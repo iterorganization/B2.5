@@ -7944,13 +7944,11 @@ contains
     subroutine fill_summary_data( summary )
     implicit none
     type (ids_summary), intent(inout) :: summary
-    integer :: i, ib, ireg, freg, is, iFc
-#ifdef B25_EIRENE
+    integer :: i, ib, ireg, freg, is, iFc, ngpn
     integer :: istrai
     integer :: iatm
     integer :: iatm1  !< Hydrogenic atom index in molecule composition
     integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
-#endif
     real(IDS_real) :: gpff, gsum, gmid, gbot, gtop, area
     logical at_top, at_bot, at_mid
 
@@ -7988,10 +7986,10 @@ contains
     call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real )
 
     call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
-    gsum = 0.0_R8
-    gtop = 0.0_R8
-    gmid = 0.0_R8
-    gbot = 0.0_R8
+    gsum = 0.0_IDS_real
+    gtop = 0.0_IDS_real
+    gmid = 0.0_IDS_real
+    gbot = 0.0_IDS_real
     do i = 1, nspecies
       is = eb2spcr(i)
       if (is.lt.0) cycle
@@ -8093,10 +8091,14 @@ contains
         end select
       end do
     end do
-#ifdef B25_EIRENE
     do istrai = 1, nstrai
       if (crcstra(istrai).eq.'C') then
-        do iatm = 1, natmi
+        if (switch%use_eirene.ne.0) then
+          ngpn=natmi
+        else
+          ngpn=nspecies
+        end if
+        do iatm = 1, ngpn
           gpff = tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
           if (gpff.eq.0.0_R8) cycle
           gsum = gsum + gpff
@@ -8131,7 +8133,7 @@ contains
           else if (at_mid) then
             gmid = gmid + gpff
           end if
-          if (gpfc(iatm,istrai).eq.1.0_R8) then
+          if (gpfc(iatm,istrai).eq.sum(gpfc(:,istrai))) then
             select case (is_codes(eb2atcr(iatm)))
             case ('H')
               call add_sourced_value( summary%gas_injection_rates%hydrogen, &
@@ -8194,14 +8196,18 @@ contains
             end select
           end if
         end do
-        if (maxval(gpfc(1:natmi,istrai)).ne.1.0_R8) then
-          do iatm = 1, natmi
+        if (count(gpfc(:,istrai).gt.0.0_R8).gt.1) then
+          iatm1 = 0
+          iatm2 = 0
+          do iatm = 1, ngpn
             if (gpfc(iatm,istrai).gt.0.0_R8) then
               if (nint(zn(eb2atcr(iatm))).eq.1) iatm1 = iatm
               if (nint(zn(eb2atcr(iatm))).gt.1) iatm2 = iatm
             end if
           end do
-          if (gpfc(iatm1,istrai)+gpfc(iatm2,istrai).le.0.9999_R8) then
+          if (iatm1.eq.0.or.iatm2.eq.0) then
+            continue ! molecule not identified
+          else if (gpfc(iatm1,istrai)+gpfc(iatm2,istrai).le.0.9999_R8) then
             continue ! case not coded
           else
             if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.4) then
@@ -8261,7 +8267,6 @@ contains
         end if
       end if
     end do
-#endif
     call write_sourced_value( summary%gas_injection_rates%total, gsum )
     call write_sourced_value( summary%gas_injection_rates%midplane, gmid )
     call write_sourced_value( summary%gas_injection_rates%top, gtop )
