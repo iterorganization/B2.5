@@ -331,6 +331,7 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
 
@@ -567,6 +568,7 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     else
       CALL EIRENE_ALLOC_COMUSR(1)
+      CALL EIRENE_ALLOC_CGEOM(1)
       call eirene_extrab25_eirpbls_init(nmol,nion,npls)
       call ntread
 #endif

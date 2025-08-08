@@ -137,6 +137,7 @@ program b2_ual_rewrite
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
     use b2mod_ipmain
@@ -175,6 +176,7 @@ program b2_ual_rewrite
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
+    CALL EIRENE_ALLOC_CGEOM(1)
     call eirene_extrab25_eirpbls_init(nmol,nion,npls)
     call ntread
 #endif
