@@ -548,7 +548,7 @@ c*** Flux across the side walls
           end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
-c*** we must remove targets, core bounaries and transparent surfaces from that list
+c*** we must remove targets, core boundaries and transparent surfaces from that list
           do js=1,nsts !{
             is_target = .false.
             do ic=1,ntns !{

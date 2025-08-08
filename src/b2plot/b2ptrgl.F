@@ -1038,9 +1038,11 @@ c        print '(a,i4,1p,4e12.4)','j,wt,wo,t,p: ',j,wt,wo,t,p  !###
         if(p.gt.0.0_R8) hwxm_idt(itrg(j))=t/p
 c*** xwhm: exponential decay length calculated from half-width
 c        print '(a,i4,1p,2e12.3)','m,wo,wid_par(m,j):',
-c                                  m,wo,wid_par(m,itrg(j)) !###
+c     .                            m,wo,wid_par(m,itrg(j)) !###
         do i=m,mpg%divFcP(itrg(j),2) !{
-          if(wid_par(i,itrg(j)).lt.0.5_R8*wo) then !{
+          if(i.le.1.or.m.eq.0) cycle
+          if(wid_par(i,itrg(j)).lt.0.5_R8*wo.and.
+     .       wid_par(i,itrg(j)).ne.wid_par(i-1,itrg(j))) then !{
             d=(0.5_R8*wo-wid_par(i,itrg(j)))/
      .                  (wid_par(i-1,itrg(j))-wid_par(i,itrg(j)))
             hwhm_idp(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
@@ -1056,9 +1058,11 @@ c!###}
           end if !}
         end do !}
 c        print '(a,i4,1p,2e12.3)','n,p,wid_trg(n,j):',
-c                                  n,p,wid_trg(n,itrg(j)) !###
+c     .                            n,p,wid_trg(n,itrg(j)) !###
         do i=n,mpg%divFcP(itrg(j),2) !{
-          if(wid_trg(i,itrg(j)).lt.0.5_R8*p) then !{
+          if(i.le.1.or.n.eq.0) cycle
+          if(wid_trg(i,itrg(j)).lt.0.5_R8*p.and.
+     .       wid_trg(i,itrg(j)).ne.wid_trg(i-1,itrg(j))) then !{
             d=(0.5_R8*p-wid_trg(i,itrg(j)))/
      .        (wid_trg(i-1,itrg(j))-wid_trg(i,itrg(j)))
             hwhm_idt(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
