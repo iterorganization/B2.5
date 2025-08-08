@@ -981,6 +981,9 @@ ${OBJDIR}/eirmod_cestim.${MOD}:
 ${OBJDIR}/eirmod_cgeom.${MOD}:
 	touch ${OBJDIR}/eirmod_cgeom.${MOD}
 
+${OBJDIR}/eirmod_cgrid.${MOD}:
+	touch ${OBJDIR}/eirmod_cgrid.${MOD}
+
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
 
@@ -1004,6 +1007,12 @@ ${OBJDIR}/eirmod_coutau.${MOD}:
 
 ${OBJDIR}/eirmod_cpes.${MOD}:
 	touch ${OBJDIR}/eirmod_cpes.${MOD}
+
+${OBJDIR}/eirmod_cplot.${MOD}:
+	touch ${OBJDIR}/eirmod_cplot.${MOD}
+
+${OBJDIR}/eirmod_csdvi.${MOD}:
+	touch ${OBJDIR}/eirmod_csdvi.${MOD}
 
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrcei.${MOD}

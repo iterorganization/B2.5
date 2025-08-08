@@ -59,7 +59,8 @@ module b2mod_ual_io
     use eirmod_ctrig &
      & , only : ntrii, ixtri
     use eirmod_comusr &
-     & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
+     & , only : natmi, nmoli, nioni, &
+     &          nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
     use eirmod_cestim &
      & , only : pdena, pdenm, &
@@ -165,7 +166,8 @@ module b2mod_ual_io
      &          ids_radiation, ids_equilibrium, ids_ids_properties,          &
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
-     &          ids_generic_grid_dynamic
+     &          ids_generic_grid_dynamic,                                    &
+     &          ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
      & , only : ids_dataset_description
@@ -435,7 +437,7 @@ contains
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( &
             &   edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             &   description, &
 #endif
@@ -480,6 +482,7 @@ contains
             !< account the energy transported by the particle flux)
         type (ids_radiation) :: radiation !< IDS designed to store
             !< data on radiation emitted by the plasma species
+        type (ids_wall) :: wall !< IDS designed to store wall data
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
@@ -594,10 +597,10 @@ contains
 #if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic) :: edge_grid, transport_grid, &
-            &  sources_grid
+            &  sources_grid, wall_grid
 #else
         type(ids_generic_grid_aos3_root) :: edge_grid, transport_grid, &
-            &  sources_grid
+            &  sources_grid, wall_grid
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
@@ -809,6 +812,8 @@ contains
           &  homogeneous_time )
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
+        call write_ids_properties( wall%ids_properties, &
+          &  homogeneous_time )
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         call write_ids_properties( description%ids_properties, 2 )
 #endif
@@ -838,6 +843,7 @@ contains
         call write_ids_code( switch, edge_transport%code, code_commit, code_description )
         call write_ids_code( switch, edge_sources%code, code_commit, code_description )
         call write_ids_code( switch, radiation%code, radiation_commit, code_description )
+        call write_ids_code( switch, wall%code, code_commit, code_description )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( switch, summary%code, code_commit, code_description )
 #endif
@@ -894,6 +900,8 @@ contains
 #endif
         allocate( radiation%time(num_time_slices) )
         radiation%time(time_sind) = time
+        allocate( wall%time(num_time_slices) )
+        wall%time(time_sind) = time
 
         !! Allocate radiation.process
         !! Process 1: line and recombination radiation due to B2.5 species
@@ -935,6 +943,7 @@ contains
         end if
 
         !! Allocate ggd for number of different time steps
+        allocate( wall%description_ggd(1) )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         allocate( edge_profiles%grid_ggd( num_time_slices ) )
         allocate( edge_transport%grid_ggd( num_time_slices ) )
@@ -942,9 +951,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
+        allocate( wall%description_ggd(1)%grid_ggd( num_time_slices ) )
 #endif
         allocate( edge_profiles%ggd( num_time_slices ) )
         allocate( edge_transport%model(1)%ggd( num_time_slices ) )
+        allocate( wall%description_ggd(1)%ggd( num_time_slices ) )
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
@@ -1148,16 +1159,12 @@ contains
 #endif
 
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        allocate( summary%composition%names( nspecies ) )
-        allocate( summary%composition%n_i_over_n_e( nspecies ) )
         nesum = 0.0_IDS_real
         do iCv = 1, mpg%nCi
           if (.not.mpg%cvOnClosedSurface(iCv)) cycle
           nesum = nesum + state%dv%ne(iCv)*geo%cvVol(iCv)
         end do
         do i = 1, nspecies
-          call write_sourced_string( summary%composition%names(i), &
-              &  species_list(i) )
           frac = 0.0_IDS_real
           do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
             if (is.ge.ns) cycle
@@ -2006,6 +2013,9 @@ contains
         allocate( radiation%grid_ggd( time_sind )%path(1) )
         radiation%grid_ggd( time_sind )%path = &
             &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+        allocate( wall%description_ggd(1)%grid_ggd( time_sind )%path(1) )
+        wall%description_ggd(1)%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
 #else
         call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
             &   edge_transport%grid_ggd( time_sind ) )
@@ -2015,6 +2025,8 @@ contains
         call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
             &   radiation%grid_ggd( time_sind ) )
 #endif
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   wall%description_ggd(1)%grid_ggd( time_sind ) )
 #endif
 #endif
 #else
@@ -2031,6 +2043,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
 #endif
+        wall%description_ggd(1)%grid_ggd( time_sind )%time = time_slice_value
 #endif
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         do is = 1, nsources
@@ -2189,20 +2202,20 @@ contains
             call species( ks, spclabel, .false.)
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%label = spclabel
+            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             do i = 1, nsources
               edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             end do
-            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
 #endif
 #else
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%name = spclabel
+            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
             do i = 1, nsources
               edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
             end do
-            edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
             radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
@@ -2486,10 +2499,13 @@ contains
             is = ispion(js,1)
             if (istion(js).eq.1) then
               edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+              edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_profiles%ggd( time_sind )%ion( js )%label = textin( is-1 )
+              edge_transport%model(1)%ggd( time_sind )%ion( js )%label = textin( is-1 )
 #else
               edge_profiles%ggd( time_sind )%ion( js )%name = textin( is-1 )
+              edge_transport%model(1)%ggd( time_sind )%ion( js )%name = textin( is-1 )
 #endif
               do i = 1, nsources
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -2499,12 +2515,6 @@ contains
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%name = textin( is-1 )
 #endif
               end do
-              edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-              edge_transport%model(1)%ggd( time_sind )%ion( js )%label = textin( is-1 )
-#else
-              edge_transport%model(1)%ggd( time_sind )%ion( js )%name = textin( is-1 )
-#endif
             else
               match_found = .false.
               do ks = 2, istion(js)
@@ -2945,10 +2955,13 @@ contains
               if (is_neutral(eb2spcr(is))) nneut=nneut+1
             end do
             allocate( edge_profiles%ggd( time_sind )%neutral( nneut ) )
+            allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
             do i = 1, nsources
                allocate( edge_sources%source(i)%ggd( time_sind )%neutral( nneut ) )
             end do
-            allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            allocate( radiation%process(1)%ggd( time_sind )%neutral( nneut ) )
+#endif
             j = 0
             do js = 1, nspecies
                is = eb2spcr(js)
@@ -3093,7 +3106,6 @@ contains
 #endif
             end do
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-            allocate( radiation%process(1)%ggd( time_sind )%neutral( nneut ) )
             j = 0
             do js = 1, nspecies
                is = eb2spcr(js)
@@ -3160,15 +3172,13 @@ contains
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%label = &
-                &    species_list(js)
+            radiation%process(3)%ggd( time_sind )%neutral( js )%label = species_list( js )
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                 &    textan( is-1 )
 #else
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%name = &
-                &    species_list(js)
+            radiation%process(3)%ggd( time_sind )%neutral( js )%name = species_list( js )
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = &
                 &    textan( is-1 )
 #endif
@@ -3484,6 +3494,7 @@ contains
             edge_grid = edge_profiles%ggd( time_sind )%grid
             transport_grid = edge_transport%ggd( time_sind )%grid
             sources_grid = edge_sources%ggd( time_sind )%grid
+            wall_grid = wall%description_ggd(1)%ggd( time_sind )%grid
 #else
 #if AL_MAJOR_VERSION < 5
             edge_grid = edge_profiles%grid_ggd( time_sind )
@@ -3492,6 +3503,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation_grid = radiation%grid_ggd( time_sind )
 #endif
+            wall_grid = wall%description_ggd(1)%grid_ggd( time_sind )
 #else
             edge_grid = edge_profiles%grid_ggd( time_sind )
             transport_grid = edge_profiles%grid_ggd( time_sind )
@@ -3499,6 +3511,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation_grid = edge_profiles%grid_ggd( time_sind )
 #endif
+            wall_grid = edge_profiles%grid_ggd( time_sind )
 #endif
 #endif
             !! ne: Electron density
@@ -6862,8 +6875,6 @@ contains
         if (do_description) then
 ! Summary plasma composition
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-          allocate( summary%composition%names( nspecies ) )
-          allocate( summary%composition%n_i_over_n_e( nspecies ) )
           u = 0.0_IDS_real
           do is = 0, ns-1
             do iCv = 1, mpg%nCi
@@ -6872,8 +6883,6 @@ contains
             end do
           end do
           do i = 1, nspecies
-            call write_sourced_string( summary%composition%names(i), &
-                &  species_list(i) )
             frac = 0.0_IDS_real
             do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
               if (is.ge.ns) cycle

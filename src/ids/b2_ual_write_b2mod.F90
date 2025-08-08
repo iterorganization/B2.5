@@ -261,7 +261,7 @@ program b2_ual_write_b2mod
      & , only : idx, ids_path, dtim, imas_version, continued, &
      &          shot, run, username, database, version, &
      &          description, old_imas_version, &
-     &          old_description, old_edge_profiles, equilibrium, &
+     &          old_description, old_edge_profiles, equilibrium, wall, &
      &          ids_end_time, old_start_time, old_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
@@ -278,7 +278,7 @@ program b2_ual_write_b2mod
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
     use b2mod_ual &
      & , only : new_ids_edge, put_ids_edge, close_ual, &
      &          dealloc_ids_edge, dealloc_batch_edge
@@ -783,7 +783,7 @@ program b2_ual_write_b2mod
           time_slice_index = num_time_slices
           call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
-             &  radiation, &
+             &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              &  description, &
 #endif
@@ -823,7 +823,7 @@ program b2_ual_write_b2mod
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
-         &  radiation, &
+         &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
          &  description, &
 #endif
@@ -851,7 +851,7 @@ program b2_ual_write_b2mod
     write(*,*) "START put_ids_edge"
     call put_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
 #endif
@@ -878,7 +878,7 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-        &   radiation )
+        &   radiation, wall )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
