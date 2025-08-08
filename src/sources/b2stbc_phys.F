@@ -1194,11 +1194,6 @@ c   (ionising_core option)
                   srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
      .             t0/pl%na(iCv1,is)
                 endif
-    !             t0 = geo%fcS(iFc)*                                        !lkw 30.06.2022{
-    !  &          sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
-    !  &          (am(is)*mp))*conpar(is,ib,2)
-              !  srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is)+t0*pl%na(iCv1,is)
-              !  srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is)-t0               !lkw 30.06.2022}
               endif
             else
               srw%sna0(iCv1,0,is) = 0.0_R8
