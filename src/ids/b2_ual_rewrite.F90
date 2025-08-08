@@ -71,7 +71,7 @@ program b2_ual_rewrite
      &          shot, run, username, database, version, &
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
-     &          equilibrium, batch_profiles, batch_sources
+     &          equilibrium, wall, batch_profiles, batch_sources
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use b2mod_driver &
      & , only : old_description, description
@@ -94,7 +94,7 @@ program b2_ual_rewrite
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
     use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge, &
      &          dealloc_ids_edge, dealloc_batch_edge, close_ual
@@ -630,7 +630,7 @@ program b2_ual_rewrite
     !! Create/Write the set data to IDSs
     call B25_process_ids( &
       &  edge_profiles, edge_sources, edge_transport, &
-      &  radiation, &
+      &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       &  description, &
 #endif
@@ -656,7 +656,7 @@ program b2_ual_rewrite
     write(*,*) "START new_ids_edge"
     call new_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
 #endif
@@ -703,7 +703,7 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-        &   radiation )
+        &   radiation, wall )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
