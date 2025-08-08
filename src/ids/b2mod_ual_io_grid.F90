@@ -1399,17 +1399,17 @@ contains
                 !! subroutine collectIndexListForRegionSubroutine
                 !! (function collectIndexListForRegion transferred to subroutine,
                 !! as array of certain dimension is required as an output)
-                call collectIndexListForRegionSubroutine( mpg,          &
-                    &   iType, regionNumber(geoId, iType, iRegion),     &
+                call collectIndexListForRegionSubroutine( mpg,           &
+                    &   iType, regionNumber(geoId, iType, iRegion),      &
                     &   indexList2d )
 
                 if ( size(indexList2d,1) > 0 ) then
                   GSubsetCount = GSubsetCount + 1
-                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//    &
-                    &   " add (private) grid subset #"//                &
-                    &   int2str(GSubsetCount)//                         &
-                    &   " for iType "//int2str( iType )//", iRegion "// &
-                    &   int2str( regionNumber(geoId, iType, iRegion) )  &
+                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//     &
+                    &   " add (private) grid subset #"//                 &
+                    &   int2str(GSubsetCount)//                          &
+                    &   " for iType "//int2str( iType )//", iRegion "//  &
+                    &   int2str( regionNumber(geoId, iType, iRegion) )   &
                     &   //": "//regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list

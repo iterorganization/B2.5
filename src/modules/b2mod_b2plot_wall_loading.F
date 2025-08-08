@@ -21,8 +21,9 @@ c
      ,  ntrgts, ntrgs, grid_mode,
      ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel
       integer itrg(ntrgsx)
-      integer, allocatable :: indwll(:), lewrk(:), luwrk(:), lwldrad(:),
-     ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
+      integer, allocatable :: indwll(:), lewrk(:), luwrk(:), lbwrk(:),
+     ,  lwldrad(:), lwldlis(:,:), leirlis(:,:), lb25lis(:,:),
+     ,  lpumplis(:)
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
      ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx), lfclbl(mskipel)
@@ -58,6 +59,7 @@ c*** itrg     : list of target indices
 c*** lwlddir  : orientation of the "plot zones" (true = CCW)
 c*** lwldlis  : list of segments belonging to the "plot zones" (DG numbering)
 c*** leirlis  : list of segments belonging to the "plot zones" (Eirene numbering)
+c*** lb25lis  : list of segments belonging to the "plot zones" (B2.5 numbering)
 c*** lnumboff : numbering offset for the wall segments in Eirene
 c*** nskipel  : number of segments to be ignored by Eirene
 c*** lskipel  : list of segments to be ignored by Eirene
@@ -110,6 +112,7 @@ c*** lrdlsp   : radiation load split was calculated
 c*** lrdlcr   : radiation load from core sources was calculated
 c*** luwrk    : working array for wall elements (DG numbering)
 c*** lewrk    : working array for wall elements (Eirene numbering)
+c*** lbwrk    : working array for wall surfaces (B2.5 numbering)
 c*** co_data  : working array (originally, for average energy)
 c======================================================================
 
@@ -121,15 +124,17 @@ c======================================================================
 
       if (allocated(indwll)) return
       allocate(indwll(nsgmx), lwldrad(nsgmx))
-      allocate(lewrk(nsgmx), luwrk(nsgmx))
+      allocate(lewrk(nsgmx), luwrk(nsgmx), lbwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(leirlis(nsgmx,nwldprtx))
+      allocate(lb25lis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))
       allocate(wldrdlsp(nsgmx,DEF_NATM))
       allocate(segm_area(nsgmx), segm_len(nsgmx),
      ,  wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
       allocate(mtrwldsg(nsgmx))
       lewrk = 0
+      lbwrk = 0
       lskip = .false.
       grid_mode = 0
 
@@ -139,9 +144,10 @@ c======================================================================
       subroutine dealloc_b2plot_wall_loading
       implicit none
 
-      deallocate(indwll, lewrk, luwrk, lwldrad)
+      deallocate(indwll, lewrk, luwrk, lbwrk, lwldrad)
       deallocate(lwldlis)
       deallocate(leirlis)
+      deallocate(lb25lis)
       deallocate(lpumplis)
       deallocate(wldrdlsp)
       deallocate(segm_area, segm_len, wldrfdst, wldrdld, co_data)

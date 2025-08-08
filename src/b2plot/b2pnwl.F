@@ -10,6 +10,7 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_b2cmpa
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -32,10 +33,10 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1_R8,enrctff=1.0e-8_R8,pwrctff=1.0e-8_R8)
-      integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc
+      integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc,iCv
       character*74 hlp_frm
       real (kind=R8) ::
-     *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
+     *   x,distance,h,a,aa,u,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
      ,     wwj(DEF_NATM+DEF_NMOL),wwe(DEF_NATM+DEF_NMOL)
       real (kind=R8) :: hlp_w(4),hlp_p(4),hlp_s(4)
       real (kind=R8), allocatable :: hlp_a(:,:),hlp_e(:,:),
@@ -144,7 +145,11 @@ c
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             ib=iabs(ia)
-            is=leirlis(i,il)
+            if (switch%use_eirene.ne.0) then
+              is=leirlis(i,il)
+            else
+              is=lb25lis(i,il)
+            end if
             h=distance
             distance=sqrt((pp1(1,ib)-pp2(1,ib))**2+
      .                    (pp1(2,ib)-pp2(2,ib))**2)
@@ -158,122 +163,159 @@ c
             aa=1.0e-6_R8/a
             distance=0.5_R8*distance
             x=x+h+distance
-            if(is.gt.0 .and. is.le.nlimi) then
-              hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
-              wwk=wldnek(is,0)*aa
-              wwp=wldnep(is,0)*aa
-              wwt=max(wwk+wwp,pwrctff)
-c              wwk=max(wwk,pwrctff)
-c              wwp=max(wwp,pwrctff)
-              k=0
-              do ii=1,natmi
-                k=k+1
-                wwj(k)=max(wldna(is,ii,0),flxctff)/a
-                wwe(k)=max(ewlda(is,ii,0),enrctff)
-              end do
-              do ii=1,nmoli
-                k=k+1
-                wwj(k)=max(wldnm(is,ii,0),flxctff)/a
-                wwe(k)=max(ewldm(is,ii,0),enrctff)
-              end do
+            if (switch%use_eirene.ne.0) then
+              if(is.gt.0 .and. is.le.nlimi) then
+                hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
+                wwk=wldnek(is,0)*aa
+                wwp=wldnep(is,0)*aa
+                wwt=max(wwk+wwp,pwrctff)
+c                wwk=max(wwk,pwrctff)
+c                wwp=max(wwp,pwrctff)
+                k=0
+                do ii=1,natmi
+                  k=k+1
+                  wwj(k)=max(wldna(is,ii,0),flxctff)/a
+                  wwe(k)=max(ewlda(is,ii,0),enrctff)
+                end do
+                do ii=1,nmoli
+                  k=k+1
+                  wwj(k)=max(wldnm(is,ii,0),flxctff)/a
+                  wwe(k)=max(ewldm(is,ii,0),enrctff)
+                end do
 c*** Calculate the net and gross erosion
-              if(ic .gt. 0) then
-                wwyg=wldspt(is,0)/a
-                wwyn=(wldra(is,ic,0)-wldna(is,ic,0)
-     .                              -wldpa(is,ic,0))/a
-                do ii=1,nmoli
-                  if (mlcmp(ic,ii).gt.0)
-     >             wwyn=wwyn+mlcmp(ic,ii)*(wldrm(is,ii,0)-wldnm(is,ii,0)
-     .                                    -wldpm(is,ii,0))/a
+                if(ic .gt. 0) then
+                  wwyg=wldspt(is,0)/a
+                  wwyn=(wldra(is,ic,0)-wldna(is,ic,0)
+     .                                -wldpa(is,ic,0))/a
+                  do ii=1,nmoli
+                    if (mlcmp(ic,ii).gt.0)
+     >               wwyn=wwyn+
+     .                mlcmp(ic,ii)*(wldrm(is,ii,0)-wldnm(is,ii,0)
+     .                                            -wldpm(is,ii,0))/a
+                  end do
+                else
+                  wwyn=flxctff
+                  wwyg=flxctff
+                end if
+              else if (ib.gt.lppp) then
+                iend = lppp
+                if (grid_mode.lt.2) then
+                  j = 0
+                  js = 0
+                  do ii = 1, ntrgts
+                    if (itrg(ii).eq.0) cycle
+                    if (j.gt.0.and.js.gt.0) cycle
+                    istart = iend+1
+                    iend = iend+mpg%divFcP(itrg(ii),2)
+                    if (ib.ge.istart.and.ib.le.iend) then
+                      j = ii
+                      js = ib-istart+1
+                    end if
+                  end do
+                  iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
+                  ias = b2_fnmti(iFc)
+                else
+                  ias = ib-lppp
+                  do ii = 1, ncns
+                    ias = ias+eirdiag_nds_ind(ii+1)-eirdiag_nds_ind(ii)
+                  end do
+                  ias = ias + 1
+                end if
+                wwk=0.0_R8
+                wwp=0.0_R8
+                k=0
+                do ii=1,natmi
+                  k=k+1
+                  if (ias.eq.0) cycle
+                  wwk=wwk+(ewlda_res(ii,ias)-ewldea_res(ii,ias))
+                  wwj(k)=max(wldna_res(ii,ias),flxctff)/a
+                  wwe(k)=max(ewlda_res(ii,ias),enrctff)
                 end do
+                do ii=1,nmoli
+                  k=k+1
+                  if (ias.eq.0) cycle
+                  wwk=wwk+(ewldm_res(ii,ias)-ewldem_res(ii,ias))
+                  wwp=wwp+ewldmr_res(ii,ias)
+                  wwj(k)=max(wldnm_res(ii,ias),flxctff)/a
+                  wwe(k)=max(ewldm_res(ii,ias),enrctff)
+                end do
+                if(ic.gt.0.and.ias.gt.0) then
+                  wwyg=wldspta_res(ic,ias)/a
+                  wwyn=(wldspta_res(ic,ias)-wldna_res(ic,ias)-
+     >                                      wlpump_res(ic,ias))/a
+                  do ii=1,nmoli
+                    if (mlcmp(ic,ii).gt.0)
+     >               wwyn=wwyn+mlcmp(ic,ii)*
+     .                (wldsptm_res(ii,ias)-wldnm_res(ii,ias)-
+     .                                     wlpump(ii+natmi,ias))/a
+                  end do
+                else
+                  wwyn=flxctff
+                  wwyg=flxctff
+                end if
+                hlpw=hlpw+wwk+wwp
+                wwk=max(wwk*aa,pwrctff)
+                wwp=max(wwp*aa,pwrctff)
+                wwt=max(wwk+wwp,pwrctff)
               else
                 wwyn=flxctff
                 wwyg=flxctff
-              end if
-            else if (ib.gt.lppp) then
-              iend = lppp
-              if (grid_mode.lt.2) then
-                j = 0
-                js = 0
-                do ii = 1, ntrgts
-                  if (itrg(ii).eq.0) cycle
-                  if (j.gt.0.and.js.gt.0) cycle
-                  istart = iend+1
-                  iend = iend+mpg%divFcP(itrg(ii),2)
-                  if (ib.ge.istart.and.ib.le.iend) then
-                    j = ii
-                    js = ib-istart+1
-                  end if
+                wwk=pwrctff
+                wwp=pwrctff
+                wwt=pwrctff
+                k=natmi+nmoli
+                do ii=1,k
+                  wwj(ii)=0.1_R8*flxctff
+                  wwe(ii)=enrctff
                 end do
-                iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
-                ias = b2_fnmti(iFc)
-              else
-                ias = ib-lppp
-                do ii = 1, ncns
-                  ias = ias+eirdiag_nds_ind(ii+1)-eirdiag_nds_ind(ii)
-                end do
-                ias = ias + 1
               end if
-              wwk=0.0_R8
-              wwp=0.0_R8
-              k=0
-              do ii=1,natmi
-                k=k+1
-                if (ias.eq.0) cycle
-                wwk=wwk+(ewlda_res(ii,ias)-ewldea_res(ii,ias))
-                wwj(k)=max(wldna_res(ii,ias),flxctff)/a
-                wwe(k)=max(ewlda_res(ii,ias),enrctff)
-              end do
-              do ii=1,nmoli
-                k=k+1
-                if (ias.eq.0) cycle
-                wwk=wwk+(ewldm_res(ii,ias)-ewldem_res(ii,ias))
-                wwp=wwp+ewldmr_res(ii,ias)
-                wwj(k)=max(wldnm_res(ii,ias),flxctff)/a
-                wwe(k)=max(ewldm_res(ii,ias),enrctff)
-              end do
-              if(ic.gt.0.and.ias.gt.0) then
-                wwyg=wldspta_res(ic,ias)/a
-                wwyn=(wldspta_res(ic,ias)-wldna_res(ic,ias)-
-     >                                    wlpump_res(ic,ias))/a
-                do ii=1,nmoli
-                  if (mlcmp(ic,ii).gt.0)
-     >             wwyn=wwyn+mlcmp(ic,ii)*
-     .              (wldsptm_res(ii,ias)-wldnm_res(ii,ias)-
-     .                                   wlpump(ii+natmi,ias))/a
-                end do
-              else
-                wwyn=flxctff
-                wwyg=flxctff
-              end if
-              hlpw=hlpw+wwk+wwp
-              wwk=max(wwk*aa,pwrctff)
-              wwp=max(wwp*aa,pwrctff)
-              wwt=max(wwk+wwp,pwrctff)
-            else
-              wwyn=flxctff
-              wwyg=flxctff
-              wwk=pwrctff
-              wwp=pwrctff
-              wwt=pwrctff
-              k=natmi+nmoli
-              do ii=1,k
-                wwj(ii)=0.1_R8*flxctff
-                wwe(ii)=enrctff
-              end do
-            end if
-            if (from_b2plot) then
-              write (hlp_frm,'(a,i2,a)')
+              if (from_b2plot) then
+                write (hlp_frm,'(a,i2,a)')
      ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
-              if (ic.eq.0) then
-                write (lun,hlp_frm) pltzlbl(il),
+                if (ic.eq.0) then
+                  write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
-              else
-                write (lun,hlp_frm) pltzlbl(il),
+                else
+                  write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
+                end if
+              end if
+            else if (grid_mode.eq.2) then
+              u=mpg%bcFcOr(mpg%fcBc(is,1))
+              iCv=min(mpg%fcCv(is,1),mpg%fcCv(is,2))
+              k=0
+              wwk=0.0_R8
+              wwp=0.0_R8
+              do ii=0,state%ns-1
+                if (.not.is_neutral(ii)) cycle
+                k=k+1
+                hlpw=hlpw+
+     .               u*(state%dv%fhm(is,0,ii)+state%dv%fhm(is,1,ii)+
+     .                  state%dv%fhp(is,0,ii)+state%dv%fhp(is,1,ii))
+                wwk=wwk+
+     .               u*(state%dv%fhm(is,0,ii)+state%dv%fhm(is,1,ii))*aa
+                wwp=wwp+
+     .               u*(state%dv%fhp(is,0,ii)+state%dv%fhp(is,1,ii))*aa
+                wwj(k)=max(flxctff,
+     .               u*(state%dv%fna(is,0,ii)+state%dv%fna(is,1,ii)))/a
+                if (nint(zn(ii)).eq.1) then
+                  wwe(k)=max(state%pl%tn(iCv),enrctff)
+                else
+                  wwe(k)=max(state%pl%ti(iCv),enrctff)
+                end if
+              enddo
+              wwt=max(wwk+wwp,pwrctff)
+              wwyn=flxctff
+              wwyg=flxctff
+              if (from_b2plot) then
+                write (hlp_frm,'(a,i2,a)')
+     ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
+                write (lun,hlp_frm) pltzlbl(il),
+     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
+     ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
               end if
             end if
           end do
@@ -322,22 +364,58 @@ c      end if
       do k=1,ntns
         if (ktns(k).eq.0) cycle
         if (itrg(ktns(k)).eq.0) cycle
-        hlp_w(itrg(ktns(k))) = hlp_w(itrg(ktns(k)))+
+        if (switch%use_eirene.ne.0) then
+          hlp_w(itrg(ktns(k))) = hlp_w(itrg(ktns(k)))+
      .                   wldnek(nlim+ltns(k),0)+wldnep(nlim+ltns(k),0)
-        hlp_p(itrg(ktns(k))) = hlp_p(itrg(ktns(k)))+
+          hlp_p(itrg(ktns(k))) = hlp_p(itrg(ktns(k)))+
      .                   wldnep(nlim+ltns(k),0)
-        do i=1,natmi
-          hlp_a(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+
+          do i=1,natmi
+            hlp_a(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+
      .                   wldna(nlim+ltns(k),i,0)
-          hlp_e(itrg(ktns(k)),i) = hlp_e(itrg(ktns(k)),i)+
+            hlp_e(itrg(ktns(k)),i) = hlp_e(itrg(ktns(k)),i)+
      .                   ewlda(nlim+ltns(k),i,0)*wldna(nlim+ltns(k),i,0)
-        end do
-        do i=1,nmoli
-          hlp_m(itrg(ktns(k)),i) = hlp_m(itrg(ktns(k)),i)+
+          end do
+          do i=1,nmoli
+            hlp_m(itrg(ktns(k)),i) = hlp_m(itrg(ktns(k)),i)+
      .                   wldnm(nlim+ltns(k),i,0)
-          hlp_f(itrg(ktns(k)),i) = hlp_f(itrg(ktns(k)),i)+
+            hlp_f(itrg(ktns(k)),i) = hlp_f(itrg(ktns(k)),i)+
      .                   ewldm(nlim+ltns(k),i,0)*wldnm(nlim+ltns(k),i,0)
-        end do
+          end do
+        else
+          do ii=1,mpg%divFcP(itrg(ktns(k)),2)
+            iFc=mpg%divFc(mpg%divFcP(itrg(ktns(k)),1)+ii-1)
+            u=mpg%divFcOr(mpg%divFcP(itrg(ktns(k)),1)+ii-1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            do i=1,nspecies
+              hlp_w(itrg(ktns(k))) = hlp_w(itrg(ktns(k)))+u*
+     .         (state%dv%fhm(iFc,0,b2espcr(i))+
+     .          state%dv%fhm(iFc,1,b2espcr(i))+
+     .          state%dv%fhp(iFc,0,b2espcr(i))+
+     .          state%dv%fhp(iFc,1,b2espcr(i)))
+              hlp_p(itrg(ktns(k))) = hlp_p(itrg(ktns(k)))+u*
+     .         (state%dv%fhp(iFc,0,b2espcr(i))+
+     .          state%dv%fhp(iFc,1,b2espcr(i)))
+              hlp_a(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+u*
+     .         (state%dv%fna(iFc,0,b2espcr(i))+
+     .          state%dv%fna(iFc,1,b2espcr(i)))
+              if (nint(zn(b2espcr(i))).eq.1) then
+                hlp_e(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+u*
+     .          ((state%dv%fna_32(iFc,0,b2espcr(i))+
+     .            state%dv%fna_32(iFc,1,b2espcr(i)))*1.5_R8+
+     .           (state%dv%fna_52(iFc,0,b2espcr(i))+
+     .            state%dv%fna_52(iFc,1,b2espcr(i)))*2.5_R8)*
+     .            state%pl%tn(iCv)
+              else
+                hlp_e(itrg(ktns(k)),i) = hlp_a(itrg(ktns(k)),i)+u*
+     .          ((state%dv%fna_32(iFc,0,b2espcr(i))+
+     .            state%dv%fna_32(iFc,1,b2espcr(i)))*1.5_R8+
+     .           (state%dv%fna_52(iFc,0,b2espcr(i))+
+     .            state%dv%fna_52(iFc,1,b2espcr(i)))*2.5_R8)*
+     .            state%pl%ti(iCv)
+              end if
+            end do
+          end do
+        end if
       end do
       do k=1,ntrgts
         if (itrg(k).eq.0) cycle
@@ -401,258 +479,3 @@ c----------------------------------------------------------------------
   999 return
 c----------------------------------------------------------------------
       end subroutine b2pnwl
-c
-c
-c======================================================================
-      subroutine b2pwsrt(iret)
-c
-c*** sort the lists of target sections to simply connected chains
-c----------------------------------------------------------------------
-c*** Global variables
-c***
-c***  nwldprt : the number of lists to be sorted
-c***  lwldstrt: the initial segments of the chains
-c***  nwldlis : the list lengths
-c***  lwldlis : the lists themselves (DG numbering)
-c***  leirlis : the lists themselves (Eirene numbering)
-c
-      use b2us_data
-      use b2mod_types
-      use b2mod_b2plot
-      use b2mod_b2plot_wall_loading
-#ifdef B25_EIRENE
-      use eirmod_parmmod
-      use eirmod_extrab25
-#else
-      use b2mod_eirdiag
-#endif
-      use b2mod_dimensions
-      implicit none
-      integer iret
-#ifndef B25_EIRENE
-#     include "COUPLE/KOPPLDIM.F"
-#endif
-c
-c*** Local variables
-c***
-c*** goup  : the end of the last segment of the chain is still free
-c*** placed: the segment is already in the chain
-c*** lwsrtwrk: a temporary array for sorting
-c*** nwsrtwrk: a counter for this array
-c*** wsrttol : a tolerance parameter for defining adjacent segments
-c
-      logical goup,placed(DEF_NLIM),found,direction_same
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
-      real (kind=R8) ::
-     *   wsrttol, d2etol
-      parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
-c----------------------------------------------------------------------
-c
-cc%%%
-c      print *,'b2pwsrt',nwldprt
-c      if (mpg%nnreg(0).lt.7) then
-c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
-c      else
-c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
-c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
-c      end if
-c      do il=1,nwldprt
-c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
-c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
-c        do ii=1,nwldlis(il)
-c          is=lwldlis(ii,il)
-c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
-c        end do
-c      end do
-cc%%%
-      iret=0
-      do il=1,nwldprt
-        is=lwldstrt(il)
-        if(is .gt. lppp  .or.  is .le. 0) then
-          write(*,*) 'Starting segment outside the limits',is,il
-          nwldlis(il)=0
-        else
-          goup=.false.
-          do ii=1,nwldlis(il)
-            placed(ii)=.false.
-            if(is .eq. lwldlis(ii,il)) then
-              placed(ii)=.true.
-              goup=.true.
-            end if
-          end do
-          if(.not.goup) then
-            write(*,*) 'Starting segment outside the list',is,il
-            nwldlis(il)=0
-          else
-c*** initialise the chain counter and the chain list
-            nwsrtwrk=1
-            lwsrtwrk(nwsrtwrk)=is
-c*** both ends of the first element will be checked (goup=.true. here)
-            k=2
-            do ii=2,nwldlis(il)
-c              print *,'do 100:',ii,is,goup
-              do ik=1,k
-c                print *,'do ik:',ik,is,goup
-                do jj=1,nwldlis(il)
-c                  print *,'do jj:',jj,is,goup,placed(jj)
-                  if(.not.placed(jj)) then
-                    js=lwldlis(jj,il)
-c                    print *,'js:',js,is,goup
-                    if(goup) then
-                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and.
-     .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
-                        goup=.true.
-                        is=js
-                        nwsrtwrk=nwsrtwrk+1
-                        lwsrtwrk(nwsrtwrk)=is
-                        placed(jj)=.true.
-c                        print *,'2->1:',is,nwsrtwrk
-                        go to 100
-                      end if
-                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and.
-     .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
-                        goup=.false.
-                        is=js
-                        nwsrtwrk=nwsrtwrk+1
-                        lwsrtwrk(nwsrtwrk)=is
-                        placed(jj)=.true.
-c                        print *,'2->2:',is,nwsrtwrk
-                        go to 100
-                      end if
-                    else
-                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and.
-     .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
-                        goup=.false.
-                        is=js
-                        nwsrtwrk=nwsrtwrk+1
-                        lwsrtwrk(nwsrtwrk)=is
-                        placed(jj)=.true.
-c                        print *,'1->2:',is,nwsrtwrk
-                        go to 100
-                      end if
-                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and.
-     .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
-                        goup=.true.
-                        is=js
-                        nwsrtwrk=nwsrtwrk+1
-                        lwsrtwrk(nwsrtwrk)=is
-                        placed(jj)=.true.
-c                        print *,'1->1:',is,nwsrtwrk
-                        go to 100
-                      end if
-                    end if
-                  end if
-                end do
-c*** This only works for the first element.
-c*** Look in the opposite direction
-                goup=.false.
-              end do
-c*** No connection found
-              go to 50
-  100         k=1
-            end do
-   50       if(nwsrtwrk .ne. nwldlis(il)) then
-              write(*,*) 'The chain is broken: ',il
-              nwldlis(il)=nwsrtwrk
-            end if
-            do ii=1,nwldlis(il)
-              j = lwsrtwrk(ii)
-              if (lskip(j)) then
-                lwldlis(ii,il)=j
-                leirlis(ii,il)=0
-              else if (nlimi.eq.0) then
-                lwldlis(ii,il)=j
-                leirlis(ii,il)=j
-              else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
-     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
-     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
-     .                 mpg%nnreg(0).ge.7)) then
-                k = 1
-                found = .false.
-                do while (.not.found .and. k.le.nlim)
-                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    direction_same = abs(
-     .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
-     .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
-     .                (sqrt(( p2(1,k)- p1(1,k))**2+
-     .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    direction_same = abs(
-     .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
-     .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
-     .                (sqrt(( p2(1,k)- p1(1,k))**2+
-     .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    direction_same = abs(
-     .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
-     .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
-     .                (sqrt(( p2(1,k)- p1(1,k))**2+
-     .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    direction_same = abs(
-     .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
-     .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/
-     .                (sqrt(( p2(1,k)- p1(1,k))**2+
-     .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-                    direction_same = .false.
-                  end if
-                  if (direction_same) then
-                    found = .true.
-                    lwldlis(ii,il)=j
-                    leirlis(ii,il)=k
-                  else
-                    k = k + 1
-                  end if
-                end do
-                if (.not.found) write(*,'(a,i4,a)')
-     .            'Found no correspondence (1A) between DG wall # ', j ,
-     .            ' and Eirene wall list'
-              else
-                k = 1
-                found = .false.
-                do while (.not.found .and. k.le.nlim)
-                  if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .                abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
-     .                abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .                abs(p2(2,k)-pp2(2,j)) .le. wsrttol) .or.
-     .               (abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .                abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
-     .                abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .                abs(p2(2,k)-pp1(2,j)) .le. wsrttol)) then
-                    lwldlis(ii,il)=j
-                    leirlis(ii,il)=k
-                    found = .true.
-                  end if
-                  k = k + 1
-                end do
-                if (.not.found) write(*,'(a,i4,a)')
-     .           'Found no correspondence (2A) between DG wall # ', j ,
-     .           ' and Eirene wall list'
-              end if
-            end do
-c            print '(a,i2/(1x,20i4))','il =',il,
-c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
-c            print '(1x,20i4)', (leirlis(ii,il),ii=1,nwldlis(il))
-          end if
-        end if
-      end do
-c----------------------------------------------------------------------
-      return
-      end subroutine b2pwsrt

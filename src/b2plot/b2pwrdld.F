@@ -58,14 +58,20 @@ c
 
 #ifdef DBG
       print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
-      print *,'lwldlis(i,1):'
-      print '(20i5)',(lwldlis(i,1),i=1,nplgs)
-      print *,'lbnd(i):'
-      print '(20i5)',(lbnd(i),i=1,nplgs)
-      print *,'luwrk:'
-      print '(20i5)',(luwrk(i),i=1,nsgmx)
-      print *,'lewrk:'
-      print '(20i5)',(lewrk(i),i=1,nsgmx)
+      if (nplgs.gt.0) then
+        print *,'lwldlis(i,1):'
+        print '(20i5)',(lwldlis(i,1),i=1,nplgs)
+        print *,'lbnd(i):'
+        print '(20i5)',(lbnd(i),i=1,nplgs)
+      endif
+      if (maxval(luwrk).gt.0) then
+        print *,'luwrk:'
+        print '(20i5)',(luwrk(i),i=1,nsgmx)
+      endif
+      if (maxval(lewrk).gt.0) then
+        print *,'lewrk:'
+        print '(20i5)',(lewrk(i),i=1,nsgmx)
+      endif
 #endif
 
       k=0
@@ -87,21 +93,23 @@ c
       end do
       ntrg=k
 #ifdef DBG
-      print *,'Shadowing structure: ',
-     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-      print '(20i5)',(lbnd(i),i=1,nplgs)
-      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
-      print '(a,12i5)','Radiation target ',ntrg,
-     ,       (nwldlis(i),i=2,nwldprt)
-      print '(20i5)',(ltrg(i),i=1,ntrg)
+      if (nplgs.gt.0) then
+        print *,'Shadowing structure: ',
+     ,           nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+        print '(20i5)',(lbnd(i),i=1,nplgs)
+        print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+        print '(a,12i5)','Radiation target ',ntrg,
+     ,         (nwldlis(i),i=2,nwldprt)
+        print '(20i5)',(ltrg(i),i=1,ntrg)
 
-      open(lun_w,file='layout-w.dat')
-      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-      write(lun_w,'(3a)') '# R',tab,'Z'
-      do i=1,nplgs
-        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
-      end do
-      close(lun_w)
+        open(lun_w,file='layout-w.dat')
+        write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+        write(lun_w,'(3a)') '# R',tab,'Z'
+        do i=1,nplgs
+          write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
+        end do
+        close(lun_w)
+      endif
 #endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional
