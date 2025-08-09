@@ -200,6 +200,7 @@ module b2mod_ual_io
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic,                                    &
+     &          ids_plasma_composition_neutral_element,                      &
      &          ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
@@ -2385,27 +2386,19 @@ contains
             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%z_ion = ion_charge_int
           end if
 
-          ! Put mass of species
-          edge_profiles%ggd( time_sind )%ion( js )%element(1)%a = am( is )
-          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
-
-          ! Put nuclear charge
-#if IMAS_MAJOR_VERSION < 4
-          edge_profiles%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
-          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
-#else
-          edge_profiles%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
-          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
-#endif
-
-          ! Put number of atoms
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          edge_profiles%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-          edge_profiles%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
-          edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
-#endif
+          ! Put element data
+          call fill_neutral_element( is, js, &
+            &  edge_profiles%ggd( time_sind )%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%element(1) )
 
           ! Put neutral index
           edge_profiles%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
@@ -2467,22 +2460,9 @@ contains
               edge_sources%source(i)%ggd( time_sind )%ion( js )%z_ion = ion_charge_int
             end if
 
-            ! Put mass of ion
-            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
-
-            ! Put nuclear charge
-#if IMAS_MAJOR_VERSION < 4
-            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
-#else
-            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
-#endif
-
-            ! Put number of atoms
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-            edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
-#endif
+            ! Put element data
+            call fill_neutral_element( is, js, &
+              &  edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1) )
 
             ! Put neutral index
             edge_sources%source(i)%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
@@ -2522,22 +2502,11 @@ contains
             radiation%process(2)%ggd( time_sind )%ion( js )%z_ion = ion_charge_int
           end if
 
-          ! Put mass of ion
-          radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
-          radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%a = am( is )
-
-          ! Put nuclear charge
-#if IMAS_MAJOR_VERSION < 4
-          radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
-          radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
-#else
-          radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
-          radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%z_n = nint(zn(is))
-#endif
-
-          ! Put number of atoms
-          radiation%process(1)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
-          radiation%process(2)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
+          ! Put element data
+          call fill_neutral_element( is, js, &
+            &  radiation%process(1)%ggd( time_sind )%ion( js )%element(1) )
+          call fill_neutral_element( is, js, &
+            &  radiation%process(2)%ggd( time_sind )%ion( js )%element(1) )
 
           ! Put neutral index
           radiation%process(1)%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
@@ -2947,22 +2916,18 @@ contains
              allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%element(1) )
              allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%element(1) )
              allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%element(1) )
-             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-#else
-             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-             edge_profiles%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
-             edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
-#endif
+             call fill_neutral_element( is, js, &
+               &  edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
+             call fill_neutral_element( is, js, &
+               &  edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
+             call fill_neutral_element( is, js, &
+               &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%element(1) )
+             call fill_neutral_element( is, js, &
+               &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%element(1) )
+             call fill_neutral_element( is, js, &
+               &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%element(1) )
+             call fill_neutral_element( is, js, &
+               &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
@@ -3002,17 +2967,8 @@ contains
              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%ion_index = js
              do i = 1, nsources
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1) )
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
-#else
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-                edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
-#endif
+                call fill_neutral_element( is, js, &
+                  &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = species_list( js )
@@ -3076,7 +3032,7 @@ contains
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%index = -1
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
                    &     "Kinetic neutral atoms from Eirene"
-               edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+                edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 do i = 1, nsources
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
@@ -3394,28 +3350,18 @@ contains
                allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%element(1) )
                allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%element(1) )
                allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%element(1) )
-               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
-#else
-               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
-#else
-               edge_profiles%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-#endif
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
-#else
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
-#else
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-#endif
+               call fill_neutral_element( is, js, &
+                 &  edge_profiles%ggd( time_sind )%neutral( j )%element(1) )
+               call fill_neutral_element( is, js, &
+                 &  edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
+               call fill_neutral_element( is, js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%element(1) )
+               call fill_neutral_element( is, js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%element(1) )
+               call fill_neutral_element( is, js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%element(1) )
+               call fill_neutral_element( is, js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
@@ -3530,19 +3476,8 @@ contains
                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%multiple_states_flag = 1
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
-                     &   zn( is )
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
-                     &   nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1.0_IDS_real
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-#endif
+                  call fill_neutral_element( is, js, &
+                    &  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
@@ -3578,13 +3513,8 @@ contains
                end do
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%a = am(is)
-#if IMAS_MAJOR_VERSION < 4
-               radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn(is)
-#else
-               radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
-#endif
-               radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
+               call fill_neutral_element( is, js, &
+                 &  radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
@@ -3638,13 +3568,8 @@ contains
             ks = isstat(is)
             spclabel = trim(textan(is-1))
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%a = nmassa( is )
-#if IMAS_MAJOR_VERSION < 4
-            radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = real(nchara(is),IDS_real)
-#else
-            radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = nchara( is )
-#endif
-            radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+            call fill_neutral_element( eb2atcr(is), js, &
+              &  radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
@@ -8411,6 +8336,27 @@ contains
     ncall = ncall + 1
     return
     end subroutine put_equilibrium_data
+
+    subroutine fill_neutral_element( is, js, neutral_element )
+    implicit none
+    integer, intent(in) :: is !< B2.5 species index
+    integer, intent(in) :: js !< B2.5 isonuclear species index
+    type(ids_plasma_composition_neutral_element) :: neutral_element
+
+    neutral_element%a = am(is)
+#if IMAS_MAJOR_VERSION < 4
+    neutral_element%z_n = zn(is)
+#else
+    neutral_element%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    neutral_element%multiplicity = 1.0_IDS_real
+#else
+    neutral_element%atoms_n = 1
+#endif
+
+    return
+    end subroutine fill_neutral_element
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     subroutine fill_summary_data( summary, wall, time_sind )
