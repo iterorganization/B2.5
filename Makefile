@@ -1565,7 +1565,7 @@ echo:
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
-${SRCLOCAL}/b2local.F:
+${SRCLOCAL}/b2local.F: ${MAKES}
 	mkdir -p ${SRCLOCAL}
 	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
@@ -1574,17 +1574,17 @@ ${SRCLOCAL}/b2local.F:
 	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end" >> ${SRCLOCAL}/b2local.F
+	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
 
-${MODLOCAL}/b2mod_local.F:
+${MODLOCAL}/b2mod_local.F: ${MAKES}
 	mkdir -p ${MODLOCAL}
 	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end" >> ${MODLOCAL}/b2mod_local.F
+	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
 
-${INCLOCAL}/b2local.h:
+${INCLOCAL}/b2local.h: ${MAKES}
 	mkdir -p ${INCLOCAL}
 	echo "c" > ${INCLOCAL}/b2local.h
 	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h

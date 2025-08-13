@@ -47,11 +47,24 @@
      &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
      &          b2divua, b2exbe
       use b2us_feedback
-     & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out 
+      use b2mod_b2zhco
+     & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa, c_r_tb,
+     &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -116,7 +129,6 @@
 
 *   ..local variables
       integer :: iCv
-      integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: flag_startup = 0                                  !fc: local variable used to start-up BDF2 scheme with an IE first time-step
       logical domoqt, wrong_flow                                         !xpb
@@ -159,9 +171,9 @@
        endif
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
        if(switch%equation_sources.ne.0)
-     &   call read_equation_sources(nCv, ns, switch, itim, mpg)
+     &  call read_equation_sources(nCv, ns, switch, itim, mpg)
        if(switch%boundary_sources.ne.0)
-     &   call read_boundary_sources(nCv, ns, switch, itim, mpg)    !srv 26.02.18 }
+     &  call read_boundary_sources(nCv, ns, switch, itim, mpg)          !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (switch%b2mndt_style.eq.2) then
@@ -290,18 +302,35 @@ ctmp.dpc
      .      st%dv%ne)
           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
      .      st%dv%ne2)
-*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv,
-     .      st_ext, st%co%chvemx, st%co%chvimx)
+*   ..compute transport coefficients                                     !srv 11.10.02 03.06.03 {
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
-     1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     &      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co,
+     &      st%co_ns)
 !WG_TODO         newneo=.true.
-          call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &      st%pl%po, st%dv%fchanml)
-          call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &      st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-          call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &      st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+          call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &      st%dv%fchanml_a, st%dv%fchanml)
+          call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &      st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &      st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &      st%dv%fchvispar)
+          call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%na, st%pl%ua, st%dv%facdrift,
+     &      st%dv%fchinert_a, st%dv%fchinert)
+          call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &      st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
+          call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
+     &      st%pl%ti, st%pl%na, st%dv%ni(:,1), st%rt%rza,
+     &      st%co_ns%vsaf_hAdp_albe, st%co_ns%vsaf_hBdp_al,
+     &      st%co%hcix_c, st%co%hci_a, st%co_ns%hci_al_ast,
+     &      st%dv%fchvisq_a, st%dv%fchvisq)
+          call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
+     &      st%dv%fchviskt_a, st%dv%fchviskt)
+
 #ifdef WG_TODO
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -346,7 +375,7 @@ ctmp.dpc
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
           endif
 
-          if(switch%equation_sources.ne.0) then                                 !srv 26.02.18 {
+          if(switch%equation_sources.ne.0) then                          !srv 26.02.18 {
             do iCv = 1,mpg%nCi
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
@@ -444,7 +473,7 @@ ctmp.dpc
      &       (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
             if (domoqt) then
-              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then              !srv 31.01.07
+              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then     !srv 31.01.07
                 call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &           switch, geo, st%pl, st%dv, st%diag)
                 flush(nout(4))

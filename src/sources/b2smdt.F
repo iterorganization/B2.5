@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2smdt (nCv, nCi, ns, dtim, hz,          !srv 09.01.01 01.07.08
-     &  cvVol, na, uap, switch, mpg, smodt, isb)              !srv 11.09.09
+      subroutine b2smdt (nCv, nCi, ns, dtim, hz,                     !srv 09.01.01 01.07.08
+     &  cvVol, na, uap, switch, mpg, smodt, isb)                     !srv 11.09.09
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_constants
@@ -41,7 +41,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, k
+      integer iCv, k
       character chns*3, chk*1
       real (kind=R8) :: t0, ttim, ts_factor
 *   ..procedures
@@ -83,10 +83,10 @@
         ttim=dtim*dtmo(isb,mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)
      &       *ts_factor
-        smodt(iCv,0,isb) = t0*am(isb)*mp*uap(iCv,isb)*na(iCv,isb) !srv 06.01.21 {
+        smodt(iCv,0,isb) = t0*am(isb)*mp*uap(iCv,isb)*na(iCv,isb)        !srv 06.01.21 {
         smodt(iCv,1,isb) = 0.0_R8
         smodt(iCv,2,isb) = 0.0_R8
-        smodt(iCv,3,isb) = -t0                                      !srv 06.01.21 }
+        smodt(iCv,3,isb) = -t0                                           !srv 06.01.21 }
       enddo
 
 cdjm Store the total change in linearised sources for balance

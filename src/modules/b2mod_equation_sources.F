@@ -55,8 +55,8 @@
        implicit none
        type (switches), intent (in) :: switch
        type (mapping), intent (in) :: mpg
-       integer nCv, ns
-       integer is, iCv, i, itim, tt
+       integer nCv, ns, itim
+       integer i, is, iCv, tt
        logical b2news_solving(4)
        character*27 filename
        logical art_exists

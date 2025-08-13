@@ -1,5 +1,5 @@
       subroutine b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &   po, na, kt, vaecrb, dna_ExB, fchviskt)
+     &   po, na, kt, vaecrb, dna_ExB, fchviskt_a, fchviskt)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -27,7 +27,7 @@
      2   vaecrb(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   fchviskt(nFc,0:1)
+     3   fchviskt_a(nFc,0:1,0:ns-1), fchviskt(nFc,0:1)
      
 *-----------------------------------------------------------------------
 *.documentation
@@ -69,10 +69,11 @@
         call grad(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrkg)
 
 *     ..contribution from trace RS tensor
-        fchviskt(:,0) = -switch%b2tfhe_vis_kt*geo%fcS*geo%fcQalf(:,0)*
-     &    wrkg(:,1)*geo%fcBb(:,2)/geo%fcBb(:,3)**2
-        fchviskt(:,1) =  switch%b2tfhe_vis_kt*geo%fcS*geo%fcQalf(:,1)*
-     &    wrkg(:,0)*geo%fcBb(:,2)/geo%fcBb(:,3)**2
+        fchviskt_a = 0.0_R8
+        fchviskt_a(:,0,ismain) = -switch%b2tfhe_vis_kt*geo%fcS*
+     &    geo%fcQalf(:,0)*wrkg(:,1)*geo%fcBb(:,2)/geo%fcBb(:,3)**2
+        fchviskt_a(:,1,ismain) =  switch%b2tfhe_vis_kt*geo%fcS*
+     &    geo%fcQalf(:,1)*wrkg(:,0)*geo%fcBb(:,2)/geo%fcBb(:,3)**2
 
 *     ..compute V_{perp,a} on cell faces
         call grad(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrkg)
@@ -100,12 +101,17 @@
 
 *     ..interpolate to face and multiply by radial area
         call intface(nCv, nFc, mpg%fcCv, weight, wrk0, wrkf)
-        fchviskt(:,1) = fchviskt(:,1) + switch%b2tfhe_vis_kt*
-     &    wrkf*geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
+        fchviskt_a(:,1,ismain) = fchviskt_a(:,1,ismain) +
+     &    switch%b2tfhe_vis_kt*wrkf*geo%fcS*geo%fcQalf(:,1)/
+     &    geo%fcBb(:,3)
+
+*     ..accumulate into fchviskt
+        fchviskt = fchviskt_a(:,:,ismain)
 
       else
 
         fchviskt = 0.0_R8
+        fchviskt_a = 0.0_R8
 
       endif
 
@@ -122,4 +128,3 @@
 *.end b2tvskt
 
       end subroutine b2tvskt
-

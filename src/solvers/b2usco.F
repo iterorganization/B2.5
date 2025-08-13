@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv, !srv 13.10.06 26.09.12
-     &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
-     &   rescb, corpb, aa, name)                                         !srv 18.05.02
+      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg,    !srv 13.10.06 26.09.12
+     &   nregionv, solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
+     &   rescb, corpb, aa, name)                                  !srv 18.05.02
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -61,12 +61,12 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
+      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg, k
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
-     *   t1, t2, t3, t11, t22
-      character chns*3
+     *   t1, t2, t3, t11, t22, wrk(nCv)
+      character chns*3, charnv*2
       logical lnonzero
 *   ..procedures
       intrinsic abs
@@ -153,18 +153,18 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         t2 =   0.5_R8*flob(iFc,1) - conb(iFc,1,0) - conb(iFc,1,1)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solvereg(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -174,8 +174,8 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
          enddo
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -189,7 +189,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         ! contribution from iVx1
         do inCv = 1, mpg%vxCvP(iVx1,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+         t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -200,7 +200,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         ! contribution from iVx2
         do inCv = 1, mpg%vxCvP(iVx2,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-         t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+         t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -214,7 +214,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -226,31 +226,29 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)             !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)            !srv 18.05.02
 *   ..redo the scaling
 ! $AD II-LOOP
       do iCv = 1, nCv
         corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
-      if (switch%b2usco_iout.ne.0) then                                 !srv 17.06.02 {
+      if (switch%b2usco_iout.ne.0) then                                !srv 17.06.02 {
         write (chns,'(i3.3)') isb
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-6),name//'_aam6'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-5),name//'_aam5'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-4),name//'_aam4'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-3),name//'_aam3'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-2),name//'_aam2'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-1),name//'_aam1'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 0),name//'_aacc'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 1),name//'_aap1'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 2),name//'_aap2'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 3),name//'_aap3'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 4),name//'_aap4'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 5),name//'_aap5'//chns)
-!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 6),name//'_aap6'//chns)
+        do k=1,maxval(mpg%cvNvP(1:nCv,2))
+          write (charnv,'(i2.2)') k
+          do iCv = 1, nCv
+            if (k.le.mpg%cvNvP(iCv,2)) then
+              wrk(iCv) = aa(mpg%cvNvP(iCv,1)+k-1)
+            else
+              wrk(iCv) = 0.0_R8
+            end if
+          end do
+          call my_out_us(70,nCv,0,wrk,name//'_aam'//charnv//'_'//chns)
+        end do
         call my_out_us(70,nCv,0,corpb,name//'_corpb'//chns)
         call my_out_us(70,nCv,0,rescb,name//'_rescb'//chns)
         call my_out_us(70,nCv,0,nb,name//'_na'//chns)
-      endif                                                             !srv 17.06.02 }
+      endif                                                            !srv 17.06.02 }
 
 * ..return
       ncall_b2usco = ncall_b2usco+1

@@ -902,7 +902,6 @@ c   Nuclear Fusion 57.11 (2017): 116043.
 
            if (is.ne.is0) then !! ion species, recycling
 
-
 cmb   net momentum sources from neutral particle recombination
 c            Calculate recycled neutral particle flux (assuming thin boundary cells)
              if (.not.lcore) then

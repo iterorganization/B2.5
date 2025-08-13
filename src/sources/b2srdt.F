@@ -286,7 +286,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
       enddo
 
       do iCv = 1, mpg%nCi
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
         sr%snedt(iCv,0) = t0*ne0(iCv)

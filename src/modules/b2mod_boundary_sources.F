@@ -55,8 +55,8 @@
       implicit none
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, ns
-      integer is, iCv, i, itim
+      integer nCv, ns, itim
+      integer i, is, iCv
       logical b2news_solving(4)
       character*36 filename
       logical lexist
@@ -76,7 +76,7 @@
 !      Read MMS inputs
 
       if (b2news_solving(2).and.
-     &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
+     &    any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
         if (switch%use_mms.eq.1) then
           filename='bv_na_us.dat'
           call find_file(filename,lexist)
@@ -96,7 +96,7 @@
       endif
 
       if (b2news_solving(1).and.
-     &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
+     &    any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
         if (switch%use_mms.eq.1) then
           filename='bv_ua_us.dat'
           call find_file(filename,lexist)
@@ -155,7 +155,7 @@
       endif
 
       if (b2news_solving(3).and.
-     &     any(solvepo(0:mpg%nnreg(0)))) then
+     &    any(solvepo(0:mpg%nnreg(0)))) then
         filename='bv_po_us.dat'
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' not found')
