@@ -1,4 +1,4 @@
-      subroutine b2pnwl(iret)
+      subroutine b2pnwl(iret,from_b2plot)
 c
 c  version : 11.11.97 20:52
 c
@@ -19,6 +19,7 @@ c======================================================================
       use b2mod_dimensions
       implicit none
       integer iret
+      logical from_b2plot
 c*** Local variables
 c
       integer lun
@@ -71,49 +72,51 @@ c*** Check whether carbon atoms are present in the calculation
         if(streql(text_an(i),'C')) ic=i
       end do
 c
-      open (lun,file='wlld.dat')
-      if (ic.eq.0) then
-        write (hlp_frm,'(a,i2,a)')
+      if (from_b2plot) then
+        open (lun,file='wlld.dat')
+        if (ic.eq.0) then
+          write (hlp_frm,'(a,i2,a)')
      .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
      .      '(a4,a8))'
-      else
-        write (hlp_frm,'(a,i2,a)')
+        else
+          write (hlp_frm,'(a,i2,a)')
      .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
      .      '(a4,a8),2(1x,a8,3x))'
-      end if
-      if (ic.eq.0) then
-        if (nmoli.gt.0) then
-          write(lun,hlp_frm)
-     -     'zone','DG#','EIR#',
-     ,     'R1','Z1','R2','Z2',' X','Xr',
-     ,     'area','Wtot','Wkin','Wpot',
-     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
-     ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli)
-        else
-          write(lun,hlp_frm)
-     -     'zone','DG#','EIR#',
-     ,     'R1','Z1','R2','Z2',' X','Xr',
-     ,     'area','Wtot','Wkin','Wpot',
-     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi)
         end if
-      else
-        if (nmoli.gt.0) then
-          write(lun,hlp_frm)
-     -     'zone','DG#','EIR#',
-     ,     'R1','Z1','R2','Z2',' X','Xr',
-     ,     'area','Wtot','Wkin','Wpot',
-     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
-     ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
-     ,      'net_ersn','grs_ersn'
+        if (ic.eq.0) then
+          if (nmoli.gt.0) then
+            write(lun,hlp_frm)
+     -       'zone','DG#','EIR#',
+     ,       'R1','Z1','R2','Z2',' X','Xr',
+     ,       'area','Wtot','Wkin','Wpot',
+     ,       ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,       ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli)
+          else
+            write(lun,hlp_frm)
+     -       'zone','DG#','EIR#',
+     ,       'R1','Z1','R2','Z2',' X','Xr',
+     ,       'area','Wtot','Wkin','Wpot',
+     ,       ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi)
+          end if
         else
-          write(lun,hlp_frm)
-     -     'zone','DG#','EIR#',
-     ,     'R1','Z1','R2','Z2',' X','Xr',
-     ,     'area','Wtot','Wkin','Wpot',
-     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
-     ,      'net_ersn','grs_ersn'
+          if (nmoli.gt.0) then
+            write(lun,hlp_frm)
+     -       'zone','DG#','EIR#',
+     ,       'R1','Z1','R2','Z2',' X','Xr',
+     ,       'area','Wtot','Wkin','Wpot',
+     ,       ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,       ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
+     ,        'net_ersn','grs_ersn'
+          else
+            write(lun,hlp_frm)
+     -       'zone','DG#','EIR#',
+     ,       'R1','Z1','R2','Z2',' X','Xr',
+     ,       'area','Wtot','Wkin','Wpot',
+     ,       ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,        'net_ersn','grs_ersn'
+          end if
         end if
       end if
 #ifdef DBG
@@ -126,7 +129,7 @@ c
 c
       do il=1,nwldprt
         if(nwldlis(il) .gt. 0) then
-          write(lun,*)
+          if (from_b2plot) write(lun,*)
 c*** calculate the length of the target segment
           hlpx=0.0_R8
           do i=1,nwldlis(il)
@@ -259,23 +262,25 @@ c*** Calculate the net and gross erosion
                 wwe(ii)=enrctff
               end do
             end if
-            write (hlp_frm,'(a,i2,a)')
+            if (from_b2plot) then
+              write (hlp_frm,'(a,i2,a)')
      ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
-            if (ic.eq.0) then
-              write (lun,hlp_frm) pltzlbl(il),
+              if (ic.eq.0) then
+                write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
-            else
-              write (lun,hlp_frm) pltzlbl(il),
+              else
+                write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
+              end if
             end if
           end do
           write(*,*) 'Neutral power to wall: ',pltzlbl(il),il,hlpw
         end if
       end do
-      close(lun)
+      if (from_b2plot) close(lun)
 c
 c      if(natmi .gt. 1  .and.  npumplis .gt. 0) then
 cc*** calculate the helium concentration at the pump

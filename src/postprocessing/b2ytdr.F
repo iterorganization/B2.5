@@ -41,6 +41,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
      , , only : wklng,
@@ -176,7 +177,7 @@ c 2002-09-11: logic revised
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
-      integer ismain, ismain0, isfb, is_previous, nfb1
+      integer ismain, ismain0, isfb, is_previous, iFb, ifb1, nfb1
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
@@ -195,7 +196,7 @@ c 2002-09-11: logic revised
       integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
       integer naver, ntotdt, ntfts
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
-      character id0*8
+      character id0*8, chns*3
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
@@ -272,16 +273,16 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_fb_actuator1(:),
+     3 saved_fb_actuator1(:), saved_fb_prev1(:),
      4 fb_target1(:), fb_alpha1(:), fb_beta1(:),
      5 fb_puff_min1(:), fb_puff_max1(:),
      6 fb_const1(:), fb_overshoot1(:),
      7 fb_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:)
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
@@ -490,7 +491,7 @@ c 2002-09-11: logic revised
      7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cnbmip*80, cvalip*80
+      character cnamip*80, cnbmip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
@@ -498,6 +499,7 @@ c 2002-09-11: logic revised
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line, ligne, cur_contr_comment
       character*500, allocatable :: add_comment(:)
+      character*1, allocatable :: zh_tf_toff1(:)
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
@@ -1464,6 +1466,21 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
+      cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
+      call ipgetc ('b2tral_zh_tf_toff', cvalip)
+      do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+        zh_tf_toff(i) = cvalip(i:i)
+      end do
+      call alloc_b2mod_zhco_amfact(nspecies)
+      allocate(amfact1(0:nspecies1-1))
+      amfact(0:nspecies-1) = 1.0_R8
+      do i = 0, nspecies-1
+        write (chns,'(i3.3)') is
+        call ipgetr ('b2tral_amfact_'//chns, amfact(i))
+        j = ispecies1(i+1)
+        if (j.gt.0) amfact1(j-1)=amfact(i)
+      end do
       call ipgeti ('b2mndr_pulse_number', pulse)
       call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
@@ -1496,7 +1513,7 @@ c 2002-09-11: logic revised
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
      .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-        call read_neutrals_namelist(nx, ny, ns, .false.)
+        call read_neutrals_namelist(nx, ny, ns, switch, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
@@ -1973,7 +1990,59 @@ c 2002-09-11: logic revised
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
+      if (cnamip(1:14).eq.'b2tral_amfact_'.and.
+     &    .not.streql(cnamip,'b2tral_amfact_on')) then
+        read (cnamip(15:17),'(i3.3)') i
+        j = ispecies1(i+1)
+        if (j.gt.0) then
+          todo = .true.
+          rswitch = amfact1(j-1)
+          write (cnamip,'(a14,i3.3)') 'b2tral_amfact_', j-1
+        else
+          todo = .false.
+          wait = .true.
+        end if
+      end if
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..character string switches
+      todo = .true.
+      CSWITCHES: select case (cnamip)
+        case('b2tral_zh_tf_toff')
+          if (same_atoms) then
+            todo = .false.
+          else
+            allocate(zh_tf_toff1(max(1,
+     .                (nspecies1*(nspecies1+1))/2-nspecies1)))
+            do i = 1, nspecies-1
+              do j = i+1, nspecies
+                i1 = ispecies1(i)
+                j1 = ispecies1(j)
+                if (i1.ne.-1 .and. j1.ne.-1) then
+                  ij = 0
+                  do k = 1, i-1
+                    ij = ij + (nspecies-k)
+                  end do
+                  ij = ij + (j-i)
+                  ij1 = 0
+                  do k = 1, min(i1,j1)-1
+                    ij1 = ij1 + (nspecies1-k)
+                  end do
+                  ij1 = ij1 + (max(i1,j1)-min(i1,j1))
+                  zh_tf_toff1(ij1) = zh_tf_toff(ij)
+                end if
+              end do
+            end do
+            if (nspecies1.eq.1) zh_tf_toff1(1)='0'
+            write(hlp_frm,'(a,i3,a)')
+     .       '(',max(1,(nspecies1*(nspecies1+1))/2-nspecies1),'a1)'
+            write(cswitch,hlp_frm) (zh_tf_toff1(i),
+     .       i=1,max(1,(nspecies1*(nspecies1+1))/2-nspecies1))
+            deallocate(zh_tf_toff1)
+          end if
+        case default CSWITCHES
+          todo = .false.
+      end select CSWITCHES
+      if (todo) write(cvalip,'(a)') trim(cswitch)
 *   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
         if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
@@ -2017,6 +2086,8 @@ c 2002-09-11: logic revised
       end if
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
+      deallocate(zh_tf_toff)
+      deallocate(amfact1)
 
 *  ..rewrite boundary namelist
       first_pass = .true.
@@ -3966,7 +4037,8 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+          case ('H','D','T','DT',
+     &          'He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
             continue
           case default
             no_sputtering = .false.
@@ -3976,7 +4048,7 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','C','Ne','Ar','N','Be')
+          case ('H','D','T','DT','He','C','Ne','Ar','N','Be')
             continue
           case default
             adas_correct = b2fstate_version.gt.'03.000.007'
@@ -11341,7 +11413,7 @@ cxpb as they no longer necessarily point to the same species
          filename = neutrals_filename
          new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
-         call read_neutrals_namelist(nx, ny, ns, .false.)
+         call read_neutrals_namelist(nx, ny, ns, switch, .false.)
          call xertst (nstrai.le.nstraid,
      >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)
@@ -11506,51 +11578,6 @@ cxpb as they no longer necessarily point to the same species
         endif  ! sputter_namelist_used
       endif
 
-*  ..write new b2.feedback_save.parameters if needed
-*   ..we can only do this after the species mapping has been done
-      filename='b2.feedback_save.parameters'
-      call find_file(filename,todo)
-      new_filename = 'b2.feedback_save.parameters.2'
-      call find_file(new_filename,found)
-      if (found) write(6,*) trim(new_filename),' already present!'
-      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
-     &   .and. .not.found .and. .not.same_atoms) then
-        call read_b2us_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_fb_actuator).gt.0.0_R8) then
-          todo = .false.
-          is = 1
-          do while (.not.todo .and. is.le.nspecies)
-            todo = todo .or.
-     &        (saved_fb_actuator(is-1).gt.0.0_R8 .and.
-     &         ispecies1(is).ne.is)
-            is = is+1
-          end do
-          if (todo) then
-            allocate(saved_fb_actuator1(0:nspecies1-1))
-            saved_fb_actuator1 = 0.0_R8
-            do is = 1, nspecies
-              if (ispecies1(is).ne.-1)
-     >         saved_fb_actuator1(ispecies1(is)-1) =
-     .          saved_fb_actuator(is-1)
-            end do
-            write(*,*) 'Writing b2.feedback_save.parameters.2'
-            write(nout(5),'(a)') trim(new_filename)
-            open(99,file=new_filename)
-            write(99,'(a9)') '&FEEDBACK'
-            write(hlp_frm,'(a,i2,a)')
-     >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
-     >       (saved_fb_actuator1(is),is=0,nspecies1-1)
-            write(99,'(a1)') '/'
-            close(99)
-            deallocate(saved_fb_actuator1)
-          end if
-        end if
-      else if (todo) then
-        write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in b2.feedback_save.parameters'
-      end if
-
 *   ..write new b2.feedback_control.parameters if needed
       filename='b2.feedback_control.parameters'
       call find_file(filename,todo)
@@ -11559,24 +11586,6 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
-        allocate(fb_target1(0:nspecies1-1))
-        allocate(fb_type1(0:nspecies1-1))
-        allocate(fb_type_inverse1(0:nspecies1-1))
-        allocate(fb_rescale_option1(0:nspecies1-1))
-        allocate(fb_actuator1(0:nspecies1-1))
-        allocate(fb_reg1(nMxFbReg))
-        allocate(fb_regp1(0:nspecies1-1,2))
-        allocate(fb_reg_par1(0:nspecies1-1,2))
-        allocate(fb_istra1(0:nspecies1-1))
-        allocate(fb_ib1(0:nspecies1-1))
-        allocate(fb_species1(0:nspecies1-1))
-        allocate(fb_alpha1(0:nspecies1-1))
-        allocate(fb_beta1(0:nspecies1-1))
-        allocate(fb_const1(0:nspecies1-1))
-        allocate(fb_time1(0:nspecies1-1))
-        allocate(fb_puff_min1(0:nspecies1-1))
-        allocate(fb_puff_max1(0:nspecies1-1))
-        allocate(fb_overshoot1(0:nspecies1-1))
         call read_b2us_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
@@ -11648,121 +11657,124 @@ cxpb as they no longer necessarily point to the same species
         nfb1 = 0
         fb_reg1 = 0
         fb_regp1 = 0
-        do is = 1, nspecies
-          if (ispecies1(is).ne.-1) then
-            nfb1 = nfb1 + 1
-            fb_target1(ispecies1(is)-1) = fb_target(is-1)
-            fb_type1(ispecies1(is)-1) = fb_type(is-1)
-            fb_type_inverse1(ispecies1(is)-1) = fb_type_inverse(is-1)
-            fb_rescale_option1(ispecies1(is)-1) =
-     .       fb_rescale_option(is-1)
-            fb_actuator1(ispecies1(is)-1) = fb_actuator(is-1)
-            fb_reg_par1(ispecies1(is)-1,1:2) = fb_reg_par(is-1,1:2)
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) nfb1=nfb1+1
+        end do
+        allocate(fb_target1(1:nfb1))
+        allocate(fb_type1(1:nfb1))
+        allocate(fb_type_inverse1(1:nfb1))
+        allocate(fb_rescale_option1(1:nfb1))
+        allocate(fb_actuator1(1:nfb1))
+        allocate(fb_reg1(nMxFbReg))
+        allocate(fb_regp1(1:nfb1,2))
+        allocate(fb_reg_par1(1:nfb1,2))
+        allocate(fb_istra1(1:nfb1-1))
+        allocate(fb_ib1(1:nfb1-1))
+        allocate(fb_species1(1:nfb1))
+        allocate(fb_alpha1(1:nfb1))
+        allocate(fb_beta1(1:nfb1))
+        allocate(fb_const1(1:nfb1))
+        allocate(fb_time1(1:nfb1))
+        allocate(fb_puff_min1(1:nfb1))
+        allocate(fb_puff_max1(1:nfb1))
+        allocate(fb_overshoot1(1:nfb1))
+        ifb1 = 0
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) then
+            ifb1 = ifb1 + 1
+            fb_target1(ifb1) = fb_target(iFb)
+            fb_type1(ifb1) = fb_type(iFb)
+            fb_type_inverse1(ifb1) = fb_type_inverse(iFb)
+            fb_rescale_option1(ifb1) = fb_rescale_option(iFb)
+            fb_actuator1(ifb1) = fb_actuator(iFb)
+            fb_reg_par1(ifb1,1:2) = fb_reg_par(iFb,1:2)
             if (maxval(fb_reg).gt.0) then
-              if (fb_regp(is-1,2).gt.0) then
-                fb_regp1(ispecies1(is)-1,2) = fb_regp(is-1,2)
-                if (nfb1.eq.1) then
-                  fb_regp1(ispecies1(is)-1,1) = 1
+              if (fb_regp(iFb,2).gt.0) then
+                fb_regp1(ifb1,2) = fb_regp(iFb,2)
+                if (ifb1.eq.1) then
+                  fb_regp1(ifb1,1) = 1
                 else
-                  fb_regp1(ispecies1(is)-1,1) =
+                  fb_regp1(ifb1,1) =
      .             fb_regp1(is_previous,1)+fb_regp1(is_previous,2)
                 end if
-                fb_reg1(fb_regp1(ispecies1(is)-1,1):
-     .                  fb_regp1(ispecies1(is)-1,1)+
-     .                  fb_regp1(ispecies1(is)-1,2)-1) =
-     .           fb_reg(fb_regp(is-1,1):
-     .                  fb_regp(is-1,1)+fb_regp(is-1,2)-1)
+                fb_reg1(fb_regp1(ifb1,1):
+     .                  fb_regp1(ifb1,1)+fb_regp1(ifb1,2)-1) =
+     .           fb_reg(fb_regp(iFb,1):
+     .                  fb_regp(iFb,1)+fb_regp(iFb,2)-1)
               end if
-              is_previous = ispecies1(is)-1
+              is_previous = ifb1
             end if
-            fb_istra1(ispecies1(is)-1) = istra1(fb_istra(is-1))
-            fb_ib1(ispecies1(is)-1) = fb_ib(is-1)
-            if (is1(fb_species(is-1)).ne.-1) then
-              fb_species1(ispecies1(is)-1) = is1(fb_species(is-1))
+            fb_istra1(ifb1) = istra1(fb_istra(iFb))
+            fb_ib1(ifb1) = fb_ib(iFb)
+            if (is1(fb_species(iFb)).ne.-1) then
+              fb_species1(ifb1) = is1(fb_species(iFb))
             else
-              if (fb_actuator(is-1).eq.1) then
-                fb_species1(ispecies1(is)-1) = ismain0
+              if (fb_actuator(iFb).eq.1) then
+                fb_species1(ifb1) = ismain0
               else
-                fb_species1(ispecies1(is)-1) = ismain
+                fb_species1(ifb1) = ismain
               endif
             end if
-            fb_alpha1(ispecies1(is)-1) = fb_alpha(is-1)
-            fb_beta1(ispecies1(is)-1) = fb_beta(is-1)
-            fb_const1(ispecies1(is)-1) = fb_const(is-1)
-            fb_puff_min1(ispecies1(is)-1) = fb_puff_min(is-1)
-            fb_puff_max1(ispecies1(is)-1) = fb_puff_max(is-1)
-            fb_overshoot1(ispecies1(is)-1) = fb_overshoot(is-1)
-            fb_time1(ispecies1(is)-1) = fb_time(is-1)
+            fb_alpha1(ifb1) = fb_alpha(iFb)
+            fb_beta1(ifb1) = fb_beta(iFb)
+            fb_const1(ifb1) = fb_const(iFb)
+            fb_puff_min1(ifb1) = fb_puff_min(iFb)
+            fb_puff_max1(ifb1) = fb_puff_max(iFb)
+            fb_overshoot1(ifb1) = fb_overshoot(iFb)
+            fb_time1(ifb1) = fb_time(iFb)
           end if
         end do
         write(99,'(a,i2,a)') 'NFB=',nfb1,','
         write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,t20,',nspecies1,'(1x,i2,'',''))'
-        if (maxval(fb_type1(0:nspecies1-1)).gt.0)
+     .   '(1x,a,t20,',nfb1,'(1x,i2,'',''))'
+        if (maxval(fb_type1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_TYPE=',fb_type1(1:nfb1)
+        if (maxval(fb_rescale_option1(1:nfb1)).gt.0)
      >   write(99,hlp_frm)
-     .     'FB_TYPE=',fb_type1(0:nspecies1-1)
-        if (maxval(fb_rescale_option1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'FB_RESCALE_OPTION=',fb_rescale_option1(0:nspecies1-1)
-        if (maxval(fb_actuator1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'FB_ACTUATOR=',fb_actuator1(0:nspecies1-1)
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
-        if (maxval(fb_ib1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'FB_IB=',fb_ib1(0:nspecies1-1)
-        if (maxval(fb_species1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'FB_SPECIES=',fb_species1(0:nspecies1-1)
-        if (maxval(fb_reg_par1(0:nspecies1-1,1:2)).gt.0) then
-          write(99,hlp_frm)
-     .     'FB_REG_PAR(1,1)=',fb_reg_par1(0:nspecies1-1,1)
-          write(99,hlp_frm)
-     .     'FB_REG_PAR(1,1)=',fb_reg_par1(0:nspecies1-1,2)
+     .     'FB_RESCALE_OPTION=',fb_rescale_option1(1:nfb1)
+        if (maxval(fb_actuator1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ACTUATOR=',fb_actuator1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'(1x,i4,'',''))'
+        if (maxval(fb_ib1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_IB=',fb_ib1(1:nfb1)
+        if (maxval(fb_species1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_SPECIES=',fb_species1(1:nfb1)
+        if (maxval(fb_reg_par1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REG_PAR(1,1)=',fb_reg_par1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REG_PAR(1,2)=',fb_reg_par1(1:nfb1,2)
         end if
-        if (maxval(fb_regp1(0:nspecies1-1,1:2)).gt.0) then
-          write(99,hlp_frm)
-     .     'FB_REGP(1,1)=',fb_regp1(0:nspecies1-1,1)
-          write(99,hlp_frm)
-     .     'FB_REGP(1,2)=',fb_regp1(0:nspecies1-1,2)
+        if (maxval(fb_regp1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REGP(1,1)=',fb_regp1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REGP(1,2)=',fb_regp1(1:nfb1,2)
         end if
-        if (maxval(fb_istra1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'FB_ISTRA=',fb_istra1(0:nspecies1-1)
+        if (maxval(fb_istra1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ISTRA=',fb_istra1(1:nfb1)
         write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,t20,1p,',nspecies1,'(1x,g10.3,'',''))'
-        if (maxval(fb_target1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_TARGET=',fb_target1(0:nspecies1-1)
-        if (maxval(fb_alpha1(0:nspecies1-1)).ne.0.001_R8 .or.
-     &      minval(fb_alpha1(0:nspecies1-1)).ne.0.001_R8)
-     >   write(99,hlp_frm)
-     .     'FB_ALPHA=',fb_alpha1(0:nspecies1-1)
-        if (maxval(fb_beta1(0:nspecies1-1)).ne.1.0_R8 .or.
-     &      minval(fb_beta1(0:nspecies1-1)).ne.1.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_BETA=',fb_beta1(0:nspecies1-1)
-        if (maxval(fb_const1(0:nspecies1-1)).ne.0.0_R8 .or.
-     &      minval(fb_const1(0:nspecies1-1)).ne.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_CONST=',fb_const1(0:nspecies1-1)
-        if (maxval(fb_puff_min1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_PUFF_MIN=',fb_puff_min1(0:nspecies1-1)
-        if (maxval(fb_puff_max1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_PUFF_MAX=',fb_puff_max1(0:nspecies1-1)
-        if (maxval(fb_overshoot1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_OVERSHOOT=', fb_overshoot1(0:nspecies1-1)
-        if (maxval(fb_time1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'FB_TIME=',fb_time1(0:nspecies1-1)
-        write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,',nspecies1,'l1,'',''))'
-        if (any(fb_type_inverse1(0:nspecies1-1)))
-     >   write(99,hlp_frm)
-     .     'FB_TYPE_INVERSE=',fb_type_inverse1(0:nspecies1-1)
+     .   '(1x,a,t20,1p,',nfb1,'(1x,g10.3,'',''))'
+        if (maxval(fb_target1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TARGET=',fb_target1(1:nfb1)
+        if (maxval(fb_alpha1(1:nfb1)).ne.0.001_R8 .or.
+     &      minval(fb_alpha1(1:nfb1)).ne.0.001_R8)
+     >   write(99,hlp_frm) 'FB_ALPHA=',fb_alpha1(1:nfb1)
+        if (maxval(fb_beta1(1:nfb1)).ne.1.0_R8 .or.
+     &      minval(fb_beta1(1:nfb1)).ne.1.0_R8)
+     >   write(99,hlp_frm) 'FB_BETA=',fb_beta1(1:nfb1)
+        if (maxval(fb_const1(1:nfb1)).ne.0.0_R8 .or.
+     &      minval(fb_const1(1:nfb1)).ne.0.0_R8)
+     >   write(99,hlp_frm) 'FB_CONST=',fb_const1(1:nfb1)
+        if (maxval(fb_puff_min1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MIN=',fb_puff_min1(1:nfb1)
+        if (maxval(fb_puff_max1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MAX=',fb_puff_max1(1:nfb1)
+        if (maxval(fb_overshoot1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_OVERSHOOT=', fb_overshoot1(1:nfb1)
+        if (maxval(fb_time1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TIME=',fb_time1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'l1,'',''))'
+        if (any(fb_type_inverse1(1:nfb1)))
+     >   write(99,hlp_frm) 'FB_TYPE_INVERSE=',fb_type_inverse1(1:nfb1)
         if (maxval(fb_reg1).gt.0) then
           write(hlp_frm,'(a,i4,a)')
      .     '(1x,a,',fb_regp(is_previous,1)+fb_regp(is_previous,2)-1,
@@ -11794,6 +11806,67 @@ cxpb as they no longer necessarily point to the same species
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'
+      end if
+
+*  ..write new b2.feedback_save.parameters if needed
+*   ..we can only do this after the species mapping has been done
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.feedback_save.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
+     &   .and. .not.found .and. .not.same_atoms) then
+        call read_b2us_feedback(99,'    ',feedback_namelist_used)
+        if (maxval(saved_fb_actuator).gt.0.0_R8.or.
+     &      maxval(saved_fb_prev).gt.0.0_R8) then
+          todo = .false.
+          ifb1 = 0
+          do iFb = 1, nFb
+            todo = todo .or.
+     &       ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &         saved_fb_prev(iFb).gt.0.0_R8) .and.
+     &         is1(fb_species(iFb)).ne.fb_species(iFb))
+            if ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &           saved_fb_prev(iFb).gt.0.0_R8).and.
+     &          (is1(fb_species(iFb)).ne.-1.or.
+     .           fb_actuator(iFb).eq.1)) ifb1 = ifb1+1
+          end do
+          if (todo) then
+            allocate(saved_fb_actuator1(1:ifb1))
+            allocate(saved_fb_prev1(1:ifb1))
+            saved_fb_actuator1 = 0.0_R8
+            saved_fb_prev1 = 0.0_R8
+            ifb1 = 0
+            do ifb = 1, nFb
+              if (is1(fb_species(ifb)).ne.-1.or.
+     .            fb_actuator(iFb).eq.1) then
+                ifb1 = ifb1 + 1
+                saved_fb_actuator1(ifb1) = saved_fb_actuator(ifb)
+                saved_fb_prev1(ifb1) = saved_fb_prev(ifb)
+              end if
+            end do
+            write(*,*) 'Writing b2.feedback_save.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
+            open(99,file=new_filename)
+            write(99,'(a9)') '&FEEDBACK'
+            write(hlp_frm,'(a,i2,a)')
+     >       '(a,1p,',ifb1,'(1x,1e15.8,'',''))'
+            if (maxval(saved_fb_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
+     >        (saved_fb_actuator1(ifb),ifb=1,ifb1)
+            if (maxval(saved_fb_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_PREV=',
+     >        (saved_fb_prev1(ifb),ifb=1,ifb1)
+            write(99,'(a1)') '/'
+            close(99)
+            deallocate(saved_fb_actuator1)
+            deallocate(saved_fb_prev1)
+          end if
+        end if
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_save.parameters'
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.optimization.parameters, if needed
@@ -11929,6 +12002,22 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
+        if (Te_det_threshold.ne.2.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'TE_DET_THRESHOLD=',Te_det_threshold,','
+        if (q95_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'Q95_ALBLL=',q95_albll,','
+        if (B0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'B0_ALBLL=',B0_albll,','
+        if (R0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'R0_ALBLL=',R0_albll,','
+        if (maxval(trgshp(1:2*nncut)).gt.1.0_R8) then
+          write(hlp_frm,'(a,i1,a)') '(1x,a,1p,',2*nncut,'(e10.2,a))'
+          write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=1,2*nncut)
+        end if
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do

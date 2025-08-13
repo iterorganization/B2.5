@@ -323,7 +323,8 @@
      *  fhi_visper(:,:),
      *  fhi_visq(:,:),
      *  fhi_anml(:,:),
-     *  fhi_kevis(:,:)
+     *  fhi_kevis(:,:),
+     *  fhi_vzh(:,:)
 *     Source
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_shi0to3(:,:),
@@ -385,6 +386,7 @@
      *  fhi_visq_av(:,:),
      *  fhi_anml_av(:,:),
      *  fhi_kevis_av(:,:),
+     *  fhi_vzh_av(:,:),
      *  b2stbr_phys_shi_bal_av(:),
      *  b2stbr_first_flight_shi_bal_av(:),
      *  b2stbc_shi_bal_av(:),
@@ -807,6 +809,7 @@
       allocate(fhi_visq(nFc,0:1))
       allocate(fhi_anml(nFc,0:1))
       allocate(fhi_kevis(nFc,0:1))
+      allocate(fhi_vzh(nFc,0:1))
 *     Sources
       allocate(b2stbr_phys_shi0to3(nCv,0:3))
       allocate(b2stbr_phys_shi_bal(nCv))
@@ -894,6 +897,7 @@
       allocate(fhi_visq_av(nFc,0:1))
       allocate(fhi_anml_av(nFc,0:1))
       allocate(fhi_kevis_av(nFc,0:1))
+      allocate(fhi_vzh_av(nFc,0:1))
       allocate(b2stbr_phys_shi_bal_av(nCv))
       allocate(b2stbr_first_flight_shi_bal_av(nCv))
       allocate(b2stbc_shi_bal_av(nCv))
@@ -1177,6 +1181,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_visq)
       deallocate(fhi_anml)
       deallocate(fhi_kevis)
+      deallocate(fhi_vzh)
 *     Sources
       deallocate(b2stbr_phys_shi0to3)
       deallocate(b2stbr_phys_shi_bal)
@@ -1228,6 +1233,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_visq_av)
       deallocate(fhi_anml_av)
       deallocate(fhi_kevis_av)
+      deallocate(fhi_vzh_av)
       deallocate(b2stbr_phys_shi_bal_av)
       deallocate(b2stbr_first_flight_shi_bal_av)
       deallocate(b2stbc_shi_bal_av)
@@ -2275,6 +2281,7 @@ cdjm Update ion heat sources
         fhi_visq_av=0.0_R8
         fhi_anml_av=0.0_R8
         fhi_kevis_av=0.0_R8
+        fhi_vzh_av=0.0_R8
         b2stbr_phys_shi_bal_av=0.0_R8
         b2stbr_first_flight_shi_bal_av=0.0_R8
         b2stbc_shi_bal_av=0.0_R8
@@ -2588,9 +2595,11 @@ cdjm Update ion heat sources
       fhi_visq_av = avmlt*fhi_visq_av +
      &                curmlt*fhi_visq
       fhi_anml_av = avmlt*fhi_anml_av +
-     &              curmlt*fhi_anml
+     &                curmlt*fhi_anml
       fhi_kevis_av = avmlt*fhi_kevis_av +
-     &               curmlt*fhi_kevis
+     &                curmlt*fhi_kevis
+      fhi_vzh_av = avmlt*fhi_vzh_av +
+     &                curmlt*fhi_vzh
       b2stbr_phys_shi_bal_av = avmlt*b2stbr_phys_shi_bal_av +
      &                         curmlt*b2stbr_phys_shi_bal
       b2stbr_first_flight_shi_bal_av =
@@ -3069,6 +3078,8 @@ cdjm Update ion heat sources
      &                   fhi_anml_av,vdims,2)
       call write_cdf_double(ncid,'fhi_kevis',
      &                   fhi_kevis_av,vdims,2)
+      call write_cdf_double(ncid,'fhi_vzh',
+     &                   fhi_vzh_av,vdims,2)
 *     Sources
       vdims(1)=nCvpid
       call write_cdf_double(ncid,'b2stbr_phys_shi_bal',

@@ -176,4 +176,3 @@ c
       endif
       return
       end subroutine set_partition_colors
-

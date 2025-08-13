@@ -425,14 +425,14 @@ c*** flux across the side walls
        end do !}
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-       do is=1,nsns !{
+       do is=1,nsts !{
          is_target = .false.
          do js=1,ntns !{
-           is_target = is_target.or.abs(lsns(is)).eq.ltns(js)
+           is_target = is_target.or.is.eq.ltns(js)
          end do !}
          if (.not.is_target) then !{
-           ks = abs(lsns(is))+nnlimi
-           if (iliin(abs(lsns(is))).gt.0) then !{
+           ks = is+nnlimi
+           if (iliin(is).gt.0) then !{
              pwwln_tmp=pwwln_tmp+wldnek(ks,0)+wldnep(ks,0)
              pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(ks,0)
              pwtds_tmp(k)=pwtds_tmp(k)+wldnep(ks,0)
@@ -681,7 +681,7 @@ c*** It was a major change of the file format - impossible to continue
         if(nz_tmp.ne.ntrgf_tmp) then !{
           warn_tmp=.true.
           write(*,'(a,i2,3a,i2)')
-     ,     '!!! b2blne: current number of targets ',ntrgf_tmp,
+     ,     '!!! b2blne: current number of surfaces ',ntrgf_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nz_tmp
           filedata(ltrc)=.false.
         end if !}

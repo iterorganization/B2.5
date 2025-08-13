@@ -21,7 +21,7 @@ c======================================================================
 #include "impcon.inc"
       integer nnns
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
-      parameter (nnns=31)
+      parameter (nnns=33)
       character*8 unm,unms(nnns),u
       integer ll, lutrgt, luswch
       integer i, j
@@ -33,8 +33,8 @@ c======================================================================
      3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist','edge_trg',
      4        'edge_sol','edge_pfr','sol_edge','pfr_edge','trg_spcf',
      5        'skipelem','misselem','laddsrfs','gleirdat','pltz_lbl',
-     6        'material','made_of' ,'tgspcsw' ,'tgsppsw' ,'jlsptp'  ,
-     7        'jlsptc'  /
+     6        'material','made_of ','tgspcsw' ,'tgsppsw' ,'jlsptp  ',
+     7        'jlsptc  ','fclbl   ','grd_mode'/
       data ll / 0 /, luswch / 0 /, lutrgt / 0 /
 c======================================================================
 c
@@ -298,6 +298,20 @@ c-----------------------------------------------------------------------
 c*** Wall sputtering - chemical
       case (31)
        call rearri(lcspwll,mskipel,i)
+c-----------------------------------------------------------------------
+c*** Face labels
+      case (32)
+        call rearri(lfclbl,DEF_NLIM,ll)
+        if(ll.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',ll
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
+c-----------------------------------------------------------------------
+c*** Grid mode
+      case (33)
+        call resimi(grid_mode)
 c-----------------------------------------------------------------------
       case default
        ll=0

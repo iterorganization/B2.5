@@ -1388,6 +1388,209 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_Zhdanov_closure</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_closure.eq.1, the Zhdanov-Grad module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al. [S. O. Makarov et al., PoP 2021]. Otherwise the standard SOLPS-ITER model is applied.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_imp_analyt</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_imp_analyt.eq.0, the Zhdanov-Grad closure method is applied by means of the explicit matrix inversion methed (EMIM).
+					If b2tral_zh_imp_analyt.eq.1, the improved analytical method (IAM) is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_analyt_mdf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_analyt_mdf.eq.1, the MDF friction force calculation is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_cond</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_cond.eq.0, the Braginskii expression for the ion conductivity is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_vish</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_vish.eq.0, the Braginskii expression for the heat flux dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_visu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_visu.eq.0, the Braginskii expression for the velocity-dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorr</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Flux-limiting coefficient multiplier.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorrh</name>
+				<default>0.4</default>
+				<type>real</type>
+				<description>
+					Additional flux-limiting coefficient multiplier for the heat flux.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature and Joule heating between Zhdanov and Braginskii.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corrT</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature between Zhdanov and Braginskii in the thermal force calculation.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr_vq</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr_vq.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled for the heat stress-viscosity.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2sifr_Zhdanov_tf_fr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_tf_fr.eq.1, the Zhdanov expressions for the thermal and friction forces are used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_Zhdanov_test</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_test.eq.1, the Zhdanov-Grad calculation takes place, but is not used. To be used for testing purposes.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tfhi_Zhdanov_vel_heat</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tfhi_Zhdanov_vel_heat.eq.1, the Zhdanov velocity-dependent ion heat flux is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_zh_tf_toff</name>
+				<default>0</default>
+				<type>string</type>
+				<description>
+					String of integers with (nspecies*(nspecies+1))/2-nspecies digits. If a digit is {\tt 1}, turn off the thermal force between corresponding species starting from 1 and 2; 1 and 3;....; up to nspecies-1 and nspecies.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+		          <switch>
+			    <name>b2tral_zh_vis_type</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.2, the Makarov-like velocity-dependent stress-viscosity is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_smbvi_factor</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					This switch defines the fraction of the cross-ion part of the stress-viscosity term which is applied. The cross-ion part of the stress-viscosity term can lead to numerical problems. If so, it is recommended to start from '0.0' and increase it step by step.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_on</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_amfact_on.eq.1, the mass correction for the thermal and friction force calculation is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_***</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2tral_amfact_on.eq.1, this multiplier is applied for the mass of the species corresponding to isonuclear sequence number '***'. Recall the sequence numbering starts at zero (e.g. b2tral_amfact_000, b2tral_amfact_001, ...).
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_fr</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_fr.eq.1, an improved analytical form for the friction force is computed instead of the form corrresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_tf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_tf.eq.1, an improved analytical form for the thermal force is computed instead of the form corresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo mass multiplicator</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Using this number the impurity mass can be artificialy increased.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sqel_artificial_radiation</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -1604,7 +1807,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations  must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
 				</description>
 			</switch>
 			<switch>
@@ -1644,6 +1847,11 @@
 				</switch>
 				<switch>
 					<name>b2mndr_set_ti_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_tn_numerical</name>
 					<default>0</default>
 					<type>integer</type>
 				</switch>
@@ -2855,6 +3063,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>keps_anom_he_model</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If set to 0, uses multiplier 5/2 for the anomalous convective and conductive heat fluxes associated with anomalous density transport, as per the SOLPS5.2 physics model.
+					If set to 1 (default), uses multiplier 3/2 for the anomalous convective and conductive heat fluxes associated with electrostatic ExB drift turbulence, consistent with the keps-model derivation.
+					If set to 2 (experimental), additionally assumes the corresponding physical fluxes across surfaces/boundaries to have multiplier 3/2.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mn_afn</name>
 				<default>0</default>
 				<type>integer</type>
@@ -3981,50 +4199,60 @@
 			</switch>
 			<switch>
 				<name>b2sihs_shivis</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.1, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.2, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shivis.eq.3, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shi</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+					If b2sihs_shi.ne.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to b2sihs_shi value as default (individual keys can still be overwritten by b2sihs_shi* and b2sihs_shivis that take proprity over b2sihs_shi).
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidu.eq.0, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidu.eq.1, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidu.eq.2, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shidu.eq.3, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.1, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.2, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the  ones that belong to the core and target boundaries.
+					If b2sihs_shidd.eq.3, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shedu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedu.eq.2, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedu.eq.3, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shedd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedd.eq.2, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedd.eq.3, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
@@ -4289,7 +4517,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the ExB velocity for sheath boundary conditions in b2stbc_spb and BCMOM=13 case of b2stbc_phys.
+					Multiplier to the ExB velocity for sheath boundary conditions BCMOM=13.
 					Not yet available for WG.
 				</description>
 			</switch>
@@ -6847,7 +7075,7 @@
 					24 : constant density feedback scaled by density on the ring 'bc_type21_ref' away. CONPAR(,,1) specifies the desired density in m<sup>-3</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Not yet available for WG.
 					25 : feedback boundary condition: prescribe the average value of the density and add the poloidal density variation from the neighbouring radial ring. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=21 fails). It is recommended to use this boundary condition together with the corresponding condition on ion temperature (BCENI=26,27). CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					26 : feedback boundary condition: prescribe the total ion flux and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=22 fails). It is recommended to use this boundary condition together with a corresponding condition on the ion temperature (BCENI=26,27). The total desired flux is summed over all BCCON=26 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
-					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density of the highest ionization stage. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
+					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					28 : Prescribe the flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. Only intended for core boundaries. CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					29 : Feedback on the total particle flux, by imposing a flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Intended for core boundaries only.
 				</description>
@@ -6870,7 +7098,7 @@
 					10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m.
 					11 : Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used. Not yet available for WG.
 					12 : condition from b2stbc_spb for the parallel momentum.
-					13 : sheath boundary condition from b2stbc_spb for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts.
+					13 : drift-compatible sheath boundary condition for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts.
 					14 : condition from b2stbc_spb for the parallel momentum
 					15 : prescribe the value of the parallel velocity, scaled with B_average/B_local. Not yet available for WG.
 					16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
@@ -6897,8 +7125,8 @@
 					11 : not used
 					12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>. Obsolete. Replace with drift-compatible BCENE = 15.
 					13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
-					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
+					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>. The energy loss also includes an electrostatic term as &alpha; ENEPAR(,2) C<sub>s</sub>,collective e &Phi; n<sub>e</sub>.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used). Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Recommended to replace [16] for high densities.
 					18 : fractional drop condition. Experimental. Attempts to set the guard cell temperature to be (1 - ENEPAR(,1)) times the boundary cell temperature.
@@ -6930,7 +7158,7 @@
 					12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>. Obsolete. Replace with drift-compatible BCENI = 15.
 					13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
 					14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>.
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_ti will be used). Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 					18 : fractional drop condition.  Experimental. Attempts to set the guard cell temperature to be (1 - ENIPAR(,1)) times the boundary cell temperature.
@@ -6964,7 +7192,7 @@
 					8 : prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
 					9 : prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m.
 					10 : should not be used for feedbacks anymore, not converted to WG code.
-					11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
+					11 : sheath conditions, electron energy transmission, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 					12 : imposes the currents due to drifts for the core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 					13 : imposes the currents due to drifts for the private flux and main chamber boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 					14 : prescribe the total current without imposing a specific profile. Follow the profile of the 1st flux tube inside. Intended use: core boundary, total PF boundary,.. For testing purposes, use with care!
@@ -7173,6 +7401,14 @@
 					Last value used for the feedback actuator for each feedback.
 				</description>
 			</switch>
+			<switch>
+				<name>SAVED_FB_PREV</name>
+				<default>0.0</default>
+				<type>real array of size (NSPECIES)</type>
+				<description>
+					Last value of the target quantity used for the feedback control for each isonuclear sequence.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.feedback_control.parameters">
 			<introduction>
@@ -7297,6 +7533,7 @@
 						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
 						25: Peak electron density along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
 						26: Peak saturation current along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
+						27: Total particle content in the SOL and PFR for the isonuclear sequence (including Eirene neutrals).
 				</description>
 			</switch>
 			<switch>
@@ -7317,6 +7554,7 @@
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by fb_alpha (SOLPS4 style)
 						7: If fb_target/fb_current &lt; (1-fb_const) or &gt; (1+fb_const), the rescaling coincides with FB_RESCALE.eq.3. Otherwise no rescaling is applied.
+						8: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence outside the separatrix (including contributions from Eirene species).
 				</description>
 			</switch>
 			<switch>
@@ -7491,12 +7729,12 @@
 					For (i,ir,ik,is) in (1:2,1:NY+2,1:NKIND_SOURCE,0:NS),
 					SDATA(1,ir,:,:) contains the radial location of the profile point (ir).
 					SDATA(2,ir,:,:) contains the source profile value at point (ir).
-					KIND_SOURCE=1 means particle source of species (is) (in particles/m3)
-					KIND_SOURCE=2 means parallel momentum source for species (is) (in kg.m/s/m3)
+					KIND_SOURCE=1 means particle source of species (is) (in particles/s/m3)
+					KIND_SOURCE=2 means parallel momentum source for species (is) (in N/m3)
 					KIND_SOURCE=3 means electron heat source (in Watts/m3)
 					KIND_SOURCE=4 means ion heat source (in Watts/m3)
-					KIND_SOURCE=5 means electric charge source (in Coulombs/m3)
-					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/m3)
+					KIND_SOURCE=5 means electric charge source (in Amperes/m3)
+					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/s/m3)
 				</description>
 			</switch>
 			<switch>
@@ -8524,6 +8762,46 @@
 				<type>real</type>
 				<description>
 					Nominal pumping speed.
+				</description>
+			</switch>
+			<switch>
+				<name>TE_DET_THRESHOLD</name>
+				<default>2.0</default>
+				<type>real</type>
+				<description>
+					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
+				</description>
+			</switch>
+			<switch>
+				<name>Q95_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Safety factor used to estimate the ballooning "alpha" parameter, if not assigned will be estimated as L_conn/(2*pi*R) at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>R0_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Major radius used to estimate the ballooning "alpha" parameter. If not assigned, will be estimated as 0.5*(Rmin-Rmax) at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>B0_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Magnetic field used to estimate the ballooning "alpha" parameter. If not assigned, will be estimated as Bomp*R0/Romp at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>TRGSHP</name>
+				<default>1.0</default>
+				<type>real array of size (NTRGTS)</type>
+				<description>
+					Target shaping factor applied to plasma heat loads in peak heat flux estimate calculated by b2mod_usertrc.
 				</description>
 			</switch>
 			<switch>

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, !srv 29.01.20 {
-     &  geo, mpg, pl, dv, co, rt, st_ext)
+      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,            !srv 29.01.20 {
+     &  geo, mpg, pl, dv, co, co_ns, rt, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
@@ -17,6 +17,9 @@
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+      use b2mod_zhfrtf
+     & , only : z2n_xy, nal, ia, av_ualpha, avm_u, rho_a_rel,
+     &          z_to_m1_ast
       use b2mod_ad
      & , only : my_out_folder, ncall_b2xehx, ncall_b2tcpa,
 #ifdef WG_DEBUG
@@ -27,7 +30,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -37,6 +40,7 @@
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
       type(B2Coeff), intent (inout) :: co
+      type(B2Coeff_nspecies), intent (inout) :: co_ns
       type(B2Derivatives), intent (inout) :: dv
 *   ..local variables
 *   ..common blocks
@@ -114,30 +118,37 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
         dv%fch_p     = 0.0_R8
         dv%fchviskt  = 0.0_R8
         dv%fchanml   = 0.0_R8
+        dv%fchanml_a = 0.0_R8
         dv%conc      = 0.0_R8
       else
 *     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
         call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
-     &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl,
-     &    dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
-*     ..compute x,y-components of divergent part of diamagnetic current
+     &    dv%facdrift, dv%fac_ExB, pl,
+     &    dv%fna, co%csigin, dv%fchin)                                   !srv 11.05.09
+*     ..compute poloidal and radial components of divergent part of diamagnetic current
         call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv)
-*     ..calculate x,y-components of viscosity parallel current
-        call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
-     &    co%vsaf_cl, dv%fac_vis, dv%fchvispar)
+*     ..calculate poloidal and radial components of viscosity parallel current
+        call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    pl%na, pl%ua, pl%ti, rt%rza, co%vsaf_cl, co%vsaf_drho,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al, dv%fac_vis,
+     &    dv%fchvispar_a, dv%fchvispar)
 *     ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
-        call b2tvspr(nCv, nFc, nVx, ns, switch, geo, mpg,
-     &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,dv%fchvisper)
+        call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,
+     &    dv%fchvisper_a, dv%fchvisper)
 *     ..calculate the parallel viscosity current connected with the heat flux
-        call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
-     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni(:,1), co%hcix_c,
-     &    dv%fchvisq)
+        call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    dv%fac_vis, dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, pl%na,
+     &    dv%ni(:,1), rt%rza, co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
+     &    co%hcix_c, co%hci_a, co_ns%hci_al_ast,
+     &    dv%fchvisq_a, dv%fchvisq)
 *     ..calculate inertia current                                        !srv 07.07.99
-        call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
-     &    dv%facdrift, dv%fchinert)
-*     ..calculate the x,y-components of anomalous current
-        call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an,
-     &    pl%po,dv%fchanml)
+        call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    pl%na, pl%ua, dv%facdrift, dv%fchinert_a, dv%fchinert)
+*     ..calculate the poloidal and radial components of anomalous current
+        call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    co%csig_an, pl%po, dv%ne, pl%na, rt%rza,
+     &    dv%fchanml_a, dv%fchanml)
 #ifdef WG_TODO
 *     ..calculate the y-component of electron current associated with
 *       stochastization of magnetic field
@@ -149,7 +160,8 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &  ehx, st_ext, dv%fch_p, dv%fch_pi_c, dv%fch_pi_f)                 !srv 13.01.17
 *     ..compute current due to RS of kt-model
         call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
+     &    pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB,
+     &    dv%fchviskt_a, dv%fchviskt)
 
 *     ..compute total currents
         dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar +

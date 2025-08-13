@@ -31,7 +31,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumtrgw
 c
       subroutine sumtrgz()
       use b2mod_types
@@ -65,7 +65,7 @@ c
       enddo
 
       return
-      end
+      end subroutine sumtrgz
 c
       subroutine inttrgw()
       use b2mod_types
@@ -97,7 +97,7 @@ c
       enddo
 
       return
-      end
+      end subroutine inttrgw
 c
       subroutine inttrgwstar()
       use b2mod_types
@@ -122,7 +122,7 @@ c
       enddo
 
       return
-      end
+      end subroutine inttrgwstar
 c
       subroutine inttrgz()
       use b2mod_types
@@ -152,4 +152,4 @@ c
       enddo
 
       return
-      end
+      end subroutine inttrgz

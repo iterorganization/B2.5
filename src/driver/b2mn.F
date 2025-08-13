@@ -116,9 +116,9 @@
 *-----------------------------------------------------------------------
 *.computation
 
-      call b2mn_init(switch, geo, mpg, state, state_ext, state_avg)
-      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, J)
-      call b2mn_fin(switch, geo, mpg, state, state_ext, state_avg)
+      call b2mn_init
+      call b2mn_step(J)
+      call b2mn_fin
 
       stop 'b2mn'
 
@@ -126,4 +126,3 @@
 *.end b2mn
 
       end program b2mn
-

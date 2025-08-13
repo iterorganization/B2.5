@@ -171,7 +171,7 @@ c*** Check the topology of the grid and the list of target edges
           target_east = .false.
           target_west = .false.
           do i = 1, nbc
-            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
+            if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
      &                             gridGeometry).eq.EAST) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
@@ -300,7 +300,7 @@ c======================================================================
 #endif
       use b2us_data
       implicit none
-      integer i,i1,i2,ii,il,is,itmp,j,jj,iFc,istart,iend,idir,
+      integer i,i1,i2,ii,il,is,itmp,j,jj,iCv,iFc,istart,iend,idir,
      *  k,k1,k2,kb,ke,kk,kn,kkb,kke,kkk,ks,
      *  l,n,cont,flagmin,flagmin1,ksel,iVx1,iVx2
       integer, allocatable :: ib(:),ie(:),it(:)
@@ -382,7 +382,7 @@ c      print '(a4,8a12)','j','r1i','r2i','z1i','z2i',
 c     ,                      'r1o','r2o','z1o','z2o'
 cc>>>
       k=0
-      allocate(CCW(ntrgts+nsns))
+      allocate(CCW(ntrgts+nsts))
       CCW=.false.
       do j=1,ntrgts
         if (itrg(j).eq.0) cycle
@@ -454,11 +454,12 @@ c     ,            pp1(2,k+lppp),pp2(2,k+lppp)
         end if
       end do
       if (grid_mode.eq.2) then
-        do j=1,nsns !{
-          ks=abs(lsns(j))
+        do j=1,nsts !{
 c First find out surface orientation: CW or CCW
-          if(fnmti_b2(eirdiag_nds_ind(ks)+1).eq.-1) cycle
-          iFc=fnmti_b2(eirdiag_nds_ind(ks)+1)
+          if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+          iFc=fnmti_b2(eirdiag_nds_ind(j)+1)
+          iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if(mpg%cvOnClosedSurface(iCv)) cycle
           if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
             iVx1=mpg%fcVx(iFc,1)
             CCW(ntrgts+j)=.true.
@@ -466,7 +467,7 @@ c First find out surface orientation: CW or CCW
             iVx1=mpg%fcVx(iFc,2)
             CCW(ntrgts+j)=.false.
           end if
-          iFc=fnmti_b2(eirdiag_nds_ind(ks)+2)
+          iFc=fnmti_b2(eirdiag_nds_ind(j)+2)
           if(iFc.gt.0) then
             if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
               iVx2=mpg%fcVx(iFc,2)
@@ -475,7 +476,7 @@ c First find out surface orientation: CW or CCW
             end if
             CCW(ntrgts+j)=iVx1.ne.iVx2
           end if
-          do i=eirdiag_nds_ind(ks)+1,eirdiag_nds_ind(ks+1)-1 !{
+          do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1 !{
             k=k+1
             call xertst(k+lppp.le.size(pp1,2),
      .       'Insufficient storage for wall elements. '//
@@ -689,10 +690,10 @@ c      close(lun_w)
 c>>>
 c
       allocate(isrecycling(nwldprt))
-      allocate(ib(max(ntrgsx,nsns)),
-     .         ie(max(ntrgsx,nsns)),
-     .         it(0:max(ntrgsx,nsns)),
-     .         traversed(0:max(ntrgsx,nsns)),counted(nsns))
+      allocate(ib(max(ntrgsx,nsts)),
+     .         ie(max(ntrgsx,nsts)),
+     .         it(0:max(ntrgsx,nsts)),
+     .         traversed(0:max(ntrgsx,nsts)),counted(nsts))
       it=0
       isrecycling=.false.
       traversed=.false.
@@ -707,7 +708,7 @@ c
       do il=1,nwldprt !{
         n=nwldlis(il)
         if(n .gt. 0) then !{
-          do i=1,max(ntrgts,nsns) !{
+          do i=1,max(ntrgts,nsts) !{
             ib(i)=0
             ie(i)=0
             it(i)=0
@@ -731,7 +732,7 @@ c          print '(1x,20i5)',(lwldlis(i,il),i=1,n)       !###
           do i=1,n
             k=iabs(lwldlis(is,il))
             if(lelmind(k).gt.nlimi) then !{ recycling surface
-              ks=abs(lsns(lelmind(k)-nlimi))
+              ks=lelmind(k)-nlimi+ncns
               iFc=fnmti_b2(eirdiag_nds_ind(ks)+1) ! first face of surface
             else !}{
               iFc=1  ! dummy index to allow tests to proceed
@@ -829,7 +830,7 @@ c***
 c*** The list orientation is given by lwlddir value (true=CCW)
 
           kk=0
-          do i=1,max(ntrgts,nsns) !{
+          do i=1,max(ntrgts,nsts) !{
             if(ib(i)+ie(i).gt.0) then !{
               kk=kk+1
             end if !}
@@ -876,27 +877,27 @@ c*** selecting the chain from shadowing structure itself
 c*** CCW target
                 do j=1,n !{
                   ke=0
-                  do i=1,max(ntrgts,nsns) !{
+                  do i=1,max(ntrgts,nsts) !{
                     if(ke.ne.0) cycle
                     if(j.eq.ie(i)) ke=i
                   end do !}
                   kb=0
-                  do i=1,max(ntrgts,nsns) !{
+                  do i=1,max(ntrgts,nsts) !{
                     if(kb.ne.0) cycle
                     if(j.eq.ib(i)) kb=i
                   end do !}
                   ks=0
                   kkk=0
-                  do i=1,max(ntrgts,nsns) !{
+                  do i=1,max(ntrgts,nsts) !{
                     if(ib(i).le.ie(i)) then !{
                       if(j.ge.ib(i).and.j.le.ie(i)) then
                         kkk=i
-                        ks=abs(lsns(i))
+                        ks=i+ncns
                       end if
                     else !}{
                       if(j.le.ib(i).and.j.ge.ie(i)) then
                         kkk=i
-                        ks=abs(lsns(i))
+                        ks=i+ncns
                       end if
                     end if !}
                   end do !}
@@ -957,31 +958,28 @@ c*** Limiter configuration. Add first the CW target face
                           found=.false.
                           istart=lppp
                           counted=.false.
-                          do i=1,nsns
+                          do i=ncns+1,nsts
                             if (found) cycle
-                            found=abs(lsns(i)).eq.k
-                            if (.not.found.and.
-     &                          .not.counted(abs(lsns(i)))) then
+                            found=i.eq.k
+                            if (.not.found.and..not.counted(i)) then
                               istart=istart
-     .                         +eirdiag_nds_ind(abs(lsns(i))+1)
-     .                         -eirdiag_nds_ind(abs(lsns(i)))-1
-                              counted(abs(lsns(i)))=.true.
+     .                         +eirdiag_nds_ind(i+1)
+     .                         -eirdiag_nds_ind(i)-1
+                              counted(i)=.true.
                             else if (found) then
                               if (CCW(ntrgts+i)) then
-                                do ii=eirdiag_nds_ind(abs(lsns(i)))+1,
-     .                                eirdiag_nds_ind(abs(lsns(i))+1)-1
+                                do ii=eirdiag_nds_ind(i)+1,
+     .                                eirdiag_nds_ind(i+1)-1
                                   kn=kn+1
-                                  luwrk(kn)=istart+ii
-     .                             -eirdiag_nds_ind(abs(lsns(i)))
-                                  lewrk(kn)=nlim+abs(lsns(i))
+                                  luwrk(kn)=istart+ii-eirdiag_nds_ind(i)
+                                  lewrk(kn)=nlim+i
                                 end do
                               else
-                                do ii=eirdiag_nds_ind(abs(lsns(i))+1)-1,
-     .                                eirdiag_nds_ind(abs(lsns(i)))+1,-1
+                                do ii=eirdiag_nds_ind(i+1)-1,
+     .                                eirdiag_nds_ind(i)+1,-1
                                   kn=kn+1
-                                  luwrk(kn)=istart+ii
-     .                             -eirdiag_nds_ind(abs(lsns(i)))
-                                  lewrk(kn)=nlim+abs(lsns(i))
+                                  luwrk(kn)=istart+ii-eirdiag_nds_ind(i)
+                                  lewrk(kn)=nlim+i
                                 end do
                               end if
                             end if
@@ -1046,33 +1044,32 @@ c*** Limiter configuration. Add first the CW target face
                             found=.false.
                             istart=lppp
                             counted=.false.
-                            do i=1,nsns !{
+                            do i=ncns+1,nsts !{
                               if (found) cycle
-                              found=abs(lsns(i)).eq.k
-                              if (.not.found.and.
-     &                            .not.counted(abs(lsns(i)))) then !{
+                              found=i.eq.k
+                              if (.not.found.and..not.counted(i)) then !{
                                 istart=istart
-     .                           +eirdiag_nds_ind(abs(lsns(i))+1)
-     .                           -eirdiag_nds_ind(abs(lsns(i)))-1
-                                counted(abs(lsns(i)))=.true.
+     .                           +eirdiag_nds_ind(i+1)
+     .                           -eirdiag_nds_ind(i)-1
+                                counted(i)=.true.
                               else if (found) then !}{
                                 if (CCW(ntrgts+i)) then
                                   do ii=
-     .                             eirdiag_nds_ind(abs(lsns(i)))+1,
-     .                             eirdiag_nds_ind(abs(lsns(i))+1)-1
+     .                             eirdiag_nds_ind(i)+1,
+     .                             eirdiag_nds_ind(i+1)-1
                                     kn=kn+1
                                     luwrk(kn)=istart+ii
-     .                               -eirdiag_nds_ind(abs(lsns(i)))
-                                    lewrk(kn)=nlim+abs(lsns(i))
+     .                               -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
                                   end do
                                 else
                                   do ii=
-     .                             eirdiag_nds_ind(abs(lsns(i))+1)-1,
-     .                             eirdiag_nds_ind(abs(lsns(i)))+1,-1
+     .                             eirdiag_nds_ind(i+1)-1,
+     .                             eirdiag_nds_ind(i)+1,-1
                                     kn=kn+1
                                     luwrk(kn)=istart+ii
-     .                               -eirdiag_nds_ind(abs(lsns(i)))
-                                    lewrk(kn)=nlim+abs(lsns(i))
+     .                               -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
                                   end do
                                 end if
                               end if
@@ -1114,33 +1111,32 @@ c*** Limiter configuration. Add the CCW target face
                             found=.false.
                             istart=lppp
                             counted=.false.
-                            do i=1,nsns
+                            do i=ncns+1,nsts
                               if (found) cycle
-                              found=abs(lsns(i)).eq.kke
-                              if (.not.found.and.
-     &                            .not.counted(abs(lsns(i)))) then
+                              found=i.eq.kke
+                              if (.not.found.and..not.counted(i)) then
                                 istart=istart
-     .                           +eirdiag_nds_ind(abs(lsns(i))+1)
-     .                           -eirdiag_nds_ind(abs(lsns(i)))-1
-                                counted(abs(lsns(i)))=.true.
+     .                           +eirdiag_nds_ind(i+1)
+     .                           -eirdiag_nds_ind(i)-1
+                                counted(i)=.true.
                               else if (found) then
                                 if (CCW(ntrgts+i)) then
                                   do ii=
-     .                             eirdiag_nds_ind(abs(lsns(i)))+1,
-     .                             eirdiag_nds_ind(abs(lsns(i))+1)-1
+     .                             eirdiag_nds_ind(i)+1,
+     .                             eirdiag_nds_ind(i+1)-1
                                     kn=kn+1
                                     luwrk(kn)=istart+ii
-     .                                   -eirdiag_nds_ind(abs(lsns(i)))
-                                    lewrk(kn)=nlim+abs(lsns(i))
+     .                                   -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+abs(i)
                                   end do
                                 else
                                   do ii=
-     .                             eirdiag_nds_ind(abs(lsns(i))+1)-1,
-     .                             eirdiag_nds_ind(abs(lsns(i)))+1,-1
+     .                             eirdiag_nds_ind(i+1)-1,
+     .                             eirdiag_nds_ind(i)+1,-1
                                     kn=kn+1
                                     luwrk(kn)=istart+ii
-     .                                   -eirdiag_nds_ind(abs(lsns(i)))
-                                    lewrk(kn)=nlim+abs(lsns(i))
+     .                                   -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
                                   end do
                                 end if
                               end if
@@ -1227,7 +1223,7 @@ c                print *,'il,kn = ',il,kn                  !###
 #ifdef DBG
       print *,'After correction. nwldprt =',nwldprt
       print '(a,i4,1x,a,i4/(20i5))',
-     ,  'lwldlis :',il,pltzlbl(1),nwldlis(1),
+     ,  'lwldlis :',1,pltzlbl(1),nwldlis(1),
      ,  (lwldlis(i,1),i=1,nwldlis(1))
 #endif
 
@@ -1365,9 +1361,8 @@ c*** Calculate the segment areas and related quantities
         kn=lppp+mpg%divFcP(ntrgts,1)+mpg%divFcP(ntrgts,2)-1
       else !}{
         kn=lppp
-        do j=1,nsns !{
-          ks=abs(lsns(j))
-          kn=kn+eirdiag_nds_ind(ks+1)-eirdiag_nds_ind(ks)-1
+        do j=ncns+1,nsts !{
+          kn=kn+eirdiag_nds_ind(j+1)-eirdiag_nds_ind(j)-1
         end do !}
       end if !}
       do i=1,kn !{
@@ -1454,25 +1449,54 @@ c*** use the zone index to label the plot zone
 c*** Fill in the input arrays for b2pwrdld
 c
       nwldrad=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        do i=1,mpg%divFcP(itrg(j),2) !{
-          if (CCW(itrg(j))) then
-            lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
-          else
-            lwldrad(nwldrad+i)=lppp+nwldrad+i
-          end if
+      if (grid_mode.lt.2) then
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          do i=1,mpg%divFcP(itrg(j),2) !{
+            if (CCW(itrg(j))) then
+              lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
+            else
+              lwldrad(nwldrad+i)=lppp+nwldrad+i
+            end if
+          end do !}
+          nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
         end do !}
-        nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
-      end do !}
 #ifdef DBG
-      print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
-      k=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        print '(20i5)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
-        k=k+mpg%divFcP(itrg(j),2)
-      end do !}
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          print '(20i5)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
+          k=k+mpg%divFcP(itrg(j),2)
+        end do !}
+#endif
+      else
+        do j=ncns+1,nsts !{
+          if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+          do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1 !{
+            if (CCW(ntrgts+j)) then
+              lwldrad(nwldrad+eirdiag_nds_ind(j+1)-i)=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(j)
+            else
+              lwldrad(nwldrad+i-eirdiag_nds_ind(j))=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(j)
+            end if
+          end do !}
+          nwldrad=nwldrad+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
+        end do !}
+#ifdef DBG
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=ncns+1,nsts !{
+          if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+          print '(20i5)',
+     .     (lwldrad(k+i),i=1,eirdiag_nds_ind(j+1)-
+     .                      (eirdiag_nds_ind(j)+1))
+          k=k+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
+        end do !}
+#endif
+      end if
+#ifdef DBG
       print '(1x,a,i5/(20i5))','nwldlis / lwldlis',nwldlis(1),
      ,                           (lwldlis(i,1),i=1,nwldlis(1))
 #endif

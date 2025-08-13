@@ -2173,7 +2173,15 @@
             end do !ixreg
           end do !iy
         end do !iyreg
+
+        ! To avoid segmentation fault error we check if guessed amount
+        ! of faces and cells is bigger than found amount of faces and cells.
+        call xertst (iFccy.le.m%nFc, 'iFccy.gt.nFc!')
+        call xertst (iFcc.le.m%nFc, 'iFcc.gt.nFc!')
+        call xertst (iCv.le.m%nCv, 'iCv.gt.nCv!')
+        call xertst (iFt.le.m%nFt, 'Too many flux tubes found!')
         m%nFt = iFt
+        call xertst (iFs.le.m%nFs, 'Too many flux surfaces found!')
         m%nFs = iFs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
         deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg,m%ftLbl)
@@ -3922,10 +3930,11 @@
 
 **********************************************************************
 
-      subroutine to_struct_plasma (ns, mpg, st)
+      subroutine to_struct_plasma (ns, gm, mpg, st)
 
       implicit none
       integer, intent(in) :: ns
+      type(geometry), intent(in) :: gm
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
       integer :: nx, ny
@@ -4638,7 +4647,10 @@
             cvsa_cl(ix,iy,0,0:1,0:ns-1) =
      .            st % co % cvsa_cl(iFc,0:1,0:ns-1)
 
-            cddi(ix,iy,0,0:1,0:ns-1) = st % co % cddi(iFc,0:1,0:ns-1)
+            cddi(ix,iy,0,0,0:ns-1) = st % co % cddi(iFc,0,0:ns-1)*
+     .        gm % fcQalf(iFc,0)
+            cddi(ix,iy,0,1,0:ns-1) = st % co % cddi(iFc,1,0:ns-1)*
+     .        gm % fcQalf(iFc,1)
 
             fllim0fna(ix,iy,0,0:1,0:ns-1) =
      .              st % co % fllim0fna(iFc,0:1,0:ns-1)
@@ -4775,7 +4787,10 @@
             cvsa_cl(ix,iy,1,0:1,0:ns-1) =
      .            st % co % cvsa_cl(iFc,0:1,0:ns-1)
 
-            cddi(ix,iy,1,0:1,0:ns-1) = st % co % cddi(iFc,0:1,0:ns-1)
+            cddi(ix,iy,1,0,0:ns-1) = st % co % cddi(iFc,0,0:ns-1)*
+     .        gm % fcQalf(iFc,0)
+            cddi(ix,iy,1,1,0:ns-1) = st % co % cddi(iFc,1,0:ns-1)*
+     .        gm % fcQalf(iFc,1)
 
             fllim0fhi(ix,iy,1,0:1,0:ns-1) =
      .              st % co % fllim0fhi(iFc,0:1,0:ns-1)

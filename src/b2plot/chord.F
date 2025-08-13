@@ -617,4 +617,3 @@ c
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
 !DIAG      write(*,*) chain,rectangles,triangles      ! diag
 !DIAG      end subroutine chord_diagnostics      ! diag
-

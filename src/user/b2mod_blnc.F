@@ -509,10 +509,10 @@ c*** Flux across the core boundary
           js=lcns(is)+nnlimi
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnc=hlpnc-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
@@ -522,50 +522,55 @@ c*** Flux across the targets
           js=ltns(is)+nnlimi
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnt=hlpnt-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
         end do
 c*** Flux across the side walls
-        do js=1,nnlimi
-          do j=1,nnatmi
-            if(latmscl(j).eq.ls) then
-              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
-              do ic=1,nnmoli
-                if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .           (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
-              end do
-            end if
+        if (switch%use_eirene.ne.0) then
+          do js=1,nnlimi
+#ifdef B25_EIRENE
+            if(iliin(js).le.0) cycle
+#endif
+            do j=1,nnatmi
+              if(latmscl(j).eq.ls) then
+                hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)
+                do ic=1,nnmoli
+                  if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
+     .             (wldnm(js,ic,0)-wldrm(js,ic,0))
+                end do
+              end if
+            end do
           end do
-        end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
-c*** we must remove targets and transparent surfaces from that list
-        do js=1,nsns !{
-          is_target = .false.
-          do ic=1,ntns !{
-            is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
-          end do !}
-          if (.not.is_target) then !{
-            ks = abs(lsns(js))+nnlimi
-            if (iliin(abs(lsns(js))).gt.0) then !{
-              do j=1,nnatmi !{
-                if(latmscl(j).eq.ls) then !{
-                  hlpnw=hlpnw-wldna(ks,j,0)+wldra(ks,j,0)+wldpa(ks,j,0)
-                  do ic=1,nnmoli !{
-                    if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .               (wldnm(ks,ic,0)-wldrm(ks,ic,0)-wldpm(ks,ic,0))
-                  end do !}
-                end if !}
-              end do !}
+c*** we must remove targets, core bounaries and transparent surfaces from that list
+          do js=1,nsts !{
+            is_target = .false.
+            do ic=1,ntns !{
+              is_target = is_target.or.js.eq.ltns(ic).or.js.eq.lcns(ic)
+            end do !}
+            if (.not.is_target) then !{
+              ilks = js+nnlimi
+              if (iliin(ilks).gt.0) then !{
+                do j=1,nnatmi !{
+                  if(latmscl(j).eq.ls) then !{
+                    hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
+                    do ic=1,nnmoli !{
+                      if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
+     .                           (wldnm(ilks,ic,0)-wldrm(ilks,ic,0))
+                    end do !}
+                  end if !}
+                end do !}
+              end if !}
             end if !}
-          end if !}
-        end do !}
+          end do !}
 #endif
+        end if
 c*** Gas puffing source and recycling
         do ic=1,nstrat
           hlp_tt = debug_flags(90).gt.0 .and.
@@ -658,6 +663,8 @@ c<<<
      ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
      ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
 c>>>
+              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
+              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
             end if
           end if
         end do

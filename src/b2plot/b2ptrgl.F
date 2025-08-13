@@ -223,7 +223,7 @@ c----------------------------------------------------------------------
 c*** Power loading:
 c*** Radiation load onto the targets
 
-      call b2ptrdl(wrdtrg)
+      call b2ptrdl(DEF_NYD,ntrgsx,wrdtrg,.true.)
 #ifdef DBG
       print '(2a,i5,2(1x,l1))','After b2ptrdl: ',
      ,        'ntrgts,lrdlsp,lrdlcr = ',   !###
@@ -659,17 +659,17 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
           wtttrg(iy,itrg(j))=wpttrg(iy,itrg(j))+wrdtrg(iy,itrg(j),0)
         end do !}
       end do !}
-      if (ntrgts.gt.0) write(*,'(1x,a,1p,16e12.3)')
+      if (ntrgts.gt.0.and.ft44) write(*,'(1x,a,1p,16e12.3)')
      -           'Scaling factors for Wn : ',(wi(itrg(i)),i=1,ntrgts)
 
       nclm_ld=21
-#ifdef B25_EIRENE
-      nclm_na=natmi
-      nclm_nm=nmoli
-#else
-      nclm_na=nspecies
-      nclm_nm=0
-#endif
+      if (use_eirene.ne.0) then
+        nclm_na=natmi
+        nclm_nm=nmoli
+      else
+        nclm_na=nspecies
+        nclm_nm=0
+      endif
       if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       if(lrdlcr) nclm_ld=nclm_ld+1
 
@@ -1607,15 +1607,15 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
             do ia=1,nclm_na
               fpt_out(1+3*(ia-1))=sja(iy,itrg(j),ia)/s(iy,itrg(j))
-#ifdef B25_EIRENE
-              fpt_out(2+3*(ia-1))=tab2(iCv,ia,1)/ev
-#else
-              if (nint(zn(eb2atcr(ia))).eq.1) then
-                fpt_out(2+3*(ia-1))=state%pl%tn(iCv)/ev
+              if (use_eirene.ne.0) then
+                fpt_out(2+3*(ia-1))=tab2(iCv,ia,1)/ev
               else
-                fpt_out(2+3*(ia-1))=state%pl%ti(iCv)/ev
+                if (nint(zn(eb2atcr(ia))).eq.1) then
+                  fpt_out(2+3*(ia-1))=state%pl%tn(iCv)/ev
+                else
+                  fpt_out(2+3*(ia-1))=state%pl%ti(iCv)/ev
+                end if
               end if
-#endif
               fpt_out(3+3*(ia-1))=spa(iy,itrg(j),ia)
             end do
             do is=1,nspecies

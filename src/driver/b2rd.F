@@ -140,7 +140,7 @@
       call xertst(1.le.ishot, 'faulty run number')
       write(*,*) 'Attempting recovery from run number ',ishot
 *   ..obtain archived run
-      status=mdsconnect('solps-mdsplus.aug.ipp.mpg.de:8001'//char(0))
+      status=mdsconnect('solps-mdsplus.ipp.mpg.de:8001'//char(0))
       write(*,*) 'mdsconnect'
       if(status.lt.0) then
         write(*,*) ' return status: ',status

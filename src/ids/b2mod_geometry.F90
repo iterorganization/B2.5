@@ -147,7 +147,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LIMITER
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
         &   'Core cut                        ',                                     &
@@ -160,7 +160,7 @@ module b2mod_geometry
         &   'Main chamber wall               ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_SN Single null
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Western divertor                ', 'Eastern divertor                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                             &
         & &
@@ -212,7 +212,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -238,7 +238,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -265,7 +265,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_STELLARATORISLAND
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor                  ', &
         &   'Island                          ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                                 &
@@ -295,7 +295,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
@@ -320,7 +320,7 @@ module b2mod_geometry
         &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
         &   'Third outer leg baffle          ',                                     &
         & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
@@ -780,7 +780,7 @@ contains
     regionName = regionNames(regionId, regionType, geometryId)
   end function regionName
 
-  !> Return number of a specific grid region as per the cfReg numbering
+  !> Return number of a specific grid region as per the fcReg numbering
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].

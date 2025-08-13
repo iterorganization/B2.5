@@ -1,5 +1,5 @@
       subroutine b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, st,
-     & st_ext, sw, J)
+     & st_ext, J)
       use b2mod_types
       use b2us_map
       use b2us_plasma
@@ -20,14 +20,12 @@
       use b2mod_transport_namelist
      & , only : parm_dna
 #endif
-      use b2mod_switches
       use b2mod_subsys
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
       type(B2State), intent (in)    :: st
       type(B2StateExt), intent (in) :: st_ext
-      type(switches), intent(in)    :: sw
       real(kind=R8) :: J(nncf)
       integer :: nCv, nFc, nVx, ns
       integer :: icf, ic1, ic2, iCv, n1, n2,
@@ -307,4 +305,3 @@
       return
 
       end subroutine b2usr_cost_function
-

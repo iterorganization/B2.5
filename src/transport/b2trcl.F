@@ -211,45 +211,47 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,      !srv 01.07.05 {
-     &   vsa(:,0,is), cvsahz(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   vsa(:,1,is), cvsahz(:,1,is))                                 !srv 01.07.05 }
+       call b2txcx (nCv, nFc, 0.0_R8,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,0,is), cvsahz(:,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,1,is), cvsahz(:,1,is))
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, vsa(:,0,is), cvsa(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(:,1,is), cvsa(:,1,is))
-       do k = 0, nscx-1
-         is0 = iscx(k)
-         if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,  !sv
-     &       geo%fcS, sigin(:,0,is,k), csigin(:,0,is,is0))            !sv 01.07.99
-           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, !sv
-     &       sigin(:,1,is,k), csigin(:,1,is,is0))                     !sv
-        endif
-       enddo
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,0,is), cvsa(:,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,1,is), cvsa(:,1,is))
+        do k = 0, nscx-1
+          is0 = iscx(k)
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+            call b2txcx (nCv, nFc, 0.0_R8,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,0,is,k), csigin(:,0,is,is0))
+            call b2txcy (nCv, nFc,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,1,is,k), csigin(:,1,is,is0))
+          endif
+        enddo
       enddo
       inctran = switch%b2txcx_increase_transp_coefs
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, hce(:,0), chce(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, hci(:,0), chci(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, sig(:,0), csig(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
-     &  geo%fcS, alf(:,0), calf(:,0))
-      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(:,1), calf(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,0), chce(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,1), chce(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,0), chci(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,1), chci(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,0), csig(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,1), csig(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,0), calf(:,0))
+      call b2txcy (nCv, nFc,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,1), calf(:,1))
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
@@ -291,6 +293,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       co%f_luc_et = 1.0_R8
       co%f_luc_sg = 1.0_R8
       co%f_luc_al = 1.0_R8                                            !srv 13.01.17 }
+      co%alpha1f = 1.0_R8
+      co%f_luc_ke_c = 1.0_R8
+      co%f_luc_ki_c = 1.0_R8
       if(switch%lluciani.eq.1) then   ! connection length formulation
        !wdk There is implicit assumption here that flux tubes exist in the grid.
        !wdk Need to generalize to truly unstructured grids; using fcConn at each
@@ -336,13 +341,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/(1.0_R8 +
+            co%f_luc_ke_c(iCv) = 1.0_R8/(1.0_R8 +
      1       7.5e16_R8*(pl%te(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/(1.0_R8 +
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/(1.0_R8 +
      1       7.5e16_R8*(pl%ti(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo
@@ -379,13 +384,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/(1.0_R8 +
+            co%f_luc_ke_c(iCv) = 1.0_R8/(1.0_R8 +
      1       0.3e16_R8*(pl%te(iCv)/ev)**2/dv%ne2(iCv))
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/(1.0_R8 +
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/(1.0_R8 +
      1       0.3e16_R8*(pl%ti(iCv)/ev)**2/dv%ne2(iCv))
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo
@@ -504,11 +509,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/k1(iCv)*0.58_R8*sqrt(geo%ftEps(iFt)**3)
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/k2(iCv)*1.60_R8*sqrt(geo%ftEps(iFt)**3)
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%f_luc_ke_c(iCv) = 1.0_R8/k1(iCv)*0.58_R8*
+     &        sqrt(geo%ftEps(iFt)**3)
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/k2(iCv)*1.60_R8*
+     &        sqrt(geo%ftEps(iFt)**3)
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo
@@ -731,8 +738,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
       wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  wrkc, cdkt(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, wrkc, cdkt(:,0))
       cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
       co%sigx_kt = wrkc

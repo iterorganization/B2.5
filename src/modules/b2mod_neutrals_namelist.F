@@ -22,7 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
-c*  lsns          : Eirene recycling 'non-default surfaces'
+c*  lsns          : Eirene recycling 'non-default surfaces' for the strata
 c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
@@ -629,7 +629,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       return
       end subroutine dealloc_b2mod_neutrals_save
 
-      subroutine read_neutrals_namelist_st(nx, ny, ns, dotest)
+      subroutine read_neutrals_namelist_st(nx, ny, ns, switch, dotest)
       use b2mod_wall
      & , only : track_index, ntrack, track_species
       use b2mod_indirect
@@ -637,7 +637,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
+      use b2mod_switches
       implicit none
+      type(switches), intent(in) :: switch
       integer nx, ny, ns
       logical dotest
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
@@ -677,16 +679,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrai=nstrai-1
         elseif (crcstra(nstrai+1).eq.'T') then
           nstrat=nstrai+1
-        else
-#ifdef B25_EIRENE
+        elseif (switch%use_eirene.ne.0) then
           nstrat=nstrai+1
           crcstra(nstrat)='T'
           rcpos(nstrat)=0
           rcstart(nstrat)=0
           rcend(nstrat)=0
-#else
+        else
           nstrat=nstrai
-#endif
         endif
 
         allocate(old_style(nstrat))
@@ -1333,8 +1333,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrai=nstrai-1
         elseif (crcstra(nstrai+1).eq.'T') then
           nstrat=nstrai+1
-        else
-#ifdef B25_EIRENE
+        elseif (switch%use_eirene.ne.0) then
           nstrat=nstrai+1
           crcstra(nstrat)='T'
           rcpos(nstrat)=0
@@ -1348,9 +1347,8 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
               end if
             end do
           end if
-#else
+        else
           nstrat=nstrai
-#endif
         endif
 
         m%nRc = nstrat
