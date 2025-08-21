@@ -25,6 +25,8 @@
       use b2mod_transport_namelist
       use b2mod_indirect
       use b2mod_ipmain
+      use b2mod_frtf_nccorr
+     , , only :  alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax, mode
@@ -161,6 +163,7 @@
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
+      integer, save :: Zhdanov_nc = 0
       character*80 cvalip
 *   ..initialisation
       save ncall
@@ -173,12 +176,22 @@
       call subini ('b2trzh')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
 *   ..allocate
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nx, ny)
         call alloc_b2mod_zhfrtf(nx, ny, ns)
         if (zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nx, ny, ns)
+        endif
+        call alloc_b2mod_frtf_nccorr(nx, ny, ns)
+        if (Zhdanov_nc.eq.0) then
+          corr_fria = 1.0_R8
+          corr_tfia = 1.0_R8
+        else
+          zh_imp_analyt = 1
+          write (*,*) 'Zhdanov closure has been switched ',
+     &      'to analytical expression.'
         endif
         cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
         call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
@@ -437,6 +450,7 @@
      &         cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
      &        *tf_ton_mat(i,0:nspecies-1)
               c_hTA_an_fl(i) = cF_limh(i)*c_hTA_an(i)
+              c_hTA_an_fl_save(ix,iy,i) = c_hTA_an_fl(i)
             enddo
 *    ..calculate the classical ion conductivity with flux limiting
             call b2trht_an(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),

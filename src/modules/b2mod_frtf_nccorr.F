@@ -1,0 +1,235 @@
+      module b2mod_frtf_nccorr
+      use b2mod_types
+      use b2mod_geo
+     & , only : vol 
+      use b2mod_b2cmpa
+      use b2mod_b2zhco
+      use b2mod_b2mrel
+      use b2mod_subsys
+      use b2mod_indirect
+     , , only : on_closed_surface       
+      use b2mod_transport
+     , , only : nu2, eps1, k2
+      use b2mod_zhfrtf       
+      implicit none
+      real (kind=R8), allocatable ::
+     &  alpha_HS_style(:,:,:), g_HS_style(:,:),
+     &  corr_tfia(:,:,:), corr_fria(:,:,:)
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2MOD_FRTF_NCCORR stores a parameter of relative impurity presence, 
+*     main ion collisionality (neoclassical style, see the manual) and correction coefficients,
+*     that can be used to make impurity transport inside the separatrix
+*     closer to neoclassical one.
+*     It contains subroutines to calculate correction coefficients and
+*     the friction force (Zhdanov closure style, see b2mod_zhfrtf_fr) with
+*     neoclassical correction applied.
+*
+*  3. description
+*
+*     This module contains:
+*     - alpha_HS_style: ratio of the squared charge weighted density of impurity ion
+*                         to the main ion density  
+*     - g_HS_style: collisionality of main ions multiplied by \eps^{3/2} and divided by 
+*                         a component containing impurity presence
+*     - corr_fria:  a correction coefficient that is designed 
+*                       only for friction of chosen medium\high
+*                       charged impurity with main ions
+*     - corr_tfia:  a correction coefficient that is designed 
+*                       only for thermal force of chosen medium\high
+*                       charged impurity with main ions
+*-----------------------------------------------------------------------
+      contains
+!...............................................................................
+      subroutine alloc_b2mod_frtf_nccorr(nx, ny, ns)
+      implicit none
+      integer :: nx, ny, ns, is
+
+
+
+      allocate(alpha_HS_style(-1:nx,-1:ny,0:ns-1))
+      allocate(g_HS_style(-1:nx,-1:ny))
+      allocate(corr_tfia(-1:nx,-1:ny,0:ns-1))
+      allocate(corr_fria(-1:nx,-1:ny,0:ns-1))
+
+      return
+      end subroutine alloc_b2mod_frtf_nccorr
+
+      subroutine dealloc_b2mod_frtf_nccorr
+      implicit none
+      if (.not.allocated(alpha_HS_style)) return
+      deallocate(alpha_HS_style)
+      deallocate(g_HS_style)
+      deallocate(corr_tfia)
+      deallocate(corr_fria)
+      return
+      end subroutine dealloc_b2mod_frtf_nccorr
+!...................................................................................
+      subroutine b2mod_frtf_nccorr_prep(nx,ny,ns,na,ismain,rz2,
+     &    nu2,eps1,zeff)
+      implicit none
+
+      integer :: nx, ny, ns, ismain
+      real (kind=R8) :: na(-1:nx,-1:ny,0:ns-1),
+     &  rz2(-1:nx,-1:ny,0:ns-1),
+     &  nu2(-1:nx,-1:ny), eps1(-1:ny),zeff(-1:nx,-1:ny)
+*   ..local variables
+        integer :: ix, iy, inucl, is
+
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2MOD_FRTF_NCCORR_PREP stores a parameter of relative impurity presence 
+*     and main ion collisionality (neoclassical style, see the manual) 
+*
+*  3. description
+*
+*     This module contains:
+*     - alpha_HS_style: ratio of the squared charge weighted density of impurity ion
+*                         to the main ion density  
+*     - g_HS_style: collisionality of main ions multiplied by \eps^{3/2} and divided by 
+*                         a component containing impurity presence
+*
+*-----------------------------------------------------------------------
+      do iy = 0, ny-1
+          do ix = 0, nx-1
+              do is = 0, ns-1
+          
+                  alpha_HS_style(ix,iy,is)=na(ix,iy,is)
+     &               *rz2(ix,iy,is)/na(ix,iy,ismain)
+              enddo
+                g_HS_style(ix,iy)=nu2(ix,iy)
+     &               *sqrt(eps1(iy)**3.0_R8)
+     &               /zeff(ix,iy)
+          enddo
+      enddo
+
+      return
+      end subroutine b2mod_frtf_nccorr_prep
+
+      subroutine b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
+     &   rz2,corr_Z_min,corr_spec,Zhdanov_closure,
+     &   chTAanxy,cRTAanxy,cimp2,z2n_xy,temp_corr,k2_mean)
+      implicit none
+      integer :: nx, ny, ns, ismain, corr_Z_min,
+     &    corr_spec,Zhdanov_closure      
+      real (kind=R8) :: 
+     &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1), 
+     &  zeff(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
+     &  chTAanxy(-1:nx,-1:ny,0:nspecies-1),
+     &  cRTAanxy(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
+     &  cimp2(-1:nx,-1:ny,0:ns-1), z2n_xy(-1:nx,-1:ny,0:nspecies-1)
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2MOD_FRTF_NCCORR_COEFS calculates correction coefficients.
+*
+*  3. description
+*
+*     This routine computes:
+*     - corr_fria:  a correction coefficient that is designed 
+*                       only for friction of chosen medium\high
+*                       charged impurity with main ions
+*     - corr_tfia:  a correction coefficient that is designed 
+*                       only for thermal force of chosen medium\high
+*                       charged impurity with main ions
+*
+*-----------------------------------------------------------------------
+*  ..local variabless
+        integer :: ix, iy, is
+        real (kind=R8) :: temp_corr(-1:nx,-1:ny,0:4), 
+     &    corr_fria_D(-1:nx,-1:ny),corr_tfia_D(-1:nx,-1:ny),
+     &    k2_mean(-1:nx,-1:ny),k2_tmp(-1:ny,0:1)
+*-------------------------------------------------------------------
+      
+      call b2mod_frtf_nccorr_prep(nx,ny,ns,na,ismain,rz2,
+     &  nu2,eps1,zeff)
+      corr_fria_D(:,:)=0.0e0_R8
+      corr_tfia_D(:,:)=0.0e0_R8
+      corr_fria(:,:,:)=1.0e0_R8
+      corr_tfia(:,:,:)=1.0e0_R8
+      k2_mean(:,:)=0.0e0_R8
+      k2_tmp(:,:)=0.0e0_R8
+      do iy=-1,ny
+          do ix = 0, nx-1
+              if (on_closed_surface(ix,iy)) then
+                  k2_tmp(iy,0)=k2_tmp(iy,0)+k2(ix,iy)*vol(ix,iy)
+                  k2_tmp(iy,1)=k2_tmp(iy,1)+vol(ix,iy)
+              endif
+          enddo
+          do ix = 0, nx-1
+              if (on_closed_surface(ix,iy)) then
+                  k2_mean(ix,iy)=k2_tmp(iy,0)/k2_tmp(iy,1)
+              endif
+          enddo
+      enddo
+        
+
+      do iy = 0, ny-1
+          do ix = 0, nx-1
+* coefficients are calculated only inside the separatrix and for plasma with low main ion collisionality
+            if (on_closed_surface(ix,iy) .and.
+     &      (g_HS_style(ix,iy).le.1.0e0_R8)) then
+              do is = 0, ns-1 
+c                if (Zhdanov_closure.eq.1) then
+                  if ((rza(ix,iy,is).ge.corr_Z_min))   then
+* coefficients are calculated only for chosen ions of the chosen impurity 
+                  corr_fria(ix,iy,is)=
+     &    1+(-0.36e0_R8*alpha_HS_style(ix,iy,is)+
+     &    0.44e0_R8*alpha_HS_style(ix,iy,is)**(0.77e0_R8)
+     &    +0.01)/(1+g_HS_style(ix,iy)**2.0_R8)
+
+                  temp_corr(ix,iy,0)=
+     &    (chTAanxy(ix,iy,s2nucl(ismain)-1)*2.0e0_R8**0.5e0_R8)
+     &    /(cRTAanxy(ix,iy,s2nucl(ismain)-1,s2nucl(is)-1)*2.5e0_R8) 
+                  temp_corr(ix,iy,1)=
+     &    (2.4e0_R8*eps1(iy)**1.5e0_R8)/
+     &    (1.0e0_R8+(0.36e0_R8+0.4e0_R8*
+     &    alpha_HS_style(ix,iy,is))*g_HS_style(ix,iy)**2.0_R8)  
+                  temp_corr(ix,iy,2)=
+     &    (1.6e0_R8*(eps1(iy)**3.0e0_R8)*
+     &    g_HS_style(ix,iy)**2.0_R8)/
+     &    (1+(eps1(iy)**1.5e0_R8)*g_HS_style(ix,iy)**2.0_R8)
+                  corr_tfia(ix,iy,is)=
+     &    (temp_corr(ix,iy,0)*temp_corr(ix,iy,1)+
+     &    temp_corr(ix,iy,2))/k2_mean(ix,iy)
+
+        temp_corr(ix,iy,3)=2.4e0_R8*eps1(iy)**1.5e0_R8
+        temp_corr(ix,iy,4)=1.0e0_R8+(0.36e0_R8+0.4e0_R8*
+     &    alpha_HS_style(ix,iy,is))*g_HS_style(ix,iy)**2.0_R8
+
+
+                  endif
+c                endif
+* the correction for main ions is calculated to make total forces zero
+                if ((s2nucl(is)-1).eq.corr_spec) then
+                  if ((ix.eq.50).and.(iy.eq.8)) then
+
+c                  print*, 'corr_fria_D shoul be calculated'
+                  endif
+                  corr_fria_D(ix,iy)=corr_fria_D(ix,iy)
+     &  +corr_fria(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
+     &  z2n_xy(ix,iy,s2nucl(is)-1)
+                  corr_tfia_D(ix,iy)=corr_tfia_D(ix,iy)
+     &  +corr_tfia(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
+     &  z2n_xy(ix,iy,s2nucl(is)-1)
+                endif
+              enddo
+                    corr_fria(ix,iy,ismain)=corr_fria_D(ix,iy)
+                    corr_tfia(ix,iy,ismain)=corr_tfia_D(ix,iy)
+
+            endif
+          enddo
+        enddo
+      return
+      end subroutine b2mod_frtf_nccorr_coefs
+
+      end module b2mod_frtf_nccorr

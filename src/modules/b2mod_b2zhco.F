@@ -15,7 +15,8 @@
      &  c_R_TB(:,:,:), c_R_TB_nofl(:,:,:),
      &  c_R_wB(:,:,:,:),
      &  c_R_w(:,:,:,:),
-     &  tf_ton_mat(:,:)
+     &  tf_ton_mat(:,:),
+     &  c_hTA_an_fl_save(:,:,:)
       real (kind=R8), allocatable, save :: amfact(:)
 
 *-----------------------------------------------------------------------
@@ -61,6 +62,7 @@
       allocate(c_R_w(-1:nx,-1:ny,0:nnucl-1,0:nnucl-1))
       allocate(tf_ton_mat(0:nnucl-1,0:nnucl-1))
       allocate(zh_tf_toff(max(1,(nnucl*(nnucl+1))/2-nnucl)))
+      allocate(c_hTA_an_fl_save(-1:nx,-1:ny,0:nnucl-1))
       tf_ton_mat=1.0_R8
 
       return
@@ -87,6 +89,7 @@
         deallocate(c_R_w)
         deallocate(tf_ton_mat)
         deallocate(zh_tf_toff)
+        deallocate(c_hTA_an_fl_save)
       end if
 
       if(allocated(amfact)) then

@@ -381,10 +381,11 @@
       end subroutine b2mod_zhfrtf_tgta
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_fr(ix,iy,is,coef,smfr_p2,smfr_p1)
+      subroutine b2mod_zhfrtf_fr(ix,iy,is,coef,smfr_p2,smfr_p1,
+     &  corr_fria)
       implicit none
       integer :: ix, iy, is, inucl
-      real (kind=R8) :: coef, smfr_p1, smfr_p2
+      real (kind=R8) :: coef, smfr_p1, smfr_p2, corr_fria
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -408,7 +409,7 @@
         temp=temp+z2n_xy(ix,iy,inucl)*
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(ix,iy,inucl,s2nucl(is)-1)
       enddo
-      smfr_p1=-coef*temp
+      smfr_p1=-coef*temp*corr_fria
 
 *   ..the second part of the friction force
       temp=0
@@ -417,16 +418,16 @@
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(ix,iy,inucl,s2nucl(is)-1)*
      &   av_ualpha(ix,iy,inucl)
       enddo
-      smfr_p2=coef*temp
+      smfr_p2=coef*temp*corr_fria
 
       return
       end subroutine b2mod_zhfrtf_fr
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tf(ix,iy,is,nais,smtf,smtf_nofl)
+      subroutine b2mod_zhfrtf_tf(ix,iy,is,nais,smtf,smtf_nofl,corr_tfia)
       implicit none
       integer :: ix, iy, is
-      real (kind=R8) :: smtf, smtf_nofl,nais
+      real (kind=R8) :: smtf, smtf_nofl,nais, corr_tfia
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -465,6 +466,8 @@
      &    Ia(ix,iy,is)*gtalc(ix,iy,s2nucl(is)-1))
       endif
 
+      smtf = smtf*corr_tfia
+      smtf_nofl = smtf_nofl*corr_tfia
       return
       end subroutine b2mod_zhfrtf_tf
 

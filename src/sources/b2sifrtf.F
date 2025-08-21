@@ -27,6 +27,8 @@
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
+      use b2mod_frtf_nccorr
+     , , only : corr_fria, corr_tfia
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -223,7 +225,8 @@
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1))
+     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1),
+     &       corr_fria(ix,iy,isb))
            endif
           enddo
         enddo
@@ -236,7 +239,8 @@
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &       smbfrial_test(ix,iy,0),smbfrial_test(ix,iy,1))
+     &       smbfrial_test(ix,iy,0),smbfrial_test(ix,iy,1),
+     &       corr_fria(ix,iy,isb))
            endif
           enddo
         enddo
@@ -377,7 +381,8 @@
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0))
+     &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0),
+     &        corr_tfia(ix,iy,isb))
             endif
            enddo
           enddo
@@ -390,7 +395,8 @@
          do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     &        smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0))
+     &        smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0),
+     &        corr_tfia(ix,iy,isb))
            endif
          enddo
         enddo

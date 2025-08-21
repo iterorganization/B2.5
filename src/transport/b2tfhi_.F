@@ -70,6 +70,7 @@ csw 30apr2014 added fna_he, ia
       integer ncall, n2, ix, iy, is, ib
       integer, save :: Zhdanov_closure = 0                              !som 13.07.21
       integer, save :: Zhdanov_test = 0                                 !som 13.07.21
+      integer, save :: Zhdanov_nc = 0
       integer, save :: Zhdanov_vel_heat = 1                             !som 13.07.21
       integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
@@ -129,6 +130,7 @@ cpax
        call ipgeti ('b2tfhi_b2vis', b2vis)
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 13.07.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 13.07.21
+       call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 13.07.21
       endif                                                             !srv
 *   ..set n2
@@ -208,7 +210,8 @@ cpax
 * ..compute fluxes and linearization
 * ..velocity-dependent part of the heat flux
       floi_vhx = 0.0_R8                                                 !som 13.07.21
-      if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0 .and.
+      if (Zhdanov_closure.eq.1 .and. (Zhdanov_test .eq.0 .or.
+     &    Zhdanov_nc.eq.1).and.
      &    Zhdanov_vel_heat.eq.1) then                                   !som 13.07.21
         call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
       endif

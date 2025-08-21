@@ -48,6 +48,8 @@
       use b2mod_b2zhco
       use b2mod_zhfrtf
      & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
+      use b2mod_frtf_nccorr
+     & , only : dealloc_b2mod_frtf_nccorr
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
@@ -3784,6 +3786,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
       call dealloc_b2mod_zhfrtf
+      call dealloc_b2mod_frtf_nccorr
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies

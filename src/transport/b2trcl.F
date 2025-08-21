@@ -21,7 +21,8 @@
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
      &                     fllim_al_c, alfx_c, sigx_c,                   !srv 08.10.14
-     &                     alpha1, kt_neo                                !som 05.10.21
+     &                     alpha1, kt_neo,                               !som 05.10.21
+     &                     nu2, eps1, k2                                 !vvk 23.01.24
       use b2mod_transport_namelist
 #ifdef ASTRA
       use b2mod_geo_corner
@@ -107,8 +108,8 @@
      *  cthiv, cthev, vis_par, jemax                                     !srv 13.01.17
       real (kind=R8) ::                                                  !srv 03.06.03
      *  t0, dte, dti, flomx
-      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
-     &  k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)             !lk 19.09.07
+      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1),                       !lk 19.09.07 !vvk 23.01.24
+     &  tt0(-1:ny), tt1(-1:ny)                                           !lk 19.09.07 !vvk 23.01.24
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
      &  k1(-1:nx,-1:ny), t1, t2, t3, tauVeff                             !lk 12.05.11 !som 22.06.21
       real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
