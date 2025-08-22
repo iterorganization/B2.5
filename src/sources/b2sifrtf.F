@@ -28,7 +28,7 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_frtf_nccorr
-     , , only : corr_fria, corr_tfia
+     , , only : corr_fria, corr_tfia, alpha_HS_style, g_HS_style
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -569,6 +569,12 @@ c   .... apply flux limit
         wrk = vol*hz*smbtfeal(:,:,0)
         call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
+        call my_out(70,nx,ny,corr_fria(:,:,isb),'b2sifrtf_cf'//chns)
+        call my_out(70,nx,ny,corr_tfia(:,:,isb),'b2sifrtf_ct'//chns)
+        call my_out(70,nx,ny,alpha_HS_style(:,:,isb),
+     &  'b2sifrtf_alpha'//chns)
+        call my_out(70,nx,ny,g_HS_style(:,:),
+     &  'b2sifrtf_g')
 
         wrk = vol*hz*(smbfrial_test(:,:,0)+
      &        smbfrial_test(:,:,1)*ua(:,:,isb)+

@@ -30,7 +30,7 @@
       use b2mod_zhfrtf                                                 !som 13.08.21
      1 , only : rho_A_rel, avm_u, z2n_xy
       use b2mod_b2zhco
-     1 , only : c_hTA_an_fl_save, c_R_TA
+     1 , only : c_hTA_an_fl_save, c_R_TA_an_save
       use b2mod_frtf_nccorr
      , , only : b2mod_frtf_nccorr_coefs
 #ifdef _OPENMP
@@ -567,7 +567,7 @@
         if (Zhdanov_nc.eq.1)
      &    call b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
      &      rz2,Zhdanov_nc_min,Zhdanov_nc_spec-1,Zhdanov_closure,
-     &      c_hTA_an_fl_save,c_R_TA,cimp2,z2n_xy,temp_xya,k2_mean)
+     &      c_hTA_an_fl_save,c_R_TA_an_save,cimp2,z2n_xy,zeff)
          call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,            !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17

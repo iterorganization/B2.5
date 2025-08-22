@@ -464,6 +464,8 @@
               c_R_TA(ix,iy,i,0:nspecies-1) =
      &         -c_R_TA_an(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
               c_R_TA(ix,iy,i,i) = c_R_TA(ix,iy,i,i)+temp
+              c_R_TA_an_save(ix,iy,i,0:nspecies-1)=
+     &        c_R_TA_an(i,0:nspecies-1)
             enddo
 
 *    ..the analytical viscous stress transport coefficient
