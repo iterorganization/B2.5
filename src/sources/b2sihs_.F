@@ -674,7 +674,7 @@
        endif                                                           !srv 29.08.02
       enddo
 
-      if (switch%b2sihs_shivis.eq.0) then
+      if (switch%b2sihs_shivis.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
