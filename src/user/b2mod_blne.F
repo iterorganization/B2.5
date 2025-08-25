@@ -312,7 +312,7 @@ c>>>
 c
 c*** Now add the data to the proper accumulators
           if (lcore_hlp) then !{
-            pwcrh_tmp=pwcrh_tmp-hlp_h
+            pwcrh_tmp=pwcrh_tmp-hlp_h+hlp_p
             pwcrp_tmp=pwcrp_tmp-hlp_p
           else !}{
             if (lcross_hlp) then !{
@@ -323,7 +323,7 @@ c*** Now add the data to the proper accumulators
           end if !}
           do j = 1,ntrgf_tmp !{
             if (ltarg_hlp(j)) then !{
-              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h
+              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h-hlp_p
               pwtio_tmp(j)=pwtio_tmp(j)+hlp_p
             end if !}
           end do !}
@@ -476,7 +476,7 @@ c***            kinetic energy of the plasma flow is still neglected!!!
 c
 c*** Totals
 c
-      pwcrt_tmp=pwcrh_tmp-pwcrn_tmp
+      pwcrt_tmp=pwcrh_tmp+pwcrp_tmp-pwcrn_tmp
       pwwlt_tmp=pwwlp_tmp+pwwln_tmp
       pwtgt_tmp=pwtgp_tmp+pwtgn_tmp
       pwrdt_tmp=radbr_tmp+radnu_tmp
