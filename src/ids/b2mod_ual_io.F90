@@ -2332,6 +2332,7 @@ contains
           do is = 1, istion(js)
             ks = ispion(js,is)
             call species( ks, spclabel, .false.)
+            call shrink_label(spclabel)
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%label = spclabel
             edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label = spclabel
@@ -2634,6 +2635,7 @@ contains
             do ks = 1, istion(js)
               is = ispion(js,ks)
               spclabel = trim(textin(is-1))
+              call shrink_label(spclabel)
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label = spclabel
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label = &
@@ -2704,6 +2706,7 @@ contains
             end do
             is = ispion(js,1)
             spclabel = trim(textin(is-1))
+            call shrink_label(spclabel)
             if (istion(js).eq.1) then
               edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -2763,6 +2766,7 @@ contains
               else
                 ion_label = textin(ispion(js,1)-1)
               end if
+              call shrink_label(ion_label)
               do ks = 2, istion(js)
                 p = index(textin(ispion(js,ks)-1),'+')
                 if (p.gt.1) then
@@ -3022,6 +3026,7 @@ contains
              do iss = 1, ks
                 iatm = b2eatcr(is) + iss - 1
                 spclabel = trim(textan(iatm-1))
+                call shrink_label(spclabel)
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                 allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
                 allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
@@ -3149,6 +3154,7 @@ contains
                ks = isstat(natmi+j)
                if (ks.eq.1) js = js + 1
                spclabel = trim(textmn(j-1))
+               call shrink_label(spclabel)
                nelems = count ( mlcmp( 1:natmi, j ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%element( nelems ) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element( nelems ) )
@@ -3352,6 +3358,7 @@ contains
                if (.not.is_neutral(is)) cycle
                j = j + 1
                call species( is, spclabel, .false. )
+               call shrink_label(spclabel)
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%element(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
                allocate( wall%global_quantities%neutral( j )%element(1) )
@@ -3540,6 +3547,7 @@ contains
             js = latmscl(is)
             ks = isstat(is)
             spclabel = trim(textan(is-1))
+            call shrink_label(spclabel)
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
             call fill_neutral_element( eb2atcr(is), js, &
               &  radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
@@ -3566,6 +3574,7 @@ contains
             ks = isstat(natmi+j)
             if (ks.eq.1) js = js + 1
             spclabel = trim(textmn(j-1))
+            call shrink_label(spclabel)
             nelems = count ( mlcmp( 1:natmi, j ) > 0 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element( nelems ) )
             call fill_molecule_elements( nelems, j, &
@@ -3610,6 +3619,7 @@ contains
             do ks = 1, istion(js)
               is = ispion(js,ks)
               spclabel = trim(textin(is-1))
+              call shrink_label(spclabel)
               allocate( radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%label(1) )
               radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%label = spclabel
             end do
@@ -3618,12 +3628,14 @@ contains
             do ks = 1, istion(js)
               is = ispion(js,ks)
               spclabel = trim(textin(is-1))
+              call shrink_label(spclabel)
               allocate( radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%name(1) )
               radiation%process(4)%ggd( time_sind )%ion( js )%state( ks )%name = spclabel
             end do
 #endif
             is = ispion(js,1)
             spclabel = trim(textin(is-1))
+            call shrink_label(spclabel)
             nelems = count ( micmp( 1:natmi, is ) > 0 )
             allocate( radiation%process(4)%ggd( time_sind )%ion( js )%element( nelems ) )
             call fill_mol_ion_elements( nelems, is, &
@@ -3650,6 +3662,7 @@ contains
               else
                 ion_label = textin(ispion(js,1)-1)
               end if
+              call shrink_label(ion_label)
               do ks = 2, istion(js)
                 p = index(textin(ispion(js,ks)-1),'+')
                 if (p.gt.1) then
@@ -6887,6 +6900,7 @@ contains
 #endif
           do is = 1, nfluids(js)
             call species( ks, spclabel, .false.)
+            call shrink_label(spclabel)
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             batch_profiles%ggd( batch_index )%ion( js )%state( is )%label = spclabel
             batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%label = spclabel
@@ -10041,6 +10055,7 @@ contains
     do is = 0, ns-1
        allocate(edgecpo%species(is+1)%label(1))
        call species(is, spclabel, .false.)
+       call shrink_label(spclabel)
        edgecpo%species(is+1)%label = spclabel
        edgecpo%species(is+1)%amn = am(is)
        edgecpo%species(is+1)%zn = zn(is)
