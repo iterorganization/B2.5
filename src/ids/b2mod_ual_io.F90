@@ -2679,51 +2679,24 @@ contains
               allocate( &
                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%element( nelems ) )
 #endif
+              call fill_mol_ion_elements( nelems, is, &
+                &  edge_profiles%ggd( time_sind )%ion( js )%element(:) )
+              call fill_mol_ion_elements( nelems, is, &
+                &  edge_transport%model(1)%ggd( time_sind )%ion( js )%element(:) )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+              call fill_mol_ion_elements( nelems, is, &
+                &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%element(:) )
+              call fill_mol_ion_elements( nelems, is, &
+                &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%element(:) )
+              call fill_mol_ion_elements( nelems, is, &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%element(:) )
+              call fill_mol_ion_elements( nelems, is, &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%element(:) )
+#endif
               do i = 1, nsources
                 allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%element( nelems ) )
-              end do
-              i = 0
-              do k = 1, natmi
-                if ( micmp( k, is ) > 0 ) then
-                  i = i + 1
-                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
-#if IMAS_MAJOR_VERSION < 4
-                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
-#else
-                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
-#else
-                  edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
-#endif
-                  do ii = 1, nsources
-                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
-#if IMAS_MAJOR_VERSION < 4
-                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
-#else
-                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%multiplicity = &
-                        &   micmp(k,is)
-#else
-                    edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%atoms_n = &
-                        &   micmp(k,is)
-#endif
-                  end do
-                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
-#if IMAS_MAJOR_VERSION < 4
-                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
-#else
-                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
-#else
-                  edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
-#endif
-                end if
+                call fill_mol_ion_elements( nelems, is, &
+                  &  edge_sources%source(i)%ggd( time_sind )%ion( js )%element(:) )
               end do
             end do
             is = ispion(js,1)
@@ -3195,6 +3168,22 @@ contains
                allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
                  &  neutral( js )%element( nelems ) )
 #endif
+               call fill_molecule_elements( nelems, j, &
+                 &  edge_profiles%ggd( time_sind )%neutral( js )%element(:) )
+               call fill_molecule_elements( nelems, j, &
+                 &  edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(:) )
+               call fill_molecule_elements_constant( nelems, j, &
+                 &  wall%global_quantities%neutral( js )%element(:) )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+               call fill_molecule_elements( nelems, j, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%element(:) )
+               call fill_molecule_elements( nelems, j, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%element(:) )
+               call fill_molecule_elements( nelems, j, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%element(:) )
+               call fill_molecule_elements( nelems, j, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%element(:) )
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
@@ -3293,6 +3282,8 @@ contains
                    &     "Kinetic neutral molecules from Eirene"
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element( nelems ) )
+                  call fill_molecule_elements( nelems, j, &
+                    &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(:) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
@@ -3304,55 +3295,6 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%name = spclabel
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%name = spclabel
 #endif
-               end do
-               i = 0
-               do k = 1, natmi
-                  if (mlcmp( k, j ) > 0 ) then
-                      i = i + 1
-                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
-#if IMAS_MAJOR_VERSION < 4
-                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                         &   real(nchara(k),IDS_real)
-#else
-                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                         &   nchara( k )
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
-                         &   mlcmp(k,j)
-#else
-                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
-                         &   mlcmp(k,j)
-#endif
-                      do icnt = 1, nsources
-                         edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%a = &
-                            &   nmassa( k )
-#if IMAS_MAJOR_VERSION < 4
-                         edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                            &   real(nchara(k),IDS_real)
-#else
-                         edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                            &   nchara( k )
-#endif
-                         edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
-                            &   mlcmp(k,j)
-                      end do
-                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
-#if IMAS_MAJOR_VERSION < 4
-                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                         &   real(nchara(k),IDS_real)
-#else
-                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
-                         &   nchara( k )
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
-                         &   mlcmp(k,j)
-#else
-                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
-                         &   mlcmp(k,j)
-#endif
-                   end if
                end do
                ion_label = trim(spclabel)//'+'
                i = 1
@@ -3383,15 +3325,6 @@ contains
                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%multiple_states_flag = 1
 #endif
                do i = 1, nsources
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label = &
-                      &    textmn( j-1 )
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%name = &
-                      &    textmn( j-1 )
-#endif
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = k
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3709,20 +3642,8 @@ contains
             spclabel = trim(textmn(j-1))
             nelems = count ( mlcmp( 1:natmi, j ) > 0 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element( nelems ) )
-            i = 0
-            do k = 1, natmi
-              if (mlcmp( k, j ) > 0 ) then
-                i = i + 1
-                radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
-#if IMAS_MAJOR_VERSION < 4
-                radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%z_n = real(nchara(k),IDS_real)
-#else
-                radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%z_n = nchara( k )
-#endif
-                radiation%process(3)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
-                    &   mlcmp(k,j)
-              end if
-            end do
+            call fill_molecule_elements( nelems, j, &
+              &  radiation%process(3)%ggd( time_sind )%neutral( js )%element(:) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
@@ -3786,19 +3707,8 @@ contains
             spclabel = trim(textin(is-1))
             nelems = count ( micmp( 1:natmi, is ) > 0 )
             allocate( radiation%process(4)%ggd( time_sind )%ion( js )%element( nelems ) )
-            i = 0
-            do k = 1, natmi
-              if ( micmp( k, is ) > 0 ) then
-                i = i + 1
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
-#if IMAS_MAJOR_VERSION < 4
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = real(nchara(k),IDS_real)
-#else
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-#endif
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
-              end if
-            end do
+            call fill_mol_ion_elements( nelems, is, &
+              &  radiation%process(4)%ggd( time_sind )%ion( js )%element(:) )
             if (istion(js).eq.1) then
               radiation%process(4)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
@@ -8485,6 +8395,92 @@ contains
 
     return
     end subroutine fill_neutral_element_constant
+
+#ifdef B25_EIRENE
+    subroutine fill_molecule_elements( nelems, imol, neutral_element )
+    implicit none
+    integer, intent(in) :: nelems !< Number of elements in molecule
+    integer, intent(in) :: imol !< Eirene molecular species index
+    type(ids_plasma_composition_neutral_element) :: neutral_element(nelems)
+    integer :: i, k
+
+    i = 0
+    do k = 1, natmi
+      if (mlcmp( k, imol ) > 0 ) then
+        i = i + 1
+        neutral_element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+        neutral_element(i)%z_n = real(nchara(k),IDS_real)
+#else
+        neutral_element(i)%z_n = nchara(k)
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        neutral_element(i)%multiplicity = mlcmp(k,imol)
+#else
+        neutral_element(i)%atoms_n = mlcmp(k,imol)
+#endif
+      end if
+    end do
+
+    return
+    end subroutine fill_molecule_elements
+
+    subroutine fill_molecule_elements_constant( nelems, imol, neutral_element )
+    implicit none
+    integer, intent(in) :: nelems !< Number of elements in molecule
+    integer, intent(in) :: imol !< Eirene molecular species index
+    type(ids_plasma_composition_neutral_element_constant) :: neutral_element(nelems)
+    integer :: i, k
+
+    i = 0
+    do k = 1, natmi
+      if (mlcmp( k, imol ) > 0 ) then
+        i = i + 1
+        neutral_element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+        neutral_element(i)%z_n = real(nchara(k),IDS_real)
+#else
+        neutral_element(i)%z_n = nchara(k)
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        neutral_element(i)%multiplicity = mlcmp(k,imol)
+#else
+        neutral_element(i)%atoms_n = mlcmp(k,imol)
+#endif
+      end if
+    end do
+
+    return
+    end subroutine fill_molecule_elements_constant
+
+    subroutine fill_mol_ion_elements( nelems, iion, neutral_element )
+    implicit none
+    integer, intent(in) :: nelems !< Number of elements in molecule
+    integer, intent(in) :: iion !< Eirene molecular ion species index
+    type(ids_plasma_composition_neutral_element) :: neutral_element(nelems)
+    integer :: i, k
+
+    i = 0
+    do k = 1, natmi
+      if (micmp( k, iion ) > 0 ) then
+        i = i + 1
+        neutral_element(i)%a = nmassa( k )
+#if IMAS_MAJOR_VERSION < 4
+        neutral_element(i)%z_n = real(nchara(k),IDS_real)
+#else
+        neutral_element(i)%z_n = nchara(k)
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        neutral_element(i)%multiplicity = micmp(k,iion)
+#else
+        neutral_element(i)%atoms_n = micmp(k,iion)
+#endif
+      end if
+    end do
+
+    return
+    end subroutine fill_mol_ion_elements
+#endif
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     subroutine fill_summary_data( summary, wall, time_sind )
