@@ -202,7 +202,8 @@ module b2mod_ual_io
      &          ids_generic_grid_dynamic,                                    &
      &          ids_plasma_composition_neutral_element,                      &
      &          ids_plasma_composition_neutral_element_constant,             &
-     &          ids_wall
+     &          ids_wall,                                                    &
+     &          ids_identifier_dynamic_aos3
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
      & , only : ids_dataset_description
@@ -2047,6 +2048,7 @@ contains
           & electron_power(1)
         wall%global_quantities%electrons%power_outer_target( time_sind ) = &
           & electron_power(maxval(mpg%strDiv))
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         allocate( &
           &  wall%global_quantities%power_inner_target_ion_total( num_time_slices ) )
         wall%global_quantities%power_inner_target_ion_total( time_sind ) = &
@@ -2059,6 +2061,7 @@ contains
           &  wall%global_quantities%power_density_outer_target_max( num_time_slices ) )
         wall%global_quantities%power_density_outer_target_max( time_sind ) = &
           & power_flux_peak(maxval(mpg%strDiv))
+#endif
         deallocate( ion_power )
         deallocate( electron_power )
         deallocate( power_incident )
@@ -3056,24 +3059,22 @@ contains
                 wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%state( iss )%name = &
                   &  spclabel
 #endif
-                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )% &
-                   &      neutral_type%name(1) )
-                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( iss )% &
-                   &      neutral_type%description(1) )
-                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%name = &
-                   &     "Kinetic"
-                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%index = -1
-                edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
-                   &     "Kinetic neutral atoms from Eirene"
-                 allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )% &
-                   &      neutral_type%name(1) )
-                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )% &
-                   &      neutral_type%description(1) )
-                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%name = &
-                   &     "Kinetic"
-                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%index = -1
-                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
-                   &     "Kinetic neutral atoms from Eirene"
+                call fill_atom_neutral_type( iatm, &
+                  &  edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type )
+                call fill_atom_neutral_type( iatm, &
+                  &  edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+                call fill_atom_neutral_type( iatm, &
+                  &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( iss )%neutral_type )
+                call fill_atom_neutral_type( iatm, &
+                  &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%state( iss )%neutral_type )
+                call fill_atom_neutral_type( iatm, &
+                  &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%       &
+                  &  neutral( js )%state( iss )%neutral_type )
+                call fill_atom_neutral_type( iatm, &
+                  &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                  &  neutral( js )%state( iss )%neutral_type )
+#endif
                 edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 do i = 1, nsources
@@ -3084,15 +3085,8 @@ contains
                    allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%name(1) )
                    edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%name = spclabel
 #endif
-                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )% &
-                      &      neutral_type%name(1) )
-                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )% &
-                      &      neutral_type%description(1) )
-                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%name = &
-                      &     "Kinetic"
-                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%index = -1
-                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
-                      &     "Kinetic neutral atoms from Eirene"
+                   call fill_atom_neutral_type( iatm, &
+                  &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type )
                    if (ks.gt.1) then
                       edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                    else
@@ -3262,24 +3256,24 @@ contains
                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%state( ks )%name = &
                  &  spclabel
 #endif
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
-                   &      neutral_type%name(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
-                   &      neutral_type%description(1) )
-               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                   &     "Kinetic"
-               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                   &     "Kinetic neutral molecules from Eirene"
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
-                   &     neutral_type%name(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
-                   &     neutral_type%description(1) )
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                   &     "Kinetic"
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                   &     "Kinetic neutral molecules from Eirene"
+               call fill_molecule_type( &
+                 &  edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type )
+               call fill_molecule_type( &
+                 &  edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+               call fill_molecule_type( &
+                 &  wall%description_ggd(1)%ggd( time_sind )%recycling% &
+                 &  neutral( js )%state( ks )%neutral_type )
+               call fill_molecule_type( &
+                 &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+                 &  neutral( js )%state( ks )%neutral_type )
+               call fill_molecule_type( &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic% &
+                 &  neutral( js )%state( ks )%neutral_type )
+               call fill_molecule_type( &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                 &  neutral( js )%state( ks )%neutral_type )
+#endif
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element( nelems ) )
                   call fill_molecule_elements( nelems, j, &
@@ -3295,6 +3289,8 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%name = spclabel
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%name = spclabel
 #endif
+                  call fill_molecule_type( &
+                    &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type )
                end do
                ion_label = trim(spclabel)//'+'
                i = 1
@@ -3327,15 +3323,6 @@ contains
                do i = 1, nsources
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = k
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
-                      &      neutral_type%name(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
-                      &      neutral_type%description(1) )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                      &     "Kinetic"
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                      &     "Kinetic neutral molecules from Eirene"
                end do
             end do
 #endif
@@ -3464,41 +3451,19 @@ contains
                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%name = spclabel
                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%name = spclabel
 #endif
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
-                   &      neutral_type%name(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
-                   &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
-                   &      neutrals_identifier%thermal
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &      neutrals_identifier%name( neutrals_identifier%thermal )
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &      neutrals_identifier%description( neutrals_identifier%thermal )
-#else
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &     "Thermal"
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &     "Fluid neutral species from B2.5"
-#endif
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
-                   &      neutral_type%name(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
-                   &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
-                   &      neutrals_identifier%thermal
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &      neutrals_identifier%name( neutrals_identifier%thermal )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &      neutrals_identifier%description( neutrals_identifier%thermal )
-#else
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &     "Thermal"
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &     "Fluid neutral species from B2.5"
+               call fill_atom_neutral_type( js, &
+                 &  edge_profiles%ggd( time_sind )%neutral( j )%state( 1 )%neutral_type )
+               call fill_atom_neutral_type( js, &
+                 &  edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+               call fill_atom_neutral_type( js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1)%neutral_type )
+               call fill_atom_neutral_type( js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1)%neutral_type )
+               call fill_atom_neutral_type( js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%neutral_type )
+               call fill_atom_neutral_type( js, &
+                 &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%neutral_type )
 #endif
                edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
                edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
@@ -3530,24 +3495,8 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%name = species_list( js )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
 #endif
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
-                     &      neutral_type%name(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
-                     &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
-                     &      neutrals_identifier%thermal
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                     &      neutrals_identifier%name( neutrals_identifier%thermal )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                     &      neutrals_identifier%description( neutrals_identifier%thermal )
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                     &     "Thermal"
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                     &     "Fluid neutral species from B2.5"
-#endif
+                  call fill_atom_neutral_type( js, &
+                    &  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
                end do
@@ -3572,24 +3521,8 @@ contains
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
 #endif
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
-                   &     neutral_type%name(1) )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
-                   &     neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
-                   &     neutrals_identifier%thermal
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &     neutrals_identifier%name( neutrals_identifier%thermal )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &     neutrals_identifier%description( neutrals_identifier%thermal )
-#else
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                   &     "Thermal"
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                   &     "Fluid neutral species from B2.5"
-#endif
+               call fill_atom_neutral_type( js, &
+                 &  radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type )
 #endif
             end do
         end if
@@ -3621,15 +3554,8 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%name = species_list( js )
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = spclabel
 #endif
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%description(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                &     "Kinetic"
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                &     "Kinetic neutral atoms from Eirene"
+            call fill_atom_neutral_type( is, &
+              &  radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type )
             radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = js
             radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
           end do
@@ -3655,16 +3581,9 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%name = spclabel
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = spclabel
 #endif
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%description(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                &     "Kinetic"
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                &     "Kinetic neutral molecules from Eirene"
-            ion_label = trim(textmn( j-1 ))//'+'
+            call fill_molecule_type( &
+              &  radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type )
+            ion_label = trim(spclabel)//'+'
             i = 1
             match_found = .false.
             do while (.not.match_found.and.i.le.nioni)
@@ -8396,6 +8315,36 @@ contains
     return
     end subroutine fill_neutral_element_constant
 
+    subroutine fill_atom_neutral_type( iatm, neutral_type )
+    implicit none
+    integer, intent(in) :: iatm !< Eirene atom species index or
+                                !< B2.5 species index
+    type(ids_identifier_dynamic_aos3) :: neutral_type
+    character(len=13)  :: spclabel   !< Species label
+
+    if (switch%use_eirene.ne.0) then
+      neutral_type%index = -1
+      allocate( neutral_type%name(1) )
+      neutral_type%name = "Kinetic"
+      allocate( neutral_type%description(1) )
+      neutral_type%description = "Kinetic neutral atoms from Eirene"
+    else
+      allocate( neutral_type%name(1) )
+      allocate( neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+      neutral_type%index = neutrals_identifier%thermal
+      neutral_type%name = neutrals_identifier%name( neutrals_identifier%thermal )
+      neutral_type%description = neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+      neutral_type%index = 2
+      neutral_type%name = "Thermal"
+      neutral_type%description = "Fluid neutral species from B2.5"
+#endif
+    end if
+
+    return
+    end subroutine fill_atom_neutral_type
+
 #ifdef B25_EIRENE
     subroutine fill_molecule_elements( nelems, imol, neutral_element )
     implicit none
@@ -8452,6 +8401,19 @@ contains
 
     return
     end subroutine fill_molecule_elements_constant
+
+    subroutine fill_molecule_type( neutral_type )
+    implicit none
+    type(ids_identifier_dynamic_aos3) :: neutral_type
+
+    neutral_type%index = -1
+    allocate( neutral_type%name(1) )
+    neutral_type%name = "Kinetic"
+    allocate( neutral_type%description(1) )
+    neutral_type%description = "Kinetic neutral molecules from Eirene"
+
+    return
+    end subroutine fill_molecule_type
 
     subroutine fill_mol_ion_elements( nelems, iion, neutral_element )
     implicit none
