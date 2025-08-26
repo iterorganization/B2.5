@@ -201,6 +201,7 @@ module b2mod_ual_io
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic,                                    &
      &          ids_plasma_composition_neutral_element,                      &
+     &          ids_plasma_composition_neutral_element_constant,             &
      &          ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
@@ -2974,6 +2975,8 @@ contains
                &  edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
              call fill_neutral_element( is, js, &
                &  edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
+             call fill_neutral_element_constant( is, js, &
+               &  wall%global_quantities%neutral( js )%element(1) )
 #if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
              call fill_neutral_element( is, js, &
                &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%element(1) )
@@ -3442,6 +3445,8 @@ contains
                  &  edge_profiles%ggd( time_sind )%neutral( j )%element(1) )
                call fill_neutral_element( is, js, &
                  &  edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
+               call fill_neutral_element_constant( is, js, &
+                 &  wall%global_quantities%neutral( j )%element(1) )
 #if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
                call fill_neutral_element( is, js, &
                  &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%element(1) )
@@ -8459,6 +8464,27 @@ contains
 
     return
     end subroutine fill_neutral_element
+
+    subroutine fill_neutral_element_constant( is, js, neutral_constant )
+    implicit none
+    integer, intent(in) :: is !< B2.5 species index
+    integer, intent(in) :: js !< B2.5 isonuclear species index
+    type(ids_plasma_composition_neutral_element_constant) :: neutral_constant
+
+    neutral_constant%a = am(is)
+#if IMAS_MAJOR_VERSION < 4
+    neutral_constant%z_n = zn(is)
+#else
+    neutral_constant%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    neutral_constant%multiplicity = 1.0_IDS_real
+#else
+    neutral_constant%atoms_n = 1
+#endif
+
+    return
+    end subroutine fill_neutral_element_constant
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     subroutine fill_summary_data( summary, wall, time_sind )
