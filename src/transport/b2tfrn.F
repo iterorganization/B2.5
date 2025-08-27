@@ -78,6 +78,7 @@
       integer, save :: drift_style
       integer, save :: Zhdanov_closure = 0                               !som 09.07.21
       integer, save :: Zhdanov_test = 0                                  !som 09.07.21
+      integer, save :: Zhdanov_nc = 0
       integer, save :: Zhdanov_vel_heat = 1                              !som 09.07.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -149,6 +150,7 @@
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 09.07.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 09.07.21
+        call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
         call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 09.07.21
         if (redef_gmtry.eq.0) then
           drift_style = 1
