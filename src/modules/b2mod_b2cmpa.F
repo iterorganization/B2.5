@@ -6,14 +6,14 @@
 * DPC: constant declaration now in b2mod_constants
       integer nsdecl
       parameter (nsdecl=DEF_NSD)
-      integer nspecies
-      integer partition_number(0:nsdecl-1)
+      integer, save :: nspecies
+      integer, save :: partition_number(0:nsdecl-1)
       real (kind=R8), save ::
      *  zn(0:nsdecl-1), am(0:nsdecl-1),
      &  zamax(0:nsdecl-1), zamin(0:nsdecl-1),
      &  potmin(0:nsdecl-1), potmax(0:nsdecl-1),
      &  potimin(0:nsdecl-1), potimax(0:nsdecl-1)
-      logical is_neutral(0:nsdecl-1)
+      logical, save :: is_neutral(0:nsdecl-1)
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
 

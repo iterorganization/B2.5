@@ -40,8 +40,7 @@
 *   ..local variables
       integer n2, ix, iy, is
       integer, save :: ncall = 0
-      real (kind=R8) ::
-     &  facdriftm
+      real (kind=R8) :: facdriftm
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
       integer, save :: drift_style                                       !IYS 11.02.2020
       integer, save :: no_current = 0

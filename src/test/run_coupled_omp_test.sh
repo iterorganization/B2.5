@@ -130,14 +130,26 @@ function run_test {
   # Set number of threads, compact pinning, and stack size
   export OMP_NUM_THREADS=$4
   export KMP_AFFINITY=verbose,norespect,compact
-  export KMP_STACKSIZE=32MB
+  if [ -z "$KMP_STACKSIZE" ]; then
+    export KMP_STACKSIZE=128MB
+  fi
+  if [ -z "$OMP_STACKSIZE" ]; then
+    if [ "$COMPILER" != "ifort64" ]; then
+      export OMP_STACKSIZE=128MB
+    fi
+  fi
+  if [ -n "$SOLPS_MPI" ]; then
+    echo "Found MPI mode"
+    MPI_OPTS='-m "mpiexec -np 1"'
+    echo b2run $MPI_OPTS b2mn
+  fi
 
   if [ $4 -eq 1 ]; then
     echo Running B2.5-Eirene in serial mode
-    b2run b2mn 2>&1 | tee run.log
+    b2run $MPI_OPTS b2mn 2>&1 | tee run.log
   else
     echo Running B2.5-Eirene using $4 threads
-    b2run -t $4 b2mn 2>&1 | tee run.log
+    b2run $MPI_OPTS -t $4 b2mn 2>&1 | tee run.log
   fi
   cd ..
 }

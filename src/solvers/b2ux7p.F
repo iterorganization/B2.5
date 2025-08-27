@@ -7,7 +7,6 @@
       use b2mod_ilutern_7
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv
-!      use b2mod_ma28
       use b2mod_indirect
       use b2mod_openmp
       use b2mod_subsys
@@ -65,7 +64,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, itmax, iters, itpar, cpu
+      integer ncall, style, itmax, iters, itpar, cpu
       integer, save :: nz                                      !srv 29.05.02
       parameter (itmax=100)
 #ifdef _OPENMP
@@ -74,10 +73,6 @@
       real (kind=R4) :: cpu_start, cpu_end
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
-      real (kind=R8)
-     *  , allocatable, save :: aaf(:),wrk0(:),wrk1(:),wrk2(:)
-      integer, allocatable, save :: iwrk(:)
-      integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter
@@ -87,9 +82,10 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
-      !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
+#ifdef _OPENMP
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+#endif
+      data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/               !srv 26.12.17
 
 *-----------------------------------------------------------------------
 *.computation
@@ -97,6 +93,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2ux7p')                                       !srv 11.01.00
+*   ..test nx, ny, itcnt
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2ux7p_style', style)                         !srv 11.01.00
@@ -105,65 +104,6 @@
        call ipgetr ('b2ux7p_acpar', acpar)                         !srv 11.01.00
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux7p_cpu', cpu)                             !srv 11.01.00
-       if(style.eq.2) then
-         mult_nonzero=10
-         mult_solvdim=15
-         mult_solvdim1=10
-         call ipgeti ('b2ux7p_mult_nonzero', mult_nonzero)         !srv 11.01.00
-         call ipgeti ('b2ux7p_mult_solvdim', mult_solvdim)         !srv 11.01.00
-         call ipgeti ('b2ux7p_mult_solvdim1', mult_solvdim1)       !srv 11.01.00
-         nnd=(nx+2)*(ny+2)
-         n_nonzeros=mult_nonzero*nnd
-         solvdim=mult_solvdim*n_nonzeros
-         solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_7diag                           !srv 11.01.00
-         call iniilu_7(nx+2,ny+2)                                  !srv 11.01.00
-         nltrsol=2
-         call ipgeti ('b2ux7p_nltrsol', nltrsol)                   !srv 11.01.00
-       endif
-       if(style.eq.3) then                                         !srv 29.05.02 {
-         nnd=(nx+2)*(ny+2)
-         nnd_sdrv  = (nx+2)*(ny+2)
-         n_nz_sdrv = 4*nnd_sdrv
-!         nsp = 3*nnd + 12*n_nz_sdrv  ! was 7*n_nz_sdrv without vis per !srv 13.02.03
-         nsp = 3*nnd + 16*n_nz_sdrv                                !srv 29.12.15
-         call alloc_b2mod_ysmp_sdrv
-         ia = 0                                                    !srv 15.05.07
-         ja = 0                                                    !srv 15.05.07
-       endif                                                       !srv 29.05.02 }
-      endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, itcnt
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (0.le.itcnt, 'faulty argument itcnt')
-*   ..obtain work space
-      if (ncall.eq.0) then
-        write(*,*)
-     .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
-        if (style.eq.0) then
-          call xerrab ('Style not applicable to 7-point stencil!')
-*    ..obtain workspace for iluter
-          allocate(aaf(1:n2*5))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:n2))
-          allocate(wrk2(1:n2))
-          allocate(iwrk(1:1))
-        else if (style.eq.1) then
-          call xerrab ('Style not applicable to 7-point stencil!')
-*    ..obtain workspace for slv5pt
-          allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:1))
-          allocate(wrk2(1:1))
-          allocate(iwrk(1:n2))
-        else if (style.eq.2) then
-          continue
-        else if (style.eq.3) then
-          continue
-        endif
-        write(*,*)
-     .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -180,7 +120,7 @@
         stop 'STOP: iluter not parallelised, re-run in serial'
        else
         call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
-     &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+     &   corfun, nrmc, aaf_7p, wrk0_7p, wrk1_7p, wrk2_7p)
        endif
       else if (style.eq.1) then
 *    ..use slv5pt
@@ -189,7 +129,7 @@
         stop 'STOP: slv5pt not parallelised, re-run in serial'
        else
         call slv5pt (nx+2, ny+2, aa7, resfun, iters, corfun, nrmc,
-     &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+     &   min(nx+2,ny+2), aaf_7p, wrk0_7p, iwrk_7p)
        endif
       else if (style.eq.2) then
 *    ..use ma28
@@ -262,7 +202,9 @@
       logical, save :: lfirst=.true.
       integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
       real (kind=R8) :: temp
-      !$OMP THREADPRIVATE(lfirst)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(lfirst)
+#endif
       if (lfirst) then
        indexes=0
        nxp2=nx+2
@@ -274,7 +216,7 @@
            ner=0
            i=i+1
            jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-           if( jak.gt.i .and. aa7(ix,iy,-1) .ne. 0.0e0_R8 ) then
+           if( jak.gt.i .and. aa7(ix,iy,-1) .ne. 0.0_R8 ) then
              k = k+1
              a(k) = aa7(ix,iy,-1)
              indexes(1,k)=ix
@@ -283,7 +225,7 @@
              ja(k) = jak
              ner = ner+1
            endif
-           if( aa7(ix,iy,0) .ne. 0.0e0_R8 ) then
+           if( aa7(ix,iy,0) .ne. 0.0_R8 ) then
              k = k+1
              a(k) = aa7(ix,iy,0)
              indexes(1,k)=ix
@@ -293,7 +235,7 @@
              ner = ner+1
            endif
            jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-           if( jak.gt.i .and. aa7(ix,iy,1) .ne. 0.0e0_R8 ) then
+           if( jak.gt.i .and. aa7(ix,iy,1) .ne. 0.0_R8 ) then
              k = k+1
              a(k) = aa7(ix,iy,1)
              indexes(1,k)=ix
@@ -302,7 +244,7 @@
              ja(k) = jak
              ner = ner+1
            endif
-           if( aa7(ix,iy,2) .ne. 0.0e0_R8 ) then
+           if( aa7(ix,iy,2) .ne. 0.0_R8 ) then
              k = k+1
              a(k) = aa7(ix,iy,2)
              indexes(1,k)=ix
@@ -311,7 +253,7 @@
              ja(k) =2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
              ner = ner+1
            endif
-           if( aa7(ix,iy,3) .ne. 0.0e0_R8 ) then
+           if( aa7(ix,iy,3) .ne. 0.0_R8 ) then
              k = k+1
              a(k) = aa7(ix,iy,3)
              indexes(1,k)=ix

@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_version
+      implicit none
 
 c     max. number of ionisation stages
       integer, save :: nzdecl
@@ -21,10 +22,19 @@ c     max. number of ionisation stages
      *  dd(:,:,:), vvn(:,:,:),
      *  chi(:,:,:), vwt(:,:,:)
 
+      real (kind=R8), save ::
+     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
+     &   r2i
+      real (kind=R8), allocatable, save ::
+     &   fm(:), cosbl(:), cosb2(:), sinbl(:), sinb2(:)
+
       contains
 
       subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,mmxd)
-      integer nxd,nyd,nsd,nzd,mmxd
+      use b2mod_ranges
+      implicit none
+      integer nxd, nyd, nsd, mmxd
+      integer nzd
 
       nzdecl=nint(maxval(zn(0:nsd-1)))+1
       nzd=nzdecl
@@ -49,6 +59,12 @@ c     max. number of ionisation stages
       allocate(vvn(0:nsd,0:nzd-1,-1:nyd))
       allocate(chi(0:nsd,0:nzd-1,-1:nyd))
       allocate(vwt(0:nsd,0:nzd-1,-1:nyd))
+
+      allocate(fm(0:nmaxgr-1))
+      allocate(cosbl(0:nmaxgr-1))
+      allocate(cosb2(0:nmaxgr-1))
+      allocate(sinbl(0:nmaxgr-1))
+      allocate(sinb2(0:nmaxgr-1))
 
       end subroutine alloc_b2mod_neoclassical
 
@@ -76,6 +92,12 @@ c     max. number of ionisation stages
       deallocate(vvn)
       deallocate(chi)
       deallocate(vwt)
+
+      deallocate(fm)
+      deallocate(cosbl)
+      deallocate(cosb2)
+      deallocate(sinbl)
+      deallocate(sinb2)
 
       return
       end subroutine dealloc_b2mod_neoclassical

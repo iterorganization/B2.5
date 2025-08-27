@@ -233,7 +233,7 @@
 *     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 *     local expression
 *       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-*         cfdna(2,is)*df0(,)+
+*         cfdna(2,is)*df0(,,is)+
 *         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.na; the transport equation for species (is) contains a term
@@ -627,7 +627,7 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read physics common

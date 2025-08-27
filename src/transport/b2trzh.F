@@ -58,7 +58,7 @@
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),         !som 22.12.23
      &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
@@ -254,6 +254,10 @@
       endif
 
 *   ..main part
+
+      eta_cl_a_only    = 0.0_R8     !srv 05.07.24 {
+      eta_cl_a_only_fl = 0.0_R8     !srv 05.07.24 }
+
 *   ..calculate the average Z**2*n and density of each isonuclear sequence
       call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
 
@@ -327,19 +331,16 @@
             hci0_al(ix,iy,0:nspecies-1) = wrkc
 *    ..calculate the velocity parts of heat flux and R-transport coefficient
             call b2trhw(nspecies, G2, G8, mum,
-     &       Ainv, Ainv_mdf,
-     &       c_hwA(0:nspecies-1,0:nspecies-1),
-     &       c_rwA(0:nspecies-1,0:nspecies-1))
+     &       Ainv, Ainv_mdf, c_hwA, c_rwA)
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
-     &        wrkcc)
+     &       wrkcc)
             c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 *    ..calculate the thermal force transport coefficient with flux limiting
             wrkG2 = G2*tf_ton_mat
             wrkG8 = G8*tf_ton_mat
             call b2trtf(nspecies, wrkG2, wrkG8,
-     &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
-     &        wrkcc)
+     &       mum, mdm, Ainv_fl, Ainv_mdf_fl, wrkcc)
             c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1
@@ -519,9 +520,7 @@
 
 *    ..calculate the friction force transport coefficient
           wrkc = z2n_xy(ix,iy,0:nspecies-1)
-          call b2trfr(nspecies, mum, rmu, wrkc,
-     &     c_hwA(0:nspecies-1,0:nspecies-1),
-     &     c_rwA(0:nspecies-1,0:nspecies-1),
+          call b2trfr(nspecies, mum, rmu, wrkc, c_hwA, c_rwA,
      &     wrkcB, wrkcA, wrkcc)
           c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
@@ -907,10 +906,10 @@
         do iy = -1, ny
           do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
-              cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
-              cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
+              cvsahz_uBdp_luc(ix,iy,0,i) =
+     &         cvsahz_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
+              cvsa_uBdp_luc(ix,iy,0,i) =
+     &         cvsa_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
             else
               cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)
               cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)

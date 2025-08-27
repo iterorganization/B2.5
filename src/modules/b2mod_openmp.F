@@ -48,6 +48,16 @@
       get_stacksize_s = trim(stacksize)
 #endif
       end function
+#elif defined GFORTRAN
+      function get_stacksize_s()
+      character*12 get_stacksize_s
+      character*12 stacksize
+      logical streql
+      external streql
+      call getenv ('OMP_STACKSIZE', stacksize)
+      if (streql(stacksize,' ')) stacksize = '128 MB'
+      get_stacksize_s = trim(stacksize)
+      end function
 #endif
 
       subroutine print_openmp_info()
@@ -59,7 +69,7 @@
         write(*,'(A,I3,A)') 'B2.5 running in OpenMP mode using ',
      &   get_num_threads(),' thread.'
       end if
-#if !defined GFORTRAN && !defined NAGFOR && !defined PGF90
+#if !defined NAGFOR && !defined PGF90
       if (get_num_threads().gt.1)
      & write(*,*) ' Stack size allotted per thread is : ',
      & get_stacksize_s()

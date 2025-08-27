@@ -27,8 +27,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ucb/cpp -C
@@ -36,6 +36,7 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C # -real_size 64
 else
@@ -49,6 +50,7 @@ DBLSED = sed -e s:\#PREC\#:d:g
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -61,8 +63,10 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
+LN = ${FN}
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

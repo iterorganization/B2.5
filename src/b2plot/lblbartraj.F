@@ -4,8 +4,8 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) :: ZLOD,ZHID
       integer linlog
       real zlo, zhi
@@ -133,8 +133,8 @@ C =====================================================================
 
       subroutine lblbartrajcol(ZVALIN,icol)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8), intent(in) :: zvalin
       integer, intent(out) :: icol
 

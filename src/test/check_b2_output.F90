@@ -139,7 +139,13 @@ module check_module_local
     write (*,'(a29,a12,E14.5E3)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
     avg_abs_val = avg_abs_val / ub
     write (*,'(a29,a12,E14.5E3)') 'Average array value (abs) in ',trim(name), avg_abs_val
-    write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val
+    if ( avg_abs_val > 0. ) then
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val
+    else if ( avg_abs_val == 0. .and. error_max_abs == 0. ) then
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), 0.
+    else
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), 1.
+    end if
     write (*,'(a30,F5.1,a1)')   'Number of errors / array size ', n_error * 100.0 / ub, '%'
     write (*,*) ' '
   end if
@@ -400,35 +406,40 @@ program test_b2output
    open(unit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #endif
    ! Read the header
-   read(my_unit,'(a,a)') label ,version_in
-   if (label/='VERSION') then
-     if (label == '*cf:') then
-       ! No version header, but seems to be a text file
-       label='unknown'
-       version_in = 'version'
-       rewind(my_unit)
-     else
-       ! If it does not match, then it should be a binary file
-       close(my_unit)
+   read(my_unit,'(a,a)',iostat=ierr) label, version_in
+   if (ierr == 0) then
+     if (label/='VERSION') then
+       if (label == '*cf:') then
+         ! No version header, but seems to be a text file
+         label='unknown'
+         version_in = 'version'
+         rewind(my_unit)
+       else
+         ! If it does not match, then it should be a binary file
+         close(my_unit)
        ! reopen in UNFORMATTED mode
 #ifndef LEGACYCOMP
-       open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+         open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #else
-       open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+         open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #endif
-       read(my_unit) label ,version_in
-       if (label/='VERSION') then
-         if (label == '*cf:') then
-           ! No version header, but seems to be a valid file
-           label='unknown'
-           version_in = 'version'
-           rewind(my_unit)
-         else
-           write(*,*) 'Error, file should start with VERSION or *cf tag'
-           stop
+         read(my_unit) label, version_in
+         if (label/='VERSION') then
+           if (label == '*cf:') then
+             ! No version header, but seems to be a valid file
+             label='unknown'
+             version_in = 'version'
+             rewind(my_unit)
+           else
+             write(*,*) 'Error, file should start with VERSION or *cf tag'
+             stop
+           endif
          endif
        endif
      endif
+   else
+     write(*,*) 'Error, file '//trim(filename)//' found empty or missing'
+     stop
    endif
    if (ierr == 0) write(*,*) trim(filename),' opened successfully'
    write(*,*) label, ' ', version_in

@@ -629,6 +629,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 
 * ..return
       deallocate(wn,wt)
+      flush (nprt)
       call subend ()
       return
 

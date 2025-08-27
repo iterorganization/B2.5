@@ -1,21 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trsc (nx, ny, vol, po, te, ne,
+      subroutine b2trsc (nx, ny, vol, hy1, po, te, ne,
      &  csig_stoch)                                                     !srv 24.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny),
+     & hy1(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      1 po(-1:nx,-1:ny), te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -79,7 +77,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -92,7 +90,7 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      csig_stoch = 0.0e0_R8
+      csig_stoch = 0.0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then

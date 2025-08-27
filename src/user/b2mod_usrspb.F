@@ -603,7 +603,7 @@ c***              3 - in upper PFR, 4 - on the inner wall
             ix_pneut_beg(1) = leftcut(1) - 1 + ix_pneut_beg(1)
           elseif (lpfrs_pmp .eq. 2) then !}{
             ix_pneut_beg(1) = nx - 1 + ix_pneut_beg(1)
-          elseif(lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
+          elseif (lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
             ix_pneut_beg(1) = nxtl - 1 + ix_pneut_beg(1)
           end if !}
         end if !}
@@ -615,7 +615,7 @@ c***              3 - in upper PFR, 4 - on the inner wall
             ix_pneut_end(1) = nx - 1 + ix_pneut_end(1)
           elseif (lpfrs_pmp .eq. 3) then !}{
             ix_pneut_end(1) = leftcut(2) - ix_pneut_end(1)
-          elseif(lpfrs_pmp.eq.4) then !}{
+          elseif (lpfrs_pmp.eq.4) then !}{
             ix_pneut_end(1) = nxtl - 1 + ix_pneut_end(1)
           end if !}
         end if !}
@@ -626,21 +626,21 @@ c***              3 - in upper PFR, 4 - on the inner wall
         if (ix_pneut_beg(2) .le. 0) then !{
           if (lpfrs_pmp .eq. 1) then !{
             ix_pneut_beg(2) = rightcut(1) - ix_pneut_beg(2)
-          elseif(lpfrs_pmp .eq. 2) then !}{
+          elseif (lpfrs_pmp .eq. 2) then !}{
             ix_pneut_beg(2) = nx - 1 + ix_pneut_beg(2)
-          elseif(lpfrs_pmp .eq. 3) then !}{
+          elseif (lpfrs_pmp .eq. 3) then !}{
             ix_pneut_beg(2) = rightcut(2) - 1 + ix_pneut_beg(2)
-          elseif(lpfrs_pmp.eq.4) then !}{
+          elseif (lpfrs_pmp.eq.4) then !}{
             ix_pneut_beg(2) = nxtr - 1 - ix_pneut_beg(2)
           end if !}
         end if !}
         ix_pneut_end(2) = lpfrb_o
         if (ix_pneut_end(2) .le. 0) then !{
-          if(lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
+          if (lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
             ix_pneut_end(2) = nx - 1 + ix_pneut_end(2)
-          else if(lpfrs_pmp .eq. 3) then !}{
+          else if (lpfrs_pmp .eq. 3) then !}{
             ix_pneut_end(2) = nxtr + 1 - ix_pneut_end(2)
-          else if(lpfrs_pmp .eq. 4) then !}{
+          else if (lpfrs_pmp .eq. 4) then !}{
             ix_pneut_end(2) = nxtl - 1 + ix_pneut_end(2)
           end if !}
         end if !}

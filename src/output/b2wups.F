@@ -180,6 +180,7 @@
         call cfwure (nput, n2*2, floi_noc, 'floi_noc')
       endif
 * ..return
+      flush (nput)
       call subend ()
       return
 

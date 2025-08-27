@@ -206,7 +206,7 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm=idum(0)
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       call cfrure (ninp(1), 100, parg, 'parg')

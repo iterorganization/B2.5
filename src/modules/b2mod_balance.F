@@ -332,7 +332,8 @@
      *  fhi_visper(:,:,:),
      *  fhi_visq(:,:,:),
      *  fhi_anml(:,:,:),
-     *  fhi_kevis(:,:,:)
+     *  fhi_kevis(:,:,:),
+     *  fhi_vzh(:,:,:)
 *     Source
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_shi0to3(:,:,:),
@@ -396,6 +397,7 @@
      *  fhi_visq_av(:,:,:),
      *  fhi_anml_av(:,:,:),
      *  fhi_kevis_av(:,:,:),
+     *  fhi_vzh_av(:,:,:),
      *  b2stbr_phys_shi_bal_av(:,:),
      *  b2stbr_bas_shi_bal_av(:,:),
      *  b2stbr_first_flight_shi_bal_av(:,:),
@@ -834,6 +836,7 @@
       allocate(fhi_visq(-1:nxd,-1:nyd,0:1))
       allocate(fhi_anml(-1:nxd,-1:nyd,0:1))
       allocate(fhi_kevis(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_vzh(-1:nxd,-1:nyd,0:1))
 *     Sources
       allocate(b2stbr_phys_shi0to3(-1:nxd,-1:nyd,0:3))
       allocate(b2stbr_phys_shi_bal(-1:nxd,-1:nyd))
@@ -925,6 +928,7 @@
       allocate(fhi_visq_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_anml_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_kevis_av(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_vzh_av(-1:nxd,-1:nyd,0:1))
       allocate(b2stbr_phys_shi_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_bas_shi_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_first_flight_shi_bal_av(-1:nxd,-1:nyd))
@@ -1218,6 +1222,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_visq)
       deallocate(fhi_anml)
       deallocate(fhi_kevis)
+      deallocate(fhi_vzh)
 *     Sources
       deallocate(b2stbr_phys_shi0to3)
       deallocate(b2stbr_phys_shi_bal)
@@ -1271,6 +1276,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_visq_av)
       deallocate(fhi_anml_av)
       deallocate(fhi_kevis_av)
+      deallocate(fhi_vzh_av)
       deallocate(b2stbr_phys_shi_bal_av)
       deallocate(b2stbr_bas_shi_bal_av)
       deallocate(b2stbr_first_flight_shi_bal_av)
@@ -1651,11 +1657,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       integer nx,ny,isb
       real (kind=R8):: nb(-1:nx,-1:ny)
 *   ..local variables
-      integer ix,iy,istrai,nstrad
-*   ..procedures
-      intrinsic size
-
-      nstrad = size(eirene_mc_papl_sna_bal,4)
+      integer ix,iy
       
       do ix=-1,nx
         do iy=-1,ny
@@ -1670,25 +1672,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &                b2stbr_first_flight_sna0to1(ix,iy,1,isb)*nb(ix,iy)
           b2stbc_sna_bal(ix,iy,isb)=b2stbc_sna0to1(ix,iy,0,isb)+
      &                     b2stbc_sna0to1(ix,iy,1,isb)*nb(ix,iy)
-          if (allocated(eirene_mc_papl_sna_bal)) then
-            do istrai=1,nstrad
-              eirene_mc_papl_sna_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_papl_sna0to1(ix,iy,0,isb,istrai)+
-     &         eirene_mc_papl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
-              eirene_mc_pmpl_sna_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_pmpl_sna0to1(ix,iy,0,isb,istrai)+
-     &         eirene_mc_pmpl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
-              eirene_mc_pipl_sna_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_pipl_sna0to1(ix,iy,0,isb,istrai)+
-     &         eirene_mc_pipl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
-              eirene_mc_pppl_sna_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_pppl_sna0to1(ix,iy,0,isb,istrai)+
-     &         eirene_mc_pppl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
-            enddo
-            eirene_mc_core_sna_bal(ix,iy,isb)=
-     &       eirene_mc_core_sna0to1(ix,iy,0,isb)+
-     &       eirene_mc_core_sna0to1(ix,iy,1,isb)*nb(ix,iy)
-          endif
           b2stbm_sna_bal(ix,iy,isb)=b2stbm_sna0to1(ix,iy,0,isb)+
      &                     b2stbm_sna0to1(ix,iy,1,isb)*nb(ix,iy)
           ext_sna_bal(ix,iy,isb)=ext_sna0to1(ix,iy,0,isb)+
@@ -1712,17 +1695,51 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       return
       end subroutine update_balance_sources_particles
 
+      subroutine update_balance_eirene_sources_particles(nx,ny,isb,nb)
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny,isb
+      real (kind=R8):: nb(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+*   ..procedures
+      intrinsic size
+
+      nstrad = size(eirene_mc_papl_sna_bal,4)
+      
+      do ix=-1,nx
+        do iy=-1,ny
+          if (allocated(eirene_mc_papl_sna_bal)) then
+            do istrai=1,nstrad
+              eirene_mc_papl_sna_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_papl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_papl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pmpl_sna_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_pmpl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pmpl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pipl_sna_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_pipl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pipl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pppl_sna_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_pppl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pppl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+            enddo
+            eirene_mc_core_sna_bal(ix,iy,isb)=
+     &       eirene_mc_core_sna0to1(ix,iy,0,isb)+
+     &       eirene_mc_core_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          endif
+        enddo
+      enddo
+      return
+      end subroutine update_balance_eirene_sources_particles
+
       subroutine update_balance_sources_momentum(nx,ny,isb,ub,rob) !djm Jan2017
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx,ny,isb
       real (kind=R8):: ub(-1:nx,-1:ny), rob(-1:nx,-1:ny)
 *   ..local variables
-      integer ix,iy,istrai,nstrad
-*   ..procedures
-      intrinsic size
-
-      nstrad = size(eirene_mc_mapl_smo_bal,4)
+      integer ix,iy
 
       do ix=-1,nx
         do iy=-1,ny
@@ -1740,34 +1757,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2stbc_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2stbc_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
      &            b2stbc_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
-          if (allocated(eirene_mc_mapl_smo_bal)) then
-            do istrai=1,nstrad
-              eirene_mc_mapl_smo_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_mapl_smo0to3(ix,iy,0,isb,istrai)+
-     &         eirene_mc_mapl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
-     &         eirene_mc_mapl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
-     &         eirene_mc_mapl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
-     &                                                    ub(ix,iy)
-              eirene_mc_mmpl_smo_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_mmpl_smo0to3(ix,iy,0,isb,istrai)+
-     &         eirene_mc_mmpl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
-     &         eirene_mc_mmpl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
-     &         eirene_mc_mmpl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
-     &                                                    ub(ix,iy)
-              eirene_mc_mipl_smo_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_mipl_smo0to3(ix,iy,0,isb,istrai)+
-     &         eirene_mc_mipl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
-     &         eirene_mc_mipl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
-     &         eirene_mc_mipl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
-     &                                                    ub(ix,iy)
-              eirene_mc_mppl_smo_bal(ix,iy,isb,istrai)=
-     &         eirene_mc_mppl_smo0to3(ix,iy,0,isb,istrai)+
-     &         eirene_mc_mppl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
-     &         eirene_mc_mppl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
-     &         eirene_mc_mppl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
-     &                                                    ub(ix,iy)
-            enddo
-          endif
           b2stbm_smo_bal(ix,iy,isb)=b2stbm_smo0to3(ix,iy,0,isb)+
      &            b2stbm_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2stbm_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
@@ -1900,6 +1889,54 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       return
       end subroutine update_balance_sources_momentum
 
+      subroutine update_balance_eirene_sources_momentum(
+     &     nx,ny,isb,ub,rob)
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny,isb
+      real (kind=R8):: ub(-1:nx,-1:ny), rob(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+*   ..procedures
+      intrinsic size
+
+      nstrad = size(eirene_mc_mapl_smo_bal,4)
+
+      do ix=-1,nx
+        do iy=-1,ny
+          if (allocated(eirene_mc_mapl_smo_bal)) then
+            do istrai=1,nstrad
+              eirene_mc_mapl_smo_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_mapl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_mmpl_smo_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_mmpl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_mipl_smo_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_mipl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_mppl_smo_bal(ix,iy,isb,istrai)=
+     &         eirene_mc_mppl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mppl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mppl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mppl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+            enddo
+          endif
+        enddo
+      enddo
+      return
+      end subroutine update_balance_eirene_sources_momentum
+
       subroutine update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -1907,11 +1944,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       real (kind=R8):: ne(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      &                 te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..local variables
-      integer ix,iy,istrai,nstrad,is
-*   ..procedures
-      intrinsic size
-
-      nstrad = size(eirene_mc_eael_she_bal,3)
+      integer ix,iy,is
 
 cdjm Update electron heat sources
 cxpb We also treat the electron particle sources
@@ -1937,40 +1970,6 @@ cxpb We also treat the electron particle sources
      &     b2stbc_she0to3(ix,iy,1)*te(ix,iy)+
      &     b2stbc_she0to3(ix,iy,2)*ne(ix,iy)+
      &     b2stbc_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
-          if (allocated(eirene_mc_eael_she_bal)) then
-            do istrai=1,nstrad
-              eirene_mc_pael_sne_bal(ix,iy,istrai)=
-     &         eirene_mc_pael_sne0to1(ix,iy,0,istrai)+
-     &         eirene_mc_pael_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
-              eirene_mc_pmel_sne_bal(ix,iy,istrai)=
-     &         eirene_mc_pmel_sne0to1(ix,iy,0,istrai)+
-     &         eirene_mc_pmel_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
-              eirene_mc_eael_she_bal(ix,iy,istrai)=
-     &         eirene_mc_eael_she0to3(ix,iy,0,istrai)+
-     &         eirene_mc_eael_she0to3(ix,iy,1,istrai)*te(ix,iy)+
-     &         eirene_mc_eael_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
-     &         eirene_mc_eael_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
-     &                                                te(ix,iy)
-              eirene_mc_emel_she_bal(ix,iy,istrai)=
-     &         eirene_mc_emel_she0to3(ix,iy,0,istrai)+
-     &         eirene_mc_emel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
-     &         eirene_mc_emel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
-     &         eirene_mc_emel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
-     &                                                te(ix,iy)
-              eirene_mc_eiel_she_bal(ix,iy,istrai)=
-     &         eirene_mc_eiel_she0to3(ix,iy,0,istrai)+
-     &         eirene_mc_eiel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
-     &         eirene_mc_eiel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
-     &         eirene_mc_eiel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
-     &                                                te(ix,iy)
-              eirene_mc_epel_she_bal(ix,iy,istrai)=
-     &         eirene_mc_epel_she0to3(ix,iy,0,istrai)+
-     &         eirene_mc_epel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
-     &         eirene_mc_epel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
-     &         eirene_mc_epel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
-     &                                                te(ix,iy)
-            enddo
-          endif
           b2stbm_she_bal(ix,iy)=
      &     b2stbm_she0to3(ix,iy,0)+
      &     b2stbm_she0to3(ix,iy,1)*te(ix,iy)+
@@ -2048,34 +2047,6 @@ cdjm Update ion heat sources
      &     b2stbc_shi0to3(ix,iy,1)*ti(ix,iy)+
      &     b2stbc_shi0to3(ix,iy,2)*ni(ix,iy)+
      &     b2stbc_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
-          if (allocated(eirene_mc_eapl_shi_bal)) then
-            do istrai=1,nstrad
-              eirene_mc_eapl_shi_bal(ix,iy,istrai)=
-     &         eirene_mc_eapl_shi0to3(ix,iy,0,istrai)+
-     &         eirene_mc_eapl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
-     &         eirene_mc_eapl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
-     &         eirene_mc_eapl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
-     &                                                ti(ix,iy)
-              eirene_mc_empl_shi_bal(ix,iy,istrai)=
-     &         eirene_mc_empl_shi0to3(ix,iy,0,istrai)+
-     &         eirene_mc_empl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
-     &         eirene_mc_empl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
-     &         eirene_mc_empl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
-     &                                                ti(ix,iy)
-              eirene_mc_eipl_shi_bal(ix,iy,istrai)=
-     &         eirene_mc_eipl_shi0to3(ix,iy,0,istrai)+
-     &         eirene_mc_eipl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
-     &         eirene_mc_eipl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
-     &         eirene_mc_eipl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
-     &                                                ti(ix,iy)
-              eirene_mc_eppl_shi_bal(ix,iy,istrai)=
-     &         eirene_mc_eppl_shi0to3(ix,iy,0,istrai)+
-     &         eirene_mc_eppl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
-     &         eirene_mc_eppl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
-     &         eirene_mc_eppl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
-     &                                                ti(ix,iy)
-            enddo
-          endif
           b2stbm_shi_bal(ix,iy)=
      &     b2stbm_shi0to3(ix,iy,0)+
      &     b2stbm_shi0to3(ix,iy,1)*ti(ix,iy)+
@@ -2155,6 +2126,96 @@ cdjm Update ion heat sources
       enddo
       return
       end subroutine update_balance_sources_heat
+
+      subroutine update_balance_eirene_sources_heat(
+     &     nx,ny,ne,ni,te,ti)
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny
+      real (kind=R8):: ne(-1:nx,-1:ny), ni(-1:nx,-1:ny),
+     &                 te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+*   ..procedures
+      intrinsic size
+
+      nstrad = size(eirene_mc_eael_she_bal,3)
+
+cdjm Update electron heat sources
+cxpb We also treat the electron particle sources
+      do ix=-1,nx
+        do iy=-1,ny
+          if (allocated(eirene_mc_eael_she_bal)) then
+            do istrai=1,nstrad
+              eirene_mc_pael_sne_bal(ix,iy,istrai)=
+     &         eirene_mc_pael_sne0to1(ix,iy,0,istrai)+
+     &         eirene_mc_pael_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
+              eirene_mc_pmel_sne_bal(ix,iy,istrai)=
+     &         eirene_mc_pmel_sne0to1(ix,iy,0,istrai)+
+     &         eirene_mc_pmel_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
+              eirene_mc_eael_she_bal(ix,iy,istrai)=
+     &         eirene_mc_eael_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eael_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_eael_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_eael_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_emel_she_bal(ix,iy,istrai)=
+     &         eirene_mc_emel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_emel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_emel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_emel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_eiel_she_bal(ix,iy,istrai)=
+     &         eirene_mc_eiel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eiel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_eiel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_eiel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_epel_she_bal(ix,iy,istrai)=
+     &         eirene_mc_epel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_epel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_epel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_epel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+            enddo
+          endif
+        enddo
+      enddo
+cdjm Update ion heat sources
+      do ix=-1,nx
+        do iy=-1,ny
+          if (allocated(eirene_mc_eapl_shi_bal)) then
+            do istrai=1,nstrad
+              eirene_mc_eapl_shi_bal(ix,iy,istrai)=
+     &         eirene_mc_eapl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_empl_shi_bal(ix,iy,istrai)=
+     &         eirene_mc_empl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_empl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_empl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_empl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_eipl_shi_bal(ix,iy,istrai)=
+     &         eirene_mc_eipl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_eppl_shi_bal(ix,iy,istrai)=
+     &         eirene_mc_eppl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+            enddo
+          endif
+        enddo
+      enddo
+      return
+      end subroutine update_balance_eirene_sources_heat
 
       subroutine update_average_balance(itim,ntim)
       use b2mod_residuals
@@ -2318,6 +2379,7 @@ cdjm Update ion heat sources
         fhi_visq_av=0.0_R8
         fhi_anml_av=0.0_R8
         fhi_kevis_av=0.0_R8
+        fhi_vzh_av=0.0_R8
         b2stbr_phys_shi_bal_av=0.0_R8
         b2stbr_bas_shi_bal_av=0.0_R8
         b2stbr_first_flight_shi_bal_av=0.0_R8
@@ -2636,11 +2698,13 @@ cdjm Update ion heat sources
       fhi_visper_av = avmlt*fhi_visper_av +
      &                curmlt*fhi_visper
       fhi_visq_av = avmlt*fhi_visq_av +
-     &                curmlt*fhi_visq
+     &              curmlt*fhi_visq
       fhi_anml_av = avmlt*fhi_anml_av +
      &              curmlt*fhi_anml
       fhi_kevis_av = avmlt*fhi_kevis_av +
      &               curmlt*fhi_kevis
+      fhi_vzh_av = avmlt*fhi_vzh_av +
+     &             curmlt*fhi_vzh
       b2stbr_phys_shi_bal_av = avmlt*b2stbr_phys_shi_bal_av +
      &                         curmlt*b2stbr_phys_shi_bal
       b2stbr_bas_shi_bal_av = avmlt*b2stbr_bas_shi_bal_av +
@@ -3083,6 +3147,8 @@ cdjm Update ion heat sources
      &                   fhi_anml_av,vdims,3)
       call write_cdf_double(ncid,'fhi_kevis',
      &                   fhi_kevis_av,vdims,3)
+      call write_cdf_double(ncid,'fhi_vzh',
+     &                   fhi_vzh_av,vdims,3)
 *     Sources
       call write_cdf_double(ncid,'b2stbr_phys_shi_bal',
      &                      b2stbr_phys_shi_bal_av,vdims,2)

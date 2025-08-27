@@ -16,7 +16,7 @@
 #endif
       implicit none
       integer nrr, nxx, nss
-      integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
+      integer, parameter :: nkind_source=6,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
       integer, save :: csig_an_style=1
       integer :: ixref_profile, iyref_profile
@@ -865,9 +865,10 @@ cdjm Jan2017 Keep linearised sources for balance
 
                   iiy=nfitanf-3+iy
                   iir=region(ix,iiy,0)
-                  if(iir.le.0.or.iir.gt.NNREGMAX) then
-                    write(*,*) 'transport_input: out of bounds ',
-     1               'ix,iy,region(ix,iy) ',ix,iiy,iir
+                  if(iir.lt.0.or.iir.gt.NNREGMAX) then
+                    write(*,'(2a,3i4)')
+     &               'transport_input: out of bounds ',
+     &               'ix,iy,region(ix,iy) ',ix,iiy,iir
                     iir=NNREGMAX
                   endif
                   lpflux=iir.eq.3.and.iiy.le.topcut(1).and.nnreg(0).ge.4
@@ -885,11 +886,12 @@ cdjm Jan2017 Keep linearised sources for balance
                   lpflux=lpflux.or.
      &             (iir.eq.7.and.iiy.le.topcut(2).and.nnreg(0).eq.8)
                   lpflux=lpflux.or.(iir.eq.8.and.iiy.le.topcut(1))
-                  ldiv=mod(iir-1,4)+1.ge.3
+                  ldiv=iir.ne.0.and.mod(iir-1,4)+1.ge.3
                   ldiv=ldiv.or.
      &             (nnreg(0).eq.7.and.(iir.eq.5.or.iir.eq.6))
                   poloidal_scale_factor = 1.0_R8
-                  do isc=1,nscale
+                  if (iir.gt.0) then
+                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
      $                ix.ge.scaling_ix_begin(isc) .and.
      $                    ix.le.scaling_ix_end(isc)) then
@@ -899,14 +901,14 @@ cdjm Jan2017 Keep linearised sources for balance
      $                    exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
      $                         (2.0_R8*scaling_width(isc)**2)))
                     endif
-                  enddo
-                  elm_region=elm_time.and.elm_data.and.
+                   enddo
+                   elm_region=elm_time.and.elm_data.and.
      &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
 
-                  if(.not.
-     1             (.not.region_flags(iir,kind_coeff).or.
-     1             (lpflux.and.no_pflux).or.
-     1             (ldiv.and.no_div))) then
+                   if(.not.
+     1              (.not.region_flags(iir,kind_coeff).or.
+     1              (lpflux.and.no_pflux).or.
+     1              (ldiv.and.no_div))) then
 
                     if (elm_region) then
                       prof(1:ndim)=pelm(1:ndim)
@@ -962,6 +964,7 @@ cdjm Jan2017 Keep linearised sources for balance
      .                 'Option',kind_coeff,'not yet implemented'
                     endif
 
+                   endif
                   endif
                 enddo
               enddo

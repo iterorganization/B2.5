@@ -1,21 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trsh (nx, ny, vol, po, te, ne, csig_stoch,            !srv 24.08.21
+      subroutine b2trsh (nx, ny, vol, hy1, po, te, ne, csig_stoch,       !srv 24.08.21
      &                   chce_stoch)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
+     & hy1(-1:nx,-1:ny), vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
      1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -26,7 +24,7 @@
 *
 *  1. purpose
 *
-*     B2TRSH computes the X and Y components of electron thermal conductivity 
+*     B2TRSH computes the X and Y components of electron thermal conductivity
 *     associated with stochastization of the magnetic field.
 *
 *
@@ -34,12 +32,12 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer n2, ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8,                 !lk 31.01.08 }
-     &                        alpha_stoch = 1.0e0_R8                     !srv 17.12.13
+      real (kind=R8), save :: fch_stochastic = 0.0_R8,                   !lk 31.01.08 }
+     &                        alpha_stoch = 1.0_R8                       !srv 17.12.13
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
@@ -47,7 +45,7 @@
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
 *   ..initialization
-      data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
+      data ncall/0/, delta_stoch/0.0_R8/, sig_stoch/1.0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -81,7 +79,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -94,11 +92,11 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      chce_stoch = 0.0e0_R8
+      chce_stoch = 0.0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-          chce_stoch(ix,iy,1)=alpha_stoch*1.6e0_R8*
+          chce_stoch(ix,iy,1)=alpha_stoch*1.6_R8*
      &      csig_stoch(ix,iy,1)/qe/qe*
      &     (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
          endif
