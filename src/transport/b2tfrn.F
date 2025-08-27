@@ -575,7 +575,8 @@ c Drift terms
 * ..compute fluxes
 * ..velocity-dependent part of the heat flux
       floi_vhx = 0.0_R8                                                  !som 09.07.21
-      if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0  .and.
+      if (Zhdanov_closure.eq.1 .and. (Zhdanov_test.eq.0 .or.
+     &    Zhdanov_nc.eq.1).and.
      &    Zhdanov_vel_heat.eq.1) then                                    !som 09.07.21
         call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
       endif

@@ -81,6 +81,7 @@
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
      &  Zhdanov_tf_fr = 1                                               !som 01.07.21
+      integer, save :: Zhdanov_nc = 0
       integer, save :: icase = 0                                        !som 05.03.21
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
       character chns*3, chis*3
@@ -155,6 +156,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 23.02.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 12.03.21
+       call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)              !som 01.07.21
        call ipgeti ('b2tral_zhd_corr', zhd_corr)                        !som 05.03.21
        call ipgeti ('b2tral_zhd_corrT', zhd_corrT)                      !som 03.09.21
@@ -220,6 +222,18 @@
       if (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &    Zhdanov_tf_fr.eq.1) then                                      !som 01.07.2021
 *     ..actual use of the Zhdanov closure
+        do iy = 0, ny-1
+          do ix = 0, nx-1
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
+            call b2mod_zhfrtf_fr(ix,iy,isb,temp,
+     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1),
+     &       corr_fria(ix,iy,isb))
+           endif
+          enddo
+        enddo
+      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1)
+     &  .and.Zhdanov_nc.eq.1) then
         do iy = 0, ny-1
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -400,6 +414,12 @@
            endif
          enddo
         enddo
+        if (Zhdanov_nc.eq.1) then
+          call b2scopy (n2, smbtfial_test(-1,-1,0), 1,
+     &    smbtfial(:,:,0), 1)
+          call b2scopy (n2, smbtfial_test_nofl(-1,-1,0), 1,
+     &    smbtfial_nofl(:,:,0), 1)
+        else
         do iy = 0, ny-1
          do ix = 0, nx-1
            ka(ix,iy) = fka(ix,iy,isb)
@@ -462,6 +482,7 @@ c   .... apply flux limit
           enddo
          endif
         enddo
+        endif
       else
 *     ..standard thermal force calculation
         do iy = 0, ny-1
@@ -569,12 +590,14 @@ c   .... apply flux limit
         wrk = vol*hz*smbtfeal(:,:,0)
         call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
-        call my_out(70,nx,ny,corr_fria(:,:,isb),'b2sifrtf_cf'//chns)
-        call my_out(70,nx,ny,corr_tfia(:,:,isb),'b2sifrtf_ct'//chns)
-        call my_out(70,nx,ny,alpha_HS_style(:,:,isb),
+        if (Zhdanov_nc.eq.1) then
+          call my_out(70,nx,ny,corr_fria(:,:,isb),'b2sifrtf_cf'//chns)
+          call my_out(70,nx,ny,corr_tfia(:,:,isb),'b2sifrtf_ct'//chns)
+          call my_out(70,nx,ny,alpha_HS_style(:,:,isb),
      &  'b2sifrtf_alpha'//chns)
-        call my_out(70,nx,ny,g_HS_style(:,:),
+          call my_out(70,nx,ny,g_HS_style(:,:),
      &  'b2sifrtf_g')
+        endif
 
         wrk = vol*hz*(smbfrial_test(:,:,0)+
      &        smbfrial_test(:,:,1)*ua(:,:,isb)+

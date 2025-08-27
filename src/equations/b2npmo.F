@@ -564,7 +564,7 @@
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
        if(style.eq.2) then                                             !srv 13.01.17
-        if (Zhdanov_nc.eq.1)
+        if (Zhdanov_nc.eq.1 .and. Zhdanov_closure.eq.1)
      &    call b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
      &      rz2,Zhdanov_nc_min,Zhdanov_nc_spec-1,Zhdanov_closure,
      &      c_hTA_an_fl_save,c_R_TA_an_save,cimp2,z2n_xy,zeff)
