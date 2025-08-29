@@ -208,8 +208,11 @@ module b2mod_ual_io
      &          ids_generic_grid_dynamic,                                    &
      &          ids_plasma_composition_neutral_element,                      &
      &          ids_plasma_composition_neutral_element_constant,             &
-     &          ids_wall, ids_wall_description_ggd_material,                 &
-     &          ids_identifier_dynamic_aos3
+     &          ids_wall, ids_identifier_dynamic_aos3
+#if ( IMAS_MAJOR_VERSION > 3 || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 37 ) )
+    use ids_schemas &     ! IGNORE
+     & , only : ids_wall_description_ggd_material
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
      & , only : ids_dataset_description
