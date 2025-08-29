@@ -51,9 +51,7 @@ module b2mod_ual_io
      &          read_balance
     use b2mod_diag &
      & , only : nfluids, species_list, label
-#endif
 #ifdef B25_EIRENE
-#ifdef IMAS
     use eirmod_cgrid &
      & , only : eirene_alloc_cgrid
     use eirmod_cinit &
@@ -103,10 +101,10 @@ module b2mod_ual_io
     use b2mod_b2plot &
      & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene, &
      &          b2_fnmti
-#endif
-#elif defined(IMAS)
+#else
     use b2mod_b2plot &
-     & , only : triangle_vol, natmi, nmoli, nioni, b2_fnmti
+     & , only : triangle_vol, natmi, nmoli, nioni, nphoti, b2_fnmti
+#endif
 #endif
     use logging
 
@@ -130,12 +128,20 @@ module b2mod_ual_io
      & , only : b2_IMAS_Transform_Data_B2_To_IDS_Cell,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Face,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
+#if ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && GGD_MINOR_VERSION > 13 ) )
+    use b2mod_ual_io_data &
+     & , only : b2_IMAS_Transform_Wall_ID_B2_TO_IDS_Face
+#endif
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
     use ids_grid_subgrid  &     ! IGNORE
      & , only : findGridSubsetByName
     use ids_grid_structured &   ! IGNORE
      & , only : gridWriteData
+#if ( GGD_MAJOR_VERSION > 1 || GGD_MINOR_VERSION > 13 )
+    use ids_grid_structured &   ! IGNORE
+     & , only : gridWriteMaterialIdentifiers
+#endif
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
@@ -202,7 +208,7 @@ module b2mod_ual_io
      &          ids_generic_grid_dynamic,                                    &
      &          ids_plasma_composition_neutral_element,                      &
      &          ids_plasma_composition_neutral_element_constant,             &
-     &          ids_wall,                                                    &
+     &          ids_wall, ids_wall_description_ggd_material,                 &
      &          ids_identifier_dynamic_aos3
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &     ! IGNORE
@@ -235,6 +241,8 @@ module b2mod_ual_io
      & , only : midplane_identifier
     use imas_neutrals_identifier &     ! IGNORE
      & , only : neutrals_identifier
+    use imas_materials_identifier &    ! IGNORE
+     & , only : materials_identifier
     use imas_radiation_identifier &    ! IGNORE
      & , only : radiation_identifier
     use imas_edge_source_identifier &  ! IGNORE
@@ -244,6 +252,8 @@ module b2mod_ual_io
      & , only : midplane_identifier
     use al_neutrals_identifier &       ! IGNORE
      & , only : neutrals_identifier
+    use al_materials_identifier &      ! IGNORE
+     & , only : materials_identifier
     use al_radiation_identifier &      ! IGNORE
      & , only : radiation_identifier
     use al_edge_source_identifier &    ! IGNORE
@@ -2143,6 +2153,7 @@ contains
           radiation%process(j)%ggd( time_sind )%time = time_slice_value
         end do
 #endif
+        wall%description_ggd(1)%ggd( time_sind )%time = time_slice_value
 
         !! List of species
         !! Careful here: ion in DD means isonuclear sequence !!
@@ -6536,6 +6547,8 @@ contains
         end if
 #endif
 
+        call fill_wall_data( wall, wall_grid, time_sind )
+
         deallocate(ionstt,istion,ispion)
 #ifdef B25_EIRENE
         if (switch%use_eirene.ne.0) then
@@ -8819,6 +8832,767 @@ contains
     end subroutine fill_summary_data
 #endif
 
+    subroutine fill_wall_data( wall, wall_grid, time_sind )
+    implicit none
+    type (ids_wall), intent(inout) :: wall
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    type(ids_generic_grid_dynamic), intent(in) :: wall_grid
+#else
+    type(ids_generic_grid_aos3_root), intent(in) :: wall_grid
+#endif
+    integer, intent(in) :: time_sind
+    integer :: i, j, is, ispz, js, ks, ias, ists, istrai, &
+           &   iCv, iFc, iRc, ngpn, nclm_na
+#ifndef B25_EIRENE
+    integer :: nflai
+#endif
+    real (kind=IDS_real) :: u, v, area, fast_fraction, &
+        & peak_power_flux, wall_peak_power, &
+        & power_flux, power_conducted, power_convected, &
+        & power_radiated, power_neutrals, power_recombination_plasma, &
+        & power_recombination_neutrals, power_currents, total_power
+    real (kind=IDS_real), allocatable :: &
+        & emitted_flux(:,:), pumped_flux(:), particle_flux(:), &
+        & power_density(:), v_biasing(:), wall_phi(:), wall_psi(:), &
+        & recycling(:,:), incident_neutrals(:,:), incident_ions(:,:), &
+        & incident_neutsum(:,:), incident_ionsum(:,:), &
+        & emitted_neutrals(:,:), emitted_neutsum(:,:), &
+        & radiated_flux(:), current_flux(:), &
+        & recombination_flux(:,:), recombination_sum(:,:), &
+        & kinetic_iflux(:,:), kinetic_eflux(:,:), &
+        & kinetic_isum(:,:), kinetic_esum(:,:)
+    integer, allocatable :: material_id(:)
+
+    if(switch%use_eirene.eq.0) then
+      nclm_na = nspecies
+      ngpn = nspecies
+      nflai = 0
+      nphoti = 0
+      lkindp = 0
+      do is = 0, state%ns-1
+        if (.not.is_neutral(is)) then
+          nflai = nflai+1
+          lkindp(nflai) = b2espcr(is)
+        end if
+      end do
+    else
+      nclm_na = natmi
+      ngpn = natmi
+    end if
+    allocate( pumped_flux( nclm_na+nmoli ) )
+    allocate( particle_flux( nclm_na+nmoli ) )
+    allocate( emitted_flux( 3, nclm_na+nmoli ) )
+    allocate( v_biasing( mpg%nFc ) )
+    allocate( material_id( mpg%nFc ) )
+    allocate( power_density( mpg%nFc ) )
+    allocate( recycling( mpg%nFc, nclm_na+nmoli+nioni+nflai ) )
+    allocate( incident_ions( mpg%nFc, nflai+nioni ) )
+    allocate( incident_neutrals( mpg%nFc, nclm_na+nmoli ) )
+    allocate( incident_ionsum( mpg%nFc, nsion ) )
+    allocate( incident_neutsum( mpg%nFc, nneut ) )
+    allocate( emitted_neutrals( mpg%nFc, nclm_na+nmoli ) )
+    allocate( emitted_neutsum( mpg%nFc, nneut ) )
+    allocate( radiated_flux( mpg%nFc ) )
+    allocate( current_flux( mpg%nFc ) )
+    allocate( recombination_flux( mpg%nFc, nclm_na+nmoli+nioni+nflai ) )
+    allocate( recombination_sum( mpg%nFc, nneut+nsion ) )
+    allocate( kinetic_iflux( mpg%nFc, nclm_na+nmoli+nioni+nflai ) )
+    allocate( kinetic_eflux( mpg%nFc, nclm_na+nmoli+nioni+nflai ) )
+    allocate( kinetic_isum ( mpg%nFc, nneut+nsion ) )
+    allocate( kinetic_esum ( mpg%nFc, nneut+nsion ) )
+    allocate( wall_psi( mpg%nFc ) )
+    allocate( wall_phi( mpg%nFc ) )
+    area = 0.0_IDS_real
+    material_id = 0
+    recycling = 0.0_IDS_real
+    v_biasing = 0.0_IDS_real
+    total_power = 0.0_IDS_real
+    power_density = 0.0_IDS_real
+    power_currents = 0.0_IDS_real
+    power_neutrals = 0.0_IDS_real
+    power_radiated = 0.0_IDS_real
+    power_conducted = 0.0_IDS_real
+    power_convected = 0.0_IDS_real
+    peak_power_flux = 0.0_IDS_real
+    wall_peak_power = 0.0_IDS_real
+    power_recombination_plasma = 0.0_IDS_real
+    power_recombination_neutrals = 0.0_IDS_real
+    incident_ions = 0.0_IDS_real
+    incident_neutrals = 0.0_IDS_real
+    incident_ionsum = 0.0_IDS_real
+    incident_neutsum = 0.0_IDS_real
+    emitted_neutrals = 0.0_IDS_real
+    emitted_neutsum = 0.0_IDS_real
+    radiated_flux = 0.0_IDS_real
+    current_flux = 0.0_IDS_real
+    recombination_flux = 0.0_IDS_real
+    recombination_sum = 0.0_IDS_real
+    kinetic_iflux = 0.0_IDS_real
+    kinetic_eflux = 0.0_IDS_real
+    kinetic_isum = 0.0_IDS_real
+    kinetic_esum = 0.0_IDS_real
+    wall_psi = 0.0_IDS_real
+    call intface( mpg%nCv, mpg%nFc, mpg%fcCv, geo%fcVol, state%pl%po, wall_phi )
+    do i = 1, mpg%nCg
+      iFc = mpg%fcs_wall(i)
+      iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      if (mpg%cvOnClosedSurface(iCv)) cycle
+! From here: skipping core boundary cells
+      area = area + geo%fcS(iFc)
+      v_biasing(iFc) = get_phi_applied(switch%b2stbc_boundary_namelist,mpg,iFc)
+      wall_psi(iFc) = 0.5_IDS_real * &
+        &  ( geo%vxFpsi(mpg%fcVx(iFc,1)) + geo%vxFpsi(mpg%fcVx(iFc,2)) )
+      if (switch%use_eirene.ne.0) then
+        ias = b2_fnmti(iFc)
+        j = ias
+        do ists = 1, ncns
+          j = j - (eirdiag_nds_ind(ists+1)-(eirdiag_nds_ind(ists)+1))
+        end do
+        ists = ncns + 1
+        do while ( eirdiag_nds_ind(ists).lt.ias .and. ists.le.nsts )
+          j = j - 1
+          ists = ists + 1
+        end do
+      else if (grid_mode.eq.2) then
+        j = 0
+        do is = 1, nwldlis(1)
+          if (j.gt.0) cycle
+          if (lwldrad(is).le.lppp) cycle
+          if (lb25lis(lwldrad(is)-lppp,1).eq.iFc) j=is
+        end do
+      else
+        j = 0
+      end if
+      if (nwldrad.gt.0.and.j.gt.0) then
+        if (lwldrad(j).gt.0) radiated_flux(iFc) = wldrdld(lwldrad(j)) / geo%fcS(iFc)
+      end if
+      current_flux(iFc) = mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1))
+      u = 0.0_IDS_real
+      v = 0.0_IDS_real
+      power_flux = 0.0_IDS_real
+      if (switch%use_eirene.ne.0) then
+        if (ias.gt.0) then
+          do is = 1, natmi
+            power_flux = power_flux + &
+              & sarea_res(ias)*(ewlda_res(is,ias)-ewldea_res(is,ias))
+            power_neutrals = power_neutrals + &
+              & sarea_res(ias)*(ewlda_res(is,ias)-ewldea_res(is,ias))
+          end do
+          do is = 1, nmoli
+            power_flux = power_flux + sarea_res(ias)* &
+              &  (ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias))
+            power_neutrals = power_neutrals + sarea_res(ias)* &
+              &  (ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias))
+            power_recombination_neutrals = power_recombination_neutrals + &
+              &   sarea_res(ias)*ewldmr_res(is,ias)
+          end do
+        end if
+      end if
+      do is = 0, state%ns-1
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
+          power_neutrals = power_neutrals + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            &  state%pl%tn(iCv)* &
+            & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+            &                state%dv%fna_32(iFc,1,is) ) + &
+            &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+            &                state%dv%fna_52(iFc,1,is) ) )
+          power_neutrals = power_neutrals + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
+        else if (is_neutral(is)) then
+          power_neutrals = power_neutrals + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            &  state%pl%ti(iCv)* &
+            & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+            &                state%dv%fna_32(iFc,1,is) ) + &
+            &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+            &                state%dv%fna_52(iFc,1,is) ) )
+          power_neutrals = power_neutrals + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
+        else
+          u = u + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%pl%ti(iCv) + &
+            &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
+            & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+            &                state%dv%fna_32(iFc,1,is) ) + &
+            &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+            &                state%dv%fna_52(iFc,1,is) ) )
+          v = v + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) + &
+            &  state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
+          power_recombination_plasma = power_recombination_plasma + &
+            &  mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+            & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
+        end if
+      end do
+      power_convected = power_convected + u
+      power_conducted = power_conducted - u - v + &
+        &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+        & ( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) + &
+        &   state%dv%fht(iFc,1) - state%dv%fhj(iFc,1) )
+      power_currents = power_currents + &
+        &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+        & ( state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1) )
+      power_flux = power_flux + mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+        & ( state%dv%fht(iFc,0) + state%dv%fht(iFc,1) )
+      if (nwldrad.gt.0.and.j.gt.0) then
+        if (lwldrad(j).gt.0) then
+          power_flux = power_flux + wldrdld(lwldrad(j))
+          power_radiated = power_radiated + wldrdld(lwldrad(j))
+        end if
+      end if
+      total_power = total_power + power_flux
+      power_density(iFc) = power_flux / geo%fcS(iFc)
+      peak_power_flux = max( peak_power_flux, power_density(iFc) )
+      if (mod(mpg%cvReg(iCv),4).eq.3.or.mod(mpg%cvReg(iCv),4).eq.0) &
+       &  wall_peak_power = max( wall_peak_power, power_density(iFc) )
+    end do
+! Below here: loop over all Eirene surfaces (except core boundaries)
+    pumped_flux = 0.0_IDS_real
+    emitted_flux = 0.0_IDS_real
+    particle_flux = 0.0_IDS_real
+    if (switch%use_eirene.ne.0) then
+#ifdef B25_EIRENE
+      do i = 1, nlim+nsts
+        if (i.ge.nlim+1.and.i.le.nlim+ncns) cycle
+        if (i.gt.nlim+ncns) then
+          if (eirdiag_nds_ind(i-nlim)+1.eq.eirdiag_nds_ind(i-nlim+1)) cycle
+        end if
+        do is = 1, natmi
+          ispz = nphoti+is
+          fast_fraction = min(recycf(ispz,i),recyct(ispz,i)) / recyct(ispz,i)
+          pumped_flux(is) = pumped_flux(is) + wlpump(is,i)
+          emitted_flux(1,is) = emitted_flux(1,is) + &
+           &  ( ( 1.0_IDS_real - fast_fraction )*wldra(i,is,0) + wldspta(i,is,0) )
+          emitted_flux(2,is) = emitted_flux(2,is) + &
+           &  ( fast_fraction*wldra(i,is,0) + wldspta(i,is,0) )
+          particle_flux(is) = particle_flux(is) + wldna(i,is,0)
+        end do
+        do is = 1, nmoli
+          ispz = nphoti+natmi+is
+          do js = 1, natmi
+            if (mlcmp(js,is).eq.0) cycle
+            pumped_flux(is+natmi) = pumped_flux(is+natmi) + wlpump(ispz,i)
+            emitted_flux(1,is+natmi) = emitted_flux(1,is+natmi) + &
+             & (wldrm(i,is,0)+wldpm(i,is,0)+wldsptm(i,is,0))
+            particle_flux(is+natmi) = particle_flux(is+natmi) + wldnm(i,is,0)
+          end do
+        end do
+        do is = 1, nioni
+          ispz = nphoti+natmi+nmoli+is
+          do js = 1, natmi
+            if (micmp(js,is).eq.0) cycle
+            pumped_flux(js) = pumped_flux(js) + wlpump(ispz,i)*micmp(js,is)
+          end do
+        end do
+        do is = 1, nflai
+          ispz = nphoti+natmi+nmoli+nioni+is
+          fast_fraction = min(recycf(ispz,i),recyct(ispz,i)) / recyct(ispz,i)
+          pumped_flux(lkindp(is)) = pumped_flux(lkindp(is)) + wlpump(ispz,i)
+          particle_flux(lkindp(is)) = particle_flux(lkindp(is)) + wldpp(i,is,0)
+          if (is.eq.1) then
+            emitted_flux(1,lkindp(is)) = emitted_flux(1,lkindp(is)) + &
+             &  ( 1.0_IDS_real - fast_fraction )*wldpa(i,lkindp(is),0)
+            emitted_flux(2,lkindp(is)) = emitted_flux(2,lkindp(is)) + &
+             &  fast_fraction*wldpa(i,lkindp(is),0)
+          else if (lkindp(is).ne.lkindp(is-1)) then
+            emitted_flux(1,lkindp(is)) = emitted_flux(1,lkindp(is)) + &
+             &  ( 1.0_IDS_real - fast_fraction )*wldpa(i,lkindp(is),0)
+            emitted_flux(2,lkindp(is)) = emitted_flux(2,lkindp(is)) + &
+             &  fast_fraction*wldpa(i,lkindp(is),0)
+          end if
+        end do
+        if (i.gt.nlim+ncns) then
+          do ias = eirdiag_nds_ind(i-nlim)+1, eirdiag_nds_ind(i-nlim+1)-1
+            iFc = fnmti_b2(ias)
+            if (iFc.eq.-1) cycle
+            do is = 1, natmi
+              ispz = nphoti+is
+              recycling(iFc,ispz) = recyct(ispz,i)
+              incident_neutrals(iFc,is) = wldna_res(is,ias) / geo%fcS(iFc)
+              incident_neutsum(iFc,latmscl(is)) = &
+                &  incident_neutsum(iFc,latmscl(is)) + &
+                &  wldna_res(is,ias) / geo%fcS(iFc)
+              emitted_neutrals(iFc,is) = &
+                & (wldna_res(is,ias)*recyct(ispz,i) + &
+                &  wldspta_res(is,ias)) / geo%fcS(iFc)
+              emitted_neutsum(iFc,latmscl(is)) = &
+                &  emitted_neutsum(iFc,latmscl(is)) + &
+                & (wldna_res(is,ias)*recyct(ispz,i) + &
+                &  wldspta_res(is,ias)) / geo%fcS(iFc)
+              kinetic_iflux(iFc,is) = ewlda_res(is,ias) / geo%fcS(iFc)
+              kinetic_eflux(iFc,is) = ewldea_res(is,ias) / geo%fcS(iFc)
+              kinetic_isum(iFc,latmscl(is)) = kinetic_isum(iFc,latmscl(is)) + &
+                &  ewlda_res(is,ias) / geo%fcS(iFc)
+              kinetic_esum(iFc,latmscl(is)) = kinetic_esum(iFc,latmscl(is)) + &
+                &  ewldea_res(is,ias) / geo%fcS(iFc)
+            end do
+            do is = 1, nmoli
+              ispz = nphoti+natmi+is
+              recycling(iFc,ispz) = recyct(ispz,i)
+              incident_neutrals(iFc,is+natmi) = wldnm_res(is,ias) / geo%fcS(iFc)
+              incident_neutsum(iFc,imneut(is)) = &
+                &  incident_neutsum(iFc,imneut(is)) + &
+                &  wldnm_res(is,ias) / geo%fcS(iFc)
+              emitted_neutrals(iFc,is+natmi) = &
+                & (wldnm_res(is,ias)*recyct(ispz,i) + &
+                &  wldsptm_res(is,ias)) / geo%fcS(iFc)
+              emitted_neutsum(iFc,imneut(is)) = &
+                &  emitted_neutsum(iFc,imneut(is)) + &
+                & (wldnm_res(is,ias)*recyct(ispz,i) + &
+                &  wldsptm_res(is,ias)) / geo%fcS(iFc)
+              kinetic_iflux(iFc,is+natmi) = ewldm_res(is,ias) / geo%fcS(iFc)
+              kinetic_eflux(iFc,is+natmi) = &
+                & (ewldm_res(is,ias) - ewldem_res(is,ias)) / geo%fcS(iFc)
+              kinetic_isum(iFc,latmscl(is)) = kinetic_isum(iFc,latmscl(is)) + &
+                &  ewldm_res(is,ias) / geo%fcS(iFc)
+              kinetic_esum(iFc,latmscl(is)) = kinetic_esum(iFc,latmscl(is)) + &
+                & (ewldm_res(is,ias) - ewldem_res(is,ias)) / geo%fcS(iFc)
+              recombination_flux(iFc,is+natmi) = ewldmr_res(is,ias) / geo%fcS(iFc)
+              recombination_sum(iFc,latmscl(is)) = &
+                &  recombination_sum(iFc,latmscl(is)) + &
+                &  ewldmr_res(is,ias) / geo%fcS(iFc)
+            end do
+            do is = 1, nioni
+              ispz = nphoti+natmi+nmoli+is
+              recycling(iFc,ispz) = recyct(ispz,i)
+            end do
+            do is = 1, nflai
+              ispz = nphoti+natmi+nmoli+nioni+is
+              recycling(iFc,ispz) = recyct(ispz,i)
+              incident_ions(iFc,is) = max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+              incident_ionsum(iFc,b2espcr(is)) = &
+                &   incident_ionsum(iFc,b2espcr(is)) + &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) / geo%fcS(iFc)
+              emitted_neutrals(iFc,isrf(ispz,i)) = &
+                &   emitted_neutrals(iFc,isrf(ispz,i)) + &
+                &   min(recycf(ispz,i),recyct(ispz,i))*max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+              emitted_neutsum(iFc,latmscl(isrf(ispz,i))) = &
+                &   emitted_neutsum(iFc,latmscl(isrf(ispz,i))) + &
+                &   min(recycf(ispz,i),recyct(ispz,i))*max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+              if (isrt(ispz,i).gt.0.and.isrt(ispz,i).le.natmi) then
+                emitted_neutrals(iFc,isrt(ispz,i)) = &
+                  &   emitted_neutrals(iFc,isrt(ispz,i)) + &
+                  &  (recyct(ispz,i)-min(recycf(ispz,i),recyct(ispz,i)))*max(0.0_R8, &
+                  &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                  &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+                emitted_neutsum(iFc,latmscl(isrt(ispz,i))) = &
+                  &   emitted_neutsum(iFc,latmscl(isrt(ispz,i))) + &
+                  &  (recyct(ispz,i)-min(recyct(ispz,i),recycf(ispz,i)))*max(0.0_R8, &
+                  &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                  &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+              else if (isrt(ispz,i).lt.0.and.abs(isrt(ispz,i)).le.nmoli) then
+                emitted_neutrals(iFc,natmi-isrt(ispz,i)) = &
+                  &   emitted_neutrals(iFc,natmi-isrt(ispz,i)) + &
+                  &  (recyct(ispz,i)-min(recyct(ispz,i),recycf(ispz,i)))*max(0.0_R8, &
+                  &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                  &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+                emitted_neutsum(iFc,imneut(-isrt(ispz,i))) = &
+                  &   emitted_neutsum(iFc,imneut(-isrt(ispz,i))) + &
+                  &  (recyct(ispz,i)-min(recyct(ispz,i),recycf(ispz,i)))*max(0.0_R8, &
+                  &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                  &  (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is)) ) / geo%fcS(iFc)
+              end if
+              kinetic_iflux(iFc,natmi+nmoli+nioni+is) = max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fhm(iFc,0,is)+state%dv%fhm(iFc,1,is)) ) / &
+                &   geo%fcS(iFc)
+              kinetic_isum(iFc,nneut+lkindp(is)) = &
+                &  kinetic_isum(iFc,nneut+lkindp(is)) + max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fhm(iFc,0,is)+state%dv%fhm(iFc,1,is)) ) / &
+                &   geo%fcS(iFc)
+              recombination_flux(iFc,natmi+nmoli+nioni+is) = max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)) ) / &
+                &   geo%fcS(iFc)
+              recombination_sum(iFc,nneut+lkindp(is)) = &
+                &  recombination_sum(iFc,nneut+lkindp(is)) + max(0.0_R8, &
+                &   mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+                &  (state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)) ) / &
+                &   geo%fcS(iFc)
+            end do
+          end do
+        end if
+      end do
+#endif
+    else
+      do i = 1, maxval(rcend(1:mpg%nRc))
+        do iFc = 1, mpg%nFc
+          if (mpg%fcLbl(iFc).ne.i) cycle
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (mpg%cvOnClosedSurface(iCv)) cycle
+          do is = 0, state%ns-1
+            istrai = 0
+            do iRc = 1, mpg%nRc
+              if (rcstart(iRc).gt.i) cycle
+              if (rcend(iRc).lt.i) cycle
+              if (species_start(iRc).gt.is) cycle
+              if (species_end(iRc).lt.is) cycle
+              istrai = iRc
+            end do
+            if (istrai.eq.0) cycle
+            js = b2espcr(is)
+            recycling(iFc,js) = recyc(is,istrai)
+            pumped_flux(js) = pumped_flux(js) + max(0.0_IDS_real, &
+             & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+             &  mpg%bcFcOr(mpg%fcBc(iFc,1))* &
+             & (1.0_IDS_real-recyc(is,istrai)))
+            emitted_flux(1,js) = emitted_flux(1,js) + max(0.0_IDS_real, &
+             & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+             &  mpg%bcFcOr(mpg%fcBc(iFc,1))*recyc(is,istrai))
+            particle_flux(js) = particle_flux(js) + max(0.0_IDS_real, &
+             & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+             &  mpg%bcFcOr(mpg%fcBc(iFc,1)))
+            if (is_neutral(is)) then
+              incident_neutrals(iFc,js) = max(0.0_IDS_real, &
+               & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))) / geo%fcS(iFc)
+              incident_neutsum(iFc,js) = incident_neutsum(iFc,js) + &
+               &  max(0.0_IDS_real, &
+               & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))) / geo%fcS(iFc)
+              emitted_neutrals(iFc,js) = -min(0.0_IDS_real, &
+               & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))) / geo%fcS(iFc)
+              emitted_neutsum(iFc,js) = incident_neutsum(iFc,js) - &
+               &  min(0.0_IDS_real, &
+               & (state%dv%fna(iFc,0,is)+state%dv%fna(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))) / geo%fcS(iFc)
+              kinetic_iflux(iFc,js) = max(0.0_IDS_real, &
+               & (state%dv%fna_53(iFc,0,is)+state%dv%fna_53(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))*0.5_IDS_real* &
+               & (state%pl%tn(mpg%fcCv(iFc,1))+state%pl%tn(mpg%fcCv(iFc,2)))) &
+               & /geo%fcS(iFc)
+              kinetic_eflux(iFc,js) = -min(0.0_IDS_real, &
+               & (state%dv%fna_53(iFc,0,is)+state%dv%fna_53(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))*0.5_IDS_real* &
+               & (state%pl%tn(mpg%fcCv(iFc,1))+state%pl%tn(mpg%fcCv(iFc,2)))) &
+               & /geo%fcS(iFc)
+              kinetic_isum(iFc,js) = kinetic_isum(iFc,js) + max(0.0_IDS_real, &
+               & (state%dv%fna_53(iFc,0,is)+state%dv%fna_53(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))*0.5_IDS_real* &
+               & (state%pl%tn(mpg%fcCv(iFc,1))+state%pl%tn(mpg%fcCv(iFc,2)))) &
+               & /geo%fcS(iFc)
+              kinetic_esum(iFc,js) = kinetic_esum(iFc,js) - min(0.0_IDS_real, &
+               & (state%dv%fna_53(iFc,0,is)+state%dv%fna_53(iFc,1,is))* &
+               &  mpg%bcFcOr(mpg%fcBc(iFc,1))*0.5_IDS_real* &
+               & (state%pl%tn(mpg%fcCv(iFc,1))+state%pl%tn(mpg%fcCv(iFc,2)))) &
+               & /geo%fcS(iFc)
+            end if
+          end do
+        end do
+      end do
+    end if
+    wall%first_wall_surface_area = area
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 31 )
+    allocate( wall%global_quantities%power_incident( num_time_slices ) )
+    wall%global_quantities%power_incident( time_sind ) = total_power
+#else
+    allocate( wall%global_quantities%power_from_plasma( num_time_slices ) )
+    wall%global_quantities%power_from_plasma( time_sind ) = total_power
+#endif
+    allocate( wall%global_quantities%power_currents( num_time_slices ) )
+    wall%global_quantities%power_currents( time_sind ) = power_currents
+    allocate( wall%global_quantities%power_neutrals( num_time_slices ) )
+    wall%global_quantities%power_neutrals( time_sind ) = power_neutrals
+    allocate( wall%global_quantities%power_radiated( num_time_slices ) )
+    wall%global_quantities%power_radiated( time_sind ) = power_radiated
+    allocate( wall%global_quantities%power_conducted( num_time_slices ) )
+    wall%global_quantities%power_conducted( time_sind ) = power_conducted
+    allocate( wall%global_quantities%power_convected( num_time_slices ) )
+    wall%global_quantities%power_convected( time_sind ) = power_convected
+    allocate( wall%global_quantities%power_recombination_plasma( num_time_slices ) )
+    wall%global_quantities%power_recombination_plasma( time_sind ) = &
+      &  power_recombination_plasma
+    allocate( wall%global_quantities%power_recombination_neutrals( num_time_slices ) )
+    wall%global_quantities%power_recombination_neutrals( time_sind ) = &
+      &  power_recombination_neutrals
+    call write_timed_value(wall%first_wall_power_flux_peak, peak_power_flux)
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    call write_timed_value(wall%first_wall_power_flux_peak_outside_divertors, wall_peak_power)
+#endif
+    do is = 1, nneut
+      allocate( wall%global_quantities%neutral( is )%pumping_speed( num_time_slices ) )
+      wall%global_quantities%neutral( is )%pumping_speed( time_sind ) = pumped_flux( is )
+      allocate( &
+        &  wall%global_quantities%neutral( is )%particle_flux_from_plasma( num_time_slices ) )
+      wall%global_quantities%neutral( is )%particle_flux_from_plasma( time_sind ) = &
+        &  particle_flux(is)
+      allocate( &
+        &  wall%global_quantities%neutral( is )%particle_flux_from_wall(3,num_time_slices) )
+      wall%global_quantities%neutral( is )%particle_flux_from_wall(1:3,time_sind) = &
+        &  emitted_flux(1:3,is)
+    end do
+#if ( IMAS_MAJOR_VERSION > 3 || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 37 ) || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 2 ) ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && GGD_MINOR_VERSION > 13 ) )
+    if ( switch%use_eirene.ne.0) then
+      j = 0
+      do ists = ncns + 1, nsts
+        do ias = eirdiag_nds_ind(ists)+1, eirdiag_nds_ind(ists+1)-1
+          iFc = fnmti_b2(ias)
+          if (iFc.eq.-1) cycle
+          j = j + 1
+          select case( trim(mtrwldsg(j)) )
+          case ( 'C' )
+            material_id(iFc) = 1
+          case ( 'W' )
+            material_id(iFc) = 2
+          case ( 'SS' )
+            material_id(iFc) = 4
+          case ( 'Be' )
+            material_id(iFc) = 10
+          case ( 'Mo' )
+            material_id(iFc) = 11
+          case ( 'Si' )
+            material_id(iFc) = 14
+          case ( 'Cu' )
+            material_id(iFc) = 18
+          end select
+        end do
+      end do
+    else
+      do i = 1, mpg%nRc
+        do iFc = 1, mpg%nFc
+          if (mpg%fcLbl(iFc).lt.rcstart(i)) cycle
+          if (mpg%fcLbl(iFc).gt.rcend(i)) cycle
+          if (material_id(iFc).ne.0) cycle
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (mpg%cvOnClosedSurface(iCv)) cycle
+          select case ( trim(surf_mat(i)) )
+          case ( 'C' )
+            material_id(iFc) = 1
+          case ( 'W' )
+            material_id(iFc) = 2
+          case ( 'SS' )
+            material_id(iFc) = 4
+          case ( 'Be' )
+            material_id(iFc) = 10
+          case ( 'Mo' )
+            material_id(iFc) = 11
+          case ( 'Si' )
+            material_id(iFc) = 14
+          case ( 'Cu' )
+            material_id(iFc) = 18
+          end select
+        end do
+      end do
+    end if
+    allocate( wall%description_ggd(1)%material( num_time_slices ) )
+    call write_wall_material_identifiers( wall_grid, time_sind, &
+       &   wall%description_ggd(1)%material( time_sind ), &
+       &   material_id )
+    wall%description_ggd(1)%material( time_sind )%time = time_slice_value
+#endif
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%power_density,   &
+       &   value = power_density )
+#if ( IMAS_MAJOR_VERSION > 3 || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 37 ) || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 2 ) )
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%v_biasing,       &
+       &   value = v_biasing )
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+       &         radiation%incident,                                       &
+       &   value = radiated_flux )
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+       &         current%incident,                                         &
+       &   value = current_flux )
+    do is = 1, ngpn
+      ispz = nphoti+is
+      if (switch%use_eirene.ne.0) then
+        js = latmscl(is)
+#ifdef B25_EIRENE
+        ks = isstat(is)
+#endif
+      else
+        js = b2espcr(is)
+        ks = 1
+      end if
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%recycling%       &
+        &        neutral( js )%state( ks )%coefficient,                    &
+        &  value = recycling(:,ispz) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%state( ks )%incident,                       &
+        &  value = incident_neutrals(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%state( ks )%emitted,                        &
+        &  value = emitted_neutrals(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%state( ks )%incident,               &
+        &  value = kinetic_iflux(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%state( ks )%emitted,                &
+        &  value = kinetic_eflux(:,is) )
+    end do
+    do is = 1, nspecies
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( is )%incident,                                   &
+        &  value = incident_neutsum(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( is )%emitted,                                    &
+        &  value = emitted_neutsum(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( is )%incident,                           &
+        &  value = kinetic_isum(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( is )%emitted,                            &
+        &  value = kinetic_esum(:,is) )
+    end do
+    js = nspecies
+#ifdef B25_EIRENE
+    do is = 1, nmoli
+      ispz = nphoti+natmi+is
+      ks = isstat(natmi+is)
+      if (ks.eq.1) js = js + 1
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%recycling%       &
+        &        neutral( js )%state( ks )%coefficient,                    &
+        &  value = recycling(:,ispz) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%state( ks )%incident,                       &
+        &  value = incident_neutrals(:,is+natmi) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%state( ks )%emitted,                        &
+        &  value = emitted_neutrals(:,is+natmi) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%state( ks )%incident,               &
+        &  value = kinetic_iflux(:,is+natmi) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%state( ks )%emitted,                &
+        &  value = kinetic_eflux(:,is+natmi) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        recombination%neutral( js )%state( ks )%incident,         &
+        &  value = recombination_flux(:,is+natmi) )
+    end do
+    do is = 1, nmoli
+      js = imneut(is)
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%incident,                                   &
+        &  value = incident_neutsum(:,js) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        neutral( js )%emitted,                                    &
+        &  value = emitted_neutsum(:,js) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%emitted,                            &
+        &  value = kinetic_esum(:,js) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%neutral( js )%incident,                           &
+        &  value = kinetic_isum(:,js) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        recombination%neutral( js )%incident,                     &
+        &  value = recombination_sum(:,js) )
+    end do
+    do is = 1, nioni
+      ispz = nphoti+natmi+nmoli+is
+      js = imiion(is)
+      ks = ionstt(state%ns-1+is)
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%recycling%       &
+        &        ion( js )%state( ks )%coefficient,                        &
+        &  value = recycling(:,ispz) )
+    end do
+#endif
+    js = 0
+    do is = 1, nflai
+      ispz = nphoti+natmi+nmoli+nioni+is
+      if (js.ne.lkindp(is)) then
+        js = lkindp(is)
+        ks = 1
+      else
+        ks = ks + 1
+      end if
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%recycling%       &
+        &        ion( js )%state( ks )%coefficient,                        &
+        &  value = recycling(:,ispz) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        ion( js )%state( ks )%incident,                           &
+        &  value = incident_ions(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%ion( js )%state( ks )%incident,                   &
+        &  value = kinetic_iflux(:,natmi+nmoli+nioni+is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        recombination%ion( js )%state( ks )%incident,             &
+        &  value = recombination_flux(:,natmi+nmoli+nioni+is) )
+    end do
+    do is = 1, nspecies
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+        &        ion( is )%incident,                                       &
+        &  value = incident_ionsum(:,is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        kinetic%ion( is )%incident,                               &
+        &  value = kinetic_isum(:,nneut+is) )
+      call write_wall_face_scalar( wall_grid,                              &
+        &  val = wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%   &
+        &        recombination%ion( is )%incident,                         &
+        &  value = recombination_sum(:,nneut+is) )
+    end do
+#endif
+#if ( IMAS_MAJOR_VERSION > 3 || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 39 ) )
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%phi_potential,   &
+       &   value = wall_phi )
+    call write_wall_face_scalar( wall_grid,                                &
+       &   val = wall%description_ggd(1)%ggd( time_sind )%psi,             &
+       &   value = wall_psi )
+#endif
+
+    deallocate( recycling )
+    deallocate( v_biasing )
+    deallocate( pumped_flux )
+    deallocate( emitted_flux )
+    deallocate( power_density )
+    deallocate( particle_flux )
+    deallocate( material_id )
+    deallocate( incident_ions )
+    deallocate( incident_neutrals )
+    deallocate( incident_ionsum )
+    deallocate( incident_neutsum )
+    deallocate( emitted_neutrals )
+    deallocate( radiated_flux )
+    deallocate( current_flux )
+    deallocate( recombination_flux )
+    deallocate( recombination_sum )
+    deallocate( kinetic_eflux )
+    deallocate( kinetic_iflux )
+    deallocate( kinetic_esum )
+    deallocate( kinetic_isum )
+    deallocate( wall_psi )
+    deallocate( wall_phi )
+    return
+    end subroutine fill_wall_data
+
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     subroutine write_ids_midplane( midplane, midplane_id )
     implicit none
@@ -9704,6 +10478,309 @@ contains
 
     return
     end subroutine write_face_vector
+
+    !> Write a scalar B2 wall face quantity to ids_generic_grid_scalar
+    !> Only fill in the grid subsets corresponding to the wall
+    subroutine write_wall_face_scalar( basegrid, val, value )
+    implicit none
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#else
+    type (ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#endif
+    type (ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
+        !< Type of IDS data structure, designed for scalar data handling
+        !< (in this case scalars residing on grid faces)
+    real(IDS_real), intent(in) :: value( mpg%nFc )
+    integer :: nSubsets  !< number of grid subsets to fill
+    integer :: iSubset   !< Grid subset iterator
+    integer :: iSubsetID !< Grid subset identifier index
+    integer :: ggdID     !< Grid identifier index
+    integer :: ndim      !< Grid subset dimension
+    integer :: freg      !< B2.5 Face region ID
+
+    ggdId = basegrid%identifier%index
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    nSubsets = 2
+#else
+    nSubsets = size(basegrid%grid_subset)
+    if (nSubsets.eq.0) return
+#endif
+    !! Allocate data fields for grid subsets
+    if (.not.associated( val ) ) then
+      allocate( val(nSubsets) )
+    end if
+
+    do iSubset = 1, nSubsets
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+      select case (iSubset)
+      case (1)
+        iSubsetID = GRID_SUBSET_X_ALIGNED_EDGES
+        ndim = 2
+      case (2)
+        iSubsetID = GRID_SUBSET_Y_ALIGNED_EDGES
+        ndim = 2
+      case default
+        iSubsetID = iSubset
+        ndim = IDS_INT_INVALID
+       end select
+#else
+       ndim = basegrid%grid_subset(iSubset)%dimension
+       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+#endif
+       if (ndim.eq.IDS_INT_INVALID) then
+         select case (iSubsetID)
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+           ndim = 1
+         case( GRID_SUBSET_EDGES, &
+             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_FULL_WALL, &
+             & GRID_SUBSET_SECOND_SEPARATRIX, &
+             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+           ndim = 2
+         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+           ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
+         end select
+       end if
+       if (ndim.ne.2) cycle
+       if (iSubsetID.gt.0 .and. &
+         &(iSubsetID.ne.GRID_SUBSET_MAIN_CHAMBER_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_BAFFLE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_BAFFLE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_MAIN_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_FULL_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_BAFFLE_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_BAFFLE_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_PFR_WALL_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_PFR_WALL_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_TARGET .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_TARGET .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_TARGET_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_TARGET_INACTIVE) ) cycle
+       if (iSubsetID.lt.0) then
+         freg = abs(iSubsetID) - regionCounts(0,gridGeometry)
+         if (freg.le.0) cycle
+         if (boundaryAssignments(freg,gridGeometry).eq.NODIRECTION) cycle
+         select case ( gridGeometry )
+           case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
+             if ( freg.eq.2 ) cycle
+           case ( GEOMETRY_LIMITER )
+             if ( freg.eq.4 ) cycle
+           case ( GEOMETRY_SN )
+             if ( freg.eq.8 ) cycle
+           case ( GEOMETRY_STELLARATORISLAND )
+             if ( freg.eq.9 ) cycle
+           case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+             if ( freg.eq.15 ) cycle
+           case ( GEOMETRY_CDN )
+             if ( freg.eq.14 .or. freg.eq.21 ) cycle
+           case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+             if ( freg.eq.15 .or. freg.eq.22 ) cycle
+         end select
+       end if
+       call write_face_vector( basegrid, val( iSubset ), value, &
+           &    ggdID, iSubsetID, iSubset )
+    end do
+
+    return
+    end subroutine write_wall_face_scalar
+
+#if ( IMAS_MAJOR_VERSION > 3 || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 37 ) || ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 2 ) ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && GGD_MINOR_VERSION > 13 ) )
+    !> Write a material identifier for wall faces
+    subroutine write_wall_material_identifiers( basegrid, time_slice_index, val, material_id )
+    implicit none
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#else
+    type (ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#endif
+    type (ids_wall_description_ggd_material), intent(inout) :: val
+        !< Type of IDS data structure, designed for wall material identifiers
+        !< (in this case identifiers residing on grid wall faces)
+    integer, intent(in) :: material_id( mpg%nFc )
+    integer, intent(in) :: time_slice_index
+    integer, dimension(:), pointer :: idsdata    !< Array for
+        !< handling data field values
+    integer :: nSubsets  !< number of grid subsets to fill
+    integer :: iSubset   !< Grid subset iterator
+    integer :: iSubsetID !< Grid subset identifier index
+    integer :: ggdID     !< Grid identifier index
+    integer :: ndim      !< Grid subset dimension
+    integer :: freg      !< B2.5 Face region ID
+
+    ggdId = basegrid%identifier%index
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+    nSubsets = 2
+#else
+    nSubsets = size(basegrid%grid_subset)
+    if (nSubsets.eq.0) return
+#endif
+    !! Allocate data fields for grid subsets
+    if (.not.associated( val%grid_subset ) ) then
+      allocate( val%grid_subset(nSubsets) )
+    end if
+
+    do iSubset = 1, nSubsets
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+      select case (iSubset)
+      case (1)
+        iSubsetID = GRID_SUBSET_X_ALIGNED_EDGES
+        ndim = 2
+      case (2)
+        iSubsetID = GRID_SUBSET_Y_ALIGNED_EDGES
+        ndim = 2
+      case default
+        iSubsetID = iSubset
+        ndim = IDS_INT_INVALID
+       end select
+#else
+       ndim = basegrid%grid_subset(iSubset)%dimension
+       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+#endif
+       if (ndim.eq.IDS_INT_INVALID) then
+         select case (iSubsetID)
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+           ndim = 1
+         case( GRID_SUBSET_EDGES, &
+             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_FULL_WALL, &
+             & GRID_SUBSET_SECOND_SEPARATRIX, &
+             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+           ndim = 2
+         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+           ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
+         end select
+       end if
+       if (ndim.ne.2) cycle
+       if (iSubsetID.gt.0 .and. &
+         &(iSubsetID.ne.GRID_SUBSET_MAIN_CHAMBER_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_BAFFLE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_BAFFLE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_MAIN_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_PFR_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_FULL_WALL .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_BAFFLE_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_BAFFLE_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_PFR_WALL_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_PFR_WALL_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_TARGET .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_TARGET .and. &
+         & iSubsetID.ne.GRID_SUBSET_OUTER_TARGET_INACTIVE .and. &
+         & iSubsetID.ne.GRID_SUBSET_INNER_TARGET_INACTIVE) ) cycle
+      if (iSubsetID.lt.0) then
+        freg = abs(iSubsetID) - regionCounts(0,gridGeometry)
+        if (freg.le.0) cycle
+        if (boundaryAssignments(freg,gridGeometry).eq.NODIRECTION) cycle
+        select case ( gridGeometry )
+          case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
+            if ( freg.eq.2 ) cycle
+          case ( GEOMETRY_LIMITER )
+            if ( freg.eq.4 ) cycle
+          case ( GEOMETRY_SN )
+            if ( freg.eq.8 ) cycle
+          case ( GEOMETRY_STELLARATORISLAND )
+            if ( freg.eq.9 ) cycle
+          case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+            if ( freg.eq.15 ) cycle
+          case ( GEOMETRY_CDN )
+            if ( freg.eq.14 .or. freg.eq.21 ) cycle
+          case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+            if ( freg.eq.15 .or. freg.eq.22 ) cycle
+        end select
+      end if
+      idsdata => b2_IMAS_Transform_Wall_ID_B2_To_IDS_Face(    &
+               &   basegrid, iSubset, mpg, material_id )
+      if ( size( idsdata ) > 0 ) then
+        call gridWriteMaterialIdentifiers( val%grid_subset( iSubset ), &
+               &   ggdID, iSubsetID, idsdata )
+      else
+        val%grid_subset(iSubset)%grid_index = ggdId
+        val%grid_subset(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
+    end do
+
+    return
+    end subroutine write_wall_material_identifiers
+#endif
+
 #endif
 
     subroutine write_sourced_constant( val, value )
