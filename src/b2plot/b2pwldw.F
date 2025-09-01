@@ -87,7 +87,7 @@ c=======================================================================
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
 #else
-      integer :: use_eirene = 0
+      integer :: use_eirene = 0, nclm_ni
       real (kind=R8) :: pump, pumptot
       character*13 species_name
 #endif
@@ -243,7 +243,7 @@ c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_v,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,
      ,  n_sfpr_s,m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m,
-     ,  nclm_na,nclm_nm,nclm_ni
+     ,  nclm_na,nclm_nm
       parameter
      , (n_hdpr_c=10, n_hdpr_v=3, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4,
      ,  n_hdpr_sp=2, n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -329,7 +329,6 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
 #ifndef B25_EIRENE
         nclm_na=nspecies
         nclm_nm=0
-        nclm_ni=0
         do ia=1,nspecies
           TEXTA(ia)=species_list(ia)
         end do
