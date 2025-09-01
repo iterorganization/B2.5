@@ -2053,6 +2053,7 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, u )
         end select
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         allocate( &
           &  wall%global_quantities%electrons%power_inner_target( num_time_slices ) )
         allocate( &
@@ -2061,7 +2062,6 @@ contains
           & electron_power(1)
         wall%global_quantities%electrons%power_outer_target( time_sind ) = &
           & electron_power(maxval(mpg%strDiv))
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         allocate( &
           &  wall%global_quantities%power_inner_target_ion_total( num_time_slices ) )
         wall%global_quantities%power_inner_target_ion_total( time_sind ) = &
