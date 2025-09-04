@@ -564,9 +564,9 @@
 !     16 - b2recyc(paris(ipar),parib(ipar)), with paris(ipar) identifies species, parib(ipar) identifies stratum
 !     17 - b2tqna_ballooning
 !     18 - b2tqna_ballooning_rescale
-!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
-!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
-!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
+!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k)
+!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB
+!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB
 !     22 - keps_sig
 !     23 - keps_alf
 !     24 - keps_visc
@@ -750,7 +750,7 @@
         prior_par(idd:idd+spatial_points(ipp)-1,2) = parold(ipp,2)
         prior_range(idd:idd+spatial_points(ipp)-1,1) = rangeold(ipp,1)
         prior_range(idd:idd+spatial_points(ipp)-1,2) = rangeold(ipp,2)
-        npar_opt = npar_opt + spatial_points(ipp) - 1 
+        npar_opt = npar_opt + spatial_points(ipp) - 1
         idd = idd + spatial_points(ipp) - 1 !next index
        end if
        npar_opt = npar_opt + 1
@@ -775,9 +775,9 @@
       if (cftype(1).eq.6 .and. nshift_opt.gt.0) then
         ! test priors for shift. sigma and mean will be added here later
         write(*,*) 'Testing priors for shift_cf_data'
-        call test_priors(nshift_opt, shift_prior_type(1:nshift_opt), 
+        call test_priors(nshift_opt, shift_prior_type(1:nshift_opt),
      &   shift_prior_par(1:nshift_opt,1:2),
-     &   shift_prior_range(1:nshift_opt,1:2), 
+     &   shift_prior_range(1:nshift_opt,1:2),
      &   xL(npar_opt-nshift_opt+1:npar_opt))
       endif
 !     as above, add the contribution to sensitivity/optimization variables of the corr_model
@@ -803,9 +803,9 @@
       if (cftype(1).eq.6 .and. ncorr_opt.gt.0) then
         ! test priors for corr
         write(*,*) 'Testing priors for corr_length'
-        call test_priors(ncorr_opt, corr_prior_type(1:ncorr_opt), 
+        call test_priors(ncorr_opt, corr_prior_type(1:ncorr_opt),
      &   corr_prior_par(1:ncorr_opt,1:2),
-     &   corr_prior_range(1:ncorr_opt,1:2), 
+     &   corr_prior_range(1:ncorr_opt,1:2),
      &   xL(npar_opt-ncorr_opt+1:npar_opt))
       endif
       if (flag_optim) call xertst(npar_opt.gt.0,
@@ -822,7 +822,7 @@
          endif
         enddo
       endif
-      isigma = npar_opt - nsigma_opt  - nmean_opt - nshift_opt - 
+      isigma = npar_opt - nsigma_opt  - nmean_opt - nshift_opt -
      &         ncorr_opt + 1 ! position of first sigma in x0
       do ii = 1, nsigma
 !      only assign initial value from x0 if that sigma is being optimized or used in MAP

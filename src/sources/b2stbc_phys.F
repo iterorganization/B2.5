@@ -4706,7 +4706,6 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENE=20 -- Feedback boundary condition with constant temperature
 
       case (20)
-        call xerrab ('b2stbc_phys -- BCENE = 20 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'BCENE = 20 : electron temperature feedback by flux ',
@@ -7657,7 +7656,6 @@ cwdk    For testing purposes, use with care!
 * -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
       case (16)
-        call xerrab ('b2stbc_phys -- BCPOT = 16 not adapted for WG')
         if (ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'BCPOT = 16 : electric potential feedback by current on ',
