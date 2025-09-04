@@ -591,7 +591,6 @@ c b2txcx
 c Feedback
       integer :: b2stbc_feedback
 
-
 c Optimization
       integer :: b2optim_save_states
       integer :: b2optim_reset_iter
@@ -963,8 +962,7 @@ c Zhdanov closure switches
       s % set_tn_numerical = 0
       s % set_po_numerical = 0
 
-
-c far-sol flux limiting options
+c far-SOL flux limiting options
       s % b2tlhe_far_sol = 0
       s % b2tlhi_far_sol = 0
       s % b2tlmv_far_sol = 0
