@@ -2461,10 +2461,12 @@
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
       integer, save :: mod_hc = 0, set_beta = 0
-      integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
+      integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp,
+     *   iFt, l
       logical :: iscvsb(mpg%nCv)
       integer :: wrkVx(mpg%nVx)
-      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk
+      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk,
+     *  cur_len(2), cen_len(2), a(2)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
@@ -2791,27 +2793,60 @@
             cycle
           endif
           if (mpg%cvFt(minval(mpg%fcCv(iFc,:))).ne.
-     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))
-     &        .or. wrk < gm%Qalfmin ) then
+     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))) then
 
-              k = ind1-1
-              if(((ind1-1) .le. ind) .or. 
-     &        (minval(mpg%fcCv(fcsb(ind),1:2))
-     &         .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
-                ind = ind1
-                cycle
-              endif     
-              write(*,*), "boundary faces of cell:"
-              write (*,*) fcsb(ind:k)
-              if (mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),1).and.
-     &          mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),2)) then
-                iVx1 = mpg%fcVx(fcsb(ind),1)
-              else
-                iVx1 = mpg%fcVx(fcsb(ind),2)
+            k = ind1-1
+            if(((ind1-1) .le. ind) .or.
+     &          (minval(mpg%fcCv(fcsb(ind),1:2))
+     &       .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
+              ind = ind1
+              cycle
+            endif
+            write(*,*) "boundary faces of cell:"
+            write (*,*) fcsb(ind:k)
+
+            wrkVx = 0
+            do k=ind,ind1-1
+              iCv = cvsb(k,2)
+              if (cvsb(k,2).eq.cvsb(k-1,2)) cycle
+              wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                       mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) =
+     &         wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                        mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))+1
+            enddo
+            print *, "vertices of effective cell:"
+            meanCv = 0.0_R8
+            tmp = 0
+            do k=1,mpg%nVx
+              if (wrkVx(k).ge.1) then
+                print *, k
+                meanCv(1) = meanCv(1) + gm%vxX(k)
+                meanCv(2) = meanCv(2) + gm%vxY(k)
+                tmp = tmp + 1
               endif
             enddo
             meanCv = meanCv/real(tmp,R8)
             write (*,'(2es17.6)') meanCv(1), meanCv(2)
+
+            do l=ind,k
+              iVx1 = mpg%fcVx(fcsb(l),1)
+              iVx2 = mpg%fcVx(fcsb(l),2)
+              a(1) = gm%vxX(iVx1)
+              a(2) = gm%vxY(iVx1)
+              cur_len(1) = gm%vxX(iVx2)-a(1)
+              cur_len(2) = gm%vxY(iVx2)-a(2)
+              cen_len(1) = meanCv(1)-a(1)
+              cen_len(2) = meanCv(2)-a(2)
+              wrk = (cen_len(1)*cur_len(1)+cen_len(2)*cur_len(2))/
+     &          (cur_len(1)**2.0_R8+cur_len(2)**2.0_R8)
+              if (wrk >= 0.0_R8 .and. wrk <= 1.0_R8) then
+                meanFc(1) = a(1)+wrk*cur_len(1)
+                meanFc(2) = a(2)+wrk*cur_len(2)
+                write(*,*) "Closest point:"
+                write (*,'(2es17.6)') meanFc(1), meanFc(2)
+                exit
+              endif
+            enddo
 
             wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
             write (*,*) "new fcHc:"
