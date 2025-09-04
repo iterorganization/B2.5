@@ -1243,11 +1243,7 @@
         mpg%nFci = 0
         do j = 2, mpg%nCg
             if (maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j), 1:2))) /=
-     &          maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2))) .or.
-     &         (minval(abs(gm%fcPbs(mpg%fcs_wall(j-1:j))/
-     &          gm%fcS(mpg%fcs_wall(j-1:j)))) < gm%Qalfmin .and.
-     &          maxval(abs(gm%fcPbs(mpg%fcs_wall(j-1:j))/
-     &          gm%fcS(mpg%fcs_wall(j-1:j)))) >= gm%Qalfmin)) then
+     &          maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
                 mpg%nFci = mpg%nFci + 1
             end if
         end do
@@ -1261,18 +1257,11 @@
         i = 1
         do j = 2, mpg%nCg
           if (maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j), 1:2))) /=
-     &        maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2))) .or.
-     &       (minval(abs(gm%fcPbs(mpg%fcs_wall(j-1:j))/
-     &        gm%fcS(mpg%fcs_wall(j-1:j)))) < gm%Qalfmin .and.
-     &        maxval(abs(gm%fcPbs(mpg%fcs_wall(j-1:j))/
-     &        gm%fcS(mpg%fcs_wall(j-1:j)))) >= gm%Qalfmin)) then
+     &        maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
                 mpg%fcs_wall_ind(k, 1) = i
                 mpg%fcs_wall_ind(k, 2) = j - i
               if (mpg%cvOnClosedSurface
      &           (minval(mpg%fcCv(mpg%fcs_wall(i), 1:2)))) then
-                mpg%fcs_wall_type(k) = 3
-              elseif (abs(gm%fcPbs(mpg%fcs_wall(i))/
-     &                gm%fcS(mpg%fcs_wall(i))) < gm%Qalfmin) then
                 mpg%fcs_wall_type(k) = 1
               else
                 mpg%fcs_wall_type(k) = 2
@@ -1289,9 +1278,6 @@
      &    mpg%fcs_wall_ind(mpg%nFci, 1) + 1
         if (mpg%cvOnClosedSurface
      &     (minval(mpg%fcCv(mpg%fcs_wall(i), 1:2)))) then
-            mpg%fcs_wall_type(k) = 3
-        elseif (abs(gm%fcPbs(mpg%fcs_wall(mpg%nCg))/
-     &          gm%fcS(mpg%fcs_wall(mpg%nCg))) < gm%Qalfmin) then
             mpg%fcs_wall_type(k) = 1
         else
             mpg%fcs_wall_type(k) = 2

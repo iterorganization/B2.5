@@ -216,8 +216,8 @@ cwdk                   (original code: simple averaging)
           else
             iVx2 = mpg%fcVx(iFc1,2)
           endif
-          fcHt_tot = sum(geo%fcHt(mpg%fcs_wall_ind(j,1):
-     &      mpg%fcs_wall_ind(j,1)+mpg%fcs_wall_ind(j,2)-1))
+          fcHt_tot = sum(geo%fcHt(mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
+     &      mpg%fcs_wall_ind(j,1)+mpg%fcs_wall_ind(j,2)-1)))
           if (switch%b2tfnb_avg_vExB.ge.2)
      &      write(*,*), "iVx1,iVx2, po_iVx1, po_iVx2",iVx1,iVx2,
      &          wrkVx(iVx1),wrkVx(iVx2)
