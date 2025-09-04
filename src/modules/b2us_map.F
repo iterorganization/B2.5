@@ -118,7 +118,7 @@
         logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
         integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
         integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
-        integer, allocatable :: fcs_wall_type(:)       ! (nFci) inticates type of boundary: 1 - field aligned, 2 - non field aligned, 3 - boudary faces inside the separatirx
+        integer, allocatable :: fcs_wall_type(:)       ! (nFci) inticates type of boundary: 1 - boudary faces inside the separatirx, 2 - other boundary faces.
 
         end type mapping
 

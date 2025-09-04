@@ -5886,12 +5886,7 @@ cxpb code segment analog to b2tfhi
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          if (conpar(is,ib,2).eq.0.0_R8) then
-            cs = sqrt(pz(iCv1)/rz(iCv1))
-          else
-            cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
-     &        (am(is)*mp))
-          endif
+          cs = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
@@ -5899,7 +5894,7 @@ cxpb code segment analog to b2tfhi
           if (bceni_15_style == 0) then
             if (wrk < geo%Qalfmin) then
               srw%shi0(iCv1,0) = 0.0_R8
-              srw%shi0(iCv1,1) = -enipar(ib,1)*geo%fcS(iFc)*geo%Qalfmax*cs
+              srw%shi0(iCv1,1) = -1.5_R8*geo%fcS(iFc)*geo%Qalfmax*cs
      &         *dv%ni(iCv1,1)
               if(switch%mdf_fhi.ne.0) then
                 srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
