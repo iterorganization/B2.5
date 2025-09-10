@@ -4025,6 +4025,24 @@ c
           description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
+        case ('fteq')
+          description='fteq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFt) then
+            do i=1,mpg%ftCvP(istack(iistack),2)
+              iCv=mpg%ftCv(mpg%ftCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Flux tube index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iFt = '//int2str(istack(iistack))  ! IGNORE
+          write(*,*) '"fteq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('lnlam')
           description='ln \GK\R'
           nz=1
