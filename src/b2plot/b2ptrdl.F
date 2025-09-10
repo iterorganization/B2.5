@@ -47,7 +47,7 @@ c<<<
      ,   'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
      ,    l2pwinp , lppp , nwldprt , nadsrc , add_rad
         if (nwldlis(1).gt.0) then !{
-          print '(a/(16i5))','Shadowing structure',
+          print '(a/(20i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
           iend=lppp
           do j=1,ntrgts !{
