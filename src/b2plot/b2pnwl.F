@@ -55,6 +55,7 @@ c
 c*** Set the default values
       npumplis=0
       nwldprt=0
+      nskipel=0
 c*** Read the data from dg files
       iret=0
       call b2pinp(iret)
