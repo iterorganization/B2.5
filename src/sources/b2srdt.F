@@ -110,10 +110,10 @@
 * ..Optionally, calculate a local (cell-based) multiplier to the timestep.
 *   mult_dt will be 1.0 if b2mndt_var_style = 0 (default). 
       call get_mult_dt(switch%b2mndt_var_style, dtim, dv, geo, mpg, 
-     &     nCv, ns,  te, switch%b2mndt_var_te_min,
+     &     nCv, mpg%nFc, ns, te, ti, na, ua, switch%b2mndt_var_te_min,
      &     switch%b2mndt_var_te_max, switch%b2mndt_var_mult, 
      &     switch%b2mndt_var_style3_Cmax, mult_dt, 
-     &     dt_var4_ns,dt_var4_min)
+     &     dt_var4_ns,dt_var4_min,switch%b2mndt_var_style_nfilter)
 
 * ..include the contributions from dtim
 *   ..modify snadt

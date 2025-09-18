@@ -537,6 +537,7 @@ c b2mndt
       real (kind=R8) :: b2mndt_var_mult
       real (kind=R8) :: b2mndt_var_style2_SF
       real (kind=R8) :: b2mndt_var_style3_Cmax
+      integer :: b2mndt_var_style_nfilter
       real (kind=R8) :: b2mndt_max_update
 
 c b2mndr
@@ -1140,6 +1141,7 @@ c b2mndt
       s % b2mndt_var_mult = 1.0_R8
       s % b2mndt_var_style2_SF = 10.0_R8
       s % b2mndt_var_style3_Cmax = 1.0_R8
+      s % b2mndt_var_style_nfilter = 1
       s % b2mndt_max_update = 0.0_R8
 
 c Feedback
@@ -1764,6 +1766,8 @@ c b2mndt
       call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
       call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
       call ipgetr ('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_Cmax)
+      call ipgeti ('b2mndt_var_style_nfilter',
+     &              s%b2mndt_var_style_nfilter)
       call ipgetr ('b2mndt_max_update', s%b2mndt_max_update)
 
 c b2mndr
