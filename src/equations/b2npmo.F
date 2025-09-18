@@ -696,20 +696,6 @@ c     ..compare 9-pt stencil matrice
       endif                                                             !srv 06.07.10
 
 
-
-* ..optional stabilization scheme (experimental), limit update to x % of value
-      if (switch%b2mndt_max_update.gt.0.0_R8) then
-        do is = 0, ns-1
-          do iCv = 1,mpg%nCi
-            dv%corua(iCv,is) = sign(1.0_R8,dv%corua(iCv,is))
-     &      *min(abs(dv%corua(iCv,is)),
-     &         switch%b2mndt_max_update*
-     &         max(abs(pl%ua(iCv,is)),100.0_R8))
-!! in contrast to density and temperature, the parallel velocity can be zero, so we always allow at least an update of b2mndt_max_update*100m/s
-          enddo
-        enddo
-      endif
-
 *   ..apply correction
       if (rxf.ne.0.0_R8) then
        do is = 0, ns-1
