@@ -1096,8 +1096,10 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
               endif
 
-              fb_current(ifb) = 0.5_R8 *
-     *          (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
+              fb_current(ifb) = (geo%cvVol(omp(icsepomp-1))*
+     &          dv%ne(omp(icsepomp-1))+geo%cvVol(omp(icsepomp))*
+     &          dv%ne(omp(icsepomp)))/(geo%cvVol(omp(icsepomp-1))+
+     &          geo%cvVol(omp(icsepomp)))
               is_start=-1
               is_end=-1
               do is=0, ns-1
@@ -2368,7 +2370,7 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
               endif
 
-              if(feedback_namelist_used .and.
+              if(
      &             ncall .eq. 0 .and.
      &             saved_fb_actuator(ifb) .eq. 0.0_R8)
      &             saved_fb_actuator(ifb) =
