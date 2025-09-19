@@ -294,7 +294,7 @@
           call calc_log_prior(prior, inrange)
           write(*,*) 'MAP log prior value:', prior
           if (inrange) then
-            J(1) = -(prior + lll_cum)*cfweight(icf)
+            J(1) = -(prior + lll_cum)*cfweight(1)
           else
             J(1) = inf_opt
           endif
