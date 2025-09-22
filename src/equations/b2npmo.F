@@ -471,18 +471,17 @@ cdjm Jan2017 update momentum source components for balance
            endif
          endif
 *    .. calculate time-dependent source
+*    .. ts_factor = time-stepping multiplication factor
+         if (switch%b2mndt_ckn.eq.2) then
+           ts_factor = 2.0_R8
+         elseif (switch%b2mndt_bdf.eq.2) then
+           ts_factor = 3.0_R8/2.0_R8
+         else !default implicit Euler scheme
+           ts_factor = 1.0_R8
+         endif
          if (switch%b2mndt_style.eq.2) then
            call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                 pl%na, psnl%ua, switch, mpg, sr%smodt, is)
-*   .. modify time-stepping sources according to time integration scheme
-*   .. ts_factor = time-stepping multiplication factor
-      if (switch%b2mndt_ckn.eq.2) then
-        ts_factor = 2.0_R8
-      elseif (switch%b2mndt_bdf.eq.2) then
-        ts_factor = 3.0_R8/2.0_R8
-      else !default implicit Euler scheme
-        ts_factor = 1.0_R8
-      endif
 *    .. add contribution from time-dependent source
            sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
      &       am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))
