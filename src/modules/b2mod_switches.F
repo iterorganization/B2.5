@@ -2142,6 +2142,7 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
       call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
+      call ipgetr ('b2mndt_nstg_aresmo', s%nstg_aresmo)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
       call ipgetr ('b2news_facExB_start',   s%facExB_start)
@@ -2748,7 +2749,7 @@ c b2mndt
       call xertst (s%nstg_aresco.ge.0.0_R8,
      &  'faulty internal parameter nstg_aresco')
       call xertst (s%nstg_aresmo.ge.0.0_R8,
-     &  'faulty internal parameter nstg_aresmo')
+     &  'faulty internal parameter nstg_aresmo')     
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,

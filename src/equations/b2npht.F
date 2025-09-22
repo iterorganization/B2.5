@@ -335,15 +335,7 @@ cdjm Jan2017 update particle source components for balance
           endif
         endif
 c time-dependent treatment                                              !srv 07.07.21 {
-      if(switch%b2mndt_style.eq.2) then
-*  .. calculate time-dependent source
-        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
-     &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
-     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
-     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
-     &    sr%sktdt, sr%sztdt)
-*   ..modify time-stepping sources according to time integration scheme
-*   .. ts_factor = time-stepping multiplication factor
+*  .. ts_factor = time-stepping multiplication factor
       if (switch%b2mndt_ckn.eq.2) then
         ts_factor = 2.0_R8
       elseif (switch%b2mndt_bdf.eq.2) then
@@ -351,6 +343,13 @@ c time-dependent treatment                                              !srv 07.
       else !default implicit Euler scheme
         ts_factor = 1.0_R8
       endif
+      if(switch%b2mndt_style.eq.2) then
+*  .. calculate time-dependent source
+        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
+     &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
 cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
 cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,

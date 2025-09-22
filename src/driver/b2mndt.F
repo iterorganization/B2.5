@@ -200,6 +200,10 @@
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
       endif
+      test_residual = switch%nstg_areshe.gt.0.0_R8.or.
+     &                switch%nstg_areshi.gt.0.0_R8.or.
+     &                switch%nstg_aresco.gt.0.0_R8.or.
+     &                switch%nstg_aresmo.gt.0.0_R8
 *   ..time-dependent MMS test                                            !fc 21.03.24
       if (switch%use_mms.eq.2.and.itim.gt.0) then
         if(switch%equation_sources.ne.0)
@@ -481,18 +485,18 @@ ctmp.dpc
             call b2mxar (nCv, ns, switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
             quit_residual=test_residual.and.
-     &       ((st%diag%areshe*switch%nstg_areshe).le.
-     &        (switch%nstg_areshe*switch%nstg_areshe)
-     &        .or.switch%nstg_areshe.eq.0.0_R8).and.
-     &       ((st%diag%areshi*switch%nstg_areshi).le.
-     &        (switch%nstg_areshi*switch%nstg_areshi)
-     &        .or.switch%nstg_areshi.eq.0.0_R8).and.
-     &       ((st%diag%aresco(ismain)*switch%nstg_aresco)
-     &        .le.(switch%nstg_aresco*switch%nstg_aresco)
-     &        .or.switch%nstg_aresco.eq.0.0_R8).and.
-     &       ((st%diag%aresmo(ismain)*switch%nstg_aresmo)
-     &        .le.(switch%nstg_aresmo*switch%nstg_aresmo)
-     &        .or.switch%nstg_aresmo.eq.0.0_R8)
+     &                    ((st%diag%areshe*switch%nstg_areshe).le.
+     &                     (switch%nstg_areshe*switch%nstg_areshe)
+     &                     .or.switch%nstg_areshe.eq.0.0_R8).and.
+     &                    ((st%diag%areshi*switch%nstg_areshi).le.
+     &                     (switch%nstg_areshi*switch%nstg_areshi)
+     &                     .or.switch%nstg_areshi.eq.0.0_R8).and.
+     &                    ((st%diag%aresco(ismain)*switch%nstg_aresco)
+     &                     .le.(switch%nstg_aresco*switch%nstg_aresco)
+     &                     .or.switch%nstg_aresco.eq.0.0_R8).and.
+     &                    ((st%diag%aresmo(ismain)*switch%nstg_aresmo)
+     &                     .le.(switch%nstg_aresmo*switch%nstg_aresmo)
+     &                     .or.switch%nstg_aresmo.eq.0.0_R8)
 *      ..compute norms of the corrections
             call b2mxac (nCv, ns, st%dv, st%diag)
 *      ..decide what output
