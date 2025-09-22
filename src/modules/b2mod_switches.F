@@ -533,6 +533,7 @@ c b2mndt
       integer :: b2mndt_moqtlv
       integer :: b2mndt_moitlv
       real (kind=R8) :: nstg_aresco
+      real (kind=R8) :: nstg_aresmo
       real (kind=R8) :: nstg_areshe
       real (kind=R8) :: nstg_areshi
       real (kind=R8) :: BoRiS
@@ -1153,6 +1154,7 @@ c b2mndt
       s % b2mndt_moqtlv = 3
       s % b2mndt_moitlv = -1
       s % nstg_aresco = 0.0_R8
+      s % nstg_aresmo = 0.0_R8
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
@@ -1807,6 +1809,7 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
       call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
+      call ipgetr ('b2mndt_nstg_aresmo', s%nstg_aresmo)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
@@ -2404,6 +2407,8 @@ c b2mndt
      &  'faulty internal parameter nstg_areshi')
       call xertst (s%nstg_aresco.ge.0.0_R8,
      &  'faulty internal parameter nstg_aresco')
+      call xertst (s%nstg_aresmo.ge.0.0_R8,
+     &  'faulty internal parameter nstg_aresmo')     
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,

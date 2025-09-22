@@ -265,8 +265,9 @@
       integer stack_ntim(20)
       integer stack_ptr
       real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco, res_quit, res_max
-      logical quit_residual, test_residual
+     *  min_areshe, min_areshi, min_aresco, min_aresmo,
+     *  res_quit, res_max
+      logical quit_residual, test_residual_out
       real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
@@ -286,7 +287,8 @@
       save delta_cdfmovie_time, save_cdfmovie_time
       save delta_plasma_time, save_plasma_time
       save delta_ids_time, save_ids_time
-      save min_areshe, min_areshi, min_aresco, res_quit, res_max
+      save min_areshe, min_areshi, min_aresco, min_aresmo,
+     &     res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
@@ -322,7 +324,7 @@
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data delta_ids_time/0.0_R8/, save_ids_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
-     &     res_quit/1.0e-7_R8/
+     &     min_aresmo/0.0_R8/, res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
@@ -998,11 +1000,14 @@
        call ipgetr ('b2mndr_min_aresco', min_aresco)                     !jwk
        call xertst (min_aresco.ge.0.0_R8,                                !jwk
      &      'faulty internal parameter min_aresco')                      !jwk
+       call ipgetr ('b2mndr_min_aresmo', min_aresmo)                     !jwk
+       call xertst (min_aresmo.ge.0.0_R8,                                !fc
+     &      'faulty internal parameter min_aresmo')                      !fc     
        if (min_areshe.gt.0.0_R8.or.min_areshi.gt.0.0_R8.or.              !jwk
-     &     min_aresco.gt.0.0_R8) then                                    !jwk
-          test_residual=.true.                                           !jwk
+     &     min_aresco.gt.0.0_R8.or.min_aresmo.gt.0.0_R8) then            !fc
+          test_residual_out=.true.                                           !jwk
        else                                                              !jwk
-          test_residual=.false.                                          !jwk
+          test_residual_out=.false.                                          !jwk
        endif                                                             !jwk
        call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
        call xertst (res_quit.ge.0.0_R8,                                  !sc
@@ -2583,14 +2588,17 @@ c new CDF movie option
         if (any(solvezt).and.switch%solve_keps.eq.2)
      &    res_max = max(res_max,state%diag%areszt)
 #ifndef FIXED_POINT
-        if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
-          quit_residual=                                                 !jwk
-     &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
-     &        .and.
-     &        (state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
-     &        .and.
-     &        (state%diag%aresco(ismain)*
-     &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
+        if(test_residual_out.and.mod(itim,10).eq.0
+     &     .and.no_solve.le.0) then   !jwk
+          quit_residual=
+     &      ((state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
+     &       .or.min_areshe.eq.0.0_R8).and.
+     &      ((state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
+     &       .or.min_areshi.eq.0.0_R8).and.
+     &      ((state%diag%aresco(ismain)*min_aresco)
+     &       .le.(min_aresco*min_aresco).or.min_aresco.eq.0.0_R8).and.  !jwk
+     &      ((state%diag%aresmo(ismain)*min_aresmo)
+     &       .le.(min_aresmo*min_aresmo).or.min_aresmo.eq.0.0_R8)       !fc
         endif                                                            !jwk
 #endif
         quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11

@@ -3949,7 +3949,7 @@
 			<switchgroup>
 				<name>b2mndr_min_ares*</name>
 				<description>
-					Minimum residuals for stopping a run. All criteria must be met simultaneously for the run to stop. The continuity equation residual applies to the "ismain" species (See "Run" section).
+					Minimum residuals for stopping a run. All criteria must be met simultaneously for the run to stop. The continuity and momentum minimum residuals apply to the "ismain" species (See "Run" section).
 				</description>
 				<switch>
 					<name>b2mndr_min_areshe</name>
@@ -3963,6 +3963,11 @@
 				</switch>
 				<switch>
 					<name>b2mndr_min_aresco</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2mndr_min_aresmo</name>
 					<default>0.0</default>
 					<type>real</type>
 				</switch>
@@ -3980,7 +3985,7 @@
 				<description>
 					Minimum residuals for an internal solution loop to stop.
 					Used in conjunction with (not in replacement of) the nstg(0:2) numbers.
-					All nonzero criteria must be met simultaneously. The continuity equation residual applies to the 'ismain' species (See 'Run' section).
+					All nonzero criteria must be met simultaneously. The continuity and momentum minimum residuals apply to the 'ismain' species (See 'Run' section).
 				</description>
 				<switch>
 					<name>b2mndt_nstg_areshe</name>
@@ -3994,6 +3999,11 @@
 				</switch>
 				<switch>
 					<name>b2mndt_nstg_aresco</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2mndt_nstg_aresmo</name>
 					<default>0.0</default>
 					<type>real</type>
 				</switch>
