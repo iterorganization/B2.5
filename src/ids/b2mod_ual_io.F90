@@ -8520,7 +8520,7 @@ contains
       call write_sourced_value( summary%boundary%strike_point_outer_z, geo%vxY(mpg%strVx(1)) )
     endif
 
-    call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real )
+    call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real/5.0_IDS_real )
 
     call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
     allocate( gas_puff( nneut ) )

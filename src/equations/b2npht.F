@@ -215,7 +215,6 @@ c make sure fhn is zero when not solving a separate neutral energy equation
         dv%fhn = 0.0_R8
       endif
 
-
 *   ..compute final heat sources
       if(switch%b2npht_style.eq.0) then
        call xerrab('b2npht -- style 0 not available for WG')
