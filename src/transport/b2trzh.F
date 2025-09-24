@@ -164,6 +164,8 @@
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
       integer, save :: Zhdanov_nc = 0
+      integer, save :: iout = 0
+      character chns1*3,chns2*3
       character*80 cvalip
 *   ..initialisation
       save ncall
@@ -177,6 +179,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
+        call ipgeti ('b2sifrtf_iout', iout)
 *   ..allocate
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nx, ny)
@@ -953,7 +956,28 @@
           enddo
         enddo
       enddo
-
+      if (iout.ne.0) then
+        do i = 0, nspecies-1
+          write (chns1,'(i3.3)') i
+          do j = 0, nspecies-1
+            write (chns2,'(i3.3)') j
+            wrk = c_R_w(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_w'//chns1//chns2)
+            wrk = c_R_wA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wA'//chns1//chns2)
+            wrk = c_R_wB(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wB'//chns1//chns2)
+            wrk = c_R_TA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA'//chns1//chns2)
+            wrk = c_R_TA_nofl(:,:,i,j)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA_nofl'//chns1//chns2)
+          enddo
+          wrk = c_R_TB(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB'//chns1)
+          wrk = c_R_TB_nofl(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB_nofl'//chns1)
+        enddo
+      endif
       ncall = ncall+1
       call subend ()
       return
