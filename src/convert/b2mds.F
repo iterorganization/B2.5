@@ -238,6 +238,7 @@ c
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
+            if(abs(am(is)-2.5_R8).lt.amtol) textsp(iss)='DT'
           else
             textsp(iss)=' '//elements(il)
           end if
@@ -293,7 +294,7 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
-c calculate additional fluxes (fhj, fhm, fhp, fht)
+c calculate additional fluxes (fhj, fhp, fht)
       call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,

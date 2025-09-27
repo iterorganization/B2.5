@@ -87,7 +87,7 @@ c=======================================================================
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
 #else
-      integer :: use_eirene = 0
+      integer :: use_eirene = 0, nclm_ni
       real (kind=R8) :: pump, pumptot
       character*13 species_name
 #endif
@@ -337,6 +337,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         if (use_eirene.eq.0) then
           nclm_na=nspecies
           nclm_nm=0
+          nclm_ni=0
           if (.not.allocated(texta)) allocate(texta(nspecies))
           do ia=1,nspecies
             TEXTA(ia)=species_list(ia)
@@ -344,6 +345,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         else
           nclm_na=natmi
           nclm_nm=nmoli
+          nclm_ni=nioni
         endif
 #endif
         do ia=1,nclm_na
@@ -401,10 +403,10 @@ c carlis insert wall material for each target element
           end do !}
         else !}{
           do j=1,nbc !{
-            if (bcchar(ib).ne.'A'.and.
-     &          bcchar(ib).ne.'E'.and.bcchar(ib).ne.'W') cycle
-            if (bcene(ib).ne.3.and.bcene(ib).ne.12.and.bcene(ib).ne.15)
-     >       cycle
+            if (bcchar(j).ne.'A'.and.
+     &          bcchar(j).ne.'E'.and.bcchar(j).ne.'W') cycle
+            if (bcene(j).ne. 3.and.bcene(j).ne.12.and.
+     &          bcene(j).ne.14.and.bcene(j).ne.15) cycle
             ntg=ntg+1
             ltgs(ntg)=j
             ltsz(ntg)=mpg%bcFcP(j,2)
@@ -495,7 +497,7 @@ c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+kk)           !###
         i=0
 #ifdef B25_EIRENE
 c carlis evaluate number of sputtered atoms and molecules
-        do ia=1,natmi
+        do ia=1,nclm_na
           match_found=.false.
           j=1
           do j=1,nlimps
@@ -511,19 +513,19 @@ c carlis evaluate number of sputtered atoms and molecules
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do imol=1,nmoli
+        do imol=1,nclm_nm
           match_found=.false.
           j=1
           do j=1,nlimps
             if (wldsptm(j,imol,0).gt.0.0_R8) then
               sptflx(j)=wldsptm(j,imol,0)
-              do_spt_wll(j)=imol+natmi
+              do_spt_wll(j)=imol+nclm_na
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
-            i_sfpr_sp(i)=imol+natmi
+            i_sfpr_sp(i)=imol+nclm_na
             sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
@@ -543,7 +545,7 @@ c carlis calculation of total pumped fluxes
         print *,'Pumped fluxes'
         k=0
         pumptot=0.0_R8
-        do ia=1,natmi
+        do ia=1,nclm_na
           pump=0.0_R8
           do j=1,nlimps
             if (wlabsrp(k+ia,j).gt.0.0) then
@@ -554,8 +556,8 @@ c carlis calculation of total pumped fluxes
           print *,'Pumped ',trim(TEXTA(ia)),': ',pump,' (1/s)'
         end do
 
-        k=k+natmi
-        do ia=1,nmoli
+        k=k+nclm_na
+        do ia=1,nclm_nm
           pump=0.0_R8
           do j=1,nlimps
             if (wlabsrp(k+ia,j).gt.0.0) then
@@ -567,8 +569,8 @@ c carlis calculation of total pumped fluxes
      ,': ',pump,' (1/s)'
         end do
 
-        k=k+nmoli
-        do ia=1,nioni
+        k=k+nclm_nm
+        do ia=1,nclm_ni
           pump=0.0_R8
           do j=1,nlimps
             if (wlabsrp(k+ia,j).gt.0.0) then
@@ -580,7 +582,7 @@ c carlis calculation of total pumped fluxes
      ,': ',pump,' (1/s)'
         end do
 
-        k=k+nioni
+        k=k+nclm_ni
         ia=0
         do is = 0, state%ns-1
           if (.not.is_neutral(is)) then
@@ -637,14 +639,17 @@ c*** Wall segment. Reset the target pointer
               end if
             end do !}
           else !}{
+            jj=0
             do j=1,nbc !{
               if (itg.gt.0) cycle
-              if (bcchar(ib).ne.'A'.and.
-     &            bcchar(ib).ne.'E'.and.bcchar(ib).ne.'W') cycle
-              if (bcene(ib).ne.3.and.
-     &            bcene(ib).ne.12.and.bcene(ib).ne.15) cycle
+              if (bcchar(j).ne.'A'.and.
+     &            bcchar(j).ne.'E'.and.bcchar(j).ne.'W') cycle
+              if (bcene(j).ne. 3.and.bcene(j).ne.12.and.
+     &            bcene(j).ne.14.and.bcene(j).ne.15) cycle
+              jj=jj+1
               if (k.le.mpg%bcFcP(j,2)) then
-                itg=j
+                if (mpg%fcLbl(lb25lis(iln,izn)).ge.bcstart(j).and.
+     &              mpg%fcLbl(lb25lis(iln,izn)).le.bcend(j)) itg=jj
               else
                 k=k-mpg%bcFcP(j,2)
               end if
@@ -822,7 +827,7 @@ c*** Power loading:
 
 c*** Plasma and neutrals
 
-c            print *,'Starting target power. ntrgts=',ntrgts   !###
+c            print *,'Starting target power. ntg=',ntg   !###
             do j=1,ntg
               jj = j
               if (grid_mode.lt.2) jj = itrg(j)
@@ -830,9 +835,12 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                 if (grid_mode.lt.2) then !{
                   iFc = mpg%divFc(mpg%divFcP(itrg(j),1) + iy - 1)
                   u = mpg%divFcOr(mpg%divFcP(itrg(j),1) + iy - 1)
-                else !}{
+                else if (switch%use_eirene.ne.0) then !}{
                   iFc = fnmti_b2(eirdiag_nds_ind(ltgs(j))+iy)
                   u = mpg%bcFcOr(mpg%fcBc(iFc,1))
+                else
+                  iFc = mpg%bcFc(mpg%bcFcP(ltgs(j),1) + iy - 1)
+                  u = mpg%bcFcOr(mpg%bcFcP(ltgs(j),1) + iy - 1)
                 end if !}
                 iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
                 wo=0.0_R8
@@ -1040,9 +1048,12 @@ c!###}
                   if (grid_mode.lt.2) then !{
                     iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+iy-1)
                     u = mpg%divFcOr(mpg%divFcP(itrg(j),1)+iy-1)
-                  else !}{
+                  else if (switch%use_eirene.ne.0) then !}{
                     iFc = fnmti_b2(eirdiag_nds_ind(ltgs(j))+iy)
                     u = mpg%bcFcOr(mpg%fcBc(iFc,1))
+                  else !}{
+                    iFc = mpg%bcFc(mpg%bcFcP(ltgs(j),1)+iy-1)
+                    u = mpg%bcFcOr(mpg%bcFcP(ltgs(j),1)+iy-1)
                   end if !}
                   iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
                   iCb = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1172,8 +1183,8 @@ c carlis           [J]=[J/s]/[1/s]
                       iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+iy-1)
                       u = mpg%divFcOr(mpg%divFcP(itrg(j),1)+iy-1)
                     else !}{
-                      iFc = mpg%bcFc(mpg%bcFcP(itrg(j),1)+iy-1)
-                      u = mpg%bcFcOr(mpg%bcFcP(itrg(j),1)+iy-1)
+                      iFc = mpg%bcFc(mpg%bcFcP(ltgs(j),1)+iy-1)
+                      u = mpg%bcFcOr(mpg%bcFcP(ltgs(j),1)+iy-1)
                     end if !}
                     iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
                     naitrg(iy,ltgs(j),iatm)=
@@ -1195,7 +1206,7 @@ c              write(*,'(1p,12e10.2)') (wwi(ltgs(i)),i=1,ntrgts)
             end do !} loop over atoms
 
 c*** Molecules fluxes and energies
-            do imol=1,nmoli !{
+            do imol=1,nclm_nm !{
               do j=1,ntg !{
                 if (ft44) then !{
                   if (grid_mode.lt.2) jj=itrg(j)
@@ -1203,8 +1214,10 @@ c*** Molecules fluxes and energies
                   do iy=1,ltsz(j) !{
                     if (grid_mode.lt.2) then
                       iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+iy-1)
-                    else
+                    else if (switch%use_eirene.ne.0) then
                       iFc = fnmti_b2(eirdiag_nds_ind(ltgs(j))+iy)
+                    else
+                      iFc = mpg%bcFc(mpg%bcFcP(ltgs(j),1)+iy-1)
                     end if
                     iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
                     ias = b2_fnmti(iFc)

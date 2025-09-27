@@ -41,6 +41,9 @@
      & , only : rho_a_rel
 #endif
       use b2mod_subsys
+      use b2mod_geometry
+      use b2mod_b2plot_wall_loading
+     & , only: itrg
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
@@ -79,6 +82,7 @@
 
 *   ..local variables
       integer iCv, iFc, is, isb, k
+      integer :: gridGeometry
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                         !som 13.11.20
       real (kind=R8), parameter :: eps = 1.0e-60_R8
       integer, save :: shdd_style = 0
@@ -154,6 +158,7 @@
       if (ncall_b2sihs_.eq.0) then
         call ipgeti('b2sihs_shdd_style',shdd_style)
       endif
+      gridGeometry = geometryId( mpg, geo, 1 )
 *   ..compute ctaup
 *     Following Balescu; Braginskii has ctaup different by a factor
 *     sqrt(2). The mathematical expression is:
@@ -232,11 +237,55 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
-      if (switch%b2sihs_shedu.eq.0) then
+      if (switch%b2sihs_shedu.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          shedu(iCv,:) = 0.0_R8
+          if (switch%b2sihs_shedu.eq.1) then
+            shedu(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shedu.eq.2) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).eq.1 .and. itrg(1).ne.0 .or.
+     &            mpg%fcReg(iFc).eq.2 .and. itrg(2).ne.0) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.2 .or.
+     &            mpg%fcReg(iFc).eq.4) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.14 .or. mpg%fcReg(iFc).eq.21) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.15 .or. mpg%fcReg(iFc).eq.22) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8 .or. mpg%fcReg(iFc).eq.15) cycle
+            end select
+            shedu(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shedu.eq.3) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).ne.3) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).ne.6) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).ne.12) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).ne.19) cycle
+            end select
+            shedu(iCv,:) = 0.0_R8
+          endif
         enddo
       endif
 #ifndef FIXED_POINT
@@ -301,11 +350,55 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
-      if (switch%b2sihs_shidu.eq.0) then
+      if (switch%b2sihs_shidu.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          shidu(iCv,:) = 0.0_R8
+          if (switch%b2sihs_shidu.eq.1) then
+            shidu(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shidu.eq.2) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).eq.1 .and. itrg(1).ne.0 .or.
+     &            mpg%fcReg(iFc).eq.2 .and. itrg(2).ne.0) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.2 .or.
+     &            mpg%fcReg(iFc).eq.4) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.14 .or. mpg%fcReg(iFc).eq.21) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.15 .or. mpg%fcReg(iFc).eq.22) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8 .or. mpg%fcReg(iFc).eq.15) cycle
+            end select
+            shidu(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shidu.eq.3) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).ne.3) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).ne.6) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).ne.12) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).ne.19) cycle
+            end select
+            shidu(iCv,:) = 0.0_R8
+          endif
         enddo
       endif
 #ifndef FIXED_POINT
@@ -347,11 +440,55 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
-      if (switch%b2sihs_shedd.eq.0) then
+      if (switch%b2sihs_shedd.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          shedd(iCv,:) = 0.0_R8
+          if (switch%b2sihs_shedd.eq.1) then
+            shedd(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shedd.eq.2) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).eq.1 .and. itrg(1).ne.0 .or.
+     &            mpg%fcReg(iFc).eq.2 .and. itrg(2).ne.0) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.2 .or.
+     &            mpg%fcReg(iFc).eq.4) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.14 .or. mpg%fcReg(iFc).eq.21) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.15 .or. mpg%fcReg(iFc).eq.22) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8 .or. mpg%fcReg(iFc).eq.15) cycle
+            end select
+            shedd(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shedd.eq.3) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).ne.3) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).ne.6) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).ne.12) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).ne.19) cycle
+            end select
+            shedd(iCv,:) = 0.0_R8
+          endif
         enddo
       endif
 #ifndef FIXED_POINT
@@ -385,11 +522,55 @@
         enddo
        endif
       enddo
-      if (switch%b2sihs_shidd.eq.0) then
+      if (switch%b2sihs_shidd.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          shidd(iCv,:) = 0.0_R8
+          if (switch%b2sihs_shidd.eq.1) then
+            shidd(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shidd.eq.2) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).eq.1 .and. itrg(1).ne.0 .or.
+     &            mpg%fcReg(iFc).eq.2 .and. itrg(2).ne.0) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.2 .or.
+     &            mpg%fcReg(iFc).eq.4) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.14 .or. mpg%fcReg(iFc).eq.21) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.15 .or. mpg%fcReg(iFc).eq.22) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8 .or. mpg%fcReg(iFc).eq.15) cycle
+            end select
+            shidd(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shidd.eq.3) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).ne.3) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).ne.6) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).ne.12) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).ne.19) cycle
+            end select
+            shidd(iCv,:) = 0.0_R8
+          endif
         enddo
       endif
 #ifndef FIXED_POINT
@@ -505,12 +686,58 @@
        endif                                                           !srv 29.08.02
       enddo
 
-      if (switch%b2sihs_shivis.eq.0) then
+      if (switch%b2sihs_shivis.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          shivc(iCv,:) = 0.0_R8
-          shiva(iCv,:) = 0.0_R8
+          if (switch%b2sihs_shivis.eq.1) then
+            shivc(iCv,:) = 0.0_R8
+            shiva(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shivis.eq.2) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).eq.1 .and. itrg(1).ne.0 .or.
+     &            mpg%fcReg(iFc).eq.2 .and. itrg(2).ne.0) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.2 .or.
+     &            mpg%fcReg(iFc).eq.4) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.14 .or. mpg%fcReg(iFc).eq.21) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.5 .or. mpg%fcReg(iFc).eq.8 .or.
+     &            mpg%fcReg(iFc).eq.15 .or. mpg%fcReg(iFc).eq.22) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).eq.1 .or. mpg%fcReg(iFc).eq.4 .or.
+     &            mpg%fcReg(iFc).eq.8 .or. mpg%fcReg(iFc).eq.15) cycle
+            end select
+            shivc(iCv,:) = 0.0_R8
+            shiva(iCv,:) = 0.0_R8
+          elseif (switch%b2sihs_shivis.eq.3) then
+            select case ( gridGeometry )
+            case ( GEOMETRY_LINEAR )
+              if (mpg%fcReg(iFc).ne.3) cycle
+            case ( GEOMETRY_LIMITER )
+              if (mpg%fcReg(iFc).ne.6) cycle
+            case ( GEOMETRY_SN )
+              if (mpg%fcReg(iFc).ne.12) cycle
+            case ( GEOMETRY_CDN )
+              if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+            case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+              if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &             GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              if (mpg%fcReg(iFc).ne.19) cycle
+            end select
+            shivc(iCv,:) = 0.0_R8
+            shiva(iCv,:) = 0.0_R8
+          endif
         enddo
       endif
 
