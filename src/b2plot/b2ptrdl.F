@@ -25,7 +25,7 @@ c======================================================================
       real (kind=R8) ::
      *   rdl(nwe,ntg,0:DEF_NATM)
       logical, intent(in) :: tg_only
-      integer i,ii,j,jj,k,m,n
+      integer i,ii,j,jj,k,m,n,nRFc
 #ifdef DBG
       integer istart,iend
 #endif
@@ -47,7 +47,7 @@ c<<<
      ,   'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
      ,    l2pwinp , lppp , nwldprt , nadsrc , add_rad
         if (nwldlis(1).gt.0) then !{
-          print '(a/(16i5))','Shadowing structure',
+          print '(a/(20i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
           iend=lppp
           do j=1,ntrgts !{
@@ -139,7 +139,7 @@ c*** Arrange the output data
             end if !}
           end do !}
         end do !}
-      else !}{
+      else if (switch%use_eirene.ne.0) then !}{
         jj=0
         do j=ncns+1,nsts !{
           if (eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
@@ -158,6 +158,23 @@ c*** Arrange the output data
               rdl(ii,jj,1)=wldrdlsp(lwldrad(k),1)
             end if !}
           end do
+        end do !}
+      else if (grid_mode.eq.2) then !}{
+        do j=1,nstsi !{
+          nRFc=count(mpg%fcLbl==j)
+          do i=1,nRFc !{
+            k=k+1
+            if (lwldrad(k).eq.0) cycle
+            rdl(i,j,0)=wldrdld(lwldrad(k))
+            if(lrdlsp) then !{
+              do m=1,n !{
+                rdl(i,j,m)=wldrdlsp(lwldrad(k),m)
+              end do !}
+            end if !}
+            if(lrdlcr) then !{
+              rdl(i,j,1)=wldrdlsp(lwldrad(k),1)
+            end if !}
+          end do !}
         end do !}
       end if !}
 c======================================================================

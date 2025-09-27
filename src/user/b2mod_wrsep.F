@@ -215,11 +215,14 @@ c
           end do
           hlp_tisp=hlp_tisp+v*hlp_i*state%pl%ti(iCv)
           hlp_zesp=hlp_zesp+v*state%dv%ne(iCv)*zeff(iCv)
-          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)
+          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)+0.5_R8*
+     .       (1.0_R8-switch%BoRiS)*state%dv%fne_53(iFc,1)*
+     .       (state%pl%te(iCv)+state%pl%te(iCn))
           hlp_qisp=hlp_qisp+state%dv%fhi(iFc,1)
           do is=0,ns-1
-            hlp_qisp=hlp_qisp+
-     .       (1.0_R8-switch%BoRiS)*state%dv%fhm(iFc,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-switch%BoRiS)*
+     .         (state%dv%fhm(iFc,1,is)+0.5_R8*state%dv%fna_53(iFc,1,is)*
+     .         (state%pl%ti(iCv)+state%pl%ti(iCn)))
           enddo
           is=0
           do j=1,nspecies !{

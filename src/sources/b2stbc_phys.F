@@ -4341,8 +4341,8 @@ cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
-     &       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
-     1       ' on ',BCCHAR(IB),boundary_location(ib)
+     .       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
+     .       ' on ',BCCHAR(IB),boundary_location(IB)
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -4719,7 +4719,6 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENE=20 -- Feedback boundary condition with constant temperature
 
       case (20)
-        call xerrab ('b2stbc_phys -- BCENE = 20 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'BCENE = 20 : electron temperature feedback by flux ',
@@ -7674,7 +7673,6 @@ cwdk    For testing purposes, use with care!
 * -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
       case (16)
-        call xerrab ('b2stbc_phys -- BCPOT = 16 not adapted for WG')
         if (ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'BCPOT = 16 : electric potential feedback by current on ',

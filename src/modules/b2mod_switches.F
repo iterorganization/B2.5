@@ -600,7 +600,6 @@ c b2txcx
 c Feedback
       integer :: b2stbc_feedback, use_pump
 
-
 c Optimization
       integer :: b2optim_save_states
       integer :: b2optim_reset_iter
@@ -908,12 +907,12 @@ c Zhdanov closure switches
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2sihs_shidu = 1
-      s % b2sihs_shidd = 1
-      s % b2sihs_shedu = 1
-      s % b2sihs_shedd = 1
-      s % b2sihs_shivis = 1
-      s % b2sihs_shi = 1
+      s % b2sihs_shidu = 0
+      s % b2sihs_shidd = 0
+      s % b2sihs_shedu = 0
+      s % b2sihs_shedd = 0
+      s % b2sihs_shivis = 0
+      s % b2sihs_shi = 0
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -972,8 +971,7 @@ c Zhdanov closure switches
       s % set_tn_numerical = 0
       s % set_po_numerical = 0
 
-
-c far-sol flux limiting options
+c far-SOL flux limiting options
       s % b2tlhe_far_sol = 0
       s % b2tlhi_far_sol = 0
       s % b2tlmv_far_sol = 0
@@ -1567,12 +1565,12 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgeti ('b2sihs_shi', s % b2sihs_shi)
-      if (s % b2sihs_shi .eq. 0) then
-        s % b2sihs_shidu = 0
-        s % b2sihs_shidd = 0
-        s % b2sihs_shedu = 0
-        s % b2sihs_shedd = 0
-        s % b2sihs_shivis = 0
+      if (s % b2sihs_shi .ne. 0) then
+        s % b2sihs_shidu = s % b2sihs_shi
+        s % b2sihs_shidd = s % b2sihs_shi
+        s % b2sihs_shedu = s % b2sihs_shi
+        s % b2sihs_shedd = s % b2sihs_shi
+        s % b2sihs_shivis = s % b2sihs_shi
       endif
       call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
       call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
@@ -2754,6 +2752,11 @@ c b2sihs_
       call xertst (0.0_R8.le.min(s%b2sihs__rf0,s%b2sihs__rf1,
      &  s%b2sihs__rf2,s%b2sihs__rf3,s%b2sihs__rf4),
      &  'faulty internal parameter rf0/1/2/3/4')
+      call xertst (0.le.min(s%b2sihs_shivis,s%b2sihs_shedu,
+     &  s%b2sihs_shedd,s%b2sihs_shidu,s%b2sihs_shidd) .and.
+     &  max(s%b2sihs_shivis,s%b2sihs_shedu,s%b2sihs_shedd,
+     &  s%b2sihs_shidu,s%b2sihs_shidd).le.3,
+     &  'faulty internal parameter shi/shivis/shedu/shedd/shidu/shidd')
 
 c b2srst
       call xertst (0.0_R8.le.s%b2srst_rf0.and.0.0_R8.le.s%b2srst_rf1

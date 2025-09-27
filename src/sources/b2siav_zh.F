@@ -113,7 +113,7 @@
 
           if (switch%b2siav_qstyle.eq.0.and.minval(rzb).gt.0.0_R8) then
 
-            do iFt = 1, mpg%nFt 
+            do iFt = 1, mpg%nFt
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
@@ -161,7 +161,7 @@
 
           if (switch%b2siav_qstyle.eq.1.and.minval(rzb).gt.0.0_R8) then
 
-            do iFt = 1, mpg%nFt 
+            do iFt = 1, mpg%nFt
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
@@ -203,7 +203,7 @@
             if (switch%b2siav_qstyle.eq.0.and.
      &          minval(rzb).gt.0.0_R8) then
 
-              do iFt = 1, mpg%nFt 
+              do iFt = 1, mpg%nFt
                if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1))))
      &           then
                 do ic=mpg%ftCvP(iFt,1),
@@ -255,7 +255,7 @@
             if (switch%b2siav_qstyle.eq.1.and.
      &          minval(rzb).gt.0.0_R8)  then
 
-              do iFt = 1, mpg%nFt 
+              do iFt = 1, mpg%nFt
                if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1))))
      &           then
                 do ic=mpg%ftCvP(iFt,1),
@@ -298,8 +298,8 @@
 
 *       ..main contribution
 
-*       ..gradient qipgen_al in cell centers   
-          !wdk modified computation compared to structured code to 
+*       ..gradient qipgen_al in cell centers
+          !wdk modified computation compared to structured code to
           !wdk facilitate implementation on unstructured grids
           do inucl = 0, nspecies-1
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen_al(:,inucl),
@@ -339,7 +339,7 @@
 *       ..charge state correction
           if (switch%zhcscorr.gt.0 .and. switch%zhcscorr_vq.gt.0) then
 
-*         ..gradient qipgen in cell centers   
+*         ..gradient qipgen in cell centers
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrkf0)
 
 *         ..calculate the difference from parallel heat flux of ion
@@ -365,7 +365,7 @@
             enddo
 
             !calculate the actual source
-            smbvh(:,0) = smbvh(:,0) + 
+            smbvh(:,0) = smbvh(:,0) +
      &        switch%addvis*ft_h*geo%cvVol*geo%cvBb(:,0)*
      &        sqrt(geo%cvBb(:,3))*geo%cvHz*wrk1
 
@@ -421,7 +421,7 @@
 
             u_res_b = (avm_u - rho_rel*ua(:,isb))*wrk2
 
-*         ..gradient u_res in cell centers   
+*         ..gradient u_res in cell centers
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, u_res_b, wrkv,
      &        wrkf0)
 
@@ -486,7 +486,7 @@
             enddo
 
             wrkf = wrkf + wrkf0*
-     &        (vsaf_uAdp_albe(:,0,s2nucl(isb)-1,s2nucl(isb)-1) - 
+     &        (vsaf_uAdp_albe(:,0,s2nucl(isb)-1,s2nucl(isb)-1) -
      &         switch%zhcscorr*vsaf_uBdp_al(:,0,s2nucl(isb)-1))
 
             !wdk common multipliers
