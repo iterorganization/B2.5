@@ -77,7 +77,7 @@
 *   ..local variables
       character chns*3                                                   !srv 04.07.08
       real (kind=R8) ::
-     *   aa(mpg%nCmxNv), wrk0(nCv), ts_factor
+     *   aa(mpg%nCmxNv), wrk0(nCv)
       logical warning
       integer :: iCv
 *   ..procedures
@@ -240,13 +240,6 @@ cdjm Jan2017 update particle source components for balance
 
 *    ..compute time derivative
       ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
-      if (switch%b2mndt_ckn.eq.2) then
-        ts_factor = 2.0_R8
-      elseif (switch%b2mndt_bdf.eq.2) then
-        ts_factor = 3.0_R8/2.0_R8
-      else !default implicit Euler scheme
-        ts_factor = 1.0_R8
-      endif
       dv%dnadt(:,isb) = (-sr%snadt(:,1,isb)*pl%na(:,isb)
      &                  -sr%snadt(:,0,isb))/ts_factor               ! dv%dnadt = V*(dna/dt)
 

@@ -94,7 +94,7 @@
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
-     6 skt_prod(nCv), skt_diss(nCv), ts_factor
+     6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
@@ -335,14 +335,6 @@ cdjm Jan2017 update particle source components for balance
           endif
         endif
 c time-dependent treatment                                              !srv 07.07.21 {
-*  .. ts_factor = time-stepping multiplication factor
-      if (switch%b2mndt_ckn.eq.2) then
-        ts_factor = 2.0_R8
-      elseif (switch%b2mndt_bdf.eq.2) then
-        ts_factor = 3.0_R8/2.0_R8
-      else !default implicit Euler scheme
-        ts_factor = 1.0_R8
-      endif
       if(switch%b2mndt_style.eq.2) then
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
