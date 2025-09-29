@@ -176,6 +176,14 @@
        if (switch%b2mndt_style.eq.2) then
          write(*,*) 'Running in time-dependent mode'
        endif
+       ! compute time-stepping factor based on time integration scheme
+       if (switch%b2mndt_ckn.eq.2) then
+         ts_factor = 2.0_R8
+       elseif (switch%b2mndt_bdf.eq.2) then
+         ts_factor = 3.0_R8/2.0_R8
+       else !default implicit Euler scheme
+         ts_factor = 1.0_R8
+       endif
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -415,8 +423,10 @@ ctmp.dpc
               !fc: if using BDF2, the first iteration must use IE to start-up the scheme
               if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
                 switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+                ts_factor=1.0_R8
                 if (switch%b2mndt_startup.eq.2) then
                   switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+                  ts_factor=2.0_R8
                 endif
                 flag_startup=1 !fc: startup done
               endif
@@ -430,6 +440,7 @@ ctmp.dpc
                 if (switch%b2mndt_startup.eq.2) then
                   switch%b2mndt_ckn=1 ! turn off CKN scheme after startup
                 endif
+                ts_factor = 3.0_R8/2.0_R8
               endif
 
             else

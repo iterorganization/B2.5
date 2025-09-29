@@ -49,7 +49,7 @@
       integer iCv, is, k
       character chk*1                                                !srv 11.09.09 }
       real (kind=R8) ::
-     *   t0, ttim, ts_factor
+     *   t0, ttim
 *   ..procedures
       external xertst
       external b2xvsg
@@ -80,14 +80,6 @@
 
 *   ..modify time-stepping sources according to time integration scheme
 *   .. ts_factor = time-stepping multiplication factor
-      if (switch%b2mndt_ckn.eq.2) then
-        ts_factor = 2.0_R8
-      elseif (switch%b2mndt_bdf.eq.2) then
-        ts_factor = 3.0_R8/2.0_R8
-      else !default implicit Euler scheme
-        ts_factor = 1.0_R8
-      endif
-
 *   ..modify shedt, shidt, shndt
 
       do iCv = 1, nCi ! only internal cells
