@@ -43,7 +43,7 @@
 *   ..local variables
       integer iCv, k
       character chns*3, chk*1
-      real (kind=R8) :: t0, ttim, ts_factor
+      real (kind=R8) :: t0, ttim
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg
@@ -68,14 +68,6 @@
 
 *   ..modify time-stepping sources according to time integration scheme
 *   .. ts_factor = time-stepping multiplication factor
-      if (switch%b2mndt_ckn.eq.2) then
-        ts_factor = 2.0_R8
-      elseif (switch%b2mndt_bdf.eq.2) then
-        ts_factor = 3.0_R8/2.0_R8
-      else !default implicit Euler scheme
-        ts_factor = 1.0_R8
-      endif
-
 * ..include the contributions from dtim
 
 *   ..modify smodt

@@ -96,7 +96,7 @@
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
       real (kind=R8) ::
-     *  t0, t1, czetap, czetae, ts_factor                              !srv 13.01.17
+     *  t0, t1, czetap, czetae                             !srv 13.01.17
       real (kind=R8) ::
      *  smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      *  smbgp(nCv,0:3),
@@ -472,13 +472,6 @@ cdjm Jan2017 update momentum source components for balance
          endif
 *    .. calculate time-dependent source
 *    .. ts_factor = time-stepping multiplication factor
-         if (switch%b2mndt_ckn.eq.2) then
-           ts_factor = 2.0_R8
-         elseif (switch%b2mndt_bdf.eq.2) then
-           ts_factor = 3.0_R8/2.0_R8
-         else !default implicit Euler scheme
-           ts_factor = 1.0_R8
-         endif
          if (switch%b2mndt_style.eq.2) then
            call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                 pl%na, psnl%ua, switch, mpg, sr%smodt, is)

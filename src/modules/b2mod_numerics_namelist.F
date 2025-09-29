@@ -69,6 +69,7 @@
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
       logical, allocatable, save :: last_solve_5(:), last_solve_9(:)
+      real (kind=R8), allocatable, save :: ts_factor
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -98,6 +99,7 @@
       allocate(time_factor(nCv))
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
+      allocate(ts_factor)
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(dtfts(1:DEF_NYD))
       allocate(dtco(0:nsd-1,0:nnreg(0)))
@@ -172,6 +174,7 @@
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
       time_factor=1.0_R8
+      ts_factor=1.0_R8
       write(*,*) 'Allocated space for b2mod_numerics'              !srv 11.11.09
       b2mod_numerics_allocated = .true.
 
@@ -185,6 +188,7 @@
       deallocate(time_factor)
       deallocate(last_solve_5)
       deallocate(last_solve_9)
+      deallocate(ts_factor)
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(dtfts)
       deallocate(dtco)
