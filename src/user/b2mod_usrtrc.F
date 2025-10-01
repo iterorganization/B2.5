@@ -1360,6 +1360,7 @@ c*** Calculate the peak parallel power flux to the main chamber wall
      .      0.5_R8*(1.0_R8-switch%BoRiS)*st%dv%fna_53(iFc,0,is)*
      .      (st%pl%ti(mpg%fcCv(iFc,1))+st%pl%ti(mpg%fcCv(iFc,2))))
         end do !}
+        hlp = abs(hlp)
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .     st_ext%ta(1,is))

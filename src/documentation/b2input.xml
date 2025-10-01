@@ -2604,8 +2604,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '0', flux limit is not applied directly to the electron heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
-					b2tfhe_lim_flux.eq.1 not yet available for WG.
+					If '0' and 'b2trcl_conductive_limit' is '1', the flux limit is not applied directly to the electron heat flux but is applied through the transport coefficients. This is the recommended default behaviour.
+					If '1' and 'b2trcl_conductive_limit' is '0', the flux limit is applied directly to the electron heat flux.
+					If '0' and 'b2trcl_conductive_limit' is '0', no flux limit is applied.
 				</description>
 			</switch>
 			<switch>
@@ -2613,8 +2614,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '0', flux limit is not applied directly to the ion heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
-					b2tfhi_lim_flux.eq.1 not yet available for WG.
+					If '0' and 'b2trcl_conductive_limit' is '1', the flux limit is not applied directly to the ion heat flux but is applied through the transport coefficients. This is the recommended default behaviour.
+					If '1' and 'b2trcl_conductive_limit' is '0', the flux limit is applied directly to the ion heat flux.
+					If '0' and 'b2trcl_conductive_limit' is '0', no flux limit is applied.
 				</description>
 			</switch>
 			<switch>
@@ -4214,7 +4216,7 @@
 				<description>
 					If b2sihs_shivis.eq.1, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
 					If b2sihs_shivis.eq.2, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
-					If b2sihs_shivis.eq.3, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
+					If b2sihs_shivis.eq.3, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4232,7 +4234,7 @@
 				<description>
 					If b2sihs_shidu.eq.1, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
 					If b2sihs_shidu.eq.2, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
-					If b2sihs_shidu.eq.3, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
+					If b2sihs_shidu.eq.3, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4242,7 +4244,7 @@
 				<description>
 					If b2sihs_shidd.eq.1, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
 					If b2sihs_shidd.eq.2, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the  ones that belong to the core and target boundaries.
-					If b2sihs_shidd.eq.3, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
+					If b2sihs_shidd.eq.3, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4252,7 +4254,7 @@
 				<description>
 					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
 					If b2sihs_shedu.eq.2, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
-					If b2sihs_shedu.eq.3, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
+					If b2sihs_shedu.eq.3, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4262,7 +4264,7 @@
 				<description>
 					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
 					If b2sihs_shedd.eq.2, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
-					If b2sihs_shedd.eq.3, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
+					If b2sihs_shedd.eq.3, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4326,8 +4328,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', flux limit of the parallel electron and ion heat fluxes is applied to transport coefficients.
-					It is recommended '1'. If 'b2trcl_conductive_limit' '0' then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.
+					When set to '1' (recommended default), the flux limit to the parallel electron and ion heat fluxes is applied through the associated transport coefficients.
+					If 'b2trcl_conductive_limit' is '0', then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' are used to decide whether a flux limit is applied, to the fluxes directly.
 				</description>
 			</switch>
 			<switch>

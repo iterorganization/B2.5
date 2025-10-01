@@ -72,7 +72,8 @@ c     Boolean to indicate whether trim data is present for species/material comb
       character*2 target_code(0:nbnd_local-1)
 
       character*2 recycle_code(0:nsd-1)
-      external open_file
+      logical streql
+      external open_file, streql
       external cfrure, cfruin
 
       if(recycle_initialised) return
@@ -95,7 +96,7 @@ cmb   Check how many different recycled species there are
         isp=isp+1
         recycle_index(is)=isp
         recycle_code(isp)=is_codes(is)
-        recycle_zn(isp) = zn(is) 
+        recycle_zn(isp) = zn(is)
     5   continue
         write(*,'(1x,i3,1x,i3,1x,a)') is,recycle_index(is),
      1   recycle_code(recycle_index(is))
@@ -128,8 +129,9 @@ cmb   Mixed materials not taken into account.
       trimrecyc_present = .false.
       do is=0,isp
         do it=0,itm
+          if (streql(target_code(it),' ')) cycle
           if (use_coarse.eq.0) then
-cc the finer tables were used for the original AFN work, but are too large to add to git for each H, D ,T x wall material combination
+cc the finer tables were used for the original AFN work, but are too large to add to git for each H/D/T-x wall material combination
             filename =
      1       recycle_code(is)(1:len_trim(recycle_code(is)))//
      2       target_code(it)(1:len_trim(target_code(it)))//
@@ -215,36 +217,36 @@ c    first lines in the .fnn file. They are allocated to dummy variables.
 
             endif
 
-c         Read preintegrated recycling coefficient contributions
-          call cfrure (96,ndata,rc1(:,:,:,is,it),'r1')
-          call cfrure (96,ndata,rc2(:,:,:,is,it),'r2')
-          call cfrure (96,ndata,rmx1(:,:,:,is,it),'rmx1')
-          call cfrure (96,ndata,rmx2(:,:,:,is,it),'rmx2')
-          call cfrure (96,ndata,rmy1(:,:,:,is,it),'rmy1')
-          call cfrure (96,ndata,rmy2(:,:,:,is,it),'rmy2')
-          call cfrure (96,ndata,rmz1(:,:,:,is,it),'rmz1')
-          call cfrure (96,ndata,rmz2(:,:,:,is,it),'rmz2')
-          call cfrure (96,ndata,re1(:,:,:,is,it),'re1')
-          call cfrure (96,ndata,re2(:,:,:,is,it),'re2')
-          call cfrure (96,ndata,rp11(:,:,:,is,it),'rp11')
-          call cfrure (96,ndata,rp12(:,:,:,is,it),'rp12')
-          call cfrure (96,ndata,rp21(:,:,:,is,it),'rp21')
-          call cfrure (96,ndata,rp22(:,:,:,is,it),'rp22')
-          call cfrure (96,ndata,rp31(:,:,:,is,it),'rp31')
-          call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
-          close(96)
+c           Read preintegrated recycling coefficient contributions
+            call cfrure (96,ndata,rc1(:,:,:,is,it),'r1')
+            call cfrure (96,ndata,rc2(:,:,:,is,it),'r2')
+            call cfrure (96,ndata,rmx1(:,:,:,is,it),'rmx1')
+            call cfrure (96,ndata,rmx2(:,:,:,is,it),'rmx2')
+            call cfrure (96,ndata,rmy1(:,:,:,is,it),'rmy1')
+            call cfrure (96,ndata,rmy2(:,:,:,is,it),'rmy2')
+            call cfrure (96,ndata,rmz1(:,:,:,is,it),'rmz1')
+            call cfrure (96,ndata,rmz2(:,:,:,is,it),'rmz2')
+            call cfrure (96,ndata,re1(:,:,:,is,it),'re1')
+            call cfrure (96,ndata,re2(:,:,:,is,it),'re2')
+            call cfrure (96,ndata,rp11(:,:,:,is,it),'rp11')
+            call cfrure (96,ndata,rp12(:,:,:,is,it),'rp12')
+            call cfrure (96,ndata,rp21(:,:,:,is,it),'rp21')
+            call cfrure (96,ndata,rp22(:,:,:,is,it),'rp22')
+            call cfrure (96,ndata,rp31(:,:,:,is,it),'rp31')
+            call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
+            close(96)
           else
 c         Give error message or information if files are not found
-            write(*,*) 'No TRIM recycling data  for ',
+            write(*,*) 'No TRIM recycling data for ',
      1       recycle_code(is),' onto ',target_code(it)
-            if (recycle_zn(is).eq.0.0_R8) then !! expected to use AFN BCs, so give error 
+            if (recycle_zn(is).eq.0.0_R8) then !! expected to use AFN BCs, so give error
               if (use_coarse.ne.1) then !! first suggest to go look for coarse files
                 write(*,*) 'Consider using b2stbr_afn_bcs_use_coarse'
               endif
               call xerrab ('Error using advanced fluid neutral BCs')
             else !! currently, default neutral boundary conditions will automatically be used for non-hydrogenic species, so we should not give an error here
               write(*,*) 'Default recycling model used for ',
-     1       recycle_code(is),' onto ',target_code(it) 
+     1         recycle_code(is),' onto ',target_code(it)
             endif
           endif
         enddo
@@ -1590,7 +1592,7 @@ c     Calculate rate coefficients at boundary
       recycle_initialised=.false.
       return
       end subroutine dealloc_recycle_fnn
-      
+
 
       subroutine precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &  pl, dv, co, rt, dnn)

@@ -1,5 +1,6 @@
       subroutine b2pwrldw
       use b2us_data
+      use b2mod_rdload
       use b2mod_b2plot_wall_loading
       use b2mod_dimensions
 c
@@ -54,18 +55,19 @@ c
       do j=2,nwldprt
         do 100 i=1,nwldlis(j)
           l=iabs(lwldlis(i,j))
-          if(l.gt.lppp.and.l.le.lptg) then
+          if(l.gt.lppp.and.l.le.lptg.and.grid_mode.lt.2) then
             ltg=.true.
-          else
-            do m=1,k
-              if(l.eq.lwldrad(m)) go to 100
+          else if (l.gt.lptg.or.grid_mode.eq.2) then
+            do m=1,nwldlis(1)
+              if (lwldlis(m,1).eq.l) then
+                k=k+1
+                ltrg(k)=m
+              end if
             end do
-            k=k+1
-            lwldrad(k)=l
           end if
   100   continue
       end do
-      nwldrad=k
+      ntrg=k
 c
 c*** Calculate the load
 c

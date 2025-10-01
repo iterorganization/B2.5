@@ -24,7 +24,7 @@
 #ifndef SOLPS4_3
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
-     &          ewldrp_res
+     &          ewldrp_res, ewldt_res
       use eirmod_eirbra
      & , only : fnmti_B2
 #else
@@ -1678,12 +1678,15 @@ cxpb size is changed in b2mod_dimensions
                 t0 = dv%fht(fbReg(iFc),0)+dv%fht(fbReg(iFc),1)
                 t0 = t1*t0/geo%fcS(fbReg(iFc))
                 if (switch%use_eirene.ne.0) then
-                  t0 = t0 - ewldrp_res(b2_fnmti(fbReg(iFc)))
+                  t0 = t0 + ewldt_res(b2_fnmti(iFc))
+     .                    - ewldrp_res(b2_fnmti(iFc))
                 endif
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
+              else
+                fb_current(ifb) = fb_target(ifb)
               endif
 
             case (24) ! peak electron temperature at specific boundary
@@ -2145,7 +2148,7 @@ cxpb size is changed in b2mod_dimensions
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
