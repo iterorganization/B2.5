@@ -589,7 +589,6 @@ c residuals for separate neutral energy equation
         pl%tn = pl%ti                   !! tn must be exactly equal to ti.
       endif
 
-! TEMPORARY, TO BE MODIFIED FURTHER: replace shx0 with shxdt, and move output under b2npht_iout if condition
 *   ..compute physical time-derivative after correction has been applied
 *   .. m*d(nT)/dt = m*[n*(dT/dt) + T*(dn/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to shXdt
