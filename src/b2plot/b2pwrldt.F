@@ -2,6 +2,7 @@
       use b2us_data
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_rdload
       use b2mod_b2plot_wall_loading
 c
 c  version : 06.09.97 20:48
@@ -43,9 +44,9 @@ c>>>
 c----------------------------------------------------------------------
 c*** Fill in the input arrays for b2pwrdld
 c
-      nwldrad=mpg%divFcP(1,2)+mpg%divFcP(2,2)
+      ntrg=mpg%divFcP(1,2)+mpg%divFcP(2,2)
       do i=1,mpg%divFcP(1,2)+mpg%divFcP(2,2)
-        lwldrad(i)=lppp+i
+        ltrg(i)=i
       end do
 c
 c*** Calculate the load

@@ -202,6 +202,55 @@ contains
         end do
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
 
+    !> Transform an identifier stored on wall faces from a B2 array
+    !!  into an IMAS IDS array for a given grid subset ID.
+    function b2_IMAS_Transform_Wall_ID_B2_To_IDS_Face( grid, gridSubsetInd,  &
+            &   mpg, b2FaceData ) result( idsdata )
+#if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#else
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#endif
+        integer, intent(in) :: gridSubsetInd !< Base grid subset index
+        type(mapping), intent(in) :: mpg !< The grid mapping
+        integer, intent(in) :: b2FaceData( 1:mpg%nFc )        !< Face ID
+            !< indices given on the 2-D B2 data structure
+        integer, dimension(:), pointer :: idsdata      !< Array for
+            !< handling data field values
+
+        !! Internal variables
+        integer :: nObjs    !< Total number of objects
+        integer :: iObj     !< Object index (iterator)
+        integer :: iFc      !< Face index
+        type(GridObject) :: curObj
+
+        !! Procedures
+        external xertst
+
+        !! .neqv. is xor (exclusive or)
+        !! (http://de.wikibooks.org/wiki/Fortran:_Fortran_95:_Logische_Ausdr%C3%BCcke)
+        !! Allocate result vector according to grid subset size
+        nObjs = getGridSubsetSize( grid%grid_subset( gridSubsetInd ) )
+        allocate( idsdata( nObjs ) )
+        !! Collect all data items for the grid subset objects
+        do iObj = 1, nObjs
+            !! Get the object descriptor
+            curObj = getGridSubsetObject( grid%grid_subset( gridSubsetInd ), iObj )
+            !! Face data case
+            !! check that it is a face
+            call xertst( all( curObj%cls ==             &
+                &   IDS_CLASS_POLOIDALRADIAL_EDGE ),    &
+                &   "Assert error 2 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
+            !! get the subobject index for the face in the 2-D poloidal
+            !! plane space
+            iFc = curObj%ind( SPACE_POLOIDALPLANE )
+            !! copy data
+            idsdata( iObj ) = b2FaceData( iFc )
+        end do
+    end function b2_IMAS_Transform_Wall_ID_B2_To_IDS_Face
+
 #endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
 
