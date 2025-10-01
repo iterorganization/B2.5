@@ -75,7 +75,7 @@
             movi = movi+geo%cvVol(iCv)*
      &        pl%na(iCv,is)*am(is)*mp*abs(pl%ua(iCv,is))
           endif
-!WG_TODO         if (resignore(ix,iy,1).ne.0) 
+!WG_TODO         if (resignore(iCv,1).ne.0) 
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
 !WG_TODO         if (resignore(iCv,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*

@@ -146,7 +146,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
             endif
           endif
-          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn    !fc 11.03.24
+          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*ts_factor    !fc 11.03.24
           sr%snadt(iCv,0,is) = t0*na0(iCv,is)
           sr%snadt(iCv,1,is) = -t0
           sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
@@ -177,7 +177,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             endif
           endif
           t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)  !srv 09.01.01
-     &         *switch%b2mndt_ckn
+     &         *ts_factor
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
@@ -209,7 +209,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim=dtim*dtee_fts(iFt)*time_factor(iCv)
           endif
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
         sr%shedt(iCv,2) = 0.0_R8
@@ -223,7 +223,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
           endif
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
         sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
@@ -246,7 +246,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
 
         if (switch%tn_style.eq.0) then
 
