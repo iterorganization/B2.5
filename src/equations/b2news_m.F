@@ -478,8 +478,8 @@ c   extra call at this place within internal iteration)
      &    .false.)                                                       !srv 23.07.21
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nCv, ns, switch,
-     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, !srv 01.07.08
-     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)    !srv 23.07.21
+     &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,    !srv 01.07.08
+     &    st%dv%ne, st%dv%ni, st%dv%nn, st%pl%kt, st%pl%zt, st%sr)       !srv 23.07.21
       endif
 *   ..compute ue, electron parallel velocity
 ! lkw20.03.2023{

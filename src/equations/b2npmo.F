@@ -96,7 +96,7 @@
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
       real (kind=R8) ::
-     *  t0, t1, czetap, czetae                             !srv 13.01.17
+     *  t0, t1, czetap, czetae                                         !srv 13.01.17
       real (kind=R8) ::
      *  smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      *  smbgp(nCv,0:3),
