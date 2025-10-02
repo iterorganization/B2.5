@@ -841,7 +841,7 @@ c
       end do !}
 
       write(fmt_peak,700) 24
-  700 format('(1p,e12.5,',i3,'(a1,e12.5))')
+  700 format('(1p,e12.5,',i3,'(a1,e13.5e3))')
       i1=1
       i2=ntrgts
       fn_hlp=fsumm(1)
@@ -1178,7 +1178,7 @@ c!###}
      -   ((tab,hdr_2(i)//'_'//hlp_trg(itrg(j)),i=1,n_intgrs),j=1,ntrgs),
      ,   ((tab,hdr_4(i)//'_'//hlp_trg(itrg(j)),i=1,n_trgprj),j=1,ntrgs)
         write(fmt_peak,705) n
-  705   format('(1p,e12.5,',i3,'(a1,e12.5))')
+  705   format('(1p,e12.5,',i3,'(a1,e13.5e3))')
         write(lun,fmt_peak) tim,
      ,    (tab, pwr_rd(itrg(j)),tab, pwr_tt(itrg(j)),
      ,     tab,fwht_tt(itrg(j)),tab,fwxt_tt(itrg(j)),
@@ -1767,8 +1767,8 @@ c
       return
 
 c======================================================================
-  710 format('(a1,',i3,'(1x,a11,2x))')
-  720 format('(1x,1p,',i3,'(e12.5,2x))')
+  710 format('(a1,',i3,'(1x,a11,3x))')
+  720 format('(1x,1p,',i3,'(e13.5e3,2x))')
   740 format('# ',2a,' : ',2a)
   750 format('# ',4a)
 c======================================================================
