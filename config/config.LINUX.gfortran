@@ -1,5 +1,5 @@
 # Test whether necessary variables are set
-LD_NETCDF  = -L${NETCDF_LIB_DIR} -lnetcdf -L${NETCDF_FORTRAN_LIB_DIR} -lnetcdff -lcurl -L${LIBJSON} -ljsonfortran
+LD_NETCDF  = -L${NETCDF_LIB_DIR} -lnetcdf -L${NETCDF_FORTRAN_LIB_DIR} -lnetcdff -lcurl
 MSCL_ROOT ?= ${MSCL_HOME}
 LD_NCARG   = -L${NCARG_LIB_DIR} -lncarg -lncarg_gks -lncarg_c -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lz -lXrender -lbz2 -ldl -L${FREETYPE_LIB_DIR} -lfreetype -L${LIBPNG_LIB_DIR} -lpng
 LD_NAG     = -L${LAPACK_LIB_DIR} -llapack -L${BLAS_LIB_DIR} -lblas
