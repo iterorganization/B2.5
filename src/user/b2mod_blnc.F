@@ -856,7 +856,7 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,    ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
       end if
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3))'
+     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3e3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnc: cannot open file ',trim(f)
