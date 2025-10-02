@@ -355,6 +355,7 @@ c======================================================================
       end subroutine b2filec
 c======================================================================
       subroutine b2filew(it,nregionv)
+      use b2mod_time
       implicit none
       integer, intent(in) :: it, nregionv
       integer i, j, k, l
@@ -386,7 +387,7 @@ c
         l=3
         if(.not.op) go to 72
         l=4
-        write(ntrc(ntrc_res),hlp_frmr,err=72) it,
+        write(ntrc(ntrc_res),hlp_frmr,err=72) it, tim,
      ,     (reshereg(i),i=1,nregionv),
      ,     (reshireg(i),i=1,nregionv),
      ,    ((rescoreg(i,ions_list(j)),i=1,nregionv),
