@@ -253,7 +253,7 @@ c***  sfpr_m    : list of active materials
       character*(m_hdpr) tab*1,hdpr_c(n_hdpr_c),hdpr_t(n_hdpr_t),
      ,  hdpr_s(n_hdpr_s),hdpr_a(n_hdpr_a),hdpr_sp(n_hdpr_sp),
      ,  sfpr_s(DEF_NATM)*2,sfpr_a(DEF_NATM)*2,
-     ,  sfpr_m(nsptmx)*(lnwlmtrl),hdr_line*(m_hdln),frmt_hlp*24,
+     ,  sfpr_m(nsptmx)*(lnwlmtrl),hdr_line*(m_hdln),frmt_hlp*26,
      ,  hdpr_ml(n_hdpr_ml), hdpr_er(n_hdpr_er),
      ,  sfpr_sp(DEF_NATM+DEF_NMOL)*3
       character*16 ssmol,ssion
@@ -522,7 +522,8 @@ c carlis evaluate number of sputtered atoms and molecules
      ,           n_hdpr_s*n_sfpr_s+nclm_na*n_hdpr_a+
      ,           n_hdpr_ml*nclm_nm+n_hdpr_sp*n_sfpr_sp+
      ,           n_hdpr_er*n_sfpr_er
-        write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'
+        write(frmt_hlp,'(a7,i5,a14)')
+     ,   '(1p,1x,',n_line_x,'(se13.5e3,a1))'
 c carlis calculation of total pumped fluxes
 #ifdef B25_EIRENE
         print *,'Pumped fluxes'
