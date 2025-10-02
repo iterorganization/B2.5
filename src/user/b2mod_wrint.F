@@ -670,13 +670,13 @@ c Create a format string for the column headers
         hlp_frf='(a,7(i3,a))'
         if (nfl_tmp.gt.0) then
          write(hlp_frm,hlp_frf)
-     ,    '(a1,7x,a4,7x,',ng_tmp,'(2x,a8,4x),',
-     ,            nr_tmp*nrg_tmp,'(1x,a8,i2.2,3x),',
-     ,            ns_tmp*nsp_tmp,'(1x,a8,a2,3x),',
+     ,    '(a1,7x,a4,5x,',ng_tmp,'(3x,a8,3x),',
+     ,            nr_tmp*nrg_tmp,'(2x,a8,i2.2,2x),',
+     ,            ns_tmp*nsp_tmp,'(3x,a8,a2,1x),',
      ,    na_tmp*nrg_tmp*nsp_tmp,'(a8,i2.2,''_'',a2,1x),',
-     ,            nf_tmp*nfl_tmp,'(1x,a8,i2.2,3x),',
+     ,            nf_tmp*nfl_tmp,'(2x,a8,i2.2,2x),',
      ,    nb_tmp*nsp_tmp*nfl_tmp,'(a8,i2.2,''_'',a2,1x),',
-     ,            nb_tmp*nfl_tmp,'(1x,a8,i2.2,3x))'
+     ,            nb_tmp*nfl_tmp,'(2x,a8,i2.2,2x))'
         else
           write(*,*)
      &     'Unexpected inconsistency: number of strata NSTRAI = ',
@@ -710,7 +710,7 @@ c>>>
      +       na_tmp*nrg_tmp*nsp_tmp + nf_tmp*nfl_tmp +
      +                    (nsp_tmp+1)*nb_tmp*nfl_tmp
         write(hlp_frf,'(a,i1,a)') '(a,i',len_of_digits(nfields),',a)'
-        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4))'
+        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4e3))'
       end if
 c      print *,'hlp_frm:'       !###
 c      print *,trim(hlp_frm)    !###
