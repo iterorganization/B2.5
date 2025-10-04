@@ -1046,12 +1046,12 @@ c Artificial losses module
      &      'faulty internal parameter min_aresco')                      !jwk
        call ipgetr ('b2mndr_min_aresmo', min_aresmo)                     !jwk
        call xertst (min_aresmo.ge.0.0_R8,                                !fc
-     &      'faulty internal parameter min_aresmo')                      !fc     
+     &      'faulty internal parameter min_aresmo')                      !fc
        if (min_areshe.gt.0.0_R8.or.min_areshi.gt.0.0_R8.or.              !jwk
      &     min_aresco.gt.0.0_R8.or.min_aresmo.gt.0.0_R8) then            !fc
-          test_residual_out=.true.                                           !jwk
+          test_residual_out=.true.                                       !jwk
        else                                                              !jwk
-          test_residual_out=.false.                                          !jwk
+          test_residual_out=.false.                                      !jwk
        endif                                                             !jwk
        call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
        call xertst (res_quit.ge.0.0_R8,                                  !sc
@@ -2657,14 +2657,14 @@ c new CDF movie option
         if(test_residual_out.and.mod(itim,10).eq.0
      &     .and.no_solve.le.0) then   !jwk
           quit_residual=
-     &      ((state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
+     &      ((state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)   !jwk
      &       .or.min_areshe.eq.0.0_R8).and.
-     &      ((state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
+     &      ((state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)   !jwk
      &       .or.min_areshi.eq.0.0_R8).and.
      &      ((state%diag%aresco(ismain)*min_aresco)
-     &       .le.(min_aresco*min_aresco).or.min_aresco.eq.0.0_R8).and.  !jwk
+     &       .le.(min_aresco*min_aresco).or.min_aresco.eq.0.0_R8).and.   !jwk
      &      ((state%diag%aresmo(ismain)*min_aresmo)
-     &       .le.(min_aresmo*min_aresmo).or.min_aresmo.eq.0.0_R8)       !fc
+     &       .le.(min_aresmo*min_aresmo).or.min_aresmo.eq.0.0_R8)        !fc
         endif                                                            !jwk
 #endif
         quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11

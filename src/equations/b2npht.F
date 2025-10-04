@@ -95,7 +95,7 @@
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
-      character chns*3                                                  !srv 17.07.05
+      character chns*3                                                   !srv 17.07.05
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
@@ -311,7 +311,7 @@ cdjm Jan2017 update particle source components for balance
             endif
           endif
 *       ..neutrals (if using AFNs)
-          if (switch % tn_style.eq.2) then   !! separate neutral energy equation
+          if (switch%tn_style.eq.2) then   !! separate neutral energy equation
             if (any(solvnreg(0:mpg%nnreg(0))).or.
      &        switch%get_residuals.eq.1) then
               call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
@@ -350,7 +350,7 @@ cc while the second contribution corresponds to T dn/dt
      &                *ts_factor*psnl%te/dtim*geo%cvVol
         she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
-          sr%shidt(:,0) = sr%shidt(:,0) 
+          sr%shidt(:,0) = sr%shidt(:,0)
      &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
      &                      *ts_factor*psnl%ti/dtim*geo%cvVol
           shi0 = shi0 + sr%shidt

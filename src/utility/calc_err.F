@@ -167,7 +167,7 @@
 #ifdef F2003
      &          norm2(era)/L2norm
 #else
-     &          norm2(nCv,era)/L2norm
+     &        norm2(nCv,era)/L2norm
 #endif
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' C_eraNa',chns,'/C_Na',chns,'    =',
@@ -247,7 +247,7 @@
 #ifdef F2003
      &          norm2(era)/L2norm
 #else
-     &          norm2(nCv,era)/L2norm
+     &        norm2(nCv,era)/L2norm
 #endif
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' C_eraUa',chns,'/C_Ua',chns,'    =',

@@ -127,11 +127,11 @@ c*** New file - write the headers
         if(nstrai.gt.0) then
           if (nnatmi.gt.0) then
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it'',7x,''time'',4x',nstrai*5,
+     /         '(''# it'',7x,''time'',6x,',nstrai*5,
      /         '(1x,a8,i2.2,a3,',nnatmi,'(a8,i2.2,a1,a2,1x)))'
           else
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it'',7x,''time'',4x,',nstrai*5,
+     /         '(''# it'',7x,''time'',6x,',nstrai*5,
      /         '(1x,a8,i2.2,a3))'
           end if
 #ifdef DBG
@@ -221,7 +221,7 @@ c*** New file - write the headers
         write(ntrc(ntrc_res),710,err=5) '## ',trim(label)
 
         write(hlp_frmr,'(a,i3,a,i3,a)')
-     /        '(''# it'',7x,''time'',4x,',
+     /        '(''# it'',7x,''time'',8x,',
      -         nregionv*2,
      /        '(2x,a3,a2,i2.2,5x),',
      -         nregionv*(nis_tmp)*2,

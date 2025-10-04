@@ -2300,7 +2300,7 @@
       allocate( snap % dhidt( nCv ) )
       allocate( snap % dhndt( nCv ) )
       allocate( snap % dktdt( nCv ) )
-      allocate( snap % dztdt( nCv ) )      
+      allocate( snap % dztdt( nCv ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -2340,7 +2340,7 @@
       snap % dhidt = 0._R8
       snap % dhndt = 0._R8
       snap % dktdt = 0._R8
-      snap % dztdt = 0._R8      
+      snap % dztdt = 0._R8
 
 #endif
       return
@@ -2666,7 +2666,7 @@
         snap % dhidt = dv % dhidt
         snap % dhndt = dv % dhndt
         snap % dktdt = dv % dktdt
-        snap % dztdt = dv % dztdt        
+        snap % dztdt = dv % dztdt
 
       return
       end subroutine getB2PlasmaSnapshot
