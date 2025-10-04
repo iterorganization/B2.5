@@ -1798,36 +1798,36 @@ c b2srsm
       call ipgeti ('b2srsm_enable', s % b2srsm_enable)
 
 c b2mndt
-      call ipgeti ('b2mndt_density_control',s%density_control)
-      call ipgeti ('b2mndt_nstg0', s%nstg(0))
-      call ipgeti ('b2mndt_nstg1', s%nstg(1))
-      call ipgeti ('b2mndt_nstg2', s%nstg(2))
-      call ipgeti ('b2mndt_moqtlv', s%b2mndt_moqtlv)
-      call ipgeti ('b2mndt_moitlv', s%b2mndt_moitlv)
-      call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
-      call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
-      call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
-      call ipgetr ('b2mndt_nstg_aresmo', s%nstg_aresmo)
-      call ipgetr ('b2news_BoRiS', s%BoRiS)
-      call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgeti ('b2mndt_style',s%b2mndt_style)
-      call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
-      call ipgeti ('b2mndt_bdf',s%b2mndt_bdf)
-      call ipgeti ('b2mndt_dummy',s%b2mndt_dummy)
-      call ipgeti ('b2mndt_startup',s%b2mndt_startup)
-      call ipgeti ('b2mndt_ntim_step_out',s%ntim_step_out)
-      call ipgeti ('b2mndt_calc_err_step_out',s%calc_err_step_out)
-      call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
-      call ipgeti ('b2mndt_temp1',s%b2mndt_temp1)
-      call ipgeti ('b2mndt_temp2',s%b2mndt_temp2)
+      call ipgeti ('b2mndt_density_control', s % density_control)
+      call ipgeti ('b2mndt_nstg0', s % nstg(0))
+      call ipgeti ('b2mndt_nstg1', s % nstg(1))
+      call ipgeti ('b2mndt_nstg2', s % nstg(2))
+      call ipgeti ('b2mndt_moqtlv', s % b2mndt_moqtlv)
+      call ipgeti ('b2mndt_moitlv', s % b2mndt_moitlv)
+      call ipgetr ('b2mndt_nstg_areshe', s % nstg_areshe)
+      call ipgetr ('b2mndt_nstg_areshi', s % nstg_areshi)
+      call ipgetr ('b2mndt_nstg_aresco', s % nstg_aresco)
+      call ipgetr ('b2mndt_nstg_aresmo', s % nstg_aresmo)
+      call ipgetr ('b2news_BoRiS', s % BoRiS)
+      call ipgetr ('b2mndt_rxf', s % b2mndt_rxf)
+      call ipgeti ('b2mndt_style', s % b2mndt_style)
+      call ipgeti ('b2mndt_ckn', s % b2mndt_ckn)
+      call ipgeti ('b2mndt_bdf', s % b2mndt_bdf)
+      call ipgeti ('b2mndt_dummy', s % b2mndt_dummy)
+      call ipgeti ('b2mndt_startup', s % b2mndt_startup)
+      call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
+      call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
+      call ipgeti ('b2mndt_temp0', s % b2mndt_temp0)
+      call ipgeti ('b2mndt_temp1', s % b2mndt_temp1)
+      call ipgeti ('b2mndt_temp2', s % b2mndt_temp2)
 
 c b2mndr
-      call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
-      call ipgetr ('b2mndr_stim', s%b2mndr_stim)
-      call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
-      call ipgeti ('b2mndr_use_mms', s%use_mms)
-      call ipgeti ('b2mndr_equation_sources', s%equation_sources)
-      call ipgeti ('b2mndr_boundary_sources', s%boundary_sources)
+      call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
+      call ipgetr ('b2mndr_stim', s % b2mndr_stim)
+      call ipgetr ('b2mndr_rescale_neutrals', s % neutral_rescale)
+      call ipgeti ('b2mndr_use_mms', s % use_mms)
+      call ipgeti ('b2mndr_equation_sources', s % equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s % boundary_sources)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s % b2agmt_width)
@@ -2406,7 +2406,7 @@ c b2mndt
       call xertst (s%nstg_aresco.ge.0.0_R8,
      &  'faulty internal parameter nstg_aresco')
       call xertst (s%nstg_aresmo.ge.0.0_R8,
-     &  'faulty internal parameter nstg_aresmo')     
+     &  'faulty internal parameter nstg_aresmo')
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
@@ -2429,7 +2429,7 @@ c b2mndt
       call xertst (1.le.s%ntim_step_out,
      &   'faulty internal parameter ntim_step_out')
       call xertst (1.le.s%calc_err_step_out,
-     &   'faulty internal parameter calc_err_step_out')                         
+     &   'faulty internal parameter calc_err_step_out')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,

@@ -147,7 +147,6 @@
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *
-
 *-----------------------------------------------------------------------
 *.computation
 
@@ -463,18 +462,18 @@ ctmp.dpc
             call b2mxar (nCv, ns, switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
             quit_residual=test_residual.and.
-     &                    ((st%diag%areshe*switch%nstg_areshe).le.
-     &                     (switch%nstg_areshe*switch%nstg_areshe)
-     &                     .or.switch%nstg_areshe.eq.0.0_R8).and.
-     &                    ((st%diag%areshi*switch%nstg_areshi).le.
-     &                     (switch%nstg_areshi*switch%nstg_areshi)
-     &                     .or.switch%nstg_areshi.eq.0.0_R8).and.
-     &                    ((st%diag%aresco(ismain)*switch%nstg_aresco)
-     &                     .le.(switch%nstg_aresco*switch%nstg_aresco)
-     &                     .or.switch%nstg_aresco.eq.0.0_R8).and.
-     &                    ((st%diag%aresmo(ismain)*switch%nstg_aresmo)
-     &                     .le.(switch%nstg_aresmo*switch%nstg_aresmo)
-     &                     .or.switch%nstg_aresmo.eq.0.0_R8)
+     &       ((st%diag%areshe*switch%nstg_areshe).le.
+     &        (switch%nstg_areshe*switch%nstg_areshe)
+     &        .or.switch%nstg_areshe.eq.0.0_R8).and.
+     &       ((st%diag%areshi*switch%nstg_areshi).le.
+     &        (switch%nstg_areshi*switch%nstg_areshi)
+     &        .or.switch%nstg_areshi.eq.0.0_R8).and.
+     &       ((st%diag%aresco(ismain)*switch%nstg_aresco)
+     &        .le.(switch%nstg_aresco*switch%nstg_aresco)
+     &        .or.switch%nstg_aresco.eq.0.0_R8).and.
+     &       ((st%diag%aresmo(ismain)*switch%nstg_aresmo)
+     &        .le.(switch%nstg_aresmo*switch%nstg_aresmo)
+     &        .or.switch%nstg_aresmo.eq.0.0_R8)
 *      ..compute norms of the corrections
             call b2mxac (nCv, ns, st%dv, st%diag)
 *      ..decide what output

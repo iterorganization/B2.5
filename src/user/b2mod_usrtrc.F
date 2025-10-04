@@ -2055,7 +2055,7 @@ c*** New file
         write(lun,700) lv,ng_tmp,np_tmp,ns_tmp,na_tmp
         write(lun,'(2a)') '#  ',label
         write(hlp_frm,'(a,i3,a)')
-     ,   '(''# time'',',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,a))'
+     ,   '(''# time'',8x,',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,a))'
 #ifdef DBG
         print *,'b2usrtrc frm:',trim(hlp_frm)  !###
 #endif

@@ -64,8 +64,8 @@
 
 !      For time-dependent: tt is the time instant at which the sources are to be read
        if (switch%use_mms.eq.2) then
-         if (switch%b2mndt_dummy.eq.0) then 
-           tt = itim + 1 
+         if (switch%b2mndt_dummy.eq.0) then
+           tt = itim + 1
          else
            tt = 0 !initial dummy call for Crank Nicolson reads sources at t = 0 s
          endif
@@ -83,16 +83,16 @@
      &      switch%b2mndt_style, .false.)
 
 !      Read inputs
-     
+
        if (b2news_solving(2).and.
-     &      any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
+     &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
          if (switch%use_mms.eq.1) then
            filename = 'art_sna_us.dat'
            call find_file(filename,art_exists)
            call xertst(art_exists,'File '//trim(filename)//' not found')
            open(70,FILE=trim(filename))
            read (70,"(1x,e24.16)")
-     &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          elseif (switch%use_mms.eq.2) then
            write (chitim,'(i4.4)') tt
@@ -101,20 +101,20 @@
            call xertst(art_exists,'File '//trim(filename)//' not found')
            open(70,FILE=trim(filename))
            read (70,"(1x,e24.16)")
-     &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          endif
        endif
 
        if (b2news_solving(1).and.
-     &      any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
+     &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
          if (switch%use_mms.eq.1) then
-           filename='art_smo_us.dat'
+           filename = 'art_smo_us.dat'
            call find_file(filename,art_exists)
            call xertst(art_exists,'File '//trim(filename)//' not found')
            open(70,FILE=trim(filename))
            read (70,"(1x,e24.16)")
-     &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          elseif (switch%use_mms.eq.2) then
            write (chitim,'(i4.4)') tt
@@ -123,7 +123,7 @@
            call xertst(art_exists,'File '//trim(filename)//' not found')
            open(70,FILE=trim(filename))
            read (70,"(1x,e24.16)")
-     &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          endif
        endif
@@ -131,13 +131,13 @@
        if (b2news_solving(4)) then
          if (any(solveee(0:mpg%nnreg(0)))) then
            if (switch%use_mms.eq.1) then
-             filename='art_she_us.dat'
+             filename = 'art_she_us.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,
-     &          'File '//trim(filename)//' not found')
+     &        'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &          (art_she(iCv,0),iCv=1,nCv)
+     &        (art_she(iCv,0),iCv=1,nCv)
              close(70)
            elseif (switch%use_mms.eq.2) then
              write (chitim,'(i4.4)') tt
@@ -153,13 +153,13 @@
          endif
          if (any(solveei(0:mpg%nnreg(0)))) then
            if (switch%use_mms.eq.1) then
-             filename='art_shi_us.dat'
+             filename = 'art_shi_us.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,
-     &          'File '//trim(filename)//' not found')
+     &        'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &          (art_shi(iCv,0),iCv=1,nCv)
+     &        (art_shi(iCv,0),iCv=1,nCv)
              close(70)
            elseif (switch%use_mms.eq.2) then
              write (chitim,'(i4.4)') tt
@@ -177,35 +177,35 @@
 
        if (b2news_solving(3).and.
      &     any(solvepo(0:mpg%nnreg(0)))) then
-         filename='art_sch_us.dat'
+         filename = 'art_sch_us.dat'
          call find_file(filename,art_exists)
          call xertst(art_exists,'File '//trim(filename)//' not found')
          open(70,FILE=trim(filename))
          read (70,"(1x,e24.16)")
-     &      (art_sch(iCv,0),iCv=1,nCv)
+     &    (art_sch(iCv,0),iCv=1,nCv)
          close(70)
        endif
 
        if (switch%tn_style.eq.2) then
          if (any(solveen(0:mpg%nnreg(0)))) then
            if (switch%use_mms.eq.1) then
-             filename='art_shn_us.dat'
+             filename = 'art_shn_us.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,
-     &          'File '//trim(filename)//' not found')
+     &        'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &          (art_shn(iCv,0),iCv=1,nCv)
+     &        (art_shn(iCv,0),iCv=1,nCv)
              close(70)
            elseif (switch%use_mms.eq.2) then
              write (chitim,'(i4.4)') tt
              filename = 'art_shn_us'//chitim//'.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,
-     &          'File '//trim(filename)//' not found')
+     &        'File '//trim(filename)//' not found')
              open(70,FILE=trim(filename))
              read (70,"(1x,e24.16)")
-     &          (art_shn(iCv,0),iCv=1,nCv)
+     &        (art_shn(iCv,0),iCv=1,nCv)
              close(70)
            endif
          endif

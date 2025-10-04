@@ -395,7 +395,7 @@ c*** New file
         ndv_tmp=ndiv
         write(lun,700) lv,nd_tmp,ndv_tmp,label
         write(hlp_frf,'(a,i3,a)')
-     ,   '(a6,12x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
+     ,   '(a6,11x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
         write(lun,hlp_frf) '# time',
      -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if

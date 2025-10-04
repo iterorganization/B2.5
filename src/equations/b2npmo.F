@@ -461,48 +461,48 @@ cdjm Jan2017 update momentum source components for balance
 
 *    ..time-dependent treatment
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
-         if (switch%b2mndt_ckn.eq.2) then
-           if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+       if (switch%b2mndt_ckn.eq.2) then
+         if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then
-             call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is,
-     &         pl%ua(:,is), rob, smb, flub, flubv, co%cvsahz(:,:,is),
-     &         dv%resmo0(:,is), dv%fmo(:,:,is), dv%fhm(:,:,is),
-     &         co%cvsahz_eff(:,:,is))
-           endif
+           call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is,
+     &       pl%ua(:,is), rob, smb, flub, flubv, co%cvsahz(:,:,is),
+     &       dv%resmo0(:,is), dv%fmo(:,:,is), dv%fhm(:,:,is),
+     &       co%cvsahz_eff(:,:,is))
          endif
+       endif
 *    .. calculate time-dependent source
 *    .. ts_factor = time-stepping multiplication factor
-         if (switch%b2mndt_style.eq.2) then
-           call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
-     &                 pl%na, psnl%ua, switch, mpg, sr%smodt, is)
+       if (switch%b2mndt_style.eq.2) then
+         call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
+     &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
-           sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
-     &       am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))
-     &       *psnl%ua(:,is)/dtim
-           smb = smb + sr%smodt(:,:,is)
-         endif
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
+     &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
+     &    psnl%ua(:,is)/dtim
+         smb = smb + sr%smodt(:,:,is)
+       endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
-     &            .or.switch%get_residuals.eq.1) then                  !srv 22.05.18
+     &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      &    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
-     &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
-      endif                                                            !srv 22.05.18
+     &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
+      endif                                                             !srv 22.05.18
 *    ..modify residual for ckn scheme
-       if (switch%b2mndt_ckn.eq.2) then
-         if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+      if (switch%b2mndt_ckn.eq.2) then
+        if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &      .or.switch%get_residuals.eq.1) then
-           dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
-     &       psnl%resmo0(1:mpg%nCi,is)
-         endif
-       elseif (switch%b2mndt_bdf.eq.2) then
-         if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
-     &      .or.switch%get_residuals.eq.1) then
-           dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
-     &       0.5_R8*psnl%dmodt(1:mpg%nCi,is) ! +1/2*m*V*[d(nu)/dt]_i (where i denotes the previous time-step)
-         endif
-       endif
+          dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
+     &     psnl%resmo0(1:mpg%nCi,is)
+        endif
+      elseif (switch%b2mndt_bdf.eq.2) then
+        if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+     &     .or.switch%get_residuals.eq.1) then
+          dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
+     &     0.5_R8*psnl%dmodt(1:mpg%nCi,is) ! +1/2*m*V*[d(nu)/dt]_i (where i denotes the previous time-step)
+        endif
+      endif
 
 #ifndef FIXED_POINT
 cdjm Mar2019 output the total momentum flux and source for balance
@@ -511,8 +511,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
       endif
 #endif
 
-
-       write (chns,'(i3.3)') is                                        !srv 18.03.10
+      write (chns,'(i3.3)') is                                          !srv 18.03.10
 
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
         call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
