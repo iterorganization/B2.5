@@ -69,6 +69,7 @@
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
       logical, allocatable, save :: last_solve_5(:), last_solve_9(:)
+      real (kind=R8) :: ts_factor
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -172,6 +173,7 @@
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
       time_factor=1.0_R8
+      ts_factor=1.0_R8
       write(*,*) 'Allocated space for b2mod_numerics'              !srv 11.11.09
       b2mod_numerics_allocated = .true.
 
