@@ -94,7 +94,7 @@
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
-      character chns*3                                                  !srv 17.07.05
+      character chns*3                                                   !srv 17.07.05
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
@@ -211,7 +211,7 @@
 * ..main computation
 
 c make sure fhn is zero when not solving a separate neutral energy equation
-      if (switch % tn_style.ne.2) then
+      if (switch%tn_style.ne.2) then
         dv%fhn = 0.0_R8
       endif
 
@@ -245,7 +245,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
         call b2saxpy (nCv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
-      
+
 #ifndef FIXED_POINT
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -284,7 +284,7 @@ cdjm Jan2017 update particle source components for balance
             endif
           endif
 *       ..neutrals (if using AFNs)
-          if (switch % tn_style.eq.2) then   !! separate neutral energy equation
+          if (switch%tn_style.eq.2) then   !! separate neutral energy equation
             if (any(solvnreg(0:mpg%nnreg(0))).or.
      &        switch%get_residuals.eq.1) then
               call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
@@ -323,7 +323,7 @@ cc while the second contribution corresponds to T dn/dt
      &                *ts_factor*psnl%te/dtim*geo%cvVol
         she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
-          sr%shidt(:,0) = sr%shidt(:,0) 
+          sr%shidt(:,0) = sr%shidt(:,0)
      &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
      &                      *ts_factor*psnl%ti/dtim*geo%cvVol
           shi0 = shi0 + sr%shidt
@@ -390,7 +390,7 @@ cc while the second contribution corresponds to T dn/dt
       endif
 
 c residuals for separate neutral energy equation
-      if (switch % tn_style.eq.2) then   !! separate neutral energy equation
+      if (switch%tn_style.eq.2) then   !! separate neutral energy equation
         if (any(solvnreg(0:mpg%nnreg(0))).or.
      &      switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
@@ -584,9 +584,9 @@ c residuals for separate neutral energy equation
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
 
-      if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0)
-                                        !! or pure ion (tn_style.eq.1) energy equation,
-        pl%tn = pl%ti                   !! tn must be exactly equal to ti.
+      if (switch%tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0)
+                                      !! or pure ion (tn_style.eq.1) energy equation,
+        pl%tn = pl%ti                 !! tn must be exactly equal to ti.
       endif
 
 *   ..compute physical time-derivative after correction has been applied

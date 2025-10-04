@@ -4888,12 +4888,12 @@
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
 			</switch>
-						<switch>
+			<switch>
 				<name>b2mndt_startup</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
-                    When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
+					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
 					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
 				</description>
 			</switch>
