@@ -103,7 +103,7 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #   endif
 #   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    use al_ggd_identifier &
+    use al_ggd_identifier &          ! IGNORE
      & , only : set_identifier => set_ggd_identifier
     use al_ggd_space_identifier &    ! IGNORE
      & , only : set_identifier => set_ggd_space_identifier
