@@ -102,6 +102,16 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #   endif
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    use imas_ggd_identifier &
+     & , only : set_identifier => set_ggd_identifier
+    use imas_ggd_space_identifier &    ! IGNORE
+     & , only : set_identifier => set_ggd_space_identifier
+    use imas_ggd_subset_identifier &   ! IGNORE
+     & , only : set_identifier => set_ggd_subset_identifier
+    use imas_ggd_geometry_content_identifier &   ! IGNORE
+     & , only : set_identifier => set_ggd_geometry_content_identifier
+#endif
 #   if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
 #    if AL_MAJOR_VERSION < 5
     use imas_ggd_identifier &          ! IGNORE
@@ -660,22 +670,29 @@ contains
 
         geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
 
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_ggd_identifier( grid_ggd%identifier, geometryType )
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         grid_ggd%identifier%index = geometryType
         allocate( grid_ggd%identifier%name(1) )
         allocate( grid_ggd%identifier%description(1) )
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         grid_ggd%identifier%name = ggd_identifier%name( geometryType )
         grid_ggd%identifier%description = ggd_identifier%description( geometryType )
 #else
+        grid_ggd%identifier%index = geometryType
+        allocate( grid_ggd%identifier%name(1) )
+        allocate( grid_ggd%identifier%description(1) )
         grid_ggd%identifier%name = geometryName(geometryType)
         grid_ggd%identifier%description = geometryDescription(geometryType)
 #endif
         allocate( grid_ggd%space( SPACE_COUNT ) )
 
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_ggd_space_identifier( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier, 1 )
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%index = &
           & ggd_space_identifier%primary_standard
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = &
@@ -683,6 +700,8 @@ contains
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description = &
           & ggd_space_identifier%description( ggd_space_identifier%primary_standard )
 #else
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = "Standard grid"
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%index = 1
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description = labgeo
@@ -726,7 +745,12 @@ contains
         !! For SN: gmap%nVx = ( nx+1 )*( ny+1 ) - 1
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%object( gmap%nVx ) )
-#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_ggd_geometry_content_identifier(           &
+            &   grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content, "node_coordinates_connection" )
+#elif ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%index =                    &
@@ -753,7 +777,12 @@ contains
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   object( gmap%nFcx + gmap%nFcy ) )
-#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_ggd_geometry_content_identifier(           &
+            &   grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content, "edge_areas" )
+#elif ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%index =                    &
@@ -779,7 +808,12 @@ contains
         !! For SN: gmap%nCv = nx*ny
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%object( gmap%nCv ) )
-#if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_ggd_geometry_content_identifier(           &
+            &   grid_ggd%space( SPACE_POLOIDALPLANE )%      &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content, "face_indices_volume_connection" )
+#elif ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%index =                    &
@@ -1270,6 +1304,10 @@ contains
         !! If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          call set_ggd_space_identifier( &
+              & grid_ggd%space( SPACE_TOROIDALANGLE )%identifier, "secondary_structured")
+#else
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description(1) )
 #if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
@@ -1281,6 +1319,7 @@ contains
           & ggd_space_identifier%description( ggd_space_identifier%secondary_structured )
 #else
           grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 2
+#endif
 #endif
 #endif
           grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%index = 0
@@ -1334,7 +1373,12 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+         call set_ggd_geometry_content_identifier( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content, "node_coordinates" )
+         call set_ggd_geometry_content_identifier( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content, "unspecified" )
+#elif ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &

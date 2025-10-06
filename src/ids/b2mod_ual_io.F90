@@ -210,6 +210,16 @@ module b2mod_ual_io
      & , only : radiation_identifier
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    use al_neutrals_identifier &       ! IGNORE
+     & , only : set_neutral_type_identifier => set_identifier
+    use al_radiation_identifier &      ! IGNORE
+     & , only : set_radiation_identifier => set_identifier
+    use al_edge_source_identifier &    ! IGNORE
+     & , only : set_edge_source_identifier => set_identifier
+    use al_plasma_source_identifier &    ! IGNORE
+     & , only : set_plasma_source_identifier => set_identifier
+#endif
 #endif
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
@@ -224,7 +234,7 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_code_constant, &
      &          ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
-#if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 1
+#if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0
     use ids_schemas &     ! IGNORE
      & , only : ids_plasma_sources_source_ggd, &
      &          ids_plasma_transport_model_ggd
@@ -855,7 +865,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 )
         type(ids_plasma_sources_source_ggd), allocatable :: source_ggd(:)
         type(ids_plasma_transport_model_ggd), allocatable :: transport_ggd(:)
 #endif
@@ -1211,13 +1221,18 @@ contains
         end if
         allocate( radiation%process(n_process) )
         do j = 1, n_process
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          if (j.eq.2) cycle ! Now taken care of by set_identifier API
+#endif
           allocate( radiation%process(j)%identifier%name(1) )
           allocate( radiation%process(j)%identifier%description(1) )
         end do
         radiation%process(1)%identifier%index = 2
         radiation%process(1)%identifier%name = 'line_radiation'
         radiation%process(1)%identifier%description = 'Line and rec. rad. from B2.5 species'
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_radiation_identifier( radiation%process(2)%identifier, 'bremsstrahlung' )
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         radiation%process(2)%identifier%index = &
           &  radiation_identifier%bremsstrahlung
         radiation%process(2)%identifier%name = &
@@ -1262,11 +1277,40 @@ contains
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
 #if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION < 31 )
-          allocate( edge_sources%source(is)%name(1) )
-          allocate( edge_sources%source(is)%description(1) )
+          allocate( edge_sources%source(is)%identifier%name(1) )
+          allocate( edge_sources%source(is)%identifier%description(1) )
 #endif
         end do
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        !! Total sources
+        call set_edge_source_identifier( edge_sources%source(1)%identifier, "Total" )
+        !! Background sources
+        call set_edge_source_identifier( edge_sources%source(2)%identifier, "Background" )
+        !! Prescribed sources
+        call set_edge_source_identifier( edge_sources%source(3)%identifier, "Prescribed" )
+        !! Time derivative
+        call set_edge_source_identifier( edge_sources%source(4)%identifier, "Time derivative" )
+        !! Atomic ionization
+        call set_edge_source_identifier( edge_sources%source(5)%identifier, "Atomic ionization" )
+        !! Molecular ionization
+        call set_edge_source_identifier( edge_sources%source(6)%identifier, "Molecular ionization" )
+        !! Ionization
+        call set_edge_source_identifier( edge_sources%source(7)%identifier, "Ionization" )
+        !! Recombination
+        call set_edge_source_identifier( edge_sources%source(8)%identifier, "Recombination" )
+        !! Charge exchange
+        call set_edge_source_identifier( edge_sources%source(9)%identifier, "Charge exchange" )
+        !! Collisional equipartition
+        call set_edge_source_identifier( edge_sources%source(10)%identifier, "Equipartition" )
+        !! Ohmic
+        call set_edge_source_identifier( edge_sources%source(11)%identifier, "Ohmic" )
+        !! Radiation
+        call set_edge_source_identifier( edge_sources%source(12)%identifier, "Radiation" )
+#ifdef B25_EIRENE
+        !! Neutrals
+        call set_edge_source_identifier( edge_sources%source(13)%identifier, "Neutrals" )
+#endif
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
         call write_source_identifier( &
           &  edge_sources%source(1)%identifier, edge_source_identifier%total )
@@ -1380,6 +1424,36 @@ contains
         do is = 1, nsources
           allocate( plasma_sources%source(is)%ggd( num_time_slices ) )
         end do
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        !! Total sources
+        call set_plasma_source_identifier( plasma_sources%source(1)%identifier, "Total" )
+        !! Background sources
+        call set_plasma_source_identifier( plasma_sources%source(2)%identifier, "Background" )
+        !! Prescribed sources
+        call set_plasma_source_identifier( plasma_sources%source(3)%identifier, "Prescribed" )
+        !! Time derivative
+        call set_plasma_source_identifier( plasma_sources%source(4)%identifier, "Time derivative" )
+        !! Atomic ionization
+        call set_plasma_source_identifier( plasma_sources%source(5)%identifier, "Atomic ionization" )
+        !! Molecular ionization
+        call set_plasma_source_identifier( plasma_sources%source(6)%identifier, "Molecular ionization" )
+        !! Ionization
+        call set_plasma_source_identifier( plasma_sources%source(7)%identifier, "Ionization" )
+        !! Recombination
+        call set_plasma_source_identifier( plasma_sources%source(8)%identifier, "Recombination" )
+        !! Charge exchange
+        call set_plasma_source_identifier( plasma_sources%source(9)%identifier, "Charge exchange" )
+        !! Collisional equipartition
+        call set_plasma_source_identifier( plasma_sources%source(10)%identifier, "Equipartition" )
+        !! Ohmic
+        call set_plasma_source_identifier( plasma_sources%source(11)%identifier, "Ohmic" )
+        !! Radiation
+        call set_plasma_source_identifier( plasma_sources%source(12)%identifier, "Radiation" )
+#ifdef B25_EIRENE
+        !! Neutrals
+        call set_plasma_source_identifier( plasma_sources%source(13)%identifier, "Neutrals" )
+#endif
+#else
         !! Total sources
         call write_source_identifier( &
           &  plasma_sources%source(1)%identifier, edge_source_identifier%total )
@@ -1420,6 +1494,7 @@ contains
         !! Neutrals
         call write_source_identifier( &
           &  plasma_sources%source(13)%identifier, edge_source_identifier%neutrals )
+#endif
 #endif
 #endif
 
@@ -3700,11 +3775,15 @@ contains
 #endif
                edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
                edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+               call set_neutral_type_identifier( &
+                   &  edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type, &
+                   &  "Thermal" )
+#elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
                    &      neutrals_identifier%thermal
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
@@ -3712,6 +3791,10 @@ contains
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &      neutrals_identifier%description( neutrals_identifier%thermal )
 #else
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
+                   &      neutral_type%name(1) )
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
+                   &      neutral_type%description(1) )
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
@@ -3748,11 +3831,15 @@ contains
 #endif
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+               call set_neutral_type_identifier( &
+                   &  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type, &
+                   &  "Thermal" )
+#elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
                      &      neutral_type%name(1) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
                      &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
                      &      neutrals_identifier%thermal
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
@@ -3760,6 +3847,10 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                      &      neutrals_identifier%description( neutrals_identifier%thermal )
 #else
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
+                     &      neutral_type%name(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
+                     &      neutral_type%description(1) )
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                   edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                      &     "Thermal"
@@ -3793,11 +3884,15 @@ contains
 #endif
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%ion_index = js
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+               call set_neutral_type_identifier( &
+                   &  edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type, &
+                   &  "Thermal" )
+#elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
                    &      neutrals_identifier%thermal
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
@@ -3805,6 +3900,10 @@ contains
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &      neutrals_identifier%description( neutrals_identifier%thermal )
 #else
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
+                   &      neutral_type%name(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
+                   &      neutral_type%description(1) )
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
@@ -3824,6 +3923,10 @@ contains
                   source_ggd(i)%neutral( j )%element(1)%atoms_n = 1
                   source_ggd(i)%neutral( j )%ion_index = js
                   source_ggd(i)%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+                  call set_neutral_type_identifier( &
+                     &  source_ggd(i)%neutral( j )%state(1)%neutral_type, "Thermal" )
+#else
                   allocate( source_ggd(i)%neutral( j )%state(1)% &
                      &      neutral_type%name(1) )
                   allocate( source_ggd(i)%neutral( j )%state(1)% &
@@ -3834,6 +3937,7 @@ contains
                      &      neutrals_identifier%name( neutrals_identifier%thermal )
                   source_ggd(i)%neutral( j )%state(1)%neutral_type%description = &
                      &      neutrals_identifier%description( neutrals_identifier%thermal )
+#endif
                end do
                allocate( transport_ggd(1)%neutral( j )%element(1) )
                allocate( transport_ggd(1)%neutral( j )%state(1) )
@@ -3846,6 +3950,10 @@ contains
                transport_ggd(1)%neutral( j )%element(1)%atoms_n = 1
                transport_ggd(1)%neutral( j )%ion_index = js
                transport_ggd(1)%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+               call set_neutral_type_identifier( &
+                   &  transport_ggd(i)%neutral( j )%state(1)%neutral_type, "Thermal" )
+#else
                allocate( transport_ggd(1)%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( transport_ggd(1)%neutral( j )%state(1)% &
@@ -3856,6 +3964,7 @@ contains
                    &      neutrals_identifier%name( neutrals_identifier%thermal )
                transport_ggd(1)%neutral( j )%state(1)%neutral_type%description = &
                    &      neutrals_identifier%description( neutrals_identifier%thermal )
+#endif
 #endif
             end do
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -3888,11 +3997,14 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+               call set_neutral_type_identifier( &
+                  &  radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type, "Thermal" )
+#elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
                    &     neutrals_identifier%thermal
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
@@ -3900,6 +4012,10 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     neutrals_identifier%description( neutrals_identifier%thermal )
 #else
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
+                   &     neutral_type%name(1) )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
+                   &     neutral_type%description(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
                    &     "Thermal"
@@ -8910,7 +9026,7 @@ contains
 #else
         type(ids_generic_grid_aos3_root) :: batch_grid, sources_grid
 #endif
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 )
         type(ids_plasma_sources_source_ggd), allocatable :: source_ggd(:)
 #endif
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
@@ -9034,7 +9150,10 @@ contains
 #endif
 #endif
 #ifdef B25_EIRENE
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        !! Neutrals
+        call set_edge_source_identifier( batch_sources%source(1)%identifier, "Neutrals" )
+#elif ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
         call write_source_identifier( &
           &  batch_sources%source(1)%identifier, edge_source_identifier%neutrals )
