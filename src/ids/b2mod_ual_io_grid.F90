@@ -103,15 +103,15 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #   endif
 #   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    use imas_ggd_identifier &
+    use al_ggd_identifier &
      & , only : set_identifier => set_ggd_identifier
-    use imas_ggd_space_identifier &    ! IGNORE
+    use al_ggd_space_identifier &    ! IGNORE
      & , only : set_identifier => set_ggd_space_identifier
-    use imas_ggd_subset_identifier &   ! IGNORE
+    use al_ggd_subset_identifier &   ! IGNORE
      & , only : set_identifier => set_ggd_subset_identifier
-    use imas_ggd_geometry_content_identifier &   ! IGNORE
+    use al_ggd_geometry_content_identifier &   ! IGNORE
      & , only : set_identifier => set_ggd_geometry_content_identifier
-#endif
+#   endif
 #   if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
 #    if AL_MAJOR_VERSION < 5
     use imas_ggd_identifier &          ! IGNORE
