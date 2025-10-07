@@ -207,6 +207,8 @@ module b2mod_ual_io
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    use al_midplane_identifier &       ! IGNORE
+     & , only : set_midplane_identifier => set_identifier
     use al_neutrals_identifier &       ! IGNORE
      & , only : set_neutral_type_identifier => set_identifier
     use al_radiation_identifier &      ! IGNORE
@@ -7715,13 +7717,15 @@ contains
         allocate( batch_profiles%grid_ggd( num_batch_slices ) )
         allocate( batch_sources%grid_ggd( num_batch_slices ) )
 #endif
-        allocate (batch_sources%source(1) )
-        allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+        allocate( batch_sources%source(1) )
+        allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
 #ifdef B25_EIRENE
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_source_identifier( batch_sources%source(1)%identifier, "Neutrals" )
+#elif ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+        !! Neutrals
         allocate( batch_sources%source(1)%identifier%name(1) )
         allocate( batch_sources%source(1)%identifier%description(1) )
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-        !! Neutrals
         batch_sources%source(1)%identifier%index = edge_source_identifier%neutrals
         batch_sources%source(1)%identifier%name = &
           &  edge_source_identifier%name( edge_source_identifier%neutrals )
@@ -7729,6 +7733,8 @@ contains
           &  edge_source_identifier%description( edge_source_identifier%neutrals )
 #else
         !! Total sources due to Eirene species
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%index = 0
         batch_sources%source(1)%identifier%name = "Eirene"
         batch_sources%source(1)%identifier%description = &
@@ -9576,6 +9582,9 @@ contains
     type(ids_identifier_static) :: midplane
     integer, intent(in) :: midplane_id
 
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    call set_midplane_identifier( midplane, midplane_id )
+#else
     midplane%index = midplane_id
     allocate( midplane%name(1) )
     allocate( midplane%description(1) )
@@ -9598,6 +9607,7 @@ contains
       midplane%description = &
          &  'Location specified by GGD outer midplane grid subset'
     end select
+#endif
 #endif
     return
 
