@@ -211,6 +211,8 @@ module b2mod_ual_io
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+   use al_midplane_identifier &       ! IGNORE
+     & , only : set_midplane_identifier => set_identifier
     use al_neutrals_identifier &       ! IGNORE
      & , only : set_neutral_type_identifier => set_identifier
     use al_radiation_identifier &      ! IGNORE
@@ -11337,6 +11339,9 @@ contains
     integer, intent(in) :: midplane_id
 
     midplane%index = midplane_id
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    call set_midplane_identifier( midplane, midplane_id )
+#else
     allocate( midplane%name(1) )
     allocate( midplane%description(1) )
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
@@ -11358,6 +11363,7 @@ contains
       midplane%description = &
          &  'Location specified by GGD outer midplane grid subset'
     end select
+#endif
 #endif
     return
 
