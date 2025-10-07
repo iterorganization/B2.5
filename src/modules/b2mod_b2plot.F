@@ -45,8 +45,8 @@
      *  twrk_hlp(:)
 
       real (kind=R8), save ::
-     *  pp1(2,DEF_NLIM+2*DEF_NYD),
-     *  pp2(2,DEF_NLIM+2*DEF_NYD)
+     *  pp1(2,2*DEF_NLIM+4*DEF_NYD),
+     *  pp2(2,2*DEF_NLIM+4*DEF_NYD)
 
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:), b2_fnmti(:)
@@ -127,7 +127,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      *  ixref,iyref
 cank 960511
       integer, save ::
-     *  nlimi,nstsi,natmi,nmoli,nioni,nlim1,nsts1
+     *  nlimi,nstsi,natmi,nmoli,nioni,nphoti,nlim1,nsts1
 cank
       integer, save ::
      *  mcol,scol,vcol,ocol,ecol,fcol,acol,zcol,y_transform_l,

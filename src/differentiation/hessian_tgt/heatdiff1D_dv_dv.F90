@@ -37,7 +37,7 @@
 !       DU = (1/rho/Cp) * (K*UXX + gradK*UX + S)
 !       DU is the rate of change of temperature
 !       UXX is "doe^2 T / doe^2 x"   and UX is "doe T / doe x"
-! with Neumann bondary condition at the plasma facing surface side
+! with Neumann boundary condition at the plasma facing surface side
 ! i.e.  UX is specified.
 ! and a Dirichlet type boundary condition at the coolant side.
 ! i.e. T is specified.

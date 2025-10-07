@@ -14,7 +14,9 @@
      & , only : dtco, time_factor                                        !srv 07.07.21 }
 #ifndef FIXED_POINT
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,         !djm Jan2017
+     & ,only : update_balance_sources_particles,
+     &         update_balance_eirene_sources_particles,
+     &         balance_netcdf,                                           !djm Jan2017
      &         tot_sna0to1, fna_tot                                      !djm Mar2019
 #endif
       use b2mod_ad
@@ -129,7 +131,7 @@
             write(6,'(a,i3,a)')
      &        'rxf*dtco*time_factor for species ',isb,' should be 1 !'
             write(6,*) 'Time derivative terms may be inacurrate !'
-          end if
+          endif
         else
           rxg_npco = switch%b2npco_rxg
         endif
@@ -154,7 +156,21 @@ cdjm Jan2017 update particle source components for balance
         fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
         call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
       endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles
+     &   (nCv,isb,pl%na(:,isb))
+      endif
 #endif
+
+      !Compute residual without time-stepping sources (needed at next time-step for ckn scheme)
+      if (switch%b2mndt_ckn.eq.2) then
+        if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
+     &            .or.switch%get_residuals.eq.1) then
+          call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+     &      dv%fna(:,:,isb), dv%resco0(:,isb))
+        endif
+      endif
 
       if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
 *  .. calculate time-dependent source
@@ -176,6 +192,16 @@ cdjm Jan2017 update particle source components for balance
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
       endif                                                             !srv 22.05.18
+
+*   ..modify residual for ckn scheme
+      if (switch%b2mndt_ckn.eq.2) then
+        if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
+     &            .or.switch%get_residuals.eq.1) then
+          dv%resco(1:mpg%nCi,isb) = dv%resco(1:mpg%nCi,isb) +
+     &      psnl%resco0(1:mpg%nCi,isb)
+        endif
+      endif
+
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18

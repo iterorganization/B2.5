@@ -479,7 +479,20 @@
           m%nncut = idum(2)
         endif
 
-        !read vertex information
+!        ! read Xpoint information
+!        call cfruin (nrid, 1, idum,'nX')
+!        m%nXp = idum(0)
+
+!        ! read OMPr, OMPz, IMPr, IMPz
+!        call cfrure(nrid,2,m%OMPr,'OMPr')
+!        call cfrure(nrid,2,m%OMPz,'OMPz')
+!        call cfrure(nrid,2,m%IMPr,'IMPr')
+!        call cfrure(nrid,2,m%IMPz,'IMPz')
+
+!        ! read Xpoint vertex number
+!        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
+
+        ! read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
           do iVx = 1, nnVx

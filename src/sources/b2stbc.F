@@ -325,7 +325,7 @@
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &    call compute_feedback(nCv, nFc, ns, ismain,
-     &     switch, geo, mpg, pl, dv, rt, psnc, psnl,
+     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl,
      &     main_call)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
@@ -335,10 +335,6 @@
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
       endif
-
-!WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
-!WG_RM     &    switch, geo, pl, dv, srw, main_call)
 
 #ifdef WG_TODO
 c added 2001.11.26 dpc/xpb

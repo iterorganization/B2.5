@@ -45,7 +45,7 @@ c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er
       integer i1,i2,i3,ia,ib,ic,is,ims,ias,nclm_na,nclm_nm
       integer iCb,iCm,iCn,iCp,iCv,iCx
-      integer iFc,iFn,iFs,iFs1,iFs2,iVx1,iVx2
+      integer iFc,iFn,iFs,iFs1,iFs2,iFt,iFm,iVx,iVx1,iVx2
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       integer im,midplane_list(nromp),nmp
       logical found,match_found,do_sput(ntrgsx)
@@ -223,7 +223,7 @@ c----------------------------------------------------------------------
 c*** Power loading:
 c*** Radiation load onto the targets
 
-      call b2ptrdl(wrdtrg)
+      call b2ptrdl(DEF_NYD,ntrgsx,wrdtrg,.true.)
 #ifdef DBG
       print '(2a,i5,2(1x,l1))','After b2ptrdl: ',
      ,        'ntrgts,lrdlsp,lrdlcr = ',   !###
@@ -269,7 +269,7 @@ c*** Target geometry
 c*** Midplane coordinates
 
       xmc_hlp=0.0_R8
-      do j=1,2*ntrgts
+      do j=1,ntrgts
         if (j.le.ntrgts/2 .and. nimp.gt.0) then
           midplane_list = imp
           fs_ds_mp = fs_ds_imp
@@ -297,6 +297,7 @@ c*** Midplane coordinates
           end do !}
           u=0.0_R8
           xmc_hlp(lseppos(itrg(j))-1,itrg(j))=0.0_R8
+          iFm=mpg%cvFt(midplane_list(im))
           do i=lseppos(itrg(j)),mpg%divFcP(itrg(j),2) !{
 ! May be a partial mapping only!
 ! First, find to which flux tube the target surface belongs
@@ -306,17 +307,18 @@ c*** Midplane coordinates
             iVx1 = mpg%fcVx(iFc,1)
             iVx2 = mpg%fcVx(iFc,2)
             iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iFt = mpg%cvFt(iCv)
             iFs1 = mpg%vxFs(iVx1)
             iFs2 = mpg%vxFs(iVx2)
-            if (iFs1.eq.0.or.iFs2.eq.0) then
-              Psit1 = minval(
-     .         geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1):
-     .                             mpg%cvVxP(iCv,1)+
-     .                             mpg%cvVxP(iCv,2)-1)))
-              Psit2 = maxval(
-     .         geo%vxFpsi(mpg%cvVx(mpg%cvVxP(iCv,1):
-     .                             mpg%cvVxP(iCv,1)+
-     .                             mpg%cvVxP(iCv,2)-1)))
+            if (iFt.ne.iFm) then
+              im = im+l
+              if (im.gt.0.and.im.le.nmp) then
+                iFm = mpg%cvFt(midplane_list(im))
+              end if
+            end if
+            if ((iFs1.eq.0.or.iFs2.eq.0).and.im.gt.0.and.im.le.nmp) then
+              Psit1 = min(geo%vxFpsi(iVx1),geo%vxFpsi(iVx2))
+              Psit2 = max(geo%vxFpsi(iVx1),geo%vxFpsi(ivx2))
               Psim1 = minval(
      .         geo%vxFpsi(mpg%cvVx(mpg%cvVxP(midplane_list(im),1):
      .                             mpg%cvVxP(midplane_list(im),1)+
@@ -325,39 +327,25 @@ c*** Midplane coordinates
      .         geo%vxFpsi(mpg%cvVx(mpg%cvVxP(midplane_list(im),1):
      .                             mpg%cvVxP(midplane_list(im),1)+
      .                             mpg%cvVxP(midplane_list(im),2)-1)))
-              do while (im.gt.0.and.im.lt.nmp.and.
-     .          (Psit1.lt.Psim1.or.Psit1.gt.Psim2.or.
-     .           Psit2.lt.Psim1.or.Psit2.gt.Psim2))
-                im = im+l
-                Psim1 = minval(
-     .           geo%vxFpsi(mpg%cvVx(mpg%cvVxP(midplane_list(im),1):
-     .                               mpg%cvVxP(midplane_list(im),1)+
-     .                               mpg%cvVxP(midplane_list(im),2)-1)))
-                Psim2 = maxval(
-     .           geo%vxFpsi(mpg%cvVx(mpg%cvVxP(midplane_list(im),1):
-     .                               mpg%cvVxP(midplane_list(im),1)+
-     .                               mpg%cvVxP(midplane_list(im),2)-1)))
-              end do
-              call xertst (.not.(im.le.0.or.im.gt.nmp),
-     .         'Stepped outside midplane range of cells!')
+              frac = (Psit2-Psit1)/(Psim2-Psim1)
               iFs1 = 0
               iFs2 = 0
               do k = mpg%cvVxP(midplane_list(im),1),
      .               mpg%cvVxP(midplane_list(im),1) +
      .               mpg%cvVxP(midplane_list(im),2) - 1
-                iFs = mpg%vxFs(k)
+                iVx = mpg%cvVx(k)
+                iFs = mpg%vxFs(iVx)
                 if (iFs.eq.0) cycle
                 if (iFs1.eq.0) then
                   iFs1 = iFs
-                else if (iFs2.eq.0) then
+                else if (iFs2.eq.0.and.iFs.ne.iFs1) then
                   iFs2 = iFs
                 end if
               end do
-              frac = (Psit2-Psit1)/(Psim2-Psim1)
             else
               frac = 1.0_R8
             end if
-            if (iFs1.gt.0.and.iFs2.gt.0) then
+            if (iFs1.ne.0.and.iFs2.ne.0.and.im.gt.0.and.im.le.nmp) then
               h=0.5_R8*frac*abs(fs_ds_mp(iFs2)-fs_ds_mp(iFs1))
             else
               h=0.0_R8
@@ -375,7 +363,7 @@ c*** Midplane coordinates
       print *,'ny,xmp_hlp:',maxval(mpg%divFcP(1:ntrgts,2))
       do j=1,ntrgts !{
         print '(1x,i3,10(1x,f9.6)/(4x,10(1x,f9.6)))',
-     ,                       lseppos(itrg(j))+1,
+     ,                       lseppos(itrg(j)),
      ,                      (xmp_hlp(i,itrg(j)),i=1,mpg%divFcP(j,2))
       end do !}
 #endif
@@ -397,6 +385,7 @@ c
           do iy=1,mpg%divFcP(itrg(j),2) !{
             iFc = mpg%divFc(mpg%divFcP(itrg(j),1) + iy - 1)
             iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iFt = mpg%cvFt(iCv)
             wo=0.0_R8
             wnutrg(iy,itrg(j))=0.0_R8
             whtpl(iy,itrg(j))=(state%dv%fhe(iFc,0)+state%dv%fhe(iFc,1)+
@@ -508,12 +497,20 @@ c             kinetic energy of recycled and sputtered neutrals
 c carlis  21 feb 2017 added calculation of connection length from midplane to targets
 c         and from x-point to targets
             if (mpg%nncut.ge.1) then
-              iCx=0
+              if (mod(mpg%cvReg(iCv),4).eq.2) then ! already in main SOL
+                iCx=-1
+              else
+                iCx=0
+              end if
             else
               iCx=-1
             end if
             if (iy.ge.lseppos(itrg(j))) then
-              iCm=0
+              if (xmp_hlp(iy,itrg(j)).gt.499.0_R8) then
+                iCm=-1 ! we will not meet the midplane
+              else
+                iCm=0
+              end if
             else
               iCm=-1
             end if
@@ -521,7 +518,7 @@ c         and from x-point to targets
             iCb=iCv
             lcnnt(iy,itrg(j))=0.0_R8
             lcnnx(iy,itrg(j))=0.0_R8
-            do while (.not.(iCx.ne.0.and.iCm.ne.0))
+            do while (.not.(iCx.ne.0.and.iCm.ne.0).and.iCn.ne.0)
               iCp = 0
               do i = mpg%cvFcP(iCn,1),
      .               mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
@@ -530,6 +527,14 @@ c         and from x-point to targets
                 if (mpg%fcFs(iFn).ne.0) cycle
                 if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
      .              mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
+                if (mpg%fcCv(iFn,1).eq.iCv.and.iCn.eq.iCv) then
+                  if (geo%cvConn(iCv).gt.geo%cvConn(mpg%fcCv(iFn,2)))
+     >             cycle ! starting in wrong direction
+                end if
+                if (mpg%fcCv(iFn,2).eq.iCv.and.iCn.eq.iCv) then
+                  if (geo%cvConn(iCv).gt.geo%cvConn(mpg%fcCv(iFn,1)))
+     >             cycle ! starting in wrong direction
+                end if
                 if (mpg%fcCv(iFn,1).eq.iCn .and. mpg%fcCv(iFn,2).ne.iCb)
      >           then
                   u = -1.0_R8
@@ -555,14 +560,16 @@ c         and from x-point to targets
               end do
               iCb = iCn
               iCn = iCp
-              if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
-                iCx = iCn
-                lcnnx(iy,itrg(j)) = geo%cvConn(iCb) + h
-                wo=state%dv%fht(iFn,0)-state%dv%fhj(iFn,0)
-                wp_xpt(iy,itrg(j))=wo*u/t
-                wid_par(iy,itrg(j))=wp_xpt(iy,itrg(j))*xfn/
-     1           (geo%vxX(mpg%fcVx(iFc,1))+geo%vxX(mpg%fcVx(iFc,2)))
-                wid_trg(iy,itrg(j))=wo*u/s(iy,itrg(j))
+              if (iCx.ne.-1.and.iCn.ne.0) then
+                if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
+                  iCx = iCn
+                  lcnnx(iy,itrg(j)) = geo%cvConn(iCb) + h
+                  wo=state%dv%fht(iFn,0)-state%dv%fhj(iFn,0)
+                  wp_xpt(iy,itrg(j))=wo*u/t
+                  wid_par(iy,itrg(j))=wp_xpt(iy,itrg(j))*xfn/
+     1             (geo%vxX(mpg%fcVx(iFc,1))+geo%vxX(mpg%fcVx(iFc,2)))
+                  wid_trg(iy,itrg(j))=wo*u/s(iy,itrg(j))
+                end if
               end if
               found = .false.
               if (j.le.ntrgts/2 .and. nimp.gt.0 .and. iCm.ne.-1) then
@@ -585,7 +592,8 @@ c         and from x-point to targets
           if (ntrgts.ge.2) then
             do iy=1,lseppos(itrg(j))-1 !{
 c carlis  If in PFR region then connection length from midplane to target will
-c         be equal to connection length from target to target
+c         be equal to the full flux tube connection length
+c         (from target to target or from target to wall)
               iFc = mpg%divFc(mpg%divFcP(itrg(j),1) + iy - 1)
               iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
               lcnnt(iy,itrg(j))=geo%ftConn(mpg%cvFt(iCv))
@@ -651,17 +659,17 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
           wtttrg(iy,itrg(j))=wpttrg(iy,itrg(j))+wrdtrg(iy,itrg(j),0)
         end do !}
       end do !}
-      if (ntrgts.gt.0) write(*,'(1x,a,1p,16e12.3)')
+      if (ntrgts.gt.0.and.ft44) write(*,'(1x,a,1p,16e12.3)')
      -           'Scaling factors for Wn : ',(wi(itrg(i)),i=1,ntrgts)
 
       nclm_ld=21
-#ifdef B25_EIRENE
-      nclm_na=natmi
-      nclm_nm=nmoli
-#else
-      nclm_na=nspecies
-      nclm_nm=0
-#endif
+      if (use_eirene.ne.0) then
+        nclm_na=natmi
+        nclm_nm=nmoli
+      else
+        nclm_na=nspecies
+        nclm_nm=0
+      endif
       if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       if(lrdlcr) nclm_ld=nclm_ld+1
 
@@ -1030,9 +1038,11 @@ c        print '(a,i4,1p,4e12.4)','j,wt,wo,t,p: ',j,wt,wo,t,p  !###
         if(p.gt.0.0_R8) hwxm_idt(itrg(j))=t/p
 c*** xwhm: exponential decay length calculated from half-width
 c        print '(a,i4,1p,2e12.3)','m,wo,wid_par(m,j):',
-c                                  m,wo,wid_par(m,itrg(j)) !###
+c     .                            m,wo,wid_par(m,itrg(j)) !###
         do i=m,mpg%divFcP(itrg(j),2) !{
-          if(wid_par(i,itrg(j)).lt.0.5_R8*wo) then !{
+          if(i.le.1.or.m.eq.0) cycle
+          if(wid_par(i,itrg(j)).lt.0.5_R8*wo.and.
+     .       wid_par(i,itrg(j)).ne.wid_par(i-1,itrg(j))) then !{
             d=(0.5_R8*wo-wid_par(i,itrg(j)))/
      .                  (wid_par(i-1,itrg(j))-wid_par(i,itrg(j)))
             hwhm_idp(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
@@ -1048,9 +1058,11 @@ c!###}
           end if !}
         end do !}
 c        print '(a,i4,1p,2e12.3)','n,p,wid_trg(n,j):',
-c                                  n,p,wid_trg(n,itrg(j)) !###
+c     .                            n,p,wid_trg(n,itrg(j)) !###
         do i=n,mpg%divFcP(itrg(j),2) !{
-          if(wid_trg(i,itrg(j)).lt.0.5_R8*p) then !{
+          if(i.le.1.or.n.eq.0) cycle
+          if(wid_trg(i,itrg(j)).lt.0.5_R8*p.and.
+     .       wid_trg(i,itrg(j)).ne.wid_trg(i-1,itrg(j))) then !{
             d=(0.5_R8*p-wid_trg(i,itrg(j)))/
      .        (wid_trg(i-1,itrg(j))-wid_trg(i,itrg(j)))
             hwhm_idt(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
@@ -1599,15 +1611,15 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
             do ia=1,nclm_na
               fpt_out(1+3*(ia-1))=sja(iy,itrg(j),ia)/s(iy,itrg(j))
-#ifdef B25_EIRENE
-              fpt_out(2+3*(ia-1))=tab2(iCv,ia,1)/ev
-#else
-              if (nint(zn(eb2atcr(ia))).eq.1) then
-                fpt_out(2+3*(ia-1))=state%pl%tn(iCv)/ev
+              if (use_eirene.ne.0) then
+                fpt_out(2+3*(ia-1))=tab2(iCv,ia,1)/ev
               else
-                fpt_out(2+3*(ia-1))=state%pl%ti(iCv)/ev
+                if (nint(zn(eb2atcr(ia))).eq.1) then
+                  fpt_out(2+3*(ia-1))=state%pl%tn(iCv)/ev
+                else
+                  fpt_out(2+3*(ia-1))=state%pl%ti(iCv)/ev
+                end if
               end if
-#endif
               fpt_out(3+3*(ia-1))=spa(iy,itrg(j),ia)
             end do
             do is=1,nspecies

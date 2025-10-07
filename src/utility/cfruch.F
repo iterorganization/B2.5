@@ -56,4 +56,4 @@
    94 call xerrab ('cfruch--read error at head, unformatted, id='//id0)
    95 call xerrab ('cfruch--read error at data, unformatted, id='//id0)
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfruch

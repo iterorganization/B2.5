@@ -16,6 +16,7 @@ c***
 c*** Output
 c***  lwldlis : sorted lists of the "plot zones" (DG numbering)
 c***  leirlis : sorted lists of the "plot zones" (Eirene numbering)
+c***  lb25lis : sorted lists of the "plot zones" (B2.5 numbering)
 c***  lwlddir : orientation of the "plot zones" (true = CCW)
 c***  pp1,pp2 : completed arrays of the wall segments
 c======================================================================
@@ -36,7 +37,7 @@ c======================================================================
       use b2mod_dimensions
       implicit none
       integer i,j,k,n
-      integer geometryType
+      integer gridGeometry, plasmaGeometry
       logical lim_cnf,target_east,target_west
 #ifdef DBG
       integer il
@@ -81,28 +82,38 @@ c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c>>>
-      lim_cnf=mpg%nncut.eq.0 .and. mpg%nnreg(0).eq.2
+      gridGeometry = geometryId( mpg, geo, 1 )
+      plasmaGeometry = geometryId( mpg, geo, 2 )
+      lim_cnf = plasmaGeometry.eq.GEOMETRY_LIMITER
 
 c*** Make the list of references to the Eirene "Additional surfaces" -
 c*** count for "unused elements", "elements not for Eirene", and
 c*** "numbering offset" in the DG model
 
       if(lvdg20) then !{
-        k=1
+        if (nlimi.gt.0) then
+          k=1
+        else
+          k=0
+        end if
         do j=1,lppp !{
           lelmind(j)=k+lnumboff
+          if(lfclbl(j).gt.0) lelmind(j)=nlimi+lfclbl(j)
           do i=1,nskipel !{
             if(lskipel(i).eq.j) lelmind(j)=0
           end do !}
-          if(lelmind(j).gt.0) k=k+1
+          if(lelmind(j).gt.0.and.lelmind(j).le.nlimi.and.nlimi.gt.0)
+     >     k=k+1
         end do !}
       else !}{
         do j=1,lppp !{
           lelmind(j)=j
         end do !}
       end if !}
-c      print *,'lelmind:'                                !###
-c      print '(10(i6,2h :,i4))',(lelmind(i),i,i=1,lppp)  !###
+#ifdef DBG
+      print *,'lelmind:'                                   !###
+      print '(10(i6,a2,i4))',(i,' :',lelmind(i),i=1,lppp)  !###
+#endif
 
 c
 c*** Convert the input wall coordinates into double precision
@@ -157,7 +168,6 @@ c*** Check the topology of the grid and the list of target edges
         end if
       end if !}
       ntrgts=2
-      geometryType = geometryId( mpg, geo )
       if(mpg%nncut.eq.0 .and. .not.lim_cnf) then
         if (mpg%periodic_bc.eq.1) then
           ntrgts=0
@@ -167,13 +177,14 @@ c*** Check the topology of the grid and the list of target edges
           target_east = .false.
           target_west = .false.
           do i = 1, nbc
+            if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
-     &                             geometryType).eq.EAST) then
+     &                             gridGeometry).eq.EAST) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
      &                      bcene(i).eq.15.or. target_east
             end if
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
-     &                             geometryType).eq.WEST) then
+     &                             gridGeometry).eq.WEST) then
                target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
      &                       bcene(i).eq.15.or. target_west
             end if
@@ -197,13 +208,11 @@ c*** Check the topology of the grid and the list of target edges
             itrg(1)=2
           end if
         end if
-      end if
-      if(mpg%nncut.eq.1 .or. lim_cnf) then
+      else if(plasmaGeometry.eq.GEOMETRY_SN .or. lim_cnf) then
         ntrgts=2
         itrg(1)=1
         itrg(2)=2
-      end if
-      if(mpg%nncut.eq.2) then
+      else if(mpg%nncut.eq.2) then
         ntrgts=4
         itrg(1)=1
         itrg(2)=2
@@ -268,15 +277,17 @@ c*** neutral-related data will be plotted for it.
 
 #ifdef DBG
       print *,'After sorting. nwldprt =',nwldprt
-      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
-      do il=1,nwldprt
-        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
+      if (nwldprt.gt.0) then
+        print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+        print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+        print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
+        do il=1,nwldprt
+          print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
      ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-        print '(a,i5/(5x,15i5))','leirlis :',il,
+          print '(a,i5/(5x,15i5))','leirlis :',il,
      ,                                  (leirlis(i,il),i=1,nwldlis(il))
-      end do
+        end do
+      end if
 #endif
       call b2pwltrg
 c======================================================================
@@ -290,25 +301,26 @@ c======================================================================
       use b2mod_b2cmfs
       use b2mod_b2plot
       use b2mod_constants
-      use b2mod_user_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
+      use eirmod_eirbra
       use eirmod_wneutrals
 #endif
       use b2us_data
       implicit none
-      integer i,i1,i2,ii,il,is,ias,itmp,j,jj,iFc,istart,iend,idir,
-     *  k,k1,k2,kb,ke,kk,kn,kkb,kke,l,n,cont,flagmin,flagmin1,ksel
-      integer ib(ntrgsx),ie(ntrgsx),it(ntrgsx)
+      integer i,i1,i2,ii,il,is,itmp,j,jj,iCv,iFc,istart,iend,idir,
+     *  k,k1,k2,kb,ke,kk,kn,kkb,kke,kkk,ks,
+     *  l,n,cont,flagmin,flagmin1,ksel,iVx1,iVx2,nRFc
+      integer, allocatable :: ib(:),ie(:),it(:)
+      integer, allocatable :: regFaces(:)
       integer :: nwldlis_old
-      integer, allocatable :: lwldlis_old(:), leirlis_old(:)
-      integer, allocatable :: lis_ind(:)
-      real (kind=R8) :: xx1,xx2,yy1,yy2,distmin,distmin1,distance
-      logical lim_cnf,ccw(ntrgsx)
-      logical, allocatable :: istarget(:)
-      data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
-      real (kind=R8) ::
-     *   d,x,x0,y0,x1,x2,y1,y2
+      integer, allocatable :: lwldlis_old(:),leirlis_old(:),
+     *                        lb25lis_old(:)
+      integer, allocatable :: lis_ind(:),first_face(:)
+      real (kind=R8) :: d,x,xx1,xx2,yy1,yy2,distmin,distmin1,distance
+      logical lim_cnf,done,last,found
+      logical, allocatable :: isrecycling(:),traversed(:),ccw(:),
+     *  counted(:),rcDone(:)
 c
       integer use_eirene
       real (kind=R8) :: width
@@ -380,65 +392,195 @@ c      print '(a4,8a12)','j','r1i','r2i','z1i','z2i',
 c     ,                      'r1o','r2o','z1o','z2o'
 cc>>>
       k=0
+      if (grid_mode.eq.2.and.switch%use_eirene.eq.0)
+     > nstsi=maxval(rcend(1:mpg%nRc))
+      allocate(CCW(ntrgts+nstsi))
+      CCW=.false.
       do j=1,ntrgts
         if (itrg(j).eq.0) cycle
 c First find out target orientation: CW or CCW
         iFc=mpg%divFc(mpg%divFcP(itrg(j),1))
         if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
-          x1=geo%vxX(mpg%fcVx(iFc,1))
-          y1=geo%vxY(mpg%fcVx(iFc,1))
+          iVx1=mpg%fcVx(iFc,1)
+          CCW(itrg(j))=.true.
         else
-          x1=geo%vxX(mpg%fcVx(iFc,2))
-          y1=geo%vxY(mpg%fcVx(iFc,2))
+          iVx1=mpg%fcVx(iFc,2)
+          CCW(itrg(j))=.false.
         end if
-        iFc=mpg%divFc(mpg%divFcP(itrg(j),1)+mpg%divFcP(itrg(j),2)-1)
+        iFc=mpg%divFc(mpg%divFcP(itrg(j),1)+1)
         if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
-          x2=geo%vxX(mpg%fcVx(iFc,2))
-          y2=geo%vxY(mpg%fcVx(iFc,2))
+          iVx2=mpg%fcVx(iFc,2)
         else
-          x2=geo%vxX(mpg%fcVx(iFc,1))
-          y2=geo%vxY(mpg%fcVx(iFc,1))
+          iVx2=mpg%fcVx(iFc,1)
         end if
-        if (rzomp(1,1).lt.rzomp(1,2)) then
-          x0=rzomp(1,1)
-          y0=rzomp(2,1)
-        else
-          x0=rzomp(1,2)
-          y0=rzomp(2,2)
-        end if
-        CCW(itrg(j)) = ((x2-x1)*(y0-y1)-(y2-y1)*(x0-x1)).lt.0.0_R8
+        CCW(itrg(j))=iVx1.ne.iVx2
         if (CCW(itrg(j))) then
-          istart=mpg%divFcP(itrg(j),2)
-          iend=1
-          idir=-1
-        else
           istart=1
           iend=mpg%divFcP(itrg(j),2)
           idir=1
+        else
+          istart=mpg%divFcP(itrg(j),2)
+          iend=1
+          idir=-1
         end if
-        do i=istart,iend,idir
-          k=k+1
-          iFc=mpg%divFc(mpg%divFcP(itrg(j),1)+i-1)
-          if (nint(mpg%divFcOr(mpg%divFcP(itrg(j),1)+i-1)).eq.1) then
-            pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
-            pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
-            pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
-            pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
-          else
-            pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
-            pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
-            pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
-            pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
-          end if
-        end do
-c       print '(1x,i4,1p,8e12.4)',
-c     ,  itrg(j),pp1(1,k+lppp-mpg%divFcP(itrg(j),2)+1),
-c     ,          pp2(1,k+lppp-mpg%divFcP(itrg(j),2)+1),
-c     ,          pp1(2,k+lppp-mpg%divFcP(itrg(j),2)+1),
-c     ,          pp2(2,k+lppp-mpg%divFcP(itrg(j),2)+1),
-c     ,          pp1(1,k+lppp),pp2(1,k+lppp),
-c     ,          pp1(2,k+lppp),pp2(2,k+lppp)
+        if (grid_mode.lt.2) then
+          do i=istart,iend,idir
+            k=k+1
+            call xertst(k+lppp.le.size(pp1,2),
+     .       'Insufficient storage for wall elements. '//
+     .       'Increase DEF_NLIM in b2mod_dimensions.F and recompile.')
+            iFc=mpg%divFc(mpg%divFcP(itrg(j),1)+i-1)
+            if (.not.CCW(itrg(j))) then
+              if (mpg%fcCv(iFc,1).gt.mpg%fcCv(iFc,2)) then
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+              else
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+              end if
+            else
+              if (mpg%fcCv(iFc,1).gt.mpg%fcCv(iFc,2)) then
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+              else
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+              end if
+            end if
+          end do
+c         print '(1x,i4,1p,8e12.4)',
+c     ,    itrg(j),pp1(1,k+lppp-mpg%divFcP(itrg(j),2)+1),
+c     ,            pp2(1,k+lppp-mpg%divFcP(itrg(j),2)+1),
+c     ,            pp1(2,k+lppp-mpg%divFcP(itrg(j),2)+1),
+c     ,            pp2(2,k+lppp-mpg%divFcP(itrg(j),2)+1),
+c     ,            pp1(1,k+lppp),pp2(1,k+lppp),
+c     ,            pp1(2,k+lppp),pp2(2,k+lppp)
+        end if
       end do
+      if (grid_mode.eq.2) then
+        if (switch%use_eirene.ne.0) then
+          do j=1,nstsi !{
+c First find out surface orientation: CW or CCW
+            if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+            iFc=fnmti_b2(eirdiag_nds_ind(j)+1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            if(mpg%cvOnClosedSurface(iCv)) cycle
+            if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+              iVx1=mpg%fcVx(iFc,1)
+              CCW(ntrgts+j)=.true.
+            else
+              iVx1=mpg%fcVx(iFc,2)
+              CCW(ntrgts+j)=.false.
+            end if
+            iFc=fnmti_b2(eirdiag_nds_ind(j)+2)
+            if(iFc.gt.0) then
+              if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+                iVx2=mpg%fcVx(iFc,2)
+              else
+                iVx2=mpg%fcVx(iFc,1)
+              end if
+              CCW(ntrgts+j)=iVx1.ne.iVx2
+            end if
+            do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1 !{
+              k=k+1
+              call xertst(k+lppp.le.size(pp1,2),
+     .         'Insufficient storage for wall elements. '//
+     .         'Increase DEF_NLIM in b2mod_dimensions.F and recompile.')
+              iFc=fnmti_b2(i)
+              if (mpg%fcCv(iFc,1).le.mpg%nCi) then !{
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+              else !}{
+                pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+              end if !}
+            end do !}
+          end do !}
+        else !}{
+          allocate(rcDone(maxval(rcend(1:mpg%nRc))))
+          allocate(first_face(maxval(rcend(1:mpg%nRc))))
+          rcDone = .false.
+          first_face = 0
+          do j = 1, mpg%nRc !{
+            if (mpg%rcFcP(j,2).eq.0) cycle
+            iFc = mpg%rcFc(mpg%rcFcP(j,1))
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            if(rcDone(mpg%fcLbl(iFc))) cycle
+            rcDone(rcstart(j))=.true.
+            if (first_face(mpg%fcLbl(iFc)).eq.0)
+     >       first_face(mpg%fcLbl(iFc))=iFc
+            if (mpg%cvOnClosedSurface(iCv)) cycle
+            if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+              iVx1=mpg%fcVx(iFc,1)
+              CCW(ntrgts+rcstart(j))=.true.
+            else
+              iVx1=mpg%fcVx(iFc,2)
+              CCW(ntrgts+rcstart(j))=.false.
+            end if
+            if (mpg%rcFcP(j,2).gt.1) then
+              iFc = mpg%rcFc(mpg%rcFcP(j,1)+1)
+              if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+                iVx2=mpg%fcVx(iFc,2)
+              else
+                iVx2=mpg%fcVx(iFc,1)
+              end if
+              CCW(ntrgts+rcstart(j):ntrgts+rcend(j))=iVx1.ne.iVx2
+            end if
+            rcDone(rcstart(j):rcend(j))=.true.
+            do i = rcstart(j), rcend(j)
+              nRFc = count(mpg%fcLbl==i)
+              allocate(regFaces(nRFc))
+              call sort_faces(nRFc,regFaces,mpg%nFc,mpg%fcLbl,i,mpg)
+              do ii = 1, nRFc
+                k = k + 1
+                call xertst(k+lppp.le.size(pp1,2),
+     .         'Insufficient storage for wall elements. '//
+     .         'Increase DEF_NLIM in b2mod_dimensions.F and recompile.')
+                iFc = regFaces(ii)
+                if (.not.CCW(ntrgts+i)) then
+                  if (mpg%fcCv(iFc,1).gt.mpg%fcCv(iFc,2)) then
+                    pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                    pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                    pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                    pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                  else
+                    pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                    pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                    pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                    pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                  end if
+                else
+                  if (mpg%fcCv(iFc,1).gt.mpg%fcCv(iFc,2)) then
+                    pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                    pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                    pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                    pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                  else
+                    pp1(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,2))
+                    pp1(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,2))
+                    pp2(1,k+lppp)=geo%vxX(mpg%fcVx(iFc,1))
+                    pp2(2,k+lppp)=geo%vxY(mpg%fcVx(iFc,1))
+                  end if
+                end if
+              end do
+              deallocate(regFaces)
+            end do
+          end do !}
+          deallocate(rcDone)
+        end if !}
+      end if !}
 c<<<
 c
 c      open(lun_w,file='layout-g.dat')
@@ -485,66 +627,52 @@ c     ,          'i4',(pp1(j,ltrgedge(1,4)),pp2(j,ltrgedge(1,4)),j=1,2),
 c     ,          'o4',(pp1(j,ltrgedge(2,4)),pp2(j,ltrgedge(2,4)),j=1,2)
 c      end if
 
-      k=1
-      do i=1,ntrgts !{
-        if (itrg(i).eq.0) cycle
+      if (grid_mode.lt.2) then !{
+        k=1
+        do i=1,ntrgts !{
+          if (itrg(i).eq.0) cycle
 c        print *,'i,k,ltrgedges: ',i,k,ltrgedge(1,i),ltrgedge(2,i) !###
-        if(ltrgedge(1,i).gt.0 .or. ltrgedge(2,i).gt.0) then !{
-          l=ltrgedge(k,i)
-          if(l.gt.0) then !{
-            if (CCW(itrg(i))) then
-              iFc=mpg%divFc(mpg%divFcP(itrg(i),1))
-              if (nint(mpg%divFcOr(mpg%divFcP(itrg(i),1))).eq.1) then
+          if(ltrgedge(1,i).gt.0 .or. ltrgedge(2,i).gt.0) then !{
+            l=ltrgedge(k,i)
+            if(l.gt.0) then !{
+              if (.not.CCW(itrg(i))) then
+                iFc=mpg%divFc(mpg%divFcP(itrg(i),1))
+              else
+                iFc=mpg%divFc(mpg%divFcP(itrg(i),1)+
+     .                        mpg%divFcP(itrg(i),2)-1)
+              end if
+              if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
                 pp1(1,l)=geo%vxX(mpg%fcVx(iFc,2))
                 pp1(2,l)=geo%vxY(mpg%fcVx(iFc,2))
               else
                 pp1(1,l)=geo%vxX(mpg%fcVx(iFc,1))
                 pp1(2,l)=geo%vxY(mpg%fcVx(iFc,1))
               end if
-            else
-              iFc=mpg%divFc(mpg%divFcP(itrg(i),1)+
-     .                      mpg%divFcP(itrg(i),2)-1)
-              if (nint(mpg%divFcOr(mpg%divFcP(itrg(i),1)+
-     .                             mpg%divFcP(itrg(i),2)-1)).eq.1) then
-                pp1(1,l)=geo%vxX(mpg%fcVx(iFc,2))
-                pp1(2,l)=geo%vxY(mpg%fcVx(iFc,2))
+              print *,'pp1: l, ',l,ccw(itrg(i)),pp1(1,l),pp1(2,l) !###
+            end if !}
+            k=3-k
+            l=ltrgedge(k,i)
+            if(l.gt.0) then !{
+              if (.not.CCW(itrg(i))) then
+                iFc=mpg%divFc(mpg%divFcP(itrg(i),1)+
+     .                        mpg%divFcP(itrg(i),2)-1)
               else
-                pp1(1,l)=geo%vxX(mpg%fcVx(iFc,1))
-                pp1(2,l)=geo%vxY(mpg%fcVx(iFc,1))
-              end if
-            end if
-            print *,'pp1: l, ',l,ccw(itrg(i)),pp1(1,l),pp1(2,l) !###
-          end if !}
-          k=3-k
-          l=ltrgedge(k,i)
-          if(l.gt.0) then !{
-            if (CCW(itrg(i))) then
-              iFc=mpg%divFc(mpg%divFcP(itrg(i),1)+
-     .                      mpg%divFcP(itrg(i),2)-1)
-              if (nint(mpg%divFcOr(mpg%divFcP(itrg(i),1)+
-     .                             mpg%divFcP(itrg(i),2)-1)).eq.1) then
-                pp2(1,l)=geo%vxX(mpg%fcVx(iFc,2))
-                pp2(2,l)=geo%vxY(mpg%fcVx(iFc,2))
-              else
+                iFc=mpg%divFc(mpg%divFcP(itrg(i),1))
+              endif
+              if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
                 pp2(1,l)=geo%vxX(mpg%fcVx(iFc,1))
                 pp2(2,l)=geo%vxY(mpg%fcVx(iFc,1))
-              end if
-            else
-              iFc=mpg%divFc(mpg%divFcP(itrg(i),1))
-              if (nint(mpg%divFcOr(mpg%divFcP(itrg(i),1))).eq.1) then
+              else
                 pp2(1,l)=geo%vxX(mpg%fcVx(iFc,2))
                 pp2(2,l)=geo%vxY(mpg%fcVx(iFc,2))
-              else
-                pp2(1,l)=geo%vxX(mpg%fcVx(iFc,1))
-                pp2(2,l)=geo%vxY(mpg%fcVx(iFc,1))
               end if
-            end if
-            print *,'pp2: l, ',l,ccw(itrg(i)),pp2(1,l),pp2(2,l) !###
+              print *,'pp2: l, ',l,ccw(itrg(i)),pp2(1,l),pp2(2,l) !###
+            end if !}
+            k=3-k
           end if !}
           k=3-k
-        end if !}
-        k=3-k
-      end do !}
+        end do !}
+      end if !}
 
 c<<<
 c      open(lun_w,file='layout-h.dat')
@@ -576,7 +704,7 @@ c>>>
 
 c*** Check whether the modified edges coincide with the saved ones
 
-      if (use_eirene.ne.0) then !{
+      if (use_eirene.ne.0.and.grid_mode.lt.2) then !{
         do k=1,ntrgts !{
           do l=1,2 !{
             j=ltrgedge(l,k)
@@ -591,9 +719,9 @@ c     ,                              p1(1,jj),p1(2,jj),p2(1,jj),p2(2,jj)
 c              print '(1x,a8,1p,4e15.6)','b2plot',
 c     ,                              pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
 c!###}
-                if(abs(p1(1,jj)-pp1(1,j)) .le. wsrttol  .and.
-     .             abs(p1(2,jj)-pp1(2,j)) .le. wsrttol  .and.
-     .             abs(p2(1,jj)-pp2(1,j)) .le. wsrttol  .and.
+                if(abs(p1(1,jj)-pp1(1,j)) .le. wsrttol .and.
+     .             abs(p1(2,jj)-pp1(2,j)) .le. wsrttol .and.
+     .             abs(p2(1,jj)-pp2(1,j)) .le. wsrttol .and.
      .             abs(p2(2,jj)-pp2(2,j)) .le. wsrttol) then !{
 c                print *,'== OK'
                   do il=1,nwldprt !{
@@ -610,7 +738,7 @@ c                print *,'== OK'
      .             'DG (mod): ', j,pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
                 end if !}
               else !}{
-                write(0,*)
+                write(0,'(a,4i6)')
      .           'Edges check failed - not in Eirene:',l,k,j,jj
                 call xerrab('==> Check the DG model')
               end if !}
@@ -646,25 +774,38 @@ c      end do !}
 c      close(lun_w)
 c>>>
 c
-      allocate(istarget(nwldprt))
-      istarget=.false.
-c*** Correct the segment lists for the refined targets
-c*** All the segments between the target edges - or between a target
-c*** edge and the end of the list - are replaced with the segments
-c*** of the target sections of the B2 grid.
+      allocate(isrecycling(nwldprt))
+      allocate(ib(max(ntrgsx,nstsi)),
+     .         ie(max(ntrgsx,nstsi)),
+     .         it(0:max(ntrgsx,nstsi)),
+     .         traversed(0:max(ntrgsx,nstsi)),counted(nstsi))
+      it=0
+      isrecycling=.false.
+      traversed=.false.
+c*** Correct the segment lists for the refined recycling surfaces
+c*** All the segments between the recycling surface edges
+c*** - or between a recycling surface edge and the end of the list -
+c*** are replaced with the faces segments from the B2 grid.
 c
-c*** Below, kb marks the target; ib, ie are the locations of the inner
+c*** Below, kb marks the recycling surface; ib, ie are the locations of the inner
 c*** and outer edges in the lists
 c
       do il=1,nwldprt !{
         n=nwldlis(il)
+        last=.false.
         if(n .gt. 0) then !{
-          do i=1,ntrgsx !{
+          do i=1,max(ntrgts,nstsi) !{
             ib(i)=0
             ie(i)=0
             it(i)=0
+            traversed(i)=.false.
           end do !}
           kb=0
+          if(grid_mode.lt.2) then !{
+            kk=ntrgts
+          else !}{
+            kk=0
+          end if !}
           if(lwlddir(il)) then !{
             is=1
             ii=1
@@ -673,12 +814,36 @@ c
             ii=-1
           end if !}
 c          print *,'il,n,is,ii/lwldlis : ',il,n,is,ii    !###
-c          print '(1x,30i4)',(lwldlis(i,il),i=1,n)       !###
+c          print '(1x,20i5)',(lwldlis(i,il),i=1,n)       !###
           do i=1,n
             k=iabs(lwldlis(is,il))
-            if(k.eq.ltrgedge(2,1) .or. k.eq.ltrgedge(1,2) .or.
+            if(switch%use_eirene.eq.0) then
+              ks=lelmind(k)
+              if (ks.eq.0) then
+                write(*,'(a,i4,a)') 'DivGeo element ',k,
+     .           ' does not belong to any recycling boundary!'
+                if (il.eq.1) then
+                  write(*,*) 'Check the shadowing structure definition.'
+                  call xerrab
+     .             ('Non-boundary surface in shadowing structure.')
+                else
+                  write(*,'(a,i2,1x,a)')
+     .             'Check the definition for plot zone',il,pltzlbl(il)
+                  call xerrab
+     .             ('Non-boundary surface in plot zone.')
+                end if
+              end if
+              iFc=first_face(ks)
+            else if(lelmind(k).gt.nlimi) then !{ recycling surface
+              ks=lelmind(k)-nlimi+ncns
+              iFc=fnmti_b2(eirdiag_nds_ind(ks)+1) ! first face of surface
+            else !}{
+              iFc=1  ! dummy index to allow tests to proceed
+            end if !}
+            if(grid_mode.lt.2.and.
+     .         (k.eq.ltrgedge(2,1) .or. k.eq.ltrgedge(1,2) .or.
      .          (ntrgts.eq.4 .and.
-     .        (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4)))) then !{
+     .           (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4))))) then !{
 c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
@@ -688,7 +853,7 @@ c*** Target still open...
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
                 write(*,*) 'lwldlis : ',pltzlbl(il)
-                write(*,*) (lwldlis(i1,il),i1=1,n)
+                write(*,'(1x,20i5)') (lwldlis(i1,il),i1=1,n)
                 call xerrab ('Missing CCW edge in b2pwltrg')
               end if !}
               i1=2
@@ -697,11 +862,12 @@ c*** Target still open...
                 i1=3-i1
               end do !}
               ib(kb)=is
-              it(kb)=kb
-c              print *,'kb,ib(kb)=',kb,ib(kb)            !###
-            else if(k.eq.ltrgedge(1,1) .or. k.eq.ltrgedge(2,2) .or.
-     .        (ntrgts.eq.4 .and.
-     .             (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4)))) then !}{
+              it(kb)=ltns(ktns(kb))
+c              print *,'k,kb =',k,kb,it(kb),ib(kb),ie(kb)            !###
+            else if(grid_mode.lt.2.and.
+     .        (k.eq.ltrgedge(1,1) .or. k.eq.ltrgedge(2,2) .or.
+     .         (ntrgts.eq.4 .and.
+     .          (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4))))) then !}{
 c*** CCW edge. Check to which target this edge belongs
               i1=1
               do i2=1,ntrgts !{
@@ -709,7 +875,7 @@ c*** CCW edge. Check to which target this edge belongs
                 i1=3-i1
               end do !}
               if(kb.eq.0) kb=kkb
-              if (kb.ne.kkb .and. .not. lim_cnf) then !{
+              if(kb.ne.kkb .and. .not. lim_cnf) then !{
                 write(*,*) 'b2pwltrg: unexpected error. ',
      ,                                  'Inner edge not found ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
@@ -717,8 +883,43 @@ c*** CCW edge. Check to which target this edge belongs
                 call xerrab ('Inner edge not found in b2pwltrg')
               end if !}
               ie(kkb)=is
-              it(kkb)=kkb
+              it(kkb)=ltns(ktns(kkb))
+c              print *,'k,kkb=',k,kkb,it(kkb),ib(kkb),ie(kkb)        !###
               kb=0
+            else if(iFc.eq.-1) then ! face label assigned but not a grid surface
+              done=.false.
+              do i2=1,kk
+                if(it(i2).eq.ks) done=.true.
+              end do
+              if (.not.done) then
+                kk=kk+1
+                it(kk)=ks
+              end if
+              if (ib(kk).eq.0) ib(kk)=is
+              if (ie(kk).eq.0) ie(kk)=is
+c              print *,'k,kk =',k,kk,it(kk),ib(kk),ie(kk)
+            else if(lelmind(k).gt.nlimi.and.
+     &         (mpg%fcLbl(iFc).le.0.or.mpg%fcLbl(iFc).gt.ntrgts.or.
+     &          grid_mode.eq.2)) then
+              done=.false.
+              do i2=1,kk
+                if(it(i2).eq.ks) done=.true.
+              end do
+              if (.not.done) kk=kk+1
+              if (kk.gt.1.and.it(1).eq.ks.and..not.last) then
+                last=.true.
+                kk=kk+1
+              end if
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then  ! CW edge
+                if (ib(kk).eq.0) ib(kk)=is
+                ie(kk)=is
+                if (.not.done.or.last) it(kk)=ks
+              else  ! CCW edge
+                ib(kk)=is
+                if (ie(kk).eq.0) ie(kk)=is
+                if (.not.done.or.last) it(kk)=ks
+              end if
+c              print *,'k,kk =',k,kk,it(kk),ib(kk),ie(kk)
             end if !}
             is=is+ii
           end do !}
@@ -736,21 +937,22 @@ c***
 c*** The list orientation is given by lwlddir value (true=CCW)
 
           kk=0
-          do i=1,ntrgts !{
+          do i=1,max(ntrgts,nstsi) !{
             if(ib(i)+ie(i).gt.0) then !{
               kk=kk+1
             end if !}
           end do !}
 c<<<
-c          print *,'After the check. il,kk,lppp = ',il,kk,lppp
-c          print '(2a6)','ib','ie'
-c          print '(2i6)',(ib(i),ie(i),i=1,ntrgts)
+c         print *,'After the check. il,kk,lppp = ',
+c     ,                 pltzlbl(il),il,kk,lppp
+c         print '(2a6)','ib','ie'
+c         print '(2i6)',(ib(i),ie(i),i=1,kk)
 c>>>
 
 c*** Now fill in the necessary arrays
 
           if(kk .gt. 0) then
-            istarget(il)=.true.
+            isrecycling(il)=.true.
 
 c!###{
 c           print *,         'Before merging the targets ',
@@ -782,15 +984,40 @@ c*** selecting the chain from shadowing structure itself
 c*** CCW target
                 do j=1,n !{
                   ke=0
-                  do i=1,ntrgts !{
+                  do i=1,max(ntrgts,nstsi) !{
+                    if(ke.ne.0) cycle
                     if(j.eq.ie(i)) ke=i
                   end do !}
                   kb=0
-                  do i=1,ntrgts !{
+                  do i=1,max(ntrgts,nstsi) !{
+                    if(kb.ne.0) cycle
                     if(j.eq.ib(i)) kb=i
                   end do !}
-c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
-                  if(kb.gt.0 .and. ke.gt.0) then !{
+                  ks=0
+                  kkk=0
+                  do i=1,max(ntrgts,nstsi) !{
+                    if(ib(i).le.ie(i)) then !{
+                      if(j.ge.ib(i).and.j.le.ie(i)) then
+                        kkk=i
+                        if (switch%use_eirene.ne.0) then
+                          ks=i+ncns
+                        else
+                          ks=i
+                        end if
+                      end if
+                    else !}{
+                      if(j.le.ib(i).and.j.ge.ie(i)) then
+                        kkk=i
+                        if (switch%use_eirene.ne.0) then
+                          ks=i+ncns
+                        else
+                          ks=i
+                        end if
+                      end if
+                    end if !}
+                  end do !}
+c                  print '(1x,a,5i5)','j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
+                  if(kb.gt.0 .and. ke.gt.0 .and. kb.ne.ke) then !{
                     write (*,*) 'b2pwltrg: a segment can appear in ',
      ,                   'the grid edge lists no more than once.'
                     write (*,*) 'Segment ',lwldlis(j,il),',  list ',
@@ -803,104 +1030,329 @@ c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
                     call xerrab ('Duplicate segment!')
                   end if !}
                   if(k.eq.0) then !{
-                    if(ke.ne.0) then !{
-                      kke=it(ke)
-                      if(j.ne.1) then !{
-c*** The zone starts from a target: reset counters and insert the target
-                        kn=0
-                        if(lim_cnf) then !{
-c*** Limiter configuration. Add first the CW target face
-                          do i=1,mpg%divFcP(itrg(kke),2) !{
-                            luwrk(i)=lppp+i
-                            if (use_eirene.ne.0) then !{
-                              iFc=mpg%divFc(mpg%divFcP(itrg(kke),1)+i-1)
-                              ias=b2_fnmti(iFc)
-                              lewrk(i)=nlim+ias
-                            else !}{
-                              lewrk(i)=0
-                            end if !}
-                          end do !}
-                          kn=kn+mpg%divFcP(itrg(kke),2)
-                        end if !}
+                    if(ke.ne.0.and.kb.eq.0) then !{
+                      if (traversed(kkk).and.grid_mode.lt.2) then !{
+                        kn=kn+1
+                        luwrk(kn)=lwldlis(j,il)
+                        lewrk(kn)=leirlis(j,il)
+                      else if (.not.traversed(ks).and.grid_mode.eq.2)
+     .                 then !}
                         k=it(ke)
-                        do i=1,mpg%divFcP(itrg(k),2) !{
-                          luwrk(kn+i)=lppp
-                          do ii=1,itrg(k)-1
-                            luwrk(kn+i)=luwrk(kn+i)+mpg%divFcP(ii,2)
-                          enddo
-                          luwrk(kn+i)=luwrk(kn+i)+i
-                          if (use_eirene.ne.0) then !{
-                            iFc=mpg%divFc(mpg%divFcP(itrg(kke),1)+i-1)
-                            ias=b2_fnmti(iFc)
-                            lewrk(kn+i)=nlim+ias
-                          else !}{
-                            lewrk(kn+i)=0
-                          end if !}
-                        end do !}
-                        kn=kn+mpg%divFcP(itrg(k),2)
-                        kke=-kke
-                        k=0
-                      end if !}
-                      kn=kn+1
-                      luwrk(kn)=lwldlis(j,il)
-                      lewrk(kn)=leirlis(j,il)
-                    else if(kb.ne.0) then !}{
-                      kn=kn+1
-                      luwrk(kn)=lwldlis(j,il)
-                      lewrk(kn)=leirlis(j,il)
-                      k=it(kb)
-                      if(k.ne.-kke) then !{
-                        if(j.ne.n .or. k.eq.kke) then !{
-                          do i=1,mpg%divFcP(itrg(k),2) !{
+                        if (grid_mode.lt.2.and.use_eirene.ne.0) then
+                          do i=1,mpg%divFcP(itrg(kkk),2) !{
                             luwrk(kn+i)=lppp
-                            do ii=1,itrg(k)-1
+                            do ii=1,itrg(kkk)-1
+                              luwrk(kn+i)=luwrk(kn+i)+mpg%divFcP(ii,2)
+                            end do
+                            luwrk(kn+i)=luwrk(kn+i)+i
+                            iFc=mpg%divFc(mpg%divFcP(itrg(kkk),1)+i-1)
+                            ii=b2_fnmti(iFc)
+                            lewrk(kn+i)=nlim+ii
+                            lbwrk(kn+i)=iFc
+                          end do !}
+                          kn=kn+mpg%divFcP(itrg(k),2)
+                        else if (use_eirene.ne.0) then !}{
+                          found=.false.
+                          istart=lppp
+                          counted=.false.
+                          do i=ncns+1,nstsi
+                            if (found) cycle
+                            found=i.eq.k
+                            if (.not.found.and..not.counted(i)) then
+                              istart=istart
+     .                         +eirdiag_nds_ind(i+1)
+     .                         -eirdiag_nds_ind(i)-1
+                              counted(i)=.true.
+                            else if (found) then
+                              if (CCW(ntrgts+i)) then
+                                do ii=eirdiag_nds_ind(i)+1,
+     .                                eirdiag_nds_ind(i+1)-1
+                                  kn=kn+1
+                                  luwrk(kn)=istart+ii-eirdiag_nds_ind(i)
+                                  lewrk(kn)=nlim+i
+                                  lbwrk(kn)=fnmti_b2(ii)
+                                end do
+                              else
+                                do ii=eirdiag_nds_ind(i+1)-1,
+     .                                eirdiag_nds_ind(i)+1,-1
+                                  kn=kn+1
+                                  luwrk(kn)=istart+ii-eirdiag_nds_ind(i)
+                                  lewrk(kn)=nlim+i
+                                  lbwrk(kn)=fnmti_b2(ii)
+                                end do
+                              end if
+                            end if
+                          end do
+                        else if (grid_mode.lt.2) then !}{
+                          do i=1,mpg%divFcP(itrg(kkk),2) !{
+                            luwrk(kn+i)=lppp
+                            do ii=1,itrg(kkk)-1
                               luwrk(kn+i)=luwrk(kn+i)+mpg%divFcP(ii,2)
                             enddo
                             luwrk(kn+i)=luwrk(kn+i)+i
-                            if (use_eirene.ne.0) then !{
-                              iFc=mpg%divFc(mpg%divFcP(itrg(k),1)+i-1)
-                              ias=b2_fnmti(iFc)
-                              lewrk(kn+i)=nlim+ias
-                            else !}{
-                              lewrk(kn+i)=0
-                            end if !}
+                            lewrk(kn+i)=0
+                            lbwrk(kn+i)=
+     .                       mpg%divFc(mpg%divFcP(itrg(kkk),1)+i-1)
                           end do !}
-                          kn=kn+mpg%divFcP(itrg(k),2)
-                          if(lim_cnf) then !{
-c*** Limiter configuration. Add the CCW target face
-                            do i=1,mpg%divFcP(itrg(3-k),2) !{
-                              luwrk(kn+i)=lppp+mpg%divFcP(itrg(k),2)+i
-                              if (use_eirene.ne.0) then !{
-                                iFc=
-     .                         mpg%divFc(mpg%divFcP(itrg(3-k),1)+i-1)
-                                ias=b2_fnmti(iFc)
-                                lewrk(kn+i)=nlim+ias
-                              else !}{
-                                lewrk(kn+i)=0
-                              end if !}
-                            end do !}
-                            kn=kn+mpg%divFcP(itrg(3-k),2)
-                          end if !}
+                          kn=kn+mpg%divFcP(itrg(kkk),2)
+                        else !}{
+                          nRFc=count(mpg%fcLbl==lelmind(lwldlis(j,il)))
+                          allocate(regFaces(nRFc))
+                          call sort_faces
+     .                     (nRFc,regFaces,mpg%nFc,mpg%fcLbl,
+     .                      lelmind(lwldlis(j,il)),mpg)
+                          do i=1,nRFc !{
+                            luwrk(kn+i)=lppp
+                            do ii=1,lelmind(lwldlis(j,il))-1
+                              luwrk(kn+i)=
+     .                         luwrk(kn+i)+count(mpg%fcLbl==ii)
+                            enddo
+                            luwrk(kn+i)=luwrk(kn+i)+i
+                            lewrk(kn+i)=lelmind(lwldlis(j,il))
+                            lbwrk(kn+i)=regFaces(i)
+                          end do !}
+                          kn=kn+nRFc
+                          deallocate(regFaces)
+                          traversed(ks)=.true.
+                          if (j.eq.1.and.last) traversed(kk)=.true.
+                        end if !}
+                        if (grid_mode.lt.2) then
+                          kke=-kke
+                          traversed(kkk)=.true.
+                        else
+                          traversed(ks)=.true.
+                        end if
+                        k=0
+                        if (grid_mode.lt.2) then !{
+                          kn=kn+1
+                          luwrk(kn)=lwldlis(j,il)
+                          lewrk(kn)=leirlis(j,il)
                         end if !}
                       end if !}
-                    else !}{
+                    else if(kb.ne.0.and.ke.eq.0.and..not.traversed(ks))
+     >               then !}{
+                      if (grid_mode.lt.2) then !{
+                        kn=kn+1
+                        luwrk(kn)=lwldlis(j,il)
+                        lewrk(kn)=leirlis(j,il)
+                      end if !}
+                      k=it(kb)
+                      if(k.ne.-kke) then !{
+                        if(j.ne.n .or. k.eq.kke) then !{
+                          if (grid_mode.lt.2.and.use_eirene.ne.0) then !{
+                            do i=1,mpg%divFcP(itrg(kkk),2) !{
+                              luwrk(kn+i)=lppp
+                              do ii=1,itrg(kkk)-1
+                                luwrk(kn+i)=luwrk(kn+i)+mpg%divFcP(ii,2)
+                              enddo
+                              luwrk(kn+i)=luwrk(kn+i)+i
+                              iFc=mpg%divFc(mpg%divFcP(itrg(kkk),1)+i-1)
+                              ii=b2_fnmti(iFc)
+                              lewrk(kn+i)=nlim+ii
+                              lbwrk(kn+i)=iFc
+                            end do !}
+                            kn=kn+mpg%divFcP(itrg(kkk),2)
+                            if(lim_cnf) then !{
+                              do i=1,eirdiag_nds_ind(3-k)+1,
+     .                               eirdiag_nds_ind(3-k)-1
+                                luwrk(kn+i)=lppp+eirdiag_nds_ind(k+1)
+     .                                          -eirdiag_nds_ind(k)-1+i
+                                lewrk(kn+i)=nlim+i
+                                lbwrk(kn+i)=fnmti_b2(i)
+                              end do
+                              kn=kn+eirdiag_nds_ind(3-k+1)
+     .                             -eirdiag_nds_ind(3-k)-1
+                            end if !}
+                          else if (use_eirene.ne.0) then !}{
+                            found=.false.
+                            istart=lppp
+                            counted=.false.
+                            do i=ncns+1,nstsi !{
+                              if (found) cycle
+                              found=i.eq.k
+                              if (.not.found.and..not.counted(i)) then !{
+                                istart=istart
+     .                           +eirdiag_nds_ind(i+1)
+     .                           -eirdiag_nds_ind(i)-1
+                                counted(i)=.true.
+                              else if (found) then !}{
+                                if (CCW(ntrgts+i)) then
+                                  do ii=
+     .                             eirdiag_nds_ind(i)+1,
+     .                             eirdiag_nds_ind(i+1)-1
+                                    kn=kn+1
+                                    luwrk(kn)=istart+ii
+     .                               -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
+                                    lbwrk(kn)=fnmti_b2(ii)
+                                  end do
+                                else
+                                  do ii=
+     .                             eirdiag_nds_ind(i+1)-1,
+     .                             eirdiag_nds_ind(i)+1,-1
+                                    kn=kn+1
+                                    luwrk(kn)=istart+ii
+     .                               -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
+                                    lbwrk(kn)=fnmti_b2(ii)
+                                  end do
+                                end if
+                              end if
+                            end do !}
+                          else if (grid_mode.lt.2) then !}{
+                            do i=1,mpg%divFcP(itrg(kkk),2) !{
+                              luwrk(kn+i)=lppp
+                              do ii=1,itrg(kkk)-1
+                                luwrk(kn+i)=luwrk(kn+i)+mpg%divFcP(ii,2)
+                              enddo
+                              luwrk(kn+i)=luwrk(kn+i)+i
+                              lewrk(kn+i)=0
+                              lbwrk(kn+i)=
+     .                         mpg%divFc(mpg%divFcP(itrg(kkk),1)+i-1)
+                            end do !}
+                            kn=kn+mpg%divFcP(itrg(kkk),2)
+                            if(lim_cnf) then !{
+c*** Limiter configuration. Add the CCW target face
+                              do i=1,mpg%divFcP(itrg(3-kkk),2) !{
+                                luwrk(kn+i)=
+     .                           lppp+mpg%divFcP(itrg(kkk),2)+i
+                                lewrk(kn+i)=0
+                                lbwrk(kn+i)=
+     .                         mpg%divFc(mpg%divFcP(itrg(3-kkk),1)+i-1)
+                              end do !}
+                              kn=kn+mpg%divFcP(itrg(3-kkk),2)
+                            end if !}
+                          else !}{
+                            nRFc=
+     .                       count(mpg%fcLbl==lelmind(lwldlis(j,il)))
+                            allocate(regFaces(nRFc))
+                            call sort_faces
+     .                       (nRFc,regFaces,mpg%nFc,mpg%fcLbl,
+     .                        lelmind(lwldlis(j,il)),mpg)
+                            do i=1,nRFc !{
+                              luwrk(kn+i)=lppp
+                              do ii=1,lelmind(lwldlis(j,il))-1
+                                luwrk(kn+i)=
+     .                           luwrk(kn+i)+count(mpg%fcLbl==ii)
+                              enddo
+                              luwrk(kn+i)=luwrk(kn+i)+i
+                              lewrk(kn+i)=lelmind(lwldlis(j,il))
+                              lbwrk(kn+i)=regFaces(i)
+                            end do !}
+                            kn=kn+nRFc
+                            deallocate(regFaces)
+                            traversed(ks)=.true.
+                            if (j.eq.1.and.last) traversed(kk)=.true.
+                          end if !}
+                        end if !}
+                        if (grid_mode.lt.2) then
+                          traversed(kkk)=.true.
+                        else
+                          traversed(ks)=.true.
+                        end if
+                        k=0
+                      end if !}
+                    else if (kb.ne.0.and.ke.eq.kb) then !}{
+                      kke=it(kb)
+                      if (use_eirene.ne.0) then !{
+                        if (grid_mode.ge.2) then !{
+                          if(fnmti_b2(eirdiag_nds_ind(kke)+1).ne.-1)
+     >                     then !{
+                            found=.false.
+                            istart=lppp
+                            counted=.false.
+                            do i=ncns+1,nstsi
+                              if (found) cycle
+                              found=i.eq.kke
+                              if (.not.found.and..not.counted(i)) then
+                                istart=istart
+     .                           +eirdiag_nds_ind(i+1)
+     .                           -eirdiag_nds_ind(i)-1
+                                counted(i)=.true.
+                              else if (found) then
+                                if (CCW(ntrgts+i)) then
+                                  do ii=
+     .                             eirdiag_nds_ind(i)+1,
+     .                             eirdiag_nds_ind(i+1)-1
+                                    kn=kn+1
+                                    luwrk(kn)=istart+ii
+     .                                   -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+abs(i)
+                                    lbwrk(kn)=fnmti_b2(ii)
+                                  end do
+                                else
+                                  do ii=
+     .                             eirdiag_nds_ind(i+1)-1,
+     .                             eirdiag_nds_ind(i)+1,-1
+                                    kn=kn+1
+                                    luwrk(kn)=istart+ii
+     .                                   -eirdiag_nds_ind(i)
+                                    lewrk(kn)=nlim+i
+                                    lbwrk(kn)=fnmti_b2(ii)
+                                  end do
+                                end if
+                              end if
+                            end do
+                          else !}{
+                            kn=kn+1
+                            luwrk(kn)=lwldlis(j,il)
+                            lewrk(kn)=lelmind(lwldlis(j,il))
+                          end if !}
+                          traversed(ks)=.true.
+                        else !}{
+                          kn=kn+1
+                          luwrk(kn)=lwldlis(j,il)
+                          lewrk(kn)=lelmind(lwldlis(j,il))
+                          traversed(kkk)=.true.
+                        end if !}
+                      else if (grid_mode.eq.2) then !}{
+                        nRFc = count(mpg%fcLbl==lelmind(lwldlis(j,il)))
+                        allocate(regFaces(nRFc))
+                        call sort_faces
+     .                   (nRFc,regFaces,mpg%nFc,mpg%fcLbl,
+     .                    lelmind(lwldlis(j,il)),mpg)
+                        do i=1,nRFc !{
+                          luwrk(kn+i)=lppp
+                          do ii=1,lelmind(lwldlis(j,il))-1
+                            luwrk(kn+i)=
+     .                       luwrk(kn+i)+count(mpg%fcLbl==ii)
+                          enddo
+                          luwrk(kn+i)=luwrk(kn+i)+i
+                          lewrk(kn+i)=lelmind(lwldlis(j,il))
+                          lbwrk(kn+i)=regFaces(i)
+                        end do !}
+                        kn=kn+nRFc
+                        deallocate(regFaces)
+                        traversed(ks)=.true.
+                        if (j.eq.1.and.last) traversed(kk)=.true.
+                      else !}{
+                        kn=kn+1
+                        luwrk(kn)=lwldlis(j,il)
+                        lewrk(kn)=0
+                      end if !}
+                      k=0
+                    else
+     .               if ((.not.traversed(ks) .and.grid_mode.ge.2).or.
+     .                   (.not.traversed(kkk).and.grid_mode.lt.2)) then !}{
                       kn=kn+1
                       luwrk(kn)=lwldlis(j,il)
                       lewrk(kn)=leirlis(j,il)
                     end if !}
-                  else !}{
+                  else
+     .             if ((.not.traversed(kkk).and.grid_mode.lt.2).or.
+     .                 (.not.traversed(ks) .and.grid_mode.ge.2)) then !}{
                     if(ke.ne.0) then !{
                       if(it(ke).ne.k .and. .not.lim_cnf) then !{
-                        write(*,*) 'b2pwltrg: unexpected error. ',
-     ,                        'Trying to close a target different ',
+                        write(*,'(a/a)') 'b2pwltrg: unexpected error. ',
+     ,                        'Trying to close a target different '//
      ,                        'from the opened one.'
                         write(*,*) 'Segment ',lwldlis(j,il),
      ,                                      ',  targets: ',k,it(ke)
                         write(*,*) 'List ',il
-                        write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
-                        write(*,*) 'it : ',(it(i),i=1,kk)
-                        write(*,*) 'ib : ',(ib(i),i=1,kk)
-                        write(*,*) 'ie : ',(ie(i),i=1,kk)
+                        write(*,'(1x,20i5)') (lwldlis(i,il),i=1,n)
+                        write(*,'(a,20i4)') 'it : ',(it(i),i=1,kk)
+                        write(*,'(a,20i4)') 'ib : ',(ib(i),i=1,kk)
+                        write(*,'(a,20i4)') 'ie : ',(ie(i),i=1,kk)
                         call xerrab ('Not closing the open target!')
                       end if !}
                       kn=kn+1
@@ -908,16 +1360,16 @@ c*** Limiter configuration. Add the CCW target face
                       lewrk(kn)=leirlis(j,il)
                       k=0
                     else if(kb.ne.0) then !}{
-                      write(*,*) 'b2pwltrg: unexpected error. ',
-     ,                         'Trying to open a target having one ',
+                      write(*,'(a/a)') 'b2pwltrg: unexpected error. ',
+     ,                         'Trying to open a target having one '//
      ,                         'already opened.'
                       write(*,*) 'Segment ',lwldlis(j,il),
      ,                                    ',  targets: ',k,it(kb)
                       write(*,*) 'List ',il
-                      write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
-                      write(*,*) 'it : ',(it(i),i=1,kk)
-                      write(*,*) 'ib : ',(ib(i),i=1,kk)
-                      write(*,*) 'ie : ',(ie(i),i=1,kk)
+                      write(*,'(1x,20i5)') (lwldlis(i,il),i=1,n)
+                      write(*,'(a,20i4)') 'it : ',(it(i),i=1,kk)
+                      write(*,'(a,20i4)') 'ib : ',(ib(i),i=1,kk)
+                      write(*,'(a,20i4)') 'ie : ',(ie(i),i=1,kk)
                       call xerrab ('Target already opened!')
                     end if !}
                   end if !}
@@ -925,6 +1377,7 @@ c*** Limiter configuration. Add the CCW target face
                 do i=1,kn !{
                   lwldlis(i,il)=luwrk(i)
                   leirlis(i,il)=lewrk(i)
+                  lb25lis(i,il)=lbwrk(i)
                 end do !}
                 nwldlis(il)=kn
 c                print *,'il,kn = ',il,kn                  !###
@@ -939,13 +1392,12 @@ c                print *,'il,kn = ',il,kn                  !###
           end if !} kk.gt.0
         end if !} n.gt.0
       end do !}
+
 #ifdef DBG
       print *,'After correction. nwldprt =',nwldprt
-      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-      do il=1,nwldprt !{
-        print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
-     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
-      end do !}
+      print '(a,i4,1x,a,i4/(20i5))',
+     ,  'lwldlis :',1,pltzlbl(1),nwldlis(1),
+     ,  (lwldlis(i,1),i=1,nwldlis(1))
 #endif
 
       do il=2,nwldprt
@@ -953,8 +1405,10 @@ c*** Store original plot zones to be used for substituting proper elements insid
         nwldlis_old = nwldlis(il)
         allocate(lwldlis_old(size(lwldlis,1)))
         allocate(leirlis_old(size(leirlis,1)))
+        allocate(lb25lis_old(size(lb25lis,1)))
         lwldlis_old(:)=lwldlis(:,il)
         leirlis_old(:)=leirlis(:,il)
+        lb25lis_old(:)=lb25lis(:,il)
         allocate(lis_ind(nwldlis_old))
 ccc*** Order elements of original plot zone in CCW direction
         do i=1,nwldlis_old
@@ -987,11 +1441,14 @@ ccc*** Order elements of original plot zone in CCW direction
           itmp=leirlis_old(cont+i1-1)
           leirlis_old(cont+i1-1)=leirlis_old(i1)
           leirlis_old(i1)=itmp
+          itmp=lb25lis_old(cont+i1-1)
+          lb25lis_old(cont+i1-1)=lb25lis_old(i1)
+          lb25lis_old(i1)=itmp
         end do
         deallocate(lis_ind)
 
 ccc*** Check if a plot zone has starting and ending element which is inside a target
-        if (.not. istarget(il)) then
+        if (.not. isrecycling(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1))
           k2=abs(lwldlis_old(nwldlis_old))
@@ -1003,12 +1460,12 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
             end if
           end do
           if (flagmin .eq. 0) then
-            istarget(il)=.true.
+            isrecycling(il)=.true.
           end if
         end if
 
-ccc*** Substitute B2 cells only when overlapping original plot zone target elements
-        if (istarget(il)) then !{ inside target
+ccc*** Substitute B2 faces only when overlapping original plot zone target elements
+        if (isrecycling(il)) then !{ inside target
           k1=lwldlis_old(1)
           k2=lwldlis_old(nwldlis_old)
           distmin=1.0e5_R8
@@ -1026,6 +1483,9 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
               distmin=distance
               flagmin=i
             end if !}
+          end do
+          do i=flagmin+1,nwldlis(1)
+            ksel=lwldlis(i,1)
             xx1=pp2(1,k2)
             yy1=pp2(2,k2)
             xx2=pp2(1,ksel)
@@ -1040,6 +1500,7 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
           do i=flagmin,flagmin1
             lwldlis_old(cont)=lwldlis(i,1)
             leirlis_old(cont)=leirlis(i,1)
+            lb25lis_old(cont)=lb25lis(i,1)
             cont=cont+1
           end do
           nwldlis_old=cont-1
@@ -1049,23 +1510,50 @@ c*** Now change also the new plot zone according to the CW or CCW order
             do i=1,nwldlis(il)
               lwldlis(i,il)=lwldlis_old(i)
               leirlis(i,il)=leirlis_old(i)
+              lb25lis(i,il)=lb25lis_old(i)
             end do
           else !CW order
             do i=1,nwldlis(il)
               lwldlis(i,il)=lwldlis_old(nwldlis(il)-i+1)
               leirlis(i,il)=leirlis_old(nwldlis(il)-i+1)
+              lb25lis(i,il)=lb25lis_old(nwldlis(il)-i+1)
             end do
           end if
         end if !}
         deallocate(lwldlis_old)
         deallocate(leirlis_old)
+        deallocate(lb25lis_old)
       end do !}
 
-      deallocate(istarget)
+#ifdef DBG
+      do il=2,nwldprt !{
+        print '(a,i4,1x,a,i4/(20i5))',
+     ,   'lwldlis :',il,pltzlbl(il),nwldlis(il),
+     ,   (lwldlis(i,il),i=1,nwldlis(il))
+      end do !}
+#endif
+
+      deallocate(isrecycling)
+      deallocate(traversed,counted)
+      deallocate(ib,it,ie)
 
 c*** Calculate the segment areas and related quantities
 
-      do i=1,lppp+mpg%divFcP(ntrgts,1)+mpg%divFcP(ntrgts,2)-1 !{
+      if (grid_mode.lt.2) then !{
+        kn=lppp+mpg%divFcP(ntrgts,1)+mpg%divFcP(ntrgts,2)-1
+      else !}{
+        kn=lppp
+        if (switch%use_eirene.ne.0) then !{
+          do j=ncns+1,nstsi !{
+            kn=kn+eirdiag_nds_ind(j+1)-eirdiag_nds_ind(j)-1
+          end do !}
+        else !}{
+          do j=1,nstsi !{
+            kn=kn+count(mpg%fcLbl==j)
+          end do !}
+        end if !}
+      end if !}
+      do i=1,kn !{
         segm_len(i)=sqrt((pp1(1,i)-pp2(1,i))**2+(pp1(2,i)-pp2(2,i))**2)
         if (isymm.eq.0) then
           segm_area(i) = width*segm_len(i)
@@ -1140,6 +1628,10 @@ c*** use the zone index to label the plot zone
      ,                                  (lwldlis(i,il),i=1,nwldlis(il))
         print '(a,i5/(1x,8i11))','leirlis :',il,
      ,                                  (leirlis(i,il),i=1,nwldlis(il))
+        if (grid_mode.eq.2) then
+          print '(a,i5/(1x,8i11))','lb25lis :',il,
+     ,                                  (lb25lis(i,il),i=1,nwldlis(il))
+        end if
         print '(a,i5/(1x,1p,8e11.3))','length  :',il,
      ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
         print '(a,i5/(1x,1p,8e11.3))','distance:',il,
@@ -1149,28 +1641,80 @@ c*** use the zone index to label the plot zone
 c*** Fill in the input arrays for b2pwrdld
 c
       nwldrad=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        do i=1,mpg%divFcP(itrg(j),2) !{
-          if (CCW(itrg(j))) then
-            lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
-          else
-            lwldrad(nwldrad+i)=lppp+nwldrad+i
-          end if
+      if (grid_mode.lt.2) then
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          do i=1,mpg%divFcP(itrg(j),2) !{
+            if (CCW(itrg(j))) then
+              lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
+            else
+              lwldrad(nwldrad+i)=lppp+nwldrad+i
+            end if
+          end do !}
+          nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
         end do !}
-        nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
-      end do !}
 #ifdef DBG
-      print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
-      k=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        print '(20i4)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
-        k=k+mpg%divFcP(itrg(j),2)
-      end do !}
-      print '(1x,a,i5/(20i4))','nwldlis / lwldlis',nwldlis(1),
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          print '(20i5)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
+          k=k+mpg%divFcP(itrg(j),2)
+        end do !}
+#endif
+      else if (switch%use_eirene.ne.0) then
+        do j=ncns+1,nstsi !{
+          if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+          do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1 !{
+            if (CCW(ntrgts+j)) then
+              lwldrad(nwldrad+eirdiag_nds_ind(j+1)-i)=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(j)
+            else
+              lwldrad(nwldrad+i-eirdiag_nds_ind(j))=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(j)
+            end if
+          end do !}
+          nwldrad=nwldrad+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
+        end do !}
+#ifdef DBG
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=ncns+1,nstsi !{
+          if(eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
+          print '(20i5)',
+     .     (lwldrad(k+i),i=1,eirdiag_nds_ind(j+1)-
+     .                      (eirdiag_nds_ind(j)+1))
+          k=k+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
+        end do !}
+#endif
+      else
+        do j=1,nstsi !{
+          nRFc=count(mpg%fcLbl==j)
+          do i=1,nRFc !{
+            if (.not.CCW(ntrgts+j)) then
+              lwldrad(nwldrad+nRFc-i+1)=lppp+nwldrad+i
+            else
+              lwldrad(nwldrad+i)=lppp+nwldrad+i
+            end if
+          end do !}
+          nwldrad=nwldrad+nRFc
+        end do !}
+#ifdef DBG
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=1,nstsi !{
+          nRFc=count(mpg%fcLbl==j)
+          print '(20i5)',(lwldrad(k+i),i=1,nRFc)
+          k=k+nRFc
+        end do !}
+#endif
+      end if
+#ifdef DBG
+      print '(1x,a,i5/(20i5))','nwldlis / lwldlis',nwldlis(1),
      ,                           (lwldlis(i,1),i=1,nwldlis(1))
 #endif
+      deallocate(ccw)
+      if (allocated(first_face)) deallocate(first_face)
 
 c======================================================================
       call subend ()

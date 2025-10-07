@@ -934,4 +934,3 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
       end function dist
 
       end subroutine b2agmt_st
-

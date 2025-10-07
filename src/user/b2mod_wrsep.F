@@ -45,6 +45,7 @@ c***     Ga_sep_    gasp_tmp    inward neutral flux for each species
 c***     Gp_sep_    gpuf_tmp    gas puffing rate for each species
 c***     pr_sep_    prsr_tmp    relative total pressure for each species
 c***     nr_sep_    nrsr_tmp    relative ion density for each species
+c***     nri_sep_   nrsri_tmp   relative ion density for each species
 c***
 c***.............................................................(ions)
 c***     nii_sep_   nisi_tmp    average ni for each ion
@@ -61,11 +62,11 @@ c----------------------------------------------------------------------
       integer nglb_tmp
       parameter (nglb_tmp=9)
       integer nspc_tmp
-      parameter (nspc_tmp=10)
+      parameter (nspc_tmp=11)
       integer nion_tmp
       parameter (nion_tmp=2)
       character, save :: hlp_hg(nglb_tmp)*8
-      character, save :: hlp_hs(nspc_tmp)*7
+      character, save :: hlp_hs(nspc_tmp)*8
       character, save :: hlp_hi(nion_tmp)*8
 c*** Values by species
       real (kind=R8), allocatable ::
@@ -74,7 +75,7 @@ c*** Values by species
      *      nisp_tmp(:), zisp_tmp(:), zesp_tmp(:),
      ,      gisp_tmp(:), nasp_tmp(:), tasp_tmp(:),
      ,      gasp_tmp(:), gpuf_tmp(:),
-     ,      prsr_tmp(:), nrsr_tmp(:)
+     ,      prsr_tmp(:), nrsr_tmp(:), nrsri_tmp(:)
 
 c*** Values by ion charge states
       real (kind=R8), allocatable ::
@@ -88,8 +89,9 @@ c*** Column headers:
      2 '  Qt_sep','  Qe_sep','  Qi_sep','Qrad_SOL',
      3 'Spmp_nom'/
       data hlp_hs /
-     1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
-     2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
+     1  ' ni_sep_',' Zi_sep_',' Ze_sep_',' Gi_sep_',' na_sep_',
+     2  ' Ta_sep_',' Ga_sep_',' Gp_sep_',' pr_sep_',' nr_sep_',
+     3  'nri_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
 c----------------------------------------------------------------------
 
@@ -159,6 +161,7 @@ c
         gpuf_tmp(i)=0.0_R8
         prsr_tmp(i)=0.0_R8
         nrsr_tmp(i)=0.0_R8
+        nrsri_tmp(i)=0.0_R8
       end do !}
       do i=1,ns !{
         nisi_tmp(i)=0.0_R8
@@ -212,11 +215,14 @@ c
           end do
           hlp_tisp=hlp_tisp+v*hlp_i*state%pl%ti(iCv)
           hlp_zesp=hlp_zesp+v*state%dv%ne(iCv)*zeff(iCv)
-          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)
+          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)+0.5_R8*
+     .       (1.0_R8-switch%BoRiS)*state%dv%fne_53(iFc,1)*
+     .       (state%pl%te(iCv)+state%pl%te(iCn))
           hlp_qisp=hlp_qisp+state%dv%fhi(iFc,1)
           do is=0,ns-1
-            hlp_qisp=hlp_qisp+
-     .       (1.0_R8-switch%BoRiS)*state%dv%fhm(iFc,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-switch%BoRiS)*
+     .         (state%dv%fhm(iFc,1,is)+0.5_R8*state%dv%fna_53(iFc,1,is)*
+     .         (state%pl%ti(iCv)+state%pl%ti(iCn)))
           enddo
           is=0
           do j=1,nspecies !{
@@ -374,6 +380,7 @@ c     ,                                i,wldnm(l,i,0),mlcmp(ia,i) !###
           nrsr_tmp(k)=0.0_R8
         end do !}
       end if !}
+      nrsri_tmp = nisp_tmp/sum(nisp_tmp)
 
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then !{
@@ -390,6 +397,7 @@ c*** Write the data in a separate file for plotting...
           equs_tmp(k,8) = gpuf_tmp(k)
           equs_tmp(k,9) = prsr_tmp(k)
           equs_tmp(k,10)= nrsr_tmp(k)
+          equs_tmp(k,11)= nrsri_tmp(k)
         end do !}
         do k = 1, ns !{
           equi_tmp(k,1) = nisi_tmp(k)
@@ -425,7 +433,7 @@ c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
-      geometryType = geometryId( mpg, geo )
+      geometryType = geometryId( mpg, geo, 2 )
 
       if(nspecies.le.0) then !{
         write(*,*) '!!! b2wrsep: nspecies.lt.0 - no tracing data'
@@ -540,7 +548,7 @@ c*** New file
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
      ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(5x,a7,a2),',
+     ,                   ns_tmp*nsp_tmp,'(5x,a8,a2),',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
@@ -577,6 +585,7 @@ c>>>
       allocate(gpuf_tmp(nspecies))
       allocate(prsr_tmp(nspecies))
       allocate(nrsr_tmp(nspecies))
+      allocate(nrsri_tmp(nspecies))
       allocate(equi_tmp(ns,nion_tmp))
       allocate(nisi_tmp(ns))
       allocate(gisi_tmp(ns))
@@ -664,6 +673,7 @@ c     Finalization step
       deallocate(gpuf_tmp)
       deallocate(prsr_tmp)
       deallocate(nrsr_tmp)
+      deallocate(nrsri_tmp)
       deallocate(equi_tmp)
       deallocate(nisi_tmp)
       deallocate(gisi_tmp)

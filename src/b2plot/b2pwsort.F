@@ -43,7 +43,7 @@ c======================================================================
 c     integer i
 c
 cc%%%
-c      print *,'b2pwsrt',nwldprt
+c      print *,'b2pwsort',nwldprt
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -151,6 +151,9 @@ c*** No connection found
               else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
+              else if (lfclbl(j).gt.0) then
+                lwldlis(ii,il)=j
+                leirlis(ii,il)=nlimi+lfclbl(j)
               else 
                 is_target_edge = .false.
                 do k=1,ntrgts
