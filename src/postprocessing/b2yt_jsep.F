@@ -115,4 +115,3 @@ cxpb  Compute position of additional targets in DN configuration
       call subend ()
       return
       end subroutine b2yt_nxt
-

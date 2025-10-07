@@ -457,6 +457,4 @@ c     calculate the friction
       enddo
  
       return
-      end
-
-
+      end subroutine ps

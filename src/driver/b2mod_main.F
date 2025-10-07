@@ -15,6 +15,7 @@
       use b2us_map
       use b2us_plasma
       use b2us_io
+      use b2us_data
       use b2us_work
       use b2mod_switches
       use b2mod_recycle
@@ -167,15 +168,8 @@
 
       contains
 
-      subroutine b2mn_init (switch, geo, mpg,
-     .                      state, state_ext, state_avg)
+      subroutine b2mn_init
       implicit none
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
       integer idum(0:9)
 
 *   ..program start-up calls
@@ -283,17 +277,15 @@ csw
       call alloc_b2us_work (mpg%nCv, ns)
       call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
       call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
-      call alloc_b2mod_astra_to_b2 (mpg, DEF_NXD, DEF_NYD)
+      call alloc_b2mod_astra_to_b2 (mpg, DEF_NYD)
       call alloc_b2mod_b2_to_astra (mpg, DEF_NYD, ns)
 
-      call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 
-     &               state, state_ext, state_avg)
+      call b2mndr_0 (ninp, nout, ns, ns0)
 
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step(switch, geo, mpg,
-     &                     state, state_ext, state_avg, J)
+      subroutine b2mn_step(J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_b2cmrc
@@ -309,33 +301,18 @@ csw
       use b2mod_ad
      , , only: nncf
       implicit none
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2average), intent (inout)  :: state_avg
       real(kind=R8) :: J(nncf)
 
-      call b2mndr_1 (nout, ns,
-     .               switch, geo, mpg, state, state_ext, state_avg, J)
+      call b2mndr_1 (nout, ns, J)
 
       return
       end subroutine b2mn_step
 
-      subroutine b2mn_fin (switch, geo, mpg,
-     .                     state, state_ext, state_avg)
+      subroutine b2mn_fin
       implicit none
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
       integer io
 
-      call b2mndr_2 (nout, ns, switch, geo, mpg,
-     .               state, state_ext, state_avg)
+      call b2mndr_2 (nout, ns)
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(11),'tran','new','unformatted')

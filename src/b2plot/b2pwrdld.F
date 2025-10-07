@@ -20,13 +20,11 @@ c======================================================================
 #endif
       implicit none
       integer iatm,imol,iion
-      integer i,j,k,l,m,is,iCv,n_hlperr,
-     ,        l_errt(nsgmx),l_errs(nsgmx)
-      real (kind=R8) ::
-     *   u
+      integer i,j,k,l,m,is,iCv
+      real (kind=R8) :: u
 #ifdef DBG
       integer lun_w
-      parameter (lun_w=96)
+      parameter (lun_w=95)
       character tab
 #endif
 c======================================================================
@@ -44,7 +42,6 @@ c
       do i=1,nsgmx !{
         luwrk(i)=0
       end do !}
-      n_hlperr=0
       nplgs=nwldlis(1)
       nbndry=nplgs
       do i=1,nplgs
@@ -58,50 +55,40 @@ c
 
 #ifdef DBG
       print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
-      print *,'lwldlis(i,1):'
-      print '(20i4)',(lwldlis(i,1),i=1,nplgs)
-      print *,'lbnd(i):'
-      print '(20i4)',(lbnd(i),i=1,nplgs)
-      print *,'luwrk:'
-      print '(20i4)',(luwrk(i),i=1,nsgmx)
-      print *,'lewrk:'
-      print '(20i4)',(lewrk(i),i=1,nsgmx)
+      if (nplgs.gt.0) then
+        print *,'lwldlis(i,1):'
+        print '(20i5)',(lwldlis(i,1),i=1,nplgs)
+        print *,'lbnd(i):'
+        print '(20i5)',(lbnd(i),i=1,nplgs)
+      endif
+      if (maxval(luwrk).gt.0) then
+        print *,'luwrk:'
+        print '(20i5)',(luwrk(i),i=1,nsgmx)
+      endif
+      if (maxval(lewrk).gt.0) then
+        print *,'lewrk:'
+        print '(20i5)',(lewrk(i),i=1,nsgmx)
+      endif
 #endif
 
-      k=0
-      do i=1,nwldrad
-        l=lwldrad(i)
-        m=luwrk(l)
-        if(m .eq. 0) then
-          write(*,'(2a,i4,a,i4)') 
-     ,             'b2pwrdld: radiation target must belong to ',
-     ,             'the shadowing structure. Target ',i,',  segment ',l
-          lwldrad(i)=0
-          n_hlperr=n_hlperr+1
-          l_errt(n_hlperr)=i
-          l_errs(n_hlperr)=l
-        else
-          k=k+1
-          ltrg(k)=m
-        end if
-      end do
-      ntrg=k
 #ifdef DBG
-      print *,'Shadowing structure: ',
-     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-      print '(20i4)',(lbnd(i),i=1,nplgs)
-      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
-      print '(a,12i5)','Radiation target ',ntrg,
-     ,       (nwldlis(i),i=2,nwldprt)
-      print '(20i4)',(ltrg(i),i=1,ntrg)
+      if (nplgs.gt.0) then
+        print *,'Shadowing structure: ',
+     ,           nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+        print '(20i5)',(lbnd(i),i=1,nplgs)
+        print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+        print '(a,12i5)','Radiation target ',ntrg,
+     ,         (nwldlis(i),i=2,nwldprt)
+        print '(20i5)',(ltrg(i),i=1,ntrg)
 
-      open(lun_w,file='layout-w.dat')
-      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-      write(lun_w,'(3a)') '# R',tab,'Z'
-      do i=1,nplgs
-        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
-      end do
-      close(lun_w)
+        open(lun_w,file='layout-w.dat')
+        write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+        write(lun_w,'(3a)') '# R',tab,'Z'
+        do i=1,nplgs
+          write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
+        end do
+        close(lun_w)
+      endif
 #endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional
@@ -125,12 +112,12 @@ c
         xysrc(1,iCv)=geo%cvX(iCv)
         xysrc(2,iCv)=geo%cvY(iCv)
       end do
+      k=mpg%nCi
 
 #ifdef DBG
-      print *,'nadsrc,add_rad = ',nadsrc,add_rad
+      print *,'nadsrc, add_rad = ',nadsrc,add_rad
 #endif
-      k=mpg%nCi
-      if(nadsrc .gt. 0  .and.  add_rad .gt. 0.0_R8) then
+      if(nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then
         u=1.0e6_R8*add_rad/nadsrc
         do i=1,nadsrc
           k=k+1
@@ -157,19 +144,14 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
       if (add_rad.gt.0.0_R8)
      >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
-        write(*,*) '  Reaching the targets    : ',tttrg
+        if (grid_mode.eq.2) then
+          write(*,*) '  Reaching the surfaces   : ',tttrg
+        else
+          write(*,*) '  Reaching the targets    : ',tttrg
+        end if
       else if (irdparm.eq.2 .and. nwldprt.gt.1) then
         write(*,*) '  Reaching the plot zones : ',tttrg
       end if
-      if(n_hlperr.gt.0) then !{
-        write(*,*) '*** ',n_hlperr,
-     ,                      ' segments outside the shadowing structure'
-        write(*,*) '   indices in the segment list:'
-        write(*,'(1x,20i5)') (l_errs(i),i=1,n_hlperr)
-        write(*,*) '   indices in the target list:'
-        write(*,'(1x,20i5)') (l_errt(i),i=1,n_hlperr)
-        write(*,*)
-      end if !}
 c----------------------------------------------------------------------
 c*** Extract the data and put them in the output module.
 c*** After rlcomp, the radiation loads are stored in radld (b2mod_rdload)
@@ -182,13 +164,9 @@ c***   outer top target, cells ny-1 to lytg ];
 c***  Eastern target, cells lytg to ny-1
 c*** Normalisation per unit area is also done here.
 c
-      k=0
-      do i=1,nwldrad
-        l=lwldrad(i)
-        if(l .gt. 0) then
-          k=k+1
-          wldrdld(l)=radld(k)/segm_area(l)
-        end if
+      do i=1,ntrg
+        l=ltrg(i)
+        wldrdld(lwldlis(l,1))=radld(i)/segm_area(lwldlis(l,1))
       end do
 
       do i=1,nsgmx !{
@@ -235,24 +213,24 @@ c*** Calculate the radiation load split by impurity species from B2
           call rlcomp
           write(*,*)   '  Total radiation         : ',ttsrc
           if (irdparm.eq.1) then
-            write(*,*) '  Reaching the targets    : ',tttrg
+            if (grid_mode.eq.2) then
+              write(*,*) '  Reaching the surfaces   : ',tttrg
+            else
+              write(*,*) '  Reaching the targets    : ',tttrg
+            end if
           else if (irdparm.eq.2 .and. nwldprt.gt.1) then
             write(*,*) '  Reaching the plot zones : ',tttrg
           end if
-          k=0
-          do i=1,nwldrad !{
-            l=lwldrad(i)
-            if(l.gt.0) then !{
-              k=k+1
-              wldrdlsp(l,j)=radld(k)/segm_area(l)
-            end if !}
+          do i=1,ntrg !{
+            l=ltrg(i)
+            wldrdlsp(lwldlis(l,1),j)=radld(i)/segm_area(lwldlis(l,1))
           end do !}
         end do !}
         lrdlsp=.true.
       end if !}
 
 #ifdef DBG
-      print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+      print *,'ildparm, nadsrc, add_rad: ',ildparm,nadsrc,add_rad
 #endif
       if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
 
@@ -277,14 +255,10 @@ c*** Calculate the radiation load from the core sources
         write(*,*) '  Total additional core radiation     : ',ttsrc
 #endif
         write(*,*) '  Core radiation reaching the targets : ',tttrg
-        k=0
         is=1
-        do i=1,nwldrad !{
-          l=lwldrad(i)
-          if(l.gt.0) then !{
-            k=k+1
-            wldrdlsp(l,is)=radld(k)/segm_area(l)
-          end if !}
+        do i=1,ntrg !{
+          l=ltrg(i)
+          wldrdlsp(lwldlis(l,1),is)=radld(i)/segm_area(lwldlis(l,1))
         end do !}
         lrdlcr=.true.
       end if !}

@@ -93,4 +93,3 @@ c
      &                 (dummy(is+nlim,iif),is=1,nsts1)
       enddo
       end subroutine wrneutrs
-

@@ -1,5 +1,5 @@
 ! $AD NOCHECKPOINT
-      subroutine b2txcc (nCv, nFc, mode,
+      subroutine b2txcc (nCv, nFc, increase_transp_coefs, mode,
      .  geo, mpg, fcVol, fcS, kap, con)
       use b2mod_types
       use b2us_geo
@@ -10,12 +10,13 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &   fcVol(nFc,2), fcS(nFc), kap(nCv), con(nFc)
+     &   fcVol(nFc,2), fcS(nFc), kap(nCv), con(nFc),
+     &   increase_transp_coefs
 *     ------------------------------------------------------------------
 *     B2TXCC computes normal conductances between neighbouring cells, 
 *     given the conductivities.
 *     ------------------------------------------------------------------
-      integer iFc
+      integer iFc, cvs(2)
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
@@ -48,6 +49,13 @@
      &   (fcVol(iFc,1)*kap(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1))*
      &   (fcVol(iFc,2)*kap(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2))))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+         if (increase_transp_coefs.gt.1.0_R8) then
+           cvs = mpg%fcCv(iFc,1:2)
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
+             con(iFc) = con(iFc)*increase_transp_coefs
+          endif
+        endif
        enddo
       else if (mode.eq.1) then
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
@@ -56,6 +64,13 @@
      &   (fcVol(iFc,1)*kap(mpg%fcCv(iFc,1)) + 
      &    fcVol(iFc,2)*kap(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
+         if (increase_transp_coefs.gt.1.0_R8) then
+           cvs = mpg%fcCv(iFc,1:2)
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
+             con(iFc) = con(iFc)*increase_transp_coefs
+          endif
+        endif
        enddo
       else if (mode.eq.2) then
 *    ..use arithmetic averaging (SOLPS4.0 formulation)
@@ -65,6 +80,13 @@
      &   (geo%fcHc(iFc,1)*kap(mpg%fcCv(iFc,1)) + 
      &    geo%fcHc(iFc,2)*kap(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
+         if (increase_transp_coefs .gt. 1.0_R8) then
+           cvs = mpg%fcCv(iFc,1:2)
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
+             con(iFc) = con(iFc)*increase_transp_coefs
+          endif
+        endif
        enddo
       else if (mode.eq.3) then
 *    ..use arithmetic averaging (drift formulation)
@@ -75,6 +97,13 @@
      &   (geo%fcVol(iFc,1)*kap(mpg%fcCv(iFc,1)) + 
      &    geo%fcVol(iFc,2)*kap(mpg%fcCv(iFc,2)))/
      &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
+         if (increase_transp_coefs.gt.1.0_R8) then
+           cvs = mpg%fcCv(iFc,1:2)
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
+             con(iFc) = con(iFc)*increase_transp_coefs
+           endif
+         endif
        enddo
       endif
 *   ..return

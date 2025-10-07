@@ -22,7 +22,7 @@ c
       call flux_add(nCv)
 #endif
       if(wall) then
-        call pltwall(nCv,physical,.false.)
+        call pltwall(physical,.false.)
       endif
       if(target.and.physical) then
         call plttarget

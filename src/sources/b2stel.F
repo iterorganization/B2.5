@@ -33,6 +33,8 @@
      & , only : ncall_b2stel
       use b2mod_subsys
       use b2mod_dimensions
+      use b2us_feedback
+     & , only : she_rad_tot
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain
@@ -516,6 +518,9 @@ c accounted for)
 
         enddo
       endif
+      wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &     srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+      she_rad_tot = -sum(wrk0)
       if (switch%b2stel_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3
@@ -524,8 +529,6 @@ c accounted for)
 !         call my_out(70,nx,ny,shi0_rec(-1,-1,k),'b2stel_shi_rec'//chk)
 !        enddo
 !      call my_out(70,nx,ny,srw%she0(-1,-1,k),'b2stel_she')
-        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
-     &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
         call my_out_us(70,nCv,0,wrk0,'b2stel_she_rad')
         wrk0=shi0_ion(:,0)+shi0_ion(:,1)*pl%ti+
      &       shi0_ion(:,2)*dv%ni(:,0)+

@@ -95,4 +95,4 @@ c     calculate the xi coefficients
       enddo
 
       return
-      end
+      end subroutine colxi

@@ -15,7 +15,8 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh,
+     &          balance_netcdf
 #endif
       use b2mod_ad
      & , only : ncall_b2tfhi
@@ -24,6 +25,8 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tfhi_cutlo, my_out_folder
+      use b2mod_zhfrtf
+     & , only : z2n_xy, nal, ia, av_ualpha, z_to_m1_ast
 #endif
       use b2mod_subsys
       implicit none
@@ -57,7 +60,7 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, is, meth
+      integer is, meth
       real (kind=R8) ::
      *   floi0(nFc,0:1), coni0(nFc,0:1), fhi_32_loc(nFc,0:1),
      *   fhi_52_loc(nFc,0:1),
@@ -68,13 +71,12 @@
      &   dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
      &   dumm4(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
-     *   flo0_ExB(nFc,0:1)
+     *   flo0_ExB(nFc,0:1), floi_vhx(nFc)
 cpax
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc), wrkf(nFc,0:1),
-     *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
-     *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1), cdzt0(nFc,0:1)
+     *   cdkt0(nFc,0:1), cdzt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -140,64 +142,14 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..set dummy arrays
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
-      facdriftm = maxval(dv%facdrift)
-      dv%fhiPSch = 0.0_R8                                                !srv 13.10.06
-      dv%coni    = 0.0_R8                                                !srv 02.01.07
-      dv%floi    = 0.0_R8
-      if(facdriftm.ne.0.0_R8) then
-       do is = 0, ns-1
-        if(.not.is_neutral(is)) then
 
-*      ..precompute face and vertex values of nati and nati2
-         nati  = pl%na(:,is)*pl%ti
-         nati2 = pl%na(:,is)*pl%ti*pl%ti
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nati,nativ)
-         call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
-         call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
-
-*      ..compute P.Sch heat flux
-         dv%fhiPSch(:,0) = dv%fhiPSch(:,0) +
-     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
-         dv%fhiPSch(:,1) = dv%fhiPSch(:,1) -
-     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
-*      ..linearization coefficients for P.Sch flows
-         cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
-         cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi,floi0,coni0)
-         do iFc = 1, nFc
-          dv%floi(iFc,0)   = dv%floi(iFc,0) +
-     &       0.5_R8*floi0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,1)) + nati(mpg%fcCv(iFc,2))) -
-     &       coni0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,2)) - nati(mpg%fcCv(iFc,1)))
-          dv%floi(iFc,1)   = dv%floi(iFc,1) +
-     &       0.5_R8*floi0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
-     &       coni0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
-!wdk      For now, directly add these contributions into coni(,,0),
-!wdk      so they are directly added into the stencil.
-!wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
-!wdk      in b2ux9p if we decide to move away from inverse volume weighting
-!wdk      to compute vertex values of drifts!
-          dv%coni(iFc,0,0) = dv%coni(iFc,0,0) +
-     &       0.5_R8*coni0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,1))+nati(mpg%fcCv(iFc,2))) -
-     &       0.25_R8*floi0(iFc,0)*
-     &      (nati(mpg%fcCv(iFc,2))-nati(mpg%fcCv(iFc,1)))
-          dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
-     &       0.5_R8*coni0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*floi0(iFc,1)*
-     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
-         enddo
-        endif
-       enddo
-      endif
+      call b2tipsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
+     &    co%cddi, pl%ti, pl%na, dv%floi, dv%coni, dv%fhiPSch)          !srv 16.10.17
 
       wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
-      if(facdriftm.ne.0.0_R8) then                                      !srv 18.01.07
+      facdriftm = maxval(dv%facdrift)
+      if(facdriftm.ne.0.0e0_R8) then                                    !srv 18.01.07
        do is = 0, ns-1
         if ( .not.is_neutral(is) ) then
 *      ..interpolate na(:,is) to cell faces
@@ -226,15 +178,23 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..interpolate ni and ti to cell faces
 
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
-      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)        !! in case of default energy equation, tn will be equal to ti
+      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)                     !! in case of default energy equation, tn will be equal to ti
 
-      if (switch%tn_style.eq.0) then                       !! default combined ion-neutral energy equation
+      if (switch%tn_style.eq.0) then                                    !! default combined ion-neutral energy equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
-      elseif (switch%tn_style.eq.1) then                   !! pure ion equation
+      elseif (switch%tn_style.eq.1) then                                !! pure ion equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
-      else                                                 !! separate tn equation for hydrogenic atoms, all other species in ti-equation
+      else                                                              !! separate tn equation for hydrogenic atoms, all other species in ti-equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%nn,nif)
         call intface(nCv,nFc,mpg%fcCv,wght,dv%nn,nnf)
+      endif
+
+*   ..velocity-dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                 !som 13.07.21
+      if (switch%Zhdanov_closure.eq.1 .and.
+     &    switch%Zhdanov_test.eq.0 .and.
+     &    switch%Zhdanov_vel_heat.eq.1) then                            !som 13.07.21
+        call b2tfvh (nCv, nFc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
       endif
 
 *   ..contributions from currents
@@ -257,13 +217,13 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..convective coefficients
       !floi0
       floi0(:,0) = 1.5_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &  flidia(:,0) + scur(:,0)
+     &  flidia(:,0) + scur(:,0) + floi_vhx
       floi0(:,1) = 1.5_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  flidia(:,1) + scur(:,1)
 
       !floi0_mdf
       floi0_mdf(:,0) = 1.5_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &  scur(:,0)
+     &  scur(:,0) + floi_vhx
       floi0_mdf(:,1) = 1.5_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  scur(:,1)
 
@@ -422,6 +382,11 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
      &    wrkf,dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
+        wrkf = 0.0_R8
+        wrkf(:,0) = sign(floi_vhx,floi0_mdf(:,0))
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
+     &    wrkf,dumm1,dumm2,fhi_vzh,dumm4)
+        fhi_vzh(:,0) = sign(fhi_vzh(:,0),floi_vhx)
       endif
 #endif
 
@@ -726,19 +691,10 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-#ifndef FIXED_POINT
-       if (balance.and.(balance_netcdf.ne.0)) then
-         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
-       else
-         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
-       endif
-#endif
+       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -767,19 +723,10 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-#ifndef FIXED_POINT
-       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
-       else
-         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
-       endif
-#endif
+       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
       endif
 
 * ..return

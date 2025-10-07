@@ -93,5 +93,3 @@ c     max. number of ionisation stages
       end subroutine dealloc_b2mod_neoclassical
 
       end module b2mod_neoclassical
-
-

@@ -630,13 +630,3 @@ if __name__ == '__main__':
     write_ids()
 
     read_ids()
-
-
-
-
-
-
-
-
-
-
