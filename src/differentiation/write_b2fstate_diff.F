@@ -91,4 +91,3 @@
       return
 
       end subroutine write_b2fstate_diff
-

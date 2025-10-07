@@ -1,7 +1,7 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
 NCARG_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
-MSCL_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
+MSCL_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl_1.2.4
 GLI_HOME ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR ?= ${NAG_HOME}
 NCDIR ?= /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary

@@ -138,7 +138,7 @@
        call read_b2fgmtry (ninp(1), mpg, geo)
        call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *    ..convert to structured format and write b2fstate_st, b2fplasmf_st
-       call to_struct_plasma (ns,mpg,state)
+       call to_struct_plasma (ns, geo, mpg, state)
       endif
 *   ..close files
       do io=0,size(ninp)-1

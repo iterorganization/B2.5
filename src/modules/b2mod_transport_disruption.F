@@ -28,5 +28,3 @@
       end subroutine dealloc_b2mod_transport_disruption
 
       end module b2mod_transport_disruption
-
-

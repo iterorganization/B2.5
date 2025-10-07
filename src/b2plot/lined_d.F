@@ -65,6 +65,3 @@ c      write(*,*) 'lined: ',xas,yas,xbs,ybs
       endif
       return
       end subroutine grpts_d
-          
-      
-

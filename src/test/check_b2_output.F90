@@ -139,7 +139,13 @@ module check_module_local
     write (*,'(a29,a12,E14.5E3)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
     avg_abs_val = avg_abs_val / ub
     write (*,'(a29,a12,E14.5E3)') 'Average array value (abs) in ',trim(name), avg_abs_val
-    write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val
+    if ( avg_abs_val > 0. ) then
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val
+    else if ( avg_abs_val == 0. .and. error_max_abs == 0. ) then
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), 0.
+    else
+      write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), 1.
+    end if
     write (*,'(a30,F5.1,a1)')   'Number of errors / array size ', n_error * 100.0 / ub, '%'
     write (*,*) ' '
   end if

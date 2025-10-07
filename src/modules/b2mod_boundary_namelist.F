@@ -109,10 +109,10 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       private :: boundary
 
-      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,ENKPAR,
-     1 ENZPAR,
-     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,BCENK,BCENZ,
-     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,BC_LIST_CHAR,
+      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
+     1 ENKPAR,ENZPAR,
+     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,BCENK,
+     1 BCENZ,BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,BC_LIST_CHAR,
      2 gammai,gammae,lbndusr,lfeedback,
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
@@ -1060,7 +1060,8 @@ c.. Make a list of core boundaries
           endif
         enddo
         if (maxval(m%fsVxP(:,2)).gt.2) then
-          if (m%nnreg(0).gt.1 .or. m%periodic_bc.eq.1) then
+          if ((m%nnreg(0).gt.1.or.m%periodic_bc.eq.1).and.
+     &        .not.(all(m%cvOnClosedSurface).eqv..false.)) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
           end if
         end if

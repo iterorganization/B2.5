@@ -70,4 +70,4 @@
       enddo
       if(xbox(n).eq.xbox(1).and.ybox(n).eq.ybox(1)) n=n-1
       return
-      end
+      end subroutine clip_box

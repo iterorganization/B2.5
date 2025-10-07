@@ -24,9 +24,6 @@
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
         real (kind=R8), allocatable  :: cvBzb(:)       ! Factor for P-S/mdf flows
         real (kind=R8), allocatable  :: cvEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
-        real (kind=R8) :: signmf  ! Direction of poloidal field
-                                  ! +1: Going clockwise around plasma
-                                  ! -1: Going counterclockwise around plasma
         real (kind=R8), allocatable  :: cvFpsi(:)      ! Psi in each cell
 
 !  face based quantities
@@ -67,11 +64,21 @@
         real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio
         real (kind=R8), allocatable  :: ftBbav2(:)     ! (nFt) Average B**2 on the flux tube
 
-        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
+        real (kind=R8), allocatable  :: ftFpsi(:)      ! (nFt) Psi of a flux tube; for a cell with cvFt(iCv)=iFt, we should have ftFpsi(iFt) = cvFpsi(cvFt(iCv))
+        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface; for  face with fcFs(iFc)=iFs, we should have fsPsi(iFs) = fcFpsi(fcFs(iFc))
+
+        real (kind=R8), allocatable  :: ftDs(:)        ! (nFt) A flux tube coordinate based on the radial distance at the OMP
+        real (kind=R8), allocatable  :: fsDs(:)        ! (nFs) A flux surface coordinate based on the radial distance at the OMP
 
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
+
+        real (kind=R8) :: signmf  ! Direction of poloidal field
+                                  ! +1: Going clockwise around plasma
+                                  ! -1: Going counterclockwise around plasma
+
+        real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
       contains
@@ -139,6 +146,9 @@
       allocate (g%vxConn(nVx))
       allocate (g%fsConn(nFs))
       allocate (g%fsPsi(nFs))
+      allocate (g%ftFpsi(nFt))
+      allocate (g%fsDs(nFs))
+      allocate (g%ftDs(nFt))
 
       call initialize_geometry(g)
 
@@ -205,9 +215,16 @@
       g%vxConn = 0._R8
       g%fsConn = 0._R8
       g%fsPsi = 0._R8
+      g%ftFpsi = 0._R8
+
+      g%fsDs = 0._R8
+      g%ftDs = 0._R8
 
       g%LSN = .true.
       g%psi_increasing = .true.
+
+      g%Qalfmax = 1.0e-3_R8
+      g%Qalfmin = 1.0e-3_R8
 
       return
       end subroutine initialize_geometry
@@ -274,6 +291,9 @@
       deallocate (g%vxConn)
       deallocate (g%fsConn)
       deallocate (g%fsPsi)
+      deallocate (g%ftFpsi)
+      deallocate (g%fsDs)
+      deallocate (g%ftDs)
 
       return
       end subroutine dealloc_geometry
@@ -287,7 +307,8 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
-      external cfrure
+      real(kind=R8) :: rdum(1)
+      external cfrure, cfrure_opt, ipgetr
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -323,6 +344,15 @@
       call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmin', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmin')
+      gm%Qalfmin = rdum(1)
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmax', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmax')
+      gm%Qalfmax = rdum(1)
+
 ! check consistency of input
       call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
 
@@ -336,6 +366,7 @@
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
+      real(kind=R8) :: rdum(1)
       external cfwure
 
 ! cell volumes
@@ -369,6 +400,11 @@
 ! flux surface quantities
       call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
+
+      rdum(1) = gm%Qalfmin
+      call cfwure (nout,   1,   rdum,  'Qalfmin')
+      rdum(1) = gm%Qalfmax
+      call cfwure (nout,   1,   rdum,  'Qalfmax')
 
       return
       end subroutine write_geometry
@@ -419,15 +455,15 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
-     &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
-     &           i1, i2, inv_dist(mpg%nVx)
+     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
+     &           inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
-      intrinsic maxval, maxloc, minloc, abs, sqrt
+      intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, xerrab, xertst
 
       nCv = mpg%nCv
@@ -487,6 +523,20 @@
       do iFc = 1, nFc
         gm%fcFpsi(iFc) = 0.5_R8*(gm%vxFpsi(mpg%fcVx(iFc,1)) +
      &    gm%vxFpsi(mpg%fcVx(iFc,2)) )
+      enddo
+
+*   ..precompute psi for flux tube
+      do iFt = 1, mpg%nFt
+        gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
+        do i = 1, mpg%ftCvP(iFt,2)
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+          if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt)) then
+            write (*,'(a,i6,a,i4)')
+     &       'Warning: cvFpsi value in cell ', iCv,
+     &       ' not equal to value in its flux tube ', iFt
+            write (*,*) gm%cvFpsi(iCv), gm%ftFpsi(iFt)
+          endif
+        enddo
       enddo
 
 *   ..set weights for interpolation to vertices
@@ -649,78 +699,48 @@
             enddo
           endif
         enddo
-      elseif (switch%vxVol_style .eq. 7) then
-        !recalculate cvFpsi
-        do iCv = 1, nCv
-          allocate(verts(1:mpg%cvVxP(iCv,2)))
-          verts = mpg%cvVx(mpg%cvVxP(iCv,1):
-     &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2))
-          gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
-          i1 = minloc(gm%vxFpsi(verts),1) -1
-          i2 = maxloc(gm%vxFpsi(verts),1) -1
-          dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) -
-     1                    gm%vxFpsi(verts(i1)) )
-          deallocate(verts)
-        enddo
-        !count cells per vertex with higher and lower Psi
+      elseif (switch%vxVol_style .eq. 7 .or.
+     &        switch%vxVol_style .eq. 8 ) then
+        ! wdk Style 7 and 8 have become basically equal to vxVol_style 2, except for treatment of guard cells
+        ! wdk need to remove obsolete options eventually
+
+        ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
+        ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
+        !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
+        !                  average between flux tube values)
+        ! Count cells per vertex with higher, lower Psi
+        ! Exceptional case: equal Psi (pentagon splitting);
+        ! will also catch case where Psi = 0 everywhere
         do iVx = 1, nVx
           count_down = 0
           count_up   = 0
+          count_eq   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
-            iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
               count_up = count_up + 1
-            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
               count_down = count_down + 1
+            else
+              count_eq = count_eq + 1
             endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
-            iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (iCv.le.mpg%nCi) then
               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               real(count_up,R8) / mpg%vxCvP(iVx,2)
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            2.0_R8*count_up
               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
-     &               real(count_down,R8) / mpg%vxCvP(iVx,2)
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            2.0_R8*count_down
+              else
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            real(count_eq,R8)
               endif
             else
               ! Make guards cells dominate and account for
               ! length difference via distance to vertex
-              gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
-            endif
-          enddo
-          !Special case for pentagon splitting
-          if (mpg%vxCvP(iVx,2).eq.3) then
-            do inCv = 1, mpg%vxCvP(iVx,2)
-              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-              if (iCv .le. mpg%nCi) then
-                if (mpg%cvVxP(iCv,2).eq.5) then
-                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
-                else
-                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8
-                endif
-              else
-                gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
-              endif
-            enddo
-          endif
-        enddo
-      elseif (switch%vxVol_style .eq. 8) then
-        ! Same as style 2 but with weighting for boundary vertices
-        ! assign 1/4, except guard cells
-        do iVx = 1, nVx
-          do inCv = 1, mpg%vxCvP(iVx,2)
-            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-            if (iCv.le.mpg%nCi) then
-              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-            else
-              ! Make sure guard cells dominate in the interpolation
-              ! to vertices => use volume
               gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
@@ -728,18 +748,6 @@
           enddo
         enddo
       elseif (switch%vxVol_style .eq. 9) then
-        !recalculate cvFpsi
-        do iCv = 1, nCv
-          allocate(verts(1:mpg%cvVxP(iCv,2)))
-          verts = mpg%cvVx(mpg%cvVxP(iCv,1):
-     &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2))
-          gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
-          i1 = minloc(gm%vxFpsi(verts),1) -1
-          i2 = maxloc(gm%vxFpsi(verts),1) -1
-          dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) -
-     1                    gm%vxFpsi(verts(i1)) )
-          deallocate(verts)
-        enddo
         !count cells per vertex with higher and lower Psi
         do iVx = 1, nVx
           count_down = 0
@@ -762,7 +770,7 @@
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if (iCv.le.mpg%nCi) then
+            if (iCv .le. mpg%nCi) then
               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =

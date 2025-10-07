@@ -45,7 +45,7 @@ c ..interpolate the quantity to cell faces
 c ..compute the effective velocity
       do idir = 0, 1
         do iFc = 1, nFc
-          if (geo%fcQalf(iFc,idir).ne.0.0_R8) then
+          if (geo%fcQalf(iFc,idir).ne.0.0_R8.and.qf(iFc).ne.0.0_R8) then
             wrkf(iFc,idir) = faceflux(iFc,idir)/qf(iFc)/
      .                      (geo%fcS(iFc)*abs(geo%fcQalf(iFc,idir)))
           else

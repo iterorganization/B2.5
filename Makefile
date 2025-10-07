@@ -151,9 +151,21 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && ec
   MAKES += ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
+# Verify that some needed variables are defined
+ifndef LD_MSCL
+ifndef SOLPS_CPP
+$(error LD_MSCL not defined!)
+else
+$(error LD_MSCL not defined. Run the install_dependencies script first.)
+endif
+endif
+
 # Add external includes first
 ifdef NCDIR
 SOLPSINCLUDE += -I${NCDIR}/include
+ifeq ($(UNAME),Darwin)
+SOLPSINCLUDE += -I${NCFDIR}/include
+endif
 endif
 
 ifdef USE_IMPGYRO
@@ -957,6 +969,9 @@ ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 ${OBJDIR}/eirmod_braeir.${MOD}:
 	touch ${OBJDIR}/eirmod_braeir.${MOD}
 
+${OBJDIR}/eirmod_cadgeo.${MOD}:
+	touch ${OBJDIR}/eirmod_cadgeo.${MOD}
+
 ${OBJDIR}/eirmod_ccona.${MOD}:
 	touch ${OBJDIR}/eirmod_ccona.${MOD}
 
@@ -968,6 +983,9 @@ ${OBJDIR}/eirmod_cestim.${MOD}:
 
 ${OBJDIR}/eirmod_cgeom.${MOD}:
 	touch ${OBJDIR}/eirmod_cgeom.${MOD}
+
+${OBJDIR}/eirmod_cgrid.${MOD}:
+	touch ${OBJDIR}/eirmod_cgrid.${MOD}
 
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
@@ -984,8 +1002,14 @@ ${OBJDIR}/eirmod_comprt.${MOD}:
 ${OBJDIR}/eirmod_comsou.${MOD}:
 	touch ${OBJDIR}/eirmod_comsou.${MOD}
 
+${OBJDIR}/eirmod_comspl.${MOD}:
+	touch ${OBJDIR}/eirmod_comspl.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
+
+${OBJDIR}/eirmod_comxs.${MOD}:
+	touch ${OBJDIR}/eirmod_comxs.${MOD}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
@@ -993,11 +1017,29 @@ ${OBJDIR}/eirmod_coutau.${MOD}:
 ${OBJDIR}/eirmod_cpes.${MOD}:
 	touch ${OBJDIR}/eirmod_cpes.${MOD}
 
+${OBJDIR}/eirmod_cplot.${MOD}:
+	touch ${OBJDIR}/eirmod_cplot.${MOD}
+
+${OBJDIR}/eirmod_cpolyg.${MOD}:
+	touch ${OBJDIR}/eirmod_cpolyg.${MOD}
+
+${OBJDIR}/eirmod_csdvi.${MOD}:
+	touch ${OBJDIR}/eirmod_csdvi.${MOD}
+
+${OBJDIR}/eirmod_ctetra.${MOD}:
+	touch ${OBJDIR}/eirmod_ctetra.${MOD}
+
+${OBJDIR}/eirmod_ctext.${MOD}:
+	touch ${OBJDIR}/eirmod_ctext.${MOD}
+
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}
+
+${OBJDIR}/eirmod_czt1.${MOD}:
+	touch ${OBJDIR}/eirmod_czt1.${MOD}
 
 ${OBJDIR}/eirmod_eirbra.${MOD}:
 	touch ${OBJDIR}/eirmod_eirbra.${MOD}
@@ -1553,7 +1595,7 @@ echo:
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
-${SRCLOCAL}/b2local.F:
+${SRCLOCAL}/b2local.F: ${MAKES}
 	mkdir -p ${SRCLOCAL}
 	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
@@ -1562,17 +1604,17 @@ ${SRCLOCAL}/b2local.F:
 	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end" >> ${SRCLOCAL}/b2local.F
+	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
 
-${MODLOCAL}/b2mod_local.F:
+${MODLOCAL}/b2mod_local.F: ${MAKES}
 	mkdir -p ${MODLOCAL}
 	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end" >> ${MODLOCAL}/b2mod_local.F
+	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
 
-${INCLOCAL}/b2local.h:
+${INCLOCAL}/b2local.h: ${MAKES}
 	mkdir -p ${INCLOCAL}
 	echo "c" > ${INCLOCAL}/b2local.h
 	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h

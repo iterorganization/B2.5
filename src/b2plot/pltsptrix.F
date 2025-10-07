@@ -89,7 +89,18 @@ c
      &                     real(fcxIy(iFc),R8)-0.5_R8,
      &                     real(fcxIx(iFc),R8)-0.5_R8,
      &                     real(fcxIy(iFc),R8)+0.5_R8)
-
+              if (fcxIx(iFc).eq.cvIx(iCv1)) then
+                call lined_d(real(cvIx(iCv2),R8)-0.5_R8,
+     &                       real(cvIy(iCv2),R8)-0.5_R8,
+     &                       real(cvIx(iCv2),R8)-0.5_R8,
+     &                       real(cvIy(iCv2),R8)+0.5_R8)
+              end if
+              if (fcxIx(iFc).eq.cvIx(iCv2)) then
+                call lined_d(real(cvIx(iCv1),R8)+0.5_R8,
+     &                       real(cvIy(iCv1),R8)-0.5_R8,
+     &                       real(cvIx(iCv1),R8)+0.5_R8,
+     &                       real(cvIy(iCv1),R8)+0.5_R8)
+              end if
             end if
           end if
           if (fcyIx(iFc).ne.-2.and.fcyIy(iFc).ne.-2) then
@@ -102,7 +113,18 @@ c
      &                     real(fcyIy(iFc),R8)-0.5_R8,
      &                     real(fcyIx(iFc),R8)+0.5_R8,
      &                     real(fcyIy(iFc),R8)-0.5_R8)
-
+              if (fcyIy(iFc).eq.cvIy(iCv1)) then
+                call lined_d(real(cvIx(iCv2),R8)-0.5_R8,
+     &                       real(cvIy(iCv2),R8)-0.5_R8,
+     &                       real(cvIx(iCv2),R8)+0.5_R8,
+     &                       real(cvIy(iCv2),R8)-0.5_R8)
+              end if
+              if (fcyIy(iFc).eq.cvIy(iCv2)) then
+                call lined_d(real(cvIx(iCv1),R8)-0.5_R8,
+     &                       real(cvIy(iCv1),R8)+0.5_R8,
+     &                       real(cvIx(iCv1),R8)+0.5_R8,
+     &                       real(cvIy(iCv1),R8)+0.5_R8)
+              end if
             end if
           end if
         end do
