@@ -105,9 +105,11 @@ module b2mod_ual_io_grid
 #   endif
 #   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
     use al_ggd_identifier &          ! IGNORE
-     & , only : set_identifier => set_ggd_identifier
+     & , only : set_identifier => set_ggd_identifier, &
+     &          get_name => get_ggd_name
     use al_ggd_space_identifier &    ! IGNORE
-     & , only : set_identifier => set_ggd_space_identifier
+     & , only : set_identifier => set_ggd_space_identifier, &
+     &          get_name => get_ggd_space_name
     use al_ggd_subset_identifier &   ! IGNORE
      & , only : set_identifier => set_ggd_subset_identifier
     use al_ggd_geometry_content_identifier &   ! IGNORE
@@ -625,7 +627,7 @@ contains
         geometryType = geometryId( mpg, geo, 2 )
 
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        call set_ggd_identifier( grid_ggd%identifier, geometryType )
+        call set_ggd_identifier( grid_ggd%identifier, get_ggd_name(geometryType) )
 #elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         grid_ggd%identifier%index = geometryType
         allocate( grid_ggd%identifier%name(1) )
@@ -643,7 +645,8 @@ contains
 
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        call set_ggd_space_identifier( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier, 1 )
+        call set_ggd_space_identifier( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier, &
+            &  get_ggd_space_name(1) )
 #elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )

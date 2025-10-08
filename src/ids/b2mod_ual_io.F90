@@ -262,6 +262,9 @@ module b2mod_ual_io
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+   use al_midplane_identifier &        ! IGNORE
+     & , only : set_midplane_identifier => set_identifier, &
+     &          get_midplane_name => get_name
     use al_neutrals_identifier &       ! IGNORE
      & , only : set_neutral_type_identifier => set_identifier
     use al_materials_identifier &      ! IGNORE
@@ -270,7 +273,7 @@ module b2mod_ual_io
      & , only : set_radiation_identifier => set_identifier
     use al_edge_source_identifier &    ! IGNORE
      & , only : set_edge_source_identifier => set_identifier
-    use al_plasma_source_identifier &    ! IGNORE
+    use al_plasma_source_identifier &  ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
 #endif
 #endif
@@ -7751,7 +7754,7 @@ contains
     return
     end subroutine write_model_identifier
 
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 30 ) || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 ) )
     subroutine write_source_identifier( source_id, id_index )
     implicit none
     type(ids_identifier) :: source_id
@@ -9656,7 +9659,7 @@ contains
     integer, intent(in) :: midplane_id
 
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    call set_midplane_identifier( midplane, midplane_id )
+    call set_midplane_identifier( midplane, get_midplane_name(midplane_id) )
 #else
     midplane%index = midplane_id
     allocate( midplane%name(1) )
