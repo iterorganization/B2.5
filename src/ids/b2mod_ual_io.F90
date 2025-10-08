@@ -208,14 +208,15 @@ module b2mod_ual_io
      & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
     use al_midplane_identifier &       ! IGNORE
-     & , only : set_midplane_identifier => set_identifier
+     & , only : set_midplane_identifier => set_identifier, &
+     &          get_midplane_name => get_name
     use al_neutrals_identifier &       ! IGNORE
      & , only : set_neutral_type_identifier => set_identifier
     use al_radiation_identifier &      ! IGNORE
      & , only : set_radiation_identifier => set_identifier
     use al_edge_source_identifier &    ! IGNORE
      & , only : set_edge_source_identifier => set_identifier
-    use al_plasma_source_identifier &    ! IGNORE
+    use al_plasma_source_identifier &  ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
 #endif
 #endif
@@ -9583,7 +9584,7 @@ contains
     integer, intent(in) :: midplane_id
 
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    call set_midplane_identifier( midplane, midplane_id )
+    call set_midplane_identifier( midplane, get_midplane_name(midplane_id) )
 #else
     midplane%index = midplane_id
     allocate( midplane%name(1) )
