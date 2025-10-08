@@ -1036,6 +1036,11 @@
               write (*,*) 'locrightix, locrightiy = ',
      .          locrightix(ix,iy),
      .          locrightiy(ix,iy)
+              write (*,*) 'Rc, Zc =',
+     .          0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                   crx(ix,iy,2)+crx(ix,iy,3)),
+     .          0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                   cry(ix,iy,2)+cry(ix,iy,3))
               cellError=.true.
 !              call xerrab ('Problem in definition of locrightix.')
             endif
@@ -1045,6 +1050,11 @@
               write (*,*) 'loctopix, loctopiy = ',
      .          loctopix(ix,iy),
      .          loctopiy(ix,iy)
+              write (*,*) 'Rc, Zc =',
+     .          0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                   crx(ix,iy,2)+crx(ix,iy,3)),
+     .          0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                   cry(ix,iy,2)+cry(ix,iy,3))
               cellError=.true.
 !              call xerrab ('Problem in definition of loctopiy.')
             endif
@@ -1061,6 +1071,11 @@
                    write (*,*) 'locrightix, locrightiy = ',
      .               locrightix(ix,iy),
      .               locrightiy(ix,iy)
+                   write (*,*) 'Rc, Zc =',
+     .               0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                        crx(ix,iy,2)+crx(ix,iy,3)),
+     .               0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                        cry(ix,iy,2)+cry(ix,iy,3))
                    cellError=.true.
 !                    call xerrab ('Problem in definition of locrightix.')
                   endif
@@ -1077,6 +1092,11 @@
                    write (*,*) 'loctopix, loctopiy = ',
      .               loctopix(ix,iy),
      .               loctopiy(ix,iy)
+                   write (*,*) 'Rc, Zc =',
+     .               0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                        crx(ix,iy,2)+crx(ix,iy,3)),
+     .               0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                        cry(ix,iy,2)+cry(ix,iy,3))
                    cellError=.true.
 !                    call xerrab ('Problem in definition of loctopiy.')
                   endif

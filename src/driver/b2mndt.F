@@ -411,6 +411,16 @@ ctmp.dpc
 *      ..basic iterative step
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
+            !fc: if using BDF2, the first iteration must use IE to start-up the scheme
+            if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
+              switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+              ts_factor=1.0_R8
+              if (switch%b2mndt_startup.eq.2) then
+                switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+                ts_factor=2.0_R8
+              endif
+              flag_startup=1 !fc: startup done
+            endif
             if (switch%b2mndt_style.eq.1) then
 
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
@@ -419,32 +429,23 @@ ctmp.dpc
 
             elseif (switch%b2mndt_style.eq.2) then
 
-              !fc: if using BDF2, the first iteration must use IE to start-up the scheme
-              if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
-                switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
-                ts_factor=1.0_R8
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
-                  ts_factor=2.0_R8
-                endif
-                flag_startup=1 !fc: startup done
-              endif
-
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
 
-              if (flag_startup.eq.1) then
-                switch%b2mndt_bdf=2 !fc: if start-up done, switch back to BDF2 time-stepping scheme
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=1 ! turn off CKN scheme after startup
-                endif
-                ts_factor = 3.0_R8/2.0_R8
-              endif
-
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
+            
+            !fc: if BDF2 startup done, switch back to BDF2 time-stepping scheme
+            if (flag_startup.eq.1) then
+                switch%b2mndt_bdf=2
+                if (switch%b2mndt_startup.eq.2) then
+                  switch%b2mndt_ckn=1
+                endif
+                ts_factor = 3.0_R8/2.0_R8
+            endif
+
             flush(6)
 *      ..re-compute ne, ne2, ni
             call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
