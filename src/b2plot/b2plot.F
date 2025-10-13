@@ -177,7 +177,7 @@ c
       integer lucdf
       integer itmp, istart, iend,
      * sput_src, refl_model, sput_phys_model,
-     * sput_chem_model, sput_phys_col, drift_style
+     * sput_chem_model, sput_phys_col, drift_style, ue_style
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
@@ -227,13 +227,13 @@ c
      8     sput_phys_model/1/, sput_phys/0.0_R8/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
-     2     use_eirene/0/, ismain0/0/
+     2     use_eirene/0/, ismain0/0/, ue_style/2/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
      3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
      4     neutrals_namelist,
-     5     sput_frac_flag, use_eirene, ismain0, drift_style
+     5     sput_frac_flag, use_eirene, ismain0, drift_style, ue_style
 
 c
 #ifndef NO_GETENV
@@ -430,6 +430,7 @@ cxpb  quantities before their mapping to cell centers
         drift_style = 2
       end if
       call ipgeti ('b2tfnb_drift_style', drift_style)
+      call ipgeti ('b2sigp_style', ue_style)
       call ipgetr ('b2news_BoRiS', BoRiS)
       call b2xpni (nx, ny, ns, na, ni)
       nflai=0
@@ -1329,7 +1330,12 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      ue(:,:)=-fch_p(:,:,0,0)/pbs(:,:,0)/qe       !srv 10.06.09
+      if (ue_style.eq.2) then
+        call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
+     &               ne, te, na, ua, ue_ext, ne_ext, ue)
+      else
+        ue(:,:)=-fch_p(:,:,0,0)/pbs(:,:,0)/qe                            !srv 10.06.09
+      end if
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
@@ -1337,7 +1343,8 @@ c
             vv(ix,iy,is)=fna(ix,iy,1,1,is)/na(ix,iy,is)/gs(ix,iy,1)
             up(ix,iy,is)=
      .       fna(ix,iy,0,0,is)/na(ix,iy,is)/gs(ix,iy,0)/qz(ix,iy,1)
-            ue(ix,iy)=ue(ix,iy)+rza(ix,iy,is)*ua(ix,iy,is)*na(ix,iy,is)
+            if (ue_style.lt.2)
+     >       ue(ix,iy)=ue(ix,iy)+rza(ix,iy,is)*ua(ix,iy,is)*na(ix,iy,is)
             fnax(ix,iy,is)=fna(ix,iy,0,0,is)
             fmox(ix,iy,is)=fmo(ix,iy,0,0,is)
             fhmx(ix,iy,is)=fhm(ix,iy,0,0,is)
@@ -1359,8 +1366,10 @@ c
           enddo
         enddo
       enddo
-      ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
-      ue(:,:)=ue(:,:)/ne(:,:)
+      if (ue_style.lt.2) then
+        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
+        ue(:,:)=ue(:,:)/ne(:,:)
+      end if
       do iy=-1,ny
         rave(iy)=0.0_R8
         t1=0.0_R8
