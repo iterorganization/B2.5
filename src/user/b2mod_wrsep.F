@@ -547,8 +547,8 @@ c*** New file
         write(lun,'(2a)') '#  ',trim(label)
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
-     ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(5x,a8,a2),',
+     ,   '(a1,6x,a4,4x,',ng_tmp,'(5x,a8,1x),',
+     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),2x,',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
@@ -572,7 +572,7 @@ c>>>
 
       end if
       write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
-     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4))'
+     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4e3))'
 
       allocate(equs_tmp(nspecies,nspc_tmp))
       allocate(nisp_tmp(nspecies))

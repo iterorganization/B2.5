@@ -69,7 +69,7 @@
        do iCv = 1, mpg%nCi
           navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
           movi = movi+geo%cvVol(iCv)*
-     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
+     &      pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
 !WG_TODO         if (resignore(iCv,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
 !WG_TODO         if (resignore(iCv,2).ne.0)

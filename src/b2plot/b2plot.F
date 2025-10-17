@@ -5259,6 +5259,20 @@ c     assumes that bb is OK for 1d cases
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
+        case ('colle')
+          description='Electron collision number'
+          call b2txnce (mpg,geo,switch,mpg%nCv,
+     &     state%pl%te,state%dv%ne2,state%dv%lnlam,wrkf, wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textbl)
+        case ('colli')
+          description='Main ion collision number'
+          call b2txnci (mpg,geo,switch,mpg%nCv,state%ns,
+     &     state%pl%ti,state%pl%te,state%rt%rz2,state%dv%ne,
+     &     state%dv%ne2,state%pl%na,state%dv%lnlam,
+     &     ismain,state_ext,wrkf,wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textpl(ismain))
 #ifdef WG_TODO
         case ('crx')
           description='Corner radial coordinate (m)'

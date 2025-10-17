@@ -332,7 +332,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
         do k = 1, mpg%nCg
           iFc = mpg%fcs_wall(k)
           wrk0 = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-          if ((wrk0 >= geo%Qalfmin)) then
+          if (wrk0 >= geo%Qalfmin) then
             co%chcb(iFc,1,:) = 0.0_R8
             co%calf(iFc,1) = 0.0_R8
             co%csig(iFc,1) = 0.0_R8
@@ -355,7 +355,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
                 co%cdna(iFc,1,is) = co%cdna(iFc,1,is)/inctran
               endif
             enddo
-            if (co%csig(iFc,0)*geo%fcQalf(iFc,0) .gt. 0.0_R8) then
+            if (co%csig(iFc,0)*geo%fcQalf(iFc,0).gt.0.0_R8) then
               co%calf(iFc,1) = 0.0_R8
               co%csig(iFc,1) = 0.0_R8
             else

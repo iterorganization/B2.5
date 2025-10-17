@@ -471,11 +471,12 @@ cdjm Jan2017 update momentum source components for balance
          endif
        endif
 *    .. calculate time-dependent source
+*    .. ts_factor = time-stepping multiplication factor
        if (switch%b2mndt_style.eq.2) then
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
-         sr%smodt(:,0,is) = sr%smodt(:,0,is)-switch%b2mndt_ckn*
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
      &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
      &    psnl%ua(:,is)/dtim
          smb = smb + sr%smodt(:,:,is)
@@ -494,6 +495,12 @@ cdjm Jan2017 update momentum source components for balance
      &      .or.switch%get_residuals.eq.1) then
           dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
      &     psnl%resmo0(1:mpg%nCi,is)
+        endif
+      elseif (switch%b2mndt_bdf.eq.2) then
+        if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+     &     .or.switch%get_residuals.eq.1) then
+          dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
+     &     0.5_R8*psnl%dmodt(1:mpg%nCi,is) ! +1/2*m*V*[d(nu)/dt]_i (where i denotes the previous time-step)
         endif
       endif
 
@@ -725,12 +732,23 @@ c     ..compare 9-pt stencil matrices
         endif
       endif
 
+*   ..compute physical time-derivative after correction has been applied
+*   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
+! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
+      do is = 0, ns-1
+        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                          ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
+     &    -sr%smodt(:,1,is)*pl%ua(:,is)                             ! = 0
+     &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                   ! = 0
+     &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
+     &    /ts_factor
+      enddo
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                        !srv 18.05.02
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
+        call my_out_us(70,nCv,0,dv%dmodt(1,is),'b2npmo_dmodt'//chns)
        enddo
       endif                                                             !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then
