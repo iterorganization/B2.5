@@ -4,7 +4,7 @@
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
      &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
-     &  hx, hy, gs, qc, vol, bb, pbs, lnlam,
+     &  hx, hy, hy1, gs, qc, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
      &  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 08.05.24
@@ -17,7 +17,9 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     & , only : b2npht_shei_bal,
+     &          update_balance_sources_heat,
+     &          update_balance_eirene_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
       use b2mod_sources
@@ -32,6 +34,7 @@
       real (kind=R8) ::
      *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),       !srv 07.06.00 02.06.99 07.07.21
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hy1(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
@@ -107,6 +110,7 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: style = 1                                        !srv 09.07.08
       integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: write_eirene_sources = 0
       integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       character chns*3                                                  !srv 17.07.05
       logical warning_e, warning_i
@@ -143,6 +147,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nph9')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
@@ -183,13 +193,8 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
@@ -249,12 +254,12 @@
 
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, hy1,
      &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,            !srv 01.07.09
      &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)  !xpb !srv 24.08.21
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,
+     *  hx, hy, hy1, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
      *  cvsa_drho,                                                      !som 16.08.21
      *  cvsa_uAdp_albe, cvsa_uBdp_al,                                   !som 08.05.24
@@ -266,6 +271,9 @@
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
+      endif
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_heat(nx,ny,ne,ni,te,ti)
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
@@ -332,10 +340,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,reshe,'b2nph9_reshe')
         call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
         call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
-!        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
-!        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
-!        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
-!        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
+        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
+        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
+        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
+        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                   she0(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2nph9_she')
@@ -343,10 +351,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,resht,'b2nph9_resht')
         call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
         call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
-!        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
-!        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
-!        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
-!        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
+        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
+        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
+        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
+        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')

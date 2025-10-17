@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -D${OBJDIR}
@@ -30,8 +27,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/lib/cpp
@@ -39,6 +36,7 @@ CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C -qfixed -qextchk
 else
@@ -52,6 +50,7 @@ DBLSED = sed -e s:\#PREC\#:d:g
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -63,9 +62,9 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
+LN = ${FN}
 
-LCPP = ${LD_SONNET} -L/usr/lpp/xlC/lib -lCns
 
 #!!!Local Variables:
 #!!! mode: Makefile

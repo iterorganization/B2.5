@@ -34,7 +34,9 @@
       real (kind=R8) ::
      *   ft
       save ncall
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
       external xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
@@ -61,7 +63,7 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
-          if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then                          !som 13.01.22
+          if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then          !som 13.01.22
            flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*
      &     (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
           else if (zh_vis_type.eq.1) then

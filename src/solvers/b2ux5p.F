@@ -16,7 +16,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
-*   ..common blocks
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -62,7 +61,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, itmax, iters, itpar, cpu, ix, iy
+      integer ncall, style, itmax, iters, itpar, cpu
       parameter (itmax=100)
 #ifdef _OPENMP
       real (kind=R8) :: cpu_start, cpu_end
@@ -70,10 +69,6 @@
       real (kind=R4) :: cpu_start, cpu_end
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
-      real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
-      integer, allocatable, save :: iwrk(:)
-      integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter
@@ -83,14 +78,15 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
+#ifdef _OPENMP
 !!FR The save variables used by ilutern need to be declared threadprivate
 !!FR to ensure that each thread accesses its own copy of these and not a
 !!FR global version. The iluter and slv5pt specific arrays have also been
 !!FR declared threadprivate to ensure any attempts to allocate them on
 !!FR multiple threads will work. However, the code will be stopped if
 !!FR the iluter or slv5pt are used as these have not been parallelised.
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
-      !$OMP THREADPRIVATE (ncall, style, acpar, cpu)
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu)
+#endif
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -99,6 +95,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2ux5p')
+*   ..test nx, ny, itcnt
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2ux5p_style', style)
@@ -107,64 +106,6 @@
        call ipgetr ('b2ux5p_acpar', acpar)
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux5p_cpu', cpu)
-       if(style.eq.2) then
-         mult_nonzero=10
-         mult_solvdim=15
-         mult_solvdim1=10
-         call ipgeti ('b2ux5p_mult_nonzero', mult_nonzero)
-         call ipgeti ('b2ux5p_mult_solvdim', mult_solvdim)
-         call ipgeti ('b2ux5p_mult_solvdim1', mult_solvdim1)
-         nnd=(nx+2)*(ny+2)
-         n_nonzeros=mult_nonzero*nnd
-         solvdim=mult_solvdim*n_nonzeros
-         solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28
-         call iniilu(nx+2,ny+2)
-         nltrsol=2
-         call ipgeti ('b2ux5p_nltrsol', nltrsol)
-       endif
-      endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, itcnt
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (0.le.itcnt, 'faulty argument itcnt')
-*   ..obtain work space
-      if (ncall.eq.0) then
-        write(*,*) 'Allocating space for solver'
-        if (style.eq.0) then
-*    ..obtain workspace for iluter
-          allocate(aaf(1:n2*5))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:n2))
-          allocate(wrk2(1:n2))
-          allocate(iwrk(1:1))
-        else if (style.eq.1) then
-*    ..obtain workspace for slv5pt
-          allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:1))
-          allocate(wrk2(1:1))
-          allocate(iwrk(1:n2))
-        else if (style.eq.2) then
-        endif
-        if (style.lt.2) then
-          do ix = -1, nx
-            do iy = -1, ny
-              call xertst (
-     .    (leftix(ix,iy).eq.-2 .or. leftix(ix,iy).eq.ix-1) .and.
-     .     leftiy(ix,iy).eq.iy .and.
-     .    (rightix(ix,iy).eq.nx+1 .or. rightix(ix,iy).eq.ix+1) .and.
-     .     rightiy(ix,iy).eq.iy .and.
-     .     bottomix(ix,iy).eq.ix .and.
-     .    (bottomiy(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.iy-1) .and.
-     .     topix(ix,iy).eq.ix .and.
-     .    (topiy(ix,iy).eq.ny+1 .or. topiy(ix,iy).eq.iy+1),
-     .   'Solver type inappropriate for non-trivial neighbourhoods')
-            enddo
-          enddo
-        endif
-        write(*,*) 'Allocated space for solver'
       endif
 
 *   ..solve the correction equation
@@ -183,7 +124,7 @@
         stop 'STOP: iluter not parallelised, re-run in serial'
        else
         call iluter (nx+2, ny+2, aa5, resfun, iters, acpar, itpar,
-     &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+     &   corfun, nrmc, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
        endif
       else if (style.eq.1) then
 *    ..use slv5pt
@@ -192,7 +133,7 @@
         stop 'STOP: slv5pt not parallelised, re-run in serial'
        else
         call slv5pt (nx+2, ny+2, aa5, resfun, iters, corfun, nrmc,
-     &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+     &   min(nx+2,ny+2), aaf_5p, wrk0_5p, iwrk_5p)
        endif
       else if (style.eq.2) then
 *    ..use ma28

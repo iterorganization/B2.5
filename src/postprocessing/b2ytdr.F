@@ -179,7 +179,7 @@ c 2002-09-11: logic revised
       integer elm_ix1, elm_ix2
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, jsep_cnv, jxa_cnv, iyped
       integer mw_jxa1, mw_jsep1, jsep1cnv, jxa1cnv, iyped1
-      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
+      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
@@ -263,7 +263,8 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
+     3 saved_na_feedback_actuator1(:), saved_na_feedback_prev1(:),
+     4 na_feedback_target1(:),
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
      4 na_feedback_gamma1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
@@ -597,7 +598,7 @@ c 2002-09-11: logic revised
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data use_eirene/0/, style_b2mndt/1/
+      data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -850,9 +851,9 @@ c 2002-09-11: logic revised
       endif
 *   ..import parameters from Eirene input.dat file
       CALL EIRENE_DEFAULTS_USR
-      inquire(file='input.dat',exist=ex)
+      inquire(file=fort_lc//'1',exist=ex)
       if (ex) then
-        open(unit=45,file='input.dat')
+        open(unit=45,file=fort_lc//'1')
         CALL EIRENE_FIND_PARAM(45)
         close(45)
         CALL EIRENE_SET_PARMMOD(1)
@@ -952,7 +953,7 @@ c 2002-09-11: logic revised
 *   ..read old geometry and metric (do not overwrite redef_gmtry)
         redef_gmtry_save = redef_gmtry
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
         redef_gmtry = redef_gmtry_save
@@ -990,7 +991,7 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
         call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -1500,6 +1501,8 @@ c 2002-09-11: logic revised
         j = ispecies1(i+1)
         if (j.gt.0) amfact1(j-1)=amfact(i)
       end do
+      call ipgeti ('b2mndr_pulse_number', pulse)
+      call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1962,6 +1965,11 @@ c 2002-09-11: logic revised
               read (ninp(2),'(a)') add_comment(i)
             end do
           end if
+        case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
+          todo = pulse.eq.0.and.shot.ne.0
+          wait = .true.
+          cnamip = 'b2mndr_pulse_number'
+          if (todo) iswitch = shot
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -4239,7 +4247,8 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+          case ('H','D','T','DT',
+     &          'He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
             continue
           case default
             no_sputtering = .false.
@@ -4249,7 +4258,7 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','C','Ne','Ar','N','Be')
+          case ('H','D','T','DT','He','C','Ne','Ar','N','Be')
             continue
           case default
             adas_correct = b2fstate_version.gt.'03.000.007'
@@ -4312,7 +4321,7 @@ cxpb  Start reading input.dat file
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
           READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,19)
+          call fix_logical_input(zeile,20)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
@@ -4330,10 +4339,10 @@ cxpb  Start reading input.dat file
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
                                          ! NLTRIMESH
           ELSE
-            READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
           ENDIF
         ENDIF
         IF (streql(eirene_format,'facelift')) then
@@ -4350,12 +4359,15 @@ cxpb  Start reading input.dat file
         ELSE
           ldum(10) = .true. ! Make sure we are using the H1RN random generator
         END IF
-        IF (.not.streql(eirene_format,'msv')) ldum(18)=.true. ! Add NLSOLEDGE on by default
+        IF (.not.streql(eirene_format,'msv')) then
+          ldum(18)=.true.  ! Add NLSOLEDGE on by default
+          ldum(19)=.false. ! Add NLSPCSPT off by default
+        END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
         NLTRIMESH = ldum(15)
-        WRITE(IUNOT,6665) ldum(0:18) ! NLTRIMESH now moved to block 14
+        WRITE(IUNOT,6665) ldum(0:19) ! NLTRIMESH now moved to block 14
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -10788,8 +10800,14 @@ C  HERE: EIRENE SURFACE TALLIES
 cxpb  Convert fort.44 file if needed
         filename=fort_lc//'44'
         inquire(file=filename,exist=todo)
+        if (todo) then
+          rewind(44)
+          read (44,'(I4,2X,I4,2X,I8)',END=4499,ERR=4499) idum(0:2)
+          rewind(44)
+        end if
         if (todo.and.(.not.streql(solps_version,'iter').or.
-     &     .not.same_bundling.or..not.same_grid)) then
+     &     .not.same_bundling.or..not.same_grid.or.
+     &     idum(2).lt.jvft44)) then
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
@@ -10799,13 +10817,14 @@ cxpb  Convert fort.44 file if needed
      &     no_sputtering, savestratum, non_commensurate, flip,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc, hxx, hyy, qc1, gs1)
+     &     hx, hy, qc, vol, hxx, hyy, qc1, gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
           write(nout(5),'(a)') 'fort.44'
           write(*,*) 'No changes needed in '//fort_lc//'44'
         endif
+ 4499   continue
 cxpb  Convert fort.46 file if needed
         filename=fort_lc//'46'
         inquire(file=filename,exist=todo)
@@ -11829,22 +11848,29 @@ cxpb as they no longer necessarily point to the same species
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
      &   .and. .not.found .and. .not.same_atoms) then
         call read_b2mod_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
+        if (maxval(saved_na_feedback_actuator).gt.0.0_R8.or.
+     &      maxval(saved_na_feedback_prev).gt.0.0_R8) then
           todo = .false.
           is = 1
           do while (.not.todo .and. is.le.nspecies)
             todo = todo .or.
-     &        (saved_na_feedback_actuator(is-1).gt.0.0_R8 .and.
+     &       ((saved_na_feedback_actuator(is-1).gt.0.0_R8.or.
+     &         saved_na_feedback_prev(is-1).gt.0.0_R8) .and.
      &         ispecies1(is).ne.is)
             is = is+1
           end do
           if (todo) then
             allocate(saved_na_feedback_actuator1(0:nspecies1-1))
+            allocate(saved_na_feedback_prev1(0:nspecies1-1))
             saved_na_feedback_actuator1 = 0.0_R8
+            saved_na_feedback_prev1 = 0.0_R8
             do is = 1, nspecies
-              if (ispecies1(is).ne.-1)
-     >         saved_na_feedback_actuator1(ispecies1(is)-1) =
-     .          saved_na_feedback_actuator(is-1)
+              if (ispecies1(is).ne.-1) then
+                saved_na_feedback_actuator1(ispecies1(is)-1) =
+     .           saved_na_feedback_actuator(is-1)
+                saved_na_feedback_prev1(ispecies1(is)-1) =
+     .           saved_na_feedback_prev(is-1)
+              end if
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
             write(nout(5),'(a)') trim(new_filename)
@@ -11873,11 +11899,16 @@ cxpb as they no longer necessarily point to the same species
      >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
-     >       (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_na_feedback_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
+     >        (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_na_feedback_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_NA_FEEDBACK_PREV=',
+     >        (saved_na_feedback_prev1(is),is=0,nspecies1-1)
             write(99,'(a1)') '/'
             close(99)
             deallocate(saved_na_feedback_actuator1)
+            deallocate(saved_na_feedback_prev1)
           end if
         end if
       else if (todo) then
@@ -12349,6 +12380,23 @@ cxpb as they no longer necessarily point to the same species
         if (Te_det_threshold.ne.2.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)')
      >    'TE_DET_THRESHOLD=',Te_det_threshold,','
+        if (q95_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'Q95_ALBLL=',q95_albll,','
+        if (B0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'B0_ALBLL=',B0_albll,','
+        if (R0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'R0_ALBLL=',R0_albll,','
+        if (maxval(trgshp(1:2*nncut)).gt.1.0_R8) then
+          write(hlp_frm,'(a,i1,a)') '(1x,a,1p,',2*nncut,'(e10.2,a))'
+          if (flip) then
+            write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=2*nncut,1,-1)
+          else
+            write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=1,2*nncut)
+          end if
+        end if
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do

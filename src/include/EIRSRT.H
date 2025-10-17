@@ -35,8 +35,8 @@ c*** sps_id:    identifier of the group of surfaces (assigned in DG)
       integer n_spcsrf, l_spcsrf(nn_spcsrf), i_spcsrf(DEF_NSPCSRFG),
      ,  j_spcsrf(DEF_NSPCSRFG), sps_sgrp(DEF_NSPCSRFG)
       character*8 sps_mtrl(DEF_NSPCSRFG), sps_id(DEF_NSPCSRFG)
-      common/spcsrfcom/
-     r  sps_absr,sps_trno,sps_trni,sps_mtri,sps_tmpr,
-     r  sps_spph,sps_spch,
-     i  n_spcsrf,l_spcsrf,i_spcsrf,j_spcsrf,sps_sgrp
-      common/spcsrfcch/sps_mtrl,sps_id
+!      common/spcsrfcom/
+!     r  sps_absr,sps_trno,sps_trni,sps_mtri,sps_tmpr,
+!     r  sps_spph,sps_spch,
+!     i  n_spcsrf,l_spcsrf,i_spcsrf,j_spcsrf,sps_sgrp
+!      common/spcsrfcch/sps_mtrl,sps_id

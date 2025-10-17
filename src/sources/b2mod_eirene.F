@@ -248,6 +248,7 @@ csw 26feb2014
       real (kind=R8) :: relax
       integer, save :: jxi, jxa, jsep
       integer, save :: nxtl, nxtr   ! IYS 29.03.2022
+      integer, save :: write_eirene_sources = 0
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -310,9 +311,6 @@ c not sure this is the right place
         allocate(ishigh(NATM))
         allocate(sum_wld(4,2+NATM))
         allocate(feedback_strata(0:nspecies-1))
-        if (balance_netcdf.ne.0) then !djm Jan2017
-         call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
-        endif
 
         write(*,*) 'Calling test_couple'
         call test_couple(ndx,ndy,nstra,nfl,natm,nmol,nion,nlimps)
@@ -463,6 +461,12 @@ csw 26feb2013
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
         call ipgeti ('eirene_stab_corr', stab_corr)
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
+         call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
+        endif
+
       end if !}
 
       if(ncall.eq.0) then
@@ -846,7 +850,7 @@ c          end if !}
         end if !}
       end do !}
 
-      write(hlp_frm,'(a,i2,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
+      write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
       if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
         write(*,hlp_frm) 'tflux: ',tflux
         write(*,hlp_frm) 'flux_scale: ',flux_scale
@@ -1351,7 +1355,8 @@ c!###}
                       smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
      *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
-                      if (balance_netcdf.ne.0) then !djm Jan2017
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         sni_papl(ix,iy,fluids_list(is),istrai)=
      *                     sni_papl(ix,iy,fluids_list(is),istrai)*
      *                     hlp_scl(ls)
@@ -1565,7 +1570,8 @@ c>>>
                       smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
      *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
-                      if (balance_netcdf.ne.0) then !djm Jan2017
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         sni_papl(ix,iy,fluids_list(is),istrai)=
      *                   sni_papl(ix,iy,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
@@ -1827,7 +1833,8 @@ c*** Here only the second pass of correction
                       smo(ix,iy,fluids_list(is)+2*nfl,istrai)=
      *                   smo(ix,iy,fluids_list(is)+2*nfl,istrai)*
      *                   hlp_scl(ls)
-                      if (balance_netcdf.ne.0) then !djm Jan2017
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         sni_papl(ix,iy,fluids_list(is),istrai)=
      *                   sni_papl(ix,iy,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
@@ -2061,7 +2068,7 @@ c              it is NOT IYSs style)
         smo_av=0.0_R8
         see_av=0.0_R8
         sei_av=0.0_R8
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           allocate(sne_av_pael(0:(size(see,1)-1),0:(size(see,2)-1),
      .                    size(see,3)))
           allocate(sne_av_pmel(0:(size(see,1)-1),0:(size(see,2)-1),
@@ -2159,7 +2166,7 @@ c              it is NOT IYSs style)
          smo_av=0.0_R8
          see_av=0.0_R8
          sei_av=0.0_R8
-         if (balance_netcdf.ne.0) then !djm Jan2017
+         if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
            sne_av_pael=0.0_R8
            sne_av_pmel=0.0_R8
            sna_av_paat=0.0_R8
@@ -2199,7 +2206,7 @@ c              it is NOT IYSs style)
         smo_av = smo_av + smo
         sei_av = sei_av + sei
         see_av = see_av + see
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = sne_av_pael + sne_pael
           sne_av_pmel = sne_av_pmel + sne_pmel
           sna_av_paat = sna_av_paat + sna_paat
@@ -2253,7 +2260,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
         smo_h(:,:,:,:,ihist) = smo
         see_h(:,:,:,ihist) = see
         sei_h(:,:,:,ihist) = sei
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           sna_h_paat(:,:,:,:,ihist) = sna_paat
           sna_h_pmat(:,:,:,:,ihist) = sna_pmat
           sna_h_piat(:,:,:,:,ihist) = sna_piat
@@ -2300,7 +2307,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
         smo_av = 0.0_R8
         see_av = 0.0_R8
         sei_av = 0.0_R8
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = 0.0_R8
           sne_av_pmel = 0.0_R8
           sna_av_paat = 0.0_R8
@@ -2339,7 +2346,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
          smo_av = smo_av + smo_h(:,:,:,:,ih)
          see_av = see_av + see_h(:,:,:,ih)
          sei_av = sei_av + sei_h(:,:,:,ih)
-         if (balance_netcdf.ne.0) then !djm Jan2017
+         if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
            sne_av_pael = sne_av_pael + sne_h_pael(:,:,:,ih)
            sne_av_pmel = sne_av_pmel + sne_h_pmel(:,:,:,ih)
            sna_av_paat = sna_av_paat + sna_h_paat(:,:,:,:,ih)
@@ -2407,7 +2414,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         smo_s = smo_s*relax + smo/dble(ih_end)
         see_s = see_s*relax + see/dble(ih_end)
         sei_s = sei_s*relax + sei/dble(ih_end)
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           sne_s_pael = sne_s_pael*relax + sne_pael/dble(ih_end)
           sne_s_pmel = sne_s_pmel*relax + sne_pmel/dble(ih_end)
           sna_s_paat = sna_s_paat*relax + sna_paat/dble(ih_end)
@@ -2454,7 +2461,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         smo_av = smo_s*dble(ih_end)
         sei_av = sei_s*dble(ih_end)
         see_av = see_s*dble(ih_end)
-        if (balance_netcdf.ne.0) then !djm Jan2017
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = sne_s_pael*dble(ih_end)
           sne_av_pmel = sne_s_pmel*dble(ih_end)
           sna_av_paat = sna_s_paat*dble(ih_end)
@@ -2495,7 +2502,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
        smo_av = smo
        sei_av = sei
        see_av = see
-       if (balance_netcdf.ne.0) then !djm Jan2017
+       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
          sne_av_pael = sne_pael
          sne_av_pmel = sne_pmel
          sna_av_paat = sna_paat
@@ -2721,7 +2728,7 @@ c   and apply linearisation
           enddo !}
         endif !}
       enddo !}
-      if (balance_netcdf.ne.0) then
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
         eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
         eirene_mc_papl_sna0to1 = 0.0_R8
         eirene_mc_pmel_sne0to1 = 0.0_R8
@@ -2785,7 +2792,8 @@ c     *             recyctmp*flux_scale(istrai)
                                                   ! original wrong code
                   else if(dpc_fix.eq.1) then
                     t0=t00                        ! dpc fix!
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t0_a = sni_av_papl(ix+1,iy+1,ifl,istrai)*  !djm Jan2017
      *                       tflux(istrai)*
      *                       recyctmp*flux_scale(istrai)/
@@ -2805,7 +2813,8 @@ c     *             recyctmp*flux_scale(istrai)
                     endif
                   else if(dpc_fix.eq.2) then
                     t0=0.0_R8                     ! at least get the wrong code to go wrong safely!
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t0_a=0.0_R8 !djm Jan2017
                       t0_m=0.0_R8
                       t0_i=0.0_R8
@@ -2814,7 +2823,8 @@ c     *             recyctmp*flux_scale(istrai)
                   endif
                   if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8) then
                     t0=t00*sclalph(j,istrai)
-                    if (balance_netcdf.ne.0) then !djm Jan2017
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t0_a=t0_a*sclalph(j,istrai)
                       t0_m=t0_m*sclalph(j,istrai)
                       t0_i=t0_i*sclalph(j,istrai)
@@ -2841,7 +2851,8 @@ c                  end if !}
                     sna0(ix,iy,0,is)=sna0(ix,iy,0,is)+rf0*abs(t0)
                     sna0(ix,iy,1,is)=sna0(ix,iy,1,is)-
      1               rf0*abs(t0)/na(ix,iy,is)
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
                         eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)=
@@ -2910,7 +2921,8 @@ c$$$                    endif
                     endif
                   elseif(linearisation.eq.0) then !}{
                     sna0(ix,iy,0,is)=sna0(ix,iy,0,is)+t0
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)= !djm Jan2017
      &                 eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)+t0_a
                       eirene_mc_pmpl_sna0to1(ix,iy,0,is,istrai)=
@@ -2962,7 +2974,8 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
                   t0=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *             dble(ih_end)*hz(ix,iy)
-                  if (balance_netcdf.ne.0) then !djm Jan2017
+                  if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *               write_eirene_sources.ne.0) then
                     t0_a=smo_av_mapl(ix+1,iy+1,ifl,istrai)*
      *                   tflux(istrai)*
      *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
@@ -3003,7 +3016,8 @@ cxpb was     1               UA(RIGHTIX(IX,IY),RIGHTIY(IX,IY),IS)/VTHE
 cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)=
 cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)-
 cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
                         eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)=
@@ -3073,7 +3087,8 @@ c$$$                    endif
                     endif
                   elseif (linearisation.eq.0) then !}{
                     smo0(IX,IY,0,IS)=smo0(IX,IY,0,IS)+t0
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)= !djm Jan2017
      &                 eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)+t0_a
                       eirene_mc_mmpl_smo0to3(ix,iy,0,is,istrai)=
@@ -3125,7 +3140,7 @@ c Diamagnetic momentum source component
             end do !}  ! iy
           end if !}
         end do !}  ! is
-        if (balance_netcdf.ne.0) then !{
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !{
           rf0=RF_NEUT(1)
           do is=1,nnatmi !{
             do iy=-1,ny !{
@@ -3219,7 +3234,8 @@ c Diamagnetic momentum source component
      &         region(ix,iy,0).ne.0) then !{
 * electron particle source
               rf0=RF_NEUT(1)
-              if (balance_netcdf.ne.0) then
+              if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *           write_eirene_sources.ne.0) then
                 t0_a = sne_av_pael(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *           dble(ih_end)
@@ -3228,7 +3244,8 @@ c Diamagnetic momentum source component
      *           dble(ih_end)
               endif
               if (linearisation.eq.1) then !{
-                if (balance_netcdf.ne.0) then
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0_a.ge.0.0_R8) then
                     eirene_mc_pael_sne0to1(ix,iy,0,istrai)=
@@ -3262,7 +3279,8 @@ cdjm Jan2017 Calculate linearised components of source
                   endif
                 endif
               elseif (linearisation.eq.0) then !}{
-                if (balance_netcdf.ne.0) then
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
                   eirene_mc_pael_sne0to1(ix,iy,0,istrai)= !djm Jan2017
      &             eirene_mc_pael_sne0to1(ix,iy,0,istrai)+t0_a
                   eirene_mc_pmel_sne0to1(ix,iy,0,istrai)=
@@ -3277,7 +3295,8 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=see_av(ix+1,iy+1,istrai)*tflux(istrai)*
      *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *         dble(ih_end)
-              if (balance_netcdf.ne.0) then
+              if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *           write_eirene_sources.ne.0) then
                 t0_a = see_av_eael(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
      *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      *           dble(ih_end)
@@ -3296,7 +3315,8 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
                 she0(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 she0(ix,iy,1)=she0(ix,iy,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy)
-                if (balance_netcdf.ne.0) then
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
                     eirene_mc_eael_she0to3(ix,iy,0,istrai)=
@@ -3366,7 +3386,8 @@ c$$$                    endif
                 endif
               elseif (linearisation.eq.0) then !}{
                 she0(ix,iy,0)=she0(ix,iy,0)+t0
-                if (balance_netcdf.ne.0) then
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
                   eirene_mc_eael_she0to3(ix,iy,0,istrai)= !djm Jan2017
      &             eirene_mc_eael_she0to3(ix,iy,0,istrai)+t0_a
                   eirene_mc_emel_she0to3(ix,iy,0,istrai)=
@@ -3419,7 +3440,8 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=sei_av(ix+1,iy+1,istrai)*tflux(istrai)*
      1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1         dble(ih_end)
-              if (balance_netcdf.ne.0) then
+              if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *           write_eirene_sources.ne.0) then
                 t0_a=sei_av_eapl(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
@@ -3467,7 +3489,8 @@ c*** before correction (r), after correction (c), after iteration (i)
                 src_es(0,3)=src_es(0,3)+t0
               endif
               t1=0.0_R8
-              if (balance_netcdf.ne.0) then
+              if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *           write_eirene_sources.ne.0) then
                 t1_apl=0.0_R8 !djm Jan2017
                 t1_mpl=0.0_R8
                 t1_ipl=0.0_R8
@@ -3505,7 +3528,8 @@ c     *               recyctmp*flux_scale(istrai)
                     t2=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t2_apl= !djm Jan2017
      *                 smo_av_mapl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *                 recyctmp*flux_scale(istrai)/
@@ -3525,7 +3549,8 @@ c     *               recyctmp*flux_scale(istrai)
                     endif
 
                     t2=t2*sclstra(j,istrai)
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t2_apl=t2_apl*sclstra(j,istrai) !djm Jan2017
                       t2_mpl=t2_mpl*sclstra(j,istrai)
                       t2_ipl=t2_ipl*sclstra(j,istrai)
@@ -3539,7 +3564,8 @@ c     *               recyctmp*flux_scale(istrai)
                     t3=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t3_apl= !djm Jan2017
      *                 sni_av_papl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *                 recyctmp*flux_scale(istrai)/
@@ -3562,7 +3588,8 @@ csw 26mar2013 (for TESTING)
                     if(iscltst .eq. 0) then
                       if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
      -                 t3=t3*sclalph(j,istrai)
-                       if (balance_netcdf.ne.0) then
+                       if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                    write_eirene_sources.ne.0) then
                          t3_apl=t3_apl*sclalph(j,istrai) !djm Jan2017
                          t3_mpl=t3_mpl*sclalph(j,istrai)
                          t3_ipl=t3_ipl*sclalph(j,istrai)
@@ -3571,7 +3598,8 @@ csw 26mar2013 (for TESTING)
                     else
                       if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
      -                 t3=t3*sclstra(j,istrai)
-                       if (balance_netcdf.ne.0) then
+                       if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                    write_eirene_sources.ne.0) then
                          t3_apl=t3_apl*sclstra(j,istrai) !djm Jan2017
                          t3_mpl=t3_mpl*sclstra(j,istrai)
                          t3_ipl=t3_ipl*sclstra(j,istrai)
@@ -3581,7 +3609,8 @@ csw 26mar2013 (for TESTING)
 
 csw 06mar2012 total correction
                     t1=t1-ua(ix,iy,is)*t2+kinrgy(ix,iy,is)*t3
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t1_apl=t1_apl-ua(ix,iy,is)*t2_apl+ !djm Jan2017
      &                       kinrgy(ix,iy,is)*t3_apl
                       t1_mpl=t1_mpl-ua(ix,iy,is)*t2_mpl+
@@ -3601,7 +3630,8 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
      .                    t3*dtim*dtco(is,region(ix,iy,0)))/
      .                      (dtim*dtei(region(ix,iy,0)))*
      .                    0.5_R8*mp*am(is)*dua**2
-                      if (balance_netcdf.ne.0) then
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         t4_apl=(na(ix,iy,is)*vol(ix,iy)* !djm Jan2017
      .                      (t2_apl/smo_tot(ix+1,iy+1,ifl))+
      .                      t3_apl*dtim*dtco(is,region(ix,iy,0)))/
@@ -3625,7 +3655,8 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                       endif
                     else
                       t4=0.0_R8
-                      if (balance_netcdf.ne.0) then
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         t4_apl=0.0_R8 !djm Jan2017
                         t4_mpl=0.0_R8
                         t4_ipl=0.0_R8
@@ -3634,7 +3665,8 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                     endif
                     t1=t1-t4
                     sseistab(istrai)=sseistab(istrai)-t4
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       t1_apl=t1_apl-t4_apl !djm Jan2017
                       t1_mpl=t1_mpl-t4_mpl
                       t1_ipl=t1_ipl-t4_ipl
@@ -3645,7 +3677,8 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
               end if !}
               sseicorr(istrai)=sseicorr(istrai)+t1
               t0=t0+t1
-              if (balance_netcdf.ne.0) then
+              if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *           write_eirene_sources.ne.0) then
                 t0_a=t0_a+t1_apl !djm Jan2017
                 t0_m=t0_m+t1_mpl
                 t0_i=t0_i+t1_ipl
@@ -3655,7 +3688,8 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
                 shi0(ix,iy,0)=shi0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 shi0(ix,iy,1)=shi0(ix,iy,1)+
      1           (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy)
-                if (balance_netcdf.ne.0) then
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
                     eirene_mc_eapl_shi0to3(ix,iy,0,istrai)=
@@ -3725,7 +3759,8 @@ c$$$                    endif
                 endif
               elseif (linearisation.eq.0) then !}{
                 shi0(ix,iy,0)=shi0(ix,iy,0)+t0
-                if (balance_netcdf.ne.0) then !djm Jan2017
+                if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *             write_eirene_sources.ne.0) then
                   eirene_mc_eapl_shi0to3(ix,iy,0,istrai)=
      &             eirene_mc_eapl_shi0to3(ix,iy,0,istrai)+t0_a
                   eirene_mc_empl_shi0to3(ix,iy,0,istrai)=
@@ -3862,7 +3897,7 @@ C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS AND ATOMIC IO
 cxpb  core recycling into ions of the highest ionisation stage
       if (ionising_core.gt.0) then
         rf0=RF_NEUT(1)
-        if (balance_netcdf.ne.0) then
+        if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
         do j = 1, nnatmi
@@ -3908,7 +3943,8 @@ cxpb  core recycling into ions of the highest ionisation stage
      ,                     bc_list_y(ix,ib),0,ishigh(j))=
      &                 sna0(bc_list_x(ix,ib),
      ,                      bc_list_y(ix,ib),0,ishigh(j))+t0
-                      if (balance_netcdf.ne.0) then
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         eirene_mc_core_sna0to1(bc_list_x(ix,ib),
      ,                                         bc_list_y(ix,ib),0,
      ,                                         ishigh(j))
@@ -3923,7 +3959,8 @@ cxpb  core recycling into ions of the highest ionisation stage
      ,                      bc_list_y(ix,ib),1,ishigh(j))
      1                +t0/na(bc_list_x(ix,ib),
      ,                       bc_list_y(ix,ib),ishigh(j))
-                      if (balance_netcdf.ne.0) then
+                      if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                   write_eirene_sources.ne.0) then
                         eirene_mc_core_sna0to1(bc_list_x(ix,ib),
      ,                                         bc_list_y(ix,ib),1,
      ,                                         ishigh(j))
@@ -3938,7 +3975,8 @@ cxpb  core recycling into ions of the highest ionisation stage
                     sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))=
      .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))
      1               +rf0*abs(t0)
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_core_sna0to1(bc_list_x(ix,ib),
      .                                       bc_list_y(ix,ib),0,
      .                                       ishigh(j))= !djm Jan2017
@@ -3950,7 +3988,8 @@ cxpb  core recycling into ions of the highest ionisation stage
      .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),1,ishigh(j))
      1               -rf0*abs(t0)/
      .                na(bc_list_x(ix,ib),bc_list_y(ix,ib),ishigh(j))
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_core_sna0to1(bc_list_x(ix,ib),
      ,                                       bc_list_y(ix,ib),1,
      ,                                       ishigh(j))= !djm Jan2017
@@ -3963,7 +4002,8 @@ cxpb  core recycling into ions of the highest ionisation stage
                     sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))=
      .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))
      .               +t0
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_core_sna0to1(bc_list_x(ix,ib),
      .                                       bc_list_y(ix,ib),0,
      .                                       ishigh(j))= !djm Jan2017
@@ -3983,14 +4023,16 @@ cxpb  core recycling into ions of the highest ionisation stage
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
                     sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
      .                 eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+t0
                     endif
                   else !}{
                     sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))+
      .               t0/na(ix,-1,ishigh(j))
-                    if (balance_netcdf.ne.0) then
+                    if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *                 write_eirene_sources.ne.0) then
                       eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
      .                 eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))+
      .                 t0/na(ix,-1,ishigh(j))
@@ -3998,21 +4040,24 @@ cxpb  core recycling into ions of the highest ionisation stage
                   end if !}
                   sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+
      .             rf0*abs(t0)
-                  if (balance_netcdf.ne.0) then
+                  if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *               write_eirene_sources.ne.0) then
                     eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
      .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+
      .               rf0*abs(t0)
                   endif
                   sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))-
      1             rf0*abs(t0)/na(ix,-1,ishigh(j))
-                  if (balance_netcdf.ne.0) then
+                  if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *               write_eirene_sources.ne.0) then
                     eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
      .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))-
      .               rf0*abs(t0)/na(ix,-1,ishigh(j))
                   endif
                 elseif(linearisation.eq.0) then !}{
                   sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0
-                  if (balance_netcdf.ne.0) then
+                  if (balance_netcdf.ne.0 .or.          !djm Jan2017
+     *               write_eirene_sources.ne.0) then
                     eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
      .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+t0
                   endif
@@ -4425,6 +4470,10 @@ c!###}
 #include "COUPLE/KOPPLDIM.F"
 #endif
 
+      integer, save :: write_eirene_sources = 0
+      external ipgeti
+      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+
 ! to store the time history of sources from EIRENE
       allocate(sni_h(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    size(sni,3), size(sni,4), nhistd))
@@ -4434,7 +4483,7 @@ c!###}
      .                    size(see,3), nhistd))
       allocate(sei_h(0:(size(sei,1)-1), 0:(size(sei,2)-1),
      .                    size(sei,3), nhistd))
-      if (balance_netcdf.ne.0) then !djm Jan2017
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
         allocate(sna_h_paat(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    nnatmi, size(sni,4), nhistd))
         allocate(sna_h_pmat(0:(size(sni,1)-1), 0:(size(sni,2)-1),
@@ -4549,6 +4598,11 @@ c!###}
 
       subroutine clear_hist_arrays                                !csw 24feb2014
       implicit none
+
+      integer, save :: write_eirene_sources = 0
+      external ipgeti
+      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+
       sni_h = 0.0_R8
       smo_h = 0.0_R8
       see_h = 0.0_R8
@@ -4558,7 +4612,7 @@ c!###}
       rfluxa_h = 0.0_R8
       rfluxm_h = 0.0_R8
       dab2_h = 0.0_R8
-      if (balance_netcdf.ne.0) then !djm Jan2017
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
         sne_h_pael = 0.0_R8
         sne_h_pmel = 0.0_R8
         sna_h_paat = 0.0_R8
@@ -4602,6 +4656,11 @@ c!###}
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
+
+      integer, save :: write_eirene_sources = 0
+      external ipgeti
+      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+
       allocate(sni_s(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    size(sni,3), size(sni,4)))
       allocate(smo_s(0:(size(smo,1)-1), 0:(size(smo,2)-1),
@@ -4610,7 +4669,7 @@ c!###}
      .                    size(see,3)))
       allocate(sei_s(0:(size(sei,1)-1), 0:(size(sei,2)-1),
      .                    size(sei,3)))
-      if (balance_netcdf.ne.0) then !djm Jan2017
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
         allocate(sna_s_paat(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                      nnatmi, size(sni,4)))
         allocate(sna_s_pmat(0:(size(sni,1)-1), 0:(size(sni,2)-1),
@@ -4724,11 +4783,16 @@ c!###}
 
       subroutine clear_sum_arrays                                !csw 24feb2014
       implicit none
+
+      integer, save :: write_eirene_sources = 0
+      external ipgeti
+      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+
       sni_s = 0.0_R8
       smo_s = 0.0_R8
       see_s = 0.0_R8
       sei_s = 0.0_R8
-      if (balance_netcdf.ne.0) then !djm Jan2017
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
         sne_s_pael = 0.0_R8
         sne_s_pmel = 0.0_R8
         sni_s_papl = 0.0_R8

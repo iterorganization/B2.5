@@ -104,9 +104,6 @@ contains
             &   gridSubsetInd, gmap, b2FaceData = b2FaceData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Face
 
-    !! TODO: find a way to include this subroutine in the
-    !! b2_IMAS_Transform_Data_B2_To_IDS interface
-
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetInd,   &
             &   gmap, b2VertexData ) result( idsdata )

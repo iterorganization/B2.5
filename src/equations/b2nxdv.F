@@ -16,7 +16,9 @@
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
       integer, save :: style = 1                                       !srv 26.10.08
-      !$OMP THREADPRIVATE(ncall, style)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, style)
+#endif
       save ncall
       external xertst
 *   ..initialisation

@@ -8,15 +8,21 @@
       !common /zzline/ dx,x0,xn,x
       real (kind=R8) :: dx(ndepth-1), x0, xn
       real (kind=R8) :: x(ndepth)
-      !$OMP THREADPRIVATE(dx,x0,xn,x)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(dx,x0,xn,x)
+#endif
 
       ! common /phyparams/ Qtot,Tcbc,active
       real (kind=R8) :: Qtot, Tcbc
       logical :: active
-      !$OMP THREADPRIVATE(Qtot,Tcbc,active)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(Qtot,Tcbc,active)
+#endif
 
       ! common /location/ iwall, ns
       integer :: iwall, ns
-      !$OMP THREADPRIVATE(iwall, ns)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(iwall, ns)
+#endif
 
       end module b2mod_heatdiff_common

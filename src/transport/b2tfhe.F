@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,      !srv 19.02.21
-     1  BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,                   !srv 13.01.17
+     1  BoRiS, vol, hx, hy1, te, po, ne, na, vedia, veecrb,              !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06 !som 03.11.21
      &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
@@ -16,8 +16,6 @@
       use b2mod_rates                                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
@@ -35,7 +33,7 @@
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cdde(-1:nx,-1:ny,0:1),                                            !som 03.11.21
-     1 hx(-1:nx,-1:ny),
+     1 hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
       real (kind=R8) :: fchstoch(-1:nx,-1:ny,0:1)                        !lk 31.01.08 24.08.21

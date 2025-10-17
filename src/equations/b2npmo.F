@@ -19,8 +19,9 @@
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
+     1 , only : update_balance_sources_momentum,
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -146,6 +147,7 @@
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
       integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer, save :: write_eirene_sources = 0
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
@@ -192,7 +194,10 @@
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
-      logical new_matrix, solvedum(0:NNREGMAX), main_lightest
+      logical solvedum(0:NNREGMAX), main_lightest
+#if ( !defined(_OPENMP) || defined(NO_OPENMP_B2NPMO) )
+      logical new_matrix
+#endif
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -273,6 +278,7 @@
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
         impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
@@ -469,7 +475,7 @@
 
 * ..main computation
 *   ..compute individual species corrections
-#ifndef NO_OPENMP_B2NPMO
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -487,22 +493,28 @@
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
 !$OMP& PRIVATE(smbvi, smbvtemp)
-!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& PRIVATE(chns, wrks)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
+!$OMP& SHARED(solvemt, solvemo)
 !$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
-!$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
+!$OMP& SHARED(ns, n2, na, am, nx, ny, rza)
+!$OMP& SHARED(ne, te, ti, vol, hx, hz, bb)
 !$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn, uap)
 !$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, smodt, resmo)
 !$OMP& SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
-!$OMP& SHARED(b2npmo_smav, solving, get_residuals, solvemt, solvemo)
-!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, style_b2mndt)
-!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(b2npmo_smav, solving, get_residuals)
+!$OMP& SHARED(nsmin, nsmax, ismain)
+!$OMP& SHARED(style, b2sifr_ver, style_b2mndt)
+!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl)
+!$OMP& SHARED(balance_netcdf, write_eirene_sources, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
-!$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$OMP& SHARED(cimp2, zeff, fmo, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(is_neutral, ue)
+!$OMP& SHARED(zetap, zetae, gti, gte)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
 !$OMP& SHARED(rz2, ne_ext, ro)
+!$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
 !$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
@@ -544,15 +556,20 @@
 !$OMP& SHARED(fmo_tot, fchanml_a)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi)
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
-!$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(Zhdanov_closure, Zhdanov_test)
+!$OMP& SHARED(Zhdanov_visu, Zhdanov_vish)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
-#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
-!$OMP& COPYIN(last_solve_5)
-#else
-!$OMP& PRIVATE(last_solve_5)
-#endif
+!$OMP& SHARED(last_solve_5)
+!$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
+!$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
+!$OMP& COPYIN(irn_5p, icn_5p, irnh_5p, icnh_5p)
+!$OMP& COPYIN(ish_5p, jsh_5p, ijsh_5p, iw28_5p)
+!$OMP& COPYIN(icnhkeep_5p, ikeep_5p, irnh_save_5p, icnh_save_5p)
+!$OMP& COPYIN(nc0_5p)
+!$OMP& COPYIN(nltrsol_5p, solvdim1_5p, solvdim_5p, n_nonzeros_5p)
+!$OMP& COPYIN(lfirst_ilu)
 #endif
 
 !      do is = 0, ns-1
@@ -745,6 +762,10 @@ cdjm Jan2017 update momentum source components for balance
          tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
+       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+         call update_balance_eirene_sources_momentum(
+     &    nx,ny,is,ua(-1,-1,is),rob)
+       endif
 
 *    ..compute residual
        if((solving.and.any(solvemo(is,0:nnreg(0))))
@@ -831,18 +852,22 @@ cdjm Mar2019 output the total momentum flux and source for balance
        if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
          solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
-     &     solvemo(is,ireg).neqv.last_solve_5(ireg)
+     &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
-         if (new_matrix) call restart_ma28
+         if (new_matrix.or.in_parallel()) call restart_ma28
+#endif
 *    ..compute correction
          call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
      &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &    pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
-         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+         last_solve_5(is,0:nnreg(0)) = solvemo(is,0:nnreg(0))
 csw 21feb2014 added this else branch
        else
          pcca(:,:,:,is)  = 0.0_R8
@@ -880,28 +905,32 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif                                                           !srv 22.05.18
       enddo
-#ifndef NO_OPENMP_B2NPMO
-      !$OMP END PARALLEL DO
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+!$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif
 #endif
 csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:nnreg(0)))
-     &                  .and.any(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
-!      if (solving) then                                              !srv 22.05.18
+     &                  .and.any(solvemt(0:nnreg(0)))) then            !srv 06.07.10 22.05.18
+!      if (solving) then                                               !srv 22.05.18
 *   ..compute simultaneous correction
          call sfill (n2, 0.0_R8, wrk0, 1)
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
            new_matrix = new_matrix.or.
-     &      solvemt(ireg).neqv.last_solve_5(ireg)
+     &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
-         if (new_matrix) call restart_ma28
-         call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
-     &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
-         last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
+         if (new_matrix.or.in_parallel()) call restart_ma28
+#endif
+         call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
+     &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,      !srv 09.01.01
+     &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')        !srv 06.04.07
+         last_solve_5(ns,0:nnreg(0)) = solvemt(0:nnreg(0))
       else
        pccm  = 0.0_R8
 !       resmt = 0.0_R8                                                 !srv 22.05.18
@@ -981,7 +1010,7 @@ csw 21feb2014, execute simultaneous corrections always
         call my_out(70,nx,ny,uap(-1,-1,is),'b2npmo_uap'//chns)
         call my_out(70,nx,ny,na(-1,-1,is),'b2npmo_na'//chns)
         call my_out(70,nx,ny,nap(-1,-1,is),'b2npmo_nap'//chns)
-        if(style_b2mndt.eq.2) then                                      !srv 07.07.21 {
+        if(style_b2mndt.eq.2) then                                     !srv 07.07.21 {
          wrks=mp*am(is)*na(:,:,is)*(ua(:,:,is)-uap(:,:,is))*
      &         vol*hz/dtim
          call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
@@ -998,7 +1027,7 @@ csw 21feb2014, execute simultaneous corrections always
           enddo
          enddo
          call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)
-        endif                                                           !srv 07.07.21 }
+        endif                                                          !srv 07.07.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then

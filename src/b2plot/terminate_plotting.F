@@ -1,10 +1,12 @@
 
       subroutine terminate_plotting
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
 #ifdef NCAR4      
       integer iw
 #endif
+
       if(.not.initialised_plotting) return
       if(same_page.ne.0) then
         same_page=0

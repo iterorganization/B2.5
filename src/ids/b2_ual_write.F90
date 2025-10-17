@@ -30,7 +30,8 @@
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
 !!      character(len=256) :: path      !< Directory path of the IMAS data entry
-!!      integer :: shot   !< The shot number of the database being created
+!!      integer :: shot   !< The pulse (previously shot) number of the database
+!!        !< being created
 !!      integer :: run    !< The run number of the database being created
 !!      integer :: status !< Returned status for UAL commands
 !!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
@@ -43,6 +44,17 @@
 !!        !< the energy transported by the particle flux)
 !!      type (ids_edge_transport) :: edge_transport !< IDS designed to store
 !!        !< data on edge plasma transport. Energy terms correspond to the
+!!        !< full kinetic energy equation (i.e. the energy flux takes into
+!!        !< account the energy transported by the particle flux)
+!!      type(ids_plasma_profiles) :: plasma_profiles !< IDS designed to store
+!!        !< data on plasma profiles
+!!      type (ids_plasma_profiles) :: old_plasma_profiles
+!!      type (ids_plasma_sources) :: plasma_sources !< IDS designed to store
+!!        !< data on plasma sources. Energy terms correspond to the full
+!!        !< kinetic energy equation (i.e. the energy flux takes into account
+!!        !< the energy transported by the particle flux)
+!!      type (ids_plasma_transport) :: plasma_transport !< IDS designed to store
+!!        !< data on plasma transport. Energy terms correspond to the
 !!        !< full kinetic energy equation (i.e. the energy flux takes into
 !!        !< account the energy transported by the particle flux)
 !!      type (ids_radiation) :: radiation !< IDS designed to store
@@ -70,11 +82,23 @@ program b2_ual_write
     use b2mod_driver &
      & , only : idx, ids_path, continued, &
      &          shot, run, username, database, version, &
-     &          old_description, old_edge_profiles, equilibrium, &
+     &          old_edge_profiles, equilibrium, &
      &          old_imas_version, old_start_time, old_end_time, &
-     &          description, imas_version, ids_end_time, new_eq_ggd, &
+     &          imas_version, ids_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+    use b2mod_driver &
+     & , only : plasma_profiles, plasma_sources, plasma_transport, &
+     &          old_plasma_profiles, batch_plasma_profiles, batch_plasma_sources
+#endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use b2mod_driver &
+     & , only : old_description, description
+#else
+    use b2mod_driver &
+     & , only : old_summary
+#endif
     use b2mod_geo
     use b2mod_time
     use b2mod_plasma
@@ -87,25 +111,35 @@ program b2_ual_write
     use b2mod_numerics_namelist
     use b2mod_ual    &
      & , only : put_ids_edge, dealloc_ids_edge, dealloc_batch_edge, &
-     &          b25_process_ids, close_ual, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium
+     &          b25_process_ids, close_ual
+   use ids_schemas   &  ! IGNORE
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_equilibrium
     use b2mod_ual_io
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use ids_schemas &   ! IGNORE
+     & , only : ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &  ! IGNORE
      & , only : ids_summary
     use b2mod_driver &
      & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &  ! IGNORE
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
 #endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas  &  ! IGNORE
+     & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
+#endif
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
-     & , only : imas_open, OPEN_PULSE, STRMAXLEN
+     & , only : imas_open, al_build_uri_from_legacy_parameters, &
+     &          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
 #else
     use ids_routines &  ! IGNORE
      & , only : imas_open_env
@@ -116,11 +150,6 @@ program b2_ual_write
      & , only : ids_get, ids_deallocate
     use ids_schemas  &  ! IGNORE
      & , only : IDS_real, IDS_REAL_INVALID
-#ifdef B25_EIRENE
-    use eirmod_parmmod
-    use eirmod_comusr
-    use eirmod_extrab25
-#endif
     use b2mod_ipmain
     implicit none
 #ifndef NO_GETENV
@@ -141,7 +170,7 @@ program b2_ual_write
     integer narg, cptArg, l, m, status, tmp_run, time_slice_index
 #if AL_MAJOR_VERSION > 4
     character*256 olddir
-    character(len=STRMAXLEN) :: uri
+    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
     character*16 usrnam, run_user
@@ -149,13 +178,25 @@ program b2_ual_write
     logical absolute_path, not_default
     external usrnam
 
+    write(*,*) 'Starting b2mn init'
+    call b2mn_init
+    ! call b2mn_step(0)
+    ! read plasma state
+    call cfopen(56,'b2fplasma','old','unformatted')
+    call cfverr(56, b2fplasma_version)
+    call read_b2mod_geo(nx, ny, 56)
+    call read_b2mod_plasma(nx, ny, ns, 56)
+    call read_b2mod_residuals(56)
+    call read_b2mod_sources(56)
+    call read_b2mod_transport(56)
+
     !! Set default value for IMAS major version and IDS treename
     status = 0
     run_user = usrnam()
-    call ipgetc('b2mndr_user', run_user )
-    call xertst( .not.streql(run_user,' '), 'User name not defined !')
-    not_default = .not.streql(run_user, usrnam())
     username = run_user
+    call ipgetc('b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    not_default = .not.streql(username, usrnam())
     home_dir = '/home/'//trim(run_user)
     database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
@@ -199,23 +240,8 @@ program b2_ual_write
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
 #endif
-    write(*,*) 'Starting b2mn init'
-    call b2mn_init
-    ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-#endif
-    ! read plasma state
-    call cfopen(56,'b2fplasma','old','unformatted')
-    call cfverr(56, b2fplasma_version)
-    call read_b2mod_geo(nx, ny, 56)
-    call read_b2mod_plasma(nx, ny, ns, 56)
-    call read_b2mod_residuals(56)
-    call read_b2mod_sources(56)
-    call read_b2mod_transport(56)
-
-    call ipgeti('b2mndr_shot_number', shot )
+    call ipgeti('b2mndr_pulse_number', shot )
+    if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )
     path = ' '
     absolute_path = .false.
@@ -264,7 +290,7 @@ program b2_ual_write
             ids_path = trim(imasdir)//'/'//trim(path)
           end if
 #endif
-        case("--shot","-s")
+        case("--pulse","--shot","-s")
           call get_command_argument( cptArg + 1, shot_string )
           !! Transform dummy string variable to integer
           read( shot_string, *) shot
@@ -282,7 +308,7 @@ program b2_ual_write
     end do
 
 #if AL_MAJOR_VERSION > 4
-    call xertst( 0.le.shot, 'Invalid shot number')
+    call xertst( 0.le.shot, 'Invalid pulse number')
     call xertst( 0.le.run, 'Invalid run number')
 #else
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
@@ -293,7 +319,8 @@ program b2_ual_write
     if (index(imasdir,trim(username)).eq.0) then
       l=index(imasdir,trim(run_user))
       m=index(imasdir(l+len_trim(run_user):256),'/')
-      write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
+      write(imasdir,'(a)') &
+        & imasdir(1:l-1)//trim(username)//trim(imasdir(m+l+len_trim(run_user)-1:256))
     end if
     if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
       l=index(imasdir,'imasdb/')
@@ -316,7 +343,7 @@ program b2_ual_write
     end if
     if (streql(path,' ')) then
 #if AL_MAJOR_VERSION > 4
-      call xertst( 0.lt.shot, 'Invalid shot number !')
+      call xertst( 0.lt.shot, 'Invalid pulse number !')
       ids_path = trim(imasdir)//'/'//int2str(shot)//'/'//int2str(run)
 #else
       ids_path = imasdir
@@ -340,7 +367,7 @@ program b2_ual_write
 #if AL_MAJOR_VERSION > 4
     uri = 'imas:mdsplus?path='//trim(ids_path)
     write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
-      &  trim(imasdir)//'/'//trim(ids_path)
+      &  trim(ids_path)
     call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
     write(0,'(2a,2i8)') "Checking if IMAS data entry already exists : ", &
@@ -380,22 +407,54 @@ program b2_ual_write
     if ( status.eq.0 .and. idx.ne.0 ) then
       write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
+#if IMAS_MAJOR_VERSION > 3
+      call ids_get( idx, "plasma_profiles", old_plasma_profiles, status)
+      if (status.ne.0) &
+        & call ids_get( idx, "edge_profiles", old_edge_profiles, status)
+#else
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
+#endif
       if ( status.ne.0 ) then
-        write(0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
+        write(0,*) 'Error opening old profiles IDS ! Will create a new one.'
         idx = 0
         continued = .false.
       else
-        num_time_slices = size(old_edge_profiles%time)
-        if (num_time_slices.gt.0) then
-          ids_end_time = old_edge_profiles%time(num_time_slices)
+#if IMAS_MAJOR_VERSION > 3
+        if (associated(old_plasma_profiles%time)) then
+          num_time_slices = size(old_plasma_profiles%time)
+          if (num_time_slices.gt.0) then
+            ids_end_time = old_plasma_profiles%time(num_time_slices)
+          else
+            ids_end_time = IDS_REAL_INVALID
+          end if
+          call ids_deallocate( old_plasma_profiles )
         else
-          ids_end_time = IDS_REAL_INVALID
+#endif
+          num_time_slices = size(old_edge_profiles%time)
+          if (num_time_slices.gt.0) then
+            ids_end_time = old_edge_profiles%time(num_time_slices)
+          else
+            ids_end_time = IDS_REAL_INVALID
+          end if
+          call ids_deallocate( old_edge_profiles )
+#if IMAS_MAJOR_VERSION > 3
         end if
-        call ids_deallocate( old_edge_profiles )
+#endif
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
         old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+        call ids_get( idx, "summary", old_summary, status)
+        if ( status.ne.0 ) then
+          write(0,*) 'Error opening old summary IDS !'
+        else if (associated(old_summary%ids_properties% &
+                        &   version_put%data_dictionary)) then
+          old_start_time = old_summary%simulation%time_begin
+          old_end_time = old_summary%simulation%time_end
+          old_imas_version = old_summary%ids_properties% &
+                          &  version_put%data_dictionary(1)
+          call ids_deallocate( old_summary )
+#else
         call ids_get( idx, "dataset_description", old_description, status)
         if ( status.ne.0 ) then
           write(0,*) 'Error opening old dataset_description IDS !'
@@ -408,6 +467,9 @@ program b2_ual_write
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+#endif
+        else if ( streql(old_imas_version,'x.xx.x') ) then
+          call xerrab ('Old IMAS data entry is incomplete !')
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &
            &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)
@@ -432,12 +494,39 @@ program b2_ual_write
             tmp_run = run
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) &
               & tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+            call al_build_uri_from_legacy_parameters                 &
+              & ( MDSPLUS_BACKEND, shot, run, trim(username),        &
+              &   trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
+              &   uri_source, status )
+            if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) then
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                &   'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
+                &   uri_dest, status )
+            else
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_dest, status )
+            end if
+#if IMAS_MAJOR_VERSION < 4
+            write(systemarg,'(a,a,a,a,a)')                    &
+              & 'idscp --set-dataset-version'//               &
+              &      ' -s ',trim(uri_source),                 &
+              &      ' -d ',trim(uri_dest),' --dd-update'
+#else
+            write(systemarg,'(a,a,a,a,a)')                    &
+              & 'idscp -s ',trim(uri_source),                 &
+              &      ' -d ',trim(uri_dest),' --dd-update'
+#endif
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
               & 'idscp --setDatasetVersion'//                 &
-              &       ' -si ',shot,' -ri ',run,               &
-              &       ' -so ',shot,' -ro ',tmp_run,           &
-              &       ' -d ',trim(database),' -u ',trim(username)
+              &      ' -si ',shot,' -ri ',run,                &
+              &      ' -so ',shot,' -ro ',tmp_run,            &
+              &      ' -d ',trim(database),' -u ',trim(username)
 #else
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
               & 'idscp -si ',shot,' -ri ',run,                &
@@ -446,23 +535,38 @@ program b2_ual_write
 #endif
             if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) &
               & systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else
             call system(systemarg)
 #endif
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) then
+#if AL_MAJOR_VERSION > 4
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_source, status )
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, run, trim(username),      &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_dest, status )
+              write(systemarg,'(a,a,a,a)')                     &
+                & 'idscp -s ',trim(uri_source),                &
+                &      ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp --setDatasetVersion'//                 &
-               &       ' -si ',shot,' -ri ',tmp_run,           &
-               &       ' -so ',shot,' -ro ',run,               &
-               &       ' -d ',trim(database),' -u ',trim(username)
+                & 'idscp --setDatasetVersion'//                &
+                &      ' -si ',shot,' -ri ',tmp_run,           &
+                &      ' -so ',shot,' -ro ',run,               &
+                &      ' -d ',trim(database),' -u ',trim(username)
 #else
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp -si ',shot,' -ri ',tmp_run,            &
-               &      ' -so ',shot,' -ro ',run,                &
-               &      ' -d ',trim(database),' -u ',trim(username)
+                & 'idscp -si ',shot,' -ri ',tmp_run,           &
+                &      ' -so ',shot,' -ro ',run,               &
+                &      ' -d ',trim(database),' -u ',trim(username)
+#endif
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -488,8 +592,16 @@ program b2_ual_write
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, equilibrium, &
+          call B25_process_ids( &
+             &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+             &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
+             &  radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+             &  description, &
+#endif
+             &  equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
 #endif
@@ -502,7 +614,11 @@ program b2_ual_write
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+             &  tim, dteff, shot, database, new_eq_ggd, &
+#else
              &  tim, dteff, shot, run, database, version, new_eq_ggd, &
+#endif
              &  time_slice_index, num_time_slices )
         else
           write (0,*) "Not a time continuation, IDS will be overwritten !"
@@ -515,8 +631,16 @@ program b2_ual_write
       if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, equilibrium, &
+      call B25_process_ids( &
+         &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+         &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
+         &  radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+         &  description, &
+#endif
+         &  equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
 #endif
@@ -529,13 +653,25 @@ program b2_ual_write
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+         &  tim, dteff, shot, database, new_eq_ggd )
+#else
          &  tim, dteff, shot, run, database, version, new_eq_ggd )
+#endif
     end if
 
     !! Create/Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, equilibrium, &
+    call put_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
+        &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description, &
+#endif
+        &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
@@ -551,7 +687,11 @@ program b2_ual_write
         &   treename, shot, run, username, database, version, &
 #endif
         &   idx, new_eq_ggd )
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -559,11 +699,18 @@ program b2_ual_write
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+        &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-        &   description )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description &
+#endif
+        &   )
     call close_ual(idx)
 
 end program b2_ual_write

@@ -1246,7 +1246,7 @@
 *     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 *     local expression
 *       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-*         cfdna(2,is)*df0(,)+
+*         cfdna(2,is)*df0(,,is)+
 *         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.na; the transport equation for species (is) contains a term
@@ -1737,9 +1737,9 @@
 *
 *   ..workspace
 *
-*     /stackw/ - common block.
-*     /stackw/ contains two stacks, one for real*8 and one for integer
-*     workspace.  They are used to provide local dynamic arrays within
+*     The b2mod_stack module contains two stacks, one for real*8 and
+*     one for integer workspace.
+*     They are used to provide local dynamic arrays within
 *     the rules of Fortran 77.
 *      nstckw - integer constant.
 *     nstckw specifies the size of the real*8 workspace array w. If

@@ -7,7 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
       use b2mod_indirect
-      use b2mod_ilutern_9
+      use b2mod_ma28_for_9diag
       use b2mod_numerics_namelist
       use b2mod_subsys
       implicit none
@@ -67,12 +67,16 @@
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0
       real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
-      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
-      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
-      !$OMP THREADPRIVATE(cor_diag)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
+!$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
+!$OMP THREADPRIVATE(cor_diag)
+#endif
       integer ireg, ileft, ibot
       save ncall
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
       real (kind=R8) ::
      *   t0, t1
       logical new_matrix
@@ -99,9 +103,13 @@
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2ush9_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif
@@ -161,9 +169,10 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solveet(ireg).neqv.last_solve_9(ireg)
+     &   solveet(ireg).neqv.last_solve_9(ns,ireg)
       end do
-      if (new_matrix.or.ncall.eq.0) call restart_ma28_for_9
+      if (in_parallel().or.(new_matrix.or.ncall.eq.0))
+     > call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -356,7 +365,7 @@
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.in_parallel()) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
@@ -493,7 +502,7 @@
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.in_parallel()) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
@@ -606,7 +615,7 @@
       enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
-      last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
+      last_solve_9(ns,0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
        do ix = -1, nx
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))

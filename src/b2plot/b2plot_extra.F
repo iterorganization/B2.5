@@ -178,9 +178,9 @@ c     filling array and computing rate
       subroutine get_amjuel_data(filnam,h123,reac,crc,
      1 nxd,nyd,nx,ny,ne,te,mach)
       use b2mod_types
+      use b2mod_eirreac
       use b2mod_constants
       IMPLICIT NONE
-#     include <eir_reac.F>
       integer nxd,nyd,nx,ny
       real (kind=R8) ::
      1 ne(0:nxd+1,0:nyd+1),te(0:nxd+1,0:nyd+1),
@@ -532,6 +532,7 @@ c         write(*,*) 'Do not yet know about ',h123
 
       SUBROUTINE SLREAC_b2plot(IR,FILNAM,H123,REAC,CRC)
       use b2mod_types
+      use b2mod_eirreac
       use b2mod_subsys
 c
 C  input
@@ -606,7 +607,6 @@ C                                   9 ELECTRON DENSITIES  AVAILABLE
 C                                   (ON CREAC(..,J,IR),J=1,9)
 C                   N           =0  ELSE
 C
-#     include <eir_reac.F>
       real(kind=R8) :: CONST, FPARM(3)
       REAL(kind=R8) :: R1MN, R1MX, R2MN, R2MX
       integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IANF,IREAC,INDFF,IFLG

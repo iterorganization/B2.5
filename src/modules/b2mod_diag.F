@@ -143,13 +143,13 @@ c
       allocate(fluids_list(0:nsd-1))
       allocate(nfluids(1:nspecies))
       allocate(
-     ,     src_ee(0:nregionv,3)   , src_ei(0:nregionv,3),
-     ,     src_es(0:nregionv,3)   , src_ms(0:nregionv,3),
+     ,     src_ee(0:nregionv,3), src_ei(0:nregionv,3),
+     ,     src_es(0:nregionv,3), src_ms(0:nregionv,3),
      ,     src_ni(0:nregionv,3,nspecies),
      ,     src_mo(0:nregionv,3,nspecies),
      ,     src_ne(0:nregionv,3))
       allocate(
-     ,     cor_ee(-1:nxd,-1:nyd)     , cor_ei(-1:nxd,-1:nyd),
+     ,     cor_ee(-1:nxd,-1:nyd), cor_ei(-1:nxd,-1:nyd),
      ,     cor_ni(-1:nxd,-1:nyd,nspecies),
      ,     cor_mo(-1:nxd,-1:nyd,nspecies),
      ,     cor_ne(-1:nxd,-1:nyd))

@@ -58,7 +58,7 @@
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),         !som 22.12.23
      &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
@@ -164,6 +164,8 @@
      &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
       integer, save :: Zhdanov_nc = 0
+      integer, save :: iout = 0
+      character chns1*3,chns2*3
       character*80 cvalip
 *   ..initialisation
       save ncall
@@ -177,6 +179,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
+        call ipgeti ('b2sifrtf_iout', iout)
 *   ..allocate
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nx, ny)
@@ -254,6 +257,10 @@
       endif
 
 *   ..main part
+
+      eta_cl_a_only    = 0.0_R8     !srv 05.07.24 {
+      eta_cl_a_only_fl = 0.0_R8     !srv 05.07.24 }
+
 *   ..calculate the average Z**2*n and density of each isonuclear sequence
       call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
 
@@ -327,19 +334,16 @@
             hci0_al(ix,iy,0:nspecies-1) = wrkc
 *    ..calculate the velocity parts of heat flux and R-transport coefficient
             call b2trhw(nspecies, G2, G8, mum,
-     &       Ainv, Ainv_mdf,
-     &       c_hwA(0:nspecies-1,0:nspecies-1),
-     &       c_rwA(0:nspecies-1,0:nspecies-1))
+     &       Ainv, Ainv_mdf, c_hwA, c_rwA)
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
-     &        wrkcc)
+     &       wrkcc)
             c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 *    ..calculate the thermal force transport coefficient with flux limiting
             wrkG2 = G2*tf_ton_mat
             wrkG8 = G8*tf_ton_mat
             call b2trtf(nspecies, wrkG2, wrkG8,
-     &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
-     &        wrkcc)
+     &       mum, mdm, Ainv_fl, Ainv_mdf_fl, wrkcc)
             c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1
@@ -519,9 +523,7 @@
 
 *    ..calculate the friction force transport coefficient
           wrkc = z2n_xy(ix,iy,0:nspecies-1)
-          call b2trfr(nspecies, mum, rmu, wrkc,
-     &     c_hwA(0:nspecies-1,0:nspecies-1),
-     &     c_rwA(0:nspecies-1,0:nspecies-1),
+          call b2trfr(nspecies, mum, rmu, wrkc, c_hwA, c_rwA,
      &     wrkcB, wrkcA, wrkcc)
           c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
@@ -907,10 +909,10 @@
         do iy = -1, ny
           do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
-              cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
-              cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
+              cvsahz_uBdp_luc(ix,iy,0,i) =
+     &         cvsahz_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
+              cvsa_uBdp_luc(ix,iy,0,i) =
+     &         cvsa_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
             else
               cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)
               cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)
@@ -954,7 +956,28 @@
           enddo
         enddo
       enddo
-
+      if (iout.ne.0) then
+        do i = 0, nspecies-1
+          write (chns1,'(i3.3)') i
+          do j = 0, nspecies-1
+            write (chns2,'(i3.3)') j
+            wrk = c_R_w(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_w'//chns1//chns2)
+            wrk = c_R_wA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wA'//chns1//chns2)
+            wrk = c_R_wB(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wB'//chns1//chns2)
+            wrk = c_R_TA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA'//chns1//chns2)
+            wrk = c_R_TA_nofl(:,:,i,j)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA_nofl'//chns1//chns2)
+          enddo
+          wrk = c_R_TB(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB'//chns1)
+          wrk = c_R_TB_nofl(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB_nofl'//chns1)
+        enddo
+      endif
       ncall = ncall+1
       call subend ()
       return

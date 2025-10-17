@@ -175,7 +175,7 @@
      &   chi_e_astra(iy), chi_i_astra(iy), chi_N_astra(iy),
      &   qi_neo_astra(iy), Vcovv_astra(iy), PeNB_astra(iy),
      &   PiNB_astra(iy) 
-         ny_astra = ny_astra +1
+         ny_astra = ny_astra+1
        enddo
 
   100  write(*,*) ny_astra,' lines from astra_to_b2 have been read'

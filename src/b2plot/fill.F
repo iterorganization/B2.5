@@ -3,7 +3,8 @@ C ================= User-defined routine for contour filling ======
       SUBROUTINE FILL(XWRK,YWRK,NWRK,IAREA,IGRP,NGRPS)
 C =================================================================
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
       INTEGER NWRK, IAREA, IGRP, NGRPS
       REAL XWRK, YWRK
       DIMENSION XWRK(*),YWRK(*),IAREA(*),IGRP(*)

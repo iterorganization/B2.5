@@ -7,7 +7,7 @@ c     of neoclassical theory.
 c
 c     input   nsl        : the number of species
 c             ncl        : array(nsdecl+1) that gives the number of
-c                         charge states per species
+c                          charge states per species
 c             nsdecl     : actual (first) dimension of the zsp,den,
 c                          and ds array
 c             nzdecl     : actual (second) dimens. of array
@@ -115,6 +115,9 @@ c--------------------------------------------------------------------
       use b2mod_types
       use b2mod_ranges
       use b2mod_constants
+      use b2mod_neoclassical
+     , , only : bav, b2av, bi2a, rbt, bgradp, dpsidr,
+     ,          rnq, fc, gclass, r2i, fm
 
       implicit none
 
@@ -135,12 +138,6 @@ c--------------------------------------------------------------------
      &       la(3,3,0:nsdecl), lab(3,3,0:nsdecl,0:nsdecl), mm(3,3),
      &       nn(3,3),ta,tb,ma,mb,
      &       coeffc(0:nsdecl,0:nzdecl-1,4)
-      real (kind=R8) ::
-     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
-     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
-     &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
-      common /b2ngeom/ bav,b2av,bi2a,rbt,bgradp,dpsidr,rnq,fc,
-     *                 gclass,fm,r2i,cosbl,cosb2,sinbl,sinb2
 
       if  ((neofrc).and.(neogeo)) call perr(16)
 
@@ -163,7 +160,6 @@ c     culated then go through the following loop.
         if (dum.ne.1.) call perr(15)
       endif
       if (ncof.ne.1) call perr(14)
-
 
       call colxi(nsdecl,nzdecl,nsl,ncl,zsp,den,t,m,ntau,xi)
 
@@ -280,6 +276,3 @@ c       coeff and clear coeffc
 
       return
       end subroutine neoart
-
-
-

@@ -1,14 +1,13 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, kapy, cony)
+      subroutine b2txcy (nx, ny, mode, vol, gs, hy1, kapy, cony)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &   hy1(-1:nx,-1:ny),
      &   kapy(-1:nx,-1:ny), cony(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXCY computes conductances between neighbouring cells in the

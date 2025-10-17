@@ -77,6 +77,8 @@ c 2002-09-11: logic revised
       use b2mod_interp
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_chord_shift
+      use helper
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -85,9 +87,6 @@ c 2002-09-11: logic revised
 c
 c  version : 27.07.96 20:37
 c
-      logical ratio
-      common /t_ratio/ ratio
-
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -165,7 +164,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   neutrals_namelist, sput_frac_flag, use_eirene
 
@@ -190,10 +189,6 @@ c
       character*256 description
       character*24 hlp_frm
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
-c
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done
       logical open_file, streql, isaletter
@@ -260,7 +255,7 @@ c
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
@@ -363,6 +358,7 @@ c
 #endif
       lucdf=0
       eirc_done=.false.
+      call init_chord_shift
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
@@ -1401,6 +1397,7 @@ c
 c
       lu=5
       lu_pos=0
+      write(*,'(a)') 'Enter your commands here:'
       call readline(textline,lu,ipos)
 c
       irstack=0
@@ -1967,12 +1964,7 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          do iy = -1, ny
-            do ix = -1, nx
-              mach(ix,iy,0)=hy1(ix,iy)
-            end do
-          end do
-          call copy(mach,1.0_R8,nz,textbl)
+          call copy(hy1,1.0_R8,nz,textbl)
         case('sx')
           description='sx (m^{2})'
           nz=1
@@ -2113,8 +2105,20 @@ c
           description='Molecule dissociation rate (#.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
-            call copy(mach,-1.0_R8/qe,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=srcml(0:nx+1,0:ny+1,is+1,1)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8/qe,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
@@ -2124,8 +2128,20 @@ c
           description='Power to atoms due to molecule dissociation (W)'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
-            call copy(mach,-1.0_R8,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=edissml(0:nx+1,0:ny+1,is+1,0)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
@@ -2732,7 +2748,7 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('nreg')
-          description='Region'
+          description='Volume region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -2746,12 +2762,15 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description='Volume region '//int2str(istack(iistack))  ! IGNORE
               else
                 if(region(ix,iy,0) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .    'All volume regions except region '//int2str(istack(iistack))
               end if
             end do
           end do
@@ -2772,12 +2791,17 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description=  ! IGNORE
+     .           'X-directed flux region '//int2str(istack(iistack))
               else
                 if(region(ix,iy,1) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .           'All X-directed flux regions except region '//
+     .            int2str(istack(iistack))
               end if
             end do
           end do
@@ -2799,12 +2823,17 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description=  ! IGNORE
+     .           'Y-directed flux region '//int2str(istack(iistack))
               else
                 if(region(ix,iy,2) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .           'All Y-directed flux regions except region '//
+     .            int2str(istack(iistack))
               end if
             end do
           end do
@@ -3204,6 +3233,7 @@ c
               end if
             end do
           end do
+          description='ix < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixlt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixle')
@@ -3220,6 +3250,7 @@ c
               end if
             end do
           end do
+          description='ix =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixeq')
@@ -3236,6 +3267,7 @@ c
               end if
             end do
           end do
+          description='ix = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixne')
@@ -3252,6 +3284,7 @@ c
               end if
             end do
           end do
+          description='ix != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixge')
@@ -3268,6 +3301,7 @@ c
               end if
             end do
           end do
+          description='ix >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixgt')
@@ -3284,6 +3318,7 @@ c
               end if
             end do
           end do
+          description='ix > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iylt')
@@ -3300,6 +3335,7 @@ c
               end if
             end do
           end do
+          description='iy < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iylt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyle')
@@ -3316,6 +3352,7 @@ c
               end if
             end do
           end do
+          description='iy =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyeq')
@@ -3332,6 +3369,7 @@ c
               end if
             end do
           end do
+          description='iy = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyne')
@@ -3348,6 +3386,7 @@ c
               end if
             end do
           end do
+          description='iy != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyge')
@@ -3364,6 +3403,7 @@ c
               end if
             end do
           end do
+          description='iy >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iygt')
@@ -3380,6 +3420,7 @@ c
               end if
             end do
           end do
+          description='iy > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('islt')
@@ -3917,7 +3958,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('rlcl')
-          description='real cells'
+          description='Real cells'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
@@ -3930,7 +3971,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('gdcl')
-          description='guard cells'
+          description='Guard cells'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
@@ -6000,6 +6041,7 @@ c
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
         case('chor')     ! chord file
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call process_chords(spop(sstack,isstack))
         case('chpl')     ! plot chords

@@ -9,69 +9,44 @@
 #LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 #LD_NAG      ?= -L${NAGDIR} -lnag
 
-CPP      = /lib/cpp -traditional
+CPP        = /lib/cpp -traditional
 
-ifdef USE_MPI
-FC       = mpif90
-FC       = mpiifort
+#MPI_FC   ?= mpif90
+MPI_FC    ?= mpiifort
+ifdef SOLPS_MPI
+ FC        = ${MPI_FC}
 else
-ifdef USE_IMPGYRO
-FC       = mpif90
-FC       = mpiifort
-else
-FC       = ifort
+ ifdef USE_IMPGYRO
+  FC       = ${MPI_FC}
+ endif
 endif
-endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -traceback
-ifdef USE_MPI
-FCOPTS  += -fpe0
+ FCOPTS    = -g -C -traceback
+ ifdef SOLPS_MPI
+  FCOPTS  += -fpe0
+ else
+  FCOPTS  += -debug all -fPIC -assume no2underscore
+  ifdef USE_IMPGYRO
+   FPOPTS += ${MPI_CPP}
+  else
+   FCOPTS += -check all -fpe0
+  endif
+ endif
 else
-FCOPTS  += -debug all -fPIC -assume no2underscore
-ifdef USE_IMPGYRO
-FCOPTS  += ${MPI_CPP}
-else
-FCOPTS  += -check all -fpe0
-endif
-endif
-else
-FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -fp-model=precise
-endif
-ifdef USE_MPI
-FCOPTS  += ${MPI_CPP}
-else
-ifdef USE_IMPGYRO
-FCOPTS  += ${MPI_CPP}
-endif
-endif
+ FCOPTS    = -O2 -xHost -fPIC -assume no2underscore
+ ifdef SOLPS_MPI
+  FPOPTS  += ${MPI_CPP}
+ else
+  ifdef USE_IMPGYRO
+   FPOPTS  += ${MPI_CPP}
+  endif
+ endif
 endif
 
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
+ifdef SOLPS_MPI
+ LDLIBES += ${LD_MPI}
 endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
-
-ifdef USE_MPI
-LDLIBES += ${LD_MPI}
-endif
-
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 
 #!!!Local Variables:

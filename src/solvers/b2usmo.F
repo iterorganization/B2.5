@@ -55,8 +55,10 @@
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, csb, csb1
-      !$OMP THREADPRIVATE(ncall, cfc0, iout)
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, cfc0, iout)
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#endif
       save ncall, cfc0
 *   ..procedures
       external xertst, ipgetr, sfill
@@ -79,9 +81,13 @@
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2usmo OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

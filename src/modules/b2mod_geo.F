@@ -17,6 +17,7 @@
      *  gs(:,:,:),
      *  hx(:,:),
      *  hy(:,:),
+     *  hy1(:,:),
      *  hz(:,:),                                                     !srv 09.01.01
      *  hyl(:,:),                                                    ! IYS 04.03.2019
      *  hxb(:,:),                                                    ! IYS 04.03.2019
@@ -39,7 +40,7 @@
 
       public :: abs_diff, dist, disx, disy, distc, match
       public :: divide_by_poloidal_areas, divide_by_contact_areas
-      public :: cr, cz, hy1, pit, pitx, sy
+      public :: cr, cz, pit, pitx, sy
 
       contains
 
@@ -59,6 +60,7 @@
       allocate(hzl(-1:nxd,-1:nyd))
       allocate(hzb(-1:nxd,-1:nyd))
       allocate(hy(-1:nxd,-1:nyd))
+      allocate(hy1(-1:nxd,-1:nyd))
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
       allocate(qc(-1:nxd,-1:nyd))
@@ -90,6 +92,7 @@
         deallocate(gs)
         deallocate(hx)
         deallocate(hy)
+        deallocate(hy1)
         deallocate(hyl)
         deallocate(hxb)
         deallocate(hzl)
@@ -2797,14 +2800,6 @@ c conn
      1        dist(ix,iy,0,2))/2.0_R8
       return
       end function disy
-
-      function hy1(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      real(kind=R8) :: hy1
-      hy1 = hy(ix,iy)*qz(ix,iy,1)
-      return
-      end function hy1
 
       logical function match(ix1,iy1,ix2,iy2)
       implicit none

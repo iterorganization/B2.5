@@ -35,7 +35,7 @@
       integer, save :: mode_ehy = 0                                      !srv 06.04.15
       integer, save :: pot_eq = 1, no_current= 0                         !srv 29.01.20
       real (kind=R8) ::
-     *   t0, hy1_(-1:nx,-1:ny)
+     *   t0
       save ncall
 *   ..procedures
       external xertst
@@ -70,11 +70,6 @@
       if(pot_eq.ne.1 .and. no_current.ne.0) then                         !srv 29.01.20 {
         ehy = 0.0_R8
       else
-        do iy=-1,ny
-          do ix=-1,nx
-            hy1_(ix,iy)=hy1(ix,iy)
-          enddo
-        enddo
 
 *   ....compute ehy
         do iy = -1, ny
@@ -91,9 +86,9 @@
      &          (2.0_R8/qe)/
      &          (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
               else if(mode_ehy.eq.1) then
-                t0= (ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1_(ix,iy)+
-     &             ne(ix,iy)*hy1_(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &            (hy1_(bottomix(ix,iy),bottomiy(ix,iy))+hy1_(ix,iy))
+                t0= (ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy)+
+     &             ne(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &            (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
                 ehy(ix,iy) =
      &         -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
      &          (ne(ix,iy)*te(ix,iy)-

@@ -94,7 +94,7 @@
       call timer%start("parallel")
 #endif
 *   ..loop over cells
-#ifndef NO_OPENMP_B2SPCX
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SPCX) )
 !$OMP PARALLEL DO
 !$OMP& default(none)
 !$OMP& firstprivate(it0, in0)
@@ -160,7 +160,7 @@
         enddo
        enddo
       enddo
-#ifndef NO_OPENMP_B2SPCX
+#if( defined(_OPENMP) && !defined(NO_OPENMP_B2SPCX) )
 !$OMP END PARALLEL DO
 #endif
 #ifdef WITH_FTIMINGS

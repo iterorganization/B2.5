@@ -80,19 +80,22 @@
       integer iargc
 #endif
       integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
+      integer :: ismain = 1, b2wall_netcdf = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: neutrals_namelist = 0, numerics_namelist = 0
       integer :: b2mndt_style = 1
       integer :: nsmin, nsmax
+      integer :: write_triangles = 0
+      real (kind=R8) :: delta_cdfmovie_time = 0.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
+      character filename_tri*256
       character b2fstate_only*256
 #ifdef B25_EIRENE
       character extension*4
 #endif
       character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists, todo
+      logical file_open, file_exists, file_tri_exists, todo
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql
@@ -195,7 +198,7 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
@@ -275,7 +278,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,file_exists)
       if (file_exists.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
@@ -449,13 +452,25 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
      .               'no b2tallies.nc file found'
         end if
       end if
-      call ipgeti ('b2mndr_mvnum', mvnum)
-      if (todo.and.mvnum.gt.0) then
+      call ipgetr ('b2mndr_cdfmovietim', delta_cdfmovie_time)
+      call ipgeti ('cdfmovie_triangles', write_triangles)
+      if (todo.and.delta_cdfmovie_time.gt.0.0_R8) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
+        if (nnatmi.gt.0 .and. write_triangles.ge.1) then
+          filename_tri='eirenemovies.nc'
+          call find_file(filename_tri,file_tri_exists)
+        end if
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nx, ny, ns, nnatmi, nnmoli, tim)
+          if(file_tri_exists) then
+            write(*,*) 'Truncating ', trim(filename_tri)
+          endif
+#ifdef B25_EIRENE
+          call b2co_movies_cdf(nx, ny, ns, nnatmi, nnmoli, ntri, tim)
+#else
+          call b2co_movies_cdf(nx, ny, ns, nnatmi, nnmoli, 0, tim)
+#endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
@@ -495,4 +510,3 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 *.end b2co
 
       end program b2co
-

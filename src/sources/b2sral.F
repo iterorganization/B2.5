@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                     !srv 09.01.01 02.04.18
+     &  vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb, lnlam,                !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -51,7 +51,7 @@
 *     (geometry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
+     &  hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      &  pbs(-1:nx,-1:ny,0:1),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
      &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
@@ -101,7 +101,7 @@
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
      &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 26.04.24
-     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24 
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24
      6  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1)
 *     (log-log rate coefficients)
@@ -153,28 +153,28 @@
       integer guard_flows, numerics_namelist
       integer use_astra
       integer, save :: elm_count
-      integer, save :: style = 2                                        !srv 28.06.08
-      integer, save :: iout = 0, iout_b2wdat = 0                        !srv 30.06.08, IYS 06.11.2017
-      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
-      integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
+      integer, save :: style = 2                                         !srv 28.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0                         !srv 30.06.08, IYS 06.11.2017
+      integer, save :: style_b2mndt = 1                                  !srv 07.07.21
+      integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0         !srv 14.07.10
       integer, save :: no_fluid_neutral_sources = 0
-      character chns*3, chk*1                                           !srv 30.06.08
+      character chns*3, chk*1                                            !srv 30.06.08
       real (kind=R8) ::
-     *  snatot(0:ns-1),                                                 !srv 18.05.09
+     *  snatot(0:ns-1),                                                  !srv 18.05.09
      1  rsa(-1:nx,-1:ny,0:ns-1),
      2  rra(-1:nx,-1:ny,0:ns-1),
      3  rcx(-1:nx,-1:ny,0:ns-1),
-     4  smq0(-1:nx,-1:ny,0:3,0:ns-1), smq0_ion(-1:nx,-1:ny,0:3,0:ns-1), !srv 11.09.09
+     4  smq0(-1:nx,-1:ny,0:3,0:ns-1), smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),  !srv 11.09.09
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
      7  fne(-1:nx,-1:ny,0:1),
-     8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1), !srv 11.09.09
+     8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),  !srv 11.09.09
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
      &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3)
-      real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:),  ! IYS 06.11.2017
+      real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:), !IYS 06.11.2017
      &  shi0_cx(:,:,:)
       logical catch_up
       character*32 hlp_frm
@@ -233,10 +233,11 @@
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
+*    ..test sign of vol, hx, hy, hy1
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -311,22 +312,24 @@
         endif
       endif                                                             !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.
-     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+     &             1.0_R8.ge.maxval(facdrift),
+     &            'faulty argument facdrift')
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
-     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+     &             1.0_R8.ge.maxval(fac_ExB),
+     &            'faulty argument fac_ExB')
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
      &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
-       call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
+       call b2tvspa (nx, ny, ns, ismain, hy1, bb,                       !srv 19.02.21
      &               na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,           !som 18.08.21
      &               cvsa_uAdp_albe, cvsa_uBdp_al,                      !som 26.04.24
      &               fchvispar_a, fchvispar)
        call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &               na, ua, facdrift, fchinert_a, fchinert)
        call b2tvspr (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
-     &               vol, po, ti, na,
+     &               vol, hy1, po, ti, na,
      &               avisper_a, bvisper_a, cvisper_a,
      &               fchvisper_a, fchvisper)
        call b2tvsq  (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
@@ -335,7 +338,7 @@
      &               fchvisq_a, fchvisq)
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hz, qz, qc, bb,
+     &              vol, gs, hx, hy1, hz, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)        !IYS 17.10.2023
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, ismain, guard_flows,                    !srv 19.02.21
@@ -407,7 +410,7 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  vol, hx, hy, hy1, hz, gs, qz, pbs,
      &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,            !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
@@ -457,8 +460,8 @@ csw 30sep2013, added cdpa in call, uadia
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz, na,   !srv 09.01.01
-     & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,  !srv 07.07.09
+      call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz, na,  !srv 09.01.01
+     & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB, !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09 {
 *   ..add to previous contributions
@@ -468,7 +471,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2saxpy (n2*4*ns, 1.0_R8, smq0_rec, 1, smq, 1)
       call b2saxpy (n2*4, 1.0_R8, she0, 1, she, 1)
       call b2saxpy (n2*4, 1.0_R8, shi0_ion, 1, shi, 1)
-      call b2saxpy (n2*4, 1.0_R8, shi0_rec, 1, shi, 1)                   !srv 11.09.09 }
+      call b2saxpy (n2*4, 1.0_R8, shi0_rec, 1, shi, 1)                  !srv 11.09.09 }
 *     (no contribution to sch or sne)
 *   ..compute sources due to charge exchange
       rcxnareg=0.0_R8
@@ -496,8 +499,8 @@ csw 30sep2013, added cdpa in call, uadia
      &   rlcx(-1,-1,0,0,k), rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
-        call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,    !srv 09.01.01
-     &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)       !srv 07.07.09
+        call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,   !srv 09.01.01
+     &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)      !srv 07.07.09
 *    ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smq, 1)
@@ -535,7 +538,7 @@ csw 30sep2013, added cdpa in call, uadia
         endif
       endif
 
-      if(iout.ne.0) then                                                 !srv 30.06.08 {
+      if(iout.ne.0) then                                                !srv 30.06.08 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           do k=0,1

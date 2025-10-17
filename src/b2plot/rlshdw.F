@@ -1,5 +1,6 @@
       subroutine rlshdw
       use b2mod_types
+      use b2mod_rdload
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -34,7 +35,6 @@ c***  sb,se   starting and ending points of the irradiated part of the
 c***          base segment normalised to the base length.
 c***          sb >= se means total shadowing (no irradiation)
 c======================================================================
-#include "rdload.inc"
       real (kind=R8) :: ueps
       parameter (ueps=1.0e-20_R8)
       integer i, jj, js, k

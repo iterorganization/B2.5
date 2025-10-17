@@ -1,14 +1,13 @@
-      subroutine b2txfy (nx, ny, ns, mode, vol, gs, kapy, cony)
+      subroutine b2txfy (nx, ny, ns, mode, vol, gs, hy1, kapy, cony)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
       integer nx, ny, ns, mode
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &   hy1(-1:nx,-1:ny),
      &   kapy(-1:nx,-1:ny,0:1,0:ns-1), cony(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXFY computes conductances between neighbouring cells in the
@@ -42,7 +41,7 @@
          if (mode.eq.-1) then
 *    ..use harmonic averaging
            t0 = vol(bottomix(ix,iy),bottomiy(ix,iy))*kapsn/
-     &        hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &          hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
            t1 = vol(ix,iy)*kaps/hy1(ix,iy)**2
            if (t0*t1.le.0.0_R8) then
             cony(ix,iy) = 0.0_R8

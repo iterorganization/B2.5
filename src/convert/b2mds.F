@@ -125,7 +125,7 @@ c
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
@@ -238,6 +238,7 @@ c
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
+            if(abs(am(is)-2.5_R8).lt.amtol) textsp(iss)='DT'
           else
             if(nint(am(is)).ne.nuclear_mass(il)) then
               if(nint(am(is)).lt.10) then
@@ -700,8 +701,11 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
 c 29: Same indexing error was also present in emolrad and eionrad
+c 30: Reserved for 3.2.0 WG code version
+c 31: Corrected units for srcml and edissml
+c 32: Reserved for 3.2.0 WG code version
 
-      dbversion=29
+      dbversion=31
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -855,12 +859,7 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      do iy=-1,ny
-       do ix=-1,nx
-        temp(ix,iy)=hy1(ix,iy)
-       end do
-      end do
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',
@@ -1327,12 +1326,22 @@ c
      1   temp(ix,iy)=emissmol(ix+1,iy+1,1,1)
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
      1   nx+2,ny+2,temp,'')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','A',nx+2,
+        if (jvft44.lt.20240627) then
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)*1.0e6_R8*vol(ix,iy)/qe
+        else
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
+        endif
+        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','s^-1',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
+        if (jvft44.lt.20240627) then
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)*1.0e6_R8*vol(ix,iy)
+        else
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
+        endif
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)

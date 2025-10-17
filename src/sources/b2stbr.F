@@ -3,7 +3,7 @@
 
       subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  vol, hx, hy, hy1, hz, gs, qz, pbs,
      &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
@@ -57,13 +57,16 @@
 #ifndef ALLOCATE_AND_NAMELIST
       use b2mod_dimensions
 #endif
+#ifdef _OPENMP
+      use omp_lib           !IGNORE
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  hz(-1:nx,-1:ny),
+     &  hy1(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -182,10 +185,6 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
-#if ( defined(_OPENMP) && defined(CRAY) )
-      real (kind=R8) :: omp_get_wtime
-      external omp_get_wtime
-#endif
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -419,10 +418,11 @@
      & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
+*    ..test sign of vol, hx, hy, hy1
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -536,7 +536,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shitmp=shi0
         endif
         call b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
-     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &   hx, hy1, hz, gs, bb, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
@@ -565,7 +565,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shitmp=shi0
         endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
-     &   hx, gs,
+     &   hx, hy1, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,

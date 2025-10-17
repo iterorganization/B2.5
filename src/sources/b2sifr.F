@@ -75,8 +75,10 @@
       external xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
 *   ..initialisation
-      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase)
-      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase)
+!$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+#endif
       save ncall, styl0, styl1,
      &  phm0, phm1, phm2, phm3, limthii, limthee
       data ncall/0/, styl0/0/, styl1/0/,
@@ -108,10 +110,14 @@
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
           write(*,*) 'B2SIFR OpenMP warning: no file output in ',
      &               'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
        call ipgeti ('b2tlnl_ii', icase)

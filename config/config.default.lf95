@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
@@ -30,8 +27,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -41,6 +38,7 @@ SED =
 LINK_MOD =
 
 FC = lf95
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g --trace --trap --chk asu
@@ -57,6 +55,7 @@ DBLSED =
 INCMOD = -M
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -72,10 +71,10 @@ ifdef USE_EIRENE
   LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = lf95
+LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

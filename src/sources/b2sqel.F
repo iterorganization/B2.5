@@ -103,7 +103,7 @@
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP PARALLEL DEFAULT(none)
 !$OMP& private(ix, iy, is),
 !$OMP& shared(rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
@@ -118,14 +118,14 @@
         wrk0(ix,iy) = log(te(ix,iy)/ev)
        enddo
       enddo
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP END DO
 #endif
 
 * ..main computation
 *   ..compute rate coefficients
 
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP DO
 #endif
       do is = 0, ns-1
@@ -161,7 +161,7 @@
         enddo
        enddo
       enddo
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP END DO
 #endif
 
@@ -173,7 +173,7 @@
      1     'Artificial radiation model active, art_rad = ',art_rad
         endif
         is=ismain    ! XPB 2007.11.02 was ns-1
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP DO
 #endif
         do iy = -1, ny
@@ -186,11 +186,11 @@
      1       art_rad*2.0E-31_R8/(TNORM**1.5_R8+1.0_R8/TNORM**3)
           enddo
         enddo
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP END DO
 #endif
       endif
-#ifndef NO_OPENMP_B2SQEL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 !$OMP END PARALLEL
 #endif
 #ifdef WITH_FTIMINGS

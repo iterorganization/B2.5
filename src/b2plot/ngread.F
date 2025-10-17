@@ -42,8 +42,8 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      integer NNX, NNY, ix, iy, jvft44, istra
-      integer nstsi_in, nstrai_in, nplsi_in
+      integer NNX, NNY, ix, iy, istra
+      integer nstsi_in, nstrai_in, nplsi_in, jvft44_in
       integer, allocatable :: idum(:)
       integer i, j, k, ncl
       integer geometryType
@@ -62,8 +62,9 @@ c
       EXTERNAL GFSUB2
       external ipgeti, xertst
 #ifdef B25_EIRENE
+      integer lines_for_format
       logical streql
-      external streql
+      external streql, lines_for_format
 
       interface
         subroutine rdneutrs(kard,dummy,ldmf,extra_time)
@@ -99,8 +100,8 @@ C
 *
       rewind (44)
 C
-      READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
-      if (jvft44.ge.20240311) then
+      READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44_in
+      if (jvft44_in.ge.20240311) then
         READ(44,'(I4,2X,I4,2X,I4,2X,I4)',END=99,ERR=99)
      .   NATMI,NMOLI,NIONI,NPLSI_IN
         write(*,'(3a,t27,6i5)') ' Dimensions in ',fort_lc,'44 = ',
@@ -265,7 +266,7 @@ cank 960511
           end do
         end do
       end do
-      if(jvft44 .ge. 960511) then
+      if(jvft44_in .ge. 960511) then
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
         end do
@@ -273,7 +274,7 @@ cank 960511
           call gfsub2(44,ndx,ndy,nnx,nny,edissml(:,:,is,0))
         end do
       end if
-      if(jvft44 .ge. 960513) then
+      if(jvft44_in .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi_in,nstrai_in
         allocate(idum(0:nstsi_in+1))
         if (nsts.eq.0) then
@@ -308,13 +309,13 @@ c*** read the wall geometry
       end if
 cank
 cank-960727
-      if(jvft44 .ge. 960623) then
+      if(jvft44_in .ge. 960623) then
         print *,'natmi,nmoli,nioni,nplsi = ',
      .           natmi,nmoli,nioni,nplsi_in
         call rdneutrs(44,wldra,natmi,extra_time)
         call rdneutrs(44,wldrm,nmoli,extra_time)
       end if
-      if(jvft44 .ge. 960727) then
+      if(jvft44_in .ge. 960727) then
         if(nstrai_in .gt. 1) then
           do istra=1,nstrai_in
             call rdneutrs(44,wldnek(1,istra),1,extra_time)
@@ -414,13 +415,13 @@ cank-960727
      .            'may be incomplete'
         end if
       end if
-      if(jvft44 .ge. 961228) then
+      if(jvft44_in .ge. 961228) then
         call rdneutrs(44,wldpp,nplsi_in,extra_time)
         call rdneutrs(44,wldpa,natmi,extra_time)
         call rdneutrs(44,wldpm,nmoli,extra_time)
         call rdneutrs(44,wldpeb,1,extra_time)
         call rdneutrs(44,wldspt,1,extra_time)
-        if (jvft44 .ge. 20170328) then
+        if (jvft44_in .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi,extra_time)
           call rdneutrs(44,wldsptm,nmoli,extra_time)
           do j = 1, natmi
@@ -437,7 +438,7 @@ cank-960727
             call rdneutrs(44,wldpm(:,:,istra),nmoli,extra_time)
             call rdneutrs(44,wldpeb(1,istra),1,extra_time)
             call rdneutrs(44,wldspt(1,istra),1,extra_time)
-            if (jvft44 .ge. 20170328) then
+            if (jvft44_in .ge. 20170328) then
               call rdneutrs(44,wldspta(:,:,istra),natmi,extra_time)
               call rdneutrs(44,wldsptm(:,:,istra),nmoli,extra_time)
             end if
@@ -445,26 +446,26 @@ cank-960727
         end if
       end if
 cank
-      if(jvft44 .ge. 20000727) then
+      if(jvft44_in .ge. 20000727) then
         call read_title(44)
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
-        read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
+        read (44,'(18i4)') (isrftype(nlim+i),i=1,min(nstsi,nstsi_in))
         if (nstsi_in.eq.nstsi+1 .and. mod(nstsi,18).eq.0) read(44,1028)
       end if
       if (NLWRMSH) then
-        if(jvft44 .ge. 20051115) then
+        if(jvft44_in .ge. 20051115) then
           call read_title(44)
           read (44,'(6e13.5)',end=999) (wlarea(i),i=1,nlimi)
-          read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
+          read (44,'(6e13.5)') (wlarea(nlim+i),i=1,min(nstsi,nstsi_in))
           if (nstsi_in.eq.nstsi+1 .and. mod(nstsi,6).eq.0) read(44,1028)
         end if
-        if(jvft44 .ge. 20060206) then
+        if(jvft44_in .ge. 20060206) then
           k=0
           call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
-     ,                                                       i=1,nstsi)
+     ,                                        i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*natmi).gt.
      .        lines_for_format(6,nstsi*natmi)) then
             do i = lines_for_format(6,nstsi*natmi)+1,
@@ -477,7 +478,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
-     ,                                                       i=1,nstsi)
+     ,                                        i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nmoli).gt.
      .        lines_for_format(6,nstsi*nmoli)) then
             do i = lines_for_format(6,nstsi*nmoli)+1,
@@ -490,7 +491,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
-     ,                                                       i=1,nstsi)
+     ,                                        i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nioni).gt.
      .        lines_for_format(6,nstsi*nioni)) then
             do i = lines_for_format(6,nstsi*nioni)+1,
@@ -503,7 +504,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi_in),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi_in),
-     ,                                                       i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nplsi_in).gt.
      .        lines_for_format(6,nstsi*nplsi_in)) then
             do i = lines_for_format(6,nstsi*nplsi_in)+1,
@@ -513,13 +514,13 @@ cank
           end if
         end if
 
-        if(jvft44 .ge. 20170328) then
+        if(jvft44_in .ge. 20170328) then
           k=0
           call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,natmi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,natmi),
-     ,                                                       i=1,nstsi)
+     ,                                       i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*natmi).gt.
      .        lines_for_format(6,nstsi*natmi)) then
             do i = lines_for_format(6,nstsi*natmi)+1,
@@ -532,7 +533,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nmoli),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nmoli),
-     ,                                                       i=1,nstsi)
+     ,                                       i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nmoli).gt.
      .        lines_for_format(6,nstsi*nmoli)) then
             do i = lines_for_format(6,nstsi*nmoli)+1,
@@ -545,7 +546,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nioni),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nioni),
-     ,                                                       i=1,nstsi)
+     ,                                       i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nioni).gt.
      .        lines_for_format(6,nstsi*nioni)) then
             do i = lines_for_format(6,nstsi*nioni)+1,
@@ -558,7 +559,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi_in),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi_in),
-     ,                                                      i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nplsi_in).gt.
      .        lines_for_format(6,nstsi*nplsi_in)) then
             do i = lines_for_format(6,nstsi*nplsi_in)+1,
@@ -572,13 +573,13 @@ cank
           end do
         end if
 
-        if(jvft44 .ge. 20071209) then
+        if(jvft44_in .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if
 
-        if(jvft44 .ge. 20180323) then
+        if(jvft44_in .ge. 20180323) then
           do is = 1, nmoli
             call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
           end do
@@ -587,18 +588,27 @@ cank
           end do
         end if
 
-        if(jvft44 .ge. 20080706) then
+        if(jvft44_in .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (idum(i),i=1,nstsi_in+1)
-          eirdiag_nds_ind(1:nstsi) = idum(1:nstsi)
+          if (nstsi_in.ge.nstsi) then
+            eirdiag_nds_ind(1:nstsi) = idum(1:nstsi)
+          else
+            eirdiag_nds_ind(1:nstsi_in) = idum(1:nstsi_in)
+            eirdiag_nds_ind(nstsi) = -1
+          end if
           eirdiag_nds_ind(nstsi+1) = idum(nstsi_in+1)
           READ (44,'(12i6)') (idum(i),i=1,nstsi_in)
+          if (nstsi_in+1.eq.nstsi) idum(nstsi)=0
           eirdiag_nds_typ(1:nstsi) = idum(1:nstsi)
           READ (44,'(12i6)') (idum(i),i=1,nstsi_in)
+          if (nstsi_in+1.eq.nstsi) idum(nstsi)=0
           eirdiag_nds_srf(1:nstsi) = idum(1:nstsi)
           READ (44,'(12i6)') (idum(i),i=1,nstsi_in)
+          if (nstsi_in+1.eq.nstsi) idum(nstsi)=0
           eirdiag_nds_start(1:nstsi) = idum(1:nstsi)
           READ (44,'(12i6)') (idum(i),i=1,nstsi_in)
+          if (nstsi_in+1.eq.nstsi) idum(nstsi)=0
           eirdiag_nds_end(1:nstsi) = idum(1:nstsi)
 
           geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
@@ -683,11 +693,11 @@ cank
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
-            if (jvft44.ge.20170228) then
+            if (jvft44_in.ge.20170228) then
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
-            if (jvft44.ge.20170328) then
+            if (jvft44_in.ge.20170328) then
               call read_title(44)
               READ (44,'(6e15.7)')
      .              ((wldspta_res(j,i),j=1,natmi),i=1,NCL)
@@ -715,7 +725,7 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi_in),
      ,                                i=1,NCL)
             end if
-            if (jvft44.ge.20201006) then
+            if (jvft44_in.ge.20201006) then
               call read_title(44)
               read(44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
@@ -738,11 +748,11 @@ cank
             READ (44,1028)
             call read_title(44)
             READ (44,1028)
-            if (jvft44.ge.20170228) then
+            if (jvft44_in.ge.20170228) then
               call read_title(44)
               READ (44,1028)
             end if
-            if (jvft44.ge.20170328) then
+            if (jvft44_in.ge.20170328) then
               call read_title(44)
               READ (44,1028)
               call read_title(44)
@@ -756,14 +766,14 @@ cank
               call read_title(44)
               READ (44,1028)
             end if
-            if (jvft44.ge.20201006) then
+            if (jvft44_in.ge.20201006) then
               call read_title(44)
               READ (44,1028)
             end if
           END IF
         end if
 
-        if(jvft44 .ge. 20081111) then
+        if(jvft44_in .ge. 20081111) then
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),
      .                                                    J=0,NSTRAI)
@@ -887,12 +897,12 @@ cank
         end if
   999   continue
       else  ! NLWRMSH
-        if(jvft44 .ge. 20071209) then
+        if(jvft44_in .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if
-        if(jvft44 .ge. 20180323) then
+        if(jvft44_in .ge. 20180323) then
           do is = 1, nmoli
             call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
           end do
@@ -979,7 +989,7 @@ cxpb
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,natmi),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,natmi),
-     ,                                                        i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*natmi).gt.
      .        lines_for_format(6,nstsi*natmi)) then
             do i = lines_for_format(6,nstsi*natmi)+1,
@@ -991,7 +1001,7 @@ cxpb
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nmoli),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nmoli),
-     ,                                                        i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nmoli).gt.
      .        lines_for_format(6,nstsi*nmoli)) then
             do i = lines_for_format(6,nstsi*nmoli)+1,
@@ -1003,7 +1013,7 @@ cxpb
           call read_title(48)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nioni),i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nioni),
-     ,                                                        i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nioni).gt.
      .        lines_for_format(6,nstsi*nioni)) then
             do i = lines_for_format(6,nstsi*nioni)+1,
@@ -1016,7 +1026,7 @@ cxpb
           read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nplsi_in),
      ,                                                        i=1,nlimi)
           read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nplsi_in),
-     ,                                                        i=1,nstsi)
+     ,                                          i=1,min(nstsi,nstsi_in))
           if (lines_for_format(6,nstsi_in*nplsi_in).gt.
      .        lines_for_format(6,nstsi*nplsi_in)) then
             do i = lines_for_format(6,nstsi*nplsi_in)+1,
@@ -1039,9 +1049,14 @@ C
 
 #ifdef B25_EIRENE
  948  call xerrab (fort_lc//'44_aver file found empty!')
+#endif
 
-      contains
+*=======================================================================
+*//END NGREAD//
 
+      END SUBROUTINE NGREAD
+
+#ifdef B25_EIRENE
       integer function lines_for_format( nfields_per_line, ndata )
       integer, intent(in) :: nfields_per_line, ndata
 
@@ -1058,11 +1073,3 @@ C
       return
       end function lines_for_format
 #endif
-
-*=======================================================================
-*//END NGREAD//
-
-      END SUBROUTINE NGREAD
-
-
-

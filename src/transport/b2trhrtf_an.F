@@ -41,7 +41,8 @@
       real (kind=R8) :: sqrt2
       real (kind=R8) :: Z5s(0:nspecies-1),
      &  Z9s(0:nspecies-1), Z11s(0:nspecies-1),
-     &  rz2n(0:nspecies-1), Delta_al(0:nspecies-1)
+     &  rz2n(0:nspecies-1), Delta_al(0:nspecies-1),
+     &  mdmi(0:nspecies-1), mumi(0:nspecies-1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -52,13 +53,12 @@
       sqrt2=sqrt(2.0_R8)
 *    ..Z-variables
       do i = 0, nspecies-1
+        mdmi(0:nspecies-1) = mdm(i,0:nspecies-1)
+        mumi(0:nspecies-1) = mum(i,0:nspecies-1)
         rz2n(0:nspecies-1)=nz2n(0:nspecies-1)/nz2n(i)
-        Z5s(i)=b2mod_Zzh_Z5s(nspecies,i,mum(i,0:nspecies-1),
-     &   mdm(i,0:nspecies-1),rz2n)
-        Z9s(i)=b2mod_Zzh_Z9s(nspecies,i,mum(i,0:nspecies-1),
-     &   mdm(i,0:nspecies-1),rz2n)
-        Z11s(i)=b2mod_Zzh_Z11s(nspecies,i,mum(i,0:nspecies-1),
-     &   mdm(i,0:nspecies-1),rz2n)
+        Z5s(i)=b2mod_Zzh_Z5s(nspecies,i,mumi,mdmi,rz2n)
+        Z9s(i)=b2mod_Zzh_Z9s(nspecies,i,mumi,mdmi,rz2n)
+        Z11s(i)=b2mod_Zzh_Z11s(nspecies,i,mumi,mdmi,rz2n)
       enddo
 
 *    ..denominator of the analytical transport coefficients

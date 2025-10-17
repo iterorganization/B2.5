@@ -8,9 +8,6 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       character*256 extralabel
       character*256 tmpstring,titlestring
