@@ -312,10 +312,11 @@
       end subroutine b2mod_zhfrtf_tgta
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p2,smfr_p1)
+      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p)
       implicit none
       integer :: iCv, is, inucl
-      real (kind=R8) :: coef, smfr_p1, smfr_p2
+      real (kind=R8) :: coef
+      real (kind=R8), DIMENSION(0:1) :: smfr_p
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -326,8 +327,8 @@
 *  3. description
 *
 *     This routine computes:
-*     -smfr_p1: smbfrial(iCv,1) part of the friction force
-*     -smfr_p2: smbfrial(iCv,0) part of the friction force
+*     -smfr_p(0): smbfrial(iCv,0) part of the friction force
+*     -smfr_p(1): smbfrial(iCv,1) part of the friction force
 *
 *-----------------------------------------------------------------------
 *  ..local variabless
@@ -339,7 +340,7 @@
         temp=temp+z2n_xy(iCv,inucl)*
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)
       enddo
-      smfr_p1=-coef*temp
+      smfr_p(1)=-coef*temp
 
 *   ..the second part of the friction force
       temp=0
@@ -348,7 +349,7 @@
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)*
      &   av_ualpha(iCv,inucl)
       enddo
-      smfr_p2=coef*temp
+      smfr_p(0)=coef*temp
 
       return
       end subroutine b2mod_zhfrtf_fr
