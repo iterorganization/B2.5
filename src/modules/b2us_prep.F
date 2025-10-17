@@ -224,6 +224,8 @@
            m%ictcntrl(ict) = ix-1
          end if
        end do
+      else
+        allocate (m%ictcntrl(0)) !csc needed for adjoint AD
       endif
 
 ! no. of faces

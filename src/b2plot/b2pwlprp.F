@@ -542,7 +542,8 @@ c First find out surface orientation: CW or CCW
             do i = rcstart(j), rcend(j)
               nRFc = count(mpg%fcLbl==i)
               allocate(regFaces(nRFc))
-              call sort_faces(nRFc,regFaces,mpg%nFc,mpg%fcLbl,i,mpg)
+              call sort_faces(nRFc,regFaces,mpg%nFc,mpg%fcLbl,
+     .         i,mpg)
               do ii = 1, nRFc
                 k = k + 1
                 call xertst(k+lppp.le.size(pp1,2),
