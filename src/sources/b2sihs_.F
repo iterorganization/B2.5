@@ -35,7 +35,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          my_out_folder, ncall_b2sifrtf
+     &          my_out_folder, ncall_b2sifrtf, ncall_b2ttia
       use b2mod_zhfrtf
      & , only : rho_a_rel
 #endif

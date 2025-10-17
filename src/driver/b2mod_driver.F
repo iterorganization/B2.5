@@ -10,7 +10,8 @@
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
      &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop
@@ -37,10 +38,11 @@
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2mrel
-     & , only : dealloc_b2mod_mrel
+     & , only : alloc_b2mod_mrel, dealloc_b2mod_mrel
       use b2mod_b2zhco
       use b2mod_zhfrtf
-     & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
+     & , only : alloc_b2mod_zhfrtf, alloc_b2mod_zhfrtf_df,
+     &          dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -348,7 +350,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer iCv, is, istra, k, idum(0:9)
+      integer iCv, is, istra, k, idum(0:9), zmaxmax, nnucl_tral
 #ifdef WG_TODO
       integer ix, iy
 #endif
@@ -947,6 +949,18 @@
 *     the call to b2mnds.)
       if (ncall.eq.0) then
        call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+       if (switch%Zhdanov_closure.eq.1) then
+*   ..allocate more Zhdanov variables here instead that inside routines
+        call b2trnu (ns, nnucl_tral, zmaxmax)
+        call xertst (nnucl_tral.eq.nspecies,
+     &   'Error while building isonuclear sequences!')
+        call alloc_b2mod_mrel(nspecies,zmaxmax,ns)
+        call alloc_b2mod_zhco(nspecies, nCv)
+        call alloc_b2mod_zhfrtf(nCv, ns)
+        if (switch%zh_dist_fun.eq.1) then
+          call alloc_b2mod_zhfrtf_df(nCv, ns)
+        endif
+       endif
 #ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
@@ -2148,7 +2162,7 @@ c new CDF movie option (1st frame at t=0)
      &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
      &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
      &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
-     &          mdm_mdf
+     &          mdm_mdf, znnucl, mu, mu_mdf
       use b2mod_input_profile
      & , only : sources_time_mod, sources_time_switch, sources_filename,
      &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,

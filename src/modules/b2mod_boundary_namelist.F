@@ -53,6 +53,7 @@ cank }
      *   BCCHAR(:)
      *   ACCHAR(:)
      *   BC_LIST_CHAR(:,:)
+      logical, allocatable, save :: BCCON14_IS(:)
 #else
       real (kind=R8), save :: CONPAR(0:nsdmax-1,NBCD,3)
       real (kind=R8), save :: MOMPAR(0:nsdmax-1,NBCD,2)
@@ -88,6 +89,7 @@ cank }
       integer, save :: NBCFACES(NBCD)
       integer, save :: BC_FACES(2*(DEF_NXD+DEF_NYD),NBCD)
       real (kind=R8), save :: BC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NBCD)
+      logical, save :: BCCON14_IS(NBCD)
 #endif
 csw 18feb2014 added for correct implementation of boundary conditions
 !WG_TODO     integer, allocatable, save :: iftimbound(:)
@@ -264,6 +266,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(NYISO2(nnisod_in))
       allocate(NIISO(0:nsd-1))
       allocate(lcbs(nbcd_in))
+      allocate(BCCON14_IS(nbcd_in))
 #else
 #ifdef WG_OUT
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
@@ -306,6 +309,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       gammai=1.0_R8
       gammae=0.5_R8
       lbndusr=.false.
+      BCCON14_IS = .false.
 !DPC-2003-10-23 set as a ipget parameter      lfeedback=.false.
       nniso=0
       nxiso1=-2
@@ -358,6 +362,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(NYISO2)
       deallocate(NIISO)
       deallocate(LCBS)
+      deallocate(BCCON14_IS)
 #endif
       deallocate(isOnFluxBoundary)
 
