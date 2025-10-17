@@ -136,6 +136,7 @@
 *   ..local variables
       integer :: iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
+      integer, save :: flag_startup = 0                                  !fc: local variable used to start-up BDF2 scheme with an IE first time-step
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
@@ -166,9 +167,6 @@
          switch%nstg(2) = 0
        end if
        if (switch%no_solve.eq.1) switch%nstg(0:2)=1
-       test_residual=switch%nstg_areshe.gt.0.0_R8.or.
-     &               switch%nstg_areshi.gt.0.0_R8.or.
-     &               switch%nstg_aresco.gt.0.0_R8
        if (switch%use_eirene .eq. 1) then
          call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi,
      &                         switch)
@@ -183,6 +181,14 @@
        if (switch%b2mndt_style.eq.2) then
          write(*,*) 'Running in time-dependent mode'
        endif
+       ! compute time-stepping factor based on time integration scheme
+       if (switch%b2mndt_ckn.eq.2) then
+         ts_factor = 2.0_R8
+       elseif (switch%b2mndt_bdf.eq.2) then
+         ts_factor = 3.0_R8/2.0_R8
+       else !default implicit Euler scheme
+         ts_factor = 1.0_R8
+       endif
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -194,6 +200,10 @@
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
       endif
+      test_residual = switch%nstg_areshe.gt.0.0_R8.or.
+     &                switch%nstg_areshi.gt.0.0_R8.or.
+     &                switch%nstg_aresco.gt.0.0_R8.or.
+     &                switch%nstg_aresmo.gt.0.0_R8
 *   ..time-dependent MMS test                                            !fc 21.03.24
       if (switch%use_mms.eq.2.and.itim.gt.0) then
         if(switch%equation_sources.ne.0)
@@ -378,8 +388,9 @@ ctmp.dpc
      &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
           endif
+
           if(switch%equation_sources.ne.0) then                          !srv 26.02.18 {
-            do iCv = 1,nCv
+            do iCv = 1,mpg%nCi
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
               st%sr%smo(iCv,0:3,0:ns-1) = st%sr%smo(iCv,0:3,0:ns-1)+
@@ -406,17 +417,41 @@ ctmp.dpc
 *      ..basic iterative step
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
+            !fc: if using BDF2, the first iteration must use IE to start-up the scheme
+            if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
+              switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+              ts_factor=1.0_R8
+              if (switch%b2mndt_startup.eq.2) then
+                switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+                ts_factor=2.0_R8
+              endif
+              flag_startup=1 !fc: startup done
+            endif
             if (switch%b2mndt_style.eq.1) then
+
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
+
             elseif (switch%b2mndt_style.eq.2) then
+
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
+
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
+            
+            !fc: if BDF2 startup done, switch back to BDF2 time-stepping scheme
+            if (flag_startup.eq.1) then
+                switch%b2mndt_bdf=2
+                if (switch%b2mndt_startup.eq.2) then
+                  switch%b2mndt_ckn=1
+                endif
+                ts_factor = 3.0_R8/2.0_R8
+            endif
+
             flush(6)
 *      ..re-compute ne, ne2, ni
             call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
@@ -433,7 +468,7 @@ ctmp.dpc
 *      ..compute norms of the residuals
             call b2mxar (nCv, ns, switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
-            quit_residual=test_residual .and.
+            quit_residual=test_residual.and.
      &       ((st%diag%areshe*switch%nstg_areshe).le.
      &        (switch%nstg_areshe*switch%nstg_areshe)
      &        .or.switch%nstg_areshe.eq.0.0_R8).and.
@@ -442,7 +477,10 @@ ctmp.dpc
      &        .or.switch%nstg_areshi.eq.0.0_R8).and.
      &       ((st%diag%aresco(ismain)*switch%nstg_aresco)
      &        .le.(switch%nstg_aresco*switch%nstg_aresco)
-     &        .or.switch%nstg_aresco.eq.0.0_R8)
+     &        .or.switch%nstg_aresco.eq.0.0_R8).and.
+     &       ((st%diag%aresmo(ismain)*switch%nstg_aresmo)
+     &        .le.(switch%nstg_aresmo*switch%nstg_aresmo)
+     &        .or.switch%nstg_aresmo.eq.0.0_R8)
 *      ..compute norms of the corrections
             call b2mxac (nCv, ns, st%dv, st%diag)
 *      ..decide what output
