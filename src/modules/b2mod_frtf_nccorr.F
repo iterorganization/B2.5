@@ -47,7 +47,7 @@
 !...............................................................................
       subroutine alloc_b2mod_frtf_nccorr(nx, ny, ns)
       implicit none
-      integer :: nx, ny, ns, is
+      integer :: nx, ny, ns
 
 
 
@@ -71,6 +71,7 @@
 !...................................................................................
       subroutine b2mod_frtf_nccorr_prep(nx,ny,ns,na,ismain,rz2,
      &    nu2,eps1,zeff)
+      use b2mod_indirect
       implicit none
 
       integer :: nx, ny, ns, ismain
@@ -78,7 +79,7 @@
      &  rz2(-1:nx,-1:ny,0:ns-1),
      &  nu2(-1:nx,-1:ny), eps1(-1:ny),zeff(-1:nx,-1:ny)
 *   ..local variables
-        integer :: ix, iy, inucl, is
+        integer :: ix, iy, is
 
 
 *-----------------------------------------------------------------------
@@ -99,33 +100,33 @@
 *
 *-----------------------------------------------------------------------
       do iy = 0, ny-1
-          do ix = 0, nx-1
-              do is = 0, ns-1
-          
-                  alpha_HS_style(ix,iy,is)=na(ix,iy,is)
-     &               *rz2(ix,iy,is)/na(ix,iy,ismain)
-              enddo
-                g_HS_style(ix,iy)=nu2(ix,iy)
-     &               *sqrt(eps1(iy)**3.0_R8)
-     &               /zeff(ix,iy)
+        do ix = 0, nx-1
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+          do is = 0, ns-1
+            alpha_HS_style(ix,iy,is)=na(ix,iy,is)*
+     &        rz2(ix,iy,is)/na(ix,iy,ismain)
           enddo
+            g_HS_style(ix,iy)=nu2(ix,iy)*
+     &       sqrt(eps1(iy)**3)/zeff(ix,iy)
+          endif               
+        enddo
       enddo
 
       return
       end subroutine b2mod_frtf_nccorr_prep
 
       subroutine b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
-     &   rz2,corr_Z_min,corr_spec,Zhdanov_closure,
-     &   chTAanxy,cRTAanxy,cimp2,z2n_xy,zeff)
+     &   rz2,corr_Z_min,corr_spec,chTAanxy,cRTAanxy,z2n_xy,zeff)
+      use b2mod_indirect
       implicit none
       integer :: nx, ny, ns, ismain, corr_Z_min,
-     &    corr_spec,Zhdanov_closure      
+     &    corr_spec     
       real (kind=R8) :: 
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1), 
      &  zeff(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
      &  chTAanxy(-1:nx,-1:ny,0:nspecies-1),
      &  cRTAanxy(-1:nx,-1:ny,0:nspecies-1,0:nspecies-1),
-     &  cimp2(-1:nx,-1:ny,0:ns-1), z2n_xy(-1:nx,-1:ny,0:nspecies-1)
+     &  z2n_xy(-1:nx,-1:ny,0:nspecies-1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -148,7 +149,7 @@
         character chns*3
         integer, save :: iout = 0
         integer :: ix, iy, is
-        real (kind=R8) :: temp_corr(-1:nx,-1:ny,0:4,0:ns-1), 
+        real (kind=R8) :: temp_corr(-1:nx,-1:ny,0:2,0:ns-1), 
      &    corr_fria_D(-1:nx,-1:ny),corr_tfia_D(-1:nx,-1:ny),
      &    k2_mean(-1:nx,-1:ny),k2_tmp(-1:ny,0:1)
 *-------------------------------------------------------------------
@@ -164,15 +165,19 @@
       k2_tmp(:,:)=0.0e0_R8
       do iy=-1,ny
           do ix = 0, nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
               if (on_closed_surface(ix,iy)) then
                   k2_tmp(iy,0)=k2_tmp(iy,0)+k2(ix,iy)*vol(ix,iy)
                   k2_tmp(iy,1)=k2_tmp(iy,1)+vol(ix,iy)
               endif
+            endif
           enddo
           do ix = 0, nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
               if (on_closed_surface(ix,iy)) then
                   k2_mean(ix,iy)=k2_tmp(iy,0)/k2_tmp(iy,1)
               endif
+            endif
           enddo
       enddo
         
@@ -180,6 +185,7 @@
       do iy = 0, ny-1
           do ix = 0, nx-1
 * coefficients are calculated only inside the separatrix and for plasma with low main ion collisionality
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             if (on_closed_surface(ix,iy) .and.
      &      (g_HS_style(ix,iy).le.5.0e0_R8)) then                      !this is a temporary decision
               do is = 0, ns-1 
@@ -187,40 +193,31 @@ c                if (Zhdanov_closure.eq.1) then
                   if ((rza(ix,iy,is).ge.corr_Z_min))   then
 * coefficients are calculated only for chosen ions of the chosen impurity 
                   corr_fria(ix,iy,is)=
-     &    1+(-0.36e0_R8*alpha_HS_style(ix,iy,is)+
-     &    0.44e0_R8*alpha_HS_style(ix,iy,is)**(0.77e0_R8)
-     &    +0.01)/(1+g_HS_style(ix,iy)**2.0_R8)
+     &    1.0_R8+(-0.36e0_R8*alpha_HS_style(ix,iy,is)+
+     &    0.44e0_R8*alpha_HS_style(ix,iy,is)**(0.77e0_R8)+
+     &    0.01_R8)/(1+g_HS_style(ix,iy)**2)
 
                   temp_corr(ix,iy,0,is)=
-     &    (chTAanxy(ix,iy,s2nucl(ismain)-1)*2.0e0_R8**0.5e0_R8)
-     &    /(cRTAanxy(ix,iy,s2nucl(ismain)-1,s2nucl(is)-1)*2.5e0_R8) 
+     &    (chTAanxy(ix,iy,s2nucl(ismain)-1)*sqrt(2.0e0_R8))/
+     &    (cRTAanxy(ix,iy,s2nucl(ismain)-1,s2nucl(is)-1)*2.5e0_R8) 
                   temp_corr(ix,iy,1,is)=
-     &    (2.4e0_R8*eps1(iy)**1.5e0_R8)/
-     &    (1.0e0_R8+(0.36e0_R8+0.4e0_R8*
-     &    alpha_HS_style(ix,iy,is))*g_HS_style(ix,iy)**2.0_R8)  
+     &    (2.4e0_R8*sqrt(eps1(iy)**3))/(1.0e0_R8+(0.36e0_R8+0.4e0_R8*
+     &    alpha_HS_style(ix,iy,is))*g_HS_style(ix,iy)**2)  
                   temp_corr(ix,iy,2,is)=
-     &    (1.6e0_R8*(eps1(iy)**3.0e0_R8)*
-     &    g_HS_style(ix,iy)**2.0_R8)/
-     &    (1+(eps1(iy)**1.5e0_R8)*g_HS_style(ix,iy)**2.0_R8)
+     &    (1.6e0_R8*(eps1(iy)**3)*g_HS_style(ix,iy)**2)/
+     &    (1.0_R8+sqrt(eps1(iy)**3)*g_HS_style(ix,iy)**2)
                   corr_tfia(ix,iy,is)=
      &    (temp_corr(ix,iy,0,is)*temp_corr(ix,iy,1,is)+
      &    temp_corr(ix,iy,2,is))/k2_mean(ix,iy)
-
-        temp_corr(ix,iy,3,is)=2.4e0_R8*eps1(iy)**1.5e0_R8
-        temp_corr(ix,iy,4,is)=1.0e0_R8+(0.36e0_R8+0.4e0_R8*
-     &    alpha_HS_style(ix,iy,is))*g_HS_style(ix,iy)**2.0_R8
-
-
                   endif
-c                endif
 * the correction for main ions is calculated to make total forces zero
                 if ((s2nucl(is)-1).eq.corr_spec) then
                   
-                  corr_fria_D(ix,iy)=corr_fria_D(ix,iy)
-     &  +corr_fria(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
+                  corr_fria_D(ix,iy)=corr_fria_D(ix,iy)+
+     &  corr_fria(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
      &  z2n_xy(ix,iy,s2nucl(is)-1)
-                  corr_tfia_D(ix,iy)=corr_tfia_D(ix,iy)
-     &  +corr_tfia(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
+                  corr_tfia_D(ix,iy)=corr_tfia_D(ix,iy)+
+     &  corr_tfia(ix,iy,is)*rz2(ix,iy,is)*na(ix,iy,is)/
      &  z2n_xy(ix,iy,s2nucl(is)-1)
                 endif
               enddo
@@ -228,27 +225,24 @@ c                endif
                     corr_tfia(ix,iy,ismain)=corr_tfia_D(ix,iy)
 
             endif
+          endif
           enddo
         enddo
          
 
-        if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
+        if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then
           do is = 0, ns-1
             write (chns,'(i3.3)') is
   
             call my_out(70,nx,ny,temp_corr(:,:,0,is),
-     &      'b2sifrtf_temp0_'//chns)
+     &      'b2mod_frtf_nccorr_coefs_temp0_'//chns)
             call my_out(70,nx,ny,temp_corr(:,:,1,is),
-     &      'b2sifrtf_temp1_'//chns)
+     &      'b2mod_frtf_nccorr_coefs_temp1_'//chns)
             call my_out(70,nx,ny,temp_corr(:,:,2,is),
-     &      'b2sifrtf_temp2_'//chns)
-            call my_out(70,nx,ny,temp_corr(:,:,3,is),
-     &      'b2sifrtf_temp3_'//chns)
-            call my_out(70,nx,ny,temp_corr(:,:,4,is),
-     &      'b2sifrtf_temp4_'//chns)
+     &      'b2mod_frtf_nccorr_coefs_temp2_'//chns)
         enddo
         call my_out(70,nx,ny,k2_mean(:,:),
-     &      'b2sifrtf_k2mean_'//chns)
+     &      'b2mod_frtf_nccorr_coefs_k2mean_'//chns)
         
         endif
 
