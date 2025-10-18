@@ -87,7 +87,7 @@
       integer, save :: get_residuals = 0                                 !srv 22.05.18
       integer, save :: visper_all_ions = 1
       real (kind=R8) ::
-     *   potok
+     *  potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
@@ -116,10 +116,10 @@
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2treq, b2tfnb, b2npp5,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
-*   ..initialization
-      data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,        !srv 09.07.99 09.03.09
-     2   vis_per/0.0e0_R8/, no_current/0/                               !srv 06.07.00
+*   ..initialisation
+      data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
+     1  xfm3/1.0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,           !srv 09.07.99 09.03.09
+     2  vis_per/1.0_R8/, no_current/0/                                  !srv 06.07.00
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
@@ -274,15 +274,15 @@ csw 26feb2014 some extra variables
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
-          nsmin=ns
+         nsmin=ns
        elseif(nsmin.lt.0) then
-          nsmin=0
+         nsmin=0
        endif
        call ipgeti ('b2news_nsmax', nsmax)
        if(nsmax.gt.ns) then
-          nsmax=ns
+         nsmax=ns
        elseif(nsmax.lt.0) then
-          nsmax=0
+         nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
@@ -292,7 +292,7 @@ csw 26feb2014 some extra variables
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
       zero(-1:nx,-1:ny) = 0.0_R8
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
@@ -337,8 +337,8 @@ csw 26feb2014 some extra variables
 *     iteration; hence the different setting of rxf2.
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = rxf*xfm3
 cxpb  Force a restart of the matrix builds on the first instance of every call
       first_pass_5 = .true.
@@ -432,20 +432,20 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(last_solve_9, last_solve_11)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
-!$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
-!$OMP& SHARED(zn, zamax)
+!$OMP& SHARED(topiy, na, rza, zn, zamax, te, ti, am, ua, ne)
 !$OMP& SHARED(is_neutral, use_9pt_stencil, uadia, ncall, resmo, corua)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
-!$OMP& SHARED(cssb, vaecrb, vadia)
-!$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, qs, po)
+!$OMP& SHARED(cssb, vaecrb, vadia, wadia)
+!$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, qs, po)
 !$OMP& SHARED(cvla, cdna, cdpa, cddi, cdde, cvlahz, cdnahz, cdpahz)
 !$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq, fchin)
-!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
-!$OMP& SHARED(fchin_a, fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fchvispar_a, fchvisper_a, fchinert_a)
+!$OMP& SHARED(fchanml_a, fchvisq_a, fchin_a)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
 !$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
-!$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa, b2stbr_sna)
-!$OMP& SHARED(b2stbm_sna,ext_sna)
+!$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
+!$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna)
 !$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
 !$OMP& COPYIN(iwrk_7p, aaf_7p, wrk0_7p, wrk1_7p, wrk2_7p)
 !$OMP& COPYIN(iwrk_9p, aaf_9p, wrk0_9p, wrk1_9p, wrk2_9p)
@@ -1068,7 +1068,7 @@ c      with diamagnetic drift part                                       !srv 13
       call b2tfhe_ (nx, ny, ns, facdrift,
      & vol, hx, hy, hy1, qc, qs,                                         !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
-     2 chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
+     & chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, hy1, qc, qs, bb,  !som 13.07.21
@@ -1220,7 +1220,7 @@ c   recompute particle fluxes
 *    ..perform iteration
         new_matrix = .false.
         if(mdf_fnb.eq.0) then                                            !srv 13.10.06
-!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
