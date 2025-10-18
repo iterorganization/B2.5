@@ -249,6 +249,17 @@ csw 26feb2014
       integer, save :: jxi, jxa, jsep
       integer, save :: nxtl, nxtr   ! IYS 29.03.2022
       integer, save :: write_eirene_sources = 0
+      real(kind=R8) :: gs_ti
+      real(kind=R8) :: gs_fsi
+      real(kind=R8) :: gs_inv_dbihend
+      real(kind=R8) :: gs_prod_3
+      real(kind=R8) :: gs_prod_4
+      real(kind=R8) :: gs_inv_sqrt_ammpme
+      integer :: gs_ix, gs_iy, gs_idim, gs_is, gs_istra
+      integer :: gs_copy_NSTRAT
+      integer :: gs_sni_d1, gs_sni_d2, gs_sni_d3, gs_sni_d4
+      integer :: gs_smo_d(1:4,1:4)
+      integer :: gs_i1, gs_i2, gs_i3, gs_i4
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -2514,14 +2525,138 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
          sna_av_paio = sna_paio
          sna_av_pmio = sna_pmio
          sna_av_piio = sna_piio
-         sni_av_papl = sni_papl
-         sni_av_pmpl = sni_pmpl
-         sni_av_pipl = sni_pipl
-         sni_av_pppl = sni_pppl
-         smo_av_mapl = smo_mapl
-         smo_av_mmpl = smo_mmpl
-         smo_av_mipl = smo_mipl
-         smo_av_mppl = smo_mppl
+
+         gs_sni_d1 = size(sni,1)-1
+         gs_sni_d2 = size(sni,2)-1
+         gs_sni_d3 = size(sni,3)
+         gs_sni_d4 = size(sni,4)
+
+         gs_smo_d(1,1) = size(smo_mapl,1)-1
+         gs_smo_d(1,2) = size(smo_mapl,2)-1
+         gs_smo_d(1,3) = size(smo_mapl,3)
+         gs_smo_d(1,4) = size(smo_mapl,4)
+
+         gs_smo_d(2,1) = size(smo_mmpl,1)-1
+         gs_smo_d(2,2) = size(smo_mmpl,2)-1
+         gs_smo_d(2,3) = size(smo_mmpl,3)
+         gs_smo_d(2,4) = size(smo_mmpl,4)
+
+         gs_smo_d(3,1) = size(smo_mipl,1)-1
+         gs_smo_d(3,2) = size(smo_mipl,2)-1
+         gs_smo_d(3,3) = size(smo_mipl,3)
+         gs_smo_d(3,4) = size(smo_mipl,4)
+
+         gs_smo_d(4,1) = size(smo_mppl,1)-1
+         gs_smo_d(4,2) = size(smo_mppl,2)-1
+         gs_smo_d(4,3) = size(smo_mppl,3)
+         gs_smo_d(4,4) = size(smo_mppl,4)
+
+#if(defined(_OPENMP))
+!$OMP PARALLEL DEFAULT(NONE)
+!$OMP& SHARED(sni_av_papl,sni_av_pmpl,sni_av_pipl,sni_av_pppl)
+!$OMP& SHARED(sni_papl,sni_pmpl,sni_pipl,sni_pppl)
+!$OMP& SHARED(smo_av_mapl,smo_av_mmpl,smo_av_mipl,smo_av_mppl)
+!$OMP& SHARED(smo_mapl,smo_mmpl,smo_mipl,smo_mppl)
+!$OMP& SHARED(gs_sni_d1,gs_sni_d2,gs_sni_d3,gs_sni_d4)
+!$OMP& SHARED(gs_smo_d)
+!$OMP& PRIVATE(gs_i1,gs_i2,gs_i3,gs_i4)
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+      do gs_i4=1,gs_sni_d4
+        do gs_i3=1,gs_sni_d3
+          do gs_i2=0,gs_sni_d2
+            do gs_i1=0,gs_sni_d1
+              sni_av_papl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &          sni_papl(gs_i1,gs_i2,gs_i3,gs_i4)
+              sni_av_pmpl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &          sni_pmpl(gs_i1,gs_i2,gs_i3,gs_i4)
+              sni_av_pipl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &          sni_pipl(gs_i1,gs_i2,gs_i3,gs_i4)
+              sni_av_pppl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &          sni_pppl(gs_i1,gs_i2,gs_i3,gs_i4)
+            end do
+          end do
+        end do
+      end do
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+      do gs_i4=1,gs_smo_d(1,4)
+        do gs_i3=1,gs_smo_d(1,3)
+          do gs_i2=0,gs_smo_d(1,2)
+            do gs_i1=0,gs_smo_d(1,1)
+              smo_av_mapl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &         smo_mapl(gs_i1,gs_i2,gs_i3,gs_i4)
+            end do
+          end do
+        end do
+      end do
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+      do gs_i4=1,gs_smo_d(2,4)
+        do gs_i3=1,gs_smo_d(2,3)
+          do gs_i2=0,gs_smo_d(2,2)
+            do gs_i1=0,gs_smo_d(2,1)
+              smo_av_mmpl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &         smo_mmpl(gs_i1,gs_i2,gs_i3,gs_i4)
+            end do
+          end do
+        end do
+      end do
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+      do gs_i4=1,gs_smo_d(3,4)
+        do gs_i3=1,gs_smo_d(3,3)
+          do gs_i2=0,gs_smo_d(3,2)
+            do gs_i1=0,gs_smo_d(3,1)
+              smo_av_mipl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &         smo_mipl(gs_i1,gs_i2,gs_i3,gs_i4)
+            end do
+          end do
+        end do
+      end do
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+      do gs_i4=1,gs_smo_d(4,4)
+        do gs_i3=1,gs_smo_d(4,3)
+          do gs_i2=0,gs_smo_d(4,2)
+            do gs_i1=0,gs_smo_d(4,1)
+              smo_av_mppl(gs_i1,gs_i2,gs_i3,gs_i4) =
+     &         smo_mppl(gs_i1,gs_i2,gs_i3,gs_i4)
+            end do
+          end do
+        end do
+      end do
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP END PARALLEL
+#endif
+
          sei_av_eapl = sei_eapl
          sei_av_empl = sei_empl
          sei_av_eipl = sei_eipl
@@ -2729,16 +2864,97 @@ c   and apply linearisation
         endif !}
       enddo !}
       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
-        eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
-        eirene_mc_papl_sna0to1 = 0.0_R8
-        eirene_mc_pmel_sne0to1 = 0.0_R8
-        eirene_mc_pmpl_sna0to1 = 0.0_R8
-        eirene_mc_pipl_sna0to1 = 0.0_R8
-        eirene_mc_pppl_sna0to1 = 0.0_R8
-        eirene_mc_mapl_smo0to3 = 0.0_R8
-        eirene_mc_mmpl_smo0to3 = 0.0_R8
-        eirene_mc_mipl_smo0to3 = 0.0_R8
-        eirene_mc_mppl_smo0to3 = 0.0_R8
+      gs_copy_NSTRAT = NSTRAT
+#if(defined(_OPENMP))
+!$OMP PARALLEL DEFAULT(NONE)
+!$OMP& SHARED(eirene_mc_pael_sne0to1,eirene_mc_pmel_sne0to1)
+!$OMP& SHARED(eirene_mc_papl_sna0to1,eirene_mc_pmpl_sna0to1)
+!$OMP& SHARED(eirene_mc_pipl_sna0to1,eirene_mc_pppl_sna0to1)
+!$OMP& SHARED(eirene_mc_mapl_smo0to3,eirene_mc_mmpl_smo0to3)
+!$OMP& SHARED(eirene_mc_mipl_smo0to3,eirene_mc_mppl_smo0to3)
+!$OMP& SHARED(nx,ny,ns,gs_copy_NSTRAT)
+!$OMP& PRIVATE(gs_ix,gs_iy,gs_idim,gs_is,gs_istra)
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(4)
+#endif
+
+      do gs_istra=1,gs_copy_NSTRAT
+        do gs_idim=0,1
+          do gs_iy=-1,ny
+            do gs_ix=-1,nx
+              eirene_mc_pael_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)= !djm Jan2017
+     &          0.0_R8
+              eirene_mc_pmel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
+     &          0.0_R8
+            end do
+          end do
+        end do
+      end do
+
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(5)
+#endif
+
+      do gs_istra=1,gs_copy_NSTRAT
+        do gs_is=0,ns-1
+          do gs_idim=0,1
+            do gs_iy=-1,ny
+              do gs_ix=-1,nx
+                eirene_mc_papl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_pmpl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_pipl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_pppl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+              end do
+            end do
+          end do
+        end do
+      end do
+
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(5)
+#endif
+
+      do gs_istra=1,gs_copy_NSTRAT
+        do gs_is=0,ns-1
+          do gs_idim=0,3
+            do gs_iy=-1,ny
+              do gs_ix=-1,nx
+                eirene_mc_mapl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_mmpl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_mipl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_mppl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+              end do
+            end do
+          end do
+        end do
+      end do
+
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP END PARALLEL
+#endif
+
         eirene_mc_eael_she0to3 = 0.0_R8
         eirene_mc_emel_she0to3 = 0.0_R8
         eirene_mc_eiel_she0to3 = 0.0_R8
@@ -2747,17 +2963,24 @@ c   and apply linearisation
         eirene_mc_empl_shi0to3 = 0.0_R8
         eirene_mc_eipl_shi0to3 = 0.0_R8
         eirene_mc_eppl_shi0to3 = 0.0_R8
+
       endif
       do istrai=1,nstrat !{
 * by ns
         recyc_hlp=0.0_R8
+        gs_ti  = tflux(istrai)
+        gs_fsi = flux_scale(istrai)
+        gs_inv_dbihend = 1.0_R8/dble(ih_end)
+        gs_prod_3 = gs_ti * gs_fsi * gs_inv_dbihend
         do is=0,ns-1 !{
           j=b2eatcr(is)
+          gs_inv_sqrt_ammpme = 1.0_R8/sqrt(am(is)*mp/me)
           if(use_recyceir.gt.0) then
             recyctmp=recyceir(istrai)
           else
             recyctmp=recyc(is,istrai)
           endif
+          gs_prod_4 = gs_prod_3 * recyctmp
           recyc_hlp=max(recyc_hlp,recyctmp)
           if(.not.is_neutral(is)) then !{
             ifl=fluids_list(is)
@@ -2774,9 +2997,7 @@ c   and apply linearisation
 csw 26feb2014 averaging
 c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)
-                  t00=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)/
-     *             dble(ih_end)
+                  t00=sni_av(ix+1,iy+1,ifl,istrai)* gs_prod_4
 
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
@@ -2795,21 +3016,13 @@ c     *             recyctmp*flux_scale(istrai)
                     if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *                 write_eirene_sources.ne.0) then
                       t0_a = sni_av_papl(ix+1,iy+1,ifl,istrai)*  !djm Jan2017
-     *                       tflux(istrai)*
-     *                       recyctmp*flux_scale(istrai)/
-     *                       dble(ih_end)
+     *                       gs_prod_4
                       t0_m = sni_av_pmpl(ix+1,iy+1,ifl,istrai)*
-     *                       tflux(istrai)*
-     *                       recyctmp*flux_scale(istrai)/
-     *                       dble(ih_end)
+     *                       gs_prod_4
                       t0_i = sni_av_pipl(ix+1,iy+1,ifl,istrai)*
-     *                       tflux(istrai)*
-     *                       recyctmp*flux_scale(istrai)/
-     *                       dble(ih_end)
+     *                       gs_prod_4
                       t0_p = sni_av_pppl(ix+1,iy+1,ifl,istrai)*
-     *                       tflux(istrai)*
-     *                       recyctmp*flux_scale(istrai)/
-     *                       dble(ih_end)
+     *                       gs_prod_4
                     endif
                   else if(dpc_fix.eq.2) then
                     t0=0.0_R8                     ! at least get the wrong code to go wrong safely!
@@ -2971,32 +3184,31 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
-                  t0=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *             dble(ih_end)*hz(ix,iy)
+                  t0=smo_av(ix+1,iy+1,ifl,istrai)*
+     *             gs_prod_4 * sclstra(j,istrai)*
+     *             hz(ix,iy)
                   if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *               write_eirene_sources.ne.0) then
                     t0_a=smo_av_mapl(ix+1,iy+1,ifl,istrai)*
-     *                   tflux(istrai)*
-     *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *                   dble(ih_end)*hz(ix,iy)
+     *                   gs_prod_4 *
+     *                   sclstra(j,istrai) *
+     *                   hz(ix,iy)
                     t0_m=smo_av_mmpl(ix+1,iy+1,ifl,istrai)*
-     *                   tflux(istrai)*
-     *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *                   dble(ih_end)*hz(ix,iy)
+     *                   gs_prod_4 *
+     *                   sclstra(j,istrai) *
+     *                   hz(ix,iy)
                     t0_i=smo_av_mipl(ix+1,iy+1,ifl,istrai)*
-     *                   tflux(istrai)*
-     *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *                   dble(ih_end)*hz(ix,iy)
+     *                   gs_prod_4 *
+     *                   sclstra(j,istrai) *
+     *                   hz(ix,iy)
                     t0_p=smo_av_mppl(ix+1,iy+1,ifl,istrai)*
-     *                   tflux(istrai)*
-     *                   recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *                   dble(ih_end)*hz(ix,iy)
+     *                   gs_prod_4 *
+     *                   sclstra(j,istrai) *
+     *                   hz(ix,iy)
                   endif
 
-                  VTHE=SQRT(TE(IX,IY)/me)
 c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
-                  VTHE=VTHE/sqrt(am(is)*mp/me)
+                  VTHE=SQRT(TE(IX,IY)/me) * gs_inv_sqrt_ammpme
 c
                   if (linearisation.eq.1) then !{
 cxpb 2002.01.28 moved to cell-centered velocities
@@ -3126,14 +3338,14 @@ c*** before correction (r), after correction (c), after iteration (i)
                     src_ms(0,3)=src_ms(0,3)+t0
                   endif
 c Radial momentum source component
-                  t0=smo_av(ix+1,iy+1,nfl+ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *             dble(ih_end)*hz(ix,iy)
+                  t0=smo_av(ix+1,iy+1,nfl+ifl,istrai)*
+     *             gs_prod_4 * sclstra(j,istrai) *
+     *             hz(ix,iy)
                   smr0(ix,iy,0,is)=smr0(ix,iy,0,is)+t0
 c Diamagnetic momentum source component
-                  t0=smo_av(ix+1,iy+1,2*nfl+ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *             dble(ih_end)*hz(ix,iy)
+                  t0=smo_av(ix+1,iy+1,2*nfl+ifl,istrai)*
+     *             gs_prod_4 * sclstra(j,istrai) *
+     *             hz(ix,iy)
                   smd0(ix,iy,0,is)=smd0(ix,iy,0,is)+t0
                 end if !}
               end do !}  ! ix
@@ -3149,17 +3361,11 @@ c Diamagnetic momentum source component
      &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
      &             region(ix,iy,0).ne.0) then !{
                   t0_a = sna_av_paat(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_m = sna_av_pmat(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_i = sna_av_piat(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   eirene_mc_paat_sna_bal(ix,iy,is,istrai)=
      *                   eirene_mc_paat_sna_bal(ix,iy,is,istrai)+t0_a
                   eirene_mc_pmat_sna_bal(ix,iy,is,istrai)=
@@ -3177,17 +3383,11 @@ c Diamagnetic momentum source component
      &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
      &             region(ix,iy,0).ne.0) then !{
                   t0_a = sna_av_paml(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_m = sna_av_pmml(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_i = sna_av_piml(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   eirene_mc_paml_sna_bal(ix,iy,is,istrai)=
      *                   eirene_mc_paml_sna_bal(ix,iy,is,istrai)+t0_a
                   eirene_mc_pmml_sna_bal(ix,iy,is,istrai)=
@@ -3205,17 +3405,11 @@ c Diamagnetic momentum source component
      &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
      &             region(ix,iy,0).ne.0) then !{
                   t0_a = sna_av_paio(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_m = sna_av_pmio(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   t0_i = sna_av_piio(ix+1,iy+1,is,istrai)*
-     *                   tflux(istrai)*
-     *                   recyc_hlp*flux_scale(istrai)/
-     *                   dble(ih_end)
+     *                   gs_prod_3 * recyc_hlp
                   eirene_mc_paio_sna_bal(ix,iy,is,istrai)=
      *                   eirene_mc_paio_sna_bal(ix,iy,is,istrai)+t0_a
                   eirene_mc_pmio_sna_bal(ix,iy,is,istrai)=
@@ -3236,12 +3430,10 @@ c Diamagnetic momentum source component
               rf0=RF_NEUT(1)
               if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *           write_eirene_sources.ne.0) then
-                t0_a = sne_av_pael(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
-                t0_m = sne_av_pmel(ix+1,iy+1,istrai)*tflux(istrai)*
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
+                t0_a = sne_av_pael(ix+1,iy+1,istrai)*gs_prod_3* !djm Jan2017
+     *           recyc_hlp*sclstra(0,istrai)
+                t0_m = sne_av_pmel(ix+1,iy+1,istrai)*gs_prod_3*
+     *           recyc_hlp*sclstra(0,istrai)
               endif
               if (linearisation.eq.1) then !{
                 if (balance_netcdf.ne.0 .or.          !djm Jan2017
@@ -3292,23 +3484,18 @@ cdjm Jan2017 Calculate linearised components of source
 csw 26feb2014 averaging
 c              t0=see(ix+1,iy+1,istrai)*tflux(istrai)*
 c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
-              t0=see_av(ix+1,iy+1,istrai)*tflux(istrai)*
-     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *         dble(ih_end)
+              t0=see_av(ix+1,iy+1,istrai)*gs_prod_3*
+     *         recyc_hlp*sclstra(0,istrai)
               if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *           write_eirene_sources.ne.0) then
-                t0_a = see_av_eael(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
-                t0_m = see_av_emel(ix+1,iy+1,istrai)*tflux(istrai)*
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
-                t0_i = see_av_eiel(ix+1,iy+1,istrai)*tflux(istrai)*
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
-                t0_p = see_av_epel(ix+1,iy+1,istrai)*tflux(istrai)*
-     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *           dble(ih_end)
+                t0_a = see_av_eael(ix+1,iy+1,istrai)*gs_prod_3* !djm Jan2017
+     *           recyc_hlp*sclstra(0,istrai)
+                t0_m = see_av_emel(ix+1,iy+1,istrai)*gs_prod_3*
+     *           recyc_hlp*sclstra(0,istrai)
+                t0_i = see_av_eiel(ix+1,iy+1,istrai)*gs_prod_3*
+     *           recyc_hlp*sclstra(0,istrai)
+                t0_p = see_av_epel(ix+1,iy+1,istrai)*gs_prod_3*
+     *           recyc_hlp*sclstra(0,istrai)
               endif
 
               if (linearisation.eq.1) then !{
@@ -3437,23 +3624,18 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c              t0=sei(ix+1,iy+1,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
-              t0=sei_av(ix+1,iy+1,istrai)*tflux(istrai)*
-     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1         dble(ih_end)
+              t0=sei_av(ix+1,iy+1,istrai)*gs_prod_3*
+     1         recyc_hlp*sclstra(0,istrai)
               if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *           write_eirene_sources.ne.0) then
-                t0_a=sei_av_eapl(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
-     1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1           dble(ih_end)
-                t0_m=sei_av_empl(ix+1,iy+1,istrai)*tflux(istrai)*
-     1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1           dble(ih_end)
-                t0_i=sei_av_eipl(ix+1,iy+1,istrai)*tflux(istrai)*
-     1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1           dble(ih_end)
-                t0_p=sei_av_eppl(ix+1,iy+1,istrai)*tflux(istrai)*
-     1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1           dble(ih_end)
+                t0_a=sei_av_eapl(ix+1,iy+1,istrai)*gs_prod_3* !djm Jan2017
+     1           recyc_hlp*sclstra(0,istrai)
+                t0_m=sei_av_empl(ix+1,iy+1,istrai)*gs_prod_3*
+     1           recyc_hlp*sclstra(0,istrai)
+                t0_i=sei_av_eipl(ix+1,iy+1,istrai)*gs_prod_3*
+     1           recyc_hlp*sclstra(0,istrai)
+                t0_p=sei_av_eppl(ix+1,iy+1,istrai)*gs_prod_3*
+     1           recyc_hlp*sclstra(0,istrai)
               endif
 
               ssei(istrai)=ssei(istrai)+t0
@@ -3505,6 +3687,7 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                   else
                     recyctmp=recyc(is,istrai)
                   endif
+                  gs_prod_4 = gs_prod_3 * recyctmp
                   if(.not.is_neutral(is)) then !{
                     ifl=fluids_list(is)
                     j=b2eatcr(is)
@@ -3525,27 +3708,17 @@ csw 06mar2012 momentum source
 csw 26feb2014 averaging
 c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-                    t2=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *               recyctmp*flux_scale(istrai)/
-     *               dble(ih_end)
+                    t2=smo_av(ix+1,iy+1,ifl,istrai)*gs_prod_4
                     if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *                 write_eirene_sources.ne.0) then
                       t2_apl= !djm Jan2017
-     *                 smo_av_mapl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 smo_av_mapl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t2_mpl=
-     *                 smo_av_mmpl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 smo_av_mmpl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t2_ipl=
-     *                 smo_av_mipl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 smo_av_mipl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t2_ppl=
-     *                 smo_av_mppl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 smo_av_mppl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                     endif
 
                     t2=t2*sclstra(j,istrai)
@@ -3561,27 +3734,17 @@ csw 06mar2012 particle source
 csw 26feb2014 averaging
 c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-                    t3=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *               recyctmp*flux_scale(istrai)/
-     *               dble(ih_end)
+                    t3=sni_av(ix+1,iy+1,ifl,istrai)*gs_prod_4
                     if (balance_netcdf.ne.0 .or.          !djm Jan2017
      *                 write_eirene_sources.ne.0) then
                       t3_apl= !djm Jan2017
-     *                 sni_av_papl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 sni_av_papl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t3_mpl=
-     *                 sni_av_pmpl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 sni_av_pmpl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t3_ipl=
-     *                 sni_av_pipl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 sni_av_pipl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                       t3_ppl=
-     *                 sni_av_pppl(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *                 recyctmp*flux_scale(istrai)/
-     *                 dble(ih_end)
+     *                 sni_av_pppl(ix+1,iy+1,ifl,istrai)*gs_prod_4
                     endif
 
 csw 26mar2013 (for TESTING)

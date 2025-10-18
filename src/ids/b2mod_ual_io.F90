@@ -868,7 +868,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         type(ids_plasma_sources_source_ggd), allocatable :: source_ggd(:)
         type(ids_plasma_transport_model_ggd), allocatable :: transport_ggd(:)
 #endif
@@ -9029,7 +9029,7 @@ contains
 #else
         type(ids_generic_grid_aos3_root) :: batch_grid, sources_grid
 #endif
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         type(ids_plasma_sources_source_ggd), allocatable :: source_ggd(:)
 #endif
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
