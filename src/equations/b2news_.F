@@ -118,7 +118,7 @@
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
      1  xfm3/1.0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,           !srv 09.07.99 09.03.09
-     2  vis_per/1.0_R8/, no_current/0/                                  !srv 06.07.00
+     2  vis_per/0.0_R8/, no_current/0/                                  !srv 06.07.00
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
