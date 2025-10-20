@@ -87,6 +87,10 @@
      &  '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))',
      &  '(1p,9(1x,e13.5e3))', '(1p,10(1x,e12.4e3))'/
 
+      character, save :: fmtwuin(0:6)*32
+      data fmtwuin /'(8(1x,i15))', '(10(1x,i12))', '(12(1x,i10))',
+     &  '(14(1x,i8))', '(16(1x,i7))', '(18(1x,i6))', '(22(1x,i5))'/
+
 ! ncall variables from transport routines
       integer, save :: ncall_b2tcpa = 0, ncall_b2tfcc = 0,
      & ncall_b2tfch = 0, ncall_b2tfed = 0, ncall_b2tfhe = 0,
@@ -122,5 +126,7 @@
 
       integer, save :: gradient_iterations = 0, primal_iterations = 0
       real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8
+
+      logical, save :: firstgmid = .true.
 
       end module b2mod_ad

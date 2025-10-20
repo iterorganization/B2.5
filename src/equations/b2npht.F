@@ -36,7 +36,7 @@
      &          ncall_b2sikt, ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax,
-     &          ncall_b2ttia
+     &          ncall_b2ttia, firstgmid
 #endif
       use b2mod_subsys
       implicit none
