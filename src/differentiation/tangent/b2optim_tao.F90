@@ -38,8 +38,7 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, stated,&
-&      state_ext, state_extd, state_avg, state_avgd, npar_opt)
+      call b2mn_init_dv(npar_opt)
       call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
@@ -143,8 +142,7 @@
       CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,&
-&      state_ext, state_extd, state_avg, state_avgd, npar_opt)
+      call b2mn_fin_dv(npar_opt)
       deallocate(par_opt_phys)
       deallocate(xold)
       deallocate(xnew)
@@ -245,7 +243,7 @@
       use b2mod_diffsizes
       use b2us_io_diffv &
       , only : write_b2fstate
-      use b2mod_version_diffv &
+      use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diffv
       use b2mod_par_opt_diffv &
@@ -328,9 +326,7 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
-     &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
 #ifdef TGT
@@ -454,7 +450,7 @@
           endif
         end do
       endif
-      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
+      call b2mn_step(j)
       xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
       write (*,*) 'TAO COST FUNCTION:', F
@@ -469,7 +465,7 @@
       subroutine FormGradient(tao, XX, grad, dummy, ierr)
       use b2us_io_diffv &
       , only : write_b2fstate
-      use b2mod_version_diffv &
+      use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diffv
       use b2mod_par_opt_diffv &
@@ -552,9 +548,7 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
-     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
-     &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(j, jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       xold(1:npar_opt) = x_v(1:npar_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
