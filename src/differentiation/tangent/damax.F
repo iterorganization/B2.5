@@ -6,7 +6,7 @@
      *   damax
       integer n, incx
       real (kind=R8) ::
-     *   sx(0:*)
+     *   sx(0:n*incx-1)
 *     ------------------------------------------------------------------
 *     DAMAX (BLAS-like routine) computes the maximum absolute value in
 *     a vector.
