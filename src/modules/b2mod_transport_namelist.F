@@ -220,10 +220,10 @@ cpxb  In the PFR, we apply the value at the relevant separatrix.
       integer :: iCv
 #endif
 
-      cfl(nCv) = cflm
+      cfl(1:nCv) = cflm
       if (core.gt.0.0_R8.and.sol.gt.0.0_R8) then
         if (core.eq.sol) then
-          cfl(nCv) = core
+          cfl(1:nCv) = core
         else
           call xerrab('cfl_tanh_profile not coded yet')
 #ifdef WG_TODO
