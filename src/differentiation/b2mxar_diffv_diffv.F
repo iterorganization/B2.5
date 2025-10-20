@@ -1,11 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diffv_diffv (nCv, ns, nregionv, BoRiS, switch,
-     &   geo, mpg, pl, dv, diag)
+      subroutine b2mxar_diffv_diffv (nCv, ns, switch, geo, mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
-!      use b2mod_rates
       use b2mod_b2cmpa_diffv_diffv
       use b2mod_switches_diffv_diffv
       use b2us_geo_diffv_diffv
@@ -20,7 +18,6 @@
       type (mapping), intent (in) :: mpg
       type (B2Plasma_diffv_diffv), intent (in) :: pl
       type (B2Derivatives_diffv_diffv), intent (in) :: dv
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic_diffv_diffv), intent (inout) :: diag
 *   ..common blocks
@@ -37,15 +34,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
-      save ncall
 *   ..procedures
       intrinsic sqrt, abs
       external xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -102,7 +97,15 @@
          do is = 0, ns-1
           prvi=prvi+abs(geo%cvVol(iCv)*pl%na(1,1,iCv,is)*pl%ti(1,1,iCv))
          enddo
-         prvn = prvi
+         prvn = prvi !dummy
+        elseif (switch%tn_style.eq.1) then
+         do is = 0, ns-1
+          if (.not.is_neutral(is)) then
+           prvi = prvi +
+     &      abs(geo%cvVol(iCv)*pl%na(1,1,iCv,is)*pl%ti(1,1,iCv))
+          endif
+         enddo
+         prvn = prvi !dummy
         else
          do is = 0, ns-1
           if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
@@ -128,10 +131,13 @@
        t3 = t3+abs(dv%reshn(1,1,iCv))
        t4 = t4+abs(dv%reskt(1,1,iCv))
       enddo
-      if (prvi .gt. 0.0_R8) diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
-      if (prvi .gt. 0.0_R8) diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshe =
+     & abs(t0/((1.5_R8+switch%BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshi =
+     & abs(t1/((1.5_R8+switch%BoRiS)*prvi))
       if (nevi .gt. 0.0_R8) diag%arespo = abs(t2/(qe*nevi))
-      if (prvn .gt. 0.0_R8) diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
+      if (prvn .gt. 0.0_R8) diag%areshn =
+     & abs(t3/((1.5_R8+switch%BoRiS)*prvn))
       if (prvi .gt. 0.0_R8) diag%areskt = abs(t4/(prvi))
 
 * ..compute regional scaled sums
@@ -181,12 +187,11 @@
      .    diag%reshireg(1,1,mpg%cvReg(iCv))+abs(dv%reshi(1,1,iCv))
       enddo
       if (prvi .gt. 0.0_R8) diag%reshereg(1,1,:) = 
-     .  abs(diag%reshereg(1,1,:)/((1.5_R8+BoRiS)*prvi))
+     .  abs(diag%reshereg(1,1,:)/((1.5_R8+switch%BoRiS)*prvi))
       if (prvi .gt. 0.0_R8) diag%reshireg(1,1,:) = 
-     .  abs(diag%reshireg(1,1,:)/((1.5_R8+BoRiS)*prvi))
+     .  abs(diag%reshireg(1,1,:)/((1.5_R8+switch%BoRiS)*prvi))
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

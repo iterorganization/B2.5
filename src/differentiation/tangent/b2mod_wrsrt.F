@@ -329,9 +329,9 @@ c*** New file
 
 c Create a format string for the column headers
         if (nfl_tmp.gt.0) then
-          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,5x,',
+          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,4x,',
      ,             nr_tmp*nrg_tmp,'(4x,a8,i2.2),',
-     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),',
+     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),1x,',
      ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
 #ifdef DBG
 c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
@@ -352,7 +352,7 @@ c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
      +   nr_tmp*nrg_tmp + ns_tmp*nsp_tmp + na_tmp*nrg_tmp*nsp_tmp,
-     +  '(2x,e12.4))'
+     +  '(2x,e12.4e3))'
       end if
 #ifdef DBG
       print *,'hlp_frm:'       !###

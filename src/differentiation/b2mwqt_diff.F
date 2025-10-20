@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt_diff (nput, nCv, ns, itim, itcnt, BoRiS,
-     &  switch, geo, pl, dv, diag)
+      subroutine b2mwqt_diff (nput, nCv, ns, itim, itcnt, switch,
+     &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa_diff
@@ -13,7 +13,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nCv, ns, itim, itcnt
-      real (kind=R8) :: BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma_diff), intent (in) :: pl
@@ -57,7 +56,7 @@
 *   ..set and test nfld
       nfld = 0
       if (1.le.switch%b2mwqt_style) then
-       nfld = nfld+2+2*(2*ns+6)
+       nfld = nfld+2+2*(2*ns+7)
       endif
       if (2.le.switch%b2mwqt_style) then
        nfld = nfld+36*(ns+3)
@@ -99,6 +98,8 @@
        k = k+1
        z(k) = diag%areskt
        k = k+1
+       z(k) = diag%areszt
+       k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
         z(k) = diag%acorpa(is)
@@ -119,6 +120,8 @@
        z(k) = diag%acorpo
        k = k+1
        z(k) = diag%acorkt/ev
+       k = k+1
+       z(k) = diag%acorzt/ev
        k = k+1
       endif
       if (2.le.switch%b2mwqt_style) then
