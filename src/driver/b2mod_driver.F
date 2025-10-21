@@ -2198,7 +2198,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
-      integer i, is, icf, iCv
+      integer i, is, icf
 #ifdef IMAS
       integer l, tmp_run, time_slice_index, num_batch_slices
 #ifndef NAGFOR
