@@ -430,7 +430,7 @@ EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${P
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
 ADEXTRA =
 ifdef DIFF_D
-ADEXTRA += ${CONTEXTAD}
+ADEXTRA += ${CONTEXTAD} ${JSONAD}
 endif
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
@@ -464,6 +464,7 @@ OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
 MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
 
 CONTEXTAD = ${OBJDIR}/adContext.o
+JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
@@ -1280,7 +1281,10 @@ endif
 ${MNHEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
-${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
+${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h ${JSONAD}
+	${CC} -c $< -o $@
+
+${JSONAD}: ${DIFFPATH}/json.c ${DIFFPATH}/json.h
 	${CC} -c $< -o $@
 
 ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
