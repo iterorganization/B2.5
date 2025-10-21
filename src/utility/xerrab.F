@@ -37,6 +37,8 @@
       if (lwf) then
        write (nprt,'(1x,a/1x,a)')
      &   '*** XERRAB: program will stop. ***', trim(messg)
+       write (*,'(1x,a/1x,a)')
+     &   '*** XERRAB: program will stop. ***', trim(messg)
       else
        write (*,'(1x,a/1x,a)')
      &   '*** XERRAB: program will stop. ***', trim(messg)
