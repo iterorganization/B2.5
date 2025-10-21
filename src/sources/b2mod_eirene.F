@@ -832,7 +832,7 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
               if (feedback_strata(is).eq.istrai .and.
      &            na_feedback_target(is).gt.0.0_R8 .and.
      &            na_feedback_actuator(is).eq.1)
-     .          tflux(istrai)= tflux(istrai) + userfluxparm(istrai,1)
+     >          tflux(istrai)=tflux(istrai)+userfluxparm(istrai,1)
             end do !}
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
@@ -980,7 +980,6 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end if
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
-
 
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
       if(ank_mods.ne.0 .or. ionising_core.eq.1) then
@@ -2582,13 +2581,13 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
           do gs_i2=0,gs_sni_d2
             do gs_i1=0,gs_sni_d1
               sni_av_papl(gs_i1,gs_i2,gs_i3,gs_i4) =
-     &          sni_papl(gs_i1,gs_i2,gs_i3,gs_i4)
+     &         sni_papl(gs_i1,gs_i2,gs_i3,gs_i4)
               sni_av_pmpl(gs_i1,gs_i2,gs_i3,gs_i4) =
-     &          sni_pmpl(gs_i1,gs_i2,gs_i3,gs_i4)
+     &         sni_pmpl(gs_i1,gs_i2,gs_i3,gs_i4)
               sni_av_pipl(gs_i1,gs_i2,gs_i3,gs_i4) =
-     &          sni_pipl(gs_i1,gs_i2,gs_i3,gs_i4)
+     &         sni_pipl(gs_i1,gs_i2,gs_i3,gs_i4)
               sni_av_pppl(gs_i1,gs_i2,gs_i3,gs_i4) =
-     &          sni_pppl(gs_i1,gs_i2,gs_i3,gs_i4)
+     &         sni_pppl(gs_i1,gs_i2,gs_i3,gs_i4)
             end do
           end do
         end do
@@ -2876,7 +2875,7 @@ c   and apply linearisation
         endif !}
       enddo !}
       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
-      gs_copy_NSTRAT = NSTRAT
+        gs_copy_NSTRAT = NSTRAT
 #if(defined(_OPENMP))
 !$OMP PARALLEL DEFAULT(NONE)
 !$OMP& SHARED(eirene_mc_pael_sne0to1,eirene_mc_pmel_sne0to1)
@@ -2892,45 +2891,18 @@ c   and apply linearisation
 !$OMP DO COLLAPSE(4)
 #endif
 
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_idim=0,1
-          do gs_iy=-1,ny
-            do gs_ix=-1,nx
-              eirene_mc_pael_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)= !djm Jan2017
-     &          0.0_R8
-              eirene_mc_pmel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
-     &          0.0_R8
-            end do
-          end do
-        end do
-      end do
-
-#if(defined(_OPENMP))
-!$OMP END DO
-#endif
-
-#if(defined(_OPENMP))
-!$OMP DO COLLAPSE(5)
-#endif
-
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_is=0,ns-1
+        do gs_istra=1,gs_copy_NSTRAT
           do gs_idim=0,1
             do gs_iy=-1,ny
               do gs_ix=-1,nx
-                eirene_mc_papl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pmpl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pipl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pppl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_pael_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)= !djm Jan2017
+     &           0.0_R8
+                eirene_mc_pmel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
+     &           0.0_R8
               end do
             end do
           end do
         end do
-      end do
 
 #if(defined(_OPENMP))
 !$OMP END DO
@@ -2940,24 +2912,51 @@ c   and apply linearisation
 !$OMP DO COLLAPSE(5)
 #endif
 
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_is=0,ns-1
-          do gs_idim=0,3
-            do gs_iy=-1,ny
-              do gs_ix=-1,nx
-                eirene_mc_mapl_smo0to3(gs_ix,gs_iy,gs_idim,
+        do gs_istra=1,gs_copy_NSTRAT
+          do gs_is=0,ns-1
+            do gs_idim=0,1
+              do gs_iy=-1,ny
+                do gs_ix=-1,nx
+                  eirene_mc_papl_sna0to1(gs_ix,gs_iy,gs_idim,
      &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mmpl_smo0to3(gs_ix,gs_iy,gs_idim,
+                  eirene_mc_pmpl_sna0to1(gs_ix,gs_iy,gs_idim,
      &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mipl_smo0to3(gs_ix,gs_iy,gs_idim,
+                  eirene_mc_pipl_sna0to1(gs_ix,gs_iy,gs_idim,
      &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mppl_smo0to3(gs_ix,gs_iy,gs_idim,
+                  eirene_mc_pppl_sna0to1(gs_ix,gs_iy,gs_idim,
      &             gs_is,gs_istra) = 0.0_R8
+                end do
               end do
             end do
           end do
         end do
-      end do
+
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(5)
+#endif
+
+        do gs_istra=1,gs_copy_NSTRAT
+          do gs_is=0,ns-1
+            do gs_idim=0,3
+              do gs_iy=-1,ny
+                do gs_ix=-1,nx
+                  eirene_mc_mapl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mmpl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mipl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mppl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &             gs_is,gs_istra) = 0.0_R8
+                end do
+              end do
+            end do
+          end do
+        end do
 
 #if(defined(_OPENMP))
 !$OMP END DO
@@ -4464,7 +4463,7 @@ c*** surface sources should be counted here - the volumetric
 c*** recombination is already evaluated above.
 
         hlp_pff=.true.
-        do istrai=1, nstrat !{
+        do istrai=1,nstrat !{
           do is=0,ns-1 !{
             if(.not.is_neutral(is)) then !{
               j=b2eatcr(is)
