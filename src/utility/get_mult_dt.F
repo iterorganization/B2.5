@@ -37,11 +37,9 @@
 *
 *     style = 2: based on the magnitude of the sources compared to the particle/momentum/energy content of the cell. 
 *
-*     style = 3: CFL-like criterium for drift velocities
+*     style = 3: CFL-like criterium for drift velocities. Under development.
 *
-*     style = 4: Combination of option 2 and 3. The minimum of both options is taken.
-*
-*     style = 5: CFL-like criterium for drift velocities, based on final fluxes
+*     style = 4: Combination of option 2 and 3. The minimum of both options is taken. Under development. 
 *
 *     Other styles can be added in the future.
 *
@@ -84,6 +82,7 @@
       elseif (style.eq.2) then !! This option is worked out in b2srdt itself.
         mult_dt = 1.0_R8 
       elseif (style.eq.3) then 
+cc Highly experimental work! Use with care.
         !! interpolate drift velocities to cell centers
         call intcell1(nFc, nCv, ns-1, mpg, mpg%intcellP,
      &               dv%uadia(:,0,:),uadia_c0)
@@ -125,6 +124,7 @@
           enddo
         enddo
       elseif (style.eq.4) then 
+cc Highly experimental work! Use with care.
         mult_dt = 1.0_R8 !! For this option mult_dt is not used but other pre-compuations are performed here
         !! interpolate drift velocities to cell centers
         call intcell1(nFc, nCv, ns-1, mpg, mpg%intcellP,
