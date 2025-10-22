@@ -37,28 +37,28 @@
 *   ..common blocks
       integer ncall
       integer iCv,iFc,is,ir,tallies_netcdf
-      character*256 tally_format, species_nodiff_format
-      character*13, allocatable, save :: species_nodiff_name(:)
+      character*256 tally_format, species_format
+      character*13, allocatable, save :: species_name(:)
       save ncall,tallies_netcdf
       data ncall/0/,tallies_netcdf/0/
 #ifdef NO_LONG_LINES
-      data tally_format, species_nodiff_format
+      data tally_format, species_format
      *  /'(a,1p,8e12.4,/,(''+ '',10e12.4))',
      *   '(a,1x,i3,18(1x,a),/,(''+ '',20(1x,a)))'/
 #else
-      data tally_format, species_nodiff_format
+      data tally_format, species_format
      *  /'(a,1p,(10000e12.4))','(a,1x,i3,999(1x,a))'/
 #endif
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('tallies')
-*    ..initialise species_nodiff_name
+*    ..initialise species_name
       if (ncall.eq.0) then
         call initialise_potentials(ns)
-        allocate(species_nodiff_name(0:ns-1))
+        allocate(species_name(0:ns-1))
         do is = 0, ns-1
           potave(is) = (potmin(is)+potmax(is))/2.0_R8
-          call species_nodiff(is,species_nodiff_name(is),.false.)
+          call species_nodiff(is,species_name(is),.false.)
         enddo
         call ipgeti('tallies_netcdf',tallies_netcdf)
       endif
@@ -157,11 +157,14 @@
      2        2.5_R8*(state%dv%fnn_52(iFc,0)+
      2                state%dv%fnn_52(iFc,1)))
           end if
-          qconvereg(mpg%fcReg(iFc))=                              !cjk
+          qconvereg(mpg%fcReg(iFc))=                                !cjk
      1     qconvereg(mpg%fcReg(iFc))+tef(iFc)*rzf(iFc,is)*
      1    (1.5_R8*(state%dv%fna_32(iFc,0,is)+state%dv%fna_32(iFc,1,is))+
      1     2.5_R8*(state%dv%fna_52(iFc,0,is)+state%dv%fna_52(iFc,1,is)))
         end do
+        qconvereg(mpg%fcReg(iFc))=                                  !wuhsh
+     1    qconvereg(mpg%fcReg(iFc))-tef(iFc)*
+     1   (1.5_R8*state%dv%fch_p(iFc,0)/qe)
         fhireg(mpg%fcReg(iFc))=fhireg(mpg%fcReg(iFc))+
      1     state%dv%fhi(iFc,0)+state%dv%fhi(iFc,1)
         fhereg(mpg%fcReg(iFc))=fhereg(mpg%fcReg(iFc))+
@@ -457,8 +460,8 @@
 *    ..write tallies
       write(*,tally_format) 'Start tallies by region'
       write(*,'(a,2(1x,i2))') 'nnreg',mpg%nnreg
-      write(*,species_nodiff_format) 'species_nodiff',ns,
-     * (trim(species_nodiff_name(is)),is=0,ns-1)
+      write(*,species_format) 'species',ns,
+     * (trim(species_name(is)),is=0,ns-1)
       if(ncall.eq.0) then
         write(*,tally_format) 'pot',potave(0:ns-1)
       endif
@@ -588,7 +591,7 @@
             end if
             write(6,'(a,i8)') trim(filename)//' : ntstep = ', ntstep
             if (ntstep.eq.0) call write_cdf_char_variable(ncid,-1,
-     *       'species_nodiff',species_nodiff_name(0:ns-1))
+     *       'species',species_name(0:ns-1))
           else
             status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
