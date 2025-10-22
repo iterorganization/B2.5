@@ -38,8 +38,7 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_b(switch, switchb, geo, geob, mpg, mpgb, state, stateb,&
-&      state_ext, state_extb, state_avg, state_avgb)
+      call b2mn_init_b()
       call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
@@ -143,8 +142,7 @@
       CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_b(switch, geo, geob, mpg, mpgb, state, stateb,&
-&      state_ext, state_extb, state_avg, state_avgb)
+      call b2mn_fin_b()
       deallocate(par_opt_phys)
       deallocate(xold)
       deallocate(xnew)
@@ -327,8 +325,7 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_b(switch, switchb, geo, geob, mpg, mpgb, state,&
-     &   stateb, state_ext, state_extb, state_avg, state_avgb, j, jdiff)
+      call b2mn_step_b(j, jdiff)
       xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
 #ifdef TGT
@@ -452,7 +449,7 @@
           endif
         end do
       endif
-      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
+      call b2mn_step(j)
       xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
       write (*,*) 'TAO COST FUNCTION:', F
@@ -550,8 +547,7 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_b(switch, switchb, geo, geob, mpg, mpgb, state,&
-     &   stateb, state_ext, state_extb, state_avg, state_avgb, j, jdiff)
+      call b2mn_step_b(j, jdiff)
       xold(1:npar_opt) = x_v(1:npar_opt)
 #ifdef TGT
       do ipar = 1, npar_opt

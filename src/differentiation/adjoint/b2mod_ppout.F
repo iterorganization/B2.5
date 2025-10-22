@@ -1413,7 +1413,7 @@ c=======================================================================
       use b2mod_types
       use b2mod_plasma_diff
       use b2mod_constants
-      use b2mod_elements
+      use b2mod_elements_diff
       use b2mod_b2cmpa_diff
 
       implicit none

@@ -32,7 +32,9 @@ contains
 
 #ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, &
+#ifndef NO_CDF
                      ntim, b2time, ntim_batch, &
+#endif
                      nCv, nFc, ns, nncutmax, geo, mpg, switch, &
                      pl, dv, co, rt, srw, ext, &
                      ismain, ismain0, lwti, lwav, luav)
@@ -45,12 +47,12 @@ contains
     use b2us_geo_diff
     use b2us_map_diff
     use b2us_plasma_diff
-    use b2mod_geometry &
+    use b2mod_geometry_diff &
     , only : geometryID, GEOMETRY_CDN
     use b2mod_user_namelist_diff &
     , only : omp, imp, nimp, nomp, icsepimp
 #ifndef NO_CDF
-    use b2mod_geometry &
+    use b2mod_geometry_diff &
     , only : GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
              GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS
 #endif
@@ -79,8 +81,8 @@ contains
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
-    integer, intent(in) :: ntim, b2time, ntim_batch
 #ifndef NO_CDF
+    integer, intent(in) :: ntim, b2time, ntim_batch
 #   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
@@ -142,7 +144,8 @@ contains
     real(kind=R8) :: fettmp, fdir
     real(kind=R8), allocatable :: ptf(:,:), taf(:,:), uaf(:,:)
     integer, save :: write_2d = 0
-    integer, save :: nc, ntstep, nastep, geometryType
+    integer, save :: nc, ntstep, nastep
+    integer, save :: gridGeometry, plasmaGeometry
     integer, allocatable :: fclist(:)
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
@@ -193,7 +196,8 @@ contains
          'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
-      geometryType = geometryId ( mpg, geo )
+      gridGeometry = geometryId ( mpg, geo, 1 )
+      plasmaGeometry = geometryId ( mpg, geo, 2 )
       !   ..test state
       call ipgeti ('b2mwti_2dwrite',write_2d)
       call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
@@ -806,7 +810,13 @@ contains
         fetsip(2) = fetsip(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.4) ireg = 3
+      if (mpg%nnreg(0).ge.4) then
+        if (gridGeometry.eq.plasmaGeometry) then
+          ireg = 3
+        else
+          ireg = 7
+        end if
+      end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisap(1) = fnisap(1) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesap(1) = feesap(1) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -854,7 +864,7 @@ contains
       else if (mpg%nnreg(0).eq.7) then
         ireg = 19
       else if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 18
         else
           ireg = 19
@@ -884,7 +894,7 @@ contains
       else if (mpg%nnreg(0).eq.7) then
         ireg = 18
       else if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 17
         else
           ireg = 18
@@ -914,7 +924,7 @@ contains
       else if (mpg%nnreg(0).eq.7) then
         ireg = 20
       else if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 26
         else
           ireg = 27
@@ -940,7 +950,7 @@ contains
       if (mpg%nnreg(0).eq.7) then
         ireg = 24
       else if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 13
         else
           ireg = 14
@@ -966,7 +976,7 @@ contains
       if (mpg%nnreg(0).eq.7) then
         ireg = 25
       else if (mpg%nnreg(0).eq.8) then
-        if (geometryType.eq.GEOMETRY_CDN) then
+        if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 22
         else
           ireg = 23
@@ -1109,7 +1119,7 @@ contains
       if (mpg%nnreg(0).eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
-        elseif (geometryType.eq.GEOMETRY_CDN) then
+        elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 25
         else
           ireg = 26
@@ -1135,7 +1145,7 @@ contains
       if (mpg%nnreg(0).eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
-        elseif (geometryType.eq.GEOMETRY_CDN) then
+        elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 19
         else
           ireg = 20
@@ -1161,7 +1171,7 @@ contains
       if (mpg%nnreg(0).eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
-        elseif (geometryType.eq.GEOMETRY_CDN) then
+        elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 24
         else
           ireg = 25
@@ -1187,7 +1197,7 @@ contains
       if (mpg%nnreg(0).eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
-        elseif (geometryType.eq.GEOMETRY_CDN) then
+        elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 15
         else
           ireg = 16
@@ -1213,7 +1223,7 @@ contains
       if (mpg%nnreg(0).eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
-        elseif (geometryType.eq.GEOMETRY_CDN) then
+        elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 20
         else
           ireg = 21
@@ -1285,9 +1295,9 @@ contains
          co%vsa0(omp(icsepomp),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp),ismain)))
       iFt = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
       cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+target_offset) !inner
-      if (mpg%nXpt.lt.2 .or. geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
-        & geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-        & geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+      if (mpg%nXpt.lt.2 .or. gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
+        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
         nesepi(1) = dv%ne(cvtrg)
         tesepi(1) = pl%te(cvtrg)/ev
         tisepi(1) = pl%ti(cvtrg)/ev
@@ -1301,7 +1311,7 @@ contains
         ktsepa(2) = pl%kt(cvtrg)
       end if
       cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
-      if (mpg%nXpt.lt.2 .or. geometryType.ne.GEOMETRY_DDN_TOP) then
+      if (mpg%nXpt.lt.2 .or. gridGeometry.ne.GEOMETRY_DDN_TOP) then
         nesepa(1) = dv%ne(cvtrg)
         tesepa(1) = pl%te(cvtrg)/ev
         tisepa(1) = pl%ti(cvtrg)/ev
@@ -1355,7 +1365,7 @@ contains
       vssepm(2) = 0.5_R8 * ( &
          co%vsa0(imp(icsepimp-1),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp-1),ismain))+ &
          co%vsa0(imp(icsepimp),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp),ismain)))
-      if (geometryType.eq.GEOMETRY_CDN) then
+      if (gridGeometry.eq.GEOMETRY_CDN) then
         iFt = mpg%cvFt(imp(icsepimp)) ! HFS separatrix flux tube
         cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
         nesepi(1) = dv%ne(cvtrg)
@@ -1369,7 +1379,7 @@ contains
         tisepi(2) = pl%ti(cvtrg)/ev
         posepi(2) = pl%po(cvtrg)
         ktsepi(2) = pl%kt(cvtrg)
-      else if (geometryType.eq.GEOMETRY_DDN_TOP) then
+      else if (gridGeometry.eq.GEOMETRY_DDN_TOP) then
         iFc = mpg%divFc(mpg%divFcP(1,1)+mpg%ifdiv(1)-1)
         if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
           & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
@@ -1394,7 +1404,7 @@ contains
         tisepa(1) = pl%ti(cvtrg)/ev
         posepa(1) = pl%po(cvtrg)
         ktsepa(1) = pl%kt(cvtrg)
-      else if (geometryType.eq.GEOMETRY_DDN_BOTTOM) then
+      else if (gridGeometry.eq.GEOMETRY_DDN_BOTTOM) then
         if (maxval(mpg%strDiv).gt.2) then
           iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
           if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &

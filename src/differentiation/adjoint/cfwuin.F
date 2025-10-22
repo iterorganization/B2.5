@@ -1,5 +1,7 @@
       subroutine cfwuin (nput, n, infun, id)
       use b2mod_types
+      use b2mod_ad_diff
+     , , only: fmtwuin
       implicit none
       integer nput, n, infun(0:n-1)
       character id*(*)
@@ -8,12 +10,9 @@
 *     ------------------------------------------------------------------
       integer ifmt, i
       parameter (ifmt=2)
-      character fmt(0:6)*32, chf*12, idcod*8, idtyp*8, id0*32
-      save fmt
+      character chf*12, idcod*8, idtyp*8, id0*32
       logical streql
       external xerrab, streql
-      data fmt /'(8(1x,i15))', '(10(1x,i12))', '(12(1x,i10))',
-     &  '(14(1x,i8))', '(16(1x,i7))', '(18(1x,i6))', '(22(1x,i5))'/
 *     ------------------------------------------------------------------
 *!!   Note: set ifmt to select the desired format.
 *     ------------------------------------------------------------------
@@ -27,7 +26,7 @@
 *    ..formatted write
        write (nput,'(2a8,i12,4x,a32)') idcod, idtyp, n, id0
        if (0.lt.n) then
-        write (nput,fmt(ifmt)) (infun(i),i=0,n-1)
+        write (nput,fmtwuin(ifmt)) (infun(i),i=0,n-1)
        endif
       else if (streql(chf,'unformatted')) then
 *    ..unformatted write
