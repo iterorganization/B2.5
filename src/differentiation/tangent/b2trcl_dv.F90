@@ -1225,8 +1225,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END DO
             t0 = temp11
           ELSE
-            IF (collisnumef(ifc) .LT. 1e-16_R8) THEN
-              max1 = 1e-16_R8
+            IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
+              max1 = 1.0e-16_R8
               max1d = 0.D0
             ELSE
               DO nd=1,nbdirs
@@ -1299,8 +1299,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END DO
             t0 = temp11
           ELSE
-            IF (collisnumf(ifc) .LT. 1e-16_R8) THEN
-              max2 = 1e-16_R8
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              max2 = 1.0e-16_R8
               max2d = 0.D0
             ELSE
               DO nd=1,nbdirs
@@ -2342,8 +2342,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END IF
             t0 = abs0/(flomx*max3+b2trcl_cutlo)
           ELSE
-            IF (collisnumef(ifc) .LT. 1e-16_R8) THEN
-              max1 = 1e-16_R8
+            IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
+              max1 = 1.0e-16_R8
             ELSE
               max1 = collisnumef(ifc)
             END IF
@@ -2378,8 +2378,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             END IF
             t0 = abs1/(flomx*max4+b2trcl_cutlo)
           ELSE
-            IF (collisnumf(ifc) .LT. 1e-16_R8) THEN
-              max2 = 1e-16_R8
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              max2 = 1.0e-16_R8
             ELSE
               max2 = collisnumf(ifc)
             END IF

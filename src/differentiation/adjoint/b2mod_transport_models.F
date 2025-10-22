@@ -24,6 +24,8 @@
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(eta_hce_mult(nFs))
 #else
+      call xertst (nFs.le.DEF_NYD,
+     . 'Increase DEF_NYD in b2mod_dimensions')
       call xertst (nsd.le.DEF_NSD,
      . 'Increase DEF_NSD in b2mod_dimensions')
 #endif

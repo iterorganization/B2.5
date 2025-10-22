@@ -101,11 +101,13 @@ c
      ,            (equdiv(1,13), rlres)
 c----------------------------------------------------------------------
 c
-      integer i, j, ic, it, iy, iCb, iCn, iCp, iCv, iCx, iFc, iFp, iFn
+      integer i, j, ic, it, iy,
+     *     iCb, iCn, iCp, iCv, iCx, iFc, iFp, iFn, iFt
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(mpg%nCv)
       integer, save :: is
+      logical :: done(mpg%nFt)
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
@@ -139,6 +141,7 @@ c
      .   state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, pr,
      .   state_ext)
         do ic=1,2
+          done = .false.
           if (ic.eq.1) then
             it=1
           else
@@ -147,10 +150,12 @@ c
           do iy = 1, mpg%divFcP(it,2)
             iFc = mpg%divFc(mpg%divFcP(it,1)+iy-1)
             iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iFt = mpg%cvFt(iCv)
             iCx = 0
             iCn = iCv
             iCb = iCv
-            do while (iCx.eq.0)
+            if (iFt.eq.0) cycle
+            do while (iCx.eq.0.and..not.done(iFt))
               iCp = 0
               do i = mpg%cvFcP(iCn,1),
      .               mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
@@ -170,10 +175,18 @@ c
                   iFp = iFn
                 end if
               end do
+! In case of a shaved flux tube, we may have started in the wrong direction
+! The algorithm will however always work
+! when starting from the triangle tip cell
+              if (iCp.eq.0) then
+                iCx = -1
+                cycle
+              end if
               iCb = iCn
               iCn = iCp
               if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
                 iCx = iCn
+                done(iFt) = .true.
                 do is=0,ns-1
                   if (.not.is_neutral(is)) then
                     if (ic.eq.1) then
@@ -382,12 +395,12 @@ c*** New file
         ndv_tmp=ndiv
         write(lun,700) lv,nd_tmp,ndv_tmp,label
         write(hlp_frf,'(a,i3,a)')
-     ,   '(a6,12x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
+     ,   '(a6,11x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
         write(lun,hlp_frf) '# time',
      -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3))'
+     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3e3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnm: cannot open file ',trim(f)
@@ -402,8 +415,8 @@ c*** Prepare the formats for the printout
    98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
-  710 format('(1x,a3,',i3,'(2x,a8,1x))')
-  720 format('(1p,1x,a2,1x,',i3,'e11.3)')
+  710 format('(1x,a3,',i3,'(2x,a8,2x))')
+  720 format('(1p,1x,a2,1x,',i3,'e11.3e3)')
 c======================================================================
       end subroutine b2blnmi
 c

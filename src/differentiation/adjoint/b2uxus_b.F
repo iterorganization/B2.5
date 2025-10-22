@@ -170,6 +170,3 @@
 *.end b2uxus_b
 
       end subroutine b2uxus_b
-
-
-
