@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diffv_diffv (nCv, ns, switch, geo, mpg, pl, dv, diag)
+      subroutine b2mxar_diffv_diffv (nCv, ns, switch, geo, mpg, pl, dv,
+     &  diag)
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmpa_diffv_diffv
+      use b2mod_b2cmpa_diffv
       use b2mod_switches_diffv_diffv
       use b2us_geo_diffv_diffv
       use b2us_map_diffv_diffv

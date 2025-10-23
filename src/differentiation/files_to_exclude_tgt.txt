@@ -120,7 +120,6 @@
   b2mod_impgyro
   b2us_prep
   calc_err
-  b2mod_geometry
   b2stbc_fb
   b2mod_ual
   b2mod_ual_io_data
@@ -129,6 +128,8 @@
   b2mod_grid_mapping
   cpmpxy
   b2mwmv
+  b2mod_create_afn_bc_tables
+  invert_matrix
   b2optim_tao
   fortranAdaptor
   b2npp7_dv

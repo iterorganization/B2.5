@@ -1,8 +1,8 @@
       subroutine tallies(ns,tim,mpg,geo,state,state_ext,switch)
       use b2mod_types
       use b2mod_diag_diffv_diffv
-      use b2mod_b2cmpa_diffv_diffv
-      use b2mod_tallies_diffv_diffv
+      use b2mod_b2cmpa_diffv
+      use b2mod_tallies
       use b2mod_switches_diffv_diffv
       use b2mod_constants
       use b2mod_subsys
@@ -58,7 +58,7 @@
         allocate(species_name(0:ns-1))
         do is = 0, ns-1
           potave(is) = (potmin(is)+potmax(is))/2.0_R8
-          call species_nodiff_nodiff(is,species_name(is),.false.)
+          call species_nodiff(is,species_name(is),.false.)
         enddo
         call ipgeti('tallies_netcdf',tallies_netcdf)
       endif
@@ -157,11 +157,14 @@
      2        2.5_R8*(state%dv%fnn_52(iFc,0)+
      2                state%dv%fnn_52(iFc,1)))
           end if
-          qconvereg(mpg%fcReg(iFc))=                              !cjk
+          qconvereg(mpg%fcReg(iFc))=                                !cjk
      1     qconvereg(mpg%fcReg(iFc))+tef(iFc)*rzf(iFc,is)*
      1    (1.5_R8*(state%dv%fna_32(iFc,0,is)+state%dv%fna_32(iFc,1,is))+
      1     2.5_R8*(state%dv%fna_52(iFc,0,is)+state%dv%fna_52(iFc,1,is)))
         end do
+        qconvereg(mpg%fcReg(iFc))=                                  !wuhsh
+     1    qconvereg(mpg%fcReg(iFc))-tef(iFc)*
+     1   (1.5_R8*state%dv%fch_p(iFc,0)/qe)
         fhireg(mpg%fcReg(iFc))=fhireg(mpg%fcReg(iFc))+
      1     state%dv%fhi(iFc,0)+state%dv%fhi(iFc,1)
         fhereg(mpg%fcReg(iFc))=fhereg(mpg%fcReg(iFc))+

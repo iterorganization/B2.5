@@ -335,4 +335,3 @@
 *.end average
 
       end subroutine average
-
