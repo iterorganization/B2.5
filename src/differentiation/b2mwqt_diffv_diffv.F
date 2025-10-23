@@ -5,7 +5,7 @@
      &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmpa_diffv_diffv
+      use b2mod_b2cmpa_diffv
       use b2mod_switches_diffv_diffv
       use b2us_geo_diffv_diffv
       use b2us_plasma_diffv_diffv
@@ -40,7 +40,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *   smin, b2ssum
-      external xertst, ipgeti, smin, b2ssum, cfwure_nodiff
+      external xertst, ipgeti, smin, b2ssum, cfwure
 *.computation
 
 * ..preliminaries
@@ -140,7 +140,7 @@
       call xertst (k.eq.nfld, 'faulty parameter nfld')
 
 * ..produce output
-      call cfwure_nodiff (nput, nfld, z, 'data')
+      call cfwure (nput, nfld, z, 'data')
 
 * ..return
       call subend ()
