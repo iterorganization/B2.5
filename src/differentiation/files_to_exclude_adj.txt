@@ -132,3 +132,4 @@
   invert_matrix
   b2optim_tao
   fortranAdaptor
+  b2uxus_b

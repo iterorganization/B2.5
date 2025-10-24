@@ -23,16 +23,16 @@
       real (kind=R8) ::
      *   rnan
       equivalence (nan,rnan)
-      external sfill
+      external sfill_nodiff_nodiff
 *     ------------------------------------------------------------------
       nan(0) = -1
       nan(1) = 0
 #ifdef GFORTRAN
 #ifndef DBG
-      call sfill (n, rnan, sx, incx)
+      call sfill_nodiff_nodiff (n, rnan, sx, incx)
 #endif
 #else
-      call sfill (n, rnan, sx, incx)
+      call sfill_nodiff_nodiff (n, rnan, sx, incx)
 #endif
 *     (The second argument to sfill is deliberately of wrong type.)
 *     ------------------------------------------------------------------
