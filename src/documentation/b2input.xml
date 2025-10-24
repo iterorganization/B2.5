@@ -5825,14 +5825,14 @@
 				<name>b2optim_reset_drift_iter</name>
 				<default>2</default>
 				<description>
-					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_drift_iter iterations.
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in b2mndr_ntim/b2optim_reset_drift_iter iterations.
 				</description>
 			</switch>
 			<switch>
 				<name>b2optim_reset_param_iter</name>
 				<default>1</default>
 				<description>
-					If .gt. 1, the values of the parameters from the new optimization step will be gradually increased so that they will take ntim/b2optim_reset_param_iter to change from their previous to their new value.
+					If .gt. 1, the values of the parameters from the new optimization step will be gradually changed so that they will take b2mndr_ntim/b2optim_reset_param_iter to change from their previous to their new value.
 				</description>
 			</switch>
 		</category>
