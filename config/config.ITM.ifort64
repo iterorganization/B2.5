@@ -1,14 +1,14 @@
 # Test whether necessary variables are set
-MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
-NCDIR       ?= /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
-LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
+MDSPLUS_DIR ?= ${EBROOTMDSPLUS}
+NCDIR       ?= ${EBROOTNETCDFMINFORTRAN}
+LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
 MSCL_ROOT   ?= /pfs/work/g2dpc/SOLPS-ITER/mscl
 LD_MSCL     ?= -L${MSCL_ROOT}/lib -lmscl
 NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/NCARG
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
-NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/nag
-LD_NAG      ?= -L${NAGDIR} -lnag
+NAGDIR      ?= ${EBROOTOPENBLAS}
+LD_NAG      ?= `pkg-config openblas --libs`
 
 DEFINES += -DNO_OPT # -DNO_CDF
 
@@ -31,7 +31,7 @@ FCOPTS  += -O2 -xHost
 endif
 
 ifndef SOLPS_CPP
-DEFINES += -DITM
+DEFINES += -DITM -DNO_NAG
 endif
 
 ifdef IMAS_VERSION
@@ -47,8 +47,6 @@ else
     IMASLIBS = ${LD_AL} -lUALFORTRANInterface_ifort
   endif
 endif
-
-SOLPSINCLUDE += `pkg-config netcdf-fortran --cflags`
 
 LD_AL += -lxml2 -lstdc++
 
