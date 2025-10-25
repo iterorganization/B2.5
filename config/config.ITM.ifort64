@@ -7,8 +7,8 @@ LD_MSCL     ?= -L${MSCL_ROOT}/lib -lmscl
 NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/NCARG
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
-NAGDIR      ?= ${NAG_LIB}
-LD_NAG      ?= -L${NAGDIR} -lnag_nag
+NAGDIR      ?= ${EBROOTOPENBLAS}
+LD_NAG      ?= `pkg-config openblas --libs`
 
 DEFINES += -DNO_OPT # -DNO_CDF
 
@@ -31,7 +31,7 @@ FCOPTS  += -O2 -xHost
 endif
 
 ifndef SOLPS_CPP
-DEFINES += -DITM -DNO_F01AAF -DNAG22
+DEFINES += -DITM -DNO_NAG
 endif
 
 ifdef IMAS_VERSION
