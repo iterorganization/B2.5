@@ -39,7 +39,7 @@ GGD_VERSION ?= `pkg-config ggd --modversion`
 else
 GGD_VERSION ?= '0.0.0'
 endif
-LD_AL += -lstdc++
+LD_AL += /gw/swimas/software/GCCcore/13.2.0/lib64/libstdc++.so
 else
 AL_MAJOR_VERSION = 0
 AL_MINOR_VERSION = 0
