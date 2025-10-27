@@ -48,7 +48,7 @@ else
   endif
 endif
 
-LD_AL += -lxml2 -lstdc++
+LD_AL += -lxml2 /gw/swimas/software/GCCcore/13.2.0/lib64/libstdc++.so
 
 
 #!!!Local Variables:
