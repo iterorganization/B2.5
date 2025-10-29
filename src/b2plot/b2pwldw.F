@@ -258,7 +258,7 @@ c***  sfpr_m    : list of active materials
      ,  sfpr_sp(DEF_NATM+DEF_NMOL)*3
       character*16 ssmol,ssion
       data hdpr_c /'x', 'Wtot','Wrad','Wpart','Wpls',
-     2  'Wneu','Wheat','Wpot', 'Whtpl', 'Wptpl' /
+     2  'Wneut','Wheat','Wpot', 'Whtpl', 'Wptpl' /
       data hdpr_t /'ne', 'Te','Ti','xMP'/
       data hdpr_s /'flxi','Eavi'/
       data hdpr_a /'flxa','Eava','na','pa'/
