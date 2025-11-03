@@ -64,33 +64,30 @@ c-----------------------------------------------------------------------
 
       contains
 
-      subroutine b2wrsrt(nx,ny,ns)
-      use b2mod_constants
-      use b2mod_geo_diffv
-      use b2mod_rates
-      use b2mod_plasma_diffv
-      use b2mod_tallies_diffv
-      use b2mod_indirect
-      use b2mod_external_diffv
+      subroutine b2wrsrt(ns,geo,mpg,st)
       use b2mod_constants
       use b2mod_numerics_namelist_diffv
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
 #endif
       use b2mod_dimensions
+      use b2us_map_diffv
+      use b2us_geo_diffv
+      use b2us_plasma_diffv
       implicit none
 c
-      integer nx, ny, ns
-c
-c
+      integer, intent(in) :: ns
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2state), intent(in) :: st
 c
 c*** Values by regions
-      real (kind=R8) :: tesum(NNREGMAX)
+      real (kind=R8) :: tesum(2*DEF_NCUT)
 
-      real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
+      real (kind=R8) :: equr_tmp(2*DEF_NCUT,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum)
 c
 c*** Values by species
@@ -99,13 +96,13 @@ c*** Values by species
       equivalence (equs_tmp(1,1), Natm_tmp)
 
 c*** Values by species and regions
-      real (kind=R8) :: equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
+      real (kind=R8) :: equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)  ! IYS 29.09.2017 added total number of neutrals
+     *     nasum(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)     ! IYS 29.09.2017 added total number of neutrals
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
 c-----------------------------------------------------------------------
 c*** Local variables of general use
-      integer i, j, k, ir, is, ix, iy
+      integer i, j, k, ir, is, iCv
       integer iatm ! IYS 29.09.2017
 #ifdef B25_EIRENE
       integer imol
@@ -116,7 +113,7 @@ c
      +  equs_tmp,
      +  Natm_tmp,
      +  equa_tmp,
-     +  i, j, k, is, ix
+     +  i, j, k, is
 c=======================================================================
 
 c*** Initialise the arrays
@@ -141,42 +138,38 @@ c
       end do
 
 csw 20sep2013 added
-      do iy=0,ny-1
-        do ix=0,nx-1
-          ir=region(ix,iy,0)
-          tesum(ir)  = tesum(ir)
-     &          + 1.5_R8*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-     &          + 1.5_R8*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
-          do is=0,ns-1
-            nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .                          na(ix,iy,is)*vol(ix,iy)
-            tesum(ir) = tesum(ir) +
-     &       0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
-            if (is_neutral(is)) then
-              nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
-     .                                na(ix,iy,is)*vol(ix,iy)
+      do iCv=1,mpg%nCv
+        ir = mpg%cvReg(iCv)
+        tesum(ir)  = tesum(ir)
+     &          + 1.5_R8*st%pl%te(iCv)*st%dv%ne(iCv)*geo%cvVol(iCv)
+     &          + 1.5_R8*st%pl%ti(iCv)*st%dv%ni(iCv,0)*geo%cvVol(iCv)
+        do is=0,ns-1
+          nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
+     .                        st%pl%na(iCv,is)*geo%cvVol(iCv)
+          tesum(ir) = tesum(ir) + 0.5_R8*mp*am(is)*
+     &       st%pl%na(iCv,is)*(st%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
+          if (is_neutral(is)) then
+            nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
+     .                              st%pl%na(iCv,is)*geo%cvVol(iCv)
 ! For fluid neutrals Natm_tmp is just the number of atoms integrated over
 ! the whole B2.5 domain
-              Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
-     .                                na(ix,iy,is)*vol(ix,iy)
-            endif
-          end do
+            Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
+     .                              st%pl%na(iCv,is)*geo%cvVol(iCv)
+          endif
+        end do
 #ifdef B25_EIRENE
-#ifdef WG_TODO
-          do iatm = 1, nnatmi
-            is = latmscl(iatm)
-            if (is.eq.0) cycle
-            nasum(is,ir) = nasum(is,ir) +
-     .                     dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
-            do imol = 1, nnmoli
-              if (mlcmp(iatm,imol).gt.0)
-     >          nasum(is,ir) = nasum(is,ir) +
-     .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
-            end do
+        do iatm = 1, nnatmi
+          is = latmscl(iatm)
+          if (is.eq.0) cycle
+          nasum(is,ir) = nasum(is,ir) +
+     .                   dab2(iCv,iatm,1)*geo%cvVol(iCv)
+          do imol = 1, nnmoli
+            if (mlcmp(iatm,imol).gt.0)
+     >       nasum(is,ir) = nasum(is,ir) +
+     .        mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
           end do
+        end do
 #endif
-#endif
-        enddo
       enddo
 
       if(filedata(ltrc)) then
@@ -336,9 +329,9 @@ c*** New file
 
 c Create a format string for the column headers
         if (nfl_tmp.gt.0) then
-          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,5x,',
+          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,4x,',
      ,             nr_tmp*nrg_tmp,'(4x,a8,i2.2),',
-     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),',
+     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),1x,',
      ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
 #ifdef DBG
 c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
@@ -359,7 +352,7 @@ c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
      +   nr_tmp*nrg_tmp + ns_tmp*nsp_tmp + na_tmp*nrg_tmp*nsp_tmp,
-     +  '(2x,e12.4))'
+     +  '(2x,e12.4e3))'
       end if
 #ifdef DBG
       print *,'hlp_frm:'       !###

@@ -7,6 +7,7 @@ c
       use b2mod_types
       use b2us_data
       use b2mod_constants
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
       
@@ -25,10 +26,6 @@ c
       integer iCv
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
 
@@ -222,7 +219,23 @@ c
       use b2us_map
       use b2us_geo
       use b2mod_subsys
+      use b2mod_chord_shift
+#ifndef NAGFOR
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : covered, rmin, rmax, zmin, zmax, first, cvcov, icov,
+     &          iCvsv, lngind, lngcov
       implicit none
+#else
+      implicit none
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
+      integer, save :: covered(lngcov,lngcov), cvcov(lngind),
+     &  icov(lngind), iCvsv
+      real (kind=R8), save :: rmin, rmax, zmin, zmax
+      logical, save :: first = .true.
+#endif
 
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
@@ -235,17 +248,12 @@ c
       integer cvpos
 
       logical inside_cell
-      integer iCv,icnt1,icnt2
+      integer icnt1,icnt2
       real (kind=R8) ::
-     *   x,y,z,r,rmin,rmax,zmin,zmax
+     *   x,y,z,r
 
-      logical first
       integer ir,iz
-      integer lngcov,lngind
-      parameter(lngcov=200,lngind=500 000)
-      integer covered(lngcov,lngcov),
-     1 cvcov(lngind),icov(lngind),
-     2 ipos,jpos
+      integer ipos,jpos
 
 #ifdef EASY
       integer ir1,ir2,iz1,iz2
@@ -257,14 +265,7 @@ c
       integer xmin(lngcov),xmax(lngcov),ymin,ymax
 #endif
 
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-
       external xerrab
-      save covered,rmin,rmax,zmin,zmax,first,cvcov,icov,iCv
-
-      data first/.true./
 
       call subini ('chord_find')
       if(first) then
@@ -283,28 +284,28 @@ c
         ipos=0
         icnt2=0
 
-        do iCv=1,mpg%nCi
+        do iCvsv=1,mpg%nCi
 #ifdef EASY
           ir1= irpos(
-     1     minval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCv,1):
-     1            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))))
+     1     minval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
           ir2= irpos(
-     1     maxval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCv,1):
-     1            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))))
+     1     maxval(geo%vxX(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
           iz1= izpos(
-     1     minval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCv,1):
-     1            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))))
+     1     minval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCv,2)-1))))
           iz2= izpos(
-     1     maxval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCv,1):
-     1            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))))
+     1     maxval(geo%vxY(mpg%cvVx(mpg%cvVxP(iCvsv,1):
+     1            mpg%cvVxP(iCvsv,1)+mpg%cvVxP(iCvsv,2)-1))))
           do iz=iz1,iz2
             do ir=ir1,ir2
               ipos=ipos+1
               if(ipos.gt.lngind) then
-                write(*,*) iCv,ipos
+                write(*,*) iCvsv,ipos
                 call xerrab ('increase size of {xyi}cov')
               endif
-              cvcov(ipos)=iCv
+              cvcov(ipos)=iCvsv
               icov(ipos)=0
               if(covered(ir,iz).eq.0) then
                 covered(ir,iz)=ipos
@@ -328,8 +329,8 @@ c
           enddo
           ymin=lngcov+1
           ymax=0
-          do ip=1,mpg%cvFcP(iCv,2)
-            iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+ip-1)
+          do ip=1,mpg%cvFcP(iCvsv,2)
+            iFc=mpg%cvFc(mpg%cvFcP(iCvsv,1)+ip-1)
             r1=geo%cvX(mpg%fcVx(iFc,1))
             z1=geo%cvY(mpg%fcVx(iFc,1))
             r2=geo%cvX(mpg%fcVx(iFc,2))
@@ -383,10 +384,10 @@ c       write(*,*) 'xmax ',xmax
             do ir=xmin(iz),xmax(iz)
               ipos=ipos+1
               if(ipos.gt.lngind) then
-                write(*,*) 'iCv ',iCv
+                write(*,*) 'iCv ',iCvsv
                 call xerrab ('increase lngind')
               endif
-              cvcov(ipos)=iCv
+              cvcov(ipos)=iCvsv
               icov(ipos)=0
               icnt2=1
               if(covered(ir,iz).eq.0) then
@@ -415,7 +416,7 @@ c       write(*,*) 'xmax ',xmax
         write(*,*) 100.0*icnt1/(lngcov*lngcov),' % covered'
         write(*,*) ipos,' positions used'
         write(*,*) icnt2,' is the maximum chain length'
-        iCv=1
+        iCvsv=1
 !DIAG   rectangles=0      ! diag
 !DIAG   triangles=0      ! diag
 !DIAG   chain=0      ! diag
@@ -433,20 +434,20 @@ c       write(*,*) 'xmax ',xmax
       end if
       jpos=covered(irpos(r),izpos(z))
       if(jpos.ne.0) then
-        if(inside_cell(mpg,geo,r,z,iCv)) goto 2100
+        if(inside_cell(mpg,geo,r,z,iCvsv)) goto 2100
       endif
 c next try the chain
       do while(jpos.ne.0)
 !DIAG   chain=chain+1      ! diag
-        iCv=cvcov(jpos)
+        iCvsv=cvcov(jpos)
         jpos=icov(jpos)
-        if(inside_cell(mpg,geo,r,z,iCv)) goto 2100
+        if(inside_cell(mpg,geo,r,z,iCvsv)) goto 2100
       enddo
       call subend ()
       return
 
  2100 continue
-      cvpos=iCv
+      cvpos=iCvsv
       found=.true.
       call subend ()
       return
@@ -611,18 +612,8 @@ c
       return
       end function inside_triangle
 
-      block data bd_chord_shift
-      use b2mod_types
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      data rshift, zshift, r0, z0, a0, b0, tt0
-     1    /0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8/
-      end block data bd_chord_shift
-
 !DIAG      subroutine chord_diagnostics      ! diag
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
 !DIAG      write(*,*) chain,rectangles,triangles      ! diag
 !DIAG      end subroutine chord_diagnostics      ! diag
-

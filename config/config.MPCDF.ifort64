@@ -1,56 +1,50 @@
 # Test whether necessary variables are set
+
+IPPSOLPSLIBS ?= /u/azito/SOLPS-ITER
+CLUSTER_NAME := $(shell hostname)
+ifeq ($(findstring raven,$(CLUSTER_NAME)),raven)
+MKL_PATH ?= /mpcdf/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/mkl/2023.1.0/lib/intel64
+endif
+ifeq ($(findstring viper,$(CLUSTER_NAME)),viper)
+MKL_PATH ?= /mpcdf/soft/RHEL_9/packages/x86_64/intel_oneapi/2024.0/mkl/2024.0/lib
+endif
+
 NCDIR       ?= ${NETCDF_HOME}
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
-MSCL_ROOT   ?= /tokp/work/dpc/SOLPS-ITER/mscl
+MSCL_ROOT   ?= ${IPPSOLPSLIBS}/mscl
 LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
-GLI_HOME    ?= /tokp/work/dpc/SOLPS-ITER/gks
-NCARG_ROOT  ?= /tokp/work/dpc/SOLPS-ITER/NCARG
-LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-NAGDIR      ?= /tokp/work/dpc/SOLPS-ITER/nag
-LD_NAG      ?= -L${NAGDIR} -lnag
-MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
+GLI_HOME    ?= ${IPPSOLPSLIBS}/gks
+NCARG_ROOT  ?= ${IPPSOLPSLIBS}/NCARG
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
+NAGDIR      ?= ${IPPSOLPSLIBS}/nag
+LD_NAG      ?= -L${NAGDIR} -lnag -L${MKL_PATH} -lmkl_blas95_lp64 -lmkl_lapack95_lp64 -lmkl_intel_lp64  -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+MDSPLUS_DIR ?= ${IPPSOLPSLIBS}/MDSPLUS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
 MPI_FC  ?= mpiifort
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
 FC       = ${MPI_FC}
-else
-FC      ?= ifort
 endif
 endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
+CLUSTER_NAME := $(shell hostname)
+ifeq ($(findstring raven,$(CLUSTER_NAME)),raven)
 FCOPTS   = -O2 -xHost
 endif
-
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
+ifeq ($(findstring viper,$(CLUSTER_NAME)),viper)
+FCOPTS   = -O2 -march=core-avx2 -diag-disable=10448
 endif
 endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
-
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 DEFINES += -DNO_OPT
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -85,7 +85,6 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         IF (NCV .LT. 1) THEN
           CALL XERRAB ('ILUTERN_US -- FAULTY ARGUMENT NCV')
         END IF
-
       endif
       
       N  = NCV
@@ -95,7 +94,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       if(kwrite_bnr.eq.ncall) then                                  !srv 18.05.02 {
          write(*,*) 'Opening 76'
          open(76,file='b2_us_rhs_binary_'//trim(name),
-     &     form='unformatted') !srv 11.03.13
+     &           form='unformatted')                                !srv 11.03.13
          write(76) n
          do i=1,nCv
            write(76) rr1(i)
@@ -103,7 +102,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
          close(76)
          write(*,*) 'Opening 77'
          open(77,file='b2_us_matrix_binary_'//
-     &       trim(name),form='unformatted')                         !srv 11.03.13
+     &                 trim(name),form='unformatted')               !srv 11.03.13
          write(77) n, nz
          do i=1,nz
            write(77) IRNH(i),ICNH(i),A1H(i)
@@ -129,22 +128,23 @@ cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
-            write(*,*) 'Opening 79'
+            write(*,*) 'Opening 84'
             open(79,file='b2_us_matrix')
           endif
-          write(*,*) 'Writing 79'
-          write(79,*) 'Called from '//trim(name)
-          write(79,*) n,' n'
+          write(*,*) 'Writing 84'
+          write(84,*) 'Called from '//trim(name)
+          write(84,*) n,' n'
           do i=1,n
-            write(79,*) rr1(i)
+            write(84,*) rr1(i)
           enddo
-          write(79,*) nz,' nz'
+          write(84,*) nz,' nz'
           do i=1,nz
-            write(79,*) IRNH(i),ICNH(i),A1H(i)
+            write(84,*) IRNH(i),ICNH(i),A1H(i)
           enddo
-        elseif(nwrite.eq.ncall) then
-           write(*,*) 'Closing 79'
-           close(79)
+          if(ncall+1.eq.nwrite) then
+           write(*,*) 'Closing 84'
+           close(84)
+          endif
         endif
       endif
 cdpc
@@ -179,9 +179,9 @@ cdpc
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim      !srv 09.07.02 28.06.16
-   2  format(' ma28ad for ',a13,': iflag =',i9/,
-     1 ' minirn =',i9,' solvdim1 =',i9,
-     2 ' minicn =',i9,' solvdim =',i9)                               !srv 09.07.02
+   2    format(' ma28ad for ',a13,': iflag =',i9/,
+     1   ' minirn =',i9,' solvdim1 =',i9,
+     2   ' minicn =',i9,' solvdim =' ,i9)                            !srv 09.07.02
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
@@ -208,14 +208,14 @@ cdpc
         call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
-     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
+     1    trim(name), iflag, minirn, solvdim1, minicn, solvdim
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
 
         call ma28idcopy
-     1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 rr1,s1,res,w,1,1e-10_R8,iflag)
+     1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
+     1    rr1,s1,res,w,1,1e-10_R8,iflag)
 
         if(iflag.lt.0) then
          write(*,"(a)") 'Problem with solving '//trim(name)
@@ -241,4 +241,3 @@ cdpc
 *//END ILUTERN_US//                                                    !srv 13.10.06
 
       END SUBROUTINE ILUTERN_US
-

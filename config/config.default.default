@@ -14,12 +14,16 @@ endif
 
 
 EQUIVS =      # name changes from single precision version
+DEFINES =     # preprocessor pragma definitions (for serial compilation)
+DPFINES =     # preprocessor pragma definitions (added to DEFINES for parallel compilation)
 
 CPP =         # where to find CPP
 CPPOPTS =     # options for CPP
 
 FC =          # fortran compiler
-FCOPTS =      # options for fortran compiler for single precision version
+FN =          # fortran compiler for netCDF utility programs (should be serial)
+FCOPTS =      # options for fortran compiler (for serial compilation)
+FPOPTS =      # options for fortran compiler (added to FCOPTS for parallel compilation)
 INCMOD =      # option for including modules
 MOD =         # module suffix
 
@@ -30,7 +34,9 @@ PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
 LD =          # loader
-LDOPTS =      # options for loader
+LN =          # loader for netCDF utility programs (should be serial)
+LDOPTS =      # options for loader (for serail compilation)
+LPOPTS =      # options for loader (added to LDOPTS for parallel compilation)
 
 #!!!Local Variables:
 #!!! mode: Makefile

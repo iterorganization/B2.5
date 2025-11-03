@@ -25,7 +25,7 @@
 *
 *  1. purpose
 *
-*     B2OBEQ calculates difference betwenn eperimental and model data.
+*     B2OBEQ calculates difference between experimental and model data.
 *
 *
 *  2. specification
@@ -317,4 +317,3 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *.end b2obeq
 
       end subroutine b2obeq
-

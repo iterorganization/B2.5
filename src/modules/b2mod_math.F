@@ -104,6 +104,24 @@
       return
       end function norm
 
+#ifdef LEGACYCOMP
+      function norm2(n,vector)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: norm2
+      integer, intent(in) :: n
+      real (kind=R8), intent(in) :: vector(n)
+      integer i
+
+      norm2 = 0.0_R8
+      do i = 1, n
+        norm2 = norm2 + vector(i)*vector(i)
+      end do
+      norm2 = sqrt(norm2)
+      return
+      end function norm2
+#endif
+
       function sinang(p0x,p0y,p1x,p1y)
       implicit none
       real(kind=R8) :: sinang, p0x, p0y, p1x, p1y
@@ -120,6 +138,7 @@
 
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
+! $AD NOCHECKPOINT
       function trimg(t0,t1,tt)
       implicit none
       real(kind=R8) :: trimg, t0, t1, tt

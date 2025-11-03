@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  dtim, switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  sput_src, sput_chem_model, reflection_on, sputter_energy_on,
@@ -45,7 +45,6 @@
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
       integer sput_src, sput_chem_model,
@@ -75,7 +74,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iRc1, iRc2, iFc, is, istra
+      integer i, iRc1, iRc2, iCv, iFc, is, istra
 !     integer k
       character chns*3!, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
@@ -84,12 +83,12 @@
       integer sput_dst_bulk
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)
-      real (kind=R8) :: b2stbr_phys_sna(0:ns-1)
       real (kind=R8) :: lnorm, GammaEvap, redep_max,
      *   t0, t1, t2, t3, yldchm, yldres, yself_max,
      *   reflection_max, deposition_error(ntrack)
       logical l_chem_sput, match
 #endif
+      real (kind=R8) :: b2stbr_phys_sna(0:ns-1)
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *   qin, qel, surface_temp,
@@ -105,7 +104,7 @@ c     output for analysis/debugging
 *   ..procedures
       intrinsic abs
       external xertst
-      external b2xvsg, b2xvff, smin, smax
+      external b2xvsg, smin, smax
       real (kind=R8) ::
      *   smax, smin
 *   ..initialisation
@@ -184,7 +183,7 @@ c     output for analysis/debugging
               if (nint(zn(is)).eq.1) then
                 if(erecyc(is,istra)>0.0_R8.or.
      2            mrecyc(is,istra)>0.0_R8)
-     3            write(*,*)'recycle_afn incompatible with '//
+     3            write(*,'(a,i3)') 'recycle_afn incompatible with '//
      4             'user-defined momentum and energy recycling '//
      5             'coefficients > 0 for istra= ', istra
               endif
@@ -211,17 +210,6 @@ c     output for analysis/debugging
      &           ' ) is ',track_chem_sput(itargsp)
          enddo
       endif
-
-      b2stbr_phys_sna=0.0_R8
-      do is=0,ns-1
-        do iCv=1,nCv
-            b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
-     1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
-        enddo
-      enddo
-      if((main_call.and.switch%b2stbr_output.ge.1).or.
-     &                  switch%b2stbr_output.gt.1)
-     *     write(*,*) 'b2stbr_phys_sna(start): ',b2stbr_phys_sna
 
       if(ncall_b2stbr_phys.eq.0.and.sput_dst.ge.0.and.
      &   sput_dst.lt.ns) then
@@ -258,6 +246,17 @@ c     output for analysis/debugging
       yself_max = 0.0_R8
 #endif
 
+      b2stbr_phys_sna=0.0_R8
+      do is=0,ns-1
+        do iCv=1,nCv
+            b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
+     1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
+        enddo
+      enddo
+      if((main_call.and.switch%b2stbr_output.ge.1).or.
+     &                  switch%b2stbr_output.gt.1)
+     *     write(*,*) 'b2stbr_phys_sna(start): ',b2stbr_phys_sna
+
 c pre-computations for KUL fluid neutrals
       dnn = 0.0_R8      
       if (switch%recycle_afn.ne.0) then
@@ -276,7 +275,6 @@ c     initialize debugging/analysis arrays
      &   pl, dv, co, rt, dnn)
       endif !! end pre-computations KUL fluid neutrals
 
-      
       do istra = 1, nstrat
 #ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
@@ -331,6 +329,7 @@ c     initialize debugging/analysis arrays
             endif
           endif
         endif
+#endif
 
         b2stbr_phys_sna=0.0_R8
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
@@ -340,11 +339,9 @@ c     initialize debugging/analysis arrays
 !$OMP& PRIVATE(is,iCv)
 #endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
-          do iy=-1,ny
-            do ix=-1,nx
-              b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
-     1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
-            enddo
+          do iCv=1,nCv
+            b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
+     1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
           enddo
         enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
@@ -352,9 +349,9 @@ c     initialize debugging/analysis arrays
 #endif
         if((main_call.and.switch%b2stbr_output.ge.1).or.
      &                    switch%b2stbr_output.gt.1)
-     *     write(*,*) 'stratum,b2stbr_phys_sna(start): ',
-     1   istra, b2stbr_phys_sna
-#endif
+     *     write(*,*) 'stratum,b2stbr_phys_sna(begin): ',
+     1   istra,b2stbr_phys_sna
+
 * ..recycling model at south boundary
         if (crcstra(istra).eq.'A') then
 
@@ -405,37 +402,32 @@ c for KUL recycling/reflection model
 
         endif       ! crcstra(istra)
 
-#ifdef WG_TODO
         b2stbr_phys_sna=0.0_R8
         do is=0,ns-1
-          do iy=-1,ny
-            do ix=-1,nx
-              b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
-     1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
-            enddo
+          do iCv=1,nCv
+            b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
+     1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
           enddo
         enddo
         if((main_call.and.switch%b2stbr_output.ge.1).or.
      &                    switch%b2stbr_output.gt.1)
-     *       write(*,*) 'stratum,b2stbr_phys_sna(end): ',
-     1   istra, b2stbr_phys_sna
-#endif
+     *     write(*,*) 'stratum,b2stbr_phys_sna(end): ',
+     1   istra,b2stbr_phys_sna
+
       enddo      ! istra
 
-#ifdef WG_TODO
       b2stbr_phys_sna=0.0_R8
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
-     1       sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
-          enddo
+        do iCv=1,nCv
+          b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
+     1     srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
         enddo
       enddo
       if((main_call.and.switch%b2stbr_output.ge.1).or.
      &                  switch%b2stbr_output.gt.1)
      *     write(*,*) 'b2stbr_phys_sna(end): ',b2stbr_phys_sna
 
+#ifdef WG_TODO
       if(main_call.and.sput_dst.ge.0.and.sput_dst.lt.ns) then
         do itargsp=1,ntargsp
           deposition_error(itargsp)=0.0_R8

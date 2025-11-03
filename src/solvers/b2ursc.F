@@ -53,7 +53,7 @@
       integer iFc
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------

@@ -8,10 +8,12 @@
       use b2mod_elements
       use b2us_feedback
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
-     &          fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
-     &          feedback_namelist_used
+     &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_sputter
+     & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
@@ -19,6 +21,8 @@
      & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
      & , only : dealloc_b2mod_neoclassical
+      use b2mod_facdrift_exb
+     & , only : dealloc_b2mod_facdrift_exb
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
@@ -28,11 +32,17 @@
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_transport_disruption
+     & , only : dealloc_b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_b2mrel
+     & , only : alloc_b2mod_mrel, dealloc_b2mod_mrel
+      use b2mod_b2zhco
+      use b2mod_zhfrtf
+     & , only : alloc_b2mod_zhfrtf, alloc_b2mod_zhfrtf_df,
+     &          dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -44,10 +54,12 @@
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+#endif
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -55,6 +67,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_io
+      use b2us_data
       use b2mod_par_opt
       use b2mod_b2plot
      , , only : wklng, nlimi, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
@@ -62,7 +75,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, 
+     *          nsrfs, n1st, n2nd, n3rd, nreac,
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -101,6 +114,7 @@
       use b2mod_impgyro !yamoto
 #endif
 #ifdef IMAS
+      use helper
 #if AL_MAJOR_VERSION > 4
       use ids_routines  ! IGNORE
      , , only : imas_open, al_build_uri_from_legacy_parameters,
@@ -113,7 +127,11 @@
      , , only : ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,          ids_radiation, ids_dataset_description, ids_equilibrium
+     ,          ids_radiation, ids_equilibrium, ids_wall
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+      use ids_schemas   ! IGNORE
+     , , only : ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
      , , only : ids_real, ids_real_invalid
@@ -142,18 +160,14 @@
       implicit none
 *   ..common blocks
 *   ..local variables
-      integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
-     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
-     &  nxtl, nxtr
+      integer ncall, ntim, mvinc, mvnum, jsep,
+     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
-      integer, save :: b2mndr_redef_pbs = 0
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
-      integer, save :: use_mms = 0                                   !srv 26.02.18
-      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -188,7 +202,6 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -212,8 +225,13 @@
       type(ids_edge_sources) :: batch_sources
       type(ids_edge_transport) :: edge_transport
       type(ids_radiation) :: radiation
+      type(ids_wall) :: wall
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       type(ids_dataset_description) :: description
       type(ids_dataset_description) :: old_description
+#else
+      type(ids_summary) :: old_summary
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       type(ids_summary) :: summary
 #endif
@@ -250,8 +268,9 @@
       integer stack_ntim(20)
       integer stack_ptr
       real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco, res_quit, res_max
-      logical quit_residual, test_residual
+     *  min_areshe, min_areshi, min_aresco, min_aresmo,
+     *  res_quit, res_max
+      logical quit_residual, test_residual_out
       real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
@@ -271,7 +290,8 @@
       save delta_cdfmovie_time, save_cdfmovie_time
       save delta_plasma_time, save_plasma_time
       save delta_ids_time, save_ids_time
-      save min_areshe, min_areshi, min_aresco, res_quit, res_max
+      save min_areshe, min_areshi, min_aresco, min_aresmo,
+     &     res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
@@ -307,14 +327,13 @@
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data delta_ids_time/0.0_R8/, save_ids_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
-     &     res_quit/1.0e-7_R8/
+     &     min_aresmo/0.0_R8/, res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo,
-     &  mpg, state, state_ext, state_avg)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0)
       use b2mod_ad
      & , only : old_erosion, old_deposition
       implicit none
@@ -325,12 +344,6 @@
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -339,7 +352,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer iCv, is, istra, k, idum(0:9)
+      integer iCv, is, istra, k, idum(0:9), zmaxmax, nnucl_tral
 #ifdef WG_TODO
       integer ix, iy
 #endif
@@ -405,7 +418,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:5) integer array, input.
+*     ninp - (0:6) integer array, input.
 *     ninp specifies the input unit numbers, as follows.
 *     ninp(0): formatted; provides physics and numerics parameters.
 *     ninp(1): un*formatted; provides the geometry.
@@ -415,7 +428,7 @@
 *     ninp(5): un*formatted; provides source term data.
 *     ninp(6): un*formatted; provides the initial differentiated state.
 *
-*     nout - (0:5) integer array, input.
+*     nout - (0:11) integer array, input.
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary print output.
 *     nout(1): un*formatted; provides actual physics parameters.
@@ -425,6 +438,7 @@
 *     nout(5): un*formatted; may provide detailed convergence data.
 *     nout(9): un*formatted; provides the final differentiated state.
 *     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -460,29 +474,6 @@
 *     The following common blocks have their outermost declaration in
 *     this routine; they need not be preserved between calls.
 *
-*     /b2cmgs/ specifies the singular regions in the geometry.
-*      nlrmx - integer constant.
-*     nlrmx is an upper bound for nlreg, and is used in dimension
-*     specifications.
-*      nlreg - integer.
-*     nlreg specifies the number of singular regions. It will hold that
-*     0.le.nlreg.le.nlrmx.
-*      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-*     the bounds of the i-th singular region. Mesh locations (ix,iy)
-*     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-*     will be included in (-1:nx,-1:ny).
-*     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-*     are unspecified.
-*      nlloc - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-*     which the i-th region is special, as follows:
-*       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-*       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-*       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-*       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-*     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-*
 *     /b2cmpa/ specifies basic physics parameters.
 *      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 *     These parameters are included with /b2cmpa/.
@@ -505,189 +496,128 @@
 *     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     undefined.
 *
-*     /b2cmpb/ specifies physics parameters for boundary conditions.
-*     For this purpose the boundary is divided up into regions, and for
-*     each region a set of coefficients defines the local conditions.
-*     For detailed description of /b2cmpb/ see the code, especially the
-*     routine b2stbc.
-*      cbnrmx - integer constant.
-*     cbnrmx is an upper bound for the number of boundary regions nreg,
-*     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-*     specifications.
-*      cbirso, cbirno, cbirwe, cbirea - integer.
-*     cbirso(-no,-we,-ea) is the index of the first region on the
-*     south (north, west, east) boundary.
-*      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-*     cbnrso(-no,-we,-ea) is the number of regions on the south
-*     (north, west, east) boundary.
-*     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-*     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-*     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-*      cbrbrk - (0:cbnrmx-1) real*8 array.
-*     cbrbrk defines the boundaries between the boundary regions.
-*      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-*     the continuity equation for species (is) on the (ireg) boundary
-*     region.
-*      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-*     the parallel momentum balance equation for species (is) on the
-*     (ireg) boundary region.
-*      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-*     the contribution to that atom heat equation by species (is) on
-*     the (ireg) boundary region.
-*      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-*     specify standard form boundary conditions for the electron heat
-*     equation on the (ireg) boundary region.
-*      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-*     specify standard form boundary conditions for the electric
-*     potential equation on the (ireg) boundary region.
-*      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-*     on the boundary region ireg. The exact interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to the recycling process (b2stbr). Routine b2stbr is
-*     problem dependent.
-*      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-*      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-*     specify miscellaneous processes on the boundary region ireg.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-*     (is) on the boundary region ireg. The interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-*     application dependent.
-*
 *   ..transport coefficients, parameters
 *
 *     /b2cmpt/ - common block.
 *     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 *     is used instead of (ns) in dimension specifications.)
 *      cfdf0 - (0:7,0:ns-1) real*8 array.
-*     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+*     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 *     the local expression
-*       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-*         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-*          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+*       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+*         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+*          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 *     is used in the definition of the anomalous transport coefficients.
-*     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+*     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 *     the corresponding term in df0 is understood as 0 independent of
 *     cfdf0(3:4,is).
 *      cfdna - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 *     local expression
-*       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-*         cfdna(2,is)*df0(,)+
-*         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+*         cfdna(2,is)*df0(,is)+
+*         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.na; the transport equation for species (is) contains a term
-*     difna(,,is)*'grad.na'.
+*     difna(,is)*'grad.na'.
 *     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-*     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfdna(4:6,) are not used in the default version of the code.
 *      cfdpa - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 *     local expression
-*       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-*         cfdpa(2,is)*df0(,,is)+
-*         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+*         cfdpa(2,is)*df0(,is)+
+*         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.pa; the transport equation for species (is) contains a term
-*     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+*     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 *     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-*     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfdpa(4:6,) are not used in the default version of the code.
 *      cfvla - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 *     local expression
-*       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-*         cfvla(2,is)*df0(,,is)+
-*         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+*         cfvla(2,is)*df0(,is)+
+*         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous y-velocity of species (is); the
 *     transport equation for species (is) contains a term
-*     vlay(,,is)*na(,,is).
+*     vlay(,is)*na(,is).
 *     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-*     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfvla(4:6,) are not used in the default version of the code.
 *      cfvsa - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 *     local expression
-*       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-*         cfvsa(2,is)*df0(,,is)+
-*         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+*         cfvsa(2,is)*df0(,is)+
+*         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the diffusivity corresponding to the anomalous
 *     transverse viscosity, so that this viscosity is
-*       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+*       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 *     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-*     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfvsa(4:6,) are not used in the default version of the code.
 *      cfhci - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 *     local expression
-*       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-*         cfhci(2,is)*df0(,,is)+
-*         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+*         cfhci(2,is)*df0(,is)+
+*         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous atom heat conductivity associated
 *     with species (is), so that the atom heat conduction coefficient
-*     contains a term dfhca(,,is)*na(,,is).
+*     contains a term dfhca(,is)*na(,is).
 *     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-*     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfhci(4:6,) are not used in the default version of the code.
 *      cfhce - (0:7) real*8 array.
 *     cfhce() are the coefficients in the local expression
-*       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-*         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+*       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+*         cfhce(3)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous electron heat conductivity, so that
-*     the electron heat conduction coefficient is dfhce(,)*ne(,).
+*     the electron heat conduction coefficient is dfhce()*ne().
 *     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-*     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfhce(2) and (4:6) are not used in the default version of the code.
 *      cfsig - (0:7) real*8 array.
 *     cfsig() are the coefficients in the local expression
-*       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-*         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+*       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+*         cfsig(3)*te()/ev/abs(bb(,3))/16+
 *         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 *     that specifies the diffusivity corresponding to the anomalous
 *     electrical conductivity, which is
-*       sig(,) = qe*ne(,)*dfsig(,).
+*       sig() = qe*ne()*dfsig().
 *     L is the local radial width of the plasma and
 *     y is the radial distance from the inner (South) boundary.
 *     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-*     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfsig(2) and (6) are not used in the default version of the code.
 *      cfalf - (0:7) real*8 array.
 *     cfalf() are the coefficients in the local expression
-*       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-*         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+*       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+*         cfalf(3)*te()/ev/abs(bb(,3))/16
 *     that specifies the diffusivity corresponding to the anomalous
 *     thermo-electric coefficient, which is
-*       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+*       alf() = ne()*sqrt(qe/te())*dfalf().
 *     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-*     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfalf(2) and (4:6) are not used in the default version of the code.
 *      cflim - (0:7) real*8 array.
 *     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -803,144 +733,145 @@
 *
 *     Description of some local variables (including arrays in w(0:*)):
 *
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-*     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-*     coordinates (in the physical plane) of the four corners of the
-*     (ix,iy) cell, mapped as follows:
-*     (,,0): lower left corner,  (,,1): lower right corner,
-*     (,,2): upper left corner,  (,,3): upper right corner.
-*     One expects the following identities to hold away from the
-*     boundaries:
-*     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-*     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-*     However, there may be cuts in the geometry, in which case these
-*     identities need not hold.
+*     cvX, cvY - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvX(iCv) specifies the
+*     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+*     the Cartesian Y-coordinate of the center of the cell.
 *
-*     bb - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-*     magnetic field at the center of the (ix,iy) cell.
-*     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+*     vxX, vxY - (1:nVx) real*8 array.
+*     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+*     specify the vertical coordinates (in the physical plane) of
+*     the vertex with number iVx.
+*
+*     cvBb - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+*     magnetic field at the center of the (iCv) cell.
+*     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 *     the absolute magnetic field strength.
-*     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-*     It will hold that 0.lt.bb(,,3).
+*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+*     It will hold that 0.le.cvBb(,0:3), because the direction of the
+*     magnetic field follows from cvEb (see below).
 *
-*     vol - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-*     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+*     cvEb - (1:nCv,0:2) real*8 array.
+*     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+*     the center of the cell iCv in the (R,Z,toroidal) axis system.
+*     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+*
+*     cvVol - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+*     the (iCv) cell. (In the case of toroidal symmetry this volume
 *     includes a factor 2*pi*R, while in the case of cylindrical
 *     symmetry it includes a factor 2*pi*Z.)
-*     It will hold that 0.lt.vol(,).
+*     It will hold that 0.lt.cvVol().
 *
-*     hx, hy - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-*     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+*     cvHz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+*     the (iCv) cell in the z-direction, measured at the cell center.
 *
-*     qz - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-*     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-*     between the x-direction and the y-direction on the (ix,iy) cell.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-*     vectors.)
-*     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+*     cvSz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+*     the (iCv) cell perpendicular to the z-direction.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
+*     fcQgam - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+*     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector vector and the normal vector
+*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 *
-*     gs - (-1:nx,-1:ny,0:2) real*8 array.
-*     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-*     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-*     gsx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-*     gsy(-1:nx,iy) will hold 0.
-*     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-*     (ix,iy) cell normal to the third (ignorable) coordinate.
+*     fcQalf - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+*     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+*     between the magnetic field vector and the face normal.
+*     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 *
-*     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-*     field pitch)*(surface area), namely the parallel contact area,
-*     on the (ix,iy) cell left and bottom faces respectively.
-*     In the case where the grid covers the full vacuum vessel,
-*     pbsy also contains a contribution from the narrowing of the
-*     flux tube when impacting the wall structures.
-*     See routine b2xgbs for the form of interpolation employed.
+*     fcQbet - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+*     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector and the magnetic field vector.
+*     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 *
-*     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-*     the density of atomic species (is) on the (ix,iy) cell.
-*     It will hold that 0.lt.na(,,).
+*     fcPbs - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+*     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+*     namely the parallel contact area.
 *
-*     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-*     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+*     fcPbshz - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+*     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+*
+*     fcS - (1:nFc,1:2) real*8 array.
+*     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+*
+*     na - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+*     the density of atomic species (is) on the (iCv) cell.
+*     It will hold that 0.lt.na(:).
+*
+*     ua - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+*     the parallel velocity of atomic species (is) on the (iCv) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
 *
-*     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-*     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-*     uadia(ix,iy,1,is) the radial drift velocity.
+*     te - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), te(iCv) specifies the electron
+*     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 *
-*     te - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+*     ti - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+*     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 *
-*     ti - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+*     tn - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+*     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+*     When no separate fluid neutral energy equation is solved, tn = ti.
 *
-*     po - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-*     potential on the (ix,iy) cell.
+*     po - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), po(iCv) specifies the electric
+*     potential on the (iCv) cell.
 *
-*     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+*     kt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+*     energy on the (iCv) cell.
 *
-*     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     zt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+*     on the (iCv) cell.
 *
-*     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     For all the fluxes below, the sign convention is as follows.
+*     Fluxes are positive when they flow in the local x-direction,
+*     where x is the connector line from C1 to C2.
 *
-*     fch - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its bottom
-*     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+*     the poloidal component and fna(iFc,1,is) specifies
+*     the radial component of the flux of atoms of species (is) through the
+*     face iFc.
+*
+*     fhe - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+*     fhe(iFc,1) specifies the radial component of the electron heat flux
+*     through the face iFc.
+*
+*     fhi - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+*     fhi(iFc,1) specifies the radial component of the all atom heat flux
+*     through the face iFc.
+*
+*     fch - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+*     fch(iFc,1) specifies the radial component of the electric
+*     current through the face iFc.
+*
+*     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field), but projected onto the
+*     poloidal direction.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
+*     in the radial direction.
 *
 *     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 *     state of the plasma at the start of the present timestep.
@@ -1019,20 +950,29 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       if (switch%Zhdanov_closure.gt.0)
-     &   call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+       call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+       if (switch%Zhdanov_closure.eq.1) then
+*   ..allocate more Zhdanov variables here instead that inside routines
+        call b2trnu (ns, nnucl_tral, zmaxmax)
+        call xertst (nnucl_tral.eq.nspecies,
+     &   'Error while building isonuclear sequences!')
+        call alloc_b2mod_mrel(nspecies,zmaxmax,ns)
+        call alloc_b2mod_zhco(nspecies, nCv)
+        call alloc_b2mod_zhfrtf(nCv, ns)
+        if (switch%zh_dist_fun.eq.1) then
+          call alloc_b2mod_zhfrtf_df(nCv, ns)
+        endif
+       endif
+#ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
-       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
-       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0)
+#endif
+       if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
-       call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0)
+       if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1075,11 +1015,14 @@
        call ipgetr ('b2mndr_min_aresco', min_aresco)                     !jwk
        call xertst (min_aresco.ge.0.0_R8,                                !jwk
      &      'faulty internal parameter min_aresco')                      !jwk
+       call ipgetr ('b2mndr_min_aresmo', min_aresmo)                     !jwk
+       call xertst (min_aresmo.ge.0.0_R8,                                !fc
+     &      'faulty internal parameter min_aresmo')                      !fc
        if (min_areshe.gt.0.0_R8.or.min_areshi.gt.0.0_R8.or.              !jwk
-     &     min_aresco.gt.0.0_R8) then                                    !jwk
-          test_residual=.true.                                           !jwk
+     &     min_aresco.gt.0.0_R8.or.min_aresmo.gt.0.0_R8) then            !fc
+          test_residual_out=.true.                                       !jwk
        else                                                              !jwk
-          test_residual=.false.                                          !jwk
+          test_residual_out=.false.                                      !jwk
        endif                                                             !jwk
        call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
        call xertst (res_quit.ge.0.0_R8,                                  !sc
@@ -1305,10 +1248,9 @@ c and hence the reaction rates have to be rescaled here.
              enddo
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
-                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
                 rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18
-                write(*,'(i3,1p,2e16.8)')
-     *             is,zamax(is),rtlqr(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
            if (switch%spatial_hybrid.eq.1) then
@@ -1357,10 +1299,17 @@ cwdk for now, dummy external state is created in b2mod_main
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-       call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                         switch%b2tfnb_ycur.eq.0.0_R8),
+       call xertst (k.eq.1.or.switch%Zhdanov_closure.gt.0.or.
+     &  (switch%b2tfnb_xcur.eq.0.0_R8.and.switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
-     .  'hydrogenic species!')
+     .  'hydrogenic species unless the Zhdanov closure is used!')
+       if (k.gt.1.and.switch%Zhdanov_closure.eq.0.and.
+     >     switch%b2sigp_style.eq.2) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+       endif
 *
        ixfb=rratio(nCv,8) !WG_TODO dummy values provided now; probably need icvfb instead...
        iyfb=rratio(nCv,2) !WG_TODO dummy values provided now
@@ -1406,7 +1355,6 @@ csw 09oct2012
          call xertst( .not.streql(username,' '),
      .    'User name not defined !')
          not_default = .not.streql(username, usrnam())
-         home_dir = '/home/'//trim(username)
          database = 'solps-iter'
          write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifdef NO_GETENV
@@ -1437,6 +1385,10 @@ csw 09oct2012
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'
 #endif
+         if (not_default) then
+           l = index(home_dir,trim(usrnam()))
+           if (l.gt.0) home_dir = home_dir(1:l-1)//trim(username)
+         end if
          call ipgetc('b2mndr_device', database )
          call ipgetc('b2mndr_database', database )
          call xertst( .not.streql(database,' '),
@@ -1455,11 +1407,7 @@ csw 09oct2012
      .    'Invalid shot number')
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
-         imasdir = trim(home_dir)//'/public/imasdb/'
-     &           //trim(database)//'/'//trim(version)
-#if AL_MAJOR_VERSION < 5
-     &           //'/0'
-#endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -1469,6 +1417,11 @@ csw 09oct2012
          if (ierror.eq.0)
      >    call get_environment_variable('IMASDIR',value=imasdir)
 #endif
+#endif
+         if (not_default) imasdir = trim(home_dir)//'/public/imasdb/'
+     &                            //trim(database)//'/'//trim(version)
+#if AL_MAJOR_VERSION < 5
+     &                            //'/0'
 #endif
          if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
            l=index(imasdir,'imasdb/')
@@ -1640,20 +1593,6 @@ csw 09oct2012
       call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry (mpg, geo, switch)
 
-      call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
-      if (b2mndr_redef_pbs.ne.0) then
-        if (redef_gmtry.eq.1) then
-          write(6,*)
-     &     'Magnetic flux correction of pbsx already done in b2ag.'
-        else
-          write(6,*)
-     &     'Magnetic flux correction must now be done in b2ag.'
-          write(6,*)
-     &     'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ',
-     &     'and re-run b2ag.'
-          call xerrab ('Obsolete switch b2mndr_redef_pbs!')
-        endif
-      endif
 #ifdef WG_TODO
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
@@ -1797,7 +1736,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                                             !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                                  !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -1843,16 +1782,14 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        call my_out_us(70,nFc,1,geo%fcEb(1,1),'b2mndr_fcEbY')
        call my_out_us(70,nFc,1,geo%fcEb(1,2),'b2mndr_fcEbZ')
       endif                                                          !srv 25.01.16 }
-      do is = 0,ns-1                                                 !srv 25.01.16 {
-        do iCv=1,nCv
+      do is = 0, ns-1                                                !srv 25.01.16 {
+        do iCv = 1, nCv
           state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
      &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
-!      if(use_mms.ne.0) then                                         !srv 26.02.18 {
-*   ..reset initial state using exact solution
+*   ..reset initial state if using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
-!      endif                                                         !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -1864,7 +1801,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new, 
+       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new,
      .   state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
@@ -2017,11 +1954,11 @@ c   --> better way doing this is necessary)
           call b2xpne (nCv, ns, state%rt%rza, state%pl%na,
      .       state_ext%ne, state%dv%ne)
           max_delta = max(
-     1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
-     2     maxval(abs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
-     3     maxval(abs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
-     4     maxval(abs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
-     5     maxval(abs((state%dv%ne - state%psnc%ne)/
+     1     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
+     2     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
+     3     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
+     4     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
+     5     maxval(dabs((state%dv%ne - state%psnc%ne)/
      6       (state%dv%ne + na_eps))))
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
@@ -2046,8 +1983,8 @@ c   --> better way doing this is necessary)
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
       call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
 !WG_TODO*   ..write output control
 !WG_TODO      write (nout(0),'(2(/2x,a,2x,a))')
 !WG_TODO     &  'idout0:', idout0, 'idout1:', idout1
@@ -2083,7 +2020,7 @@ c   --> better way doing this is necessary)
       end if
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
-      save_cdfmovie_time = tim
+      save_cdfmovie_time = tim + delta_cdfmovie_time
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -2094,10 +2031,7 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call read_neutrals_namelist(ns, mpg, switch, .true.)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
-      if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
-     & 'cftype=6 requires b2.optimization.namelist')
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -2110,19 +2044,25 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
+        allocate(xold(npar_opt))
+        allocate(xnew(npar_opt))
+        allocate(xmult(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+        xold(1:npar_opt) = x0(1:npar_opt)
+        xnew(1:npar_opt) = x0(1:npar_opt)
+        xmult = 1.0_R8
       endif
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
-        call init_feedback(nFc, ns, switch, mpg)
+        call init_feedback(nFc, ns, switch, mpg, geo)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
       nlimi = 0
@@ -2150,7 +2090,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2160,6 +2100,39 @@ c new CDF movie option (1st frame at t=0)
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
+      !Initialize residual if using Crank-Nicolson scheme
+      if ( itim.eq.0.and.(switch%b2mndt_ckn.eq.2
+     &     .or.switch%b2mndt_startup.eq.2) ) then
+        !Dummy call to b2mndt
+        !Temporarily set dummy switch to 1
+        switch%b2mndt_dummy = 1
+        !Temporarily set rxf to 0 to not update any physical quantities
+        switch%b2mndt_rxf = 0.0_R8
+        !Temporarily set inner iterations to 1
+        switch%nstg(0) = 1
+        switch%nstg(1) = 1
+        switch%nstg(2) = 1
+        call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+        !Read again rxf switch and inner iterations switches
+        call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+        call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+        call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+        call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+        !Set back dummy switch to default value of 0
+        switch%b2mndt_dummy = 0
+        !Update plasma snapshots with initialized residuals (without time-stepping sources)
+        state%psnl%resco0 = state%dv%resco0
+        state%psnl%resmo0 = state%dv%resmo0
+        state%psnl%reshe0 = state%dv%reshe0
+        state%psnl%reshi0 = state%dv%reshi0
+        state%psnl%reshn0 = state%dv%reshn0
+        state%psnl%reskt0 = state%dv%reskt0
+        state%psnl%reszt0 = state%dv%reszt0
+      endif
+
       call subend()
       return
 #ifdef USE_MPI
@@ -2168,8 +2141,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
-     &  state_ext, state_avg, J)
+      subroutine b2mndr_1 (nout, ns, J)
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -2184,8 +2156,30 @@ c new CDF movie option (1st frame at t=0)
      &          told, fna_mol
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
-      use b2mod_ad
+      use b2mod_facdrift_ExB
+     & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
+     &          fac_vis_scalar
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf, znnucl, mu, mu_mdf
+      use b2mod_input_profile
+     & , only : sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata
+      use b2mod_facdrift_exb
+     & , only : iy_nocoreexb, facdrift_tanh_a, facdrift_tanh_b,
+     &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
+     &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
+     &          fac_vis_profile
 #endif
+      use b2mod_ad
 #ifdef IMAS
       use b2mod_ual
      , , only : new_batch_edge, put_batch_edge
@@ -2201,15 +2195,6 @@ c new CDF movie option (1st frame at t=0)
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
-#endif
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
-      type(switches), intent (inout)   :: switch
-#ifdef FIXED_POINT
-      type(B2State) :: state0
 #endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
@@ -2234,7 +2219,7 @@ c new CDF movie option (1st frame at t=0)
       integer ierror, status
 #endif
 #endif
-      character*1 ss
+      character*2 ss
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -2279,15 +2264,15 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-      state0 = state
 ! $AD FP-LOOP "state"
-      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim) .and.
+     &          (.not.quit))
 #else
     1 continue
 #endif
@@ -2338,40 +2323,9 @@ cwdk  set some integers
 c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
 c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
-        state%psnl%na = state%pl%na
-        state%psnc%na = state%pl%na
-        state%psnl%ua = state%pl%ua
-        state%psnc%ua = state%pl%ua
-        state%psnl%ne = state%dv%ne
-        state%psnc%ne = state%dv%ne
-        state%psnl%ni = state%dv%ni
-        state%psnc%ni = state%dv%ni
-        state%psnl%te = state%pl%te
-        state%psnc%te = state%pl%te
-        state%psnl%ti = state%pl%ti
-        state%psnc%ti = state%pl%ti
-        state%psnl%tn = state%pl%tn
-        state%psnc%tn = state%pl%tn
-        state%psnl%kinrgy = state%dv%kinrgy
-        state%psnc%kinrgy = state%dv%kinrgy
-        state%psnl%po = state%pl%po
-        state%psnc%po = state%pl%po
-        state%psnl%kt = state%pl%kt
-        state%psnc%kt = state%pl%kt
-        state%psnl%zt = state%pl%zt
-        state%psnc%zt = state%pl%zt
-        state%psnl%fna = state%dv%fna
-        state%psnc%fna = state%dv%fna
-        state%psnl%fhe = state%dv%fhe
-        state%psnc%fhe = state%dv%fhe
-        state%psnl%fhi = state%dv%fhi
-        state%psnc%fhi = state%dv%fhi
-        state%psnl%fch = state%dv%fch
-        state%psnc%fch = state%dv%fch
-        state%psnl%fkt = state%dv%fkt
-        state%psnc%fkt = state%dv%fkt
-        state%psnl%fzt = state%dv%fzt
-        state%psnc%fzt = state%dv%fzt
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
@@ -2408,17 +2362,16 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..call cost function
         call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch%BoRiS, J)
+     &    state_ext, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
+          if (icf.gt.9) write (ss,'(I2)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 *    ..produce data for movie
-#ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
-          call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+          call b2mwmv (nout(3), nCv, state, itim, tim, dtim)
         endif
-#endif
 *    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
@@ -2441,9 +2394,11 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
+#ifndef FIXED_POINT
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
+#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -2454,41 +2409,41 @@ csw 09oct2012 set default potential already at this point (BCs)
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
 #ifndef FIXED_POINT
-        write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
+        write(*,*) 'delta na ',maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
+        write(*,*) 'delta te ',maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
+        write(*,*) 'delta ti ',maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
-        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+        write(*,*) 'delta tn ',maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
-     &    (abs(state%pl%po)+po_eps)))
-        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
-     &    (abs(state%pl%kt)+kt_eps*ev)))
-        write(*,*) 'delta zt ',maxval(abs((state%pl%zt-state%psnc%zt)/
-     &    (abs(state%pl%zt)+zt_eps*ev)))
+        write(*,*) 'delta po ',maxval(dabs((state%pl%po-state%psnc%po)/
+     &    (dabs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(dabs((state%pl%kt-state%psnc%kt)/
+     &    (dabs(state%pl%kt)+kt_eps*ev)))
+        write(*,*) 'delta zt ',maxval(dabs((state%pl%zt-state%psnc%zt)/
+     &    (dabs(state%pl%zt)+zt_eps*ev)))
         write(*,*) 'delta ua ',
-     *   maxval(abs((state%pl%na*state%pl%ua-
+     *   maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
-     &     maxval(abs((state%pl%na-state%psnc%na)/
+     &     maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps))),
-     &     maxval(abs((state%pl%te-state%psnc%te)/
+     &     maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev))),
-     &     maxval(abs((state%pl%ti-state%psnc%ti)/
+     &     maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
-     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &     maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev))),
-     &     maxval(abs((state%pl%po-state%psnc%po)/
+     &     maxval(dabs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
-     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &     maxval(dabs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
-     &     maxval(abs((state%pl%zt-state%psnc%zt)/
+     &     maxval(dabs((state%pl%zt-state%psnc%zt)/
      &    (state%pl%zt+zt_eps*ev))),
-     &     maxval(abs((state%pl%na*state%pl%ua-
+     &     maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then
@@ -2533,10 +2488,10 @@ csw 09oct2012 set default potential already at this point (BCs)
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
             if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-            call cfopen (nout(9),tran_file_name,'new','unformatted')
+            call cfopen (nout(11),tran_file_name,'new','unformatted')
             call set_b2mod_ppout
-            call write_b2mod_ppout(nout(9))
-            close(nout(9))
+            call write_b2mod_ppout(nout(11))
+            close(nout(11))
             write(*,*) 'Saved ',tran_file_name
           else
             write(*,*) 'More than 99 tran files --- no more saved'
@@ -2548,12 +2503,13 @@ c new CDF movie option
         if(tim.ge.(save_cdfmovie_time-dtim/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2569,6 +2525,7 @@ c new CDF movie option
      .              nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .              state%pl,state%dv,state%co,state%rt,state%srw,
      .              state_ext,ismain,ismain0,lwti,lwav,.true.)
+#ifndef FIXED_POINT
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2601,12 +2558,12 @@ c new CDF movie option
           call b2trci(geo,mpg,ns,nlim,nmol,switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
-        if (ank_tracing.ne.0) then
+        if (ank_tracing.ne.0.and.ntim.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch,state_ext)
+     >     call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
+#endif
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
 #ifdef _OPENMP
@@ -2639,7 +2596,6 @@ c new CDF movie option
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
-#endif
         res_max = 0.0_R8
         do is = 0, ns-1
           if (any(solveco(is,:)))
@@ -2660,19 +2616,25 @@ c new CDF movie option
         if (any(solvezt).and.switch%solve_keps.eq.2)
      &    res_max = max(res_max,state%diag%areszt)
 #ifndef FIXED_POINT
-        if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
-          quit_residual=                                                 !jwk
-     &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
-     &        .and.
-     &        (state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
-     &        .and.
-     &        (state%diag%aresco(ismain)*
-     &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
+        if(test_residual_out.and.mod(itim,10).eq.0
+     &     .and.no_solve.le.0) then   !jwk
+          quit_residual=
+     &      ((state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)   !jwk
+     &       .or.min_areshe.eq.0.0_R8).and.
+     &      ((state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)   !jwk
+     &       .or.min_areshi.eq.0.0_R8).and.
+     &      ((state%diag%aresco(ismain)*min_aresco)
+     &       .le.(min_aresco*min_aresco).or.min_aresco.eq.0.0_R8).and.   !jwk
+     &      ((state%diag%aresmo(ismain)*min_aresmo)
+     &       .le.(min_aresmo*min_aresmo).or.min_aresmo.eq.0.0_R8)        !fc
         endif                                                            !jwk
-        quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
+#endif
+        quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &       b2mndr_elapsed.gt.0.0_R8).or.
+     &       b2mndr_elapsed.gt.0.0_R8)
+#ifndef FIXED_POINT
+     &      .or. quit_residual.or.
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
@@ -2866,9 +2828,9 @@ c new CDF movie option
             if (status.eq.0 .and. idx.ne.0) then
               write(*,*) "Reading old IMAS data entry: ",
      .         trim(database), shot, run
-              call ids_get( idx, "equilibrium", equilibrium, status)
+              call ids_get( idx, "equilibrium", equilibrium, status )
               call ids_get( idx, "edge_profiles", old_edge_profiles,
-     .          status)
+     .          status )
               if (status.ne.0) then
                 write(*,*) 'Error opening old edge_profiles IDS ! '//
      .                     'Will create a new one.'
@@ -2883,7 +2845,7 @@ c new CDF movie option
                 end if
                 call ids_deallocate( old_edge_profiles )
                 call ids_get( idx, "edge_profiles/1",
-     .            old_batch_profiles, status)
+     .            old_batch_profiles, status )
                 if (status.ne.0) then
                   num_batch_slices = 0
                 else
@@ -2893,21 +2855,37 @@ c new CDF movie option
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
                 old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+                call ids_get( idx, "summary", old_summary, status )
+                if ( status.ne.0 ) then
+                  write(*,*) 'Error opening old summary IDS !'
+                else if (associated(old_summary%ids_properties%
+     &                              version_put%data_dictionary)) then
+                  old_imas_version = old_summary%ids_properties%
+     &                               version_put%data_dictionary(1)
+                  old_start_time = old_summary%simulation%time_begin
+                  old_end_time = old_summary%simulation%time_end
+                  call ids_deallocate( old_summary )
+                end if
+#else
                 call ids_get( idx, "dataset_description",
-     .                                  old_description, status)
+     .                                  old_description, status )
                 if ( status.ne.0 ) then
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
                 else if (associated(old_description%ids_properties%
      &                              version_put%data_dictionary)) then
-#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-                  old_start_time = description%simulation%time_begin
-                  old_end_time = description%simulation%time_end
-#endif
                   old_imas_version = old_description%ids_properties%
      &                               version_put%data_dictionary(1)
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+                  old_start_time = old_description%simulation%time_begin
+                  old_end_time = old_description%simulation%time_end
+#endif
                   call ids_deallocate( old_description )
+                else if ( streql(old_imas_version,'x.xx.x') ) then
+                  call xerrab ('Old IMAS data entry is incomplete !')
                 end if
+#endif
                 continued = continued .and.
      &           (ids_end_time.lt.tim .and.
      &            ids_end_time.ne.IDS_REAL_INVALID)
@@ -2953,10 +2931,16 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                     end if
-                    write(systemarg,'(a,a,a,a)')
-     &                'idscp --setDatasetVersion'//
+#if IMAS_MAJOR_VERSION < 4
+                    write(systemarg,'(a,a,a,a,a)')
+     &                'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
-     &                     ' -d ',trim(uri_dest)
+     &                     ' -d ',trim(uri_dest),' --dd-update'
+#else
+                    write(systemarg,'(a,a,a,a,a)')
+     &                'idscp -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest),' --dd-update'
+#endif
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -2991,9 +2975,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                       write(systemarg,'(a,a,a,a)')
-     &                  'idscp --setDatasetVersion'//
-     &                     ' -s ',trim(uri_source),
-     &                     ' -d ',trim(uri_dest)
+     &                  'idscp -s ',trim(uri_source),
+     &                       ' -d ',trim(uri_dest)
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                       write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3044,9 +3027,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_ids) then
                     time_slice_index = num_time_slices
                     call B25_process_ids(
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
-     &               radiation, description, equilibrium,
+     &               radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &               description,
+#endif
+     &               equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
@@ -3059,7 +3045,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &               tim, dtim, shot, database,
+#else
      &               tim, dtim, shot, run, database, version,
+#endif
      &               new_eq_ggd,
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
@@ -3067,13 +3057,19 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_av) then
                     batch_index = num_batch_slices
                     call B25_av_ids( summary_av,
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               batch_profiles, batch_sources,
-     &               description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &               description,
+#endif
+     &               equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &               tim, shot, run, database, version, new_eq_ggd,
+#else
+     &               tim, shot, database, new_eq_ggd,
+#endif
      &               batch_index, num_batch_slices )
                     process_av = .false.
                   end if
@@ -3101,9 +3097,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (status.ne.0) idx = 0
             if (process_ids) then
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation, description, equilibrium,
+     &          radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3116,19 +3115,29 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd )
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
               old_start_time = run_start_time
               process_ids = .false.
             end if
             if (process_av) then
               call B25_av_ids( summary_av,
-     &         geo, mpg, state, state_ext, state_avg, switch,
      &         batch_profiles, batch_sources,
-     &         description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &         description,
+#endif
+     &         equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &         summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &         tim, shot, run, database, version, new_eq_ggd )
+#else
+     &         tim, shot, database, new_eq_ggd )
+#endif
               process_av = .false.
             end if
           else if (process_ids .or. process_av) then
@@ -3138,9 +3147,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_time_slices = num_time_slices + 1
               time_slice_index = num_time_slices
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation, description, equilibrium,
+     &          radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3153,7 +3165,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd,
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &          time_slice_index, num_time_slices )
               process_ids = .false.
             end if
@@ -3164,21 +3180,32 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_batch_slices = num_batch_slices + 1
               batch_index = num_batch_slices
               call B25_av_ids( summary_av,
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          batch_profiles, batch_sources,
-     &          description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &          tim, shot, run, database, version, new_eq_ggd,
+#else
+     &          tim, shot, database, new_eq_ggd,
+#endif
      &          batch_index, num_batch_slices )
               process_av = .false.
             end if
           end if
           if (ids_replace) then
             if (write_ids)
-     >       call new_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description, equilibrium,
+     >       call new_ids_edge(
+     &        edge_profiles, edge_sources, edge_transport,
+     &        radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3202,12 +3229,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-     &        description, summary_av, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        summary_av, new_eq_ggd )
           else
             if (database.eq.'iter') database = 'ITER'
             if (write_ids)
-     >       call put_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description, equilibrium,
+     >       call put_ids_edge(
+     &        edge_profiles, edge_sources, edge_transport,
+     &        radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3235,7 +3270,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-     &        description, summary_av, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        summary_av, new_eq_ggd )
           end if
 #endif
           if (.not.continued) continued = .true.
@@ -3252,29 +3290,29 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
 #endif
 #ifdef FIXED_POINT
-        call calc_res_fp(ns, state, state0, res_max)
         write(*,*) 'MAX RESIDUAL ',res_max
-        state0 = state
+        primal_iterations = itim
 *   ..end loop
       end do
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch%BoRiS, J)
+     &    state_ext, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*,*) 'Cost function value '//ss//': ',J(icf)
       end do
 #else
         goto 1
 *   ..end loop
       endif  !}
+      primal_iterations = itim
 #endif
       call subend ()
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, ns, switch, geo, mpg,
-     &                    state, state_ext, state_avg)
+      subroutine b2mndr_2(nout, ns)
       use b2mod_switches
       use b2mod_ad
      & , only : old_erosion, old_deposition
@@ -3287,13 +3325,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #ifdef WG_TODO
       integer nx, ny
 #endif
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
-      integer nCv, nFc, is                                               !srv 29.11.18
+      integer nCv, nFc, is                                          !srv 29.11.18
+#ifndef NO_CDF
+      integer nVx
+#endif
 #ifdef WG_TODO
       character*256 filename
       logical found
@@ -3342,6 +3377,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
       nCv = mpg%nCv
       nFc = mpg%nFc
+#ifndef NO_CDF
+      nVx = mpg%nVx
+#endif
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -3365,11 +3403,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &  te, ti, po, fna, fhe, fhi, fch)
       if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-*   ..test plasma state
-      call b2xvps (nx, ny, ns,
-     .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-      call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 #endif
+*   ..test plasma state
+      call b2xvps (nCv, nFc, ns, state%pl, state%dv)
+      call b2xvsg (nCv*ns, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
       call write_b2fstate (nout(2), nCv, nFc, ns, state)
 *   ..write plasma state
@@ -3382,12 +3419,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-*   ..mms error analysis
-      if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
+*   ..mms steady-state error analysis
+      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then          !srv 26.02.18 {
+        call calc_err(nCv, ns, state%pl, switch, itim, mpg)
       endif                                                              !srv 26.02.18 }
-      if(iout.ne.0) then
-        if(use_mms.eq.0) then                                            !srv 29.11.18 {
+      if(switch%b2mndr_iout.ne.0) then
+        if(switch%use_mms.eq.0) then                                     !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3422,11 +3459,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         close(31)
        end if
       end if
-#ifdef WG_TODO
 *   ..produce data for last frame in movie if not yet done
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
-        call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+        call b2mwmv (nout(3), nCv, state, itim, tim, dtim)
       endif
+#ifdef WG_TODO
 *   ..produce last time-dependent file if not yet done
 #ifdef JET
       if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
@@ -3435,10 +3472,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(10),tran_file_name,'new','unformatted')
+          call cfopen (nout(11),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(10))
-          close(nout(10))
+          call write_b2mod_ppout(nout(11))
+          close(nout(11))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
@@ -3450,7 +3487,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(ncid,nCv,ns,geo,state,switch)
+        call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -3474,18 +3511,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
+#ifndef FIXED_POINT
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         if (balance_average .ne. 0) then
           call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-        call write_balance(nCv,nFc,ns,geo)
+        call write_balance(nCv,nFc,nVx,ns,geo,mpg)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
+#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3510,9 +3549,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation, description, equilibrium,
+     &      radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3525,7 +3567,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd,
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &      time_slice_index, num_time_slices )
         else if (continued) then
 #if AL_MAJOR_VERSION > 4
@@ -3582,9 +3628,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           if (status.eq.0 .and. idx.ne.0) then
             write(*,*) "Reading old IMAS data entry: ",
      .       trim(database), shot, run
-            call ids_get( idx, "equilibrium", equilibrium, status)
+            call ids_get( idx, "equilibrium", equilibrium, status )
             call ids_get( idx, "edge_profiles", old_edge_profiles,
-     .        status)
+     .        status )
             if (status.ne.0) then
               write(*,*) 'Error opening old edge_profiles IDS ! '//
      .                   'Will create a new one.'
@@ -3601,20 +3647,36 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               old_start_time = 0.0_IDS_real
               old_end_time = IDS_REAL_INVALID
               old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+              call ids_get( idx, "summary", old_summary, status )
+              if ( status.ne.0 ) then
+                write(*,*) 'Error opening old summary IDS !'
+              else if (associated(old_summary%ids_properties%
+     &                            version_put%data_dictionary)) then
+                old_imas_version = old_summary%ids_properties%
+     &                             version_put%data_dictionary(1)
+                old_start_time = old_summary%simulation%time_begin
+                old_end_time = old_summary%simulation%time_end
+                call ids_deallocate( old_summary )
+              end if
+#else
               call ids_get( idx, "dataset_description",
-     .                                old_description, status)
+     .                                old_description, status )
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old dataset_description IDS !'
               else if (associated(old_description%ids_properties%
      &                            version_put%data_dictionary)) then
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-                old_start_time = description%simulation%time_begin
-                old_end_time = description%simulation%time_end
+                old_start_time = old_description%simulation%time_begin
+                old_end_time = old_description%simulation%time_end
 #endif
                 old_imas_version = old_description%ids_properties%
      &                             version_put%data_dictionary(1)
                 call ids_deallocate( old_description )
+              else if ( streql(old_imas_version,'x.xx.x') ) then
+                call xerrab ('Old IMAS data entry is incomplete !')
               end if
+#endif
               continued = continued .and.
      &         (ids_end_time.lt.tim .and.
      &          ids_end_time.ne.IDS_REAL_INVALID)
@@ -3661,10 +3723,16 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                   end if
-                  write(systemarg,'(a,a,a,a)')
-     &              'idscp --setDatasetVersion'//
+#if IMAS_MAJOR_VERSION < 4
+                  write(systemarg,'(a,a,a,a,a)')
+     &              'idscp --set-dataset-version'//
      &                   ' -s ',trim(uri_source),
-     &                   ' -d ',trim(uri_dest)
+     &                   ' -d ',trim(uri_dest),' --dd-update'
+#else
+                  write(systemarg,'(a,a,a,a,a)')
+     &              'idscp -s ',trim(uri_source),
+     &                   ' -d ',trim(uri_dest),' --dd-update'
+#endif
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3699,9 +3767,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                     write(systemarg,'(a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
-     &                  ' -s ',trim(uri_source),
-     &                  ' -d ',trim(uri_dest)
+     &               'idscp -s ',trim(uri_source),
+     &                    ' -d ',trim(uri_dest)
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3743,9 +3810,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 end if
                 time_slice_index = num_time_slices
                 call B25_process_ids(
-     &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
-     &            radiation, description, equilibrium,
+     &            radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &            description,
+#endif
+     &            equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &            summary,
 #endif
@@ -3758,7 +3828,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &            tim, dtim, shot, database, new_eq_ggd,
+#else
      &            tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &            time_slice_index, num_time_slices )
               else
                 write(*,'(a)')
@@ -3790,9 +3864,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation, description, equilibrium,
+     &      radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3805,11 +3882,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd )
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
         end if
         if (ids_replace) then
-          call new_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call new_ids_edge(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3824,8 +3910,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      idx, new_eq_ggd )
         else
-          call put_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call put_ids_edge(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation, wall,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3850,7 +3941,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
-     &      radiation )
+     &      radiation, wall )
         call dealloc_batch_edge( batch_profiles, batch_sources,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
@@ -3885,19 +3976,26 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 * ..return
       ncall = ncall+1
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
-     &  deallocate(par_opt_phys)
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
+        deallocate(par_opt_phys)
+        deallocate(xold, xnew, xmult)
+      endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
 !WG_RM      call dealloc_b2mod_ma28
+      call dealloc_b2mod_mrel
       call dealloc_b2mod_wall
+      call dealloc_b2mod_zhco
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_zhfrtf
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+#ifndef FIXED_POINT
       call dealloc_b2mod_balance
+#endif
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -3909,18 +4007,24 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
+      call dealloc_b2mod_zhfrtf_df
+      call dealloc_b2mod_facdrift_ExB
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
       call dealloc_b2mod_neoclassical
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
       call dealloc_b2mod_ma28_for_us
+#ifndef FIXED_POINT
       call dealloc_b2mod_eirene_sources
+#endif
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
-      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
-      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
+      if(switch%boundary_sources.ne.0)
+     & call dealloc_b2mod_boundary_sources                              !srv 26.02.18
+      if(switch%equation_sources.ne.0)
+     & call dealloc_b2mod_equation_sources                              !srv 26.02.18
       call dealloc_b2mod_b2plot
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR

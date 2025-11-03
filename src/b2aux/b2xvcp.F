@@ -55,11 +55,6 @@
 *   ..local variables
       integer i, is, ireg
       character*80 message
-#ifdef WG_TODO
-      integer ic
-      logical found
-      intrinsic nint
-#endif
 *   ..procedures
       external xertst
       external b2xvsg
@@ -124,30 +119,6 @@
        enddo
        call xertst (1.0_R8.lt.cbrbrk(cbirea+cbnrea-1),
      &   'faulty argument cbrbrk, east, endpoint')
-*    ..test boundary cross-consistency in /b2cmpb/
-#ifdef WG_TODO
-cwdk  this check relies on nx and b2mod_indirect
-cwdk  not available anymore; needed at all with new solver?
-cwdk  can probably be removed completely?
-      do ic = 1, nncut
-        found = .false.
-        ireg = 0
-        do while (.not.found .and. ireg.lt.cbnrso)
-          found = nint(cbrbrk(ireg)*nx).eq.leftcut(ic)
-          ireg = ireg + 1
-        end do
-        call xertst (found, 
-     .   'Mismatch between leftcut and cbrbrk (South)!')
-        found = .false.
-        ireg = 0
-        do while (.not.found .and. ireg.lt.cbnrso)
-          found = nint(cbrbrk(ireg)*nx).eq.rightcut(ic)
-          ireg = ireg + 1
-        end do
-        call xertst (found, 
-     .   'Mismatch between rightcut and cbrbrk (South)!')
-      end do
-#endif
 *    ..test parameters in /b2cmpb/
        do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
 *     ..test cbsna, cbsmo, cbshi

@@ -4,9 +4,7 @@
       program b2mnastra
       use b2mod_types
       use b2mod_version
-      use b2mod_work
       use b2mod_ma28
-      use b2mod_geo_corner
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
@@ -70,6 +68,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
@@ -81,7 +80,9 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -139,6 +140,11 @@
 #endif
 *-----------------------------------------------------------------------
 *.computation
+crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+crfs put here the other main programs b2ag (prepares geometry and
+crfs  magnetic field), b2ah (prepares tables of default physics
+crfs  parameters), b2ai (prepares an initial plasma state),
+crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *   ..program start-up calls
 #ifdef USE_MPI
@@ -228,21 +234,21 @@
 *   ..call principal driver routine
       call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
       call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
-      call alloc_b2mod_astra_to_b2(mpg, DEF_NXD, DEF_NYD)       !srv 28.07.11 {
+      call alloc_b2mod_astra_to_b2(mpg, DEF_NYD)                !srv 28.07.11 {
       call alloc_b2mod_b2_to_astra(mpg, DEF_NYD, ns)
 !WG_TODO      call read_astra_to_b2(ny, ninp(6))
       open(70,file='check_astra_to_b2.prt')
       call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
 *   ..call driver routines
-      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, J)
+      call b2mn_step(J)
 #ifdef _OPENMP
       cpu_f = omp_get_wtime()
 #else
       call cpu_time(cpu_f)
 #endif
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
-      call b2mn_fin(switch, geo, mpg, state, state_ext, state_avg)
+      call b2mn_fin
 
       stop 'b2mnastra'
 
@@ -250,4 +256,3 @@
 *.end b2mnastra
 
       end program b2mnastra
-

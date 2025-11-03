@@ -135,7 +135,6 @@
         endif
       end do
 
-
 !  now check coordinates from old fort.33 file for new index
       nnodes = npnodes
       do ico = 1, nco_old

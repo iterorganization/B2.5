@@ -1,10 +1,10 @@
 
       module b2mod_batch_average
       use b2mod_types
+      use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
+      use b2us_plasma
       implicit none
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:), te_mean(:),
@@ -27,9 +27,10 @@
       integer, save :: naver, ntotdt
       contains
 
-      subroutine batch_av_all (itim,ntim_batch,nCv,ns)
+      subroutine batch_av_all (itim,ntim_batch,nCv,pl,ns)
       implicit none
       integer, intent(in) :: itim, ntim_batch, nCv, ns
+      type(B2Plasma), intent(in) :: pl
       integer :: itp
       real (kind=R8) ::
      *   sna_tot(nCv,0:ns-1), smo_tot(nCv,0:ns-1), 
@@ -38,12 +39,12 @@
       itp = itim + 1
 
 *  calculate averaged plasma profiles and sources
-      call batch_average (nCv*ns, na, na_mean, itp, ntim_batch)
-      call batch_average (nCv,    te, te_mean, itp, ntim_batch)
-      call batch_average (nCv,    ti, ti_mean, itp, ntim_batch)
-      call batch_average (nCv,    po, po_mean, itp, ntim_batch)
-      call batch_average (nCv*ns, ua, ua_mean, itp, ntim_batch)
-      call batch_average (nCv,    kt, kt_mean, itp, ntim_batch)
+      call batch_average (nCv*ns, pl%na, na_mean, itp, ntim_batch)
+      call batch_average (nCv,    pl%te, te_mean, itp, ntim_batch)
+      call batch_average (nCv,    pl%ti, ti_mean, itp, ntim_batch)
+      call batch_average (nCv,    pl%po, po_mean, itp, ntim_batch)
+      call batch_average (nCv*ns, pl%ua, ua_mean, itp, ntim_batch)
+      call batch_average (nCv,    pl%kt, kt_mean, itp, ntim_batch)
 
       call batch_average (nCv*ns, sna_tot, sna_mean, itp, ntim_batch)
       call batch_average (nCv,    she_tot, she_mean, itp, ntim_batch)
@@ -51,12 +52,12 @@
       call batch_average (nCv*ns, smo_tot, smo_mean, itp, ntim_batch)
 
 *  calculate squared averaged plasma profiles
-      call batch_average_sq (nCv*ns, na, e_na, itp, ntim_batch)
-      call batch_average_sq (nCv,    te, e_te, itp, ntim_batch)
-      call batch_average_sq (nCv,    ti, e_ti, itp, ntim_batch)
-      call batch_average_sq (nCv,    po, e_po, itp, ntim_batch)
-      call batch_average_sq (nCv*ns, ua, e_ua, itp, ntim_batch)
-      call batch_average_sq (nCv,    kt, e_kt, itp, ntim_batch)
+      call batch_average_sq (nCv*ns, pl%na, e_na, itp, ntim_batch)
+      call batch_average_sq (nCv,    pl%te, e_te, itp, ntim_batch)
+      call batch_average_sq (nCv,    pl%ti, e_ti, itp, ntim_batch)
+      call batch_average_sq (nCv,    pl%po, e_po, itp, ntim_batch)
+      call batch_average_sq (nCv*ns, pl%ua, e_ua, itp, ntim_batch)
+      call batch_average_sq (nCv,    pl%kt, e_kt, itp, ntim_batch)
       
       call batch_average_sq (nCv*ns, sna_tot, e_sna, itp, ntim_batch)
       call batch_average_sq (nCv,    she_tot, e_she, itp, ntim_batch)

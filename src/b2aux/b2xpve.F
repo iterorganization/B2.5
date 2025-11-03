@@ -7,7 +7,7 @@
       use b2us_map
       use b2us_plasma
       implicit none
-      integer nCv, nFc, ns
+      integer, intent (in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

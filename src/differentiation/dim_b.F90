@@ -20,4 +20,3 @@ SUBROUTINE DIM_B(x, xb, y, yb, resb)
   xb = xb + dummyb
   yb = yb - dummyb
 END SUBROUTINE DIM_B
-

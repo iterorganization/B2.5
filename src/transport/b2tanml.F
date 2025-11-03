@@ -12,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -45,7 +45,7 @@
      &  wght(nFc,2)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, diff_r
+      external b2xvsg, diff_r
 *-----------------------------------------------------------------------
 *.computation
 
@@ -67,10 +67,10 @@
 
       else                                                              !srv 27.02.13
 
-*     ..compute differences of po
+*   ..compute differences of po
         call diff(nCv, nFc, nVx, 0, geo, mpg, po, pov, dpo)
 
-*     ..compute the anomalous current
+*   ..compute the anomalous current
         fchanml = 0.0_R8
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
@@ -89,7 +89,7 @@
           endif
         enddo
 
-*     ..fully assign to main ion species if needed
+*   ..fully assign to main ion species if needed
         if (switch%anml_all_ions.eq.0) then
           do is = 0, ns-1
             if (is.eq.ismain) then

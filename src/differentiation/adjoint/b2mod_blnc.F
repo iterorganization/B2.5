@@ -91,9 +91,6 @@ c*** Column headers:
 
       subroutine b2blnc(ns,geo,mpg,st,switch,dtim)
       use b2mod_geo_diff
-      use b2mod_plasma_diff
-      use b2mod_sources_diff
-      use b2mod_indirect
       use b2mod_numerics_namelist_diff
       use b2mod_neutrals_namelist_diff
       use b2mod_boundary_namelist_diff
@@ -105,6 +102,7 @@ c*** Column headers:
       use b2us_geo_diff
       use b2us_plasma_diff
       use b2mod_switches_diff
+      use b2mod_geometry
       use b2mod_dimensions
 c
 c  version : 19.07.2001 18:46
@@ -124,6 +122,7 @@ c
 c
       integer i, j, k, l, m, ic, ii, is, js, ks, ls,
      ,        kks, iCv, ilks, iFc
+      integer, save :: geometryType
       logical first, hlp_lw, hlp_lt
 c<<<
       logical hlp_tt
@@ -175,6 +174,7 @@ c======================================================================
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
+        geometryType = geometryId( mpg, geo )
 #ifdef WG_TODO
         print *,'=== Regions of the grid:'
         l=ny+1
@@ -282,91 +282,99 @@ c<<<
             write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
-           end do
-         end do
-       end if
+          end do
+        end do
+      end if
 c>>>
 
 c*** The plasma flows across the boundaries
 
       ks=0
       do ls=1,nspecies
-        hlpic =0.0_R8
-        hlpit =0.0_R8
-        hlpiw =0.0_R8
+        hlpic=0.0_R8
+        hlpit=0.0_R8
+        hlpiw=0.0_R8
         hlpit_lp(ls)=0.0_R8
         hlpit_rp(ls)=0.0_R8
 c<<<
-        do ic=1,nbc
+        do ic=1,mpg%nbc
           hlp_pls(ic,ls)=0.0_R8
-          if (bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
-     .        bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W') kst_hlp=ic
+          if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .         geometryType).ne.NODIRECTION) kst_hlp=ic
         end do
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1
           do 1100 ic = 1, mpg%nbc
-            if (bcchar(ic).eq.'S') then
+            if (boundaryAssignments(
+     .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .           geometryType).eq.SOUTH) then
               do j = 1, ncbs
                 if(ic.eq.lcbs(j)) then
 c***     core boundary
-                  do i = 1, mpg%bcFcp(ic,2)
-                    ifc = mpg%bcfcp(ic,1)+i-1
+                  do i = 1, mpg%bcFcP(ic,2)
+                    iFc = mpg%bcFcP(ic,1)+i-1
                     hlpic=hlpic+
-     .               st%dv%fna(ifc,1,ions_list(ks))
+     .               st%dv%fna(iFc,1,ions_list(ks))
 c<<<
                     hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .               st%dv%fna(ifc,1,ions_list(ks))
+     .               st%dv%fna(iFc,1,ions_list(ks))
 c>>>
                   end do
                   go to 1100
                 end if
               end do
 c***     wall in PFR
-              do i = 1, mpg%bcFcp(ic,2)
-                ifc = mpg%bcfcp(ic,1)+i-1
+              do i = 1, mpg%bcFcP(ic,2)
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpiw=hlpiw+
-     .           st%dv%fna(ifc,1,ions_list(ks))
+     .           st%dv%fna(iFc,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           st%dv%fna(ifc,1,ions_list(ks))
+     .           st%dv%fna(iFc,1,ions_list(ks))
 c>>>
               end do
-            else if (bcchar(ic).eq.'N') then
+            else if (boundaryAssignments(
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                geometryType).eq.NORTH) then
 c***     outer wall
-              do i = 1, mpg%bcFcp(ic,2)
-                ifc = mpg%bcfcp(ic,1)+i-1
+              do i = 1, mpg%bcFcP(ic,2)
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpiw=hlpiw
-     .           -st%dv%fna(ifc,1,ions_list(ks))
+     .           -st%dv%fna(iFc,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           st%dv%fna(ifc,1,ions_list(ks))
+     .           st%dv%fna(iFc,1,ions_list(ks))
 c>>>
               end do
-            else if (bcchar(ic).eq.'W') then
+            else if (boundaryAssignments(
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                geometryType).eq.WEST) then
 c***     left target
               do i = 1, mpg%bcFcp(ic,2)
-                ifc = mpg%bcfcp(ic,1)+i-1
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpit=hlpit+
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
                 hlpit_lp(ls)=hlpit_lp(ls)+
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
 c>>>
               end do
-            else if (bcchar(ic).eq.'E') then
+            else if (boundaryAssignments(
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                geometryType).eq.EAST) then
 c***     right target
-              do i = 1, mpg%bcFcp(ic,2)
-                ifc = mpg%bcfcp(ic,1)+i-1
+              do i = 1, mpg%bcFcP(ic,2)
+                iFc = mpg%bcFcP(ic,1)+i-1
                 hlpit=hlpit-
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
                 hlpit_rp(ls)=hlpit_rp(ls)-
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           st%dv%fna(ifc,0,ions_list(ks))
+     .           st%dv%fna(iFc,0,ions_list(ks))
 c>>>
               end do
             end if
@@ -404,8 +412,8 @@ c
         hlpia =0.0_R8
         hlpis =0.0_R8
 c<<<
-        hlpit_l =0.0_R8
-        hlpit_r =0.0_R8
+        hlpit_l=0.0_R8
+        hlpit_r=0.0_R8
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1

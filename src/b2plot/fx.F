@@ -14,10 +14,6 @@ c
       real (kind=R8) :: wrk(-1:mpg%nx)
       integer ix,is,iCv,iCn,ixstart,ixend,len_of_digits
 
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
-
       intrinsic min,max,mod,sqrt
       external xertst,len_of_digits
 
@@ -285,10 +281,6 @@ c
       integer i,is,iCv,iCn
       integer len_of_digits
       external len_of_digits
-
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(iFt),',a)'
       allocate(wrk(1:mpg%ftCvP(iFt,2)))

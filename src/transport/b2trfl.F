@@ -1,16 +1,15 @@
 *.specification
 
-      subroutine b2trfl (iCv, mpg, Ainv, zeffne, amti, zetap, gamma,
-     &  cF_lim, cF_limh, cF_limB, cF_limBh)
+      subroutine b2trfl (iCv, switch, mpg, Ainv, zeffne, amti, zetap,
+     &  gamma, cF_lim, cF_limh, cF_limB, cF_limBh)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_constants
       use b2us_map
+      use b2mod_switches
       use b2mod_zhfrtf
      , , only: gtalc, nal
-      use b2mod_b2zhco
-     , , only: zhflcorr, zhflcorrh
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -19,6 +18,7 @@
       real (kind=R8) :: zeffne, zetap, amti(0:nspecies-1),
      &  Ainv(0:2*nspecies-1,0:2*nspecies-1)
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  cF_lim(0:nspecies-1),
@@ -55,8 +55,8 @@
         do i=0, nspecies-1
           t0=abs(sum(Ainv(i,0:nspecies-1)*nal(iCv,0:nspecies-1)*
      &     gtalc(iCv,0:nspecies-1)))
-          t1=zhflcorr*cflim(4)/sqrt(amti(i))
-          t2=zhflcorrh*zhflcorr*cflim(4)/sqrt(amti(i))
+          t1=switch%zhflcorr*cflim(4)/sqrt(amti(i))
+          t2=switch%zhflcorrh*switch%zhflcorr*cflim(4)/sqrt(amti(i))
 
           cF_lim(i)=
      &     1.0_R8/(1.0_R8+(coef*t0/t1)**gamma)**(1.0_R8/gamma)

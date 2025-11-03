@@ -7,7 +7,13 @@ c-----------------------------------------------------------------------
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_geometry
       use b2mod_boundary_namelist
+      use b2us_geo
+      use b2us_map
+#ifdef B25_EIRENE
+      use eirmod_clgin
+#endif
       implicit none
 
 c-----------------------------------------------------------------------
@@ -78,6 +84,7 @@ c***   suffices: il, ol, iu, ou, wl for inner and outer targets and wall
       character*8 hlp_hg(nglb_tmp)
       character*2, allocatable :: hlp_spc(:)
 
+      integer, save :: geometryType
       integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
       real (kind=R8), allocatable :: radim_tmp(:)
 
@@ -120,22 +127,23 @@ c-----------------------------------------------------------------------
 
       contains
 
-      subroutine b2blne(nx,ny,ns,BoRiS)
-      use b2mod_geo
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_indirect
+      subroutine b2blne(mpg,geo,ns,state,state_ext,switch)
+      use b2mod_switches
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
-      use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
+      use b2us_plasma
 
       implicit none
-      integer nx,ny,ns
-      real (kind=R8) :: BoRiS
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2State), intent(in) :: state
+      type(B2StateExt), intent(in) :: state_ext
+      type(switches), intent(in) :: switch
+      integer, intent(in) :: ns
 
 c-----------------------------------------------------------------------
 c*** Global values
@@ -173,13 +181,15 @@ c*** Values by species
       logical ltarg_hlp(ntrgs_tmp)
 c-----------------------------------------------------------------------
 
-      integer i, j, k, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf
+      integer i, j, k, n, ic, is, iCv, iFc
       real (kind=R8) :: hlp_h, hlp_p
-      logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
+      logical lcross_hlp, lbound_hlp, lcore_hlp
+      real (kind=R8) :: intface_s
+      external intface_s
 #ifdef B25_EIRENE
-      integer, save :: l, m, js
+      integer, save :: l, m, js, ks
       real (kind=R8), save :: hlp
+      logical :: is_target
 #endif
 c-----------------------------------------------------------------------
 c
@@ -194,9 +204,9 @@ c
      ,     pwtnu_tmp, pwtio_tmp,
      ,     pwtds_tmp,
      +  ltarg_hlp,
-     +  i, j, k, ic, is, ix, iy,
+     +  i, j, k, ic, is,
      +  hlp_h, hlp_p,
-     +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
+     +  lcross_hlp, lbound_hlp, lcore_hlp
 c=======================================================================
 
 c*** Initialisation
@@ -254,108 +264,66 @@ c*** Belongs to the target j?
   100   continue !}
 c
 c*** Across or along the field?
-        lcross_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N'
-        lminus_hlp = bcchar(ic).eq.'E' .or. bcchar(ic).eq.'N'
+        if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).ne.0) then
+          lcross_hlp =
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.SOUTH .or.
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.NORTH
+        else ! assume a floating structure in SOL or PFR
+          lcross_hlp = .true.
+        end if
         lbound_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
-     .               bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W'
+     .               bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W' .or.
+     .               bcchar(ic).eq.'A'
 c
-        do i = 1, bc_list_size(ic)
-          ix = bc_list_x(i,ic)
-          iy = bc_list_y(i,ic)
-          if (bcchar(ic).eq.'W') then
-            ixr=rightix(bc_list_x(i,ic),bc_list_y(i,ic))
-            iyr=rightiy(bc_list_x(i,ic),bc_list_y(i,ic))
-          else if (bcchar(ic).eq.'E') then
-            ixr=leftix(bc_list_x(i,ic),bc_list_y(i,ic))
-            iyr=leftiy(bc_list_x(i,ic),bc_list_y(i,ic))
-          else if (bcchar(ic).eq.'S') then
-            ixr=topix(bc_list_x(i,ic),bc_list_y(i,ic))
-            iyr=topiy(bc_list_x(i,ic),bc_list_y(i,ic))
-          else if (bcchar(ic).eq.'N') then
-            ixr=bottomix(bc_list_x(i,ic),bc_list_y(i,ic))
-            iyr=bottomiy(bc_list_x(i,ic),bc_list_y(i,ic))
-          endif
-          if (lminus_hlp) then
-            ixf=ix
-            iyf=iy
-          else
-            ixf=ixr
-            iyf= iyr
-          endif
-          if (lcross_hlp) then !{
-            hlp_h=fht(ixf,iyf,1,1)-fhj(ixf,iyf,1,1)+fhi_ext(ixf,iyf,1,1)
-            hlp_p=0.0_R8
-            do is=0,ns-1 !{
-              hlp_h=hlp_h-fhp(ixf,iyf,1,1,is)
-              hlp_p=hlp_p+fhp(ixf,iyf,1,1,is)
-            end do !}
-            do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,1,1,is)*ev*
-     .         (pt_ext(ix,iy,is)*hy1(ixr,iyr)+
-     .          pt_ext(ixr,iyr,is)*hy1(ix,iy))/
-     .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*
-     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
-     .         (ua_ext(ix,iy,is)**2*hy1(ixr,iyr)+
-     .          ua_ext(ixr,iyr,is)**2*hy1(ix,iy))/
-     .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+
-     .          fa_ext(ixf,iyf,1,1,is)*
-     .         (ta_ext(ix,iy,is)*hy1(ixr,iyr)+
-     .          ta_ext(ixr,iyr,is)*hy1(ix,iy))/
-     .         (hy1(ix,iy)+hy1(ixr,iyr))
+        do i = 1, mpg%bcFcP(ic,2)
+          iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+          hlp_h = state%dv%fht(iFc,0)-state%dv%fhj(iFc,0)+
+     .            state_ext%fhi(iFc,0)+
+     .            state%dv%fht(iFc,1)-state%dv%fhj(iFc,1)+
+     .            state_ext%fhi(iFc,1)
+          hlp_p=0.0_R8
+          do is=0,ns-1 !{
+            hlp_p=hlp_p+state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)
+          end do !}
+          do is=0,state_ext%ns-1 !{
+            hlp_p=hlp_p+
+     .       (state_ext%fa(iFc,0,is)+state_ext%fa(iFc,1,is))*ev*
+     .        intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .                  state_ext%pt(1,is))
+            hlp_h=hlp_h+
+     .       (state_ext%fa(iFc,0,is)+state_ext%fa(iFc,1,is))*
+     .       (1.0_R8-switch%BoRiS)*0.5_R8*state_ext%am(is)*mp*
+     .        intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .                  state_ext%ua(1,is))**2
+            hlp_h=hlp_h+
+     .       (state_ext%fa(iFc,0,is)+state_ext%fa(iFc,1,is))*
+     .        intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .                  state_ext%ta(1,is))
 c
-            end do !}
-          else if (lbound_hlp) then !}{
-            hlp_h=fht(ixf,iyf,0,0)-fhj(ixf,iyf,0,0)+fhi_ext(ixf,iyf,0,0)
-            hlp_p=0.0_R8
-            do is=0,ns-1 !{
-              hlp_h=hlp_h-fhp(ixf,iyf,0,0,is)
-              hlp_p=hlp_p+fhp(ixf,iyf,0,0,is)
-            end do !}
-            do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+
-     .          fa_ext(ixf,iyf,0,0,is)*ev*
-     .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
-     .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+
-     .          fa_ext(ixf,iyf,0,0,is)*
-     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
-     .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
-     .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+
-     .          fa_ext(ixf,iyf,0,0,is)*
-     .         (ta_ext(ix,iy,is)*hx(ixr,iyr)+
-     .          ta_ext(ixr,iyr,is)*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-c
-            end do !}
-          end if !}
-          if (lminus_hlp) then !{
-            hlp_h=-hlp_h
-            hlp_p=-hlp_p
-          end if !}
+          end do !}
+          hlp_h=hlp_h*mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+          hlp_p=hlp_p*mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
-c          print *,'b2blne: ic,bcchar,lminus,hlp_h=',ic,' ',bcchar(ic),
-c     ,                                             ' ',lminus_hlp,hlp_h
+c          print *,'b2blne: ic,bcchar,hlp_h=',ic,' ',bcchar(ic),
+c     ,        ' ',hlp_h
 c>>>
 c
 c*** Now add the data to the proper accumulators
           if (lcore_hlp) then !{
-            pwcrh_tmp=pwcrh_tmp+hlp_h
-            pwcrp_tmp=pwcrp_tmp+hlp_p
+            pwcrh_tmp=pwcrh_tmp-hlp_h+hlp_p
+            pwcrp_tmp=pwcrp_tmp-hlp_p
           else !}{
             if (lcross_hlp) then !{
-              pwwlp_tmp=pwwlp_tmp+hlp_h+hlp_p
+              pwwlp_tmp=pwwlp_tmp+hlp_h
             else if (lbound_hlp) then !}{
-              pwtgp_tmp=pwtgp_tmp+hlp_h+hlp_p
+              pwtgp_tmp=pwtgp_tmp+hlp_h
             end if !}
           end if !}
           do j = 1,ntrgf_tmp !{
             if (ltarg_hlp(j)) then !{
-              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h
+              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h-hlp_p
               pwtio_tmp(j)=pwtio_tmp(j)+hlp_p
             end if !}
           end do !}
@@ -375,7 +343,8 @@ c>>>
 #ifdef B25_EIRENE
       do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
-     .     crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
+     .     crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S' .or.
+     .     crcstra(ic).eq.'A') then !{
           l=msns(1,ic)
           m=msns(2,ic)
           hlp=0.0_R8
@@ -385,12 +354,17 @@ c>>>
             if(k.gt.0) hlp=hlp+wldpeb(k,ic)
           end do !}
           k=0
-          if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W') then !{
-            do i=1,nbc !{
-              if(bcchar(i).eq.crcstra(ic) .and.
-     &           bc_list_x(1,i).eq.rc_list_x(1,ic)) k=i
-            end do !}
-          end if !}
+          if (mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))).ne.0) then
+            if(boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
+     &                             geometryType).eq.EAST .or.
+     &         boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
+     &                             geometryType).eq.WEST) then !{
+              do i=1,nbc !{
+                if(bcchar(i).eq.crcstra(ic) .and.
+     &             bcstart(i).eq.rcstart(ic)) k=i
+              end do !}
+            end if !}
+          end if
 c<<<
 c          print *,'b2blne: ic,k= ',ic,k
 c>>>
@@ -401,7 +375,7 @@ c>>>
             end do !}
             if(j.gt.0) then !{
               k=j
-              pwtgp_tmp=pwtgp_tmp+hlp
+              pwtgp_tmp=pwtgp_tmp-hlp
             else !}{
               k=0
               write(*,*) 'b2blne: failed to relate a stratum',ic,
@@ -409,9 +383,9 @@ c>>>
             end if !}
           else !}{
             k=ntrgf_tmp
-            pwwlp_tmp=pwwlp_tmp+hlp
+            pwwlp_tmp=pwwlp_tmp-hlp
           end if !}
-          if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)+hlp
+          if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)-hlp
         end if !}
       end do !}
 #endif
@@ -443,8 +417,27 @@ c*** flux across the targets
         pwtgn_tmp=pwtgn_tmp+wldnek(js,0)+wldnep(js,0)
        end do !}
 c*** flux across the side walls
+       k=ntrgf_tmp
        do js=1,nnlimi !{
         pwwln_tmp=pwwln_tmp+wldnek(js,0)+wldnep(js,0)
+        pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(js,0)
+        pwtds_tmp(k)=pwtds_tmp(k)+wldnep(js,0)
+       end do !}
+c*** flux across other recycling surfaces for vessel mode grids
+c*** we must remove targets and transparent surfaces from that list
+       do is=1,nsts !{
+         is_target = .false.
+         do js=1,ntns !{
+           is_target = is_target.or.is.eq.ltns(js)
+         end do !}
+         if (.not.is_target) then !{
+           ks = is+nnlimi
+           if (iliin(is).gt.0) then !{
+             pwwln_tmp=pwwln_tmp+wldnek(ks,0)+wldnep(ks,0)
+             pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(ks,0)
+             pwtds_tmp(k)=pwtds_tmp(k)+wldnep(ks,0)
+           end if !}
+         end if !}
        end do !}
 c*** flux across the specified zones
        do j=1,ntrgf_tmp !{
@@ -465,18 +458,16 @@ c*** flux across the specified zones
       endif !nnatmi
 #endif
 c
-c*** Energy content
+C*** Energy content
 c
-      do ix=0,nx-1 !{
-        do iy=0,ny-1 !{
-          if(region(ix,iy,0).ne.0) then !{
-            enrte_tmp=enrte_tmp+ne(ix,iy)*te(ix,iy)*vol(ix,iy)
-            enrti_tmp=enrti_tmp+ni(ix,iy,1)*ti(ix,iy)*vol(ix,iy)
-            do is =0,ns_ext-1 !{
-              enrti_tmp = enrti_tmp +
-     .         na_ext(ix,iy,is)*ta_ext(ix,iy,is)*vol(ix,iy)
-            end do !}
-          end if !}
+      do iCv=1,mpg%nCi !{
+        enrte_tmp=enrte_tmp+
+     .   state%dv%ne(iCv)*state%pl%te(iCv)*geo%cvVol(iCv)
+        enrti_tmp=enrti_tmp+
+     .   state%dv%ni(iCv,1)*state%pl%ti(iCv)*geo%cvVol(iCv)
+        do is =0,state_ext%ns-1 !{
+          enrti_tmp = enrti_tmp +
+     .     state_ext%na(iCv,is)*state_ext%ta(iCv,is)*geo%cvVol(iCv)
         end do !}
       end do !}
       enrte_tmp=1.5_R8*enrte_tmp
@@ -484,9 +475,6 @@ c***            kinetic energy of the plasma flow is still neglected!!!
       enrti_tmp=1.5_R8*enrti_tmp
 c
 c*** Totals
-c
-      pwtgp_tmp=-pwtgp_tmp
-      pwwlp_tmp=-pwwlp_tmp
 c
       pwcrt_tmp=pwcrh_tmp+pwcrp_tmp-pwcrn_tmp
       pwwlt_tmp=pwwlp_tmp+pwwln_tmp
@@ -501,8 +489,6 @@ c
       pwttr_tmp=pwtot_tmp/enrtt_tmp
 c
       do k=1,ntrgf_tmp !{
-        pwtpl_tmp(k)=-pwtpl_tmp(k)
-        pwtio_tmp(k)=-pwtio_tmp(k)
         pwttt_tmp(k)=pwtpl_tmp(k)+pwtnu_tmp(k)+pwtio_tmp(k)+pwtds_tmp(k)
       end do !}
 c
@@ -532,10 +518,11 @@ c
       end subroutine b2blne
 c=======================================================================
 c
-      subroutine b2blnei(ny, switch)
+      subroutine b2blnei(mpg, geo, switch)
       use b2mod_switches
       implicit none
-      integer, intent(in) :: ny
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (in) :: geo
       type (switches), intent (in) :: switch
       integer :: i, j, k, l, n, is, nv, ns_tmp
       character hlp_c
@@ -546,6 +533,7 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
+      geometryType = geometryId( mpg, geo, 1 )
       allocate(ltgs(nlim,ntrgs_tmp))
       allocate(limp_tmp(nspecies))
       allocate(radim_tmp(nspecies))
@@ -568,19 +556,20 @@ c*** First, targets in B2
       warn_tmp=.true.
       k=0
       do j=1,nbc !{
-        if(bcchar(j).eq.'W' .or. bcchar(j).eq.'E') then !{
-          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and.
-     &       maxval(bc_list_y(1:bc_list_size(j),j)).ge.ny-1) then !{
-            k=k+1
-            if(k.le.ntrgs_tmp) then !{
-              nsrf_hlp(k)=1
-              indt_hlp(1,k)=j
-              indt_hlp(2,k)=k
-            else !}{
-              if(warn_tmp) write(0,*) '!!! Too many targets (',k,' ) ',
-     ,                'found. Check the value of NTRGS_TMP in b2blne.F'
-              warn_tmp=.false.
-            end if !}
+        if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))).eq.0) cycle
+        if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))),
+     &                         geometryType).eq.EAST .or.
+     &     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))),
+     &                         geometryType).eq.WEST) then !{
+          k=k+1
+          if(k.le.ntrgs_tmp) then !{
+            nsrf_hlp(k)=1
+            indt_hlp(1,k)=j
+            indt_hlp(2,k)=k
+          else !}{
+            if(warn_tmp) write(0,*) '!!! Too many targets (',k,' ) ',
+     ,              'found. Check the value of NTRGS_TMP in b2blne.F'
+            warn_tmp=.false.
           end if !}
         end if !}
       end do !}
@@ -588,8 +577,8 @@ c*** First, targets in B2
 c*** Sort the targets
       do l=1,k !{
         do i=l+1,k !{
-          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i)))
-     >     then !{
+          if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(indt_hlp(1,l),1))).gt.
+     .       mpg%fcReg(mpg%bcFc(mpg%bcFcP(indt_hlp(1,i),1)))) then !{
             j=indt_hlp(1,l)
             indt_hlp(1,l)=indt_hlp(1,i)
             indt_hlp(1,i)=j
@@ -692,7 +681,7 @@ c*** It was a major change of the file format - impossible to continue
         if(nz_tmp.ne.ntrgf_tmp) then !{
           warn_tmp=.true.
           write(*,'(a,i2,3a,i2)')
-     ,     '!!! b2blne: current number of targets ',ntrgf_tmp,
+     ,     '!!! b2blne: current number of surfaces ',ntrgf_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nz_tmp
           filedata(ltrc)=.false.
         end if !}
@@ -746,15 +735,15 @@ c*** New file
         ns_tmp=nspc_tmp
         write(lun,700) lv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp,label
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
-     ,   '(a6,9x,',ng_tmp,'(6x,a8),',n*ns_tmp,'(4x,a8,a2),2x,',
-     ,                          nt_tmp*nz_tmp,'(3x,a11))'
+     ,   '(a6,9x,',ng_tmp,'(6x,a8),3x,',n*ns_tmp,'(2x,a8,a2,2x),',
+     ,                             nt_tmp*nz_tmp,'(1x,a11,2x))'
         write(lun,hlp_frm) '# time',(hlp_hg(i),i=1,ng_tmp),
      ,                  ((hlp_hs(i),hlp_spc(j),i=1,ns_tmp),j=1,n),
      ,            ((hlp_ht(i)//'_'//hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
       end if !}
       n=max(ni_tmp,1)
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3))'
+     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3e3))'
       return
 c=======================================================================
    90 write(*,*) 'b2blne: cannot open file ',trim(f)

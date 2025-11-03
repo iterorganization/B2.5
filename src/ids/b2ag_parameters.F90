@@ -131,8 +131,10 @@ contains
 
     external xertst, xerrab, streql, b2agx0, open_file, cfruin
 
-     call b2agx0 (ninp(0), nCv, nFc, nVx) ! nog issue met deze functie
-
+     nCv = 0
+     nFc = 0
+     nVx = 0
+     call b2agx0 (ninp(0), nCv, nFc, nVx) ! still an issue with this function
 
      ! istyle == -1
      ! means Carre grid input
@@ -205,8 +207,12 @@ contains
 
      ! check that b2ag.dat and geometry file sizes are compatible
      if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then
-       write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
+       write(*,'(a,6i6)') 'b2ag_read_parameters: nCv,nFc,nVx code and data disagree', &
+         &  nCv,nFc,nVx,nCv0,nFc0,nVx0
        call xerrab ( 'Dimensions mismatch !' )
+     else if (nCv.eq.0.or.nFc.eq.0.or.nVx.eq.0) then
+       write(*,'(a,3i6)') 'b2ag_read_parameters: missing dimensions',nCv,nFc,nVx
+       call xerrab ( 'Missing dimensions !' )
      endif
 
      ! fix nCv, in case ghost cells are not provided

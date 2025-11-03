@@ -13,13 +13,15 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2srsm
+     & , only : ncall_b2srsm, diagno_srsm
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -51,24 +53,16 @@
 *.declarations
 
 *   ..local variables
-      integer is
+      integer is, iCv
       integer k
       character chns*3, chk*1                                        !srv 11.09.09 }
-#ifdef WG_TODO
-      integer diagno
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
-#endif
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
 *   ..procedures
       external xertst, ipgeti, b2xvsg
-#ifdef WG_TODO
-*   ..initialisation
-      save diagno
-      data diagno/0/
-#endif
 *-----------------------------------------------------------------------
 *.computation
 
@@ -91,7 +85,7 @@
       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
-      call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
+      call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocities !')
 *   ..obtain input
       if (ncall_b2srsm.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -109,219 +103,217 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       shitmp = sr%shi
 
       if(switch%b2srsm_enable.ne.0) then
+!WG_TODO
         call xerrab ('b2srsm not adapted for WG')
-#ifdef WG_TODO
 c*** calculate the integral sources for all regions:
 c*** before correction (1), after correction (2)
         timefactor = 1.0_R8
 
 *   ..smooth particle and parallel momentum sources
         do is = 0, ns-1
-
-          do ix = -1, nx
-            do iy = -1, ny
-              if (resignore(ix,iy,1).ne.0) then
+          do iCv = 1, mpg%nCv
+!WG_TODO            if (resignore(iCv,1).ne.0) then
 c check particles
-                invtimescale =
-     1           abs(sr%sna(ix,iy,0,is)+sr%sna(ix,iy,1,is)*na(ix,iy,is))
-     2           /(na(ix,iy,is)*vol(ix,iy))
-                hlp = invtimescale*time_factor_required*
-     1           dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-                if (hlp.gt.1.0_R8) then
-                  timescale  = 1.0_R8/invtimescale
-                  timefactor = min(timefactor,1.0_R8/hlp)
-                  if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
-                    write(*,*) 'WARNING: particle sources very strong @'
-                    write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,               timescale,
-     2               dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-                    write(*,'(a,2i4,i3)') 'ix,iy,is = ', ix,iy,is
-                    write(*,'(a,3e10.3)') 'te,ti,ne = ',
-     1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
-                  endif
-                  sr%sna(ix,iy,0,is) = sr%sna(ix,iy,0,is)/hlp
-                  sr%sna(ix,iy,1,is) = sr%sna(ix,iy,1,is)/hlp
-                  if (main_call.and.
-     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
-                    src_ni(region(ix,iy,0),2,b2espcr(is)) =
-     &                src_ni(region(ix,iy,0),2,b2espcr(is)) +
-     &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_ni(0,2,b2espcr(is)) =
-     &                src_ni(0,2,b2espcr(is)) +
-     &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                  endif
+              invtimescale =
+     1         abs(sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na(iCv,is))
+     2         /(na(iCv,is)*geo%cvVol(iCv))
+              hlp = invtimescale*time_factor_required*
+     1         dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
+              if (hlp.gt.1.0_R8) then
+                timescale  = 1.0_R8/invtimescale
+                timefactor = min(timefactor,1.0_R8/hlp)
+                if ((main_call.and.diagno_srsm.ge.1).or.
+     &              diagno_srsm.ge.2) then
+                  write(*,*) 'WARNING: particle sources very strong @'
+                  write(*,'(a,2e10.3)') 'timescale,dt = ',
+     ,             timescale,
+     2             dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
+                  write(*,'(a,2i4,i3)') 'iCv,is = ', iCv,is
+                  write(*,'(a,3e10.3)') 'te,ti,ne = ',
+     1             te(iCv)/ev,ti(iCv)/ev,ne(iCv)
+                endif
+                sr%sna(iCv,0,is) = sr%sna(iCv,0,is)/hlp
+                sr%sna(iCv,1,is) = sr%sna(iCv,1,is)/hlp
+                if (main_call.and.
+     &           mod(ncall_b2srsm,eirene_mod).eq.0) then
+                  src_ni(mpg%cvReg(iCv),2,b2espcr(is)) =
+     &             src_ni(mpg%cvReg(iCv),2,b2espcr(is)) +
+     &             cor_ni(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+                  src_ni(0,2,b2espcr(is)) =
+     &             src_ni(0,2,b2espcr(is)) +
+     &             cor_ni(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
                 endif
               endif
-            enddo
+!WG_TODO            endif
           enddo
-          do ix = -1, nx
-            do iy = -1, ny
-              if (resignore(ix,iy,2).ne.0) then
+          do iCv = 1, mpg%nCv
+!WG_TODO            if (resignore(iCv,2).ne.0) then
 c check parallel momentum
-                invtimescale = abs(sr%smo(ix,iy,0,is) +
-     1           sr%smo(ix,iy,1,is)*ua(ix,iy,is) +
-     &           sr%smo(ix,iy,2,is)*roxa(ix,iy,is) +
-     &           sr%smo(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is))
-     2           /(sqrt(ti(ix,iy)/
-     3           (am(is)*mp))*roxa(ix,iy,is)*vol(ix,iy))
-                hlp = invtimescale*time_factor_required*
-     1           dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
-                if (hlp.gt.1.0_R8) then
-                  timescale  = 1.0_R8/invtimescale
-                  timefactor = min(timefactor,1.0_R8/hlp)
-                  if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
-                    write(*,*)
-     1               'WARNING: parallel momentum sources very strong @'
-                    write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,               timescale,
-     2               dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
-                    write(*,'(a,2i4,i3)') 'ix,iy,is = ', ix,iy,is
-                    write(*,'(a,3e10.3)') 'te,ti,ne = ',
-     1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
-                  endif
-                  sr%smo(ix,iy,0,is) = sr%smo(ix,iy,0,is)/hlp
-                  sr%smo(ix,iy,1,is) = sr%smo(ix,iy,1,is)/hlp
-                  sr%smo(ix,iy,2,is) = sr%smo(ix,iy,2,is)/hlp
-                  sr%smo(ix,iy,3,is) = sr%smo(ix,iy,3,is)/hlp
-                  if (main_call.and.
-     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
-                    src_mo(region(ix,iy,0),2,b2espcr(is)) =
-     &                src_mo(region(ix,iy,0),2,b2espcr(is)) +
-     &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_mo(0,2,b2espcr(is)) =
-     &                src_mo(0,2,b2espcr(is)) +
-     &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_ms(region(ix,iy,0),2) =
-     &                src_ms(region(ix,iy,0),2) +
-     &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_ms(0,2) = src_ms(0,2) +
-     &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                  endif
+              invtimescale = abs(sr%smo(iCv,0,is) +
+     1         sr%smo(iCv,1,is)*ua(iCv,is) +
+     &         sr%smo(iCv,2,is)*roxa(iCv,is) +
+     &         sr%smo(iCv,3,is)*roxa(iCv,is)*ua(iCv,is))
+     2         /(sqrt(ti(iCv)/
+     3         (am(is)*mp))*roxa(iCv,is)*geo%cvVol(iCv))
+              hlp = invtimescale*time_factor_required*
+     1         dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
+              if (hlp.gt.1.0_R8) then
+                timescale  = 1.0_R8/invtimescale
+                timefactor = min(timefactor,1.0_R8/hlp)
+                if ((main_call.and.diagno_srsm.ge.1).or.
+     &              diagno_srsm.ge.2) then
+                  write(*,*)
+     1             'WARNING: parallel momentum sources very strong @'
+                  write(*,'(a,2e10.3)') 'timescale,dt = ',
+     ,             timescale,
+     2             dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
+                  write(*,'(a,2i4,i3)') 'iCv,is = ', iCv,is
+                  write(*,'(a,3e10.3)') 'te,ti,ne = ',
+     1             te(iCv)/ev,ti(iCv)/ev,ne(iCv)
+                endif
+                sr%smo(iCv,0,is) = sr%smo(iCv,0,is)/hlp
+                sr%smo(iCv,1,is) = sr%smo(iCv,1,is)/hlp
+                sr%smo(iCv,2,is) = sr%smo(iCv,2,is)/hlp
+                sr%smo(iCv,3,is) = sr%smo(iCv,3,is)/hlp
+                if (main_call.and.
+     &            mod(ncall_b2srsm,eirene_mod).eq.0) then
+                  src_mo(mpg%cvReg(iCv),2,b2espcr(is)) =
+     &             src_mo(mpg%cvReg(iCv),2,b2espcr(is)) +
+     &             cor_mo(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+                  src_mo(0,2,b2espcr(is)) =
+     &             src_mo(0,2,b2espcr(is)) +
+     &             cor_mo(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+                  src_ms(mpg%cvReg(iCv),2) =
+     &             src_ms(mpg%cvReg(iCv),2) +
+     &             cor_mo(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+                  src_ms(0,2) = src_ms(0,2) +
+     &             cor_mo(iCv,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
                 endif
               endif
-            enddo
+!WG_TODO            endif
           enddo
         enddo
 *   ..smooth electron heat, ion heat and electron particle sources
-        do ix = -1, nx
-          do iy = -1, ny
-            if (resignore(ix,iy,1).ne.0) then
+        do iCv = 1, mpg%nCv
+!WG_TODO          if (resignore(iCv,1).ne.0) then
 c check ion energy
-              invtimescale =
-     1         abs(sr%shi(ix,iy,0) + sr%shi(ix,iy,1)*ti(ix,iy) +
-     &         sr%shi(ix,iy,2)*ni(ix,iy,0) +
-     &         sr%shi(ix,iy,3)*ti(ix,iy)*ni(ix,iy,0))
-     2         /(ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy))
-              hlp = invtimescale*time_factor_required*
-     .         dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
-              if (hlp.gt.1.0_R8) then
-                timescale  = 1.0_R8/invtimescale
-                timefactor = min(timefactor,1.0_R8/hlp)
-                if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
-                  write(*,*) 'WARNING: ion heat sources very strong @'
-                  write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,             timescale,
-     2             dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
-                  write(*,'(a,2i4)') 'ix,iy = ', ix,iy
-                  write(*,'(a,3e10.3)') 'te,ti,ne = ',
-     1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
-                endif
-                sr%shi(ix,iy,0) = sr%shi(ix,iy,0)/hlp
-                sr%shi(ix,iy,1) = sr%shi(ix,iy,1)/hlp
-                sr%shi(ix,iy,2) = sr%shi(ix,iy,2)/hlp
-                sr%shi(ix,iy,3) = sr%shi(ix,iy,3)/hlp
-                if (main_call.and.
-     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
-                  src_ei(region(ix,iy,0),2) =
-     &              src_ei(region(ix,iy,0),2) +
-     &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_ei(0,2) = src_ei(0,2) +
-     &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(region(ix,iy,0),2) =
-     &              src_es(region(ix,iy,0),2) +
-     &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(0,2) = src_es(0,2) +
-     &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                endif
+            invtimescale =
+     1       abs(sr%shi(iCv,0) + sr%shi(iCv,1)*ti(iCv) +
+     &           sr%shi(iCv,2)*ni(iCv,0) +
+     &           sr%shi(iCv,3)*ti(iCv)*ni(iCv,0))
+     2         /(ti(iCv)*ni(iCv,0)*geo%cvVol(iCv))
+            hlp = invtimescale*time_factor_required*
+     .       dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+            if (hlp.gt.1.0_R8) then
+              timescale  = 1.0_R8/invtimescale
+              timefactor = min(timefactor,1.0_R8/hlp)
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
+                write(*,*) 'WARNING: ion heat sources very strong @'
+                write(*,'(a,2e10.3)') 'timescale,dt = ',
+     ,           timescale,
+     2           dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+                write(*,'(a,2i4)') 'iCv = ', iCv
+                write(*,'(a,3e10.3)') 'te,ti,ne = ',
+     1           te(iCv)/ev,ti(iCv)/ev,ne(iCv)
               endif
-c check neutral energy
-              if (switch%tn_style.ne.0) then
-                call xerrab ('b2srsm not developed for tn_style.ne.0')
-              endif
-c check electron energy
-              invtimescale =
-     1         abs(sr%she(ix,iy,0) + sr%she(ix,iy,1)*te(ix,iy) +
-     &         sr%she(ix,iy,2)*ne(ix,iy) +
-     &         sr%she(ix,iy,3)*te(ix,iy)*ne(ix,iy))
-     2         /(te(ix,iy)*ne(ix,iy)*vol(ix,iy))
-              hlp = invtimescale*time_factor_required*
-     .         dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
-              if (hlp.gt.1.0_R8) then
-                timescale  = 1.0_R8/invtimescale
-                timefactor = min(timefactor,1.0_R8/hlp)
-                if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
-                  write(*,*)
-     ,             'WARNING: electron heat sources very strong @'
-                  write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,             timescale,
-     2             dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
-                  write(*,'(a,2i4)') 'ix,iy = ', ix,iy
-                  write(*,'(a,3e10.3)') 'te,ti,ne = ',
-     1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
-                endif
-                sr%she(ix,iy,0) = sr%she(ix,iy,0)/hlp
-                sr%she(ix,iy,1) = sr%she(ix,iy,1)/hlp
-                sr%she(ix,iy,2) = sr%she(ix,iy,2)/hlp
-                sr%she(ix,iy,3) = sr%she(ix,iy,3)/hlp
-                if (main_call.and.
-     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
-                  src_ee(region(ix,iy,0),2) =
-     &              src_ee(region(ix,iy,0),2) +
-     &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_ee(0,2) = src_ee(0,2) +
-     &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(region(ix,iy,0),2) =
-     &              src_es(region(ix,iy,0),2) +
-     &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(0,2) = src_es(0,2) +
-     &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                endif
-              endif
-c check electron particle number
-              invtimescale =
-     1         abs(sr%sne(ix,iy,0) + sr%sne(ix,iy,1)*ne(ix,iy))
-     2         /(ne(ix,iy)*vol(ix,iy))
-              hlp = invtimescale*time_factor_required*
-     1         dtim*time_factor(ix,iy)
-              if (hlp.gt.1.0_R8) then
-                timescale  = 1.0_R8/invtimescale
-                timefactor = min(timefactor,1.0_R8/hlp)
-                if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
-                  write(*,*)
-     ,             'WARNING: electron particle sources very strong @'
-                  write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,             timescale,dtim*time_factor(ix,iy)
-                  write(*,'(a,2i4)') 'ix,iy = ', ix,iy
-                  write(*,'(a,3e10.3)') 'te,ti,ne = ',
-     1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
-                endif
-                sr%sne(ix,iy,0) = sr%sne(ix,iy,0)/hlp
-                sr%sne(ix,iy,1) = sr%sne(ix,iy,1)/hlp
-                if (main_call.and.
-     &                mod(ncall_b2srsm,eirene_mod).eq.0) then
-                  src_ne(region(ix,iy,0),2) =
-     &              src_ne(region(ix,iy,0),2) +
-     &              cor_ne(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_ne(0,2) = src_ne(0,2) +
-     &              cor_ne(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                endif
+              sr%shi(iCv,0) = sr%shi(iCv,0)/hlp
+              sr%shi(iCv,1) = sr%shi(iCv,1)/hlp
+              sr%shi(iCv,2) = sr%shi(iCv,2)/hlp
+              sr%shi(iCv,3) = sr%shi(iCv,3)/hlp
+              if (main_call.and.
+     &         mod(ncall_b2srsm,eirene_mod).eq.0) then
+                src_ei(mpg%cvReg(iCv),2) =
+     &           src_ei(mpg%cvReg(iCv),2) +
+     &           cor_ei(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_ei(0,2) = src_ei(0,2) +
+     &           cor_ei(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_es(mpg%cvReg(iCv),2) =
+     &           src_es(mpg%cvReg(iCv),2) +
+     &           cor_ei(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_es(0,2) = src_es(0,2) +
+     &           cor_ei(iCv)*(1.0_R8/hlp-1.0_R8)
               endif
             endif
-          enddo
+c check neutral energy
+            if (switch%tn_style.ne.0) then
+              call xerrab ('b2srsm not developed for tn_style.ne.0')
+            endif
+c check electron energy
+            invtimescale =
+     1       abs(sr%she(iCv,0) + sr%she(iCv,1)*te(iCv) +
+     &           sr%she(iCv,2)*ne(iCv) +
+     &           sr%she(iCv,3)*te(iCv)*ne(iCv))
+     2         /(te(iCv)*ne(iCv)*geo%cvVol(iCv))
+            hlp = invtimescale*time_factor_required*
+     .       dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
+            if (hlp.gt.1.0_R8) then
+              timescale  = 1.0_R8/invtimescale
+              timefactor = min(timefactor,1.0_R8/hlp)
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
+                write(*,*)
+     ,           'WARNING: electron heat sources very strong @'
+                write(*,'(a,2e10.3)') 'timescale,dt = ',
+     ,           timescale,
+     2           dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
+                write(*,'(a,2i4)') 'iCv = ', iCv
+                write(*,'(a,3e10.3)') 'te,ti,ne = ',
+     1           te(iCv)/ev,ti(iCv)/ev,ne(iCv)
+              endif
+              sr%she(iCv,0) = sr%she(iCv,0)/hlp
+              sr%she(iCv,1) = sr%she(iCv,1)/hlp
+              sr%she(iCv,2) = sr%she(iCv,2)/hlp
+              sr%she(iCv,3) = sr%she(iCv,3)/hlp
+              if (main_call.and.
+     &         mod(ncall_b2srsm,eirene_mod).eq.0) then
+                src_ee(mpg%cvReg(iCv),2) =
+     &           src_ee(mpg%cvReg(iCv),2) +
+     &           cor_ee(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_ee(0,2) = src_ee(0,2) +
+     &           cor_ee(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_es(mpg%cvReg(iCv),2) =
+     &           src_es(mpg%cvReg(iCv),2) +
+     &           cor_ee(iCv)*(1.0_R8/hlp-1.0_R8)
+               src_es(0,2) = src_es(0,2) +
+     &           cor_ee(iCv)*(1.0_R8/hlp-1.0_R8)
+              endif
+            endif
+c check electron particle number
+            invtimescale =
+     1       abs(sr%sne(iCv,0) + sr%sne(iCv,1)*ne(iCv))
+     2         /(ne(iCv)*geo%cvVol(iCv))
+            hlp = invtimescale*time_factor_required*
+     1       dtim*time_factor(iCv)
+            if (hlp.gt.1.0_R8) then
+              timescale  = 1.0_R8/invtimescale
+              timefactor = min(timefactor,1.0_R8/hlp)
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
+                write(*,*)
+     ,           'WARNING: electron particle sources very strong @'
+                write(*,'(a,2e10.3)') 'timescale,dt = ',
+     ,           timescale,dtim*time_factor(iCv)
+                write(*,'(a,2i4)') 'iCv = ', iCv
+                write(*,'(a,3e10.3)') 'te,ti,ne = ',
+     1           te(iCv)/ev,ti(iCv)/ev,ne(iCv)
+              endif
+              sr%sne(iCv,0) = sr%sne(iCv,0)/hlp
+              sr%sne(iCv,1) = sr%sne(iCv,1)/hlp
+              if (main_call.and.
+     &          mod(ncall_b2srsm,eirene_mod).eq.0) then
+                src_ne(mpg%cvReg(iCv),2) =
+     &           src_ne(mpg%cvReg(iCv),2) +
+     &           cor_ne(iCv)*(1.0_R8/hlp-1.0_R8)
+                src_ne(0,2) = src_ne(0,2) +
+     &           cor_ne(iCv)*(1.0_R8/hlp-1.0_R8)
+              endif
+            endif
+!WG_TODO          endif
         enddo
-#endif
       endif
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2srsm_sna0to1 = sr%sna-snatmp
@@ -329,33 +321,32 @@ cdjm Store the total change in linearised sources for balance
         b2srsm_she0to3 = sr%she-shetmp
         b2srsm_shi0to3 = sr%shi-shitmp
       endif
+#endif
 
-#ifdef WG_TODO
-      if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {
+      if (switch%b2npmo_iout.eq.1) then                                  !srv 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-!         call my_out(70,nCv,sr%smo(:,:,0,is)+                               !srv 07.10.09
-!     &        sr%smo(:,:,1,is)*ua(:,:,is)+
-!     &        sr%smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
-!     &        sr%smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-!     &        'b2srsm_smosm'//chns)
+          call my_out_us(70,nCv,0,sr%smo(:,0,is)+                        !srv 07.10.09
+     &     sr%smo(:,1,is)*ua(:,is)+
+     &     sr%smo(:,2,is)*na(:,is)*mp*am(is)+
+     &     sr%smo(:,3,is)*ua(:,is)*na(:,is)*mp*am(is),
+     &    'b2srsm_smosm'//chns)
         enddo
       endif
       if (switch%b2npco_iout.eq.1) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-!        call my_out(70,nCv,sr%sna(:,:,0,is)+                       !srv 07.10.09
-!     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
+          call my_out_us(70,nCv,0,sr%sna(:,0,is)+                        !srv 07.10.09
+     &             sr%sna(:,1,is)*na(:,is),'b2srsm_snasm'//chns)
         enddo
       endif
-      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1) then
-!        call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
-!     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
-!        call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+
-!     &   sr%shi(:,:,2)*ni(:,:,0) +
-!     &   sr%shi(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
+      if (switch%b2npht_iout.eq.1) then
+        call my_out_us(70,nCv,0,sr%she(:,0)+sr%she(:,1)*te+              !srv 07.10.09
+     &   sr%she(:,2)*ne + sr%she(:,3)*te*ne,'b2srsm_shesm')
+        call my_out_us(70,nCv,0,sr%shi(:,0)+sr%shi(:,1)*ti+
+     &   sr%shi(:,2)*ni(:,0) +
+     &   sr%shi(:,3)*ti*ni(:,0),'b2srsm_shism')
       endif
-#endif
 
       if (switch%b2srsm_iout.eq.1) then
         do is = 0, ns-1
@@ -388,5 +379,16 @@ cdjm Store the total change in linearised sources for balance
 
 *-----------------------------------------------------------------------
 *.end b2srsm
+
+      contains
+
+      function roxa(iCv, is)
+      implicit none
+      integer, intent(in) :: iCv, is
+      real (kind=R8) :: roxa
+
+      roxa = am(is)*mp*na(iCv,is)
+      return
+      end function roxa
 
       end subroutine b2srsm

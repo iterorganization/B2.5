@@ -26,6 +26,7 @@ else
 GGD_VERSION ?= '0.0.0'
 endif
 
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:

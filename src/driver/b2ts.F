@@ -4,7 +4,6 @@
       program b2ts
       use b2mod_types
       use b2mod_version
-      use b2mod_work
       use b2mod_xerset
       use b2us_map
       use b2us_geo
@@ -158,16 +157,6 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
      &  'faulty input nCv, nFc, ns from b2fplasmf file')
 *   ..read plasma state
       call read_b2fplasma(ninp(4), nCv, nFc, ns, state)
-#ifdef WG_TODO
-      write(*,*) crx(5*nx/8-2,0,0:3)
-      write(*,*) cry(5*nx/8-2,0,0:3)
-      write(*,*) crx(5*nx/8-1,0,0:3)
-      write(*,*) cry(5*nx/8-1,0,0:3)
-      write(*,*) crx(5*nx/8,0,0:3)
-      write(*,*) cry(5*nx/8,0,0:3)
-      write(*,*) crx(5*nx/8+1,0,0:3)
-      write(*,*) cry(5*nx/8+1,0,0:3)
-#endif
 *   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

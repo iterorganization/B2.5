@@ -33,8 +33,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -44,6 +44,7 @@ SED =
 LINK_MOD =
 
 FC = lf95
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g --trace --trap --chk asu
@@ -77,6 +78,7 @@ ifdef USE_EIRENE
 endif
 
 LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

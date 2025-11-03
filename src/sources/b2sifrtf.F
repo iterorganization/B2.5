@@ -12,8 +12,6 @@
       use b2mod_b2cmpt
       use b2mod_zhfrtf
      & , only: b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
-      use b2mod_b2zhco
-     & , only: zhd_corr, zhd_corrT                                      !som 05.03.21
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -24,9 +22,11 @@
       use b2mod_ad
      & , only : ncall_b2sifrtf
       use b2mod_subsys
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jun2019
      & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -96,7 +96,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -193,7 +193,7 @@
         do iCv = 1, mpg%nCi
           t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
           call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &      smbfrial(iCv,0),smbfrial(iCv,1))
+     &      smbfrial(iCv,0:1))
         enddo
       else
         smbfrial_test = 0.0_R8
@@ -204,7 +204,7 @@
           do iCv = 1, mpg%nCi
             t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
             call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &        smbfrial_test(iCv,0),smbfrial_test(iCv,1))
+     &        smbfrial_test(iCv,0:1))
           enddo
         endif
 *     ..standard friction force calculation
@@ -283,7 +283,7 @@
      &    switch%Zhdanov_tf_fr.eq.1) then                               !som 01.07.2021
 *     ..actual use of the Zhdanov closure
         do iCv = 1, mpg%nCi
-          call b2mod_zhfrtf_tf(iCv,isb,na(iCv,isb),
+          call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
      &      smbtfial(iCv,0),smbtfial_nofl(iCv,0))
         enddo
       else
@@ -294,7 +294,7 @@
      &      switch%Zhdanov_tf_fr.eq.0)) then                            !som 01.07.2021
 *       ..test run of the Zhdanov closure
           do iCv = 1, mpg%nCi
-            call b2mod_zhfrtf_tf(iCv,isb,na(iCv,isb),
+            call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
      &        smbtfial_test(iCv,0),smbtfial_test_nofl(iCv,0))
           enddo
         endif
@@ -339,7 +339,7 @@ c        .. apply flux limit
               jabmax = qe*KabVp(iCv)*sqrt(ti(iCv)/mp)*
      &          (na(iCv,isb)+na(iCv,is))
               t0 = abs(calfab*gti(iCv))/(cflim(4)*jabmax)
-              fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
             else
               fllim_al_ab = 1.0_R8
             endif
@@ -363,8 +363,9 @@ c        .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jun2019
-        do iCv=1,nCv
+        do iCv = 1, nCv
           b2sifr_smofria0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
      &                                      smbfria(iCv,0:3)
           b2sifr_smofrea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
@@ -375,6 +376,7 @@ c        .. apply flux limit
      &                                      smbtfea(iCv,0:3)
         enddo
       endif
+#endif
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then               !srv 05.07.17
        write (chns,'(i3.3)') isb
@@ -445,7 +447,6 @@ c        .. apply flux limit
 
         call my_out_us(70,nCv,0,ua(:,isb),'b2sifrtf_ua'//chns)
       endif
-
 
 * ..return
       ncall_b2sifrtf = ncall_b2sifrtf+1

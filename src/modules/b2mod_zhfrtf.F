@@ -5,15 +5,15 @@
       use b2mod_b2mrel
       use b2mod_subsys
       implicit none
-      integer, allocatable ::
+      integer, allocatable, save ::
      &  is_i(:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  z2n_xy(:,:), nal(:,:), Ia(:,:), av_ualpha(:,:),
      &  gt_Ac(:,:), gtalc(:,:), avm_u(:), rho_A_rel(:,:),
-     &  gavm_uc(:), Z_to_m1(:,:)
-      real (kind=R8), allocatable ::
+     &  gavm_uc(:), Z_to_m1_ast(:,:)
+      real (kind=R8), allocatable, save ::
      &  w_out(:,:), hTdp_out(:,:), hwdp_out(:,:),
-     &  rTdpgamma_out(:,:), rwdpgamma_out(:,:)
+     &  rTdpgamma_out(:,:), rwdpgamma_out(:,:), piu_out(:,:)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -64,7 +64,7 @@
       allocate(gt_Ac(nCv,0:ns-1))
       allocate(rho_A_rel(nCv,0:ns-1))
       allocate(gavm_uc(nCv))
-      allocate(Z_to_m1(nCv,0:nspecies-1))
+      allocate(Z_to_m1_ast(nCv,0:nspecies-1))
 
       return
       end subroutine alloc_b2mod_zhfrtf
@@ -82,7 +82,7 @@
       deallocate(gt_Ac)
       deallocate(rho_A_rel)
       deallocate(gavm_uc)
-      deallocate(Z_to_m1)
+      deallocate(Z_to_m1_ast)
       return
       end subroutine dealloc_b2mod_zhfrtf
 
@@ -96,6 +96,7 @@
       allocate(hwdp_out(nCv,0:ns-1))
       allocate(rTdpgamma_out(nCv,0:ns-1))
       allocate(rwdpgamma_out(nCv,0:ns-1))
+      allocate(piu_out(nCv,0:ns-1))
 
       return
       end subroutine alloc_b2mod_zhfrtf_df
@@ -108,6 +109,7 @@
       deallocate(hwdp_out)
       deallocate(rTdpgamma_out)
       deallocate(rwdpgamma_out)
+      deallocate(piu_out)
       return
       end subroutine dealloc_b2mod_zhfrtf_df
 
@@ -118,7 +120,7 @@
       real (kind=R8) :: na(nCv,0:ns-1),
      &  ua(nCv,0:ns-1)
 *   ..local variables
-      integer :: iCv, inucl, iz
+      integer :: inucl, iz
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -156,15 +158,15 @@
 *   ..Ia ratio and Ia weighted average velocity of the one type of ions
       Ia = 0.0_R8
       av_ualpha = 0.0_R8
-      Z_to_m1 = 0.0_R8
+      Z_to_m1_ast = 0.0_R8
       do inucl = 0, nspecies-1
         do iz= 1, znnucl_int(inucl)
           Ia(:,nucl2s(inucl,iz)) =
      &      iz**2*na(:,nucl2s(inucl,iz))/z2n_xy(:,inucl)
           av_ualpha(:,inucl) = av_ualpha(:,inucl) +
      &      Ia(:,nucl2s(inucl,iz))*ua(:,nucl2s(inucl,iz))
-          Z_to_m1(:,inucl)=Z_to_m1(:,inucl) +
-     &      Ia(:,nucl2s(inucl,iz))/iz
+          Z_to_m1_ast(:,inucl) = Z_to_m1_ast(:,inucl) +
+     &      na(:,nucl2s(inucl,iz))/(iz*nal(:,inucl))
         enddo
       enddo
 
@@ -220,11 +222,12 @@
       end subroutine b2mod_zhfrtf_avm_u
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, geo, mpg, na, ua,
-     &  ti)
+      subroutine b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  na, ua, ti)
       use b2mod_constants
       use b2us_geo
       use b2us_map
+      use b2mod_switches
       implicit none
 
 *.declarations
@@ -232,12 +235,13 @@
       integer nCv, nFc, nVx, ns
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv)
 
 *   ..local variables
       integer is, iz, inucl
-      real (kind=R8) :: rho_A(nCv,0:ns-1), rho(nCv), w_A(nCv,0:ns-1),
+      real (kind=R8) :: rho(nCv), w_A(nCv,0:ns-1),
      &   t_A(nCv,0:ns-1), wrkv(nVx)
 
 *-----------------------------------------------------------------------
@@ -277,8 +281,8 @@
 *   ..temperature of each ion charge state
       do is = 0, ns-1
         w_A(:,is) = ua(:,is) - avm_u
-        t_A(:,is) = ti +
-     &    zhd_corr*zhd_corrT*(am(is)*mp*w_A(:,is)**2)/3.0_R8
+        t_A(:,is) = ti + switch%zhd_corr*switch%zhd_corrT*
+     &    (am(is)*mp*w_A(:,is)**2)/3.0_R8
       end do
 
 *   ..temperature gradient of each ion charge state  in the cell center
@@ -308,10 +312,11 @@
       end subroutine b2mod_zhfrtf_tgta
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p2,smfr_p1)
+      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p)
       implicit none
       integer :: iCv, is, inucl
-      real (kind=R8) :: coef, smfr_p1, smfr_p2
+      real (kind=R8) :: coef
+      real (kind=R8), DIMENSION(0:1) :: smfr_p
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -322,8 +327,8 @@
 *  3. description
 *
 *     This routine computes:
-*     -smfr_p1: smbfrial(iCv,1) part of the friction force
-*     -smfr_p2: smbfrial(iCv,0) part of the friction force
+*     -smfr_p(0): smbfrial(iCv,0) part of the friction force
+*     -smfr_p(1): smbfrial(iCv,1) part of the friction force
 *
 *-----------------------------------------------------------------------
 *  ..local variabless
@@ -335,7 +340,7 @@
         temp=temp+z2n_xy(iCv,inucl)*
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)
       enddo
-      smfr_p1=-coef*temp
+      smfr_p(1)=-coef*temp
 
 *   ..the second part of the friction force
       temp=0
@@ -344,15 +349,15 @@
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)*
      &   av_ualpha(iCv,inucl)
       enddo
-      smfr_p2=coef*temp
+      smfr_p(0)=coef*temp
 
       return
       end subroutine b2mod_zhfrtf_fr
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tf(iCv,is,nais,smtf,smtf_nofl)
+      subroutine b2mod_zhfrtf_tf(iCv,is,zhcscorr,nais,smtf,smtf_nofl)
       implicit none
-      integer :: iCv, is
+      integer :: iCv, is, zhcscorr
       real (kind=R8) :: smtf, smtf_nofl,nais
 *-----------------------------------------------------------------------
 *.documentation

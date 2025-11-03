@@ -54,6 +54,7 @@ module b2mod_cellhelper
     integer, parameter :: VX_UNDEFINED = -1
 
     integer, parameter :: B2_GRID_UNDEFINED = -2
+    integer, parameter :: US_GRID_UNDEFINED = 0
 
     !! Circling around vertices, following connectivity in the B2 grid
     integer, parameter :: CLOCKWISE = 1

@@ -4,6 +4,7 @@
       subroutine ratadp (nz, rtt, nt, rtn, nn, 
      1  rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       use b2mod_subsys
       implicit none
@@ -166,34 +167,7 @@
       parameter (nzm=99, cm3=1.0e-6_R8, arbn=1.0e18_R8)
 *     cm3 is one cm**3, expressed in m**3.
 *     arbn is an arbitrary density, expressed in 1/m**3.
-*   ..common blocks for adpak
-      integer nucz, nspc, nvalnc(100)
-      real (kind=R8) ::
-     *  apn(100,10), aqn(100,10), sigma(10,10), qn(100,10),
-     &  en(100,10), ein(100,5), enm(100,5,10),
-     &  fnm(100,5,10), fnn(100), enn(100)
-      common /adsdat/ nucz, nspc, apn, aqn, nvalnc, sigma, qn,
-     &  en, ein, enm, fnm, fnn, enn
-      real (kind=R8) ::
-     *  rclion(100), rrarec(100), rdirec(100), cizlos(100),
-     &  radrrc(100), raddrc(100), radclx(100), radbrm(100)
-      common /adelec/ rclion, rrarec, rdirec, cizlos,
-     &  radrrc, raddrc, radclx, radbrm
-      real (kind=R8) ::
-     *  rcxrec(100), radbcx(100)
-      common /adneut/ rcxrec, radbcx
-      integer laden, ladtip, ltipok, leci, leciok
-      common /adparm/ laden, ladtip, ltipok, leci, leciok
-      integer ldrmlt
-      real (kind=R8) ::
-     *  cdnn(100), cdnm(100),
-     &  yhnna, yhnnb, yhnnc, yhnma, yhnmb, yhnmc
-      common /addiel/ cdnn, cdnm,
-     &  yhnna, yhnnb, yhnnc, yhnma, yhnmb, yhnmc, ldrmlt
-      real (kind=R8) ::
-     *  cefrac(100), ceavgz, cerad
-      common /adceq/ cefrac, ceavgz, cerad
-*   ..further interface to adpak
+*   ..interface to adpak
       integer ncxopt, ncxerr, ivunit
       real (kind=R8) ::
      *   anneut(0:0), vneut(0:0)

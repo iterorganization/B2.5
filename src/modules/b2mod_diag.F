@@ -1,7 +1,6 @@
       module b2mod_diag
       use b2mod_types
       use b2mod_elements
-      use b2mod_residuals
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
@@ -134,13 +133,13 @@ c
       allocate(fluids_list(0:nsd-1))
       allocate(nfluids(1:nspecies))
       allocate(
-     ,     src_ee(0:nregionv,3)   , src_ei(0:nregionv,3),
-     ,     src_es(0:nregionv,3)   , src_ms(0:nregionv,3),
+     ,     src_ee(0:nregionv,3), src_ei(0:nregionv,3),
+     ,     src_es(0:nregionv,3), src_ms(0:nregionv,3),
      ,     src_ni(0:nregionv,3,nspecies),
      ,     src_mo(0:nregionv,3,nspecies),
      ,     src_ne(0:nregionv,3))
       allocate(
-     ,     cor_ee(nCv)     , cor_ei(nCv),
+     ,     cor_ee(nCv), cor_ei(nCv),
      ,     cor_ni(nCv,nspecies),
      ,     cor_mo(nCv,nspecies),
      ,     cor_ne(nCv))

@@ -2,14 +2,12 @@
       subroutine init_page(title,xlod,xhid,ylod,yhid,linlog,
      1 aspect,colorbar,physical)
       use b2mod_types
+      use b2mod_b2plot
+     , , only : linefmt
       use b2mod_b2plot_debug
       use b2mod_graphics
       use b2mod_wall
       implicit none
-
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       character*(*) title
       character*20 fmtx,fmty

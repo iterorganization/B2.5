@@ -91,7 +91,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2uxus                           !srv 02.01.07
+      external b2xvsg, b2uxus                                           !srv 02.01.07
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -115,12 +115,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif 
         endif 
       endif
+
       iCv1 = 1 !csc needed for correct initialization in adjoint AD
       iCv2 = 1
 *   ..subprogram start-up calls
       call subini ('b2usht')
-*   ..test nCv, nFc, ns
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx, ns
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     .  'faulty argument nCv, nFc, nVx')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
@@ -251,7 +253,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')     
@@ -268,7 +269,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt_pre')
       endif
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -302,11 +303,11 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
@@ -314,7 +315,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -325,7 +326,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -340,7 +341,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -351,7 +352,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -365,7 +366,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -424,7 +425,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')     
@@ -443,7 +443,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_coney')
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te_pre')
       endif 
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -475,18 +475,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveee(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -497,7 +497,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -511,7 +511,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -522,7 +522,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -536,7 +536,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -595,7 +595,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix') 
@@ -613,7 +612,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti_pre')
       endif
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -645,18 +644,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveei(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -667,7 +666,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -681,7 +680,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -692,7 +691,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -706,7 +705,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -806,18 +805,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveen(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -828,7 +827,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -842,7 +841,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -853,7 +852,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -867,7 +866,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -957,18 +956,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solvekt(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -979,7 +978,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -993,7 +992,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -1004,7 +1003,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -1018,7 +1017,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
        do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -1029,10 +1028,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
-! $AD II-LOOP
-       do iCv = 1, nCv
-        corkt(iCv) = corkt(iCv)
-       enddo
       endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
@@ -1101,18 +1096,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solvezt(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -1123,7 +1118,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
@@ -1137,7 +1132,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -1148,7 +1143,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
@@ -1162,7 +1157,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 ! $AD II-LOOP
        do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -1173,10 +1168,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
-! $AD II-LOOP
-       do iCv = 1, nCv
-        corzt(iCv) = corzt(iCv)
-       enddo
       endif !solve_keps - enstrophy
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then

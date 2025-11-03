@@ -4,5 +4,3 @@
       integer, save :: b2plot_debug
 
       end module b2mod_b2plot_debug
-
-

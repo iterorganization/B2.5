@@ -34,7 +34,6 @@
       contains
 
       subroutine running_average (nCv, ns, pl, srw, avg)
-      use b2mod_plasma
       implicit none
 c input
       integer, intent(in) :: nCv, ns

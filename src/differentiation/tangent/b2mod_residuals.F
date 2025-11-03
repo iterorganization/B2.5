@@ -56,6 +56,7 @@
       subroutine dealloc_b2mod_residuals
       implicit none
 
+      if (.not.allocated(resco)) return
       deallocate(resco)
       deallocate(reshe)
       deallocate(reshi)

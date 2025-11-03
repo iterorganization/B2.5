@@ -23,12 +23,13 @@
       call cfwure (nput, nCv*ns,   st % pl % na, 'na')
       call cfwure (nput, nCv,      st % dv % ne, 'ne')
       call cfwure (nput, nCv*ns,   st % pl % ua, 'ua')
-      call cfwure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfwure (nput, nFc*2*ns, st % dv % uadia, 'uadia')
       call cfwure (nput, nCv,      st % pl % te, 'te')
       call cfwure (nput, nCv,      st % pl % ti, 'ti')
       call cfwure (nput, nCv,      st % pl % tn, 'tn')
       call cfwure (nput, nCv,      st % pl % po, 'po')
       call cfwure (nput, nCv,      st % pl % kt, 'kt')
+      call cfwure (nput, nCv,      st % pl % zt, 'zt')
 
 *   ..save fluxes
       call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
@@ -41,6 +42,7 @@
       call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
       call cfwure (nput, nFc*2*ns, st % dv % fhm, 'fhm')
       call cfwure (nput, nFc*2,    st % dv % fkt, 'fkt')
+      call cfwure (nput, nFc*2,    st % dv % fzt, 'fzt')
 
 *   ..save time
       time(1)=tim
@@ -74,6 +76,7 @@
       call cfwure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
       call cfwure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
       call cfwure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nput, nFc*2,    st % dv % fchviskt, 'fchviskt')
       call cfwure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
       call cfwure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
       call cfwure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
@@ -88,4 +91,3 @@
       return
 
       end subroutine write_b2fstate_diff
-

@@ -39,7 +39,7 @@
      *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, diff, intface
+      external b2xvsg, diff, intface
 *   ..initialisation
 
 *-----------------------------------------------------------------------

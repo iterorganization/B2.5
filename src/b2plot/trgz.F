@@ -13,10 +13,6 @@ c
      *   lmin,lmax,xmin,xmax
       integer i
 
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
-
       intrinsic min,max,mod
       external xertst
 c      if(nidim .ne. 1) call line(1)

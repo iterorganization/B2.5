@@ -10,6 +10,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlh0, b2tlh0_cutlo
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

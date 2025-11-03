@@ -11,6 +11,7 @@
       use b2mod_driver
       use b2us_geo
       use b2us_map
+      use b2us_data
       use b2us_plasma
       use b2us_prep
       use b2us_io
@@ -69,6 +70,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
@@ -80,7 +82,9 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -124,19 +128,12 @@
 
 *   ..common blocks
 
-*   ..main data structures
-      type(mapping), save    :: mpg
-      type(geometry), save   :: geo
-      type(B2State), save    :: state
-      type(B2StateExt), save :: state_ext
-      type(B2Average), save  :: state_avg
-      type(switches), save   :: switch
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
-      integer ninp(0:6), nout(0:9), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:11), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
-      integer ninp(0:6), nout(0:8), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -152,9 +149,9 @@
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68,69/
+      data nout/60,61,62,63,64,65,66,67,68,69,70,71/
 #else
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69,70/
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -252,12 +249,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call createB2State (nCv, nFc, ns, state)
       call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
 *   ..call driver routines
-      call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg,
-     &  state, state_ext, state_avg)
-      call b2mndr_1 (nout, ns, switch, geo, mpg,
-     &  state, state_ext, state_avg, 0)
-      call b2mndr_2 (nout, ns, switch, geo, mpg,
-     &  state, state_ext, state_avg)
+      call b2mndr_0 (ninp, nout, ns, ns0)
+      call b2mndr_1 (nout, ns, 0)
+      call b2mndr_2 (nout, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)
@@ -268,15 +262,13 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 *   ..write data for optimization
-#ifdef WG_TODO
-      call write_results(nx, ny)
-#endif
+      call write_results(nCv)
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(9),'tran','new','unformatted')
+      call cfopen (nout(11),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(9))
-      close (nout(9))
+      call write_b2mod_ppout(nout(11))
+      close (nout(11))
 #endif
 *   ..close files
       do io=0,size(ninp)-1
@@ -313,4 +305,3 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *.end b2mn_opt
 
       end program b2mn_opt
-

@@ -1,15 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trfr(nnucl, mum, rmu,
+      subroutine b2trfr(nnucl, switch, mum, rmu,
      &  z2n, c_hwA, c_rwA, c_R_wB, c_R_wA, c_R_w)
       use b2mod_types
       use b2mod_subsys
-      use b2mod_b2zhco
-     , , only: zhcscorr
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nnucl
+      type (switches), intent (in) :: switch
       real (kind=R8) :: 
      &  z2n(0:nnucl-1),
      &  mum(0:nnucl-1,0:nnucl-1), rmu(0:nnucl-1,0:nnucl-1)
@@ -78,7 +78,7 @@
 *   ..apply charge state correction 
       c_R_w=c_R_wA
       do i = 0, nnucl-1
-        if (zhcscorr.eq.1) then
+        if (switch%zhcscorr.eq.1) then
           temp=0
           do k = 0, nnucl-1
             temp=temp+(rmu(i,k)/rmu(i,i))*(z2n(k)/z2n(i))*

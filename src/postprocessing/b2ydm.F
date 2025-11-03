@@ -130,4 +130,5 @@
      .    +yData(dataIndex)
       enddo
 
-      end subroutine
+      return
+      end subroutine interp

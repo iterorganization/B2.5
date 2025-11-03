@@ -21,6 +21,7 @@ c 2002-09-11: logic revised
       use b2mod_sputter
       use b2mod_tallies
       use b2mod_elements
+      use b2mod_geometry
       use b2mod_constants
       use b2mod_b2plot_xy
       use b2mod_b2plot_ank
@@ -34,7 +35,6 @@ c 2002-09-11: logic revised
       use b2mod_neoclassical
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_ranges
       use b2us_plasma
       use b2us_data
@@ -73,6 +73,8 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_chord_shift
+      use helper
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -81,9 +83,6 @@ c 2002-09-11: logic revised
 c
 c  version : 27.07.96 20:37
 c
-      logical ratio
-      common /t_ratio/ ratio
-
       real (kind=R8) ::
      1   r_ref, z_ref, s_ref(nomp), profile(nomp),
 #ifdef WG_TODO
@@ -118,16 +117,16 @@ c
      *   vn_neo(mpg%nCv,0:nsd_local),
      *   vw_neo(mpg%nCv,0:nsd_local)
       real (kind=R8), allocatable ::
-     *   pr(:), pz(:), ro(:,:), up(:,:), vv(:,:), ww(:,:),
+     *   pr(:), pz(:), ro(:,:), ro_ch(:), up(:,:), vv(:,:), ww(:,:),
      *   fnax(:,:), fnay(:,:), fmox(:,:), fmoy(:,:),
      *   fhmx(:,:), fhmy(:,:), fhpx(:,:), fhpy(:,:),
-     *   flux_density(:,:,:), cv_flux(:,:,:),
      *   cvsa_cl_x(:,:), cvsa_cl_y(:,:),
      *   fllim0fna_x(:,:), fllim0fna_y(:,:),
      *   fllim0fhi_x(:,:), fllim0fhi_y(:,:),
      *   energy_balance(:), energy_balance2(:), particle_balance(:,:),
      *   energy_balance_old(:), wall_tmp(:,:), trg_tmp(:,:),
-     *   k1(:), nu1(:), tau(:), flf(:,:), flv(:,:), wrkf2(:,:),
+     *   k1(:), nu1(:), tau(:), flf(:,:), flv(:,:), naf(:,:),
+     *   wrkf2(:,:), wrkf2s(:,:,:), wrkc2(:,:), wrkc2s(:,:,:),
      *   hce(:,:), alf(:,:), sig(:,:), gte(:), gti(:),
      *   ehxp(:), smbch(:,:), smbtf(:,:), smbvh(:,:), smbvv(:,:)
       real (kind=R8), allocatable ::
@@ -151,7 +150,7 @@ c
      *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   boundary_namelist, neutrals_namelist,
-     *   sput_frac_flag, use_eirene
+     *   sput_frac_flag, use_eirene, geometryType
 
 #ifndef NO_CDF
       real (kind=R8) ::
@@ -175,10 +174,6 @@ c
       character*256 description
       character*24 hlp_frm
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
-c
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done, classical_style
       logical open_file, streql, isaletter
@@ -204,14 +199,14 @@ c
 #endif
 c
       real (kind=R8) ::
-     * dummy,rval,time,minpsi,maxpsi,sumomp,sumimp
+     * dummy,rval,time,minpsi,maxpsi,sumomp,sumimp,suml(2),sumr(2)
 #ifdef WG_TODO
-      integer icell,idir,isign,ixn,iyn,ixf,iyf
+      integer icell,idir,isign,ixn,iy,iyn,ixf,iyf
       real (kind=R8) ::
-     * hh, hhn, phi_app, suml(2), sumr(2)
+     * hh, hhn, phi_app
 #endif
       integer i,j,il,imi,
-     1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
+     1 is1,ival,ix1,ix2,iy1,iy2,izend,izstrt,
      2 ikind,nz,isel,
      3 i1,ibnd
       data sput_src/1/, ismain/1/, sput_frc/0.0_R8/,
@@ -337,8 +332,6 @@ c
       allocate(fhmy(mpg%nCv,0:nsd_local-1))
       allocate(fhpx(mpg%nCv,0:nsd_local-1))
       allocate(fhpy(mpg%nCv,0:nsd_local-1))
-      allocate(flux_density(mpg%nFc,0:1,0:nsd_local-1))
-      allocate(cv_flux(mpg%nCv,0:1,0:nsd_local-1))
       allocate(ehxp(mpg%nCv))
       allocate(gte(mpg%nCv))
       allocate(gti(mpg%nCv))
@@ -371,12 +364,17 @@ c
       allocate(k1(mpg%nCv))
       allocate(nu1(mpg%nCv))
       allocate(tau(mpg%nCv))
+      allocate(ro_ch(mpg%nCv))
+      allocate(naf(mpg%nFc,0:nsd_local-1))
       allocate(hce(mpg%nCv,0:1))
       allocate(sig(mpg%nCv,0:1))
       allocate(alf(mpg%nCv,0:1))
       allocate(flf(mpg%nFc,0:1))
       allocate(flv(mpg%nFc,0:1))
       allocate(wrkf2(mpg%nFc,0:1))
+      allocate(wrkc2(mpg%nCv,0:1))
+      allocate(wrkc2s(mpg%nCv,0:1,0:nsd_local-1))
+      allocate(wrkf2s(mpg%nFc,0:1,0:nsd_local-1))
       allocate(mach(mpg%nCv,
      *     0:max(1,nsd_local,state_ext%ns,natm,nmol,nion)-1))
       solpstop=' '
@@ -413,6 +411,7 @@ c
 #endif
       lucdf=0
       eirc_done=.false.
+      call init_chord_shift
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
@@ -576,14 +575,14 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
       call alloc_b2mod_tallies(mpg%nnreg, ns)
-c calculate additional fluxes (fhj, fhm, fhp, fht)
+c calculate additional fluxes (fhj, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg,
+      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg, switch,
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
      3 state%rt%rpt, state%pl%te, state%pl%ti, state%pl%tn,
-     4 state%pl%po, switch%BoRiS, state%dv%fhm, state%dv%fhp,
+     4 state%pl%po, state%dv%fhm, state%dv%fhp,
      5 state%dv%fhj, state%dv%fht)
 c calculate divergences of the various fluxes
       do is=0,ns-1
@@ -840,52 +839,6 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
         endif
        enddo
       endif
-      call b2sihs_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns,
-     & switch, geo, mpg, ismain,
-     & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
-     & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
-     & state%pl%po, state%dv%ne, state%dv%ni, state%dv%nn,
-     & state%dv%fna_fcor, state%dv%fne, state%dv%fch,
-     & state%co%cvsa, state%co%cvsa_cl, state%co%cvsa_drho,
-     & state%co%cvsahz_eff, state%co%f_luc_sg,
-     & state%co%alfx_c, state%co%sigx_c,
-     & state%rt%rza, state%rt%rz2, state_ext,
-     & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
-      if(switch%b2sigp_style.ne.2) then
-       call b2nxfx (mpg%nCv, mpg%nFc, mpg%nVx, switch, geo, mpg, qe,
-     &   state%dv%ne, state%pl%te, state%pl%po,
-     &   ehxp, wrkfs(1,0), wrkfs(1,1))
-       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
-     &   state%pl%ti, wrkv, gti)
-       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
-     &   state%pl%te, wrkv, gte)
-       do is = 0, state%ns-1
-        call b2sifr_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns, is,
-     &   switch, geo, mpg,
-     &   state%pl%na, state%pl%ua, state%pl%te, state%pl%ti,
-     &   state%dv%ni, state%dv%ne, state%dv%ne2, state%rt%rza,
-     &   state%rt%rz2, ehxp, state%dv%lnlam,
-     &   state%co%cthe, state%co%cthi, state_ext,
-     &   smbch, smbtf, state%srw%smpr(:,is), state%srw%smpt(:,is),
-     &   state%srw%smfr(:,is), wrkc, gti, gte)
-        state%srw%b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)
-        call b2sigp (mpg%nCv, mpg%nFc, mpg%nVx, is,
-     &   switch, geo, mpg, state%rt%rza(:,is),
-     &   state%pl%na(:,is), state%pl%ti, state%pl%tn,
-     &   state%dv%ne, state%pl%te, state%pl%po,
-     &   state%srw%b2npmo_smag(1,0,is),
-     &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
-        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is, ismain,
-     &   switch, geo, mpg, am(is)*mp,
-     &   state%pl%ua(:,is), state%pl%te, state%pl%ti,
-     &   state%pl%na(:,is), state%dv%ni(:,1), state%dv%ne2,
-     &   state%rt%rz2, state%dv%lnlam,
-     &   state%co%hcix_c, state%co%cvsahz_cl(:,:,is),
-     &   smbvh, smbvv, state%co%kt_neo,
-     &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
-        state%srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)
-       end do
-      end if
 c
       call alloc_b2mod_boundary(DEF_NXD, DEF_NYD, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
@@ -903,7 +856,7 @@ c
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if (nomp.gt.0) then
         allocate(dsomp(nomp),wdomp(nomp))
         call set_distances(mpg,geo,nomp,omp,icsepomp-1,dsomp,wdomp)
@@ -911,6 +864,64 @@ c
       if (nimp.gt.0) then
         allocate(dsimp(nimp),wdimp(nimp))
         call set_distances(mpg,geo,nimp,imp,icsepimp-1,dsimp,wdimp)
+      end if
+c
+      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
+      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
+      do is=0,ns-1
+        state%dv%ue = state%dv%ue +
+     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
+      enddo
+      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
+      state%dv%ue = state%dv%ue/state%dv%ne
+      call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
+     & switch, geo, mpg, state%pl, state%dv, state%rt,
+     & state%rtw, state%srw)
+      call b2sihs_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns,
+     & switch, geo, mpg, ismain,
+     & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
+     & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
+     & state%pl%po, state%dv%ne, state%dv%ne2, state%dv%ni,
+     & state%dv%nn, state%dv%fch,
+     & state%co%cvsa, state%co%cvsa_cl, state%co%cvsa_drho,
+     & state%co%cvsahz_eff, state%co%f_luc_sg,
+     & state%co%alfx_c, state%co%sigx_c,
+     & state%rt%rza, state%rt%rz2, state_ext,
+     & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
+      if(switch%b2sigp_style.ne.2.and.b2fplasma_version.lt.'03.002.001')
+     > then
+       call b2nxfx (mpg%nCv, mpg%nFc, mpg%nVx, switch, geo, mpg, qe,
+     &  state%dv%ne, state%pl%te, state%pl%po, ehxp)
+       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &  state%pl%ti, wrkv, gti)
+       call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &  state%pl%te, wrkv, gte)
+       do is = 0, state%ns-1
+        call b2sifr_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns, is,
+     &   switch, geo, mpg,
+     &   state%pl%na, state%pl%ua, state%pl%te, state%pl%ti,
+     &   state%dv%ni, state%dv%ne, state%dv%ne2, state%rt%rza,
+     &   state%rt%rz2, ehxp, state%dv%lnlam,
+     &   state%co%cthe, state%co%cthi, state_ext,
+     &   smbch, smbtf, state%srw%smpr(:,is), state%srw%smpt(:,is),
+     &   state%srw%smfr(:,is), wrkc, gti, gte)
+        state%srw%b2npmo_smaf(:,:,is)=smbch(:,:)+smbtf(:,:)
+        call b2sigp (mpg%nCv, mpg%nFc, mpg%nVx, is,
+     &   switch, geo, mpg, state%rt%rza(:,is),
+     &   state%pl%na(:,is), state%pl%ti, state%pl%tn,
+     &   state%dv%ne, state%pl%te, state%pl%po,
+     &   state%srw%b2npmo_smag(1,0,is),
+     &   wrkcs(1,0), wrkcs(1,1))
+        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is, ismain,
+     &   switch, geo, mpg, am(is)*mp,
+     &   state%pl%ua(:,is), state%pl%te, state%pl%ti,
+     &   state%pl%na(:,is), state%dv%ni(:,1), state%dv%ne2,
+     &   state%rt%rz2, state%dv%lnlam,
+     &   state%co%hcix_c, state%co%cvsahz_cl(:,:,is),
+     &   smbvh, smbvv, state%co%kt_neo,
+     &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
+        state%srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)
+       end do
       end if
 c
       nflai=0
@@ -1386,32 +1397,36 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
-      do is=0,ns-1
-        state%dv%ue = state%dv%ue +
-     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
-      enddo
-      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
-      state%dv%ue = state%dv%ue/state%dv%ne
+      call intface1(mpg%nCv,mpg%nFc,ns-1,mpg%fcCv,geo%fcVol,state%pl%na,
+     .  naf)
+      wrkcs = state%pl%na*state%pl%ua
+      call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .  state%dv%fhm,wrkcs,wrkc2s)
+      fmox(:,:) = wrkc2s(:,0,:)
+      fmoy(:,:) = wrkc2s(:,1,:)
+      wrkcs = state%pl%na*state%pl%ua**2
+      call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .  state%dv%fhm,wrkcs,wrkc2s)
+      fhmx(:,:) = wrkc2s(:,0,:)
+      fhmy(:,:) = wrkc2s(:,1,:)
+      ro_ch = 0.0_R8
       do is=0,ns-1
         ro(:,is)=am(is)*mp*state%pl%na(:,is)
+        ro_ch=ro_ch+state%pl%na(:,is)*state%rt%rza(:,is)
+        wrkf2s(:,0,is) =
+     .   state%dv%fna(:,0,is)/(geo%fcS(:)*geo%fcQalf(:,0)+cutlo)/
+     *   naf(:,is)
+        wrkf2s(:,1,is) =
+     .   state%dv%fna(:,1,is)/(geo%fcS(:)*geo%fcQalf(:,1)+cutlo)/
+     *   naf(:,is)
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .    state%dv%fna(1,0,is),fnax(1,is))
+     .    wrkf2s(1,0,is),up(1,is))
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .    state%dv%fna(1,1,is),fnay(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .    state%dv%fmo(1,0,is),fmox(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .    state%dv%fmo(1,1,is),fmoy(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .    state%dv%fhm(1,0,is),fhmx(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .    state%dv%fhm(1,1,is),fhmy(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .    state%dv%fhp(1,0,is),fhpx(1,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .    state%dv%fhp(1,1,is),fhpy(1,is))
+     .    wrkf2s(1,1,is),vv(1,is))
+        fnax(:,is) = up(:,is)*state%pl%na(:,is)*geo%cvHy(:)*geo%cvHz(:)
+        fnay(:,is) = vv(:,is)*state%pl%na(:,is)*geo%cvHx(:)*geo%cvHz(:)
+        fhpx(:,is) = fnax(:,is)*state%rt%rpt(:,is)*ev
+        fhpy(:,is) = fnay(:,is)*state%rt%rpt(:,is)*ev
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .    state%co%cvsa_cl(1,0,is),cvsa_cl_x(1,is))
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
@@ -1425,28 +1440,6 @@ c
         call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
      .    state%co%fllim0fhi(1,1,is),fllim0fhi_y(1,is))
         uutraj(:,is)=state%pl%ua(:,is)
-      enddo
-      do is=0,ns-1
-        do iFc = 1, mpg%nFc
-          if (geo%fcQalf(iFc,0).ne.0.0_R8) then
-            flux_density(iFc,0,is)=state%dv%fna(iFc,0,is)
-     .       /(geo%fcS(iFc)*geo%fcQalf(iFc,0))
-          else
-            flux_density(iFc,0,is) = 0.0_R8
-          end if
-          if (geo%fcQalf(iFc,1).ne.0.0_R8) then
-            flux_density(iFc,1,is)=state%dv%fna(iFc,1,is)
-     .       /(geo%fcS(iFc)*geo%fcQalf(iFc,1))
-          else
-            flux_density(iFc,1,is) = 0.0_R8
-          end if
-        end do
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     flux_density(1,0,is),cv_flux(1,0,is))
-        call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     flux_density(1,1,is),cv_flux(1,1,is))
-        up(:,is)=cv_flux(:,0,is)/state%pl%na(:,is)
-        vv(:,is)=cv_flux(:,1,is)/state%pl%na(:,is)
         arrowx(:,is)=up(:,is)
         arrowy(:,is)=vv(:,is)
         vvtraj(:,is)=vv(:,is)
@@ -1518,6 +1511,7 @@ c
 c
       lu=5
       lu_pos=0
+      write(*,'(a)') 'Enter your commands here:'
       call readline(textline,lu,ipos)
 c
       irstack=0
@@ -1576,11 +1570,10 @@ c
             call terminate_plotting
             write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
      .       iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
-            deallocate(pr,pz,ro,up,vv,ww,k1,nu1,tau)
+            deallocate(pr,pz,ro,ro_ch,up,vv,ww,k1,nu1,tau)
             deallocate(alf,hce,sig)
-            deallocate(flf,flv,wrkf2)
+            deallocate(naf,flf,flv,wrkf2,wrkf2s,wrkc2,wrkc2s)
             deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
-            deallocate(flux_density,cv_flux)
             deallocate(ehxp,gte,gti,smbch,smbtf,smbvh,smbvv)
             deallocate(div_fna,div_fmo,div_fhm,div_fhp)
             deallocate(div_fhe,div_fhi,div_fch,div_fhj)
@@ -1673,11 +1666,10 @@ c
           call terminate_plotting
           write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
      .     iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
-          deallocate(pr,pz,ro,up,vv,ww,k1,nu1,tau)
+          deallocate(pr,pz,ro,ro_ch,up,vv,ww,k1,nu1,tau)
           deallocate(alf,hce,sig)
-          deallocate(flf,flv,wrkf2)
+          deallocate(naf,flf,flv,wrkf2,wrkf2s,wrkc2,wrkc2s)
           deallocate(fnax,fnay,fmox,fmoy,fhpx,fhpy,fhmx,fhmy)
-          deallocate(flux_density,cv_flux)
           deallocate(ehxp,gte,gti,smbch,smbtf,smbvh,smbvv)
           deallocate(div_fna,div_fmo,div_fhm,div_fhp)
           deallocate(div_fhe,div_fhi,div_fch,div_fhj)
@@ -1738,9 +1730,9 @@ c
       contains
 
       subroutine select_matrix
-      integer i, j, is, ix, ibc, iCv, iFc, iFt
+      integer i, j, is, ix, iy, ibc, iCv, iFc, iFt
 #ifdef WG_TODO
-      integer iy, iso
+      integer iso
 #endif
 
       cflag=.true.
@@ -1941,27 +1933,27 @@ c
         case('fnex')
           description='Poloidal electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fne(1,0),mach)
-          call copy(mach,1.0_R8,1,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne,state%dv%ne,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,1,textbl)
         case('fney')
           description='Radial electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fne(1,1),mach)
-          call copy(mach,1.0_R8,1,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne,state%dv%ne,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,1,textbl)
         case('fnnx')
           description='Poloidal fluid neutral particle flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fnn(1,0),mach)
-          call copy(mach,1.0_R8,1,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn,state%dv%nn,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,1,textbl)
         case('fnny')
           description='Radial fluid neutral particle flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fnn(1,1),mach)
-          call copy(mach,1.0_R8,1,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn,state%dv%nn,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,1,textbl)
         case('fmox')
           description='Poloidal flux of parallel momentum (N)'
           nz=ns
@@ -1973,63 +1965,63 @@ c
         case('fhex')
           description='Poloidal electron energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhe(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhe,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhey')
           description='Radial electron energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhe(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhe,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhetx')
           description='Poloidal electron energy flux [fhetx] (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhet(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhet,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhety')
           description='Radial electron energy flux [fhety] (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhet(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhet,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhix')
           description='Poloidal ion energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhi(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhi,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhiy')
           description='Radial ion energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhi(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhi,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhitx')
           description='Poloidal ion energy flux [fhitx] (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhit(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhit,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhity')
           description='Radial ion energy flux [fhity] (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhit(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhit,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhnx')
           description='Poloidal fluid neutral energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhn(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%nn*state%pl%tn
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhn,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhny')
           description='Radial fluid neutral energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhn(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%nn*state%pl%tn
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fhn,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhmx')
           description='Poloidal parallel kinetic energy flux (W)'
           nz=ns
@@ -2049,53 +2041,53 @@ c
         case('fhjx')
           description='Poloidal electrostatic energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fhj(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhj,state%dv%ne,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhjy')
           description='Radial electrostatic energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fhj(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhj,state%dv%ne,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fhtx')
           description='Poloidal total energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fht(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te+state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fht,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fhty')
           description='Radial total energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fht(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te+state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,state%dv%fht,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fktx')
           description='Poloidal E\mU\dB turbulent energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fkt(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fkt,state%pl%kt,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fkty')
           description='Radial E\mU\dB turbulent energy flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fkt(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fkt,state%pl%kt,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fztx')
           description=
      .     'Poloidal E\mU\dB turbulent enstrophy flux (s^{-3}?)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .     state%dv%fzt(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fzt,state%pl%zt,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case('fzty')
           description=
      .     'Radial E\mU\dB turbulent enstrophy flux (s^{-3}?)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .     state%dv%fzt(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fzt,state%pl%zt,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case('fle')
           description='Electron heat flow flux limit factor'
           nz=1
@@ -2245,37 +2237,34 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          do iCv=1,mpg%nCv
-            i=0
-            mach(iCv,0)=0.0_R8
-            do j=1,mpg%cvFcP(iCv,2)
-              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
-              iVx1=mpg%fcVx(iFc,1)
-              iVx2=mpg%fcVx(iFc,2)
-              if (mpg%vxFs(iVx1).ne.0.and.mpg%vxFs(iVx2).ne.0.and.
-     &            mpg%vxFs(iVx1).ne.mpg%vxFs(iVx2)) then
-                i=i+1
-                mach(iCv,0)=mach(iCv,0)+geo%fcHt(iFc)*geo%fcQgam(iFc,0)
-              end if
-            end do
-            if(i.gt.0) mach(iCv,0)=mach(iCv,0)/real(i,R8)
-          end do
+          call copy(geo%cvHy,1.0_R8,nz,textbl)
           call copy(mach,1.0_R8,nz,textbl)
-#ifdef WG_TODO
         case('sx')
           description='sx (m^{2})'
           nz=1
-          call copy(gs(:,:,0),1.0_R8,nz,textbl)
+          mach=0.0_R8
+          do iCv=1,mpg%nCv
+            do i=1,mpg%cvFcP(iCv,2)
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+              iFm=mpg%cvFt(mpg%fcCv(iFc,1))
+              iFp=mpg%cvFt(mpg%fcCv(iFc,2))
+              if (iFm.eq.iFp.and.iFm.ne.0.and.iFp.ne.0)
+     >         mach(iCv,0)=mach(iCv,0)+geo%fcHt(iFc)
+            end do
+            if (iCv.le.mpg%nCi) mach(iCv,0)=0.5_R8*mach(iCv,0)
+          end do
+          mach(:,0)=mach(:,0)*geo%cvHz
+          call copy(mach,1.0_R8,nz,textbl)
         case('sxperp')
           description='sxperp (m^{2})'
           nz=1
-          mach(:,:,0)=gs(:,:,0)*qz(:,:,1)
+          mach(:,0)=geo%cvHy*geo%cvHz
           call copy(mach,1.0_R8,nz,textbl)
         case('sy')
           description='sy (m^{2})'
           nz=1
-          call copy(gs(:,:,1),1.0_R8,nz,textbl)
-#endif
+          mach(:,0)=geo%cvHx*geo%cvHz
+          call copy(mach,1.0_R8,nz,textbl)
         case('sz')
           description='sz (m^{2})'
           nz=1
@@ -2552,37 +2541,41 @@ c
         case ('fetx')
           description='Total poloidal internal energy flux (W)'
           nz=1
-          wrkf(:)=state%dv%fht(:,0)-state%dv%fhj(:,0)+state_ext%fhi(:,0)
+          wrkc=state%dv%ne*state%pl%te+state%dv%ni(:,0)*state%pl%ti
+          wrkf2(:,:)=
+     .     state%dv%fht(:,:)-state%dv%fhj(:,:)+state_ext%fhi(:,:)
           wrkcs=0.0_R8
           do is=0,state_ext%ns-1
+            wrkc=wrkc+state_ext%na(:,is)*state_ext%ta(:,is)
             wrkcs(:,is)=state_ext%pt(:,is)*ev+
      .       (0.5_R8*state_ext%am(is)*mp*state_ext%ua(:,is)**2+
      .        state_ext%ta(:,is))*(1.0_R8-switch%BoRiS)
             call intface(mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .        wrkcs(1,is),wrkfs(1,is))
             wrkfs(:,is)=wrkfs(:,is)*state_ext%fa(:,0,is)
-            wrkf(:)=wrkf(:)+wrkfs(:,is)
+            wrkf2(:,0)=wrkf2(:,0)+wrkfs(:,is)
           end do
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      wrkf,mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,wrkf2,wrkc,wrkc2)
+          call copy(wrkc2(1,0),1.0_R8,nz,textbl)
         case ('fety')
           description='Total radial internal energy flux (W)'
           nz=1
-          wrkf(:)=state%dv%fht(:,1)-state%dv%fhj(:,1)+state_ext%fhi(:,1)
+          wrkc=state%dv%ne*state%pl%te+state%dv%ni(:,0)*state%pl%ti
+          wrkf2(:,:)=
+     .     state%dv%fht(:,:)-state%dv%fhj(:,:)+state_ext%fhi(:,:)
           wrkcs=0.0_R8
           do is=0,state_ext%ns-1
+            wrkc=wrkc+state_ext%na(:,is)*state_ext%ta(:,is)
             wrkcs(:,is)=state_ext%pt(:,is)*ev+
      .       (0.5_R8*state_ext%am(is)*mp*state_ext%ua(:,is)**2+
      .        state_ext%ta(:,is))*(1.0_R8-switch%BoRiS)
             call intface(mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .        wrkcs(1,is),wrkfs(1,is))
             wrkfs(:,is)=wrkfs(:,is)*state_ext%fa(:,1,is)
-            wrkf(:)=wrkf(:)+wrkfs(:,is)
+            wrkf2(:,1)=wrkf2(:,1)+wrkfs(:,is)
           end do
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      wrkf,mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,wrkf2,wrkc,wrkc2)
+          call copy(wrkc2(1,1),1.0_R8,nz,textbl)
         case ('tab2')
           description='Neutral atom temperature (eV)'
           if (natmi.gt.0) then
@@ -2752,18 +2745,18 @@ c
           nz=ns
           do is=0,ns-1
             wrkfs(:,is)=state%dv%fna(:,0,is)*am(is)*mp
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        wrkfs(1,is),mach(1,is))
           end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,wrkfs,ro,wrkc2s)
+          mach(:,:)=wrkc2s(:,0,:)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fmy')
           description='Radial mass flux (kg/s)'
           nz=ns
           do is=0,ns-1
             wrkfs(:,is)=state%dv%fna(:,1,is)*am(is)*mp
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        wrkfs(1,is),mach(1,is))
           end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,wrkfs,ro,wrkc2s)
+          mach(:,:)=wrkc2s(:,1,:)
           call copy(mach,1.0_R8,nz,textpl)
         case ('p*')
           description='Dynamic plasma pressure (Pa)'
@@ -2805,56 +2798,53 @@ c
      1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
             end do
           end if
-#ifdef WG_TODO
           suml=0.0_R8
           sumr=0.0_R8
-          do iy=-1,ny
-            ix=0
-            if (iy.ge.topcut(1)) suml(1)=suml(1)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-            ix=nx-1
-            if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
-              if (iy.ge.topcut(1).and.iy.lt.topcut(2))
-     .              sumr(1)=sumr(1)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-            else if (nnreg(0).ne.7) then
-              if (iy.ge.topcut(1)) sumr(1)=sumr(1)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-            end if
-            if(nncut.eq.2) then
-              ix=nxtr+1
-              if (iy.ge.topcut(2)) suml(2)=suml(2)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-              ix=nxtl-1
-              if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
-                if (iy.ge.topcut(2)) sumr(2)=sumr(2)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-              else
-                if (iy.ge.topcut(1)) sumr(2)=sumr(2)+mach(ix,iy,0)*
-     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
-     2                hy1(ix,iy)
-              endif
-            endif
+          do iy=mpg%ifdiv(1),mpg%divFcP(1,2)
+            iFc=mpg%divFc(mpg%divFcP(1,1)+iy-1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            suml(1)=suml(1)+mach(iCv,0)*
+     1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
+     2                geo%cvX(iCv)*geo%cvHy(iCv)
           end do
-          if (mpg%nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+          do iy=mpg%ifdiv(maxval(mpg%strDiv)),
+     .          mpg%divFcP(maxval(mpg%strDiv),2)
+            iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+iy-1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            sumr(1)=sumr(1)+mach(iCv,0)*
+     1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
+     2                geo%cvX(iCv)*geo%cvHy(iCv)
+          end do
+          if(mpg%nncut.eq.2) then
+            do iy=mpg%ifdiv(2),mpg%divFcP(2,2)
+              suml(2)=suml(2)+mach(iCv,0)*
+     1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
+     2                geo%cvX(iCv)*geo%cvHy(iCv)
+            end do
+            do iy=mpg%ifdiv(3),mpg%divFcP(3,2)
+              sumr(2)=sumr(2)+mach(iCv,0)*
+     1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
+     2                geo%cvX(iCv)*geo%cvHy(iCv)
+            end do
+          end if
+          geometryType = geometryId( mpg, geo, 2 )
+          select case ( geometryType )
+          case ( GEOMETRY_LFS_SNOWFLAKE_MINUS )
             write(*,*) 'Midplane pressure: ',sumomp
             write(*,*) 'Inner target:      ',suml(1)
             write(*,*) 'Near SOL target:   ',sumr(1)
             write(*,*) 'Far SOL target:    ',sumr(2)
             write(*,*) 'Pressure drop (inner & outer): ',
      1             suml(1)/sumomp,(sumr(1)+sumr(2))/sumomp
-          else if (mpg%nnreg(0).le.7) then
+          case ( GEOMETRY_LFS_SNOWFLAKE_PLUS,
+     .           GEOMETRY_STELLARATORISLAND,
+     .           GEOMETRY_SN, GEOMETRY_LIMITER, GEOMETRY_LINEAR )
             write(*,*) 'Midplane pressure: ',sumomp
             write(*,*) 'Western target:    ',suml(1)
             write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
      1             suml(1)/sumomp,sumr(1)/sumomp
-          else if (mpg%nnreg(0).eq.8) then
+          case ( GEOMETRY_CDN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
             write(*,*) 'Outer midplane pressure: ',sumomp
             write(*,*) 'Outer top target:        ',suml(2)
             write(*,*) 'Outer bottom target:     ',sumr(1)
@@ -2866,8 +2856,7 @@ c
             write(*,*) 'Inner bottom target:     ',suml(1)
             write(*,*) 'Pressure drop (top & bottom): ',
      1             sumr(2)/sumimp,suml(1)/sumimp
-          endif
-#endif
+          end select
           call copy(mach,1.0_R8,nz,textbl)
         case ('conn')
 ! New treatment using connectivity arrays
@@ -3007,29 +2996,21 @@ c
           end do
           mach(:,ns-1)=0.0_R8
           call copy(mach,1.0_R8,nz,textpl)
-#ifdef WG_TODO
         case ('smp')
           description='Self-pressure force'
           nz=ns
           do is=0,ns-1
-            do iy=-1,ny
-              do ix=-1,nx
-                ix1=leftix(ix,iy)
-                if (ix1.ne.-2) then
-                  mach(ix,iy,is)=-0.5_R8*
-     1             abs(wbbl(ix,iy,0))/wbbl(ix,iy,3)*
-     2             (gs(ix1,iy,0)+gs(ix,iy,0))/2.0_R8*qc(ix,iy,0)*
-     2             (na(ix1,iy,is)*ti(ix1,iy)-na(ix,iy,is)*ti(ix,iy))
-                else
-                  mach(ix,iy,is)=0.0_R8
-                end if
-              end do
-            end do
+            wrkc=state%pl%na(:,is)*state%pl%ti
+            call diff_p(mpg%nCv,mpg%nFc,mpg%nVx,0,geo,mpg,
+     .       wrkc,wrkv,wrkf)
+            wrkf=-0.5_R8*wrkf*abs(geo%fcBb(:,0))/geo%fcBb(:,3)*
+     .       geo%fcS*geo%fcQalf(:,0)
+            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,
+     .       mach(1,is))
           end do
           call copy(mach,1.0_R8,nz,textpl)
-#endif
         case ('nreg')
-          description='Region'
+          description='Volume region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -3050,10 +3031,21 @@ c
               end if
             end if
           end do
+          if (abs(istack(iistack)).gt.0) then
+            if (istack(iistack).gt.0) then
+              description='Volume region '//int2str(istack(iistack))  ! IGNORE
+            else
+              description=  ! IGNORE
+     .    'All volume regions except region '//int2str(-istack(iistack))
+            end if
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No cells with region index '//
+     .                   int2str(abs(istack(iistack)))//' found!'
+          end if
           write(*,*) '"region" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('freg')
-          description='Flux region index'
+          description='Face region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -3071,7 +3063,13 @@ c
               end if
             end if
           end do
-          write(*,*) 'Flux "region" option with ',
+          if (istack(iistack).gt.0) then
+            description='Flux region '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No faces with region index '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
+          write(*,*) 'Face "region" option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('clbl')
@@ -3091,11 +3089,17 @@ c
               end if
             end if
           end do
+          if (istack(iistack).ne.0) then
+            description='Cell label '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No cells with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
           write(*,*) 'Cell label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('flbl')
-          description='Flux label'
+          description='Face label'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -3113,7 +3117,13 @@ c
               end if
             end if
           end do
-          write(*,*) 'Flux label option with ',
+          if (istack(iistack).ne.0) then
+            description='Face label '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No faces with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
+          write(*,*) 'Face label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('tlbl')
@@ -3139,6 +3149,12 @@ c
               end if
             end if
           end do
+          if (istack(iistack).ne.0) then
+            description='Flux tube '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No flux tube with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
           write(*,*) 'Flux tube label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3652,6 +3668,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixlt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixle')
@@ -3667,6 +3684,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixeq')
@@ -3682,6 +3700,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixne')
@@ -3697,6 +3716,7 @@ c
               mach(iCv,0)=1.0_R8
             end if
           end do
+          description='ix != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixge')
@@ -3712,6 +3732,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixgt')
@@ -3727,6 +3748,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iylt')
@@ -3742,6 +3764,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iylt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyle')
@@ -3757,6 +3780,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyeq')
@@ -3772,6 +3796,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyne')
@@ -3787,6 +3812,7 @@ c
               mach(iCv,0)=1.0_R8
             end if
           end do
+          description='iy != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyge')
@@ -3802,6 +3828,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iygt')
@@ -3817,6 +3844,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iclt')
@@ -3826,6 +3854,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack)-1,0)=1.0_R8
           mach(istack(iistack):mpg%nCv,0)=0.0_R8
+          description='iCv < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iclt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icle')
@@ -3835,6 +3864,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack),0)=1.0_R8
           mach(istack(iistack)+1:mpg%nCv,0)=0.0_R8
+          description='iCv =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iceq')
@@ -3844,6 +3874,7 @@ c
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
           mach(istack(iistack),0)=1.0_R8
+          description='iCv = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iceq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icne')
@@ -3853,6 +3884,7 @@ c
           if(bad_args(stack_req)) return
           mach(:,0)=1.0_R8
           mach(istack(iistack),0)=0.0_R8
+          description='iCv != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icge')
@@ -3862,6 +3894,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack)-1,0)=0.0_R8
           mach(istack(iistack):mpg%nCv,0)=1.0_R8
+          description='iCv >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icgt')
@@ -3871,6 +3904,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack),0)=0.0_R8
           mach(istack(iistack)+1:mpg%nCv,0)=1.0_R8
+          description='iCv > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('islt')
@@ -3963,8 +3997,14 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
-          mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFc) then
+            mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
+            mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          else
+            write(*,*) 'Face index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iFc = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ifeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iveq')
@@ -3973,11 +4013,35 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          do i=1,mpg%vxCvP(istack(iistack),2)
-            iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
-            mach(iCv,0)=1.0_R8
-          end do
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nVx) then
+            do i=1,mpg%vxCvP(istack(iistack),2)
+              iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Vertex index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('fteq')
+          description='fteq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFt) then
+            do i=1,mpg%ftCvP(istack(iistack),2)
+              iCv=mpg%ftCv(mpg%ftCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Flux tube index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iFt = '//int2str(istack(iistack))  ! IGNORE
+          write(*,*) '"fteq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('lnlam')
           description='ln \GK\R'
@@ -4184,21 +4248,21 @@ c     assumes that bb is OK for 1d cases
         case ('fchp')
           description='Parallel current (A)'
           nz=1
-          wrkf=state%dv%fch_p(:,0)
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch_p,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchx')
           description='Poloidal current (A)'
           nz=1
-          wrkf=state%dv%fch(:,0)
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchy')
           description='Radial current (A)'
           nz=1
-          wrkf=state%dv%fch(:,1)
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,wrkf,mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch,state%dv%ne,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('ud')
           description='pol comp of the ' //
      *          'drift velocity [uadia.x] (m.s^{-1})'
@@ -4304,15 +4368,15 @@ c     assumes that bb is OK for 1d cases
         case ('cd')
           description='fchdia.x'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     *      state%dv%fchdia(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     *      state%dv%fchdia,state%dv%ni(:,1),mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('dd')
           description='fchdia.y'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     *      state%dv%fchdia(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     *      state%dv%fchdia,state%dv%ni(:,1),mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
 #ifdef WG_TODO
         case ('niso')
           description='Isolating region'
@@ -4503,16 +4567,38 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textbl)
 #endif
         case ('rlcl')
-          description='real cells'
+          description='Real cells'
           nz=1
           mach(1:mpg%nCi,0)=1.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=0.0_R8
           call copy(mach,1.0_R8,nz,textbl)
         case ('gdcl')
-          description='guard cells'
+          description='Guard cells'
           nz=1
           mach(1:mpg%nCi,0)=0.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=1.0_R8
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('bdcl')
+          description='Boundary cells'
+          nz=1
+          mach(1:mpg%nCv,0)=0.0_R8
+          do i=mpg%nCi+1,mpg%nCv
+            iFc=mpg%cvFc(mpg%cvFcP(i,1))
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            mach(iCv,0)=1.0_R8
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('npcl')
+          description='Neutral pressure cells'
+          nz=1
+          mach(1:mpg%nCv,0)=0.0_R8
+          if (npfr_cvs.eq.0) then
+            write(*,*) 'No neutral pressure cells defined'
+          else
+            do i=1,npfr_cvs
+              mach(pfr_cvs(i),0)=1.0_R8
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textbl)
         case ('iimp')
           description='Inner midplane cells'
@@ -4728,345 +4814,339 @@ c     assumes that bb is OK for 1d cases
         case ('fnax32')
           description='Convective poloidal particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_32(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_32,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnay32')
           description='Convective radial particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_32(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_32,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnax52')
           description='Conductive poloidal particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_52(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_52,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnay52')
           description='Conductive radial particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_52(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_52,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxnodr')
           description='Poloidal particle flux without drifts (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_nodrift(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_nodrift,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaynodr')
           description='Radial particle flux without drifts (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_nodrift(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_nodrift,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnix32')
           description='Convective poloidal total ion flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fni_32(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fni_32,state%dv%ni(:,0),mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fniy32')
           description='Convective radial total ion flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fni_32(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fni_32,state%dv%ni(:,0),mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnix52')
           description='Conductive poloidal total ion flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fni_52(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fni_52,state%dv%ni(:,0),mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fniy52')
           description='Conductive radial total ion flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fni_52(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fni_52,state%dv%ni(:,0),mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnnx32')
           description='Convective poloidal fluid neutral flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fnn_32(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn_32,state%dv%nn,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fnny32')
           description='Convective radial fluid neutral flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fnn_32(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn_32,state%dv%nn,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnnx52')
           description='Conductive poloidal fluid neutral flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fnn_52(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn_52,state%dv%nn,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fnny52')
           description='Conductive radial fluid neutral flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fnn_52(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fnn_52,state%dv%nn,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnex32')
           description='Convective poloidal electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fne_32(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne_32,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fney32')
           description='Convective radial electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fne_32(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne_32,state%dv%ne,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnex52')
           description='Conductive poloidal electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fne_52(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne_52,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fney52')
           description='Conductive radial electron flux (s^{-1})'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fne_52(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fne_52,state%dv%ne,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchx32')
           description='Convective poloidal current (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fch_32(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch_32,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchy32')
           description='Convective radial current (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fch_32(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch_32,state%dv%ne,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchx52')
           description='Conductive poloidal current (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fch_52(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch_52,state%dv%ne,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchy52')
           description='Conductive radial current (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fch_52(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fch_52,state%dv%ne,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchxvspa')
           description='Pol comp of fchvispar (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchvispar(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvispar,ro_ch,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchyvspa')
           description='Rad comp of fchvispar (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchvispar(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvispar,ro_ch,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchxvspe')
           description='Pol comp of fchvisper (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchvisper(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvisper,ro_ch,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchyvspe')
           description='Rad comp of fchvisper (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchvisper(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvisper,ro_ch,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchxn')
           description='Pol comp of fchin (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchin(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchin,ro_ch,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchyn')
           description='Rad comp of fchin (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchin(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchin,ro_ch,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnaxmdf')
           description='Modified poloidal particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_mdf(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .      state%dv%fna_mdf,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaymdf')
           description='Modified radial particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_mdf(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .      state%dv%fna_mdf,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fhexmdf')
           description='Modified poloidal electron heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fhe_mdf(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhe_mdf,wrkc,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fheymdf')
           description='Modified radial electron heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fhe_mdf(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhe_mdf,wrkc,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fhixmdf')
           description='Modified poloidal ion heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fhi_mdf(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhi_mdf,wrkc,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fhiymdf')
           description='Modified radial ion heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fhi_mdf(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhi_mdf,wrkc,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fhexps')
           description=
      .     'Pfirsch-Schlueter poloidal electron heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fhePSch(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhePSch,wrkc,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fheyps')
           description=
      .     'Pfirsch-Schlueter radial electron heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fhePSch(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ne*state%pl%te
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhePSch,wrkc,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fhixps')
           description='Pfirsch-Schlueter poloidal ion heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fhiPSch(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhiPSch,wrkc,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fhiyps')
           description='Pfirsch-Schlueter radial ion heat flux (W)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fhiPSch(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          wrkc=state%dv%ni(:,0)*state%pl%ti
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fhiPSch,wrkc,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fnaxps')
           description=
      .     'Pfirsch-Schlueter poloidal particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fnaPSch(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fnaPSch,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayps')
           description=
      .     'Pfirsch-Schlueter radial particle flux (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fnaPSch(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fnaPSch,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxfcor')
           description=
      .     'Poloidal particle flux with Coriolis term (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_fcor(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_fcor,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayfcor')
           description=
      .     'Radial particle flux with Coriolis term (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_fcor(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_fcor,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxhe')
           description=
      .     'Poloidal particle flux for heat equations (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state%dv%fna_he(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_he,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayhe')
           description=
      .     'Radial particle flux for heat equations (s^{-1})'
           nz=ns
-          do is=0,ns-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state%dv%fna_he(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,ns,mpg,geo,
+     .     state%dv%fna_he,state%pl%na,wrkc2s)
+          mach(:,0:ns-1)=wrkc2s(:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fchxvisq')
           description=
      .     'Poloidal current due to heat flux viscosity tensor (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchvisq(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvisq,ro_ch,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchyvisq')
           description=
      .     'Radial current due to heat flux viscosity tensor (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchvisq(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchvisq,ro_ch,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fcxviskt')
           description=
      .     'Poloidal current due to Reynolds stress of kt-model (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchviskt(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchviskt,state%pl%kt,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fcyviskt')
           description=
      .     'Radial current due to Reynolds stress of kt-model (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchviskt(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchviskt,state%pl%kt,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
         case ('fchxinrt')
           description=
      .     'Poloidal current due to inertia and gyroviscosity (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .      state%dv%fchinert(1,0),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchinert,ro_ch,mach)
+          call copy(mach(1,0),1.0_R8,nz,textbl)
         case ('fchyinrt')
           description=
      .     'Radial current due to inertia and gyroviscosity (A)'
           nz=1
-          call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .      state%dv%fchinert(1,1),mach)
-          call copy(mach,1.0_R8,nz,textbl)
+          call intflux(mpg%nFc,mpg%nCv,mpg,geo,
+     .      state%dv%fchinert,ro_ch,mach)
+          call copy(mach(1,1),1.0_R8,nz,textbl)
 *    neoclassical part                                               !cjk
         case ('dnneo')
           description='Neoclassical particle diffusivity D_{n} ' //
@@ -5179,6 +5259,20 @@ c     assumes that bb is OK for 1d cases
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
+        case ('colle')
+          description='Electron collision number'
+          call b2txnce (mpg,geo,switch,mpg%nCv,
+     &     state%pl%te,state%dv%ne2,state%dv%lnlam,wrkf, wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textbl)
+        case ('colli')
+          description='Main ion collision number'
+          call b2txnci (mpg,geo,switch,mpg%nCv,state%ns,
+     &     state%pl%ti,state%pl%te,state%rt%rz2,state%dv%ne,
+     &     state%dv%ne2,state%pl%na,state%dv%lnlam,
+     &     ismain,state_ext,wrkf,wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textpl(ismain))
 #ifdef WG_TODO
         case ('crx')
           description='Corner radial coordinate (m)'
@@ -5250,19 +5344,17 @@ c     assumes that bb is OK for 1d cases
           if(state_ext%ns.eq.0) return
           description='External species poloidal flux (#.s^{-1})'
           nz=state_ext%ns
-          do is=0,nz-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .        state_ext%fa(1,0,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,nz,mpg,geo,
+     .      state_ext%fa,state_ext%na,wrkc2s)
+          mach(:,0:nz-1)=wrkc2s(:,0,0:nz-1)
           call copy(mach,1.0_R8,nz,state_ext%text)
         case ('fay_ext')
           if(state_ext%ns.eq.0) return
           description='External species radial flux (#.s^{-1})'
           nz=state_ext%ns
-          do is=0,nz-1
-            call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .        state_ext%fa(1,1,is),mach(1,is))
-          end do
+          call intflux1(mpg%nFc,mpg%nCv,nz,mpg,geo,
+     .      state_ext%fa,state_ext%na,wrkc2s)
+          mach(:,0:nz-1)=wrkc2s(:,1,0:nz-1)
           call copy(mach,1.0_R8,nz,state_ext%text)
         case ('ne_ext')
           description=
@@ -6182,10 +6274,8 @@ c     assumes that bb is OK for 1d cases
                 mach(:,is)=mach(:,is)+dab2(:,iatm,1)
                 if (maxval(abs(pfluxa(:,iatm,1))).gt.0.0_R8) then
                   do iCv=1,mpg%nCv
-#ifdef WG_TODO
-                    fna(ix,iy,0,0,is)=fna(ix,iy,0,0,is)+
-     &               pfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,0)*qz(ix,iy,1)
-#endif
+                    fnax(iCv,is)=fnax(iCv,is)+
+     &               pfluxa(iCv,iatm,1)*geo%cvHy(iCv)*geo%cvHz(iCv)
                     state%pl%ua(iCv,is)=state%pl%ua(iCv,is)+
      &               pfluxa(iCv,iatm,1)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
                     up(iCv,is)=up(iCv,is)+pfluxa(iCv,iatm,1)
@@ -6193,10 +6283,8 @@ c     assumes that bb is OK for 1d cases
                 endif
                 if (maxval(abs(rfluxa(:,iatm,1))).gt.0.0_R8) then
                   do iCv=1,mpg%nCv
-#ifdef WG_TODO
-                    fna(ix,iy,1,1,is)=fna(ix,iy,1,1,is)+
-     &               rfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,1)
-#endif
+                    fnay(iCv,is)=fnay(iCv,is)+
+     &               rfluxa(iCv,iatm,1)*geo%cvHx(iCv)*geo%cvHz(iCv)
                     vv(iCv,is)=vv(iCv,is)+rfluxa(iCv,iatm,1)
                   enddo
                 endif
@@ -6214,10 +6302,6 @@ c     assumes that bb is OK for 1d cases
                   vv(iCv,is)=0.0_R8
                 endif
               enddo
-              call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
-     .         state%dv%fna(1,0,is),fnax(1,is))
-              call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .         state%dv%fna(1,1,is),fnay(1,is))
               arrowx(:,is)=up(:,is)
               arrowy(:,is)=vv(:,is)
               uutraj(:,is)=state%pl%ua(:,is)
@@ -9221,7 +9305,7 @@ c normalised weights is 1
       end subroutine select_wall_stack
 
       subroutine select_wall_command
-      integer i, is, ix, iclv, iseg
+      integer i, is, ix, iy, iclv, iseg
 
       cflag=.true.
       WFVALUE: select case (cval)
@@ -10094,7 +10178,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ns,boundary_namelist,switch%BoRiS)
+          call b2pwld(istack(iistack),switch%BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff
@@ -10713,7 +10797,7 @@ c
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
-          call trgsurf(mpg%nCv,1)
+          call trgsurf(1)
         case('kappa_ab') ! target heat conductivity computed as 1/(AT+B)
           do ibnd = 1, nbnd
             do i = 1, ndepth_nml
@@ -11342,7 +11426,7 @@ c
         case('nxtl')     ! nxtl
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (nnreg(0).ge.7) then
+          if (mpg%nnreg(0).ge.7) then
 #ifdef WG_TODO
             call ipush(istack,iistack,nxtl)
 #endif
@@ -11354,7 +11438,7 @@ c
         case('nxtr')     ! nxtr
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (nnreg(0).ge.7) then
+          if (mpg%nnreg(0).ge.7) then
 #ifdef WG_TODO
             call ipush(istack,iistack,nxtr)
 #endif
@@ -11947,13 +12031,11 @@ c
           call set_partition_colors(rpop(rstack,irstack))
         case('lbsa')     ! toggle label lines
           call toggle_label_lines
-#ifdef WG_TODO
         case('ytra')     ! transform the "y" coordinate for comparison to experiment
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           y_transform_l=istack(iistack)
           call pop_stack(stack_req)
-#endif
         case('ecol')     ! colour index of experimental data
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -12005,32 +12087,6 @@ c     <delta wavelength in A> nspe
             writing_to_file=.false.
             close(nwtf)
           end if
-#ifdef WG_TODO
-        case('omp')      ! set jxa (OMP)
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          if(.not.check_classical_grid(mpg)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
-            jxa = ipop(istack,iistack)
-            write(*,*) 'jxa changed to ', jxa
-          else
-            write(*,*)
-     .       'Faulty ix = ',istack(iistack),' chosen for jxa!'
-            call pop_stack(stack_req)
-          endif
-        case('imp')      ! set jxi (IMP)
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          if(.not.check_classical_grid(mpg)) return
-          if(-1.le.istack(iistack).and.istack(iistack).le.mpg%nx) then
-            jxi = ipop(istack,iistack)
-            write(*,*) 'jxi changed to ', jxi
-          else
-            write(*,*)
-     .       'Faulty ix = ',istack(iistack),' chosen for jxi!'
-            call pop_stack(stack_req)
-          endif
-#endif
         case('yref')     ! set yref
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -12151,6 +12207,7 @@ c calculate neoclassical diagnostics
       intrinsic sqrt
 
       ds(1)= 0.0_R8
+      wd(:)= 0.0_R8
       do i=2,nlist
         ds(i)=ds(i-1)+
      &      sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+

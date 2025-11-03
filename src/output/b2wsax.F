@@ -249,6 +249,7 @@
      &  0.0_R8,0.0_R8
 
 * ..return
+      flush (nsav)
       call subend ()
       return
 

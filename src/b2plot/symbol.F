@@ -5,14 +5,14 @@ c
       character*500 textline
       character*1 c
       integer iun, ipos, ikind,ival,getint
-      real (kind=R8) ::
-     *   rval
+      real (kind=R8) :: rval
       character*8 cval
       character*(*) sval
       integer icnt, noofdigits
       logical negative
       logical isadigit,isplusorminus,isnegative,is_comment
       external isadigit,isplusorminus,isnegative,is_comment
+
     1 call skipblanks(textline,iun,ipos)
       ival=0
       rval=0.0_R8
@@ -98,4 +98,6 @@ c	    write(*,*) rval
         if(icnt.le.8) cval(icnt:icnt)=c
         goto 20
       endif
-      end
+
+      return
+      end subroutine symbol

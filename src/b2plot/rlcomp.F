@@ -3,6 +3,7 @@
       use b2mod_constants
       use b2mod_diag
       use b2mod_subsys
+      use b2mod_rdload
       use b2mod_dimensions
       implicit none
 c
@@ -28,7 +29,6 @@ c***  radld   radiation power coming to the segments of T
 c***  ttsrc   the total power radiated from the sources
 c***  tttrg   the total power coming to T
 c======================================================================
-#include "rdload.inc"
       real (kind=R8) :: upi, udpi, ueps
       parameter (upi=pi)
       parameter (udpi=2.0_R8*upi, ueps=1.0e-20_R8)
@@ -59,7 +59,7 @@ c*** Loop over the sources
 c
 c<<<
       if (uu_dbg) then
-        print *,'rlcomp: nsrc,ntrg = ',nsrc,ntrg
+        print *,'rlcomp: nsrc, ntrg = ',nsrc,ntrg
         open(lun_s,file='sources.dat')
         write(lun_s,'(2a)') '# Radiation sources : ',trim(label)
         write(lun_s,'(5a)') '# R',tab,'Z',tab,'S'
@@ -87,7 +87,7 @@ c<<<
           open(lun_t,file='targ-rlc.dat')
           write(lun_t,'(2a)') '# Target geometry : ',trim(label)
           write(lun_t,
-     ,     '(a1,4x,a2,12x,a2,12x,a2,12x,a2,11x,'//
+     ,     '(a1,12x,a2,12x,a2,12x,a2,12x,a2,11x,'//
      ,      'a3,11x,a3,11x,a3,10x,a5,9x,a5,9x,a5)')
      ,      '#','Rb','Zb','Re','Ze',
      ,      'ddx','ddy','uda','anglb','angle','radld'
@@ -179,8 +179,8 @@ c>>>
           end if
 c<<<
           if(uu_dbg) then
-            write(lun_t,'(1p,10(e12.5,2x))')
-     ,         xb,yb,uu_xe,uu_ye,ddx,ddy,uda/udpi,anglb,angle,radld(j)
+            write(lun_t,'(1p,i6,2x,10(e12.5,2x))')
+     ,        j,xb,yb,uu_xe,uu_ye,ddx,ddy,uda/udpi,anglb,angle,radld(j)
             if (i.eq.1) then
               write(lun_l,*) xb,tab,yb
               write(lun_l,*) uu_xe,tab,uu_ye

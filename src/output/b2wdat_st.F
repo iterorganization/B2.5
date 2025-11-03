@@ -16,10 +16,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_elements
-!      use b2mod_sign_of_magnetic_field
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
@@ -48,13 +45,12 @@
 *   ..local variables
       integer ncall
 #ifdef WG_TODO
-      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA           !srv 05.10.01 03.04.13 19.04.13
+      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA            !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
-      integer, save :: use_mms = 0                                 !srv 26.02.18
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
@@ -122,7 +118,6 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti('b2mndr_use_mms', use_mms)                     !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
        call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -1659,10 +1654,7 @@ c     calculate coordinates of cell centre
        close(70)
 
       endif              !srv   endif for iout=1 .or. iout=3
-      
-      if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
-        call calc_err(nx, ny, ns)
-      endif                                                             !srv 26.02.18 }
+
 #endif
 * ..return
       ncall = ncall+1

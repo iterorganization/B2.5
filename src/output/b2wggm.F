@@ -18,7 +18,6 @@
 *     (none)
 *   ..common blocks
 
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -197,6 +196,7 @@
       endif
 
 * ..return
+      flush (nprt)
       call subend ()
       return
 

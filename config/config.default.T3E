@@ -33,8 +33,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /opt/ctl/cf90/cf90/lib/ftpp -F
@@ -43,6 +43,7 @@ CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)
 SED = sed s:\#PREC\#:d:g
 
 FC = f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -v -g -dp
 else
@@ -64,9 +65,11 @@ endif
 
 LD = ${FC} -lapp
 LD = ${FC}
+LN = ${FN}
 
 LDOPTS = -l /usr/local/pat/libpat.a /usr/local/pat/pat.cld
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

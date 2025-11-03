@@ -1,14 +1,10 @@
-  b2plot_extra
   chord
   species
   extend
   init_wall
   mapx
   mapy
-  find_faces
-  b2agbf
   b2wfcp
   b2wucp
   b2wups
   b2wuzd
-  b2agx0

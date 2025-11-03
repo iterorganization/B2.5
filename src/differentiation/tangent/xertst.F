@@ -17,10 +17,8 @@
       end subroutine xertst
 
       subroutine b25_mpi_stop
-#ifdef USE_MPI
-#if MPI_MOD > 0
+#if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi     ! IGNORE
-#endif
 #endif
       implicit none
 #ifdef USE_MPI

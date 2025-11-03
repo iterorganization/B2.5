@@ -4,7 +4,7 @@
       use b2us_map
       use b2mod_subsys
       implicit none
-      integer nCv, nFc
+      integer, intent (in) :: nCv, nFc
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::

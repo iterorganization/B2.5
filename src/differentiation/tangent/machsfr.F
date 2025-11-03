@@ -41,3 +41,33 @@
       return
 *     ------------------------------------------------------------------
       end function machsfr
+
+      function machsfr4 ()
+      use b2mod_types
+      implicit none
+      real (kind=R4) ::
+     *   machsfr4
+*     ------------------------------------------------------------------
+*     MACHSFR4 returns the safe numerical range (a tiny positive machine
+*     value e0 for which -e0, 1/e0, -1/e0 are all computable).
+*     This routine is for simple-precision arithmetic.
+*!!   This routine may contain system dependencies.
+*     ------------------------------------------------------------------
+      integer small
+      real (kind=R4) ::
+     *   mchsfr
+      equivalence (mchsfr,small)
+      data small/8388614/
+*$$$  data small/8388608/ ! this value is given in r1mach, see below.
+*     ------------------------------------------------------------------
+*     It is assumed that we have IEEE arithmetic.
+*     It was found that if mchsfr is set exactly as in r1mach, i.e.
+*     using small=8388608, then the expression exp(log(mchsfr)) raises
+*     an underflow exception on the Sparc (f77 with libraries SC1.0).
+*     Using a slightly larger value, small=8388614, avoids that problem.
+*     The decimal equivalent value is about 1.1755e-38 in either case.
+*     ------------------------------------------------------------------
+      machsfr4 = mchsfr
+      return
+*     ------------------------------------------------------------------
+      end function machsfr4

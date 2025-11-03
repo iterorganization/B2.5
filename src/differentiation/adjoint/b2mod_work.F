@@ -101,6 +101,7 @@
 
       subroutine dealloc_b2mod_work
 
+      if (.not.allocated(conb)) return
       deallocate(conb)
       deallocate(conc)
       deallocate(cone)

@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=412,nfns=219,nsparameters=34,nelabels=36,
+      parameter(nlabels=416,nfns=220,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -109,10 +109,11 @@
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
      *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     , 'iclt'    /
-      data labels(401:412) /
+      data labels(401:416) /
      1  'icle'    , 'iceq'    , 'icne'    , 'icge'    , 'icgt'    ,
      2  'ifeq'    , 'iveq'    , 'ic'      , 'iimp'    , 'iomp'    ,
-     3  'clbl'    , 'tlbl'    /
+     3  'clbl'    , 'tlbl'    , 'bdcl'    , 'npcl'    , 'colle'   ,
+     4  'colli'   /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -236,7 +237,7 @@
      *    'Ionisation energy (eV) [shifted down one]'/
       data descriptions(111:120) /
      1    'Self-pressure force',
-     2    'Region',
+     2    'Volume region index',
      3    'Parallel momentum source (N)',
      4    'Momentum sources from atomic physics (N)',
      5    'Extended friction term (N)',
@@ -308,8 +309,8 @@
      5    'bottomiy',
      6    'topix',
      7    'topiy',
-     8    'real cells',
-     9    'guard cells',
+     8    'Real cells',
+     9    'Guard cells',
      *    'Test ion density (m^{-3})'/
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
@@ -385,7 +386,7 @@
      5    'Parallel electron velocity (u_{e}) (m.s^{-1})',
      6    'Parallel current (A)',
      7    'Squared ion charge (e^{2})',
-     8    'Flux region index',
+     8    'Face region index',
      9    'Face label',
      *    'Nuclear sequence index'/
       data descriptions(251:260) /
@@ -564,9 +565,13 @@
      8    'ic',
      9    'Inner midplane cells',
      *    'Outer midplane cells'/
-      data descriptions(411:412) /
+      data descriptions(411:416) /
      1    'Cell label',
-     2    'Flux tube label'/
+     2    'Flux tube label',
+     3    'Boundary cells',
+     4    'Neutral pressure cells',
+     5    'Electron collision number',
+     6    'Main ion collision number'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -655,10 +660,11 @@
      8    1,      1,      1,      1,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      1/
-      data dimensions(401:412) /
+      data dimensions(401:416) /
      1    1,      1,      1,      1,      1,
      2    1,      1,      1,      1,      1,
-     3    1,      1/
+     3    1,      1,      1,      1,      1,
+     4    1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -703,11 +709,11 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:219) /
+      data fns(201:220) /
      1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
      2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  ,
      3 'fcol' , 'bold' , 'rmaj' , 'f.imp'  , 'f.omp' ,
-     4 'f.t'  , 'sumft', 't_xy' , 'icse'   /
+     4 'f.t'  , 'sumft', 't_xy' , 'icse'   , 'fteq'  /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',

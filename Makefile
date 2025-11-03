@@ -24,7 +24,7 @@ ifndef SOLPS_CPP
     include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
     MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
   else
-    $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
+    $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found. Assuming stand-alone compilation.)
   endif
   ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
     include ${SOLPSTOP}/SETUP/config.common.${COMPILER}
@@ -73,11 +73,11 @@ endif
 ifdef USE_IMPGYRO
 EXT_IMPGYRO = .ig
 else
-ifdef USE_MPI
+ifdef SOLPS_MPI
 EXT_MPI = .mpi
 endif
 endif
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 EXT_OPENMP = .openmp
 endif
 ifdef SOLPS_DEBUG
@@ -96,6 +96,11 @@ EXT_DIFF = .diff_b
 DIFF = yes
 DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
+ifdef DIFF_DD
+EXT_DIFF = .diff_dd
+DIFF = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
+endif
 ifdef TGT
 EXT_DIFF = .tgt
 DIFF = yes
@@ -105,6 +110,11 @@ ifdef ADJ
 EXT_DIFF = .adj
 DIFF = yes
 DIFFDIR = src/differentiation/adjoint
+endif
+ifdef HESS_TGT
+EXT_DIFF = .hess_tgt
+DIFF = yes
+DIFFDIR = src/differentiation/hessian_tgt
 endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
@@ -126,7 +136,7 @@ ifdef USE_IMPGYRO
   USE_MPI ?= -DUSE_MPI
   include ${OBJDIR}/mpiversion.mk
 else
- ifdef USE_MPI
+ ifdef SOLPS_MPI
   include ${OBJDIR}/mpiversion.mk
  endif
 endif
@@ -141,15 +151,27 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && ec
   MAKES += ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
+# Verify that some needed variables are defined
+ifndef LD_MSCL
+ifndef SOLPS_CPP
+$(error LD_MSCL not defined!)
+else
+$(error LD_MSCL not defined. Run the install_dependencies script first.)
+endif
+endif
+
 # Add external includes first
 ifdef NCDIR
 SOLPSINCLUDE += -I${NCDIR}/include
+ifeq ($(UNAME),Darwin)
+SOLPSINCLUDE += -I${NCFDIR}/include
+endif
 endif
 
 ifdef USE_IMPGYRO
 SOLPSINCLUDE += ${MPI_CPP}
 else
-ifdef USE_MPI
+ifdef SOLPS_MPI
 SOLPSINCLUDE += ${MPI_CPP}
 else
 SOLPSINCLUDE += -I${SRCDIR}/mpi_dummy
@@ -222,8 +244,10 @@ TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 #TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
 IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
-ifneq ($(shell `pkg-config --exists petsc`; echo $$?),0)
 ifdef TAO
+ifdef TAO_NEW
+DEFINES += -DTAO_NEW
+endif
 SOLPSINCLUDE += -I${PETSC_DIR}/include
 MODINCLUDE += -I${PETSC_DIR}/include
 ifdef PETSC_ARCH
@@ -233,20 +257,19 @@ MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
 endif
 endif
 endif
-endif
 
 ifdef USE_MPI
-DEFINES += ${USE_MPI}
+DPFINES += ${USE_MPI}
 else
 ifeq ($(shell [ -d ${SOLPSTOP}/modules/solps4-5/src/Eirene_commons ] && echo yes || echo no ),yes)
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
 endif
 endif
 ifdef USE_OPENMP
-DEFINES += ${USE_OPENMP}
+DPFINES += ${USE_OPENMP}
 endif
 ifdef USE_IMPGYRO
-DEFINES += ${USE_IMPGYRO}
+DPFINES += ${USE_IMPGYRO}
 endif
 ifdef PERFMON
 DEFINES += ${PERFMON}
@@ -266,9 +289,15 @@ endif
 ifdef DIFF_B
 DEFINES += -DADJ
 endif
+ifdef DIFF_DD
+DEFINES += -DHESS
+endif
 ifdef TGT
 DEFINES += -DTGT
 endif
+#ifdef HESS_TGT
+#DEFINES += -DHESS_TGT
+#endif
 ifdef ADJ
 DEFINES += -DADJ
 endif
@@ -384,7 +413,7 @@ endif
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
-PROG_AM = b2ar.exe
+PROG_AM = b2ab.exe b2ar.exe
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2ai.exe b2fu.exe b2ts.exe b2uf.exe b2us.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe b2plasmastate_inspect.exe calc_atomic_data.exe
 PROG_CO = b2co.exe
@@ -399,17 +428,18 @@ PROG_NC = nc2text_simple.exe
 PROG_NR = nc_reduce.exe
 PROG_MND = b2mn_d.exe
 PROG_MNB = b2mn_b.exe
+PROG_MNH = b2mn_hess.exe
 ifdef OPT
 PROG_OPT = b2optim_${OPT}.exe
 endif
-OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
+OPTEXCL = b2optim_tao.exe
 
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
 ADEXTRA =
 ifdef DIFF_D
-ADEXTRA += ${CONTEXTAD}
+ADEXTRA += ${CONTEXTAD} ${JSONAD}
 endif
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
@@ -440,19 +470,24 @@ NREXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NR}}
 MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
 MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
 OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
+MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
+
 CONTEXTAD = ${OBJDIR}/adContext.o
+JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT ADJOINT DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_DD: VERSION ${MNHEXE}
 TANGENT: VERSION ${MNDEXE} ${OPTEXE}
 ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
+HESS_TGT: VERSION ${MNHEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -489,7 +524,7 @@ MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
-MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90 
+MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
@@ -541,6 +576,15 @@ ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
 
 ${DOCDIR}/b2cdcn.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdcn.py
 	-cd ${DOCDIR}; ${PYTHON} b2cdcn.py || echo "! Error building b2cdcn.F from b2input.xml" > ${DOCDIR}/b2cdcn.F
+
+DIMSDIR = ${SRCDIR}/modules
+ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
+DIMSDIR = ${SRCDIR}/modules.local
+endif
+DEFINES += -DDIMENSIONS_MODULE # this is needed for makedepend for Eirene
+
+${DIFFDIR}/b2mod_dimensions.F: ${DIMSDIR}/b2mod_dimensions.F
+	ln -sf  $< ${DIFFDIR}
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
@@ -935,6 +979,9 @@ ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 ${OBJDIR}/eirmod_braeir.${MOD}:
 	touch ${OBJDIR}/eirmod_braeir.${MOD}
 
+${OBJDIR}/eirmod_cadgeo.${MOD}:
+	touch ${OBJDIR}/eirmod_cadgeo.${MOD}
+
 ${OBJDIR}/eirmod_ccona.${MOD}:
 	touch ${OBJDIR}/eirmod_ccona.${MOD}
 
@@ -946,6 +993,9 @@ ${OBJDIR}/eirmod_cestim.${MOD}:
 
 ${OBJDIR}/eirmod_cgeom.${MOD}:
 	touch ${OBJDIR}/eirmod_cgeom.${MOD}
+
+${OBJDIR}/eirmod_cgrid.${MOD}:
+	touch ${OBJDIR}/eirmod_cgrid.${MOD}
 
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
@@ -962,8 +1012,14 @@ ${OBJDIR}/eirmod_comprt.${MOD}:
 ${OBJDIR}/eirmod_comsou.${MOD}:
 	touch ${OBJDIR}/eirmod_comsou.${MOD}
 
+${OBJDIR}/eirmod_comspl.${MOD}:
+	touch ${OBJDIR}/eirmod_comspl.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
+
+${OBJDIR}/eirmod_comxs.${MOD}:
+	touch ${OBJDIR}/eirmod_comxs.${MOD}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
@@ -971,11 +1027,29 @@ ${OBJDIR}/eirmod_coutau.${MOD}:
 ${OBJDIR}/eirmod_cpes.${MOD}:
 	touch ${OBJDIR}/eirmod_cpes.${MOD}
 
+${OBJDIR}/eirmod_cplot.${MOD}:
+	touch ${OBJDIR}/eirmod_cplot.${MOD}
+
+${OBJDIR}/eirmod_cpolyg.${MOD}:
+	touch ${OBJDIR}/eirmod_cpolyg.${MOD}
+
+${OBJDIR}/eirmod_csdvi.${MOD}:
+	touch ${OBJDIR}/eirmod_csdvi.${MOD}
+
+${OBJDIR}/eirmod_ctetra.${MOD}:
+	touch ${OBJDIR}/eirmod_ctetra.${MOD}
+
+${OBJDIR}/eirmod_ctext.${MOD}:
+	touch ${OBJDIR}/eirmod_ctext.${MOD}
+
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}
+
+${OBJDIR}/eirmod_czt1.${MOD}:
+	touch ${OBJDIR}/eirmod_czt1.${MOD}
 
 ${OBJDIR}/eirmod_eirbra.${MOD}:
 	touch ${OBJDIR}/eirmod_eirbra.${MOD}
@@ -1016,14 +1090,14 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
 ${OBJDIR}/b2stel.o: b2stel.F
 	@- /bin/rm -f ${OBJDIR}/b2stel.f ${OBJDIR}/b2stel.o ${OBJDIR}/b2stel.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel.f
 endif
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel.o ${OBJDIR}/b2stel.f
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel.o ${OBJDIR}/b2stel.f
 endif
 	@if [ -f b2stel.o ] ; then /bin/mv b2stel.o ${OBJDIR}/ ; fi
 	@if [ -f b2stel.${MOD} ] ; then /bin/mv b2stel.${MOD} ${OBJDIR}/ ; fi
@@ -1033,14 +1107,14 @@ endif
 ${OBJDIR}/b2stel_b.o: b2stel_b.F90
 	@- /bin/rm -f ${OBJDIR}/b2stel_b.f90 ${OBJDIR}/b2stel_b.o ${OBJDIR}/b2stel_b.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_b.f90
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_b.f90
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_b.f90
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_b.f90
 endif
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_b.o ${OBJDIR}/b2stel_b.f90
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_b.o ${OBJDIR}/b2stel_b.f90
 endif
 	@if [ -f b2stel_b.o ] ; then /bin/mv b2stel_b.o ${OBJDIR}/ ; fi
 	@if [ -f b2stel_b.${MOD} ] ; then /bin/mv b2stel_b.${MOD} ${OBJDIR}/ ; fi
@@ -1052,14 +1126,14 @@ endif
 ${OBJDIR}/b2stel_dv.o: b2stel_dv.F90
 	@- /bin/rm -f ${OBJDIR}/b2stel_dv.f90 ${OBJDIR}/b2stel_dv.o ${OBJDIR}/b2stel_dv.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_dv.f90
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_dv.f90
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_dv.f90
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_dv.f90
 endif
-	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_dv.o ${OBJDIR}/b2stel_dv.f90
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_dv.o ${OBJDIR}/b2stel_dv.f90
 endif
 	@if [ -f b2stel_dv.o ] ; then /bin/mv b2stel_dv.o ${OBJDIR}/ ; fi
 	@if [ -f b2stel_dv.${MOD} ] ; then /bin/mv b2stel_dv.${MOD} ${OBJDIR}/ ; fi
@@ -1067,6 +1141,29 @@ endif
 	@if [ -f b2stel_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv__genmod.${MOD} ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+
+${OBJDIR}/b2stel_dv_dv.o: b2stel_dv_dv.F90
+	@- /bin/rm -f ${OBJDIR}/b2stel_dv_dv.f90 ${OBJDIR}/b2stel_dv_dv.o ${OBJDIR}/b2stel_dv_dv.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_dv_dv.f90
+else
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_dv_dv.f90
+endif
+	${FC} ${FNOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_dv_dv.o ${OBJDIR}/b2stel_dv_dv.f90
+endif
+	@if [ -f b2stel_dv_dv.o ] ; then /bin/mv b2stel_dv_dv.o ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv.${MOD} ] ; then /bin/mv b2stel_dv_dv.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv__genmod.f90 ] ; then /bin/mv b2stel_dv_dv__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv_dv__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_nodiff__genmod.f90 ] ; then /bin/mv b2stel_dv_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_dv_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
 endif
 endif
 
@@ -1075,30 +1172,30 @@ ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -ge 10; echo $$?),0)
 ${OBJDIR}/b2mod_mdsplus.o: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 	@if [ -f b2mod_mdsplus.${MOD} ] ; then /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ ; fi
 
 ifneq (${MOD},o)
-${OBJDIR}/b2mod_mdsplus.${MOD} : b2mod_mdsplus.F
+${OBJDIR}/b2mod_mdsplus.${MOD}: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 ifeq ($(strip $(LINK_MOD)),)
@@ -1111,85 +1208,99 @@ endif
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${AMEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${AMEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${AMEXTRA} ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${AMEXTRA} ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
 
 ${OEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
 
 ${COEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${PLLIBES} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${PLLIBES} ${LDLIBES} ${LDOPTSend}
 
 ${OPEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
 ${OQEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
 ${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES}
 
 ${GEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${PLLIBES} ${GRLIBES} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${PLLIBES} ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
 ${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${GRLIBES} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
 ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${OBJDIR}/libsolps4.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${OBJDIR}/libsolps4.a ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${OBJDIR}/libsolps4.a ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
 ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
+ifndef COMPILER_REDEF
+	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
 	@-ln -sf $@ ${NCXDIR}/$*
 	@-ln -sf ${NCXDIR}/nc2text_simple ${NCXDIR}/nc2text
 else
-	$(warning NETCDF library not present!)
+	$(warning Compiler type was redefined: skipping!)
+endif
+else
+	$(warning nc2text_simple compilation skipped because netCDF library not present)
 endif
 
 ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${MAKES}
 ifdef LD_NETCDF
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
+ifndef COMPILER_REDEF
+	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
 	@-ln -sf $@ ${NCXDIR}/$*
 endif
 else
-	$(warning NETCDF library not present!)
+	$(warning Compiler type was redefined: skipping!)
+endif
+else
+	$(warning nc_reduce compilation skipped because netCDF library not present)
 endif
 
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
 endif
 
-${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
-	cc -c $< -o $@
+${MNHEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+
+${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h ${JSONAD}
+	${CC} -c $< -o $@
+
+${JSONAD}: ${DIFFPATH}/json.c ${DIFFPATH}/json.h
+	${CC} -c $< -o $@
 
 ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
-	cc -c $< -o $@
+	${CC} -c $< -o $@
 
 ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
-	cc -c $< -o $@
+	${CC} -c $< -o $@
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
@@ -1204,50 +1315,50 @@ nc_reduce: ${NREXE}
 
 ${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
 ifdef LD_NETCDF
+ifndef COMPILER_REDEF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
-else
-	$(warning NETCDF library not present!)
+	${FN} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
+endif
 endif
 
 ${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_stack.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
 ifdef LD_NETCDF
+ifndef COMPILER_REDEF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODN} -o $*.o $*.F90
-else
-	$(warning NETCDF library not present!)
+	${FN} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODN} -o $*.o $*.F90
+endif
 endif
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${DPFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${DPFINES} -DSOLPS_ITER -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
 ${EIR4OBJS}: ${OBJDIR}/%.o: ${EIR4}/%.F
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} -DDIMENSIONS_MODULE ${EQUIVS} ${SOLPSINCLUDE} ${OBJDEST} -c $?
 
 ${EIR4MODS}: ${OBJDIR}/%.${MOD}: ${EIR4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} ${SOLPS4INCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${DPFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${DPFINES} -DDIMENSIONS_MODULE ${EQUIVS} -P ${SOLPSINCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
 	@touch ${OBJDIR}/$*.${MOD}
 endif
 
@@ -1329,7 +1440,7 @@ endif
 
 else
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
+depend: ${DIFFDIR}/b2mod_dimensions.F ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${SOLPSINCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
 	sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies
@@ -1441,14 +1552,14 @@ ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F
 	@- /bin/rm -f ${OBJDIR}/b2stbc.f ${OBJDIR}/b2stbc.o
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stbc.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stbc.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stbc.f
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stbc.f
 endif
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -O1 -c ${INCMOD}${OBJDIR} ${OBJDIR}/b2stbc.f
+	${FC} ${FCOPTS} ${FPOPTS} ${FFLAGSEXTRA} -O1 -c ${INCMOD}${OBJDIR} ${OBJDIR}/b2stbc.f
 endif
 	@if [ -f b2stbc.o ] ; then /bin/mv b2stbc.o ${OBJDIR}/ ; fi
 endif
@@ -1458,6 +1569,7 @@ echo:
 	@echo SOLPSINCLUDE=${SOLPSINCLUDE}
 	@echo LDLIBES=${LDLIBES}
 	@echo DEFINES=${DEFINES}
+	@echo DPFINES=${DPFINES}
 	@echo EQUIVS=${EQUIVS}
 	@echo VPATH=${VPATH}
 	@echo FPATH=${FPATH}
@@ -1496,7 +1608,7 @@ echo:
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
-${SRCLOCAL}/b2local.F:
+${SRCLOCAL}/b2local.F: ${MAKES}
 	mkdir -p ${SRCLOCAL}
 	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
@@ -1505,17 +1617,17 @@ ${SRCLOCAL}/b2local.F:
 	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end" >> ${SRCLOCAL}/b2local.F
+	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
 
-${MODLOCAL}/b2mod_local.F:
+${MODLOCAL}/b2mod_local.F: ${MAKES}
 	mkdir -p ${MODLOCAL}
 	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end" >> ${MODLOCAL}/b2mod_local.F
+	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
 
-${INCLOCAL}/b2local.h:
+${INCLOCAL}/b2local.h: ${MAKES}
 	mkdir -p ${INCLOCAL}
 	echo "c" > ${INCLOCAL}/b2local.h
 	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h
@@ -1526,7 +1638,7 @@ ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else
 	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=1'\nEND\n" > ${OBJDIR}/mpi_version.f90
-	( ${FC} ${FCOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || \
+	( ${FC} ${FCOPTS} ${FPOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || \
 	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND\n" > ${OBJDIR}/mpi_version.f90 ; \
-	${FC} ${FCOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk
+	${FC} ${FCOPTS} ${FPOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk
 endif

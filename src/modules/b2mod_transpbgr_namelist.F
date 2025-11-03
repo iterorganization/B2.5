@@ -1,4 +1,3 @@
-
       module b2mod_transpbgr_namelist
       use b2mod_types
 
@@ -9,7 +8,7 @@
 
       subroutine read_b2mod_transpbgr_namelist
 
-      namelist /transpbgr/ fix_dna,fix_hci,fix_hce
+      namelist /transpbgr/ fix_dna, fix_hci, fix_hce
       character*256 filename
       logical :: file_ok
 
@@ -41,7 +40,7 @@
 
       subroutine write_b2mod_transpbgr_namelist
 
-      namelist /transpbgr/  fix_dna,fix_hci,fix_hce
+      namelist /transpbgr/ fix_dna, fix_hci, fix_hce
 
       write(*,transpbgr)
 

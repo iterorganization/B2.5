@@ -221,9 +221,7 @@ fort += """*--------------------------------------------------------------------
 *.end b2cdci
 
       end subroutine b2cdci
-
 """
-
 
 if sys.version_info[0] >= 3:
     f = open('b2cdci.F', 'wb')
