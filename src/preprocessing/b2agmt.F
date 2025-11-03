@@ -221,6 +221,7 @@
             g%cvVol(iCv) = g%cvSz(iCv)*width
             call calc_psi_cellcenter(g,m,iCv,psic,isymm)
             cvFpsi(iCv) = psic
+
           elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about x=0 axis
             if (volhmk.eq.0) then
               g%cvX(iCv) = sum(g%vxX(verts)) / real(nv,R8)
@@ -233,11 +234,12 @@
             endif
             ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+
           elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about y=0
             if (volhmk.eq.0) then
-              g%cvX(iCv) = sum(g%vxX(verts)) / nv
-              g%cvY(iCv) = sum(g%vxY(verts)) / nv
-              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
+              g%cvX(iCv) = sum(g%vxX(verts)) / real(nv,R8)
+              g%cvY(iCv) = sum(g%vxY(verts)) / real(nv,R8)
+              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / real(nv,R8)
             else
               ! Calculate the cell center similar to the method for the triangle cell center
               call calc_psi_cellcenter(g,m,iCv,psic,isymm)
@@ -796,7 +798,7 @@ cnv   but now for quads
 
 *-----------------------------------------------------------------------
 
-      subroutine recalc_guard_bb(m,g,isymm,bc,iCv, v1, v2)
+      subroutine recalc_guard_bb(m,g,isymm,bc,iCv,v1,v2)
       use b2mod_types
       use b2us_map
       use b2us_geo
@@ -815,9 +817,9 @@ cnv   but now for quads
       allocate(verts(nv))
 
       verts = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+nv-1)
-      bcBb(0) = 0.25_R8 * sum( g%vxBb(verts,0) )
-      bcBb(1) = 0.25_R8 * sum( g%vxBb(verts,1) )
-      bcBb(2) = 0.25_R8 * sum( g%vxFfbz(verts))
+      bcBb(0) = sum( g%vxBb(verts,0) ) / real(nv,R8)
+      bcBb(1) = sum( g%vxBb(verts,1) ) / real(nv,R8)
+      bcBb(2) = sum( g%vxFfbz(verts) ) / real(nv,R8)
 
       !2. construct 3d-plane with two guard cell vertices and cell center
       ! p(0)*x+ p(1)*y + p(2)*z = d met x = x-coordinate, y = y-coordinate, z = bb-value

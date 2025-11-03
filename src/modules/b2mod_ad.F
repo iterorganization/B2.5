@@ -10,7 +10,7 @@
       integer CVREGMAX
       parameter (CVREGMAX=100)
       integer nncf
-      parameter (nncf=8)
+      parameter (nncf=DEF_NCF)
 
       character(7), save :: my_out_folder
 #ifdef WG_DEBUG
@@ -40,6 +40,10 @@
       real (kind=R8), save :: b2srst_kt_eps = 1.0e-60_R8
       real (kind=R8), save :: b2srst_zt_eps = 1.0e-60_R8
 
+      real (kind=R8), save :: rxg_npco = 1.0_R8
+      real (kind=R8), save :: rxg_npmo = 1.0_R8
+      real (kind=R8), save :: rxg_npht = 1.0e6_R8
+
       logical, save :: b2npmo_solvedum(0:CVREGMAX) = .true.
 
       logical, save :: b2news_solving(4) = .true.    !srv 06.07.00
@@ -47,9 +51,28 @@
       real (kind=R8), save :: cfnorm(nncf), vold(nncf)
       real (kind=R8), allocatable, save :: b2data(:), b2dataOnCf(:)
       real (kind=R8), allocatable, save :: b2rr(:,:), b2volOnCf(:,:)
+      real (kind=R8), allocatable, save :: b2psi(:,:)
+      integer, save :: ompind(nncf,2) = 0
 
       logical, save :: test_residual = .false. 
       integer, save :: b2mndt_itcnt = 0
+      integer, save :: nsmooth_tvsq = 2
+      integer, save :: nsmooth_siav = 2
+      integer, save :: nsmooth_siav_zh = 2
+      integer, save :: in_no_of_start_points = 0, in_no_of_angles = 9,
+     & in_size_of_table = 200000
+      integer, save :: icase_sifr = 0
+      integer, save :: nnucl_tral = 0
+      integer, save :: sources_inputfile = 0
+      integer, save :: diagno_srsm = 0
+
+! some variables for chord_find
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
+      integer, save :: covered(lngcov,lngcov), cvcov(lngind),
+     &  icov(lngind), iCvsv
+      real (kind=R8), save :: rmin, rmax, zmin, zmax
+      logical, save :: first = .true.
 
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
@@ -64,6 +87,10 @@
      &  '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))',
      &  '(1p,9(1x,e13.5e3))', '(1p,10(1x,e12.4e3))'/
 
+      character, save :: fmtwuin(0:6)*32
+      data fmtwuin /'(8(1x,i15))', '(10(1x,i12))', '(12(1x,i10))',
+     &  '(14(1x,i8))', '(16(1x,i7))', '(18(1x,i6))', '(22(1x,i5))'/
+
 ! ncall variables from transport routines
       integer, save :: ncall_b2tcpa = 0, ncall_b2tfcc = 0,
      & ncall_b2tfch = 0, ncall_b2tfed = 0, ncall_b2tfhe = 0,
@@ -73,7 +100,7 @@
      & ncall_b2tqce = 0, ncall_b2tqin = 0, ncall_b2tqna = 0,
      & ncall_b2tral = 0, ncall_transp_keps = 0, ncall_b2trcl = 0,
      & ncall_b2treq = 0, ncall_b2trno = 0, ncall_b2trql = 0,
-     & ncall_b2ttia = 0, ncall_b2tiner = 0, ncall_b2trzh = 0,
+     & ncall_b2ttia = 0, ncall_b2trzh = 0,
 ! ncall variables from sources routines
      & ncall_b2siav = 0, ncall_b2sigp = 0, ncall_b2sihs_ = 0,
      & ncall_b2sikt = 0, ncall_b2spcx = 0, ncall_b2spel = 0,
@@ -100,7 +127,6 @@
       integer, save :: gradient_iterations = 0, primal_iterations = 0
       real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8
 
-
 #ifdef _OPENMP
 ! ncall_b2news_ is NOT threadprivate but shared!
 !$omp threadprivate(ncall_b2tcpa , ncall_b2tfcc )
@@ -111,7 +137,7 @@
 !$omp threadprivate( ncall_b2tqce , ncall_b2tqin , ncall_b2tqna )
 !$omp threadprivate( ncall_b2tral , ncall_transp_keps , ncall_b2trcl)
 !$omp threadprivate( ncall_b2treq , ncall_b2trno , ncall_b2trql )
-!$omp threadprivate( ncall_b2ttia , ncall_b2tiner , ncall_b2trzh)
+!$omp threadprivate( ncall_b2ttia , ncall_b2trzh)
 !$omp threadprivate( ncall_b2siav , ncall_b2sigp , ncall_b2sihs_ )
 !$omp threadprivate( ncall_b2sikt , ncall_b2spcx , ncall_b2spel )
 !$omp threadprivate( ncall_b2sqcx , ncall_b2sqel , ncall_b2sral )
@@ -134,5 +160,6 @@
 !$omp threadprivate( primal_res, gradient_res)
 #endif
 
+      logical, save :: firstgmid = .true.
 
       end module b2mod_ad

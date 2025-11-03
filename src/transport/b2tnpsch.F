@@ -1,4 +1,4 @@
-      subroutine b2tnpsch(nCv, nFc, nVx, isb, switch, geo, mpg,
+      subroutine b2tnpsch(nCv, nFc, nVx, switch, geo, mpg,
      &    facdrift, cddb, ti, nb, kmprti, flob, conb, fnbPSch)
       use b2mod_types
       use b2mod_b2cmpa
@@ -8,7 +8,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer nCv, nFc, nVx
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

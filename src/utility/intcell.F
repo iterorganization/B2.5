@@ -2,7 +2,7 @@
       use b2mod_types
       use b2us_map
       implicit none
-      integer nCv,nFc,nz
+      integer, intent (in) :: nCv,nFc,nz
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   wght(mpg%nCmxFc),face(nFc,0:nz),centre(nCv,0:nz)
@@ -18,21 +18,19 @@ c
       use b2mod_types
       use b2us_map
       implicit none
-      integer nCv,nFc
+      integer, intent (in) :: nCv,nFc
       type (mapping), intent (in) :: mpg
-      real (kind=R8), intent(in) ::
-     *   wght(mpg%nCmxFc),face(nFc)
-      real (kind=R8), intent(out) :: centre(nCv)
-  
+      real (kind=R8) ::
+     *   wght(mpg%nCmxFc),face(nFc),centre(nCv)
       integer iFc,iCv
       real (kind=R8) :: wghtsum
 
-      centre=0.0_R8
+      centre = 0.0_R8
       do iCv = 1, nCv
         wghtsum = 0.0_R8
-        do iFc = 1,mpg%cvFcP(iCv,2)
+        do iFc = 1, mpg%cvFcP(iCv,2)
           wghtsum = wghtsum + wght(mpg%cvFcP(iCv,1) + iFc - 1)
-          centre(iCv) = centre(iCv) + 
+          centre(iCv) = centre(iCv) +
      &      face(mpg%cvFc(mpg%cvFcP(iCv,1) + iFc - 1))*
      &      wght(mpg%cvFcP(iCv,1) + iFc - 1)
         enddo

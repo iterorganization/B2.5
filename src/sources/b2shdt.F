@@ -5,7 +5,6 @@
      &  cvVol, nap, tep, tip, tnp, ktp, ztp, ne, ni, nn, kinrgyp,
      &  switch, mpg, shedt, shidt, shndt, sktdt, sztdt)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
@@ -14,6 +13,10 @@
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2shdt
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -43,15 +46,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, k
+      integer iCv, is, k
       character chk*1                                                !srv 11.09.09 }
       real (kind=R8) ::
      *   t0, ttim
 *   ..procedures
       external xertst
       external b2xvsg
-*   ..initialisation
-      data ncall/0/                                                  !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -62,7 +63,7 @@
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2shdt.lt.3) then
 *    ..test old state
        call b2xvsg (nCv*ns, nap, 1, 'nap', '.gt.')
        call b2xvsg (nCv, tep, 1, 'tep', '.gt.')
@@ -77,11 +78,13 @@
      &   'Warning: b2srdt_phm3 should be 1.0 for time-dependent mode'
       endif
 
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
 *   ..modify shedt, shidt, shndt
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
         shedt(iCv,0) = 1.5_R8*t0*ne(iCv)*tep(iCv)               !srv 06.01.21 {
         shedt(iCv,1) = 0.0_R8
         shedt(iCv,2) = 0.0_R8
@@ -90,7 +93,7 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
         if (switch%tn_style.eq.0) then
           shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)           !srv 06.01.21 {
           shidt(iCv,1) = 0.0_R8
@@ -119,7 +122,7 @@
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           shndt(iCv,0) = 1.5_R8*t0*nn(iCv)*tnp(iCv)               !srv 06.01.21 {
           shndt(iCv,1) = 0.0_R8
           shndt(iCv,2) = 0.0_R8
@@ -130,7 +133,7 @@
       if (switch%solve_keps.gt.0) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           sktdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ktp(iCv)
           sktdt(iCv,1) = 0.0_R8
           sktdt(iCv,2) = 0.0_R8
@@ -141,7 +144,7 @@
       if (switch%solve_keps.gt.1) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           sztdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ztp(iCv)
           sztdt(iCv,1) = 0.0_R8
           sztdt(iCv,2) = 0.0_R8
@@ -169,7 +172,7 @@ cdjm Store the total change in linearised sources for balance
       endif                                                           !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2shdt = ncall_b2shdt+1
       call subend ()
       return
 

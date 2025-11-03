@@ -3,9 +3,9 @@
 c  version : 08.08.2000 11:35
 
       use b2mod_types
+      use b2mod_eirreac
       use b2mod_constants
       implicit none
-#     include <eir_reac.F>
       integer iarg,iostat,nden,iden
       integer ir,i_k,i_l,i_m,i_n,i,j,ii,ifex
       real (kind=R8) :: D11(0:8,0:8),density(101),csx(101)

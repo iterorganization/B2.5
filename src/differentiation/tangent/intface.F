@@ -6,6 +6,7 @@
       real (kind=R8) ::
      *   fcVol(nFc,2),centre(nCv,0:nz),face(nFc,0:nz)
       integer is
+      external intface
       do is=0,nz
         call intface(nCv,nFc,fcCv,fcVol,centre(1,is),face(1,is))
       enddo
@@ -37,16 +38,16 @@ c
       use b2mod_types
       implicit none
 
-      integer, intent(in):: nCv,nFc, iFc
+      integer, intent(in):: nCv,nFc,iFc
       integer, intent(in) :: fcCv(nFc,2)
       real (kind=R8), intent(in) ::
      *   fcVol(nFc,2),centre(nCv)
       real (kind=R8) :: face
 
-        face =
-     &    (fcVol(iFc,1)*centre(fcCv(iFc,2))+
-     &     fcVol(iFc,2)*centre(fcCv(iFc,1)))/
-     &    (fcVol(iFc,1)+fcVol(iFc,2))
+      face =
+     &  (fcVol(iFc,1)*centre(fcCv(iFc,2))+
+     &   fcVol(iFc,2)*centre(fcCv(iFc,1)))/
+     &  (fcVol(iFc,1)+fcVol(iFc,2))
      
       return
       end function intface_s

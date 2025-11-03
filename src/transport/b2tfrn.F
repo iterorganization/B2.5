@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg, pl, dv,
-     .   co, rt, st_ext)
+      subroutine b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg,
+     .  pl, dv, co, rt, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
@@ -16,16 +16,20 @@
       use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+#ifndef NAGFOR
+      use b2mod_b2zhco
+     & , only : c_hw_save
+#endif
       use b2mod_ad
      & , only : ncall_b2tfrn
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer, intent (in) :: nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type(B2Plasma), intent (in) :: pl 
+      type(B2Plasma), intent (in) :: pl
       type(B2Rates), intent (in) :: rt
       type(B2Coeff), intent (in) :: co
       type(B2StateExt), intent (in) :: st_ext
@@ -51,7 +55,7 @@
       integer iCv, iFc, is, isb, meth
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) ::
-     *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
+     *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),              !srv 14.07.10
      &   floe_eir(nFc,0:1), floi_eir(nFc,0:1), floi_vhx(nFc),
      &   fnef(nFc,0:1), fnec(nFc,0:1), fne_eir(nFc, 0:1)
       real (kind=R8) :: 
@@ -67,7 +71,7 @@ c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr
-      external b2xvsg, b2xvff, intface
+      external b2xvsg, intface
 *   ..initialisation
       scur(:,:) = 0.0_R8
 
@@ -119,7 +123,7 @@ c      endif
       do is = 0, ns-1
 
 *    ..compute partial pressure
-       call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, pl%ti, 
+       call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, pl%ti,
      &   pl%tn, is, dv%pa(:,is))
 
 *   ..interpolate na and pa to cell faces
@@ -141,7 +145,7 @@ c      endif
      &  switch%fnb_drift_hyb*
      &  (switch%xvecrb*dv%vaecrb(:,0,is)+switch%xwdia*dv%wadia(:,0,is))*
      &   geo%fcS*geo%fcQalf(:,0)
-       flo_eir(:,1) = co%cvla(:,1,is) + 
+       flo_eir(:,1) = co%cvla(:,1,is) +
      &  switch%fnb_drift_hyb*
      &  (switch%xvecrb*dv%vaecrb(:,1,is)+switch%xwdia*dv%wadia(:,1,is))*
      &   geo%fcS*geo%fcQalf(:,1)
@@ -149,15 +153,15 @@ c      endif
 *   ..add contribution from currents
 cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
        if (.not.is_neutral(is)) then
-        scur(:,0) = 
-     &   (dv%fchinert_a(:,0,is) + dv%fchvispar_a(:,0,is) + 
+        scur(:,0) =
+     &   (dv%fchinert_a(:,0,is) + dv%fchvispar_a(:,0,is) +
      &    switch%fnb_vis_per*dv%fchvisper_a(:,0,is) +
      &    dv%fchanml_a(:,0,is) +
      &    switch%fnb_vis_q*dv%fchvisq_a(:,0,is))*switch%b2tfnb_xcur/
      &   (rzf*qe*nbf) +
      &    dv%fchviskt_a(:,0,is)/(rzf*qe*nbf)
-        scur(:,1) = 
-     &   (dv%fchinert_a(:,1,is) + dv%fchvispar_a(:,1,is) + 
+        scur(:,1) =
+     &   (dv%fchinert_a(:,1,is) + dv%fchvispar_a(:,1,is) +
      &    switch%fnb_vis_per*dv%fchvisper_a(:,1,is) +
      &    dv%fchanml_a(:,1,is) +
      &    switch%fnb_vis_q*dv%fchvisq_a(:,1,is))*switch%b2tfnb_ycur/
@@ -173,14 +177,14 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
      &  co%cdna(:,:,is),dv%fna_eir(:,:,is),wrk00,wrk11)
 
 *   ..add non-hybrid drift contribution
-       dv%fna_eir(:,0,is) = dv%fna_eir(:,0,is) + 
+       dv%fna_eir(:,0,is) = dv%fna_eir(:,0,is) +
      &  (1.0_R8-switch%fnb_drift_hyb)*
-     &  ((switch%xvecrb*dv%vaecrb(:,0,is) + 
+     &  ((switch%xvecrb*dv%vaecrb(:,0,is) +
      &   switch%xwdia*dv%wadia(:,0,is))*
      &   geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
-       dv%fna_eir(:,1,is) = dv%fna_eir(:,1,is) + 
+       dv%fna_eir(:,1,is) = dv%fna_eir(:,1,is) +
      &  (1.0_R8-switch%fnb_drift_hyb)*
-     &  ((switch%xvecrb*dv%vaecrb(:,1,is) + 
+     &  ((switch%xvecrb*dv%vaecrb(:,1,is) +
      &   switch%xwdia*dv%wadia(:,1,is))*
      &   geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
@@ -255,10 +259,10 @@ cwdk    should we not compute fne_eir as sum(fna_eir,is) - fch?
 cwdk    (in that case, fch including full diamagnetic current?)
 cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
 *   ..compute convective coefficients (poloidal and radial)
-      fle_eir(:,0) = geo%fcPbs*wrk0 + 
+      fle_eir(:,0) = geo%fcPbs*wrk0 +
      &  (switch%xvecrb*dv%veecrb(:,0) + switch%xwdia*dv%wedia(:,0))*
      &   geo%fcS*geo%fcQalf(:,0)
-      fle_eir(:,1) = 
+      fle_eir(:,1) =
      &  (switch%xvecrb*dv%veecrb(:,1) + switch%xwdia*dv%wedia(:,1))*
      &   geo%fcS*geo%fcQalf(:,1)
 
@@ -278,7 +282,7 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
       dv%fne_eir = fne_eir + fnef
 
 *   ..compute convective coefficients electron heat flux
-      floe_eir(:,0) = 2.5_R8*dv%fne_eir(:,0) - 
+      floe_eir(:,0) = 2.5_R8*dv%fne_eir(:,0) -
      &  c071f*dv%fch_p(:,0)/qe*switch%fch_pTe
       floe_eir(:,1) = 2.5_R8*dv%fne_eir(:,1)
 
@@ -300,8 +304,8 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi_eir,
      &  co%chci,dv%fhi_eir,wrk00,wrk11)
 
-      if(switch%b2tfrn_iout.ne.0) then                                      !srv 18.06.08 {
-       do is = 0,ns-1
+      if(switch%b2tfrn_iout.ne.0) then                                   !srv 18.06.08 {
+       do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,dv%fna_eir(1,0,is),
      .   'b2tfrn_fna_eir_th'//chns)

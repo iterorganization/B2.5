@@ -1,8 +1,8 @@
       SUBROUTINE ILUTERN(N1, N2, N1D, ASO, AWE, ACP, AEA, ANO,
      .      RHS, SOL, NAME)                                          !srv 18.03.10
       use b2mod_types
-      use b2mod_ma28
       use b2mod_indirect
+      use b2mod_ma28
       use b2mod_subsys
       use b2mod_openmp
       IMPLICIT NONE
@@ -344,4 +344,3 @@ cdpc
 *//END ILUTERN//
 
       END SUBROUTINE ILUTERN
-

@@ -2,14 +2,14 @@
 *.specification
 
       subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, pl, dv, st_ext, sr, srw, main_call)
+     &  geo, mpg, pl, dv, st_ext, srw, main_call)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_external
+#ifdef USE_IMPGYRO
       use b2mod_impgyro
+#endif
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
 #ifdef WG_RM
@@ -17,10 +17,12 @@
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
 #endif
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : balance_netcdf
      2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
      3          b2stbm_shi0to3
+#endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
@@ -41,7 +43,6 @@
       type (B2StateExt), intent (inout) :: st_ext
 *   ..input/output arguments 
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -87,8 +88,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbm')
-*   ..test nCv, nFc, ns, ismain
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx, ns, ismain
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     & 'faulty argument nCv, nFc, nVx')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -114,18 +116,6 @@
      &   'faulty argument range fcQgam(,0)')
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
-
-*   ..test edge values of fluxes
-#ifdef WG_TODO
-       do is = 0, ns-1
-        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
-       enddo
-       call b2xvff (nx, ny, fhe, 'fhe')
-       call b2xvff (nx, ny, fhi, 'fhi')
-       call b2xvff (nx, ny, fch, 'fch')
-       call b2xvff (nx, ny, fne, 'fne')
-       call b2xvff (nx, ny, fni, 'fni')
-#endif
       endif
 
 *   ..initialise sources to 0
@@ -273,20 +263,21 @@ cxpb And then derive: ua_ext
        call extend(na_ext,nx,ny,ns_ext,nx,ny,ns_ext)
        call extend(ua_ext,nx,ny,ns_ext,nx,ny,ns_ext)
        call extend(ta_ext,nx,ny,ns_ext,nx,ny,ns_ext)
+#endif
         
-       ne_ext = 0.0_R8
-       ni_ext = 0.0_R8
-       ue_ext = 0.0_R8
-       ne2_ext = 0.0_R8
-       do is = 0, ns_ext-1
-         ne_ext(-1:nx,-1:ny) = ne_ext(-1:nx,-1:ny) +
-     .     za_ext(-1:nx,-1:ny,is) * na_ext(-1:nx,-1:ny,is)
-         ne2_ext(-1:nx,-1:ny) = ne2_ext(-1:nx,-1:ny) +
-     .     za2_ext(-1:nx,-1:ny,is) * na_ext(-1:nx,-1:ny,is)
-         ni_ext(-1:nx,-1:ny,0) = ni_ext(-1:nx,-1:ny,0) +
-     .     na_ext(-1:nx,-1:ny,is)
-         if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
-     .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
+       st_ext%ne = 0.0_R8
+       st_ext%ni = 0.0_R8
+       st_ext%ue = 0.0_R8
+       st_ext%ne2 = 0.0_R8
+       do is = 0, st_ext%ns-1
+         st_ext%ne(:) = st_ext%ne(:) +
+     .     st_ext%za(:,is) * st_ext%na(:,is)
+         st_ext%ne2(:) = st_ext%ne2(:) +
+     .     st_ext%za2(:,is) * st_ext%na(:,is)
+         st_ext%ni(:,0) = st_ext%ni(:,0) + st_ext%na(:,is)
+         if (.not.st_ext%is_neutral(is)) st_ext%ni(:,1) =
+     .     st_ext%ni(:,1) + st_ext%na(:,is)
+#ifdef WG_TODO
 cxpb Computing ua from fa is what we really want to do
          if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
@@ -341,8 +332,8 @@ cxpb
              ue_ext(ix,iy) = 0.0_R8
            endif
          enddo
-       enddo
 #endif
+       enddo
       end if
 
 * ..linearise external sources
@@ -463,6 +454,7 @@ cxpb
       srw%b2stbm_shi(:)=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti(:)
       srw%b2stbm_sch(:)=srw%sch0(:,0)+srw%sch0(:,1)*pl%po(:)
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stbm_sna0to1 = srw%sna0
@@ -470,6 +462,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbm_she0to3 = srw%she0
         b2stbm_shi0to3 = srw%shi0
       endif
+#endif
 
 * ..return
   999 if (main_call.or.ncall.eq.0) ncall = ncall+1

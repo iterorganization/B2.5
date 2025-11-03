@@ -8,6 +8,7 @@ c
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2plot
+      use b2mod_chord_shift
       implicit none
       type(geometry), intent(in) :: geo
       
@@ -30,10 +31,6 @@ c
       integer it
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
       intrinsic sqrt
       intrinsic abs,atan2,cos,sin
       external chord_find, xertst
@@ -245,7 +242,7 @@ c
      1 xp,yp,zp,found,itpos)
 
       use b2mod_types
-      use b2mod_indirect
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
 
@@ -284,10 +281,6 @@ c
      *   r1,r2,z1,z2
       data next/2,3,1/
 #endif
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
       save covered,rmin,rmax,zmin,zmax,first,tcov,icov
@@ -525,4 +518,3 @@ c
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
 !DIAG      write(*,*) chain,rectangles,triangles      ! diag
 !DIAG      end subroutine chord_diagnostics      ! diag
-

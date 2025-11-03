@@ -50,7 +50,7 @@
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 
@@ -136,4 +136,3 @@
 *.end b2tvspr
 
       end subroutine b2tvspr                                            !srv 10.10.17
-

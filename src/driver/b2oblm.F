@@ -25,7 +25,7 @@
 *
 *  1. purpose
 *
-*     B2OBLM calculates difference betwenn eperimental and model data.
+*     B2OBLM calculates difference between experimental and model data.
 *
 *
 *  2. specification
@@ -361,5 +361,3 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        enddo
       endif
       end subroutine treat_exp_res_eq
-
-

@@ -4,6 +4,7 @@
 
       Vec X,X_L,X_U
       Mat Hess
+      integer, save :: iter = 0, filen = 0, ntim = 1
       end module taomodule
 
       program b2optim_tao
@@ -23,7 +24,7 @@
       PetscReal            tol
       PetscViewer          viewer
 
-      integer :: ncon, nele_jac, ipar
+      integer :: ipar
       logical :: streql, hessian
       external streql
 
@@ -37,12 +38,12 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
-&      state_ext, state_extdiff)
+      call b2mn_init_diff()
+      call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
-      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in b2mod_diffsizes.F')
       call set_tgt_perturbation(switchd)
 #endif
 
@@ -71,18 +72,38 @@
         call TaoSetType(tao,TAOBQNLS,ierr)
         CHKERRA(ierr)
       endif
+#ifdef TAO_NEW
+      call TaoSetSolution(tao,X,ierr)
+#else
       call TaoSetInitialVector(tao,X,ierr)
+#endif
       CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr)
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjectiveAndGradient(tao,PETSC_NULL_VEC,FormFunctionGradient,0,ierr)
+#else
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjective(tao,FormFunction,0,ierr)
+#else
       call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetGradient(tao,PETSC_NULL_VEC,FormGradient,0,ierr)
+#else
       call TaoSetGradientRoutine(tao,FormGradient,0,ierr)
+#endif
       CHKERRA(ierr)
       if (hessian) then
+#ifdef TAO_NEW
+        call TaoSetHessian(tao,Hess,Hess,FormHessian,0,ierr)
+#else
         call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr)
+#endif
         CHKERRA(ierr)
       endif
 
@@ -121,9 +142,11 @@
       CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
-&      state_ext, state_extdiff)
+      call b2mn_fin_diff()
       deallocate(par_opt_phys)
+      deallocate(xold)
+      deallocate(xnew)
+      deallocate(xmult)
       deallocate(par_opt_physdiff)
       stop 'b2optim'
 
@@ -133,7 +156,7 @@
 
       subroutine InitializeProblem(npar,ierr)
       use b2mod_par_opt_diff &
-     , only : x0, xl, xu, par_rescale, sigma
+     , only : x0, xl, xu, par_rescale, sigma, mean
       implicit none
       PetscReal zero
       PetscErrorCode ierr
@@ -157,6 +180,7 @@
       do ipar = 1, npar
         call VecSetValue(X,ipar-1,x0(ipar)/par_rescale(ipar),INSERT_VALUES,ierr)
         CHKERRQ(ierr)
+        xold(ipar) = x0(ipar)/par_rescale(ipar)
         if (xl(ipar).lt.-inf_opt) then
           write(*,*) 'TAO: warning, X_L(',ipar,') set to infty'
           call VecSetValue(X_L,ipar-1,PETSC_NINFINITY,INSERT_VALUES,ierr)
@@ -222,17 +246,20 @@
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       use b2mod_par_opt_diff &
-     , only : par_rescale, sigma
+     , only : par_rescale, sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2)
-      integer, save :: iter = 0
+      integer ipar, isigma, idum(0:2), imean, ishift, icorr
       character*3 str
       character(22) :: opt_state_name
       character*120 label
+      logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
-      Vec XX,grad
+      Vec XX, grad
       Tao tao
       PetscScalar F
       PetscReal, pointer :: x_v(:), g_v(:)
@@ -242,61 +269,109 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+      call reset_drifts_params(XX)
+
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', xnew(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
+      if (cftype(1) .eq. 6) then
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
+      do ipar = 1, nshift
+        if (shiftopt(ipar)) then
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
+          write(str,"(I1)") ishift
+          if (ishift.ge.10) write(str,"(I2)") ishift
+          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
+          ishift = ishift + 1
         endif
       end do
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
-     &   statediff, state_ext, state_extdiff, j, jdiff)
+      call b2mn_step_diff(j, jdiff)
+      xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchdiff)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
+      end do
+
+      write (*,*) 'TAO COST FUNCTION:', F
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
       call VecRestoreArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 ! Experimental: write intermediate state file?
-      if (iter .gt. 0) then
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(iter,switch%b2optim_save_states).eq.0
+      endif
+      if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',iter
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
         idum(2) = state%ns
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
-        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
       iter = iter + 1
       ierr = 0
@@ -304,10 +379,12 @@
 
       subroutine FormFunction(tao, XX, F, dummy, ierr)
       use b2mod_par_opt_diff &
-      , only : sigma
+      , only : sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations, primal_res
       implicit none
       real(kind=r8) j(nncf)
-      integer ipar, isigma
+      integer ipar, isigma, imean, ishift, icorr
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -319,24 +396,65 @@
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+      call reset_drifts_params(XX)
+
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_F with x',trim(str),'= ', xnew(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
+      if (cftype(1) .eq. 6)  then
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
+      do ipar = 1, nshift
+        if (shiftopt(ipar)) then
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
+          write(str,"(I1)") ishift
+          if (ishift.ge.10) write(str,"(I2)") ishift
+          write(*,*) 'TAO: eval_F with x',trim(str),'= ', shift(ipar)
+          ishift = ishift + 1
         endif
       end do
-      call b2mn_step(switch, geo, mpg, state, state_ext, j)
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
+      call b2mn_step(j)
+      xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
+      write (*,*) 'TAO COST FUNCTION:', F
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
 
       call VecRestoreArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
@@ -349,15 +467,18 @@
       use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
-      use b2mod_par_opt_diffv &
-      , only : sigma
+      use b2mod_par_opt_diff &
+      , only : sigma, mean
+      use b2mod_ad_diff &
+     , only : primal_iterations, gradient_iterations, primal_res, &
+              gradient_res
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2)
+      integer ipar, isigma, idum(0:2), imean, ishift, icorr
       character*3 str
-      integer, save :: iter = 0
       character(22) :: opt_state_name
       character*120 label
+      logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -370,56 +491,104 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+      call reset_drifts_params(XX)
+
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', xnew(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
-      do ipar = 1, nsigma
-        if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
-          write(str,"(I1)") isigma
-          if (isigma.ge.10) write(str,"(I2)") isigma
-          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
-          isigma = isigma + 1
+      if (cftype(1) .eq. 6) then
+        isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nsigma
+          if (sigma_opt(ipar)) then
+            sigma(ipar) = x_v(isigma)*par_rescale(isigma)
+            write(str,"(I1)") isigma
+            if (isigma.ge.10) write(str,"(I2)") isigma
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
+            isigma = isigma + 1
+          endif
+        end do
+        imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = x_v(imean)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (imean.ge.10) write(str,"(I2)") imean
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', mean(ipar)
+            imean = imean + 1
+          endif
+        end do
+      endif
+      ishift = npar_opt - nshift_opt - ncorr_opt + 1
+      do ipar = 1, nshift
+        if (shiftopt(ipar)) then
+          shift(ipar) = x_v(ishift)*par_rescale(ishift)
+          write(str,"(I1)") ishift
+          if (ishift.ge.10) write(str,"(I2)") ishift
+          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', shift(ipar)
+          ishift = ishift + 1
         endif
       end do
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+      if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+        icorr = npar_opt - ncorr_opt + 1
+        do ipar = 1, ncf
+          if (corr_opt(ipar)) then
+            corr_length(ipar) = xold(icorr)*par_rescale(icorr)
+            write(str,"(I1)") icorr
+            if (icorr.ge.10) write(str,"(I2)") icorr
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', corr_length(ipar)
+            icorr = icorr + 1
+          endif
+        end do
+      endif
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
-     &   statediff, state_ext, state_extdiff, j, jdiff)
+      call b2mn_step_diff(j, jdiff)
+      xold(1:npar_opt) = x_v(1:npar_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
 #ifdef ADJ
-      call set_adj_gradient(npar_opt,gradd,switchb)
+      call set_adj_gradient(npar_opt,gradd,switchdiff)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
+      end do
+
+      write (*,*) 'TAO COST FUNCTION:', J(1)
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
+      write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
+      write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
+      write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
+      write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
 ! Experimental: write intermediate state file?
-      if (iter .gt. 0) then
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(iter,switch%b2optim_save_states).eq.0
+      endif
+      if (write_state) then
         write(*,*) 'Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim..',iter
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
         idum(2) = state%ns
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
-        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
       iter = iter + 1
       call VecRestoreArrayReadF90(XX,x_v,ierr)
@@ -466,5 +635,60 @@
 
       return
       end subroutine FormHessian
+
+      subroutine reset_drifts_params(XX)
+      use b2mod_facdrift_exb_diff &
+      , only : facdrift_scalar, fac_exb_scalar
+      implicit none
+      logical :: sameX
+      integer :: ipar
+      real (kind=R8) :: nn
+      Vec XX, grad
+      PetscReal, pointer :: x_v(:)
+
+      call VecGetArrayReadF90(XX,x_v,ierr)
+      CHKERRQ(ierr)
+      ! check if the same value for the current solution has been already used
+      ! in FormFunction or FormGradient, if not, then drifts need to be reset to
+      ! avoid potential crash
+      sameX = .true.
+      do ipar = 1, npar_opt
+        if (abs(xold(ipar)-x_v(ipar)).gt.1.0E-4_R8) sameX = .false.
+      end do
+
+      if (.not. sameX .and. (switch%facExB_start.gt.0.0_R8 .or. switch%facdrift_start.gt.0.0_R8)) then
+        ! reset drift percentage to b2optim_reset_drift
+        fac_exb_scalar = min(switch%b2optim_reset_drift,switch%facExB_start)
+        facdrift_scalar = min(switch%b2optim_reset_drift,switch%facdrift_start)
+        ! make sure that drifts are increased to 100% in ntim/XX iterations
+        ! where XX is b2optim_reset_iter
+        nn = ntim/switch%b2optim_reset_drift_iter
+        switch%facExB_inc = (1.0_R8/fac_exb_scalar)**(1.0_R8/nn)
+        switch%facdrift_inc = (1.0_R8/facdrift_scalar)**(1.0_R8/nn)
+        write (*,*) ' b2optim_tao: resetting drifts to', switch%b2optim_reset_drift
+        write (*,*) ' b2optim_tao: drift_inc set to', switch%facExB_inc
+        write (*,*) ' b2optim_tao: drifts back at 100% in ',nint(nn),'iterations'
+      endif
+
+!     Gradually increase the value of par_opt_phys when calling
+!     set_parameters in b2mod_driver such that each of them will
+!     get to the desired 'new' value in ntim/b2optim_reset_param_iter
+!     iterations, similar as done with drifts. NOTE: we will not care
+!     about sigma, mean, etc. because they do not affect the plasma state
+      if (.not. sameX .and. switch%b2optim_reset_param_iter .gt. 1) then
+        recalc_params = .true.
+        do ipar = 1, npar_opt
+          nn = ntim/switch%b2optim_reset_param_iter
+          xmult(ipar) = (x_v(ipar)/xold(ipar))**(1.0_R8/nn)
+        end do
+      else
+        ! if not gradually changing, then xold is assigned to par_opt_phys
+        ! for the new optimization step
+        recalc_params = .false.
+        xold(1:npar_opt) = x_v(1:npar_opt)
+      end if
+
+      return
+      end subroutine reset_drifts_params
 
       end program b2optim_tao

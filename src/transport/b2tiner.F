@@ -13,7 +13,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -28,8 +28,8 @@
 *
 *  1. purpose
 *
-*     B2TINER computes the poloidal and radial components of the inertial
-*     current.
+*     B2TINER computes the poloidal and radial components of the
+*     inertial current.
 *
 *  8. further comments
 *
@@ -44,7 +44,7 @@
      &  wrk(nCv), wrkf(nFc)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
 *.computation

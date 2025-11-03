@@ -2,9 +2,9 @@
      .           bndmdl, trifc, elem_cv, nelem, node_vert, nnode)
 
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-      use b2mod_indirect
       use b2us_map
 
       implicit none
@@ -369,9 +369,9 @@
      .           neighbor)
 
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-      use b2mod_indirect
       use b2us_map
 
       implicit none
@@ -621,9 +621,9 @@
       subroutine find_eirene_numbering (mpg, idim, ipos, istart, iend, 
      .           ilbls, ilble, nd, nsf, ipos_b2)
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-      use b2mod_indirect
       use b2us_map
       use b2us_geo
 
@@ -881,5 +881,3 @@
 
       return
       end subroutine find_eirene_numbering
-
-

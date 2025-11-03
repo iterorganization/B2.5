@@ -4,7 +4,6 @@
       subroutine b2scdt (nCv, nCi, isb, dtim,                        !srv 07.07.21
      &  cvVol, nap, switch, mpg, snadt)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
@@ -13,6 +12,10 @@
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2scdt
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -37,16 +40,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, k
+      integer iCv, k
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   t0, ttim
-      save ncall                                                     !xpb
 *   ..procedures
       external xertst
       external b2xvsg
-*   ..initialisation
-      data ncall/0/                                                  !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -59,7 +59,7 @@
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2scdt.lt.3) then
 *    ..test old state
        call b2xvsg (nCv, nap, 1, 'nap', '.gt.')
       endif
@@ -68,15 +68,16 @@
      & 'Warning: b2srdt_phm0 should be 1.0 for time-dependent mode'
       endif
 
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
 * ..include the contributions from dtim
 *   ..modify snadt
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv)
-        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)                                     !srv 06.01.21
+        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)*ts_factor           !srv 06.01.21
         snadt(iCv,0) = t0*nap(iCv)                                  !srv 06.01.21
         snadt(iCv,1) =-t0                                           !srv 06.01.21
       enddo
-
 
 !WG_TODO cdjm Store the total change in linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
@@ -95,7 +96,7 @@
       endif                                                           !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2scdt = ncall_b2scdt+1
       call subend ()
       return
 

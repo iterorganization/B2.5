@@ -28,7 +28,6 @@ c 2002-09-11: logic revised
       use b2mod_sputter
       use b2mod_indirect
       use b2mod_elements
-      use b2mod_feedback
       use b2mod_geo_corner
       use b2mod_input_profile
       use b2mod_user_namelist
@@ -42,6 +41,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
      , , only : wklng,
@@ -86,6 +86,7 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2us_feedback
       use b2mod_switches
       use b2mod_dimensions
       implicit none
@@ -176,30 +177,30 @@ c 2002-09-11: logic revised
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
-      integer ismain, ismain0, isfeedback, isfb
+      integer ismain, ismain0, isfb, is_previous, iFb, ifb1, nfb1
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref, iyref, ixref1, iyref1
+      integer iyref, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
-      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
+      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
       integer mw_jxa1, mw_jsep1, iyped1
       integer jsep, jxi, jxa, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
-      integer coriolis, lhalpha
+      integer lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor, b2ux7p_style
-      integer naver, ntotdt
-      integer ncon, nele_jac
+      integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
+      integer naver, ntotdt, ntfts
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
-      character id0*8
+      character id0*8, chns*3
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
+      data csigin_style/0/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -272,15 +273,16 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
-     4 na_feedback_alpha1(:), na_feedback_beta1(:),
-     5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
-     6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), gpdata1(:,:,:)
+     3 saved_fb_actuator1(:), saved_fb_prev1(:),
+     4 fb_target1(:), fb_alpha1(:), fb_beta1(:),
+     5 fb_puff_min1(:), fb_puff_max1(:),
+     6 fb_const1(:), fb_overshoot1(:),
+     7 fb_time1(:), gpdata1(:,:,:),
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
@@ -299,11 +301,10 @@ c 2002-09-11: logic revised
       integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:)
       integer, allocatable :: lstrascl1(:,:), lsns1(:), ksns1(:)
       integer, allocatable :: ngpdata1(:)
-      integer, allocatable :: na_feedback_actuator1(:),
-     1  na_feedback_choice1(:), na_feedback_option1(:),
-     2  na_feedback_ix11(:), na_feedback_ix21(:),
-     3  na_feedback_iy11(:), na_feedback_iy21(:),
-     4  na_feedback_ib1(:)
+      integer, allocatable :: fb_actuator1(:),
+     1  fb_type1(:), fb_rescale_option1(:),
+     2  fb_reg1(:), fb_regp1(:,:), fb_reg_par1(:,:),
+     4  fb_ib1(:), fb_istra1(:), fb_species1(:)
       integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
@@ -477,30 +478,32 @@ c 2002-09-11: logic revised
       integer jatm, jmol
 #endif
       real (kind=R8) ::
-     *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
+     *  neutral_rescale, BoRiS, divheat_ip, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
+     .  sources_time_mod_ip, sources_time_switch_ip, fch_ion_neutral,
+     .  b2stbc_Qalfmin, b2us_prep_Qalfmin,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
+     7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cnbmip*80, cvalip*80
-      character*256 sources_filename, new_filename, filename
+      character cnamip*80, cnbmip*80, cvalip*80, cswitch*80
+      character*256 sources_filename_ip, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line, ligne, cur_contr_comment
       character*500, allocatable :: add_comment(:)
+      character*1, allocatable :: zh_tf_toff1(:)
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
-      character*80 MESSAGE
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
@@ -527,11 +530,14 @@ c 2002-09-11: logic revised
 #endif
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
+      logical new_namelist
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
+      logical, allocatable :: do_sna_corr_core1(:)
+      logical, allocatable :: fb_type_inverse1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -596,21 +602,23 @@ c 2002-09-11: logic revised
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
-      data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
+      data ismain/1/, ismain0/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/-2/
+      data iy_nocoreExB/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
-      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
+      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
+      data b2stbc_Qalfmin/1.0e-3_R8/, b2us_prep_Qalfmin/1.0e-3_R8/
 *  ..namelists
-      namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
-     . sources_time_mod, sources_time_switch, sources_filename
+      namelist /profile/ nsdata, nxdata, sdata, xdata, divheat_ip,
+     . sources_time_mod_ip, sources_time_switch_ip, sources_filename_ip
       namelist /transport/ ndata, tdata, addspec,
      1   transport_ip_filename, transport_ip_time_mod,
      2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end,
@@ -1415,18 +1423,18 @@ c 2002-09-11: logic revised
       call xertst (ns.gt.sput_dst, 'faulty input sput_dst')
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
+      call ipgetr ('b2stbr_sna_corr', b2stbr_sna_corr)
+      call ipgetr ('b2stbr_taumax', b2stbr_taumax)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
       call ipgeti ('b2stbc_isfeedback', isfeedback)
-      iyped = jsep/2
+      iyped = icsepomp/2
       call ipgeti ('b2stbc_iyped', iyped)
       call ipgeti ('b2mwti_jxi', jxi)
       call ipgeti ('b2mwti_jxa', jxa)
-      call ipgeti ('b2tqna_ixref', ixref)
-      call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
       call ipgeti ('b2tqna_iy1', iy1)
@@ -1441,20 +1449,38 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
-      call ipgeti ('b2news_coriolis', coriolis)
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgetr ('b2sikt_aniso', fac_aniso)
       call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
+      call ipgetr ('b2stbc_Qalfmin', b2stbc_Qalfmin)
+      call ipgetr ('b2us_prep_Qalfmin', b2us_prep_Qalfmin)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
+      call ipgeti ('b2tqin_csigin_style', csigin_style)
       call ipgetr ('b2tfnb_ycur', ycur)
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
+      cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
+      call ipgetc ('b2tral_zh_tf_toff', cvalip)
+      do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+        zh_tf_toff(i) = cvalip(i:i)
+      end do
+      call alloc_b2mod_zhco_amfact(nspecies)
+      allocate(amfact1(0:nspecies1-1))
+      amfact(0:nspecies-1) = 1.0_R8
+      do i = 0, nspecies-1
+        write (chns,'(i3.3)') is
+        call ipgetr ('b2tral_amfact_'//chns, amfact(i))
+        j = ispecies1(i+1)
+        if (j.gt.0) amfact1(j-1)=amfact(i)
+      end do
       call ipgeti ('b2mndr_pulse_number', pulse)
       call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
@@ -1487,7 +1513,7 @@ c 2002-09-11: logic revised
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
      .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-        call read_neutrals_namelist(nx, ny, ns, .false.)
+        call read_neutrals_namelist(nx, ny, ns, switch, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
@@ -1668,21 +1694,17 @@ c 2002-09-11: logic revised
       if (nnreg(0).eq.1 .and. jsep.ne.ny/2 .and. jsep1.eq.ny1/2)
      .  jsep1 = conformal_convert(non_commensurate,2,
      .                            jxa,jsep,nx,ny,nx1,ny1,2)
-      if (iy_nocoreExB.gt.-2) iy_nocoreExB = conformal_convert
+      if (iy_nocoreExB.eq.-2) iy_nocoreExB = 0
+      if (iy_nocoreExB.eq.-1) iy_nocoreExB = 1
+      if (iy_nocoreExB.gt.0) iy_nocoreExB = conformal_convert
      .  (non_commensurate,2,jxa,iy_nocoreExB,nx,ny,nx1,ny1,2)
       bc_type16_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type16_ref-2,nx,ny,nx1,ny1,2)
       bc_type20_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type20_ref-2,nx,ny,nx1,ny1,2)
-      if (ixref.ge.0) then
-        ixref1 = conformal_convert
-     .   (non_commensurate,1,ixref,iyref,nx,ny,nx1,ny1,4)
-      else
-        ixref1 = jxa1
-      endif
       if (iyref.ge.0) then
         iyref1 = conformal_convert
-     .   (non_commensurate,2,ixref,iyref,nx,ny,nx1,ny1,4)
+     .   (non_commensurate,2,jxa,iyref,nx,ny,nx1,ny1,4)
       else
         iyref1 = jsep1
       endif
@@ -1705,23 +1727,25 @@ c 2002-09-11: logic revised
       mw_ix2 = conformal_convert
      .   (non_commensurate,1,mw_ix2,mw_jsep,nx,ny,nx1,ny1,3)
       if (mw_jxa.ge.0) then
-        mw_jxa1= conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,4)
+        mw_jxa1 =
+     .   conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,4)
       else
-        mw_jxa1=jxa1
+        mw_jxa1 = jxa1
       endif
       if (mw_jsep.ge.0) then
-        mw_jsep1= conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,2)
+        mw_jsep1 =
+     .   conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,2)
       else
-        mw_jsep1=jsep1
+        mw_jsep1 = jsep1
       endif
       if (jxa.ne.-2) then
-        jxa1=conformal_convert(non_commensurate,1,jxa,jsep,
+        jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       if (jxi.ne.-2) then
-        jxi1=conformal_convert(non_commensurate,1,jxi,jsep,
+        jxi1 = conformal_convert(non_commensurate,1,jxi,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       tab = char(9)
@@ -1789,8 +1813,6 @@ c 2002-09-11: logic revised
           iswitch = bc_type16_ref
         case('b2stbc_type20_ref')
           iswitch = bc_type20_ref
-        case('b2tqna_ixref','set_transport_ixref')
-          iswitch = ixref1
         case('set_transport_iyref')
           iswitch = iyref1
         case('b2tqna_iy1')
@@ -1832,13 +1854,19 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis','b2npht_style_shei',
-     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
+        case('b2tqin_style')
+          cnamip = 'b2tqin_csigin_style'
+          todo = csigin_style.eq.0
+        case('b2news_coriolis', 'b2npht_style_shei',
+     &                          'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
+        case('eirene_fixmap', 'b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
-     &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
+     &       'b2stel_fix_recomb_energy', 'b2mndr_redef_pbs',
+     &       'b2news_guard_flows', 'b2news_fac_ref',
+     &       'b2tqna_ixref', 'set_transport_ixref',
+     &       'b2npmo_b2sifr_', 'b2sifr_styl1')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1901,29 +1929,17 @@ c 2002-09-11: logic revised
             cnamip = 'b2mndr_na_new'
           end if
           todo = .false.
-        case('b2tfnb_xfrhie')  ! Needs to be replaced by xfrhiehz value if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) rswitch = xfrhiehz
-        case('b2tfnb_xfrhiehz') ! Needs to be rewritten as xfrhie if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) then
-            rswitch = xfrhiehz
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
-        case ('b2tfnb_xfrhie_no_drift') ! Needs to be rewritten as xfrhie
-          todo = xfrhie_no_drift.ne.xfrhie .and.
-     &           xfrhie_no_drift.ne.1.0_R8
-          if (todo) then
-            rswitch = xfrhie_no_drift
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
+        case('b2tfnb_xfrhie', 'b2tfnb_xfrhiehz',
+     &       'b2tfnb_xfrhie_no_drift')  ! Now obsolete, removed from list
+          todo = .false.
+          wait = .true.
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
           rswitch = b2tfhe_inert
           cnamip = 'b2tiner_inert'
+        case ('b2sikt_aniso') ! needs to be rewritten as b2sikt_fac_aniso
+          todo = fac_aniso.ne.1.0_R8
+          rswitch = fac_aniso
+          cnamip = 'b2sikt_fac_aniso'
         case ('b2tvspa_vis_par') ! obsolete, superseded by b2tfhe_vis_par
           todo = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
@@ -1932,24 +1948,101 @@ c 2002-09-11: logic revised
             cnamip = 'b2tfhe_vis_par'
           else
             wait = .true.
-          endif
+          end if
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
           if (wait) then
             rswitch = b2tvspa_vis_par
+            wait = .false.
           else
             rswitch = b2tfhe_vis_par
+          end if
+        case ('b2stbc_Qalfmin') ! obsolete, superseded by b2us_prep_Qalfmin
+          todo = b2stbc_Qalfmin    .ne. 1.0e-3_R8 .and.
+     &           b2us_prep_Qalfmin .eq. 1.0e-3_R8
+          if (todo) then
+            rswitch = b2stbc_Qalfmin
+            cnamip = 'b2us_prep_Qalfmin'
+          else
+            wait = .true.
+          end if
+        case ('b2us_prep_Qalfmin') ! superseding b2stbc_Qalfmin, with above
+          wait = b2stbc_Qalfmin    .ne. 1.0e-3_R8 .and.
+     &           b2us_prep_Qalfmin .eq. 1.0e-3_R8
+          if (wait) then
+            rswitch = b2stbc_Qalfmin
+            wait = .false.
+          else
+            rswitch = b2us_prep_Qalfmin
           end if
         case ('b2tfnb_ycur')
           rswitch = ycur
           ycur_done = .true.
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
+        case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
+          wait = .true.
+        case ('b2nppo_restrict_po') ! Superseded by real switch b2nppo_restr_po
+          todo = .false.
+          wait = .true.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
+      if (cnamip(1:14).eq.'b2tral_amfact_'.and.
+     &    .not.streql(cnamip,'b2tral_amfact_on')) then
+        read (cnamip(15:17),'(i3.3)') i
+        j = ispecies1(i+1)
+        if (j.gt.0) then
+          todo = .true.
+          rswitch = amfact1(j-1)
+          write (cnamip,'(a14,i3.3)') 'b2tral_amfact_', j-1
+        else
+          todo = .false.
+          wait = .true.
+        end if
+      end if
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..character string switches
+      todo = .true.
+      CSWITCHES: select case (cnamip)
+        case('b2tral_zh_tf_toff')
+          if (same_atoms) then
+            todo = .false.
+          else
+            allocate(zh_tf_toff1(max(1,
+     .                (nspecies1*(nspecies1+1))/2-nspecies1)))
+            do i = 1, nspecies-1
+              do j = i+1, nspecies
+                i1 = ispecies1(i)
+                j1 = ispecies1(j)
+                if (i1.ne.-1 .and. j1.ne.-1) then
+                  ij = 0
+                  do k = 1, i-1
+                    ij = ij + (nspecies-k)
+                  end do
+                  ij = ij + (j-i)
+                  ij1 = 0
+                  do k = 1, min(i1,j1)-1
+                    ij1 = ij1 + (nspecies1-k)
+                  end do
+                  ij1 = ij1 + (max(i1,j1)-min(i1,j1))
+                  zh_tf_toff1(ij1) = zh_tf_toff(ij)
+                end if
+              end do
+            end do
+            if (nspecies1.eq.1) zh_tf_toff1(1)='0'
+            write(hlp_frm,'(a,i3,a)')
+     .       '(',max(1,(nspecies1*(nspecies1+1))/2-nspecies1),'a1)'
+            write(cswitch,hlp_frm) (zh_tf_toff1(i),
+     .       i=1,max(1,(nspecies1*(nspecies1+1))/2-nspecies1))
+            deallocate(zh_tf_toff1)
+          end if
+        case default CSWITCHES
+          todo = .false.
+      end select CSWITCHES
+      if (todo) write(cvalip,'(a)') trim(cswitch)
 *   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
         if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
@@ -1993,6 +2086,8 @@ c 2002-09-11: logic revised
       end if
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
+      deallocate(zh_tf_toff)
+      deallocate(amfact1)
 
 *  ..rewrite boundary namelist
       first_pass = .true.
@@ -2420,8 +2515,8 @@ c 2002-09-11: logic revised
         end do
         write(99,'(1x,a,f10.7,a,f10.7,a)')
      .   'GAMMAI=',gammai,', GAMMAE=',gammae,','
-        write(99,'(1x,a,l1,a,l1,a)')
-     .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
+        write(99,'(1x,a,l1,a)')
+     .   'LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
@@ -2967,10 +3062,10 @@ cxpb We must ensure we have not already listed this additional species
       sdata(:,:,:,:)=0.0_R8
       nxdata(:,:,:)=0
       xdata(:,:,:,:)=0.0_R8
-      divheat=0.0_R8
-      sources_filename='b2.sources.profile'
-      sources_time_mod=0.0_R8
-      sources_time_switch=0.0_R8
+      divheat_ip=0.0_R8
+      sources_filename_ip='b2.sources.profile'
+      sources_time_mod_ip=0.0_R8
+      sources_time_switch_ip=0.0_R8
       allocate(ns1data(1:nkind_data,1:nkind_source,0:nsm-1))
       allocate(s1data(2,1:DEF_NYD+2,1:nkind_source,0:nsm-1))
       allocate(nx1data(1:nkind_data,1:nkind_source,0:nsm-1))
@@ -2987,7 +3082,7 @@ cxpb We must ensure we have not already listed this additional species
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((sources_inputfile.eq.1.or.todo).and..not.found)
-       filename = sources_filename
+       filename = sources_filename_ip
        call find_file(filename,ex)
        open(92,file=trim(filename))
        read(92,profile,err=999)
@@ -2997,10 +3092,10 @@ cxpb We must ensure we have not already listed this additional species
          write(nout(5),'(a)') 'b2.sources.profile'
          write(*,*) 'No changes needed in b2.sources.profile'
         endif
-        if (.not.streql(sources_filename,'b2.sources.profile'))
+        if (.not.streql(sources_filename_ip,'b2.sources.profile'))
      >   then
-          write(nout(5),'(a)') trim(sources_filename)
-          write(*,*) 'No changes needed in ',trim(sources_filename)
+          write(nout(5),'(a)') trim(sources_filename_ip)
+          write(*,*) 'No changes needed in ',trim(sources_filename_ip)
         endif
        else
         write(*,*) 'Writing ',trim(new_filename)
@@ -3163,16 +3258,14 @@ cxpb Calculate radial locations of combined profile spr(1:ndim)
                       if (.not.prdone) then
                         allocate(prdsa(1:ny1+2),pra(1:ny1+2))
                         allocate(r(1:ny+2),f(1:ny+2))
-                        prdsa(1)=sqrt((cr1(ixref1,-1)-
-     1                   0.5_R8*(crx1(ixref1,-1,0)+
-     .                           crx1(ixref1,-1,1)))**2+
-     2                    (cz1(ixref1,-1)-
-     3                   0.5_R8*(cry1(ixref1,-1,0)+
-     .                           cry1(ixref1,-1,1)))**2)
+                        prdsa(1)=sqrt((cr1(jxa1,-1)-
+     1                   0.5_R8*(crx1(jxa1,-1,0)+crx1(jxa1,-1,1)))**2+
+     2                    (cz1(jxa1,-1)-
+     3                   0.5_R8*(cry1(jxa1,-1,0)+cry1(jxa1,-1,1)))**2)
                         do iy = 0, ny1
                           prdsa(iy+2)=prdsa(iy+1)+
-     1                     sqrt((cr1(ixref1,iy)-cr1(ixref1,iy-1))**2+
-     2                          (cz1(ixref1,iy)-cz1(ixref1,iy-1))**2)
+     1                     sqrt((cr1(jxa1,iy)-cr1(jxa1,iy-1))**2+
+     2                          (cz1(jxa1,iy)-cz1(jxa1,iy-1))**2)
                         enddo
                         ds_offset=
      .                   (prdsa(iyref1+2)+prdsa(iyref1+3))/2.0_R8
@@ -3383,7 +3476,7 @@ cxpb This will need to be checked !!!
                         allocate(l_conn(-1:nx1))
                         allocate(fx(1:nx+2))
                         allocate(dx(1:nx+2))
-                        ireg = mod(region1(ixref1,iyref1,0),4)
+                        ireg = mod(region1(jxa1,iyref1,0),4)
                         if (ikind.eq.1) then
                           l_total = 0.0_R8
                           pxa(-1) = 0.0_R8
@@ -3397,7 +3490,7 @@ cxpb This will need to be checked !!!
                             l_total = l_total + l_conn(i)
                           end do
                           pxa(nx1) = pxa(nx1-1) + 0.5_R8*l_conn(nx1-1)
-                          l_ref = pxa(ixref1)
+                          l_ref = pxa(jxa1)
                           if (ireg.eq.1 .and. nnreg(0).ge.4) then
                             do i = -1, nx1
                               if (mod(region1(i,iyref1,0),4).eq.ireg)
@@ -3475,25 +3568,25 @@ cxpb This will need to be checked !!!
             enddo
           enddo
         enddo
-        if (divheat.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'DIVHEAT=',divheat,','
-        if(sources_time_mod.gt.0.0_R8)
+        if (divheat_ip.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .   'DIVHEAT=',divheat_ip,','
+        if(sources_time_mod_ip.gt.0.0_R8)
      .   write(99,'(1x,a,1p,1g10.3,a)')
-     .     'SOURCES_TIME_MOD=',sources_time_mod,','
-        if(sources_time_switch.ne.0.0_R8)
+     .     'SOURCES_TIME_MOD=',sources_time_mod_ip,','
+        if(sources_time_switch_ip.ne.0.0_R8)
      .   write(99,'(1x,a,1p,1g10.3,a)')
-     .     'SOURCES_TIME_SWITCH=',sources_time_switch,','
-        if(.not.streql(sources_filename,'b2.sources.profile')
+     .     'SOURCES_TIME_SWITCH=',sources_time_switch_ip,','
+        if(.not.streql(sources_filename_ip,'b2.sources.profile')
      ^     .or..not.first_pass) write(99,'(1x,a,a,a)')
-     .     'SOURCES_FILENAME=''',trim(sources_filename),''','
+     .     'SOURCES_FILENAME=''',trim(sources_filename_ip),''','
         write(99,'(a1)') '/'
         close(99)
        end if
-       if (.not.streql(sources_filename,'b2.sources.profile'))
+       if (.not.streql(sources_filename_ip,'b2.sources.profile'))
      >  then
          first_pass = .false.
-         new_filename = trim(sources_filename)//'.2'
-         filename = sources_filename
+         new_filename = trim(sources_filename_ip)//'.2'
+         filename = sources_filename_ip
          call find_file(filename,todo)
          call find_file(new_filename,found)
          if (found) write(6,*) trim(new_filename), ' already present!'
@@ -3516,10 +3609,16 @@ cxpb This will need to be checked !!!
       new_filename = 'b2.numerics.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
+      new_namelist = (b2stbr_sna_corr.ne.0.0_R8 .or.
+     &                b2stbr_taumax.ne.0.05_R8) .and.
+     &                numerics_namelist.eq.0
+      todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
+     &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
-        if (same_bundling) then
+     >   nnreg,mpg%cvOnClosedSurface,style_b2mndt,new_namelist)
+        if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
+     &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
             write(*,*) 'No changes needed in b2.numerics.parameters'
@@ -3566,6 +3665,24 @@ cxpb This will need to be checked !!!
           if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
      .     'DTEI=',(dtei(ireg),ireg=0,nnreg(0))
+          if(minval(dten(0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dten(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
+     .     'DTEN=',(dten(ireg),ireg=0,nnreg(0))
+          ntfts = minloc(dtfts,1)-1
+          if (ntfts.gt.0) then
+            write(hlp_frm,'(a,i3,a)') '(1x,a,',ntfts,'(i3,'',''))'
+            write(99,hlp_frm) 'DTFTS=',(dtfts(ireg),ireg=1,ntfts)
+            write(hlp_frm,'(a,i3,a)')
+     .       '(1x,a,1p,',ntfts,'(1x,g10.3,'',''))'
+            if(minval(dtco_ft).ne.1.0_R8.or.maxval(dtco_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTCO_FT=',(dtco_ft(ireg),ireg=1,ntfts)
+            if(minval(dtmo_ft).ne.1.0_R8.or.maxval(dtmo_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTMO_FT=',(dtmo_ft(ireg),ireg=1,ntfts)
+            if(minval(dtee_ft).ne.1.0_R8.or.maxval(dtee_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTEE_FT=',(dtee_ft(ireg),ireg=1,ntfts)
+            if(minval(dtei_ft).ne.1.0_R8.or.maxval(dtei_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTEI_FT=',(dtei_ft(ireg),ireg=1,ntfts)
+          endif
           write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
           do ireg = 0, nnreg(0)
             todo = .false.
@@ -3618,10 +3735,28 @@ cxpb This will need to be checked !!!
      .     'SOLVEEI=',(solveei(ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveen(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEEN=',(solveen(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveet(ireg)
           enddo
           if (todo) write(99,hlp_frm)
      .     'SOLVEET=',(solveet(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvekt(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEKT=',(solvekt(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvezt(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEZT=',(solvezt(ireg),ireg=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
@@ -3650,6 +3785,58 @@ cxpb This will need to be checked !!!
           if(time_factor_required.ne.0.1_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
+          if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
+     >     then
+            allocate(sna_corr1(1:nspecies1))
+            if (maxval(sna_corr).eq.0.0_R8.and.
+     >          b2stbr_sna_corr.ne.0.0_R8) then
+              sna_corr1(1:nspecies1) = b2stbr_sna_corr
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  sna_corr1(ispecies1(is)) = sna_corr(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
+            deallocate(sna_corr1)
+          end if
+          if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
+     &      .or. b2stbr_taumax.ne.0.05_R8) then
+            allocate(taumax1(1:nspecies1))
+            if (maxval(taumax).eq.0.05_R8 .and.
+     &          minval(taumax).eq.0.05_R8 .and.
+     &           b2stbr_taumax.ne.0.05_R8) then
+              taumax1(1:nspecies1) = b2stbr_taumax
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  taumax1(ispecies1(is)) = taumax(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'TAUMAX=',(taumax1(is),is=1,nspecies1)
+            deallocate(taumax1)
+          end if
+          if (.not.(any(do_sna_corr_core(1:nspecies)))) then
+            allocate(do_sna_corr_core1(1:nspecies1))
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
+              end if
+            end do
+            if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
+              write(hlp_frm,'(a,i2,a)')
+     .         '(1x,a,',nspecies1,'l1,'','')'
+              write(99, hlp_frm) 'DO_SNA_CORR_CORE=',
+     .         (do_sna_corr_core1(is),is=1,nspecies1)
+            end if
+            deallocate(do_sna_corr_core1)
+          end if
           if (.not.write_nml_num) write(99, '(a,l1,a)')
      >     'WRITE_NML_NUM=',write_nml_num,','
           write(99,'(a1)') '/'
@@ -3850,7 +4037,8 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+          case ('H','D','T','DT',
+     &          'He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
             continue
           case default
             no_sputtering = .false.
@@ -3860,7 +4048,7 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','C','Ne','Ar','N','Be')
+          case ('H','D','T','DT','He','C','Ne','Ar','N','Be')
             continue
           case default
             adas_correct = b2fstate_version.gt.'03.000.007'
@@ -9643,7 +9831,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .           'increase size of ZEILEN in b2ytdr!')
                 JLINE = ILINE + 1
                 READ (IUNIN,'(A80)') ZEILEN(JLINE)
-                READ (ZEILEN(JLINE),'(3I6,1X,A6)')
+                READ (ZEILEN(JLINE),'(3I6)')
      .                               ISL, ITP, IRATIO
                 IF (IRATIO.GT.0) THEN
                   JLINE = JLINE + 1
@@ -9674,16 +9862,16 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
                     IRC1 = 0
                   END IF
                   IF (ITP.EQ.1) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IATM1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.2) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IMOL1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.3) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IION1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.4) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IPLS1(ISL), ITP, IRATIO
                   END IF
                   ILINE = JLINE
@@ -11059,15 +11247,15 @@ cxpb as they no longer necessarily point to the same species
         k = 0
         kk = 0
         ib1 = 0
-        nsns = 0
+        nsns1 = 0
         do ib = 1, nstrai
           if (crcstra(ib).eq.'N'.or. crcstra(ib).eq.'W'.or.
      &        crcstra(ib).eq.'E') then
-            nsns = nsns + 1
+            nsns1 = nsns1 + 1
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              ksns1(ib1) = ksns(nsns)
-              do j = k+1, k+ksns(nsns)
+              ksns1(ib1) = ksns(nsns1)
+              do j = k+1, k+ksns(nsns1)
                 kk = kk + 1
                 lsns1(kk) = lsns(j)
               end do
@@ -11075,7 +11263,7 @@ cxpb as they no longer necessarily point to the same species
           else if (crcstra(ib).eq.'S') then
             if (rcpos1(ib).ne.-2) then
               if(mod(region1(rcstart1(ib),rcpos1(ib),0),4).ne.1) then
-                nsns = nsns + 1
+                nsns1 = nsns1 + 1
               end if
             else
               found = .true.
@@ -11084,27 +11272,27 @@ cxpb as they no longer necessarily point to the same species
      &           mod(region1(rc_list_x1(ix,ib),
      .                       rc_list_y1(ix,ib),0),4).ne.1
               end do
-              if (found) nsns = nsns + 1
+              if (found) nsns1 = nsns1 + 1
             end if
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              ksns1(ib1) = ksns(nsns)
-              do j = k+1, k+ksns(nsns)
+              ksns1(ib1) = ksns(nsns1)
+              do j = k+1, k+ksns(nsns1)
                 kk = kk + 1
                 lsns1(kk) = lsns(j)
               end do
             end if
           end if
-          k = k + ksns(nsns)
+          k = k + ksns(nsns1)
         end do
-        nsns = ib1
-        if (nsns.gt.0) then
+        nsns1 = ib1
+        if (nsns1.gt.0) then
           write(hlp_frm,'(a,i3,a)') '(1x,a,',kk,'(1x,i3,'',''))'
           if(maxval(lsns(1:k)).gt.0.or.minval(lsns(1:k)).lt.0)
      >     write(99,hlp_frm) 'LSNS=',(lsns1(j),j=1,kk)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsns,'(1x,i3,'',''))'
-          if(maxval(ksns(1:nsns)).gt.0)
-     >     write(99,hlp_frm) 'KSNS=',(ksns1(ib),ib=1,nsns)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsns1,'(1x,i3,'',''))'
+          if(maxval(ksns(1:nsns1)).gt.0)
+     >     write(99,hlp_frm) 'KSNS=',(ksns1(ib),ib=1,nsns1)
         endif
         write(99,'(1x,a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
         if (n_spcsrf.gt.0) then
@@ -11225,7 +11413,7 @@ cxpb as they no longer necessarily point to the same species
          filename = neutrals_filename
          new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
-         call read_neutrals_namelist(nx, ny, ns, .false.)
+         call read_neutrals_namelist(nx, ny, ns, switch, .false.)
          call xertst (nstrai.le.nstraid,
      >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)
@@ -11390,65 +11578,6 @@ cxpb as they no longer necessarily point to the same species
         endif  ! sputter_namelist_used
       endif
 
-*  ..write new b2.feedback_save.parameters if needed
-*   ..we can only do this after the species mapping has been done
-      filename='b2.feedback_save.parameters'
-      call find_file(filename,todo)
-      new_filename = 'b2.feedback_save.parameters.2'
-      call find_file(new_filename,found)
-      if (found) write(6,*) trim(new_filename),' already present!'
-      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
-     &   .and. .not.found .and. .not.same_atoms) then
-        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
-          todo = .false.
-          is = 1
-          do while (.not.todo .and. is.le.nspecies)
-            todo = todo .or.
-     &        (saved_na_feedback_actuator(is-1).gt.0.0_R8 .and.
-     &         ispecies1(is).ne.is)
-            is = is+1
-          end do
-          if (todo) then
-            allocate(saved_na_feedback_actuator1(0:nspecies1-1))
-            saved_na_feedback_actuator1 = 0.0_R8
-            do is = 1, nspecies
-              if (ispecies1(is).ne.-1)
-     >         saved_na_feedback_actuator1(ispecies1(is)-1) =
-     .          saved_na_feedback_actuator(is-1)
-            end do
-            write(*,*) 'Writing b2.feedback_save.parameters.2'
-            write(nout(5),'(a)') trim(new_filename)
-            open(99,file=new_filename)
-            write(99,'(a9)') '&FEEDBACK'
-            if (saved_cbshe_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSHE_CORE=',saved_cbshe_core,','
-            if (saved_cbshi_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSHI_CORE=',saved_cbshi_core,','
-            if (saved_cbsna_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_CORE=',saved_cbsna_core,','
-            if (saved_cbsch_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSCH_CORE=',saved_cbsch_core,','
-            if (saved_cbsna_pfr1.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr1,','
-            if (saved_cbsna_pfr2.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
-            if (saved_cbsna_sol.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
-            write(hlp_frm,'(a,i2,a)')
-     >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
-     >       (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
-            write(99,'(a1)') '/'
-            close(99)
-            deallocate(saved_na_feedback_actuator1)
-          end if
-        end if
-      else if (todo) then
-        write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in b2.feedback_save.parameters'
-      end if
-
 *   ..write new b2.feedback_control.parameters if needed
       filename='b2.feedback_control.parameters'
       call find_file(filename,todo)
@@ -11457,27 +11586,12 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
-        allocate(na_feedback_target1(0:nspecies1-1))
-        allocate(na_feedback_choice1(0:nspecies1-1))
-        allocate(na_feedback_option1(0:nspecies1-1))
-        allocate(na_feedback_actuator1(0:nspecies1-1))
-        allocate(na_feedback_ix11(0:nspecies1-1))
-        allocate(na_feedback_ix21(0:nspecies1-1))
-        allocate(na_feedback_iy11(0:nspecies1-1))
-        allocate(na_feedback_iy21(0:nspecies1-1))
-        allocate(na_feedback_ib1(0:nspecies1-1))
-        allocate(na_feedback_alpha1(0:nspecies1-1))
-        allocate(na_feedback_beta1(0:nspecies1-1))
-        allocate(na_feedback_const1(0:nspecies1-1))
-        allocate(na_feedback_time1(0:nspecies1-1))
-        allocate(na_feedback_puff_min1(0:nspecies1-1))
-        allocate(na_feedback_puff_max1(0:nspecies1-1))
-        allocate(na_feedback_overshoot1(0:nspecies1-1))
-        call read_b2mod_feedback_control(99)
+        call read_b2us_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
         write(99,'(a17)') '&FEEDBACK_CONTROL'
+#ifdef WG_TODO
         if (vacuum_communication.ne.0) write(99,'(a,i2,a)')
      .   'VACUUM_COMMUNICATION=',vacuum_communication,','
         write (hlp_frm,'(a,i2,a)') '(a,',nvac,'(i2,'',''))'
@@ -11539,126 +11653,220 @@ cxpb as they no longer necessarily point to the same species
      .       (vacuum_communication_beta(is,i2),is=0,ns1-1)
           end if
         end do
-        do is = 1, nspecies
-          if (ispecies1(is).ne.-1) then
-            na_feedback_target1(ispecies1(is)-1) =
-     .       na_feedback_target(is-1)
-            na_feedback_choice1(ispecies1(is)-1) =
-     .       na_feedback_choice(is-1)
-            na_feedback_option1(ispecies1(is)-1) =
-     .       na_feedback_option(is-1)
-            na_feedback_actuator1(ispecies1(is)-1) =
-     .       na_feedback_actuator(is-1)
-            na_feedback_ix11(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,1,
-     .       na_feedback_ix1(is-1),na_feedback_iy1(is-1),
-     .       nx,ny,nx1,ny1,1)
-            na_feedback_iy11(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,2,
-     .       na_feedback_ix1(is-1),na_feedback_iy1(is-1),
-     .       nx,ny,nx1,ny1,0)
-            na_feedback_ix21(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,1,
-     .       na_feedback_ix2(is-1),na_feedback_iy2(is-1),
-     .       nx,ny,nx1,ny1,3)
-            na_feedback_iy21(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,2,
-     .       na_feedback_ix2(is-1),na_feedback_iy2(is-1),
-     .       nx,ny,nx1,ny1,2)
-            na_feedback_ib1(ispecies1(is)-1) =
-     .       na_feedback_ib(is-1)
-            na_feedback_alpha1(ispecies1(is)-1) =
-     .       na_feedback_alpha(is-1)
-            na_feedback_beta1(ispecies1(is)-1) =
-     .       na_feedback_beta(is-1)
-            na_feedback_const1(ispecies1(is)-1) =
-     .       na_feedback_const(is-1)
-            na_feedback_puff_min1(ispecies1(is)-1) =
-     .       na_feedback_puff_min(is-1)
-            na_feedback_puff_max1(ispecies1(is)-1) =
-     .       na_feedback_puff_max(is-1)
-            na_feedback_overshoot1(ispecies1(is)-1) =
-     .       na_feedback_overshoot(is-1)
-            na_feedback_time1(ispecies1(is)-1) =
-     .       na_feedback_time(is-1)
+#endif
+        nfb1 = 0
+        fb_reg1 = 0
+        fb_regp1 = 0
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) nfb1=nfb1+1
+        end do
+        allocate(fb_target1(1:nfb1))
+        allocate(fb_type1(1:nfb1))
+        allocate(fb_type_inverse1(1:nfb1))
+        allocate(fb_rescale_option1(1:nfb1))
+        allocate(fb_actuator1(1:nfb1))
+        allocate(fb_reg1(nMxFbReg))
+        allocate(fb_regp1(1:nfb1,2))
+        allocate(fb_reg_par1(1:nfb1,2))
+        allocate(fb_istra1(1:nfb1-1))
+        allocate(fb_ib1(1:nfb1-1))
+        allocate(fb_species1(1:nfb1))
+        allocate(fb_alpha1(1:nfb1))
+        allocate(fb_beta1(1:nfb1))
+        allocate(fb_const1(1:nfb1))
+        allocate(fb_time1(1:nfb1))
+        allocate(fb_puff_min1(1:nfb1))
+        allocate(fb_puff_max1(1:nfb1))
+        allocate(fb_overshoot1(1:nfb1))
+        ifb1 = 0
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) then
+            ifb1 = ifb1 + 1
+            fb_target1(ifb1) = fb_target(iFb)
+            fb_type1(ifb1) = fb_type(iFb)
+            fb_type_inverse1(ifb1) = fb_type_inverse(iFb)
+            fb_rescale_option1(ifb1) = fb_rescale_option(iFb)
+            fb_actuator1(ifb1) = fb_actuator(iFb)
+            fb_reg_par1(ifb1,1:2) = fb_reg_par(iFb,1:2)
+            if (maxval(fb_reg).gt.0) then
+              if (fb_regp(iFb,2).gt.0) then
+                fb_regp1(ifb1,2) = fb_regp(iFb,2)
+                if (ifb1.eq.1) then
+                  fb_regp1(ifb1,1) = 1
+                else
+                  fb_regp1(ifb1,1) =
+     .             fb_regp1(is_previous,1)+fb_regp1(is_previous,2)
+                end if
+                fb_reg1(fb_regp1(ifb1,1):
+     .                  fb_regp1(ifb1,1)+fb_regp1(ifb1,2)-1) =
+     .           fb_reg(fb_regp(iFb,1):
+     .                  fb_regp(iFb,1)+fb_regp(iFb,2)-1)
+              end if
+              is_previous = ifb1
+            end if
+            fb_istra1(ifb1) = istra1(fb_istra(iFb))
+            fb_ib1(ifb1) = fb_ib(iFb)
+            if (is1(fb_species(iFb)).ne.-1) then
+              fb_species1(ifb1) = is1(fb_species(iFb))
+            else
+              if (fb_actuator(iFb).eq.1) then
+                fb_species1(ifb1) = ismain0
+              else
+                fb_species1(ifb1) = ismain
+              endif
+            end if
+            fb_alpha1(ifb1) = fb_alpha(iFb)
+            fb_beta1(ifb1) = fb_beta(iFb)
+            fb_const1(ifb1) = fb_const(iFb)
+            fb_puff_min1(ifb1) = fb_puff_min(iFb)
+            fb_puff_max1(ifb1) = fb_puff_max(iFb)
+            fb_overshoot1(ifb1) = fb_overshoot(iFb)
+            fb_time1(ifb1) = fb_time(iFb)
           end if
         end do
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
-        if (maxval(na_feedback_choice1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CHOICE=  ',na_feedback_choice1(0:nspecies1-1)
-        if (maxval(na_feedback_option1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_OPTION=  ',na_feedback_option1(0:nspecies1-1)
-        if (maxval(na_feedback_actuator1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_ACTUATOR=',na_feedback_actuator1(0:nspecies1-1)
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
-        if (maxval(na_feedback_ib1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IB= ',na_feedback_ib1(0:nspecies1-1)
-        if (maxval(na_feedback_ix11(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IX1=',na_feedback_ix11(0:nspecies1-1)
-        if (maxval(na_feedback_ix21(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IX2=',na_feedback_ix21(0:nspecies1-1)
-        if (maxval(na_feedback_iy11(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IY1=',na_feedback_iy11(0:nspecies1-1)
-        if (maxval(na_feedback_iy21(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IY2=',na_feedback_iy21(0:nspecies1-1)
+        write(99,'(a,i2,a)') 'NFB=',nfb1,','
         write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,1p,',nspecies1,'(1x,g10.3,'',''))'
-        if (maxval(na_feedback_target1(0:nspecies1-1)).gt.0.0_R8)
+     .   '(1x,a,t20,',nfb1,'(1x,i2,'',''))'
+        if (maxval(fb_type1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_TYPE=',fb_type1(1:nfb1)
+        if (maxval(fb_rescale_option1(1:nfb1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_TARGET=  ',na_feedback_target1(0:nspecies1-1)
-        if (maxval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8 .or.
-     &      minval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_ALPHA=   ',na_feedback_alpha1(0:nspecies1-1)
-        if (maxval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8 .or.
-     &      minval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_BETA=    ',na_feedback_beta1(0:nspecies1-1)
-        if (maxval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8 .or.
-     &      minval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CONST=   ',na_feedback_const1(0:nspecies1-1)
-        if (maxval(na_feedback_puff_min1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MIN=',na_feedback_puff_min1(0:nspecies1-1)
-        if (maxval(na_feedback_puff_max1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MAX=',na_feedback_puff_max1(0:nspecies1-1)
-        if (maxval(na_feedback_overshoot1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm) 'NA_FEEDBACK_OVERSHOOT=',
-     .     na_feedback_overshoot1(0:nspecies1-1)
-        if (maxval(na_feedback_time1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_TIME=',na_feedback_time1(0:nspecies1-1)
+     .     'FB_RESCALE_OPTION=',fb_rescale_option1(1:nfb1)
+        if (maxval(fb_actuator1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ACTUATOR=',fb_actuator1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'(1x,i4,'',''))'
+        if (maxval(fb_ib1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_IB=',fb_ib1(1:nfb1)
+        if (maxval(fb_species1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_SPECIES=',fb_species1(1:nfb1)
+        if (maxval(fb_reg_par1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REG_PAR(1,1)=',fb_reg_par1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REG_PAR(1,2)=',fb_reg_par1(1:nfb1,2)
+        end if
+        if (maxval(fb_regp1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REGP(1,1)=',fb_regp1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REGP(1,2)=',fb_regp1(1:nfb1,2)
+        end if
+        if (maxval(fb_istra1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ISTRA=',fb_istra1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)')
+     .   '(1x,a,t20,1p,',nfb1,'(1x,g10.3,'',''))'
+        if (maxval(fb_target1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TARGET=',fb_target1(1:nfb1)
+        if (maxval(fb_alpha1(1:nfb1)).ne.0.001_R8 .or.
+     &      minval(fb_alpha1(1:nfb1)).ne.0.001_R8)
+     >   write(99,hlp_frm) 'FB_ALPHA=',fb_alpha1(1:nfb1)
+        if (maxval(fb_beta1(1:nfb1)).ne.1.0_R8 .or.
+     &      minval(fb_beta1(1:nfb1)).ne.1.0_R8)
+     >   write(99,hlp_frm) 'FB_BETA=',fb_beta1(1:nfb1)
+        if (maxval(fb_const1(1:nfb1)).ne.0.0_R8 .or.
+     &      minval(fb_const1(1:nfb1)).ne.0.0_R8)
+     >   write(99,hlp_frm) 'FB_CONST=',fb_const1(1:nfb1)
+        if (maxval(fb_puff_min1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MIN=',fb_puff_min1(1:nfb1)
+        if (maxval(fb_puff_max1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MAX=',fb_puff_max1(1:nfb1)
+        if (maxval(fb_overshoot1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_OVERSHOOT=', fb_overshoot1(1:nfb1)
+        if (maxval(fb_time1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TIME=',fb_time1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'l1,'',''))'
+        if (any(fb_type_inverse1(1:nfb1)))
+     >   write(99,hlp_frm) 'FB_TYPE_INVERSE=',fb_type_inverse1(1:nfb1)
+        if (maxval(fb_reg1).gt.0) then
+          write(hlp_frm,'(a,i4,a)')
+     .     '(1x,a,',fb_regp(is_previous,1)+fb_regp(is_previous,2)-1,
+     .     '(1x,i5,'',''))'
+          write(99,hlp_frm)
+     .     'FB_REG=',fb_reg1(1:fb_regp(is_previous,1)+
+     .                         fb_regp(is_previous,2)-1)
+        end if
         write(99,'(a1)') '/'
         close(99)
-        deallocate(na_feedback_target1)
-        deallocate(na_feedback_choice1)
-        deallocate(na_feedback_option1)
-        deallocate(na_feedback_actuator1)
-        deallocate(na_feedback_ix11)
-        deallocate(na_feedback_ix21)
-        deallocate(na_feedback_iy11)
-        deallocate(na_feedback_iy21)
-        deallocate(na_feedback_ib1)
-        deallocate(na_feedback_alpha1)
-        deallocate(na_feedback_beta1)
-        deallocate(na_feedback_const1)
-        deallocate(na_feedback_puff_min1)
-        deallocate(na_feedback_puff_max1)
-        deallocate(na_feedback_overshoot1)
-        deallocate(na_feedback_time1)
+        deallocate(fb_target1)
+        deallocate(fb_type1)
+        deallocate(fb_type_inverse1)
+        deallocate(fb_rescale_option1)
+        deallocate(fb_actuator1)
+        deallocate(fb_reg1)
+        deallocate(fb_regp1)
+        deallocate(fb_reg_par1)
+        deallocate(fb_istra1)
+        deallocate(fb_ib1)
+        deallocate(fb_species1)
+        deallocate(fb_alpha1)
+        deallocate(fb_beta1)
+        deallocate(fb_const1)
+        deallocate(fb_puff_min1)
+        deallocate(fb_puff_max1)
+        deallocate(fb_overshoot1)
+        deallocate(fb_time1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'
+      end if
+
+*  ..write new b2.feedback_save.parameters if needed
+*   ..we can only do this after the species mapping has been done
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.feedback_save.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
+     &   .and. .not.found .and. .not.same_atoms) then
+        call read_b2us_feedback(99,'    ',feedback_namelist_used)
+        if (maxval(saved_fb_actuator).gt.0.0_R8.or.
+     &      maxval(saved_fb_prev).gt.0.0_R8) then
+          todo = .false.
+          ifb1 = 0
+          do iFb = 1, nFb
+            todo = todo .or.
+     &       ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &         saved_fb_prev(iFb).gt.0.0_R8) .and.
+     &         is1(fb_species(iFb)).ne.fb_species(iFb))
+            if ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &           saved_fb_prev(iFb).gt.0.0_R8).and.
+     &          (is1(fb_species(iFb)).ne.-1.or.
+     .           fb_actuator(iFb).eq.1)) ifb1 = ifb1+1
+          end do
+          if (todo) then
+            allocate(saved_fb_actuator1(1:ifb1))
+            allocate(saved_fb_prev1(1:ifb1))
+            saved_fb_actuator1 = 0.0_R8
+            saved_fb_prev1 = 0.0_R8
+            ifb1 = 0
+            do ifb = 1, nFb
+              if (is1(fb_species(ifb)).ne.-1.or.
+     .            fb_actuator(iFb).eq.1) then
+                ifb1 = ifb1 + 1
+                saved_fb_actuator1(ifb1) = saved_fb_actuator(ifb)
+                saved_fb_prev1(ifb1) = saved_fb_prev(ifb)
+              end if
+            end do
+            write(*,*) 'Writing b2.feedback_save.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
+            open(99,file=new_filename)
+            write(99,'(a9)') '&FEEDBACK'
+            write(hlp_frm,'(a,i2,a)')
+     >       '(a,1p,',ifb1,'(1x,1e15.8,'',''))'
+            if (maxval(saved_fb_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
+     >        (saved_fb_actuator1(ifb),ifb=1,ifb1)
+            if (maxval(saved_fb_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_PREV=',
+     >        (saved_fb_prev1(ifb),ifb=1,ifb1)
+            write(99,'(a1)') '/'
+            close(99)
+            deallocate(saved_fb_actuator1)
+            deallocate(saved_fb_prev1)
+          end if
+        end if
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_save.parameters'
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.optimization.parameters, if needed
@@ -11671,7 +11879,7 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ns, mpg, switch)
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
@@ -11748,20 +11956,6 @@ cxpb as they no longer necessarily point to the same species
         if (.not.streql(limited_memory_update_type,'bfgs'))
      >   write(99,'(1x,a,a,a)') 'LIMITED_MEMORY_UPDATE_TYPE=''',
      >                      trim(limited_memory_update_type),''','
-        if (nncon.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNCON=',nncon,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nncon,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'GL=',(gl(i),i=1,nncon)
-          write(99,hlp_frm) 'GU=',(gu(i),i=1,nncon)
-        end if
-        if (nnjac.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNJAC=',nnjac,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,i6,'',''))'
-          write(99,hlp_frm) 'JCOL=',(jcol(i),i=1,nnjac)
-          write(99,hlp_frm) 'JROW=',(jrow(i),i=1,nnjac)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'JJ=',(jj(i),i=1,nnjac)
-        end if
         write(99,'(a1)') '/'
         close(99)
       else if (todo) then
@@ -11780,7 +11974,7 @@ cxpb as they no longer necessarily point to the same species
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
         if(.not.user_initialised)
-     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli)
+     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli,switch)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -11796,107 +11990,34 @@ cxpb as they no longer necessarily point to the same species
             write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ntns)
           end if
         end if
-#ifdef WG_TODO
         write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
-        if (lpfrb_i.ne.0) then
-          if (lpfrb_i.gt.0) then
-            ix = conformal_convert(non_commensurate,1,
-     .       lpfrb_i, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',ix,','
-          else if (lpfrs_pmp.eq.1) then
-            ix = conformal_convert(non_commensurate,1,
-     .       leftcut(1)-1+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(leftcut1(1)-1-ix),','
-          else if (lpfrs_pmp.eq.2) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nx-1+lpfrb_i, ny-1, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nx1-1-ix),','
-          else if (lpfrs_pmp.eq.3) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtl-1+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-1-ix),','
-          else if (lpfrs_pmp.eq.4) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtl-1+lpfrb_i, ny-1, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-1-ix),','
-          end if
+        if (npfr_cvs.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NPFR_CVS=',NPFR_CVS,','
+          write(hlp_frm,'(a,i3,a)') '(1x,a,',npfr_cvs,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PFR_CVS=',(pfr_cvs(j),j=1,npfr_cvs)
         end if
-        if (lpfrb_o.ne.0) then
-          if (lpfrb_o.gt.0) then
-            ix = conformal_convert(non_commensurate,1,
-     .       lpfrb_o, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',ix,','
-          else if (lpfrs_pmp.eq.1) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nx-1+lpfrb_o, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nx1-1-ix),','
-          else if (lpfrs_pmp.eq.2) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nx-1+lpfrb_o, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nx1-1-ix),','
-          else if (lpfrs_pmp.eq.3) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtr+1-lpfrb_o, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(ix-nxtr1-1),','
-          else if (lpfrs_pmp.eq.4) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtl-1+lpfrb_o, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nxtl1-1-ix),','
-          end if
-        end if
-        if (lpfrt_i.ne.0) then
-          if (lpfrt_i.gt.0) then
-            ix = conformal_convert(non_commensurate,1,
-     .       lpfrt_i, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_I=',ix,','
-          else if (lpfrs_pmp.eq.1) then
-            ix = conformal_convert(non_commensurate,1,
-     .       leftcut(1)-1+lpfrt_i, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(leftcut1(1)-1-ix),','
-          else if (lpfrs_pmp.eq.2) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nx-1+lpfrt_i, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(nx1-1-ix),','
-          else if (lpfrs_pmp.eq.3) then
-            ix = conformal_convert(non_commensurate,1,
-     .       leftcut(2)-lpfrt_i, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(ix-leftcut1(2)),','
-          else if (lpfrs_pmp.eq.4) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtl-1+lpfrt_i, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(nxtl1-1-ix),','
-          end if
-        end if
-        if (lpfrt_o.ne.0) then
-          if (lpfrt_o.gt.0) then
-            ix = conformal_convert(non_commensurate,1,
-     .       lpfrt_o, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRT_O=',ix,','
-          else if (lpfrs_pmp.eq.1) then
-            ix = conformal_convert(non_commensurate,1,
-     .       rightcut(1)-lpfrt_o, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-rightcut1(1)),','
-          else if (lpfrs_pmp.eq.2) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nx-1+lpfrt_o, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(nx1-1-ix),','
-          else if (lpfrs_pmp.eq.3) then
-            ix = conformal_convert(non_commensurate,1,
-     .       rightcut(2)-1+lpfrt_o, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(rightcut1(2)-1-ix),','
-          else if (lpfrs_pmp.eq.4) then
-            ix = conformal_convert(non_commensurate,1,
-     .       nxtr+1-lpfrt_o, ny-1, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-nxtr1-1),','
-          end if
-        end if
-#endif
         if (fusion_power.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'FUSION_POWER=',fusion_power,','
         if (Spmp_He_to_D.ne.1.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
+        if (Te_det_threshold.ne.2.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'TE_DET_THRESHOLD=',Te_det_threshold,','
+        if (q95_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'Q95_ALBLL=',q95_albll,','
+        if (B0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'B0_ALBLL=',B0_albll,','
+        if (R0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'R0_ALBLL=',R0_albll,','
+        if (maxval(trgshp(1:2*nncut)).gt.1.0_R8) then
+          write(hlp_frm,'(a,i1,a)') '(1x,a,1p,',2*nncut,'(e10.2,a))'
+          write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=1,2*nncut)
+        end if
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do

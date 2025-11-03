@@ -68,14 +68,14 @@ c----------------------------------------------------------------------
 #include "impcon.inc"
       integer nnns
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
-      parameter (nnns=23)
+      parameter (nnns=25)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
      2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
      3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
      4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str',
-     5        'radpower','sources ','gleirdat'/
+     5        'radpower','sources ','gleirdat','fclbl   ','grd_mode'/
       integer i, j
       integer ll, lt, luswch
       logical streql
@@ -118,9 +118,21 @@ c      print *,'b2prdn >> ',unm
       case (5)
         call rearre(ppp1,3*DEF_NLIM,ll)
         lppp=ll/3
+        if(lppp.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',lppp
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
       case (6)
         call rearre(ppp2,3*DEF_NLIM,ll)
         lppp=ll/3
+        if(lppp.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',lppp
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
       case (9:13)
         if (streql(u,unms(9))) then
 c*** Inner edge of Western target (inner for LSN, outer for USN)
@@ -182,6 +194,13 @@ c*** Plotzone label
 c*** Elements not for Eirene
         call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
         do j = nskipel+1, nskipel+i
+          if(lskipel(j).gt.DEF_NLIM) then !{
+            write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+            write(0,*) 'Current number of requested elements: ',
+     .        lskipel(j)
+            call xerrab
+     .       (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+          end if !}
           lskip(lskipel(j)) = .true.
         end do
         nskipel=nskipel+i
@@ -207,6 +226,18 @@ c*** DG v. 2.0 or later
       case (23)
         call resimi(i)
         lvdg20=.true.
+c*** Face labels
+      case (24)
+        call rearri(lfclbl,DEF_NLIM,ll)
+        if(ll.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',ll
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
+c*** Grid mode
+      case (25)
+        call resimi(grid_mode)
       case default
         call scipit
       end select

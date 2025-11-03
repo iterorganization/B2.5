@@ -8,7 +8,7 @@
       use b2us_map
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, mode
+      integer, intent (in) :: nCv, nFc, nVx, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8), intent(in) ::

@@ -17,12 +17,22 @@
 
       if (.not.flag_optim) return
 
+      if (recalc_params) then
+        do ip = 1, npar_opt - nsigma_opt - nmean_opt
+          if (xnew(ip) .gt. xold(ip)) then
+            par_opt_phys(ip) = min(par_opt_phys(ip)*xmult(ip),xnew(ip))
+          else
+            par_opt_phys(ip) = max(par_opt_phys(ip)*xmult(ip),xnew(ip))
+          endif
+        end do
+      endif
+
       idir = 1 !this indicates the different parameters active
-      do ip = 1, nnvar - nsigma_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           if (partype(ip).lt.1 .or. partype(ip).gt.9) then
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype incompatible with spatial points')
           endif
           do ii = 1, spatial_points(ip)
@@ -41,7 +51,7 @@
             parm_hci(paris(ip)) = par_opt_phys(idir)
           case (4)
             parm_hce = par_opt_phys(idir)
-          case (5)
+          case (6)
             parm_vla(paris(ip)) = par_opt_phys(idir)
           case (7)
             parm_vsa(paris(ip)) = par_opt_phys(idir)
@@ -114,7 +124,7 @@
           case (39)
             switch%b2tfhe_vis_kt = par_opt_phys(idir)
           case default
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
           idir = idir + 1
@@ -123,4 +133,3 @@
 
       return
       end subroutine set_parameters
-

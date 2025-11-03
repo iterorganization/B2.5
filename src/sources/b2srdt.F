@@ -13,9 +13,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
      2          b2srdt_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -53,7 +55,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, k
+      integer iCv, is, k, iFt, iFc
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv), mult_dt(nCv)
@@ -63,6 +65,8 @@
      &                  ttim_na(nCv,0:ns-1), ttim_ua(nCv,0:ns-1),       
      &                  ttim_ti(nCv), ttim_te(nCv),
      &                  dt_var4_ns(nCv,0:ns-1), dt_var4_min(nCv)
+      real (kind=R8) :: dtee_fts(mpg%nFt), dtei_fts(mpg%nFt),
+     &                  dtco_fts(mpg%nFt), dtmo_fts(mpg%nFt)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -92,7 +96,7 @@
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
-       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua0)).lt.c, 'Supra-luminal velocity !')
 *    ..test current state
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -104,7 +108,7 @@
        call b2xvsg (nCv*ns, kinrgy, 1, 'kinrgy', '.ge.')
        call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
 * ..Optionally, calculate a local (cell-based) multiplier to the timestep.
@@ -115,13 +119,27 @@
      &     switch%b2mndt_var_style3_Cmax, mult_dt, 
      &     dt_var4_ns,dt_var4_min,switch%b2mndt_var_style_nfilter)
 
+* ..Flux-tube based mechanism (not compatible with b2mndt_var_style.gt.0)
+      k = 1
+      dtee_fts = 0.0_R8
+      dtei_fts = 0.0_R8
+      dtco_fts = 0.0_R8
+      dtmo_fts = 0.0_R8
+      do while (dtfts(k) .ne. 0 .and. k .le. DEF_NYD)
+        dtee_fts(dtfts(k)) = dtee_ft(k)
+        dtei_fts(dtfts(k)) = dtei_ft(k)
+        dtco_fts(dtfts(k)) = dtco_ft(k)
+        dtmo_fts(dtfts(k)) = dtmo_ft(k)
+        k = k + 1
+      enddo
+
 * ..include the contributions from dtim
 *   ..modify snadt
 
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp parallel
 !$omp& default(none)
-!$omp& private(is,iCv,ttim,t0)
+!$omp& private(is,iCv,ttim,t0, iFc, iFt)
 !$omp& shared(nCv,ns,time_factor, geo, mpg, sr, lout)
 !$omp& shared(dtim,dtco,dtmo,dtee,dtei, switch)
 !$omp& shared(kinrgy0)
@@ -130,19 +148,33 @@
 !$omp& shared(ttim_te,ttim2_te,ttim_ti,ttim2_ti,mult_dt)
 !$omp& shared(dt_var4_ns,dt_var4_min)
 !$omp& private(ttim2,content,src_tot,smt)
+!$omp& shared(dtee_fts, dtei_fts, dtco_fts, dtmo_fts)
+!$omp& shared(ts_factor)
 !$omp do
 #endif
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO           if(iftimbound(ix,iy) .ne. 0) cycle
 !WG_TODO           if((guard_flows.eq.2 .or.
 !WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-          ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)*
-     &         mult_dt(iCv)
-          if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to particle content
+          if (switch%b2mndt_var_style.eq.0) then !! standard approaches
+            ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
+            iFt = mpg%cvFt(iCv) !! flux tube approach is only allowed for b2mndt_var_style = 0
+            if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
+            endif
+            if (iFt.ne.0) then
+              if (dtco_fts(iFt).gt.0.0_R8) then
+                ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
+              endif
+            endif
+          elseif (switch%b2mndt_var_style.eq.1) then !! Te based local timestep
+            ttim=dtim*dtco(is,mpg%cvReg(iCv))*mult_dt(iCv)
+          elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to particle content
             src_tot = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na0(iCv,is)
             content = geo%cvVol(iCv)*na0(iCv,is)
             ttim2 = content/abs(src_tot)/
@@ -152,8 +184,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_na(iCv,is) = ttim2
               ttim_na(iCv,is) = ttim
             endif
-          endif
-          if (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to particle content and drift CFL criterion
+          elseif (switch%b2mndt_var_style.eq.3) then !! CFL-based criterion for drifts (EXPERIMENTAL!)
+            ttim=dtim*dtco(is,mpg%cvReg(iCv))*
+     &         mult_dt(iCv)
+          elseif (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to particle content and drift CFL criterion
             src_tot = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na0(iCv,is)
             content = geo%cvVol(iCv)*na0(iCv,is)
             ttim2 = content/abs(src_tot)/
@@ -164,12 +198,15 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_na(iCv,is) = ttim2
               ttim_na(iCv,is) = ttim
             endif
+          else
+            call xerrab('b2mndt_var_style.gt.4 not yet implemented')
           endif
-          sr%snadt(iCv,0,is) =
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
-          sr%snadt(iCv,1,is) = -
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
-          sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
+
+          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*ts_factor    !fc 11.03.24
+          sr%snadt(iCv,0,is) = t0*na0(iCv,is)
+          sr%snadt(iCv,1,is) = -t0
+          if (.not.lout)
+     &     sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
@@ -181,13 +218,24 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !$omp DO
 #endif
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
-
-          ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)*
-     &         mult_dt(iCv)
-          if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to parallel momentum content
+          if (switch%b2mndt_var_style.eq.0) then !! standard approaches
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
+            iFt = mpg%cvFt(iCv)
+            if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
+            endif
+            if (iFt.ne.0) then
+              if (dtmo_fts(iFt).gt.0.0_R8) then
+                ttim=dtim*dtmo_fts(iFt)*time_factor(iCv)
+              endif
+            endif
+          elseif (switch%b2mndt_var_style.eq.1) then !! Te-based
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))*mult_dt(iCv)
+          elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to parallel momentum content
             smt = sr%smq(iCv,0:3,is) + sr%smo(iCv,0:3,is)
             src_tot = smt(0) + 
      &                smt(1)*ua0(iCv,is) + 
@@ -202,8 +250,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_ua(iCv,is) = ttim2
               ttim_ua(iCv,is) = ttim
             endif
-          endif
-          if (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to parallel momentum content and drift CFL criterion
+          elseif (switch%b2mndt_var_style.eq.3) then !! drift CFL criterion
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))*
+     &         mult_dt(iCv)
+          elseif (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to parallel momentum content and drift CFL criterion
             smt = sr%smq(iCv,0:3,is) + sr%smo(iCv,0:3,is)
             src_tot = smt(0) + 
      &                smt(1)*ua0(iCv,is) + 
@@ -219,13 +269,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_ua(iCv,is) = ttim2
               ttim_ua(iCv,is) = ttim
             endif
+          else
+            call xerrab('b2mndt_var_style.gt.4 not yet implemented')
           endif
-          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
+          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)  !srv 09.01.01
+     &         *ts_factor
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
           sr%smodt(iCv,3,is) = -t0
-          sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
+          if (.not.lout)
+     &     sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
         enddo
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
@@ -233,16 +287,29 @@ csw 24feb2014 check for guard cell (SOLPS4)
 #endif
 
 *   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
-#ifndef NO_OPENMP_B2SRDT
-!$OMP DO
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp DO
 #endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-        ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)*
-     &         mult_dt(iCv)
-        if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to electron heat content
+        if (switch%b2mndt_var_style.eq.0) then !! Standard approaches
+          ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
+          iFt = mpg%cvFt(iCv)
+          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+            iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
+          endif
+          if (iFt.ne.0) then
+            if (dtee_fts(iFt).gt.0.0_R8) then
+              ttim=dtim*dtee_fts(iFt)*time_factor(iCv)
+            endif
+          endif
+        elseif (switch%b2mndt_var_style.eq.1) then !! Te-based
+          ttim=dtim*dtee(mpg%cvReg(iCv))*mult_dt(iCv)
+        elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to electron heat content
             src_tot = sr%she(iCv,0) + 
      &                sr%she(iCv,1)*te0(iCv) + 
      &                sr%she(iCv,2)*ne0(iCv) +
@@ -255,8 +322,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_te(iCv) = ttim2
               ttim_te(iCv) = ttim
             endif
-        endif
-        if (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
+        elseif (switch%b2mndt_var_style.eq.3) then !! CFL drift criterion
+          ttim=dtim*dtee(mpg%cvReg(iCv))*
+     &         mult_dt(iCv)
+        elseif (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
             src_tot = sr%she(iCv,0) + 
      &                sr%she(iCv,1)*te0(iCv) + 
      &                sr%she(iCv,2)*ne0(iCv) +
@@ -270,22 +339,34 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_te(iCv) = ttim2
               ttim_te(iCv) = ttim
             endif
+        else
+          call xerrab('b2mndt_var_style.gt.4 not yet implemented')
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
         sr%shedt(iCv,2) = 0.0_R8
         sr%shedt(iCv,3) = -1.5_R8*t0
-        sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
+        if (.not.lout)
+     &   sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
 
-        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
-     &         mult_dt(iCv)
-        if (switch%b2mndt_var_style.eq.2) then !! For now keep timestep for kt and zt same is for ti
+
+
+        if (switch%b2mndt_var_style.eq.0) then !! Standard approaches
+          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+          if (iFt.ne.0) then
+            if (dtei_fts(iFt) .gt. 0.0_R8) then
+              ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
+            endif
+          endif
+        elseif (switch%b2mndt_var_style.eq.1) then !! Te-based
+          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
+        elseif (switch%b2mndt_var_style.eq.2) then !! For now keep timestep for kt and zt same is for ti
             src_tot = sr%shi(iCv,0) + 
      &                sr%shi(iCv,1)*ti0(iCv) + 
      &                sr%shi(iCv,2)*ni0(iCv,0) +
      &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv) !! TODO fix !!!
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
@@ -293,8 +374,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_ti(iCv) = ttim2
               ttim_ti(iCv) = ttim
             endif
-        endif
-        if (switch%b2mndt_var_style.eq.4) then 
+        elseif (switch%b2mndt_var_style.eq.4) then 
             src_tot = sr%shi(iCv,0) + 
      &                sr%shi(iCv,1)*ti0(iCv) + 
      &                sr%shi(iCv,2)*ni0(iCv,0) +
@@ -308,19 +388,23 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim2_ti(iCv) = ttim2
               ttim_ti(iCv) = ttim
             endif
+        else
+          call xerrab('b2mndt_var_style.gt.4 not yet implemented')
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
         sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
         sr%sktdt(iCv,3) = -t0
-        sr%sktdt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
+        if (.not.lout)
+     &   sr%skt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
 
         sr%sztdt(iCv,0) = t0*ni0(iCv,1)*zt0(iCv)
         sr%sztdt(iCv,1) = 0.0_R8
         sr%sztdt(iCv,2) = 0.0_R8
         sr%sztdt(iCv,3) = -t0
-        sr%sztdt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
+        if (.not.lout)
+     &   sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
@@ -354,7 +438,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim2 = min(ttim2,dt_var4_min(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
 
         if (switch%tn_style.eq.0) then
 
@@ -374,37 +458,40 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         elseif (switch%tn_style.eq.1) then
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a pure ion energy equation (tn_style=1)
 
         else
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a separate ion-neutral energy equation (tn_style=2)
 
           sr%shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)
           sr%shndt(iCv,1) = 0.0_R8
           sr%shndt(iCv,2) = 0.0_R8
           sr%shndt(iCv,3) = -1.5_R8*t0
-          sr%shn(iCv,:) = sr%shn(iCv,:)+sr%shndt(iCv,:)
+          if (.not.lout)
+     &     sr%shn(iCv,:) = sr%shn(iCv,:)+sr%shndt(iCv,:)
         endif
 
-        sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
+        if (.not.lout)
+     &   sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 
+
 !$omp do
 #endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-
-
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
         t0 = (switch%b2srdt_phm4/dtim)
@@ -413,26 +500,30 @@ cxpb  This treatment added as a fix to get the ExB runs going
         sr%schdt(iCv,1) = 0.0_R8
         sr%schdt(iCv,2) = 0.0_R8
         sr%schdt(iCv,3) = -t0                                           !xpb
-        sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
+        if (.not.lout)
+     &   sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 
 !$omp do
 #endif
-      do iCv = 1, nCv
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+
+      do iCv = 1, mpg%nCi
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
         sr%snedt(iCv,0) = t0*ne0(iCv)
         sr%snedt(iCv,1) = -t0
-        sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
+        if (.not.lout)
+     &   sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$omp end do
 !$omp end parallel
 #endif
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2srdt_sna0to1 = sr%snadt
@@ -440,6 +531,7 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_she0to3 = sr%shedt
         b2srdt_shi0to3 = sr%shidt
       endif
+#endif
 
       if ((switch%b2npmo_iout.eq.1.or.
      &                   switch%iout_b2wdat .eq. 4).and.lout) then      !srv 11.09.09 {

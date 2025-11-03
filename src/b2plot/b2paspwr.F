@@ -9,16 +9,16 @@ c***  power radiated near the targets, areas of the separatrix branches
 c***  and mean specific power radiated along the divertor legs per
 c***  square meter. ig-1000 cells are treated as "close to the targets"
 c======================================================================
+      use helper
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
+      use b2mod_ipmain
       use b2mod_b2plot
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
+      use b2mod_b2plot_wall_loading
+      use b2us_data
       implicit none
 c
-      integer ic
+      integer, intent(in) :: ic
       integer lun,m_hlp,m_hlpa
       parameter (lun=96, m_hlp=9, m_hlpa=1)
       integer, save :: shot = 0, run = 0
@@ -26,13 +26,16 @@ c
       character*16 username
       character*24 database,version
       character*256 filename,path,imasdir,home_dir,zeile
-      integer i,j,k,l,m,n,ix,ixx,isep,lv_hlp,n_hlp
+      integer i,j,k,l,m,lv_hlp,n_hlp
+      integer iCb,iCn,iCp,iCv,iCx,iFc,iFn
       real (kind=R8) ::
-     ,  hlp_pwr_in(2),hlp_rad_div(2),hlp_rad_trg(2),hlp_area(2),
-     ,  hlp_spwr(2),hlp_spwt(2),hlp_rdfr(2),hlp_rad_tot(2),
-     ,  hlp_area_t(2)
+     ,  hlp_pwr_in(ntrgsx),hlp_rad_div(ntrgsx),
+     ,  hlp_rad_trg(ntrgsx),hlp_area(ntrgsx),
+     ,  hlp_spwr(ntrgsx),hlp_spwt(ntrgsx),
+     ,  hlp_rdfr(ntrgsx),hlp_rad_tot(ntrgsx),
+     ,  hlp_area_t(ntrgsx)
       real (kind=R8) ::
-     ,  equ_hlp(2,m_hlp),hlp_r,s,eqa_hlp(m_hlpa),hlp_tot
+     ,  equ_hlp(ntrgsx,m_hlp),hlp_r,u,eqa_hlp(m_hlpa),hlp_tot
       equivalence
      ,  (hlp_tot,eqa_hlp(1))
       equivalence
@@ -42,10 +45,10 @@ c
      ,  (hlp_rdfr,equ_hlp(1,7)),    (hlp_rad_tot,equ_hlp(1,8)),
      ,  (hlp_area_t,equ_hlp(1,9))
       logical ex,not_default
-      character hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
-     ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8
+      character hlp_fn*24,hlp_c(ntrgsx)*2,hlp_u,hlp_frm*256,hlp_frh*256,
+     ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8,hlp_s(ntrgsx)
       data hlp_fn / 'spec_pwr.dat' /
-      data hlp_c / 'i', 'o' /
+      data hlp_c / 'i ', 'iu', 'ou', 'o ' /
       data hlp_hdr / 'Pin_','Pdv_','Ptg_','Sdv_','Psw_',
      ,               'Pst_','RdF_','Prd_','Sdt_' /
       data hlp_hda / 'Pin' /
@@ -61,85 +64,93 @@ c
 #endif
 c======================================================================
 
-#ifdef WG_TODO
-      n_hlp=2*m_hlp+m_hlpa
-      isep=jsep+1
+      if (ntrgts.eq.0) ntrgts=maxval(mpg%strDiv)
+      n_hlp=ntrgts*m_hlp+m_hlpa
 
 c*** Calculate the input power for each divertor
+c*** Calculate the areas and power radiated in the divertors
+c*** Calculate the power radiated near the targets
 
       hlp_tot=0.0_R8
-      ix=leftcut(1)-1
-      s=-1.0_R8
-      do l=1,2
-        hlp_pwr_in(l)=0.0_R8
-        do j=0,ny-1
-          if (l.eq.1) then
-            ixx=rightix(ix,j)
-          else
-            ixx=ix
-          end if
-          hlp_pwr_in(l)=hlp_pwr_in(l)+fhe(ixx,j,0,0)+fhi(ixx,j,0,0)
-        end do
-        hlp_pwr_in(l)=hlp_pwr_in(l)*s
-        hlp_tot=hlp_tot+hlp_pwr_in(l)
-        ix=rightcut(1)
-        s=1.0_R8
-        hlp_pwr_in(l)=1.0e-6_R8*hlp_pwr_in(l)
-      end do
-      hlp_tot=1.e-6*hlp_tot
-c      print *,'Input powers:',hlp_tot,hlp_pwr_in
-
-c*** Calculate the areas and power radiated in the divertors
-
-      m=ic
-      n=leftcut(1)-1
-      do l=1,2
+      do l=1,ntrgts
+        m=0
         hlp_area(l)=0.0_R8
         hlp_area_t(l)=0.0_R8
+        hlp_pwr_in(l)=0.0_R8
         hlp_rad_div(l)=0.0_R8
-        do i=m,n
-          hlp_area(l)=hlp_area(l)+gs(i,isep,1)+gs(i,isep-1,1)
-          do j=0,ny-1
-            do k=0,ns-1
-              hlp_rad_div(l)=hlp_rad_div(l)-rqbrm(i,j,k)
-              hlp_rad_div(l)=hlp_rad_div(l)-rqrad(i,j,k)
-            end do
-          end do
-        end do
-        hlp_area(l)=0.5_R8*hlp_area(l)
-        hlp_rad_div(l)=1.0e-6_R8*hlp_rad_div(l)
-        m=rightcut(1)
-        n=nx-1-ic
-      end do
-c      print *,'Areas: ',hlp_area
-c      print *,'Div. rad.: ',hlp_rad_div
-
-c*** calculate the power radiated near the targets
-
-      m=0
-      n=ic-1
-      do l=1,2
-        hlp_area_t(l)=hlp_area(l)
         hlp_rad_trg(l)=0.0_R8
-        do i=m,n
-          hlp_area_t(l)=hlp_area_t(l)+
-     .     0.5_R8*(gs(i,isep,1)+gs(i,isep-1,1))
-          do j=0,ny-1
-            do k=0,ns-1
-              hlp_rad_trg(l)=hlp_rad_trg(l)-rqbrm(i,j,k)
-              hlp_rad_trg(l)=hlp_rad_trg(l)-rqrad(i,j,k)
+        do j=mpg%ifdiv(l),mpg%divFcP(l,2)
+          iFc = mpg%divFc(mpg%divFcP(l,1) + j - 1)
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          iCn=iCv
+          iCb=iCv
+          iCx=0
+          do while (iCx.eq.0)
+            iCp = 0
+            m = m+1
+            do i = mpg%cvFcP(iCn,1),
+     .             mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
+              iFc = mpg%cvFc(i)
+              if (j.eq.mpg%ifdiv(l)) then
+                if (mpg%fcFs(iFc).eq.mpg%iFssep .or.
+     .             (mpg%fcFs(iFc).eq.mpg%iFssep2.and.mpg%iFssep2.ne.0))
+     >           then
+                  if (m.ge.ic) then
+                    hlp_area(l)=hlp_area(l)+geo%fcS(iFc)
+                  else
+                    hlp_area_t(l)=hlp_area_t(l)+geo%fcS(iFc)
+                  end if
+                end if
+              end if
+              if (iCp.ne.0) cycle
+              if (mpg%fcFs(iFc).ne.0) cycle
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi.or.
+     .            mpg%fcCv(iFc,2).gt.mpg%nCi) cycle
+              if (mpg%fcCv(iFc,1).eq.iCn .and. mpg%fcCv(iFc,2).ne.iCb)
+     >         then
+                u = -1.0_R8
+                iFn = iFc
+                iCp = mpg%fcCv(iFn,2)
+              end if
+              if (mpg%fcCv(iFc,2).eq.iCn .and. mpg%fcCv(iFc,1).ne.iCb)
+     >         then
+                u = 1.0_R8
+                iFn = iFc
+                iCp = mpg%fcCv(iFn,1)
+              end if
             end do
+            iCb = iCn
+            iCn = iCp
+            do k = 0, state%ns-1
+              if (m.ge.ic) then
+                hlp_rad_div(l)=hlp_rad_div(l)+state%srw%rqbrm(iCb,k)
+                hlp_rad_div(l)=hlp_rad_div(l)+state%srw%rqrad(iCb,k)
+              else
+                hlp_rad_trg(l)=hlp_rad_trg(l)+state%srw%rqbrm(iCb,k)
+                hlp_rad_trg(l)=hlp_rad_trg(l)+state%srw%rqrad(iCb,k)
+              end if
+            end do
+            if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
+              iCx = iCn
+              hlp_pwr_in(l)=hlp_pwr_in(l)+
+     .         u*(state%dv%fhe(iFn,0)+state%dv%fhi(iFn,0))
+            end if
           end do
         end do
+        hlp_tot=hlp_tot+hlp_pwr_in(l)
+        hlp_pwr_in(l)=1.0e-6_R8*hlp_pwr_in(l)
+        hlp_rad_div(l)=1.0e-6_R8*hlp_rad_div(l)
         hlp_rad_trg(l)=1.0e-6_R8*hlp_rad_trg(l)
-        m=nx-ic
-        n=nx-1
       end do
+      hlp_tot=1.e-6*hlp_tot
+c      print *,'Areas: ',hlp_area,hlp_area_t
+c      print *,'Input powers:',hlp_tot,hlp_pwr_in
+c      print *,'Div. rad.: ',hlp_rad_div
 c      print *,'Trg. rad.: ',hlp_rad_trg
 
-c*** total radiated power and its fraction
+c*** Total radiated power and its fraction
 
-      do i=1,2
+      do i=1,ntrgts
         hlp_rad_tot(i)=hlp_rad_div(i)+hlp_rad_trg(i)
         if(hlp_pwr_in(i).gt.0.0_R8) then
           hlp_rdfr(i)=hlp_rad_tot(i)/hlp_pwr_in(i)
@@ -148,9 +159,9 @@ c*** total radiated power and its fraction
         end if
       end do
 
-c*** calculate the specific powers
+c*** Calculate the specific powers
 
-      do l=1,2
+      do l=1,ntrgts
         if(hlp_area(l).gt.0.0_R8) then
           hlp_spwr(l)=hlp_rad_div(l)/hlp_area(l)
           hlp_spwt(l)=hlp_rad_tot(l)/hlp_area_t(l)
@@ -191,12 +202,18 @@ c*** read the file
 
 c*** Write the header
 
+        if (ntrgts.eq.2) then
+          hlp_s(1) = hlp_c(1)
+          hlp_s(2) = hlp_c(4)
+        else
+          hlp_s = hlp_c
+        end if
         rewind(lun)
         write(hlp_frh,'(a,i1,a,i3,a)')
-     .   '(a5,14x,',m_hlpa,'a4,7x,',2*m_hlp,'(a4,a1,7x))'
+     .   '(a5,14x,',m_hlpa,'a4,7x,',ntrgts*m_hlp,'(a4,a1,7x))'
 c        print *,'hlp_frh: ',hlp_frh
         write(lun,hlp_frh) '#case',(hlp_hda(i),i=1,m_hlpa),
-     -    ((hlp_hdr(i),hlp_c(j),i=1,m_hlp),j=1,2)
+     -    ((hlp_hdr(i),trim(hlp_s(j)),i=1,m_hlp),j=1,ntrgts)
       end if
 
 c*** Extract the case number
@@ -211,6 +228,7 @@ c*** Extract the case number
       call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
       call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+      not_default = shot.gt.0.and.run.ge.0
       if (shot.gt.0) then
         write(case_number,'(i6,a1,i5.5)') shot,'/',run
       else
@@ -219,7 +237,7 @@ c*** Extract the case number
         call ipgetc('b2mndr_ids_path', path )
 #endif
         call strip_spaces(path)
-        not_default = .not.streql(path,' ')
+        not_default = not_default.or..not.streql(path,' ')
         filename='shotnumber.history'
         call find_file(filename,ex)
         if (ex) then
@@ -294,7 +312,7 @@ c*** Extract the case number
           end if
           l=index(path,'$SOLPSTOP')
           if (l.gt.0) then
-            path = trim(solpstop())//trim(path(l+9:256))
+            path = trim(solpstop)//trim(path(l+9:256))
           end if
           l=index(path,'$IMASDIR')
           if (l.gt.0) then
@@ -338,9 +356,8 @@ c*** Extract the case number
 c*** Write the data
 
       write(lun,hlp_frm) case_number,(eqa_hlp(j),j=1,m_hlpa),
-     ,                            ((equ_hlp(i,j),j=1,m_hlp),i=1,2),1234
+     ,                 ((equ_hlp(i,j),j=1,m_hlp),i=1,ntrgts),1234
       close(lun)
-#endif
       return
 c======================================================================
   900 write(0,*) 'b2paspwr: unable to open ',hlp_fn

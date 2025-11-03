@@ -16,6 +16,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2urmo
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -75,7 +79,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       real (kind=R8) :: ubv(nVx), dub(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, calcflow, calccoef
+      external b2xvsg, calcflow, calccoef
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -102,18 +106,20 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 * ..compute flux
 cwdk note: compared to original code, flv is now based on "effective" 
 cwdk       viscosity, and will be zero if cvsb is zero
-      call calcflow(nCv,nFc,nVx, switch%b2npmo_discr_meth,
+      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                       geo,mpg,ub,flub,cvsb,fmb,flf,flv)
 cwdk store effective viscosity, for use in viscous heating
       call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
       cvsb_eff  = -flv/(wrkf + eps)
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         fmo_flua(:,:,isb)=flf
         call diff(nCv,nFc,nVx,0,geo,mpg,ub,ubv,dub)
         fmo_cvsa(:,:,isb)=-cvsb*dub
-        fmo_hybr(:,:,isb)=fmb-fmo_cvsa(:,:,isb)
+        fmo_hybr(:,:,isb)=fmb-fmo_cvsa(:,:,isb)-fmo_flua(:,:,isb)
       endif
+#endif
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
         if (in_parallel()) then 
@@ -131,6 +137,8 @@ cwdk store effective viscosity, for use in viscous heating
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
+       call my_out_us(70,nFc,1,flf(1,0),'b2urmo_etaPat_ua_th'//chns)
+       call my_out_us(70,nFc,1,flf(1,1),'b2urmo_etaPat_ua_r'//chns)
       endif  
       endif
 
@@ -141,7 +149,7 @@ cwdk store effective viscosity, for use in viscous heating
       ! - should contribution from flubv be in here?
       wrk  = 0.5_R8*ub**2
       wrkf = flub + flubv
-      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_ meth,
+      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                     geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz

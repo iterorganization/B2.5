@@ -1,7 +1,6 @@
       SUBROUTINE ILLTERN_7(N1, N2, N1D, NZ, RHS, SOL)                  !sv 29.05.02 {
       use b2mod_types
       use b2mod_ysmp_sdrv
-      use b2mod_indirect
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
@@ -276,4 +275,3 @@ C
 *//END ILLTERN//
 
       END subroutine                                                         !sv 29.05.02 }
-

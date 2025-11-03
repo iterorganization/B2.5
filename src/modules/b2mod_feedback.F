@@ -34,14 +34,16 @@
      & vacuum_communication_beta(0:nsdmax-1,nvac),
      & na_feedback_target(0:DEF_NATM-1), na_feedback_time(0:DEF_NATM-1),
      & saved_na_feedback_actuator(0:DEF_NATM-1),
+     & saved_na_feedback_prev(0:DEF_NATM-1),
      & na_feedback_alpha(0:DEF_NATM-1), na_feedback_beta(0:DEF_NATM-1),
      & na_feedback_const(0:DEF_NATM-1),
      & na_feedback_puff_min(0:DEF_NATM-1),
      & na_feedback_puff_max(0:DEF_NATM-1),
      & na_feedback_overshoot(0:DEF_NATM-1)
       namelist /feedback/ saved_cbshe_core, saved_cbshi_core,
-     1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1, 
-     2 saved_cbsna_pfr2, saved_cbsna_sol, saved_na_feedback_actuator
+     1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1,
+     2 saved_cbsna_pfr2, saved_cbsna_sol, saved_na_feedback_actuator,
+     3 saved_na_feedback_prev
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/ vacuum_communication,
      & vacuum_communication_nreg,
@@ -63,6 +65,7 @@
      2 saved_cbsna_core/0.0_R8/, saved_cbsch_core/0.0_R8/,
      3 saved_cbsna_pfr1/0.0_R8/, saved_cbsna_pfr2/0.0_R8/,
      4 cum_volrec/0.0_R8/, saved_na_feedback_actuator/DEF_NATM*0.0_R8/,
+     & saved_na_feedback_prev/DEF_NATM*0.0_R8/,
      5 na_feedback_target/DEF_NATM*0.0_R8/,
      * na_feedback_time/DEF_NATM*0.0_R8/,
      * na_feedback_choice/DEF_NATM*0/,
@@ -111,7 +114,8 @@
       found = max(saved_cbshe_core, saved_cbshi_core, 
      .            saved_cbsna_core, saved_cbsch_core, 
      .            saved_cbsna_pfr1, saved_cbsna_pfr2,
-     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
+     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator),
+     .            maxval(saved_na_feedback_prev))
      .            .gt. 0.0_R8
       return
 
@@ -154,9 +158,12 @@ cxpb size is changed in b2mod_dimensions
      > write(nwrite,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
       write(hlp_frm,'(a,i2,a)')
      > '(a,1p,',nspecies,'(1x,1e15.8,'',''))'
-      if (maxval(abs(saved_na_feedback_actuator)).gt.0.0_R8)
+      if (maxval(dabs(saved_na_feedback_actuator)).gt.0.0_R8)
      > write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
      > (saved_na_feedback_actuator(is),is=0,nspecies-1)
+      if (maxval(abs(saved_na_feedback_prev)).gt.0.0_R8)
+     > write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_PREV=',
+     > (saved_na_feedback_prev(is),is=0,nspecies-1)
       write(nwrite,'(a1)') '/'
       close(nwrite)
       write(*,*) 'Saved ',trim(filename)

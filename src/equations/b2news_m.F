@@ -3,9 +3,10 @@
 
       subroutine b2news_m (nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
-     &  st, st_ext, st_avg, ierr, ramp_call)
+     &  st, st_ext, st_avg, ramp_call)
       use b2mod_types
       use b2mod_constants
+      use b2mod_boundary_namelist
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
       use b2mod_time
@@ -22,21 +23,20 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
-      use b2mod_eirdiag
-     & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
-     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+     &          rsamoreg, b2divue, b2divua, b2exbe, b2exba, b2visa,
+     &          b2joule, b2fraa
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
-      use b2mod_boundary_namelist
-     & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
-     &          lfeedback
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+     & , only : maxw_eff, nstraid, userfluxparm, b2recyc, arcend,
+     &          targsp, b2species_start, b2species_end, lstrascl, lsns,
+     &          msns, gpfc, nstrai, nstrat, debug_flags, neutrals_count,
+     &          neutrals_time_mod, neutrals_time_switch, neut_scl_lim,
+     &          natmid, ntrack
       use b2mod_b2cmpt
      & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
      &          cfhce, cfhci
@@ -44,13 +44,33 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
      &          nkind_data, poloidal_scaling, transport_ip_filename,
-     &          nscale, transport_ip_time_switch, transport_ip_time_mod
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod,
+     &          sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, sdata,
+     &          xdata, divheat, nxx, nkind_source
       use b2us_feedback
-     & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
-     &          feedback_namelist_used
+     & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_wall
+     & , only : track_species
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
+      use b2mod_b2zhco
+     & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa, c_r_tb,
+     &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact,
+     &          zh_tf_toff
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf, znnucl, mu, mu_mdf
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -67,7 +87,6 @@
       type (B2StateExt), intent (inout) :: st_ext
       type (B2Average), intent (in) :: st_avg
 *   ..output arguments                                                    !xpb
-      integer ierr
       logical wrong_flow, ramp_call
 *   ..common blocks
 
@@ -101,7 +120,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, ier0, i, iCv, ireg
+      integer is, i, ib, iCv, iFc, ireg
       character charns*3                                                 !srv 30.06.03
       real (kind=R8) ::
      &  rxf0, rxf1, rxf2, rxf3, t0                                       !srv 09.07.99 06.07.00
@@ -112,9 +131,7 @@
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  fni0(nFc,0:1), na_min
       logical solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
-#ifdef WG_TODO
       logical inverted_ua
-#endif
       logical new_matrix
 *   ..procedures
       intrinsic mod
@@ -296,8 +313,10 @@ csw 01oct2012 initialize potential if necessary
      &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
      &  st%dv%fchanml_a, st%dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
-     &  st%dv%fchvispar_a, st%dv%fchvispar)
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
@@ -305,9 +324,11 @@ csw 01oct2012 initialize potential if necessary
      &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
      &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
       call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te, 
-     &  st%pl%ti, st%dv%ni(:,1), st%co%hcix_c, st%dv%fchvisq_a,
-     &  st%dv%fchvisq)
+     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
+     &  st%pl%ti, st%pl%na, st%dv%ni(:,1), st%rt%rza,
+     &  st%co_ns%vsaf_hAdp_albe, st%co_ns%vsaf_hBdp_al,
+     &  st%co%hcix_c, st%co%hci_a, st%co_ns%hci_al_ast,
+     &  st%dv%fchvisq_a, st%dv%fchvisq)
       call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
      &  st%dv%fchviskt_a, st%dv%fchviskt)
@@ -329,7 +350,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
      &    st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
-     &    st%psnc, st%psnl, st_ext, ier0)
+     &    st%psnl, st_ext)
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
@@ -348,8 +369,6 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
 *    ..perform iteration
-csw 16oct2012 init ier0
-        ier0=0
         solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
         solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
         new_matrix = .false.
@@ -361,8 +380,7 @@ csw 16oct2012 init ier0
         call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                       !srv 22.05.18
      &      b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
      &      ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
-     &      st%pl, st%dv, st%sr, st%psnc, st%psnl, ier0)
-        call xertst (ier0.eq.0, 'error return from b2npco')
+     &      st%pl, st%dv, st%sr, st%psnl)
         last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 
         do iCv = 1, nCv
@@ -405,8 +423,10 @@ csw 16oct2012 init ier0
      &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
      &  st%dv%fchanml_a, st%dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
-     &  st%dv%fchvispar_a, st%dv%fchvispar)
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
@@ -433,40 +453,27 @@ c   extra call at this place within internal iteration)
         call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
-#ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
           write(*,*) 'b2news_m: wrong_flow returned from b2sral'
-          do iy = -1,ny
-            if(topiy(-1,iy).eq.ny+1) cycle
-            if(bottomiy(-1,iy).eq.-2) cycle
-            if(region(-1,iy,0).eq.0) cycle
-            if(.not.on_closed_surface(-1,iy)) then
-              write(*,*) iy,'west =',
-     >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
-              inverted_ua = inverted_ua .and.
-     .         ua(-1,iy,ismain)*
-     .         pbs(rightix(-1,iy),rightiy(-1,iy),0).gt.0.0_R8
-            end if
-          end do
-          do iy = -1,ny
-            if(topiy(nx,iy).eq.ny+1) cycle
-            if(bottomiy(nx,iy).eq.-2) cycle
-            if(region(nx,iy,0).eq.0) cycle
-            if(.not.on_closed_surface(nx,iy)) then
-              write(*,*) iy,'east =',fna(nx,iy,0,ismain)
-              inverted_ua = inverted_ua .and.
-     .         ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
+          do ib = 1, nbc
+            if (bcchar(ib).eq.'A'.or.
+     .          bcchar(ib).eq.'W'.or.bcchar(ib).eq.'E') then
+              do i = 1, mpg%bcFcP(ib,2)
+                iFc = mpg%bcFc(mpg%bcFcP(ib,1)+i-1)
+                inverted_ua = inverted_ua .and.
+     .           st%dv%fna(iFc,0,ismain)*mpg%bcFcOr(mpg%bcFcP(ib,1)+i-1)
+     .            .le.0.0_R8
+              end do
             end if
           end do
           if (inverted_ua) then
-            write(*,*) 'All target velocities have the wrong sign'
+            write(*,*) 'All target fluxes have the wrong sign'
             write(*,*)
      .       'Please consider using the b2mndr_inverse_ua switch'
             call xerrab ('Inverted velocity field!')
           end if
         end if
-#endif
 *     ..smooth out sources
         call b2srsm (nCv, ns, dtim, switch, geo, mpg,
      &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti,
@@ -508,23 +515,21 @@ c   extra call at this place within internal iteration)
       st%dv%ue=wrk0
 !lkw20.03.2023}
 csw 11oct2012 added check on Coriolis force (taken from b2news)
-      ier0=0
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
      &  st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
-     &  st%psnc, st%psnl, st_ext, ier0)
-      call xertst (ier0.eq.0, 'error return from b2npmo')
+     &  st%psnl, st_ext)
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
         st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else if (switch%pot_eq.eq.2) then                                  !srv 11.01.12
         st%pl%po        = 3.1_R8*st%pl%te/qe
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
         if (b2news_solving(3)) then
@@ -536,8 +541,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents                                                   !srv 29.01.20 {
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
           if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
@@ -549,22 +554,21 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
             if (new_matrix.or..true.) call restart_ma28_for_us
             call b2nppo (nCv, nFc, nVx, mpg%nnreg(0),                    !srv 22.05.18
      &        b2news_solving(3), solvepo, ncall_b2news_, rxf2, switch,
-     &        geo, mpg, st%pl, st%dv, st%sr, ier0)
+     &        geo, mpg, st%pl, st%dv, st%sr)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
           else
             call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
             call b2npp7 (nx, ny, mpg%nnreg(0), b2news_solving(3),        !srv 27.01.00 22.05.18
      &       solvepo, ncall_b2news_, rxf2, ne, te, conc, avisper,        !srv 27.01.00
-     &       bvisper, cvisper, sch, po, fch, respo, corpo, ier0)         !srv 27.01.00
+     &       bvisper, cvisper, sch, po, fch, respo, corpo)               !srv 27.01.00
 #endif
           endif                                                          !srv 06.07.00
           t0 = b2sasum(nCv,st%dv%respo,1)
           write(*,*) 'respo before solving',t0
-          call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
-          call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+          call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
 *   ..compute new residual following the tradition
           call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)
@@ -579,9 +583,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       endif           ! if pot_eq                                        !srv 13.07.05 29.01.20 }
 
       if(switch%b2news_iout .ne. 0) then                                 !srv 12.07.05 {
-        write (charns,'(i3.3)') i
-        call my_out_us(70,nCv,0,st%dv%respo,'b2news__respo'//charns)
-        call my_out_us(70,nCv,0,st%pl%po,'b2news__po'//charns)
+        call my_out_us(70,nCv,0,st%dv%respo,'b2news__respo')
+        call my_out_us(70,nCv,0,st%pl%po,'b2news__po')
       endif                                                              !srv 12.07.05 }
 
       if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
@@ -654,18 +657,16 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
       st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
       st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
-     &  st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &  st%pl%ti, st%pl%tn, st%pl%po,
      &  st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 
-#ifdef WG_TODO
-      if (iout_b2wdat.eq.4) then
-       call my_out(70,nx,ny,fht(-1,-1,0),'b2news_m_fhtx')
-       call my_out(70,nx,ny,fht(-1,-1,1),'b2news_m_fhty')
+      if (switch%iout_b2wdat.eq.4) then
+       call my_out_us(70,nFc,1,st%dv%fht(1,0),'b2news_m_fht_th')
+       call my_out_us(70,nFc,1,st%dv%fht(1,1),'b2news_m_fht_r')
       endif
-#endif
 
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nCv, nFc, nVx, ns, switch, geo, mpg,
@@ -686,11 +687,10 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,         !srv 22.05.18
      &  solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3,
      &  dtim, st%pl, st%dv, st%co, st%rt, st%sr, st%srw,
-     &  st%psnc, st%psnl, st_ext, ier0)
+     &  st%psnl, st_ext)
 csw 16aug2011 init potential
       if(switch%pot_eq.eq.0) st%pl%po=0.0_R8                             !srv 13.07.05
       if(switch%pot_eq.eq.2) st%pl%po=3.1_R8*st%pl%te/qe
-      call xertst (ier0.eq.0, 'error return from b2npht')
 
 csw 12oct2012, extra call to relax particle balance if wanted (as in SOLPS4)
       if(switch%do_2nd_b2npco_call.ne.0) then
@@ -719,9 +719,8 @@ c   recompute particle fluxes
           call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                     !srv 22.05.18
      &      b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
      &      ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
-     &      st%pl, st%dv, st%sr, st%psnc, st%psnl, ier0)
+     &      st%pl, st%dv, st%sr, st%psnl)
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
-          call xertst (ier0.eq.0, 'error return from b2npco')
         enddo
 *    ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg,
@@ -759,7 +758,6 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       endif
 
 * ..return
-      ierr = 0
       ncall_b2news_ = ncall_b2news_+1
       call subend ()
       return

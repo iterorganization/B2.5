@@ -26,7 +26,6 @@
       real (kind=R8) ::
      *   damax
       external xertst, damax
-      external b2xvfx
 *   ..initialisation
       data ncall/0/
 
@@ -62,4 +61,4 @@
 *-----------------------------------------------------------------------
 *.end b2mxac
 
-      end
+      end subroutine b2mxac_diff

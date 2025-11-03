@@ -20,7 +20,7 @@
 *     pbs thus contains the parallel contact area.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, ncall
-      external xertst, b2xvsg, b2xvff, ipgeti
+      external xertst, b2xvsg, ipgeti
       save ncall
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -71,4 +71,3 @@ cwdk  test for wbb.(:,:,3) switched to .ge.; could be zero in dead cells
       return
 *     ------------------------------------------------------------------
       end subroutine b2xgbs
-

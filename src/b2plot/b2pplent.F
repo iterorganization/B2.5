@@ -33,6 +33,7 @@ c----------------------------------------------------------------------
       use b2mod_b2plot
       use b2mod_constants
       use b2mod_b2plot_ank
+      use b2mod_user_namelist
       implicit none
       integer lun
 c
@@ -46,25 +47,19 @@ c*** Grid sub-division for calculation of sources
       parameter (nqch=5)
 c
 c*** Local variables
-      integer i,j,k,l,iCv,jmp,jtp
-#ifdef WG_TODO
+      integer i,j,k,l,iCv,iFt,jmp,jtp
       real (kind=R8) :: x
-#endif
       real (kind=R8) :: a, b, cc, d, e, f, a0, a1, a2
       real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
-#ifdef WG_TODO
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)
-#endif
       real (kind=R8) :: r,z,bq,dr,dz,qmx,qmn,rmp,ztp,ztt,pwr_tot
       logical found
 c----------------------------------------------------------------------
 c*** Calculate the coefficients for radiation profiles
 c
-#ifdef WG_TODO
-      allocate(qpr_tmp(0:ny-1),qpz_tmp(0:nx-1))
-#endif
+      allocate(qpr_tmp(1:DEF_NYD),qpz_tmp(1:DEF_NXD))
       stack_req=(/0,11,0,0,0,0,0/)
       if (bad_args(stack_req)) return
       r0rad=rpop(rstack,irstack)
@@ -97,15 +92,16 @@ c*** Calculate the radial profile qpr_tmp
 c*** First, find the "outer midplane" ...
       rmp=0.0_R8
       jmp=0
-#ifdef WG_TODO
-      j=jsep+1
-      do i=leftcut(1),rightcut(1)-1
-        if(cr(i,j).gt.rmp) then
+      iFt=mpg%cvFt(omp(icsepomp))
+      do i=1,mpg%ftCvP(iFt,2)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if(mod(mpg%cvReg(iCv),4).eq.3.or.
+     .     mod(mpg%cvReg(iCv),4).eq.0) cycle
+        if(geo%cvX(iCv).gt.rmp) then
           jmp=i
-          rmp=cr(i,j)
+          rmp=geo%cvX(iCv)
         end if
       end do
-#endif
       if(jmp.eq.0) then
         write(*,*) 'Unexpected error in b2paux: midplane not found'
         return
@@ -115,39 +111,35 @@ c*** and then calculate the profiles taking x=R(midplane)/rmp
 c*** and y=(R(midplane)-rmp)/(Redge-rmp)
 c
       open(lun,file='fpri.dat')
-#ifdef WG_TODO
-      do j=0,jsep
-        x=(cr(jmp,j)-cr(jmp,0))/(rmp-cr(jmp,0))
+      rmp=(geo%cvX(omp(icsepomp-1))+geo%cvX(omp(icsepomp)))/2.0_R8
+      do j=1,icsepomp-1
+        x=(geo%cvX(omp(j))-geo%cvX(omp(1)))/(rmp-geo%cvX(omp(1)))
         qpr_tmp(j)=rd_in(x)
         write(lun,*) j,x,qpr_tmp(j)
       end do
-#endif
       close(lun)
       open(lun,file='fpro.dat')
-#ifdef WG_TODO
-      j=jsep+1
-      write(lun,*) j,0.0_R8,a+b
-      do j=jsep+2,ny-1
-        x=(cr(jmp,j)-rmp)/(cr(jmp,ny-1)-rmp)
+      write(lun,*) icsepomp,0.0_R8,a+b
+      do j=icsepomp,nomp
+        x=(geo%cvX(omp(j))-rmp)/(geo%cvX(omp(nomp))-rmp)
         qpr_tmp(j)=rd_out(x)
         write(lun,*) j,x,qpr_tmp(j)
       end do
-#endif
       close(lun)
 c
 c*** Calculate the poloidal profile qpz_tmp
 c*** First, find the "top" location ...
       ztp=0.0_R8
       jtp=0
-#ifdef WG_TODO
-      j=jsep+1
-      do i=leftcut(1),rightcut(1)-1
-        if(cz(i,j).gt.ztp) then
+      do i=1,mpg%ftCvP(iFt,2)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if(mod(mpg%cvReg(iCv),4).eq.3.or.
+     .     mod(mpg%cvReg(iCv),4).eq.0) cycle
+        if(geo%cvY(iCv).gt.ztp) then
           jtp=i
-          ztp=cz(i,j)
+          ztp=geo%cvY(iCv)
         end if
       end do
-#endif
       if(jtp.eq.0) then
         write(*,*) 'Unexpected error in b2paux: top not found'
         return
@@ -156,18 +148,20 @@ c
 c*** ... calculate the poloidal length for normalisation ...
 c
       ztt=0.0_R8
-#ifdef WG_TODO
-      j=jsep+1
-      do i=leftcut(1),rightcut(1)-1
-        ztt=ztt+hx(i,j)
+      do i=1,mpg%ftCvP(iFt,2)
+        iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if(mod(mpg%cvReg(iCv),4).eq.3.or.
+     .     mod(mpg%cvReg(iCv),4).eq.0) cycle
+        ztt=ztt+geo%cvHx(iCv)
       end do
       sgb=sgb/ztt
 c
 c*** ... and then the poloidal profiles
 c
+#ifdef WG_TODO
       qpz_tmp(jtp)=1.0_R8
       j=jsep+1
-      ztt=hx(jtp,j)*0.5_R8
+      ztt=geo%hx(jtp,j)*0.5_R8
       do i=jtp+1,nx-1
         x=hx(i,j)*0.5_R8
         ztt=ztt+x
@@ -247,9 +241,7 @@ c
         write(lun,'(1p,8e15.6)') (q_tmp(i,k),i=1,nnr)
       end do
       close(lun)
-#ifdef WG_TODO
       deallocate(qpr_tmp,qpz_tmp)
-#endif
       return
 
       contains

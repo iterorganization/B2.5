@@ -6,7 +6,7 @@ module b2mod_geometry
 
     implicit none
 
-    !! Geometry/topology IDs (obtain using function geometryId(..:))
+    !! Geometry/topology IDs (obtain using function geometryId)
 
     integer, parameter :: GEOMETRY_COUNT = 13
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
@@ -147,7 +147,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LIMITER
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
         &   'Core cut                        ',                                     &
@@ -160,7 +160,7 @@ module b2mod_geometry
         &   'Main chamber wall               ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_SN Single null
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Western divertor                ', 'Eastern divertor                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                             &
         & &
@@ -212,7 +212,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -238,7 +238,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -265,7 +265,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_STELLARATORISLAND
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor                  ', &
         &   'Island                          ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                                 &
@@ -295,7 +295,7 @@ module b2mod_geometry
         & &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
@@ -320,7 +320,7 @@ module b2mod_geometry
         &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
         &   'Third outer leg baffle          ',                                     &
         & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
@@ -521,61 +521,84 @@ contains
 
   !> Identify what geometry/topology is present from cut and periodicity data.
   !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( mpg, geo )
+  !> The object variable indicates for what object we are asking the topology of:
+  !> 1: The GRID topology
+  !> 2: The PLASMA topology
+  !> The number of regions mpg%nnreg(0) and face indices mpg%fcReg refer to grid regions
+  integer function geometryId( mpg, geo, object )
     use b2mod_types
     use b2us_map
     use b2us_geo
+    use b2mod_ad &
+     & , only: firstgmid
     implicit none
     type(mapping), intent(in) :: mpg
     type(geometry), intent(in) :: geo
+    integer, intent(in) :: object
     integer :: i, iCv
     real(kind=R8) :: Xpsi_active, Xpsi_snowflake
     logical :: active
-    external xerrab
-    logical, save :: first
-    data first/.true./
+    external xerrab, xertst
+
+    call xertst ( object.eq.1.or.object.eq.2, 'incorrect object setting in geometryId')
 
     if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR
-        if (first) then
+        if (firstgmid) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR")
-            first = .false.
+            firstgmid = .false.
         end if
         return
     end if
 
     if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc == 1) then
         geometryId = GEOMETRY_CYLINDER
-        if (first) then
+        if (firstgmid) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
-            first = .false.
+            firstgmid = .false.
         end if
         return
     end if
 
     if (mpg%nnreg(0) == 2) then
         geometryId = GEOMETRY_LIMITER
-        if (first) then
+        if (firstgmid) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LIMITER")
-            first = .false.
+            firstgmid = .false.
         end if
         return
     end if
 
     if (mpg%nnreg(0) == 4) then
-        geometryId = GEOMETRY_SN
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
-            first = .false.
+        if (object.eq.1) then
+          geometryId = GEOMETRY_SN
+          if (firstgmid) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_SN")
+            firstgmid = .false.
+          end if
+        else if (object.eq.2) then
+          if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
+            geometryId = GEOMETRY_LIMITER
+            if (firstgmid) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
+              firstgmid = .false.
+            end if
+          else
+            geometryId = GEOMETRY_SN
+            if (firstgmid) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN")
+              firstgmid = .false.
+            end if
+          end if
         end if
         return
     end if
 
     if (mpg%nnreg(0) == 5) then
         geometryId = GEOMETRY_STELLARATORISLAND
-        if (first) then
+        if (firstgmid) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
-            first = .false.
+            firstgmid = .false.
         end if
         return
     end if
@@ -597,25 +620,25 @@ contains
         if ((Xpsi_active.lt.Xpsi_snowflake.and.geo%psi_increasing).or. &
           & (Xpsi_active.gt.Xpsi_snowflake.and..not.geo%psi_increasing)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
-            if (first) then
+            if (firstgmid) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_MINUS")
-                first = .false.
+                firstgmid = .false.
             end if
             return
         else if ((Xpsi_active.gt.Xpsi_snowflake.and.geo%psi_increasing).or. &
               &  (Xpsi_active.lt.Xpsi_snowflake.and..not.geo%psi_increasing)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
-            if (first) then
+            if (firstgmid) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
-                first = .false.
+                firstgmid = .false.
             end if
             return
         end if
         if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_UNSPECIFIED
-            if (first) then
+            if (firstgmid) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
-                first = .false.
+                firstgmid = .false.
             end if
             return
         end if
@@ -623,18 +646,64 @@ contains
 
     if (mpg%nnreg(0) == 8) then
 
-        if (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
+      if (object.eq.1) then
+        if (mpg%nXpt.le.1) then
+          geometryId = GEOMETRY_DDN_BOTTOM ! Arbitrary ambiguous GEOMETRY_DDN assignment
+          if (firstgmid) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_BOTTOM?)")
+            firstgmid = .false.
+          end if
+          return
+        elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
+          geometryId = GEOMETRY_CDN
+          if (firstgmid) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_CDN")
+            firstgmid = .false.
+          end if
+          return
+        else
+          active = .false.
+          do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
+                                        & mpg%vxCvP(mpg%Xpt(1),2) - 1
+            iCv = mpg%vxCv(i)
+            if (mpg%cvReg(iCv).eq.1) active = .true.
+          end do
+          if ((geo%vxY(mpg%Xpt(1)) < geo%vxY(mpg%Xpt(2)).and.active).or. &
+           &  (geo%vxY(mpg%Xpt(1)) > geo%vxY(mpg%Xpt(2)).and..not.active)) then
+            geometryId = GEOMETRY_DDN_BOTTOM
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_BOTTOM")
+                firstgmid = .false.
+            end if
+            return
+          else
+            geometryId = GEOMETRY_DDN_TOP
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_TOP")
+                firstgmid = .false.
+            end if
+            return
+          end if
+        end if
+      else if (object.eq.2) then
+        if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
+            geometryId = GEOMETRY_LIMITER
+            if (firstgmid) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
+              firstgmid = .false.
+            end if
+        elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
             geometryID = GEOMETRY_SN
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
-                first = .false.
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN")
+                firstgmid = .false.
             end if
             return
         elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
-                first = .false.
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN")
+                firstgmid = .false.
             end if
             return
         else
@@ -647,26 +716,27 @@ contains
           if ((geo%vxY(mpg%Xpt(1)) < geo%vxY(mpg%Xpt(2)).and.active).or. &
            &  (geo%vxY(mpg%Xpt(1)) > geo%vxY(mpg%Xpt(2)).and..not.active)) then
             geometryId = GEOMETRY_DDN_BOTTOM
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_BOTTOM")
-                first = .false.
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM")
+                firstgmid = .false.
             end if
             return
           else
             geometryId = GEOMETRY_DDN_TOP
-            if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_TOP")
-                first = .false.
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_TOP")
+                firstgmid = .false.
             end if
             return
           end if
         end if
+      end if
     end if
 
     geometryId = GEOMETRY_UNSPECIFIED
-    if (first) then
+    if (firstgmid) then
         call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
-        first = .false.
+        firstgmid = .false.
     end if
 
     call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )
@@ -674,7 +744,7 @@ contains
   end function geometryId
 
 
-  !> Return number of regions of a given type for a given geometry.
+  !> Return number of regions of a given type for a given grid geometry.
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   integer function regionCount( geometryId, regionType )
@@ -686,7 +756,7 @@ contains
 
 
   !> Return total number of regions (both cell and face regions) for
-  !> the given geometry
+  !> the given grid geometry
   integer function regionCountTotal( geometryId )
     integer, intent(in) :: geometryId
 
@@ -700,7 +770,7 @@ contains
   end function regionCountTotal
 
 
-  !> Return name of a specific region.
+  !> Return name of a specific grid region.
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].
@@ -710,7 +780,7 @@ contains
     regionName = regionNames(regionId, regionType, geometryId)
   end function regionName
 
-  !> Return number of a specific region as per the cfReg numbering
+  !> Return number of a specific grid region as per the fcReg numbering
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].

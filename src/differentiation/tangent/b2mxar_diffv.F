@@ -1,11 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diffv (nCv, ns, nregionv, BoRiS, switch, geo,
-     &  mpg, pl, dv, diag)
+      subroutine b2mxar_diffv (nCv, ns, switch, geo, mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
-!      use b2mod_rates
       use b2mod_b2cmpa_diffv
       use b2mod_switches_diffv
       use b2us_geo_diffv
@@ -20,7 +18,6 @@
       type (mapping), intent (in) :: mpg
       type (B2Plasma_diffv), intent (in) :: pl
       type (B2Derivatives_diffv), intent (in) :: dv
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic_diffv), intent (inout) :: diag
 *   ..common blocks
@@ -37,15 +34,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is
+      integer iCv, is
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
-      save ncall
 *   ..procedures
       intrinsic sqrt, abs
       external xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -55,7 +50,7 @@
       call subini ('b2mxar')
 *   ..set internal parameters on first call
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 
 * ..compute scaled norms
@@ -68,9 +63,9 @@
           navi = navi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is))
           movi = movi+abs(geo%cvVol(iCv)*
      &     pl%na(1,iCv,is)*sqrt(abs(pl%ti(1,iCv)*am(is)*mp)))
-!WG_TODO         if (resignore(ix,iy,1).ne.0)
+!WG_TODO         if (resignore(iCv,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
-!WG_TODO         if (resignore(ix,iy,2).ne.0)
+!WG_TODO         if (resignore(iCv,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
 !WG_TODO     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
        enddo
@@ -95,17 +90,24 @@
       prvi = 0.0_R8
       prvn = 0.0_R8
       do iCv = 1, mpg%nCi
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
         nevi = nevi+abs(geo%cvVol(iCv)*dv%ne(1,iCv))
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(1,iCv)*pl%te(1,iCv))
         if (switch%tn_style.eq.0) then
          do is = 0, ns-1
           prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
          enddo
-         prvn = prvi
-        else
+         prvn = prvi !dummy
+        elseif (switch%tn_style.eq.1) then
          do is = 0, ns-1
           if (.not.is_neutral(is)) then
+           prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
+          endif
+         enddo
+         prvn = prvi !dummy
+        else
+         do is = 0, ns-1
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1) then
            prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
           else
            prvn = prvn+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%tn(1,iCv))
@@ -126,10 +128,13 @@
        t3 = t3+abs(dv%reshn(1,iCv))
        t4 = t4+abs(dv%reskt(1,iCv))
       enddo
-      if (prvi .gt. 0.0_R8) diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
-      if (prvi .gt. 0.0_R8) diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshe =
+     & abs(t0/((1.5_R8+switch%BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshi =
+     & abs(t1/((1.5_R8+switch%BoRiS)*prvi))
       if (nevi .gt. 0.0_R8) diag%arespo = abs(t2/(qe*nevi))
-      if (prvn .gt. 0.0_R8) diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
+      if (prvn .gt. 0.0_R8) diag%areshn =
+     & abs(t3/((1.5_R8+switch%BoRiS)*prvn))
       if (prvi .gt. 0.0_R8) diag%areskt = abs(t4/(prvi))
 
 * ..compute regional scaled sums
@@ -161,7 +166,7 @@
 *   ..compute prvi
       prvi = 0.0_R8
       do iCv = 1, mpg%nCi
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(1,iCv)*pl%te(1,iCv))
         do is = 0, ns-1
          if (.not.is_neutral(is))
@@ -179,12 +184,11 @@
      .    diag%reshireg(1,mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
       enddo
       if (prvi .gt. 0.0_R8) diag%reshereg(1,:) = 
-     .  abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
+     .  abs(diag%reshereg(1,:)/((1.5_R8+switch%BoRiS)*prvi))
       if (prvi .gt. 0.0_R8) diag%reshireg(1,:) = 
-     .  abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
+     .  abs(diag%reshireg(1,:)/((1.5_R8+switch%BoRiS)*prvi))
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

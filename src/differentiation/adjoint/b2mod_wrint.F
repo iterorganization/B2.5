@@ -16,7 +16,6 @@ c
       parameter (lv=980813)
       integer lun, ltrc
       parameter (ltrc=ntrc_int)
-
 c
 c-----------------------------------------------------------------------
 c*** Additional integrals:
@@ -110,25 +109,29 @@ c-----------------------------------------------------------------------
 
       contains
 
-      subroutine b2wrint(nx,ny,ns,nregionv)
-      use b2mod_geo_diff
-      use b2mod_rates
-      use b2mod_plasma_diff
-      use b2mod_tallies_diff
-      use b2mod_indirect
+      subroutine b2wrint(mpg,geo,state,state_ext,ns)
+      use b2mod_tallies
       use b2mod_external_diff
       use b2mod_constants
+      use b2mod_user_namelist_diff
       use b2mod_numerics_namelist_diff
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
 #endif
       use b2mod_dimensions
+      use b2us_geo_diff
+      use b2us_map_diff
+      use b2us_plasma_diff
       implicit none
 c
-      integer nx, ny, ns, nregionv
+      type(mapping) :: mpg
+      type(geometry) :: geo
+      type (B2State) :: state
+      type (B2StateExt) :: state_ext
+      integer ns
 c
 c*** Global values
       real (kind=R8) ::
@@ -146,15 +149,15 @@ c*** Global values
 c
 c*** Values by regions
       real (kind=R8) ::
-     * radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
-     1 radtt_tmp(NNREGMAX), ssee_tmp(NNREGMAX),
-     2 ssei_tmp(NNREGMAX),  brms_tmp(NNREGMAX),
-     3 eesum(NNREGMAX),     eisum(NNREGMAX),
-     4 kisum(NNREGMAX),
-     5 nesum(NNREGMAX),     volsum(NNREGMAX)
+     * radim_tmp(2*DEF_NCUT), radnu_tmp(2*DEF_NCUT),
+     1 radtt_tmp(2*DEF_NCUT), ssee_tmp(2*DEF_NCUT),
+     2 ssei_tmp(2*DEF_NCUT),  brms_tmp(2*DEF_NCUT),
+     3 eesum(2*DEF_NCUT),     eisum(2*DEF_NCUT),
+     4 kisum(2*DEF_NCUT),
+     5 nesum(2*DEF_NCUT),     volsum(2*DEF_NCUT)
 
       real (kind=R8) ::
-     *     equr_tmp(NNREGMAX,nrgn_tmp)
+     *     equr_tmp(2*DEF_NCUT,nrgn_tmp)
       equivalence
      , (equr_tmp(1,1), brms_tmp),  (equr_tmp(1,2), radim_tmp),
      , (equr_tmp(1,3), radnu_tmp), (equr_tmp(1,4), radtt_tmp),
@@ -172,10 +175,10 @@ c*** Values by species
 
 c*** Values by species and regions
       real (kind=R8) ::
-     *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
+     *     equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
-     *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
+     *     nasum(DEF_NATM,2*DEF_NCUT),  ! IYS 29.09.2017 added total number of neutrals
+     *     ssna_tmp(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)
       equivalence
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
@@ -200,7 +203,7 @@ c-----------------------------------------------------------------------
 c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
-      integer i, j, k, ir, is, ix, iy
+      integer i, j, k, ir, is, iCv, iFc, iFn, iFt
 #ifdef B25_EIRENE
       integer iatm ! IYS 29.09.2017
       integer imol
@@ -223,7 +226,7 @@ c
      +  equf_tmp,
      +  equb_tmp,
      +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
-     +  i, j, k, is, ix
+     +  i, j, k, is
 c=======================================================================
 
 c*** Initialise the arrays
@@ -248,7 +251,7 @@ csw 18nov2013 check alloc
       hlp_rdim = 0.0_R8
       hlp_rdnu = 0.0_R8
       hlp_rdtt = 0.0_R8
-      do k=1,nregionv
+      do k=1,mpg%nnreg(0)
         brms_tmp(k)  = b2bremreg(k)
         radim_tmp(k) = b2radreg(k)
         radnu_tmp(k) = rdneureg(k)
@@ -263,7 +266,7 @@ csw 18nov2013 check alloc
         hlp_ssei     = hlp_ssei     + sseireg(k)
       end do
       do is = 1,nspecies
-        do k = 1, nnreg(0)
+        do k = 1, mpg%nnreg(0)
           ssni_tmp(is)   = ssni_tmp(is)   + ssnireg(is,k)
           ssna_tmp(is,k) = ssna_tmp(is,k) + ssnireg(is,k)
         end do
@@ -282,45 +285,42 @@ csw 18nov2013 check alloc
 #endif
 
 csw 20sep2013 added
-      do iy=0,ny-1
-        do ix=0,nx-1
-          ir=region(ix,iy,0)
-          eesum(ir)  = eesum(ir)  +
-     &                 1.5_R8*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-          eisum(ir)  = eisum(ir)  +
-     &                 1.5_R8*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
-          nesum(ir)  = nesum(ir)  + ne(ix,iy)*vol(ix,iy)
-          volsum(ir) = volsum(ir) + vol(ix,iy)
-          do is=0,ns-1
-            nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .                          na(ix,iy,is)*vol(ix,iy)
-            kisum(ir) = kisum(ir) +
-     &       0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
-            if (is_neutral(is)) then
-              nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
-     .                                na(ix,iy,is)*vol(ix,iy)
+      do iCv=1,mpg%nCi
+        ir=mpg%cvReg(iCv)
+        eesum(ir)  = eesum(ir)  +
+     &   1.5_R8*state%pl%te(iCv)*state%dv%ne(iCv)*geo%cvVol(iCv)
+        eisum(ir)  = eisum(ir)  +
+     &   1.5_R8*(state%pl%ti(iCv)*state%dv%ni(iCv,1)+
+     &           state%pl%tn(iCv)*state%dv%nn(iCv))*geo%cvVol(iCv)
+        nesum(ir)  = nesum(ir)  + state%dv%ne(iCv)*geo%cvVol(iCv)
+        volsum(ir) = volsum(ir) + geo%cvVol(iCv)
+        do is=0,ns-1
+          nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
+     .     state%pl%na(iCv,is)*geo%cvVol(iCv)
+          kisum(ir) = kisum(ir) +
+     &      0.5_R8*mp*am(is)*state%pl%na(iCv,is)*
+     &     (state%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
+          if (is_neutral(is)) then
+            nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
+     .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
 ! For fluid neutrals Natm_tmp is just the number of atoms integrated over
 ! the whole B2.5 domain
-              Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
-     .                                na(ix,iy,is)*vol(ix,iy)
-            endif
-          end do
+            Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
+     .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
+          endif
+        end do
 #ifdef B25_EIRENE
-#ifdef WG_TODO
-          do iatm = 1, nnatmi
-            is = latmscl(iatm)
-            if (is.eq.0) cycle
-            nasum(is,ir) = nasum(is,ir) +
-     .                     dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
-            do imol = 1, nnmoli
-              if (mlcmp(iatm,imol).gt.0)
-     >          nasum(is,ir) = nasum(is,ir) +
-     .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
-            end do
+        do iatm = 1, nnatmi
+          is = latmscl(iatm)
+          if (is.eq.0) cycle
+          nasum(is,ir) = nasum(is,ir) + dab2(iCv,iatm,1)*geo%cvVol(iCv)
+          do imol = 1, nnmoli
+            if (mlcmp(iatm,imol).gt.0)
+     >       nasum(is,ir) = nasum(is,ir) +
+     .        mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
           end do
+        end do
 #endif
-#endif
-        enddo
       enddo
 
       hlp_s   = 0.0_R8
@@ -329,27 +329,38 @@ csw 20sep2013 added
       hlp_zv  = 0.0_R8
       hlp_zn1 = 0.0_R8
       hlp_zn2 = 0.0_R8
-      do ix=0, nx-1
-        if(on_closed_surface(ix,0)) then
-          hlp_s=hlp_s+gs(ix,0,1)
-          hlp_v=hlp_v+vol(ix,0)
+      iFt = mpg%cvFt(omp(1))
+      do i = 1, mpg%ftCvP(iFt,2)
+        iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if(mpg%cvOnClosedSurface(iCv)) then
+          do j = 1, mpg%cvFcP(iCv,2)
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+            if (max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi)
+     >       iFn = iFc
+          end do
+          hlp_s=hlp_s+geo%fcS(iFn)
+          hlp_v=hlp_v+geo%cvVol(iCv)
           zeff=0.0_R8
           do is=0,ns-1
-            zeff = zeff + rz2(ix,0,is)*na(ix,0,is)
+            zeff = zeff + state%rt%rz2(iCv,is)*state%pl%na(iCv,is)
           end do
-          do is=0,ns_ext-1
-            zeff = zeff + za2_ext(ix,0,is)*na_ext(ix,0,is)
+          do is=0,state_ext%ns-1
+            zeff = zeff + state_ext%za2(iCv,is)*state_ext%na(iCv,is)
           end do
-          zeff=zeff/ne(ix,0)
-          hlp_zs = hlp_zs + gs(ix,0,1)*zeff
-          hlp_zv = hlp_zv + vol(ix,0)*zeff
+          zeff=zeff/state%dv%ne(iCv)
+          hlp_zs = hlp_zs + geo%fcS(iFn)*zeff
+          hlp_zv = hlp_zv + geo%cvVol(iCv)*zeff
           do is=0,ns-1
-            hlp_zn1 = hlp_zn1 + vol(ix,0)*na(ix,0,is)*rz2(ix,0,is)
-            hlp_zn2 = hlp_zn2 + vol(ix,0)*na(ix,0,is)*rza(ix,0,is)
+            hlp_zn1 = hlp_zn1 +
+     .       geo%cvVol(iCv)*state%pl%na(iCv,is)*state%rt%rz2(iCv,is)
+            hlp_zn2 = hlp_zn2 +
+     .       geo%cvVol(iCv)*state%pl%na(iCv,is)*state%rt%rza(iCv,is)
           end do
-          do is=0,ns_ext-1
-            hlp_zn1 = hlp_zn1+vol(ix,0)*na_ext(ix,0,is)*za2_ext(ix,0,is)
-            hlp_zn2 = hlp_zn2+vol(ix,0)*na_ext(ix,0,is)*za_ext(ix,0,is)
+          do is=0,state_ext%ns-1
+            hlp_zn1 = hlp_zn1+
+     .       geo%cvVol(iCv)*state_ext%na(iCv,is)*state_ext%za2(iCv,is)
+            hlp_zn2 = hlp_zn2+
+     .       geo%cvVol(iCv)*state_ext%na(iCv,is)*state_ext%za(iCv,is)
           end do
         end if
       end do
@@ -370,6 +381,8 @@ csw 20sep2013 added
      >         Na_stra_tmp(i,j) = Na_stra_tmp(i,j) +
      .         mlcmp(i,imol)*pdenm_int(imol,j)
             end do
+            Na_stra_tmp(0,j)=Na_stra_tmp(0,j)+Na_stra_tmp(i,j)
+            ssna_stra_tmp(0,j)=ssna_stra_tmp(0,j)+ssnastra(i,j)
           end if
 #endif
         end do

@@ -6,7 +6,7 @@ They are only needed as additional subroutines when a new version of the differe
 The source files in tangent and adjoint folders are instead used to compile the tangent and adjoint AD codes respectively. They have been put in these subdirectories otherwise the Make file would try to use them for compilaton of standalone B2.5 or coupled B2.5-EIRENE executables.
 
 The files with name "files_to_*.txt" are needed when differentiating the code, to tell Tapenade which source files
-to keep/exclude from the differentiation. The splitting between files_to_exclude and files_to_ignore is needed by the automatic postprocessing of the differentiated files.
+to keep/exclude from the differentiation.
 
 solpsGeneralLib: file where some basic functions/subroutine not shown to Tapenade are defined, only used for differentiation
 
@@ -22,7 +22,7 @@ The user needs to supply a "b2.optimization.parameters" file to specify wrt whic
 
 The code will automatically print in run.log the value of the cost function(s) and their derivatives.
 
-b2mod_diffsizes.F acts similarly to DIMENSIONS.F and stores the maximum number of directions (nbdirsmax) allowed, i.e. the maximum number of indpendent variables with respect to which one can calculate the derivative of the cost function. Increase nbdirsmax and recompile if needed.
+b2mod_diffsizes.F acts similarly to b2mod_dimensions and stores the maximum number of directions (nbdirsmax) allowed, i.e. the maximum number of indpendent variables with respect to which one can calculate the derivative of the cost function. Increase nbdirsmax and recompile if needed.
 
 Current parameters for which derivative calculation is possible (default parameters):
  - Transport coefficients: parm_dna parm_hce parm_hci parm_vsa parm_sig parm_alf
@@ -56,4 +56,3 @@ To compile and run the optimization version, for example with PETCs/TAO optimiza
     $ set_tao
     $ gmake b25_adj
     $ b2run -opt_adj b2mn
-

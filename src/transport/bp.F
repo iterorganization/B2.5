@@ -263,6 +263,3 @@ c     finally calculate the coefficients coeff
  
       return
       end subroutine bp
-
-
-

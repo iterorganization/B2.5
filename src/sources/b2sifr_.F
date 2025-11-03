@@ -5,22 +5,21 @@
      &   na, ua, te, ti, ni, ne, ne2, rza, rz2, ehxp, lnlam, cthe, cthi,
      &   st_ext, smbch, smbtf, smprb, smptb, smfrb, vti32, gti, gte)
       use b2mod_types
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_indirect
       use b2mod_constants
-!WG_RM      use b2mod_external
       use b2mod_b2cmpa
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
+#endif
       use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
       use b2mod_openmp
       use b2mod_ad
-     & , only : ncall_b2sifr
+     & , only : ncall_b2sifr, icase_sifr
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -73,7 +72,6 @@
 *   ..local variables
       integer iCv, is, k                                              !srv 17.06.02
       integer, save :: iout = 0                                       !srv 17.06.02
-      integer, save :: icase = 0
       character chns*3, chk*1                                         !srv 17.06.02
       real (kind=R8) ::
      *   ctaup, coef, t0, t1,
@@ -83,7 +81,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, xerrab, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvsg
+      external b2xvsg
 
 #ifdef _OPENMP
 !$omp threadprivate(iout)
@@ -121,8 +119,8 @@ csw 24sep2013
 #endif
          iout = 0
        end if 
-       call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase,
+       call ipgeti ('b2tlnl_ii', icase_sifr)
+       call xertst (0.eq.icase_sifr .or. 1.eq.icase_sifr,
      &               'faulty input b2tlnl_ii')
       endif
 *   ..test nCv, nFc
@@ -150,7 +148,7 @@ csw 24sep2013
       t0 = (3/(4*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp) ! /lnlam                !srv 01.07.09 it is taken below
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nCv, switch, icase, te, ti, ne, lnlam)
+      call b2tlnl (nCv, switch, icase_sifr, te, ti, ne, lnlam)
 *   ..compute vti32
       vti32 = geo%cvVol/((ti/ev)*sqrt(ti/ev))*geo%cvHz
 *   ..compute gti,gte
@@ -235,6 +233,7 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &        +switch%b2sifr_phm3*cthi(iCv,isb)*delti*
      &        (ne(iCv)-st_ext%ne(iCv)))*
      1        geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+#ifndef FIXED_POINT
          if (balance_netcdf.ne.0) then
            smbtf_cthe(iCv) = smbtf_cthe(iCv)-t0*                    !djm Jul2018
      &                  switch%b2sifr_phm2*cthe(iCv,isb)*delte*ne(iCv)*
@@ -246,6 +245,7 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
      &                  geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
      &                  geo%cvHz(iCv)
           endif
+#endif
        enddo
       endif
       if (iout.ne.0) then                                           !srv 17.06.02 {
@@ -262,6 +262,7 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
          enddo
       endif                                                         !srv 17.06.02 }
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2sifr_smotf_ehxp0to3(1:nCv,0,isb)=smprb !djm Jul2018
@@ -269,6 +270,7 @@ cdjm Jan2017 Store the linearised sources for balance
         b2sifr_smotf_cthi0to3(1:nCv,0,isb)=smbtf_cthi
         b2sifr_smoch0to3(1:nCv,0:3,isb)=smbch
       endif
+#endif
 
 * ..return
       ncall_b2sifr = ncall_b2sifr+1

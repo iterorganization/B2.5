@@ -46,7 +46,7 @@
       character charns*3                                            !srv 17.06.02
 *   ..procedures
       external xertst, ipgeti, ipgetr
-      external b2xvff, b2xvsg, hbout, intfaceh
+      external b2xvsg, hbout, intfaceh
 *   ..initialisation
 *!!   (style is a numerical switch; needs experiments)
 
@@ -66,8 +66,9 @@
 *   ..subprogram start-up calls
       call subini ('b2nxfc')
 *   ..set internal parameters on first call
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..extensive tests on first few calls
       if (ncall_b2nxfc.lt.3) then
        if (ncall_b2nxfc.eq.switch%b2news_ncallout) then

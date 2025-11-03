@@ -1,25 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwmv (nput, nx, ny, ns, itim, tim, dtim)
+      subroutine b2mwmv (nput, nCv, state, itim, tim, dtim)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_work
-      use b2mod_indirect
       use b2mod_subsys
+      use b2us_plasma
+      use b2us_work
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nput, nx, ny, ns, itim
-      real (kind=R8) ::
-     *   tim, dtim
+      integer, intent(in) :: nput, nCv, itim
+      type(B2State), intent(in) :: state
+      real (kind=R8), intent(in) :: tim, dtim
 *   ..output arguments (unspecified on entry)
 *     (none)
-*   ..common blocks
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -43,7 +36,10 @@
 *     nput - integer, input.
 *     nput specifies a unit number for un*formatted output.
 *
-*     nx, ny, ns - integer, input.
+*     nCv - integer, input.
+*     nCv specifies the number of control volumes in the plasma grid.
+*
+*     state - plasma state data structure, input.
 *     See the calling routine for description.
 *
 *     itim - integer, input.
@@ -66,8 +62,6 @@
 *     Present state of the plasma.
 *     See the calling routine for description.
 *
-*     (parameters in common:)
-*
 *
 *  8. further comments
 *
@@ -77,13 +71,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, idum(0:9)
+      integer ncall, idum(0:9)
       save ncall
       real (kind=R8) ::
      *   rdum(0:9)
 *   ..procedures
       external xertst, b2scopy, b2saxpy, cfwuin, cfwure
-      external b2xvsg, b2xvfx
+      external b2xvsg
 *   ..initialisation
       data ncall/0/
 
@@ -93,37 +87,36 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mwmv')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (1.le.ns, 'faulty argument ns')
+*   ..test nCv
+      call xertst (1.le.nCv, 'faulty argument nCv')
 *   ..test dtim
-      call xertst (0.lt.dtim, 'faulty argument dtim')
+      call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test state
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv*state%ns, state%pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv, state%pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, state%pl%ti, 1, 'ti', '.gt.')
 *    ..test old state
-       call b2xvsg (n2*ns, na0, 1, 'na0', '.gt.')
-       call b2xvsg (n2, te0, 1, 'te0', '.gt.')
-       call b2xvsg (n2, ti0, 1, 'ti0', '.gt.')
+       call b2xvsg (nCv*state%ns, state%psnl%na, 1, 'na0', '.gt.')
+       call b2xvsg (nCv, state%psnl%te, 1, 'te0', '.gt.')
+       call b2xvsg (nCv, state%psnl%ti, 1, 'ti0', '.gt.')
       endif
 *   ..compute change in plasma state
-      call b2scopy (n2*ns, na, 1, delna, 1)
-      call b2saxpy (n2*ns, -1.0_R8, na0, 1, delna, 1)
-      call b2scopy (n2*ns, ua, 1, delua, 1)
-      call b2saxpy (n2*ns, -1.0_R8, ua0, 1, delua, 1)
-      call b2scopy (n2, te, 1, delte, 1)
-      call b2saxpy (n2, -1.0_R8, te0, 1, delte, 1)
-      call b2scopy (n2, ti, 1, delti, 1)
-      call b2saxpy (n2, -1.0_R8, ti0, 1, delti, 1)
-      call b2scopy (n2, po, 1, delpo, 1)
-      call b2saxpy (n2, -1.0_R8, po0, 1, delpo, 1)
+      call b2scopy (nCv*state%ns, state%pl%na, 1, delna, 1)
+      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%na, 1,
+     &  delna, 1)
+      call b2scopy (nCv*state%ns, state%pl%ua, 1, delua, 1)
+      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%ua, 1,
+     &  delua, 1)
+      call b2scopy (nCv, state%pl%te, 1, delte, 1)
+      call b2saxpy (nCv, -1.0_R8, state%psnl%te, 1, delte, 1)
+      call b2scopy (nCv, state%pl%ti, 1, delti, 1)
+      call b2saxpy (nCv, -1.0_R8, state%psnl%ti, 1, delti, 1)
+      call b2scopy (nCv, state%pl%po, 1, delpo, 1)
+      call b2saxpy (nCv, -1.0_R8, state%psnl%po, 1, delpo, 1)
 
 * ..save data for movie
 *   ..save itim, tim, dtim
@@ -133,11 +126,11 @@
       rdum(1) = dtim
       call cfwure (nput, 2, rdum, 'tim,dtim')
 *   ..save change in plasma state
-      call cfwure (nput, n2*ns, delna, 'delna')
-      call cfwure (nput, n2*ns, delua, 'delua')
-      call cfwure (nput, n2, delte, 'delte')
-      call cfwure (nput, n2, delti, 'delti')
-      call cfwure (nput, n2, delpo, 'delpo')
+      call cfwure (nput, nCv*state%ns, delna, 'delna')
+      call cfwure (nput, nCv*state%ns, delua, 'delua')
+      call cfwure (nput, nCv, delte, 'delte')
+      call cfwure (nput, nCv, delti, 'delti')
+      call cfwure (nput, nCv, delpo, 'delpo')
 
 * ..return
       ncall = ncall+1

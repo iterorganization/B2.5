@@ -44,6 +44,7 @@
       subroutine dealloc_b2mod_geo_corner
       implicit none
 
+      if (.not.allocated(OnedBsq)) return
       deallocate(OnedBsq)
       deallocate(OnedBsqc)
       deallocate(wbbl)

@@ -3,7 +3,6 @@
      . (ns, mpg, tim)
 #endif
       use b2mod_types
-      use b2mod_geo
       use b2mod_tallies
       use b2mod_subsys
       use b2us_map

@@ -71,5 +71,3 @@ cc    p2, q2 and q1 are colinear and q1 lies on segment p2q2
      .   onSegment = .true.
       return
       end function onSegment
-
-
