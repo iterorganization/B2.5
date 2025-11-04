@@ -338,6 +338,9 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
             co%csig(iFc,1) = 0.0_R8
             co%chce(iFc,1) = 0.0_R8
             co%cdna(iFc,1,:) = 0.0_R8
+            co%cvsa(iFc,1,:) = 0.0_R8
+            co%cdnahz(iFc,1,:) = 0.0_R8
+            co%cvsahz(iFc,1,:) = 0.0_R8
           endif
         enddo
         do iFc = 1,mpg%nFc
@@ -351,8 +354,18 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      .            co%cdpa(iFc,0,is)*geo%fcQalf(iFc,0) +
      .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1).gt.0.0_R8) then
                 co%cdna(iFc,1,is) = 0.0_R8
+                co%cvsa(iFc,0,is) = 0.0_R8
+                co%cvsa(iFc,1,is) = 0.0_R8
+                co%cdnahz(iFc,1,is) = 0.0_R8
+                co%cvsahz(iFc,0,is) = 0.0_R8
+                co%cvsahz(iFc,1,is) = 0.0_R8
               else
                 co%cdna(iFc,1,is) = co%cdna(iFc,1,is)/inctran
+                co%cvsa(iFc,0,is) = co%cvsa(iFc,0,is)/inctran
+                co%cvsa(iFc,1,is) = co%cvsa(iFc,1,is)/inctran
+                co%cdnahz(iFc,1,is) = co%cdnahz(iFc,1,is)/inctran
+                co%cvsahz(iFc,0,is) = co%cvsahz(iFc,0,is)/inctran
+                co%cvsahz(iFc,1,is) = co%cvsahz(iFc,1,is)/inctran
               endif
             enddo
             if (co%csig(iFc,0)*geo%fcQalf(iFc,0).gt.0.0_R8) then
