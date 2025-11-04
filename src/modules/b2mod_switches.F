@@ -1869,13 +1869,12 @@ c b2nppo
      &      s % b2txcx_increase_transp_coefs)
 
 c Optimization
-      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+      call ipgeti ('b2optim_save_states', s % b2optim_save_states)
       call ipgeti ('b2optim_reset_drift_iter',
-     & s%b2optim_reset_drift_iter)
-      call ipgetr ('b2optim_reset_drift',
-     & s%b2optim_reset_drift)
+     & s % b2optim_reset_drift_iter)
+      call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
       call ipgeti ('b2optim_reset_param_iter',
-     & s%b2optim_reset_param_iter)
+     & s % b2optim_reset_param_iter)
 
       return
       end subroutine read_switches

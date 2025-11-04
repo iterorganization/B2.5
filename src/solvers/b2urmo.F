@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2urmo (nCv, nFc, nVx, switch, geo, mpg,  isb, ub, rob, 
-     .  smb, flub, flubv, cvsb, resmb, fmb, fkb, cvsb_eff)                      !srv 02.06.11
+     .  smb, flub, cvsb, resmb, fmb, fkb, cvsb_eff)                      !srv 02.06.11
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -27,7 +27,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1), flubv(nFc,0:1),
+     *   ub(nCv), rob(nCv), smb(nCv,0:3), flub(nFc,0:1),
      *   cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -74,6 +74,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       real (kind=R8) ::
      *   flf(nFc,0:1), flv(nFc,0:1),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
+      real (kind=R8), allocatable, save :: zeros(:,:)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) :: ubv(nVx), dub(nFc,0:1)
 *   ..procedures
@@ -89,6 +90,11 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       call subini ('b2urmo')
 *   ..test nCv, nFc
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..initialisation on first call
+      if (ncall_b2urmo.eq.0) then
+        allocate(zeros(nFc,0:1))
+        zeros = 0.0_R8
+      end if
 *   ..extensive tests on first few calls
       if (ncall_b2urmo.lt.3) then
 *    ..test sign of rob, smb1, smb3
@@ -129,14 +135,13 @@ cwdk store effective viscosity, for use in viscous heating
       endif  
 
 * ..compute kinetic energy flux
-      ! Note: flf and flv used as dummy arrays in this call !!
-      ! To be checked:
-      ! - consistency in case of drifts (in particular: fna_cor?)
-      ! - should contribution from flubv be in here?
-      wrk  = 0.5_R8*ub**2
-      wrkf = flub + flubv
+      ! The viscous part needs a factor 2
+      ! (as a result of the term ~ - visc*grad(ua**2/2) appearing
+      !  in the kinetic energy flux)
+      wrk  = 0.5_R8*ub
+      wrkf = flf + 2.0_R8*flv
       call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
-     &                     geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
+     &                     geo,mpg,wrk,wrkf,zeros,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz
 

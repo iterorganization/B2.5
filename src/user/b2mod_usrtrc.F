@@ -1065,10 +1065,12 @@ c*** we must remove targets and transparent surfaces from that list
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
         if(hlp_hepr.gt.0.0_R8) hlp_sphe=hlp_hetp/hlp_hepr
-        if(scale_he) then !{
-          hlp_sshe=spmp_he_to_d*hlp_spdt
-        else !}{
-          hlp_sshe=hlp_spdt
+        if (j_he_at.gt.0) then !{
+          if(scale_he) then !{
+            hlp_sshe=spmp_he_to_d*hlp_spdt
+          else !}{
+            hlp_sshe=hlp_spdt
+          end if !}
         end if !}
 
 c*** Calculate the helium-related data
