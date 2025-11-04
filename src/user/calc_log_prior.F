@@ -54,7 +54,7 @@
           prior = prior
         case (1) !Uninformative, proper, Gaussian prior.
           prior = prior - log(prior_par(ind+isigma,2)) -
-     &            0.5_R8*log(2.0_R8*pi) - 
+     &            0.5_R8*log(2.0_R8*pi) -
      &            0.5_R8*((sigma(ii)-prior_par(ind+isigma,1))/
      &            prior_par(ind+isigma,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
