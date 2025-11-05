@@ -4202,7 +4202,7 @@
 			<switchgroup>
 				<name>b2mndr_min_ares*</name>
 				<description>
-					Minimum residuals for stopping a run. All criteria must be met simultaneously for the run to stop. The continuity equation residual applies to the "ismain" species (See "Run" section).
+					Minimum residuals for stopping a run. All criteria must be met simultaneously for the run to stop. The continuity and momentum minimum residuals apply to the "ismain" species (See "Run" section).
 				</description>
 				<switch>
 					<name>b2mndr_min_areshe</name>
@@ -4216,6 +4216,11 @@
 				</switch>
 				<switch>
 					<name>b2mndr_min_aresco</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2mndr_min_aresmo</name>
 					<default>0.0</default>
 					<type>real</type>
 				</switch>
@@ -4233,7 +4238,7 @@
 				<description>
 					Minimum residuals for an internal solution loop to stop.
 					Used in conjunction with (not in replacement of) the nstg(0:2) numbers.
-					All nonzero criteria must be met simultaneously. The continuity equation residual applies to the 'ismain' species (See 'Run' section).
+					All nonzero criteria must be met simultaneously. The continuity and momentum minimum residuals apply to the 'ismain' species (See 'Run' section).
 				</description>
 				<switch>
 					<name>b2mndt_nstg_areshe</name>
@@ -4247,6 +4252,11 @@
 				</switch>
 				<switch>
 					<name>b2mndt_nstg_aresco</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2mndt_nstg_aresmo</name>
 					<default>0.0</default>
 					<type>real</type>
 				</switch>
@@ -5102,7 +5112,40 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to start up the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2).
+					This switch is not meant to be changed by users! Please always keep it at its default value of 0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_ckn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
+					The scheme is meant to be used in time-dependent mode  (b2mndt_style=2).
+					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_bdf</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
+					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup. 
+					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
+					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_startup</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
+					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
 				</description>
 			</switch>
 			<switch>
