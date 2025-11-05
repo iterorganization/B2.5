@@ -179,6 +179,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             content = geo%cvVol(iCv)*na0(iCv,is)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
+            ttim=dtim*dtco(is,mpg%cvReg(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_na(iCv,is) = ttim2
@@ -193,6 +194,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
             ttim2 = min(ttim2,dt_var4_ns(iCv,is))
+            ttim=dtim*dtco(is,mpg%cvReg(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_na(iCv,is) = ttim2
@@ -245,6 +247,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &                am(is)*mp*ua0(iCv,is)*na0(iCv,is)
             ttim2 = abs(content/src_tot)/
      &              switch%b2mndt_var_style2_SF
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_ua(iCv,is) = ttim2
@@ -264,6 +267,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim2 = abs(content/src_tot)/
      &              switch%b2mndt_var_style2_SF
             ttim2 = min(ttim2,dt_var4_ns(iCv,is))
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_ua(iCv,is) = ttim2
@@ -310,35 +314,37 @@ csw 24feb2014 check for guard cell (SOLPS4)
         elseif (switch%b2mndt_var_style.eq.1) then !! Te-based
           ttim=dtim*dtee(mpg%cvReg(iCv))*mult_dt(iCv)
         elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to electron heat content
-            src_tot = sr%she(iCv,0) + 
-     &                sr%she(iCv,1)*te0(iCv) + 
-     &                sr%she(iCv,2)*ne0(iCv) +
-     &                sr%she(iCv,3)*te0(iCv)*ne0(iCv)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-            if (switch%b2srdt_iout.eq.1) then
-              ttim2_te(iCv) = ttim2
-              ttim_te(iCv) = ttim
-            endif
+          src_tot = sr%she(iCv,0) + 
+     &              sr%she(iCv,1)*te0(iCv) + 
+     &              sr%she(iCv,2)*ne0(iCv) +
+     &              sr%she(iCv,3)*te0(iCv)*ne0(iCv)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim=dtim*dtee(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          if (switch%b2srdt_iout.eq.1) then
+            ttim2_te(iCv) = ttim2
+            ttim_te(iCv) = ttim
+          endif
         elseif (switch%b2mndt_var_style.eq.3) then !! CFL drift criterion
           ttim=dtim*dtee(mpg%cvReg(iCv))*
      &         mult_dt(iCv)
         elseif (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
-            src_tot = sr%she(iCv,0) + 
-     &                sr%she(iCv,1)*te0(iCv) + 
-     &                sr%she(iCv,2)*ne0(iCv) +
-     &                sr%she(iCv,3)*te0(iCv)*ne0(iCv)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim2 = min(ttim2,dt_var4_min(iCv))
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-            if (switch%b2srdt_iout.eq.1) then
-              ttim2_te(iCv) = ttim2
-              ttim_te(iCv) = ttim
-            endif
+          src_tot = sr%she(iCv,0) + 
+     &              sr%she(iCv,1)*te0(iCv) + 
+     &              sr%she(iCv,2)*ne0(iCv) +
+     &              sr%she(iCv,3)*te0(iCv)*ne0(iCv)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim2 = min(ttim2,dt_var4_min(iCv))
+          ttim=dtim*dtee(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          if (switch%b2srdt_iout.eq.1) then
+            ttim2_te(iCv) = ttim2
+            ttim_te(iCv) = ttim
+          endif
         else
           call xerrab('b2mndt_var_style.gt.4 not yet implemented')
         endif
@@ -362,32 +368,36 @@ csw 24feb2014 check for guard cell (SOLPS4)
         elseif (switch%b2mndt_var_style.eq.1) then !! Te-based
           ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
         elseif (switch%b2mndt_var_style.eq.2) then !! For now keep timestep for kt and zt same is for ti
-            src_tot = sr%shi(iCv,0) + 
-     &                sr%shi(iCv,1)*ti0(iCv) + 
-     &                sr%shi(iCv,2)*ni0(iCv,0) +
-     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv) !! TODO fix !!!
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-            if (switch%b2srdt_iout.eq.1) then
-              ttim2_ti(iCv) = ttim2
-              ttim_ti(iCv) = ttim
-            endif
+          src_tot = sr%shi(iCv,0) + 
+     &              sr%shi(iCv,1)*ti0(iCv) + 
+     &              sr%shi(iCv,2)*ni0(iCv,0) +
+     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv) !! TODO fix !!!
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim=dtim*dtei(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          if (switch%b2srdt_iout.eq.1) then
+            ttim2_ti(iCv) = ttim2
+            ttim_ti(iCv) = ttim
+          endif
+        elseif (switch%b2mndt_var_style.eq.3) then !! drift CFL-based
+          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
         elseif (switch%b2mndt_var_style.eq.4) then 
-            src_tot = sr%shi(iCv,0) + 
-     &                sr%shi(iCv,1)*ti0(iCv) + 
-     &                sr%shi(iCv,2)*ni0(iCv,0) +
-     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim2 = min(ttim2,dt_var4_min(iCv))
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-            if (switch%b2srdt_iout.eq.1) then
-              ttim2_ti(iCv) = ttim2
-              ttim_ti(iCv) = ttim
-            endif
+          src_tot = sr%shi(iCv,0) + 
+     &              sr%shi(iCv,1)*ti0(iCv) + 
+     &              sr%shi(iCv,2)*ni0(iCv,0) +
+     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim2 = min(ttim2,dt_var4_min(iCv))
+          ttim=dtim*dtei(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          if (switch%b2srdt_iout.eq.1) then
+            ttim2_ti(iCv) = ttim2
+            ttim_ti(iCv) = ttim
+          endif
         else
           call xerrab('b2mndt_var_style.gt.4 not yet implemented')
         endif
@@ -418,25 +428,27 @@ csw 24feb2014 check for guard cell (SOLPS4)
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
         if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to ion heat content
-            src_tot = sr%shi(iCv,0) + 
-     &                sr%shi(iCv,1)*ti0(iCv) + 
-     &                sr%shi(iCv,2)*ni0(iCv,0) +
-     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          src_tot = sr%shi(iCv,0) + 
+     &              sr%shi(iCv,1)*ti0(iCv) + 
+     &              sr%shi(iCv,2)*ni0(iCv,0) +
+     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim=dtim*dtei(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
         endif
         if (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to ion heat content + drift CFL condition
-            src_tot = sr%shi(iCv,0) + 
-     &                sr%shi(iCv,1)*ti0(iCv) + 
-     &                sr%shi(iCv,2)*ni0(iCv,0) +
-     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
-            ttim2 = content/abs(src_tot)/
-     &              switch%b2mndt_var_style2_SF
-            ttim2 = min(ttim2,dt_var4_min(iCv))
-            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+          src_tot = sr%shi(iCv,0) + 
+     &              sr%shi(iCv,1)*ti0(iCv) + 
+     &              sr%shi(iCv,2)*ni0(iCv,0) +
+     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          ttim2 = content/abs(src_tot)/
+     &            switch%b2mndt_var_style2_SF
+          ttim2 = min(ttim2,dt_var4_min(iCv))
+          ttim=dtim*dtei(mpg%cvReg(iCv))
+          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
 
