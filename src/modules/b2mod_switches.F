@@ -2609,6 +2609,18 @@ c Variable local timestepping
      &  'not yet allowed for transient simulations')
       endif
 
+      if(s%b2mndt_bdf.gt.2 .and. 
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping'//
+     &  'not compatible with BDF scheme')
+      endif
+
+      if(s%tn_style.ne.0 .and. 
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping'//
+     &  'not yet compatible with tn_style.ne.0')
+      endif
+
 
       return
       end subroutine check_consistency_switches
