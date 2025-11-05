@@ -354,10 +354,10 @@ c b2npmo with rxf = 0 and recompute fluxes.
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
-          if (switch%use_min_na_numerics.ne.0) then 
+          if (switch%use_min_na_numerics.eq.0) then  !! scalar value from b2mn.dat
             na_min = switch%b2mndr_na_min
-          else
-            na_min = min_na(is,mpg%cvReg(iCv))
+          else                                       !! use species- and region-based value from b2.numerics.parameters
+            na_min = min_na(is,mpg%cvReg(iCv))   
           endif
           st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
      &      na_min),switch%b2mndr_na_max)                 !srv 24.04.09
