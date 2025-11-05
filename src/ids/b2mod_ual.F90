@@ -37,7 +37,7 @@ module b2mod_ual
 #endif
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &   ! IGNORE
      & , only : ids_dataset_description
@@ -72,7 +72,7 @@ module b2mod_ual
   public put_batch_edge, new_batch_edge
   public b25_process_ids, read_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-    &    ids_radiation, ids_equilibrium
+    &    ids_radiation, ids_equilibrium, ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
   public ids_dataset_description
 #endif
@@ -94,7 +94,7 @@ contains
     !! edge_transport IDSs.
     subroutine put_ids_edge( &
             &   edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             &   description, &
 #endif
@@ -129,6 +129,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+        type (ids_wall), intent(inout) :: wall !< IDS
+            !< designed to store wall data
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description), intent(inout) :: description !< IDS
             !<  designed to store a description of the simulation
@@ -191,7 +193,7 @@ contains
         ids_list = trim(ids_list)//", dataset_description"
 #endif
 #endif
-        ids_list = trim(ids_list)//", and radiation"
+        ids_list = trim(ids_list)//", wall, and radiation"
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
 
@@ -239,6 +241,9 @@ contains
           write(*,*) 'Putting radiation IDS'
           call ids_put( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting radiation IDS !')
+          write(*,*) 'Putting wall IDS'
+          call ids_put( idx, "wall", wall, status )
+          call xertst( status.eq.0, 'Error putting wall IDS !')
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           write(*,*) 'Putting dataset_description IDS'
           call ids_put( idx, "dataset_description", description, status )
@@ -282,6 +287,9 @@ contains
           write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+          write(*,*) 'Putting wall IDS slice'
+          call ids_put_slice( idx, "wall", wall, status )
+          call xertst( status.eq.0, 'Error putting slice in wall IDS !')
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
           if (first_pass) then
@@ -327,7 +335,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
-            &   radiation )
+            &   radiation, wall )
         implicit none
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
@@ -344,6 +352,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+        type (ids_wall), intent(inout) :: wall !< IDS
+            !< designed to store wall data
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
             !< run numerics data
@@ -357,6 +367,7 @@ contains
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
         call ids_deallocate( radiation )
+        call ids_deallocate( wall )
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAs_MAJOR_VERSION == 3 )
         call ids_deallocate( numerics )
 #endif
@@ -578,7 +589,7 @@ contains
     !! edge_transport IDSs.
     subroutine delete_ids_edge( &
             &   edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             &   description, &
 #endif
@@ -607,6 +618,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+        type (ids_wall), intent(inout) :: wall !< IDS
+            !< designed to store wall data
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
@@ -633,6 +646,7 @@ contains
           call ids_delete( idx, "edge_sources", edge_sources)
           call ids_delete( idx, "edge_transport", edge_transport)
           call ids_delete( idx, "radiation", radiation)
+          call ids_delete( idx, "wall", wall)
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call ids_delete( idx, "dataset_description", description)
 #endif
@@ -655,7 +669,7 @@ contains
     !! edge_transport IDSs.
     subroutine new_ids_edge( &
             &   edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             &   description, &
 #endif
@@ -688,6 +702,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+        type (ids_wall), intent(inout) :: wall !< IDS
+            !< designed to store wall data
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
@@ -731,7 +747,7 @@ contains
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           &  "dataset_description, "// &
 #endif
-          &  "and radiation IDS"
+          &  "wall, and radiation IDS"
 
 #if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 )
         allocate( description%uri(1) )
@@ -755,6 +771,8 @@ contains
         call xertst( status.eq.0, 'Error putting edge_transport IDS !')
         call ids_put( idx, "radiation", radiation, status )
         call xertst( status.eq.0, 'Error putting radiation IDS !')
+        call ids_put( idx, "wall", wall, status )
+        call xertst( status.eq.0, 'Error putting wall IDS !')
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         call ids_put( idx, "dataset_description", description, status )
         call xertst( status.eq.0, 'Error putting dataset_description IDS !')

@@ -22,7 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
-c*  lsns          : Eirene recycling 'non-default surfaces'
+c*  lsns          : Eirene recycling 'non-default surfaces' for the strata
 c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in

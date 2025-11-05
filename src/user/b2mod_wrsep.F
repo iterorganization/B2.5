@@ -177,8 +177,8 @@ c
 c
 c*** Compute the data
 c
-      call b2xzef(mpg%nCv,ns,state%rt%rz2,state%pl%na,state%dv%ne,
-     .  zeff, state_ext)
+      call b2xzef(mpg%nCv, ns, state%rt%rz2, state%pl%na,
+     .  state%dv%ne, zeff, state_ext)
       do ic=1,2
        if (ic.eq.2.and.geometryType.ne.GEOMETRY_CDN) cycle
        if (ic.eq.1) then
@@ -215,11 +215,14 @@ c
           end do
           hlp_tisp=hlp_tisp+v*hlp_i*state%pl%ti(iCv)
           hlp_zesp=hlp_zesp+v*state%dv%ne(iCv)*zeff(iCv)
-          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)
+          hlp_qesp=hlp_qesp+state%dv%fhe(iFc,1)+0.5_R8*
+     .       (1.0_R8-switch%BoRiS)*state%dv%fne_53(iFc,1)*
+     .       (state%pl%te(iCv)+state%pl%te(iCn))
           hlp_qisp=hlp_qisp+state%dv%fhi(iFc,1)
           do is=0,ns-1
-            hlp_qisp=hlp_qisp+
-     .       (1.0_R8-switch%BoRiS)*state%dv%fhm(iFc,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-switch%BoRiS)*
+     .         (state%dv%fhm(iFc,1,is)+0.5_R8*state%dv%fna_53(iFc,1,is)*
+     .         (state%pl%ti(iCv)+state%pl%ti(iCn)))
           enddo
           is=0
           do j=1,nspecies !{
@@ -544,8 +547,8 @@ c*** New file
         write(lun,'(2a)') '#  ',trim(label)
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
-     ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(5x,a8,a2),',
+     ,   '(a1,6x,a4,4x,',ng_tmp,'(5x,a8,1x),',
+     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),2x,',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
@@ -569,7 +572,7 @@ c>>>
 
       end if
       write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
-     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4))'
+     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4e3))'
 
       allocate(equs_tmp(nspecies,nspc_tmp))
       allocate(nisp_tmp(nspecies))

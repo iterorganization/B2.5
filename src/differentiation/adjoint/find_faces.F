@@ -2,7 +2,6 @@
      .                      m, idb)
       
       use b2mod_types
-      use b2mod_indirect_diff
       use b2us_map_diff
       use b2us_geo_diff
       use carre_constants

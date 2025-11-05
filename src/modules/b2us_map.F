@@ -878,6 +878,7 @@ cwdk  can be derived directly from data in that file
             end if
           end do
         end do
+        allocate(m%tgVx(m%nTgc)) !csc needed for adjoint AD
       else if (m%nnreg(0).eq.2) then
         allocate(freg(2))
         iFc = 1

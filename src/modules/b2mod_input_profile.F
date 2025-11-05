@@ -45,6 +45,11 @@
       integer, save :: elm_ix_begin, elm_ix_end
       integer, save :: tr_ip_elm_count
       logical, save :: tr_ip_new_files
+      real(kind=R8), save :: sources_time_mod,sources_time_switch
+      character*256, save :: sources_filename
+      integer, save :: sr_ip_elm_count
+      logical, save :: new_files
+      real(kind=R8), save :: divheat
       namelist /transport/ ndata, tdata, addspec,
      1   transport_ip_filename, transport_ip_time_mod,
      2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end,
@@ -121,9 +126,6 @@
       integer :: ndim,nxdim,ifail,is,ndat,nxdat,kind_data
       integer :: nfitanf,nfitref,nfitend
       integer :: kind_source,spec
-      real(kind=R8), save :: divheat
-      real(kind=R8), save :: sources_time_mod,sources_time_switch
-      character*256, save :: sources_filename
       real(kind=R8), intent(out) :: she0(1:mpg%nCv,0:3),
      ,  shi0(1:mpg%nCv,0:3),sch0(1:mpg%nCv,0:3)
       real(kind=R8), intent(out) :: sna0(1:mpg%nCv,0:1,0:ns-1)
@@ -134,8 +136,7 @@
       real(kind=R8) :: wrk0(mpg%nCv),wrk1(mpg%nCv)
       real(kind=R8) :: dhtot,dtot,dref
       real(kind=R8), allocatable :: fx(:),x(:),xr(:),xf(:),dx(:)
-      integer, save :: elm_count
-      logical, save :: catch_up, new_files
+      logical, save :: catch_up
 #ifdef DBG
       logical, parameter :: debug = .true.
 #else
@@ -166,9 +167,9 @@
 
       if(nc.eq.0) then
         if(sources_time_mod.gt.0.0_R8) then
-          elm_count=int(tim/sources_time_mod)
+          sr_ip_elm_count=int(tim/sources_time_mod)
         else
-          elm_count=0
+          sr_ip_elm_count=0
         endif
         if(sources_time_mod.gt.0.0_R8) then
           catch_up=mod(tim,sources_time_mod).ge.sources_time_switch.and.
@@ -194,11 +195,11 @@
         if(sources_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3e12.4,2i6)') 'SOURCES: ',
      .     tim,mod(tim,sources_time_mod),
-     1     sources_time_switch,int(tim/sources_time_mod),elm_count
+     1     sources_time_switch,int(tim/sources_time_mod),sr_ip_elm_count
           catch_up=
      1    (mod(tim,sources_time_mod).ge.sources_time_switch.and.
      1     sources_time_switch.gt.0.0_R8).or.
-     2     int(tim/sources_time_mod).gt.elm_count
+     2     int(tim/sources_time_mod).gt.sr_ip_elm_count
         else if (sources_time_switch.gt.0.0_R8) then
           catch_up=tim.ge.sources_time_switch
           if (catch_up) write(*,'(a,a)')
@@ -209,7 +210,7 @@
         end if
         if(catch_up) then
           if(sources_time_mod.gt.0.0_R8)
-     >     elm_count=int(tim/sources_time_mod)
+     >     sr_ip_elm_count=int(tim/sources_time_mod)
           call read_source_profile
           new_files = .true.
         endif

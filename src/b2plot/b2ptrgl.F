@@ -841,7 +841,7 @@ c
       end do !}
 
       write(fmt_peak,700) 24
-  700 format('(1p,e12.5,',i3,'(a1,e12.5))')
+  700 format('(1p,e12.5,',i3,'(a1,e13.5e3))')
       i1=1
       i2=ntrgts
       fn_hlp=fsumm(1)
@@ -1038,9 +1038,11 @@ c        print '(a,i4,1p,4e12.4)','j,wt,wo,t,p: ',j,wt,wo,t,p  !###
         if(p.gt.0.0_R8) hwxm_idt(itrg(j))=t/p
 c*** xwhm: exponential decay length calculated from half-width
 c        print '(a,i4,1p,2e12.3)','m,wo,wid_par(m,j):',
-c                                  m,wo,wid_par(m,itrg(j)) !###
+c     .                            m,wo,wid_par(m,itrg(j)) !###
         do i=m,mpg%divFcP(itrg(j),2) !{
-          if(wid_par(i,itrg(j)).lt.0.5_R8*wo) then !{
+          if(i.le.1.or.m.eq.0) cycle
+          if(wid_par(i,itrg(j)).lt.0.5_R8*wo.and.
+     .       wid_par(i,itrg(j)).ne.wid_par(i-1,itrg(j))) then !{
             d=(0.5_R8*wo-wid_par(i,itrg(j)))/
      .                  (wid_par(i-1,itrg(j))-wid_par(i,itrg(j)))
             hwhm_idp(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
@@ -1056,9 +1058,11 @@ c!###}
           end if !}
         end do !}
 c        print '(a,i4,1p,2e12.3)','n,p,wid_trg(n,j):',
-c                                  n,p,wid_trg(n,itrg(j)) !###
+c     .                            n,p,wid_trg(n,itrg(j)) !###
         do i=n,mpg%divFcP(itrg(j),2) !{
-          if(wid_trg(i,itrg(j)).lt.0.5_R8*p) then !{
+          if(i.le.1.or.n.eq.0) cycle
+          if(wid_trg(i,itrg(j)).lt.0.5_R8*p.and.
+     .       wid_trg(i,itrg(j)).ne.wid_trg(i-1,itrg(j))) then !{
             d=(0.5_R8*p-wid_trg(i,itrg(j)))/
      .        (wid_trg(i-1,itrg(j))-wid_trg(i,itrg(j)))
             hwhm_idt(itrg(j))=d*xmp_hlp(i-1,itrg(j))+
@@ -1174,7 +1178,7 @@ c!###}
      -   ((tab,hdr_2(i)//'_'//hlp_trg(itrg(j)),i=1,n_intgrs),j=1,ntrgs),
      ,   ((tab,hdr_4(i)//'_'//hlp_trg(itrg(j)),i=1,n_trgprj),j=1,ntrgs)
         write(fmt_peak,705) n
-  705   format('(1p,e12.5,',i3,'(a1,e12.5))')
+  705   format('(1p,e12.5,',i3,'(a1,e13.5e3))')
         write(lun,fmt_peak) tim,
      ,    (tab, pwr_rd(itrg(j)),tab, pwr_tt(itrg(j)),
      ,     tab,fwht_tt(itrg(j)),tab,fwxt_tt(itrg(j)),
@@ -1763,8 +1767,8 @@ c
       return
 
 c======================================================================
-  710 format('(a1,',i3,'(1x,a11,2x))')
-  720 format('(1x,1p,',i3,'(e12.5,2x))')
+  710 format('(a1,',i3,'(1x,a11,3x))')
+  720 format('(1x,1p,',i3,'(e13.5e3,2x))')
   740 format('# ',2a,' : ',2a)
   750 format('# ',4a)
 c======================================================================

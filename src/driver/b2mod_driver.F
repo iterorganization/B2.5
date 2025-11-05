@@ -10,7 +10,8 @@
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
      &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop
@@ -37,10 +38,11 @@
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2mrel
-     & , only : dealloc_b2mod_mrel
+     & , only : alloc_b2mod_mrel, dealloc_b2mod_mrel
       use b2mod_b2zhco
       use b2mod_zhfrtf
-     & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
+     & , only : alloc_b2mod_zhfrtf, alloc_b2mod_zhfrtf_df,
+     &          dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -65,6 +67,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_io
+      use b2us_data
       use b2mod_par_opt
       use b2mod_b2plot
      , , only : wklng, nlimi, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
@@ -72,7 +75,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, 
+     *          nsrfs, n1st, n2nd, n3rd, nreac,
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -124,7 +127,7 @@
      , , only : ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,          ids_radiation, ids_equilibrium
+     ,          ids_radiation, ids_equilibrium, ids_wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       use ids_schemas   ! IGNORE
      , , only : ids_dataset_description
@@ -227,6 +230,7 @@ c Artificial losses module
       type(ids_edge_sources) :: batch_sources
       type(ids_edge_transport) :: edge_transport
       type(ids_radiation) :: radiation
+      type(ids_wall) :: wall
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       type(ids_dataset_description) :: description
       type(ids_dataset_description) :: old_description
@@ -269,8 +273,9 @@ c Artificial losses module
       integer stack_ntim(20)
       integer stack_ptr
       real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco, res_quit, res_max
-      logical quit_residual, test_residual
+     *  min_areshe, min_areshi, min_aresco, min_aresmo,
+     *  res_quit, res_max
+      logical quit_residual, test_residual_out
       real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
@@ -290,7 +295,8 @@ c Artificial losses module
       save delta_cdfmovie_time, save_cdfmovie_time
       save delta_plasma_time, save_plasma_time
       save delta_ids_time, save_ids_time
-      save min_areshe, min_areshi, min_aresco, res_quit, res_max
+      save min_areshe, min_areshi, min_aresco, min_aresmo,
+     &     res_quit, res_max
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
@@ -326,14 +332,13 @@ c Artificial losses module
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data delta_ids_time/0.0_R8/, save_ids_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
-     &     res_quit/1.0e-7_R8/
+     &     min_aresmo/0.0_R8/, res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo,
-     &  mpg, state, state_ext, state_avg)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0)
       use b2mod_ad
      & , only : old_erosion, old_deposition
       implicit none
@@ -344,12 +349,6 @@ c Artificial losses module
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -358,7 +357,7 @@ c Artificial losses module
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer iCv, is, istra, k, idum(0:9)
+      integer iCv, is, istra, k, idum(0:9), zmaxmax, nnucl_tral
 #ifdef WG_TODO
       integer ix, iy
 #endif
@@ -957,6 +956,18 @@ c Artificial losses module
 *     the call to b2mnds.)
       if (ncall.eq.0) then
        call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+       if (switch%Zhdanov_closure.eq.1) then
+*   ..allocate more Zhdanov variables here instead that inside routines
+        call b2trnu (ns, nnucl_tral, zmaxmax)
+        call xertst (nnucl_tral.eq.nspecies,
+     &   'Error while building isonuclear sequences!')
+        call alloc_b2mod_mrel(nspecies,zmaxmax,ns)
+        call alloc_b2mod_zhco(nspecies, nCv)
+        call alloc_b2mod_zhfrtf(nCv, ns)
+        if (switch%zh_dist_fun.eq.1) then
+          call alloc_b2mod_zhfrtf_df(nCv, ns)
+        endif
+       endif
 #ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
@@ -1009,11 +1020,14 @@ c Artificial losses module
        call ipgetr ('b2mndr_min_aresco', min_aresco)                     !jwk
        call xertst (min_aresco.ge.0.0_R8,                                !jwk
      &      'faulty internal parameter min_aresco')                      !jwk
+       call ipgetr ('b2mndr_min_aresmo', min_aresmo)                     !jwk
+       call xertst (min_aresmo.ge.0.0_R8,                                !fc
+     &      'faulty internal parameter min_aresmo')                      !fc
        if (min_areshe.gt.0.0_R8.or.min_areshi.gt.0.0_R8.or.              !jwk
-     &     min_aresco.gt.0.0_R8) then                                    !jwk
-          test_residual=.true.                                           !jwk
+     &     min_aresco.gt.0.0_R8.or.min_aresmo.gt.0.0_R8) then            !fc
+          test_residual_out=.true.                                       !jwk
        else                                                              !jwk
-          test_residual=.false.                                          !jwk
+          test_residual_out=.false.                                      !jwk
        endif                                                             !jwk
        call ipgetr ('b2mndr_res_quit', res_quit)                         !sc
        call xertst (res_quit.ge.0.0_R8,                                  !sc
@@ -1346,7 +1360,6 @@ csw 09oct2012
          call xertst( .not.streql(username,' '),
      .    'User name not defined !')
          not_default = .not.streql(username, usrnam())
-         home_dir = '/home/'//trim(username)
          database = 'solps-iter'
          write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifdef NO_GETENV
@@ -1377,6 +1390,10 @@ csw 09oct2012
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'
 #endif
+         if (not_default) then
+           l = index(home_dir,trim(usrnam()))
+           if (l.gt.0) home_dir = home_dir(1:l-1)//trim(username)
+         end if
          call ipgetc('b2mndr_device', database )
          call ipgetc('b2mndr_database', database )
          call xertst( .not.streql(database,' '),
@@ -1396,11 +1413,6 @@ csw 09oct2012
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
          not_default = not_default.or.(shot.gt.0.and.run.ge.0)
-         imasdir = trim(home_dir)//'/public/imasdb/'
-     &           //trim(database)//'/'//trim(version)
-#if AL_MAJOR_VERSION < 5
-     &           //'/0'
-#endif
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -1410,6 +1422,11 @@ csw 09oct2012
          if (ierror.eq.0)
      >    call get_environment_variable('IMASDIR',value=imasdir)
 #endif
+#endif
+         if (not_default) imasdir = trim(home_dir)//'/public/imasdb/'
+     &                            //trim(database)//'/'//trim(version)
+#if AL_MAJOR_VERSION < 5
+     &                            //'/0'
 #endif
          if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
            l=index(imasdir,'imasdb/')
@@ -1789,7 +1806,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new, 
+       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new,
      .   state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
@@ -2047,9 +2064,13 @@ c Artificial losses module
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
         call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
-        allocate(xsave(npar_opt))
+        allocate(xold(npar_opt))
+        allocate(xnew(npar_opt))
+        allocate(xmult(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-        xsave(1:npar_opt) = x0(1:npar_opt)
+        xold(1:npar_opt) = x0(1:npar_opt)
+        xnew(1:npar_opt) = x0(1:npar_opt)
+        xmult = 1.0_R8
       endif
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -2098,7 +2119,8 @@ c new CDF movie option (1st frame at t=0)
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
       !Initialize residual if using Crank-Nicolson scheme
-      if (switch%b2mndt_ckn.eq.2.and.itim.eq.0) then
+      if ( itim.eq.0.and.(switch%b2mndt_ckn.eq.2
+     &     .or.switch%b2mndt_startup.eq.2) ) then
         !Dummy call to b2mndt
         !Temporarily set dummy switch to 1
         switch%b2mndt_dummy = 1
@@ -2137,8 +2159,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
-     &  state_ext, state_avg, J)
+      subroutine b2mndr_1 (nout, ns, J)
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -2165,7 +2186,16 @@ c new CDF movie option (1st frame at t=0)
      &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
      &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
      &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
-     &          mdm_mdf
+     &          mdm_mdf, znnucl, mu, mu_mdf
+      use b2mod_input_profile
+     & , only : sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata
+      use b2mod_facdrift_exb
+     & , only : iy_nocoreexb, facdrift_tanh_a, facdrift_tanh_b,
+     &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
+     &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
+     &          fac_vis_profile
 #endif
       use b2mod_ad
 #ifdef IMAS
@@ -2184,12 +2214,6 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
-      type(switches), intent (inout)   :: switch
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf
@@ -2262,7 +2286,7 @@ cwdk  set some integers
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
 ! $AD FP-LOOP "state"
       do while ((res_max.ge.res_quit) .and. (itim.lt.ntim) .and.
@@ -2519,6 +2543,7 @@ c new CDF movie option
      .              nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .              state%pl,state%dv,state%co,state%rt,state%srw,
      .              state_ext,ismain,ismain0,lwti,lwav,.true.)
+#ifndef FIXED_POINT
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2538,7 +2563,6 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
-#ifndef FIXED_POINT
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2610,14 +2634,17 @@ c new CDF movie option
         if (any(solvezt).and.switch%solve_keps.eq.2)
      &    res_max = max(res_max,state%diag%areszt)
 #ifndef FIXED_POINT
-        if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
-          quit_residual=                                                 !jwk
-     &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
-     &        .and.
-     &        (state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
-     &        .and.
-     &        (state%diag%aresco(ismain)*
-     &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
+        if(test_residual_out.and.mod(itim,10).eq.0
+     &     .and.no_solve.le.0) then   !jwk
+          quit_residual=
+     &      ((state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)   !jwk
+     &       .or.min_areshe.eq.0.0_R8).and.
+     &      ((state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)   !jwk
+     &       .or.min_areshi.eq.0.0_R8).and.
+     &      ((state%diag%aresco(ismain)*min_aresco)
+     &       .le.(min_aresco*min_aresco).or.min_aresco.eq.0.0_R8).and.   !jwk
+     &      ((state%diag%aresmo(ismain)*min_aresmo)
+     &       .le.(min_aresmo*min_aresmo).or.min_aresmo.eq.0.0_R8)        !fc
         endif                                                            !jwk
 #endif
         quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11
@@ -3018,9 +3045,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_ids) then
                     time_slice_index = num_time_slices
                     call B25_process_ids(
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
-     &               radiation,
+     &               radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &               description,
 #endif
@@ -3049,7 +3075,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_av) then
                     batch_index = num_batch_slices
                     call B25_av_ids( summary_av,
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &               description,
@@ -3090,9 +3115,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (status.ne.0) idx = 0
             if (process_ids) then
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation,
+     &          radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
 #endif
@@ -3119,7 +3143,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             end if
             if (process_av) then
               call B25_av_ids( summary_av,
-     &         geo, mpg, state, state_ext, state_avg, switch,
      &         batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &         description,
@@ -3142,9 +3165,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_time_slices = num_time_slices + 1
               time_slice_index = num_time_slices
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation,
+     &          radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
 #endif
@@ -3176,7 +3198,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_batch_slices = num_batch_slices + 1
               batch_index = num_batch_slices
               call B25_av_ids( summary_av,
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
@@ -3198,7 +3219,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call new_ids_edge(
      &        edge_profiles, edge_sources, edge_transport,
-     &        radiation,
+     &        radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &        description,
 #endif
@@ -3235,7 +3256,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call put_ids_edge(
      &        edge_profiles, edge_sources, edge_transport,
-     &        radiation,
+     &        radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &        description,
 #endif
@@ -3309,8 +3330,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, ns, switch, geo, mpg,
-     &                    state, state_ext, state_avg)
+      subroutine b2mndr_2(nout, ns)
       use b2mod_switches
       use b2mod_ad
      & , only : old_erosion, old_deposition
@@ -3323,12 +3343,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #ifdef WG_TODO
       integer nx, ny
 #endif
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
       integer nCv, nFc, is                                          !srv 29.11.18
 #ifndef NO_CDF
       integer nVx
@@ -3553,9 +3567,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation,
+     &      radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
 #endif
@@ -3815,9 +3828,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 end if
                 time_slice_index = num_time_slices
                 call B25_process_ids(
-     &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
-     &            radiation,
+     &            radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &            description,
 #endif
@@ -3870,9 +3882,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation,
+     &      radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
 #endif
@@ -3898,7 +3909,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (ids_replace) then
           call new_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation,
+     &      radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
 #endif
@@ -3919,7 +3930,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         else
           call put_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation,
+     &      radiation, wall,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
 #endif
@@ -3948,7 +3959,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
-     &      radiation )
+     &      radiation, wall )
         call dealloc_batch_edge( batch_profiles, batch_sources,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
@@ -3985,7 +3996,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       ncall = ncall+1
       if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
         deallocate(par_opt_phys)
-        deallocate(xsave)
+        deallocate(xold, xnew, xmult)
       endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)

@@ -21,7 +21,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2srsm
+     & , only : ncall_b2srsm, diagno_srsm
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -56,7 +56,6 @@
       integer is, iCv
       integer k
       character chns*3, chk*1                                        !srv 11.09.09 }
-      integer diagno
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
       real (kind=R8) :: !djm Jan2017
@@ -64,9 +63,6 @@
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)
 *   ..procedures
       external xertst, ipgeti, b2xvsg
-*   ..initialisation
-      save diagno
-      data diagno/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -126,7 +122,8 @@ c check particles
               if (hlp.gt.1.0_R8) then
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
-                if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
+                if ((main_call.and.diagno_srsm.ge.1).or.
+     &              diagno_srsm.ge.2) then
                   write(*,*) 'WARNING: particle sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
      ,             timescale,
@@ -163,7 +160,8 @@ c check parallel momentum
               if (hlp.gt.1.0_R8) then
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
-                if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
+                if ((main_call.and.diagno_srsm.ge.1).or.
+     &              diagno_srsm.ge.2) then
                   write(*,*)
      1             'WARNING: parallel momentum sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
@@ -209,7 +207,8 @@ c check ion energy
             if (hlp.gt.1.0_R8) then
               timescale  = 1.0_R8/invtimescale
               timefactor = min(timefactor,1.0_R8/hlp)
-              if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
                 write(*,*) 'WARNING: ion heat sources very strong @'
                 write(*,'(a,2e10.3)') 'timescale,dt = ',
      ,           timescale,
@@ -251,7 +250,8 @@ c check electron energy
             if (hlp.gt.1.0_R8) then
               timescale  = 1.0_R8/invtimescale
               timefactor = min(timefactor,1.0_R8/hlp)
-              if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
                 write(*,*)
      ,           'WARNING: electron heat sources very strong @'
                 write(*,'(a,2e10.3)') 'timescale,dt = ',
@@ -288,7 +288,8 @@ c check electron particle number
             if (hlp.gt.1.0_R8) then
               timescale  = 1.0_R8/invtimescale
               timefactor = min(timefactor,1.0_R8/hlp)
-              if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
+              if ((main_call .and. diagno_srsm.ge.1) .or.
+     &            diagno_srsm.ge.2) then
                 write(*,*)
      ,           'WARNING: electron particle sources very strong @'
                 write(*,'(a,2e10.3)') 'timescale,dt = ',

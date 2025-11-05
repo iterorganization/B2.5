@@ -548,15 +548,15 @@ c*** Flux across the side walls
           end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
-c*** we must remove targets and transparent surfaces from that list
-          do js=1,nsns !{
+c*** we must remove targets, core boundaries and transparent surfaces from that list
+          do js=1,nsts !{
             is_target = .false.
             do ic=1,ntns !{
-              is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+              is_target = is_target.or.js.eq.ltns(ic).or.js.eq.lcns(ic)
             end do !}
             if (.not.is_target) then !{
-              ilks = abs(lsns(js))+nnlimi
-              if (iliin(abs(lsns(js))).gt.0) then !{
+              ilks = js+nnlimi
+              if (iliin(ilks).gt.0) then !{
                 do j=1,nnatmi !{
                   if(latmscl(j).eq.ls) then !{
                     hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
@@ -624,7 +624,7 @@ c<<<
                       hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
                     end do
                     print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp,wldpp= ',
+     ,                 '%%# i,k,hlp_wldpp= ',
      ,                      i,k,hlp_wldpp
                   end if
 c>>>
@@ -856,7 +856,7 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,    ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
       end if
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3))'
+     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3e3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnc: cannot open file ',trim(f)

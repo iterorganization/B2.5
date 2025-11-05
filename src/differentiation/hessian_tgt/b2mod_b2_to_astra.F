@@ -8,7 +8,7 @@ csw 09jan2014 extra module to define some arrays
 
       module b2mod_b2_to_astra                          !srv 28.07.11 {
       use b2mod_types
-      use b2mod_astra_to_b2
+      use b2mod_astra_to_b2_diffv_diffv
 #ifdef B25_EIRENE
       use b2mod_neutrals_namelist_diffv_diffv
      , , only : b2espcr, latmscl, mlcmp
@@ -20,7 +20,7 @@ csw 09jan2014 extra module to define some arrays
      , , only : nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
 #endif
 #else
-      use b2mod_eirdiag
+      use b2mod_eirdiag_diffv_diffv
 #endif
 #ifndef B25_EIRENE
       use b2mod_dimensions
@@ -98,12 +98,12 @@ csw 09jan2014 declare fun to be private
 
        subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0,
      &   nwrite)
-        use b2mod_anomalous_transport_diffv_diffv
+        use b2mod_anomalous_transport
         use b2mod_indirect_diffv_diffv
         use b2mod_geo_diffv_diffv
-        use b2mod_plasma_diffv_diffv
+        use b2mod_plasma_diffv
         use b2mod_constants
-        use b2mod_b2cmpa_diffv_diffv
+        use b2mod_b2cmpa_diffv
 csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com
 

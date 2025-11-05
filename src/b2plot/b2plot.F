@@ -575,7 +575,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
       call alloc_b2mod_tallies(mpg%nnreg, ns)
-c calculate additional fluxes (fhj, fhm, fhp, fht)
+c calculate additional fluxes (fhj, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
       call b2xpen (mpg%nCv, mpg%nFc, ns, mpg, switch,
@@ -866,6 +866,14 @@ c
         call set_distances(mpg,geo,nimp,imp,icsepimp-1,dsimp,wdimp)
       end if
 c
+      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
+      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
+      do is=0,ns-1
+        state%dv%ue = state%dv%ue +
+     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
+      enddo
+      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
+      state%dv%ue = state%dv%ue/state%dv%ne
       call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
      & switch, geo, mpg, state%pl, state%dv, state%rt,
      & state%rtw, state%srw)
@@ -1389,14 +1397,6 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
-      do is=0,ns-1
-        state%dv%ue = state%dv%ue +
-     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
-      enddo
-      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
-      state%dv%ue = state%dv%ue/state%dv%ne
       call intface1(mpg%nCv,mpg%nFc,ns-1,mpg%fcCv,geo%fcVol,state%pl%na,
      .  naf)
       wrkcs = state%pl%na*state%pl%ua
@@ -1511,6 +1511,7 @@ c
 c
       lu=5
       lu_pos=0
+      write(*,'(a)') 'Enter your commands here:'
       call readline(textline,lu,ipos)
 c
       irstack=0
@@ -4024,6 +4025,24 @@ c
           description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
+        case ('fteq')
+          description='fteq'
+          nz=1
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          mach(:,0)=0.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFt) then
+            do i=1,mpg%ftCvP(istack(iistack),2)
+              iCv=mpg%ftCv(mpg%ftCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Flux tube index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iFt = '//int2str(istack(iistack))  ! IGNORE
+          write(*,*) '"fteq" option with ',ipop(istack,iistack)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('lnlam')
           description='ln \GK\R'
           nz=1
@@ -5240,6 +5259,20 @@ c     assumes that bb is OK for 1d cases
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
+        case ('colle')
+          description='Electron collision number'
+          call b2txnce (mpg,geo,switch,mpg%nCv,
+     &     state%pl%te,state%dv%ne2,state%dv%lnlam,wrkf, wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textbl)
+        case ('colli')
+          description='Main ion collision number'
+          call b2txnci (mpg,geo,switch,mpg%nCv,state%ns,
+     &     state%pl%ti,state%pl%te,state%rt%rz2,state%dv%ne,
+     &     state%dv%ne2,state%pl%na,state%dv%lnlam,
+     &     ismain,state_ext,wrkf,wrkc)
+          nz=1
+          call copy(wrkc,1.0_R8,nz,textpl(ismain))
 #ifdef WG_TODO
         case ('crx')
           description='Corner radial coordinate (m)'

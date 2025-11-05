@@ -70,7 +70,7 @@ program b2_ual_write
     use b2mod_driver &
      & , only : idx, ids_path, dtim, continued, &
      &          shot, run, username, database, version, &
-     &          old_edge_profiles, equilibrium, &
+     &          old_edge_profiles, equilibrium, wall, &
      &          old_imas_version, old_start_time, old_end_time, &
      &          imas_version, ids_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
@@ -91,13 +91,14 @@ program b2_ual_write
     use b2us_io
     use b2us_geo
     use b2us_map
+    use b2us_data
     use b2us_plasma
     use b2mod_ual    &
      & , only : put_ids_edge, dealloc_ids_edge, dealloc_batch_edge, &
      &          b25_process_ids, close_ual
    use ids_schemas   &  ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
     use b2mod_ual_io
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &   ! IGNORE
@@ -132,6 +133,7 @@ program b2_ual_write
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
     use b2mod_ipmain
@@ -148,12 +150,6 @@ program b2_ual_write
     external ipgeti, streql
 
     !! Local variables
-    type (geometry) :: geo
-    type (mapping) :: mpg
-    type (B2state) :: state
-    type (B2StateExt) :: state_ext
-    type (B2Average) :: state_avg
-    type (switches) :: switch
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: argName
@@ -170,10 +166,11 @@ program b2_ual_write
     external usrnam
 
     write(*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    call b2mn_init
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
+    CALL EIRENE_ALLOC_CGEOM(1)
     call eirene_extrab25_eirpbls_init(nmol,nion,npls)
     call ntread
 #endif
@@ -569,9 +566,9 @@ program b2_ual_write
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+          call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
-             &  radiation, &
+             &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              &  description, &
 #endif
@@ -605,9 +602,9 @@ program b2_ual_write
       if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+      call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
-         &  radiation, &
+         &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
          &  description, &
 #endif
@@ -635,7 +632,7 @@ program b2_ual_write
     write(*,*) "START put_ids_edge"
     call put_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
 #endif
@@ -662,7 +659,7 @@ program b2_ual_write
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-        &   radiation )
+        &   radiation, wall )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &

@@ -5,6 +5,8 @@
       use b2mod_types
       use b2mod_subsys
       use b2us_plasma
+      use b2mod_ad
+     , , only : ncall_b2mwit
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: nput, nCv, ns, itim, itcnt
@@ -55,12 +57,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, idum(0:9)
-      save ncall
+      integer idum(0:9)
 *   ..procedures
       external xertst, cfwuin, cfwure
-*   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -97,7 +96,7 @@
       call cfwure (nput, nCv, dv%corpo, 'corpo')
 
 * ..return
-      ncall = ncall+1
+      ncall_b2mwit = ncall_b2mwit+1
       call subend ()
       return
 

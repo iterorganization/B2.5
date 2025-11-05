@@ -125,9 +125,9 @@
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)
       real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
+      real (kind=R8) :: fac_he_anom, fac_he_anom_bc
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
-      logical, save :: BCCON14_IS(NBCD)
 #ifdef WG_TODO
       logical fedback_species
       character*24 hlp_frm
@@ -258,6 +258,25 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
 
       cor9 = switch%b2stbc_cor9
 
+      if (switch%keps_anom_he_model.eq.0) then
+        ! Default model. Apply factor 5/2 for anomalous terms in heat equations
+        fac_he_anom = 2.5_R8
+        ! Default model. No correction for imposed heat fluxes at boundaries
+        fac_he_anom_bc = 1.0_R8
+      elseif (switch%keps_anom_he_model.eq.1) then
+        ! keps model. Apply factor 3/2 for anomalous terms in heat equations
+        fac_he_anom = 1.5_R8
+        ! Assume physical heat flux with factor 3/2.
+        ! No correction for imposed heat fluxes at boundaries.
+        fac_he_anom_bc = 1.0_R8
+      elseif (switch%keps_anom_he_model.eq.2) then
+        ! keps model. Apply factor 3/2 for anomalous terms in heat equations
+        fac_he_anom = 1.5_R8
+        ! Assume physical heat flux is still with factor 5/2.
+        ! Correct imposed heat fluxes at boundaries.
+        fac_he_anom_bc = 3.0_R8/5.0_R8
+      endif
+
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 
 *   ..pre-compute some quantities for core BCs with drifts
@@ -273,8 +292,8 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
        iCv1 = mpg%bcCv(mpg%bcCvP(ib,1),1)
        if (mpg%cvOnClosedSurface(iCv1)) then
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-         iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+         iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
 *      ..accumulate the average pressure for inner flux surface
          pzsum    = pzsum  + geo%fcS(iFc)*pz(iCv1)
          volsum   = volsum + geo%fcS(iFc)
@@ -1198,11 +1217,6 @@ c   (ionising_core option)
                   srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
      .             t0/pl%na(iCv1,is)
                 endif
-    !             t0 = geo%fcS(iFc)*                                        !lkw 30.06.2022{
-    !  &          sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
-    !  &          (am(is)*mp))*conpar(is,ib,2)
-              !  srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is)+t0*pl%na(iCv1,is)
-              !  srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is)-t0               !lkw 30.06.2022}
               endif
             else
               srw%sna0(iCv1,0,is) = 0.0_R8
@@ -4105,9 +4119,9 @@ c test
           srw%she0(iCv1,1) = -co%hce0(iCv1)/lambda_ene*sy
           do is = 0, ns-1
             srw%she0(iCv1,0) = srw%she0(iCv1,0) + rt%rza(iCv1,is)*
-     &                     2.5_R8*pl%te(iCv1)*srw%sna0(iCv1,0,is)
+     &        fac_he_anom*pl%te(iCv1)*srw%sna0(iCv1,0,is)
             srw%she0(iCv1,1) = srw%she0(iCv1,1) + rt%rza(iCv1,is)*
-     &                     2.5_R8*srw%sna0(iCv1,1,is)*pl%na(iCv1,is)
+     &        fac_he_anom*srw%sna0(iCv1,1,is)*pl%na(iCv1,is)
           enddo !! end species loop
           if(switch%mdf_fhe.ne.0) then
             srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4264,8 +4278,8 @@ c test
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%she0(iCv1,0) = geo%fcS(iFc)*cs*dv%ne(iCv1)*
-     &      enepar(ib,1)*enepar(ib,2)*pl%po(iCv1)*qe
-          srw%she0(iCv1,3) = geo%fcS(iFc)*cs*enepar(ib,1)
+     &      fac_he_anom_bc*enepar(ib,1)*enepar(ib,2)*pl%po(iCv1)*qe
+          srw%she0(iCv1,3) = geo%fcS(iFc)*cs*fac_he_anom_bc*enepar(ib,1)
           if(switch%mdf_fhe.ne.0) then
             srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -4325,13 +4339,13 @@ c test
             if(switch%pot_eq.eq.1) then                                 !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
      &          (1.0_R8+GAMMAE)/(1.0_R8-GAMMAE)*t0 -                    !srv 19.04.13
-     &           enepar(ib,2)*t1                                        !wdk to check: correct for gammae?
+     &           fac_he_anom_bc*enepar(ib,2)*t1                         !wdk to check: correct for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &           qe*(pl%po(iCv1)-potpar(ib,2))*(t0 + t1)                !srv 07.11.12
             else                                                        !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
      &          ((1.0_R8+GAMMAE)/(1.0_R8-GAMMAE)+switch%delpo)*t0 -     !srv 19.04.13
-     &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
+     &          (fac_he_anom_bc*enepar(ib,2) + switch%delpo)*t1         !wdk to check: correct for gammae?
             endif                                                       !srv 27.02.13 }
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4352,8 +4366,8 @@ cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
-     &       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
-     1       ' on ',BCCHAR(IB),boundary_location(ib)
+     .       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
+     .       ' on ',BCCHAR(IB),boundary_location(IB)
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -4379,7 +4393,7 @@ cwdk    Todo: corrections for BCCON.ne.14
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
      &          ((1.0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0
-     &           - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
+     &           - fac_he_anom_bc*enepar(ib,2)*t1                       !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
      &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
@@ -4391,7 +4405,7 @@ cwdk    Todo: corrections for BCCON.ne.14
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
      &          ((1.0_R8+GAMMAE) + (1.0_R8-GAMMAE)*switch%delpo) -
-     &          (enepar(ib,2) + switch%delpo)*t1                        !wdk to check: correct for gammae?
+     &          (fac_he_anom_bc*enepar(ib,2) + switch%delpo)*t1         !wdk to check: correct for gammae?
             endif
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -4735,7 +4749,6 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENE=20 -- Feedback boundary condition with constant temperature
 
       case (20)
-        call xerrab ('b2stbc_phys -- BCENE = 20 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'BCENE = 20 : electron temperature feedback by flux ',
@@ -5677,9 +5690,9 @@ c test
             if(.not.is_neutral(is) .or. switch%tn_style.eq.0 .or.
      &         (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
-     &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
+     &          fac_he_anom*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
-     &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
+     &          fac_he_anom*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
             endif
           enddo !! end species loop
           if(switch%mdf_fhi.ne.0) then
@@ -5878,7 +5891,7 @@ c test
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%shi0(iCv1,0) = 0.0_R8
-          srw%shi0(iCv1,3) = geo%fcS(iFc)*cs*enipar(ib,1)
+          srw%shi0(iCv1,3) = geo%fcS(iFc)*cs*fac_he_anom_bc*enipar(ib,1)
           if(switch%mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -5965,7 +5978,7 @@ c test
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
      &         enipar(ib,1)*t0*cs*s1 -
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
-     &         enipar(ib,2)*t1*geo%fcS(iFc)
+     &         fac_he_anom_bc*enipar(ib,2)*t1*geo%fcS(iFc)
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*
      &         cs*geo%fcS(iFc)*pl%ti(iCv1)
@@ -5984,7 +5997,7 @@ c test
      &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
                 t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
                 if (conpar(is,ib,2).gt.0.0_R8)
-     &           t1 = t1 +
+     &           t1 = t1 + fac_he_anom_bc*
      &            enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            pl%na(iCv1,is)
                 t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
@@ -7709,7 +7722,6 @@ cwdk    For testing purposes, use with care!
 * -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
       case (16)
-        call xerrab ('b2stbc_phys -- BCPOT = 16 not adapted for WG')
         if (ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,a)')
      .     'BCPOT = 16 : electric potential feedback by current on ',

@@ -261,7 +261,7 @@ program b2_ual_write_b2mod
      & , only : idx, ids_path, dtim, imas_version, continued, &
      &          shot, run, username, database, version, &
      &          description, old_imas_version, &
-     &          old_description, old_edge_profiles, equilibrium, &
+     &          old_description, old_edge_profiles, equilibrium, wall, &
      &          ids_end_time, old_start_time, old_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
@@ -271,13 +271,14 @@ program b2_ual_write_b2mod
     use b2mod_switches
     use b2us_geo
     use b2us_map
+    use b2us_data
     use b2us_plasma
     use b2mod_grid_mapping
     use ids_routines &  ! IGNORE
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
     use b2mod_ual &
      & , only : new_ids_edge, put_ids_edge, close_ual, &
      &          dealloc_ids_edge, dealloc_batch_edge
@@ -330,6 +331,7 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
 
@@ -343,12 +345,6 @@ program b2_ual_write_b2mod
 #endif
 
     !! Local variables
-    type(switches)   :: switch
-    type(mapping)    :: mpg
-    type(geometry)   :: geo
-    type(B2State)    :: state
-    type(B2StateExt) :: state_ext
-    type(B2Average)  :: state_avg
     integer :: narg     !< Total Number of input arguments (shot, run, etc.)
     integer :: cptArg
     integer :: l, m, num_time_slices, tmp_run, time_slice_index, status
@@ -384,7 +380,7 @@ program b2_ual_write_b2mod
 
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    call b2mn_init
     write(0,*) "b2mn_init completed"
 
     !! Set default value for IMAS major version
@@ -567,11 +563,12 @@ program b2_ual_write_b2mod
     !! If step was defined then run the b2mn_step routine
     if( new_run ) then
         write(0,*) "Running b2mn_step()"
-        call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
+        call b2mn_step( J )
         write(0,*) "b2mn_step() completed"
 #ifdef B25_EIRENE
     else
       CALL EIRENE_ALLOC_COMUSR(1)
+      CALL EIRENE_ALLOC_CGEOM(1)
       call eirene_extrab25_eirpbls_init(nmol,nion,npls)
       call ntread
 #endif
@@ -786,9 +783,9 @@ program b2_ual_write_b2mod
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+          call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
-             &  radiation, &
+             &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              &  description, &
 #endif
@@ -826,9 +823,9 @@ program b2_ual_write_b2mod
       end if
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+      call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
-         &  radiation, &
+         &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
          &  description, &
 #endif
@@ -856,7 +853,7 @@ program b2_ual_write_b2mod
     write(*,*) "START put_ids_edge"
     call put_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
 #endif
@@ -883,7 +880,7 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-        &   radiation )
+        &   radiation, wall )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
@@ -895,7 +892,7 @@ program b2_ual_write_b2mod
     call close_ual(idx)
 
     write(0,*) " Running b2mn_fin"
-    call b2mn_fin( switch, geo, mpg, state, state_ext, state_avg )
+    call b2mn_fin
     write(0,*) "b2mn_fin completed"
 
 contains

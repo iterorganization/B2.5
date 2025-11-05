@@ -24,7 +24,7 @@
 #ifndef SOLPS4_3
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
-     &          ewldrp_res
+     &          ewldrp_res, ewldt_res
       use eirmod_eirbra
      & , only : fnmti_B2
 #else
@@ -868,7 +868,7 @@ cxpb size is changed in b2mod_dimensions
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
      &    .not.((fb_actuator(ifb).eq.1.and.switch%use_eirene.eq.0) .or.
-     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
+     &           fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
       end do
       do ifb = 1, nFb
         if (fb_actuator(ifb).eq.1) cycle
@@ -1020,12 +1020,6 @@ cxpb size is changed in b2mod_dimensions
      &        fb_rescale_option(ifb) .gt. 0 .and.
      &        fb_actuator(ifb) .gt.0) then
 
-            if (main_call.and.ncall.gt.0) then
-              saved_fb_prev(ifb) = saved_fb_actuator(ifb)
-            end if
-
-          if (abs(fb_current(ifb)) > 1.0e-7_R8)
-     >        fb_current_prev(ifb) = fb_current(ifb)
 ! phase 1:
             select case(fb_type(ifb))
 
@@ -1102,8 +1096,10 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
               endif
 
-              fb_current(ifb) = 0.5_R8 *
-     *          (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
+              fb_current(ifb) = (geo%cvVol(omp(icsepomp-1))*
+     &          dv%ne(omp(icsepomp-1))+geo%cvVol(omp(icsepomp))*
+     &          dv%ne(omp(icsepomp)))/(geo%cvVol(omp(icsepomp-1))+
+     &          geo%cvVol(omp(icsepomp)))
               is_start=-1
               is_end=-1
               do is=0, ns-1
@@ -1684,12 +1680,15 @@ cxpb size is changed in b2mod_dimensions
                 t0 = dv%fht(fbReg(iFc),0)+dv%fht(fbReg(iFc),1)
                 t0 = t1*t0/geo%fcS(fbReg(iFc))
                 if (switch%use_eirene.ne.0) then
-                  t0 = t0 - ewldrp_res(b2_fnmti(fbReg(iFc)))
+                  t0 = t0 + ewldt_res(b2_fnmti(iFc))
+     .                    - ewldrp_res(b2_fnmti(iFc))
                 endif
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
+              else
+                fb_current(ifb) = fb_target(ifb)
               endif
 
             case (24) ! peak electron temperature at specific boundary
@@ -1861,7 +1860,7 @@ cxpb size is changed in b2mod_dimensions
                         if (mlcmp(iatm,imol).gt.0) then
                           fb_current(ifb) = fb_current(ifb) +
      &                       dmb2(iCv,imol,1)*mlcmp(iatm,imol)
-     &                        *geo%cvVol(iCv)
+     &                      *geo%cvVol(iCv)
                         endif
                       enddo
                     enddo
@@ -1927,7 +1926,7 @@ cxpb size is changed in b2mod_dimensions
      &             log(fb_alpha(ifb))/log(2.0_R8))
 
             case (4) ! rescale done according to SOLPS4 formula:
-                        ! N = A + B*(time-T)
+                     ! N = A + B*(time-T)
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1936,10 +1935,8 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(saved_fb_prev(ifb).eq.0.0_R8)
+                if(saved_fb_prev(ifb).le.0.0_R8)
      &             saved_fb_prev(ifb) = fb_current(ifb)
-                if(fb_current(ifb).gt.0.0_R8)
-     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1950,11 +1947,11 @@ cxpb size is changed in b2mod_dimensions
      .          fb_alpha(ifb) *
      .          ((fb_target(ifb) -
      .          fb_current(ifb))/ddtim +
-     .          (fb_current_prev(ifb) -
+     .          (saved_fb_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
 
             case (5) ! rescale done according to SOLPS4 formula:
-                        ! Nt = A*exp((time-T)*B)
+                     ! Nt = A*exp((time-T)*B)
 
               if(ncall.eq.0) then
                 write(*,*)
@@ -1963,10 +1960,8 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(saved_fb_prev(ifb).eq.0.0_R8)
+                if(saved_fb_prev(ifb).le.0.0_R8)
      &             saved_fb_prev(ifb) = fb_current(ifb)
-                if(fb_current(ifb).gt.0.0_R8)
-     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1977,7 +1972,7 @@ cxpb size is changed in b2mod_dimensions
      .           fb_alpha(ifb) *
      .           ((fb_target(ifb) -
      .           fb_current(ifb))/ddtim +
-     .           (fb_current_prev(ifb) -
+     .           (saved_fb_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
@@ -2011,6 +2006,82 @@ cxpb size is changed in b2mod_dimensions
      &             log(fb_alpha(ifb))/log(2.0_R8))
               else
                 fb_rescale(ifb) = 1.0_R8
+              endif
+
+            case (8) ! rescaling done according to SOLPS4 formula:
+                     ! Feedback target changes as:
+                     ! S --> S + D, where
+                     ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
+                     ! if actuator is not number of particles it is
+                     ! assumed to be linearly proportional to the total number
+                     ! of particles in the edge (including neutrals)
+
+              if(ncall.eq.0) then
+                write(*,'(5a,i3)')
+     &           'compute_feedback_option: using ',
+     &           'b2stbc_fb_pre_option: using ',
+     &           'SOLPS4 formula and assuming linear relation between ',
+     &           'target and total number of particles ',
+     &           'in the edge for sequence ',
+     &           b2espcr(fb_species(ifb))
+                if ((fb_type(ifb).eq.4).or.(fb_type(ifb).eq.5).or.
+     &              (fb_type(ifb).eq.14).or.(fb_type(ifb).eq.27)) then
+                  write(*,'(2a,i3,a,i3,2a)')
+     .             'compute_feedback_option: Warning! ',
+     .             'feedback for sequence ',b2espcr(fb_species(ifb)),
+     .             ' using fb_type ',fb_type(ifb),
+     .             '. No linearisation needed. Falling back to ',
+     .             'fb_type 4 with fb_const = 0.0'
+                endif
+              endif
+
+              if ((fb_type(ifb).ne.4).and.(fb_type(ifb).ne.5).and.
+     &            (fb_type(ifb).ne.14).and.(fb_type(ifb).ne.27)) then
+                t0 = 0.0_R8
+                is_start=-1
+                is_end=-1
+                do is=0, ns-1
+                  if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                    if(is_start.eq.-1) is_start=is
+                    do iCv = 1, mpg%nCi
+                      if(mpg%cvOnClosedSurface(iCv)) cycle
+                      if(mpg%cvReg(iCv).eq.0) cycle
+                      t0 = t0 + pl%na(iCv,is)*geo%cvVol(iCv)
+                    enddo
+                    is_end=is
+                  endif
+                enddo
+#ifndef SOLPS4_3
+                if (switch%use_eirene.ne.0) then
+                  do iatm=1,nnatmi
+                    if (latmscl(iatm).eq.fb_species(ifb)) then
+                      do iCv = 1, mpg%nCi
+                        if(mpg%cvOnClosedSurface(iCv)) cycle
+                        if(mpg%cvReg(iCv).eq.0) cycle
+                        t0 = t0 + dab2(iCv,iatm,1)*geo%cvVol(iCv)
+                        do imol=1,nnmoli
+                          if (mlcmp(iatm,imol).gt.0) then
+                            t0 = t0 + dmb2(iCv,imol,1)*mlcmp(iatm,imol)*
+     &                                geo%cvVol(iCv)
+                          endif
+                        enddo
+                      enddo
+                    endif
+                  enddo
+                endif
+#endif
+                if (ncall.eq.0.and.saved_fb_prev(ifb).le.0.0_R8)
+     &            saved_fb_prev(ifb) = t0
+                  fb_rescale(ifb) = fb_alpha(ifb)*
+     .             ((fb_target(ifb)/fb_current(ifb) - 1.0_R8)*t0/ddtim +
+     .              (saved_fb_prev(ifb) - t0)/dt_prev)
+                  fb_current_prev(ifb) = t0
+              else
+                if (ncall.eq.0.and.saved_fb_prev(ifb).le.0.0_R8)
+     &            saved_fb_prev(ifb) = fb_current(ifb)
+                  fb_rescale(ifb) = fb_alpha(ifb)*
+     .             ((fb_target(ifb) - fb_current(ifb))/ddtim +
+     .             (saved_fb_prev(ifb) - fb_current(ifb))/dt_prev)
               endif
 
             case default
@@ -2069,14 +2140,17 @@ cxpb size is changed in b2mod_dimensions
                 endif
               endif
 
-              if (fb_rescale_option(ifb).lt.4) then
+              if (fb_rescale_option(ifb).eq.4 .or.
+     &            fb_rescale_option(ifb).eq.5 .or.
+     &            fb_rescale_option(ifb).eq.8) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
-              elseif (fb_rescale_option(ifb).ge.6) then
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
+              elseif (fb_rescale_option(ifb).eq.6 .or.
+     &                fb_rescale_option(ifb).eq.7) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
@@ -2296,7 +2370,7 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
               endif
 
-              if(feedback_namelist_used .and.
+              if(
      &             ncall .eq. 0 .and.
      &             saved_fb_actuator(ifb) .eq. 0.0_R8)
      &             saved_fb_actuator(ifb) =
@@ -2328,6 +2402,12 @@ cxpb size is changed in b2mod_dimensions
 
           feedback_namelist_used = feedback_namelist_used .or.
      &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3
+
+          if (fb_current_prev(ifb).gt.0.0_R8) then
+            saved_fb_prev(ifb) = fb_current_prev(ifb)
+          else
+            saved_fb_prev(ifb) = fb_current(ifb)
+          endif
 
         enddo !ifb
 

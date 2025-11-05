@@ -25,7 +25,7 @@ c======================================================================
       real (kind=R8) ::
      *   rdl(nwe,ntg,0:DEF_NATM)
       logical, intent(in) :: tg_only
-      integer i,ii,j,jj,k,m,n
+      integer i,ii,j,jj,k,m,n,nRFc
 #ifdef DBG
       integer istart,iend
 #endif
@@ -47,7 +47,7 @@ c<<<
      ,   'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
      ,    l2pwinp , lppp , nwldprt , nadsrc , add_rad
         if (nwldlis(1).gt.0) then !{
-          print '(a/(16i5))','Shadowing structure',
+          print '(a/(20i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
           iend=lppp
           do j=1,ntrgts !{
@@ -103,12 +103,10 @@ c*** Calculate the load
      ,       (wldrdld(i),i=istart,iend)
           end do !}
         else !}{
-          do j=1,nsns !{
-            if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1)
-     >       cycle
+          do j=ncns+1,nsts !{
+            if (eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
             istart=iend+1
-            iend=iend+eirdiag_nds_ind(abs(lsns(j))+1)-
-     .               (eirdiag_nds_ind(abs(lsns(j)))+1)
+            iend=iend+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
             print '(a,i3,a/(1p,5e17.4))',
      ,       'Eirene non-standard surface',j,': load',
      ,       (wldrdld(i),i=istart,iend)
@@ -141,16 +139,15 @@ c*** Arrange the output data
             end if !}
           end do !}
         end do !}
-      else !}{
+      else if (switch%use_eirene.ne.0) then !}{
         jj=0
-        do j=1,nsns !{
-          if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1) cycle
+        do j=ncns+1,nsts !{
+          if (eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
           jj=jj+1
-          do i=eirdiag_nds_ind(abs(lsns(j)))+1,
-     .         eirdiag_nds_ind(abs(lsns(j))+1)-1
+          do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1
             k=k+1
             if (lwldrad(k).eq.0) cycle
-            ii=i-eirdiag_nds_ind(abs(lsns(j)))
+            ii=i-eirdiag_nds_ind(j)
             rdl(ii,jj,0)=wldrdld(lwldrad(k))
             if(lrdlsp) then !{
               do m=1,n !{
@@ -162,7 +159,25 @@ c*** Arrange the output data
             end if !}
           end do
         end do !}
+      else if (grid_mode.eq.2) then !}{
+        do j=1,nstsi !{
+          nRFc=count(mpg%fcLbl==j)
+          do i=1,nRFc !{
+            k=k+1
+            if (lwldrad(k).eq.0) cycle
+            rdl(i,j,0)=wldrdld(lwldrad(k))
+            if(lrdlsp) then !{
+              do m=1,n !{
+                rdl(i,j,m)=wldrdlsp(lwldrad(k),m)
+              end do !}
+            end if !}
+            if(lrdlcr) then !{
+              rdl(i,j,1)=wldrdlsp(lwldrad(k),1)
+            end if !}
+          end do !}
+        end do !}
       end if !}
+
 c======================================================================
       return
       end subroutine b2ptrdl

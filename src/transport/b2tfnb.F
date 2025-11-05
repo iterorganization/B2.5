@@ -60,6 +60,7 @@
       integer iCv1, iCv2, iFc, meth                                      !srv 13.10.06
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) :: drift_hyb
+      real (kind=R8) :: fac_he_anom
       real (kind=R8) ::
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1),
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
@@ -123,6 +124,14 @@
       meth = switch%b2tfnb_discr_meth
       alpha = switch%b2tfnb_alpha
       gamma = switch%b2tfnb_gamma
+
+      if (switch%keps_anom_he_model.eq.0) then
+        ! Default model. Apply factor 5/2 for anomalous terms in heat equations
+        fac_he_anom = 5.0_R8/3.0_R8
+      else
+        ! keps model. Apply factor 3/2 for anomalous terms in heat equations
+        fac_he_anom = 1.0_R8
+      endif
 
 *   ..set dummy array
       zeros = 0.0_R8
@@ -356,10 +365,9 @@ cwdk                   (original code: simple averaging)
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo_he(:,0) = geo%fcPbs*wrk0 +
-     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) +
+      flo_he(:,0) = geo%fcPbs*wrk0 + fac_he_anom*co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
+      flo_he(:,1)  = fac_he_anom*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +
      &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
@@ -487,15 +495,15 @@ cwdk                   (original code: simple averaging)
      &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf -
      &   co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) +
+      dv%fna_he(:,0,isb)   = fac_he_anom*fna_mdf0(:,0) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
-     &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf -
+     &  (flo_he(:,0) - fac_he_anom*flo_mdf(:,0))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
+      dv%fna_he(:,1,isb)   = fac_he_anom*fna_mdf0(:,1) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
-     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf -
+     &  (flo_he(:,1) - fac_he_anom*flo_mdf(:,1))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf

@@ -71,7 +71,7 @@ program b2_ual_rewrite
      &          shot, run, username, database, version, &
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
-     &          equilibrium, batch_profiles, batch_sources
+     &          equilibrium, wall, batch_profiles, batch_sources
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use b2mod_driver &
      & , only : old_description, description
@@ -86,6 +86,7 @@ program b2_ual_rewrite
     use b2us_io
     use b2us_geo
     use b2us_map
+    use b2us_data
     use b2us_plasma
     use b2mod_solpstop
     use b2mod_numerics_namelist
@@ -93,7 +94,7 @@ program b2_ual_rewrite
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_equilibrium
+     &          ids_radiation, ids_equilibrium, ids_wall
     use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge, &
      &          dealloc_ids_edge, dealloc_batch_edge, close_ual
@@ -136,6 +137,7 @@ program b2_ual_rewrite
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
     use b2mod_ipmain
@@ -152,13 +154,6 @@ program b2_ual_rewrite
     external ipgeti, streql
 
     !! Local variables
-    type (geometry) :: geo
-    type (mapping) :: mpg
-    type (B2state) :: state
-    type (B2StateExt) :: state_ext
-    type (B2Average) :: state_avg
-
-    type (switches) :: switch
     character(len=24) :: shot_string
     character(len=24) :: run_string
     character(len=24) :: new_run_string
@@ -177,10 +172,11 @@ program b2_ual_rewrite
     external usrnam, len_of_digits
 
     write (*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    call b2mn_init
     ! call b2mn_step(0)
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
+    CALL EIRENE_ALLOC_CGEOM(1)
     call eirene_extrab25_eirpbls_init(nmol,nion,npls)
     call ntread
 #endif
@@ -430,7 +426,11 @@ program b2_ual_rewrite
       &                username, database, version, status)
 #endif
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
+#if AL_MAJOR_VERSION > 4
+      write(0,'(2a)') "Reading old IMAS data entry: ", trim(uri)
+#else
+      write(0,'(2a,2i8)') "Reading old IMAS data entry: ", trim(database), shot, run
+#endif
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       old_imas_version = 'x.xx.x'
@@ -630,9 +630,9 @@ program b2_ual_rewrite
 #endif
     end if
     !! Create/Write the set data to IDSs
-    call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+    call B25_process_ids( &
       &  edge_profiles, edge_sources, edge_transport, &
-      &  radiation, &
+      &  radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       &  description, &
 #endif
@@ -658,7 +658,7 @@ program b2_ual_rewrite
     write(*,*) "START new_ids_edge"
     call new_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, wall, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
 #endif
@@ -676,25 +676,27 @@ program b2_ual_rewrite
         &   uri, &
 #endif
         &   idx, new_eq_ggd )
-    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+    if (.not.streql(shot_string,' ')) then
+      systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
         &  //' -v '//int2str(IMAS_MAJOR_VERSION)
-    write(0,*) trim(systemarg)
-#ifdef NAGFOR
-    call system(systemarg, status, ierror)
-#else
-    call system(systemarg)
-#endif
-    if (.not.same_run_number) then
-! Add superceding information to .yaml file
-      systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
-        &  trim(run_string)//' '//trim(new_run_string)
       write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
       call system(systemarg)
 #endif
+      if (.not.same_run_number) then
+! Add superceding information to .yaml file
+        systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
+          &  trim(run_string)//' '//trim(new_run_string)
+        write(0,*) trim(systemarg)
+#ifdef NAGFOR
+        call system(systemarg, status, ierror)
+#else
+        call system(systemarg)
+#endif
+      end if
     end if
     call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
@@ -703,7 +705,7 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-        &   radiation )
+        &   radiation, wall )
     call dealloc_batch_edge( batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &

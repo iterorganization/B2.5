@@ -430,7 +430,7 @@ EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${P
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
 ADEXTRA =
 ifdef DIFF_D
-ADEXTRA += ${CONTEXTAD}
+ADEXTRA += ${CONTEXTAD} ${JSONAD}
 endif
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
@@ -464,6 +464,7 @@ OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
 MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
 
 CONTEXTAD = ${OBJDIR}/adContext.o
+JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
@@ -969,6 +970,9 @@ ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 ${OBJDIR}/eirmod_braeir.${MOD}:
 	touch ${OBJDIR}/eirmod_braeir.${MOD}
 
+${OBJDIR}/eirmod_cadgeo.${MOD}:
+	touch ${OBJDIR}/eirmod_cadgeo.${MOD}
+
 ${OBJDIR}/eirmod_ccona.${MOD}:
 	touch ${OBJDIR}/eirmod_ccona.${MOD}
 
@@ -980,6 +984,9 @@ ${OBJDIR}/eirmod_cestim.${MOD}:
 
 ${OBJDIR}/eirmod_cgeom.${MOD}:
 	touch ${OBJDIR}/eirmod_cgeom.${MOD}
+
+${OBJDIR}/eirmod_cgrid.${MOD}:
+	touch ${OBJDIR}/eirmod_cgrid.${MOD}
 
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
@@ -996,8 +1003,14 @@ ${OBJDIR}/eirmod_comprt.${MOD}:
 ${OBJDIR}/eirmod_comsou.${MOD}:
 	touch ${OBJDIR}/eirmod_comsou.${MOD}
 
+${OBJDIR}/eirmod_comspl.${MOD}:
+	touch ${OBJDIR}/eirmod_comspl.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
+
+${OBJDIR}/eirmod_comxs.${MOD}:
+	touch ${OBJDIR}/eirmod_comxs.${MOD}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
@@ -1005,11 +1018,29 @@ ${OBJDIR}/eirmod_coutau.${MOD}:
 ${OBJDIR}/eirmod_cpes.${MOD}:
 	touch ${OBJDIR}/eirmod_cpes.${MOD}
 
+${OBJDIR}/eirmod_cplot.${MOD}:
+	touch ${OBJDIR}/eirmod_cplot.${MOD}
+
+${OBJDIR}/eirmod_cpolyg.${MOD}:
+	touch ${OBJDIR}/eirmod_cpolyg.${MOD}
+
+${OBJDIR}/eirmod_csdvi.${MOD}:
+	touch ${OBJDIR}/eirmod_csdvi.${MOD}
+
+${OBJDIR}/eirmod_ctetra.${MOD}:
+	touch ${OBJDIR}/eirmod_ctetra.${MOD}
+
+${OBJDIR}/eirmod_ctext.${MOD}:
+	touch ${OBJDIR}/eirmod_ctext.${MOD}
+
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}
+
+${OBJDIR}/eirmod_czt1.${MOD}:
+	touch ${OBJDIR}/eirmod_czt1.${MOD}
 
 ${OBJDIR}/eirmod_eirbra.${MOD}:
 	touch ${OBJDIR}/eirmod_eirbra.${MOD}
@@ -1237,20 +1268,23 @@ else
 endif
 
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
 endif
 
 ${MNHEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
-${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
+${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h ${JSONAD}
+	${CC} -c $< -o $@
+
+${JSONAD}: ${DIFFPATH}/json.c ${DIFFPATH}/json.h
 	${CC} -c $< -o $@
 
 ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h

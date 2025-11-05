@@ -8,8 +8,7 @@
       use b2mod_wrsep
       use b2mod_wrsrt
       use b2mod_usrtrc
-      use b2mod_b2cmpa_diffv_diffv
-      use b2mod_indirect_diffv_diffv
+      use b2mod_b2cmpa_diffv
       use b2mod_user_namelist_diffv_diffv
       use b2mod_neutrals_namelist_diffv_diffv
       use b2us_map_diffv_diffv
@@ -29,13 +28,8 @@
 
       contains
 
-      subroutine b2trace(ns, nxtl, nxtr, ismain, dtim,
-     .                   geo, mpg, st, switch, st_ext)
+      subroutine b2trace(ns, ismain, dtim, geo, mpg, st, switch, st_ext)
 #ifdef B25_EIRENE
-#ifdef WG_TODO
-      use eirmod_parmmod
-     .   , only : nmol
-#endif
       use eirmod_wneutrals
 #endif
 c
@@ -53,7 +47,7 @@ c----------------------------------------------------------------------
       type(B2state), intent(in) :: st
       type(B2StateExt), intent(in) :: st_ext
       type(switches), intent(in) :: switch
-      integer ns, nxtl, nxtr, ismain
+      integer ns, ismain
       real (kind=R8) :: dtim
 #ifdef B25_EIRENE
       integer ix, iy, is, istra
@@ -140,22 +134,20 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
      &                                     nnatmi,nspecies  !srv 18.05.09
 #endif
       if(ank_tracing.eq.0) return
+      call xertst(0.le.ismain.and.ismain.lt.ns, 'faulty input ismain')
 c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(ns,geo,mpg,st,switch,dtim)
       if(filedata(ntrc_srt)) call b2wrsrt(ns,geo,mpg,st)
-#ifdef WG_TODO
 c*** Power balance
-      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
+      if(filedata(ntrc_ble)) call b2blne(mpg,geo,ns,st,st_ext,switch)
 c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(mpg,ns,st,st_ext)
+      if(filedata(ntrc_blm)) call b2blnm(mpg,geo,ns,st,st_ext)
 c*** Additional integrals
-      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_int)) call b2wrint(mpg,geo,st,st_ext,ns)
 c*** Separatrix data
-      if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,switch%BoRiS,iline)
+      if(filedata(ntrc_sep)) call b2wrsep(mpg,geo,ns,st,st_ext,switch)
 c*** User-specific data
-      if(filedata(ntrc_usr))
-     . call b2usrtrc(nx,ny,ns,nxtl,nxtr,switch%BoRiS)
-#endif
+      if(filedata(ntrc_usr)) call b2usrtrc(mpg,geo,ns,st,st_ext,switch)
 c
       return
       end subroutine b2trace
@@ -164,7 +156,7 @@ c======================================================================
       implicit none
       type(geometry), intent(in) :: geo
       type(mapping), intent(inout) :: mpg
-      type(switches), intent(in) :: switch
+      type(switches), intent(inout) :: switch
       integer ns, nlim, nmol
 c*** Initialisation call
       if (tracing_initialised) return
@@ -172,21 +164,21 @@ c*** Initialisation call
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
+      if(filedata(ntrc_ble)) call b2blnei(mpg,geo,switch)
       if(filedata(ntrc_bln)) call b2blnci(switch)
-      if(filedata(ntrc_srt)) call b2wrsrti(mpg%nnreg(0),switch)
-#ifdef WG_TODO
-      if(filedata(ntrc_ble)) call b2blnei(ny,switch)
       if(filedata(ntrc_blm)) call b2blnmi(switch)
+      if(filedata(ntrc_srt)) call b2wrsrti(mpg%nnreg(0),switch)
       if(filedata(ntrc_int)) call b2wrinti(mpg%nnreg(0),switch)
-      if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,switch)
-      if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
-#endif
+      if(filedata(ntrc_sep)) call b2wrsepi(mpg,geo,ns,switch)
+      if(filedata(ntrc_usr)) call b2usrtri(mpg,geo,ns,switch)
       tracing_initialised = .true.
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput)
+      subroutine b2trcc(mpg,nput)
+      use b2us_map_diffv_diffv
       implicit none
+      type(mapping), intent(in) :: mpg
       integer, intent(in) :: nput
       integer iline
 c*** Truncate to match savefile
@@ -220,13 +212,11 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
       end if
-#ifdef WG_TODO
       if(filedata(ntrc_usr)) then
-        call b2usrtrcc(nx,nxtl,nxtr,iline)
+        call b2usrtrcc(mpg,iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
-#endif
       return
       end subroutine b2trcc
 c======================================================================

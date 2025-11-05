@@ -312,7 +312,7 @@ c>>>
 c
 c*** Now add the data to the proper accumulators
           if (lcore_hlp) then !{
-            pwcrh_tmp=pwcrh_tmp-hlp_h
+            pwcrh_tmp=pwcrh_tmp-hlp_h+hlp_p
             pwcrp_tmp=pwcrp_tmp-hlp_p
           else !}{
             if (lcross_hlp) then !{
@@ -323,7 +323,7 @@ c*** Now add the data to the proper accumulators
           end if !}
           do j = 1,ntrgf_tmp !{
             if (ltarg_hlp(j)) then !{
-              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h
+              pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h-hlp_p
               pwtio_tmp(j)=pwtio_tmp(j)+hlp_p
             end if !}
           end do !}
@@ -425,14 +425,14 @@ c*** flux across the side walls
        end do !}
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-       do is=1,nsns !{
+       do is=1,nsts !{
          is_target = .false.
          do js=1,ntns !{
-           is_target = is_target.or.abs(lsns(is)).eq.ltns(js)
+           is_target = is_target.or.is.eq.ltns(js)
          end do !}
          if (.not.is_target) then !{
-           ks = abs(lsns(is))+nnlimi
-           if (iliin(abs(lsns(is))).gt.0) then !{
+           ks = is+nnlimi
+           if (iliin(is).gt.0) then !{
              pwwln_tmp=pwwln_tmp+wldnek(ks,0)+wldnep(ks,0)
              pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(ks,0)
              pwtds_tmp(k)=pwtds_tmp(k)+wldnep(ks,0)
@@ -476,7 +476,7 @@ c***            kinetic energy of the plasma flow is still neglected!!!
 c
 c*** Totals
 c
-      pwcrt_tmp=pwcrh_tmp-pwcrn_tmp
+      pwcrt_tmp=pwcrh_tmp+pwcrp_tmp-pwcrn_tmp
       pwwlt_tmp=pwwlp_tmp+pwwln_tmp
       pwtgt_tmp=pwtgp_tmp+pwtgn_tmp
       pwrdt_tmp=radbr_tmp+radnu_tmp
@@ -735,15 +735,15 @@ c*** New file
         ns_tmp=nspc_tmp
         write(lun,700) lv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp,label
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
-     ,   '(a6,9x,',ng_tmp,'(6x,a8),',n*ns_tmp,'(4x,a8,a2),2x,',
-     ,                          nt_tmp*nz_tmp,'(3x,a11))'
+     ,   '(a6,9x,',ng_tmp,'(6x,a8),3x,',n*ns_tmp,'(2x,a8,a2,2x),',
+     ,                             nt_tmp*nz_tmp,'(1x,a11,2x))'
         write(lun,hlp_frm) '# time',(hlp_hg(i),i=1,ng_tmp),
      ,                  ((hlp_hs(i),hlp_spc(j),i=1,ns_tmp),j=1,n),
      ,            ((hlp_ht(i)//'_'//hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
       end if !}
       n=max(ni_tmp,1)
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3))'
+     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3e3))'
       return
 c=======================================================================
    90 write(*,*) 'b2blne: cannot open file ',trim(f)
