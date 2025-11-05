@@ -133,7 +133,6 @@ contains
 
      call b2agx0 (ninp(0), nCv, nFc, nVx) ! nog issue met deze functie
 
-
      ! istyle == -1
      ! means Carre grid input
      !   ..read geometry parameters parg
@@ -205,7 +204,8 @@ contains
 
      ! check that b2ag.dat and geometry file sizes are compatible
      if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then
-       write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
+       write(*,'(a,6i6)') 'b2ag_read_parameters: nCv,nFc,nVx code and data disagree', &
+         &  nCv,nFc,nVx,nCv0,nFc0,nVx0
        call xerrab ( 'Dimensions mismatch !' )
      endif
 
