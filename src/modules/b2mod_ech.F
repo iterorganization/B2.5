@@ -112,7 +112,8 @@ c      call sfill (nCv*4, 0.0_R8, she0_ech, 1) not used anymore
 
       end select
 
-      if (switch%ech_out.eq.1.or.switch%iout_b2wdat.eq.4) then
+      if (ncall_calcECH.eq.0.or.
+     &    switch%ech_out.eq.1.or.switch%iout_b2wdat.eq.4) then
 c        call my_out_us(70,nCv,0,chi_ech,'b2mod_ECH_shapefun')
 c        call my_outi_us(70,nCv,0,maskf,'b2mod_ECH_maskf')
 c        do cntr = 0,3
@@ -149,7 +150,7 @@ c Output variable
 c      real (kind=R8), intent(out) :: she_ech(nCv,0:3)
 c Internal variables
       real (kind=R8) :: segment(2,2), segmdist(mpg%nCi),
-     &                  totaldist, crction, summation
+     &                  totaldist, crction, summation, dummy(mpg%nCi)
       integer :: list_cv(nCv), nncv, nnci,
      &           list_fc(mpg%nFc), nnfc
       logical :: ifail
@@ -213,7 +214,7 @@ c Compute ECH - Gaussian-like
 c Output variable
 c      real (kind=R8), intent(out) :: she_ech(nCv,0:3)
 c Internal variables
-      real (kind=R8):: sx, sy, summation
+      real (kind=R8):: sx, sy, summation, dummy(mpg%nCi)
       integer :: iCv
 
 * ..preliminaries
@@ -314,6 +315,7 @@ c Internal variables
      &                  R_UHR(nCv), BUHR(nCv)
       real (kind=R8) :: gradne(nCv), gradB(nCv), funv(mpg%nVx),
      &                  Lne(nCv), LBphi(nCv)
+      real (kind=R8) :: Buddenparam(nCv), T(nCv), R(nCv), C(nCv)
 c Other variables
       real (kind=R8) :: omegace(nCv), R_res
 c Internal variables
@@ -335,8 +337,8 @@ c Internal variables
 c-----------------Locate resonance-----------------
         call find_resonance(nCv, geo, mpg, switch, omegace, wce, R_res)
 
-        segment = reshape((/ R_res, minval(geo%cvY)-crction,
-     &       R_res, maxval(geo%cvY)+crction /), shape(segment))
+        segment = reshape((/ R_res, minval(geo%vxY)-crction,
+     &       R_res, maxval(geo%vxY)+crction /), shape(segment))
 
         call cv_intersections (geo, mpg, segment, list_cv, list_ci,
      &   list_fc, nncv, nnci, nnfc, nCv, XI, YI, 1, ifail)
@@ -347,7 +349,7 @@ c-----------------Locate resonance-----------------
           iCv2 = list_cv(iCv)
           wpe(iCv2) = sqrt(dv%ne(iCv2)*qe**2/me/eps0)
         enddo
-        alphaCE = wpe**2/wce**2
+        alphaCE = wpe**2/wce**2 !ap this one in general is different from cell to cell bc electron density is different
 
 c-----------------Locate R-cutoff-----------------
 
@@ -420,11 +422,11 @@ c-----------------Locate UHR-layer-----------------
         enddo
 
 c     Lne = abs(nr.ne[id] * abs(aR[id + 1] - aR[id - 1]) / 100.0 / (nr.ne[id - 1] - nr.ne[id + 1])); ! density scale length [m]
-        call gradc_r(nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
-     &               neUHR, funv, gradne)
+        call gradc(nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     &               dv%ne, funv, gradne)
 
 c     LBr = abs(Br[id] * abs(aR[id + 1] - aR[id - 1]) / 100.0 / (Br[id - 1] - Br[id + 1])); ! magnetic scal length [m]
-        call gradc_r(nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+        call gradc(nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
      &               BUHR, funv, gradB)
 
         Lne = neUHR/gradne
@@ -443,11 +445,11 @@ c-----------------Budden Analysis @ UHR-----------------
         Buddenparam = omegace*Lne/c * alphaUHR/sqrt(alphaUHR**2 +
      &                2.0_R8*(Lne/LBphi))*((sqrt(1.0 +
      &		      alphaUHR**2)-1.0_R8)/(alphaUHR**2+(Lne/LBphi)*
-     &                sqrt(1.0 + alphaUHR**2))**0.5_R8 ! Budden parameter
+     &                sqrt(1.0 + alphaUHR**2))**0.5_R8) ! Budden parameter
 
         T = expu(-2.0_R8 * Buddenparam) ! Tunneling fraction
-        R = (1.0_R8 - Tunnel)**2        ! Reflected part
-        C = 1.0_R8 - Tunnel - Reflect   ! XB converted fraction
+        R = (1.0_R8 - T)**2        ! Reflected part
+        C = 1.0_R8 - T - R   ! XB converted fraction
 
 c-----------------O-absorption-----------------
 

@@ -4038,25 +4038,6 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
       call sfill (nCv, 0.0_R8, hci0, 1)
       call sfill (nCv, 0.0_R8, hcn0, 1)
 
-*   ..Check whether dna0, vla0 and vma0 are zero for all the species since they are not used in Bohm transport or print warning
-      do is = 0, ns-1
-        if (ANY( dna0(:,is)/=0 )) then
-          write(*,*) 'Warning: '//
-     .    'dna0 is not zero! '//
-     .    'Recommended choice is zero when using Bohm transport model!'
-        endif
-        if (ANY( vla0(:,:,is)/=0 )) then
-          write(*,*) 'Warning: '//
-     .    'vla0 is not zero! '//
-     .    'Recommended choice is zero when using Bohm transport model!'
-        endif
-        if (ANY( vma0(:,:,is)/=0 )) then
-          write(*,*) 'Warning: '//
-     .    'vma0 is not zero! '//
-     .    'Recommended choice is zero when using Bohm transport model!'
-        endif 
-      enddo
-
 *   ..compute collision frequencies
       call b2tnua(nCv, ns, switch, pl, dv, rt, nuab, nua)
 
@@ -4101,7 +4082,8 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
           endif
 
 *   ..compute hcib (Bohm-like ion heat conductivity - extesion of the model, be careful)
-          hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
+          hcib(:,is) = 3.0_R8/2.0_R8*switch%bohm_gammaD*pl%na(:,is)*
+     &                 dna_bohm(:,1,is)
 
         elseif(is_neutral(is).and.switch%use_eirene.eq.0.and.
      &                        switch%transport_afn.eq.0) then
@@ -4121,7 +4103,8 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
           endif
 
 *   ..compute hcib (Bohm-like) for neutrals
-          hcib(:,is) = switch%bohm_gammaD*pl%na(:,is)*dna_bohm(:,1,is)
+          hcib(:,is) = 3.0_R8/2.0_R8*switch%bohm_gammaD*pl%na(:,is)*
+     &                 dna_bohm(:,1,is)
 
 *   ..compute vla_bohm (Bohm-like) for neutrals 
 *   ..no convection for neutrals, vla_bohm is zero
@@ -4150,7 +4133,12 @@ c      call sfill (nCv, 0.0001_R8, geo%cvBb(:,1), 1) ! from Tom's code -> replac
 *   ..compute rhole, vthe, hce0 (Bohm-like) for electrons
       rhole(:) = me*sqrt(2.0_R8*pl%te/(me))/abs(qe*geo%cvBb(:,3))
       vthe(:)  = sqrt(2.0_R8*pl%te/me)
-      hce0(:)  = switch%bohm_gammaD*dv%ne(:)*dna_bohm(:,1,1)
+      do is = 0, ns-1
+        if (.not.is_neutral(is)) then
+          hce0(:)  = hce0(:) + 3.0_R8/2.0_R8*switch%bohm_gammaD*
+     &                         dna_bohm(:,1,is)*pl%na(:,is)
+        endif
+      enddo
 c      hce0(:)  = switch%bohm_gammaD*dv%ne(:)*1.00_R8/3.00_R8*
 c     &           1.0_R8/16.0_R8*vthe*(rhole(:) + vthe/nuab(:,ns,ns)*
 c     &           geo%cvBb(:,0)/geo%cvBb(:,2)) ! old, minor differences in the results
