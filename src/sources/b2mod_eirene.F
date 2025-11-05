@@ -60,7 +60,7 @@
       implicit none
 
       integer, save :: use_recyceir = 1
-      integer, save :: nhist = 1, nrelax = 0, nrelax_advanced = 0
+      integer, save :: nhist = 1, nrelax = 0
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:,:), see_av(:,:)
 
@@ -267,15 +267,9 @@ csw 26mar2013
 csw 26feb2014
       integer, save :: ihist=0, neutr_avg=0
       integer, save :: ih_end
-      integer, save, allocatable :: ih_end_sni(:),
-     . ih_end_smo(:),ih_end_see(:), ih_end_sei(:)
       logical, save :: lneustra
       logical, save :: full_history = .false.
-      logical, save , allocatable :: full_history_sni(:),
-     . full_history_smo(:), full_history_see(:), full_history_sei(:)
       real (kind=R8) :: relax
-      real (kind=R8) , save, allocatable :: relax_sni(:), relax_smo(:),
-     .                                relax_see(:), relax_sei(:)
       integer, save :: relax_continue = 0
       real(kind=R8) :: gs_ti
       real(kind=R8) :: gs_fsi
@@ -357,27 +351,6 @@ c not sure this is the right place
      &      switch%write_eirene_sources.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nCv,ns,natm,nmol,nion,nstrat)
         endif
-c for advanced (equation- and stratum-resolved) underrelaxation option
-        allocate(ih_end_sni(NSTRAT))
-        allocate(ih_end_smo(NSTRAT))
-        allocate(ih_end_see(NSTRAT))
-        allocate(ih_end_sei(NSTRAT))
-        allocate(full_history_sni(NSTRAT))
-        allocate(full_history_smo(NSTRAT))
-        allocate(full_history_see(NSTRAT))
-        allocate(full_history_sei(NSTRAT))
-        allocate(relax_sni(NSTRAT))
-        allocate(relax_smo(NSTRAT))
-        allocate(relax_see(NSTRAT))
-        allocate(relax_sei(NSTRAT))
-        full_history_sni(:) = .false. !! initizalize
-        full_history_smo(:) = .false.
-        full_history_see(:) = .false.
-        full_history_sei(:) = .false.
-        ih_end_sni(nstrat) = 1
-        ih_end_smo(nstrat) = 1
-        ih_end_see(nstrat) = 1
-        ih_end_sei(nstrat) = 1
 #endif
 
         write(*,*) 'Calling test_couple'
@@ -486,7 +459,6 @@ csw 26feb2013
         call ipgeti ('eirene_neutr_avg', neutr_avg)
         call ipgeti ('b2stbr_eir_src_nhist', nhist)
         call ipgeti ('eirene_underrelax', nrelax)
-        call ipgeti ('eirene_underrelax_advanced', nrelax_advanced)
         call ipgeti ('eirene_underrelax_continue', relax_continue)
         call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
@@ -494,8 +466,6 @@ csw 26feb2013
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 
-!! When using nrelax_advanced, the value of nrelax is not relevant but should be > 1 for the code to run correctly
-        if (nrelax_advanced.ne.0.and.nrelax.le.1) nrelax = 2
         if(nhist.gt.1) call alloc_hist_arrays(nhist, switch)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays(switch)
 
@@ -2403,92 +2373,26 @@ cc Read saved sources
      .               .and.relax_continue.eq.1)then
           call read_saved_sources(size(sni,1),size(sni,2),size(sni,3))
           full_history = .true.
-          full_history_sni(:) = .true.
-          full_history_smo(:) = .true.
-          full_history_see(:) = .true.
-          full_history_sei(:) = .true.
         endif
-        if (nrelax_advanced.eq.0) then !! standard scheme
-          if (ihist.eq.nrelax) full_history = .true.
-        else                           !! advanced scheme
-          do istrai = 1, nstrai
-            if (ihist.eq.nrelax_sni(istrai)) 
-     .                 full_history_sni(istrai) = .true.
-            if (ihist.eq.nrelax_smo(istrai)) 
-     .                 full_history_smo(istrai) = .true.
-            if (ihist.eq.nrelax_see(istrai)) 
-     .                 full_history_see(istrai) = .true.
-            if (ihist.eq.nrelax_sei(istrai)) 
-     .                 full_history_sei(istrai) = .true.
-          enddo
-        endif 
-        if (ihist.eq.nrelax+1.and.nrelax_advanced.eq.0) ihist = 1
+        if (ihist.eq.nrelax) full_history = .true.
+        if (ihist.eq.nrelax+1) ihist = 1
         write(*,*)
      .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist !! TODO: different message for advanced
-        if (nrelax_advanced.eq.0) then !! standard scheme
-          if (full_history) then
-           ih_end = nrelax
-          else
-           ih_end = ihist
-          end if
-        else                            !! advanced scheme
-          do istrai = 1, nstrai
-            if (full_history_sni(istrai)) then
-              ih_end_sni(istrai) = nrelax_sni(istrai)
-            else
-              ih_end_sni(istrai) = ihist
-            endif
-            if (full_history_smo(istrai)) then
-              ih_end_smo(istrai) = nrelax_smo(istrai)
-            else
-              ih_end_smo(istrai) = ihist
-            endif
-            if (full_history_see(istrai)) then
-              ih_end_see(istrai) = nrelax_see(istrai)
-            else
-              ih_end_see(istrai) = ihist
-            endif
-            if (full_history_sei(istrai)) then
-              ih_end_sei(istrai) = nrelax_sei(istrai)
-            else
-              ih_end_sei(istrai) = ihist
-            endif
-          enddo
-        endif 
-        if (nrelax_advanced.eq.0) then !! standard scheme
-          relax = rratio(ih_end-1,ih_end)
-          sni_s = sni_s*relax + sni/dble(ih_end)
-          smo_s = smo_s*relax + smo/dble(ih_end)
-          see_s = see_s*relax + see/dble(ih_end)
-          sei_s = sei_s*relax + sei/dble(ih_end)
-        else                            !! advanced scheme
-          do istrai = 1, nstrai
-            relax_sni(istrai) = 
-     .          rratio(ih_end_sni(istrai)-1,ih_end_sni(istrai))
-            relax_smo(istrai) = 
-     .          rratio(ih_end_smo(istrai)-1,ih_end_smo(istrai))
-            relax_see(istrai) = 
-     .          rratio(ih_end_see(istrai)-1,ih_end_see(istrai))
-            relax_sei(istrai) = 
-     .          rratio(ih_end_sei(istrai)-1,ih_end_sei(istrai))
-            sni_s(:,:,istrai) = sni_s(:,:,istrai)*relax_sni(istrai) + 
-     .                          sni(:,:,istrai)/dble(ih_end_sni(istrai))
-            smo_s(:,:,istrai) = smo_s(:,:,istrai)*relax_smo(istrai) + 
-     .                          smo(:,:,istrai)/dble(ih_end_smo(istrai))
-            see_s(:,istrai)   = see_s(:,istrai)*relax_see(istrai) + 
-     .                          see(:,istrai)/dble(ih_end_see(istrai))
-            sei_s(:,:,istrai) = sei_s(:,:,istrai)*relax_sei(istrai) + 
-     .                          sei(:,:,istrai)/dble(ih_end_sei(istrai))
-          enddo
-        endif    
+        if (full_history) then
+         ih_end = nrelax
+        else
+         ih_end = ihist
+        end if
+        
+        relax = rratio(ih_end-1,ih_end)
+        sni_s = sni_s*relax + sni/dble(ih_end)
+        smo_s = smo_s*relax + smo/dble(ih_end)
+        see_s = see_s*relax + see/dble(ih_end)
+        sei_s = sei_s*relax + sei/dble(ih_end)
 
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
-          if (nrelax_advanced.ne.0) then
-            relax = relax_sni(1) !! TODO generalize
-            ih_end = ih_end_sni(1)
-          endif
           sne_s_pael = sne_s_pael*relax + sne_pael/dble(ih_end)
           sne_s_pmel = sne_s_pmel*relax + sne_pmel/dble(ih_end)
           sna_s_paat = sna_s_paat*relax + sna_paat/dble(ih_end)
@@ -2504,26 +2408,14 @@ cc Read saved sources
           sni_s_pmpl = sni_s_pmpl*relax + sni_pmpl/dble(ih_end)
           sni_s_pipl = sni_s_pipl*relax + sni_pipl/dble(ih_end)
           sni_s_pppl = sni_s_pppl*relax + sni_pppl/dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            relax = relax_smo(1) !! TODO generalize
-            ih_end = ih_end_smo(1)
-          endif
           smo_s_mapl = smo_s_mapl*relax + smo_mapl/dble(ih_end)
           smo_s_mmpl = smo_s_mmpl*relax + smo_mmpl/dble(ih_end)
           smo_s_mipl = smo_s_mipl*relax + smo_mipl/dble(ih_end)
           smo_s_cppv = smo_s_cppv*relax + smo_cppv/dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            relax = relax_see(1) !! TODO generalize
-            ih_end = ih_end_see(1)
-          endif
           see_s_eael = see_s_eael*relax + see_eael/dble(ih_end)
           see_s_emel = see_s_emel*relax + see_emel/dble(ih_end)
           see_s_eiel = see_s_eiel*relax + see_eiel/dble(ih_end)
           see_s_epel = see_s_epel*relax + see_epel/dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            relax = relax_sei(1) !! TODO generalize
-            ih_end = ih_end_sei(1)
-          endif
           sei_s_eapl = sei_s_eapl*relax + sei_eapl/dble(ih_end)
           sei_s_empl = sei_s_empl*relax + sei_empl/dble(ih_end)
           sei_s_eipl = sei_s_eipl*relax + sei_eipl/dble(ih_end)
@@ -2531,10 +2423,6 @@ cc Read saved sources
         endif
 #endif
         do iatm = 1,nnatmi
-         if (nrelax_advanced.ne.0) then
-           relax = relax_sni(1) !! TODO generalize
-           ih_end = ih_end_sni(1)
-         endif
          dab2_s(:,iatm,1) = dab2_s(:,iatm,1)*relax
      .                      + dab2(:,iatm,1)/dble(ih_end)
          pfluxa_s(:,iatm,1) = pfluxa_s(:,iatm,1)*relax
@@ -2543,39 +2431,20 @@ cc Read saved sources
      .                        + rfluxa(:,iatm,1)/dble(ih_end)
         enddo
         do imol = 1,nnmoli
-         if (nrelax_advanced.ne.0) then
-           relax = relax_sni(1) !! TODO generalize
-           ih_end = ih_end_sni(1)
-         endif
          pfluxm_s(:,imol,1) = pfluxm_s(:,imol,1)*relax
      .                        + pfluxm(:,imol,1)/dble(ih_end)
          rfluxm_s(:,imol,1) = rfluxm_s(:,imol,1)*relax
      .                        + rfluxm(:,imol,1)/dble(ih_end)
         enddo
 
-        if (nrelax_advanced.eq.0) then !! standard 
-          sni_av = sni_s*dble(ih_end)
-          smo_av = smo_s*dble(ih_end)
-          sei_av = sei_s*dble(ih_end)
-          see_av = see_s*dble(ih_end)
-        else                           !! advanced
-          do istrai = 1, nstrat
-            sni_av(:,:,istrai) = sni_s(:,:,istrai)*
-     .                           dble(ih_end_sni(istrai))
-            smo_av(:,:,istrai) = smo_s(:,:,istrai)*
-     .                           dble(ih_end_smo(istrai))
-            sei_av(:,:,istrai) = sei_s(:,:,istrai)*
-     .                           dble(ih_end_sei(istrai))
-            see_av(:,istrai) = see_s(:,istrai)*
-     .                           dble(ih_end_see(istrai))
-          enddo
-        endif
+        sni_av = sni_s*dble(ih_end)
+        smo_av = smo_s*dble(ih_end)
+        sei_av = sei_s*dble(ih_end)
+        see_av = see_s*dble(ih_end)
+
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
-          if (nrelax_advanced.ne.0) then
-            ih_end = ih_end_sni(1)
-          endif
           sne_av_pael = sne_s_pael*dble(ih_end)
           sne_av_pmel = sne_s_pmel*dble(ih_end)
           sna_av_paat = sna_s_paat*dble(ih_end)
@@ -2591,23 +2460,14 @@ cc Read saved sources
           sni_av_pmpl = sni_s_pmpl*dble(ih_end)
           sni_av_pipl = sni_s_pipl*dble(ih_end)
           sni_av_pppl = sni_s_pppl*dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            ih_end = ih_end_smo(1)
-          endif
           smo_av_mapl = smo_s_mapl*dble(ih_end)
           smo_av_mmpl = smo_s_mmpl*dble(ih_end)
           smo_av_mipl = smo_s_mipl*dble(ih_end)
           smo_av_cppv = smo_s_cppv*dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            ih_end = ih_end_sei(1)
-          endif
           sei_av_eapl = sei_s_eapl*dble(ih_end)
           sei_av_empl = sei_s_empl*dble(ih_end)
           sei_av_eipl = sei_s_eipl*dble(ih_end)
           sei_av_eppl = sei_s_eppl*dble(ih_end)
-          if (nrelax_advanced.ne.0) then
-            ih_end = ih_end_see(1)
-          endif
           see_av_eael = see_s_eael*dble(ih_end)
           see_av_emel = see_s_emel*dble(ih_end)
           see_av_eiel = see_s_eiel*dble(ih_end)
@@ -2938,12 +2798,10 @@ c   and apply linearisation
               recyctmp=recyc(is,istrai)
             endif !}
             do ic = 1, nCv !{
-              if (nrelax_advanced.ne.0) ih_end = ih_end_smo(istrai)
               smo_tot(ic,ifl)=smo_tot(ic,ifl)+
      .           smo_av(ic,ifl,istrai)*tflux(istrai)*
      *           recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
      *           dble(ih_end)
-              if (nrelax_advanced.ne.0) ih_end = ih_end_sni(istrai)
               t00 =
      .           sni_av(ic,ifl,istrai)*tflux(istrai)*
      *           recyctmp*flux_scale(istrai)/dble(ih_end)
@@ -3084,7 +2942,6 @@ c   and apply linearisation
 csw 26feb2014 averaging
 c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)
-                  if (nrelax_advanced.ne.0) ih_end = ih_end_sni(istrai) !! TODO after merge: check and fix !!
                   t00=sni_av(ic,ifl,istrai)*gs_prod_4
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
@@ -3282,7 +3139,6 @@ csw 26feb2014 averaging
 c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
 
-                  if (nrelax_advanced.ne.0) ih_end = ih_end_smo(istrai) !! TODO AFTER MERGE: check and fix
                   t0=smo_av(ic,ifl,istrai)*
      *             gs_prod_4 * sclstra(j,istrai)*
      *             geo%cvHz(ic)
@@ -3449,8 +3305,6 @@ c*** before correction (r), after correction (c), after iteration (i)
         end do !}  ! is
 cnh  12.01.2024
 
-        if (nrelax_advanced.ne.0) ih_end = ih_end_smo(istrai) !! sources below all related to particles
-
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !{
@@ -3582,7 +3436,6 @@ cdjm Jan2017 Calculate linearised components of source
      &         mpg%cvReg(ic).ne.0) then !{
 * electron energy
               rf0=RF_NEUT(3)
-              if (nrelax_advanced.ne.0) ih_end = ih_end_see(istrai) !! TODO after merge: check and fix !!
 csw 26feb2014 averaging
 c              t0=see(ic,istrai)*tflux(istrai)*
 c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
@@ -3729,7 +3582,6 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
               sseereg(mpg%cvReg(ic))=sseereg(mpg%cvReg(ic))+t0
 * ion energy
               rf0=RF_NEUT(4)
-              if (nrelax_advanced.ne.0) ih_end = ih_end_sei(istrai) !! TODO after merge: check and fix !!
 csw 26feb2014 averaging
 c              t0=sei(ic,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
@@ -3833,7 +3685,6 @@ csw 26feb2014 averaging
 c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
-                    if (nrelax_advanced.ne.0) ih_end =ih_end_smo(istrai) !! TODO after merge: check and fix !!
                     t2=smo_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
@@ -3865,7 +3716,6 @@ csw 26feb2014 averaging
 c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
-                    if (nrelax_advanced.ne.0) ih_end =ih_end_sni(istrai) !! TODO after merge: check and fix !!
                     t3=sni_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
