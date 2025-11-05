@@ -5923,7 +5923,8 @@ cxpb code segment analog to b2tfhi
      &             mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               enddo
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - (t0*enipar(ib,1) -
-     &         (dv%fhiPSch(iFc,0)+dv%fhiPSch(iFc,1))/pl%ti(iCv1)) -
+     &         (dv%fhiPSch(iFc,0)+dv%fhiPSch(iFc,1))/pl%ti(iCv1)*
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)) -
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
      &         fac_he_anom_bc*enipar(ib,2)*t1*geo%fcS(iFc)
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
