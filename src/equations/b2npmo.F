@@ -812,7 +812,8 @@ c     ..compare 9-pt stencil matrice
         endif
       endif
 
-!! do the same but with possibly a lower max M for the core region. For now, no diagnostic output for this one.
+!! do the same but with possibly a lower max M for the core region. 
+      vcount = 0
       if( switch%ion_vlct_restrict_core .ne. 0 ) then                
         do is = 0, ns-1
           do iCv = 1, nCv
@@ -824,28 +825,84 @@ c     ..compare 9-pt stencil matrice
                 cst=sqrt(pl%tn(iCv)/(mp*am(is)))
               endif
               if( abs(pl%ua(iCv,is)).gt.
-     .         switch%ion_vlct_restrict_core_M*cst ) then
-              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_core_M*cst,
-     .                              pl%ua(iCv,is))                
+     .            switch%ion_vlct_restrict_core_M*cst ) then
+                vcount(is) = vcount(is) + 1
+                if (switch%vlct_diagno.ge.2) then
+                  write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .             'Core parallel velocity restriction applied ',
+     .             'to species ',is,' in cell (',iCv,'):'
+                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
+     .             'Mach ',switch%ion_vlct_restrict_core_M,': ',
+     .                     switch%ion_vlct_restrict_core_M*cst,
+     .              ' Ua:',pl%ua(iCv,is)
+                end if
+                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_core_M*cst,
+     .                              pl%ua(iCv,is))   
               endif
             endif
           enddo
         enddo
+        if (switch%vlct_diagno.ge.1) then
+          do is = 0, ns-1
+            if (vcount(is).gt.1) then
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
+     .         'In b2npmo, core parallel velocity restriction ',
+     .         'to Mach ', switch%ion_vlct_restrict_core_M,
+     .         ' was applied ',vcount(is),
+     .         ' times for species ',is
+            else if (vcount(is).eq.1) then
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
+     .         'In b2npmo, parallel velocity restriction ',
+     .         'to Mach ', switch%ion_vlct_restrict_core_M,
+     .         ' was applied ',vcount(is),
+     .         ' time for species ',is
+            end if
+          end do
+        endif
       endif
 
-!! do the same but with a value for the parallel velocity rather than the Mach number. For now, no diagnostic output for this one.
+
+!! do the same but with a value for the parallel velocity rather than the Mach number. 
 !! Limiting only Mach number may not be enough if there is a feedback loop on viscous heating -> increased T -> increased allowable ua and sound speed -> increased ua -> increased viscous heating -> ...
+      vcount = 0
       if( switch%ion_vlct_restrict_abs .ne. 0 ) then                
         do is = 0, ns-1
           do iCv = 1, nCv
               if( abs(pl%ua(iCv,is)).gt.
      .         switch%ion_vlct_restrict_ua ) then
-              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_ua,
+                vcount(is) = vcount(is) + 1
+                if (switch%vlct_diagno.ge.2) then
+                  write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .             'Parallel velocity restriction applied on abs(ua)',
+     .             'to species ',is,' in cell (',iCv,'):'
+                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
+     .             'Max ua ',switch%ion_vlct_restrict_ua,
+     .              ' Ua:',pl%ua(iCv,is)
+                end if
+                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_ua,
      .                              pl%ua(iCv,is))                
               endif
           enddo
         enddo
+        if (switch%vlct_diagno.ge.1) then
+          do is = 0, ns-1
+            if (vcount(is).gt.1) then
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
+     .         'In b2npmo, parallel velocity restriction ',
+     .         'to ua ', switch%ion_vlct_restrict_ua,
+     .         ' was applied ',vcount(is),
+     .         ' times for species ',is
+            else if (vcount(is).eq.1) then
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
+     .         'In b2npmo, parallel velocity restriction ',
+     .         'to ua ', switch%ion_vlct_restrict_ua,
+     .         ' was applied ',vcount(is),
+     .         ' time for species ',is
+            end if
+          end do
+        endif
       endif
+
 
 *   ..compute physical time-derivative after correction has been applied
 *   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
