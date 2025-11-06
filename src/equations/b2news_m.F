@@ -747,8 +747,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       if(no_neutr_scl .eq. 0) then
         write(*,*) 'Calling b2stbr_neutr_scl'
-        call b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st%pl, st%dv,      !srv 25.10.08
-     &    switch%use_eirene, switch%ank_mods)
+        call b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st, switch)
         write(*,*) 'Called b2stbr_neutr_scl'
       endif
 

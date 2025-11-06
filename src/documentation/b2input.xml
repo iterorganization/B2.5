@@ -4113,6 +4113,7 @@
 				<description>
 					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2.5 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
 					Cannot be used in conjunction with 'eirene_ionising_core'.
+					Should also not be used if Eirene is run in time-dependent mode.
 				</description>
 			</switch>
 			<switch>
