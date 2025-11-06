@@ -461,7 +461,6 @@ c b2tqna
       integer :: b2tqna_transport_inputfile
       integer :: b2tqna_ballooning_sig
       integer :: b2tqna_limit_coeff
-      integer :: b2tqna_no_fluxtube_ordering
 
 c b2tanml
       integer :: anml_all_ions
@@ -1093,7 +1092,6 @@ c b2tqna
       s % b2tqna_transport_inputfile = 0
       s % b2tqna_ballooning_sig = 1
       s % b2tqna_limit_coeff = 0
-      s % b2tqna_no_fluxtube_ordering = 0
 
 c fch_anomalous
       s % anml_all_ions = 1
@@ -1743,8 +1741,6 @@ c b2tqna
       call ipgetr ('b2tqna_pfr_rescale', s % b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s % b2tqna_divsol_rescale)
       call ipgetr ('b2tqna_cfvma', s % b2tqna_cfvma)
-      call ipgeti ('b2tqna_no_fluxtube_ordering',
-     & s % b2tqna_no_fluxtube_ordering)
 
 c fch anomalous
       call ipgeti ('b2tanml_anml_all_ions', s % anml_all_ions)
