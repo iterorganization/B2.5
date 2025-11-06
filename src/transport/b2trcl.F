@@ -612,6 +612,15 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         collisnumf = 1.0_R8
         collisnumef = 1.0_R8
       endif
+      do k = 1, mpg%nCg
+        iFc = mpg%fcs_wall(k)
+        iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        if (collisnumf(iFc).le.switch%min_collisions.and.
+     &   .not.mpg%cvOnClosedSurface(iCv)) then
+          cvsa(iFc,0:1,:)=0.0_R8
+          cvsahz(iFc,0:1,:)=0.0_R8
+        end if
+      end do
 
       if(switch%conductive_limit.ne.0) then                           !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
