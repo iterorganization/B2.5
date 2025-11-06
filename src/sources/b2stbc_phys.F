@@ -1147,9 +1147,17 @@ c   (ionising_core option)
 
         case (14)
           if (ncall_b2stbc_phys.eq.0) then
-            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'BCCON = 14 : sound speed flux ',CONPAR(IS,IB,1),' on ',
-     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (mompar(is,ib,2).lt.0.5_R8) then
+              write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .         'BCCON = 14 : sound speed flux ',CONPAR(IS,IB,1),' on ',
+     1         BCCHAR(IB),boundary_location(ib),' for species ',IS
+            else
+              write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
+     .          'BCCON = 14 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
+     .          'sheath BC, with MOMPAR(:,:,1) = ',
+     .          MOMPAR(IS,IB,1),' on boundary ',
+     .          BCCHAR(IB),boundary_location(ib),' for species ',IS
+            endif
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             call xertst(CONPAR(IS,IB,2).ge.0.0_R8,
@@ -1161,7 +1169,7 @@ c   (ionising_core option)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (conpar(is,ib,2).eq.0.0_R8) then
+            if (mompar(is,ib,2).lt.0.5_R8) then
               cs = sqrt(pz(iCv1)/rz(iCv1))
             else
               cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
@@ -1201,7 +1209,7 @@ c   (ionising_core option)
                 endif
               endif
             else
-              vbnd = max(conpar(is,ib,1)*mompar(is,ib,1)*cs*s1,
+              vbnd = max(mompar(is,ib,1)*cs*s1,
      &         s1*abs(pl%ua(iCv1,is))+geo%fcS(iFc)*
      &         (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0)+
      &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
@@ -1209,6 +1217,10 @@ c   (ionising_core option)
 
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) = -vbnd
+              if (conpar(is,ib,2).gt.0.0_R8) then
+                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
+     .           co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
+              endif
               sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.ne.0) then
                 t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -3127,11 +3139,19 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 !srv added accumulation in order to account twice b.c. for corner cells
         case (13)
           if(ncall_b2stbc_phys.eq.0) then
-            write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
-     .       'BCMOM = 13 : from b2stbc_spb parallel momentum bc '//
-     .       'with mompar1 =', MOMPAR(IS,IB,1),
-     1       ' and mompar2 =', MOMPAR(IS,IB,2),' on ',
-     2       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (mompar(is,ib,2).lt.0.5_R8) then
+              write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
+     .         'BCMOM = 13 : from b2stbc_spb parallel momentum bc '//
+     .         'with mompar1 =', MOMPAR(IS,IB,1),
+     1         ' and mompar2 =', MOMPAR(IS,IB,2),' on ',
+     2         BCCHAR(IB),boundary_location(ib),' for species ',IS
+            else
+              write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
+     .        'BCMOM = 13 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
+     .        'sheath BC, with MOMPAR(:,:,1) = ',
+     .        MOMPAR(IS,IB,1),' on boundary ',
+     .        BCCHAR(IB),boundary_location(ib),' for species ',IS
+            endif
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -3155,9 +3175,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
               s1hz = geo%fcPbshz(iFc)
               vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
-              if (MOMPAR(IS,IB,2).eq.0.0_R8) then
+              if (mompar(is,ib,2).lt.0.5_R8) then
                 cs = sqrt(pz(iCv1)/rz(iCv1))
-                vbnd = sign(min(MOMPAR(IS,IB,1)*2.0_R8*cs*wrk,
+                vbnd = sign(min(mompar(is,ib,1)*2.0_R8*cs*wrk,
      &            abs(vbnd)),vbnd)
                 vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
      &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
@@ -3165,7 +3185,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
               else
                 cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &                    (am(is)*mp))
-                vbnd = sign(min(MOMPAR(IS,IB,1)*2.0_R8*cs*wrk,
+                vbnd = sign(min(mompar(is,ib,1)*2.0_R8*cs*wrk,
      &            abs(vbnd)), vbnd)
                 vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
      &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
@@ -4357,24 +4377,31 @@ cwdk    Todo: corrections for BCCON.ne.14
             endif
             t0 = dv%ne(iCv1)
             t1 = 0.0_R8
-            if (enepar(ib,2).gt.0.0_R8) then
-              t1 = enepar(ib,2)*t0*vte*geo%fcS(iFc)
-            endif
+            do is = 0, ns-1
+              if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
+     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
+            enddo
             t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(min(0.0_R8,   !lkw 31.03.2023
      &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
+            t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
-     &          ((1.0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0 - t1
+     &          ((1.0_R8+GAMMAE+enepar(ib,1))+
+     &            switch%stab_coeff_sheath_te)*t0
+     &           - fac_he_anom_bc*enepar(ib,2)*t1                       !wdk to check: correct 2nd term for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
-     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0          !lkw 31.03.2023
+     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
+     &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
               if (switch%b2nppo_restr_po.ne.0.0_R8 .and.
      &            (srw%she0(iCv1,0)+srw%she0(iCv1,1)*pl%te(iCv1)
      &            .gt. 0.0_R8)) srw%she0(iCv1,:) = 0.0_R8
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
-     &          ((1.0_R8+GAMMAE) + (1.0_R8-GAMMAE)*switch%delpo) -
+     &          ((1.0_R8+GAMMAE+enepar(ib,1)) +
+     &           (1.0_R8-GAMMAE)*switch%delpo) -
      &          (fac_he_anom_bc*enepar(ib,2) + switch%delpo)*t1         !wdk to check: correct for gammae?
             endif
             if(switch%mdf_fhe.ne.0) then
@@ -5921,6 +5948,9 @@ cxpb code segment analog to b2tfhi
      &            (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
      &             dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1))*
      &             mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+                  if (conpar(is,ib,2).gt.0.0_R8)
+     &             t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
+     &              *pl%na(iCv1,is)
               enddo
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - (t0*enipar(ib,1) -
      &         (dv%fhiPSch(iFc,0)+dv%fhiPSch(iFc,1))/pl%ti(iCv1)*
