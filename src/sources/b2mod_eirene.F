@@ -223,7 +223,6 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      1 hlp_scl(:),hlp_scp(:,:),
      2 core_flux(:),tflux0(:)
       real (kind=R8), save :: core_surface
-      real (kind=R8) :: hlp_st
 #ifdef WG_RM
       integer icount
 #endif
@@ -1538,11 +1537,11 @@ c*** other species. Try to scale the fluxes to keep the same source
 c*** terms in balance.
 
                 s=hlp_po(ls)+hlp_t(ls)+hlp_no(ls)-hlp_ni(ls)
-               if(abs(s).gt.0.0_R8 .and.
+                if(abs(s).gt.0.0_R8 .and.
      .            sign(1.0_R8,s).eq.sign(1.0_R8,hlp_s(ls)))
      >               hlp_scl(ls)=hlp_s(ls)/s
 c<<<
-               if(dbg_eir_mc.gt.0) then
+                if(dbg_eir_mc.gt.0) then
                  print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
      ,          hlp_scl(ls),s,hlp_po(ls),hlp_no(ls),hlp_ni(ls),hlp_t(ls)
                endif
@@ -3305,9 +3304,9 @@ cnh  12.01.2024
 #ifndef FIXED_POINT
           if (balance_netcdf.ne.0 .or.
      *        switch%write_eirene_sources.ne.0) then
-            t0_a = sne_av_pael(ic,istrai)*tflux(istrai)*gs_prod_3* !djm Jan2017
+            t0_a = sne_av_pael(ic,istrai)*gs_prod_3* !djm Jan2017
      *       recyc_hlp*sclstra(0,istrai)
-            t0_m = sne_av_pmel(ic,istrai)*tflux(istrai)*gs_prod_3*
+            t0_m = sne_av_pmel(ic,istrai)*gs_prod_3*
      *       recyc_hlp*sclstra(0,istrai)
           endif
 #endif
@@ -4129,6 +4128,7 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
       type(B2StateExt), intent (in) :: st_ext
+
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
@@ -4187,9 +4187,9 @@ csw 26feb2014
       end subroutine eirene_mc_final
 
 c======================================================================
-      subroutine neutr_scl(nCv, nFc, ns, mpg, geo, st, switch)
+      subroutine neutr_scl(ns, mpg, geo, st, switch)
       implicit none
-      integer, intent(in) :: nCv, nFc, ns
+      integer, intent(in) :: ns
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
