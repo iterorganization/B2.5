@@ -372,7 +372,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &              sr%shi(iCv,1)*ti0(iCv) + 
      &              sr%shi(iCv,2)*ni0(iCv,0) +
      &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv) !! TODO fix !!!
+          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv) 
           ttim2 = content/abs(src_tot)/
      &            switch%b2mndt_var_style2_SF
           ttim=dtim*dtei(mpg%cvReg(iCv))
@@ -388,7 +388,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &              sr%shi(iCv,1)*ti0(iCv) + 
      &              sr%shi(iCv,2)*ni0(iCv,0) +
      &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv)
           ttim2 = content/abs(src_tot)/
      &            switch%b2mndt_var_style2_SF
           ttim2 = min(ttim2,dt_var4_min(iCv))
@@ -432,7 +432,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &              sr%shi(iCv,1)*ti0(iCv) + 
      &              sr%shi(iCv,2)*ni0(iCv,0) +
      &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv)
           ttim2 = content/abs(src_tot)/
      &            switch%b2mndt_var_style2_SF
           ttim=dtim*dtei(mpg%cvReg(iCv))
@@ -443,7 +443,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &              sr%shi(iCv,1)*ti0(iCv) + 
      &              sr%shi(iCv,2)*ni0(iCv,0) +
      &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv)
           ttim2 = content/abs(src_tot)/
      &            switch%b2mndt_var_style2_SF
           ttim2 = min(ttim2,dt_var4_min(iCv))
