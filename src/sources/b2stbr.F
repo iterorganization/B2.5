@@ -1182,7 +1182,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if(switch%use_eirene.ne.0.and.switch%ank_mods.ne.0) then
 #ifdef B25_EIRENE
 c        write(*,*) 'Calling neutr_scl'
-        call neutr_scl(nCv, nFc, ns, mpg, geo, st, switch)
+        call neutr_scl(ns, mpg, geo, st, switch)
 c        write(*,*) 'Called neutr_scl'
 #else
         call xerrab ('b2stbr not compiled with the B25_EIRENE option')
