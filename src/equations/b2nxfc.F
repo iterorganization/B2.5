@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfc (nCv, nFc, nVx, isb, switch, geo, mpg, rob, 
+      subroutine b2nxfc (nCv, nFc, nVx, isb, switch, geo, mpg, rob,
      &  ub, flub, cvsb, flcb, cvcb, wrkf)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -90,7 +90,7 @@
       elseif (switch%b2nxfc_style.eq.1) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
-*     ..compute flcbx, cvcbx        
+*     ..compute flcbx, cvcbx
         do iFc = 1, nFc
           flcb(iFc,0) = flub(iFc,0) + geo%fcPbshz(iFc)*wrkf(iFc)*
      &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5_R8
@@ -102,17 +102,17 @@
       cvcb(:,1) = cvsb(:,1)
 
       if (switch%b2nxfc_iout.ne.0) then                                !sv 17.06.02 {
-        if (in_parallel()) then 
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-      write(*,*) 'B2NXFC OpenMP warning: no file output in ',
-     &   'parallel mode'
+          write(*,*) 'B2NXFC OpenMP warning: no file output in ',
+     &     'parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
         else
-          write (charns,'(i3.3)') isb    
+          write (charns,'(i3.3)') isb
           call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
           call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)
           call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcb_th'//charns)

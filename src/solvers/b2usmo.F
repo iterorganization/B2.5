@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2usmo (nCv, nFc, nVx, switch, geo, mpg,
-     &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,        !srv 09.01.01
-     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)  !srv 06.04.07
+     &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,            !srv 09.01.01
+     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)      !srv 06.04.07
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -20,11 +20,11 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      character*(*) name                                             !srv 18.05.02
+      character*(*) name                                                 !srv 18.05.02
       real (kind=R8) ::
      *  rxg, rob(nCv), rzb(nCv), pb(nCv), pz(nCv),
      &  ub(nCv), smb(nCv,0:3), flcb(nFc,0:1), cvsb(nFc,0:1),
-     &  resmb(nCv), ctcfb(nCv)                                       !srv 06.04.07
+     &  resmb(nCv), ctcfb(nCv)                                           !srv 06.04.07
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -234,31 +234,30 @@
 
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
-      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)             !srv 18.03.10
+      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)              !srv 18.03.10
 
-                                     !srv 17.06.02 }
-
-      if (switch%b2usmo_iout.ne.0) then                               !srv 17.06.02 {
-        if (in_parallel()) then 
+      if (switch%b2usmo_iout.ne.0) then                                  !srv 17.06.02 {
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-        write(*,*) 'b2usmo OpenMP warning: no file IO in parallel mode'
+          write(*,*)
+     .     'b2usmo OpenMP warning: no file IO in parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
-#endif    
-        else 
+#endif
+        else
           do k=1,maxval(mpg%cvNvP(1:nCv,2))
             write (charnv,'(i2.2)') k
-             do iCv = 1, nCv
+            do iCv = 1, nCv
               if (k.le.mpg%cvNvP(iCv,2)) then
                 wrk(iCv) = aa(mpg%cvNvP(iCv,1)+k-1)
               else
                 wrk(iCv) = 0.0_R8
               end if
-             end do
-             call my_out_us(70,nCv,0,wrk,name//'_aam'//charnv)
-           end do
+            end do
+            call my_out_us(70,nCv,0,wrk,name//'_aam'//charnv)
+          end do
           call my_out_us(70,nCv,0,resmb,name//'_resmb')
           call my_out_us(70,nCv,0,corub,name//'_corub')
           call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
@@ -272,7 +271,7 @@
           call my_out_us(70,nFc,1,flcb,name//'_flcb')
           call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
         endif
-      endif                                                             !srv 17.06.02 }
+      endif                                                              !srv 17.06.02 }
 
 * ..return
       ncall_b2usmo = ncall_b2usmo+1

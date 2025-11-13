@@ -3203,7 +3203,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied.
+					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied. In addition, viscosity will be turned off in the affected boundary cells.
 				</description>
 			</switch>
 			<switch>
@@ -4113,6 +4113,7 @@
 				<description>
 					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2.5 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
 					Cannot be used in conjunction with 'eirene_ionising_core'.
+					Should also not be used if Eirene is run in time-dependent mode.
 				</description>
 			</switch>
 			<switch>
@@ -4128,7 +4129,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed over nhist calls. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4136,7 +4137,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4144,7 +4145,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4181,12 +4182,12 @@
 					Determines M for ion_vlct_restrict.ne.0.
 				</description>
 			</switch>
-		        <switch>
+			<switch>
 				<name>b2npmo_ion_vlct_restrict_core</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ion_vlct_restrict_core.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than core_M times the global plasma sound speed, on the closed flux surfaces. This option does not affect the ExB speeds. core_M is given by b2npmo_ion_vlct_restrict_core_M. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+					If ion_vlct_restrict_core.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than core_M times the global plasma sound speed, on closed flux surfaces. This option does not affect the ExB speeds. core_M is given by b2npmo_ion_vlct_restrict_core_M. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
 				</description>
 			</switch>
 			<switch>
@@ -4197,12 +4198,12 @@
 					Determines core_M for ion_vlct_restrict_core.ne.0.
 				</description>
 			</switch>
-		        <switch>
+			<switch>
 				<name>b2npmo_ion_vlct_restrict_abs</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-				If ion_vlct_restrict_abs.ne.0, the parallel speed of ions and fluid neutrals is limited to max_ua, regardless of the Mach number. This option can be used to stabilize cases where the Mach restriction is not sufficient, but even more care is needed to make sure the limit is not too active in the converged result. max_ua is given by b2npmo_ion_vlct_restrict_ua. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+					If ion_vlct_restrict_abs.ne.0, the parallel speed of ions and fluid neutrals is limited to max_ua, regardless of the Mach number. This option can be used to stabilize cases where the Mach restriction is not sufficient, but even more care is needed to make sure the limit is not too active in the converged result. max_ua is given by b2npmo_ion_vlct_restrict_ua. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
 				</description>
 			</switch>
 			<switch>
@@ -4692,7 +4693,7 @@
 					Initial density (in m^{-3}) put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 				</description>
 			</switch>
-		        <switch>
+			<switch>
 				<name>b2mndr_use_min_na_numerics</name>
 				<default>0</default>
 				<type>integer</type>
@@ -4943,12 +4944,12 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Option to use a cell-based spatially varying false timestep computed at runtime based on local criteria. Can only be used in steady-state mode (b2mndt_style=1). In its current implementation, the methods can be used in conjunction with region-based multipliers (DTCO etc.) but not with flux-tube-based appraoches (DTCO_FTS etc.) and not with the core suppression mechanism (CORE_DT_SUPPRESSION).
+					Option to use a cell-based spatially varying false timestep computed at runtime based on local criteria. Can only be used in steady-state mode (b2mndt_style=1). In their current implementation, the methods can be used in conjunction with region-based multipliers (DTCO etc.) but not with flux-tube-based appraoches (DTCO_FTS etc.) and not with the core suppression mechanism (CORE_DT_SUPPRESSION).
 					If 0, no cell-based timestep multiplier.
-					If 1, local timestep based on the electron temperature. The baseline timestep (b2mndr_dtim) is applied below b2mndt_var_te_min. Above b2mndt_var_te_max, the baseline timestep is multiplied by b2mndt_var_mult. Log-log interpolation is used in between. 
-					If 2, local timestep based on the ratio of the source strengths compared to the particle/momentum/energy content of each cell. dt2 = abs(content)/abs(S)/Fs, where 'content' is the particle, parallel momentum, ion heat, or electron heat content of a cell, 'Fs' is a safety factor, and 'S' is the strength of the source terms. The included contributions are those computed by EIRENE, and B2.5 contributions due to ionization, recombination and CX (e.g. ionization between higher ionization stages or CX when using fluid neutrals). Other source contributions are not included because they are only computed after the calculation of the timestepping sources. The final timestep is determined as dt = min(max(dt2,b2mndr_dt),b2mndr_dt*b2mndt_var_mult), such that the user can retain control over the minimum and maximum timestep. 
+					If 1, local timestep based on the electron temperature. The baseline timestep (b2mndr_dtim) is applied below b2mndt_var_te_min. Above b2mndt_var_te_max, the baseline timestep is multiplied by b2mndt_var_mult. Log-log interpolation is used in between.
+					If 2, local timestep based on the ratio of the source strengths compared to the particle/momentum/energy content of each cell. dt2 = abs(content)/abs(S)/Fs, where 'content' is the particle, parallel momentum, ion heat, or electron heat content of a cell, 'Fs' is a safety factor, and 'S' is the strength of the source terms. The included contributions are those computed by EIRENE, and B2.5 contributions due to ionization, recombination and CX (e.g. ionization between higher ionization stages or CX when using fluid neutrals). Other source contributions are not included because they are only computed after the calculation of the timestepping sources. The final timestep is determined as dt = min(max(dt2,b2mndr_dt),b2mndr_dt*b2mndt_var_mult), such that the user can retain control over the minimum and maximum timestep.
 					If 3, CFL-criterion based on drift velocities. Highly experimental. Still under development. See code for details.
-					If 4, Combination of 3 and 2. Highly experimental. Still under development. See code for details. 
+					If 4, combination of 3 and 2. Highly experimental. Still under development. See code for details.
 				</description>
 			</switch>
 			<switch>
@@ -5927,14 +5928,14 @@
 				<name>b2optim_reset_drift_iter</name>
 				<default>2</default>
 				<description>
-					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_drift_iter iterations.
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in b2mndr_ntim/b2optim_reset_drift_iter iterations.
 				</description>
 			</switch>
 			<switch>
 				<name>b2optim_reset_param_iter</name>
 				<default>1</default>
 				<description>
-					If .gt. 1, the values of the parameters from the new optimization step will be gradually increased so that they will take ntim/b2optim_reset_param_iter to change from their previous to their new value.
+					If .gt. 1, the values of the parameters from the new optimization step will be gradually changed so that they will take b2mndr_ntim/b2optim_reset_param_iter to change from their previous to their new value.
 				</description>
 			</switch>
 		</category>

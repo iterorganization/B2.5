@@ -5638,7 +5638,7 @@ CONTAINS
     REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: ncv, nfc, nvx
-    INTEGER :: i, is, icf, icv
+    INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
     CHARACTER(len=2) :: ss
     LOGICAL :: ok, found
@@ -6302,7 +6302,7 @@ CONTAINS
     INTEGER :: nout(0:10), ns, idum(0:9)
     REAL(kind=r8) :: j(nncf)
     INTEGER :: ncv, nfc, nvx
-    INTEGER :: i, is, icf, icv
+    INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
     CHARACTER(len=2) :: ss
     LOGICAL :: ok, found

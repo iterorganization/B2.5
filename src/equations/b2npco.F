@@ -35,7 +35,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer, intent(in) :: nCv, nFc, nVx, nregionv, itcnt, isb                        !srv 05.07.08
+      integer, intent(in) :: nCv, nFc, nVx, nregionv, itcnt, isb         !srv 05.07.08
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -137,8 +137,8 @@
           rxg_npco = switch%b2npco_rxg
         endif
       endif
-      if (switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then 
-        if (in_parallel()) then 
+      if (switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
@@ -146,8 +146,8 @@
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
-        end if 
-      end if 
+        end if
+      end if
 *   ..extensive tests on first few calls
       if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
@@ -184,18 +184,18 @@ cdjm Jan2017 update particle source components for balance
         endif
       endif
 
-      if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
+      if(switch%b2mndt_style.eq.2) then                                  !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nCv, mpg%nCi, isb, dtim,
      &   geo%cvVol, psnl%na(:,isb), switch, mpg, sr%snadt(1,0,isb))
 *  .. add contribution from time-dependent source
         sr%sna(:,:,isb) = sr%sna(:,:,isb) + sr%snadt(:,:,isb)
-      endif                                                             !srv 07.07.21 }
+      endif                                                              !srv 07.07.21 }
 
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
-     &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
+     &            .or.switch%get_residuals.eq.1) then                    !srv 22.05.18
        if (switch%mdf_fnb.eq.0) then
         call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna(:,:,isb), dv%resco(:,isb))
@@ -203,7 +203,7 @@ cdjm Jan2017 update particle source components for balance
         call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
-      endif                                                             !srv 22.05.18
+      endif                                                              !srv 22.05.18
 
 *   ..modify residual according to time integration scheme
       if (switch%b2mndt_ckn.eq.2) then
@@ -222,8 +222,8 @@ cdjm Jan2017 update particle source components for balance
 
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
-        call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
+      if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                 !srv 22.05.18
+        call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,     !srv 13.10.06 26.09.12
      &   solvcreg, itcnt, rxg_npco, pl%na(:,isb), dv%pa(:,isb),
      &   sr%sna(:,1,isb), dv%flob(:,:,isb), dv%conb(:,:,:,isb),
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
@@ -232,7 +232,7 @@ cdjm Jan2017 update particle source components for balance
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb),
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb, psnl)
-      endif                                                             !srv 22.05.18
+      endif                                                              !srv 22.05.18
 
 *    ..compute time derivative
       ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
@@ -240,7 +240,7 @@ cdjm Jan2017 update particle source components for balance
      &                  -sr%snadt(:,0,isb))/ts_factor               ! dv%dnadt = V*(dna/dt)
 
 *    ..output quantities for continuity equation
-      if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then       !srv 12.07.02 {
+      if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then        !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
@@ -258,7 +258,7 @@ cdjm Jan2017 update particle source components for balance
      .    'b2npco_fna_mdf_th'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
-      elseif (switch%iout_b2wdat.eq.4 .and. .not. in_parallel()) then                             !iys 17.04.17
+      elseif (switch%iout_b2wdat.eq.4 .and. .not. in_parallel()) then    !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
         call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)

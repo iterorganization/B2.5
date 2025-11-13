@@ -671,7 +671,6 @@ c Optimization
       s % use_min_na_numerics = 0
       s % set_transport_iyref = 0
 
-
 c Advanced fluid neutral models
       s % tn_style = 0
       if (s%afn.ne.0) then
@@ -1077,7 +1076,6 @@ c k-enstrophy model
       s % b2sikt_lpar_ref = 10.0_R8
       s % keps_anom_he_model = 1
 
-
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
       s % b2tqna_bb_ref = 0.0_R8
@@ -1307,7 +1305,8 @@ c Optimization
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
-      call ipgeti ('b2mndr_use_min_na_numerics', s%use_min_na_numerics)
+      call ipgeti ('b2mndr_use_min_na_numerics',
+     &                       s % use_min_na_numerics)
       call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
@@ -1623,11 +1622,11 @@ c diagnostic switches
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
-      call ipgeti ('b2npmo_ion_vlct_restrict_core', 
+      call ipgeti ('b2npmo_ion_vlct_restrict_core',
      &             s % ion_vlct_restrict_core)
       call ipgetr ('b2npmo_ion_vlct_restrict_core_M',
      &             s % ion_vlct_restrict_core_M)
-      call ipgeti ('b2npmo_ion_vlct_restrict_abs', 
+      call ipgeti ('b2npmo_ion_vlct_restrict_abs',
      &             s % ion_vlct_restrict_abs)
       call ipgetr ('b2npmo_ion_vlct_restrict_ua',
      &             s % ion_vlct_restrict_ua)
@@ -1833,26 +1832,26 @@ c b2srsm
       call ipgeti ('b2srsm_enable', s % b2srsm_enable)
 
 c b2mndt
-      call ipgeti ('b2mndt_density_control',s%density_control)
-      call ipgeti ('b2mndt_nstg0', s%nstg(0))
-      call ipgeti ('b2mndt_nstg1', s%nstg(1))
-      call ipgeti ('b2mndt_nstg2', s%nstg(2))
-      call ipgeti ('b2mndt_moqtlv', s%b2mndt_moqtlv)
-      call ipgeti ('b2mndt_moitlv', s%b2mndt_moitlv)
-      call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
-      call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
-      call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
+      call ipgeti ('b2mndt_density_control', s % density_control)
+      call ipgeti ('b2mndt_nstg0', s % nstg(0))
+      call ipgeti ('b2mndt_nstg1', s % nstg(1))
+      call ipgeti ('b2mndt_nstg2', s % nstg(2))
+      call ipgeti ('b2mndt_moqtlv', s % b2mndt_moqtlv)
+      call ipgeti ('b2mndt_moitlv', s % b2mndt_moitlv)
+      call ipgetr ('b2mndt_nstg_areshe', s % nstg_areshe)
+      call ipgetr ('b2mndt_nstg_areshi', s % nstg_areshi)
+      call ipgetr ('b2mndt_nstg_aresco', s % nstg_aresco)
       call ipgetr ('b2mndt_nstg_aresmo', s % nstg_aresmo)
-      call ipgetr ('b2news_BoRiS', s%BoRiS)
-      call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgeti ('b2mndt_var_style', s%b2mndt_var_style)
-      call ipgetr ('b2mndt_var_te_min', s%b2mndt_var_te_min)
-      call ipgetr ('b2mndt_var_te_max', s%b2mndt_var_te_max)
-      call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
-      call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
-      call ipgetr ('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_Cmax)
+      call ipgetr ('b2news_BoRiS', s % BoRiS)
+      call ipgetr ('b2mndt_rxf', s % b2mndt_rxf)
+      call ipgeti ('b2mndt_var_style', s % b2mndt_var_style)
+      call ipgetr ('b2mndt_var_te_min', s % b2mndt_var_te_min)
+      call ipgetr ('b2mndt_var_te_max', s % b2mndt_var_te_max)
+      call ipgetr ('b2mndt_var_mult', s % b2mndt_var_mult)
+      call ipgetr ('b2mndt_var_style2_SF', s % b2mndt_var_style2_SF)
+      call ipgetr ('b2mndt_var_style3_Cmax', s % b2mndt_var_style3_Cmax)
       call ipgeti ('b2mndt_var_style_nfilter',
-     &              s%b2mndt_var_style_nfilter)
+     &              s % b2mndt_var_style_nfilter)
       call ipgeti ('b2mndt_style', s % b2mndt_style)
       call ipgeti ('b2mndt_ckn', s % b2mndt_ckn)
       call ipgeti ('b2mndt_bdf', s % b2mndt_bdf)
@@ -1860,7 +1859,6 @@ c b2mndt
       call ipgeti ('b2mndt_startup', s % b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
-
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -1913,13 +1911,12 @@ c b2nppo
      &      s % b2txcx_increase_transp_coefs)
 
 c Optimization
-      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+      call ipgeti ('b2optim_save_states', s % b2optim_save_states)
       call ipgeti ('b2optim_reset_drift_iter',
-     & s%b2optim_reset_drift_iter)
-      call ipgetr ('b2optim_reset_drift',
-     & s%b2optim_reset_drift)
+     & s % b2optim_reset_drift_iter)
+      call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
       call ipgeti ('b2optim_reset_param_iter',
-     & s%b2optim_reset_param_iter)
+     & s % b2optim_reset_param_iter)
 
       return
       end subroutine read_switches
@@ -2590,33 +2587,31 @@ c Zhdanov closure
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
-
 c controlling minimum density via b2.numerics
-      if(s%b2srdt_numerics_namelist.eq.0 .and. 
+      if(s%b2srdt_numerics_namelist.eq.0 .and.
      &           s%use_min_na_numerics.ne.0) then
-        call xerrab('use_min_na_numerics requires'//
-     &  'reading numerics namelist')
+        call xerrab('use_min_na_numerics requires '//
+     &   'reading numerics namelist')
       endif
 
 c Variable local timestepping
-      if(s%b2mndt_style.eq.2 .and. 
+      if(s%b2mndt_style.eq.2 .and.
      &           s%b2mndt_var_style.ne.0) then
-        call xerrab('Variable local timestepping'//
-     &  'not yet allowed for transient simulations')
+        call xerrab('Variable local timestepping '//
+     &   'not yet allowed for transient simulations')
       endif
 
-      if(s%b2mndt_bdf.gt.2 .and. 
+      if(s%b2mndt_bdf.gt.2 .and.
      &           s%b2mndt_var_style.ne.0) then
-        call xerrab('Variable local timestepping'//
-     &  'not compatible with BDF scheme')
+        call xerrab('Variable local timestepping '//
+     &   'not compatible with BDF scheme')
       endif
 
-      if(s%tn_style.ne.0 .and. 
+      if(s%tn_style.ne.0 .and.
      &           s%b2mndt_var_style.ne.0) then
-        call xerrab('Variable local timestepping'//
-     &  'not yet compatible with tn_style.ne.0')
+        call xerrab('Variable local timestepping '//
+     &   'not yet compatible with tn_style.ne.0')
       endif
-
 
       return
       end subroutine check_consistency_switches

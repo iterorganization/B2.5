@@ -28,7 +28,6 @@
       call sfill (nFc*2, 0.0_R8, fne, 1)
 
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2XPFE)) 
-! fixed form fortran deserves to die imho
 !$omp parallel default(none) private(is, wrkf) 
 !$omp& shared(nCv, nFc, mpg, geo, rza, fna, ns, ns_ext, za_ext, 
 !$omp& fa_ext)

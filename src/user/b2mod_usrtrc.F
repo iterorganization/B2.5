@@ -1065,10 +1065,12 @@ c*** we must remove targets and transparent surfaces from that list
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
         if(hlp_hepr.gt.0.0_R8) hlp_sphe=hlp_hetp/hlp_hepr
-        if(scale_he) then !{
-          hlp_sshe=spmp_he_to_d*hlp_spdt
-        else !}{
-          hlp_sshe=hlp_spdt
+        if (j_he_at.gt.0) then !{
+          if(scale_he) then !{
+            hlp_sshe=spmp_he_to_d*hlp_spdt
+          else !}{
+            hlp_sshe=hlp_spdt
+          end if !}
         end if !}
 
 c*** Calculate the helium-related data
@@ -1525,8 +1527,8 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_dod=0.0_R8
       hlp_isat=0.0_R8
       mgl3_tmp=0
-      call b2xppz(mpg%nCv, ns, st%dv%ne, st%pl%na, st%pl%te,
-     . st%pl%ti, pz, st_ext)
+      call b2xppz(mpg%nCv, ns, st%dv%ne, st%pl%na,
+     .  st%pl%te, st%pl%ti, pz, st_ext)
 
       if(hlp_dbg) print *,'### print_isat=',print_isat    !###
 
@@ -1572,8 +1574,8 @@ c*** find the maximum ballooning factor and its location
 
       al_bll_mx=0.0_R8
       al_bll_ic=0.0_R8
-      call gradc_r(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg, pz,
-     . pv, grpz)
+      call gradc_r(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo,
+     . mpg, pz, pv, grpz)
       do iCv=1,mpg%nCi
         if(mpg%cvOnClosedSurface(iCv) .and. mpg%cvReg(iCv).ne.0) then
           albll(iCv)=abs(grpz(iCv))*hlp_alcff

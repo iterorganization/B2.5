@@ -3,7 +3,6 @@
       use b2mod_types
       use b2mod_openmp
       use b2mod_math
-
       implicit none
       integer n, incx
       real (kind=R8) ::

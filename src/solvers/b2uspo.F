@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, 
+      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt,
      &  switch, geo,
      &  mpg, ne, te, conc, sch, respo, corpo, aa, name)                  !srv 18.03.10
       use b2mod_types
@@ -19,7 +19,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
-      character*(*) name                                             !srv 18.03.10
+      character*(*) name                                                 !srv 18.03.10
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -91,12 +91,12 @@
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from conc(:,0) ('5-point' contributions)
         t1 = -conc(iFc,0)
-        t2 = -conc(iFc,0) 
+        t2 = -conc(iFc,0)
         if (solvereg(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -105,9 +105,9 @@
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from conc(:,1) ('9-point' contributions)
@@ -193,11 +193,12 @@
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
 
       if (switch%b2uspo_iout.ne.0) then                               !srv 08.07.08 {
-        if (in_parallel()) then 
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-         write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
+          write(*,*)
+     .     'b2uspo OpenMP warning: no file I/O in parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -219,7 +220,7 @@
           end do
           call my_out_us(70,nCv,0,respo,'b2uspo_respo')
           call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
-        end if 
+        end if
       endif
 
 * ..return

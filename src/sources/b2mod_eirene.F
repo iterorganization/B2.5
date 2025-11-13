@@ -58,8 +58,8 @@
       use b2us_map
       use b2us_plasma
       use b2mod_running_average
-     . , only: sni_underrelax, smo_underrelax, sei_underrelax, 
-     .         see_underrelax, read_underrelaxed_sources, 
+     . , only: sni_underrelax, smo_underrelax, sei_underrelax,
+     .         see_underrelax, read_underrelaxed_sources,
      .         save_underrelaxed_sources
       implicit none
 
@@ -130,6 +130,7 @@
       real(kind=R8), allocatable, save :: hlp_stra(:)
       logical, allocatable, save :: hlp_pff(:,:)
       logical, save :: saved_volrec_used
+      logical, save :: lneustra
       data saved_volrec_used/.false./
 
       contains
@@ -153,7 +154,7 @@
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
+      integer ic,iCv,iCn,iFc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
 #ifdef WG_RM
       integer ifb
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
@@ -225,10 +226,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
      1 hlp_scl(:),hlp_scp(:,:),
      2 core_flux(:),tflux0(:)
-#ifdef WG_TODO
-      real (kind=R8) :: hlp_st
       real (kind=R8), save :: core_surface
-#endif
 #ifdef WG_RM
       integer icount
 #endif
@@ -271,7 +269,6 @@ csw 26mar2013
 csw 26feb2014
       integer, save :: ihist=0, neutr_avg=0
       integer, save :: ih_end
-      logical, save :: lneustra
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
       integer, save :: relax_continue = 0
@@ -575,16 +572,13 @@ c       if(crcstra(nstrat).eq.'T') l_ddt=nnlimi+nnstsi
 
       if (ncall.eq.0 .and. switch%ionising_core.ne.0) then
 cxpb compute core boundary surface area
-#ifdef WG_TODO
         core_surface = 0.0_R8
-        do iy = -1, ny
-          do ix = -1, nx
-            if (bottomiy(ix,iy).eq.-2 .and. on_closed_surface(ix,iy))
-     >       core_surface = core_surface +
-     .        gs(topix(ix,iy),topiy(ix,iy),1)
-          enddo
+        do iCv = mpg%nCi+1, mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+          iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (mpg%cvOnClosedSurface(iCn))
+     >     core_surface = core_surface + geo%fcS(iFc)
         enddo
-#endif
 cxpb compute ishigh and ion_name arrays
         ishigh = -1
         ion_name = ' '
@@ -1551,11 +1545,11 @@ c*** other species. Try to scale the fluxes to keep the same source
 c*** terms in balance.
 
                 s=hlp_po(ls)+hlp_t(ls)+hlp_no(ls)-hlp_ni(ls)
-               if(abs(s).gt.0.0_R8 .and.
+                if(abs(s).gt.0.0_R8 .and.
      .            sign(1.0_R8,s).eq.sign(1.0_R8,hlp_s(ls)))
      >               hlp_scl(ls)=hlp_s(ls)/s
 c<<<
-               if(dbg_eir_mc.gt.0) then
+                if(dbg_eir_mc.gt.0) then
                  print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
      ,          hlp_scl(ls),s,hlp_po(ls),hlp_no(ls),hlp_ni(ls),hlp_t(ls)
                endif
@@ -2386,13 +2380,13 @@ cc Read saved sources
         if (ihist.eq.nrelax) full_history = .true.
         if (ihist.eq.nrelax+1) ihist = 1
         write(*,*)
-     .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist !! TODO: different message for advanced
+     .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist
         if (full_history) then
          ih_end = nrelax
         else
          ih_end = ihist
         end if
-        
+
         relax = rratio(ih_end-1,ih_end)
         sni_s = sni_s*relax + sni/dble(ih_end)
         smo_s = smo_s*relax + smo/dble(ih_end)
@@ -3007,11 +3001,11 @@ c     *             recyctmp*flux_scale(istrai)
 c                  if (t0.lt.0.0_R8.and.main_call.and.
 c     &                crcstra(istrai).ne.'V'.and.output_style.ge.1) then !{
 c                    write(6,*) 'neutral particle source < 0! ',t0
-c                    write(6,*) 'istrai,is,ix,iy ',istrai,is,ix,iy
+c                    write(6,*) 'istrai,is,ic ',istrai,is,ic
 c                  else if (t0.gt.0.0_R8.and.main_call.and.
 c     &                crcstra(istrai).eq.'V'.and.output_style.ge.1) then !{
 c                    write(6,*) 'recombination particle source > 0! ',t0
-c                    write(6,*) 'istrai,is,ix,iy ',istrai,is,ix,iy
+c                    write(6,*) 'istrai,is,ic ',istrai,is,ic
 c                  end if !}
 
                   if(linearisation.eq.1) then !{
@@ -3052,12 +3046,6 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_pppl_sna0to1(ic,1,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ic,1,is,istrai)-
      &                    rf0*t0_p/st%pl%na(ic,is)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'sna0',t0+rf0*abs(t0),
-c$$$     &                           (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
-c$$$                      write(*,*) 'sna1',-rf0*abs(t0)/na(ix,iy,is),
-c$$$     &                          -(t0_a+t0_m+t0_i+t0_p)*rf0/na(ix,iy,is)
-c$$$                    endif
                       else
                         eirene_mc_papl_sna0to1(ic,0,is,istrai)=
      &                    eirene_mc_papl_sna0to1(ic,0,is,istrai)-
@@ -3083,13 +3071,6 @@ c$$$                    endif
                         eirene_mc_pppl_sna0to1(ic,1,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ic,1,is,istrai)+
      &                    (1.0_R8+rf0)*t0_p/st%pl%na(ic,is)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'sna0',rf0*abs(t0),
-c$$$     &                           -(t0_a+t0_m+t0_i+t0_p)*rf0
-c$$$                      write(*,*) 'sna1',t0/na(ix,iy,is)-
-c$$$     &                                  rf0*abs(t0)/na(ix,iy,is),
-c$$$     &                   (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/na(ix,iy,is)
-c$$$                    endif
                       endif
                     endif
 #endif
@@ -3183,18 +3164,6 @@ cxpb 2002.01.28 moved to cell-centered velocities
      .               t0+RF0*ABS(t0)*ST%PL%UA(IC,IS)/VTHE
                     smo0(IC,1,IS)=smo0(IC,1,IS)-
      .               RF0*ABS(t0)/VTHE
-cxpb was                    smo0(IX,IY,0,IS)=smo0(IX,IY,0,IS)+
-cxpb was     .               (t0/2.0_R8)+RF0*ABS(t0/2.0_R8)*UA(IX,IY,IS)/VTHE
-cxpb was                    smo0(IX,IY,1,IS)=smo0(IX,IY,1,IS)-
-cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
-
-cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),0,IS)=
-cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),0,IS)+
-cxpb was     .               (t0/2.0_R8)+RF0*ABS(t0/2.0_R8)*
-cxpb was     1               UA(RIGHTIX(IX,IY),RIGHTIY(IX,IY),IS)/VTHE
-cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)=
-cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)-
-cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
      *                  switch%write_eirene_sources.ne.0) then
@@ -3224,13 +3193,6 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_cppv_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ic,1,is,istrai)-
      &                   rf0*t0_p/vthe
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'smo0',
-c$$$     &                           t0+RF0*ABS(t0)*UA(IX,IY,IS)/VTHE,
-c$$$     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0*ua(ix,iy,is)/vthe)
-c$$$                      write(*,*) 'smo1',-RF0*ABS(t0)/VTHE,
-c$$$     &                          -(t0_a+t0_m+t0_i+t0_p)*rf0/vthe
-c$$$                    endif
                       else
                         eirene_mc_mapl_smo0to3(ic,0,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ic,0,is,istrai)+
@@ -3256,13 +3218,6 @@ c$$$                    endif
                         eirene_mc_cppv_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ic,1,is,istrai)+
      &                   rf0*t0_p/vthe
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'smo0',
-c$$$     &                           t0+RF0*ABS(t0)*UA(IX,IY,IS)/VTHE,
-c$$$     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8-rf0*ua(ix,iy,is)/vthe)
-c$$$                      write(*,*) 'smo1',-RF0*ABS(t0)/VTHE,
-c$$$     &                          (t0_a+t0_m+t0_i+t0_p)*rf0/vthe
-c$$$                    endif
                       endif
                     endif
 #endif
@@ -3374,9 +3329,9 @@ cnh  12.01.2024
 #ifndef FIXED_POINT
           if (balance_netcdf.ne.0 .or.
      *        switch%write_eirene_sources.ne.0) then
-            t0_a = sne_av_pael(ic,istrai)*tflux(istrai)*gs_prod_3* !djm Jan2017
+            t0_a = sne_av_pael(ic,istrai)*gs_prod_3* !djm Jan2017
      *       recyc_hlp*sclstra(0,istrai)
-            t0_m = sne_av_pmel(ic,istrai)*tflux(istrai)*gs_prod_3*
+            t0_m = sne_av_pmel(ic,istrai)*gs_prod_3*
      *       recyc_hlp*sclstra(0,istrai)
           endif
 #endif
@@ -3497,13 +3452,6 @@ cdjm Jan2017 Calculate linearised components of source
                     eirene_mc_epel_she0to3(ic,1,istrai)=
      &               eirene_mc_epel_she0to3(ic,1,istrai)-
      &               t0_p*rf0/st%pl%te(ic)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'she0',max(0.0_R8,t0)+abs(t0)*rf0,
-c$$$     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
-c$$$                      write(*,*) 'she1',
-c$$$     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy),
-c$$$     &                         -(t0_a+t0_m+t0_i+t0_p)*rf0/te(ix,iy)
-c$$$                    endif
                   else
                     eirene_mc_eael_she0to3(ic,0,istrai)=
      &               eirene_mc_eael_she0to3(ic,0,istrai)-
@@ -3529,13 +3477,6 @@ c$$$                    endif
                     eirene_mc_epel_she0to3(ic,1,istrai)=
      &               eirene_mc_epel_she0to3(ic,1,istrai)+
      &               (1.0_R8+rf0)*t0_p/st%pl%te(ic)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'she0',max(0.0_R8,t0)+abs(t0)*rf0,
-c$$$     &              -(t0_a+t0_m+t0_i+t0_p)*rf0
-c$$$                      write(*,*) 'she1',
-c$$$     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy),
-c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/te(ix,iy)
-c$$$                    endif
                   endif
                 endif
 #endif
@@ -3899,13 +3840,6 @@ cdjm Jan2017 Calculate linearised components of source
                     eirene_mc_eppl_shi0to3(ic,1,istrai)=
      &               eirene_mc_eppl_shi0to3(ic,1,istrai)-
      &               t0_p*rf0/st%pl%ti(ic)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'shi0',max(0.0_R8,t0)+abs(t0)*rf0,
-c$$$     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
-c$$$                      write(*,*) 'shi1',
-c$$$     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy),
-c$$$     &                         -(t0_a+t0_m+t0_i+t0_p)*rf0/ti(ix,iy)
-c$$$                    endif
                   else
                     eirene_mc_eapl_shi0to3(ic,0,istrai)=
      &               eirene_mc_eapl_shi0to3(ic,0,istrai)-
@@ -3931,13 +3865,6 @@ c$$$                    endif
                     eirene_mc_eppl_shi0to3(ic,1,istrai)=
      &               eirene_mc_eppl_shi0to3(ic,1,istrai)+
      &               (1.0_R8+rf0)*t0_p/st%pl%ti(ic)
-c$$$                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
-c$$$                      write(*,*) 'shi0',max(0.0_R8,t0)+abs(t0)*rf0,
-c$$$     &              -(t0_a+t0_m+t0_i+t0_p)*rf0
-c$$$                      write(*,*) 'shi1',
-c$$$     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy),
-c$$$     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/ti(ix,iy)
-c$$$                    endif
                   endif
                 endif
 #endif
@@ -4082,7 +4009,6 @@ C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS AND ATOMIC IO
 
 cxpb  core recycling into ions of the highest ionisation stage
       if (switch%ionising_core.gt.0) then
-#ifdef WG_TODO
         rf0=RF_NEUT(1)
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
@@ -4090,80 +4016,67 @@ cxpb  core recycling into ions of the highest ionisation stage
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
 #endif
-        do iy = -1, ny
-          do ix = -1, nx
+        do iCv = mpg%nCi+1, mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+          iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (mpg%cvOnClosedSurface(iCn)) then
             do j = 1, nnatmi
-              if (bottomiy(ix,iy).eq.-2 .and.
-     &            on_closed_surface(ix,iy)) then
-                t0=core_flux(j)*
-     *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
-                if(linearisation.eq.1) then !{
-                  if(t0.gt.0.0_R8) then !{
-                    sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
-#ifndef FIXED_POINT
-                    if (balance_netcdf.ne.0 .or.
-     *                  switch%write_eirene_sources.ne.0) then
-#ifdef WG_TODO
-                      eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &                 eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
-#endif
-                    endif
-#endif
-                  else !}{
-                    sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))+
-     1               t0/na(ix,iy,ishigh(j))
-#ifndef FIXED_POINT
-                    if (balance_netcdf.ne.0 .or.
-     *                  switch%write_eirene_sources.ne.0) then
-#ifdef WG_TODO
-                      eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
-     &                 eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))+
-     &                 t0/na(ix,iy,ishigh(j))
-#endif
-                    endif
-#endif
-                  end if !}
-                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+
-     1             rf0*abs(t0)
+              t0=core_flux(j)*(geo%fcS(iFc)/core_surface)
+              if(linearisation.eq.1) then !{
+                if(t0.gt.0.0_R8) then !{
+                  sna0(iCv,0,ishigh(j))=sna0(iCv,0,ishigh(j))+t0
 #ifndef FIXED_POINT
                   if (balance_netcdf.ne.0 .or.
      *                switch%write_eirene_sources.ne.0) then
-#ifdef WG_TODO
-                    eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+
-     &               rf0*abs(t0)
-#endif
+                    eirene_mc_core_sna0to1(iCv,0,ishigh(j))= !djm Jan2017
+     &               eirene_mc_core_sna0to1(iCv,0,ishigh(j))+t0
                   endif
 #endif
-                  sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))-
-     1             rf0*abs(t0)/na(ix,iy,ishigh(j))
+                else !}{
+                  sna0(iCv,1,ishigh(j))=sna0(iCv,1,ishigh(j))+
+     1             t0/st%pl%na(iCv,ishigh(j))
 #ifndef FIXED_POINT
                   if (balance_netcdf.ne.0 .or.
      *                switch%write_eirene_sources.ne.0) then
-#ifdef WG_TODO
-                    eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))-
-     &               rf0*abs(t0)/na(ix,iy,ishigh(j))
-#endif
-                  endif
-#endif
-                elseif(linearisation.eq.0) then !}{
-                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
-#ifndef FIXED_POINT
-                  if (balance_netcdf.ne.0 .or.
-     *                switch%write_eirene_sources.ne.0) then
-#ifdef WG_TODO
-                    eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
-#endif
+                    eirene_mc_core_sna0to1(iCv,1,ishigh(j))= !djm Jan2017
+     &               eirene_mc_core_sna0to1(iCv,1,ishigh(j))+
+     &               t0/st%pl%na(iCv,ishigh(j))
                   endif
 #endif
                 end if !}
-              endif
-            enddo
-          enddo
-        enddo
+                sna0(iCv,0,ishigh(j))=sna0(iCv,0,ishigh(j))+
+     1           rf0*abs(t0)
+#ifndef FIXED_POINT
+                if (balance_netcdf.ne.0 .or.
+     *              switch%write_eirene_sources.ne.0) then
+                  eirene_mc_core_sna0to1(iCv,0,ishigh(j))= !djm Jan2017
+     &             eirene_mc_core_sna0to1(iCv,0,ishigh(j))+
+     &             rf0*abs(t0)
+                endif
 #endif
+                sna0(iCv,1,ishigh(j))=sna0(iCv,1,ishigh(j))-
+     1           rf0*abs(t0)/st%pl%na(iCv,ishigh(j))
+#ifndef FIXED_POINT
+                if (balance_netcdf.ne.0 .or.
+     *              switch%write_eirene_sources.ne.0) then
+                  eirene_mc_core_sna0to1(iCv,1,ishigh(j))= !djm Jan2017
+     &             eirene_mc_core_sna0to1(iCv,0,ishigh(j))-
+     &             rf0*abs(t0)/st%pl%na(iCv,ishigh(j))
+                endif
+#endif
+              elseif(linearisation.eq.0) then !}{
+                sna0(iCv,0,ishigh(j))=sna0(iCv,0,ishigh(j))+t0
+#ifndef FIXED_POINT
+                if (balance_netcdf.ne.0 .or.
+     *              switch%write_eirene_sources.ne.0) then
+                  eirene_mc_core_sna0to1(iCv,0,ishigh(j))= !djm Jan2017
+     &             eirene_mc_core_sna0to1(iCv,0,ishigh(j))+t0
+                endif
+#endif
+              end if !}
+            enddo
+          endif
+        enddo
       else if (switch%ionising_core.lt.0) then
         ib=abs(switch%ionising_core)
         call xertst (ib.le.nbc,
@@ -4242,6 +4155,7 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
       type(B2StateExt), intent (in) :: st_ext
+
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
@@ -4304,23 +4218,21 @@ csw 26feb2014
       end subroutine eirene_mc_final
 
 c======================================================================
-      subroutine neutr_scl(nCv, nFc, ns, mpg, geo, pl, dv)
+      subroutine neutr_scl(ns, mpg, geo, st, switch)
       implicit none
-      integer, intent(in) :: nCv, nFc, ns
+      integer, intent(in) :: ns
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
-      type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (inout) :: dv
+      type (B2State), intent (in) :: st
+      type (switches), intent (in) :: switch
+      integer :: ic, iFc, is, istrai, iy, j, k, l
+      real(kind=R8) :: hlp_st, recyctmp, s, t0
+      logical :: hlp_log
 c======================================================================
       if(dbg_eir_mc.gt.0) write(*,*) 'entry neutr_scl'
-#ifdef WG_TODO
-      if(ank_mods.ne.0) then
+      if(switch%ank_mods.ne.0) then
 c*** Calculate the basic quantities - i.e. the neutral source strengths
 c*** and total plasma sources for each stratum for subsequent rescaling
-
-c!###{
-        hlp_tt=.false.
-c!###}
 
 c*** First, initialise the accumulators.
 c***  sclstra: neutral sources
@@ -4354,7 +4266,7 @@ c                s=t0+rf0*abs(t0)*(1.0_R8-st%pl%na(ic,is)/st%psnl%na(ic,is))
                   if(t0.ge.0.0_R8) then !{
                     s=t0
                   else !}{
-                    s=t0*st%pl%na(ic,is)/st%psnl*na(ic,is)
+                    s=t0*st%pl%na(ic,is)/st%psnl%na(ic,is)
                   end if !}
                   if(crcstra(istrai).eq.'V' .and. t0.lt.0.0_R8) then !{
                     sclstra(j,istrai)=sclstra(j,istrai)-s
@@ -4521,7 +4433,6 @@ c!###{
 c!###}
 
       endif ! ank_mods
-#endif
       return
       end subroutine neutr_scl
 
@@ -4866,6 +4777,5 @@ c!###}
       dab2_s = 0.0_R8
       return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
-
 
       end module b2mod_eirene

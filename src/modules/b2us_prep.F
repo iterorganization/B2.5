@@ -5048,7 +5048,6 @@
 
 ******************************************************************************
 
-
       subroutine conv_midplane(nx,ny,m)                                 !srv 16.11.22 {
         use b2mod_user_namelist
         implicit none

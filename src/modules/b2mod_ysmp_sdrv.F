@@ -21,7 +21,6 @@
       integer nnd_sdrv, nsp, n_nz_sdrv, esp
       logical, save :: lfirst_ill7 = .true.
 
-
 #ifdef _OPENMP
 !$omp threadprivate(rr1, s1, a, rsp)
 !$omp threadprivate(ia, ja, p, ip, isp, indexes, iasave, jasave)
@@ -75,7 +74,7 @@
       end subroutine dealloc_b2mod_ysmp_sdrv
 
       subroutine restart_sdrv_for_7
-      implicit none                            
+      implicit none
       lfirst_ill7=.true.
       write(*,*) ' Restarting sdrv'
       return

@@ -39,8 +39,6 @@ c ma28 common blocks
       integer ndrop,maxit,noiter,nsrch,istart,ibig
       common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
      1 ndrop,maxit,noiter,nsrch,istart,ibig
-c
-
 
 *  -- PROCEDURES --
       INTRINSIC cpu_time
@@ -96,68 +94,67 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         enddo
       enddo
 
-      if(kwrite_bnr.eq.ncall) then     
+      if(kwrite_bnr.eq.ncall) then
 !!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
-      if (in_parallel()) then !!FR in parallel do not write this file
-#ifdef _OPENMP
-!$OMP MASTER
-#endif
-          write(*,*)'OpenMP: warning: running in parallel the ',
-     1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
-     2    'will not be written out'
-#ifdef _OPENMP
-!$OMP END MASTER
-#endif
-      else                             !srv 18.05.02 {
-         write(*,*) 'Opening 76'
-         open(76,file='b2_9_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
-         write(76) n
-         do i=1,n
-           write(76) r1(i)
-         enddo
-         close(76)
-         write(*,*) 'Opening 77'
-         open(77,file='b2_9_matrix_binary_'//
-     &       trim(name),form='unformatted')                         !srv 11.03.13
-         write(77) n, nz
-         do i=1,nz
-           write(77) IRNH(i),ICNH(i),A1H(i)
-         enddo
-         close(77)
-      endif 
-      endif                                                         !srv 18.05.02 }
-      if(kwrite_fmt.eq.ncall) then           
         if (in_parallel()) then !!FR in parallel do not write this file
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
           write(*,*)'OpenMP: warning: running in parallel the ',
-     1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+     1     'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2     'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else                                                        !srv 18.05.02 {
+          write(*,*) 'Opening 76'
+          open(76,file='b2_9_rhs_binary_'//trim(name),
+     &            form='unformatted')                               !srv 11.03.13
+          write(76) n
+          do i=1,n
+            write(76) r1(i)
+          enddo
+          close(76)
+          write(*,*) 'Opening 77'
+          open(77,file='b2_9_matrix_binary_'//trim(name),
+     &            form='unformatted')                               !srv 11.03.13
+          write(77) n, nz
+          do i=1,nz
+            write(77) IRNH(i),ICNH(i),A1H(i)
+          enddo
+          close(77)
+        endif
+      endif                                                         !srv 18.05.02 }
+      if(kwrite_fmt.eq.ncall) then
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
         else                       !srv 18.05.02 {
-        write(*,*) 'Opening 76'
-        open(76,file='b2_9_rhs_'//trim(name))
-        write(76,*) n
-        do i=1,n
-          write(76,*) r1(i)
-        enddo
-        close(76)
-        open(77,file='b2_9_matrix_'//trim(name))
-        write(77,*) n, nz
-        do i=1,nz
-          write(77,*) IRNH(i),ICNH(i),A1H(i)
-        enddo
-        close(77)
-
-      endif
+          write(*,*) 'Opening 76'
+          open(76,file='b2_9_rhs_'//trim(name))
+          write(76,*) n
+          do i=1,n
+            write(76,*) r1(i)
+          enddo
+          close(76)
+          open(77,file='b2_9_matrix_'//trim(name))
+          write(77,*) n, nz
+          do i=1,nz
+            write(77,*) IRNH(i),ICNH(i),A1H(i)
+          enddo
+          close(77)
+        endif
       endif                                                         !srv 18.05.02 }
 cdpc
       if(nwrite.gt.0 .and. .not. in_parallel()) then
         if(nwrite.gt.ncall) then
-          
           if(ncall.eq.0) then
             write(*,*) 'Opening 79'
             open(79,file='b2_9_matrix')
@@ -176,7 +173,7 @@ cdpc
            write(*,*) 'Closing 79'
            close(79)
         endif
-      endif 
+      endif
 cdpc
       if(lfirst_ilu9) then
         write(*,*) 'ilutern_9: nz = ',nz
@@ -193,7 +190,7 @@ cdpc
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
-     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
+     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)")
      *    trim(name), iflag                                          !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
@@ -215,7 +212,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst_ilu9=.false. 
+        lfirst_ilu9=.false.
       endif
 
       call ma28idcopy

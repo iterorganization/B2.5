@@ -168,10 +168,10 @@ c Drift terms
       dv%vaecrb(:,:,isb)  = 0.0_R8
       dv%fnaPSch(:,:,isb) = 0.0_R8                                       !srv 13.10.06
       dv%fna_mdf(:,:,isb) = 0.0_R8                                       !srv 19.11.09
-      dv%flob(:, :, isb)    = 0.0_R8
-      dv%conb(:, :, :, isb) = 0.0_R8                                                  !srv 13.10.06
-      flobtmp = 0.0_R8 
-      conbtmp = 0.0_R8 
+      dv%flob(:,:,isb)    = 0.0_R8
+      dv%conb(:,:,:,isb)  = 0.0_R8                                       !srv 13.10.06
+      flobtmp = 0.0_R8
+      conbtmp = 0.0_R8
       ub2dia   = 0.0_R8                                                  !srv 01.10.99
       if((maxval(dv%facdrift).ne.0.0_R8 .or.
      &    maxval(dv%fac_ExB) .ne.0.0_R8) .and.
@@ -259,14 +259,14 @@ cwdk                   (original code: simple averaging)
 *     ..computation of P.Sch flows
         call b2tnpsch(nCv, nFc, nVx, switch, geo, mpg,
      &    dv%facdrift, co%cddi(:,:,isb), pl%ti, pl%na(:,isb), kmprti,
-     &    flobtmp, conbtmp(:, :, 0:2), dv%fnaPSch(:,:,isb))
+     &    flobtmp, conbtmp(:,:,0:2), dv%fnaPSch(:,:,isb))
 
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
 
         if ((isb.ne.ismain.and..not.is_neutral(isb)).and.
      .       switch%dia_lim_all_ions.eq.0) then                          !lk 02.06.11 {
           do iFc = 1, nFc
-            !wdk for unstr$uctured grids: apply flux limits
+            !wdk for unstructured grids: apply flux limits
             !    to total drift velocities (instead of individual poloidal and radial
             !    components). Otherwise: not perpendicular to gradients
             iCv1 = mpg%fcCv(iFc,1)
@@ -275,7 +275,7 @@ cwdk                   (original code: simple averaging)
             t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
             vbar = geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
      &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
-            t2 = 1.0_R8 + 
+            t2 = 1.0_R8 +
      .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
      .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
      .        geo%fcS(iFc)*
@@ -311,7 +311,7 @@ cwdk                   (original code: simple averaging)
             t0 = max(pl%ti(iCv1), pl%ti(iCv2))
             t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
             vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
-            t2 = 1.0_R8 + 
+            t2 = 1.0_R8 +
      .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
      .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
      .        geo%fcS(iFc)*
@@ -391,14 +391,14 @@ cwdk                   (original code: simple averaging)
      &     (dv%fchinert_a(:,0,isb) + dv%fchvispar_a(:,0,isb) +
      &      dv%fchvisper_a(:,0,isb) + dv%fchanml_a(:,0,isb)  +
      &      dv%fchvisq_a(:,0,isb))*switch%b2tfnb_xcur/
-     &     (rzf*qe*nbf) + 
+     &     (rzf*qe*nbf) +
      &      dv%fchviskt_a(:,0,isb)/(rzf*qe*nbf)
         scur(:,1) =
      &     (dv%fchinert_a(:,1,isb) + dv%fchvispar_a(:,1,isb) +
      &      switch%fnb_vis_per*dv%fchvisper_a(:,1,isb) +
      &      dv%fchanml_a(:,1,isb) +
      &      switch%fnb_vis_q*dv%fchvisq_a(:,1,isb))*switch%b2tfnb_ycur/
-     &     (rzf*qe*nbf) + 
+     &     (rzf*qe*nbf) +
      &      dv%fchviskt_a(:,1,isb)/(rzf*qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
@@ -475,10 +475,10 @@ cwdk                   (original code: simple averaging)
       dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
      &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
-!      if (isb == 0) then 
-!        write (*, *) 'b2tfnb: value of fna(1, 0, 0) is: ', 
+!      if (isb == 0) then
+!        write (*, *) 'b2tfnb: value of fna(1, 0, 0) is: ',
 !     &  dv%fna(1, 0, isb)
-!      end if 
+!      end if
       dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
@@ -644,8 +644,8 @@ cwdk try to introduce a common flux limit here?
       endif
 
       ! Add conb, flob to dv
-      dv%flob(:, :, isb)    = flobtmp 
-      dv%conb(:, :, :, isb) = conbtmp
+      dv%flob(:,:,isb)    = flobtmp
+      dv%conb(:,:,:,isb)  = conbtmp
 
       if(switch%b2npco_iout.ne.0
      &                     .or. switch%b2tfnb_iout .eq. 1 .or.
@@ -665,7 +665,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        if(.not. is_neutral(isb)) then
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbna_th'//chns)
         call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
-     &                                'b2tfnb_fnbPSch_th'//chns)
+     &                               'b2tfnb_fnbPSch_th'//chns)
 !        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
 !       else
@@ -1008,8 +1008,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      . 'b2tfnb_conb_r3'//chns)
        call my_out_us(70,nFc,1,dv%conb(1,1,4,isb),
      .  'b2tfnb_conb_r4'//chns)
-       call my_out_us(70,nFc,1,dv%flob(1,0, isb),'b2tfnb_flob_th'//chns)
-       call my_out_us(70,nFc,1,dv%flob(1,1, isb),'b2tfnb_flob_r'//chns)
+       call my_out_us(70,nFc,1,dv%flob(1,0,isb),'b2tfnb_flob_th'//chns)
+       call my_out_us(70,nFc,1,dv%flob(1,1,isb),'b2tfnb_flob_r'//chns)
        call my_out_us(70,nFc,1,kmprtif(1),'b2tfnb_kmprtix'//chns)
        call my_out_us(70,nCv,0,pl%ua(1,isb),'b2tfnb_ua'//chns)
        call my_out_us(70,nCv,0,pl%na(1,isb),'b2tfnb_na'//chns)

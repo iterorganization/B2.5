@@ -85,7 +85,7 @@ cdjm Store linearised source for balance
 !$OMP MASTER
 #endif
           write(*,*) 'B2SIAN OpenMP warning: no file output in ',
-     &              'parallel mode'
+     &               'parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -96,7 +96,7 @@ cdjm Store linearised source for balance
             call my_out_us(70,nCv,0,smban(1,k),
      .                         'b2sian_smoan'//chark//chns)
           enddo
-        endif 
+        endif
       endif
 
 * ..return
