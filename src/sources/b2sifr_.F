@@ -45,7 +45,7 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8), intent(inout) ::
      *   vti32(nCv), gti(nCv), gte(nCv), lnlam(nCv)
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *   smbtf_cthe(nCv),                                               !djm Jul2018
      *   smbtf_cthi(nCv)
 *-----------------------------------------------------------------------
@@ -112,13 +112,13 @@ csw 24sep2013
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-          write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
+         write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
      &               'parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
          iout = 0
-       end if 
+       end if
        call ipgeti ('b2tlnl_ii', icase_sifr)
        call xertst (0.eq.icase_sifr .or. 1.eq.icase_sifr,
      &               'faulty input b2tlnl_ii')

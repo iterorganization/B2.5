@@ -34,6 +34,7 @@ c***     Brmsreg   hlp_brms   Bremsstrahlung
 c***     imp_rad   hlp_rdim   radiation from impurity ions
 c***     neu_rad   hlp_rdnu   radiation from neutrals
 c***     tot_rad   hlp_rdtt   total radiation
+c***     N_s_sle   hlp_nsle   total electrons outside separatrix
 c***
 c***..........................................................(regions)
 c***     Brmsreg_  brms_tmp   Bremsstrahlung
@@ -49,9 +50,17 @@ c***     vol_reg__ volsum     volume of whole B2.5 domain
 c***
 c***..........................................................(species)
 c***     SSNItot_  ssni_tmp   neutral-related source of ions
+c***     N_a_tot_  Natm_tmp   total neutrals
+c***     N_i_tot_  Nion_tmp   total ions
+c***     N_s_sli_  nsli_tmp   total ions outside separatrix
+c***     N_s_sla_  nsla_tmp   total neutrals outside separatrix
+c***     N_s_slt_  nslt_tmp   total nuclei outside separatrix
 c***
 c***..............................................(species and regions)
 c***     SSNIreg_  ssna_tmp   neutral-related source of ions
+c***     N_i_reg_  nisum      total ions
+c***     N_a_reg_  nasum      total neutrals
+c***     N_t_reg_  ntsum      total nuclei
 c***
 c***...........................................................(strata)
 c***     SSNIstr_             neutral-related source of ions
@@ -67,10 +76,10 @@ c-----------------------------------------------------------------------
       character, save :: hlp_frm*256, f*(lenfnm)
 
       integer nglb_tmp
-      parameter (nglb_tmp=12) ! Number of global parameters
+      parameter (nglb_tmp=13) ! Number of global parameters
       integer nsar_tmp
 !      parameter (nsar_tmp=2)
-      parameter (nsar_tmp=3) ! IYS to add one more record to count the total
+      parameter (nsar_tmp=4) ! IYS to add one more record to count the total
                              ! number of ions (charged) and total number of
                              ! neutrals
       integer nssb_tmp
@@ -82,14 +91,14 @@ c      parameter (nssb_tmp=2)
       parameter (nrgn_tmp=11) ! Number of quantities computed in each region
       integer nspc_tmp
 !      parameter (nspc_tmp=1)
-      parameter (nspc_tmp=2) ! IYS 29.09.2017 to add total number of neutrals in whole domain
+      parameter (nspc_tmp=6) ! IYS 29.09.2017 to add total number of neutrals in whole domain
       character, save :: hlp_ha(nsar_tmp)*8
       character, save :: hlp_hb(nssb_tmp)*8
       character, save :: hlp_hf(nstr_tmp)*8
       character, save :: hlp_hg(nglb_tmp)*8
       character, save :: hlp_hr(nrgn_tmp)*8
       character, save :: hlp_hs(nspc_tmp)*8
-      data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
+      data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_', 'N_t_reg_' /
       data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
       data hlp_hf / 'Stratum_' /
 
@@ -97,13 +106,15 @@ c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg / ! These are headers for 12 global parameters
      1          'SSEE_tot','SSEI_tot','SNI_rcmb','SEE_rcmb','SEI_rcmb',
-     2          'Zeff_cor','Zeff_crs','Zeff_crn', 'Brmsreg ','imp_rad ',
-     2          'neu_rad ','tot_rad '/
+     2          'Zeff_cor','Zeff_crs','Zeff_crn','Brmsreg ','imp_rad ',
+     2          'neu_rad ','tot_rad ','N_s_sle ' /
       data hlp_hr / ! These are headers for 11 quantities computed in each region
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
      2          'SSEIreg_','th_enre_','th_enri_',
      3          'K_en_ri_','N_e_reg_','vol_reg_'/
-      data hlp_hs / 'SSNItot_', 'N_a_tot_' /
+      data hlp_hs /
+     1          'SSNItot_','N_a_tot_','N_i_tot_','N_s_sli_',
+     4          'N_s_sla_','N_s_slt_' /
 c-----------------------------------------------------------------------
       save lun
 
@@ -138,14 +149,16 @@ c*** Global values
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
      *     hlp_ssee, hlp_ssei, hlp_sumn, hlp_sume, hlp_sumi, hlp_zeff,
-     ,     hlp_zefs, hlp_zefn, hlp_brms, hlp_rdim, hlp_rdnu, hlp_rdtt
+     ,     hlp_zefs, hlp_zefn, hlp_brms, hlp_rdim, hlp_rdnu, hlp_rdtt,
+     ,     hlp_nsle
       equivalence
      ,     (equg_tmp(1),  hlp_ssee), (equg_tmp(2),  hlp_ssei),
      ,     (equg_tmp(3),  hlp_sumn), (equg_tmp(4),  hlp_sume),
      ,     (equg_tmp(5),  hlp_sumi), (equg_tmp(6),  hlp_zeff),
      ,     (equg_tmp(7),  hlp_zefs), (equg_tmp(8),  hlp_zefn),
      ,     (equg_tmp(9),  hlp_brms), (equg_tmp(10), hlp_rdim),
-     ,     (equg_tmp(11), hlp_rdnu), (equg_tmp(12), hlp_rdtt)
+     ,     (equg_tmp(11), hlp_rdnu), (equg_tmp(12), hlp_rdtt),
+     ,     (equg_tmp(13), hlp_nsle)
 c
 c*** Values by regions
       real (kind=R8) ::
@@ -170,18 +183,22 @@ c*** Values by species
       real (kind=R8) ::
      *     equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) ::
-     *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM)
-      equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
+     *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM), Nion_tmp(DEF_NATM),
+     1     nsli_tmp(DEF_NATM), nsla_tmp(DEF_NATM), nslt_tmp(DEF_NATM)
+      equivalence
+     , (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp),
+     , (equs_tmp(1,3), Nion_tmp), (equs_tmp(1,4), nsli_tmp),
+     , (equs_tmp(1,5), nsla_tmp), (equs_tmp(1,6), nslt_tmp)
 
 c*** Values by species and regions
       real (kind=R8) ::
      *     equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,2*DEF_NCUT),  ! IYS 29.09.2017 added total number of neutrals
+     *     nasum(DEF_NATM,2*DEF_NCUT), ntsum(DEF_NATM,2*DEF_NCUT),   ! IYS 29.09.2017 added total number of neutrals
      *     ssna_tmp(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)
       equivalence
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
-     &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
+     &  (equa_tmp(1,1,3), nasum), (equa_tmp(1,1,4), ntsum) ! IYS 29.09.2017
 c
 c*** Values by strata
       real (kind=R8) ::
@@ -204,6 +221,7 @@ c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir, is, iCv, iFc, iFn, iFt
+      logical hlp_l
 #ifdef B25_EIRENE
       integer iatm ! IYS 29.09.2017
       integer imol
@@ -287,25 +305,34 @@ csw 18nov2013 check alloc
 csw 20sep2013 added
       do iCv=1,mpg%nCi
         ir=mpg%cvReg(iCv)
+        hlp_l = .not.mpg%cvOnClosedSurface(iCv) .and. ir.ne.0
         eesum(ir)  = eesum(ir)  +
      &   1.5_R8*state%pl%te(iCv)*state%dv%ne(iCv)*geo%cvVol(iCv)
         eisum(ir)  = eisum(ir)  +
      &   1.5_R8*(state%pl%ti(iCv)*state%dv%ni(iCv,1)+
      &           state%pl%tn(iCv)*state%dv%nn(iCv))*geo%cvVol(iCv)
         nesum(ir)  = nesum(ir)  + state%dv%ne(iCv)*geo%cvVol(iCv)
+        if(hlp_l) hlp_nsle = hlp_nsle + state%dv%ne(iCv)*geo%cvVol(iCv)
         volsum(ir) = volsum(ir) + geo%cvVol(iCv)
         do is=0,ns-1
-          nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .     state%pl%na(iCv,is)*geo%cvVol(iCv)
-          kisum(ir) = kisum(ir) +
-     &      0.5_R8*mp*am(is)*state%pl%na(iCv,is)*
-     &     (state%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
           if (is_neutral(is)) then
             nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
      .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
 ! For fluid neutrals Natm_tmp is just the number of atoms integrated over
 ! the whole B2.5 domain
             Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
+     .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
+            if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is)) +
+     .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
+          else
+            nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
+     .       state%pl%na(iCv,is)*geo%cvVol(iCv)
+            kisum(ir) = kisum(ir) +
+     &        0.5_R8*mp*am(is)*state%pl%na(iCv,is)*
+     &       (state%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
+            Nion_tmp(b2espcr(is)) = Nion_tmp(b2espcr(is)) +
+     .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
+            if(hlp_l) nsli_tmp(b2espcr(is)) = nsli_tmp(b2espcr(is)) +
      .                              state%pl%na(iCv,is)*geo%cvVol(iCv)
           endif
         end do
@@ -314,14 +341,21 @@ csw 20sep2013 added
           is = latmscl(iatm)
           if (is.eq.0) cycle
           nasum(is,ir) = nasum(is,ir) + dab2(iCv,iatm,1)*geo%cvVol(iCv)
+          if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is)) +
+     .                                  dab2(iCv,iatm,1)*geo%cvVol(iCv)
           do imol = 1, nnmoli
-            if (mlcmp(iatm,imol).gt.0)
-     >       nasum(is,ir) = nasum(is,ir) +
-     .        mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
+            if (mlcmp(iatm,imol).gt.0) then
+              nasum(is,ir) = nasum(is,ir) +
+     .         mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
+              if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is))
+     .         + mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
+            endif
           end do
         end do
 #endif
       enddo
+      ntsum = nasum + nisum
+      nslt_tmp = nsli_tmp + nsla_tmp
 
       hlp_s   = 0.0_R8
       hlp_v   = 0.0_R8
@@ -577,13 +611,13 @@ c Create a format string for the column headers
         hlp_frf='(a,7(i3,a))'
         if (nfl_tmp.gt.0) then
          write(hlp_frm,hlp_frf)
-     ,    '(a1,7x,a4,7x,',ng_tmp,'(2x,a8,4x),',
-     ,            nr_tmp*nrg_tmp,'(1x,a8,i2.2,3x),',
-     ,            ns_tmp*nsp_tmp,'(1x,a8,a2,3x),',
+     ,    '(a1,7x,a4,5x,',ng_tmp,'(3x,a8,3x),',
+     ,            nr_tmp*nrg_tmp,'(2x,a8,i2.2,2x),',
+     ,            ns_tmp*nsp_tmp,'(3x,a8,a2,1x),',
      ,    na_tmp*nrg_tmp*nsp_tmp,'(a8,i2.2,''_'',a2,1x),',
-     ,            nf_tmp*nfl_tmp,'(1x,a8,i2.2,3x),',
+     ,            nf_tmp*nfl_tmp,'(2x,a8,i2.2,2x),',
      ,    nb_tmp*nsp_tmp*nfl_tmp,'(a8,i2.2,''_'',a2,1x),',
-     ,            nb_tmp*nfl_tmp,'(1x,a8,i2.2,3x))'
+     ,            nb_tmp*nfl_tmp,'(2x,a8,i2.2,2x))'
         else
           write(*,*)
      &     'Unexpected inconsistency: number of strata NSTRAI = ',
@@ -617,7 +651,7 @@ c>>>
      +       na_tmp*nrg_tmp*nsp_tmp + nf_tmp*nfl_tmp +
      +                    (nsp_tmp+1)*nb_tmp*nfl_tmp
         write(hlp_frf,'(a,i1,a)') '(a,i',len_of_digits(nfields),',a)'
-        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4))'
+        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4e3))'
       end if
 c      print *,'hlp_frm:'       !###
 c      print *,trim(hlp_frm)    !###

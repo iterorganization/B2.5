@@ -20,7 +20,7 @@ csw 09jan2014 extra module to define some arrays
      , , only : nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
 #endif
 #else
-      use b2mod_eirdiag
+      use b2mod_eirdiag_diff
 #endif
 #ifndef B25_EIRENE
       use b2mod_dimensions

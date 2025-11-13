@@ -72,8 +72,8 @@
      .                                           conn, conkt, conzt
         real(R8), dimension(:,:,:), allocatable :: cone, coni
         real(R8), dimension(:), allocatable :: fllime, fllimi
-        real(R8), allocatable                 :: flob(:, :, :), 
-     .      conb(:, :, :, :) ! last index is species index
+        real(R8), allocatable :: flob(:,:,:),
+     .                           conb(:,:,:,:) ! last index is species index
 
         ! residuals
         real(R8), dimension(:,:), allocatable :: resmo, resmo0
@@ -1088,7 +1088,7 @@
 
 ! numerical coefficients
       allocate( dv % flob (nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( dv % conb (nFc, 0:1, 0:4, 0:ns-1), SOURCE=0._R8 )
+      allocate( dv % conb (nFc, 0:1, 0:4, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % conc( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fllime( nFc ), SOURCE=0._R8 )
       allocate( dv % floe( nFc, 0:1 ), SOURCE=0._R8 )
@@ -2238,6 +2238,7 @@
       return
       end subroutine destroyB2RatesWork
 
+
       subroutine createB2PlasmaSnapshot( nCv, nFc, ns, snap )
       integer, intent(in) :: nCv, nFc, ns
       type(B2PlasmaSnapshot), intent(inout) :: snap
@@ -2412,6 +2413,7 @@
 
       return
       end subroutine destroyB2PlasmaSnapshot
+
 
       subroutine createB2Diagnostic( nCv, ns, nnreg, diag )
 
@@ -2613,7 +2615,6 @@
       state_ext % sna        = 0.0_R8
       state_ext % smo        = 0.0_R8
       state_ext % ns         = 0 ! default
-
 
       return
       end subroutine createB2StateExt

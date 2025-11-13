@@ -177,6 +177,7 @@ c*** Arrange the output data
           end do !}
         end do !}
       end if !}
+
 c======================================================================
       return
       end subroutine b2ptrdl

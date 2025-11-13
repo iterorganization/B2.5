@@ -70,7 +70,25 @@ c
         print '(20i5)',(lewrk(i),i=1,nsgmx)
       endif
 #endif
-
+      if (ntrg.eq.0) then
+        k=0
+        do i=1,nwldrad
+          l=lwldrad(i)
+          m=luwrk(l)
+          if(m .eq. 0) then
+#ifdef DBG
+            write(*,'(2a,i4,a,i4)')
+     ,             'b2pwrdld: radiation target must belong to ',
+     ,             'the shadowing structure. Target ',i,',  segment ',l
+#endif
+            lwldrad(i)=0
+          else
+            k=k+1
+            ltrg(k)=m
+          end if
+        end do
+        ntrg=k
+      end if
 #ifdef DBG
       if (nplgs.gt.0) then
         print *,'Shadowing structure: ',

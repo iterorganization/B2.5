@@ -63,7 +63,6 @@ c  Tp = Target surface temperature (K).
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
       common /location/ iwall, ns
-      
 
       integer, save :: npde, nw, niw
       integer, allocatable, save :: iw(:)
@@ -915,9 +914,9 @@ c  Checking inputs
       else if (iposb.eq.1) then ! RHS BC : Cooling with some contact heat conductivity (low for inertial cooling, high for active cooling)
         beta(1)= 1.0_R8
         gamma(1)=-cond_coef(.not.active,U(1))*(U(1)-Tcbc)
-!! FIXME: Could use additionally the code below once we have a way of applying 
+!! FIXME: Could use additionally the code below once we have a way of applying
 !!        the correct emissivity
-cxpb        if (.not.active) 
+cxpb        if (.not.active)
 cxpb     >    gamma(1)=gamma(1)-qrad(iwall,U(1),.false.)
 cxpb     .                     -qevap(iwall,ns,U(1))
 c$$$ Old treatment where conductivity to coolant was assumed to be perfect

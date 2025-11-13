@@ -3,7 +3,7 @@
       use b2mod_indirect_diffv_diffv
      . , only: GRID_N_CELLFLAGS
       use b2mod_cellhelper
-      use b2mod_geometry
+      use b2mod_geometry_diffv_diffv
       use carre_constants
       use b2mod_grid_mapping
 

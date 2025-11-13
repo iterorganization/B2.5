@@ -3,7 +3,7 @@
 
       subroutine b2sifrtf (nCv, nFc, nVx, ns, isb, ismain, switch, geo,
      &   mpg, na, ua, ue, te, ti, ni, ne, ne2, rza, rz2, po,
-     &   zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff, 
+     &   zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff,
      &   f_luc_sg, alfx_c, sigx_c, st_ext,
      &   smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
       use b2mod_types
@@ -119,25 +119,25 @@
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
-     &               'parallel mode'
+         write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &              'parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
-        iout = 0
+         iout = 0
        end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
-     &               'parallel mode (b2wdat)'
+         write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &              'parallel mode (b2wdat)'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
-        iout_b2wdat = 0
-      end if
+         iout_b2wdat = 0
+       end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
 #if ( ( defined(_OPENMP) ) )

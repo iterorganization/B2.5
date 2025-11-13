@@ -116,15 +116,15 @@ ctmp.dpc
       rg0 = switch%b2stcx_rg0
 *   ..compute sources due to charge exchange
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
-!svdk note that we parallellize here over iCv instead of is since 
+!svdk note that we parallellize here over iCv instead of is since
 !svdk otherwise race conditions will occur due to use of is-1
-!$omp parallel default(none) 
+!$omp parallel default(none)
 !$omp& private(is, iCv)
 !$omp& private(t0, t1, t2, du0, du1, t1n)
 !$omp& shared(ns, mpg, is0, switch, rg0, geo, is_neutral, tkin, tn, ti)
 !$omp& shared(rcx, sna0, na, rcxna, am, shi0, rcxhi, smq0, ua, shn0)
 !$omp& shared(rcxmo, zamin, zamax, zn)
-!$omp& shared(rcxnareg,rcxhireg,rcxmoreg)
+!$omp& shared(rcxnareg, rcxhireg, rcxmoreg)
 #endif
       do is = 1, ns-1
        if (lnext(is-1,is)) then
@@ -135,7 +135,7 @@ ctmp.dpc
         else
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$omp do
-#endif 
+#endif
          do iCv = 1, mpg%nCi
            if(mpg%cvReg(iCv).ne.0) then
 *        ..compute rate for is->is-1 and is0->is0+1
@@ -161,12 +161,12 @@ ctmp.dpc
          enddo
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$omp end do
-#endif 
+#endif
         endif
 *     ..heat source
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$omp do
-#endif 
+#endif
         do iCv = 1, mpg%nCi
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
@@ -235,9 +235,9 @@ ctmp.dpc
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$omp end do
 !$omp do
-#endif 
+#endif
 *     ..parallel momentum source
-        
+
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
         do iCv = 1,mpg%nCi
           if(mpg%cvReg(iCv).ne.0) then
@@ -329,11 +329,11 @@ ctmp.dpc
         enddo
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$omp end do
-#endif 
+#endif
        endif
       enddo
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
-!$omp end parallel 
+!$omp end parallel
 #endif
 
 #ifdef ASTRA

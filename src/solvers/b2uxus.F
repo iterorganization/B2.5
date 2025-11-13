@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name)    !sv 13.10.06 {
+      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name)      !sv 13.10.06 {
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map
@@ -16,7 +16,7 @@
       real (kind=R8) ::
      *   aa(13*nCv)
       real(kind=R8), intent(inout) :: resfun(nCv)
-      character*(*) name                                              !sv 18.05.02
+      character*(*) name                                                 !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(nCv)
@@ -27,7 +27,7 @@
 *
 *  1. purpose
 *
-*     B2UXUS solves a system of equations on an unstructured mesh. 
+*     B2UXUS solves a system of equations on an unstructured mesh.
 *     This routine is an interface to an iterative or a direct solver;
 *     the choice depends upon an internal parameter.
 *
@@ -144,7 +144,7 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 ind, iasave, jasave, name)       
+     *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
@@ -208,7 +208,7 @@
 
 #ifdef _OPENMP
 !$omp threadprivate(lfirst, ncall, kwrite_fmt, kwrite_bnr)
-#endif 
+#endif
 
       if(ncall.eq.0) then
         call ipgeti ('storage_us_kwrite_fmt', kwrite_fmt)
@@ -297,14 +297,14 @@
           enddo
           close(77)
         endif
-      endif 
+      endif
       if(kwrite_fmt.eq.ncall) then
         if (in_parallel()) then !!FR in parallel do not write this file
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-        write(*,*)'OpenMP: warning: running in parallel the ',
-     1    'st_us_matrix_ file will not be written out'
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'st_us_matrix_ file will not be written out'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -327,5 +327,4 @@
 
       ncall = ncall + 1
       return
-
       end subroutine storage_us                                     !sv 22.11.06

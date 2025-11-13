@@ -68,7 +68,6 @@
      .  'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
-
 * ..implement the correction
 *   ..compute wrk
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk)
@@ -103,10 +102,10 @@
 ! flux surface where such event happens.
         too_low_density = .false.
         do iCv = 1, nCv
-          if (switch%use_min_na_numerics.eq.0) then ! default 
+          if (switch%use_min_na_numerics.eq.0) then ! default
             na_min = switch%b2mndr_na_min
           else
-            na_min = min_na(isb,mpg%cvReg(iCv)) 
+            na_min = min_na(isb,mpg%cvReg(iCv))
           endif
           if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)

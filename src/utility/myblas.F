@@ -215,7 +215,7 @@
       make_parallel =  (.not. in_parallel())
 #endif
       if (incy.eq.0) then
-      call xerrab ('b2saxpy--error, incy.eq.0')
+       call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
       else if (incx.eq.1.and.incy.eq.1) then
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) )
@@ -225,17 +225,17 @@
 !$OMP& PRIVATE(i)
 !$OMP& SHARED(sx,sy,sa,n)
 #endif
-      do i = 0, n-1
-      sy(i) = sy(i)+sa*sx(i)
-      enddo
+       do i = 0, n-1
+        sy(i) = sy(i)+sa*sx(i)
+       enddo
       else
-      ix = ibase(n,incx)
-      iy = ibase(n,incy)
-      do i = 0, n-1
-      sy(iy) = sy(iy)+sa*sx(ix)
-      ix = ix+incx
-      iy = iy+incy
-      enddo
+       ix = ibase(n,incx)
+       iy = ibase(n,incy)
+       do i = 0, n-1
+        sy(iy) = sy(iy)+sa*sx(ix)
+        ix = ix+incx
+        iy = iy+incy
+       enddo
       endif
       return
 *     ------------------------------------------------------------------

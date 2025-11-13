@@ -1119,7 +1119,6 @@
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
-
       if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices

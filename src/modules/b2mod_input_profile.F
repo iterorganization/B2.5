@@ -721,8 +721,8 @@ cdjm Jan2017 Keep linearised sources for balance
                 else
                   iy2=iy
                 endif
-                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
-     &                                     mpg%ftCvP(iFt,2) - 1
+                do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                    mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
                   lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
