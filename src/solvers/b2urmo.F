@@ -74,8 +74,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       character chns*3                                                  !srv 02.06.11
       real (kind=R8) ::
      *   flf(nFc,0:1), flv(nFc,0:1),
-     *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
-      real (kind=R8), allocatable, save :: zeros(:,:)
+     *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx), zeros(nFc,0:1)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) :: ubv(nVx), dub(nFc,0:1)
 *   ..procedures
@@ -91,11 +90,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       call subini ('b2urmo')
 *   ..test nCv, nFc
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
-*   ..initialisation on first call
-      if (ncall_b2urmo.eq.0) then
-        allocate(zeros(nFc,0:1))
-        zeros = 0.0_R8
-      end if
 *   ..extensive tests on first few calls
       if (ncall_b2urmo.lt.3) then
 *    ..test sign of rob, smb1, smb3
@@ -158,6 +152,7 @@ cwdk store effective viscosity, for use in viscous heating
       !  in the kinetic energy flux)
       wrk  = 0.5_R8*ub
       wrkf = flf + 2.0_R8*flv
+      zeros = 0.0_R8
       call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                     geo,mpg,wrk,wrkf,zeros,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
