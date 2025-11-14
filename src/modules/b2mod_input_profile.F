@@ -518,7 +518,7 @@ cdjm Jan2017 Keep linearised sources for balance
 
 *-----------------------------------------------------------------------
 
-      subroutine transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt,
+      subroutine transport_input(nCv, ns, geo, mpg, pl, dv, rt,
      &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
 
 !**************************************************************************
