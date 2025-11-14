@@ -4208,7 +4208,7 @@
 			</switch>
 			<switch>
 				<name>b2npmo_ion_vlct_restrict_ua</name>
-				<default>1.0e30</default>
+				<default>+c</default>
 				<type>real</type>
 				<description>
 					Determines max_ua for ion_vlct_restrict_abs.ne.0.
