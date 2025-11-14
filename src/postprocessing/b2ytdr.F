@@ -195,6 +195,7 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
       integer naver, ntotdt, ntfts
+      integer use_min_na
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8, chns*3
       character*4 solps_version
@@ -616,6 +617,7 @@ c 2002-09-11: logic revised
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
       data b2stbc_Qalfmin/1.0e-3_R8/, b2us_prep_Qalfmin/1.0e-3_R8/
+      data use_min_na/0/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat_ip,
      . sources_time_mod_ip, sources_time_switch_ip, sources_filename_ip
@@ -1483,6 +1485,7 @@ c 2002-09-11: logic revised
       end do
       call ipgeti ('b2mndr_pulse_number', pulse)
       call ipgeti ('b2mndr_shot_number', shot)
+      call ipgeti ('b2mndr_use_min_na_numerics', use_min_na)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -3804,6 +3807,16 @@ cxpb This will need to be checked !!!
      .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
             deallocate(sna_corr1)
           end if
+          if(use_min_na.ne.0) then
+            do ireg = 0, nnreg(0)
+              cftmp(0:ns-1)=min_na(0:ns-1,ireg)
+              call convert_bundle_r
+     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+              min_na(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              write(99,hlp_frm)
+     .         'MIN_NA(0,',ireg,')=',(min_na(is,ireg),is=0,ns1-1)
+            enddo
+          endif
           if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
      &      .or. b2stbr_taumax.ne.0.05_R8) then
             allocate(taumax1(1:nspecies1))
