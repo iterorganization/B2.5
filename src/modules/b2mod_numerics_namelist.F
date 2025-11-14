@@ -151,7 +151,7 @@
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
-      min_na = 1.0e4_R8
+      min_na = switch%b2mndr_na_min
       solveco=.true.
       solvemo=.true.
       if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
