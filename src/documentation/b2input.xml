@@ -8354,10 +8354,10 @@
 			</switch>
 			<switch>
 				<name>MIN_NA</name>
-				<default>1.0e4</default>
+				<default>b2mndr_na_min</default>
 				<type>real array of size (0:NS-1,0:NREG)</type>
 				<description>
-					Species- and region-dependent minimum density. Only used if 'b2mndr_use_min_na_numerics.ne.0'.
+					Species- and region-dependent minimum density. Only used if 'b2mndr_use_min_na_numerics.ne.0'. The default value is the one set by b2mndr_na_min.
 				</description>
 			</switch>
 			<switch>
