@@ -556,7 +556,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &   switch%b2npmo_iout.ne.0 .or. switch%b2npht_iout.ne.0 .or.
      &   switch%b2nppo_iout.ne.0 .or. switch%b2npp7_iout.ne.0 .or.
      &   switch%iout_b2wdat.eq.4)
-     >  call b2srdt (nCv, ns, dtim, switch, geo, mpg,
+     >  call b2srdt (nCv, ns, dtim, switch, geo, mpg, st%dv,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, st%psnc%tn,
      &    st%psnc%ne, st%psnc%ni, st%psnc%nn, st%psnc%kinrgy,
      &    st%psnc%kt, st%psnc%zt,                                        !srv 23.07.21

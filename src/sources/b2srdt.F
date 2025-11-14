@@ -25,7 +25,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      logical(1) :: lout                                                !srv 16.07.10
+      logical :: lout                                                   !srv 16.07.10
       integer nCv, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
