@@ -357,11 +357,11 @@ c diagnostics switches
       integer :: b2npmo_diagno
       integer :: vlct_diagno
       integer :: b2tqna_diagno
-      integer :: ion_vlct_restrict_core
-      integer :: ion_vlct_restrict_abs
 
 c hard limit velocities
       integer :: ion_vlct_restrict
+      integer :: ion_vlct_restrict_core
+      integer :: ion_vlct_restrict_abs
       real(kind=R8) :: ion_vlct_restrict_M
       real(kind=R8) :: ion_vlct_restrict_core_M
       real(kind=R8) :: ion_vlct_restrict_ua
@@ -971,7 +971,7 @@ c Zhdanov closure switches
       s % ion_vlct_restrict_core = 0
       s % ion_vlct_restrict_core_M = 3.0_R8
       s % ion_vlct_restrict_abs = 0
-      s % ion_vlct_restrict_ua = 1e30
+      s % ion_vlct_restrict_ua = c
 
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
