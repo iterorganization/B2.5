@@ -387,8 +387,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
         solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
         solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP1))
-          call restart_ma28_for_us
-#else 
+        call restart_ma28_for_us
+#else
         new_matrix = .false.
         do ireg = 0, mpg%nnreg(0)
           new_matrix = new_matrix.or.
@@ -404,7 +404,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
 
         do iCv = 1, nCv
           st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
-     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                 !srv 24.04.09
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                  !srv 24.04.09
         enddo
 *    ..re-compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain,
@@ -413,7 +413,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP1))
 !$omp end parallel do
 !! FR End of loop (1)
-#endif 
+#endif
 
 *   ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -459,7 +459,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
 
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP2))
 !! FR possible loop (2) for use with OpenMP
-!$omp parallel do default(none) 
+!$omp parallel do default(none)
 !$omp& private(is)
 !$omp& shared(nCv, nFc, nVx, switch, st, ismain, geo, mpg)
 #endif
@@ -474,7 +474,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP2))
 !$OMP END PARALLEL DO
 !! FR end of loop (2)
-#endif  
+#endif
 
 *      ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -636,11 +636,11 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP3))
 !! FR possible loop (3) for use with OpenMP
 !$omp parallel do default(none)
-!$omp& private(is) 
+!$omp& private(is)
 !$omp& shared(nCv, nFc, nVx, ismain, switch, geo, mpg, st, ns)
 #ifdef DBG
 !$omp& shared(zamin, zamax)
-#endif 
+#endif
 #endif
       do is = 0, ns-1
 *   ..compute partial pressure
