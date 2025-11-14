@@ -1211,8 +1211,9 @@ c   (ionising_core option)
             else
               vbnd = max(mompar(is,ib,1)*cs*s1,
      &         s1*abs(pl%ua(iCv1,is))+geo%fcS(iFc)*
-     &         (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0)+
-     &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &          ((dv%vaecrb(iFc,0,is)+dv%vadia(iFc,0,is))*
+     &          geo%fcQalf(iFc,0) + (dv%vaecrb(iFc,1,is)+
+     &          dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1))*
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))
 
               srw%sna0(iCv1,0,is) = 0.0_R8
@@ -3173,8 +3174,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
             else
               s1hz = geo%fcPbshz(iFc)
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
+              vbnd = ((dv%vaecrb(iFc,0,is)+dv%vadia(iFc,0,is))*
+     &          geo%fcQalf(iFc,0) + (dv%vaecrb(iFc,1,is)+
+     &          dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1))
               if (mompar(is,ib,2).lt.0.5_R8) then
                 cs = sqrt(pz(iCv1)/rz(iCv1))
                 vbnd = sign(min(mompar(is,ib,1)*2.0_R8*cs*wrk,
@@ -4360,9 +4362,11 @@ cxpb code segment analog to b2tfhe
 cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
           if(ncall_b2stbc_phys.eq.0) then
-            write(*,'(a,1p,g14.7,a,a,a)')
-     .       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
-     .       ' on ',BCCHAR(IB),boundary_location(IB)
+            write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
+     .       'BCENE = 15 (style = 1) : with GAMMAE = ',
+     .        GAMMAE,' and ENEPAR(IB,1) = ',ENEPAR(IB,1),
+     .       ' (def = 0), on ',BCCHAR(IB),
+     .       boundary_location(IB)
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -5916,9 +5920,9 @@ cxpb code segment analog to b2tfhi
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
-          wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
+          wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)
           if (bceni_15_style == 0) then
-            if (wrk < geo%Qalfmin) then
+            if (abs(wrk) < geo%Qalfmin) then
               srw%shi0(iCv1,0) = 0.0_R8
               srw%shi0(iCv1,1) = -1.5_R8*geo%fcS(iFc)*geo%Qalfmax*cs
      &         *dv%ni(iCv1,1)
@@ -5943,18 +5947,19 @@ cxpb code segment analog to b2tfhi
               s1 = abs(geo%fcPbs(iFc))
               do is = 0, ns-1
                 if(is_neutral(is)) cycle
-                t0 = t0 - (srw%sna0(iCv1,0,is) + srw%sna0(iCv1,1,is)*
-     &             pl%na(iCv1,is)) + pl%na(iCv1,is)*geo%fcS(iFc)*
-     &            (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &             dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &             mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+
+                vbnd = (enipar(ib,1)*dv%vaecrb(iFc,0,is)+
+     &                  2.5_R8*dv%vadia(iFc,0,is))*geo%fcQalf(iFc,0)+
+     &                 (enipar(ib,1)*dv%vaecrb(iFc,1,is)+
+     &                  2.5_R8*dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1)
+                t0 = t0 + max(0.0_R8,pl%na(iCv1,is)*
+     &                  (enipar(ib,1)*pl%ua(iCv1,is)*wrk+vbnd)*
+     &                  geo%fcS(iFc)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))
                   if (conpar(is,ib,2).gt.0.0_R8)
      &             t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &              *pl%na(iCv1,is)
               enddo
-              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - (t0*enipar(ib,1) -
-     &         (dv%fhiPSch(iFc,0)+dv%fhiPSch(iFc,1))/pl%ti(iCv1)*
-     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)) -
+              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - t0 -
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
      &         fac_he_anom_bc*enipar(ib,2)*t1*geo%fcS(iFc)
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -7432,10 +7437,13 @@ c              fchi=0.0_R8
           do is = 0, ns-1
             if(is_neutral(is)) cycle
             t0 = t0 - ((srw%sna0(iCv1,0,is) + srw%sna0(iCv1,1,is)*
-     &       pl%na(iCv1,is)) + pl%na(iCv1,is)*geo%fcS(iFc)*
-     &       (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &        dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1)) *
-     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))*rt%rza(iCv1,is)
+     &       pl%na(iCv1,is)))*rt%rza(iCv1,is)
+            if (switch%mdf_fnb.ne.0)
+     &       t0 = t0 + (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is) +
+     &        pl%na(iCv1,is)*geo%fcS(iFc)*
+     &        (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &        dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1)))*rt%rza(iCv1,is)*
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
           fchi = qe*t0
           fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
