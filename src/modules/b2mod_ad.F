@@ -156,6 +156,7 @@
 !$omp threadprivate(ncall_b2uspo, ncall_b2uppo )
 !$omp threadprivate(ncall_b2xehx, ncall_b2xehy, ncall_b2mndt )
 !$omp threadprivate(ncall_b2mwit)
+!$omp threadprivate(nsmooth_siav_zh)
 !$omp threadprivate(gradient_iterations, primal_iterations)
 !$omp threadprivate(primal_res, gradient_res)
 #endif
