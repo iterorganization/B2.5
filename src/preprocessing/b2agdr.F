@@ -453,6 +453,25 @@
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 
+*   ..now reading b2us_prep_Qalfmin/Qalfmax
+!ap 17.11.25 this part was missing in b2ag; it was only present in
+!   b2us_prep when starting from a structured/Carre grid. In view of
+!   GOAT integration when we will immediately start with an unstructred
+!   grid, the change to Qalfmin/max is also ported here for consistency,
+!   otherwise the default values would always be written in b2fgmtry.
+      write(*,*) 'b2agdr: default g%Qalfmin: ', g%Qalfmin
+      write(*,*) 'b2agdr: default g%Qalfmax: ', g%Qalfmax
+      write(*,*) 'Now reading b2us_prep_Qalfmin/Qalfmax'
+      call ipgetr('b2us_prep_Qalfmin',g%Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',g%Qalfmax)
+      write (*,*) "b2agdr: new g%Qalfmin: ",g%Qalfmin
+      write (*,*) "b2agdr: new g%Qalfmax: ",g%Qalfmax
+!ap 17.11.25 at this point fcPbs, fcPbshz and fcQalf would be changed
+!   based on checks on local values of fcQalf w.r.t. Qalfmin and
+!   Qalfmax (see b2us_prep). This should not be done when starting
+!   from an unstructured (GOAT) grid, therefore those changes are not
+!   moved here.
+
 *   ..write summary of geometry
       call write_b2fgmtry (nout(1), m, g)
 
