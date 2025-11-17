@@ -1243,7 +1243,12 @@
        end do
       end if
 
-      end if !! belonging to temp_ignore_geo switch
+      else
+        write (*,*) 'Warning: temp_ignore_geo switch used'  
+        write (*,*) 'This is a temporary solution to run unstructured',
+     & ' geometries that do not fit in existing case categorizations.'
+        write (*,*) 'This option limits post-processing options.'  
+      endif 
 
       return
       end subroutine init_geometry
