@@ -140,17 +140,19 @@
 #ifndef FIXED_POINT
 cdjm compute b2sigp_pstat0to3 on cell face
           if (balance_netcdf.ne.0) then
-            b2sigp_pstat0to3 = 0.0_R8
-            b2sigp_pstati0to3 = 0.0_R8
-!$omp critical
-            b2sigp_pstate0to3 = 0.0_R8
+            b2sigp_pstat0to3(:,:,isb) = 0.0_R8
+            b2sigp_pstati0to3(:,:,isb) = 0.0_R8
+cc zeroing out of b2sigp_pstate0to3 should not be done here inside species loop, is done once in allocate_b2mod_balances
+cc            b2sigp_pstate0to3 = 0.0_R8      
+!$omp critical  
             do iFc = 1, nFc
               t0 = switch%b2sigp_phm0*geo%fcHz(iFc)*geo%fcS(iFc)*
      &         geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
               b2sigp_pstat0to3(iFc,0,isb) = t0*(nbf(iFc)*tbf(iFc)+
      &         rzbf(iFc)*nbf(iFc)*tef(iFc))
               b2sigp_pstati0to3(iFc,0,isb) = t0*nbf(iFc)*tbf(iFc)
-              b2sigp_pstate0to3(iFc,0) = t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
+              b2sigp_pstate0to3(iFc,0) = b2sigp_pstate0to3(iFc,0) + 
+     &                                   t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
             enddo
 !$omp end critical
           endif
