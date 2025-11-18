@@ -421,13 +421,20 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 !$omp do
 #endif
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi !! why is this loop separate from the one above? Perhaps worth the effort of merging them now the addtional var_style options cause additional complexity. 
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
-     &         mult_dt(iCv)
-        if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to ion heat content
+        if (switch%b2mndt_var_style.eq.0) then 
+          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+          if (iFt.ne.0) then
+            if (dtei_fts(iFt) .gt. 0.0_R8) then
+              ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
+            endif
+          endif
+        elseif (switch%b2mndt_var_style.eq.1) then 
+          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
+        elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to ion heat content
           src_tot = sr%shi(iCv,0) +
      &              sr%shi(iCv,1)*ti0(iCv) +
      &              sr%shi(iCv,2)*ni0(iCv,0) +
@@ -437,8 +444,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &            switch%b2mndt_var_style2_SF
           ttim=dtim*dtei(mpg%cvReg(iCv))
           ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-        endif
-        if (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to ion heat content + drift CFL condition
+        elseif (switch%b2mndt_var_style.eq.3) then
+          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
+        elseif (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to ion heat content + drift CFL condition
           src_tot = sr%shi(iCv,0) +
      &              sr%shi(iCv,1)*ti0(iCv) +
      &              sr%shi(iCv,2)*ni0(iCv,0) +
@@ -449,6 +457,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
           ttim2 = min(ttim2,dt_var4_min(iCv))
           ttim=dtim*dtei(mpg%cvReg(iCv))
           ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+        else
+          call xerrab('b2mndt_var_style.gt.4 not yet implemented')
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
 
