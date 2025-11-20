@@ -1551,11 +1551,11 @@ c*** other species. Try to scale the fluxes to keep the same source
 c*** terms in balance.
 
                 s=hlp_po(ls)+hlp_t(ls)+hlp_no(ls)-hlp_ni(ls)
-               if(abs(s).gt.0.0_R8 .and.
+                if(abs(s).gt.0.0_R8 .and.
      .            sign(1.0_R8,s).eq.sign(1.0_R8,hlp_s(ls)))
      >               hlp_scl(ls)=hlp_s(ls)/s
 c<<<
-               if(dbg_eir_mc.gt.0) then
+                if(dbg_eir_mc.gt.0) then
                  print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
      ,          hlp_scl(ls),s,hlp_po(ls),hlp_no(ls),hlp_ni(ls),hlp_t(ls)
                endif
@@ -4326,6 +4326,7 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       implicit none
       integer, intent(in) :: nx, ny, ns
       real(kind=R8), intent(in) :: BoRiS
+
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
