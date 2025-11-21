@@ -129,11 +129,12 @@ c*** New file - write the headers
         if(nstrai.gt.0) then
           if (nnatmi.gt.0) then
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it'',3x,',nstrai*5,
+     /         '(''# it'',7x,''time'',6x,',nstrai*5,
      /         '(1x,a8,i2.2,a3,',nnatmi,'(a8,i2.2,a1,a2,1x)))'
           else
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it'',3x,',nstrai*5,'(1x,a8,i2.2,a3))'
+     /         '(''# it'',7x,''time'',6x,',nstrai*5,
+     /         '(1x,a8,i2.2,a3))'
           end if
 #ifdef DBG
           print *,'%%% b2file: header format'   !###
@@ -162,7 +163,7 @@ c*** New file - write the headers
         end if
       end if
       if (nstrai.gt.0) write(hlp_frmt,'(a,i3,a)')
-     -      '(1x,i3.3,1p,',nstrai*5*(nnatmi+1),'(2x,e12.4))'
+     -      '(1x,i3.3,1p,e16.7,',nstrai*5*(nnatmi+1),'(e12.4,2x))'
       filedata(ntrc_tst)=.true.
       go to 1000
 c
@@ -222,7 +223,7 @@ c*** New file - write the headers
         write(ntrc(ntrc_res),710,err=5) '## ',trim(label)
 
         write(hlp_frmr,'(a,i3,a,i3,a)')
-     /        '(''# it'',3x,',
+     /        '(''# it'',7x,''time'',8x,',
      -         nregionv*2,
      /        '(2x,a3,a2,i2.2,5x),',
      -         nregionv*(nis_tmp)*2,
@@ -354,6 +355,7 @@ c======================================================================
       end subroutine b2filec
 c======================================================================
       subroutine b2filew(it,nregionv)
+      use b2mod_time
       implicit none
       integer, intent(in) :: it, nregionv
       integer i, j, k, l
@@ -370,7 +372,7 @@ c----------------------------------------------------------------------
         l=3
         if(.not.op) go to 62
         l=4
-        if (nstrai.gt.0) write(ntrc(ntrc_tst),hlp_frmt,err=62) it,
+        if (nstrai.gt.0) write(ntrc(ntrc_tst),hlp_frmt,err=62) it, tim,
      ,    ((sclstra(i,k),i=0,nnatmi),(sclalph(i,k),i=0,nnatmi),
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
@@ -385,7 +387,7 @@ c
         l=3
         if(.not.op) go to 72
         l=4
-        write(ntrc(ntrc_res),hlp_frmr,err=72) it,
+        write(ntrc(ntrc_res),hlp_frmr,err=72) it, tim,
      ,     (reshereg(i),i=1,nregionv),
      ,     (reshireg(i),i=1,nregionv),
      ,    ((rescoreg(i,ions_list(j)),i=1,nregionv),
