@@ -242,7 +242,7 @@
           enddo
         endif
       enddo                                                      !sv 24.03.99
-#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBR))
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
 !$omp end parallel do
 #endif
       if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb

@@ -72,8 +72,8 @@
 *   ..local variables
       integer iCv, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
-#if  ( defined(_OPENMP)  )
-!$omp threadprivate(iout, iout_b2npmo, iout_b2wdat)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
 #endif
       character chns*3, chis*3
       real (kind=R8) ::
@@ -171,9 +171,9 @@
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
       do iCv = 1, nCv
-!#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD
-!#endif
+#endif
         do is = 0, ns-1
           rz2_temp(ctr) = rz2(iCv,is)
           na_temp(ctr) = na(iCv,is)
@@ -209,13 +209,13 @@
         endif
 *     ..standard friction force calculation
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
-!$omp parallel do if (make_parallel)
-!$omp& default(none)
-!$omp& private(KabVp, is, iCv, coef, t0)
-!$omp& shared(ns, isb, is_neutral, mpg, switch)
-!$omp& shared(rz2, am, zetap, na, ua)
-!$omp& shared(ismain, cimp1)
-!$omp& reduction(+: smbfrial)
+!$OMP PARALLEL DO IF (make_parallel)
+!$OMP& DEFAULT(none)
+!$OMP& PRIVATE(KabVp, is, iCv, coef, t0)
+!$OMP& SHARED(ns, isb, is_neutral, mpg, switch)
+!$OMP& SHARED(rz2, am, zetap, na, ua)
+!$OMP& SHARED(ismain, cimp1)
+!$OMP& REDUCTION(+: smbfrial)
 #endif
         do is = 0, ns-1
           if(isb.ne.is .and.
@@ -244,7 +244,7 @@
           endif
         enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
-!$omp end parallel do
+!$OMP END PARALLEL DO
 #endif
       endif
       call nancheck(nCv, smbfrial(:,0), 'smbfrial(,0)')
@@ -304,16 +304,16 @@
         enddo
 
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
-!$omp parallel do if (make_parallel)
-!$omp& default(NONE)
-!$omp& private(KabVp, Kbatf, Kabtf, kb, is, iCv, coef, t0)
-!$omp& private(calfab, jabmax, fllim_al_ab)
-!$omp& shared(ns, isb, is_neutral, mpg, switch, geo)
-!$omp& shared(rz2, am, zetap, na, ua, gti, cflim, ti)
-!$omp& shared(ka)
-!$omp& shared(rz2_temp, na_temp, am_sqrt)
-!$omp& shared(ismain, cimp1, cimp2)
-!$omp& reduction(+: smbtfial, smbtfial_nofl)
+!$OMP PARALLEL DO IF (make_parallel)
+!$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, iCv, coef, t0)
+!$OMP& PRIVATE(calfab, jabmax, fllim_al_ab)
+!$OMP& SHARED(ns, isb, is_neutral, mpg, switch, geo)
+!$OMP& SHARED(rz2, am, zetap, na, ua, gti, cflim, ti)
+!$OMP& SHARED(ka)
+!$OMP& SHARED(rz2_temp, na_temp, am_sqrt)
+!$OMP& SHARED(ismain, cimp1, cimp2)
+!$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
         do is = 0, ns-1
          if(isb.ne.is .and.
@@ -351,7 +351,7 @@ c        .. apply flux limit
          endif
         enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
-!$omp end parallel do
+!$OMP END PARALLEL DO
 #endif
       endif
       call nancheck(nCv, smbtfial(:,0), 'smbtfial(,,0)')
@@ -502,7 +502,7 @@ c        .. apply flux limit
       integer r
       fka = 0.0_R8
 #if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
-!$omp simd reduction(+:fka)
+!$OMP SIMD REDUCTION(+:fka)
 #endif
       do r = 0, ns-1
         fka = fka + rz2(iCv,r)*na(iCv,r)*sqrt(mp)*
@@ -523,7 +523,7 @@ c        .. apply flux limit
       fka_new = 0.0_R8
       ind = (iCv-1)*ns
 #if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
-!$omp simd reduction(+:fka_new)
+!$OMP SIMD REDUCTION(+:fka_new)
 #endif
       do r = 0, ns-1
         fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*

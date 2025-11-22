@@ -12,7 +12,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8), intent(in) ::
-     *   fun(nCv), funv(nVx )
+     *   fun(nCv), funv(nVx)
 *   ..output arguments
       real (kind=R8), intent(out) ::
      *   gfunp(nCv)
@@ -42,7 +42,7 @@
       if (mode.eq.0) then
         call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv_loc)
       else
-        funv_loc = funv 
+        funv_loc = funv
       endif
 
 *   ..compute gradients on faces

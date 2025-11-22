@@ -5932,6 +5932,7 @@
 			<switch>
 				<name>b2optim_save_states</name>
 				<default>0</default>
+				<type>integer</type>
 				<description>
 					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
 				</description>
@@ -5939,6 +5940,7 @@
 			<switch>
 				<name>b2optim_reset_drift</name>
 				<default>0.4</default>
+				<type>real</type>
 				<description>
 					Percentage value at which drifts are reset at each function/gradient evaluation to avoid simualtion crash.
 				</description>
@@ -5946,6 +5948,7 @@
 			<switch>
 				<name>b2optim_reset_drift_iter</name>
 				<default>2</default>
+				<type>integer</type>
 				<description>
 					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in b2mndr_ntim/b2optim_reset_drift_iter iterations.
 				</description>
@@ -5953,6 +5956,7 @@
 			<switch>
 				<name>b2optim_reset_param_iter</name>
 				<default>1</default>
+				<type>integer</type>
 				<description>
 					If .gt. 1, the values of the parameters from the new optimization step will be gradually changed so that they will take b2mndr_ntim/b2optim_reset_param_iter to change from their previous to their new value.
 				</description>

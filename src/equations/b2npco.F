@@ -75,7 +75,7 @@
 *.declarations
 
 *   ..local variables
-      character chns*3                                             !srv 04.07.08
+      character chns*3                                                   !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
       logical warning
@@ -237,7 +237,7 @@ cdjm Jan2017 update particle source components for balance
 *    ..compute time derivative
       ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
       dv%dnadt(:,isb) = (-sr%snadt(:,1,isb)*pl%na(:,isb)
-     &                  -sr%snadt(:,0,isb))/ts_factor               ! dv%dnadt = V*(dna/dt)
+     &                   -sr%snadt(:,0,isb))/ts_factor  ! dv%dnadt = V*(dna/dt)
 
 *    ..output quantities for continuity equation
       if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then        !srv 12.07.02 {

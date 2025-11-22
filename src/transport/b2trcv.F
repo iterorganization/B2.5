@@ -31,7 +31,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer :: i,j,dnnucl
+      integer :: j,dnnucl
       real (kind=R8) :: temp,
      &  G3(0:nnucl-1,0:nnucl-1),
      &  G4(0:nnucl-1,0:nnucl-1),
