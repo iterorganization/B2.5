@@ -75,7 +75,7 @@
 *.declarations
 
 *   ..local variables
-      character chns*3                                             !srv 04.07.08
+      character chns*3                                                   !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
       logical warning
@@ -232,8 +232,15 @@ cdjm Jan2017 update particle source components for balance
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb),
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb, psnl)
-      endif                                                             !srv 22.05.18
-      if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then                           !srv 12.07.02 {
+      endif                                                              !srv 22.05.18
+
+*    ..compute time derivative
+      ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
+      dv%dnadt(:,isb) = (-sr%snadt(:,1,isb)*pl%na(:,isb)
+     &                   -sr%snadt(:,0,isb))/ts_factor  ! dv%dnadt = V*(dna/dt)
+
+*    ..output quantities for continuity equation
+      if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then        !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)

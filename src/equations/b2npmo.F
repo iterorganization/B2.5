@@ -61,9 +61,7 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co ! due to kt_neo
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  ubf(nFc), robf(nFc)
+
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -131,6 +129,10 @@
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                             !srv 13.01.17 05.07.17
+#ifndef FIXED_POINT
+      real (kind=R8) ::
+     *  ubf(nFc), robf(nFc)
+#endif
       logical new_matrix, main_lightest, warning
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -329,7 +331,7 @@ c time-dependent treatment
 !$omp& private(pb1, rob1, wrkf0)
 !$omp& firstprivate(lnlam)
 !$omp& private(is, k)
-!$omp& lastprivate(kt_neo, robf, ubf)
+!$omp& lastprivate(kt_neo)
 !$omp& private(wrkf, wrk1, smb, ro)
 !$omp& private(smbfrea, smbfria, smbtfea, smbtfia)
 !$omp& private(smbch, smbtf, smbvtmp)
@@ -342,6 +344,7 @@ c time-dependent treatment
 #ifndef FIXED_POINT
 !$omp& shared(balance_netcdf, fmo_b2nxfv)
 !$omp& shared(fmo_tot, tot_smo0to3)
+!$omp& private(robf, ubf)
 #endif
 !$omp& shared(is_neutral)
 !$omp& shared(zetap, zetae, gti, gte, ce1, ce2, cimp1)

@@ -55,8 +55,7 @@
      &            vedia_c0(nCv), vedia_c1(nCv), 
      &            veecrb_c0(nCv), veecrb_c1(nCv),
      &            wrk00(0:ns-1), wrk11(0:ns-1), dt4,
-     &            wrk(nCv), mult_dt_tmp(nCv), min_mult
-      real (kind=R8), parameter :: eps = 1.0e-20_R8
+     &            mult_dt_tmp(nCv), min_mult
 *   ..procedures
       external xertst
 *-----------------------------------------------------------------------
