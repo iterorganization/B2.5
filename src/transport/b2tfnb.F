@@ -475,10 +475,6 @@ cwdk                   (original code: simple averaging)
       dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
      &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
-!      if (isb == 0) then
-!        write (*, *) 'b2tfnb: value of fna(1, 0, 0) is: ',
-!     &  dv%fna(1, 0, isb)
-!      end if
       dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
@@ -665,7 +661,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        if(.not. is_neutral(isb)) then
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbna_th'//chns)
         call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
-     &                               'b2tfnb_fnbPSch_th'//chns)
+     &                                'b2tfnb_fnbPSch_th'//chns)
 !        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
 !       else

@@ -2628,7 +2628,7 @@ c see block data for comments on variables in common.
       common /ma30fd/ irncp, icncp, irank, minirn, minicn
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(/ma30fd/)
-#endif 
+#endif
 c
       integer j, jpos, k, kn, kl
 c

@@ -1682,7 +1682,7 @@ c Eirene coupling
      &                s % neutral_sources_rescale)
 
 c k-enstrophy model
-      call ipgeti ('b2mndr_solve_keps',s % solve_keps)
+      call ipgeti ('b2mndr_solve_keps', s % solve_keps)
       call ipgeti ('b2tqna_transport_keps', s % transport_keps)
       call ipgetr ('b2tqna_keps_cd', s % keps_cd)
       call ipgetr ('b2tqna_keps_visc', s % keps_visc)

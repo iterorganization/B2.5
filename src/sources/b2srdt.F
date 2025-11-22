@@ -356,8 +356,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
         if (.not.lout)
      &   sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
 
-
-
         if (switch%b2mndt_var_style.eq.0) then !! Standard approaches
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           if (iFt.ne.0) then

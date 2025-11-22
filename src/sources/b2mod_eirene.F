@@ -220,7 +220,7 @@ c***
 c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
 c*** Otherwise: take the radiation explicitly calculated in EIRENE.
 
-      real (kind=R8) :: s,x1,x2,t00,rec_tol
+      real (kind=R8) :: s,x1,x2,t00,det,rec_tol
       real (kind=R8), save, allocatable ::
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
@@ -1303,21 +1303,25 @@ c
      .            .and.switch%ank_mods.ne.0) then
         write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
-          if(crcstra(istrai).eq.'A') then
+          do ls=1,nnatmi !{
+            hlp_pi(ls)=0.0_R8
+            hlp_po(ls)=0.0_R8
+            hlp_ni(ls)=0.0_R8
+            hlp_no(ls)=0.0_R8
+            hlp_g(ls) =0.0_R8
+            hlp_s(ls) =0.0_R8
+            hlp_t(ls) =0.0_R8
+          end do !}
+          if(crcstra(istrai).eq.'A'.or.
+     .       crcstra(istrai).eq.'S'.or.
+     .       crcstra(istrai).eq.'N'.or.
+     .       crcstra(istrai).eq.'W'.or.
+     .       crcstra(istrai).eq.'E') then
 
 c*** Recycling stratum
 c*** First, correct the balance between B2 and Eirene sources for the
 c*** species to be scaled with themselves (recycling species)
 
-            do ls=1,nnatmi !{
-              hlp_pi(ls)=0.0_R8
-              hlp_po(ls)=0.0_R8
-              hlp_ni(ls)=0.0_R8
-              hlp_no(ls)=0.0_R8
-              hlp_g(ls) =0.0_R8
-              hlp_s(ls) =0.0_R8
-              hlp_t(ls) =0.0_R8
-            end do !}
             n=nnstsi
             if(l_ddt.gt.0) n=n-1
             do i=1,n !{
@@ -1652,16 +1656,6 @@ c>>>
 c*** Recombination or gas puffing stratum.
 c*** Here only the second pass of correction
 
-            do ls=1,nnatmi !{
-              hlp_pi(ls)=0.0_R8
-              hlp_po(ls)=0.0_R8
-              hlp_ni(ls)=0.0_R8
-              hlp_no(ls)=0.0_R8
-              hlp_g(ls) =0.0_R8
-              hlp_s(ls) =0.0_R8
-              hlp_t(ls) =0.0_R8
-            end do !}
-
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ic,1).ne.0) then !{
                 do is=0,ns-1 !{
@@ -1745,11 +1739,11 @@ c*** Here only the second pass of correction
      ,                'stratum, species = ',istrai,ls
                   end if !}
                 else !}{
-                  s=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
-                  if(s.gt.0.0_R8) then !{
-                    s=sqrt(s)
-                    x1=0.5_R8*(hlp_g(ls)+s)/(hlp_s(ls)+hlp_t(ls))
-                    x2=0.5_R8*(hlp_g(ls)-s)/(hlp_s(ls)+hlp_t(ls))
+                  det=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
+                  if(det.gt.0.0_R8) then !{
+                    det=sqrt(det)
+                    x1=0.5_R8*(hlp_g(ls)+det)/(hlp_s(ls)+hlp_t(ls))
+                    x2=0.5_R8*(hlp_g(ls)-det)/(hlp_s(ls)+hlp_t(ls))
                     if(x2.le.0.0_R8) then !{
                       hlp_scl(ls)=x1
                     else if(x1.le.0.0_R8) then !}{
@@ -1770,6 +1764,7 @@ c*** Here only the second pass of correction
                     write(*,'(a,a,i3,1x,i3)')
      ,               'eirene_mc: error in scaling - zero ',
      ,               'discriminant.  stratum, species = ',istrai,ls
+                    hlp_scl(ls)=1.0_R8
                   end if !}
                 end if !}
               end if !}
@@ -1779,13 +1774,19 @@ c*** Here only the second pass of correction
      ,           'positive scaling factor. stratum, species, ',
      ,           'factor = ',istrai,ls,hlp_scl(ls)
                 hlp_scl(ls)=1.0_R8
-              else if(abs(log(hlp_scl(ls))).gt.
-     1         abs(log(neut_scl_lim))) then !}{
-                write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
-     ,           'eirene_mc: error in scaling - too ',
-     ,           'strong variation. stratum, species, ',
-     ,           'factor = ',istrai,ls,hlp_scl(ls)
-                hlp_scl(ls)=1.0_R8
+              else if (hlp_scl(ls).gt.0.0_R8) then !}{
+                if(abs(log(hlp_scl(ls))).gt.
+     1             abs(log(neut_scl_lim))) then !}{
+                  write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
+     ,             'eirene_mc: error in scaling - too ',
+     ,             'strong variation. stratum, species, ',
+     ,             'factor = ',istrai,ls,hlp_scl(ls)
+                  if(hlp_scl(ls).gt.neut_scl_lim) then !{
+                    hlp_scl(ls)=neut_scl_lim
+                  else !}{
+                    hlp_scl(ls)=1.0_R8/neut_scl_lim
+                  end if !}
+                end if !}
               end if !}
               hlp_scp(ls,istrai)=hlp_scl(ls)
             end do !}
