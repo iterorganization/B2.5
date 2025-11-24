@@ -3,7 +3,7 @@
       use b2mod_indirect_diffv
      . , only: GRID_N_CELLFLAGS
       use b2mod_cellhelper
-      use b2mod_geometry
+      use b2mod_geometry_diffv
       use carre_constants
       use b2mod_grid_mapping
 
@@ -612,7 +612,6 @@
         end if
       end do
 
-
       ! For DN configuration, check if central cut ccut is already set (ccut).
       ! If yes, keep (came from Carre2)
       ! If no, assume 'standard' DN grid from Carre and find location based
@@ -672,98 +671,6 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
 
       return
       end function b2gavg1
-
-  ! Interpolate a cell quantity cv to a particular vertex
-      function interpolateToVertices1(nx1,ny1,vx_index,cv) result(vx)
-      use b2mod_b2cmfs
-      use b2mod_indirect_diffv
-      use b2mod_constants
-      use b2mod_cellhelper
-      implicit none
-      integer, intent(in) :: nx1, ny1, vx_index
-      real (kind=R8), intent(in), dimension(-1:nx1,-1:ny1) :: cv
-      real (kind=R8), dimension(-1:nx1,-1:ny1) :: vx
-
-      ! internal
-      integer :: ix, iy, is, ixx, iyy
-      real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
-
-      ! For every vertex, find connected cells and average values
-      do ix = -1, nx1
-        do iy = -1, ny1
-
-          if(isUnusedCell(cflags1(ix,iy,CELLFLAG_TYPE))) then
-             vx(ix,iy) = cv(ix,iy)
-             cycle
-          end if
-
-          wTot = 0.0_R8
-          av = 0.0_R8
-          minVal = huge(1.0_R8)
-          maxVal =-huge(1.0_R8)
-          do is = 1, 8
-            if ( gmap1%mapCvixVx( gmap1%mapVxI(ix,iy,vx_index), is ) ==
-     .           B2_GRID_UNDEFINED .or.
-     .           gmap1%mapCviyVx( gmap1%mapVxI(ix,iy,vx_index), is ) ==
-     .           B2_GRID_UNDEFINED) cycle
-            ixx = gmap1%mapCvixVx( gmap1%mapVxI(ix,iy,vx_index), is )
-            iyy = gmap1%mapCviyVx( gmap1%mapVxI(ix,iy,vx_index), is )
-            centroid = quadCentroid(crx1(ixx,iyy,0),cry1(ixx,iyy,0),
-     .                              crx1(ixx,iyy,1),cry1(ixx,iyy,1),
-     .                              crx1(ixx,iyy,2),cry1(ixx,iyy,2),
-     .                              crx1(ixx,iyy,3),cry1(ixx,iyy,3))
-            d = sqrt ( (centroid(0) - crx1(ix,iy,vx_index))**2 +
-     .                 (centroid(1) - cry1(ix,iy,vx_index))**2 )
-            w = 1.0_R8/d
-            av = av + cv(ixx, iyy) * w
-            wTot = wTot + w
-            minVal = min(minVal, cv(ixx, iyy))
-            maxVal = max(maxVal, cv(ixx, iyy))
-
-          end do
-
-          vx(ix, iy) = av / wTot
-          d = vx(ix,iy) - minVal
-          if (minVal.ne.0.0_R8) then
-#ifdef BUILDING_CARRE
-            if ( d/abs(minVal) < - 1.0e-15_R8 ) stop
-     .       "Interpolated value smaller than minimum"
-#else
-            call xertst( d/abs(minVal) >= - 1.0e-15_R8,
-     .       "Interpolated value smaller than minimum" )
-#endif
-          else
-#ifdef BUILDING_CARRE
-            if ( d.lt.minVal ) stop
-     .       "Interpolated value smaller than minimum"
-#else
-            call xertst( d.ge.minVal,
-     .       "Interpolated value smaller than minimum" )
-#endif
-          end if
-          d = vx(ix,iy) - maxVal
-          if (maxVal.ne.0.0_R8) then
-#ifdef BUILDING_CARRE
-            if ( d/abs(maxVal) > 1.0e-15_R8 ) stop
-     .       "Interpolated value bigger than maximum"
-#else
-            call xertst( d/abs(maxVal) <=   1.0e-15_R8,
-     .       "Interpolated value bigger than maximum" )
-#endif
-          else
-#ifdef BUILDING_CARRE
-            if ( d.gt.maxVal ) stop
-     .       "Interpolated value bigger than maximum"
-#else
-            call xertst( d.le.maxVal,
-     .       "Interpolated value bigger than maximum" )
-#endif
-          end if
-        end do
-      end do
-      return
-
-      end function interpolateToVertices1
 
       function cr1(ix,iy)
       implicit none

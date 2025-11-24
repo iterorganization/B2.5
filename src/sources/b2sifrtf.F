@@ -158,7 +158,7 @@
         do iCv = 1, mpg%nCi
           t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
           call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &      smbfrial(iCv,0),smbfrial(iCv,1))
+     &      smbfrial(iCv,0:1))
         enddo
       else
         smbfrial_test = 0.0_R8
@@ -169,7 +169,7 @@
           do iCv = 1, mpg%nCi
             t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
             call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &        smbfrial_test(iCv,0),smbfrial_test(iCv,1))
+     &        smbfrial_test(iCv,0:1))
           enddo
         endif
 *     ..standard friction force calculation

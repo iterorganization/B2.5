@@ -602,7 +602,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. save chce(:,0) after applying Luciani
       wrk = chce(:,0)                                                 !srv 13.01.17
 
-      if (switch%min_collisions .gt. 0.0_R8) then
+      if (switch%min_collisions.gt.0.0_R8) then
         call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
      &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
      &   wrkc)
@@ -612,6 +612,15 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         collisnumf = 1.0_R8
         collisnumef = 1.0_R8
       endif
+      do k = 1, mpg%nCg
+        iFc = mpg%fcs_wall(k)
+        iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        if (collisnumf(iFc).le.switch%min_collisions.and.
+     &   .not.mpg%cvOnClosedSurface(iCv)) then
+          cvsa(iFc,0:1,:)=0.0_R8
+          cvsahz(iFc,0:1,:)=0.0_R8
+        end if
+      end do
 
       if(switch%conductive_limit.ne.0) then                           !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
@@ -623,16 +632,16 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
-     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          if (collisnumef(iFc) .gt. switch%min_collisions) then
+          if (collisnumef(iFc).gt.switch%min_collisions) then
            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      &                             dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
            t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
      &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
           else
-           t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(0)*max(collisnumef(iFc), 1.0e-16_R8))**(-1)
           endif
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
@@ -645,7 +654,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
-     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           if (collisnumf(iFc) .gt. switch%min_collisions) then
            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
@@ -654,7 +663,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
           else
-           t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(1)*max(collisnumf(iFc), 1.0e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)

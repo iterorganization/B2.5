@@ -24,15 +24,15 @@
      *   rnan
       integer inan(0:1)
       equivalence (rnan,inan)
-      external ifill
+      external ifill_nodiff_nodiff
 *     ------------------------------------------------------------------
       rnan = -1.0_R8
 #ifdef GFORTRAN
 #ifndef DBG
-      call ifill (n, inan(1), kx, incx)
+      call ifill_nodiff_nodiff (n, inan(1), kx, incx)
 #endif
 #else
-      call ifill (n, inan(1), kx, incx)
+      call ifill_nodiff_nodiff (n, inan(1), kx, incx)
 #endif
 *     (The second argument to ifill is deliberately of wrong type.)
 *     ------------------------------------------------------------------

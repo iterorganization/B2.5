@@ -46,7 +46,7 @@
 
 ! Now loop only on sigma vector
       isigma = npar_opt - nsigma_opt-nmean_opt-nshift_opt-ncorr_opt
-      ind = 1 !index for prior vectors
+      ind = 1 !index for prior vectors (may differ from ii due to not optimizing some sigmas)
       do ii = 1, nsigma
         if (.not.sigma_opt(ii)) cycle
         select case (prior_type(ind+isigma))
@@ -73,11 +73,12 @@
           prior = 1.0E+60_R8
           inrange = .false.
         endif
+        ind = ind + 1
       end do
 
 ! Now loop only on mean vector
       imean = npar_opt - nmean_opt - nshift_opt - ncorr_opt
-      ind = 1 !index for prior vectors
+      ind = 1 !index for prior vectors (may differ from ii due to not optimizing some means)
       do ii = 1, nmean
         if (.not.mean_opt(ii)) cycle
         select case (prior_type(ind+imean))
@@ -102,6 +103,7 @@
           prior = 1.0E+60_R8
           inrange = .false.
         endif
+        ind = ind + 1
       end do
 
 ! Now do shift priors

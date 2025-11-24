@@ -17,6 +17,16 @@
 
       if (.not.flag_optim) return
 
+      if (recalc_params) then
+        do ip = 1, npar_opt - nsigma_opt - nmean_opt
+          if (xnew(ip) .gt. xold(ip)) then
+            par_opt_phys(ip) = min(par_opt_phys(ip)*xmult(ip),xnew(ip))
+          else
+            par_opt_phys(ip) = max(par_opt_phys(ip)*xmult(ip),xnew(ip))
+          endif
+        end do
+      endif
+
       idir = 1 !this indicates the different parameters active
       do ip = 1, nnvar - nsigma_opt - nmean_opt
         if (spatial_dep(ip)) then
@@ -123,4 +133,3 @@
 
       return
       end subroutine set_parameters
-

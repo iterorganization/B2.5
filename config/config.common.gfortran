@@ -130,7 +130,7 @@ ifndef SOLPS_CPP
 endif
 
 ifdef IMAS_PKG_LIST
-  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
+  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags --keep-system-cflags`
   IMASLIBS = ${LD_AL}
 endif
 

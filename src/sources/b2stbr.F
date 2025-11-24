@@ -1153,11 +1153,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
 *.end b2stbr
 
-      subroutine b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, pl, dv,
-     & use_eirene, ank_mods)
+      subroutine b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st, switch)
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_switches
 #ifdef B25_EIRENE
       use b2mod_eirene
      , , only : neutr_scl
@@ -1168,21 +1168,21 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       use b2mod_ad
      , , only : ncall_b2stbr_neutr_scl
       implicit none
-      integer, intent(in) :: nCv, nFc, ns, use_eirene, ank_mods
+      integer, intent(in) :: nCv, nFc, ns
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
-      type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (inout) :: dv
+      type (B2State), intent (in) :: st
+      type (switches), intent(in) :: switch
 
       call subini ('b2stbr_neutr_scl')
       if (ncall_b2stbr_neutr_scl.eq.0) then
         call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
         call xertst (1.le.ns, 'faulty argument ns')
       endif
-      if(use_eirene.ne.0.and.ank_mods.ne.0) then
+      if(switch%use_eirene.ne.0.and.switch%ank_mods.ne.0) then
 #ifdef B25_EIRENE
 c        write(*,*) 'Calling neutr_scl'
-        call neutr_scl(nCv, nFc, ns, mpg, geo, pl, dv)
+        call neutr_scl(ns, mpg, geo, st, switch)
 c        write(*,*) 'Called neutr_scl'
 #else
         call xerrab ('b2stbr not compiled with the B25_EIRENE option')

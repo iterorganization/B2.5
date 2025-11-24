@@ -400,7 +400,7 @@ c*** New file
      -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if
       write(hlp_frm,'(a,i3,a)')
-     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3))'
+     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3e3))'
       return
 c======================================================================
    90 write(*,*) 'b2blnm: cannot open file ',trim(f)
@@ -415,8 +415,8 @@ c*** Prepare the formats for the printout
    98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
-  710 format('(1x,a3,',i3,'(2x,a8,1x))')
-  720 format('(1p,1x,a2,1x,',i3,'e11.3)')
+  710 format('(1x,a3,',i3,'(2x,a8,2x))')
+  720 format('(1p,1x,a2,1x,',i3,'e11.3e3)')
 c======================================================================
       end subroutine b2blnmi
 c

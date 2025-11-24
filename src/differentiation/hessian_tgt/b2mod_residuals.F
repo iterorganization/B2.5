@@ -92,17 +92,17 @@
       subroutine write_b2mod_residuals(nwrite)
       implicit none
       integer nwrite
-      external cfwure_nodiff
+      external cfwure
 
-      call cfwure_nodiff (nwrite, size(resco), resco, 'resco')
-      call cfwure_nodiff (nwrite, size(reshe), reshe, 'reshe')
-      call cfwure_nodiff (nwrite, size(reshi), reshi, 'reshi')
-      call cfwure_nodiff (nwrite, size(reshn), reshn, 'reshn')
-      call cfwure_nodiff (nwrite, size(resmo), resmo, 'resmo')
-      call cfwure_nodiff (nwrite, size(resmt), resmt, 'resmt')
-      call cfwure_nodiff (nwrite, size(respo), respo, 'respo')
-      call cfwure_nodiff (nwrite, size(reskt), reskt, 'reskt')
-      call cfwure_nodiff (nwrite, size(reszt), reszt, 'reszt')
+      call cfwure (nwrite, size(resco), resco, 'resco')
+      call cfwure (nwrite, size(reshe), reshe, 'reshe')
+      call cfwure (nwrite, size(reshi), reshi, 'reshi')
+      call cfwure (nwrite, size(reshn), reshn, 'reshn')
+      call cfwure (nwrite, size(resmo), resmo, 'resmo')
+      call cfwure (nwrite, size(resmt), resmt, 'resmt')
+      call cfwure (nwrite, size(respo), respo, 'respo')
+      call cfwure (nwrite, size(reskt), reskt, 'reskt')
+      call cfwure (nwrite, size(reszt), reszt, 'reszt')
 
       return
       end subroutine write_b2mod_residuals

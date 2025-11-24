@@ -38,16 +38,16 @@ c
       use b2mod_types
       implicit none
 
-      integer, intent(in):: nCv,nFc, iFc
+      integer, intent(in):: nCv,nFc,iFc
       integer, intent(in) :: fcCv(nFc,2)
       real (kind=R8), intent(in) ::
      *   fcVol(nFc,2),centre(nCv)
       real (kind=R8) :: face
 
-        face =
-     &    (fcVol(iFc,1)*centre(fcCv(iFc,2))+
-     &     fcVol(iFc,2)*centre(fcCv(iFc,1)))/
-     &    (fcVol(iFc,1)+fcVol(iFc,2))
+      face =
+     &  (fcVol(iFc,1)*centre(fcCv(iFc,2))+
+     &   fcVol(iFc,2)*centre(fcCv(iFc,1)))/
+     &  (fcVol(iFc,1)+fcVol(iFc,2))
      
       return
       end function intface_s

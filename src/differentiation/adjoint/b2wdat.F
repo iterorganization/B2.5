@@ -3,10 +3,8 @@
       use b2mod_constants
       use b2mod_neutrals_namelist_diff
       use b2mod_boundary_namelist_diff
-      use b2mod_elements
-      use b2mod_b2cmgs
+      use b2mod_elements_diff
       use b2mod_b2cmpa_diff
-      use b2mod_b2cmpb_diff
       use b2mod_b2cmpt_diff
       use b2mod_b2cmrc_diff
 #ifdef B25_EIRENE
@@ -37,7 +35,7 @@
 *
 *  1. purpose
 *
-*     B2WDAT is an output routine that writes out B2 arrays into ASCII
+*     B2WDAT is an output routine that writes out B2.5 arrays into ASCII
 *     data files.
 *
 *-----------------------------------------------------------------------
@@ -50,7 +48,6 @@
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
-      integer, save :: use_mms = 0                                 !srv 26.02.18
 
       integer iRFc, nRFc, icell
 #ifdef WG_DEBUG
@@ -85,10 +82,6 @@
       real (kind=R8) ::                                            !srv
      &  pz(mpg%nCv), rz(mpg%nCv),
      &  pr(mpg%nCv), ro(mpg%nCv), cst(mpg%nCv)                     !srv 30.01.15
-#ifdef WG_TODO
-      real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
-     &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
-#endif
       character chis*3, chib*2                                     !srv 27.04.01
       character*32 hlp_frm                                         !srv 03.04.13
       character(7), save :: folder                                 !srv 26.09.17
@@ -113,7 +106,6 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
 *    ..try to create a file in optional output folder
@@ -404,7 +396,8 @@
        call my_out_us(70,nCv,0,geo%cvEb(1,0),'Cv.b_R_cyl')
        call my_out_us(70,nCv,0,geo%cvEb(1,1),'Cv.b_Z_cyl')
        call my_out_us(70,nCv,0,geo%cvEb(1,2),'Cv.b_phi_cyl')
-       call my_out_us(70,nCv,0,geo%cvHx,'Cv.lenght_pol')
+       call my_out_us(70,nCv,0,geo%cvHx,'Cv.length_pol')
+       call my_out_us(70,nCv,0,geo%cvHy,'Cv.width_rad')
        call my_out_us(70,nCv,0,geo%cvHz,'Cv.hz')
        call my_out_us(70,nCv,0,geo%cvVol,'Cv.vol')
        call my_out_us(70,nCv,0,geo%cvSz,'Cv.Sz')
@@ -508,10 +501,6 @@
        call my_out_us(70,nVx,2,geo%vxOnedBsq,'Vx.OnedBsq')
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
       endif                                                             !srv   end for iout=3
-
-      if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
-      endif                                                             !srv 26.02.18 }
 
 #ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then

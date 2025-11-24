@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trzh (nCv, nFc, nVx, ns, znmax, switch,
+      subroutine b2trzh (nCv, nFc, nVx, ns, switch,
      &  geo, mpg, pl, dv, co,
      &  hci0_al_luc, hci0_a_luc,
      &  chci0_nofl, chci0, chci0_luc,
@@ -32,7 +32,7 @@
      & , only : ncall_b2trzh
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, znmax
+      integer nCv, nFc, nVx, ns
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -183,12 +183,6 @@
 *   ..set internal parameters on first call
       if (ncall_b2trzh.eq.0) then
 *   ..allocate
-        call alloc_b2mod_mrel(nspecies,znmax,ns)
-        call alloc_b2mod_zhco(nspecies, nCv)
-        call alloc_b2mod_zhfrtf(nCv, ns)
-        if (switch%zh_dist_fun.eq.1) then
-          call alloc_b2mod_zhfrtf_df(nCv, ns)
-        endif
         cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
         call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
         do is = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)

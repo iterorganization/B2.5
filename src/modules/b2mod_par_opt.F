@@ -101,8 +101,9 @@
 ! - corr_L/U: lower/upper bound of the correlation parameter
       integer, save :: npar_opt = 0
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
-     &       par_opt_phys(:), xsave(:)
-      logical, save :: flag_optim = .false., reset_gradient = .false.
+     &       par_opt_phys(:), xold(:), xnew(:), xmult(:), xprev(:)
+      logical, save :: flag_optim = .false., reset_gradient = .false.,
+     &                 recalc_params = .false.
       integer nnvar
       real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
      &  gu(nvmx), par_rescale(nvmx)

@@ -123,7 +123,6 @@
       real (kind=R8) :: fac_he_anom, fac_he_anom_bc
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
-      logical, save :: BCCON14_IS(NBCD)
 #ifdef WG_TODO
       logical fedback_species
       character*24 hlp_frm

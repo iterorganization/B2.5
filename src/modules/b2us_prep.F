@@ -224,6 +224,8 @@
            m%ictcntrl(ict) = ix-1
          end if
        end do
+      else
+        allocate (m%ictcntrl(0)) !csc needed for adjoint AD
       endif
 
 ! no. of faces
@@ -370,7 +372,7 @@
                 locrightiy(tix,tiy) = iyvxe(nvxe)
                 loctopix(rix,riy)   = ixvxe(nvxe)
                 loctopiy(rix,riy)   = iyvxe(nvxe)
-                write (*,*)
+                write (*,'(a,2i4,a,2i4,1p,2(1x,1e14.7))')
      .           '(0) Created NE vertex for cell ix, iy = ', ix, iy,
      .           '    at ix2, iy2, crx, cry = ',
      .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
@@ -483,7 +485,7 @@
                     locrightix(tix,tiy) = ixvxe(nvxe)
                     locrightiy(tix,tiy) = iyvxe(nvxe)
                   endif
-                  write (*,*)
+                  write (*,'(a,2i4,a,2i4,1p,2(1x,1e14.7))')
      .             '(1) Created  E vertex for cell ix, iy = ', ix, iy,
      .             '    at ix2, iy2, crx, cry = ',
      .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
@@ -595,7 +597,7 @@
                     loctopix(rix,riy) = ixvxe(nvxe)
                     loctopiy(rix,riy) = iyvxe(nvxe)
                   endif
-                  write (*,*)
+                  write (*,'(a,2i4,a,2i4,1p,2(1x,1e14.7))')
      .             '(2) Created N  vertex for cell ix, iy = ', ix, iy,
      .           '    at ix2, iy2, crx, cry = ',
      .                ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
@@ -703,7 +705,7 @@
                       locrightiy(tix,tiy) = iyvxe(nvxe)
                       loctopix(rix,riy)   = ixvxe(nvxe)
                       loctopiy(rix,riy)   = iyvxe(nvxe)
-                      write (*,*)
+                      write (*,'(a,2i4,a,2i4,1p,2(1x,1e14.7))')
      .                 '(3) Created NE vertex for cell ix, iy = ',
      .                  ix, iy, ' at ix2, iy2, crx, cry = ',
      .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
@@ -868,7 +870,7 @@
                       ! Adapt local connectivity arrays
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
-                      write (*,*)
+                      write (*,'(a,2i4,a,2i4,1p,2(1x,1e14.7))')
      .                 '(4) Created NE vertex for cell ix, iy = ',
      .                  ix, iy, ' at ix2, iy2, crx, cry = ',
      .                  ix2, iy2, crx(ix2,iy2,0), cry(ix2,iy2,0)
@@ -1036,8 +1038,13 @@
               write (*,*) 'locrightix, locrightiy = ',
      .          locrightix(ix,iy),
      .          locrightiy(ix,iy)
+              write (*,*) 'Rc, Zc =',
+     .          0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                   crx(ix,iy,2)+crx(ix,iy,3)),
+     .          0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                   cry(ix,iy,2)+cry(ix,iy,3))
               cellError=.true.
-!              call xerrab ('Problem in definition locrightix.')
+!              call xerrab ('Problem in definition of locrightix.')
             endif
             if ((loctopix(ix,iy)==nx+1) .or.
      .          (loctopiy(ix,iy)==ny+1)) then
@@ -1045,8 +1052,13 @@
               write (*,*) 'loctopix, loctopiy = ',
      .          loctopix(ix,iy),
      .          loctopiy(ix,iy)
+              write (*,*) 'Rc, Zc =',
+     .          0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                   crx(ix,iy,2)+crx(ix,iy,3)),
+     .          0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                   cry(ix,iy,2)+cry(ix,iy,3))
               cellError=.true.
-!              call xerrab ('Problem in definition loctopiy.')
+!              call xerrab ('Problem in definition of loctopiy.')
             endif
           elseif (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
             if(icorner(ix,iy) == 0) then
@@ -1061,8 +1073,13 @@
                    write (*,*) 'locrightix, locrightiy = ',
      .               locrightix(ix,iy),
      .               locrightiy(ix,iy)
+                   write (*,*) 'Rc, Zc =',
+     .               0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                        crx(ix,iy,2)+crx(ix,iy,3)),
+     .               0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                        cry(ix,iy,2)+cry(ix,iy,3))
                    cellError=.true.
-!                    call xerrab ('Problem in definition locrightix.')
+!                    call xerrab ('Problem in definition of locrightix.')
                   endif
                 endif
               endif
@@ -1077,8 +1094,13 @@
                    write (*,*) 'loctopix, loctopiy = ',
      .               loctopix(ix,iy),
      .               loctopiy(ix,iy)
+                   write (*,*) 'Rc, Zc =',
+     .               0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+ ! R-coordinate of center of [ix,iy] cell
+     .                        crx(ix,iy,2)+crx(ix,iy,3)),
+     .               0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+ ! Z-coordinate of center of [ix,iy] cell
+     .                        cry(ix,iy,2)+cry(ix,iy,3))
                    cellError=.true.
-!                    call xerrab ('Problem in definition loctopiy.')
+!                    call xerrab ('Problem in definition of loctopiy.')
                   endif
                 endif
               endif
@@ -1088,7 +1110,7 @@
       enddo
 
       if (cellError)
-     .  call xerrab ('Problem in definition local connectivity.')
+     .  call xerrab ('Problem in defining local connectivity.')
 
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
@@ -1780,7 +1802,7 @@
 
       mxReg = maxval(m%cvReg(1:m%nCv))
 
-      write (*,*) 'Identify flux tubes and flux surfaces '
+      write (*,*) 'Identify flux tubes and flux surfaces'
 
 ! identify the various flux tubes and surfaces
       m%ftCv = 0 ! init to 0

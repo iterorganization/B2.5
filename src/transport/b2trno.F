@@ -87,7 +87,7 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, is, mode, k, cvs(2)
+      integer iCv, iFc, is, mode, k, cvs(2)
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
       integer, save :: set_chcb_0 = 0
@@ -98,7 +98,7 @@
 #endif
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkc(nCv), wrk0,
+     *  wrk(nFc), wrk1(nFc,2), wrkfc(nFc), wrkc(nCv), wrkcc(nCv), wrk0,
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
@@ -328,16 +328,34 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hci_ExB, co%chci_ExB(1:nFc,1))
 
+      if (switch%min_collisions.gt.0.0_R8) then
+        call b2tlnl (mpg%nCv, switch, switch%icase_ii,
+     &   pl%te, pl%ti, dv%ne, dv%lnlam)
+        call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
+     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, wrkfc,
+     &   wrkcc)
+      else
+        wrkfc = 1.0_R8
+      endif
       if (set_chcb_0.eq.1) then
         do k = 1, mpg%nCg
           iFc = mpg%fcs_wall(k)
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (wrkfc(iFc).le.switch%min_collisions.and.
+     &     .not.mpg%cvOnClosedSurface(iCv)) then
+            co%cvsa(iFc,0:1,:) = 0.0_R8
+            co%cvsahz(iFc,0:1,:) = 0.0_R8
+          end if
           wrk0 = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-          if ((wrk0 >= geo%Qalfmin)) then
+          if (wrk0 >= geo%Qalfmin) then
             co%chcb(iFc,1,:) = 0.0_R8
             co%calf(iFc,1) = 0.0_R8
             co%csig(iFc,1) = 0.0_R8
             co%chce(iFc,1) = 0.0_R8
             co%cdna(iFc,1,:) = 0.0_R8
+            co%cvsa(iFc,1,:) = 0.0_R8
+            co%cdnahz(iFc,1,:) = 0.0_R8
+            co%cvsahz(iFc,1,:) = 0.0_R8
           endif
         enddo
         do iFc = 1,mpg%nFc
@@ -351,11 +369,21 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      .            co%cdpa(iFc,0,is)*geo%fcQalf(iFc,0) +
      .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1).gt.0.0_R8) then
                 co%cdna(iFc,1,is) = 0.0_R8
+                co%cvsa(iFc,0,is) = 0.0_R8
+                co%cvsa(iFc,1,is) = 0.0_R8
+                co%cdnahz(iFc,1,is) = 0.0_R8
+                co%cvsahz(iFc,0,is) = 0.0_R8
+                co%cvsahz(iFc,1,is) = 0.0_R8
               else
                 co%cdna(iFc,1,is) = co%cdna(iFc,1,is)/inctran
+                co%cvsa(iFc,0,is) = co%cvsa(iFc,0,is)/inctran
+                co%cvsa(iFc,1,is) = co%cvsa(iFc,1,is)/inctran
+                co%cdnahz(iFc,1,is) = co%cdnahz(iFc,1,is)/inctran
+                co%cvsahz(iFc,0,is) = co%cvsahz(iFc,0,is)/inctran
+                co%cvsahz(iFc,1,is) = co%cvsahz(iFc,1,is)/inctran
               endif
             enddo
-            if (co%csig(iFc,0)*geo%fcQalf(iFc,0) .gt. 0.0_R8) then
+            if (co%csig(iFc,0)*geo%fcQalf(iFc,0).gt.0.0_R8) then
               co%calf(iFc,1) = 0.0_R8
               co%csig(iFc,1) = 0.0_R8
             else
