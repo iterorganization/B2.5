@@ -31,11 +31,11 @@
      &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
-     &          lfeedback
+     &          lfeedback, bccon14_is
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_eir_tot, fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_zhfrtf
@@ -46,14 +46,15 @@
      & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
 #endif
       use b2mod_ad
-     & , only : my_out_folder, in_no_of_start_points,
+     & , only : my_out_folder, in_no_of_start_points, sources_inputfile,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
-     &          ncall_b2tfrn
+     &          ncall_b2tfrn, senepar, senipar, sconpar,
+     &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
 #endif
       use b2mod_subsys
       implicit none
@@ -86,7 +87,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, k, is, sources_inputfile
+      integer iCv, k, is
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -99,15 +100,12 @@
      &  shi0_cx(:,:)
       logical catch_up
       character*32 hlp_frm
-      save sources_inputfile
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
-*   ..initialisation
-      data sources_inputfile/0/
 *-----------------------------------------------------------------------
 *.computation
 

@@ -15,7 +15,7 @@ endif
 CPP = /lib/cpp -traditional
 
 ifdef SOLPS_DEBUG
-FCOPTS += -gdwarf-2
+FCOPTS += -gdwarf-2 -fcheck=all
 endif
 
 DDBLOPTION = -Ad # ???

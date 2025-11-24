@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_diag_diffv_diffv
       use b2mod_time
-      use b2mod_b2cmpa_diffv_diffv
+      use b2mod_b2cmpa_diffv
       implicit none
 
 c========================================================================
@@ -77,7 +77,6 @@ c-----------------------------------------------------------------------
       use b2us_map_diffv_diffv
       use b2us_geo_diffv_diffv
       use b2us_plasma_diffv_diffv
-      use b2mod_indirect_diffv_diffv
       implicit none
 c
       integer, intent(in) :: ns
@@ -86,9 +85,9 @@ c
       type(B2state), intent(in) :: st
 c
 c*** Values by regions
-      real (kind=R8) :: tesum(NNREGMAX)
+      real (kind=R8) :: tesum(2*DEF_NCUT)
 
-      real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
+      real (kind=R8) :: equr_tmp(2*DEF_NCUT,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum)
 c
 c*** Values by species
@@ -97,9 +96,9 @@ c*** Values by species
       equivalence (equs_tmp(1,1), Natm_tmp)
 
 c*** Values by species and regions
-      real (kind=R8) :: equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
+      real (kind=R8) :: equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)  ! IYS 29.09.2017 added total number of neutrals
+     *     nasum(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)     ! IYS 29.09.2017 added total number of neutrals
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
 c-----------------------------------------------------------------------
 c*** Local variables of general use
@@ -330,9 +329,9 @@ c*** New file
 
 c Create a format string for the column headers
         if (nfl_tmp.gt.0) then
-          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,5x,',
+          write(hlp_frm,'(a,i3,a,i3,a,i3,a)') '(a1,6x,a4,4x,',
      ,             nr_tmp*nrg_tmp,'(4x,a8,i2.2),',
-     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),',
+     ,             ns_tmp*nsp_tmp,'(4x,a8,a2),1x,',
      ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
 #ifdef DBG
 c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
@@ -353,7 +352,7 @@ c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
      +   nr_tmp*nrg_tmp + ns_tmp*nsp_tmp + na_tmp*nrg_tmp*nsp_tmp,
-     +  '(2x,e12.4))'
+     +  '(2x,e12.4e3))'
       end if
 #ifdef DBG
       print *,'hlp_frm:'       !###

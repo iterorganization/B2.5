@@ -3446,7 +3446,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied.
+					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied. In addition, viscosity will be turned off in the affected boundary cells.
 				</description>
 			</switch>
 			<switch>
@@ -4364,6 +4364,7 @@
 				<description>
 					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2.5 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
 					Cannot be used in conjunction with 'eirene_ionising_core'.
+					Should also not be used if Eirene is run in time-dependent mode.
 				</description>
 			</switch>
 			<switch>
@@ -4379,7 +4380,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed over nhist calls. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4387,7 +4388,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4395,7 +4396,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4880,7 +4881,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa). Must be greater than 1.0 to have an effect.
+					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity). Must be greater than 1.0 to have an effect.
 					If b2txcx_increase_transp_coefs.gt.1.0, b2trno_set_chcb_0 will be assigned to 1.
 				</description>
 			</switch>
@@ -4889,7 +4890,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If set_chcb_0.eq.1, sets radial components of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa) equals to zero on not field-aligned boundary faces (as defined by b2us_prep_Qalfmin). Also decreases the same radial components by a b2txcx_increase_transp_coefs factor on not field-aligned faces between two neighbouring boundary cells. Always on if b2txcx_increase_transp_coefs.gt.1.0.
+					If set_chcb_0.eq.1, sets radial components of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity) equals to zero on not field-aligned boundary faces (as defined by b2us_prep_Qalfmin). Also decreases the same radial components by a b2txcx_increase_transp_coefs factor on not field-aligned faces between two neighbouring boundary cells. Always on if b2txcx_increase_transp_coefs.gt.1.0.
 				</description>
 			</switch>
 			<switch>
@@ -5121,8 +5122,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
-					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
+					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated.
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
 					The scheme is meant to be used in time-dependent mode  (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -5134,7 +5135,7 @@
 				<description>
 					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
 					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup. 
+					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup.
 					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -6081,10 +6082,17 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2optim_reset_iter</name>
+				<name>b2optim_reset_drift_iter</name>
 				<default>2</default>
 				<description>
-					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_iter iterations.
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in b2mndr_ntim/b2optim_reset_drift_iter iterations.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_param_iter</name>
+				<default>1</default>
+				<description>
+					If .gt. 1, the values of the parameters from the new optimization step will be gradually changed so that they will take b2mndr_ntim/b2optim_reset_param_iter to change from their previous to their new value.
 				</description>
 			</switch>
 		</category>

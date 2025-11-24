@@ -352,7 +352,7 @@ c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
      +   nr_tmp*nrg_tmp + ns_tmp*nsp_tmp + na_tmp*nrg_tmp*nsp_tmp,
-     +  '(2x,e12.4))'
+     +  '(2x,e12.4e3))'
       end if
 #ifdef DBG
       print *,'hlp_frm:'       !###

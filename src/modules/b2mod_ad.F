@@ -63,6 +63,8 @@
      & in_size_of_table = 200000
       integer, save :: icase_sifr = 0
       integer, save :: nnucl_tral = 0
+      integer, save :: sources_inputfile = 0
+      integer, save :: diagno_srsm = 0
 
 ! some variables for chord_find
       integer lngcov, lngind
@@ -84,6 +86,10 @@
       data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
      &  '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))',
      &  '(1p,9(1x,e13.5e3))', '(1p,10(1x,e12.4e3))'/
+
+      character, save :: fmtwuin(0:6)*32
+      data fmtwuin /'(8(1x,i15))', '(10(1x,i12))', '(12(1x,i10))',
+     &  '(14(1x,i8))', '(16(1x,i7))', '(18(1x,i6))', '(22(1x,i5))'/
 
 ! ncall variables from transport routines
       integer, save :: ncall_b2tcpa = 0, ncall_b2tfcc = 0,
@@ -115,9 +121,12 @@
      & ncall_b2usco = 0, ncall_b2usht = 0, ncall_b2usmo = 0,
      & ncall_b2uspo = 0,
 ! ncall variables from other routines
-     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
+     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0,
+     & ncall_b2mwit = 0
 
       integer, save :: gradient_iterations = 0, primal_iterations = 0
       real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8
+
+      logical, save :: firstgmid = .true.
 
       end module b2mod_ad

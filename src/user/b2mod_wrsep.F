@@ -177,8 +177,8 @@ c
 c
 c*** Compute the data
 c
-      call b2xzef(mpg%nCv,ns,state%rt%rz2,state%pl%na,state%dv%ne,
-     .  zeff, state_ext)
+      call b2xzef(mpg%nCv, ns, state%rt%rz2, state%pl%na,
+     .  state%dv%ne, zeff, state_ext)
       do ic=1,2
        if (ic.eq.2.and.geometryType.ne.GEOMETRY_CDN) cycle
        if (ic.eq.1) then
@@ -548,7 +548,7 @@ c*** New file
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
      ,   '(a1,6x,a4,4x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),1x,',
+     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),2x,',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
@@ -572,7 +572,7 @@ c>>>
 
       end if
       write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
-     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4))'
+     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4e3))'
 
       allocate(equs_tmp(nspecies,nspc_tmp))
       allocate(nisp_tmp(nspecies))

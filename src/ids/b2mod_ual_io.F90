@@ -261,6 +261,21 @@ module b2mod_ual_io
      & , only : radiation_identifier
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+   use al_midplane_identifier &        ! IGNORE
+     & , only : set_midplane_identifier => set_identifier, &
+     &          get_midplane_name => get_name
+    use al_neutrals_identifier &       ! IGNORE
+     & , only : set_neutral_type_identifier => set_identifier
+    use al_materials_identifier &      ! IGNORE
+     & , only : set_materials_identifier => set_identifier
+    use al_radiation_identifier &      ! IGNORE
+     & , only : set_radiation_identifier => set_identifier
+    use al_edge_source_identifier &    ! IGNORE
+     & , only : set_edge_source_identifier => set_identifier
+    use al_plasma_source_identifier &  ! IGNORE
+     & , only : set_plasma_source_identifier => set_identifier
+#endif
 #endif
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
@@ -987,13 +1002,18 @@ contains
         end if
         allocate( radiation%process(n_process) )
         do j = 1, n_process
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          if (j.eq.2) cycle ! Now taken care of by set_identifier API
+#endif
           allocate( radiation%process(j)%identifier%name(1) )
           allocate( radiation%process(j)%identifier%description(1) )
         end do
         radiation%process(1)%identifier%index = 2
         radiation%process(1)%identifier%name = 'line_radiation'
         radiation%process(1)%identifier%description = 'Line and rec. rad. from B2.5 species'
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        call set_radiation_identifier( radiation%process(2)%identifier, 'bremsstrahlung' )
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         radiation%process(2)%identifier%index = &
           &  radiation_identifier%bremsstrahlung
         radiation%process(2)%identifier%name = &
@@ -1015,6 +1035,7 @@ contains
         end if
 
         !! Allocate ggd for number of different time steps
+        allocate( edge_profiles%ggd( num_time_slices ) )
         allocate( wall%description_ggd(1) )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         allocate( edge_profiles%grid_ggd( num_time_slices ) )
@@ -1025,18 +1046,46 @@ contains
 #endif
         allocate( wall%description_ggd(1)%grid_ggd( num_time_slices ) )
 #endif
-        allocate( edge_profiles%ggd( num_time_slices ) )
         allocate( edge_transport%model(1)%ggd( num_time_slices ) )
         allocate( wall%description_ggd(1)%ggd( num_time_slices ) )
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
 #if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION < 31 )
-          allocate( edge_sources%source(is)%name(1) )
-          allocate( edge_sources%source(is)%description(1) )
+          allocate( edge_sources%source(is)%identifier%name(1) )
+          allocate( edge_sources%source(is)%identifier%description(1) )
 #endif
         end do
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        !! Total sources
+        call set_edge_source_identifier( edge_sources%source(1)%identifier, "Total" )
+        !! Background sources
+        call set_edge_source_identifier( edge_sources%source(2)%identifier, "Background" )
+        !! Prescribed sources
+        call set_edge_source_identifier( edge_sources%source(3)%identifier, "Prescribed" )
+        !! Time derivative
+        call set_edge_source_identifier( edge_sources%source(4)%identifier, "Time derivative" )
+        !! Atomic ionization
+        call set_edge_source_identifier( edge_sources%source(5)%identifier, "Atomic ionization" )
+        !! Molecular ionization
+        call set_edge_source_identifier( edge_sources%source(6)%identifier, "Molecular ionization" )
+        !! Ionization
+        call set_edge_source_identifier( edge_sources%source(7)%identifier, "Ionization" )
+        !! Recombination
+        call set_edge_source_identifier( edge_sources%source(8)%identifier, "Recombination" )
+        !! Charge exchange
+        call set_edge_source_identifier( edge_sources%source(9)%identifier, "Charge exchange" )
+        !! Collisional equipartition
+        call set_edge_source_identifier( edge_sources%source(10)%identifier, "Equipartition" )
+        !! Ohmic
+        call set_edge_source_identifier( edge_sources%source(11)%identifier, "Ohmic" )
+        !! Radiation
+        call set_edge_source_identifier( edge_sources%source(12)%identifier, "Radiation" )
+#ifdef B25_EIRENE
+        !! Neutrals
+        call set_edge_source_identifier( edge_sources%source(13)%identifier, "Neutrals" )
+#endif
+#elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
         call write_source_identifier( &
           &  edge_sources%source(1)%identifier, edge_source_identifier%total )
@@ -6762,7 +6811,10 @@ contains
         allocate( batch_sources%source(1) )
         allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
 #ifdef B25_EIRENE
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        !! Neutrals
+        call set_edge_source_identifier( batch_sources%source(1)%identifier, "Neutrals" )
+#elif ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
         call write_source_identifier( &
           &  batch_sources%source(1)%identifier, edge_source_identifier%neutrals )
@@ -7702,7 +7754,7 @@ contains
     return
     end subroutine write_model_identifier
 
-#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+#if ( ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 30 ) || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 ) )
     subroutine write_source_identifier( source_id, id_index )
     implicit none
     type(ids_identifier) :: source_id
@@ -8359,13 +8411,17 @@ contains
       allocate( neutral_type%description(1) )
       neutral_type%description = "Kinetic neutral atoms from Eirene"
     else
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+      call set_neutral_type_identifier( neutral_type, "Thermal")
+#elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       allocate( neutral_type%name(1) )
       allocate( neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       neutral_type%index = neutrals_identifier%thermal
       neutral_type%name = neutrals_identifier%name( neutrals_identifier%thermal )
       neutral_type%description = neutrals_identifier%description( neutrals_identifier%thermal )
 #else
+      allocate( neutral_type%name(1) )
+      allocate( neutral_type%description(1) )
       neutral_type%index = 2
       neutral_type%name = "Thermal"
       neutral_type%description = "Fluid neutral species from B2.5"
@@ -9602,6 +9658,9 @@ contains
     type(ids_identifier_static) :: midplane
     integer, intent(in) :: midplane_id
 
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    call set_midplane_identifier( midplane, get_midplane_name(midplane_id) )
+#else
     midplane%index = midplane_id
     allocate( midplane%name(1) )
     allocate( midplane%description(1) )
@@ -9624,6 +9683,7 @@ contains
       midplane%description = &
          &  'Location specified by GGD outer midplane grid subset'
     end select
+#endif
 #endif
     return
 

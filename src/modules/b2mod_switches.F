@@ -608,8 +608,9 @@ c Feedback
 
 c Optimization
       integer :: b2optim_save_states
-      integer :: b2optim_reset_iter
+      integer :: b2optim_reset_drift_iter
       real (kind=R8) :: b2optim_reset_drift
+      integer :: b2optim_reset_param_iter
 
       end type switches
 
@@ -1028,6 +1029,8 @@ c eirene coupling
       s % neutral_sources_rescale = 1.0_R8
 
 c k-enstrophy model
+      s % transport_keps = 0
+      s % solve_keps = 0
       s % keps_local = 1
       s % keps_iout = 0
       s % keps_cd = 0.3_R8
@@ -1255,8 +1258,9 @@ c b2nppo
 
 c Optimization
       s % b2optim_save_states = 0
-      s % b2optim_reset_iter = 2
+      s % b2optim_reset_drift_iter = 2
       s % b2optim_reset_drift = 0.4_R8
+      s % b2optim_reset_param_iter = 1
 
       return
       end subroutine set_defaults_switches
@@ -1687,6 +1691,8 @@ c Eirene coupling
      &                s % neutral_sources_rescale)
 
 c k-enstrophy model
+      call ipgeti ('b2mndr_solve_keps',s % solve_keps)
+      call ipgeti ('b2tqna_transport_keps', s % transport_keps)
       call ipgetr ('b2tqna_keps_cd', s % keps_cd)
       call ipgetr ('b2tqna_keps_visc', s % keps_visc)
       call ipgetr ('b2tqna_keps_dkt', s % keps_dkt)
@@ -2272,8 +2278,11 @@ c b2nppo
 
 c Optimization
       call ipgeti ('b2optim_save_states', s % b2optim_save_states)
-      call ipgeti ('b2optim_reset_iter', s % b2optim_reset_iter)
+      call ipgeti ('b2optim_reset_drift_iter',
+     & s % b2optim_reset_drift_iter)
       call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
+      call ipgeti ('b2optim_reset_param_iter',
+     & s % b2optim_reset_param_iter)
 
       return
       end subroutine read_switches
@@ -2845,11 +2854,13 @@ c zhdanov
 c Optimization
       call xertst (s%b2optim_save_states.ge.0,
      &  'faulty parameter b2optim_save_states')
-      call xertst (s%b2optim_reset_iter.gt.0,
-     &  'faulty parameter b2optim_reset_iter')
+      call xertst (s%b2optim_reset_drift_iter.gt.0,
+     &  'faulty parameter b2optim_reset_drift_iter')
       call xertst (s%b2optim_reset_drift.gt.0.0 .and.
      &   s%b2optim_reset_drift.le.1.0_R8,
      &  'faulty parameter b2optim_reset_drift')
+      call xertst (s%b2optim_reset_param_iter.gt.0,
+     &  'faulty parameter b2optim_reset_param_iter')
 
       return
       end subroutine check_values_switches

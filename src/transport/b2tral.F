@@ -21,7 +21,7 @@
       use b2mod_input_profile
      & , only : alloc_input_profile
       use b2mod_ad
-     & , only : b2news_solving, ncall_b2tral, nnucl_tral
+     & , only : b2news_solving, ncall_b2tral
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -39,26 +39,26 @@
      &          transport_ip_time_mod
       use b2mod_zhfrtf
      & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, rho_a_rel,
-     &          gavm_uc, z_to_m1_ast
+     &          gavm_uc, z_to_m1_ast, gtalc
       use b2mod_b2zhco
      & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_tb, c_r_tb_nofl,
-     &          c_r_w, tf_ton_mat
+     &          c_r_w, tf_ton_mat, zh_tf_toff
       use b2mod_b2mrel
      & , only : s2nucl, amnucl, n2, n3, n4, n5, n6, n8, n9, n10, n11,
      &          n12, n13, n14, n15, n16, mu, mum, rmu, rmd2, mdm,
      &          amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf, n6_mdf,
      &          n8_mdf, n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf,
      &          n14_mdf, n15_mdf, n16_mdf, mu_mdf, mum_mdf, rmu_mdf,
-     &          rmd2_mdf, mdm_mdf
+     &          rmd2_mdf, mdm_mdf, znnucl
       use b2mod_ad
-     & , only : my_out_folder,
+     & , only : my_out_folder, nnucl_tral,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
      &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl,
-     &          ncall_b2ttia
+     &          ncall_b2ttia, ncall_b2trzh
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #endif
@@ -114,7 +114,6 @@
 *   ..local variables
       integer iFc, is, is0, iz, inucl
       character(3) chns, chns0                                          !srv 17.06.08
-      integer, save :: zmaxmax                                          !som 09.02.21
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
@@ -187,14 +186,9 @@
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..compute Zhdanov closure coefficients
       if (switch%Zhdanov_closure.eq.1) then                             !som 09.02.21
-        if (ncall_b2tral.eq.0) then
-          call b2trnu (ns, nnucl_tral, zmaxmax)
-          call xertst (nnucl_tral.eq.nspecies,
-     &     'Error while building isonuclear sequences!')
-        endif
         call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, dv%ne,
      &    dv%lnlam)                                                     !srv 01.07.09  20.09.11
-        call b2trzh (nCv, nFc, nVx, ns, zmaxmax, switch,
+        call b2trzh (nCv, nFc, nVx, ns, switch,
      &    geo, mpg, pl, dv, co,
      &    co_ns%hci_al_ast, co%hci_a,
      &    chci0_nofl, chci0_fl, chci0_luc,

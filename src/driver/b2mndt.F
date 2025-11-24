@@ -40,16 +40,20 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
      &          nkind_data, poloidal_scaling, transport_ip_filename,
-     &          nscale, transport_ip_time_switch, transport_ip_time_mod
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod,
+     &          sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata, nxx, nkind_source
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
      &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
-     &          b2divua, b2exbe
+     &          b2divua, b2exbe, rcxnareg, rcxhireg, rcxmoreg
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_zhfrtf
@@ -58,13 +62,15 @@
      &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out 
       use b2mod_b2zhco
      & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa, c_r_tb,
-     &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact
+     &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact,
+     &          zh_tf_toff
       use b2mod_b2mrel
      & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
      &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
-     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
-     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
-     &          mdm_mdf
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf,
+     &          n6_mdf, n8_mdf, n9_mdf, n10_mdf, n11_mdf, n12_mdf,
+     &          n13_mdf, n14_mdf, n15_mdf, n16_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf, mu, mu_mdf, rmd2_mdf, znnucl
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -411,6 +417,16 @@ ctmp.dpc
 *      ..basic iterative step
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
+            !fc: if using BDF2, the first iteration must use IE to start-up the scheme
+            if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
+              switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+              ts_factor=1.0_R8
+              if (switch%b2mndt_startup.eq.2) then
+                switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+                ts_factor=2.0_R8
+              endif
+              flag_startup=1 !fc: startup done
+            endif
             if (switch%b2mndt_style.eq.1) then
 
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
@@ -419,32 +435,23 @@ ctmp.dpc
 
             elseif (switch%b2mndt_style.eq.2) then
 
-              !fc: if using BDF2, the first iteration must use IE to start-up the scheme
-              if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
-                switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
-                ts_factor=1.0_R8
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
-                  ts_factor=2.0_R8
-                endif
-                flag_startup=1 !fc: startup done
-              endif
-
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
 
-              if (flag_startup.eq.1) then
-                switch%b2mndt_bdf=2 !fc: if start-up done, switch back to BDF2 time-stepping scheme
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=1 ! turn off CKN scheme after startup
-                endif
-                ts_factor = 3.0_R8/2.0_R8
-              endif
-
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
+            
+            !fc: if BDF2 startup done, switch back to BDF2 time-stepping scheme
+            if (flag_startup.eq.1) then
+                switch%b2mndt_bdf=2
+                if (switch%b2mndt_startup.eq.2) then
+                  switch%b2mndt_ckn=1
+                endif
+                ts_factor = 3.0_R8/2.0_R8
+            endif
+
             flush(6)
 *      ..re-compute ne, ne2, ni
             call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
