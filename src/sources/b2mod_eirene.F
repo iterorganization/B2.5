@@ -2567,8 +2567,8 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
 !$OMP DO COLLAPSE(3)
 #endif
       do gs_i3=1,gs_smo_d(3,3)
-        do gs_i2=0,gs_smo_d(3,2)
-          do gs_i1=0,gs_smo_d(3,1)
+        do gs_i2=1,gs_smo_d(3,2)
+          do gs_i1=1,gs_smo_d(3,1)
             smo_av_mipl(gs_i1,gs_i2,gs_i3) =
      &       smo_mipl(gs_i1,gs_i2,gs_i3)
           end do
@@ -2582,8 +2582,8 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
 !$OMP DO COLLAPSE(3)
 #endif
       do gs_i3=1,gs_smo_d(4,3)
-        do gs_i2=0,gs_smo_d(4,2)
-          do gs_i1=0,gs_smo_d(4,1)
+        do gs_i2=1,gs_smo_d(4,2)
+          do gs_i1=1,gs_smo_d(4,1)
             smo_av_cppv(gs_i1,gs_i2,gs_i3) =
      &       smo_cppv(gs_i1,gs_i2,gs_i3)
           end do
