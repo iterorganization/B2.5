@@ -5026,6 +5026,7 @@ c!###}
       allocate(wldsptm_res_s(nmol,size(wldsptm_res,2)))
       allocate(wlpump_s(size(wlpump,1),size(wlpump,2)))
       allocate(wlpump_res_s(size(wlpump_res,1),size(wlpump_res,2)))
+#ifdef B25_EIRENE
       allocate(pdena_s(natm,ntri-1))
       allocate(pdenm_s(nmol,ntri-1))
       allocate(pdeni_s(nion,ntri-1))
@@ -5041,6 +5042,7 @@ c!###}
       allocate(vzdena_s(natm,ntri-1))
       allocate(vzdenm_s(nmol,ntri-1))
       allocate(vzdeni_s(nion,ntri-1))
+#endif
       call clear_sum_arrays(write_eirene_sources)
       return
       end subroutine alloc_sum_arrays
@@ -5131,6 +5133,7 @@ c!###}
       deallocate(wldsptm_res_s)
       deallocate(wlpump_s)
       deallocate(wlpump_res_s)
+#ifdef B25_EIRENE
       deallocate(pdena_s)
       deallocate(pdenm_s)
       deallocate(pdeni_s)
@@ -5146,6 +5149,7 @@ c!###}
       deallocate(vzdena_s)
       deallocate(vzdenm_s)
       deallocate(vzdeni_s)
+#endif
       return
       end subroutine dealloc_sum_arrays
 
@@ -5238,6 +5242,7 @@ c!###}
       wldsptm_res_s = wldsptm_res_s + wldsptm_res
       wlpump_s = wlpump_s + wlpump
       wlpump_res_s = wlpump_res_s + wlpump_res
+#ifdef B25_EIRENE
       pdena_s = pdena_s + pdena
       pdenm_s = pdenm_s + pdenm
       pdeni_s = pdeni_s + pdeni
@@ -5253,6 +5258,7 @@ c!###}
       vzdena_s = vzdena_s + vzdena
       vzdenm_s = vzdenm_s + vzdenm
       vzdeni_s = vzdeni_s + vzdeni
+#endif
 
       return
       end subroutine cumulate_source_arrays
@@ -5348,6 +5354,7 @@ c!###}
       wldsptm_res = wldsptm_res_s/dble(n_avg_repeat)
       wlpump = wlpump_s/dble(n_avg_repeat)
       wlpump_res = wlpump_res_s/dble(n_avg_repeat)
+#ifdef B25_EIRENE
       pdena = pdena_s/dble(n_avg_repeat)
       pdenm = pdenm_s/dble(n_avg_repeat)
       pdeni = pdeni_s/dble(n_avg_repeat)
@@ -5363,6 +5370,7 @@ c!###}
       vzdena = vzdena_s/dble(n_avg_repeat)
       vzdenm = vzdenm_s/dble(n_avg_repeat)
       vzdeni = vzdeni_s/dble(n_avg_repeat)
+#endif
       return
       end subroutine calc_average_source_arrays
 
@@ -5446,6 +5454,7 @@ c!###}
       wldsptm_res_s = 0.0_R8
       wlpump_s = 0.0_R8
       wlpump_res_s = 0.0_R8
+#ifdef B25_EIRENE
       pdena_s = 0.0_R8
       pdenm_s = 0.0_R8
       pdeni_s = 0.0_R8
@@ -5461,6 +5470,7 @@ c!###}
       vzdena_s = 0.0_R8
       vzdenm_s = 0.0_R8
       vzdeni_s = 0.0_R8
+#endif
       
       return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
