@@ -296,11 +296,14 @@
         call ipgeti ('b2tral_Zhdanov_nc_min', Zhdanov_nc_min)
         Zhdanov_nc_spec = nspecies
         call ipgeti ('b2tral_Zhdanov_nc_spec', Zhdanov_nc_spec)
-        if (Zhdanov_nc_spec .gt. nspecies)
-     .    call xerrab('Zhdanov_nc_spec .gt. nspecies!')
-        if (Zhdanov_nc_min .gt. 6)
-     .    write(*,'(2a)') 'Warning: It is not recommended to set',
-     .      ' Zhdanov_nc_min .le. 6!'
+        call xertst (nspecies.ge.Zhdanov_nc_spec,
+     .               'Zhdanov_nc_spec.gt.nspecies !')
+        if (Zhdanov_nc_min.lt.6) then
+          write(0,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+          write(6,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+        endif
         if (.not.main_lightest .and. style.eq.2 .and.
      .      Zhdanov_closure.eq.0) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
@@ -512,7 +515,7 @@
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue)
 !$OMP& SHARED(zetap, zetae, gti, gte)
-!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff, z2n_xy)
 !$OMP& SHARED(rz2, ne_ext, ro)
 !$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
@@ -558,9 +561,11 @@
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
 !$OMP& SHARED(Zhdanov_closure, Zhdanov_test)
 !$OMP& SHARED(Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(Zhdanov_nc, Zhdanov_nc_min, Zhdanov_nc_spec)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
+!$OMP& SHARED(c_hTA_an_fl_save, c_R_TA_an_save)
 !$OMP& SHARED(last_solve_5)
 !$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
 !$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
