@@ -51,6 +51,7 @@
       use b2mod_b2plot
      & , only : nx_b2plot => nx, ny_b2plot => ny, ns_b2plot => ns,
      &          nxtl_b2plot => nxtl, nxtr_b2plot => nxtr
+      use eirmod_cestim
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -58,7 +59,7 @@
       implicit none
 
       integer, save :: ank_mods = 0, use_recyceir = 1
-      integer, save :: nhist = 1, nrelax = 0
+      integer, save :: nhist = 1, nrelax = 0, n_avg_repeat = 1
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:,:), smo_av(:,:,:,:), sei_av(:,:,:), see_av(:,:,:)
 
@@ -83,14 +84,39 @@
      &  see_h(:,:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:),
      &  pfluxm_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
+     &  dab2_h(:,:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:,:),
      &  smo_s(:,:,:,:),
      &  see_s(:,:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:),
      &  pfluxm_s(:,:,:,:), rfluxm_s(:,:,:,:),
+     &  pefluxa_s(:,:,:,:), refluxa_s(:,:,:,:),
+     &  pefluxm_s(:,:,:,:), refluxm_s(:,:,:,:),
+     &  dab2_s(:,:,:,:), dmb2_s(:,:,:,:), dib2_s(:,:,:,:),
+     &  tab2_s(:,:,:,:), tmb2_s(:,:,:,:), tib2_s(:,:,:,:),
+     &  emiss_s(:,:,:,:), emissmol_s(:,:,:,:),
+     &  srcml_s(:,:,:,:), edissml_s(:,:,:,:),
+     &  wldnek_s(:,:), wldnep_s(:,:),
+     &  wldna_s(:,:,:), ewlda_s(:,:,:),
+     &  wldnm_s(:,:,:), ewldm_s(:,:,:),
+     &  wldra_s(:,:,:), wldrm_s(:,:,:),
+     &  wldpp_s(:,:,:), wldpa_s(:,:,:),
+     &  wldpm_s(:,:,:), wldpeb_s(:,:),
+     &  wldspt_s(:,:), wldspta_s(:,:,:), wldsptm_s(:,:,:),
+     &  eneutrad_s(:,:,:,:), emolrad_s(:,:,:,:), eionrad_s(:,:,:,:),
+     &  wlabsrp_s(:,:), wldna_res_s(:,:), wldnm_res_s(:,:),
+     &  ewlda_res_s(:,:), ewldm_res_s(:,:), ewldt_res_s(:),
+     &  ewldea_res_s(:,:), ewldem_res_s(:,:), ewldrp_res_s(:),
+     &  ewldmr_res_s(:,:),
+     &  wldspt_res_s(:), wldspta_res_s(:,:), wldsptm_res_s(:,:),
+     &  wlpump_s(:,:), wlpump_res_s(:,:),
+     &  pdena_s(:,:), pdenm_s(:,:), pdeni_s(:,:),
+     &  edena_s(:,:), edenm_s(:,:), edeni_s(:,:),
+     &  vxdena_s(:,:), vxdenm_s(:,:), vxdeni_s(:,:),
+     &  vydena_s(:,:), vydenm_s(:,:), vydeni_s(:,:),
+     &  vzdena_s(:,:), vzdenm_s(:,:), vzdeni_s(:,:)
 ! _s is an abbreviation from 'sum'
-     &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      &  sna_h_paat(:,:,:,:,:), sna_h_pmat(:,:,:,:,:),
      &  sna_h_piat(:,:,:,:,:), sna_h_paml(:,:,:,:,:),
@@ -221,12 +247,12 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
-      character*256 filename
+      character*256 filename, filename15
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical ex, last, found, na_feedback_on
+      logical ex, ex15, last, found, na_feedback_on
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, save_f31,
@@ -457,22 +483,30 @@ csw 26mar2013
         call ipgeti ('eirene_iscltst', iscltst)
 
 csw 26feb2013
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
         call ipgeti ('eirene_neutr_avg', neutr_avg)
         call ipgeti ('b2stbr_eir_src_nhist', nhist)
         call ipgeti ('eirene_underrelax', nrelax)
-        call xertst (.not.(
-     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
-     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-        if(nhist.gt.1) call alloc_hist_arrays(nhist)
-        if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
+        call ipgeti ('eirene_averaging_multiple_calls', n_avg_repeat)
+        call xertst(.not.(
+     .    (neutr_avg.gt.1 .and.
+     .      (nhist.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nhist.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nrelax.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (n_avg_repeat.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.nrelax.gt.1)) ),
+     .   ' Cannot have simultaneous multiple Eirene averaging schemes!')
+        if(nhist.gt.1)
+     .    call alloc_hist_arrays(nhist,write_eirene_sources)
+        if(nrelax.gt.1 .or. nhist.gt.1 .or. n_avg_repeat.gt.1) 
+     .    call alloc_sum_arrays(write_eirene_sources)
         call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
         call ipgeti ('eirene_stab_corr', stab_corr)
-        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
         if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
@@ -869,18 +903,69 @@ c          end if !}
 
       last=.false.
 
-cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) HERE !!!!!!!!!!!!!!!!!!!!!!!!!!
       eircount=0
       if(main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 
 csw 25jan2011 LTIME=.false. in eirsrt call
-        my_ltime=.false.
 
-        filename=fort_lc//'44'
-        call find_file(filename,ex)
-        call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *   b2brem,b2rad,b2qie(0),b2vdp,
-     1   eirene_step_cpu)
+        write(*,*) 'Main Eirene call'
+c       Store fort.15 existing at the beginning of the time step,
+c       if using Eirene in time-dependent mode, to a fort.15.init file,
+c       to avoid being overwritten by the false multiple Eirene time steps
+c       internal to a B2.5 time step
+        filename15=fort_lc//'15'
+        call find_file(filename15,ex15)
+        if (ex15) then
+          call system('cp '//trim(filename15)//' '//trim(filename15)
+     .          //'.init')
+        endif
+        if(n_avg_repeat.gt.1) then
+          call clear_sum_arrays(write_eirene_sources)
+        endif
+c       Main cycle: repeat Eirene calls n_avg_repeat times (default = 1)
+        do while (eircount.le.(n_avg_repeat-1))
+          if (eircount.ge.1) then
+            write(*,*) 'Using Eirene source averaging:'
+            write(*,*) 'repeated call n. ', eircount+1
+            call copy_background(nx,ny,ns,BoRiS)
+          endif
+          my_ltime=.false.
+          filename=fort_lc//'44'    
+          call find_file(filename,ex)
+c         Start every repeated Eirene call (if using time-dependent mode)
+c         from the same fort.15 stored at the beginning of the cycle,
+c         calculated at the end of the previous real time step
+          filename15=fort_lc//'15'//'.init'
+          call find_file(filename15,ex15)
+          if (ex15) then
+            call system('cp '//trim(filename15)//' '//trim(fort_lc)
+     .          //'15')
+          endif
+c         SINGLE EIRENE CALL
+          call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *       b2brem,b2rad,b2qie(0),b2vdp,
+     1       eirene_step_cpu)
+c         Cumulate source terms from past and current Eirene calls
+          if(n_avg_repeat.gt.1) then
+           call cumulate_source_arrays(write_eirene_sources)
+          endif
+          eircount=eircount+1
+        enddo
+c       Delete the stored fort.15.init file, if Eirene is run in time-dependent mode,
+c       so to use the fort.15 file calculated at the last Eirene call for the next
+c       real Eirene time step
+        filename15=fort_lc//'15'//'.init'
+        call find_file(filename15,ex15)
+        if (ex15) then
+          call system('rm '//trim(filename15))
+        endif
+c       Calculate averaged source terms from all Eirene calls, if using repeated calls
+        if(n_avg_repeat.gt.1) then
+          call calc_average_source_arrays(n_avg_repeat,
+     *      write_eirene_sources)
+        endif
+
 #ifdef B25_EIRENE
         if(.not.ex) then
           if (ncall.eq.0.and.filedata(ntrc_uss)) then
@@ -906,18 +991,22 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           call map_ion_components
         end if
 #endif
-        eircount=1
-        if(ncall.eq.0.and.repeat_first_call.gt.0) then
-          do while (eircount.le.repeat_first_call)
-           call copy_background(nx,ny,ns,BoRiS)
+
+        if(n_avg_repeat.eq.1) then
+          eircount=1
+          if(ncall.eq.0.and.repeat_first_call.gt.0) then
+            do while (eircount.le.repeat_first_call)
+              call copy_background(nx,ny,ns,BoRiS)
 csw 25jan2011 LTIME=.false. in eirsrt call
-           my_ltime=.false.
-           call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *       b2brem,b2rad,b2qie(0),b2vdp,
-     1       eirene_step_cpu)
-           eircount=eircount+1
-          enddo
+              my_ltime=.false.
+              call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *          b2brem,b2rad,b2qie(0),b2vdp,
+     1         eirene_step_cpu)
+              eircount=eircount+1
+            enddo
+          endif
         endif
+
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
           call post_couple(nx,ny,ns,nstrai)
@@ -932,7 +1021,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
       elseif(mod(ncall,eirene_mod).ne.0) then !}{
         write(*,*) 'Skipping call to EIRENE because of mod condition'
       end if !}
-cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) ENDED !!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
@@ -4376,7 +4465,7 @@ csw 26feb2014
          deallocate(sei_av_eppl)
        endif
       endif
-      if(nhist.gt.1) call dealloc_sum_arrays
+      if(nhist.gt.1 .or. n_avg_repeat.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
       deallocate(feedback_strata)
       deallocate(hlp_pff,hlp_stra)
@@ -4620,7 +4709,7 @@ c!###}
       return
       end subroutine neutr_scl
 
-      subroutine alloc_hist_arrays(nhistd)      !IYS 28.03.12 {
+      subroutine alloc_hist_arrays(nhistd,write_eirene_sources)      !IYS 28.03.12 {
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
@@ -4630,13 +4719,10 @@ c!###}
 #endif
       implicit none
       integer nhistd
+      integer write_eirene_sources
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
-
-      integer, save :: write_eirene_sources = 0
-      external ipgeti
-      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
 ! to store the time history of sources from EIRENE
       allocate(sni_h(0:(size(sni,1)-1), 0:(size(sni,2)-1),
@@ -4712,7 +4798,7 @@ c!###}
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
       allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(dab2_h(0:ndxp,0:ndyp,natm,1,nhistd))
-      call clear_hist_arrays
+      call clear_hist_arrays(write_eirene_sources)
       return
       end subroutine alloc_hist_arrays
 
@@ -4760,12 +4846,10 @@ c!###}
       return
       end subroutine dealloc_hist_arrays
 
-      subroutine clear_hist_arrays                                !csw 24feb2014
+      subroutine clear_hist_arrays(write_eirene_sources)          !csw 24feb2014
       implicit none
 
-      integer, save :: write_eirene_sources = 0
-      external ipgeti
-      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+      integer write_eirene_sources
 
       sni_h = 0.0_R8
       smo_h = 0.0_R8
@@ -4808,7 +4892,7 @@ c!###}
       return
       end subroutine clear_hist_arrays                            !IYS 28.03.12 }
 
-      subroutine alloc_sum_arrays
+      subroutine alloc_sum_arrays(write_eirene_sources)
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
@@ -4821,9 +4905,7 @@ c!###}
 #include "COUPLE/KOPPLDIM.F"
 #endif
 
-      integer, save :: write_eirene_sources = 0
-      external ipgeti
-      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+      integer write_eirene_sources
 
       allocate(sni_s(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    size(sni,3), size(sni,4)))
@@ -4897,8 +4979,69 @@ c!###}
       allocate(pfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
       allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(pefluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(pefluxm_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(refluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(refluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
-      call clear_sum_arrays
+      allocate(dmb2_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(dib2_s(0:ndxp,0:ndyp,nion,1))
+      allocate(tab2_s(0:ndxp,0:ndyp,natm,1))
+      allocate(tmb2_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(tib2_s(0:ndxp,0:ndyp,nion,1))
+      allocate(emiss_s(0:ndxp,0:ndyp,1,1))
+      allocate(emissmol_s(0:ndxp,0:ndyp,1,1))
+      allocate(srcml_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(edissml_s(0:ndxp,0:ndyp,nmol,0:nstra+1))
+      allocate(wldnek_s(size(wldnek,1),0:nstra+1))
+      allocate(wldnep_s(size(wldnep,1),0:nstra+1))
+      allocate(wldna_s(size(wldna,1),natm,0:nstra+1))
+      allocate(ewlda_s(size(ewlda,1),natm,0:nstra+1))
+      allocate(wldnm_s(size(wldnm,1),nmol,0:nstra+1))
+      allocate(ewldm_s(size(ewldm,1),nmol,0:nstra+1))
+      allocate(wldra_s(size(wldra,1),natm,0:nstra+1))
+      allocate(wldrm_s(size(wldrm,1),nmol,0:nstra+1))
+      allocate(wldpp_s(size(wldpp,1),npls,0:nstra+1))
+      allocate(wldpa_s(size(wldpa,1),natm,0:nstra+1))
+      allocate(wldpm_s(size(wldpm,1),nmol,0:nstra+1))     
+      allocate(wldpeb_s(size(wldpeb,1),0:nstra+1))
+      allocate(wldspt_s(size(wldspt,1),0:nstra+1))
+      allocate(wldspta_s(size(wldspta,1),natm,0:nstra+1))
+      allocate(wldsptm_s(size(wldsptm,1),nmol,0:nstra+1))
+      allocate(eneutrad_s(0:ndxp,0:ndyp,natm,0:nstra+1))
+      allocate(emolrad_s(0:ndxp,0:ndyp,nmol,0:nstra+1))
+      allocate(eionrad_s(0:ndxp,0:ndyp,nion,0:nstra+1))
+      allocate(wlabsrp_s(size(wlabsrp,1),size(wlabsrp,2)))
+      allocate(wldna_res_s(natm,size(wldna_res,2)))
+      allocate(wldnm_res_s(nmol,size(wldnm_res,2)))
+      allocate(ewlda_res_s(natm,size(ewlda_res,2)))
+      allocate(ewldm_res_s(nmol,size(ewldm_res,2)))
+      allocate(ewldt_res_s(size(ewldt_res,1)))
+      allocate(ewldea_res_s(natm,size(ewldea_res,2)))
+      allocate(ewldem_res_s(nmol,size(ewldem_res,2)))
+      allocate(ewldrp_res_s(size(ewldrp_res,1)))
+      allocate(ewldmr_res_s(nmol,size(ewldmr_res,2)))
+      allocate(wldspt_res_s(size(wldspt_res,1)))
+      allocate(wldspta_res_s(natm,size(wldspta_res,2)))
+      allocate(wldsptm_res_s(nmol,size(wldsptm_res,2)))
+      allocate(wlpump_s(size(wlpump,1),size(wlpump,2)))
+      allocate(wlpump_res_s(size(wlpump_res,1),size(wlpump_res,2)))
+      allocate(pdena_s(natm,ntri-1))
+      allocate(pdenm_s(nmol,ntri-1))
+      allocate(pdeni_s(nion,ntri-1))
+      allocate(edena_s(natm,ntri-1))
+      allocate(edenm_s(nmol,ntri-1))
+      allocate(edeni_s(nion,ntri-1))
+      allocate(vxdena_s(natm,ntri-1))
+      allocate(vxdenm_s(nmol,ntri-1))
+      allocate(vxdeni_s(nion,ntri-1))
+      allocate(vydena_s(natm,ntri-1))
+      allocate(vydenm_s(nmol,ntri-1))
+      allocate(vydeni_s(nion,ntri-1))
+      allocate(vzdena_s(natm,ntri-1))
+      allocate(vzdenm_s(nmol,ntri-1))
+      allocate(vzdeni_s(nion,ntri-1))
+      call clear_sum_arrays(write_eirene_sources)
       return
       end subroutine alloc_sum_arrays
 
@@ -4941,16 +5084,292 @@ c!###}
       deallocate(pfluxm_s)
       deallocate(rfluxa_s)
       deallocate(rfluxm_s)
+      deallocate(pefluxa_s)
+      deallocate(pefluxm_s)
+      deallocate(refluxa_s)
+      deallocate(refluxm_s)
       deallocate(dab2_s)
+      deallocate(dmb2_s)
+      deallocate(dib2_s)
+      deallocate(tab2_s)
+      deallocate(tmb2_s)
+      deallocate(tib2_s)
+      deallocate(emiss_s)
+      deallocate(emissmol_s)
+      deallocate(srcml_s)
+      deallocate(edissml_s)
+      deallocate(wldnek_s)
+      deallocate(wldnep_s)
+      deallocate(wldna_s)
+      deallocate(ewlda_s)
+      deallocate(wldnm_s)
+      deallocate(ewldm_s)
+      deallocate(wldra_s)
+      deallocate(wldrm_s)
+      deallocate(wldpp_s)
+      deallocate(wldpa_s)
+      deallocate(wldpm_s)
+      deallocate(wldpeb_s)
+      deallocate(wldspt_s)
+      deallocate(wldspta_s)
+      deallocate(wldsptm_s)
+      deallocate(eneutrad_s)
+      deallocate(emolrad_s)
+      deallocate(eionrad_s)
+      deallocate(wlabsrp_s)
+      deallocate(wldna_res_s)
+      deallocate(wldnm_res_s)
+      deallocate(ewlda_res_s)
+      deallocate(ewldm_res_s)
+      deallocate(ewldt_res_s)
+      deallocate(ewldea_res_s)
+      deallocate(ewldem_res_s)
+      deallocate(ewldrp_res_s)
+      deallocate(ewldmr_res_s)
+      deallocate(wldspt_res_s)
+      deallocate(wldspta_res_s)
+      deallocate(wldsptm_res_s)
+      deallocate(wlpump_s)
+      deallocate(wlpump_res_s)
+      deallocate(pdena_s)
+      deallocate(pdenm_s)
+      deallocate(pdeni_s)
+      deallocate(edena_s)
+      deallocate(edenm_s)
+      deallocate(edeni_s)
+      deallocate(vxdena_s)
+      deallocate(vxdenm_s)
+      deallocate(vxdeni_s)
+      deallocate(vydena_s)
+      deallocate(vydenm_s)
+      deallocate(vydeni_s)
+      deallocate(vzdena_s)
+      deallocate(vzdenm_s)
+      deallocate(vzdeni_s)
       return
       end subroutine dealloc_sum_arrays
 
-      subroutine clear_sum_arrays                                !csw 24feb2014
+      subroutine cumulate_source_arrays(write_eirene_sources)
       implicit none
 
-      integer, save :: write_eirene_sources = 0
-      external ipgeti
-      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+      integer write_eirene_sources
+
+      sni_s = sni_s + sni
+      smo_s = smo_s + smo
+      see_s = see_s + see
+      sei_s = sei_s + sei
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        sne_s_pael = sne_s_pael + sne_pael
+        sne_s_pmel = sne_s_pmel + sne_pmel
+        sna_s_paat = sna_s_paat + sna_paat
+        sna_s_pmat = sna_s_pmat + sna_pmat
+        sna_s_piat = sna_s_piat + sna_piat
+        sna_s_paml = sna_s_paml + sna_paml
+        sna_s_pmml = sna_s_pmml + sna_pmml
+        sna_s_piml = sna_s_piml + sna_piml
+        sna_s_paio = sna_s_paio + sna_paio
+        sna_s_pmio = sna_s_pmio + sna_pmio
+        sna_s_piio = sna_s_piio + sna_piio
+        sni_s_papl = sni_s_papl + sni_papl
+        sni_s_pmpl = sni_s_pmpl + sni_pmpl
+        sni_s_pipl = sni_s_pipl + sni_pipl
+        sni_s_pppl = sni_s_pppl + sni_pppl
+        smo_s_mapl = smo_s_mapl + smo_mapl
+        smo_s_mmpl = smo_s_mmpl + smo_mmpl
+        smo_s_mipl = smo_s_mipl + smo_mipl
+        smo_s_mppl = smo_s_mppl + smo_mppl
+        see_s_eael = see_s_eael + see_eael
+        see_s_emel = see_s_emel + see_emel
+        see_s_eiel = see_s_eiel + see_eiel
+        see_s_epel = see_s_epel + see_epel
+        sei_s_eapl = sei_s_eapl + sei_eapl
+        sei_s_empl = sei_s_empl + sei_empl
+        sei_s_eipl = sei_s_eipl + sei_eipl
+        sei_s_eppl = sei_s_eppl + sei_eppl
+      endif
+      dab2_s = dab2_s + dab2
+      tab2_s = tab2_s + tab2
+      pfluxa_s = pfluxa_s + pfluxa
+      rfluxa_s = rfluxa_s + rfluxa
+      pefluxa_s = pefluxa_s + pefluxa
+      refluxa_s = refluxa_s + refluxa
+      dmb2_s = dmb2_s + dmb2 
+      tmb2_s = tmb2_s + tmb2
+      pfluxm_s = pfluxm_s + pfluxm
+      rfluxm_s = rfluxm_s + rfluxm
+      pefluxm_s = pefluxm_s + pefluxm
+      refluxm_s = refluxm_s + refluxm
+      dib2_s = dib2_s + dib2
+      tib2_s = tib2_s + tib2
+      emiss_s = emiss_s + emiss
+      emissmol_s = emissmol_s + emissmol
+      srcml_s = srcml_s + srcml
+      edissml_s = edissml_s + edissml
+      wldnek_s = wldnek_s + wldnek
+      wldnep_s = wldnep_s + wldnep
+      wldna_s = wldna_s + wldna
+      ewlda_s = ewlda_s + ewlda
+      wldnm_s = wldnm_s + wldnm
+      ewldm_s = ewldm_s + ewldm
+      wldra_s = wldra_s + wldra
+      wldrm_s = wldrm_s + wldrm
+      wldpp_s = wldpp_s + wldpp
+      wldpa_s = wldpa_s + wldpa
+      wldpm_s = wldpm_s + wldpm
+      wldpeb_s = wldpeb_s + wldpeb
+      wldspt_s = wldspt_s + wldspt
+      wldspta_s = wldspta_s + wldspta
+      wldsptm_s = wldsptm_s + wldsptm
+      eneutrad_s = eneutrad_s + eneutrad
+      emolrad_s = emolrad_s + emolrad
+      eionrad_s = eionrad_s + eionrad
+      wlabsrp_s = wlabsrp_s + wlabsrp
+      wldna_res_s = wldna_res_s + wldna_res
+      wldnm_res_s = wldnm_res_s + wldnm_res
+      ewlda_res_s = ewlda_res_s + ewlda_res
+      ewldm_res_s = ewldm_res_s + ewldm_res
+      ewldt_res_s = ewldt_res_s + ewldt_res
+      ewldea_res_s = ewldea_res_s + ewldea_res
+      ewldem_res_s = ewldem_res_s + ewldem_res
+      ewldrp_res_s = ewldrp_res_s + ewldrp_res
+      ewldmr_res_s = ewldmr_res_s + ewldmr_res
+      wldspt_res_s = wldspt_res_s + wldspt_res
+      wldspta_res_s = wldspta_res_s + wldspta_res
+      wldsptm_res_s = wldsptm_res_s + wldsptm_res
+      wlpump_s = wlpump_s + wlpump
+      wlpump_res_s = wlpump_res_s + wlpump_res
+      pdena_s = pdena_s + pdena
+      pdenm_s = pdenm_s + pdenm
+      pdeni_s = pdeni_s + pdeni
+      edena_s = edena_s + edena
+      edenm_s = edenm_s + edenm
+      edeni_s = edeni_s + edeni
+      vxdena_s = vxdena_s + vxdena
+      vxdenm_s = vxdenm_s + vxdenm
+      vxdeni_s = vxdeni_s + vxdeni
+      vydena_s = vydena_s + vydena
+      vydenm_s = vydenm_s + vydenm
+      vydeni_s = vydeni_s + vydeni
+      vzdena_s = vzdena_s + vzdena
+      vzdenm_s = vzdenm_s + vzdenm
+      vzdeni_s = vzdeni_s + vzdeni
+
+      return
+      end subroutine cumulate_source_arrays
+
+      subroutine calc_average_source_arrays
+     .  (n_avg_repeat,write_eirene_sources)
+
+      implicit none
+      integer n_avg_repeat
+      integer write_eirene_sources
+
+      sni = sni_s/dble(n_avg_repeat)
+      smo = smo_s/dble(n_avg_repeat)
+      see = see_s/dble(n_avg_repeat)
+      sei = sei_s/dble(n_avg_repeat)
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        sne_pael = sne_s_pael/dble(n_avg_repeat)
+        sne_pmel = sne_s_pmel/dble(n_avg_repeat)
+        sna_paat = sna_s_paat/dble(n_avg_repeat)
+        sna_pmat = sna_s_pmat/dble(n_avg_repeat)
+        sna_piat = sna_s_piat/dble(n_avg_repeat)
+        sna_paml = sna_s_paml/dble(n_avg_repeat)
+        sna_pmml = sna_s_pmml/dble(n_avg_repeat)
+        sna_piml = sna_s_piml/dble(n_avg_repeat)
+        sna_paio = sna_s_paio/dble(n_avg_repeat)
+        sna_pmio = sna_s_pmio/dble(n_avg_repeat)
+        sna_piio = sna_s_piio/dble(n_avg_repeat)
+        sni_papl = sni_s_papl/dble(n_avg_repeat)
+        sni_pmpl = sni_s_pmpl/dble(n_avg_repeat)
+        sni_pipl = sni_s_pipl/dble(n_avg_repeat)
+        sni_pppl = sni_s_pppl/dble(n_avg_repeat)
+        smo_mapl = smo_s_mapl/dble(n_avg_repeat)
+        smo_mmpl = smo_s_mmpl/dble(n_avg_repeat)
+        smo_mipl = smo_s_mipl/dble(n_avg_repeat)
+        smo_mppl = smo_s_mppl/dble(n_avg_repeat)
+        see_eael = see_s_eael/dble(n_avg_repeat)
+        see_emel = see_s_emel/dble(n_avg_repeat)
+        see_eiel = see_s_eiel/dble(n_avg_repeat)
+        see_epel = see_s_epel/dble(n_avg_repeat)
+        sei_eapl = sei_s_eapl/dble(n_avg_repeat)
+        sei_empl = sei_s_empl/dble(n_avg_repeat)
+        sei_eipl = sei_s_eipl/dble(n_avg_repeat)
+        sei_eppl = sei_s_eppl/dble(n_avg_repeat)
+      endif
+      dab2 = dab2_s/dble(n_avg_repeat)
+      tab2 = tab2_s/dble(n_avg_repeat)
+      pfluxa = pfluxa_s/dble(n_avg_repeat)
+      rfluxa = rfluxa_s/dble(n_avg_repeat)
+      pefluxa = pefluxa_s/dble(n_avg_repeat)
+      refluxa = refluxa_s/dble(n_avg_repeat)
+      dmb2 = dmb2_s/dble(n_avg_repeat)
+      tmb2 = tmb2_s/dble(n_avg_repeat)
+      pfluxm = pfluxm_s/dble(n_avg_repeat)
+      rfluxm = rfluxm_s/dble(n_avg_repeat)
+      pefluxm = pefluxm_s/dble(n_avg_repeat)
+      refluxm = refluxm_s/dble(n_avg_repeat)
+      dib2 = dib2_s/dble(n_avg_repeat)
+      tib2 = tib2_s/dble(n_avg_repeat)
+      emiss = emiss_s/dble(n_avg_repeat)
+      emissmol = emissmol_s/dble(n_avg_repeat)
+      srcml = srcml_s/dble(n_avg_repeat)
+      edissml = edissml_s/dble(n_avg_repeat)
+      wldnek = wldnek_s/dble(n_avg_repeat)
+      wldnep = wldnep_s/dble(n_avg_repeat)
+      wldna = wldna_s/dble(n_avg_repeat)
+      ewlda = ewlda_s/dble(n_avg_repeat)
+      wldnm = wldnm_s/dble(n_avg_repeat)
+      ewldm = ewldm_s/dble(n_avg_repeat)
+      wldra = wldra_s/dble(n_avg_repeat)
+      wldrm = wldrm_s/dble(n_avg_repeat)
+      wldpp = wldpp_s/dble(n_avg_repeat)
+      wldpa = wldpa_s/dble(n_avg_repeat)
+      wldpm = wldpm_s/dble(n_avg_repeat)
+      wldpeb = wldpeb_s/dble(n_avg_repeat)
+      wldspt = wldspt_s/dble(n_avg_repeat)
+      wldspta = wldspta_s/dble(n_avg_repeat)
+      wldsptm = wldsptm_s/dble(n_avg_repeat)
+      eneutrad = eneutrad_s/dble(n_avg_repeat)
+      emolrad = emolrad_s/dble(n_avg_repeat)
+      eionrad = eionrad_s/dble(n_avg_repeat)
+      wlabsrp = wlabsrp_s/dble(n_avg_repeat)
+      wldna_res = wldna_res_s/dble(n_avg_repeat)
+      wldnm_res = wldnm_res_s/dble(n_avg_repeat)
+      ewlda_res = ewlda_res_s/dble(n_avg_repeat)
+      ewldm_res = ewldm_res_s/dble(n_avg_repeat)
+      ewldt_res = ewldt_res_s/dble(n_avg_repeat)
+      ewldea_res = ewldea_res_s/dble(n_avg_repeat)
+      ewldem_res = ewldem_res_s/dble(n_avg_repeat)
+      ewldrp_res = ewldrp_res_s/dble(n_avg_repeat)
+      ewldmr_res = ewldmr_res_s/dble(n_avg_repeat)
+      wldspt_res = wldspt_res_s/dble(n_avg_repeat)
+      wldspta_res = wldspta_res_s/dble(n_avg_repeat)
+      wldsptm_res = wldsptm_res_s/dble(n_avg_repeat)
+      wlpump = wlpump_s/dble(n_avg_repeat)
+      wlpump_res = wlpump_res_s/dble(n_avg_repeat)
+      pdena = pdena_s/dble(n_avg_repeat)
+      pdenm = pdenm_s/dble(n_avg_repeat)
+      pdeni = pdeni_s/dble(n_avg_repeat)
+      edena = edena_s/dble(n_avg_repeat)
+      edenm = edenm_s/dble(n_avg_repeat)
+      edeni = edeni_s/dble(n_avg_repeat)
+      vxdena = vxdena_s/dble(n_avg_repeat)
+      vxdenm = vxdenm_s/dble(n_avg_repeat)
+      vxdeni = vxdeni_s/dble(n_avg_repeat)
+      vydena = vydena_s/dble(n_avg_repeat)
+      vydenm = vydenm_s/dble(n_avg_repeat)
+      vydeni = vydeni_s/dble(n_avg_repeat)
+      vzdena = vzdena_s/dble(n_avg_repeat)
+      vzdenm = vzdenm_s/dble(n_avg_repeat)
+      vzdeni = vzdeni_s/dble(n_avg_repeat)
+      return
+      end subroutine calc_average_source_arrays
+
+      subroutine clear_sum_arrays(write_eirene_sources)          !csw 24feb2014
+      implicit none
+
+      integer write_eirene_sources
 
       sni_s = 0.0_R8
       smo_s = 0.0_R8
@@ -4980,7 +5399,69 @@ c!###}
       pfluxm_s = 0.0_R8
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
+      pefluxa_s = 0.0_R8
+      pefluxm_s = 0.0_R8
+      refluxa_s = 0.0_R8
+      refluxm_s = 0.0_R8
       dab2_s = 0.0_R8
+      dmb2_s = 0.0_R8
+      dib2_s = 0.0_R8
+      tab2_s = 0.0_R8
+      tmb2_s = 0.0_R8
+      tib2_s = 0.0_R8
+      emiss_s = 0.0_R8
+      emissmol_s = 0.0_R8
+      srcml_s = 0.0_R8
+      edissml_s = 0.0_R8
+      wldnek_s = 0.0_R8
+      wldnep_s = 0.0_R8
+      wldna_s = 0.0_R8
+      ewlda_s = 0.0_R8
+      wldnm_s = 0.0_R8
+      ewldm_s = 0.0_R8
+      wldra_s = 0.0_R8
+      wldrm_s = 0.0_R8
+      wldpp_s = 0.0_R8
+      wldpa_s = 0.0_R8
+      wldpm_s = 0.0_R8
+      wldpeb_s = 0.0_R8
+      wldspt_s = 0.0_R8
+      wldspta_s = 0.0_R8
+      wldsptm_s = 0.0_R8
+      eneutrad_s = 0.0_R8
+      emolrad_s = 0.0_R8
+      eionrad_s = 0.0_R8
+      wlabsrp_s = 0.0_R8
+      wldna_res_s = 0.0_R8
+      wldnm_res_s = 0.0_R8
+      ewlda_res_s = 0.0_R8
+      ewldm_res_s = 0.0_R8
+      ewldt_res_s = 0.0_R8
+      ewldea_res_s = 0.0_R8
+      ewldem_res_s = 0.0_R8
+      ewldrp_res_s = 0.0_R8
+      ewldmr_res_s = 0.0_R8
+      wldspt_res_s = 0.0_R8
+      wldspta_res_s = 0.0_R8
+      wldsptm_res_s = 0.0_R8
+      wlpump_s = 0.0_R8
+      wlpump_res_s = 0.0_R8
+      pdena_s = 0.0_R8
+      pdenm_s = 0.0_R8
+      pdeni_s = 0.0_R8
+      edena_s = 0.0_R8
+      edenm_s = 0.0_R8
+      edeni_s = 0.0_R8
+      vxdena_s = 0.0_R8
+      vxdenm_s = 0.0_R8
+      vxdeni_s = 0.0_R8
+      vydena_s = 0.0_R8
+      vydenm_s = 0.0_R8
+      vydeni_s = 0.0_R8
+      vzdena_s = 0.0_R8
+      vzdenm_s = 0.0_R8
+      vzdeni_s = 0.0_R8
+      
       return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
 
