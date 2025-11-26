@@ -13,13 +13,12 @@ CPP = /lib/cpp -traditional
 
 DDBLOPTION = -Ad # ???
 
+MPI_FC ?= mpif90
 ifdef SOLPS_MPI
-FC = mpif90
+FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC = mpif90
-else
-FC = gfortran
+FC      = ${MPI_FC}
 endif
 endif
 
