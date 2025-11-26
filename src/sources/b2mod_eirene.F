@@ -247,12 +247,12 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
-      character*256 filename, filename15
+      character*256 filename
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical ex, ex15, last, found, na_feedback_on
+      logical ex, last, found, na_feedback_on
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, save_f31,
