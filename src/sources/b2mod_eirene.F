@@ -910,17 +910,12 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) HERE !!!!!!!!!!!!!!!!!!!!!!!!!!
 csw 25jan2011 LTIME=.false. in eirsrt call
 
         write(*,*) 'Main Eirene call'
-c       Store fort.15 existing at the beginning of the time step,
-c       if using Eirene in time-dependent mode, to a fort.15.init file,
-c       to avoid being overwritten by the false multiple Eirene time steps
-c       internal to a B2.5 time step
-        filename15=fort_lc//'15'
-        call find_file(filename15,ex15)
-        if (ex15) then
-          call system('cp '//trim(filename15)//' '//trim(filename15)
-     .          //'.init')
-        endif
         if(n_avg_repeat.gt.1) then
+c         Store the fort.xx files existing at the beginning of the time step
+c         to fort.xx.init files, to avoid being overwritten by the false
+c         multiple Eirene time steps internal to a B2.5 time step
+          call store_initial_fort_file(13)
+          call store_initial_fort_file(15)
           call clear_sum_arrays(write_eirene_sources)
         endif
 c       Main cycle: repeat Eirene calls n_avg_repeat times (default = 1)
@@ -933,14 +928,12 @@ c       Main cycle: repeat Eirene calls n_avg_repeat times (default = 1)
           my_ltime=.false.
           filename=fort_lc//'44'    
           call find_file(filename,ex)
-c         Start every repeated Eirene call (if using time-dependent mode)
-c         from the same fort.15 stored at the beginning of the cycle,
-c         calculated at the end of the previous real time step
-          filename15=fort_lc//'15'//'.init'
-          call find_file(filename15,ex15)
-          if (ex15) then
-            call system('cp '//trim(filename15)//' '//trim(fort_lc)
-     .          //'15')
+          if(n_avg_repeat.gt.1) then
+c           Start every repeated Eirene call from the same fort.xx
+c           files stored at the beginning of the cycle,
+c           calculated at the end of the previous real time step
+            call reinitialize_fort_file(13)
+            call reinitialize_fort_file(15)
           endif
 c         SINGLE EIRENE CALL
           call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -952,16 +945,12 @@ c         Cumulate source terms from past and current Eirene calls
           endif
           eircount=eircount+1
         enddo
-c       Delete the stored fort.15.init file, if Eirene is run in time-dependent mode,
-c       so to use the fort.15 file calculated at the last Eirene call for the next
-c       real Eirene time step
-        filename15=fort_lc//'15'//'.init'
-        call find_file(filename15,ex15)
-        if (ex15) then
-          call system('rm '//trim(filename15))
-        endif
-c       Calculate averaged source terms from all Eirene calls, if using repeated calls
         if(n_avg_repeat.gt.1) then
+c         Delete the stored fort.xx.init files, so to use the fort.xx files
+c         calculated at the last Eirene call for the next real Eirene time step
+          call delete_initial_fort_file(13)
+          call delete_initial_fort_file(15)
+c         Calculate averaged source terms from all Eirene calls, if using repeated calls
           call calc_average_source_arrays(n_avg_repeat,
      *      write_eirene_sources)
         endif
@@ -5550,5 +5539,61 @@ c!###}
       return
       end subroutine strata_check
 #endif
+
+      subroutine store_initial_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str)
+      call find_file(filename,ex)
+      if (ex) then
+        call system('cp '//trim(filename)//' '//trim(filename)
+     .      //'.init')
+      endif
+
+      return
+      end subroutine store_initial_fort_file
+
+      subroutine reinitialize_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str) // '.init'
+      call find_file(filename,ex)
+      if (ex) then
+        call system('cp '//trim(filename)//' '//trim(fort_lc)
+     .      //index_str)
+      endif
+
+      return
+      end subroutine reinitialize_fort_file
+
+      subroutine delete_initial_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str) // '.init'
+      call find_file(filename,ex)
+      if (ex) then
+        call system('rm '//trim(filename))
+      endif
+
+      return
+      end subroutine delete_initial_fort_file
 
       end module b2mod_eirene
