@@ -13,6 +13,17 @@ CPP = /lib/cpp -traditional
 
 DDBLOPTION = -Ad # ???
 
+ifdef SOLPS_MPI
+FC = mpif90
+else
+ifdef USE_IMPGYRO
+FC = mpif90
+else
+FC = gfortran
+endif
+endif
+
+PKG_KEEP_SYS = 
 
 #!!!Local Variables:
 #!!! mode: Makefile
