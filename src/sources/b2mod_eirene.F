@@ -40,6 +40,7 @@
      ,   , only : natm, nmol, nion, nfl, nstra
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_cestim
       use eirmod_comsou
      , , only: NPTS
       use eirmod_comusr
