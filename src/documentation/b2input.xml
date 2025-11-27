@@ -3624,7 +3624,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls may be used.
 				</description>
 			</switch>
 			<switch>
@@ -3632,7 +3632,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls may be used.
 				</description>
 			</switch>
 			<switch>
@@ -3640,7 +3640,15 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax may be nonzero.
+					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls may be used.
+				</description>
+			</switch>
+			<switch>
+				<name>eirene_averaging_multiple_calls</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If eirene_averaging_multiple_calls.gt.1, then Eirene is called multiple times within a single time step, corresponding to the value of this switch, before a new plasma solution is computed by B2.5, and the Eirene sources are averaged over all performed calls before being used to compute the new plasma solution. Note that this is different from setting b2mndt_nstg1.gt.1, since in the latter case a new plasma solution is computed immediately after one call of Eirene, with this cycle being repeated b2mndt_nstg1 times. Also note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls may be used.
 				</description>
 			</switch>
 			<switch>

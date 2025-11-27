@@ -244,20 +244,20 @@
            endif
           enddo
         enddo
-      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1)
-     &  .and.Zhdanov_nc.eq.1) then
+      elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1.and.
+     &        Zhdanov_nc.eq.1) then
         do iy = 0, ny-1
           do ix = 0, nx-1
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-            temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
-            call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1),
-     &       corr_fria(ix,iy,isb))
-           endif
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+              temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
+              call b2mod_zhfrtf_fr(ix,iy,isb,temp,
+     &         smbfrial(ix,iy,0),smbfrial(ix,iy,1),
+     &         corr_fria(ix,iy,isb))
+            endif
           enddo
         enddo
-      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
-     &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
+      elseif (Zhdanov_closure.eq.1.and.
+     &       (Zhdanov_test.eq.1.or.Zhdanov_tf_fr.eq.0)) then            !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbfrial_test=0
         do iy = 0, ny-1
@@ -429,9 +429,9 @@
         enddo
         if (Zhdanov_nc.eq.1) then
           call b2scopy (n2, smbtfial_test(-1,-1,0), 1,
-     &    smbtfial(:,:,0), 1)
+     &     smbtfial(:,:,0), 1)
           call b2scopy (n2, smbtfial_test_nofl(-1,-1,0), 1,
-     &    smbtfial_nofl(:,:,0), 1)
+     &     smbtfial_nofl(:,:,0), 1)
         else
         do iy = 0, ny-1
          do ix = 0, nx-1
@@ -608,9 +608,8 @@ c   .... apply flux limit
           call my_out(70,nx,ny,corr_fria(:,:,isb),'b2sifrtf_cf'//chns)
           call my_out(70,nx,ny,corr_tfia(:,:,isb),'b2sifrtf_ct'//chns)
           call my_out(70,nx,ny,alpha_HS_style(:,:,isb),
-     &  'b2sifrtf_alpha'//chns)
-          call my_out(70,nx,ny,g_HS_style(:,:),
-     &  'b2sifrtf_g')
+     &     'b2sifrtf_alpha'//chns)
+          call my_out(70,nx,ny,g_HS_style(:,:),'b2sifrtf_g')
         endif
 
         wrk = vol*hz*(smbfrial_test(:,:,0)+
