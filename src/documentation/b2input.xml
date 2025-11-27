@@ -1606,15 +1606,15 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-          If b2tral_Zhdanov_nc.eq.1, neoclassical corrections for impurity transport is applied for a chosen impurity species by b2tral_Zhdanov_nc_spec
-				</description>
+          If b2tral_Zhdanov_nc.eq.1, neoclassical corrections for impurity transport are applied for a chosen impurity isonuclear sequence, b2tral_Zhdanov_nc_spec.
+        </description>
 			</switch>
       <switch>
 				<name>b2tral_Zhdanov_nc_spec</name>
 				<default>2</default>
 				<type>integer</type>
 				<description>
-          b2tral_Zhdanov_nc_spec sets the species number to which the neoclassical correction is applied. For Ne in case of D+Ne plasma b2tral_Zhdanov_nc_spec should be set to 2. The correction is best for impurity species higher of charge than Ne inclusive.
+          For Ne in case of a D+Ne plasma b2tral_Zhdanov_nc_spec should be set to 2. The corrections are more accurate for impurity species with at least Z=10.
 				</description>
 			</switch>
       <switch>
@@ -1622,7 +1622,7 @@
 				<default>6</default>
 				<type>integer</type>
 				<description>
-          b2tral_Zhdanov_nc_min sets the ion charge Z^min_a of the species chosen by the switch b2tral_Zhdanov_nc_spec. The correction is applied for Z_a.ge.Z^min_a 
+          Lower values are not recommended. b2tral_Zhdanov_nc_min sets the ion charge Z^min_a of the impuity species chosen by the switch b2tral_Zhdanov_nc_spec.
 				</description>
 			</switch>
 			<switchgroup>
