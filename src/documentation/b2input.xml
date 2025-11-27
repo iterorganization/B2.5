@@ -1601,28 +1601,30 @@
 					If art_rad.ne.0, then an artificial radiation loss term is added to the electron cooling rate. Art_rad represents the percent fraction of impurities in the plasma.
 				</description>
 			</switch>
-      <switch>
+			<switch>
 				<name>b2tral_Zhdanov_nc</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-          If b2tral_Zhdanov_nc.eq.1, neoclassical corrections for impurity transport are applied for a chosen impurity isonuclear sequence, b2tral_Zhdanov_nc_spec.
-        </description>
+					If b2tral_Zhdanov_nc.eq.1, neoclassical corrections for impurity transport are applied for a chosen impurity isonuclear sequence, with index b2tral_Zhdanov_nc_spec.
+				</description>
 			</switch>
-      <switch>
+			<switch>
 				<name>b2tral_Zhdanov_nc_spec</name>
 				<default>2</default>
 				<type>integer</type>
 				<description>
-          For Ne in case of a D+Ne plasma b2tral_Zhdanov_nc_spec should be set to 2. The corrections are more accurate for impurity species with at least Z=10.
+					Index of the isonuclear sequence for which the impurity neoclassical corrections will be applied. For Ne in case of a D+Ne plasma, b2tral_Zhdanov_nc_spec should be set to 2.
+					The corrections are more accurate for impurity species with at least Z=10.
 				</description>
 			</switch>
-      <switch>
+			<switch>
 				<name>b2tral_Zhdanov_nc_min</name>
 				<default>6</default>
 				<type>integer</type>
 				<description>
-          Lower values are not recommended. b2tral_Zhdanov_nc_min sets the ion charge Z^min_a of the impuity species chosen by the switch b2tral_Zhdanov_nc_spec.
+					 b2tral_Zhdanov_nc_min sets the minimum ion charge Z^{min}_a, above which (inclusively) neoclassical corrections will be applied for the chosen impurity species by the switch b2tral_Zhdanov_nc_spec.
+					 Lower values than 6 are not recommended.
 				</description>
 			</switch>
 			<switchgroup>
