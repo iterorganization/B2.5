@@ -61,8 +61,7 @@
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
      & fb_current(DEF_NATM) = 0.0_R8, fb_rescale(DEF_NATM) = 1.0_R8,
-     & fb_current_prev(DEF_NATM) = 0.0_R8,
-     & fb_tau(DEF_NATM) = 0.0_R8
+     & fb_current_prev(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
@@ -75,8 +74,7 @@
       integer, save :: fhiycore_kinetic_energy
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra, iyped,
-     &                 fb_style_calc_puff = 0
+     &                 isfeedback, nesepm_istra, iyped
       real (kind=R8), save ::
      &  fnaycore, fnaycore_alpha,
      1  fheycore, fheycore_alpha,
@@ -122,7 +120,7 @@
      & fb_ib, fb_species, fb_type_inverse,
      & fb_puff_min, fb_puff_max,
      & fb_overshoot, fb_reg, fb_regp,
-     & fb_reg_par, fb_istra, fb_tau
+     & fb_reg_par, fb_istra
       data
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./
@@ -430,7 +428,6 @@ cxpb size is changed in b2mod_dimensions
      .   'Simultaneous PFR feedback schemes not allowed!')
       endif
       call ipgeti ('eirene_nesepm_istra', nesepm_istra)
-      call ipgeti ('fb_style_calc_puff', fb_style_calc_puff)
       if(nesepm_istra.gt.0) then
         call xertst (nesepm_istra.le.nstrat,
      1    'faulty internal parameter nesepm_istra')
@@ -792,7 +789,8 @@ cxpb size is changed in b2mod_dimensions
      .   'faulty parameter fb_rescale_option!')
         call xertst(0.le.fb_actuator(iFb),
      .   'faulty parameter fb_actuator!')
-        call xertst(-1.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc,
+        call xertst((-1.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc)
+     .    .or.(fb_actuator(iFb).eq.8.and.abs(fb_ib(iFb)).le.nsts),
      .   'faulty parameter fb_ib!')
         call xertst(0.le.fb_istra(iFb).and.fb_istra(iFb).le.nstrai,
      .   'faulty parameter fb_istra!')
@@ -2100,6 +2098,64 @@ cxpb size is changed in b2mod_dimensions
      .             (saved_fb_prev(ifb) - fb_current(ifb))/dt_prev)
               endif
 
+            case (9) ! puff depending from pump rescaled by tanh_log with plateau
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,i3)')
+     &           'compute_feedback_option: using ',
+     &           'puff depending from pump ',
+     &           'tanh_log_rescale with plateau for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+              t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+              t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+              if(fb_current(ifb) < t0) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t0 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              elseif(fb_current(ifb) > t1) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t1 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              else
+                fb_rescale(ifb) = 1.0_R8
+              endif
+
+              if (switch%use_eirene.eq.0) then
+                call calc_puff_pump_b25(switch,
+     &           mpg, nCv, dv, pl, sr,
+     &           is_start, is_end, sna_pump, sna_puff, sna_core)
+                if (sna_pump < -1.0_R8) then
+                  fb_rescale(ifb) = max(0.0_R8,
+     &              (sna_pump - sna_core)*fb_rescale(ifb))
+                endif
+#ifdef B25_EIRENE
+              else
+                call calc_puff_pump(switch, ns, mpg, nCv, dv,
+     &             b2espcr(fb_species(ifb)),
+     &             sna_pump,sna_puff, sna_core)
+                  sna_puff = 0.0_R8
+                  do istra=1,mpg%nRc
+                    if (crcstra(istra).ne.'C') cycle
+                    if (istra.eq.fb_istra(ifb)) cycle
+                    if (species_start(fb_istra(ifb)).ne.
+     &                  species_start(istra)) cycle
+                    sna_puff = sna_puff + userfluxparm(istra,1)
+                  enddo
+                  write(*,'(a,i6,es17.6)')'Total puff',ifb,sna_puff
+                  write(*,'(a,i6,es17.6)')'Total pump',ifb,sna_pump
+                  write(*,'(a,i6,es17.6)')'Total core',ifb,sna_core
+                  fb_rescale(ifb) = max(0.0_R8,
+     &              (sna_pump - sna_core)*fb_rescale(ifb))
+#endif
+              endif
+
             case default
               write(*,*) 'fb_rescale_option not coded ',
      &          fb_rescale_option(ifb)
@@ -2156,80 +2212,13 @@ cxpb size is changed in b2mod_dimensions
                 endif
               endif
 
-              if(ncall.eq.0) then
-                if (fb_style_calc_puff.eq.0 .and.
-     &              switch%use_pump.gt.0) then
-                  write(*,*) "Puff is calculated as: "//
-     &                       "Puff=(fb_rescale*Pump)-Gamma_core"
-                else if (fb_style_calc_puff.eq.1 .and.
-     &                   switch%use_pump.gt.0) then
-                  write(*,*) "Puff is calculated as: "//
-     &                       "Puff=fb_rescale*(Pump-Gamma_core)"
-                endif
-              endif
-
-              if (fb_rescale_option(ifb).lt.4 .or.
-     &            fb_rescale_option(ifb).eq.7) then
-                if (switch%use_eirene.eq.0 .and.
-     &              switch%use_pump.ge.1) then
-
-                  call calc_puff_pump_b25(switch,
-     &             mpg, nCv, dv, pl, sr,
-     &             is_start, is_end, sna_pump, sna_puff, sna_core)
-                  if (sna_pump < -1.0_R8) then
-                    if (fb_tau(ifb).gt.0.0_R8) then
-                      t0 = abs(sna_pump)*fb_rescale(ifb)-sna_core
-                      saved_fb_actuator(ifb) =
-     &                 t0*(1.0_R8-exp(-ddtim/fb_tau(ifb)))+
-     &                 exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
-                    else
-                      saved_fb_actuator(ifb) =
-     &                 abs(sna_pump)*fb_rescale(ifb)-sna_core
-                    endif
-                  endif
-#ifdef B25_EIRENE
-                else if (switch%use_eirene.eq.1 .and.
-     &                   switch%use_pump.ge.1) then
-                  call calc_puff_pump(switch, ns, mpg, nCv, dv,
-     &             b2espcr(fb_species(ifb)),
-     &             sna_pump,sna_puff, sna_core)
-                  sna_puff = 0.0_R8
-                  do istra=1,mpg%nRc
-                    if (crcstra(istra).ne.'C') cycle
-                    if (istra.eq.fb_istra(ifb)) cycle
-                    if (species_start(fb_istra(ifb)).ne.
-     &                  species_start(istra)) cycle
-                    sna_puff = sna_puff + userfluxparm(istra,1)
-                  enddo
-                  write(*,'(a,i6,es17.6)')'Total puff',ifb,sna_puff
-                  if (fb_tau(ifb).gt.0.0_R8) then
-                    if (fb_style_calc_puff.eq.0) then
-                      t0 = sna_pump*fb_rescale(ifb) -
-     &                 sna_core
-                    elseif (fb_style_calc_puff.eq.1) then
-                      t0 = max(0.0_R8,
-     &                 (sna_pump - sna_core)*fb_rescale(ifb))
-                    endif
-                    saved_fb_actuator(ifb) =
-     &               t0*(1.0_R8-exp(-ddtim/fb_tau(ifb)))+
-     &               exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
-                  else
-                    if (fb_style_calc_puff.eq.0) then
-                      saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb)
-     &                 - sna_core
-                    elseif (fb_style_calc_puff.eq.1) then
-                      saved_fb_actuator(ifb) = max(0.0_R8,
-     &                 (sna_pump - sna_core)*fb_rescale(ifb))
-                    endif
-                  endif
-                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
-     &              - sna_puff
-#endif
-                else
-                  saved_fb_actuator(ifb) =
-     &             saved_fb_actuator(ifb) * fb_rescale(ifb)
-                endif
-              elseif (fb_rescale_option(ifb).ge.6) then
+              if (fb_rescale_option(ifb).eq.4 .or.
+     &            fb_rescale_option(ifb).eq.5 .or.
+     &            fb_rescale_option(ifb).eq.8) then
+                saved_fb_actuator(ifb) =
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
+              elseif (fb_rescale_option(ifb).eq.6 .or.
+     &                fb_rescale_option(ifb).eq.9) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
@@ -2473,10 +2462,24 @@ cxpb size is changed in b2mod_dimensions
             case (8) ! pump
 
               if(ncall.eq.0) then
-                write(*,'(a,a,i3)')
-     &           'compute_feedback_actuator: using ',
-     &           'gas pump for sequence ',
-     &           b2espcr(fb_species(ifb))
+                if (fb_ib(ifb).eq.0) then
+                  write(*,'(a,a)')
+     &              'compute_feedback_actuator: using ',
+     &              'gas pump for all sequences'
+                elseif (fb_ib(ifb).lt.0) then
+                  write(*,'(a,a,i3,a,i3)')
+     &              'compute_feedback_actuator: using ',
+     &              'gas pump for sequence ',
+     &              b2espcr(fb_species(ifb)),
+     &              ' at non-default standard surface number',
+     &              abs(fb_ib(ifb))
+                else
+                  write(*,'(a,a,a,i3)')
+     &              'compute_feedback_actuator: using ',
+     &              'gas pump for all sequences',
+     &              ' at non-default standard surface number',
+     &              fb_ib(ifb)
+                endif
               endif
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
@@ -2488,40 +2491,28 @@ cxpb size is changed in b2mod_dimensions
 
               if (fb_rescale_option(ifb).lt.4 .or.
      &            fb_rescale_option(ifb).eq.7) then
-                if (switch%use_pump.ge.1) then
-                  if (switch%use_eirene.eq.0) then
-                    call calc_puff_pump_b25(switch,
-     &               mpg, nCv, dv, pl, sr,
-     &               is_start, is_end, sna_pump, sna_puff, sna_core)
-                    if (sna_pump < -1.0_R8) then
-                      if (abs(1.0_R8-fb_rescale(ifb)).ge.1.0e-6_R8) then
-                        t0 = abs((sna_puff+sna_core)/sna_pump)
-     &                   *saved_fb_actuator(ifb)/fb_rescale(ifb)
-                        if (fb_tau(ifb).gt.0.0_R8) then
-                          saved_fb_actuator(ifb) =
-     &                     t0*(1.0_R8-exp(-ddtim/fb_tau(ifb)))+
-     &                     exp(-ddtim/fb_tau(ifb))*
-     &                     saved_fb_actuator(ifb)
-                        else
-                          saved_fb_actuator(ifb) = t0
-                        endif
-                      endif
+                if (switch%use_eirene.eq.0) then
+                  call calc_puff_pump_b25(switch,
+     &             mpg, nCv, dv, pl, sr,
+     &             is_start, is_end, sna_pump, sna_puff, sna_core)
+                  if (sna_pump < -1.0_R8) then
+                    if (abs(1.0_R8-fb_rescale(ifb)).ge.1.0e-6_R8) then
+                      saved_fb_actuator(ifb) =
+     &                 abs((sna_puff+sna_core)/sna_pump)
+     &                 *saved_fb_actuator(ifb)/fb_rescale(ifb)
                     endif
-#ifdef B25_EIRENE
-                  else
-                    call calc_puff_pump(switch, ns, mpg, nCv, dv,
-     &               fb_species(ifb), sna_pump, sna_puff, sna_core)
-                    if (mod(ncall,eirene_mod).eq.0 .and.
-     &                  ncall.gt.eirene_mod) then
-                      t0 = 1.0_R8/fb_rescale(ifb) * (sna_puff+sna_core)
-     &                 / sna_pump
-                      saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*t0
-                    endif
-#endif
                   endif
+#ifdef B25_EIRENE
                 else
-                  saved_fb_actuator(ifb) =
-     &             saved_fb_actuator(ifb)/fb_rescale(ifb)
+                  call calc_puff_pump(switch, ns, mpg, nCv, dv,
+     &             fb_species(ifb), sna_pump, sna_puff, sna_core)
+                  if (mod(ncall,eirene_mod).eq.0 .and.
+     &                ncall.gt.eirene_mod) then
+                    t0 = 1.0_R8/fb_rescale(ifb) * (sna_puff+sna_core)
+     &               / sna_pump
+                    saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*t0
+                  endif
+#endif
                 endif
               else
                 saved_fb_actuator(ifb) =
@@ -2548,7 +2539,8 @@ cxpb size is changed in b2mod_dimensions
      &                fb_species(ifb).gt.1) then
 
                     do istra = 1, nbc
-                      if (bccon(is_start,istra).eq.10) then
+                      if (bccon(is_start,istra).eq.10 .and.
+     &                   (istra.eq.fb_ib(ifb).or.fb_ib(ifb).eq.0)) then
                         do ibc = 1, mpg%bcCvP(istra,2)
                           conpar(is_start,istra,1) =
      &                     saved_fb_actuator(ifb)
@@ -2556,10 +2548,10 @@ cxpb size is changed in b2mod_dimensions
                       endif
                     enddo
                   else
-
                     do istra = 1, nstrai
                       if (((1.0_R8-recyc(is_start,istra)).ge.1.0e-7_R8)
-     &                 .and. (species_start(istra) .eq. is_start)) then
+     &                  .and. (species_start(istra) .eq. is_start).and.
+     &                   (istra.eq.fb_ib(ifb).or.fb_ib(ifb).eq.0)) then
                         b2recyc(is_start,istra) =
      &                   (1.0_R8+saved_fb_actuator(ifb))
                         recyc(is_start,istra) =
@@ -2570,8 +2562,8 @@ cxpb size is changed in b2mod_dimensions
 #ifdef B25_EIRENE
                 elseif (mod(ncall,eirene_mod).eq.0 .and.
      &                  ncall.gt.0) then
-                  call eirene_recyct_update(fb_species(ifb),
-     &             saved_fb_actuator(ifb),switch%use_pump.eq.2)
+                  call eirene_recyct_update(b2espcr(fb_species(ifb)),
+     &             saved_fb_actuator(ifb),fb_ib(ifb))
 #endif
                 endif
               endif
@@ -2960,8 +2952,7 @@ cxpb size is changed in b2mod_dimensions
       return
       end subroutine calc_puff_pump
 
-      subroutine eirene_recyct_update(ispecies, factor,
-     &      set_for_all_sorts)
+      subroutine eirene_recyct_update(ispecies, factor, ists)
 #ifndef SOLPS4_3
       use eirmod_clgin             ! IGNORE
 #else
@@ -2970,21 +2961,33 @@ cxpb size is changed in b2mod_dimensions
       use b2mod_neutrals_namelist
       implicit none
       integer, intent(in) :: ispecies         ! Index of B2.5 species (or isonuclear sequence)
+      integer, intent(in) :: ists             ! number of non-default standard surface
       real (kind=R8), intent(in) :: factor    ! factor to multiply the absorption coefficient
                                               ! note that recyct is (1.0 - absorption coefficient)
-      logical, intent(in) :: set_for_all_sorts
+      logical :: set_for_all_sorts, is_albedo_changed
 
       real (kind=R8) :: t0
-      integer ja, l, jm, k
+      integer ja, l, jm, k, ilim
+
+      is_albedo_changed = .false.
+      if (ists >= 0) set_for_all_sorts = .true.
+      if (ists < 0) set_for_all_sorts = .false.
+      ilim = nnlimi + abs(ists)
+
+      write (*,*) "Change absorption for all", set_for_all_sorts
 
       do l = 1, nnlimi + nsts  ! loop over Eirene surfaces
+        if (ists.ne.0 .and. l.ne.ilim) cycle
+        write (*,*) "Scan ilim", ilim, ists
         do ja = 1,nnatmi
+          write (*,*) "ja", ja,latmscl(ja),ispecies
           if (latmscl(ja).eq.ispecies .or. set_for_all_sorts) then       ! Eirene atom corresponds to B2.5 isonuclear sequence
             if (recyct(ja,l) > 0.0_R8 .and. recyct(ja,l) < 1.0_R8) then  ! this condition is required to not disturb those surfaces where albedo is exactly 1.0
               t0 = 1.0_R8 - factor
               if (t0 > 0.0_R8 .and. t0 < 1.0_R8) recyct(ja,l) = t0       ! again, not to make albedo =1.0 for those surfaces where it was set less than 1.0
     !           if (t0 > 0.0_R8 .and. t0 < 1.0_R8)
     !  &         write(*,*) "surf:", l, ja, recyct(ja,l)
+              is_albedo_changed = .true.
             endif
             do jm = 1,nnmoli                                             ! check whether this atom constitutes a part of the molecule and update the albedo for such molecule in the same manner
               if (mlcmp(ja,jm) .gt. 0) then
@@ -2995,6 +2998,7 @@ cxpb size is changed in b2mod_dimensions
      >             recyct(jm+nnatmi,l) = t0
     !               if (t0 > 0.0_R8 .and. t0 < 1.0_R8)
     !  &             write(*,*) "surf:",  l, jm, recyct(jm+nnatmi,l)
+                  is_albedo_changed = .true.
                 endif
               endif
             enddo
@@ -3002,6 +3006,9 @@ cxpb size is changed in b2mod_dimensions
         enddo
       enddo
 
+      call xertst(is_albedo_changed,
+     &  "feedback: albedo hasn't been changed anywhere!"//
+     &   " Check the FB_IB!")
       return
       end subroutine eirene_recyct_update
 #endif
