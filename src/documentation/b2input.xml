@@ -1092,25 +1092,6 @@
 					See Physics section for more details. Equivalent to LFEEDBACK=.true. in the b2.boundary.parameters namelist.
 				</description>
 			</switch>
-      <switch>
-				<name>b2stbc_use_pump</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2stbc_use_pump.eq.0, current pumping rate will not be used for any FB_ACTUATOR.
-          If b2stbc_use_pump.eq.1, current pumping rate will be used for FB_ACTUATOR.eq.1 (puff) and FB_ACTUATOR.eq.8 (pump). In case of FB_ACTUATOR.eq.8 and using EIRENE, absorption coefficient will be changed the same way for all sequences.
-          If b2stbc_use_pump.eq.2, current pumping rate will be used for FB_ACTUATOR.eq.1 (puff) and FB_ACTUATOR.eq.8 (pump). In case of FB_ACTUATOR.eq.8 and using EIRENE, absorption coefficient will be changed only for this sequence.
-				</description>
-			</switch>
-			<switch>
-				<name>fb_style_calc_puff</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If fb_style_calc_puff.eq.0, puff in feedback (fb_actuator.eq.1) will be evaluated as fb_rescale*Pump-Gamma_core.
-					If fb_style_calc_puff.eq.1, puff in feedback (fb_actuator.eq.1) will be evaluated as fb_rescale*(Pump-Gamma_core).
-				</description>
-			</switch>
 			<switch>
 				<name>b2stbc_ncallfeedback</name>
 				<default>0</default>
@@ -8132,7 +8113,9 @@
 							S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by fb_alpha (SOLPS4 style)
-            7: If fb_target/fb_current &lt;1-fb_const or &bt; 1+fb_const it coinsides with FB_RESCALE.eq.3. Otherwise it .eq. 1.
+						7: If fb_target/fb_current &lt; (1-fb_const) or &gt; (1+fb_const), the rescaling coincides with FB_RESCALE.eq.3. Otherwise no rescaling is applied.
+						8: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence outside the separatrix (including contributions from Eirene species).
+						9: This is the same as option 7, multiplied by the pumping rate.
 				</description>
 			</switch>
 			<switch>
@@ -8149,7 +8132,10 @@
 					5: ion heat flux BC
 					6: current BC
 					7: density BC
-          8: Pumping absorption coefficient
+					8: Pumping albedo coefficient.
+						If FB_IB.eq.0, albedo changes at all boundaries and surfaces where it is not .eq. 1. This applies to all sequences.
+						If FB_IB.lt.0, albedo changes where FB_IB.eq.index of non-default standard surface. This applies to the sequence where this FB_ACTUATOR is set.
+						If FB_IB.gt.0, albedo changes where FB_IB.eq.index of non-default standard surface. This applies to all sequences.
 				</description>
 			</switch>
 			<switch>
@@ -8218,7 +8204,7 @@
 				<default>-1</default>
 				<type>integer array of size (NFB)</type>
 				<description>
-					Index of boundary condition through which the feedback is being applied.
+					Index of boundary condition through which the feedback is being applied. For FB_ACTUATOR.eq.9 FB_IB also means the index of non-default standard surface.
 				</description>
 			</switch>
 			<switch>
