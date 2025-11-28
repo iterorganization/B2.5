@@ -604,7 +604,7 @@ c b2txcx
       real (kind=R8) :: b2txcx_increase_transp_coefs
 
 c Feedback
-      integer :: b2stbc_feedback, use_pump
+      integer :: b2stbc_feedback
 
 c Optimization
       integer :: b2optim_save_states
@@ -1213,7 +1213,6 @@ c b2mndt
 
 c Feedback
       s % b2stbc_feedback = 0
-      s % use_pump = 0
 
 c b2mndr
       s % b2mndr_hz = 1.0_R8
@@ -2265,7 +2264,6 @@ c b2trno
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s % b2stbc_feedback)
-      call ipgeti ('b2stbc_use_pump', s%use_pump)
 
 c b2nppo
       call ipgetr ('b2nppo_restr_po', s % b2nppo_restr_po)
