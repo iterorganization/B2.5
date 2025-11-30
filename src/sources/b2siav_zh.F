@@ -13,6 +13,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
       use b2mod_balance                                                 !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
       use b2mod_ad
@@ -81,6 +82,7 @@
      &     gti(nCv,0:1), u_res_b(nCv)
 *   ..procedures
       intrinsic sqrt
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -88,7 +90,19 @@
 *   ..subprogram start-up calls
       call subini ('b2siav')
 
-      ft = 4.0e0_R8/3.0e0_R8                                            !srv 16.10.17
+*   .. check if we can write output
+      if (switch%b2siav_iout.ne.0 .and. ncall_b2siav == 0) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+        write(*,*) 'b2siav_zh OpenMP warning: no file output in ',
+     &             'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+      end if
+
+      ft = 4.0_R8/3.0_R8                                                !srv 16.10.17
       ft_h = 8.0_R8/15.0_R8
       smbvh = 0.0_R8
       smbvv = 0.0_R8
@@ -99,9 +113,9 @@
         if (switch%addvis.ne.0.0_R8) then !srv 19.01.05 28.03.06 {
 
           ! init
-          qip1   = 0.0e0_R8
-          qipgen = 0.0e0_R8
-          wrk0   = 0.0e0_R8
+          qip1   = 0.0_R8
+          qipgen = 0.0_R8
+          wrk0   = 0.0_R8
 
           call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)             !srv 01.07.09
 
@@ -109,7 +123,7 @@
           call gradc(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
 
 *       ..calculate the parallel heat flux of species isb in the center of the cell
-          qip0   = 0.0e0_R8
+          qip0   = 0.0_R8
 
           if (switch%b2siav_qstyle.eq.0.and.minval(rzb).gt.0.0_R8) then
 
@@ -198,7 +212,7 @@
 *       ..calculate the parallel charge state averaged heat flux of all species
           do inucl= 0, nspecies-1
 
-            qip0 = 0.0e0_R8
+            qip0 = 0.0_R8
 
             if (switch%b2siav_qstyle.eq.0.and.
      &          minval(rzb).gt.0.0_R8) then
@@ -412,7 +426,6 @@
             endif
           enddo                                                         !srv 19.01.05 }
 
-
 *       ..viscosity source with contribution from other ion velocities  !som 13.08.21
 
 *       ..calculate part of the mass-averaged velocity which depends on the other
@@ -512,7 +525,7 @@
 
       endif                                                             !srv 26.10.08
 
-      if (switch%b2siav_iout.ne.0) then                                 !srv 17.06.02 {
+      if (switch%b2siav_iout.ne.0 .and. .not. in_parallel()) then       !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chk,'(i1)') k

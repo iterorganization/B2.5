@@ -20,7 +20,7 @@
       use b2us_map
       use b2us_plasma
       use b2mod_ad
-     & , only : b2sral_elm_count, ncall_b2sral
+     & , only : b2sral_elm_count, ncall_b2sral, sources_inputfile
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -46,7 +46,7 @@
      & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
 #endif
       use b2mod_ad
-     & , only : my_out_folder, in_no_of_start_points, sources_inputfile,
+     & , only : my_out_folder, in_no_of_start_points,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif

@@ -5061,7 +5061,7 @@
         real (kind=R8) :: ri(2), zi(2)
         integer :: ix, iy, ix1, ix2, iyi, iyo, iymin, iymax, iout,
      .             n_omp, n_imp, n_sep, nxtl, nxtr
-        integer :: autodet = 1
+        integer :: autodet = 1, artificial_slab = 0
         character*24 hlp_frm, filename
         logical file_ok
 #ifdef LEGACYCOMP
@@ -5070,6 +5070,7 @@
 #endif
 
         call ipgeti ('b2us_auto_midplane_det',autodet)
+        call ipgeti ('artificial_slab',artificial_slab)
         call xertst (0.le.autodet.and.autodet.le.1,
      .  'faulty parameter b2us_auto_midplane_det')
 
@@ -5205,7 +5206,7 @@
         write(*,'(a,2i5)')
      &             'Inner and outermost flux tube at IMP at '//
      &             'iymin, iymax  = ', iymin, iymax
-        if (nnreg(0).eq.1) then
+        if (nnreg(0).eq.1.or.artificial_slab.eq.1) then
         ! swap iymin and iymax for calculation below if we deal with slab or linear cases
           iyi = iymin
           iymin = iymax

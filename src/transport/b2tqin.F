@@ -108,6 +108,14 @@
       call sfill (nCv*2*ns*nscx, 0.0_R8, sigin, 1)
 *   ..we use the charge exchange rate as computed from b2frates
 *   ..this is only nonzero for hydrogen neutral on hydrogen ion CX
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TQIN))
+!svdk parallellize over charge exchange species 
+!$omp parallel do default(none)
+!$omp& private(k, is0, is, iCv, tav, t0, rcx, na0_kin, na0_fluid)
+!$omp& private(na0_tot)
+!$omp& shared(nCv, is_neutral, zn, ns, nscx, iscx, dab2, b2eatcr)
+!$omp& shared(pl , am, switch, sigin, geo, rt)
+#endif
       do k = 0, nscx-1
         is0 = iscx(k)
         if (switch%use_eirene.ne.0) then
@@ -117,6 +125,7 @@
         endif
         na0_fluid = pl%na(:,is0)
         na0_tot = na0_kin + na0_fluid !! sum for hybrid fluid-kinetic simulations
+
         do is = 0, ns-1
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
           do iCv = 1, nCv
@@ -146,6 +155,9 @@
          endif
         enddo
       enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TQIN))
+!$omp end parallel do
+#endif
 
 * ..return
       ncall_b2tqin = ncall_b2tqin + 1

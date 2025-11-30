@@ -26,6 +26,14 @@
       integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       logical, save :: lfirst_ilu_us = .true.
 
+#ifdef _OPENMP
+!$omp threadprivate(rr1, s1, a1h, w, res, a1h_save)
+!$omp threadprivate(irn, icn, ish, jsh, ijsh, irnh, icnh, icnhkeep)
+!$omp threadprivate(ikeep, iw28, irnh_save, icnh_save)
+!$omp threadprivate(nc0, nltrsol, nnd, n_nonzeros, solvdim, solvdim1)
+!$omp threadprivate(lfirst_ilu_us)
+#endif
+
       contains
 
       subroutine alloc_b2mod_ma28_for_us

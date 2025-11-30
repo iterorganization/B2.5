@@ -43,6 +43,9 @@
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2),
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)
 #endif
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(sputter_yield, sputter_yield2)
+#endif
       integer, save :: jagged_rates=0
 
       integer, save :: nx_sp, ny_sp, ns_sp
@@ -1429,6 +1432,9 @@ c   K(T) = 1/(KA * T + KB)
       integer ibnd
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
       logical, save  :: coating
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(coating)
+#endif
       real (kind=R8) :: layer_Kappa
       external layer_Kappa
 
@@ -1609,6 +1615,9 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
       if (delta.gt.4.5_R8 .and. icount.le.100) then
+#ifdef _OPENMP
+!$OMP ATOMIC
+#endif
         icount = icount + 1
         write(*,'(a,f7.2,a)')
      .   'delta projectile/target > 4.5', delta, '. Continuing...'
@@ -1772,6 +1781,9 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
       if (delta.gt.4.5_R8 .and. icount.le.100) then
+#ifdef _OPENMP
+!$OMP ATOMIC
+#endif
         icount = icount + 1
         write(*,'(a,f7.2,a)')
      .   'delta projectile/target > 4.5', delta, '. Continuing...'

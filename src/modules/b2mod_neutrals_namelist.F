@@ -140,6 +140,10 @@ cank }
       real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       real (kind=R8), save :: RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID)
       real (kind=R8), save :: STRASCLFL(NSTRAID)
+      real (kind=R8), save :: NRELAX_SNI(NSTRAID)
+      real (kind=R8), save :: NRELAX_SMO(NSTRAID)
+      real (kind=R8), save :: NRELAX_SEE(NSTRAID)
+      real (kind=R8), save :: NRELAX_SEI(NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
@@ -253,7 +257,7 @@ csw 21feb2012
      .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
      .  e_fc,      !mb Franck-Condon energy contribution
      .  accel_ion, !mb flag for ion acceleration through sheath potential
-     .  strasclfl
+     .  strasclfl, nrelax_sni, nrelax_smo, nrelax_see, nrelax_sei
 
       interface read_neutrals_namelist
         module procedure read_neutrals_namelist_st
@@ -346,6 +350,10 @@ csw 21feb2012
       allocate(accel_ion(NSTRAID))
       allocate(textan(0:natm_in-1))
       allocate(STRASCLFL(NSTRAID))
+      allocate(NRELAX_SNI(NSTRAID))
+      allocate(NRELAX_SMO(NSTRAID))
+      allocate(NRELAX_SEE(NSTRAID))
+      allocate(NRELAX_SEI(NSTRAID))
       if (nmol_in.gt.0) allocate(textmn(0:nmol_in-1))
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
@@ -526,7 +534,10 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i4)'
       write(*,hlp_frm) 'b2espcr : ',b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ',b2eatcr(0:nsd-1)
-
+      nrelax_sni(:) = 1
+      nrelax_smo(:) = 1
+      nrelax_see(:) = 1
+      nrelax_sei(:) = 1
       return
       end subroutine alloc_b2mod_neutrals
 
@@ -613,6 +624,10 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(msns)
       deallocate(textan)
       deallocate(strasclfl)
+      deallocate(nrelax_sni)
+      deallocate(nrelax_smo)
+      deallocate(nrelax_see)
+      deallocate(nrelax_sei)
       if (allocated(textmn)) deallocate(textmn)
       if (allocated(textin)) deallocate(textin)
 #ifndef NO_B2_CHEM_SPUT

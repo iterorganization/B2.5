@@ -3690,6 +3690,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           CALL XERRAB ('B2STBC -- BCENE=3, NO SHEATH IN RADIAL DIR.')
         END IF
 #endif
+
 * -- BCENE=4 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE,
 *                 WEAKLY A MIXED BOUNDARY CONDITION
 
@@ -4056,7 +4057,7 @@ cxpb code segment analog to b2tfhe
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%she0(iCv1,0) = enepar(iB,1)/US*geo%fcS(iFc)
+          srw%she0(iCv1,0) = fac_he_anom_bc*enepar(iB,1)/US*geo%fcS(iFc)
           srw%she0(iCv1,1) = 0.0_R8
           if(switch%mdf_fhe.ne.0) then
             !wdk Correction now involves vedia instead of ExB velocity
@@ -4456,7 +4457,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
           t1 = t1/t0
-          totpar = enepar(ib,1)
+          totpar = fac_he_anom_bc*enepar(ib,1)
           if (enepar(ib,2).gt.0.0_R8) t3 = enepar(ib,2)
           if (enepar(ib,2).le.0.0_R8) t3 = switch%b2stbc_bc_ref_te
           t2 = (1.0_R8-t3*(totflux-totpar)/
@@ -4956,6 +4957,7 @@ cwdk     * need to correct this BC for hybrid scheme
           totpar = totpar + enepar(ib0,1)
          endif
         enddo
+        totpar = fac_he_anom_bc*totpar
         t1 = t1/t0
         t2 = t2/t0
         if (enepar(ib,2).gt.0.0_R8) t3 = enepar(ib,2)
@@ -5595,7 +5597,7 @@ cxpb code segment analog to b2tfhi
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%shi0(iCv1,0) = enipar(iB,1)/US*geo%fcS(iFc)
+          srw%shi0(iCv1,0) = fac_he_anom_bc*enipar(iB,1)/US*geo%fcS(iFc)
           srw%shi0(iCv1,1) = 0.0_R8
           if(switch%mdf_fhi.ne.0) then
             !wdk Correction now involves vedia instead of ExB velocity
@@ -6042,7 +6044,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
           t1 = t1/t0
-          totpar = enipar(ib,1)
+          totpar = fac_he_anom_bc*enipar(ib,1)
           if (enipar(ib,2).gt.0.0_R8) t3 = enipar(ib,2)
           if (enipar(ib,2).le.0.0_R8) t3 = switch%b2stbc_bc_ref_ti
           t2 = (1.0_R8-t3*(totflux-totpar)/
@@ -7036,6 +7038,7 @@ cwdk     * need to correct this BC for hybrid scheme
           totpar = totpar + enipar(ib0,1)
          endif
         enddo
+        totpar = fac_he_anom_bc*totpar
         t1 = t1/t0
         t2 = t2/t0
         if (enipar(ib,2).gt.0.0_R8) t3 = enipar(ib,2)

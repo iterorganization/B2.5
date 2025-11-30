@@ -374,7 +374,7 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
      .                         state_avg)
             call prep_average ( nx, ny, ns, mpg, state_avg)
             call run_av_save ('b2faveri_us', mpg%nCv, ns,
-     .                         .true., .true., state_avg)
+     .                         .true., .true.,0, state_avg)
             call run_av_fin( state_avg )
             call dealloc_avg_st
           end if

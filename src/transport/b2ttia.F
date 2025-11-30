@@ -12,11 +12,11 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, ns
-      real (kind=R8) ::
+      integer, intent(in) :: nCv, ns
+      real (kind=R8), intent(in) ::
      &   ti(nCv), ne2(nCv), lnlam(nCv), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   tauia(nCv,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------

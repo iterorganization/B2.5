@@ -638,6 +638,14 @@
 					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_temp_ignore_geo</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch (b2mndr_temp_ignore_geo.eq.1) allows to run geometrically complex unstructured cases that do not yet fit in any specified case categorization. This switch should disappear as the integration of new unstructured grid generators with SOLPS / IMAS matures. Activating this switch makes it impossible to use or get correct results from some integrated post-processing options. The B2.5-EIRENE solution algorithm is unaffected.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -4353,7 +4361,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed over nhist calls. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
+					If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and a moving average is computed over nhist calls. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4361,7 +4369,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
+					If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and averaged until eirene_neutr_avg+1 steps, at which point the averaging process is reset. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls averaging schemes can be used at a time.
 				</description>
 			</switch>
 			<switch>
@@ -4369,7 +4377,26 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax averaging schemes can be used at a time.
+					If eirene_underrelax.gt.0, then an underrelaxation scheme is used for the Eirene sources, with an underrelaxation ratio of 1/eirene_underrelax. Note that only one of the b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls averaging schemes can be used at a time.
+				</description>
+			</switch>
+			<switch>
+				<name>eirene_underrelax_continue</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If eirene_underrelax_continue.eq.1, the underrelaxed Eirene sources from the end of the previous simulation are read in, to continue the run without restart effects. The underrelaxed sources are saved in b2favere. The procedure is as follows:
+					Step 1: when activating eirene_underrelax for the first time in a simulation, eirene_underrelax_continue should be 0, as the saved sources are not yet present. Set b2mndt_av to 1 to write out b2favere at the end of a run.
+					Step 2: When continuing the run, set eirene_underrelax_continue to 1. The b2favere from the previous run will be converted to b2faveri automatically by the b2run script. 
+					Note: the reading of the underrelaxed sources from b2faveri is independent of the reading of the averaged plasma states by '’b2mndr_av_read'. 
+				</description>
+			</switch>
+			<switch>
+				<name>eirene_averaging_multiple_calls</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If eirene_averaging_multiple_calls.gt.1, then Eirene is called multiple times within a single time step, corresponding to the value of this switch, before a new plasma solution is computed by B2.5, and the Eirene sources are averaged over all performed calls before being used to compute the new plasma solution. Note that this is different from setting b2mndt_nstg1.gt.1, since in the latter case a new plasma solution is computed immediately after one call of Eirene, with this cycle being repeated b2mndt_nstg1 times. Also note that only one of b2stbr_eir_src_nhist, eirene_neutr_avg, eirene_underrelax or eirene_averaging_multiple_calls may be used.
 				</description>
 			</switch>
 			<switch>
@@ -4404,6 +4431,38 @@
 				<type>real</type>
 				<description>
 					Determines M for ion_vlct_restrict.ne.0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_core</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ion_vlct_restrict_core.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than core_M times the global plasma sound speed, on closed flux surfaces. This option does not affect the ExB speeds. core_M is given by b2npmo_ion_vlct_restrict_core_M. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_core_M</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Determines core_M for ion_vlct_restrict_core.ne.0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_abs</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ion_vlct_restrict_abs.ne.0, the parallel speed of ions and fluid neutrals is limited to max_ua, regardless of the Mach number. This option can be used to stabilize cases where the Mach restriction is not sufficient, but even more care is needed to make sure the limit is not too active in the converged result. max_ua is given by b2npmo_ion_vlct_restrict_ua. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_ua</name>
+				<default>+c</default>
+				<type>real</type>
+				<description>
+					Determines max_ua for ion_vlct_restrict_abs.ne.0.
 				</description>
 			</switch>
 			<switch>
@@ -4886,6 +4945,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndr_use_min_na_numerics</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Use a species- and region-dependent minimum density (in m^{-3}).
+					The values are imposed by 'min_na' in b2.numerics.parameters.
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_te_min</name>
 				<default>0.1</default>
 				<type>real</type>
@@ -5120,6 +5188,67 @@
 				<description>
 					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
 					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Option to use a cell-based spatially varying false timestep computed at runtime based on local criteria. Can only be used in steady-state mode (b2mndt_style=1). In their current implementation, the methods can be used in conjunction with region-based multipliers (DTCO etc.) but not with flux-tube-based appraoches (DTCO_FTS etc.) and not with the core suppression mechanism (CORE_DT_SUPPRESSION).
+					If 0, no cell-based timestep multiplier.
+					If 1, local timestep based on the electron temperature. The baseline timestep (b2mndr_dtim) is applied below b2mndt_var_te_min. Above b2mndt_var_te_max, the baseline timestep is multiplied by b2mndt_var_mult. Log-log interpolation is used in between.
+					If 2, local timestep based on the ratio of the source strengths compared to the particle/momentum/energy content of each cell. dt2 = abs(content)/abs(S)/Fs, where 'content' is the particle, parallel momentum, ion heat, or electron heat content of a cell, 'Fs' is a safety factor, and 'S' is the strength of the source terms. The included contributions are those computed by EIRENE, and B2.5 contributions due to ionization, recombination and CX (e.g. ionization between higher ionization stages or CX when using fluid neutrals). Other source contributions are not included because they are only computed after the calculation of the timestepping sources. The final timestep is determined as dt = min(max(dt2,b2mndr_dt),b2mndr_dt*b2mndt_var_mult), such that the user can retain control over the minimum and maximum timestep.
+					If 3, CFL-criterion based on drift velocities. Highly experimental. Still under development. See code for details.
+					If 4, combination of 3 and 2. Highly experimental. Still under development. See code for details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_mult</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Maximum multiplier to the timestep when using b2mndt_var_style > 0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_te_min</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					The electron temperature below which the baseline timestep is used when using b2mndt_var_style = 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_te_max</name>
+				<default>1.0e30</default>
+				<type>real</type>
+				<description>
+					The electron temperature above which the maximum timestep is used when using b2mndt_var_style = 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style2_SF</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Safety factor Fs when using b2mndt_var_style = 2 or 4.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style3_Cmax</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					CFL (Courant-Friedrichs-Lewy) limit when using b2mndt_var_style = 3 or 4.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style_nfilter</name>
+				<default>1</default>
+				<type>real</type>
+				<description>
+					When using b2mndt_var_style = 3, carry over the minimum timestep between neighbours nfilter times. (Highly experimental).
 				</description>
 			</switch>
 			<switch>
@@ -6043,6 +6172,7 @@
 			<switch>
 				<name>b2optim_save_states</name>
 				<default>0</default>
+				<type>integer</type>
 				<description>
 					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
 				</description>
@@ -6050,6 +6180,7 @@
 			<switch>
 				<name>b2optim_reset_drift</name>
 				<default>0.4</default>
+				<type>real</type>
 				<description>
 					Percentage value at which drifts are reset at each function/gradient evaluation to avoid simualtion crash.
 				</description>
@@ -6057,6 +6188,7 @@
 			<switch>
 				<name>b2optim_reset_drift_iter</name>
 				<default>2</default>
+				<type>integer</type>
 				<description>
 					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in b2mndr_ntim/b2optim_reset_drift_iter iterations.
 				</description>
@@ -6064,6 +6196,7 @@
 			<switch>
 				<name>b2optim_reset_param_iter</name>
 				<default>1</default>
+				<type>integer</type>
 				<description>
 					If .gt. 1, the values of the parameters from the new optimization step will be gradually changed so that they will take b2mndr_ntim/b2optim_reset_param_iter to change from their previous to their new value.
 				</description>
@@ -8494,6 +8627,14 @@
 				<type>logical array of size (1:NSPECIES)</type>
 				<description>
 					Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
+				</description>
+			</switch>
+			<switch>
+				<name>MIN_NA</name>
+				<default>b2mndr_na_min</default>
+				<type>real array of size (0:NS-1,0:NREG)</type>
+				<description>
+					Species- and region-dependent minimum density. Only used if 'b2mndr_use_min_na_numerics.ne.0'. The default value is the one set by b2mndr_na_min.
 				</description>
 			</switch>
 			<switch>

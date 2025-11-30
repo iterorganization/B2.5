@@ -380,7 +380,7 @@ ctmp.dpc
 *     ..include contributions due to timestep
           if (switch%b2mndt_style.ne.2) then
 *     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
-            call b2srdt (nCv, ns, dtim, switch, geo, mpg,
+            call b2srdt (nCv, ns, dtim, switch, geo, mpg, st%dv,
      &       st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti,
      &       st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn,
      &       st%psnc%kinrgy,

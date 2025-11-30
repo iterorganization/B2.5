@@ -15,6 +15,7 @@
       use b2us_map
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -84,6 +85,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       real (kind=R8) ::
      *   t0, t1, t2, t3, t11, t22
       logical new_matrix
+#ifdef _OPENMP
+      logical make_parallel
+#endif
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
@@ -94,6 +98,25 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *.computation
 
 * ..preliminaries
+#ifdef _OPENMP
+      ! Check if we are already running in parallel
+      make_parallel = in_parallel()
+#endif
+      if (switch%b2usht_iout.ne.0) then
+        if (in_parallel() ) then
+          if (ncall_b2usht == 0) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)
+     .       'b2ush9 OpenMP warning: no file I/O in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+          endif
+        endif
+      endif
+
       iCv1 = 1 !csc needed for correct initialization in adjoint AD
       iCv2 = 1
 *   ..subprogram start-up calls
@@ -142,29 +165,62 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          shn = 0.0_R8
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+* ..initialize openmp parallel region for workshare
+!svdk the current implementation permits to parallellize this section
+!svdk using a task construct, since each energy equation is solved
+!svdk separately first, and updates are applied only later.
+!$omp parallel default(none)
+!$omp& shared(mpg, switch, geo, nCv, nFc, itcnt)
+!$omp& shared(solveee, solveei, solveen, solveet, solvekt, solvezt)
+!$omp& shared(floe, floi, flon, flokt, flozt)
+!$omp& shared(cone, coni, conn, conkt, conzt)
+!$omp& shared(resht, cortt, reshe, corte, reshi, corti, reshn, cortn)
+!$omp& shared(reskt, corkt, reszt, corzt)
+!$omp& shared(she, shi, shn, ne, ni, nn, te, ti, tn, ceqp)
+!$omp& shared(skt, kt, szt, zt)
+!$omp& shared(last_solve_9)
+!$omp& private(aa, flo0, con0)
+!$omp& private(iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv)
+!$omp& private(ireg, t0, t1, t2, t11, t22, t3, lnonzero, dumm)
+!svdk task 1: total heat correction equation
+!svdk should be ran by a single thread, tasks are accumulated and
+!svdk executed by other threads
+!!$omp single
+!!$omp task
+!$omp sections
+!$omp section
+#endif
+* ..total heat correction equation
       if (any(solveee(0:mpg%nnreg(0))).and.
      &    any(solveei(0:mpg%nnreg(0))).and.
      &    any(solveen(0:mpg%nnreg(0))).and.
-     &    any(solveet(0:mpg%nnreg(0)))) then                                !srv 22.05.18
+     &    any(solveet(0:mpg%nnreg(0)))) then                             !srv 22.05.18
+#ifdef _OPENMP
+      call restart_ma28_for_us
+#else
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 * ..total heat correction equation
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
       con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn
-      if (switch%b2usht_iout.ne.0) then      
-       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
-       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
-       call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
-       call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
-       call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
-       call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
-       call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
-       call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
+      if (switch%b2usht_iout.ne.0) then
+          if (ncall_b2usht == 0 .and. .not. in_parallel()) then
+            call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
+            call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
+            call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
+            call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
+            call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
+            call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
+            call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20')
+            call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20')
+        end if
       endif
 
 *   ..initialize matrix to zero
@@ -198,12 +254,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
-      if (switch%b2usht_iout.ne.0) then
-       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')     
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
+       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')
        call my_out_us(70,nCv,0,she(1,3),'b2usht_she3')
-       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1')     
+       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1')
        call my_out_us(70,nCv,0,shi(1,3),'b2usht_shi3')
-       call my_out_us(70,nCv,0,shn(1,1),'b2usht_shn1')     
+       call my_out_us(70,nCv,0,shn(1,1),'b2usht_shn1')
        call my_out_us(70,nCv,0,shn(1,3),'b2usht_shn3')
        call my_out_us(70,nCv,0,ne,'b2usht_ne')
        call my_out_us(70,nCv,0,ni,'b2usht_ni')
@@ -318,27 +374,37 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           resht(iCv) = 0.0_R8
         endif
       enddo
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
         call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt')
-      endif 
+      endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
       endif                                                             !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_ht_aa')
        call my_out_us(70,nCv,0,resht,'b2usht_resht')
        call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 2: electron temperature equation
+!!$omp task
+!$omp section
+#endif
 * ..electron temperature correction equation
       if (any(solveee(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+#ifdef _OPENMP
+      call restart_ma28_for_us
+#else
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *   ..compute flo0, con0
       flo0        = floe
       con0(:,:,0) = cone(:,:,0)
@@ -360,8 +426,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
-      if (switch%b2usht_iout.ne.0) then
-       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')     
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
+       call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')
        call my_out_us(70,nCv,0,she(1,3),'b2usht_she3_te')
        call my_out_us(70,nCv,0,te,'b2usht_te_te')
        call my_out_us(70,nCv,0,ti,'b2usht_ti_te')
@@ -371,12 +437,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        dumm = real(mpg%nCmxNv,R8)
        call my_out_us(70,1,0,dumm,'b2usht_nCmxNv')
 
-       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_floex') 
-       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_floey')  
+       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_floex')
+       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_floey')
        call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_conex')
        call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_coney')
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te_pre')
-      endif 
+      endif
 ! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
@@ -479,27 +545,37 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te')
       endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
       endif                                                            !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_he_aa')
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe')
        call my_out_us(70,nCv,0,corte,'b2usht_corte')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 3: ion temperature equation
+!!$omp task
+!$omp section
+#endif
 * ..atom temperature correction equation
       if (any(solveei(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+#ifdef _OPENMP
+      call restart_ma28_for_us
+#else
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *   ..compute flo0, con0
       flo0        = floi
       con0(:,:,0) = coni(:,:,0)
@@ -520,13 +596,13 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
-      if (switch%b2usht_iout.ne.0) then
-       call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix') 
-       call my_out_us(70,nFc,1,floi(1,1),'b2usht_floiy')  
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
+       call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix')
+       call my_out_us(70,nFc,1,floi(1,1),'b2usht_floiy')
        call my_out_us(70,nFc,1,coni(1,0,0),'b2usht_conix')
        call my_out_us(70,nFc,1,coni(1,1,0),'b2usht_coniy')
 
-       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1_ti')     
+       call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1_ti')
        call my_out_us(70,nCv,0,shi(1,3),'b2usht_shi3_ti')
        call my_out_us(70,nCv,0,te,'b2usht_te_ti')
        call my_out_us(70,nCv,0,ti,'b2usht_ti_ti')
@@ -637,163 +713,201 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           reshi(iCv) = 0.0_R8
         endif
       enddo
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti')
       endif
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!svdk do not update last_solve_9, not yet supported
+#else
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
-      endif                                                          !srv 22.05.18
+! $AD II-LOOP
+      do iCv = 1, nCv
+        corti(iCv) = corti(iCv)
+      enddo
+#endif
+      endif                                                              !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hi_aa')
        call my_out_us(70,nCv,0,reshi,'b2usht_reshi')
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 4: neutral temperature equation
+!!$omp task
+!$omp section
+#endif
       if (switch%tn_style.eq.2) then
 * ..neutral atom temperature correction equation
-      if (any(solveen(0:mpg%nnreg(0)))) then                                !srv 22.05.18
-      new_matrix = .false.
-      do ireg = 0, mpg%nnreg(0)
-        new_matrix = new_matrix.or.
-     &   solveen(ireg).neqv.solveei(ireg)
-      end do
-      if (new_matrix.or..true.) call restart_ma28_for_us
+       if (any(solveen(0:mpg%nnreg(0)))) then                            !srv 22.05.18
+#ifdef _OPENMP
+        call restart_ma28_for_us
+#else
+        new_matrix = .false.
+        do ireg = 0, mpg%nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solveen(ireg).neqv.solveei(ireg)
+        end do
+        if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *   ..compute flo0, con0
-      flo0        = flon
-      con0(:,:,0) = conn
+        flo0        = flon
+        con0(:,:,0) = conn
 *   ..initialize matrix to zero
-      aa = 0.0_R8
+        aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
-      do iCv = 1, nCv
-        ireg = mpg%cvReg(iCv)
-        if (solveen(ireg)) then
-          aa(mpg%cvNvP(iCv,1)) =
-     &    -shn(iCv,1)-shn(iCv,3)*nn(iCv)
-          if (switch%b2mndt_style.lt.2) then
-            aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
-     &     +abs(reshn(iCv))/(switch%b2npht_rxg*tn(iCv))
+        do iCv = 1, nCv
+          ireg = mpg%cvReg(iCv)
+          if (solveen(ireg)) then
+            aa(mpg%cvNvP(iCv,1)) =
+     &       -shn(iCv,1)-shn(iCv,3)*nn(iCv)
+            if (switch%b2mndt_style.lt.2) then
+              aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
+     &         +abs(reshn(iCv))/(switch%b2npht_rxg*tn(iCv))
+            endif
           endif
-        endif
-      enddo
+        enddo
 ! $AD II-LOOP
-      do iFc = 1, nFc
-        iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
-        iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
+        do iFc = 1, nFc
+          iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
+          iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
-        t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        if (solveen(mpg%cvReg(iCv1))) then
-         aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
-         where (mpg%cvNv(mpg%cvNvP(iCv1,1):
-     &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
-     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
-     &     t2
-         end where
-        endif
-        if (solveen(mpg%cvReg(iCv2))) then
-         aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
-         where (mpg%cvNv(mpg%cvNvP(iCv2,1):
-     &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
-     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1
-         end where
-        endif
+          t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
+          t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
+          if (solveen(mpg%cvReg(iCv1))) then
+           aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
+           where (mpg%cvNv(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     .                     mpg%cvNvP(iCv1,2)-1) == iCv2)
+             aa(mpg%cvNvP(iCv1,1):
+     &          mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &       aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                            mpg%cvNvP(iCv1,2)-1) + t2
+           end where
+          endif
+          if (solveen(mpg%cvReg(iCv2))) then
+           aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
+           where (mpg%cvNv(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                     mpg%cvNvP(iCv2,2)-1) == iCv1)
+            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                           mpg%cvNvP(iCv2,2)-1) =
+     &       aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                            mpg%cvNvP(iCv2,2)-1) + t1
+           end where
+          endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
-        iVx1 = mpg%fcVx(iFc,1) ! number of v1
-        iVx2 = mpg%fcVx(iFc,2) ! number of v2
-        t1 = - 0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
-        t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
-        t11 = 0.0_R8
-        do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
-        enddo
-        t22 = 0.0_R8
-        do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
-        enddo
+          iVx1 = mpg%fcVx(iFc,1) ! number of v1
+          iVx2 = mpg%fcVx(iFc,2) ! number of v2
+          t1 = - 0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
+          t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
+          t11 = 0.0_R8
+          do inCv = 1, mpg%vxCvP(iVx1,2)
+            t11 = t11 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
+          enddo
+          t22 = 0.0_R8
+          do inCv = 1, mpg%vxCvP(iVx2,2)
+            t22 = t22 + 1.0_R8/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
+          enddo
         ! contribution to equation of iCv1
-        if (solveen(mpg%cvReg(iCv1))) then
+          if (solveen(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
-         do inCv = 1, mpg%vxCvP(iVx1,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
-          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
-     &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
-     &      t3*t1
-          end where
-         enddo
+           do inCv = 1, mpg%vxCvP(iVx1,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+            t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+            where (mpg%cvNv(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                      mpg%cvNvP(iCv1,2)-1) == iCv)
+             aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                            mpg%cvNvP(iCv1,2)-1) =
+     &        aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                             mpg%cvNvP(iCv1,2)-1)-t3*t1
+            end where
+           enddo
          ! contribution from iVx2
-         do inCv = 1, mpg%vxCvP(iVx2,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
-          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
-     &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
-     &      t3*t2
-          end where
-         enddo
-        endif
+           do inCv = 1, mpg%vxCvP(iVx2,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+            t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+            where (mpg%cvNv(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                      mpg%cvNvP(iCv1,2)-1) == iCv)
+             aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                            mpg%cvNvP(iCv1,2)-1) =
+     &        aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+
+     &                             mpg%cvNvP(iCv1,2)-1)+t3*t2
+            end where
+           enddo
+          endif
         ! contribution to equation of iCv2
-        if (solveen(mpg%cvReg(iCv2))) then
+          if (solveen(mpg%cvReg(iCv2))) then
          ! contribution from iVx1
-         do inCv = 1, mpg%vxCvP(iVx1,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
-          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
-     &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
-     &      t3*t1
-          end where
-         enddo
+           do inCv = 1, mpg%vxCvP(iVx1,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+            t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
+            where (mpg%cvNv(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                      mpg%cvNvP(iCv2,2)-1) == iCv)
+             aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                            mpg%cvNvP(iCv2,2)-1) =
+     &        aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                             mpg%cvNvP(iCv2,2)-1)+t3*t1
+            end where
+           enddo
          ! contribution from iVx2
-         do inCv = 1, mpg%vxCvP(iVx2,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
-          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
-     &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
-     &      t3*t2
-          end where
-         enddo
-        endif
-      enddo
+           do inCv = 1, mpg%vxCvP(iVx2,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+            t3  = 1.0_R8/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
+            where (mpg%cvNv(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                      mpg%cvNvP(iCv2,2)-1) == iCv)
+             aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                            mpg%cvNvP(iCv2,2)-1) =
+     &        aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+
+     &                             mpg%cvNvP(iCv2,2)-1)-t3*t2
+            end where
+           enddo
+          endif
+        enddo
 *   ..check for empty matrix lines and replace with dummy equation
 ! $AD II-LOOP
-      do iCv = 1, nCv
-        lnonzero=.false.
-        do inCv = 1, mpg%cvNvP(iCv,2)
-          lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
+        do iCv = 1, nCv
+          lnonzero=.false.
+          do inCv = 1, mpg%cvNvP(iCv,2)
+            lnonzero =
+     .       lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
+          enddo
+          if (.not.lnonzero) then
+            aa(mpg%cvNvP(iCv,1)) = 1.0_R8
+            reshn(iCv) = 0.0_R8
+          endif
         enddo
-        if (.not.lnonzero) then
-          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
-          reshn(iCv) = 0.0_R8
-        endif
-      enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
-      last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
-      endif                                                          !srv 22.05.18
+        call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!svdk do not update last_solve_9, not yet supported
+#else
+        last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
+! $AD II-LOOP
+        do iCv = 1, nCv
+          cortn(iCv) = cortn(iCv)
+        enddo
+#endif
+       endif                                                             !srv 22.05.18
       endif
 
-
-      if (switch%b2usht_iout.ne.0) then
-       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
-       call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
-       call my_out_us(70,nCv,0,corti,'b2usht_cortn')
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
+        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
+        call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
+        call my_out_us(70,nCv,0,corti,'b2usht_cortn')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 5: turbulent kinetic energy equation
+!!$omp task
+!$omp section
+#endif
 * ..turbulent kinetic energy correction equation
       corkt = 0.0_R8
       if (switch%solve_keps.gt.0.and.any(solvekt(0:mpg%nnreg(0)))) then
@@ -922,12 +1036,18 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
       endif !solve_keps - kt
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_kt_aa')
        call my_out_us(70,nCv,0,reskt,'b2usht_reskt')
        call my_out_us(70,nCv,0,corkt,'b2usht_corkt')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 6: turbulent enstrophy equation
+!!$omp task
+!$omp section
+#endif
 * ..turbulent enstrophy correction equation
       corzt = 0.0_R8
       if (switch%solve_keps.gt.1.and.any(solvezt(0:mpg%nnreg(0)))) then
@@ -1056,13 +1176,17 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
       endif !solve_keps - enstrophy
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_zt_aa')
        call my_out_us(70,nCv,0,reszt,'b2usht_reszt')
        call my_out_us(70,nCv,0,corzt,'b2usht_corzt')
       endif
-
-
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!$omp end sections
+!!$omp end task
+!!$omp end single
+!$omp end parallel
+#endif
 
 *   ..return
       ncall_b2usht = ncall_b2usht+1

@@ -1005,7 +1005,9 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is) .and. switch%iout_b2wdat.eq.4) then
+         if((.not.is_neutral(is).or.switch%spatial_hybrid.eq.1)
+     &   .and. switch%iout_b2wdat.eq.4
+     &                            .or.switch%b2stbr_iout.eq.1) then
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -1035,7 +1037,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
         if(switch%use_eirene.ne.0) then
-         if(.not.is_neutral(is)) then
+         if(.not.is_neutral(is).or.switch%spatial_hybrid.eq.1) then
           if (switch%iout_b2wdat.ne.4) then
            do k=0,1                                                   !srv 29.04.10
             write (chk,'(i1)') k

@@ -10,6 +10,7 @@
       use b2mod_balance !djm Jan 2017
      1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
      2          b2stbc_shi0to3,balance_netcdf
+      use b2mod_openmp
 #endif
       use b2us_feedback
       use b2mod_b2cmpa
@@ -178,6 +179,16 @@
       qisum(1)=0.0_R8
       gssum(1)=0.0_R8                                                    !xpb
       volsum(1)=0.0_R8
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
+!svdk parallellize over tubes
+!$omp parallel do default(none)
+!$omp& private(i, iCv, j, iFc, is)
+!$omp& private(tef, tif, nef, nif, naf, zaf, nxf, taf, zxf)
+!$omp& shared(mpg, geo, pl, dv, rt, st_ext)
+!$omp& shared(nCv, nFc, iFt, ns, is_neutral)
+!$omp& reduction(+: tesum, tisum, nasum, prsum, qesum, qisum, gssum)
+!$omp& reduction(+: volsum)
+#endif
       do i = 1, mpg%ftCvP(iFt,2)                                         !xpb
         iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
         if(mpg%cvOnClosedSurface(iCv)) then                              !xpb
@@ -232,6 +243,9 @@
           enddo
         endif
       enddo                                                      !sv 24.03.99
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
+!$omp end parallel do
+#endif
       if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
       if (gssum(1).gt.0.0_R8) then
         qeaverage(1)=qesum(1)/gssum(1)

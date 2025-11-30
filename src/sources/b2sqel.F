@@ -74,11 +74,28 @@
       if (ncall_b2sqel.lt.3) then
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
+
 *   ..compute wrk0()=log(te()/ev)
       wrk0 = log(te/ev)
+      art_rad = switch%art_rad
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+! TNORM was originally shared in the structured code, but this seems
+! wrong, as it is computed for each cell (race conditions may occur
+! that way)
+!$omp parallel DEFAULT(none)
+!$omp& private(iCv, is, TNORM)
+!$omp& shared(wrk0)
+!$omp& shared(zamin, zamax, ev, ns, nCv)
+!$omp& shared(art_rad, ismain, TE)
+!$omp& shared(rtw, rt, switch)
+#endif
 
 * ..main computation
 *   ..compute rate coefficients
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+!$omp do
+#endif
       do is = 0, ns-1
        do iCv = 1, nCv
 *      ..compute ionisation rate coefficient
@@ -112,9 +129,12 @@
      &     rt%rlpi(iCv,0,is)+rt%rlpi(iCv,1,is)*wrk0(iCv)
        enddo
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+!$omp end do
+#endif
 
 * ..artificial radiation                DPC 2000.08.25
-      art_rad = switch%art_rad
+      
       if(art_rad.ne.0.0_R8) then
         if(ncall_b2sqel.eq.0) then
           art_rad=abs(art_rad)
@@ -122,6 +142,9 @@
      1    'Artificial radiation model active, art_rad =',switch%art_rad
         endif
         is=ismain    ! XPB 2007.11.02 was ns-1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+!$omp do
+#endif
         do iCv = 1, nCv
 *      ..compute artificial radiation rate coefficient
             TNORM = MAX(0.000001_R8,TE(iCv)/(15.0_R8*EV))
@@ -130,8 +153,14 @@
             rtw%rrd(iCv,is) = rtw%rrd(iCv,is) +
      1       art_rad*2.0E-31_R8/(TNORM**1.5_R8+1.0_R8/TNORM**3)
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+!$omp end do
+#endif
       endif
-      
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
+!$omp end parallel
+#endif
+
 * ..return
       ncall_b2sqel = ncall_b2sqel+1
       call subend ()
