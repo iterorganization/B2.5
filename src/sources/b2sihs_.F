@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, vaecrb, ne,
-     &  ne2, ni, nn, fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
+     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ne2,
+     &  ni, nn, fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
      &  f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext,
      &  she0, shi0, shn0, srw)
       use b2mod_types
@@ -18,7 +18,6 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2mod_neutrals_namelist, only : eb2spcr
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
@@ -61,7 +60,7 @@
      *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
      *  cvsa_cl(nFc,0:1,0:ns-1), cvsa_drho(nFc,0:1,0:ns-1),
-     *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1), vaecrb(nFc,0:1,0:ns-1)
+     *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
@@ -85,7 +84,6 @@
       integer :: gridGeometry
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                         !som 13.11.20
       real (kind=R8), parameter :: eps = 1.0e-60_R8
-      integer, save :: shdd_style = 0
       real (kind=R8) ::
      *  vti32(nCv),
      &  wrkc(nCv), wrkf(nFc,0:1), wrkf1(nFc,0:1),
@@ -154,9 +152,6 @@
        call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, ni, 1, 'ni', '.gt.')
-      endif
-      if (ncall_b2sihs_.eq.0) then
-        call ipgeti('b2sihs_shdd_style',shdd_style)
       endif
       gridGeometry = geometryId( mpg, geo, 1 )
 *   ..compute ctaup
@@ -414,18 +409,11 @@
       endif
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
-      if (shdd_style.eq.0) then
-        call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
-        call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
-     &    geo%vxOnedBsq, dOnedBsqc)
-        wrkc = geo%cvBb(:,2)*geo%cvVol*                                !srv 11.01.13
-     &      (dpoc(:,1)*dOnedBsqc(:,0) - dpoc(:,0)*dOnedBsqc(:,1))
-      else
-        is = eb2spcr(1)+1
-        wrkf(:,0) = -vaecrb(:,0,is)*geo%fcS*geo%fcQalf(:,0)
-        wrkf(:,1) = -vaecrb(:,1,is)*geo%fcS*geo%fcQalf(:,1)
-        call div(nCv,nFc,mpg,wrkf,wrkc)
-      endif
+      call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
+      call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
+     &  geo%vxOnedBsq, dOnedBsqc)
+      wrkc = geo%cvBb(:,2)*geo%cvVol*                                 !srv 11.01.13
+     &    (dpoc(:,1)*dOnedBsqc(:,0) - dpoc(:,0)*dOnedBsqc(:,1))
       b2exbe=0.0_R8
       srw%b2sihs_exbe=0.0_R8
       do iCv = 1, mpg%nCi

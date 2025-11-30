@@ -3598,14 +3598,6 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
-			<switch>
-				<name>b2sihs_shdd_style</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2sihs_shdd_style.eq.1 then heat sources due to divergence of ExB velocity will be calculated by ExB velocity itself.
-				</description>
-			</switch>
 		</category>
 		<category name="Output">
 			<switch>
