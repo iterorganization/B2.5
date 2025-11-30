@@ -488,7 +488,7 @@ csw 26feb2013
         call ipgeti ('b2stbr_eir_src_nhist', nhist)
         call ipgeti ('eirene_underrelax', nrelax)
         call ipgeti ('eirene_averaging_multiple_calls', n_avg_repeat)
-        call xertst(.not.(
+        call xertst (.not.(
      .    (neutr_avg.gt.1 .and.
      .      (nhist.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
      .    (nhist.gt.1 .and.
@@ -497,10 +497,10 @@ csw 26feb2013
      .      (neutr_avg.gt.1.or.nhist.gt.1.or.n_avg_repeat.gt.1)) .or.
      .    (n_avg_repeat.gt.1 .and.
      .      (neutr_avg.gt.1.or.nhist.gt.1.or.nrelax.gt.1)) ),
-     .   ' Cannot have simultaneous multiple Eirene averaging schemes!')
+     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1)
      .    call alloc_hist_arrays(nhist,write_eirene_sources)
-        if(nrelax.gt.1 .or. nhist.gt.1 .or. n_avg_repeat.gt.1) 
+        if(nrelax.gt.1 .or. nhist.gt.1 .or. n_avg_repeat.gt.1)
      .    call alloc_sum_arrays(write_eirene_sources)
         call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
@@ -926,7 +926,7 @@ c       Main cycle: repeat Eirene calls n_avg_repeat times (default = 1)
             call copy_background(nx,ny,ns,BoRiS)
           endif
           my_ltime=.false.
-          filename=fort_lc//'44'    
+          filename=fort_lc//'44'
           call find_file(filename,ex)
           if(n_avg_repeat.gt.1) then
 c           Start every repeated Eirene call from the same fort.xx
@@ -937,8 +937,8 @@ c           calculated at the end of the previous real time step
           endif
 c         SINGLE EIRENE CALL
           call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *       b2brem,b2rad,b2qie(0),b2vdp,
-     1       eirene_step_cpu)
+     *     b2brem,b2rad,b2qie(0),b2vdp,
+     1     eirene_step_cpu)
 c         Cumulate source terms from past and current Eirene calls
           if(n_avg_repeat.gt.1) then
            call cumulate_source_arrays(write_eirene_sources)
@@ -989,7 +989,7 @@ c         Calculate averaged source terms from all Eirene calls, if using repeat
 csw 25jan2011 LTIME=.false. in eirsrt call
               my_ltime=.false.
               call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *          b2brem,b2rad,b2qie(0),b2vdp,
+     *         b2brem,b2rad,b2qie(0),b2vdp,
      1         eirene_step_cpu)
               eircount=eircount+1
             enddo
@@ -1046,7 +1046,6 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) ENDED !!!!!!!!!!!!!!!!!!!!!!!!!
       end if
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
-
 
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
       if(ank_mods.ne.0 .or. ionising_core.eq.1) then
@@ -2498,6 +2497,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         else
          ih_end = ihist
         end if
+
         relax = rratio(ih_end-1,ih_end)
         sni_s = sni_s*relax + sni/dble(ih_end)
         smo_s = smo_s*relax + smo/dble(ih_end)
@@ -4030,10 +4030,10 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
               do imol = 1, nnmoli
 !pb  eneutrad dimensioned per stratum to allow for short cycling
 !pb  only sum over strata used here
-!                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
-!                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
-!                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
-!                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+!               radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
+!               rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
+!               rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
+!               recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
                 radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
                 rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
                 rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
@@ -4064,28 +4064,28 @@ c
 !pb  18.12.2013
 !pb  eneutrad dimensioned per stratum to allow for short cycling
 !pb  only sum over strata used here
-!                radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,1)
-!                rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,1)
-!                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
-!                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
+!               radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,1)
+!               rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,1)
+!               rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
+!               recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
-                 rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
-                 rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
-                 recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
+                radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
+                rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
+                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
+                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
               enddo
               do imol = 1, nnmoli
 !pb  edissml dimensioned per stratum to allow for short cycling
 !pb  only sum over strata used here
-!                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
-!                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
-!                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
-!                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+!               radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
+!               rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
+!               rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
+!               recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
 cxpb Replacing edissml contribution with emolrad
-c$$$                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
-c$$$                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
-c$$$                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
-c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
+c$$$              radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
+c$$$              rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
+c$$$              rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
+c$$$              recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
                 radarr(ix,iy)=radarr(ix,iy)+emolrad(ix+1,iy+1,imol,0)
                 rad_neutr=rad_neutr+emolrad(ix+1,iy+1,imol,0)
                 rdneureg(k)=rdneureg(k)+emolrad(ix+1,iy+1,imol,0)
@@ -4468,7 +4468,7 @@ c======================================================================
       integer, intent(in) :: nx, ny, ns
       integer :: ix, iy, is, istrai, j, k, l
       real(kind=R8) :: s, t0, recyctmp, hlp_st
-      logical hlp_log
+      logical :: hlp_log
 c======================================================================
       if(dbg_eir_mc.gt.0) write(*,*) 'entry neutr_scl'
       if(ank_mods.ne.0) then
@@ -4531,7 +4531,7 @@ c*** surface sources should be counted here - the volumetric
 c*** recombination is already evaluated above.
 
         hlp_pff=.true.
-        do istrai=1, nstrat !{
+        do istrai=1,nstrat !{
           do is=0,ns-1 !{
             if(.not.is_neutral(is)) then !{
               j=b2eatcr(is)

@@ -187,8 +187,7 @@
      7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),                            !srv 13.01.17 }
      8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                            !som 13.11.20
      9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
-     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny),
-     2  temp_xya(-1:nx,-1:ny,0:4), k2_mean(-1:nx,-1:ny)
+     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17

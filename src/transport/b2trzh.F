@@ -334,7 +334,9 @@
             hci0_al(ix,iy,0:nspecies-1) = wrkc
 *    ..calculate the velocity parts of heat flux and R-transport coefficient
             call b2trhw(nspecies, G2, G8, mum,
-     &       Ainv, Ainv_mdf, c_hwA, c_rwA)
+     &       Ainv, Ainv_mdf,
+     &       c_hwA(0:nspecies-1,0:nspecies-1),
+     &       c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
      &       wrkcc)
@@ -523,7 +525,9 @@
 
 *    ..calculate the friction force transport coefficient
           wrkc = z2n_xy(ix,iy,0:nspecies-1)
-          call b2trfr(nspecies, mum, rmu, wrkc, c_hwA, c_rwA,
+          call b2trfr(nspecies, mum, rmu, wrkc,
+     &     c_hwA(0:nspecies-1,0:nspecies-1),
+     &     c_rwA(0:nspecies-1,0:nspecies-1),
      &     wrkcB, wrkcA, wrkcc)
           c_R_wA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcA
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB

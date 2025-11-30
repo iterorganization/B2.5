@@ -120,8 +120,8 @@
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(ncall, phm1, phm2)
 #endif
-      data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
+      data ncall/0/, styl0/0/, phm0/1.0_R8/,
+     &  phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -197,13 +197,13 @@
       endif
 
 *   ..initialize to 0
-      call sfill (n2*4, 0.0e0_R8, smbch, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbtf, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)                          !srv 13.01.17 { !srv 05.07.17
-      call sfill (n2*4, 0.0e0_R8, smbfreal, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfial_nofl, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
+      call sfill (n2*4, 0.0_R8, smbch, 1)                               !srv 11.09.09
+      call sfill (n2*4, 0.0_R8, smbtf, 1)                               !srv 11.09.09
+      call sfill (n2*4, 0.0_R8, smbfrial, 1)                            !srv 13.01.17 { !srv 05.07.17
+      call sfill (n2*4, 0.0_R8, smbfreal, 1)
+      call sfill (n2*4, 0.0_R8, smbtfial, 1)
+      call sfill (n2*4, 0.0_R8, smbtfial_nofl, 1)
+      call sfill (n2*4, 0.0_R8, smbtfeal, 1)                            !srv 13.01.17 }
 
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
@@ -270,7 +270,7 @@
            endif
           enddo
         enddo
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
@@ -311,9 +311,12 @@
           enddo
          endif
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
+!$OMP END PARALLEL DO
+#endif
       else
 *     ..standard friction force calculation
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
@@ -355,6 +358,9 @@
           enddo
          endif
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
+!$OMP END PARALLEL DO
+#endif
       endif
       wrk(-1:nx,-1:ny) = smbfrial(-1:nx,-1:ny,0)
       call nancheck(nx, ny, wrk, 'smbfrial(,,0)')
@@ -390,7 +396,7 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
           coef = -phm2*alfx_c(ix,iy)*ce1(ix,iy)*rz2(ix,iy,isb)*(me/qe)/
      &           zetae(ix,iy)/(bb(ix,iy,0)/bb(ix,iy,3))/f_luc_sg(ix,iy)   !srv f_luc_sg should be taken in cell center ?
-          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
           t0 = na(ix,iy,isb)*delte    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
           smbtfeal(ix,iy,0) = smbtfeal(ix,iy,0)+coef*t0
          endif
@@ -404,15 +410,15 @@
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &   Zhdanov_tf_fr.eq.1) then                                       !som 01.07.2021
 *     ..actual use of the Zhdanov closure
-          do iy = 0, ny-1
-           do ix = 0, nx-1
+        do iy = 0, ny-1
+          do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
      &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0),
      &        corr_tfia(ix,iy,isb))
             endif
-           enddo
           enddo
+        enddo
       elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
      &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
 *     ..test run of the Zhdanov closure
@@ -433,12 +439,12 @@
           call b2scopy (n2, smbtfial_test_nofl(-1,-1,0), 1,
      &     smbtfial_nofl(:,:,0), 1)
         else
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-           ka(ix,iy) = fka(ix,iy,isb)
-         enddo
-        enddo
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+          do iy = 0, ny-1
+            do ix = 0, nx-1
+              ka(ix,iy) = fka(ix,iy,isb)
+            enddo
+          enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
@@ -451,50 +457,54 @@
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
-        do is = 0, ns-1
-         if(isb.ne.is .and.
+          do is = 0, ns-1
+           if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
-          do iy = 0, ny-1
-           do ix = 0, nx-1
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
-             Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
-c            kb(ix,iy)    = fka(ix,iy,is)
-c            kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
-             kb(ix,iy)    =
+            do iy = 0, ny-1
+             do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+               Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
+               Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
+c              kb(ix,iy)    = fka(ix,iy,is)
+c              kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
+               kb(ix,iy)    =
      &                 fka_new_opt(ix,iy,is,rz2_temp,na_temp,am_sqrt)
-             KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
+               KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
 c        .. calculations could be simplified
 c        .. but we did not do it in order to have the same formulae as manual
-             calfab = zetap(ix,iy)/sqrt(mp)*
+               calfab = zetap(ix,iy)/sqrt(mp)*
      &            qe*(na(ix,iy,isb)+na(ix,iy,is))*
      &            sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
      &           (Kabtf(ix,iy)/kb(ix,iy)-Kbatf(ix,iy)/ka(ix,iy))*
      &            bb(ix,iy,0)/bb(ix,iy,3)
-             coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
+               coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
      &            mp/(zetap(ix,iy)*qe)
-             delti=
-     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+               delti=
+     &          (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
 c   .... apply flux limit
-             if(cflim(4).ne.0.0_R8.and.
-     &         .not.on_closed_surface(ix,iy)) then
-               jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
-     &          (na(ix,iy,isb)+na(ix,iy,is))
-               t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-               fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
-             else
-               fllim_al_ab = 1.0_R8
-             endif
+               if(cflim(4).ne.0.0_R8.and.
+     &          .not.on_closed_surface(ix,iy)) then
+                 jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
+     &            (na(ix,iy,isb)+na(ix,iy,is))
+                 t0 = abs(calfab*delti)/(cflim(4)*jabmax)
+                 fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+               else
+                 fllim_al_ab = 1.0_R8
+               endif
 
-             t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+               t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
-             smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
-             smbtfial_nofl(ix,iy,0) = smbtfial_nofl(ix,iy,0) + coef*t0
-            endif
-           enddo
+               smbtfial(ix,iy,0) =
+     &          smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
+               smbtfial_nofl(ix,iy,0) = smbtfial_nofl(ix,iy,0) + coef*t0
+              endif
+             enddo
+            enddo
+           endif
           enddo
-         endif
-        enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
+!$OMP END PARALLEL DO
+#endif
         endif
       else
 *     ..standard thermal force calculation
@@ -503,7 +513,7 @@ c   .... apply flux limit
            ka(ix,iy) = fka(ix,iy,isb)
          enddo
         enddo
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
@@ -540,14 +550,14 @@ c        .. but we did not do it in order to have the same formulae as manual
              coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
      &            mp/(zetap(ix,iy)*qe)
              delti=
-     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
 c   .... apply flux limit
              if(cflim(4).ne.0.0_R8.and.
      &         .not.on_closed_surface(ix,iy)) then
                jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
                t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-               fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+               fllim_al_ab = 1.0_R8/(1.0_R8+t0)
              else
                fllim_al_ab = 1.0_R8
              endif
@@ -561,6 +571,9 @@ c   .... apply flux limit
           enddo
          endif
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
+!$OMP END PARALLEL DO
+#endif
       endif
       wrk(-1:nx,-1:ny) = smbtfial(-1:nx,-1:ny,0)
       call nancheck(nx, ny, wrk, 'smbtfial(,,0)')

@@ -483,7 +483,7 @@ c Drift terms
 
         elseif (drift_style.eq.1) then
 
-          weight = 1.0e0_R8
+          weight = 1.0_R8
           nete = ne*te                                                   !lk
           call intcor(nx,ny,weight,nete,netec)                           !lk 12.12.07
           call intcor(nx,ny,weight,ne,nec)                               !srv 13.05.16
@@ -518,7 +518,7 @@ c Drift terms
 
         elseif (drift_style.eq.2) then
 
-          weight = 1.0e0_R8
+          weight = 1.0_R8
           nete = ne*te                                                   !lk
           call intcor(nx,ny,weight,nete,netec)                           !lk 12.12.07
 
@@ -556,7 +556,7 @@ c Drift terms
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-            ve(ix,iy) = 0.0e0_R8
+            ve(ix,iy) = 0.0_R8
           else     ! ve has been multiplied by vol*bx/hx
             ve(ix,iy)=fne(ix,iy,0)/nel(ix,iy)
           endif
@@ -571,7 +571,7 @@ c Drift terms
           enddo
         enddo
       else
-        c071 = 0.71e0_R8                                                 !srv 13.01.17
+        c071 = 0.71_R8                                                   !srv 13.01.17
       endif
 
 * ..compute fluxes

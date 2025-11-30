@@ -53,9 +53,9 @@
      *  alfx_c(:,:),
      *  sigx_c(:,:),                                                    !iyv 19.11.13 08.10.14 !srv 13.01.17 }
      *  kt_neo(:,:),                                                    !iys 02.12.13 08.10.14
-     *  nu2(:,:),                                                       !vvk 23.01.2024   
-     *  eps1(:),                                                        !vvk 23.01.2024   
-     *  k2(:,:)                                                         !vvk 23.01.2024   
+     *  nu2(:,:),                                                       !vvk 23.01.2024
+     *  eps1(:),                                                        !vvk 23.01.2024
+     *  k2(:,:)                                                         !vvk 23.01.2024
 
       contains
 
@@ -124,9 +124,9 @@
       allocate(sigx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13
       allocate(alfx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13 08.10.14 ! srv 13.01.17 }
       allocate(kt_neo(-1:nxd,-1:nyd))                                   !iys 02.12.13 08.10.14
-      allocate(nu2(-1:nxd,-1:nyd))                                      !vvk 23.01.2024 
-      allocate(eps1(-1:nyd))                                            !vvk 23.01.2024 
-      allocate(k2(-1:nxd,-1:nyd))                                       !vvk 23.01.2024 
+      allocate(nu2(-1:nxd,-1:nyd))                                      !vvk 23.01.2024
+      allocate(eps1(-1:nyd))                                            !vvk 23.01.2024
+      allocate(k2(-1:nxd,-1:nyd))                                       !vvk 23.01.2024
       kt_neo = 0.0_R8
 
       return
@@ -186,8 +186,8 @@
       deallocate(sigx_c)                                         !iys 19.11.13
       deallocate(alfx_c)                                         !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
-      deallocate(nu2)                                            !vvk 23.01.2024 
-      deallocate(eps1)                                           !vvk 23.01.2024  
+      deallocate(nu2)                                            !vvk 23.01.2024
+      deallocate(eps1)                                           !vvk 23.01.2024
       deallocate(k2)                                             !vvk 23.01.2024
 
       return
