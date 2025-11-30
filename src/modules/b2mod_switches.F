@@ -52,6 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
+      integer :: use_min_na_numerics
       integer :: set_transport_iyref
 
 c Advanced fluid neutral models
@@ -359,7 +360,11 @@ c diagnostics switches
 
 c hard limit velocities
       integer :: ion_vlct_restrict
+      integer :: ion_vlct_restrict_core
+      integer :: ion_vlct_restrict_abs
       real(kind=R8) :: ion_vlct_restrict_M
+      real(kind=R8) :: ion_vlct_restrict_core_M
+      real(kind=R8) :: ion_vlct_restrict_ua
 
 c MMS
       integer:: set_na_numerical
@@ -548,6 +553,13 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
+      integer :: b2mndt_var_style
+      real (kind=R8) :: b2mndt_var_te_min
+      real (kind=R8) :: b2mndt_var_te_max
+      real (kind=R8) :: b2mndt_var_mult
+      real (kind=R8) :: b2mndt_var_style2_SF
+      real (kind=R8) :: b2mndt_var_style3_Cmax
+      integer :: b2mndt_var_style_nfilter
       integer :: b2mndt_ckn
       integer :: b2mndt_bdf
       integer :: b2mndt_dummy
@@ -668,6 +680,7 @@ c Optimization
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % use_min_na_numerics = 0
       s % set_transport_iyref = 0
 
 c Advanced fluid neutral models
@@ -967,6 +980,10 @@ c Zhdanov closure switches
       s % b2npmo_diagno = 0
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+      s % ion_vlct_restrict_core = 0
+      s % ion_vlct_restrict_core_M = 3.0_R8
+      s % ion_vlct_restrict_abs = 0
+      s % ion_vlct_restrict_ua = c
 
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
@@ -1200,6 +1217,13 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
+      s % b2mndt_var_style = 0
+      s % b2mndt_var_te_min = 0.0_R8
+      s % b2mndt_var_te_max = 1e30_R8
+      s % b2mndt_var_mult = 1.0_R8
+      s % b2mndt_var_style2_SF = 10.0_R8
+      s % b2mndt_var_style3_Cmax = 1.0_R8
+      s % b2mndt_var_style_nfilter = 1
       s % b2mndt_style = 1
       s % b2mndt_ckn = 1
       s % b2mndt_bdf = 1
@@ -1323,6 +1347,8 @@ c Optimization
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
+      call ipgeti ('b2mndr_use_min_na_numerics',
+     &                       s % use_min_na_numerics)
       call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
@@ -1638,6 +1664,14 @@ c diagnostic switches
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+      call ipgeti ('b2npmo_ion_vlct_restrict_core',
+     &             s % ion_vlct_restrict_core)
+      call ipgetr ('b2npmo_ion_vlct_restrict_core_M',
+     &             s % ion_vlct_restrict_core_M)
+      call ipgeti ('b2npmo_ion_vlct_restrict_abs',
+     &             s % ion_vlct_restrict_abs)
+      call ipgetr ('b2npmo_ion_vlct_restrict_ua',
+     &             s % ion_vlct_restrict_ua)
 
 c hard limit velocities
       call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
@@ -1690,7 +1724,7 @@ c Eirene coupling
      &                s % neutral_sources_rescale)
 
 c k-enstrophy model
-      call ipgeti ('b2mndr_solve_keps',s % solve_keps)
+      call ipgeti ('b2mndr_solve_keps', s % solve_keps)
       call ipgeti ('b2tqna_transport_keps', s % transport_keps)
       call ipgetr ('b2tqna_keps_cd', s % keps_cd)
       call ipgetr ('b2tqna_keps_visc', s % keps_visc)
@@ -2209,6 +2243,14 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresmo', s % nstg_aresmo)
       call ipgetr ('b2news_BoRiS', s % BoRiS)
       call ipgetr ('b2mndt_rxf', s % b2mndt_rxf)
+      call ipgeti ('b2mndt_var_style', s % b2mndt_var_style)
+      call ipgetr ('b2mndt_var_te_min', s % b2mndt_var_te_min)
+      call ipgetr ('b2mndt_var_te_max', s % b2mndt_var_te_max)
+      call ipgetr ('b2mndt_var_mult', s % b2mndt_var_mult)
+      call ipgetr ('b2mndt_var_style2_SF', s % b2mndt_var_style2_SF)
+      call ipgetr ('b2mndt_var_style3_Cmax', s % b2mndt_var_style3_Cmax)
+      call ipgeti ('b2mndt_var_style_nfilter',
+     &              s % b2mndt_var_style_nfilter)
       call ipgeti ('b2mndt_style', s % b2mndt_style)
       call ipgeti ('b2mndt_ckn', s % b2mndt_ckn)
       call ipgeti ('b2mndt_bdf', s % b2mndt_bdf)
@@ -2950,6 +2992,32 @@ c Zhdanov closure
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+
+c controlling minimum density via b2.numerics
+      if(s%b2srdt_numerics_namelist.eq.0 .and.
+     &           s%use_min_na_numerics.ne.0) then
+        call xerrab('use_min_na_numerics requires '//
+     &   'reading numerics namelist')
+      endif
+
+c Variable local timestepping
+      if(s%b2mndt_style.eq.2 .and.
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping '//
+     &   'not yet allowed for transient simulations')
+      endif
+
+      if(s%b2mndt_bdf.gt.2 .and.
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping '//
+     &   'not compatible with BDF scheme')
+      endif
+
+      if(s%tn_style.ne.0 .and.
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping '//
+     &   'not yet compatible with tn_style.ne.0')
+      endif
 
       return
       end subroutine check_consistency_switches

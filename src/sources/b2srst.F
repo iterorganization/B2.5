@@ -88,11 +88,21 @@
 
 *  ..stabilise
 *   ..modify sna
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp parallel
+!$omp& default(none)
+!$omp& private(is, iCv, t0)
+!$omp& shared(ns, nCv)
+!$omp& shared(na, ua, te, ti, po, ne, tn, snest, kt, zt)
+!$omp& shared(snast, smost, shest, shist, sktst, sztst, schst)
+!$omp& shared(sr, switch, b2srst_kt_eps, b2srst_zt_eps)
+!$omp do
+#endif
       do is = 0, ns-1
        do iCv = 1, nCv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
          t0 = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na(iCv,is)
          sr%sna(iCv,0,is) =
      &     max(sr%sna(iCv,0,is),(1.0_R8+switch%b2srst_rf0)*t0,
@@ -114,7 +124,13 @@
 !WG_TODO        enddo                                                        !srv 27.06.08 }
 !WG_TODO       endif                                                         !srv 01.07.08 }
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp end do
+#endif
 *   ..modify smo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp do
+#endif
       do is = 0, ns-1
        do iCv = 1, nCv
 *      ..make smo(,,1,) negative
@@ -127,7 +143,13 @@
          sr%smo(iCv,3,is) = min(sr%smo(iCv,3,is),0.0_R8)
        enddo
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp end do
+#endif
 *   ..modify she, shi, sch, skt, szt
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp do
+#endif
       do iCv = 1, nCv
 *     ..modify she(,0:1)
         t0 = sr%she(iCv,0)+sr%she(iCv,1)*te(iCv)
@@ -215,8 +237,14 @@
      &   min(sr%sne(iCv,1)*ne(iCv),-switch%b2srst_rf3*t0,
      &   (1.0_R8+switch%b2srst_rf3)*t0)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp end do
+#endif
 
 *   ..calculate the source coefficients of numerical stabilisation.
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp workshare
+#endif
       snast = sr%sna - snast
       smost = sr%smo - smost
       shest = sr%she - shest
@@ -225,6 +253,10 @@
       snest = sr%sne - snest
       sktst = sr%skt - sktst
       sztst = sr%szt - sztst
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
+!$omp end workshare
+!$omp end parallel
+#endif
 
 #ifndef FIXED_POINT
 cdjm Jan2017 Store for balance
@@ -254,7 +286,7 @@ cdjm Jan2017 Store for balance
 !         call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
-      if (switch%b2npht_iout.eq.1 .or. 
+      if (switch%b2npht_iout.eq.1 .or.
      &                              switch%iout_b2wdat.eq.4)   then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne

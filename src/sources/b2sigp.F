@@ -4,15 +4,16 @@
       subroutine b2sigp (nCv, nFc, nVx, isb, switch, geo, mpg, rzb,
      &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1)
       use b2mod_types
-      use b2mod_constants                                         !srv 23.03.10
+      use b2mod_constants                                                !srv 23.03.10
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
       use b2mod_b2cmpa
 #ifndef FIXED_POINT
-      use b2mod_balance                                           !djm Jan2017
+      use b2mod_balance                                                  !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
-     &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
+     &          b2sigp_pstati0to3, b2sigp_pstate0to3,                    !djm Jul2018
      &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
 #endif
 ! csc The following are not necessary for computation but are needed
@@ -22,26 +23,26 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer, intent(in) :: nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  rzb(nCv),
      &  nb(nCv), ti(nCv), tn(nCv),
      &  ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbgp(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      * wrk0(nCv), wrk1(nCv), wrk3(nCv),
 #ifdef WG_TODO
-     * wrk4(nCv),                                  !djm Jan2017
+     * wrk4(nCv),                                                        !djm Jan2017
 #endif
-     * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
+     * wrk5(nCv), wrk6(nCv),                                             !srv 28.03.17
      * tb(nCv), nete(nCv),
-     * smbgp_b4gr(nCv,0:3)                         !djm Jul2018
+     * smbgp_b4gr(nCv,0:3)                                               !djm Jul2018
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -55,7 +56,7 @@
 
 *   ..local variables
       integer iCv, iFc!, k
-      character chns*3 !, chk*1                                       !srv 17.06.02
+      character chns*3 !, chk*1                                          !srv 17.06.02
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx), nbf(nFc), tbf(nFc), rzbf(nFc),
      *   tef(nFc)
@@ -83,10 +84,25 @@
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
       endif
+*   .. check output writing
+      if ((switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4)) then                       !srv 17.06.02 {
+        if (in_parallel() .and. ncall_b2sigp == 0) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+           if (ncall_b2sigp==0) then
+             write(*,*) 'b2sigp OpenMP warning: no file output ',
+     &                  'in parallel mode'
+           end if
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        end if
+      end if
 
 * ..choose the correct temperature
       if (switch%tn_style.eq.2.and.is_neutral(isb).and.
-     &      nint(zn(isb)).eq.1)then
+     &      nint(zn(isb)).eq.1) then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti
@@ -124,17 +140,25 @@
 #ifndef FIXED_POINT
 cdjm compute b2sigp_pstat0to3 on cell face
           if (balance_netcdf.ne.0) then
-            b2sigp_pstat0to3 = 0.0_R8
-            b2sigp_pstati0to3 = 0.0_R8
-            b2sigp_pstate0to3 = 0.0_R8
+            b2sigp_pstat0to3(:,:,isb) = 0.0_R8
+            b2sigp_pstati0to3(:,:,isb) = 0.0_R8
+cc zeroing out of b2sigp_pstate0to3 should not be done here inside species loop, is done once in allocate_b2mod_balances
+cc            b2sigp_pstate0to3 = 0.0_R8
+#ifdef _OPENMP
+!$OMP CRITICAL
+#endif
             do iFc = 1, nFc
               t0 = switch%b2sigp_phm0*geo%fcHz(iFc)*geo%fcS(iFc)*
      &         geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
               b2sigp_pstat0to3(iFc,0,isb) = t0*(nbf(iFc)*tbf(iFc)+
      &         rzbf(iFc)*nbf(iFc)*tef(iFc))
               b2sigp_pstati0to3(iFc,0,isb) = t0*nbf(iFc)*tbf(iFc)
-              b2sigp_pstate0to3(iFc,0) = t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
+              b2sigp_pstate0to3(iFc,0) = b2sigp_pstate0to3(iFc,0) +
+     &                                   t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
             enddo
+#ifdef _OPENMP
+!$OMP END CRITICAL
+#endif
           endif
 #endif
         else                                                            !srv 23.03.10 {
@@ -177,7 +201,7 @@ cdjm compute b2sigp_pstat0to3 on cell face
 !WG_TODO          enddo
           endif
 #endif
-        endif                                                           !srv 02.07.08 }
+        endif                                                            !srv 02.07.08 }
 
         smbgp_b4gr=smbgp !djm Jul2018
 cxpb apply restriction to pressure gradient for minority ions
@@ -193,30 +217,32 @@ cxpb apply restriction to pressure gradient for minority ions
           enddo                                                          !lk 23.06.17}
         endif
 
-      else          !!switch%b2sigp_phm0.eq.0.0_R8                                                  !srv 26.06.18 {
+      else          !!switch%b2sigp_phm0.eq.0.0_R8                       !srv 26.06.18 {
         smbgp = 0.0_R8
 #ifdef WG_TODO
-        b2sigp_pstat0to3 = 0.0_R8
+        b2sigp_pstat0to3(:,:,isb) = 0.0_R8
 #endif
         wrk5 = 0.0_R8
         wrk6 = 0.0_R8
-      endif                                                           !srv 26.06.18 }
+      endif                                                              !srv 26.06.18 }
 
-      if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then    !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-!      do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
-!      enddo
-       call my_out_us(70,nCv,0,smbgp(1,0),'b2sigp_smogp'//chns)
-       if(switch%b2sigp_style.eq.0 .or. switch%b2sigp_style.eq.1 ) then
-          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
-       elseif(switch%b2sigp_style.eq.2) then
-          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
-       endif
-      endif                                                           !srv 17.06.02 }
+      if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then       !srv 17.06.02 {
+        if (.not. in_parallel()) then
+          write (chns,'(i3.3)') isb
+!         do k=0,3
+!           write (chk,'(i1)') k
+!           call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+!         enddo
+          call my_out_us(70,nCv,0,smbgp(1,0),'b2sigp_smogp'//chns)
+        if(switch%b2sigp_style.eq.0 .or. switch%b2sigp_style.eq.1 ) then
+              call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+              call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
+          elseif(switch%b2sigp_style.eq.2) then
+              call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+              call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
+          endif
+        endif
+      endif                                                              !srv 17.06.02 }
 #ifndef FIXED_POINT
 cdjm Jan2017 Store linearised source for balance
       if (balance_netcdf.ne.0) then

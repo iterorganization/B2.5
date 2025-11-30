@@ -48,6 +48,16 @@
       get_stacksize_s = trim(stacksize)
 #endif
       end function get_stacksize_s
+#elif defined GFORTRAN
+      function get_stacksize_s()
+      character*12 get_stacksize_s
+      character*12 stacksize
+      logical streql
+      external streql
+      call getenv ('OMP_STACKSIZE', stacksize)
+      if (streql(stacksize,' ')) stacksize = '128 MB'
+      get_stacksize_s = trim(stacksize)
+      end function get_stacksize_s
 #endif
 
       subroutine print_openmp_info()

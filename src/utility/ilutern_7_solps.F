@@ -3,9 +3,7 @@
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_subsys
-#ifdef _OPENMP
       use b2mod_openmp
-#endif
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C
@@ -67,6 +65,11 @@ c
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save ncall, nwrite
       data ncall /0/, nwrite /0/
+
+#ifdef _OPENMP
+!$omp threadprivate(/ma28fdc3/, /ma28hdc3/)
+!$omp threadprivate(ncall, nwrite, kwrite_fmt, kwrite_bnr)
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -135,15 +138,15 @@ C    ZUWEISUNG
       ICNH=0
       IRNH=0
       DO K=1,NC0
-         IF (IJSH(K).EQ.-1) A1HN=ASO1(ISH(K),JSH(K))               !srv 26.01.00
-         IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.2) A1HN=ACP(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !srv 26.01.00
+        IF (IJSH(K).EQ.-1) A1HN=ASO1(ISH(K),JSH(K))                !srv 26.01.00
+        IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
+        IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))
+        IF (IJSH(K).EQ.2) A1HN=ACP(ISH(K),JSH(K))
+        IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
+        IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
+        IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                 !srv 26.01.00
 c       IF (A1HN.EQ.0.0_R8) THEN
-         if(A1HN.EQ.0.0_R8.or.                                     !srv 29.01.20
+        if(A1HN.EQ.0.0_R8.or.                                      !srv 29.01.20
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
@@ -158,111 +161,150 @@ c       IF (A1HN.EQ.0.0_R8) THEN
           IRNH(NZ)=IRN(K)
           IK=IK+1
           ICNH(NZ)=ICN(K)
-         ENDIF
+        ENDIF
       enddo
       DO I=1,N1
-         DO J=1,N2
+        DO J=1,N2
           R1(I+(J-1)*N1)=RHS(I,J)
           S1(I+(J-1)*N1)=0.0_R8
-         enddo
+        enddo
       enddo
-      if(kwrite_bnr.eq.ncall) then                                !srv 18.05.02 {
-        write(*,*) 'Opening 83'
-        open(83,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
-        write(83) n
-        do i=1,n
-          write(83) r1(i)
-        enddo
-        close(83)
-        write(*,*) 'Opening 82'
-        open(82,file='b2_7_matrix_binary_'//trim(name),
+        !!FR The b2_matrix file will not write out correctly if code runs in parallel
+!!FR thus ensure that the code will not be executed if accessed in parallel region.
+      if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2     'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          write(*,*) 'Opening 83'
+          open(83,file='b2_7_rhs_binary_'//trim(name),
+     .            form='unformatted') !srv 11.03.13
+          write(83) n
+          do i=1,n
+            write(83) r1(i)
+          enddo
+          close(83)
+          write(*,*) 'Opening 82'
+          open(82,file='b2_7_matrix_binary_'//trim(name),
      .       form='unformatted')                                  !srv 11.03.13
-        write(82) n, nz
-        do i=1,nz
-          write(82) IRNH(i),ICNH(i),A1H(i)
-        enddo
-        close(82)
+          write(82) n, nz
+          do i=1,nz
+            write(82) IRNH(i),ICNH(i),A1H(i)
+          enddo
+          close(82)
+        endif
       endif                                                       !srv 18.05.02 }
+
       if(kwrite_fmt.eq.ncall) then                                !srv 18.05.02 {
-        write(*,*) 'Opening 83'
-        open(83,file='b2_7_rhs_'//trim(name))
-        write(83,*) n
-        do i=1,n
-          write(83,*) r1(i)
-        enddo
-        close(83)
-        open(82,file='b2_7_matrix_'//trim(name))
-        write(82,*) n, nz
-        do i=1,nz
-          write(82,*) IRNH(i),ICNH(i),A1H(i)
-        enddo
-        close(82)
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          write(*,*) 'Opening 83'
+          open(83,file='b2_7_rhs_'//trim(name))
+          write(83,*) n
+          do i=1,n
+            write(83,*) r1(i)
+          enddo
+          close(83)
+          open(82,file='b2_7_matrix_'//trim(name))
+          write(82,*) n, nz
+          do i=1,nz
+            write(82,*) IRNH(i),ICNH(i),A1H(i)
+          enddo
+          close(82)
+        endif
       endif                                                    !srv 18.05.02 }
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
-          if(ncall.eq.0) then
-            write(*,*) 'Opening 81'                            !srv 11.01.00
-            open(81,file='b2_7_diagonal_matrix')               !srv 11.01.00
+          if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)'OpenMP: warning: running in parallel the ',
+     1       'b2_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+          else
+            if(ncall.eq.0) then
+              write(*,*) 'Opening 81'                          !srv 11.01.00
+              open(81,file='b2_7_diagonal_matrix')             !srv 11.01.00
+            endif
+            write(*,*) 'Writing 81'                            !srv 11.01.00
+            write(81,*) n,' n'
+            do i=1,n
+              write(81,*) r1(i)                                !srv 11.01.00
+            enddo
+            write(81,*) nz,' nz'                               !srv 11.01.00
+            do i=1,nz
+              write(81,*) IRNH(i),ICNH(i),A1H(i)               !srv 11.01.00
+            enddo
+            if(nwrite.eq.ncall) then
+              write(*,*) 'Closing 81'                          !srv 11.01.00
+              close(81)                                        !srv 11.01.00
+            endif
           endif
-          write(*,*) 'Writing 81'                              !srv 11.01.00
-          write(81,*) n,' n'
-          do i=1,n
-            write(81,*) r1(i)                                  !srv 11.01.00
-          enddo
-          write(81,*) nz,' nz'                                 !srv 11.01.00
-          do i=1,nz
-            write(81,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
-          enddo
-        elseif(nwrite.eq.ncall) then
-          write(*,*) 'Closing 81'                              !srv 11.01.00
-          close(81)                                            !srv 11.01.00
         endif
       endif
 cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then
-         WRITE(6,*) 'ILUTERN'
+        WRITE(6,*) 'ILUTERN'
       else
-         WRITE(6,*) 'ILUTERN'
+        WRITE(6,*) 'ILUTERN'
       endif
       if(lfirst_ilu7) then
-         write(*,*) 'ilutern_7: nz = ',nz                      !srv 11.01.00
-         call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
-         iflag=0
+        write(*,*) 'ilutern_7: nz = ',nz                           !srv 11.01.00
+        call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
+        iflag=0
       endif
       do i=1,nz
-         irnh_save(i)=irnh(i)
-         icnh_save(i)=icnh(i)
-         a1h_save(i)=a1h(i)
+        irnh_save(i)=irnh(i)
+        icnh_save(i)=icnh(i)
+        a1h_save(i)=a1h(i)
       enddo
       if(.not.lfirst_ilu7) then
-         call ma28bdcopy3                                          !srv 26.12.17
+        call ma28bdcopy3                                           !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag
-         if(iflag.lt.0) then
+        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag
+        if(iflag.lt.0) then
           do i=1,nz
             irnh(i)=irnh_save(i)
             icnh(i)=icnh_save(i)
             a1h(i)=a1h_save(i)
           enddo
-         endif
+        endif
       endif
       if(lfirst_ilu7.or.iflag.lt.0) then
-         call ma28adcopy3                                          !srv 26.12.17
+        call ma28adcopy3                                           !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0 .or. iflag.lt.0)
-     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
+        if(nltrsol.gt.0 .or. iflag.lt.0)
+     >   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
-         do i=1,solvdim
+        do i=1,solvdim
           icnhkeep(i)=icnh(i)
-         enddo
-         lfirst_ilu7=.false.
+        enddo
+        lfirst_ilu7=.false.
       endif
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
+     1  r1,s1,res,w,1,prec,iflag)                                  !srv 16.01.18
       if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 

@@ -176,7 +176,7 @@ c 2002-09-11: logic revised
       integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
-      integer atomic_physics_rescale_flag
+      integer atomic_physics_rescale_flag, reset_iter
       integer ismain, ismain0, isfb, is_previous, iFb, ifb1, nfb1
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
@@ -307,6 +307,8 @@ c 2002-09-11: logic revised
      4  fb_ib1(:), fb_istra1(:), fb_species1(:)
       integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
+      integer, allocatable :: nrelax_sni1(:), nrelax_smo1(:),
+     1                        nrelax_see1(:), nrelax_sei1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
       integer bc_list_x1(2*(nx1+ny1),nbcd), bc_list_y1(2*(nx1+ny1),nbcd)
@@ -600,7 +602,7 @@ c 2002-09-11: logic revised
       data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
-      data atomic_physics_rescale_flag/0/
+      data atomic_physics_rescale_flag/0/, reset_iter/2/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
@@ -1454,6 +1456,7 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
       call ipgetr ('b2sikt_aniso', fac_aniso)
+      call ipgeti ('b2optim_reset_iter', reset_iter)
       call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgetr ('b2stbc_Qalfmin', b2stbc_Qalfmin)
@@ -1903,9 +1906,12 @@ c 2002-09-11: logic revised
           end if
         case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
           todo = pulse.eq.0.and.shot.ne.0
-          wait = .true.
           cnamip = 'b2mndr_pulse_number'
           if (todo) iswitch = shot
+        case ('b2optim_reset_iter') ! needs to be rewritten as b2optim_reset_drift_iter
+          todo = reset_iter.ne.2
+          if (todo) iswitch = reset_iter
+          cnamip = 'b2optim_reset_drift_iter'
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -3804,6 +3810,17 @@ cxpb This will need to be checked !!!
      .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
             deallocate(sna_corr1)
           end if
+          if(minval(min_na(0:ns-1,0:nnreg(0))).ne.na_min .or.
+     &       maxval(min_na(0:ns-1,0:nnreg(0))).ne.na_min) then
+            do ireg = 0, nnreg(0)
+              cftmp(0:ns-1)=min_na(0:ns-1,ireg)
+              call convert_bundle_r
+     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+              min_na(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              write(99,hlp_frm)
+     .         'MIN_NA(0,',ireg,')=',(min_na(is,ireg),is=0,ns1-1)
+            enddo
+          endif
           if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
      &      .or. b2stbr_taumax.ne.0.05_R8) then
             allocate(taumax1(1:nspecies1))
@@ -10706,6 +10723,10 @@ cxpb  Convert fort.46 file if needed
         allocate(lsns1(DEF_NSRFS*nstrat1))
         allocate(ksns1(nstrat1))
         allocate(gpdata1(100,2,nstrat1))
+        allocate(nrelax_sni1(nstrat1))
+        allocate(nrelax_smo1(nstrat1))
+        allocate(nrelax_see1(nstrat1))
+        allocate(nrelax_sei1(nstrat1))
         do ib = 1, nstrat
          if (savestratum(ib) .or. crcstra(ib).eq.'T') then
           ib1 = istra1(ib)
@@ -10887,6 +10908,10 @@ cxpb  Convert fort.46 file if needed
           time_dep_puff_case1(ib1) = time_dep_puff_case(ib)
           ngpdata1(ib1) = ngpdata(ib)
           gpdata1(:,:,ib1) = gpdata(:,:,ib)
+          nrelax_sni1(ib1) = nrelax_sni(ib)
+          nrelax_smo1(ib1) = nrelax_smo(ib)
+          nrelax_see1(ib1) = nrelax_see(ib)
+          nrelax_sei1(ib1) = nrelax_sei(ib)
          endif
         enddo
 cxpb We modify the values in stored in track_index before re-bundling
@@ -11067,6 +11092,16 @@ cxpb as they no longer necessarily point to the same species
      .   '(1x,a,1p,',nstrat1,'(1x,g10.3,'',''))'
         if (minval(recyceir1(1:nstrat1)).lt.1.0_R8)
      >   write(99, hlp_frm) 'RECYCEIR=',(recyceir1(1:nstrat1))
+        write(hlp_frm,'(a,i2,a)')
+     .   '(1x,a,',nstrat1,'(1x,i4,'',''))'
+        if (maxval(nrelax_sni1(1:nstrat1)).gt.1)
+     >   write(99, hlp_frm) 'NRELAX_SNI=',(nrelax_sni1(1:nstrat1))
+        if (maxval(nrelax_smo1(1:nstrat1)).gt.1)
+     >   write(99, hlp_frm) 'NRELAX_SMO=',(nrelax_smo1(1:nstrat1))
+        if (maxval(nrelax_see1(1:nstrat1)).gt.1)
+     >   write(99, hlp_frm) 'NRELAX_SEE=',(nrelax_see1(1:nstrat1))
+        if (maxval(nrelax_sni1(1:nstrat1)).gt.1)
+     >   write(99, hlp_frm) 'NRELAX_SEI=',(nrelax_sei1(1:nstrat1))
         write(hlp_frm,'(a,i3,a)')
      .   '(1x,a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
         do ib = 1, nstrat1
@@ -11406,6 +11441,10 @@ cxpb as they no longer necessarily point to the same species
         deallocate(gpdata1)
         deallocate(lsns1)
         deallocate(ksns1)
+        deallocate(nrelax_sni1)
+        deallocate(nrelax_smo1)
+        deallocate(nrelax_see1)
+        deallocate(nrelax_sei1)
        end if
        if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
      >  then

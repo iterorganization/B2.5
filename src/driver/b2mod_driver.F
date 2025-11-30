@@ -193,7 +193,8 @@
       integer, save :: edition_p = 0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
-     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000,
+     *  nrelax = 0
       logical lwti, lwav, lrav, lrer, continued, ids_replace
       character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
@@ -1101,6 +1102,7 @@
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_ntim_run', ntim_run)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
+       call ipgeti ('eirene_underrelax', nrelax)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -2541,7 +2543,7 @@ c new CDF movie option
              write (run_av_name,'(a14,i4.4)')
      .              'run_av/run_av.',edition_run
              call run_av_save (run_av_name,nCv,ns,.true.,.false.,
-     .                         state_avg)
+     .                         nrelax,state_avg)
              write(*,*) 'Saved ',run_av_name
           end if
         end if
@@ -2757,7 +2759,8 @@ c new CDF movie option
           if (iav_run > 0) then
             write (aver_name,'(a17,a4)')
      .              'plasmastate_aver.',savefile(13:16)
-            call run_av_save (aver_name,nCv,ns,.true.,.true.,state_avg)
+            call run_av_save (aver_name,nCv,ns,.true.,.true.,nrelax,
+     .                        state_avg)
             write (*,*) aver_name,' saved '
           end if
         endif
@@ -3965,7 +3968,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       endif
 
       if (iav_run > 0) then
-        call run_av_save ('b2favere',nCv,ns,.true.,.true.,state_avg)
+        call run_av_save ('b2favere',nCv,ns,.true.,.true.,nrelax,
+     .                    state_avg)
         call run_av_fin (state_avg)
       end if
 

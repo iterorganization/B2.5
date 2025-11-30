@@ -17,6 +17,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_openmp
       use b2mod_ad
      & , only : ncall_b2sifr, icase_sifr
 #ifndef NAGFOR
@@ -28,22 +29,23 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, isb
+      integer, intent(in) :: nCv, nFc, nVx, ns, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1), te(nCv), ti(nCv), ni(nCv,0:1),
      &  ne(nCv), ne2(nCv), rza(nCv,0:ns-1), rz2(nCv,0:ns-1), ehxp(nCv),
-     &  lnlam(nCv), cthe(nCv,0:ns-1), cthi(nCv,0:ns-1)
+     &  cthe(nCv,0:ns-1), cthi(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      &   smprb(nCv), smptb(nCv), smfrb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
+      real (kind=R8), intent(inout) ::
+     *   vti32(nCv), gti(nCv), gte(nCv), lnlam(nCv)
       real (kind=R8) ::
-     *   vti32(nCv), gti(nCv), gte(nCv),
      *   smbtf_cthe(nCv),                                               !djm Jul2018
      *   smbtf_cthi(nCv)
 *-----------------------------------------------------------------------
@@ -81,6 +83,9 @@
       external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvsg
 
+#ifdef _OPENMP
+!$omp threadprivate(iout)
+#endif
 *-----------------------------------------------------------------------
 *.computation
 
@@ -102,7 +107,18 @@ csw 24sep2013
        call xertst (0.0_R8.le.switch%b2sifr_limthii.and.
      &              0.0_R8.le.switch%b2sifr_limthee,
      &  'faulty internal parameter limthii, limthee')
-       call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.0
+       if ((iout.ne.0) .and. in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+         write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
+     &               'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+         iout = 0
+       end if
        call ipgeti ('b2tlnl_ii', icase_sifr)
        call xertst (0.eq.icase_sifr .or. 1.eq.icase_sifr,
      &               'faulty input b2tlnl_ii')
@@ -138,6 +154,7 @@ csw 24sep2013
 *   ..compute gti,gte
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
+
 * ..compute friction
 *   ..initialise to 0
       smbch = 0.0_R8
@@ -147,6 +164,7 @@ csw 24sep2013
       smfrb = 0.0_R8
       smbtf_cthe = 0.0_R8
       smbtf_cthi = 0.0_R8
+
 *   ..loop over all other species
       do is = 0, ns-1
 *    ..consider distinct cases
@@ -179,6 +197,7 @@ csw 24sep2013
 *       physics routines.)
        endif
       enddo
+
 *   ..compute thermal force
       if (.not.is_neutral(isb)) then
        do iCv = 1, mpg%nCi

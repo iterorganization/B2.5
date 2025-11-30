@@ -9,6 +9,7 @@
       use b2mod_b2cmpa
       use b2mod_geo_corner
       use b2mod_subsys
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -30,6 +31,9 @@
       character(3) :: chns
 *   ..procedures
       external xertst
+#ifdef _OPENMP
+!$omp threadprivate(ncall, iout)
+#endif
       external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
@@ -41,12 +45,23 @@
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2txvspr_iout',iout)                               !srv 06.12.17
+       if (in_parallel() .and. iout.ne.0) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+        write(*,*)
+     .   'b2txvspr OpenMP warning: no file I/O in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        iout = 0
+       endif
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
+*   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
       avisper  = 0.0_R8; bvisper = 0.0_R8; cvisper = 0.0_R8             !srv 27.01.00 22.03.02
-        
+
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0_R8) then               !srv 22.11.99
 
@@ -65,7 +80,7 @@
               endif
             enddo
           enddo
-        
+
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
@@ -74,13 +89,13 @@
               endif
             enddo
           enddo
-          
+
           avisper(:,:,1) = cvisper(:,:,1)
 
          endif                                                          !srv 16.10.17
        enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
-      
+
       if(iout.eq.1) then
        call my_out(70,nx,ny,avisper(-1,-1,1),'b2txvspr_avispery')
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2txvspr_bvispery')

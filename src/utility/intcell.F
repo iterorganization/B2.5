@@ -22,7 +22,6 @@ c
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   wght(mpg%nCmxFc),face(nFc),centre(nCv)
-
       integer iFc,iCv
       real (kind=R8) :: wghtsum
 

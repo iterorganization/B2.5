@@ -10,10 +10,11 @@
       integer, intent (in) :: nCv, nFc, nVx, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
-     *   fun(nCv), funv(nVx)
+      real (kind=R8), intent(in) ::
+     *   fun(nCv)
+      real (kind=R8), intent(inout) :: funv(nVx)
 *   ..output arguments
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   dfunp(nFc)
 *-----------------------------------------------------------------------
 *.documentation

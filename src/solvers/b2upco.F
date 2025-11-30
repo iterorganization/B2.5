@@ -11,7 +11,7 @@
       use b2us_plasma
       use b2mod_switches
       use b2mod_numerics_namelist
-     , , only : corr_core_dn
+     , , only : corr_core_dn, min_na
       use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -49,7 +49,7 @@
      *  wrk(nCv), wrkv(nVx)
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv),                                         !lk 30.06.17
-     *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17
+     *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), na_min            !lk 30.06.17
       logical too_low_density(mpg%nFt)                              ! IYS 27.11.2017
 *   ..procedures
       external xertst, ipgetr
@@ -102,12 +102,17 @@
 ! flux surface where such event happens.
         too_low_density = .false.
         do iCv = 1, nCv
+          if (switch%use_min_na_numerics.eq.0) then ! default
+            na_min = switch%b2mndr_na_min
+          else
+            na_min = min_na(isb,mpg%cvReg(iCv))
+          endif
           if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)
             if (iFt.gt.0.and.iFt.le.mpg%nFt) then
               t0 = pb(iCv)+tt2(iFt)/tt0(iFt) +
      *         corr_core_dn(isb)*(pb_(iCv)-pb(iCv)-tt2(iFt)/tt0(iFt)) ! IYS 19.12.2017
-              if (t0 .lt. pb(iCv)*switch%b2mndr_na_min / nb(iCv)) then
+              if (t0 .lt. pb(iCv)*na_min / nb(iCv)) then
                 too_low_density(iFt) = .true.
                 cycle
               else
@@ -115,7 +120,7 @@
               endif
               t0 = nb(iCv)+tt1(iFt)/tt0(iFt) +
      *         corr_core_dn(isb)*(nb_(iCv)-nb(iCv)-tt1(iFt)/tt0(iFt))   ! IYS 19.12.2017
-              if (t0 .lt. switch%b2mndr_na_min) then
+              if (t0 .lt. na_min) then
                 too_low_density(iFt) = .true.
                 cycle
               else

@@ -6,6 +6,7 @@
       use b2mod_b2cmrc
       use b2mod_subsys
       use b2mod_math
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -88,6 +89,17 @@
       it0 = 0
       in0 = 0
 *   ..loop over cells
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SPCX) )
+!$omp parallel do
+!$omp& default(none)
+!$omp& firstprivate(it0, in0)
+!$omp& private(iCv, is)
+!$omp& private(rlt0, rln0, fxt0, fxn0, t0, t1, tt)
+!$omp& shared(rtlt, th0)
+!$omp& shared(nCv, ns)
+!$omp& shared(amh0, ev, rtnt, rtln, rtnn, ne, rtlcx)
+!$omp& shared(rlcx0)
+#endif
       do iCv = 1, nCv
 *     ..compute abscissae
         rlt0 = max(rtlt(0),min(rtlt(rtnt),log(th0(iCv)/(amh0*ev))))
@@ -140,6 +152,9 @@
          rlcx0(iCv,0,is) = (1-fxt0)*t0+fxt0*t1-rlcx0(iCv,1,is)*rlt0
         enddo
       enddo
+#if( defined(_OPENMP) && !defined(NO_OPENMP_B2SPCX) )
+!$omp end parallel do
+#endif
 
 * ..return
       ncall_b2spcx = ncall_b2spcx+1

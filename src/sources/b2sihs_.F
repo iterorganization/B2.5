@@ -222,6 +222,7 @@
       call div0(nCv, nFc, mpg, wrkf(:,0), wrkc)
       b2divue=0.0_R8
       srw%b2sihs_divue=0.0_R8
+
       do iCv = 1, mpg%nCi
          t0 = -switch%b2sihs_phm0*(1.0_R8-switch%BoRiS)*wrkc(iCv)
          shedu(iCv,0) = shedu(iCv,0)+
@@ -232,6 +233,7 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+
       if (switch%b2sihs_shedu.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
@@ -345,6 +347,7 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+
       if (switch%b2sihs_shidu.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
@@ -428,6 +431,7 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+
       if (switch%b2sihs_shedd.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
@@ -510,6 +514,7 @@
         enddo
        endif
       enddo
+
       if (switch%b2sihs_shidd.ne.0) then
         do k=mpg%nCi+1,mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(k,1))
@@ -576,6 +581,7 @@
       endif
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
+
       if (switch%min_collisions .gt. 0.0_R8) then
         call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
      &   ne, ne2, na, lnlam, ismain, st_ext, wrkfc,
@@ -583,6 +589,7 @@
       else
         wrkcc = 1.0_R8
       endif
+
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then

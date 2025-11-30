@@ -40,6 +40,7 @@
      ,   , only : natm, nmol, nion, nfl, nstra
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_cestim
       use eirmod_comsou
      , , only: NPTS
       use eirmod_comusr
@@ -57,10 +58,14 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_running_average
+     . , only: sni_underrelax, smo_underrelax, sei_underrelax,
+     .         see_underrelax, read_underrelaxed_sources,
+     .         save_underrelaxed_sources
       implicit none
 
       integer, save :: use_recyceir = 1
-      integer, save :: nhist = 1, nrelax = 0
+      integer, save :: nhist = 1, nrelax = 0, n_avg_repeat = 1
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:,:), see_av(:,:)
 
@@ -85,14 +90,39 @@
      &  see_h(:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:), rfluxa_h(:,:,:,:),
      &  pfluxm_h(:,:,:,:), rfluxm_h(:,:,:,:),
+     &  dab2_h(:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:),
      &  smo_s(:,:,:),
      &  see_s(:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:), rfluxa_s(:,:,:),
      &  pfluxm_s(:,:,:), rfluxm_s(:,:,:),
+     &  pefluxa_s(:,:,:), refluxa_s(:,:,:),
+     &  pefluxm_s(:,:,:), refluxm_s(:,:,:),
+     &  dab2_s(:,:,:), dmb2_s(:,:,:), dib2_s(:,:,:),
+     &  tab2_s(:,:,:), tmb2_s(:,:,:), tib2_s(:,:,:),
+     &  emiss_s(:,:,:), emissmol_s(:,:,:),
+     &  srcml_s(:,:,:), edissml_s(:,:,:),
+     &  wldnek_s(:,:), wldnep_s(:,:),
+     &  wldna_s(:,:,:), ewlda_s(:,:,:),
+     &  wldnm_s(:,:,:), ewldm_s(:,:,:),
+     &  wldra_s(:,:,:), wldrm_s(:,:,:),
+     &  wldpp_s(:,:,:), wldpa_s(:,:,:),
+     &  wldpm_s(:,:,:), wldpeb_s(:,:),
+     &  wldspt_s(:,:), wldspta_s(:,:,:), wldsptm_s(:,:,:),
+     &  eneutrad_s(:,:,:), emolrad_s(:,:,:), eionrad_s(:,:,:),
+     &  wlabsrp_s(:,:), wldna_res_s(:,:), wldnm_res_s(:,:),
+     &  ewlda_res_s(:,:), ewldm_res_s(:,:), ewldt_res_s(:),
+     &  ewldea_res_s(:,:), ewldem_res_s(:,:), ewldrp_res_s(:),
+     &  ewldmr_res_s(:,:),
+     &  wldspt_res_s(:), wldspta_res_s(:,:), wldsptm_res_s(:,:),
+     &  wlpump_s(:,:), wlpump_res_s(:,:),
+     &  pdena_s(:,:), pdenm_s(:,:), pdeni_s(:,:),
+     &  edena_s(:,:), edenm_s(:,:), edeni_s(:,:),
+     &  vxdena_s(:,:), vxdenm_s(:,:), vxdeni_s(:,:),
+     &  vydena_s(:,:), vydenm_s(:,:), vydeni_s(:,:),
+     &  vzdena_s(:,:), vzdenm_s(:,:), vzdeni_s(:,:)
 ! _s is an abbreviation from 'sum'
-     &  dab2_h(:,:,:,:), dab2_s(:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
      &  sna_h_paat(:,:,:,:), sna_h_pmat(:,:,:,:),
      &  sna_h_piat(:,:,:,:), sna_h_paml(:,:,:,:),
@@ -216,7 +246,7 @@ c***
 c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
 c*** Otherwise: take the radiation explicitly calculated in EIRENE.
 
-      real (kind=R8) :: s,x1,x2,t00,rec_tol
+      real (kind=R8) :: s,x1,x2,t00,det,rec_tol
       real (kind=R8), save, allocatable ::
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
@@ -267,6 +297,7 @@ csw 26feb2014
       integer, save :: ih_end
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
+      integer, save :: relax_continue = 0
       real(kind=R8) :: gs_ti
       real(kind=R8) :: gs_fsi
       real(kind=R8) :: gs_inv_dbihend
@@ -455,13 +486,22 @@ csw 26feb2013
         call ipgeti ('eirene_neutr_avg', neutr_avg)
         call ipgeti ('b2stbr_eir_src_nhist', nhist)
         call ipgeti ('eirene_underrelax', nrelax)
+        call ipgeti ('eirene_underrelax_continue', relax_continue)
+        call ipgeti ('eirene_averaging_multiple_calls', n_avg_repeat)
         call xertst (.not.(
-     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
+     .    (neutr_avg.gt.1 .and.
+     .      (nhist.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nhist.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nrelax.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (n_avg_repeat.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.nrelax.gt.1)) ),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-        if(nhist.gt.1) call alloc_hist_arrays(nhist, switch)
-        if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays(switch)
+        if(nhist.gt.1)
+     .    call alloc_hist_arrays(nhist,switch)
+        if(nrelax.gt.1 .or. nhist.gt.1 .or. n_avg_repeat.gt.1)
+     .    call alloc_sum_arrays(switch)
         call xertst(switch%ank_mods.eq.0.or.switch%ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
@@ -885,18 +925,58 @@ c          end if !}
 
       last=.false.
 
-cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) HERE !!!!!!!!!!!!!!!!!!!!!!!!!!
       eircount=0
       if(main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 
 csw 25jan2011 LTIME=.false. in eirsrt call
-        my_ltime=.false.
 
-        filename=fort_lc//'44'
-        call find_file(filename,ex)
-        call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *   b2brem,b2rad,b2qie(0),b2vdp,
-     1   eirene_step_cpu)
+        write(*,*) 'Main Eirene call'
+        if(n_avg_repeat.gt.1) then
+c         Store the fort.xx files existing at the beginning of the time step
+c         to fort.xx.init files, to avoid being overwritten by the false
+c         multiple Eirene time steps internal to a B2.5 time step
+          call store_initial_fort_file(13)
+          call store_initial_fort_file(15)
+          call clear_sum_arrays(switch)
+        endif
+c       Main cycle: repeat Eirene calls n_avg_repeat times (default = 1)
+        do while (eircount.le.(n_avg_repeat-1))
+          if (eircount.ge.1) then
+            write(*,*) 'Using Eirene source averaging:'
+            write(*,*) 'repeated call n. ', eircount+1
+            call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
+     &       st_ext)
+          endif
+          my_ltime=.false.
+          filename=fort_lc//'44'
+          call find_file(filename,ex)
+          if(n_avg_repeat.gt.1) then
+c           Start every repeated Eirene call from the same fort.xx
+c           files stored at the beginning of the cycle,
+c           calculated at the end of the previous real time step
+            call reinitialize_fort_file(13)
+            call reinitialize_fort_file(15)
+          endif
+c         SINGLE EIRENE CALL
+          call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *     b2brem,b2rad,b2qie(0),b2vdp,
+     1     eirene_step_cpu)
+c         Cumulate source terms from past and current Eirene calls
+          if(n_avg_repeat.gt.1) then
+           call cumulate_source_arrays(switch)
+          endif
+          eircount=eircount+1
+        enddo
+        if(n_avg_repeat.gt.1) then
+c         Delete the stored fort.xx.init files, so to use the fort.xx files
+c         calculated at the last Eirene call for the next real Eirene time step
+          call delete_initial_fort_file(13)
+          call delete_initial_fort_file(15)
+c         Calculate averaged source terms from all Eirene calls, if using repeated calls
+          call calc_average_source_arrays(n_avg_repeat,switch)
+        endif
+
 #ifdef B25_EIRENE
         if(.not.ex) then
           do is=1,nnatmi
@@ -910,19 +990,23 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           end do
         end if
 #endif
-        eircount=1
-        if(ncall.eq.0.and.repeat_first_call.gt.0) then
-          do while (eircount.le.repeat_first_call)
-           call copy_background(nCv, nFc, ns, switch, mpg,
-     &                          geo, st%pl, st%dv, st_ext)
+
+        if(n_avg_repeat.eq.1) then
+          eircount=1
+          if(ncall.eq.0.and.repeat_first_call.gt.0) then
+            do while (eircount.le.repeat_first_call)
+              call copy_background(nCv, nFc, ns, switch, mpg,
+     &                             geo, st%pl, st%dv, st_ext)
 csw 25jan2011 LTIME=.false. in eirsrt call
-           my_ltime=.false.
-           call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
-     *       b2brem,b2rad,b2qie(0),b2vdp,
-     1       eirene_step_cpu)
-           eircount=eircount+1
-          enddo
+              my_ltime=.false.
+              call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *         b2brem,b2rad,b2qie(0),b2vdp,
+     1         eirene_step_cpu)
+              eircount=eircount+1
+            enddo
+          endif
         endif
+
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
           nplsh = 0
@@ -942,7 +1026,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
       elseif(mod(ncall,eirene_mod).ne.0) then !}{
         write(*,*) 'Skipping call to EIRENE because of mod condition'
       end if !}
-cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL(S) ENDED !!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
@@ -1295,21 +1379,25 @@ c
      .            .and.switch%ank_mods.ne.0) then
         write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
-          if(crcstra(istrai).eq.'A') then
+          do ls=1,nnatmi !{
+            hlp_pi(ls)=0.0_R8
+            hlp_po(ls)=0.0_R8
+            hlp_ni(ls)=0.0_R8
+            hlp_no(ls)=0.0_R8
+            hlp_g(ls) =0.0_R8
+            hlp_s(ls) =0.0_R8
+            hlp_t(ls) =0.0_R8
+          end do !}
+          if(crcstra(istrai).eq.'A'.or.
+     .       crcstra(istrai).eq.'S'.or.
+     .       crcstra(istrai).eq.'N'.or.
+     .       crcstra(istrai).eq.'W'.or.
+     .       crcstra(istrai).eq.'E') then
 
 c*** Recycling stratum
 c*** First, correct the balance between B2 and Eirene sources for the
 c*** species to be scaled with themselves (recycling species)
 
-            do ls=1,nnatmi !{
-              hlp_pi(ls)=0.0_R8
-              hlp_po(ls)=0.0_R8
-              hlp_ni(ls)=0.0_R8
-              hlp_no(ls)=0.0_R8
-              hlp_g(ls) =0.0_R8
-              hlp_s(ls) =0.0_R8
-              hlp_t(ls) =0.0_R8
-            end do !}
             n=nnstsi
             if(l_ddt.gt.0) n=n-1
             do i=1,n !{
@@ -1644,16 +1732,6 @@ c>>>
 c*** Recombination or gas puffing stratum.
 c*** Here only the second pass of correction
 
-            do ls=1,nnatmi !{
-              hlp_pi(ls)=0.0_R8
-              hlp_po(ls)=0.0_R8
-              hlp_ni(ls)=0.0_R8
-              hlp_no(ls)=0.0_R8
-              hlp_g(ls) =0.0_R8
-              hlp_s(ls) =0.0_R8
-              hlp_t(ls) =0.0_R8
-            end do !}
-
             do ic=1,nCv !{
 !WG_TODO              if(resignore(ic,1).ne.0) then !{
                 do is=0,ns-1 !{
@@ -1737,11 +1815,11 @@ c*** Here only the second pass of correction
      ,                'stratum, species = ',istrai,ls
                   end if !}
                 else !}{
-                  s=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
-                  if(s.gt.0.0_R8) then !{
-                    s=sqrt(s)
-                    x1=0.5_R8*(hlp_g(ls)+s)/(hlp_s(ls)+hlp_t(ls))
-                    x2=0.5_R8*(hlp_g(ls)-s)/(hlp_s(ls)+hlp_t(ls))
+                  det=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
+                  if(det.gt.0.0_R8) then !{
+                    det=sqrt(det)
+                    x1=0.5_R8*(hlp_g(ls)+det)/(hlp_s(ls)+hlp_t(ls))
+                    x2=0.5_R8*(hlp_g(ls)-det)/(hlp_s(ls)+hlp_t(ls))
                     if(x2.le.0.0_R8) then !{
                       hlp_scl(ls)=x1
                     else if(x1.le.0.0_R8) then !}{
@@ -1762,6 +1840,7 @@ c*** Here only the second pass of correction
                     write(*,'(a,a,i3,1x,i3)')
      ,               'eirene_mc: error in scaling - zero ',
      ,               'discriminant.  stratum, species = ',istrai,ls
+                    hlp_scl(ls)=1.0_R8
                   end if !}
                 end if !}
               end if !}
@@ -1771,13 +1850,19 @@ c*** Here only the second pass of correction
      ,           'positive scaling factor. stratum, species, ',
      ,           'factor = ',istrai,ls,hlp_scl(ls)
                 hlp_scl(ls)=1.0_R8
-              else if(abs(log(hlp_scl(ls))).gt.
-     1         abs(log(neut_scl_lim))) then !}{
-                write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
-     ,           'eirene_mc: error in scaling - too ',
-     ,           'strong variation. stratum, species, ',
-     ,           'factor = ',istrai,ls,hlp_scl(ls)
-                hlp_scl(ls)=1.0_R8
+              else if (hlp_scl(ls).gt.0.0_R8) then !}{
+                if(abs(log(hlp_scl(ls))).gt.
+     1             abs(log(neut_scl_lim))) then !}{
+                  write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
+     ,             'eirene_mc: error in scaling - too ',
+     ,             'strong variation. stratum, species, ',
+     ,             'factor = ',istrai,ls,hlp_scl(ls)
+                  if(hlp_scl(ls).gt.neut_scl_lim) then !{
+                    hlp_scl(ls)=neut_scl_lim
+                  else !}{
+                    hlp_scl(ls)=1.0_R8/neut_scl_lim
+                  end if !}
+                end if !}
               end if !}
               hlp_scp(ls,istrai)=hlp_scl(ls)
             end do !}
@@ -2358,6 +2443,17 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
 cxpb Under-relaxation scheme for smoothing of Eirene sources
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
         ihist=ihist+1
+cc Read saved sources
+        if (ihist.eq.1.and..not.full_history
+     .               .and.relax_continue.eq.1)then
+          call read_underrelaxed_sources(size(sni,1),size(sni,2),
+     .                                   size(sni,3))
+          sni_s = sni_underrelax
+          smo_s = smo_underrelax
+          sei_s = sei_underrelax
+          see_s = see_underrelax
+          full_history = .true.
+        endif
         if (ihist.eq.nrelax) full_history = .true.
         if (ihist.eq.nrelax+1) ihist = 1
         write(*,*)
@@ -2367,11 +2463,13 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         else
          ih_end = ihist
         end if
+
         relax = rratio(ih_end-1,ih_end)
         sni_s = sni_s*relax + sni/dble(ih_end)
         smo_s = smo_s*relax + smo/dble(ih_end)
         see_s = see_s*relax + see/dble(ih_end)
         sei_s = sei_s*relax + sei/dble(ih_end)
+
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -2418,10 +2516,12 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
          rfluxm_s(:,imol,1) = rfluxm_s(:,imol,1)*relax
      .                        + rfluxm(:,imol,1)/dble(ih_end)
         enddo
+
         sni_av = sni_s*dble(ih_end)
         smo_av = smo_s*dble(ih_end)
         sei_av = sei_s*dble(ih_end)
         see_av = see_s*dble(ih_end)
+
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -2661,7 +2761,11 @@ c***  sclbase : the plasma sources
             else
               recyctmp=recyc(is,istrai)
             endif
-            if(crcstra(istrai).eq.'A' ) then !{
+            if(crcstra(istrai).eq.'A' .or.
+     .         crcstra(istrai).eq.'E' .or.
+     .         crcstra(istrai).eq.'W' .or.
+     .         crcstra(istrai).eq.'N' .or.
+     .         crcstra(istrai).eq.'S' ) then !{
               sclsrcn(j,istrai)=sclsrcn(j,istrai)+
      +         tfl(istrai,j)*recyctmp
               sclsrcn(0,istrai)=sclsrcn(0,istrai)+
@@ -2923,7 +3027,6 @@ csw 26feb2014 averaging
 c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)
                   t00=sni_av(ic,ifl,istrai)*gs_prod_4
-
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
      1               'a default option that has been determined ' //
@@ -3106,9 +3209,11 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
 csw 26feb2014 averaging
 c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
+
                   t0=smo_av(ic,ifl,istrai)*
      *             gs_prod_4 * sclstra(j,istrai)*
      *             geo%cvHz(ic)
+
 #ifndef FIXED_POINT
                   if (balance_netcdf.ne.0 .or.
      *                switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -3244,6 +3349,7 @@ c*** before correction (r), after correction (c), after iteration (i)
           end if !}
         end do !}  ! is
 cnh  12.01.2024
+
 #ifndef FIXED_POINT
         if (balance_netcdf.ne.0 .or.
      *      switch%write_eirene_sources.ne.0) then !{
@@ -3589,6 +3695,7 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                   else
                     recyctmp=recyc(is,istrai)
                   endif
+                  gs_prod_4 = gs_prod_3 * recyctmp
                   if(.not.is_neutral(is).or.lneustra) then !{
                     ifl=fluids_list(is)
                     j=b2eatcr(is)
@@ -3609,6 +3716,7 @@ csw 06mar2012 momentum source
 csw 26feb2014 averaging
 c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
+
                     t2=smo_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
@@ -3639,6 +3747,7 @@ csw 06mar2012 particle source
 csw 26feb2014 averaging
 c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
+
                     t3=sni_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
@@ -4123,11 +4232,11 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,st_ext)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
-      type (switches), intent (in) :: switch
-      type (mapping), intent (in) :: mpg
-      type (geometry), intent (in) :: geo
-      type (B2State), intent (in) :: st
-      type(B2StateExt), intent (in) :: st_ext
+      type (switches), intent(in) :: switch
+      type (mapping), intent(in) :: mpg
+      type (geometry), intent(in) :: geo
+      type (B2State), intent(in) :: st
+      type(B2StateExt), intent(in) :: st_ext
 
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
@@ -4179,7 +4288,11 @@ csw 26feb2014
          deallocate(sei_av_eppl)
        endif
       endif
-      if(nhist.gt.1) call dealloc_sum_arrays
+      if(nhist.gt.1 .or. nrelax.gt.1) then
+        call save_underrelaxed_sources (size(sni,1),size(sni,2),
+     .                  size(sni,3),sni_s,smo_s, sei_s,see_s)
+      endif
+      if(nhist.gt.1 .or. n_avg_repeat.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
       deallocate(hlp_pff,hlp_stra)
 
@@ -4190,10 +4303,10 @@ c======================================================================
       subroutine neutr_scl(ns, mpg, geo, st, switch)
       implicit none
       integer, intent(in) :: ns
-      type (mapping), intent (in) :: mpg
-      type (geometry), intent (in) :: geo
-      type (B2State), intent (in) :: st
-      type (switches), intent (in) :: switch
+      type (mapping), intent(in) :: mpg
+      type (geometry), intent(in) :: geo
+      type (B2State), intent(in) :: st
+      type (switches), intent(in) :: switch
       integer :: ic, iFc, is, istrai, iy, j, k, l
       real(kind=R8) :: hlp_st, recyctmp, s, t0
       logical :: hlp_log
@@ -4267,7 +4380,11 @@ c*** recombination is already evaluated above.
                 recyctmp=recyc(is,istrai)
               endif
               hlp_st=0.0_R8
-              if(crcstra(istrai).eq.'A') then !{
+              if(crcstra(istrai).eq.'A' .or.
+     .           crcstra(istrai).eq.'W' .or.
+     .           crcstra(istrai).eq.'E' .or.
+     .           crcstra(istrai).eq.'N' .or.
+     .           crcstra(istrai).eq.'S') then !{
                 do iy=1,mpg%rcFcP(istrai,2) !{
                   iFc=mpg%rcFc(mpg%rcFcP(istrai,1)+iy-1)
                   hlp_st=hlp_st+mpg%rcFcOr(mpg%rcFcP(istrai,1)+iy-1)*
@@ -4659,7 +4776,70 @@ c!###}
       allocate(pfluxm_s(size(pfluxm,1),size(pfluxm,2),1))
       allocate(rfluxa_s(size(rfluxa,1),size(rfluxa,2),1))
       allocate(rfluxm_s(size(rfluxm,1),size(rfluxm,2),1))
+      allocate(pefluxa_s(size(pefluxa,1),size(pefluxa,2),1))
+      allocate(pefluxm_s(size(pefluxm,1),size(pefluxm,2),1))
+      allocate(refluxa_s(size(refluxa,1),size(refluxa,2),1))
+      allocate(refluxm_s(size(refluxm,1),size(refluxm,2),1))
       allocate(dab2_s(size(dab2,1),size(dab2,2),1))
+      allocate(dmb2_s(size(dmb2,1),size(dmb2,2),1))
+      allocate(dib2_s(size(dib2,1),size(dib2,2),1))
+      allocate(tab2_s(size(tab2,1),size(tab2,2),1))
+      allocate(tmb2_s(size(tmb2,1),size(tmb2,2),1))
+      allocate(tib2_s(size(tib2,1),size(tib2,2),1))
+      allocate(emiss_s(size(emiss,1),size(emiss,2),1))
+      allocate(emissmol_s(size(emissmol,1),size(emissmol,2),1))
+      allocate(srcml_s(size(srcml,1),size(srcml,2),1))
+      allocate(edissml_s(size(edissml,1),size(edissml,2),0:nstra+1))
+      allocate(wldnek_s(size(wldnek,1),0:nstra+1))
+      allocate(wldnep_s(size(wldnep,1),0:nstra+1))
+      allocate(wldna_s(size(wldna,1),natm,0:nstra+1))
+      allocate(ewlda_s(size(ewlda,1),natm,0:nstra+1))
+      allocate(wldnm_s(size(wldnm,1),nmol,0:nstra+1))
+      allocate(ewldm_s(size(ewldm,1),nmol,0:nstra+1))
+      allocate(wldra_s(size(wldra,1),natm,0:nstra+1))
+      allocate(wldrm_s(size(wldrm,1),nmol,0:nstra+1))
+      allocate(wldpp_s(size(wldpp,1),npls,0:nstra+1))
+      allocate(wldpa_s(size(wldpa,1),natm,0:nstra+1))
+      allocate(wldpm_s(size(wldpm,1),nmol,0:nstra+1))
+      allocate(wldpeb_s(size(wldpeb,1),0:nstra+1))
+      allocate(wldspt_s(size(wldspt,1),0:nstra+1))
+      allocate(wldspta_s(size(wldspta,1),natm,0:nstra+1))
+      allocate(wldsptm_s(size(wldsptm,1),nmol,0:nstra+1))
+      allocate(eneutrad_s(size(eneutrad,1),size(eneutrad,2),0:nstra+1))
+      allocate(emolrad_s(size(emolrad,1),size(emolrad,2),0:nstra+1))
+      allocate(eionrad_s(size(eionrad,1),size(eionrad,2),0:nstra+1))
+      allocate(wlabsrp_s(size(wlabsrp,1),size(wlabsrp,2)))
+      allocate(wldna_res_s(natm,size(wldna_res,2)))
+      allocate(wldnm_res_s(nmol,size(wldnm_res,2)))
+      allocate(ewlda_res_s(natm,size(ewlda_res,2)))
+      allocate(ewldm_res_s(nmol,size(ewldm_res,2)))
+      allocate(ewldt_res_s(size(ewldt_res,1)))
+      allocate(ewldea_res_s(natm,size(ewldea_res,2)))
+      allocate(ewldem_res_s(nmol,size(ewldem_res,2)))
+      allocate(ewldrp_res_s(size(ewldrp_res,1)))
+      allocate(ewldmr_res_s(nmol,size(ewldmr_res,2)))
+      allocate(wldspt_res_s(size(wldspt_res,1)))
+      allocate(wldspta_res_s(natm,size(wldspta_res,2)))
+      allocate(wldsptm_res_s(nmol,size(wldsptm_res,2)))
+      allocate(wlpump_s(size(wlpump,1),size(wlpump,2)))
+      allocate(wlpump_res_s(size(wlpump_res,1),size(wlpump_res,2)))
+#ifdef B25_EIRENE
+      allocate(pdena_s(natm,ntri-1))
+      allocate(pdenm_s(nmol,ntri-1))
+      allocate(pdeni_s(nion,ntri-1))
+      allocate(edena_s(natm,ntri-1))
+      allocate(edenm_s(nmol,ntri-1))
+      allocate(edeni_s(nion,ntri-1))
+      allocate(vxdena_s(natm,ntri-1))
+      allocate(vxdenm_s(nmol,ntri-1))
+      allocate(vxdeni_s(nion,ntri-1))
+      allocate(vydena_s(natm,ntri-1))
+      allocate(vydenm_s(nmol,ntri-1))
+      allocate(vydeni_s(nion,ntri-1))
+      allocate(vzdena_s(natm,ntri-1))
+      allocate(vzdenm_s(nmol,ntri-1))
+      allocate(vzdeni_s(nion,ntri-1))
+#endif
       call clear_sum_arrays(switch)
       return
       end subroutine alloc_sum_arrays
@@ -4703,9 +4883,300 @@ c!###}
       deallocate(pfluxm_s)
       deallocate(rfluxa_s)
       deallocate(rfluxm_s)
+      deallocate(pefluxa_s)
+      deallocate(pefluxm_s)
+      deallocate(refluxa_s)
+      deallocate(refluxm_s)
       deallocate(dab2_s)
+      deallocate(dmb2_s)
+      deallocate(dib2_s)
+      deallocate(tab2_s)
+      deallocate(tmb2_s)
+      deallocate(tib2_s)
+      deallocate(emiss_s)
+      deallocate(emissmol_s)
+      deallocate(srcml_s)
+      deallocate(edissml_s)
+      deallocate(wldnek_s)
+      deallocate(wldnep_s)
+      deallocate(wldna_s)
+      deallocate(ewlda_s)
+      deallocate(wldnm_s)
+      deallocate(ewldm_s)
+      deallocate(wldra_s)
+      deallocate(wldrm_s)
+      deallocate(wldpp_s)
+      deallocate(wldpa_s)
+      deallocate(wldpm_s)
+      deallocate(wldpeb_s)
+      deallocate(wldspt_s)
+      deallocate(wldspta_s)
+      deallocate(wldsptm_s)
+      deallocate(eneutrad_s)
+      deallocate(emolrad_s)
+      deallocate(eionrad_s)
+      deallocate(wlabsrp_s)
+      deallocate(wldna_res_s)
+      deallocate(wldnm_res_s)
+      deallocate(ewlda_res_s)
+      deallocate(ewldm_res_s)
+      deallocate(ewldt_res_s)
+      deallocate(ewldea_res_s)
+      deallocate(ewldem_res_s)
+      deallocate(ewldrp_res_s)
+      deallocate(ewldmr_res_s)
+      deallocate(wldspt_res_s)
+      deallocate(wldspta_res_s)
+      deallocate(wldsptm_res_s)
+      deallocate(wlpump_s)
+      deallocate(wlpump_res_s)
+#ifdef B25_EIRENE
+      deallocate(pdena_s)
+      deallocate(pdenm_s)
+      deallocate(pdeni_s)
+      deallocate(edena_s)
+      deallocate(edenm_s)
+      deallocate(edeni_s)
+      deallocate(vxdena_s)
+      deallocate(vxdenm_s)
+      deallocate(vxdeni_s)
+      deallocate(vydena_s)
+      deallocate(vydenm_s)
+      deallocate(vydeni_s)
+      deallocate(vzdena_s)
+      deallocate(vzdenm_s)
+      deallocate(vzdeni_s)
+#endif
       return
       end subroutine dealloc_sum_arrays
+
+      subroutine cumulate_source_arrays(switch)
+      use b2mod_switches
+      implicit none
+      type (switches), intent(in) :: switch
+
+      sni_s = sni_s + sni
+      smo_s = smo_s + smo
+      see_s = see_s + see
+      sei_s = sei_s + sei
+#ifndef FIXED_POINT
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        sne_s_pael = sne_s_pael + sne_pael
+        sne_s_pmel = sne_s_pmel + sne_pmel
+        sna_s_paat = sna_s_paat + sna_paat
+        sna_s_pmat = sna_s_pmat + sna_pmat
+        sna_s_piat = sna_s_piat + sna_piat
+        sna_s_paml = sna_s_paml + sna_paml
+        sna_s_pmml = sna_s_pmml + sna_pmml
+        sna_s_piml = sna_s_piml + sna_piml
+        sna_s_paio = sna_s_paio + sna_paio
+        sna_s_pmio = sna_s_pmio + sna_pmio
+        sna_s_piio = sna_s_piio + sna_piio
+        sni_s_papl = sni_s_papl + sni_papl
+        sni_s_pmpl = sni_s_pmpl + sni_pmpl
+        sni_s_pipl = sni_s_pipl + sni_pipl
+        sni_s_pppl = sni_s_pppl + sni_pppl
+        smo_s_mapl = smo_s_mapl + smo_mapl
+        smo_s_mmpl = smo_s_mmpl + smo_mmpl
+        smo_s_mipl = smo_s_mipl + smo_mipl
+        smo_s_cppv = smo_s_cppv + smo_cppv
+        see_s_eael = see_s_eael + see_eael
+        see_s_emel = see_s_emel + see_emel
+        see_s_eiel = see_s_eiel + see_eiel
+        see_s_epel = see_s_epel + see_epel
+        sei_s_eapl = sei_s_eapl + sei_eapl
+        sei_s_empl = sei_s_empl + sei_empl
+        sei_s_eipl = sei_s_eipl + sei_eipl
+        sei_s_eppl = sei_s_eppl + sei_eppl
+      endif
+#endif
+      dab2_s = dab2_s + dab2
+      tab2_s = tab2_s + tab2
+      pfluxa_s = pfluxa_s + pfluxa
+      rfluxa_s = rfluxa_s + rfluxa
+      pefluxa_s = pefluxa_s + pefluxa
+      refluxa_s = refluxa_s + refluxa
+      dmb2_s = dmb2_s + dmb2
+      tmb2_s = tmb2_s + tmb2
+      pfluxm_s = pfluxm_s + pfluxm
+      rfluxm_s = rfluxm_s + rfluxm
+      pefluxm_s = pefluxm_s + pefluxm
+      refluxm_s = refluxm_s + refluxm
+      dib2_s = dib2_s + dib2
+      tib2_s = tib2_s + tib2
+      emiss_s = emiss_s + emiss
+      emissmol_s = emissmol_s + emissmol
+      srcml_s = srcml_s + srcml
+      edissml_s = edissml_s + edissml
+      wldnek_s = wldnek_s + wldnek
+      wldnep_s = wldnep_s + wldnep
+      wldna_s = wldna_s + wldna
+      ewlda_s = ewlda_s + ewlda
+      wldnm_s = wldnm_s + wldnm
+      ewldm_s = ewldm_s + ewldm
+      wldra_s = wldra_s + wldra
+      wldrm_s = wldrm_s + wldrm
+      wldpp_s = wldpp_s + wldpp
+      wldpa_s = wldpa_s + wldpa
+      wldpm_s = wldpm_s + wldpm
+      wldpeb_s = wldpeb_s + wldpeb
+      wldspt_s = wldspt_s + wldspt
+      wldspta_s = wldspta_s + wldspta
+      wldsptm_s = wldsptm_s + wldsptm
+      eneutrad_s = eneutrad_s + eneutrad
+      emolrad_s = emolrad_s + emolrad
+      eionrad_s = eionrad_s + eionrad
+      wlabsrp_s = wlabsrp_s + wlabsrp
+      wldna_res_s = wldna_res_s + wldna_res
+      wldnm_res_s = wldnm_res_s + wldnm_res
+      ewlda_res_s = ewlda_res_s + ewlda_res
+      ewldm_res_s = ewldm_res_s + ewldm_res
+      ewldt_res_s = ewldt_res_s + ewldt_res
+      ewldea_res_s = ewldea_res_s + ewldea_res
+      ewldem_res_s = ewldem_res_s + ewldem_res
+      ewldrp_res_s = ewldrp_res_s + ewldrp_res
+      ewldmr_res_s = ewldmr_res_s + ewldmr_res
+      wldspt_res_s = wldspt_res_s + wldspt_res
+      wldspta_res_s = wldspta_res_s + wldspta_res
+      wldsptm_res_s = wldsptm_res_s + wldsptm_res
+      wlpump_s = wlpump_s + wlpump
+      wlpump_res_s = wlpump_res_s + wlpump_res
+#ifdef B25_EIRENE
+      pdena_s = pdena_s + pdena
+      pdenm_s = pdenm_s + pdenm
+      pdeni_s = pdeni_s + pdeni
+      edena_s = edena_s + edena
+      edenm_s = edenm_s + edenm
+      edeni_s = edeni_s + edeni
+      vxdena_s = vxdena_s + vxdena
+      vxdenm_s = vxdenm_s + vxdenm
+      vxdeni_s = vxdeni_s + vxdeni
+      vydena_s = vydena_s + vydena
+      vydenm_s = vydenm_s + vydenm
+      vydeni_s = vydeni_s + vydeni
+      vzdena_s = vzdena_s + vzdena
+      vzdenm_s = vzdenm_s + vzdenm
+      vzdeni_s = vzdeni_s + vzdeni
+#endif
+
+      return
+      end subroutine cumulate_source_arrays
+
+      subroutine calc_average_source_arrays
+     .  (n_avg_repeat,switch)
+      use b2mod_switches
+
+      implicit none
+      integer n_avg_repeat
+      type (switches), intent(in) :: switch
+
+      sni = sni_s/dble(n_avg_repeat)
+      smo = smo_s/dble(n_avg_repeat)
+      see = see_s/dble(n_avg_repeat)
+      sei = sei_s/dble(n_avg_repeat)
+#ifndef FIXED_POINT
+      if (balance_netcdf.ne.0 .or.
+     .    switch%write_eirene_sources.ne.0) then
+        sne_pael = sne_s_pael/dble(n_avg_repeat)
+        sne_pmel = sne_s_pmel/dble(n_avg_repeat)
+        sna_paat = sna_s_paat/dble(n_avg_repeat)
+        sna_pmat = sna_s_pmat/dble(n_avg_repeat)
+        sna_piat = sna_s_piat/dble(n_avg_repeat)
+        sna_paml = sna_s_paml/dble(n_avg_repeat)
+        sna_pmml = sna_s_pmml/dble(n_avg_repeat)
+        sna_piml = sna_s_piml/dble(n_avg_repeat)
+        sna_paio = sna_s_paio/dble(n_avg_repeat)
+        sna_pmio = sna_s_pmio/dble(n_avg_repeat)
+        sna_piio = sna_s_piio/dble(n_avg_repeat)
+        sni_papl = sni_s_papl/dble(n_avg_repeat)
+        sni_pmpl = sni_s_pmpl/dble(n_avg_repeat)
+        sni_pipl = sni_s_pipl/dble(n_avg_repeat)
+        sni_pppl = sni_s_pppl/dble(n_avg_repeat)
+        smo_mapl = smo_s_mapl/dble(n_avg_repeat)
+        smo_mmpl = smo_s_mmpl/dble(n_avg_repeat)
+        smo_mipl = smo_s_mipl/dble(n_avg_repeat)
+        smo_cppv = smo_s_cppv/dble(n_avg_repeat)
+        see_eael = see_s_eael/dble(n_avg_repeat)
+        see_emel = see_s_emel/dble(n_avg_repeat)
+        see_eiel = see_s_eiel/dble(n_avg_repeat)
+        see_epel = see_s_epel/dble(n_avg_repeat)
+        sei_eapl = sei_s_eapl/dble(n_avg_repeat)
+        sei_empl = sei_s_empl/dble(n_avg_repeat)
+        sei_eipl = sei_s_eipl/dble(n_avg_repeat)
+        sei_eppl = sei_s_eppl/dble(n_avg_repeat)
+      endif
+#endif
+      dab2 = dab2_s/dble(n_avg_repeat)
+      tab2 = tab2_s/dble(n_avg_repeat)
+      pfluxa = pfluxa_s/dble(n_avg_repeat)
+      rfluxa = rfluxa_s/dble(n_avg_repeat)
+      pefluxa = pefluxa_s/dble(n_avg_repeat)
+      refluxa = refluxa_s/dble(n_avg_repeat)
+      dmb2 = dmb2_s/dble(n_avg_repeat)
+      tmb2 = tmb2_s/dble(n_avg_repeat)
+      pfluxm = pfluxm_s/dble(n_avg_repeat)
+      rfluxm = rfluxm_s/dble(n_avg_repeat)
+      pefluxm = pefluxm_s/dble(n_avg_repeat)
+      refluxm = refluxm_s/dble(n_avg_repeat)
+      dib2 = dib2_s/dble(n_avg_repeat)
+      tib2 = tib2_s/dble(n_avg_repeat)
+      emiss = emiss_s/dble(n_avg_repeat)
+      emissmol = emissmol_s/dble(n_avg_repeat)
+      srcml = srcml_s/dble(n_avg_repeat)
+      edissml = edissml_s/dble(n_avg_repeat)
+      wldnek = wldnek_s/dble(n_avg_repeat)
+      wldnep = wldnep_s/dble(n_avg_repeat)
+      wldna = wldna_s/dble(n_avg_repeat)
+      ewlda = ewlda_s/dble(n_avg_repeat)
+      wldnm = wldnm_s/dble(n_avg_repeat)
+      ewldm = ewldm_s/dble(n_avg_repeat)
+      wldra = wldra_s/dble(n_avg_repeat)
+      wldrm = wldrm_s/dble(n_avg_repeat)
+      wldpp = wldpp_s/dble(n_avg_repeat)
+      wldpa = wldpa_s/dble(n_avg_repeat)
+      wldpm = wldpm_s/dble(n_avg_repeat)
+      wldpeb = wldpeb_s/dble(n_avg_repeat)
+      wldspt = wldspt_s/dble(n_avg_repeat)
+      wldspta = wldspta_s/dble(n_avg_repeat)
+      wldsptm = wldsptm_s/dble(n_avg_repeat)
+      eneutrad = eneutrad_s/dble(n_avg_repeat)
+      emolrad = emolrad_s/dble(n_avg_repeat)
+      eionrad = eionrad_s/dble(n_avg_repeat)
+      wlabsrp = wlabsrp_s/dble(n_avg_repeat)
+      wldna_res = wldna_res_s/dble(n_avg_repeat)
+      wldnm_res = wldnm_res_s/dble(n_avg_repeat)
+      ewlda_res = ewlda_res_s/dble(n_avg_repeat)
+      ewldm_res = ewldm_res_s/dble(n_avg_repeat)
+      ewldt_res = ewldt_res_s/dble(n_avg_repeat)
+      ewldea_res = ewldea_res_s/dble(n_avg_repeat)
+      ewldem_res = ewldem_res_s/dble(n_avg_repeat)
+      ewldrp_res = ewldrp_res_s/dble(n_avg_repeat)
+      ewldmr_res = ewldmr_res_s/dble(n_avg_repeat)
+      wldspt_res = wldspt_res_s/dble(n_avg_repeat)
+      wldspta_res = wldspta_res_s/dble(n_avg_repeat)
+      wldsptm_res = wldsptm_res_s/dble(n_avg_repeat)
+      wlpump = wlpump_s/dble(n_avg_repeat)
+      wlpump_res = wlpump_res_s/dble(n_avg_repeat)
+#ifdef B25_EIRENE
+      pdena = pdena_s/dble(n_avg_repeat)
+      pdenm = pdenm_s/dble(n_avg_repeat)
+      pdeni = pdeni_s/dble(n_avg_repeat)
+      edena = edena_s/dble(n_avg_repeat)
+      edenm = edenm_s/dble(n_avg_repeat)
+      edeni = edeni_s/dble(n_avg_repeat)
+      vxdena = vxdena_s/dble(n_avg_repeat)
+      vxdenm = vxdenm_s/dble(n_avg_repeat)
+      vxdeni = vxdeni_s/dble(n_avg_repeat)
+      vydena = vydena_s/dble(n_avg_repeat)
+      vydenm = vydenm_s/dble(n_avg_repeat)
+      vydeni = vydeni_s/dble(n_avg_repeat)
+      vzdena = vzdena_s/dble(n_avg_repeat)
+      vzdenm = vzdenm_s/dble(n_avg_repeat)
+      vzdeni = vzdeni_s/dble(n_avg_repeat)
+#endif
+      return
+      end subroutine calc_average_source_arrays
 
       subroutine clear_sum_arrays(switch)                        !csw 24feb2014
       use b2mod_switches
@@ -4743,8 +5214,128 @@ c!###}
       pfluxm_s = 0.0_R8
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
+      pefluxa_s = 0.0_R8
+      pefluxm_s = 0.0_R8
+      refluxa_s = 0.0_R8
+      refluxm_s = 0.0_R8
       dab2_s = 0.0_R8
+      dmb2_s = 0.0_R8
+      dib2_s = 0.0_R8
+      tab2_s = 0.0_R8
+      tmb2_s = 0.0_R8
+      tib2_s = 0.0_R8
+      emiss_s = 0.0_R8
+      emissmol_s = 0.0_R8
+      srcml_s = 0.0_R8
+      edissml_s = 0.0_R8
+      wldnek_s = 0.0_R8
+      wldnep_s = 0.0_R8
+      wldna_s = 0.0_R8
+      ewlda_s = 0.0_R8
+      wldnm_s = 0.0_R8
+      ewldm_s = 0.0_R8
+      wldra_s = 0.0_R8
+      wldrm_s = 0.0_R8
+      wldpp_s = 0.0_R8
+      wldpa_s = 0.0_R8
+      wldpm_s = 0.0_R8
+      wldpeb_s = 0.0_R8
+      wldspt_s = 0.0_R8
+      wldspta_s = 0.0_R8
+      wldsptm_s = 0.0_R8
+      eneutrad_s = 0.0_R8
+      emolrad_s = 0.0_R8
+      eionrad_s = 0.0_R8
+      wlabsrp_s = 0.0_R8
+      wldna_res_s = 0.0_R8
+      wldnm_res_s = 0.0_R8
+      ewlda_res_s = 0.0_R8
+      ewldm_res_s = 0.0_R8
+      ewldt_res_s = 0.0_R8
+      ewldea_res_s = 0.0_R8
+      ewldem_res_s = 0.0_R8
+      ewldrp_res_s = 0.0_R8
+      ewldmr_res_s = 0.0_R8
+      wldspt_res_s = 0.0_R8
+      wldspta_res_s = 0.0_R8
+      wldsptm_res_s = 0.0_R8
+      wlpump_s = 0.0_R8
+      wlpump_res_s = 0.0_R8
+#ifdef B25_EIRENE
+      pdena_s = 0.0_R8
+      pdenm_s = 0.0_R8
+      pdeni_s = 0.0_R8
+      edena_s = 0.0_R8
+      edenm_s = 0.0_R8
+      edeni_s = 0.0_R8
+      vxdena_s = 0.0_R8
+      vxdenm_s = 0.0_R8
+      vxdeni_s = 0.0_R8
+      vydena_s = 0.0_R8
+      vydenm_s = 0.0_R8
+      vydeni_s = 0.0_R8
+      vzdena_s = 0.0_R8
+      vzdenm_s = 0.0_R8
+      vzdeni_s = 0.0_R8
+#endif
+
       return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
+
+      subroutine store_initial_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str)
+      call find_file(filename,ex)
+      if (ex) then
+        call system('cp '//trim(filename)//' '//trim(filename)
+     .      //'.init')
+      endif
+
+      return
+      end subroutine store_initial_fort_file
+
+      subroutine reinitialize_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str) // '.init'
+      call find_file(filename,ex)
+      if (ex) then
+        call system('cp '//trim(filename)//' '//trim(fort_lc)
+     .      //index_str)
+      endif
+
+      return
+      end subroutine reinitialize_fort_file
+
+      subroutine delete_initial_fort_file(fort_index)
+      implicit none
+
+      integer fort_index
+      character*256 filename
+      character*8 index_str
+      logical ex
+
+      write(index_str, '(I0)') fort_index
+      filename = fort_lc // trim(index_str) // '.init'
+      call find_file(filename,ex)
+      if (ex) then
+        call system('rm '//trim(filename))
+      endif
+
+      return
+      end subroutine delete_initial_fort_file
 
       end module b2mod_eirene

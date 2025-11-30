@@ -78,14 +78,31 @@
 *    ..test th0
        call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
       endif
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
+!$omp parallel
+!$omp& default(none)
+!$omp& private(is,iCv, t_av)
+!$omp& shared(ns, nCv, rcx, rlcx0, wrk0)
+!$omp& shared(th0, thn0, amh0, ev, switch)
+#endif
+
+#if( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
+!$omp do schedule(static)
+#endif
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iCv = 1, nCv
         t_av = 0.5_R8*(th0(iCv)+thn0(iCv))
         wrk0(iCv) = log(t_av/(amh0*ev))
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
+!$omp end do
+#endif
 
 * ..main computation
 *   ..compute rate coefficients
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
+!$omp do schedule(static)
+#endif
       do is = 0, ns-1
        if (switch%b2sqcx_styl0.eq.0.or.is.lt.2) then
         do iCv = 1, nCv
@@ -98,6 +115,10 @@
           rcx(:,is) = 0.0_R8
        endif
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
+!$omp end do
+!$omp end parallel
+#endif
 
 * ..return
       ncall_b2sqcx = ncall_b2sqcx+1

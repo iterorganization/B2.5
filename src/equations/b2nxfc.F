@@ -1,13 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfc (nCv, nFc, nVx, isb, switch, geo, mpg, rob, 
+      subroutine b2nxfc (nCv, nFc, nVx, isb, switch, geo, mpg, rob,
      &  ub, flub, cvsb, flcb, cvcb, wrkf)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -15,18 +16,18 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer, intent(in) :: nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  rob(nCv), ub(nCv),
      &  flub(nFc,0:1), cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   flcb(nFc,0:1), cvcb(nFc,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
+      real (kind=R8), intent(inout) ::
      *   wrkf(nFc)                                                  !srv 02.07.08
 
 *-----------------------------------------------------------------------
@@ -89,7 +90,7 @@
       elseif (switch%b2nxfc_style.eq.1) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
-*     ..compute flcbx, cvcbx        
+*     ..compute flcbx, cvcbx
         do iFc = 1, nFc
           flcb(iFc,0) = flub(iFc,0) + geo%fcPbshz(iFc)*wrkf(iFc)*
      &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5_R8
@@ -101,14 +102,25 @@
       cvcb(:,1) = cvsb(:,1)
 
       if (switch%b2nxfc_iout.ne.0) then                                !sv 17.06.02 {
-        write (charns,'(i3.3)') isb    
-        call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
-        call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)
-        call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcb_th'//charns)
-        call my_out_us(70,nFc,1,flcb(1,1),'b2nxfc_flcb_r'//charns)
-        call my_out_us(70,nFc,1,cvcb(1,0),'b2nxfc_cvcb_th'//charns)
-        call my_out_us(70,nFc,1,cvcb(1,1),'b2nxfc_cvcb_r'//charns)
-        call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
+        if (in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2NXFC OpenMP warning: no file output in ',
+     &     'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          write (charns,'(i3.3)') isb
+          call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
+          call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)
+          call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcb_th'//charns)
+          call my_out_us(70,nFc,1,flcb(1,1),'b2nxfc_flcb_r'//charns)
+          call my_out_us(70,nFc,1,cvcb(1,0),'b2nxfc_cvcb_th'//charns)
+          call my_out_us(70,nFc,1,cvcb(1,1),'b2nxfc_cvcb_r'//charns)
+          call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
+        endif
       endif                                                            !sv 17.06.02 }
 * ..return
       ncall_b2nxfc = ncall_b2nxfc+1

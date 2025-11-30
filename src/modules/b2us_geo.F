@@ -459,12 +459,15 @@
      &           inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
+      integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, xerrab, xertst
+
+      call ipgeti ('b2mndr_temp_ignore_geo', temp_ignore_geo)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -993,7 +996,7 @@
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
       iXpt = 0
-      if (mpg%nnreg(0).eq.1) then
+      if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       elseif (mpg%nnreg(0).eq.2) then
@@ -1116,6 +1119,7 @@
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
+      if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
       if (allocated(mpg%strDiv)) then
@@ -1238,12 +1242,19 @@
        end do
       end if
 
+      else
+        write (*,*) 'Warning: temp_ignore_geo switch used'
+        write (*,*) 'This is a temporary solution to run unstructured',
+     & ' geometries that do not fit in existing case categorizations.'
+        write (*,*) 'This option limits post-processing options.'
+      endif
+
       if (allocated(mpg%fcs_wall)) then
       ! Count nFci
         mpg%nFci = 0
         do j = 2, mpg%nCg
             if (maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j), 1:2))) /=
-     &          maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
+     &         maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
                 mpg%nFci = mpg%nFci + 1
             end if
         end do

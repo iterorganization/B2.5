@@ -27,6 +27,25 @@ ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -warn interfaces -traceback -check all
 else
 FCOPTS   = -O2 -xHost
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
+endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+endif
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
+LDOPTS  += -i_dynamic
 endif
 
 ifdef TAO

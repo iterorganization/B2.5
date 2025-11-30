@@ -11,11 +11,13 @@
       integer, intent (in) :: nCv, nFc, nVx, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *   fun(nCv), funv(nVx)
 *   ..output arguments
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   gfunp(nCv)
+*   ..local 
+      real(kind=R8)  :: funv_loc(nVx)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -38,11 +40,13 @@
 
 *   ..interpolate fun to cell vertices, using volume weighted averaging
       if (mode.eq.0) then
-        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv_loc)
+      else
+        funv_loc = funv
       endif
 
 *   ..compute gradients on faces
-      call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfunpf)
+      call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv_loc, gfunpf)
 
 *   ..interpolate to centers
       call intcell(nFc, nCv, mpg, mpg%intcellP, gfunpf, gfunp)

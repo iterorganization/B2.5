@@ -332,12 +332,21 @@ c     initialize debugging/analysis arrays
 #endif
 
         b2stbr_phys_sna=0.0_R8
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
+!$OMP PARALLEL DO COLLAPSE(2)
+!$OMP& DEFAULT(NONE)
+!$OMP& SHARED(ns,nCv,srw,pl,b2stbr_phys_sna)
+!$OMP& PRIVATE(is,iCv)
+#endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
           do iCv=1,nCv
             b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
      1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
           enddo
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
+!$OMP END PARALLEL DO
+#endif
         if((main_call.and.switch%b2stbr_output.ge.1).or.
      &                    switch%b2stbr_output.gt.1)
      *     write(*,*) 'stratum,b2stbr_phys_sna(begin): ',
