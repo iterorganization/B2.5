@@ -3178,7 +3178,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
                 wrk = abs(2.0_R8*cs*wrk)
                 vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
                 vbnd = mompar(is,ib,1)*cs*s1hz*
-      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
      &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
      &           geo%fcS(iFc)
               else
@@ -3187,7 +3187,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
                 wrk = abs(2.0_R8*cs*wrk)
                 vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
                 vbnd = mompar(is,ib,1)*cs*s1hz*
-      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
      &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
      &           geo%fcS(iFc)
                 vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
