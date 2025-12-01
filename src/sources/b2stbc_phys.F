@@ -3180,23 +3180,23 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
                 cs = sqrt(pz(iCv1)/rz(iCv1))
                 vbnd = sign(min(mompar(is,ib,1)*2.0_R8*cs*wrk,
      &            abs(vbnd)),vbnd)
-                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
+                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &           mompar(is,ib,1)-vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*
+     &           geo%fcHz(iFc)*geo%fcS(iFc)
               else
                 cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &                    (am(is)*mp))
                 vbnd = sign(min(mompar(is,ib,1)*2.0_R8*cs*wrk,
      &            abs(vbnd)), vbnd)
-                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
+                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &            mompar(is,ib,1)-vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*
+     &            geo%fcHz(iFc)*geo%fcS(iFc)
                 vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
      &            vbnd)
               endif
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
-     &         mompar(is,ib,1)*vbnd
+     &         vbnd
               srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
             endif
