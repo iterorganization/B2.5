@@ -317,6 +317,7 @@ c***  Standard set-up:
         end if
       end do
       do ic = 1, nomp
+        if (omp(ic).gt.mpg%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(omp(ic))
@@ -554,6 +555,7 @@ c*** Set default values according to current species list
         end if
       end do
       do ic = 1, nimp
+        if (imp(ic).gt.mpg%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(imp(ic))

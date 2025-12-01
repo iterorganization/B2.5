@@ -2815,7 +2815,7 @@
             else
               iVx2 = mpg%fcVx(fcsb(k),2)
             endif
-            write(*,'(a,2i5)') 'ends of effective face', iVx1, iVx2
+            write(*,'(a,2i5)') 'endpoints of effective face', iVx1, iVx2
             meanFc(1) = gm%vxX(iVx1) + gm%vxX(iVx2)
             meanFc(2) = gm%vxY(iVx1) + gm%vxY(iVx2)
             meanFc = meanFc/2.0_R8
@@ -2830,11 +2830,11 @@
      &         wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
      &                        mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))+1
             enddo
-            print *, "ends of effective cell:"
+            print *, "vertices of effective cell:"
             meanCv = 0.0_R8
             tmp = 0
             do k=1,mpg%nVx
-              if (wrkVx(k).eq.1) then
+              if (wrkVx(k).ge.1) then
                 print *, k
                 meanCv(1) = meanCv(1) + gm%vxX(k)
                 meanCv(2) = meanCv(2) + gm%vxY(k)

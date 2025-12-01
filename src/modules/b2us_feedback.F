@@ -1642,19 +1642,19 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = fb_current(ifb)/sum_e
 
-            case (23) !  Total plasma heat flux at outer target
+            case (23) !  Total particle heat flux at outer target
 
               if(ncall.eq.0) then
                 if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
                   write(*,'(a,a,i3,a,i3)')
      &             'compute_feedback_type: using ',
-     &             ' plasma heat flux density along boundary ',
+     &             ' particle heat flux density along boundary ',
      &              fb_reg_par(ifb,1), ' for sequence ',
      &              b2espcr(fb_species(ifb))
                 else
                   write(*,'(a,a,i3,a,i3,a,i3)')
      &             'compute_feedback_type: using ',
-     &             ' plasma heat flux density along boundaries ',
+     &             ' particle heat flux density along boundaries ',
      &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
      &             ' for sequence ',b2espcr(fb_species(ifb))
                 end if
