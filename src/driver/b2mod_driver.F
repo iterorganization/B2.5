@@ -2247,7 +2247,18 @@ c new CDF movie option (1st frame at t=0)
 #endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
-      integer i, is, icf, iCv
+      integer i, is, icf
+#ifdef IMAS
+      integer l, tmp_run, time_slice_index, num_batch_slices
+#ifndef NAGFOR
+      integer status
+#endif
+#if AL_MAJOR_VERSION > 4
+      character(len=:), allocatable :: message
+      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+      character(len=256) :: olddir
+#endif
+#endif
       character*256 filename, fort31name
 #if ( defined(B25_EIRENE) || defined(IMAS) )
       character*512 systemarg
