@@ -1652,13 +1652,13 @@ cxpb size is changed in b2mod_dimensions
                 if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
                   write(*,'(a,a,i3,a,i3)')
      &             'compute_feedback_type: using ',
-     &             ' plasma heat flux density along boundary ',
+     &             ' heat flux density along boundary ',
      &              fb_reg_par(ifb,1), ' for sequence ',
      &              b2espcr(fb_species(ifb))
                 else
                   write(*,'(a,a,i3,a,i3,a,i3)')
      &             'compute_feedback_type: using ',
-     &             ' plasma heat flux density along boundaries ',
+     &             ' heat flux density along boundaries ',
      &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
      &             ' for sequence ',b2espcr(fb_species(ifb))
                 end if
@@ -1678,25 +1678,15 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
-              do k = iFc1, iFc2
-                iFc = fbReg(k)
-                ic = mpg%fcBc(iFc,1)
-                iCv = maxval(mpg%fcCv(iFc,1:2))
+              do iFc = iFc1, iFc2
+                ic = mpg%fcBc(fbReg(iFc),1)
                 t1 = mpg%bcFcOr(ic)
-                t0 = dv%fhe(iFc,0)+dv%fhe(iFc,1)+
-     .            dv%fhi(iFc,0)+dv%fhi(iFc,1)+
-     .            (dv%fne(iFc,0)+dv%fne(iFc,1))*pl%te(iCv)
-                do is=0,ns-1 !{
-                  t0=t0+(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
-     .            (rt%rpt(iCv,is)*ev+pl%ti(iCv))+
-     .            dv%fhm(iFc,0,is)+dv%fhm(iFc,1,is)
-                end do !}
-                t0 = t1*t0/geo%fcS(iFc)
-#ifdef B25_EIRENE
-                if (switch%use_eirene.ne.0)
-     .            t0=t0+ewldt_res(b2_fnmti(iFc)) -
-     .               ewldrp_res(b2_fnmti(iFc))
-#endif
+                t0 = dv%fht(fbReg(iFc),0)+dv%fht(fbReg(iFc),1)
+                t0 = t1*t0/geo%fcS(fbReg(iFc))
+                if (switch%use_eirene.ne.0) then
+                  t0 = t0 + ewldt_res(b2_fnmti(iFc))
+     .                    - ewldrp_res(b2_fnmti(iFc))
+                endif
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_current(ifb).ne.0.0_R8) then
@@ -3007,7 +2997,7 @@ cxpb size is changed in b2mod_dimensions
       enddo
 
       call xertst(is_albedo_changed,
-     &  "feedback: albedo hasn't been changed anywhere!"//
+     &  "feedback: albedo has not been changed anywhere!"//
      &   " Check the FB_IB!")
       return
       end subroutine eirene_recyct_update

@@ -207,7 +207,6 @@ c***  Standard set-up:
       type (switches), intent (inout) :: sw
       integer ic, iFc, iFs, iFs1, iFs2, iFt, iVx1, iVx2
       real (kind=R8) :: distint, dsep,
-     . dsep_vX(4),  ! is used as distance from the OMP cell vertex to the separatrix, and all cells are assumed to be triangular or quadrangular, no pentagons, hexagons etc
      . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
 
       logical :: file_ok
@@ -317,7 +316,6 @@ c***  Standard set-up:
           fs_ds_omp(iFs) = dsep - fs_ds_omp(iFs)
         end if
       end do
-      write(*,*)
       do ic = 1, nomp
 ! Exclude guard cell, since processing a guard cell may overwrite a correct distance computed one iteration before for regular cell if it is in the same flux tube
         if (omp(ic) > m%nCi) cycle
@@ -329,8 +327,6 @@ c***  Standard set-up:
         do i = m%cvVxP(omp(ic),1),
      &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
           iFs = m%vxFs(m%cvVx(i))
-          write(*,*) '   iVx = ', i, ' iFs = ', iFs
-         dsep_vX = 999.0_R8
           if (iFs.eq.0) cycle
           if (iFs1.eq.0) then
             iFs1 = iFs
@@ -338,8 +334,8 @@ c***  Standard set-up:
             iFs2 = iFs
           end if
         end do
-         if (iFs1.ne.0.and.iFs2.ne.0)
-     .      ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
+        if (iFs1.ne.0.and.iFs2.ne.0)
+     >   ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
       end do
 cxpb set default switches depending on midplane location
       if (sw%set_transport_iyref.eq.0) then

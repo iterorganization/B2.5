@@ -6005,7 +6005,8 @@
 					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
-			<name>b2tfnb_avg_vExB</name>
+			<switch>
+				<name>b2tfnb_avg_vExB</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
@@ -6013,6 +6014,7 @@
 					If b2tfnb_avg_vExB.eq.2 then additional output will be printed during averaging.
 					If b2txcx_increase_transp_coefs.gt.1 b2tfnb_avg_vExB.eq.1 automatically.
 				</description>
+			</switch>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
@@ -7448,7 +7450,7 @@
 					11 : should not be used for feedbacks anymore, not converted to WG code.
 					12 : should not be used for feedbacks anymore, not converted to WG code.
 					13 : particle density to achieve specified total flux, CONPAR(,,1) is the specified flux crossing the boundary flux surface, CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used), CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
-					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5 sound speed is defined separately for each ionization state.
+					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length. If MOMPAR(:,:,2).ge.0.5 sound speed is defined separately for each ionization state.
 					15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 					16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					18 : prescribe total main ion particle flux, used with ASTRA coupling. Not yet available for WG.
@@ -8030,15 +8032,6 @@
 				<type>integer array of size (NFB)</type>
 				<description>
 					Index of boundary condition through which the feedback is being applied. For FB_ACTUATOR.eq.9 FB_IB also means the index of non-default standard surface.
-				</description>
-			</switch>
-			<switch>
-				<name>FB_TYPE_IB</name>
-				<default>2</default>
-				<type>integer array of size (NFB)</type>
-				<description>
-					Boundary condition index of the faces used to compute the fedback quantity, for FB_TYPE = 23 to 26.
-					Default value of 2 usually corresponds to the outer target.
 				</description>
 			</switch>
 			<switch>

@@ -566,9 +566,6 @@ c b2mndt
       integer :: b2mndt_startup
       integer :: ntim_step_out
       integer :: calc_err_step_out
-      integer :: b2mndt_temp0
-      integer :: b2mndt_temp1
-      integer :: b2mndt_temp2
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1231,9 +1228,6 @@ c b2mndt
       s % b2mndt_startup = 1
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
-      s % b2mndt_temp0 = 1
-      s % b2mndt_temp1 = 1
-      s % b2mndt_temp2 = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -2258,9 +2252,6 @@ c b2mndt
       call ipgeti ('b2mndt_startup', s % b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
-      call ipgeti ('b2mndt_temp0', s % b2mndt_temp0)
-      call ipgeti ('b2mndt_temp1', s % b2mndt_temp1)
-      call ipgeti ('b2mndt_temp2', s % b2mndt_temp2)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
