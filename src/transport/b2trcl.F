@@ -19,7 +19,8 @@
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
      &                     fllim_al_c, alfx_c, sigx_c,                   !srv 08.10.14
-     &                     alpha1, kt_neo                                !som 05.10.21
+     &                     alpha1, kt_neo,                               !som 05.10.21
+     &                     nu2, eps1, k2                                 !vvk 23.01.24
       use b2mod_transport_namelist
 #ifdef ASTRA
       use b2mod_geo_corner
@@ -106,8 +107,8 @@
      *  cthiv, cthev, vis_par, jemax                                     !srv 13.01.17
       real (kind=R8) ::                                                  !srv 03.06.03
      *  t0, dte, dti, flomx
-      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
-     &  k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)             !lk 19.09.07
+      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1),                       !lk 19.09.07 !vvk 23.01.24
+     &  tt0(-1:ny), tt1(-1:ny)                                           !lk 19.09.07 !vvk 23.01.24
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
      &  k1(-1:nx,-1:ny), t1, t2, t3, tauVeff                             !lk 12.05.11 !som 22.06.21
       real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
@@ -389,9 +390,9 @@ cwdk  tmp: needed as long as not all contributions are filled later on
 *   .. plateau and banana correction for ion heat conduction             !lk 19.09.07 {
         call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                  !srv 01.07.09
 *   .. calculate inverse aspect ratio and collisionality parameter nu_star
-        tt0 = 0.0e0_R8
-        tt1 = 0.0e0_R8
-        eps1 = 1.0e0_R8
+        tt0 = 0.0_R8
+        tt1 = 0.0_R8
+        eps1 = 1.0_R8
 
 !wdk init mintopcut to -2 to skip loops in case nncut = 0
 !pbwdk        mintopcut = ny
@@ -417,10 +418,10 @@ cwdk  tmp: needed as long as not all contributions are filled later on
           eps1(iy) = tt0(iy)**2/tt1(iy)
         enddo
 
-        nu1 = 0.0e0_R8                                                   !lk 12.05.11{
-        k1 = 0.58e0_R8
-        nu2 = 0.0e0_R8
-        k2 = 1.6e0_R8
+        nu1 = 0.0_R8                                                   !lk 12.05.11{
+        k1 = 0.58_R8
+        nu2 = 0.0_R8
+        k2 = 1.6_R8
         t1 = (4.0_R8*pi*eps0/qe)/qe
         t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
 
@@ -431,20 +432,20 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      &      *sqrt(te(ix,iy)/ev)/ne2(ix,iy)
            nu1(ix,iy) = conn(iy)/(tau(ix,iy)
      &      *sqrt(te(ix,iy)/me)
-     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+     &      *2.0_R8*pi*eps1(iy)**1.5_R8)
 
-           k1(ix,iy) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(ix,iy))
-     &      +1.53e0_R8*nu1(ix,iy))
-     &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
-     &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
+           k1(ix,iy) = 1.0_R8/(1.0_R8+2.01_R8*sqrt(nu1(ix,iy))
+     &      +1.53_R8*nu1(ix,iy))
+     &      +0.52_R8*(eps1(iy)**3)*nu1(ix,iy)
+     &      /(1.0_R8+0.89_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
 
            if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0 .and.
      &         Zhdanov_cond.eq.1) then                                   !som 22.06.21
 
-             tauVeff = 0.0e0_R8
+             tauVeff = 0.0_R8
              do is = 0, ns-1
                if(.not.is_neutral(is)) then
-                 t3=sum(sqrt(2.0e0_R8*am(0:ns-1)/(am(is)+am(0:ns-1)))*
+                 t3=sum(sqrt(2.0_R8*am(0:ns-1)/(am(is)+am(0:ns-1)))*
      &            rz2(ix,iy,0:ns-1)*na(ix,iy,0:ns-1))
                  tauVeff=tauVeff+(na(ix,iy,is)/ni(ix,iy,1))*
      &            tauia(ix,iy,is)*(ne2(ix,iy)/t3)*sqrt(ti(ix,iy)/
@@ -453,27 +454,27 @@ cwdk  tmp: needed as long as not all contributions are filled later on
              enddo
 
              nu2(ix,iy) = conn(iy)/(tauVeff
-     &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+     &        *2.0_R8*pi*eps1(iy)**1.5_R8)
            else
 
              nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
      &        *sqrt(ti(ix,iy)/(mp*am(ismain)))
-     &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+     &        *2.0_R8*pi*eps1(iy)**1.5_R8)
            endif
 
-           k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
-     &      -1.54e0_R8*eps1(iy))
-     &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
-     &      +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
-     &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
-           alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))+
-     &           2.7e0_R8*nu2(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu2(ix,iy))+
-     &           nu2(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)/1.7e0_R8           !som 05.10.21
+           k2(ix,iy) = (0.66_R8+1.88_R8*sqrt(eps1(iy))
+     &      -1.54_R8*eps1(iy))
+     &      /(1.0_R8+1.03_R8*sqrt(nu2(ix,iy))+0.31_R8*nu2(ix,iy))
+     &      +1.17_R8*(eps1(iy)**3)*nu2(ix,iy)
+     &      /(1.0_R8+0.74_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
+           alpha1(ix,iy) = ((-0.17_R8+1.05_R8*sqrt(nu2(ix,iy))+
+     &           2.7_R8*nu2(ix,iy)**2*eps1(iy)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu2(ix,iy))+
+     &           nu2(ix,iy)**2*eps1(iy)**3)-1.0_R8)/1.7_R8               !som 05.10.21
            kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))
-     &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu2(ix,iy))+
+     &           ((-0.17_R8+1.05_R8*sqrt(nu2(ix,iy))
+     &           +2.7_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu2(ix,iy))+
      &           (nu2(ix,iy))**2*eps1(iy)**3))                           !som 05.10.21
           endif
          enddo
@@ -481,22 +482,22 @@ cwdk  tmp: needed as long as not all contributions are filled later on
         do iy = -1,mintopcut-1                                           !srv 22.04.16
          do ix = 0,nx
           if(on_closed_surface(ix,iy)) then                              !srv 26.11.02
-           f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
-           f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
+           f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58_R8*sqrt(eps1(iy)**3)
+           f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60_R8*sqrt(eps1(iy)**3)
            if(luc_et_form.eq.0) then ! for hydrogen isotopes + imp plasmas only
              f_luc_et(ix,iy)=cvsa_mltpl/
-     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
+     1        (1.0_R8+15.12e16_R8/conn(iy)/2.0_R8*
      2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5        /conn(iy)/2.0e0_R8*
+     4        /(1.0_R8+15.12e16_R8*eps1(iy)**1.5_R8
+     5        /conn(iy)/2.0_R8*
      6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
            else if (luc_et_form.eq.1) then ! generalized formulation     !som 01.09.22
              f_luc_et(ix,iy)=cvsa_mltpl/
-     1        (1.0e0_R8+2.0e0_R8/eps1(iy)**1.5e0_R8/
+     1        (1.0_R8+2.0_R8/eps1(iy)**1.5_R8/
      2        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
-     3        /(1.0e0_R8+2.0e0_R8/
+     3        /(1.0_R8+2.0_R8/
      4        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
            endif
            f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
@@ -523,10 +524,10 @@ cwdk  tmp: needed as long as not all contributions are filled later on
         enddo
       endif
 #ifdef ASTRA
-      bbaverage2 = 0.0e0_R8                                              !srv 28.07.11 {
-      chci_koeff = 0.0e0_R8
-      tt0 = 0.0e0_R8
-      tt1 = 0.0e0_R8
+      bbaverage2 = 0.0_R8                                                !srv 28.07.11 {
+      chci_koeff = 0.0_R8
+      tt0 = 0.0_R8
+      tt1 = 0.0_R8
       if(integral_modeling.ne.0.and.ny_astra.gt.1) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
@@ -538,7 +539,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
          endif
         enddo
         bbaverage2(iy) = tt0(iy)/tt1(iy)
-        tt0(iy) = 0.0e0_R8
+        tt0(iy) = 0.0_R8
         do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +vol(ix,iy)/bb(ix,iy,3)/bb(ix,iy,3)*
@@ -603,7 +604,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
 
       if(conductive_limit.ne.0) then                                     !srv 16.06.08 {
 *   .. apply the conductive limit of parallel electron heat flux         !srv 03.06.03 {
-       if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
+       if(cflim(0).ne.0.0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
@@ -616,7 +617,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
      &       ne(ix,iy))/2.0_R8
             t0 = chce(ix,iy,0,0)*abs(dte)/(flomx*max(
      &       te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-            fllim_ke(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+            fllim_ke(ix,iy)=1.0_R8/(1.0_R8+t0)
             chce(ix,iy,0,0)=chce(ix,iy,0,0)*fllim_ke(ix,iy)
            endif
           endif
@@ -624,7 +625,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
         enddo
        endif
 *   .. apply the conductive limit of parallel ion heat flux
-       if(cflim(1).ne.0.0e0_R8.or.cflmi_core.ne.cflmi_sol) then
+       if(cflim(1).ne.0.0_R8.or.cflmi_core.ne.cflmi_sol) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
@@ -637,7 +638,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
      &                          +ni(ix,iy,0))/2.0_R8
             t0 = chci(ix,iy,0,0)*abs(dti)/
      &        (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-            fllim_ki(ix,iy) = 1.0_R8/(1.0e0_R8+t0)
+            fllim_ki(ix,iy) = 1.0_R8/(1.0_R8+t0)
             chci(ix,iy,0,0)=chci(ix,iy,0,0)*fllim_ki(ix,iy)
            endif
           endif
@@ -647,7 +648,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
       endif                                                              !srv 16.06.08 }
 *   ..apply flux limit to calf                                           !srv 13.01.17 {
       if(style.eq.1) then
-       if(cflim(0).ne.0.0e0_R8.or.cflme_core.ne.cflme_sol) then
+       if(cflim(0).ne.0.0_R8.or.cflme_core.ne.cflme_sol) then
         do iy = -1, ny
          do ix = -1, nx
            if(leftix(ix,iy).ne.-2) then
@@ -657,7 +658,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
      &                                ne(ix,iy))/2.0_R8
                t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
      &              te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+               fllim_al(ix,iy)=1.0_R8/(1.0_R8+t0)
                calf(ix,iy,0,0)=calf(ix,iy,0,0)*fllim_al(ix,iy)           !srv 13.01.17
                alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)               !iyv 19.11.13 !srv 08.10.14
              endif
@@ -666,7 +667,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
         enddo
        endif
       else if (style.eq.2) then
-       if(cflim(3).ne.0.0e0_R8) then
+       if(cflim(3).ne.0.0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iy = -1, ny
          do ix = -1, nx
@@ -678,7 +679,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
      &           qe*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
      &           abs(pbs(ix,iy,0))
                t0 = abs(calf(ix,iy,0,0)*dte)/(cflim(3)*jemax)
-               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+               fllim_al(ix,iy)=1.0_R8/(1.0_R8+t0)
                calf(ix,iy,0,0)=calf(ix,iy,0,0)*fllim_al(ix,iy)               !srv 13.01.17
              endif
            endif
@@ -707,7 +708,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
              jemax = sqrt(te(ix,iy)/me)*
      &               qe*ne(ix,iy)*abs(bb(ix,iy,0)/bb(ix,iy,3))
              t0 = abs(alfx_c(ix,iy))*abs(dte)/(cflim(3)*jemax)
-             fllim_al_c(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+             fllim_al_c(ix,iy)=1.0_R8/(1.0_R8+t0)
              alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)               !iyv 19.11.13 !srv 08.10.14
            endif
          enddo

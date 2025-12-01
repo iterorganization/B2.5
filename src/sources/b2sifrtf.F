@@ -27,6 +27,8 @@
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
+      use b2mod_frtf_nccorr
+     , , only : corr_fria, corr_tfia, alpha_HS_style, g_HS_style
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -79,6 +81,7 @@
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
      &  Zhdanov_tf_fr = 1                                               !som 01.07.21
+      integer, save :: Zhdanov_nc = 0
       integer, save :: icase = 0                                        !som 05.03.21
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
@@ -117,8 +120,8 @@
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(ncall, phm1, phm2)
 #endif
-      data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
+      data ncall/0/, styl0/0/, phm0/1.0_R8/,
+     &  phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -165,6 +168,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 23.02.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 12.03.21
+       call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)              !som 01.07.21
        call ipgeti ('b2tral_zhd_corr', zhd_corr)                        !som 05.03.21
        call ipgeti ('b2tral_zhd_corrT', zhd_corrT)                      !som 03.09.21
@@ -193,13 +197,13 @@
       endif
 
 *   ..initialize to 0
-      call sfill (n2*4, 0.0e0_R8, smbch, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbtf, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)                          !srv 13.01.17 { !srv 05.07.17
-      call sfill (n2*4, 0.0e0_R8, smbfreal, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfial_nofl, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
+      call sfill (n2*4, 0.0_R8, smbch, 1)                               !srv 11.09.09
+      call sfill (n2*4, 0.0_R8, smbtf, 1)                               !srv 11.09.09
+      call sfill (n2*4, 0.0_R8, smbfrial, 1)                            !srv 13.01.17 { !srv 05.07.17
+      call sfill (n2*4, 0.0_R8, smbfreal, 1)
+      call sfill (n2*4, 0.0_R8, smbtfial, 1)
+      call sfill (n2*4, 0.0_R8, smbtfial_nofl, 1)
+      call sfill (n2*4, 0.0_R8, smbtfeal, 1)                            !srv 13.01.17 }
 
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
@@ -235,12 +239,25 @@
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1))
+     &       smbfrial(ix,iy,0),smbfrial(ix,iy,1),
+     &       corr_fria(ix,iy,isb))
            endif
           enddo
         enddo
-      elseif (Zhdanov_closure.eq.1.and.(Zhdanov_test.eq.1.or.
-     &        Zhdanov_tf_fr.eq.0)) then                                 !som 01.07.2021
+      elseif (Zhdanov_closure.eq.1.and.Zhdanov_test.eq.1.and.
+     &        Zhdanov_nc.eq.1) then
+        do iy = 0, ny-1
+          do ix = 0, nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+              temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
+              call b2mod_zhfrtf_fr(ix,iy,isb,temp,
+     &         smbfrial(ix,iy,0),smbfrial(ix,iy,1),
+     &         corr_fria(ix,iy,isb))
+            endif
+          enddo
+        enddo
+      elseif (Zhdanov_closure.eq.1.and.
+     &       (Zhdanov_test.eq.1.or.Zhdanov_tf_fr.eq.0)) then            !som 01.07.2021
 *     ..test run of the Zhdanov closure
         smbfrial_test=0
         do iy = 0, ny-1
@@ -248,7 +265,8 @@
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
             temp=rz2(ix,iy,isb)*na(ix,iy,isb)*mp/zetap(ix,iy)
             call b2mod_zhfrtf_fr(ix,iy,isb,temp,
-     &       smbfrial_test(ix,iy,0),smbfrial_test(ix,iy,1))
+     &       smbfrial_test(ix,iy,0),smbfrial_test(ix,iy,1),
+     &       corr_fria(ix,iy,isb))
            endif
           enddo
         enddo
@@ -377,8 +395,8 @@
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
           coef = -phm2*alfx_c(ix,iy)*ce1(ix,iy)*rz2(ix,iy,isb)*(me/qe)/
-     &           zetae(ix,iy)/(bb(ix,iy,0)/bb(ix,iy,3))/f_luc_sg(ix,iy)   !srv f_luc_sg should be taken in cell center ?
-          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     &           zetae(ix,iy)/(bb(ix,iy,0)/bb(ix,iy,3))/f_luc_sg(ix,iy) !srv f_luc_sg should be taken in cell center ?
+          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
           t0 = na(ix,iy,isb)*delte    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
           smbtfeal(ix,iy,0) = smbtfeal(ix,iy,0)+coef*t0
          endif
@@ -396,7 +414,8 @@
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0))
+     &        smbtfial(ix,iy,0),smbtfial_nofl(ix,iy,0),
+     &        corr_tfia(ix,iy,isb))
             endif
            enddo
           enddo
@@ -409,15 +428,22 @@
          do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
              call b2mod_zhfrtf_tf(ix,iy,isb,na(ix,iy,isb),
-     &        smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0))
+     &        smbtfial_test(ix,iy,0),smbtfial_test_nofl(ix,iy,0),
+     &        corr_tfia(ix,iy,isb))
            endif
          enddo
         enddo
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-           ka(ix,iy) = fka(ix,iy,isb)
-         enddo
-        enddo
+        if (Zhdanov_nc.eq.1) then
+          call b2scopy (n2, smbtfial_test(-1,-1,0), 1,
+     &     smbtfial(:,:,0), 1)
+          call b2scopy (n2, smbtfial_test_nofl(-1,-1,0), 1,
+     &     smbtfial_nofl(:,:,0), 1)
+        else
+          do iy = 0, ny-1
+           do ix = 0, nx-1
+             ka(ix,iy) = fka(ix,iy,isb)
+           enddo
+          enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
@@ -431,53 +457,55 @@
 !$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
-        do is = 0, ns-1
-         if(isb.ne.is .and.
+          do is = 0, ns-1
+           if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
-          do iy = 0, ny-1
-           do ix = 0, nx-1
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
-             Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
-c            kb(ix,iy)    = fka(ix,iy,is)
-c            kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
-             kb(ix,iy)    =
+            do iy = 0, ny-1
+             do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+               Kabtf(ix,iy) = fkabtf(ix,iy,isb,is)
+               Kbatf(ix,iy) = fkabtf(ix,iy,is,isb)
+c              kb(ix,iy)    = fka(ix,iy,is)
+c              kb(ix,iy)    = fka_new(ix,iy,is,rz2_temp,na_temp)
+               kb(ix,iy)    =
      &                 fka_new_opt(ix,iy,is,rz2_temp,na_temp,am_sqrt)
-             KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
+               KabVp(ix,iy) = fkabvp(ix,iy,isb,is)
 c        .. calculations could be simplified
 c        .. but we did not do it in order to have the same formulae as manual
-             calfab = zetap(ix,iy)/sqrt(mp)*
+               calfab = zetap(ix,iy)/sqrt(mp)*
      &            qe*(na(ix,iy,isb)+na(ix,iy,is))*
      &            sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
      &           (Kabtf(ix,iy)/kb(ix,iy)-Kbatf(ix,iy)/ka(ix,iy))*
      &            bb(ix,iy,0)/bb(ix,iy,3)
-             coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
+               coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
      &            mp/(zetap(ix,iy)*qe)
-             delti=
-     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+               delti=
+     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
 c   .... apply flux limit
-             if(cflim(4).ne.0.0_R8.and.
+               if(cflim(4).ne.0.0_R8.and.
      &         .not.on_closed_surface(ix,iy)) then
-               jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
+                 jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
-               t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-               fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
-             else
-               fllim_al_ab = 1.0_R8
-             endif
+                 t0 = abs(calfab*delti)/(cflim(4)*jabmax)
+                 fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+               else
+                 fllim_al_ab = 1.0_R8
+               endif
 
-             t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+               t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
-             smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
-             smbtfial_nofl(ix,iy,0) = smbtfial_nofl(ix,iy,0) + coef*t0
-            endif
-           enddo
+               smbtfial(ix,iy,0) =
+     &          smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
+               smbtfial_nofl(ix,iy,0) = smbtfial_nofl(ix,iy,0) + coef*t0
+              endif
+             enddo
+            enddo
+           endif
           enddo
-         endif
-        enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP END PARALLEL DO
 #endif
+        endif
       else
 *     ..standard thermal force calculation
         do iy = 0, ny-1
@@ -522,14 +550,14 @@ c        .. but we did not do it in order to have the same formulae as manual
              coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
      &            mp/(zetap(ix,iy)*qe)
              delti=
-     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
 c   .... apply flux limit
              if(cflim(4).ne.0.0_R8.and.
      &         .not.on_closed_surface(ix,iy)) then
                jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &          (na(ix,iy,isb)+na(ix,iy,is))
                t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-               fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+               fllim_al_ab = 1.0_R8/(1.0_R8+t0)
              else
                fllim_al_ab = 1.0_R8
              endif
@@ -589,6 +617,13 @@ c   .... apply flux limit
         wrk = vol*hz*smbtfeal(:,:,0)
         call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
+        if (Zhdanov_nc.eq.1) then
+          call my_out(70,nx,ny,corr_fria(:,:,isb),'b2sifrtf_cf'//chns)
+          call my_out(70,nx,ny,corr_tfia(:,:,isb),'b2sifrtf_ct'//chns)
+          call my_out(70,nx,ny,alpha_HS_style(:,:,isb),
+     &     'b2sifrtf_alpha'//chns)
+          call my_out(70,nx,ny,g_HS_style(:,:),'b2sifrtf_g')
+        endif
 
         wrk = vol*hz*(smbfrial_test(:,:,0)+
      &        smbfrial_test(:,:,1)*ua(:,:,isb)+

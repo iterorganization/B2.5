@@ -25,6 +25,8 @@
       use b2mod_transport_namelist
       use b2mod_indirect
       use b2mod_ipmain
+      use b2mod_frtf_nccorr
+     , , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, znmax, mode
@@ -161,6 +163,9 @@
      &  cvsahz_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+      integer, save :: Zhdanov_nc = 0
+      integer, save :: iout = 0
+      character chns1*3,chns2*3
       character*80 cvalip
 *   ..initialisation
       save ncall
@@ -173,12 +178,23 @@
       call subini ('b2trzh')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
+        call ipgeti ('b2sifrtf_iout', iout)
 *   ..allocate
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nx, ny)
         call alloc_b2mod_zhfrtf(nx, ny, ns)
         if (zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nx, ny, ns)
+        endif
+        call alloc_b2mod_frtf_nccorr(nx, ny, ns)
+        if (Zhdanov_nc.eq.0) then
+          corr_fria = 1.0_R8
+          corr_tfia = 1.0_R8
+        else
+          zh_imp_analyt = 1
+          write (*,'(2a)') 'Zhdanov closure has been switched ',
+     &     'to analytical expression.'
         endif
         cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
         call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
@@ -323,14 +339,13 @@
      &       c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
-     &        wrkcc)
+     &       wrkcc)
             c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 *    ..calculate the thermal force transport coefficient with flux limiting
             wrkG2 = G2*tf_ton_mat
             wrkG8 = G8*tf_ton_mat
             call b2trtf(nspecies, wrkG2, wrkG8,
-     &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
-     &        wrkcc)
+     &       mum, mdm, Ainv_fl, Ainv_mdf_fl, wrkcc)
             c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1
@@ -441,6 +456,7 @@
      &         cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
      &        *tf_ton_mat(i,0:nspecies-1)
               c_hTA_an_fl(i) = cF_limh(i)*c_hTA_an(i)
+              c_hTA_an_fl_save(ix,iy,i) = c_hTA_an_fl(i)
             enddo
 *    ..calculate the classical ion conductivity with flux limiting
             call b2trht_an(nspecies, ix, iy, bb(ix,iy,0)/bb(ix,iy,3),
@@ -454,6 +470,8 @@
               c_R_TA(ix,iy,i,0:nspecies-1) =
      &         -c_R_TA_an(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
               c_R_TA(ix,iy,i,i) = c_R_TA(ix,iy,i,i)+temp
+              c_R_TA_an_save(ix,iy,i,0:nspecies-1)=
+     &          c_R_TA_an(i,0:nspecies-1)
             enddo
 
 *    ..the analytical viscous stress transport coefficient
@@ -546,14 +564,12 @@
             do j = 0, nspecies-1
               eta_uAdp(ix,iy,i,j) = c_pi_uA(i,j)*tau_Zh(i,j)
             enddo
-
             eta_uBdp(ix,iy,i) = 2.0_R8*c_pi_uB(i)*tau_Zh(i,i)
 
 *    ..the heat flux dependent part
             do j = 0, nspecies-1
               eta_hAdp(ix,iy,i,j) = c_pi_hA(i,j)*tau_Zh(i,j)
             enddo
-
             eta_hBdp(ix,iy,i) = 2.0_R8*c_pi_hB(i)*tau_Zh(i,i)
 
 *    ..the effective velocity-dependent part for the flux limiting
@@ -561,7 +577,6 @@
             do j = 0, nspecies-1
               eta_cl_al_eff_xy(i) = eta_cl_al_eff_xy(i) +
      &         eta_uAdp(ix,iy,i,j) * ti(ix,iy) * na(ix,iy,j)
-
             enddo
           enddo
 
@@ -626,7 +641,6 @@
               eta_hAdp(ix,iy,i,j) = eta_hAdp(ix,iy,i,j)*
      &         (bb(ix,iy,0)/bb(ix,iy,3))**2
             enddo
-
             eta_hBdp(ix,iy,i) = eta_hBdp(ix,iy,i)*
      &       (bb(ix,iy,0)/bb(ix,iy,3))**2
           enddo
@@ -942,7 +956,28 @@
           enddo
         enddo
       enddo
-
+      if (iout.ne.0) then
+        do i = 0, nspecies-1
+          write (chns1,'(i3.3)') i
+          do j = 0, nspecies-1
+            write (chns2,'(i3.3)') j
+            wrk = c_R_w(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_w'//chns1//chns2)
+            wrk = c_R_wA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wA'//chns1//chns2)
+            wrk = c_R_wB(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_wB'//chns1//chns2)
+            wrk = c_R_TA(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA'//chns1//chns2)
+            wrk = c_R_TA_nofl(:,:,i,j)
+            call my_out(70,nx,ny,wrk,'b2trzh_c_R_TA_nofl'//chns1//chns2)
+          enddo
+          wrk = c_R_TB(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB'//chns1)
+          wrk = c_R_TB_nofl(:,:,i)
+          call my_out(70,nx,ny,wrk,'b2trzh_c_R_TB_nofl'//chns1)
+        enddo
+      endif
       ncall = ncall+1
       call subend ()
       return

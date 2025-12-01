@@ -1601,6 +1601,32 @@
 					If art_rad.ne.0, then an artificial radiation loss term is added to the electron cooling rate. Art_rad represents the percent fraction of impurities in the plasma.
 				</description>
 			</switch>
+			<switch>
+				<name>b2tral_Zhdanov_nc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_nc.eq.1, neoclassical corrections for impurity transport are applied for a chosen impurity isonuclear sequence, with index b2tral_Zhdanov_nc_spec.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_Zhdanov_nc_spec</name>
+				<default>2</default>
+				<type>integer</type>
+				<description>
+					Index of the isonuclear sequence for which the impurity neoclassical corrections will be applied. For Ne in case of a D+Ne plasma, b2tral_Zhdanov_nc_spec should be set to 2.
+					The corrections are more accurate for impurity species with at least Z=10.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_Zhdanov_nc_min</name>
+				<default>6</default>
+				<type>integer</type>
+				<description>
+					 b2tral_Zhdanov_nc_min sets the minimum ion charge Z^{min}_a, above which (inclusively) neoclassical corrections will be applied for the chosen impurity species by the switch b2tral_Zhdanov_nc_spec.
+					 Lower values than 6 are not recommended.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2stbc_*</name>
 				<description>
@@ -3092,15 +3118,15 @@
 				</description>
 			</switch>
 			<switch>
-			  <name>get_residuals</name>
-			  <default>0</default>
-			  <type>integer</type>
-			  <description>
-				If get_residuals.eq.1, then the residuals of unsolved equations will be outputted into b2ftrace. Equations are unsolved if 'b2news_no_solve' is nonzero or any elements of the solveco, solvemo, solveee, solveei, or solvepo are set to .false. .
-				By default, get_residuals.eq.0 and the residuals for unsolved equations are set to zero.
-				The residual of the total momentum equation is nonzero when all momentum equations for parallel velocities are solved together.
-				The residual of the total energy equation is nonzero when Te and Ti equations are solved together.
-			  </description>
+				<name>get_residuals</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If get_residuals.eq.1, then the residuals of unsolved equations will be outputted into b2ftrace. Equations are unsolved if 'b2news_no_solve' is nonzero or any elements of the solveco, solvemo, solveee, solveei, or solvepo are set to .false. .
+					By default, get_residuals.eq.0 and the residuals for unsolved equations are set to zero.
+					The residual of the total momentum equation is nonzero when all momentum equations for parallel velocities are solved together.
+					The residual of the total energy equation is nonzero when Te and Ti equations are solved together.
+				</description>
 			</switch>
 			<switch>
 				<name>b2wdat_append</name>
@@ -3285,10 +3311,10 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-				  Output flag to control diagnostics related to use of ion_vlct_restrict switch.
-				  If vlct_diagno.eq.0, the velocity restrictions are applied silently.
-				  If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
-				  If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
+					Output flag to control diagnostics related to use of ion_vlct_restrict switch.
+					If vlct_diagno.eq.0, the velocity restrictions are applied silently.
+					If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
+					If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
 				</description>
 			</switch>
 			<switchgroup>
@@ -6490,12 +6516,12 @@
 						 9 : prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m
 						10 : feedback option for core [not yet tested!!!!!!!!!] (based on using cbsch(0,coreregno))
 						11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
-						12 : Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
-						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
-						14 : Prescribe the value of the radial sheath potential, POTPAR(,1), in V
+						12 : imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+						13 : imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+						14 : prescribe the value of the radial sheath potential, POTPAR(,1), in V
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
-						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases.
-						17 : Sheath condition for floating target. This BC provides a floating target with a near zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
+						16 : constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases.
+						17 : sheath condition for floating target. This BC provides a floating target with a near zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away. POTPAR(,1) specifies the desired potential in V. POTPAR(,2) is the strength of the feedback
 				</description>
 			</switch>

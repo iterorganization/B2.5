@@ -30,7 +30,11 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_zhfrtf                                                 !som 13.08.21
-     1 , only : rho_A_rel, avm_u
+     1 , only : rho_A_rel, avm_u, z2n_xy
+      use b2mod_b2zhco
+     1 , only : c_hTA_an_fl_save, c_R_TA_an_save
+      use b2mod_frtf_nccorr
+     , , only : b2mod_frtf_nccorr_coefs
 #ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_balance
@@ -152,7 +156,8 @@
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
       integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,          !som 21.03.21
-     &  Zhdanov_tf_fr = 1                                              !som 01.07.21
+     &  Zhdanov_tf_fr = 1,                                             !som 01.07.21
+     &  Zhdanov_nc = 0, Zhdanov_nc_min = 6, Zhdanov_nc_spec = 2
       integer, save :: Zhdanov_visu = 1, Zhdanov_vish = 1              !som 13.08.21 18.10.21
       real (kind=R8), save :: smbvi_factor = 1.0_R8                    !som 14.12.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
@@ -291,6 +296,18 @@
         call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
         call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)              !som 18.10.21
         call ipgetr ('b2npmo_smbvi_factor', smbvi_factor)              !som 14.12.21
+        call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
+        call ipgeti ('b2tral_Zhdanov_nc_min', Zhdanov_nc_min)
+        Zhdanov_nc_spec = nspecies
+        call ipgeti ('b2tral_Zhdanov_nc_spec', Zhdanov_nc_spec)
+        call xertst (nspecies.ge.Zhdanov_nc_spec,
+     .               'Zhdanov_nc_spec.gt.nspecies !')
+        if (Zhdanov_nc_min.lt.6) then
+          write(0,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+          write(6,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+        endif
         if (.not.main_lightest .and. style.eq.2 .and.
      .      Zhdanov_closure.eq.0) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
@@ -503,7 +520,7 @@
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue, use_9pt_stencil)
 !$OMP& SHARED(zetap, zetae, gti, gte)
-!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff, z2n_xy)
 !$OMP& SHARED(rz2, ne_ext, ro)
 !$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
@@ -549,9 +566,11 @@
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
 !$OMP& SHARED(Zhdanov_closure, Zhdanov_test)
 !$OMP& SHARED(Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(Zhdanov_nc, Zhdanov_nc_min, Zhdanov_nc_spec)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
+!$OMP& SHARED(c_hTA_an_fl_save, c_R_TA_an_save)
 !$OMP& SHARED(last_solve_5, last_solve_9)
 !$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
 !$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
@@ -579,6 +598,10 @@
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
        if(style.eq.2) then                                             !srv 13.01.17
+        if (Zhdanov_nc.eq.1 .and. Zhdanov_closure.eq.1)
+     &    call b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
+     &      rz2,Zhdanov_nc_min,Zhdanov_nc_spec-1,
+     &      c_hTA_an_fl_save,c_R_TA_an_save,z2n_xy,zeff)
          call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,            !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
