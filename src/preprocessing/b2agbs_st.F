@@ -46,7 +46,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agbs_st')
       call ipgetr ('b2agmt_1d_width', width)
-      
+
 *   ..preparatory quantities
       hz(:,:) = vol(:,:)/gs(:,:,2)
       if (isymm.eq.0) then
