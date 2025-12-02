@@ -141,8 +141,10 @@
 *    ..use ma28
        call cpu_time(cpu_start)
 
-*csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
-        call ILUTERN_US(NCV, NZ, corfunb, incrbb, name)
+*csc  Solve in dummy way the system AT*bb=xb / AT*incrbb=corfunb
+        do iCv=1,nCv
+          incrbb(iCv) = corfunb(iCv)*aa(iCv)
+        end do
         resfunb = resfunb + incrbb
       endif
 
