@@ -317,8 +317,7 @@ c***  Standard set-up:
         end if
       end do
       do ic = 1, nomp
-! Exclude guard cell, since processing a guard cell may overwrite a correct distance computed one iteration before for regular cell if it is in the same flux tube
-        if (omp(ic) > m%nCi) cycle
+        if (omp(ic).gt.m%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(omp(ic))
@@ -556,7 +555,7 @@ c*** Set default values according to current species list
         end if
       end do
       do ic = 1, nimp
-        if (imp(ic) > m%nCi) cycle
+        if (imp(ic).gt.m%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(imp(ic))

@@ -1210,11 +1210,9 @@ c   (ionising_core option)
             else
               vbnd = max(mompar(is,ib,1)*cs*s1,
      &         s1*abs(pl%ua(iCv1,is))+geo%fcS(iFc)*
-     &          ((dv%vaecrb(iFc,0,is)+dv%vadia(iFc,0,is))*
-     &          geo%fcQalf(iFc,0) + (dv%vaecrb(iFc,1,is)+
-     &          dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1))*
+     &          (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0)+
+     &           dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))
-
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) = -vbnd
               if (conpar(is,ib,2).gt.0.0_R8) then
@@ -3173,24 +3171,27 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
             else
               s1hz = geo%fcPbshz(iFc)
-              vbnd = ((dv%vaecrb(iFc,0,is)+dv%vadia(iFc,0,is))*
-     &          geo%fcQalf(iFc,0) + (dv%vaecrb(iFc,1,is)+
-     &          dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1))
+              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
               if (mompar(is,ib,2).lt.0.5_R8) then
                 cs = sqrt(pz(iCv1)/rz(iCv1))
-                vbnd = sign(min(2.0_R8*cs*wrk,abs(vbnd)),vbnd)
-                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)-
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*
-     &           geo%fcHz(iFc)*geo%fcS(iFc)
+                wrk = abs(2.0_R8*cs*wrk)
+                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
+                vbnd = mompar(is,ib,1)*cs*s1hz*
+     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
+     &           geo%fcS(iFc)
               else
                 cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &                    (am(is)*mp))
-                vbnd = sign(min(2.0_R8*cs*wrk,abs(vbnd)), vbnd)
-                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)-
-     &            vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*
-     &            geo%fcHz(iFc)*geo%fcS(iFc)
+                wrk = abs(2.0_R8*cs*wrk)
+                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
+                vbnd = mompar(is,ib,1)*cs*s1hz*
+     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
+     &           geo%fcS(iFc)
                 vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
-     &            vbnd)
+     &           vbnd)
               endif
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
@@ -5946,16 +5947,14 @@ cxpb code segment analog to b2tfhi
               s1 = abs(geo%fcPbs(iFc))
               do is = 0, ns-1
                 if(is_neutral(is)) cycle
-
-                vbnd = (enipar(ib,1)*dv%vaecrb(iFc,0,is)+
-     &                  2.5_R8*dv%vadia(iFc,0,is))*geo%fcQalf(iFc,0)+
-     &                 (enipar(ib,1)*dv%vaecrb(iFc,1,is)+
-     &                  2.5_R8*dv%vadia(iFc,1,is))*geo%fcQalf(iFc,1)
+                vbnd = enipar(ib,1)*
+     &                (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0)+
+     &                 dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
                 t0 = t0 + max(0.0_R8,pl%na(iCv1,is)*
      &                  (enipar(ib,1)*pl%ua(iCv1,is)*wrk+vbnd)*
      &                  geo%fcS(iFc)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))
-                  if (conpar(is,ib,2).gt.0.0_R8)
-     &             t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
+                if (conpar(is,ib,2).gt.0.0_R8)
+     &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &              *pl%na(iCv1,is)
               enddo
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - t0 -
