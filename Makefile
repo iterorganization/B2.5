@@ -1015,7 +1015,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
 
-listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+listobj: local ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
