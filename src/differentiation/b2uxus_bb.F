@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxus_b(nCv, mpg, aa, aab, itcnt,   
+      subroutine b2uxus_bb(nCv, mpg, aa, aab, itcnt,   
      .  resfun, resfunb, corfun, corfunb, name)
       use b2mod_types
       use b2mod_ma28_for_us
@@ -76,7 +76,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2uxus_b')
+      call subini ('b2uxus_bb')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2ux9p_style', style)
@@ -106,11 +106,11 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-       write(*,*) 'Allocating space for solver b2uxus_b'
+       write(*,*) 'Allocating space for solver b2uxus_bb'
        if (style.eq.0) then
-        call xerrab ('b2uxus_b: Style 0 is not implemented')
+        call xerrab ('b2uxus_bb: Style 0 is not implemented')
       else if (style.eq.1) then
-        call xerrab ('b2uxus_b: Style 1 is not implemented')
+        call xerrab ('b2uxus_bb: Style 1 is not implemented')
       else if (style.eq.2) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
@@ -141,8 +141,10 @@
 *    ..use ma28
        call cpu_time(cpu_start)
 
-*csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
-        call ILUTERN_US(NCV, NZ, corfunb, incrbb, name)
+*csc  Solve in dummy way the system AT*bb=xb / AT*incrbb=corfunb
+        do iCv=1,nCv
+          incrbb(iCv) = corfunb(iCv)*aa(iCv)
+        end do
         resfunb = resfunb + incrbb
       endif
 
@@ -167,6 +169,6 @@
       return
          
 *-----------------------------------------------------------------------
-*.end b2uxus_b
+*.end b2uxus_bb
 
-      end subroutine b2uxus_b
+      end subroutine b2uxus_bb
