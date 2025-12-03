@@ -4913,7 +4913,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity). Must be greater than 1.0 to have an effect.
+					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity). Must be greater than 1.0 to have an effect. Only acts on cells faces between two boundary cells.
 					If b2txcx_increase_transp_coefs.gt.1.0, b2trno_set_chcb_0 will be assigned to 1.
 				</description>
 			</switch>
