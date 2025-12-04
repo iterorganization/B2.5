@@ -363,16 +363,21 @@ csw 20sep2013 added
       hlp_zv  = 0.0_R8
       hlp_zn1 = 0.0_R8
       hlp_zn2 = 0.0_R8
-      iFt = mpg%cvFt(omp(1))
+      if (omp(1).le.mpg%nCi) then ! take the first internal flux tube
+        iFt = mpg%cvFt(omp(1))
+      else
+        iFt = mpg%cvFt(omp(2))
+      end if
       do i = 1, mpg%ftCvP(iFt,2)
         iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
         if(mpg%cvOnClosedSurface(iCv)) then
+          iFn = 0
           do j = 1, mpg%cvFcP(iCv,2)
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
             if (max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi)
      >       iFn = iFc
           end do
-          hlp_s=hlp_s+geo%fcS(iFn)
+          if (iFn.gt.0) hlp_s=hlp_s+geo%fcS(iFn)
           hlp_v=hlp_v+geo%cvVol(iCv)
           zeff=0.0_R8
           do is=0,ns-1
@@ -382,7 +387,7 @@ csw 20sep2013 added
             zeff = zeff + state_ext%za2(iCv,is)*state_ext%na(iCv,is)
           end do
           zeff=zeff/state%dv%ne(iCv)
-          hlp_zs = hlp_zs + geo%fcS(iFn)*zeff
+          if (iFn.gt.0) hlp_zs = hlp_zs + geo%fcS(iFn)*zeff
           hlp_zv = hlp_zv + geo%cvVol(iCv)*zeff
           do is=0,ns-1
             hlp_zn1 = hlp_zn1 +
