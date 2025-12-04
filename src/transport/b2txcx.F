@@ -50,13 +50,13 @@
      &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1))*
      &   (fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2))))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
-         if (increase_transp_coefs.gt.1.0_R8) then
-           cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%cvAlongBoundary(cvs(1)).and.
-     &         mpg%cvAlongBoundary(cvs(2))) then
-             conx(iFc) = conx(iFc)*increase_transp_coefs
-           endif
+        if (increase_transp_coefs.gt.1.0_R8) then
+         cvs = mpg%fcCv(iFc,1:2)
+         if (mpg%cvAlongBoundary(cvs(1)).and.
+     &       mpg%cvAlongBoundary(cvs(2))) then
+           conx(iFc) = conx(iFc)*increase_transp_coefs
          endif
+        endif
        enddo
       else if (mode.eq.1) then
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
@@ -66,11 +66,11 @@
      &    fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
         if (increase_transp_coefs.gt.1.0_R8) then
-          cvs = mpg%fcCv(iFc,1:2)
-          if (mpg%cvAlongBoundary(cvs(1)).and.
-     &        mpg%cvAlongBoundary(cvs(2))) then
-            conx(iFc) = conx(iFc)*increase_transp_coefs
-          endif
+         cvs = mpg%fcCv(iFc,1:2)
+         if (mpg%cvAlongBoundary(cvs(1)).and.
+     &       mpg%cvAlongBoundary(cvs(2))) then
+          conx(iFc) = conx(iFc)*increase_transp_coefs
+         endif
         endif
        enddo
       else if (mode.eq.2) then
@@ -81,13 +81,13 @@
      &   (geo%fcHc(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    geo%fcHc(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
-         if (increase_transp_coefs.gt.1.0_R8) then
-           cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%cvAlongBoundary(cvs(1)).and.
-     &         mpg%cvAlongBoundary(cvs(2))) then
-             conx(iFc) = conx(iFc)*increase_transp_coefs
-           endif
+        if (increase_transp_coefs.gt.1.0_R8) then
+         cvs = mpg%fcCv(iFc,1:2)
+         if (mpg%cvAlongBoundary(cvs(1)).and.
+     &       mpg%cvAlongBoundary(cvs(2))) then
+          conx(iFc) = conx(iFc)*increase_transp_coefs
          endif
+        endif
        enddo
       else if (mode.eq.3) then
 *    ..use arithmetic averaging (drift formulation)
@@ -98,13 +98,13 @@
      &   (geo%fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    geo%fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
-         if (increase_transp_coefs.gt.1.0_R8) then
-           cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%cvAlongBoundary(cvs(1)).and.
-     &         mpg%cvAlongBoundary(cvs(2))) then
-             conx(iFc) = conx(iFc)*increase_transp_coefs
-           endif
+        if (increase_transp_coefs.gt.1.0_R8) then
+         cvs = mpg%fcCv(iFc,1:2)
+         if (mpg%cvAlongBoundary(cvs(1)).and.
+     &       mpg%cvAlongBoundary(cvs(2))) then
+          conx(iFc) = conx(iFc)*increase_transp_coefs
          endif
+        endif
        enddo
       endif
 *   ..return
