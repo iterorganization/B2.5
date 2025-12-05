@@ -239,14 +239,14 @@ c                if (switch%Zhdanov_closure.eq.1) then
       if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then
         do is = 0, pl%ns-1
           write (chns,'(i3.3)') is
-          call my_out_us(70,nCv,temp_corr(:,0,is),
+          call my_out_us(70,nCv,0,temp_corr(:,0,is),
      &     'b2mod_frtf_nccorr_coefs_temp0_'//chns)
-          call my_out_us(70,nCv,temp_corr(:,1,is),
+          call my_out_us(70,nCv,0,temp_corr(:,1,is),
      &     'b2mod_frtf_nccorr_coefs_temp1_'//chns)
-          call my_out_us(70,nCv,temp_corr(:,2,is),
+          call my_out_us(70,nCv,0,temp_corr(:,2,is),
      &     'b2mod_frtf_nccorr_coefs_temp2_'//chns)
         enddo
-        call my_out_us(70,nCv,k2_mean,
+        call my_out_us(70,nCv,0,k2_mean,
      &     'b2mod_frtf_nccorr_coefs_k2mean_'//chns)
       endif
 
