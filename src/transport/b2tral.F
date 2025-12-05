@@ -38,7 +38,7 @@
      &          transport_ip_filename, nscale, transport_ip_time_switch,
      &          transport_ip_time_mod
       use b2mod_zhfrtf
-     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, rho_a_rel,
+     & , only : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac, rho_a_rel,
      &          gavm_uc, z_to_m1_ast, gtalc
       use b2mod_b2zhco
      & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_tb, c_r_tb_nofl,

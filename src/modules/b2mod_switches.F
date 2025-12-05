@@ -78,6 +78,9 @@ c Zhdanov closure switches
       integer :: Zhdanov_visu
       integer :: Zhdanov_vish
       integer :: Zhdanov_vel_heat
+      integer :: Zhdanov_nc
+      integer :: Zhdanov_nc_min
+      integer :: Zhdanov_nc_spec
       integer :: zh_vis_type
       integer :: impr_form_tf
       integer :: impr_form_fr
@@ -698,6 +701,9 @@ c Zhdanov closure switches
       s % Zhdanov_visu = 1
       s % Zhdanov_vish = 1
       s % Zhdanov_vel_heat = 1
+      s % Zhdanov_nc = 0
+      s % Zhdanov_nc_min = 6
+      s % Zhdanov_nc_spec = 2
       s % zh_vis_type = 0
       s % impr_form_tf = 0
       s % impr_form_fr = 0
@@ -1331,6 +1337,9 @@ c Zhdanov closure
       call ipgeti ('b2tral_Zhdanov_visu', s % Zhdanov_visu)
       call ipgeti ('b2tral_Zhdanov_vish', s % Zhdanov_vish)
       call ipgeti ('b2tral_Zhdanov_vel_heat', s % Zhdanov_vel_heat)
+      call ipgeti ('b2tral_Zhdanov_nc', s % Zhdanov_nc)
+      call ipgeti ('b2tral_Zhdanov_nc_min', s % Zhdanov_nc_min)
+      call ipgeti ('b2tral_Zhdanov_nc_spec', s % Zhdanov_nc_spec)
       call ipgeti ('b2tral_zh_vis_type', s % zh_vis_type)
       call ipgeti ('b2npmo_impr_form_tf', s % impr_form_tf)
       call ipgeti ('b2npmo_impr_form_fr', s % impr_form_fr)
@@ -1945,14 +1954,14 @@ cnh   Default values
 
 ***********************************************************************
 
-      subroutine check_switches (s,ns)
+      subroutine check_switches (s,ns,nspecies)
 
       implicit none
-      integer, intent(in) :: ns
+      integer, intent(in) :: ns, nspecies
       type(switches), intent(in out) :: s
 
 c check the bounds of the switches themselves
-      call check_values_switches(s,ns)
+      call check_values_switches(s,ns,nspecies)
 c check the inter-consistency of different switches (e.g. certain combinations of swithces may not (yet) be allowed or developed)
       call check_consistency_switches(s)
 
@@ -1961,12 +1970,12 @@ c check the inter-consistency of different switches (e.g. certain combinations o
 
 ***********************************************************************
 
-      subroutine check_values_switches (s,ns)
+      subroutine check_values_switches (s,ns,nspecies)
 
 c check the bounds of the switches themselves
 
       implicit none
-      integer, intent(in) :: ns
+      integer, intent(in) :: ns, nspecies
       type(switches), intent(in out) :: s
       external xerrab, xertst
 
@@ -2481,9 +2490,14 @@ c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
-c zhdanov
+c Zhdanov closure
       call xertst (s%zh_vis_type.ge.0 .and. s%zh_vis_type.le.2,
      &  'faulty parameter b2tral_zh_vis_type')
+      call xertst (s%Zhdanov_closure.ge.0 .and. s%Zhdanov_closure.ge.1,
+     &  'faulty parameter b2tral_Zhdanov_closure')
+      call xertst (s%Zhdanov_nc_spec.gt.0 .and.
+     &             s%Zhdanov_nc_spec.le.nspecies,
+     &  'faulty parameter b2tral_Zhdanov_nc_spec')
 
 c Optimization
       call xertst (s%b2optim_save_states.ge.0,
@@ -2580,9 +2594,15 @@ c k-enstrophy model
       endif
 
 c Zhdanov closure
-      if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.1) then
-        call xerrab('wrong value of b2tral_Zhdanov_closure')
+      if (s%Zhdanov_nc.ne.0 .and. s%zh_imp_analyt.ne.1) then
+        s%zh_imp_analyt = 1
+        write(*,*) 'Zhdanov closure has been switched to '//
+     .       'analytical expression.'
       endif
+      if (s%Zhdanov_nc_min.lt.6) then
+        write(*,*)
+     .   'WARNING! Zhdanov_nc_min values below 6 are not recommended!'
+      end if
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
