@@ -296,7 +296,7 @@ c load default values of switches
 c overwrite with values provided in b2mn.dat
       call read_switches(switch)
 c check the values of the switches
-      call check_switches(switch,ns)
+      call check_switches(switch,ns,nspecies)
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 

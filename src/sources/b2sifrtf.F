@@ -12,6 +12,8 @@
       use b2mod_b2cmpt
       use b2mod_zhfrtf
      & , only: b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
+      use b2mod_frtf_nccorr
+     & , only : corr_fria, corr_tfia, alpha_HS_style, g_HS_style
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -193,7 +195,14 @@
         do iCv = 1, mpg%nCi
           t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
           call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &      smbfrial(iCv,0:1))
+     &      smbfrial(iCv,0:1),corr_fria(iCv,isb))
+        enddo
+      elseif (switch%Zhdanov_closure.eq.1.and.
+     &        switch%Zhdanov_test.eq.1.and.switch%Zhdanov_nc.eq.1) then
+        do iCv = 1, mpg%nCi
+          t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
+          call b2mod_zhfrtf_fr(iCv,isb,t0,
+     &      smbfrial(iCv,0:1),corr_fria(iCv,isb))
         enddo
       else
         smbfrial_test = 0.0_R8
@@ -204,11 +213,11 @@
           do iCv = 1, mpg%nCi
             t0=rz2(iCv,isb)*na(iCv,isb)*mp/zetap(iCv)
             call b2mod_zhfrtf_fr(iCv,isb,t0,
-     &        smbfrial_test(iCv,0:1))
-          enddo
+     &        smbfrial_test(iCv,0:1),corr_fria(iCv,isb))
+         enddo
         endif
 *     ..standard friction force calculation
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(none)
 !$OMP& PRIVATE(KabVp, is, iCv, coef, t0)
@@ -243,7 +252,7 @@
             enddo
           endif
         enddo
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP END PARALLEL DO
 #endif
       endif
@@ -284,26 +293,88 @@
 *     ..actual use of the Zhdanov closure
         do iCv = 1, mpg%nCi
           call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
-     &      smbtfial(iCv,0),smbtfial_nofl(iCv,0))
+     &      smbtfial(iCv,0),smbtfial_nofl(iCv,0),corr_tfia(iCv,isb))
         enddo
-      else
+      elseif (switch%Zhdanov_closure.eq.1.and.
+     &       (switch%Zhdanov_test.eq.1.or.
+     &        switch%Zhdanov_tf_fr.eq.0)) then
+*     ..test run of the Zhdanov closure
         smbtfial_test = 0.0_R8
         smbtfial_test_nofl = 0.0_R8
-        if (switch%Zhdanov_closure.eq.1.and.
-     &     (switch%Zhdanov_test.eq.1.or.
-     &      switch%Zhdanov_tf_fr.eq.0)) then                            !som 01.07.2021
-*       ..test run of the Zhdanov closure
-          do iCv = 1, mpg%nCi
-            call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
-     &        smbtfial_test(iCv,0),smbtfial_test_nofl(iCv,0))
+        do iCv = 1, mpg%nCi
+          call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
+     &     smbtfial_test(iCv,0),smbtfial_test_nofl(iCv,0),
+     &     corr_tfia(iCv,isb))
+        enddo
+        if (switch%Zhdanov_nc.eq.1) then
+          call b2scopy (nCv, smbtfial_test(:,0), 1,
+     &     smbtfial(:,0), 1)
+          call b2scopy (nCv, smbtfial_test_nofl(:,0), 1,
+     &         smbtfial_nofl(:,0), 1)
+        else
+*     ..standard thermal force calculation
+          do iCv = 1, nCv
+            ka(iCv) = fka(iCv,isb)
           enddo
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
+!$OMP PARALLEL DO IF (make_parallel)
+!$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, iCv, coef, t0)
+!$OMP& PRIVATE(calfab, jabmax, fllim_al_ab)
+!$OMP& SHARED(ns, isb, is_neutral, mpg, switch, geo)
+!$OMP& SHARED(rz2, am, zetap, na, ua, gti, cflim, ti)
+!$OMP& SHARED(ka)
+!$OMP& SHARED(rz2_temp, na_temp, am_sqrt)
+!$OMP& SHARED(ismain, cimp1, cimp2)
+!$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
+#endif
+          do is = 0, ns-1
+           if(isb.ne.is .and.
+     &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
+            do iCv = 1, mpg%nCi
+              Kabtf(iCv) = fkabtf(iCv,isb,is)
+              Kbatf(iCv) = fkabtf(iCv,is,isb)
+c             kb(iCv)    = fka(iCv,is)
+              kb(iCv)    = fka_new(iCv,is,rz2_temp,na_temp,am_sqrt)
+              KabVp(iCv) = fkabvp(iCv,isb,is)
+c        .. calculations could be simplified
+c        .. but we did not do it in order to have the same formulae as manual
+              calfab = zetap(iCv)/sqrt(mp)*
+     &         qe*(na(iCv,isb)+na(iCv,is))*
+     &         sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
+     &        (Kabtf(iCv)/kb(iCv)-Kbatf(iCv)/ka(iCv))*
+     &         geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
+              coef = switch%b2sifr_phm3*rz2(iCv,isb)*rz2(iCv,is)*calfab*
+     &         mp/(zetap(iCv)*qe)
+c        .. apply flux limit
+              if (cflim(4).ne.0.0_R8 .and.
+     &         .not.mpg%cvOnClosedSurface(iCv))then
+                jabmax = qe*KabVp(iCv)*sqrt(ti(iCv)/mp)*
+     &           (na(iCv,isb)+na(iCv,is))
+                t0 = abs(calfab*gti(iCv))/(cflim(4)*jabmax)
+                fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+              else
+                fllim_al_ab = 1.0_R8
+             endif
+             t0 = na(iCv,isb)*na(iCv,is)/
+     &                      ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
+             smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
+             smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
+            enddo
+           endif
+          enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
+!$OMP END PARALLEL DO
+#endif
         endif
+      else
 *     ..standard thermal force calculation
         do iCv = 1, nCv
           ka(iCv) = fka(iCv,isb)
         enddo
 
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, iCv, coef, t0)
@@ -317,7 +388,7 @@
 #endif
         do is = 0, ns-1
          if(isb.ne.is .and.
-     &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
+     &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
           do iCv = 1, mpg%nCi
             Kabtf(iCv) = fkabtf(iCv,isb,is)
             Kbatf(iCv) = fkabtf(iCv,is,isb)
@@ -337,20 +408,20 @@ c        .. apply flux limit
             if (cflim(4).ne.0.0_R8 .and.
      &         .not.mpg%cvOnClosedSurface(iCv))then
               jabmax = qe*KabVp(iCv)*sqrt(ti(iCv)/mp)*
-     &          (na(iCv,isb)+na(iCv,is))
+     &         (na(iCv,isb)+na(iCv,is))
               t0 = abs(calfab*gti(iCv))/(cflim(4)*jabmax)
               fllim_al_ab = 1.0_R8/(1.0_R8+t0)
             else
               fllim_al_ab = 1.0_R8
-            endif
-            t0 = na(iCv,isb)*na(iCv,is)/
-     &                            ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
-            smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
-            smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
+           endif
+           t0 = na(iCv,isb)*na(iCv,is)/
+     &                    ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
+           smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
+           smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
           enddo
          endif
         enddo
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP END PARALLEL DO
 #endif
       endif
@@ -393,6 +464,13 @@ c        .. apply flux limit
        wrk = geo%cvVol*geo%cvHz*smbtfeal(:,0)
        call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfea'//chns)            !srv 05.07.17 }
        call my_out_us(70,nCv,0,ue,'b2sifrtf_ue')
+       if (switch%Zhdanov_nc.eq.1) then
+         call my_out_us(70,nCv,0,corr_fria(:,isb),'b2sifrtf_cf'//chns)
+         call my_out_us(70,nCv,0,corr_tfia(:,isb),'b2sifrtf_ct'//chns)
+         call my_out_us(70,nCv,0,alpha_HS_style(:,isb),
+     &      'b2sifrtf_alpha'//chns)
+         call my_out_us(70,nCv,0,g_HS_style,'b2sifrtf_g')
+       endif
 
        wrk = geo%cvVol*geo%cvHz*
      &       (smbfrial_test(:,0)+smbfrial_test(:,1)*ua(:,isb)+

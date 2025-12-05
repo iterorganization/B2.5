@@ -157,7 +157,7 @@
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
 
         real(R8), allocatable, dimension(:) ::
-     .                           kt_neo
+     .                           kt_neo, nu2, k2
 
         real(R8), allocatable, dimension(:) ::
      .                           alfx_c, sigx_c, sigx_kt, hcix_c
@@ -551,6 +551,8 @@
       allocate( coeff%vsa_bohm( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff%kt_neo( nCv ), SOURCE=0._R8 )
+      allocate( coeff%nu2( nCv ), SOURCE=0._R8 )
+      allocate( coeff%k2( nCv ), SOURCE=0._R8 )
 
       allocate( coeff%fllim_ki( nFc ), SOURCE=0._R8 )
       allocate( coeff%fllim_ke( nFc ), SOURCE=0._R8 )
@@ -655,6 +657,8 @@
       allocate( coeff%vsa_bohm( nCv, 0:1, 0:ns-1 ) )
 
       allocate( coeff%kt_neo( nCv ) )
+      allocate( coeff%nu2( nCv ) )
+      allocate( coeff%k2( nCv ) )
 
       allocate( coeff%fllim_ki( nFc ) )
       allocate( coeff%fllim_ke( nFc ) )
@@ -760,6 +764,8 @@
       coeff % vsa_bohm = 0._R8
 
       coeff % kt_neo = 0._R8
+      coeff % nu2 = 0._R8
+      coeff % k2 = 0._R8
 
       coeff % fllim_ki = 0._R8
       coeff % fllim_ke = 0._R8
@@ -839,7 +845,6 @@
       deallocate( coeff % cthe )
       deallocate( coeff % cthi )
 
-
       deallocate( coeff % ceqp )
 
       deallocate( coeff % fllim0fna )
@@ -870,6 +875,8 @@
       deallocate( coeff % vsa_bohm )
 
       deallocate( coeff % kt_neo )
+      deallocate( coeff % nu2 )
+      deallocate( coeff % k2 )
 
       deallocate( coeff % fllim_ki )
       deallocate( coeff % fllim_ke )

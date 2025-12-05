@@ -248,7 +248,7 @@ cwdk  interpolate to cell faces!
 *   ..velocity-dependent part of the heat flux
       floi_vhx = 0.0_R8                                                 !som 13.07.21
       if (switch%Zhdanov_closure.eq.1 .and.
-     &    switch%Zhdanov_test.eq.0 .and.
+     &   (switch%Zhdanov_test.eq.0 .or. switch%Zhdanov_nc.eq.1) .and.
      &    switch%Zhdanov_vel_heat.eq.1) then                            !som 13.07.21
         call b2tfvh (nCv, nFc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
       endif
