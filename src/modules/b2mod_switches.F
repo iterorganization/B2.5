@@ -2493,10 +2493,11 @@ c b2ag
 c Zhdanov closure
       call xertst (s%zh_vis_type.ge.0 .and. s%zh_vis_type.le.2,
      &  'faulty parameter b2tral_zh_vis_type')
-      call xertst (s%Zhdanov_closure.ge.0 .and. s%Zhdanov_closure.ge.1,
+      call xertst (s%Zhdanov_closure.ge.0 .and. s%Zhdanov_closure.le.1,
      &  'faulty parameter b2tral_Zhdanov_closure')
-      call xertst (s%Zhdanov_nc_spec.gt.0 .and.
-     &             s%Zhdanov_nc_spec.le.nspecies,
+      if (s%Zhdanov_nc.eq.1)
+     > call xertst (s%Zhdanov_nc_spec.gt.0 .and.
+     &              s%Zhdanov_nc_spec.le.nspecies,
      &  'faulty parameter b2tral_Zhdanov_nc_spec')
 
 c Optimization
