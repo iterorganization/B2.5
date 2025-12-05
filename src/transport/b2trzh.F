@@ -25,6 +25,8 @@
       use b2mod_transport_namelist
       use b2mod_switches
       use b2mod_ipmain
+      use b2mod_frtf_nccorr
+     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -183,6 +185,11 @@
 *   ..set internal parameters on first call
       if (ncall_b2trzh.eq.0) then
 *   ..allocate
+        call alloc_b2mod_frtf_nccorr(nCv, ns)
+        if (switch%Zhdanov_nc.eq.0) then
+          corr_fria = 1.0_R8
+          corr_tfia = 1.0_R8
+        endif
         cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
         call ipgetc ('b2tral_zh_tf_toff', cvalip)                 !som 26.06.21
         do is = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
@@ -270,9 +277,9 @@
 *   ..calculate transport coefficietns
       do iCv = 1, nCv
         amti=amnucl*mp/pl%ti(iCv)
-        zeffne=sum(z2n_xy(iCv,0:nspecies-1))
+        zeffne=sum(z2n_cv(iCv,0:nspecies-1))
 *    ..normalized average Z**2*n
-        nz2n=z2n_xy(iCv,0:nspecies-1)/zeffne
+        nz2n=z2n_cv(iCv,0:nspecies-1)/zeffne
 *    ..calculate the correction for each charge state (heat flux/R-moment/friction)
         call b2trcz(nspecies, mum, mdm, nz2n,
      &    wrkc, wrkcB, c_hwB, c_rwB, c_hTB, c_rTB)
@@ -445,7 +452,8 @@
             c_R_TA_an(i,0:nspecies-1) =
      &        cF_lim(i)*c_R_TA_an_nofl(i,0:nspecies-1)
      &       *tf_ton_mat(i,0:nspecies-1)
-             c_hTA_an_fl(i) = cF_limh(i)*c_hTA_an(i)
+            c_hTA_an_fl(i) = cF_limh(i)*c_hTA_an(i)
+            c_hTA_an_fl_save(iCv,i) = c_hTA_an_fl(i)
           enddo
 *    ..calculate the classical ion conductivity with flux limiting
           call b2trht_an(nspecies, iCv, geo%cvBb(iCv,0)/geo%cvBb(iCv,3),
@@ -459,6 +467,8 @@
             c_R_TA(iCv,i,0:nspecies-1) =
      &        -c_R_TA_an(0:nspecies-1,i)*(nz2n(i)/nz2n(0:nspecies-1))
             c_R_TA(iCv,i,i) = c_R_TA(iCv,i,i)+temp
+            c_R_TA_an_save(iCv,i,0:nspecies-1)=
+     &       c_R_TA_an(i,0:nspecies-1)
           enddo
 
 *    ..the analytical viscous stress transport coefficient
@@ -511,7 +521,7 @@
      &    c_R_TB_nofl(iCv,0:nspecies-1)
 
 *    ..calculate the friction force transport coefficient
-        wrkc = z2n_xy(iCv,0:nspecies-1)
+        wrkc = z2n_cv(iCv,0:nspecies-1)
         call b2trfr(nspecies, switch, mum, rmu, wrkc,
      &    c_hwA(0:nspecies-1,0:nspecies-1),
      &    c_rwA(0:nspecies-1,0:nspecies-1),
@@ -521,7 +531,7 @@
         c_R_w (iCv,0:nspecies-1,0:nspecies-1) = wrkcc
 
         if (switch%amfact_on.ne.0) then
-          wrkc = z2n_xy(iCv,0:nspecies-1)
+          wrkc = z2n_cv(iCv,0:nspecies-1)
           call b2trfr(nspecies, switch, mum_mdf, rmu_mdf, wrkc,
      &     c_hwA_mdf(0:nspecies-1,0:nspecies-1),
      &     c_rwA_mdf(0:nspecies-1,0:nspecies-1),
@@ -535,7 +545,7 @@
         eta_cl(iCv,0:ns-1) = 0.0_R8
         do i = 0, nspecies-1
           tau_Zh(i,0:nspecies-1) = rmu(i,0:nspecies-1)*((zetap(iCv)*
-     &      nal(iCv,i))/(z2n_xy(iCv,i)*z2n_xy(iCv,0:nspecies-1)))
+     &      nal(iCv,i))/(z2n_cv(iCv,i)*z2n_cv(iCv,0:nspecies-1)))
 
 *    ..the velocity-dependent part
           temp = sum(c_pi_uA(i,0:nspecies-1)*tau_Zh(i,0:nspecies-1)*
@@ -545,7 +555,7 @@
             eta_cl(iCv,nucl2s(i,iz)) =
      &        pl%na(iCv,nucl2s(i,iz))*pl%ti(iCv)*
      &       (temp+switch%zhcscorr*2.0_R8*c_pi_uB(i)*tau_Zh(i,i)*
-     &       (z2n_xy(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
+     &       (z2n_cv(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
           enddo
 
           do j = 0, nspecies-1
@@ -671,7 +681,7 @@
             hci0_a(iCv,nucl2s(i,iz)) =
      &        pl%na(iCv,nucl2s(i,iz))/nal(iCv,i)*
      &       (hci0_al(iCv,i)+switch%zhcscorr*hciB_al(i)*
-     &        (z2n_xy(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
+     &        (z2n_cv(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
           enddo
         enddo
 

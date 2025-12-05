@@ -22,7 +22,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_zhfrtf
-     , , only: z2n_xy, ia, av_ualpha, z_to_m1_ast, rho_a_rel
+     , , only: z2n_cv, ia, av_ualpha, z_to_m1_ast, rho_a_rel
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)

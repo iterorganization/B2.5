@@ -43,6 +43,8 @@
       use b2mod_zhfrtf
      & , only : alloc_b2mod_zhfrtf, alloc_b2mod_zhfrtf_df,
      &          dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
+      use b2mod_frtf_nccorr
+     & , only : dealloc_b2mod_frtf_nccorr
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -777,18 +779,21 @@
 *     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
 *     fcQgam(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector vector and the normal vector
-*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
+*     of face iFc, in the poloidal plane.
+*     It will hold that 0.lt.fcQgam(,).le.1.
 *
 *     fcQalf - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
 *     fcQalf(iFc,1) specifies sin(t), where t is the included angle
-*     between the magnetic field vector and the face normal.
+*     between the magnetic field vector and the face normal, in the
+*     poloidal plane.
 *     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 *
 *     fcQbet - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
 *     fcQbet(iFc,1) specifies sin(t), where t is the included angle
-*     between the cell-connector and the magnetic field vector.
+*     between the cell-connector and the magnetic field vector, in
+*     the poloidal plane.
 *     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 *
 *     fcPbs - (1:nFc) real*8 array.
@@ -2162,7 +2167,7 @@ c new CDF movie option (1st frame at t=0)
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
       use b2mod_zhfrtf
-     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     & , only : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
      &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
      &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
       use b2mod_b2mrel
@@ -3994,6 +3999,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
       call dealloc_b2mod_zhfrtf
+      call dealloc_b2mod_frtf_nccorr
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies

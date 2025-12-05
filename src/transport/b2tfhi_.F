@@ -26,7 +26,7 @@
       use b2mod_ad
      & , only : b2tfhi_cutlo, my_out_folder
       use b2mod_zhfrtf
-     & , only : z2n_xy, nal, ia, av_ualpha, z_to_m1_ast
+     & , only : z2n_cv, nal, ia, av_ualpha, z_to_m1_ast
 #endif
       use b2mod_subsys
       implicit none
@@ -192,7 +192,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..velocity-dependent part of the heat flux
       floi_vhx = 0.0_R8                                                 !som 13.07.21
       if (switch%Zhdanov_closure.eq.1 .and.
-     &    switch%Zhdanov_test.eq.0 .and.
+     &   (switch%Zhdanov_test.eq.0 .or. switch%Zhdanov_nc.eq.1) .and.
      &    switch%Zhdanov_vel_heat.eq.1) then                            !som 13.07.21
         call b2tfvh (nCv, nFc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
       endif

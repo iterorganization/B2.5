@@ -9,7 +9,7 @@
       use b2us_map
       use b2mod_switches
       use b2mod_zhfrtf
-     , , only: gtalc, nal, z2n_xy
+     , , only: gtalc, nal, z2n_cv
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -55,7 +55,7 @@
       if (cflim(4).ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCv)) then
         coef=zetap/mp
         do i=0, nspecies-1
-          t0=nal(iCv,i)/z2n_xy(iCv,i)**2*sqrt(2.0_R8/amnucl(i))*
+          t0=nal(iCv,i)/z2n_cv(iCv,i)**2*sqrt(2.0_R8/amnucl(i))*
      &     abs(c_hTA_an(i)*gtalc(iCv,i))
           t1=switch%zhflcorr*cflim(4)/sqrt(amti(i))
           t2=switch%zhflcorrh*switch%zhflcorr*cflim(4)/sqrt(amti(i))

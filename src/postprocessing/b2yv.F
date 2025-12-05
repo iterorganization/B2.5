@@ -153,7 +153,7 @@
       call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
-      call check_switches(switch,ns)
+      call check_switches(switch,ns,nspecies)
 *   ..read geometry and metric
       call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry (mpg, geo, switch)

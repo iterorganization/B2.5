@@ -39,7 +39,11 @@
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf, icase_sifr
 #endif
       use b2mod_zhfrtf                                                 !som 13.08.21
-     & , only : rho_A_rel, avm_u
+     & , only : rho_A_rel, avm_u, z2n_cv
+      use b2mod_b2zhco
+     & , only : c_hTA_an_fl_save, c_R_TA_an_save
+      use b2mod_frtf_nccorr
+     & , only : b2mod_frtf_nccorr_coefs
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -348,7 +352,8 @@ c time-dependent treatment
 #endif
 !$omp& shared(is_neutral)
 !$omp& shared(zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$omp& shared(cimp2, zeff, rxg_npmo, dtim)
+!$omp& shared(cimp2, zeff, z2n_cv, rxg_npmo, dtim)
+!$omp& shared(c_hTA_an_fl_save, c_R_TA_an_save)
 !$omp& shared(rho_A_rel, avm_u, ts_factor)
 #endif
 !      do is = 0, ns-1
@@ -360,7 +365,11 @@ c time-dependent treatment
      &               pl%tn, is, pb)
 *    ..compute extended friction term
        if(switch%b2sigp_style.eq.2) then                               !srv 13.01.17
-        call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
+         if(switch%Zhdanov_nc.eq.1 .and. switch%Zhdanov_closure.eq.1)
+     >    call b2mod_frtf_nccorr_coefs (nCv, mpg%nFt,
+     &     mpg, geo, pl, co, rt, switch,
+     &     c_hTA_an_fl_save, c_R_TA_an_save, z2n_cv, zeff)
+          call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
      &   mpg, pl%na, pl%ua, dv%ue, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2,
      &   rt%rza, rt%rz2, pl%po,zetap, zetae, gti, gte, ce1, ce2,
      &   cimp1, cimp2, zeff, co%f_luc_sg, co%alfx_c, co%sigx_c, st_ext,
