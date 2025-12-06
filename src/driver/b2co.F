@@ -407,7 +407,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim, .false.)
+          call b2co_time_cdf(nx, ny, ns, nnatmi, nnmoli, tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -419,7 +419,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim, .true.)
+          call b2co_time_cdf(nx, ny, ns, nnatmi, nnmoli, tim, .true.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -474,7 +474,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
-     .               'no b2movies.nc file found'
+     .               'no b2movies.nc found'
         end if
       end if
 *   ..close other files

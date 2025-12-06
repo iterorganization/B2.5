@@ -33,6 +33,7 @@
       integer, save :: write_b25_state_variables = 1
       integer, save :: write_b25_fluxes = 0
       integer, save :: write_b25_sources = 0
+      integer, save :: write_b25_transport = 0
       integer, save :: write_eirene_state_variables = 0
       integer, save :: write_eirene_fluxes = 0
       integer, save :: write_eirene_sources = 0
@@ -43,6 +44,7 @@
      1  write_b25_state_variables)
       call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
       call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
+      call ipgeti ('cdfmovie_b25_transport', write_b25_transport)
       call ipgeti ('cdfmovie_eirene_state_variables',
      1  write_eirene_state_variables)
       call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
@@ -221,6 +223,22 @@ c prepare the b2movies.nc.xxxx file
      1   'Volumetric line radiation rate', 'W m^-3')
         call create_cdf_field2(ncid2, 'rqradsum',
      1   'Total volumetric line radiation rate', 'W m^-3')
+      endif
+      if (write_b25_transport.ge.1) then
+        call create_cdf_field3(ncid2, 'dna', 1,
+     1   'Particle density-driven diffusivity', 'm^-2 s^-1')
+        call create_cdf_field3(ncid2, 'dpa', 1,
+     1   'Particle pressure-driven diffusivity', 'm^-2 s^-1')
+        call create_cdf_field2(ncid2, 'hci',
+     1   'Ion thermal anomalous diffusivity', 'm^-2 s^-1')
+        call create_cdf_field2(ncid2, 'hce',
+     1   'Electron thermal anomalous diffusivity', 'm^-2 s^-1')     
+        call create_cdf_field3(ncid2, 'vlax', 1,
+     1   'Poloidal anomalous pinch velocity', 'm s^-1')
+        call create_cdf_field3(ncid2, 'vlay', 1,
+     1   'Radial anomalous pinch velocity', 'm s^-1')
+        call create_cdf_field3(ncid2, 'vsa', 1,
+     1   'Anomalous viscosity', 'm kg^-1 s^-1') 
       endif
       if (write_eirene_state_variables.ge.1) then
         if(natm.gt.0) then

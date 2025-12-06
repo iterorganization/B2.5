@@ -177,6 +177,8 @@ c 2002-09-11: logic revised
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
+      integer neoclassical_iystart, neoclassical_iyend
+      integer neoclassical_iystart1, neoclassical_iyend1
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, jsep_cnv, jxa_cnv, iyped
       integer mw_jxa1, mw_jsep1, jsep1cnv, jxa1cnv, iyped1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
@@ -184,7 +186,7 @@ c 2002-09-11: logic revised
       integer coriolis, lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer elm_ix_begin, elm_ix_end
+      integer elm_ix_begin, elm_ix_end, elm_ixref
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
@@ -480,7 +482,10 @@ c 2002-09-11: logic revised
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  elm_time_begin, elm_time_end, elm_time_period,
+     .  elm_time_begin(nkind_coeff), elm_time_plateau(nkind_coeff),
+     .  elm_time_recovery(nkind_coeff), elm_time_end(nkind_coeff),
+     .  elm_crash_factor(nkind_coeff), elm_recovery_factor(nkind_coeff),
+     .  elm_ballooning_exp(nkind_coeff), elm_time_period,
      .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
@@ -569,6 +574,7 @@ c 2002-09-11: logic revised
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical region_flags1(NNREGMAX,nkind_coeff)
       logical poloidal_scaling(nscale), prdone, axdone, spdone
+      logical elm_dynamics_multiple
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
@@ -624,8 +630,10 @@ c 2002-09-11: logic revised
      1   transport_filename, transport_time_mod,
      2   transport_time_switch, scaling_ix_begin, scaling_ix_end,
      3   scaling_strength, region_flags, no_pflux, poloidal_scaling,
-     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
+     4   scaling_width, elm_time_begin, elm_time_plateau,
+     5   elm_time_recovery, elm_time_end, elm_time_period,
+     6   elm_crash_factor, elm_recovery_factor, elm_ballooning_exp,
+     7   elm_dynamics_multiple, elm_ix_begin, elm_ix_end, elm_ixref
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
@@ -1456,6 +1464,8 @@ c 2002-09-11: logic revised
       call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
+      call ipgeti ('b2tqna_neoclassical_iystart', neoclassical_iystart)
+      call ipgeti ('b2tqna_neoclassical_iyend', neoclassical_iyend) 
       call ipgeti ('b2tqna_iy1', iy1)
       call ipgeti ('b2tqna_iy2', iy2)
       call ipgeti ('b2tqna_ix1', ix1)
@@ -1749,6 +1759,10 @@ c 2002-09-11: logic revised
       endif
       iyped1 = conformal_convert
      .   (non_commensurate,2,jxa,iyped,nx,ny,nx1,ny1,4)
+      neoclassical_iystart1 = conformal_convert
+     .   (non_commensurate,2,jxa,neoclassical_iystart,nx,ny,nx1,ny1,0)
+      neoclassical_iyend1 = conformal_convert
+     .   (non_commensurate,2,jxa,neoclassical_iyend,nx,ny,nx1,ny1,2)
       iy11 = conformal_convert
      .   (non_commensurate,2,ix1,iy1,nx,ny,nx1,ny1,0)
       iy21 = conformal_convert
@@ -1878,6 +1892,10 @@ c 2002-09-11: logic revised
           iswitch = ixref1
         case('set_transport_iyref')
           iswitch = iyref1
+        case('b2tqna_neoclassical_iystart')
+          iswitch = neoclassical_iystart1
+        case('b2tqna_neoclassical_iyend')
+          iswitch = neoclassical_iyend1
         case('b2tqna_iy1')
           iswitch = iy11
         case('b2tqna_iy2')
@@ -2884,11 +2902,18 @@ c 2002-09-11: logic revised
           scaling_width=0.0_R8
           scaling_ix_begin=-2
           scaling_ix_end=-2
-          elm_time_begin=0.0_R8
-          elm_time_end=0.0_R8
+          elm_dynamics_multiple=.false.
+          elm_time_begin(:)=0.0_R8
+          elm_time_plateau(:)=0.0_R8
+          elm_time_recovery(:)=0.0_R8
+          elm_time_end(:)=0.0_R8
           elm_time_period=0.0_R8
           elm_ix_begin=-2
           elm_ix_end=-2
+          elm_ixref = jxa
+          elm_crash_factor(:)=1.0e-10_R8
+          elm_recovery_factor(:)=1.0e-10_R8
+          elm_ballooning_exp(:)=0.0_R8
           transport_filename='b2.transport.inputfile'
           transport_time_mod=0.0_R8
           transport_time_switch=0.0_R8
@@ -3094,12 +3119,39 @@ cxpb We must ensure we have not already listed this additional species
           if (maxval(scaling_width(1:nscale)).gt.0.0_R8)
      >       write(99,hlp_frm)
      .       'SCALING_WIDTH=',scaling_width(1:nscale)
-          if (elm_time_begin.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'ELM_TIME_BEGIN=',elm_time_begin,','
-          if (elm_time_end.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'ELM_TIME_END=',elm_time_end,','
+          if (elm_dynamics_multiple) then
+            write(99,'(1x,a)') 'ELM_DYNAMICS_MULTIPLE=T,'
+          endif
+          if (any(elm_time_begin.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_BEGIN=', elm_time_begin, ','
+          end if
+          if (any(elm_time_plateau.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_PLATEAU=', elm_time_plateau, ','
+          end if
+          if (any(elm_time_recovery.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_RECOVERY=', elm_time_recovery, ','
+          end if
+          if (any(elm_time_end.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_END=', elm_time_end, ','
+          end if
           if (elm_time_period.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_PERIOD=',elm_time_period,','
+          if (any(elm_crash_factor.ne.1.0e-10_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_CRASH_FACTOR=', elm_crash_factor, ','
+          end if
+          if (any(elm_recovery_factor.ne.1.0e-10_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_RECOVERY_FACTOR=', elm_recovery_factor, ','
+          end if
+          if (any(elm_ballooning_exp.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_BALLOONING_EXP=', elm_ballooning_exp, ','
+          end if
           if (elm_ix_begin.ne.-2) then
             elm_ix_begin = conformal_convert(non_commensurate,1,
      .       elm_ix_begin,jsep,nx,ny,nx1,ny1,1)
@@ -3111,6 +3163,12 @@ cxpb We must ensure we have not already listed this additional species
      .       elm_ix_end,jsep,nx,ny,nx1,ny1,3)
             write(99,'(1x,a,i4,a)')
      .       'ELM_IX_END=',elm_ix_end,','
+          endif
+          if (elm_ixref.ne.jxa) then
+            elm_ixref = conformal_convert(non_commensurate,1,
+     .       elm_ixref,jsep,nx,ny,nx1,ny1,3)
+            write(99,'(1x,a,i4,a)')
+     .       'ELM_IXREF=',elm_ixref,','
           endif
           write(99,'(a1)') '/'
           close(99)

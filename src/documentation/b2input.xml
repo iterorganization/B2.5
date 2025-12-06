@@ -2821,14 +2821,93 @@
 				<default>3</default>
 				<type>integer</type>
 				<description>
-					..set the contribution ic in NEOART
-					0 --- classical particle flux
-					1 --- banana plateau contribution
-					2 --- Pfirsch-Schlueter contribution
-					3 --- both banana and PS
-					4 --- all contributions
-					mind that B2.5 already calculates the classical transport !
-					avoid double transport, 0+4 for cross-checks only !
+					This switch controls the type of neoclassical component calculated by NEOART and added to the B2.5 transport coefficients, if b2tqna_user_transport.eq.8.
+					If neoclassical_ic.eq.0, then only the classical component of the neoclassical transport coefficients is added.
+					If neoclassical_ic.eq.1, then only the banana-plateau component of the neoclassical transport coefficients is added.
+					If neoclassical_ic.eq.2, then only the Pfirsch-Schlueter component of the neoclassical transport coefficients is added.
+					If neoclassical_ic.eq.3, then both banana-plateau and Pfirsch-Schlueter components of the neoclassical transport coefficients are added.
+					If neoclassical_ic.eq.4, then all components of the neoclassical transport coefficients are added.
+					B2.5 already consistently calculates the classical transport components, therefore the options 0 and 4 should only used for testing or cross-checks. Additionally, if facdrift.eq.1, also the Pfirsch-Schlueter fluxes are already self-consistently calculated, therefore using the options 2 and 3 should be avoided as well.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_time_steps</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Specifies the number of timesteps between successive recalculations of the neoclassical transport coefficients by NEOART, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_iystart</name>
+				<default>See description (integer)</default>
+				<type>integer</type>
+				<description>
+					Radial cell index, on the basis mesh, defining the first poloidal ring of the region in which the neoclassical coefficients are added to the B2.5 transport coefficients, if b2tqna_user_transport.eq.8. By default equal to -1. In any case the neoclassical coefficients are only added if the poloidal ring belongs to the closed flux region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_iyend</name>
+				<default>See description (integer)</default>
+				<type>integer</type>
+				<description>
+					Radial cell index, on the basis mesh, defining the last poloidal ring of the region in which the neoclassical coefficients are added to the B2.5 transport coefficients, if b2tqna_user_transport.eq.8. By default equal to jsep. In any case the neoclassical coefficients are only added if the poloidal ring belongs to the closed flux region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_dna</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_dna.eq.1 the neoclassical transport component calculated by NEOART is added to the particle diffusivity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_vla</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_vla.eq.1 the neoclassical transport component calculated by NEOART is added to the radial convective velocity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_hci</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_hci.eq.1 the neoclassical transport component calculated by NEOART is added to the ion thermal conductivity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_hvi</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_hvi.eq.1 the neoclassical transport component calculated by NEOART is added to the radial ion thermal strange velocity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_hce</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_hce.eq.1 the neoclassical transport component calculated by NEOART is added to the electron thermal conductivity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_hve</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_hve.eq.1 the neoclassical transport component calculated by NEOART is added to the radial electron thermal strange velocity, if b2tqna_user_transport.eq.8.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_neoclassical_output</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If neoclassical_output.eq.1 the neoclassical transport coefficients calculated by NEOART at all time steps at which it is called are outputted to the b2neo.nc file, if b2tqna_user_transport.eq.8.
 				</description>
 			</switch>
 		</category>
@@ -2927,6 +3006,14 @@
 				<type>integer</type>
 				<description>
 					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_transport</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_transport.ge.1 then the anomalous transport coefficients over the B2.5 grid are outputted.
 				</description>
 			</switch>
 			<switch>
@@ -7263,28 +7350,109 @@
 				</description>
 			</switch>
 			<switch>
-				<name>ELM_TIME_BEGIN</name>
+				<name>ELM_TIME_PERIOD</name>
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Time (in seconds) modulo ELM_TIME_PERIOD at which the ELM phase begins and the ELM data must be used.
+					Indicates the real period (in seconds) of simulated ELMs. If zero, no ELM profiles are used.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_DYNAMICS_MULTIPLE</name>
+				<default>.false.</default>
+				<type>logical</type>
+				<description>
+					If .true., different dynamics for the ELM phases to each of the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_TIME_BEGIN</name>
+				<default>0.0</default>
+				<type>real array of size 9</type>
+				<description>
+					Times (in seconds) modulo ELM_TIME_PERIOD at which the overall ELM phase begins (i.e. the transport coefficients
+					start to ramp up from the TDATA(2,ir,ik,is) values to the TDATA(3,ir,ik,is) values).
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_TIME_PLATEAU</name>
+				<default>0.0</default>
+				<type>real array of size 9</type>
+				<description>
+					Times (in seconds) modulo ELM_TIME_PERIOD at which the ELM phase reaches its plateau (i.e. the transport coefficients
+					start keeping constant values equal to the TDATA(3,ir,ik,is)).
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_TIME_RECOVERY</name>
+				<default>0.0</default>
+				<type>real array of size 9</type>
+				<description>
+					Times (in seconds) modulo ELM_TIME_PERIOD at which the ELM plateau phase ends (i.e. the transport coefficients
+					start to ramp down from the TDATA(3,ir,ik,is) values to the TDATA(2,ir,ik,is) values).
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
 				</description>
 			</switch>
 			<switch>
 				<name>ELM_TIME_END</name>
 				<default>0.0</default>
-				<type>real</type>
+				<type>real array of size 9</type>
 				<description>
-					Time (in seconds) modulo ELM_TIME_PERIOD at which the ELM phase ends and the ELM data is no longer used.
+					Times (in seconds) modulo ELM_TIME_PERIOD at which the overall ELM phase ends (i.e. the transport coefficients
+					start again keeping costant values equal to the TDATA(2,ir,ik,is)).
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
 				</description>
 			</switch>
 			<switch>
-				<name>ELM_TIME_PERIOD</name>
-				<default>0.0</default>
-				<type>real</type>
+				<name>ELM_CRASH_FACTOR</name>
+				<default>1.0E-10</default>
+				<type>real array of size 9</type>
 				<description>
-					Indicates the real frequency of simulated ELMs. See above for usage.
-					If zero, no ELM profiles are used.
+					Factor describing the logarithmic increase of the transport coefficients from the TDATA(2,ir,ik,is) values
+					to the TDATA(3,ir,ik,is) values during the ELM crash phase. By default (very low values) the increase is linear in time.
+					For higher values, the increase is faster at the beginning and slower towards the end of the crash phase.
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_RECOVERY_FACTOR</name>
+				<default>1.0E-10</default>
+				<type>real array of size 9</type>
+				<description>
+					Factor describing the exponential decrease of the transport coefficients from the TDATA(3,ir,ik,is) values
+					to the TDATA(2,ir,ik,is) values during the ELM recovery phase. By default (very low values) the decrease is linear in time.
+					For higher values, the decrease is faster at the beginning and slower towards the end of the recovery phase.
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_BALLOONING_EXP</name>
+				<default>0.0</default>
+				<type>real array of size 9</type>
+				<description>
+					Exponent of a ballooning-type cosine distribution describing a poloidal dependence of the ELM profiles, with
+					peaking at the poloidal location with index ELM_IXREF to the TDATA(3,ir,ik,is) values.
+					Higher values mean stronger peaking. If equal to 0.0, then the ELM profiles are poloidally constant, in the region
+					limited by ELM_IX_BEGIN and ELM_IX_END, and given by the TDATA(3,ir,ik,is) values.
+					If ELM_DYNAMICS_MULTIPLE is .false. then the first value is applied to all the 9 types of transport coefficients.
+					If ELM_DYNAMICS_MULTIPLE is .true. then different values are applied to the 9 types of transport coefficients.
+				</description>
+			</switch>
+			<switch>
+				<name>ELM_IXREF</name>
+				<default>jxa</default>
+				<type>integer</type>
+				<description>
+					Poloidal index of the location where the ELM profiles peak to the TDATA(3,ir,ik,is) values, according to a
+					ballooning-type cosine distribution with exponent ELM_BALLOONING_EXP.
 				</description>
 			</switch>
 			<switch>
@@ -8294,6 +8462,23 @@
 				<type>real array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtbr: bremsstrahlung radiation rates of species (is).
+				</description>
+			</switch>
+		</category>
+		<category name="b2.neoclassical_transport.parameters">
+			<introduction>
+				<namelist>NEOCLASSICAL_TRANSPORT</namelist>
+				<description>
+					Read if 'b2tqna_user_transport' is set to 8.
+					Used to set the calculation of neoclassical transport coefficients for specific species.
+				</description>
+			</introduction>
+			<switch>
+				<name>NEO_NS_SET</name>
+				<default>.true.</default>
+				<type>logical array of size(0:NS-1)</type>
+				<description>
+					Specifies whether the neoclassical contribution is applied to particle diffusivity and radial convective velocity for the species (is).
 				</description>
 			</switch>
 		</category>
