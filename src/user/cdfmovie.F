@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_plasma
       use b2mod_sources
+      use b2mod_anomalous_transport
+      use b2mod_b2cmpa
+      use b2mod_rates
       use b2mod_geo
       use b2mod_time
 #ifndef NO_CDF
@@ -45,6 +48,7 @@
       integer, save :: write_b25_state_variables = 1
       integer, save :: write_b25_fluxes = 0
       integer, save :: write_b25_sources = 0
+      integer, save :: write_b25_transport = 0
       integer, save :: write_eirene_state_variables = 0
       integer, save :: write_eirene_fluxes = 0
       integer, save :: write_eirene_sources = 0
@@ -59,6 +63,7 @@
      1  write_b25_state_variables)
       call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
       call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
+      call ipgeti ('cdfmovie_b25_transport', write_b25_transport)
       call ipgeti ('cdfmovie_eirene_state_variables',
      1  write_eirene_state_variables)
       call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
@@ -147,6 +152,22 @@
             call create_cdf_field2(ncid, 'rqradsum',
      1       'Total volumetric line radiation rate', 'W m^-3')
           endif
+          if (write_b25_transport.ge.1) then
+            call create_cdf_field3(ncid, 'dna', 1,
+     1       'Particle density-driven diffusivity', 'm^-2 s^-1')
+            call create_cdf_field3(ncid, 'dpa', 1,
+     1       'Particle pressure-driven diffusivity', 'm^-2 s^-1')
+            call create_cdf_field2(ncid, 'hci',
+     1       'Ion thermal anomalous diffusivity', 'm^-2 s^-1')
+            call create_cdf_field2(ncid, 'hce',
+     1       'Electron thermal anomalous diffusivity', 'm^-2 s^-1')     
+            call create_cdf_field3(ncid, 'vlax', 1,
+     1       'Poloidal anomalous pinch velocity', 'm s^-1')
+            call create_cdf_field3(ncid, 'vlay', 1,
+     1       'Radial anomalous pinch velocity', 'm s^-1')
+            call create_cdf_field3(ncid, 'vsa', 1,
+     1       'Anomalous viscosity', 'm kg^-1 s^-1') 
+          endif     
 #ifdef B25_EIRENE
           if (write_eirene_state_variables.ge.1) then
             if(nnatmi.gt.0) then
@@ -404,6 +425,32 @@
         enddo
         write(*,*) 'put_cdf_field2: rqradsum'
         call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
+      endif
+      if (write_b25_transport.ge.1) then
+        write(*,*) 'put_cdf_field3: dna'
+        call put_cdf_field3(ncid,'dna',dna0,nx+2,ny+2,ns)
+        write(*,*) 'put_cdf_field3: dpa'
+        do is=0,ns-1
+          dummy3(:,:,is) = dpa0(:,:,is)*(rza(:,:,is)*te(:,:)+ti(:,:))
+        enddo
+        call put_cdf_field3(ncid,'dpa',dummy3,nx+2,ny+2,ns)
+        write(*,*) 'put_cdf_field2: hci'
+        dummy(:,:) = hci0(:,:)/ni(:,:,0)
+        call put_cdf_field2(ncid,'hci',dummy,nx+2,ny+2)
+        write(*,*) 'put_cdf_field2: hce'
+        dummy(:,:) = hce0(:,:)/ne(:,:)
+        call put_cdf_field2(ncid,'hce',dummy,nx+2,ny+2)
+        write(*,*) 'put_cdf_field3: vlax'
+        dummy3(:,:,:) = vla0(:,:,0,:)
+        call put_cdf_field3(ncid,'vlax',dummy3,nx+2,ny+2,ns)
+        write(*,*) 'put_cdf_field3: vlay'
+        dummy3(:,:,:) = vla0(:,:,1,:)
+        call put_cdf_field3(ncid,'vlay',dummy3,nx+2,ny+2,ns)
+        write(*,*) 'put_cdf_field3: vsa'
+        do is=0,ns-1
+          dummy3(:,:,is) = vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
+        enddo
+        call put_cdf_field3(ncid,'vsa',dummy3,nx+2,ny+2,ns)
       endif
 #ifdef B25_EIRENE
       if (write_eirene_state_variables.ge.1) then
