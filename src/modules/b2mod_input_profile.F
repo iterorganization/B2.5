@@ -1047,7 +1047,7 @@ c*** Clear data to forget previous profiles
       integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: r(nrr),pr(nrr),prtmp
-      real(kind=R8), allocatable :: pra(:), prdsa(:)
+      real(kind=R8), allocatable :: pra(:), prdsa(:), dsp(:)
       integer ncall, nya
       character*256 filenamer
       logical exist
@@ -1060,7 +1060,8 @@ c*** Clear data to forget previous profiles
         if (nomp.gt.0) then
           allocate(pra(nomp))
           allocate(prdsa(nomp))
-          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp')
+          allocate(dsp(nomp))
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp',dsp)
         end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif

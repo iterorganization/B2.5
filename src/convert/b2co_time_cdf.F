@@ -1,4 +1,5 @@
-      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, 
+     &   nnatmi, nnmoli
 #ifndef NO_CDF
      & , tim, batch_only
 #endif
@@ -21,7 +22,7 @@
 #endif
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
-      integer ns, ismain, ismain0, nnmoli
+      integer ns, ismain, ismain0, nnatmi, nnmoli
       integer :: i
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)
@@ -41,6 +42,8 @@
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
+      real (kind=R8), allocatable :: dsl(:), dsi(:), dsa(:),
+     1     dsr(:), dstl(:), dstr(:)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
@@ -63,32 +66,55 @@
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (nimp.gt.0)
-     & call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi')
-      if (nomp.gt.0)
-     & call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa')
+      if (nimp.gt.0) then
+        if (.not. allocated(dsi)) then
+          allocate(dsi(1:nimp))
+        endif
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+      endif
+      if (nomp.gt.0) then
+        if (.not. allocated(dsa)) then
+          allocate(dsa(1:nomp))
+        endif
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+      endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcP(i,2)) =
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
         select case (i)
         case (1)
+          if (.not. allocated(dsl)) then
+            allocate(dsl(1:mpg%divFcP(i,2)))
+          endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl')
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
         case (2)
           if (mpg%nnreg(0).ge.7) then
+            if (.not. allocated(dstl)) then
+              allocate(dstl(1:mpg%divFcP(i,2)))
+            endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl')
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl',dstl)
           else
+            if (.not. allocated(dsr)) then
+              allocate(dsr(1:mpg%divFcP(i,2)))
+            endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
           end if
         case (3)
+          if (.not. allocated(dstr)) then
+            allocate(dstr(1:mpg%divFcP(i,2)))
+          endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr')
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr',dstr)
         case (4)
+          if (.not. allocated(dsr)) then
+            allocate(dsr(1:mpg%divFcP(i,2)))
+          endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
         end select
         deallocate(fclist)
       end do
@@ -234,8 +260,8 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       call xertst(.not.exists,message)
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
-      call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnmoli,
-     .                 write_2d, ncid2, batch_only, iret)
+      call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi,
+     .                 nnmoli, write_2d, ncid2, batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 
