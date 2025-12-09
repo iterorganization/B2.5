@@ -32,17 +32,23 @@
       logical :: exists
 #endif
       integer, save :: write_b25_state_variables = 1
+      integer, save :: write_b25_fluxes = 0
       integer, save :: write_b25_sources = 0
+      integer, save :: write_b25_transport = 0
       integer, save :: write_eirene_state_variables = 0
+      integer, save :: write_eirene_fluxes = 0
       integer, save :: write_eirene_sources = 0
       integer, save :: write_triangles = 0
       external ipgeti, ipgetr, xerrab, xertst
 
       call ipgeti ('cdfmovie_b25_state_variables',
      1  write_b25_state_variables)
+      call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
       call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
+      call ipgeti ('cdfmovie_b25_transport', write_b25_transport)
       call ipgeti ('cdfmovie_eirene_state_variables',
      1  write_eirene_state_variables)
+      call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       call ipgeti ('cdfmovie_triangles', write_triangles)
 
@@ -169,6 +175,26 @@ c prepare the b2movies.nc.xxxx file
         call create_cdf_field2(ncid2, 'po',
      1   'Electric potential', 'V')
       endif
+#ifdef WG_TODO
+      if (write_b25_fluxes.ge.1) then
+        call create_cdf_field3(ncid2, 'fnax', 1,
+     1   'Poloidal particle flux', 's^-1')
+        call create_cdf_field3(ncid2, 'fnay', 1,
+     1    'Radial particle flux', 's^-1')
+        call create_cdf_field2(ncid2, 'fhex',
+     1    'Poloidal electron heat flux', 'W')
+        call create_cdf_field2(ncid2, 'fhey',
+     1    'Radial electron heat flux', 'W')
+        call create_cdf_field2(ncid2, 'fhix',
+     1    'Poloidal ion heat flux', 'W')
+        call create_cdf_field2(ncid2, 'fhiy',
+     1    'Radial ion heat flux', 'W')
+        call create_cdf_field2(ncid2, 'fchx',
+     1    'Poloidal electric current', 'A')
+        call create_cdf_field2(ncid2, 'fchy',
+     1    'Radial electric current', 'A')
+      endif
+#endif
       if (write_b25_sources.ge.1) then
         call create_cdf_field3(ncid2, 'rsana', 1,
      1   'Volumetric ionisation rate', 'm^-3 s^-1')
@@ -199,6 +225,22 @@ c prepare the b2movies.nc.xxxx file
         call create_cdf_field2(ncid2, 'rqradsum',
      1   'Total volumetric line radiation rate', 'W m^-3')
       endif
+      if (write_b25_transport.ge.1) then
+        call create_cdf_field3(ncid2, 'dna', 1,
+     1   'Particle density-driven diffusivity', 'm^-2 s^-1')
+        call create_cdf_field3(ncid2, 'dpa', 1,
+     1   'Particle pressure-driven diffusivity', 'm^-2 s^-1')
+        call create_cdf_field2(ncid2, 'hci',
+     1   'Ion thermal anomalous diffusivity', 'm^-2 s^-1')
+        call create_cdf_field2(ncid2, 'hce',
+     1   'Electron thermal anomalous diffusivity', 'm^-2 s^-1')     
+        call create_cdf_field3(ncid2, 'vlax', 1,
+     1   'Poloidal anomalous pinch velocity', 'm s^-1')
+        call create_cdf_field3(ncid2, 'vlay', 1,
+     1   'Radial anomalous pinch velocity', 'm s^-1')
+        call create_cdf_field3(ncid2, 'vsa', 1,
+     1   'Anomalous viscosity', 'm kg^-1 s^-1') 
+      endif
       if (write_eirene_state_variables.ge.1) then
         if(natm.gt.0) then
           call create_cdf_field3(ncid2, 'dab2', 2,
@@ -211,6 +253,28 @@ c prepare the b2movies.nc.xxxx file
      1     'Molecular density', 'm^-3')
           call create_cdf_field3(ncid2, 'tmb2', 3,
      1     'Molecule temperature', 'eV')
+        endif
+      endif
+      if (write_eirene_fluxes.ge.1) then
+        if(natm.gt.0) then
+          call create_cdf_field3(ncid2, 'rfluxa', 2,
+     1     'Atomic radial flux density', 'm^-2 s^-1')
+          call create_cdf_field3(ncid2, 'pfluxa', 2,
+     1     'Atomic poloidal flux density', 'm^-2 s^-1')
+          call create_cdf_field3(ncid2, 'refluxa', 2,
+     1     'Atomic radial energy flux density', 'W m^-2')
+          call create_cdf_field3(ncid2, 'pefluxa', 2,
+     1     'Atomic poloidal energy flux density', 'W m^-2')
+        endif
+        if(nmol.gt.0) then
+          call create_cdf_field3(ncid2, 'rfluxm', 3,
+     1     'Molecular radial flux density', 'm^-2 s^-1')
+          call create_cdf_field3(ncid2, 'pfluxm', 3,
+     1     'Molecular poloidal flux density', 'm^-2 s^-1')
+          call create_cdf_field3(ncid2, 'refluxm', 3,
+     1     'Molecular radial energy flux density', 'W m^-2')
+          call create_cdf_field3(ncid2, 'pefluxm', 3,
+     1     'Molecular poloidal energy flux density', 'W m^-2')
         endif
       endif
       if (write_eirene_sources.ge.1) then

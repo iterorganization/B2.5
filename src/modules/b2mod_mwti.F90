@@ -684,7 +684,7 @@ contains
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
       end do
       fetxip(1) = fetxip(1) + fettmp
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
         namxip(is+1,1) = max(namxip(is+1,1), pl%na(iCv,is) )
       end do
       nemxip(1) = max(nemxip(1), dv%ne(iCv) )
@@ -731,7 +731,7 @@ contains
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
       end do
       fetxap(1) = fetxap(1) + fettmp
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
         namxap(is+1,1) = max(namxap(is+1,1), pl%na(iCv,is) )
       end do
       nemxap(1) = max(nemxap(1), dv%ne(iCv) )
@@ -776,7 +776,7 @@ contains
             & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
         end do
         fetxip(2) = fetxip(2) + fettmp
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           namxip(is+1,2) = max(namxip(is+1,2), pl%na(iCv,is) )
         end do
         nemxip(2) = max(nemxip(2), dv%ne(iCv) )
@@ -809,7 +809,7 @@ contains
             & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
         end do
         fetxap(2) = fetxap(2) + fettmp
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           namxap(is+1,2) = max(namxap(is+1,2), pl%na(iCv,is) )
         end do
         nemxap(2) = max(nemxap(2), dv%ne(iCv) )
@@ -1413,7 +1413,7 @@ contains
     ktsepm = 0.0_R8; ktsepi = 0.0_R8; ktsepa = 0.0_R8;
 ! csc For now only identify outer midplane and targets separatrix values using flux tube concept
     if (nomp.gt.0) then
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
         nasepm(is+1,1) = 0.5_R8 * (pl%na(omp(icsepomp-1),is)+pl%na(omp(icsepomp),is))
       end do
       nesepm(1) = 0.5_R8 * (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
@@ -1466,7 +1466,7 @@ contains
       if (mpg%nXpt.lt.2 .or. gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
         & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
         & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepi(is+1,1) = pl%na(cvtrg,is)
         end do
         nesepi(1) = dv%ne(cvtrg)
@@ -1488,7 +1488,7 @@ contains
         ktsepi(1) = pl%kt(cvtrg)
       else
         nesepa(2) = dv%ne(cvtrg)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepa(is+1,2) = pl%na(cvtrg,is)
         end do
         tesepa(2) = pl%te(cvtrg)/ev
@@ -1511,7 +1511,7 @@ contains
       cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
       if (mpg%nXpt.lt.2 .or. gridGeometry.ne.GEOMETRY_DDN_TOP) then
         nesepa(1) = dv%ne(cvtrg)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepa(is+1,1) = pl%na(cvtrg,is)
         end do
         tesepa(1) = pl%te(cvtrg)/ev
@@ -1531,7 +1531,7 @@ contains
         posepa(1) = pl%po(cvtrg)
         ktsepa(1) = pl%kt(cvtrg)
       else
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepi(is+1,2) = pl%na(cvtrg,is)
         end do
         nesepi(2) = dv%ne(cvtrg)
@@ -1554,7 +1554,7 @@ contains
       end if
     end if
     if (nimp.gt.0.and.mpg%nXpt.ge.2) then
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
         nasepm(is+1,2) = 0.5_R8 * (pl%na(imp(icsepimp-1),is)+pl%na(imp(icsepimp),is))
       end do
       nesepm(2) = 0.5_R8 * (dv%ne(imp(icsepimp-1))+dv%ne(imp(icsepimp)))
@@ -1611,7 +1611,7 @@ contains
       if (gridGeometry.eq.GEOMETRY_CDN) then
         iFt = mpg%cvFt(imp(icsepimp)) ! HFS separatrix flux tube
         cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepi(is+1,1) = pl%na(cvtrg,is)
         end do
         nesepi(1) = dv%ne(cvtrg)
@@ -1632,7 +1632,7 @@ contains
         endif
         ktsepi(1) = pl%kt(cvtrg)
         cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepi(is+1,2) = pl%na(cvtrg,is)
         end do
         nesepi(2) = dv%ne(cvtrg)
@@ -1660,7 +1660,7 @@ contains
         else
           cvtrg = mpg%fcCv(iFc,2)
         end if
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepi(is+1,1) = pl%na(cvtrg,is)
         end do
         nesepi(1) = dv%ne(cvtrg)
@@ -1687,7 +1687,7 @@ contains
         else
           cvtrg = mpg%fcCv(iFc,2)
         end if
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           nasepa(is+1,1) = pl%na(cvtrg,is)
         end do
         nesepa(1) = dv%ne(cvtrg)
@@ -1716,7 +1716,7 @@ contains
           else
             cvtrg = mpg%fcCv(iFc,2)
           end if
-          do is = 0, ext%ns-1
+          do is = 0, ns-1
             nasepi(is+1,2) = pl%na(cvtrg,is)
           end do
           nesepi(2) = dv%ne(cvtrg)
@@ -1743,7 +1743,7 @@ contains
           else
             cvtrg = mpg%fcCv(iFc,2)
           end if
-          do is = 0, ext%ns-1
+          do is = 0, ns-1
             nasepa(is+1,2) = pl%na(cvtrg,is)
           end do
           nesepa(2) = dv%ne(cvtrg)
@@ -2161,7 +2161,7 @@ contains
           if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
           if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
         end do
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
         call rwcdf(rw,ncid,'na3dl',(/1,1,1/),slice_ns,iret)
@@ -2173,7 +2173,7 @@ contains
         call rwcdf(rw,ncid,'ti3dl',imap,slice,iret)
         slice(:) = pl%po(cvlist(:))
         call rwcdf(rw,ncid,'po3dl',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                               &          dv%fna(fclist(:),1,is))
         end do
@@ -2251,7 +2251,7 @@ contains
         if (nnmoli.gt.0) then
           allocate(slice_nmol(nimp,nnmoli))
         endif
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nimp,is+1) = pl%na(imp(1:nimp),is)
         end do
         call rwcdf(rw,ncid,'na3di',(/1,1,1/),slice_ns,iret)
@@ -2303,7 +2303,7 @@ contains
         if (nnmoli.gt.0) then
           allocate(slice_nmol(nomp,nnmoli))
         endif
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nomp,is+1) = pl%na(omp(1:nomp),is)
         end do
         call rwcdf(rw,ncid,'na3da',(/1,1,1/),slice_ns,iret)
@@ -2379,7 +2379,7 @@ contains
           if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
         end do
         slice = 0.0_R8
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
         call rwcdf(rw,ncid,'na3dr',(/1,1,1/),slice_ns,iret)
@@ -2391,7 +2391,7 @@ contains
         call rwcdf(rw,ncid,'ti3dr',imap,slice,iret)
         slice(:) = pl%po(cvlist(:))
         call rwcdf(rw,ncid,'po3dr',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
@@ -2492,7 +2492,7 @@ contains
           if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
         end do
         slice = 0.0_R8
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
         call rwcdf(rw,ncid,'na3dtr',(/1,1,1/),slice_ns,iret)
@@ -2504,7 +2504,7 @@ contains
         call rwcdf(rw,ncid,'ti3dtr',imap,slice,iret)
         slice(:) = pl%po(cvlist(:))
         call rwcdf(rw,ncid,'po3dtr',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
@@ -2607,7 +2607,7 @@ contains
           if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
         end do
         slice = 0.0_R8
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
         call rwcdf(rw,ncid,'na3dtl',(/1,1,1/),slice_ns,iret)
@@ -2619,7 +2619,7 @@ contains
         call rwcdf(rw,ncid,'ti3dtl',imap,slice,iret)
         slice(:) = pl%po(cvlist(:))
         call rwcdf(rw,ncid,'po3dtl',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
@@ -2731,17 +2731,19 @@ contains
       if (nimp.gt.0) then
         allocate(slice(nimp))
         allocate(slice_ns(nimp,ns))
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%dna0(imp(1:nimp),is)
         end do
         call rwcdf(rw,ncid,'dn3di',(/1,1,1/),slice_ns,iret)
         if (switch%tn_style.eq.0) then
-          do is = 0, ext%ns-1
+          do is = 0, ns-1
             slice_ns(1:nimp,is+1) = co%dpa0(imp(1:nimp),is)* &
               &  (rt%rza(imp(1:nimp),is)*pl%te(imp(1:nimp))+pl%ti(imp(1:nimp)))
           end do
         else
-          slice_ns(1:nimp,is+1) = co%dpa0(imp(1:nimp),is)*pl%tn(imp(1:nimp))
+          do is = 0, ns-1
+            slice_ns(1:nimp,is+1) = co%dpa0(imp(1:nimp),is)*pl%tn(imp(1:nimp))
+          end do
         end if
         call rwcdf(rw,ncid,'dp3di',(/1,1,1/),slice_ns,iret)
         slice(1:nimp)=co%hce0(imp(1:nimp))/dv%ne(imp(1:nimp))
@@ -2754,15 +2756,15 @@ contains
           slice(1:nimp)=co%hci0(imp(1:nimp))/(dv%ni(imp(1:nimp),0)-dv%nn(imp(1:nimp)))
         end if
         call rwcdf(rw,ncid,'ki3di',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vla0(imp(1:nimp),0,is)
         end do
         call rwcdf(rw,ncid,'vx3di',(/1,1,1/),slice_ns,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vla0(imp(1:nimp),1,is)
         end do
         call rwcdf(rw,ncid,'vy3di',(/1,1,1/),slice_ns,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vsa0(imp(1:nimp),is)/(mp*am(is)*pl%na(imp(1:nimp),is))
         end do
         call rwcdf(rw,ncid,'vs3di',(/1,1,1/),slice_ns,iret)
@@ -2772,17 +2774,19 @@ contains
       if (nomp.gt.0) then
         allocate(slice(nomp))
         allocate(slice_ns(nomp,ns))
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%dna0(omp(1:nomp),is)
         end do
         call rwcdf(rw,ncid,'dn3da',(/1,1,1/),slice_ns,iret)
         if (switch%tn_style.eq.0) then
-          do is = 0, ext%ns-1
+          do is = 0, ns-1
             slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)* &
               &  (rt%rza(omp(1:nomp),is)*pl%te(omp(1:nomp))+pl%ti(omp(1:nomp)))
           end do
         else
-          slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)*pl%tn(omp(1:nomp))
+          do
+            slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)*pl%tn(omp(1:nomp))
+          end do
         end if
         call rwcdf(rw,ncid,'dp3da',(/1,1,1/),slice_ns,iret)
         slice(1:nomp)=co%hce0(omp(1:nomp))/dv%ne(omp(1:nomp))
@@ -2795,15 +2799,15 @@ contains
           slice(1:nomp)=co%hci0(omp(1:nomp))/(dv%ni(omp(1:nomp),0)-dv%nn(omp(1:nomp)))
         end if
         call rwcdf(rw,ncid,'ki3da',imap,slice,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vla0(omp(1:nomp),0,is)
         end do
         call rwcdf(rw,ncid,'vx3da',(/1,1,1/),slice_ns,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vla0(omp(1:nomp),1,is)
         end do
         call rwcdf(rw,ncid,'vy3da',(/1,1,1/),slice_ns,iret)
-        do is = 0, ext%ns-1
+        do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vsa0(omp(1:nomp),is)/(mp*am(is)*pl%na(omp(1:nomp),is))
         end do
         call rwcdf(rw,ncid,'vs3da',(/1,1,1/),slice_ns,iret)
@@ -2898,7 +2902,7 @@ contains
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
          nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
@@ -2917,7 +2921,7 @@ contains
         end do
       endif
       posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
          nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
@@ -2936,7 +2940,7 @@ contains
         end do
       endif
       posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
          nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
@@ -2955,14 +2959,14 @@ contains
         end do
       endif
       posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
          namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
       temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
       timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
       pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
-      do is = 0, ext%ns-1
+      do is = 0, ns-1
          namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
