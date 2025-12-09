@@ -3495,7 +3495,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_fluxes.ge.1 then the plasma fluxes (fna(x/y), fhe(x/y), fhi(x/y), etc.) over the B2.5 grid are outputted. Not yet converted.
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_fluxes.ge.1 then the plasma fluxes (fna(x/y), fhe(x/y), fhi(x/y), etc.) over the B2.5 grid are outputted.
 				</description>
 			</switch>
 			<switch>
