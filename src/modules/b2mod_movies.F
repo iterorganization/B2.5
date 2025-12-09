@@ -2,17 +2,17 @@
       use b2mod_types
       use b2mod_constants
 #ifndef NO_CDF
-      integer, save :: ncvdim, nsdim, natmdim, nmoldim, ntridim,
+      integer, save :: ncvdim, nfcdim, nsdim, natmdim, nmoldim, ntridim,
      & timedim, ntstep
 
       contains
 
       subroutine create_cdf_start(ncid, filename,
-     & nCv, ns, natm, nmol, ntri)
+     & nCv, nFc, ns, natm, nmol, ntri)
       implicit none
 #     include <netcdf.inc>
       character*(*) filename
-      integer ncid, nCv, ns, natm, nmol, ntri
+      integer ncid, nCv, nFc, ns, natm, nmol, ntri
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -24,6 +24,8 @@
 * define dimensions
       if (index(trim(filename), 'b2movies') .gt. 0) then
         iret = nf_def_dim(ncid, 'ncv', nCv, ncvdim)
+        call check_cdf_status(iret)
+        iret = nf_def_dim(ncid, 'nfc', nFc, nfcdim)
         call check_cdf_status(iret)
         iret = nf_def_dim(ncid, 'ns', ns, nsdim)
         call check_cdf_status(iret)
@@ -86,6 +88,31 @@
       return
       end subroutine create_cdf_field2
 
+      subroutine create_cdf_field2_nfc(ncid, name, long_name, units)
+      implicit none
+#     include <netcdf.inc>
+      character*(*) name, long_name, units
+* file id
+      integer ncid
+* variable shapes
+      integer dims(2)
+* dimensions and variables
+      integer iret
+      integer z_fct_id
+* define variable
+      dims(1) = nfcdim
+      dims(2) = timedim
+      iret = nf_def_var (ncid, name, NF_DOUBLE, 2, dims, z_fct_id)
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_fct_id, 'long_name',
+     1 len_trim(long_name), trim(long_name))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_fct_id, 'units',
+     1 len_trim(units), trim(units))
+      call check_cdf_status(iret)
+      return
+      end subroutine create_cdf_field2_nfc
+
       subroutine create_cdf_field3(ncid, name, itype, long_name, units)
       implicit none
 #     include <netcdf.inc>
@@ -121,6 +148,32 @@
       call check_cdf_status(iret)
       return
       end subroutine create_cdf_field3
+
+      subroutine create_cdf_field3_nfc(ncid, name, long_name, units)
+      implicit none
+#     include <netcdf.inc>
+      integer ncid
+      character*(*) name, long_name, units
+* variable shapes
+      integer dims(3)
+* dimensions and variables
+      integer iret
+      integer z_fcst_id
+      external xerrab
+* define variable
+      dims(1) = nfcdim
+      dims(2) = nsdim
+      dims(3) = timedim
+      iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_fcst_id)
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_fcst_id, 'long_name',
+     1 len_trim(long_name), trim(long_name))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_fcst_id, 'units',
+     1 len_trim(units), trim(units))
+      call check_cdf_status(iret)
+      return
+      end subroutine create_cdf_field3_nfc
 
       subroutine create_cdf_field_tri(ncid, name, itype, long_name,
      &      units)
@@ -234,6 +287,28 @@ c
       return
       end subroutine put_cdf_field2
 
+      subroutine put_cdf_field2_nfc(ncid, name, z_fct, nFc)
+      implicit none
+#     include <netcdf.inc>
+      integer ncid
+      character*(*) name
+      integer nFc
+      real (kind=R8) :: z_fct(nFc)
+      integer iret
+      integer varid
+      integer start(2), count(2)
+c
+      iret=nf_inq_varid(ncid,name,varid)
+      call check_cdf_status(iret)
+      start(1)=1
+      start(2)=ntstep
+      count(1)=nFc
+      count(2)=1
+      iret=nf_put_vara_double(ncid,varid,start,count,z_fct)
+      call check_cdf_status(iret)
+      return
+      end subroutine put_cdf_field2_nfc
+
       subroutine put_cdf_field3(ncid, name, z_cvst, nCv, ns)
       implicit none
 #     include <netcdf.inc>
@@ -257,6 +332,30 @@ c
       call check_cdf_status(iret)
       return
       end subroutine put_cdf_field3
+
+      subroutine put_cdf_field3_nfc(ncid, name, z_fcst, nFc, ns)
+      implicit none
+#     include <netcdf.inc>
+      integer ncid
+      character*(*) name
+      integer nFc, ns
+      real (kind=R8) :: z_fcst(nFc, ns)
+      integer iret
+      integer varid
+      integer start(3), count(3)
+c
+      iret=nf_inq_varid(ncid,name,varid)
+      call check_cdf_status(iret)
+      start(1)=1
+      start(2)=1
+      start(3)=ntstep
+      count(1)=nFc
+      count(2)=ns
+      count(3)=1
+      iret=nf_put_vara_double(ncid,varid,start,count,z_fcst)
+      call check_cdf_status(iret)
+      return
+      end subroutine put_cdf_field3_nfc
 
       subroutine put_cdf_field_tri(ncid, name, z_trit, ntri, ns)
       implicit none
