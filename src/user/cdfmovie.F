@@ -1,6 +1,6 @@
       subroutine cdfmovie
 #ifndef NO_CDF
-     . (ncid,nCv,nCi,ns,geo,state,switch)
+     . (ncid,nCv,nFc,nCi,ns,geo,state,switch)
       use b2mod_types
       use b2mod_time
       use b2us_geo
@@ -23,7 +23,7 @@
       use b2mod_switches
       use b2mod_subsys
       implicit none
-      integer ncid, nCv, nCi, ns
+      integer ncid, nCv, nFc, nCi, ns
       type (geometry), intent(in) :: geo
       type (B2State), intent(in) :: state
       type (switches), intent(in) :: switch
@@ -31,7 +31,8 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns)
+      real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns),
+     & dummynFc(1:nFc), dummy3nFc(1:nFc, 1:ns)
 #ifdef B25_EIRENE
       integer nstrad
       integer iatmi, imoli, istra
@@ -85,10 +86,10 @@
           end if
 #ifdef B25_EIRENE
           call create_cdf_start(ncid, filename,
-     &     nCv, ns, nnatmi, nnmoli, ncvtot)
+     &     nCv, nFc, ns, nnatmi, nnmoli, ncvtot)
 #else
           call create_cdf_start(ncid, filename,
-     &     nCv, ns, nnatmi, nnmoli, nCi+1)
+     &     nCv, nFc, ns, nnatmi, nnmoli, nCi+1)
 #endif
           if (write_b25_state_variables.ge.1) then
             call create_cdf_field3(ncid, 'na', 1,
@@ -102,26 +103,24 @@
             call create_cdf_field2(ncid, 'po',
      1       'Electric potential', 'V')
           endif
-#ifdef WG_TODO
           if (write_b25_fluxes.ge.1) then
-            call create_cdf_field3(ncid, 'fnax', 1,
+            call create_cdf_field3_nfc(ncid, 'fnax',
      1       'Poloidal particle flux', 's^-1')
-            call create_cdf_field3(ncid, 'fnay', 1,
+            call create_cdf_field3_nfc(ncid, 'fnay',
      1       'Radial particle flux', 's^-1')
-            call create_cdf_field2(ncid, 'fhex',
+            call create_cdf_field2_nfc(ncid, 'fhex',
      1       'Poloidal electron heat flux', 'W')
-            call create_cdf_field2(ncid, 'fhey',
+            call create_cdf_field2_nfc(ncid, 'fhey',
      1       'Radial electron heat flux', 'W')
-            call create_cdf_field2(ncid, 'fhix',
+            call create_cdf_field2_nfc(ncid, 'fhix',
      1       'Poloidal ion heat flux', 'W')
-            call create_cdf_field2(ncid, 'fhiy',
+            call create_cdf_field2_nfc(ncid, 'fhiy',
      1       'Radial ion heat flux', 'W')
-            call create_cdf_field2(ncid, 'fchx',
+            call create_cdf_field2_nfc(ncid, 'fchx',
      1       'Poloidal electric current', 'A')
-            call create_cdf_field2(ncid, 'fchy',
+            call create_cdf_field2_nfc(ncid, 'fchy',
      1       'Radial electric current', 'A')
           endif
-#endif
           if (write_b25_sources.ge.1) then
             call create_cdf_field3(ncid, 'rsana', 1,
      1       'Volumetric ionisation rate', 'm^-3 s^-1')
@@ -274,7 +273,7 @@
             write(6,'(a)') trim(filename_tri)//' will be created'
           end if
           call create_cdf_start(ncid, filename_tri,
-     &     nCv, ns, nnatmi, nnmoli, ncvtot-1)
+     &     nCv, nFc, ns, nnatmi, nnmoli, ncvtot-1)
           if (nnatmi.gt.0) then
             call create_cdf_field_tri(ncid, 'pdena', 1,
      1       'Atom particle density', 'm^-3')
@@ -322,34 +321,32 @@
         write(*,*) 'put_cdf_field2: po'
         call put_cdf_field2(ncid,'po',state%pl%po,nCv)
       endif
-#ifdef WG_TODO
       if (write_b25_fluxes.ge.1) then
-        dummy3(:,:) = state%dv%fna(:,0,:)
+        dummy3nFc(:,:) = state%dv%fna(:,0,:)
         write(*,*) 'put_cdf_field3: fnax'
-        call put_cdf_field3(ncid,'fnax',dummy3,nFc,ns)
-        dummy3(:,:) = state%dv%fna(:,1,:)
+        call put_cdf_field3_nfc(ncid,'fnax',dummy3nFc,nFc,ns)
+        dummy3nFc(:,:) = state%dv%fna(:,1,:)
         write(*,*) 'put_cdf_field3: fnay'
-        call put_cdf_field3(ncid,'fnay',dummy3,nFc,ns)
-        dummy(:) = state%dv%fhe(:,0)
+        call put_cdf_field3_nfc(ncid,'fnay',dummy3nFc,nFc,ns)
+        dummynFc(:) = state%dv%fhe(:,0)
         write(*,*) 'put_cdf_field2: fhex'
-        call put_cdf_field2(ncid,'fhex',dummy,nFc)
-        dummy(:) = state%dv%fhe(:,1)
+        call put_cdf_field2_nfc(ncid,'fhex',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhe(:,1)
         write(*,*) 'put_cdf_field2: fhey'
-        call put_cdf_field2(ncid,'fhey',dummy,nFc)
-        dummy(:) = state%dv%fhi(:,0)
+        call put_cdf_field2_nfc(ncid,'fhey',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhi(:,0)
         write(*,*) 'put_cdf_field2: fhix'
-        call put_cdf_field2(ncid,'fhix',dummy,nFc)
-        dummy(:) = state%dv%fhi(:,1)
+        call put_cdf_field2_nfc(ncid,'fhix',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhi(:,1)
         write(*,*) 'put_cdf_field2: fhiy'
-        call put_cdf_field2(ncid,'fhiy',dummy,nFc)
-        dummy(:) = state%dv%fch(:,0)
+        call put_cdf_field2_nfc(ncid,'fhiy',dummynFc,nFc)
+        dummynFc(:) = state%dv%fch(:,0)
         write(*,*) 'put_cdf_field2: fchx'
-        call put_cdf_field2(ncid,'fchx',dummy,nFc)
-        dummy(:) = state%dv%fch(:,1)
+        call put_cdf_field2_nfc(ncid,'fchx',dummynFc,nFc)
+        dummynFc(:) = state%dv%fch(:,1)
         write(*,*) 'put_cdf_field2: fchy'
-        call put_cdf_field2(ncid,'fchy',dummy,nFc)
+        call put_cdf_field2_nfc(ncid,'fchy',dummynFc,nFc)
       endif
-#endif
       if (write_b25_sources.ge.1) then
         dummy3 = 0.0_R8
         do is=1,ns

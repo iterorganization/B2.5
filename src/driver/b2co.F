@@ -467,9 +467,9 @@
           call b2co_movies_cdf
 #ifndef NO_CDF
 #ifdef B25_EIRENE
-     .     (nCv, ns, nnatmi, nnmoli, ncvtot, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, ncvtot, tim)
 #else
-     .     (nCv, ns, nnatmi, nnmoli, 0, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, 0, tim)
 #endif
 #endif
           write(*,*) 'Returned from b2co_movies_cdf'

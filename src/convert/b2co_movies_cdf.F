@@ -1,13 +1,13 @@
       subroutine b2co_movies_cdf
 #ifndef NO_CDF
-     . (nCv, ns, natm, nmol, ntri, tim)
+     . (nCv, nFc, ns, natm, nmol, ntri, tim)
 #endif
       use b2mod_types
       use b2mod_movies
       use b2mod_subsys
       implicit none
 #ifndef NO_CDF
-      integer nCv, ns, natm, nmol, ntri
+      integer nCv, nFc, ns, natm, nmol, ntri
       real (kind=R8) :: tim
 #     include <netcdf.inc>
 #ifndef NO_GETENV
@@ -58,6 +58,7 @@
 #ifndef NO_CDF
 *   ..test input
       call xertst (1.le.nCv, 'faulty argument nCv')
+      call xertst (1.le.nFc, 'faulty argument nFc')
       call xertst (0.lt.ns, 'faulty argument ns')
       call xertst (0.le.natm, 'faulty argument natm')
       call xertst (0.le.nmol, 'faulty argument nmol')
@@ -161,7 +162,7 @@ c prepare the b2movies.nc.xxxx file
       filename='b2movies.nc.'//extension
       idum=timedim
       timedim=itim
-      call create_cdf_start(ncid2, filename, nCv, ns, natm, nmol,
+      call create_cdf_start(ncid2, filename, nCv, nFc, ns, natm, nmol,
      1  ntri-1)
       if (write_b25_state_variables.ge.1) then
         call create_cdf_field3(ncid2, 'na', 1,
@@ -175,26 +176,24 @@ c prepare the b2movies.nc.xxxx file
         call create_cdf_field2(ncid2, 'po',
      1   'Electric potential', 'V')
       endif
-#ifdef WG_TODO
       if (write_b25_fluxes.ge.1) then
-        call create_cdf_field3(ncid2, 'fnax', 1,
+        call create_cdf_field3_nfc(ncid2, 'fnax',
      1   'Poloidal particle flux', 's^-1')
-        call create_cdf_field3(ncid2, 'fnay', 1,
+        call create_cdf_field3_nfc(ncid2, 'fnay',
      1    'Radial particle flux', 's^-1')
-        call create_cdf_field2(ncid2, 'fhex',
+        call create_cdf_field2_nfc(ncid2, 'fhex',
      1    'Poloidal electron heat flux', 'W')
-        call create_cdf_field2(ncid2, 'fhey',
+        call create_cdf_field2_nfc(ncid2, 'fhey',
      1    'Radial electron heat flux', 'W')
-        call create_cdf_field2(ncid2, 'fhix',
+        call create_cdf_field2_nfc(ncid2, 'fhix',
      1    'Poloidal ion heat flux', 'W')
-        call create_cdf_field2(ncid2, 'fhiy',
+        call create_cdf_field2_nfc(ncid2, 'fhiy',
      1    'Radial ion heat flux', 'W')
-        call create_cdf_field2(ncid2, 'fchx',
+        call create_cdf_field2_nfc(ncid2, 'fchx',
      1    'Poloidal electric current', 'A')
-        call create_cdf_field2(ncid2, 'fchy',
+        call create_cdf_field2_nfc(ncid2, 'fchy',
      1    'Radial electric current', 'A')
       endif
-#endif
       if (write_b25_sources.ge.1) then
         call create_cdf_field3(ncid2, 'rsana', 1,
      1   'Volumetric ionisation rate', 'm^-3 s^-1')
@@ -516,7 +515,7 @@ c prepare the eirenemovies.nc.xxxx file
           filename_tri='eirenemovies.nc.'//extension
           idum=timedim
           timedim=itim
-          call create_cdf_start(ncid2, filename_tri, nCv, ns,
+          call create_cdf_start(ncid2, filename_tri, nCv, nFc, ns,
      .      natm, nmol, ntri-1)
           if(natm.gt.0) then
             call create_cdf_field_tri(ncid2, 'pdena', 1,

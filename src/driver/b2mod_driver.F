@@ -2097,7 +2097,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2510,7 +2510,7 @@ c new CDF movie option
         if(tim.ge.(save_cdfmovie_time-dtim/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -3495,7 +3495,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+        call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
