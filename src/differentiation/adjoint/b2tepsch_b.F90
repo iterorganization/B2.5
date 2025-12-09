@@ -78,10 +78,15 @@ SUBROUTINE B2TEPSCH_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 !
 !srv 13.10.06
 !srv 02.01.07
+  fhepsch = 0.0_R8
+  cone = 0.0_R8
+  floe = 0.0_R8
   facdriftm = MAXVAL(facdrift)
   IF (facdriftm .NE. 0.0_R8) THEN
 !
 !   ..precompute face and vertex values of nete2
+    nete = ne*te
+    nete2 = ne*te*te
     CALL INTVERTEX_FWD(ncv, nvx, mpg, geo%vxvol, nete, netev)
     CALL INTVERTEX_FWD(ncv, nvx, mpg, geo%vxvol, nete2, nete2v)
     CALL DIFF_FWD(ncv, nfc, nvx, 1, geo, geob, mpg, mpgb, nete2, nete2v&
