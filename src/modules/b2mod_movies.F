@@ -63,117 +63,83 @@
       return
       end subroutine create_cdf_start
 
-      subroutine create_cdf_field2(ncid, name, long_name, units)
+      subroutine create_cdf_field2(ncid, name, stype, long_name, units)
       implicit none
 #     include <netcdf.inc>
       character*(*) name, long_name, units
 * file id
-      integer ncid
+      integer ncid, stype
 * variable shapes
       integer dims(2)
 * dimensions and variables
       integer iret
-      integer z_cvt_id
+      integer z_cvfct_id
 * define variable
-      dims(1) = ncvdim
+      select case (stype)
+      case(1)
+        dims(1) = ncvdim
+      case(2)
+        dims(1) = nfcdim
+      case default
+        write(*,*) 'Undefined "stype" in create_cdf_field2 ',stype
+        call xerrab ('Undefined stype value')
+      end select
       dims(2) = timedim
-      iret = nf_def_var (ncid, name, NF_DOUBLE, 2, dims, z_cvt_id)
+      iret = nf_def_var (ncid, name, NF_DOUBLE, 2, dims, z_cvfct_id)
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_cvt_id, 'long_name',
+      iret = nf_put_att_text (ncid, z_cvfct_id, 'long_name',
      1 len_trim(long_name), trim(long_name))
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_cvt_id, 'units',
+      iret = nf_put_att_text (ncid, z_cvfct_id, 'units',
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
       end subroutine create_cdf_field2
 
-      subroutine create_cdf_field2_nfc(ncid, name, long_name, units)
+      subroutine create_cdf_field3(ncid, name, stype, itype, long_name, 
+     &      units)
       implicit none
 #     include <netcdf.inc>
-      character*(*) name, long_name, units
-* file id
-      integer ncid
-* variable shapes
-      integer dims(2)
-* dimensions and variables
-      integer iret
-      integer z_fct_id
-* define variable
-      dims(1) = nfcdim
-      dims(2) = timedim
-      iret = nf_def_var (ncid, name, NF_DOUBLE, 2, dims, z_fct_id)
-      call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_fct_id, 'long_name',
-     1 len_trim(long_name), trim(long_name))
-      call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_fct_id, 'units',
-     1 len_trim(units), trim(units))
-      call check_cdf_status(iret)
-      return
-      end subroutine create_cdf_field2_nfc
-
-      subroutine create_cdf_field3(ncid, name, itype, long_name, units)
-      implicit none
-#     include <netcdf.inc>
-      integer ncid, itype
+      integer ncid, stype, itype
       character*(*) name, long_name, units
 * variable shapes
       integer dims(3)
 * dimensions and variables
       integer iret
-      integer z_cvst_id
+      integer z_cvfcst_id
       external xerrab
 * define variable
-      dims(1) = ncvdim
-      type: select case (itype)
+      select case (stype)
+      case(1)
+        dims(1) = ncvdim
+      case(2)
+        dims(1) = nfcdim
+      case default
+        write(*,*) 'Undefined "stype" in create_cdf_field3 ',stype
+        call xerrab ('Undefined stype value')
+      end select
+      select case (itype)
       case(1)
         dims(2) = nsdim
       case(2)
         dims(2) = natmdim
       case(3)
         dims(2) = nmoldim
-      case default type
+      case default
         write(*,*) 'Undefined "itype" in create_cdf_field3 ',itype
         call xerrab ('Undefined itype value')
-      end select type
+      end select
       dims(3) = timedim
-      iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_cvst_id)
+      iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_cvfcst_id)
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_cvst_id, 'long_name',
+      iret = nf_put_att_text (ncid, z_cvfcst_id, 'long_name',
      1 len_trim(long_name), trim(long_name))
       call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_cvst_id, 'units',
+      iret = nf_put_att_text (ncid, z_cvfcst_id, 'units',
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
       end subroutine create_cdf_field3
-
-      subroutine create_cdf_field3_nfc(ncid, name, long_name, units)
-      implicit none
-#     include <netcdf.inc>
-      integer ncid
-      character*(*) name, long_name, units
-* variable shapes
-      integer dims(3)
-* dimensions and variables
-      integer iret
-      integer z_fcst_id
-      external xerrab
-* define variable
-      dims(1) = nfcdim
-      dims(2) = nsdim
-      dims(3) = timedim
-      iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_fcst_id)
-      call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_fcst_id, 'long_name',
-     1 len_trim(long_name), trim(long_name))
-      call check_cdf_status(iret)
-      iret = nf_put_att_text (ncid, z_fcst_id, 'units',
-     1 len_trim(units), trim(units))
-      call check_cdf_status(iret)
-      return
-      end subroutine create_cdf_field3_nfc
 
       subroutine create_cdf_field_tri(ncid, name, itype, long_name,
      &      units)
@@ -189,15 +155,15 @@
       integer z_trit_id
 * define variable
       dims(1) = ntridim
-      type: select case (itype)
+      select case (itype)
       case(1)
         dims(2) = natmdim
       case(2)
         dims(2) = nmoldim
-      case default type
+      case default
         write(*,*) 'Undefined "itype" in create_cdf_field_tri ',itype
         call xerrab ('Undefined itype value')
-      end select type
+      end select
       dims(3) = timedim
       iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_trit_id)
       call check_cdf_status(iret)
@@ -265,13 +231,13 @@ c
       return
       end subroutine put_cdf_start
 
-      subroutine put_cdf_field2(ncid, name, z_cvt, nCv)
+      subroutine put_cdf_field2(ncid, name, z_cvfct, nCvFc)
       implicit none
 #     include <netcdf.inc>
       integer ncid
       character*(*) name
-      integer nCv
-      real (kind=R8) :: z_cvt(nCv)
+      integer nCvFc
+      real (kind=R8) :: z_cvfct(nCvFc)
       integer iret
       integer varid
       integer start(2), count(2)
@@ -280,42 +246,20 @@ c
       call check_cdf_status(iret)
       start(1)=1
       start(2)=ntstep
-      count(1)=nCv
+      count(1)=nCvFc
       count(2)=1
-      iret=nf_put_vara_double(ncid,varid,start,count,z_cvt)
+      iret=nf_put_vara_double(ncid,varid,start,count,z_cvfct)
       call check_cdf_status(iret)
       return
       end subroutine put_cdf_field2
 
-      subroutine put_cdf_field2_nfc(ncid, name, z_fct, nFc)
+      subroutine put_cdf_field3(ncid, name, z_cvfcst, nCvFc, ns)
       implicit none
 #     include <netcdf.inc>
       integer ncid
       character*(*) name
-      integer nFc
-      real (kind=R8) :: z_fct(nFc)
-      integer iret
-      integer varid
-      integer start(2), count(2)
-c
-      iret=nf_inq_varid(ncid,name,varid)
-      call check_cdf_status(iret)
-      start(1)=1
-      start(2)=ntstep
-      count(1)=nFc
-      count(2)=1
-      iret=nf_put_vara_double(ncid,varid,start,count,z_fct)
-      call check_cdf_status(iret)
-      return
-      end subroutine put_cdf_field2_nfc
-
-      subroutine put_cdf_field3(ncid, name, z_cvst, nCv, ns)
-      implicit none
-#     include <netcdf.inc>
-      integer ncid
-      character*(*) name
-      integer nCv, ns
-      real (kind=R8) :: z_cvst(nCv, ns)
+      integer nCvFc, ns
+      real (kind=R8) :: z_cvfcst(nCvFc, ns)
       integer iret
       integer varid
       integer start(3), count(3)
@@ -325,37 +269,13 @@ c
       start(1)=1
       start(2)=1
       start(3)=ntstep
-      count(1)=nCv
+      count(1)=nCvFc
       count(2)=ns
       count(3)=1
-      iret=nf_put_vara_double(ncid,varid,start,count,z_cvst)
+      iret=nf_put_vara_double(ncid,varid,start,count,z_cvfcst)
       call check_cdf_status(iret)
       return
       end subroutine put_cdf_field3
-
-      subroutine put_cdf_field3_nfc(ncid, name, z_fcst, nFc, ns)
-      implicit none
-#     include <netcdf.inc>
-      integer ncid
-      character*(*) name
-      integer nFc, ns
-      real (kind=R8) :: z_fcst(nFc, ns)
-      integer iret
-      integer varid
-      integer start(3), count(3)
-c
-      iret=nf_inq_varid(ncid,name,varid)
-      call check_cdf_status(iret)
-      start(1)=1
-      start(2)=1
-      start(3)=ntstep
-      count(1)=nFc
-      count(2)=ns
-      count(3)=1
-      iret=nf_put_vara_double(ncid,varid,start,count,z_fcst)
-      call check_cdf_status(iret)
-      return
-      end subroutine put_cdf_field3_nfc
 
       subroutine put_cdf_field_tri(ncid, name, z_trit, ntri, ns)
       implicit none
