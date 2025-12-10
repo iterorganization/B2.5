@@ -189,12 +189,16 @@ contains
       dims(1) = timedim
       iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
       call check_cdf_status(iret)
-      dims(1) = nyidim
-      iret = nf_def_var(ncid, 'dsi', NCDOUBLE, 1, dims, dsiid)
-      call check_cdf_status(iret)
-      dims(1) = nyadim
-      iret = nf_def_var(ncid, 'dsa', NCDOUBLE, 1, dims, dsaid)
-      call check_cdf_status(iret)
+      if (nimp.gt.0) then
+        dims(1) = nyidim
+        iret = nf_def_var(ncid, 'dsi', NCDOUBLE, 1, dims, dsiid)
+        call check_cdf_status(iret)
+      endif
+      if (nomp.gt.0) then
+        dims(1) = nyadim
+        iret = nf_def_var(ncid, 'dsa', NCDOUBLE, 1, dims, dsaid)
+        call check_cdf_status(iret)
+      endif
       dims(1) = nybldim
       iret = nf_def_var(ncid, 'dsl', NCDOUBLE, 1, dims, dslid)
       call check_cdf_status(iret)
@@ -1083,14 +1087,18 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsiid, 'long_name', 35, 'radial coordinate, inboard midplane')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsiid, 'units', 2, 'm ')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsaid, 'long_name', 36, 'radial coordinate, outboard midplane')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsaid, 'units', 2, 'm ')
-      call check_cdf_status(iret)
+      if (nimp.gt.0) then
+        iret = nf_put_att_text(ncid, dsiid, 'long_name', 35, 'radial coordinate, inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsiid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+      endif
+      if (nomp.gt.0) then
+        iret = nf_put_att_text(ncid, dsaid, 'long_name', 36, 'radial coordinate, outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsaid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, dslid, 'long_name', 31, 'radial coordinate, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dslid, 'units', 2, 'm ')

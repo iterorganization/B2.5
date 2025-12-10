@@ -220,14 +220,18 @@ contains
       write(*,*) 'target_offset ', target_offset
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = max(mpg%nXpt,1)
-      if (.not. allocated(dsi)) then
-        allocate(dsi(1:nimp))
-      end if
-      if (nimp.gt.0) call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
-      if (.not. allocated(dsa)) then
-        allocate(dsa(1:nomp))
-      end if
-      if (nomp.gt.0) call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+      if (nimp.gt.0) then
+        if (.not. allocated(dsi)) then
+          allocate(dsi(1:nimp))
+        end if
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+      endif
+      if (nomp.gt.0) then
+        if (.not. allocated(dsa)) then
+          allocate(dsa(1:nomp))
+        end if
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+      endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcp(i,2)) = &
@@ -1972,8 +1976,12 @@ contains
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
-      call rwcdf(rw,ncid,'dsi',imap,dsi,iret)
-      call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
+      if (nimp.gt.0) then
+        call rwcdf(rw,ncid,'dsi',imap,dsi,iret)
+      endif
+      if (nomp.gt.0) then
+        call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
+      endif
       call rwcdf(rw,ncid,'dsl',imap,dsl,iret)
       call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
       call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
