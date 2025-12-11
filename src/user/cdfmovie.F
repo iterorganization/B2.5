@@ -94,6 +94,8 @@
      1       'Ion density', 'm^-3')
             call create_cdf_field2(ncid, 'ne',
      1       'Electron density', 'm^-3')
+            call create_cdf_field3(ncid, 'ua', 1,
+     1       'Ion parallel velocity', 'm s^-1')
             call create_cdf_field2(ncid, 'te',
      1       'Electron temperature', 'eV')
             call create_cdf_field2(ncid, 'ti',
@@ -309,6 +311,8 @@
         call put_cdf_field3(ncid,'na',na,nx+2,ny+2,ns)
         write(*,*) 'put_cdf_field2: ne'
         call put_cdf_field2(ncid,'ne',ne,nx+2,ny+2)
+        write(*,*) 'put_cdf_field3: ua'
+        call put_cdf_field3(ncid,'ua',ua,nx+2,ny+2,ns)
         write(*,*) 'put_cdf_field2: te'
         dummy(:,:) = te(:,:)/qe
         call put_cdf_field2(ncid,'te',dummy,nx+2,ny+2)
