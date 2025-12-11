@@ -39,8 +39,11 @@ contains
     integer :: nydim, nybldim, nytldim, nytrdim, nybrdim
     ! variable ids
     integer :: ntstepid, jxiid, jxaid, jsepid, timesaid, &
-         dslid, dsiid, dsaid, dsrid, dstlid, dstrid, &
-         dsLTid, dsRTid, dsTLTid, dsTRTid, dsLPid, dsRPid, dsTLPid, dsTRPid, &
+         cvlistiid, dsiid, cvlistaid, dsaid, &
+         fclistlid, cvlistlid, cnlistlid, dslid, dsLTid, dsLPid, &
+         fclistrid, cvlistrid, cnlistrid, dsrid, dsRTid, dsRPid, &
+         fclisttlid, cvlisttlid, cnlisttlid, dstlid, dsTLTid, dsTLPid, &
+         fclisttrid, cvlisttrid, cnlisttrid, dstrid, dsTRTid, dsTRPid, &
          fnixipid, feexipid, feixipid, fnixapid, feexapid, feixapid, &
          nasepiid, nesepiid, tesepiid, tisepiid, dabsepiid, dmbsepiid, tabsepiid, tmbsepiid, &
          nasepmid, nesepmid, tesepmid, tisepmid, dabsepmid, dmbsepmid, tabsepmid, tmbsepmid, &
@@ -191,30 +194,56 @@ contains
       call check_cdf_status(iret)
       if (nimp.gt.0) then
         dims(1) = nyidim
+        iret = nf_def_var(ncid, 'cvlisti', NCDOUBLE, 1, dims, cvlistiid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dsi', NCDOUBLE, 1, dims, dsiid)
         call check_cdf_status(iret)
       endif
       if (nomp.gt.0) then
         dims(1) = nyadim
+        iret = nf_def_var(ncid, 'cvlista', NCDOUBLE, 1, dims, cvlistaid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dsa', NCDOUBLE, 1, dims, dsaid)
         call check_cdf_status(iret)
       endif
-      dims(1) = nybldim
-      iret = nf_def_var(ncid, 'dsl', NCDOUBLE, 1, dims, dslid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dsLT', NCDOUBLE, 1, dims, dsLTid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dsLP', NCDOUBLE, 1, dims, dsLPid)
-      call check_cdf_status(iret)
-      dims(1) = nybrdim
-      iret = nf_def_var(ncid, 'dsr', NCDOUBLE, 1, dims, dsrid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dsRT', NCDOUBLE, 1, dims, dsRTid)
-      call check_cdf_status(iret) 
-      iret = nf_def_var(ncid, 'dsRP', NCDOUBLE, 1, dims, dsRPid)
-      call check_cdf_status(iret) 
+      if (maxval(mpg%strDiv).ge.1) then
+        dims(1) = nybldim
+        iret = nf_def_var(ncid, 'fclistl', NCDOUBLE, 1, dims, fclistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlistl', NCDOUBLE, 1, dims, cvlistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlistl', NCDOUBLE, 1, dims, cnlistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsl', NCDOUBLE, 1, dims, dslid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsLT', NCDOUBLE, 1, dims, dsLTid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsLP', NCDOUBLE, 1, dims, dsLPid)
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.2) then
+        dims(1) = nybrdim
+        iret = nf_def_var(ncid, 'fclistr', NCDOUBLE, 1, dims, fclistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlistr', NCDOUBLE, 1, dims, cvlistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlistr', NCDOUBLE, 1, dims, cnlistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsr', NCDOUBLE, 1, dims, dsrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsRT', NCDOUBLE, 1, dims, dsRTid)
+        call check_cdf_status(iret) 
+        iret = nf_def_var(ncid, 'dsRP', NCDOUBLE, 1, dims, dsRPid)
+        call check_cdf_status(iret) 
+      endif
       if (maxval(mpg%strDiv).ge.4) then
         dims(1) = nytldim
+        iret = nf_def_var(ncid, 'fclisttl', NCDOUBLE, 1, dims, fclisttlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlisttl', NCDOUBLE, 1, dims, cvlisttlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlisttl', NCDOUBLE, 1, dims, cnlisttlid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dstl', NCDOUBLE, 1, dims, dstlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dsTLT', NCDOUBLE, 1, dims, dsTLTid)
@@ -224,6 +253,12 @@ contains
       endif
       if (maxval(mpg%strDiv).ge.3) then
         dims(1) = nytrdim
+        iret = nf_def_var(ncid, 'fclisttr', NCDOUBLE, 1, dims, fclisttrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlisttr', NCDOUBLE, 1, dims, cvlisttrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlisttr', NCDOUBLE, 1, dims, cnlisttrid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dstr', NCDOUBLE, 1, dims, dstrid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dsTRT', NCDOUBLE, 1, dims, dsTRTid)
@@ -1088,42 +1123,68 @@ contains
       iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
       call check_cdf_status(iret)
       if (nimp.gt.0) then
+        iret = nf_put_att_text(ncid, cvlistiid, 'long_name', 30, 'volumes list, inboard midplane')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsiid, 'long_name', 35, 'radial coordinate, inboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsiid, 'units', 2, 'm ')
         call check_cdf_status(iret)
       endif
       if (nomp.gt.0) then
+        iret = nf_put_att_text(ncid, cvlistaid, 'long_name', 31, 'volumes list, outboard midplane')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsaid, 'long_name', 36, 'radial coordinate, outboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsaid, 'units', 2, 'm ')
         call check_cdf_status(iret)
       endif
-      iret = nf_put_att_text(ncid, dslid, 'long_name', 31, 'radial coordinate, Western edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dslid, 'units', 2, 'm ')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsLTid, 'long_name', 26, 'target areas, Western edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsLTid, 'units', 3, 'm^2')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsLPid, 'long_name', 35, 'poloial contact areas, Western edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsLPid, 'units', 3, 'm^2')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsrid, 'long_name', 30, 'radial coordinate, Easter edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsrid, 'units', 2, 'm ')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsRTid, 'long_name', 26, 'target areas, Eastern edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsRTid, 'units', 3, 'm^2')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsRPid, 'long_name', 36, 'poloidal contact areas, Eastern edge')
-      call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsRPid, 'units', 3, 'm^2')
-      call check_cdf_status(iret)
+      if (maxval(mpg%strDiv).ge.1) then
+        iret = nf_put_att_text(ncid, fclistlid, 'long_name', 29, 'cell faces list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistlid, 'long_name', 34, 'control volumes list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlistlid, 'long_name', 43, 'neutrals control volumes list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dslid, 'long_name', 31, 'radial coordinate, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dslid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLTid, 'long_name', 26, 'target areas, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLPid, 'long_name', 35, 'poloial contact areas, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.2) then
+        iret = nf_put_att_text(ncid, fclistrid, 'long_name', 29, 'cell faces list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistrid, 'long_name', 34, 'control volumes list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlistrid, 'long_name', 43, 'neutrals control volumes list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsrid, 'long_name', 31, 'radial coordinate, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsrid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRTid, 'long_name', 26, 'target areas, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRPid, 'long_name', 36, 'poloidal contact areas, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
       if (maxval(mpg%strDiv).ge.4) then
+        iret = nf_put_att_text(ncid, fclisttlid, 'long_name', 39, 'cell faces list, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlisttlid, 'long_name', 44, 'control volumes list, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlisttlid, 'long_name', 53, 'neutrals control volumes list, upper inboard divertor')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dstlid, 'long_name', 41, 'radial coordinate, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dstlid, 'units', 2, 'm ')
@@ -1138,6 +1199,12 @@ contains
         call check_cdf_status(iret)
       endif
       if (maxval(mpg%strDiv).ge.3) then
+        iret = nf_put_att_text(ncid, fclisttrid, 'long_name', 40, 'cell faces list, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlisttrid, 'long_name', 45, 'control volumes list, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlisttrid, 'long_name', 54, 'neutrals control volumes list, upper outboard divertor')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dstrid, 'long_name', 42, 'radial coordinate, upper outboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dstrid, 'units', 2, 'm ')
