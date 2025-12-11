@@ -169,6 +169,8 @@ c prepare the b2movies.nc.xxxx file
      1   'Ion density', 'm^-3')
         call create_cdf_field2(ncid2, 'ne', 1,
      1   'Electron density', 'm^-3')
+        call create_cdf_field3(ncid2, 'ua', 1, 1,
+     1   'Ion parallel velocity', 'm s^-1')
         call create_cdf_field2(ncid2, 'te', 1,
      1   'Electron temperature', 'eV')
         call create_cdf_field2(ncid2, 'ti', 1,
