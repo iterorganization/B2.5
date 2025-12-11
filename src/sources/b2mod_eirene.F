@@ -18,6 +18,7 @@
       use b2mod_balance !djm Jan2017
      & ,only : eirene_mc_papl_sna0to1, eirene_mc_pmpl_sna0to1,
      &         eirene_mc_pael_sne0to1, eirene_mc_pmel_sne0to1,
+     &         eirene_mc_piel_sne0to1,
      &         eirene_mc_pipl_sna0to1, eirene_mc_pppl_sna0to1,
      &         eirene_mc_core_sna0to1, eirene_mc_mapl_smo0to3,
      &         eirene_mc_mmpl_smo0to3, eirene_mc_mipl_smo0to3,
@@ -70,7 +71,7 @@
      .  sni_av(:,:,:), smo_av(:,:,:), sei_av(:,:,:), see_av(:,:)
 
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     .  sne_av_pael(:,:), sne_av_pmel(:,:),
+     .  sne_av_pael(:,:), sne_av_pmel(:,:), sne_av_piel(:,:),
      .  sna_av_paat(:,:,:), sna_av_pmat(:,:,:),
      .  sna_av_piat(:,:,:), sna_av_paml(:,:,:),
      .  sna_av_pmml(:,:,:), sna_av_piml(:,:,:),
@@ -134,6 +135,7 @@
      &  smo_h_mapl(:,:,:,:), smo_h_mmpl(:,:,:,:),
      &  smo_h_mipl(:,:,:,:), smo_h_cppv(:,:,:,:),
      &  sne_h_pael(:,:,:), sne_h_pmel(:,:,:),
+     &  sne_h_piel(:,:,:),
      &  see_h_eael(:,:,:), see_h_emel(:,:,:),
      &  see_h_eiel(:,:,:), see_h_epel(:,:,:),
      &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
@@ -148,6 +150,7 @@
      &  smo_s_mapl(:,:,:), smo_s_mmpl(:,:,:),
      &  smo_s_mipl(:,:,:), smo_s_cppv(:,:,:),
      &  sne_s_pael(:,:), sne_s_pmel(:,:),
+     &  sne_s_piel(:,:),
      &  see_s_eael(:,:), see_s_emel(:,:),
      &  see_s_eiel(:,:), see_s_epel(:,:),
      &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
@@ -2129,6 +2132,7 @@ c              it is NOT IYSs style)
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
           allocate(sne_av_pael(size(see,1),size(see,2)))
           allocate(sne_av_pmel(size(see,1),size(see,2)))
+          allocate(sne_av_piel(size(see,1),size(see,2)))
           allocate(sna_av_paat(size(sni,1),nnatmi, size(sni,3)))
           allocate(sna_av_pmat(size(sni,1),nnatmi, size(sni,3)))
           allocate(sna_av_piat(size(sni,1),nnatmi, size(sni,3)))
@@ -2156,6 +2160,7 @@ c              it is NOT IYSs style)
           allocate(see_av_epel(size(see,1),size(see,2)))
           sne_av_pael=0.0_R8
           sne_av_pmel=0.0_R8
+          sne_av_piel=0.0_R8
           sna_av_paat=0.0_R8
           sna_av_pmat=0.0_R8
           sna_av_piat=0.0_R8
@@ -2199,6 +2204,7 @@ c              it is NOT IYSs style)
      *       switch%write_eirene_sources.ne.0) then !djm Jan2017
            sne_av_pael=0.0_R8
            sne_av_pmel=0.0_R8
+           sne_av_piel=0.0_R8
            sna_av_paat=0.0_R8
            sna_av_pmat=0.0_R8
            sna_av_piat=0.0_R8
@@ -2242,6 +2248,7 @@ c              it is NOT IYSs style)
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = sne_av_pael + sne_pael
           sne_av_pmel = sne_av_pmel + sne_pmel
+          sne_av_piel = sne_av_piel + sne_piel
           sna_av_paat = sna_av_paat + sna_paat
           sna_av_pmat = sna_av_pmat + sna_pmat
           sna_av_piat = sna_av_piat + sna_piat
@@ -2316,6 +2323,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           smo_h_cppv(:,:,:,ihist) = smo_cppv
           sne_h_pael(:,:,ihist) = sne_pael
           sne_h_pmel(:,:,ihist) = sne_pmel
+          sne_h_piel(:,:,ihist) = sne_piel
           see_h_eael(:,:,ihist) = see_eael
           see_h_emel(:,:,ihist) = see_emel
           see_h_eiel(:,:,ihist) = see_eiel
@@ -2349,6 +2357,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = 0.0_R8
           sne_av_pmel = 0.0_R8
+          sne_av_piel = 0.0_R8
           sna_av_paat = 0.0_R8
           sna_av_pmat = 0.0_R8
           sna_av_piat = 0.0_R8
@@ -2391,6 +2400,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
      *       switch%write_eirene_sources.ne.0) then !djm Jan2017
            sne_av_pael = sne_av_pael + sne_h_pael(:,:,ih)
            sne_av_pmel = sne_av_pmel + sne_h_pmel(:,:,ih)
+           sne_av_piel = sne_av_piel + sne_h_piel(:,:,ih)
            sna_av_paat = sna_av_paat + sna_h_paat(:,:,:,ih)
            sna_av_pmat = sna_av_pmat + sna_h_pmat(:,:,:,ih)
            sna_av_piat = sna_av_piat + sna_h_piat(:,:,:,ih)
@@ -2475,6 +2485,7 @@ cc Read saved sources
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
           sne_s_pael = sne_s_pael*relax + sne_pael/dble(ih_end)
           sne_s_pmel = sne_s_pmel*relax + sne_pmel/dble(ih_end)
+          sne_s_piel = sne_s_piel*relax + sne_piel/dble(ih_end)
           sna_s_paat = sna_s_paat*relax + sna_paat/dble(ih_end)
           sna_s_pmat = sna_s_pmat*relax + sna_pmat/dble(ih_end)
           sna_s_piat = sna_s_piat*relax + sna_piat/dble(ih_end)
@@ -2527,6 +2538,7 @@ cc Read saved sources
      *      switch%write_eirene_sources.ne.0) then !djm Jan2017
           sne_av_pael = sne_s_pael*dble(ih_end)
           sne_av_pmel = sne_s_pmel*dble(ih_end)
+          sne_av_piel = sne_s_piel*dble(ih_end)
           sna_av_paat = sna_s_paat*dble(ih_end)
           sna_av_pmat = sna_s_pmat*dble(ih_end)
           sna_av_piat = sna_s_piat*dble(ih_end)
@@ -2571,6 +2583,7 @@ cc Read saved sources
      *     switch%write_eirene_sources.ne.0) then !djm Jan2017
          sne_av_pael = sne_pael
          sne_av_pmel = sne_pmel
+         sne_av_piel = sne_piel
          sna_av_paat = sna_paat
          sna_av_pmat = sna_pmat
          sna_av_piat = sna_piat
@@ -2615,20 +2628,20 @@ cc Read saved sources
 #if(defined(_OPENMP))
 !$OMP DO COLLAPSE(3)
 #endif
-      do gs_i3=1,gs_sni_d3
-        do gs_i2=1,gs_sni_d2
-          do gs_i1=1,gs_sni_d1
-            sni_av_papl(gs_i1,gs_i2,gs_i3) =
-     &       sni_papl(gs_i1,gs_i2,gs_i3)
-            sni_av_pmpl(gs_i1,gs_i2,gs_i3) =
-     &       sni_pmpl(gs_i1,gs_i2,gs_i3)
-            sni_av_pipl(gs_i1,gs_i2,gs_i3) =
-     &       sni_pipl(gs_i1,gs_i2,gs_i3)
-            sni_av_pppl(gs_i1,gs_i2,gs_i3) =
-     &       sni_pppl(gs_i1,gs_i2,gs_i3)
+        do gs_i3=1,gs_sni_d3
+          do gs_i2=1,gs_sni_d2
+            do gs_i1=1,gs_sni_d1
+              sni_av_papl(gs_i1,gs_i2,gs_i3) =
+     &         sni_papl(gs_i1,gs_i2,gs_i3)
+              sni_av_pmpl(gs_i1,gs_i2,gs_i3) =
+     &         sni_pmpl(gs_i1,gs_i2,gs_i3)
+              sni_av_pipl(gs_i1,gs_i2,gs_i3) =
+     &         sni_pipl(gs_i1,gs_i2,gs_i3)
+              sni_av_pppl(gs_i1,gs_i2,gs_i3) =
+     &         sni_pppl(gs_i1,gs_i2,gs_i3)
+            end do
           end do
         end do
-      end do
 #if(defined(_OPENMP))
 !$OMP END DO
 #endif
@@ -2636,14 +2649,14 @@ cc Read saved sources
 #if(defined(_OPENMP))
 !$OMP DO COLLAPSE(3)
 #endif
-      do gs_i3=1,gs_smo_d(1,3)
-        do gs_i2=1,gs_smo_d(1,2)
-          do gs_i1=1,gs_smo_d(1,1)
-            smo_av_mapl(gs_i1,gs_i2,gs_i3) =
-     &       smo_mapl(gs_i1,gs_i2,gs_i3)
+        do gs_i3=1,gs_smo_d(1,3)
+          do gs_i2=1,gs_smo_d(1,2)
+            do gs_i1=1,gs_smo_d(1,1)
+              smo_av_mapl(gs_i1,gs_i2,gs_i3) =
+     &         smo_mapl(gs_i1,gs_i2,gs_i3)
+            end do
           end do
         end do
-      end do
 #if(defined(_OPENMP))
 !$OMP END DO
 #endif
@@ -2651,14 +2664,14 @@ cc Read saved sources
 #if(defined(_OPENMP))
 !$OMP DO COLLAPSE(3)
 #endif
-      do gs_i3=1,gs_smo_d(2,3)
-        do gs_i2=1,gs_smo_d(2,2)
-          do gs_i1=1,gs_smo_d(2,1)
-            smo_av_mmpl(gs_i1,gs_i2,gs_i3) =
-     &       smo_mmpl(gs_i1,gs_i2,gs_i3)
+        do gs_i3=1,gs_smo_d(2,3)
+          do gs_i2=1,gs_smo_d(2,2)
+            do gs_i1=1,gs_smo_d(2,1)
+              smo_av_mmpl(gs_i1,gs_i2,gs_i3) =
+     &         smo_mmpl(gs_i1,gs_i2,gs_i3)
+            end do
           end do
         end do
-      end do
 #if(defined(_OPENMP))
 !$OMP END DO
 #endif
@@ -2666,14 +2679,14 @@ cc Read saved sources
 #if(defined(_OPENMP))
 !$OMP DO COLLAPSE(3)
 #endif
-      do gs_i3=1,gs_smo_d(3,3)
-        do gs_i2=1,gs_smo_d(3,2)
-          do gs_i1=1,gs_smo_d(3,1)
-            smo_av_mipl(gs_i1,gs_i2,gs_i3) =
-     &       smo_mipl(gs_i1,gs_i2,gs_i3)
+        do gs_i3=1,gs_smo_d(3,3)
+          do gs_i2=1,gs_smo_d(3,2)
+            do gs_i1=1,gs_smo_d(3,1)
+              smo_av_mipl(gs_i1,gs_i2,gs_i3) =
+     &         smo_mipl(gs_i1,gs_i2,gs_i3)
+            end do
           end do
         end do
-      end do
 #if(defined(_OPENMP))
 !$OMP END DO
 #endif
@@ -2681,14 +2694,14 @@ cc Read saved sources
 #if(defined(_OPENMP))
 !$OMP DO COLLAPSE(3)
 #endif
-      do gs_i3=1,gs_smo_d(4,3)
-        do gs_i2=1,gs_smo_d(4,2)
-          do gs_i1=1,gs_smo_d(4,1)
-            smo_av_cppv(gs_i1,gs_i2,gs_i3) =
-     &       smo_cppv(gs_i1,gs_i2,gs_i3)
+        do gs_i3=1,gs_smo_d(4,3)
+          do gs_i2=1,gs_smo_d(4,2)
+            do gs_i1=1,gs_smo_d(4,1)
+              smo_av_cppv(gs_i1,gs_i2,gs_i3) =
+     &         smo_cppv(gs_i1,gs_i2,gs_i3)
+            end do
           end do
         end do
-      end do
 #if(defined(_OPENMP))
 !$OMP END DO
 #endif
@@ -2908,6 +2921,7 @@ c   and apply linearisation
 #if(defined(_OPENMP))
 !$OMP PARALLEL DEFAULT(NONE)
 !$OMP& SHARED(eirene_mc_pael_sne0to1,eirene_mc_pmel_sne0to1)
+!$OMP& SHARED(eirene_mc_piel_sne0to1)
 !$OMP& SHARED(eirene_mc_papl_sna0to1,eirene_mc_pmpl_sna0to1)
 !$OMP& SHARED(eirene_mc_pipl_sna0to1,eirene_mc_pppl_sna0to1)
 !$OMP& SHARED(eirene_mc_mapl_smo0to3,eirene_mc_mmpl_smo0to3)
@@ -2925,6 +2939,7 @@ c   and apply linearisation
             do gs_ic=1,nCv
               eirene_mc_pael_sne0to1(gs_ic,gs_idim,gs_istra)=0.0_R8
               eirene_mc_pmel_sne0to1(gs_ic,gs_idim,gs_istra)=0.0_R8
+              eirene_mc_piel_sne0to1(gs_ic,gs_idim,gs_istra)=0.0_R8
             end do
           end do
         end do
@@ -4261,6 +4276,7 @@ csw 26feb2014
        if (allocated(sni_av_papl)) then !djm Jan2017
          deallocate(sne_av_pael)
          deallocate(sne_av_pmel)
+         deallocate(sne_av_piel)
          deallocate(sna_av_paat)
          deallocate(sna_av_pmat)
          deallocate(sna_av_piat)
@@ -4583,6 +4599,8 @@ c!###}
      .                    size(see,2), nhistd))
         allocate(sne_h_pmel(size(see,1),
      .                    size(see,2), nhistd))
+        allocate(sne_h_piel(size(see,1),
+     .                    size(see,2), nhistd))
         allocate(see_h_eael(size(see,1), size(see,2), nhistd))
         allocate(see_h_emel(size(see,1), size(see,2), nhistd))
         allocate(see_h_eiel(size(see,1), size(see,2), nhistd))
@@ -4622,6 +4640,7 @@ c!###}
       if (.not.allocated(sni_h_papl)) return !djm Jan2017
       deallocate(sne_h_pael)
       deallocate(sne_h_pmel)
+      deallocate(sne_h_piel)
       deallocate(sna_h_paat)
       deallocate(sna_h_pmat)
       deallocate(sna_h_piat)
@@ -4669,6 +4688,7 @@ c!###}
      *    switch%write_eirene_sources.ne.0) then !djm Jan2017
         sne_h_pael = 0.0_R8
         sne_h_pmel = 0.0_R8
+        sne_h_piel = 0.0_R8
         sna_h_paat = 0.0_R8
         sna_h_pmat = 0.0_R8
         sna_h_piat = 0.0_R8
@@ -4757,6 +4777,8 @@ c!###}
         allocate(sne_s_pael(size(see,1),
      .                      size(see,2)))
         allocate(sne_s_pmel(size(see,1),
+     .                      size(see,2)))
+        allocate(sne_s_piel(size(see,1),
      .                      size(see,2)))
         allocate(see_s_eael(size(see,1), size(see,2)))
         allocate(see_s_emel(size(see,1), size(see,2)))
@@ -4853,6 +4875,7 @@ c!###}
       if (allocated(sni_s_papl)) then !djm Jan2017
         deallocate(sne_s_pael)
         deallocate(sne_s_pmel)
+        deallocate(sne_s_piel)
         deallocate(sna_s_paat)
         deallocate(sna_s_pmat)
         deallocate(sna_s_piat)
@@ -4964,6 +4987,7 @@ c!###}
      &    switch%write_eirene_sources.ne.0) then
         sne_s_pael = sne_s_pael + sne_pael
         sne_s_pmel = sne_s_pmel + sne_pmel
+        sne_s_piel = sne_s_piel + sne_piel
         sna_s_paat = sna_s_paat + sna_paat
         sna_s_pmat = sna_s_pmat + sna_pmat
         sna_s_piat = sna_s_piat + sna_piat
@@ -5080,6 +5104,7 @@ c!###}
      .    switch%write_eirene_sources.ne.0) then
         sne_pael = sne_s_pael/dble(n_avg_repeat)
         sne_pmel = sne_s_pmel/dble(n_avg_repeat)
+        sne_piel = sne_s_piel/dble(n_avg_repeat)
         sna_paat = sna_s_paat/dble(n_avg_repeat)
         sna_pmat = sna_s_pmat/dble(n_avg_repeat)
         sna_piat = sna_s_piat/dble(n_avg_repeat)
@@ -5192,6 +5217,7 @@ c!###}
      *    switch%write_eirene_sources.ne.0) then !djm Jan2017
         sne_s_pael = 0.0_R8
         sne_s_pmel = 0.0_R8
+        sne_s_piel = 0.0_R8
         sni_s_papl = 0.0_R8
         sni_s_pmpl = 0.0_R8
         sni_s_pipl = 0.0_R8
