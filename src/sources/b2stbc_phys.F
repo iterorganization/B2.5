@@ -100,7 +100,8 @@
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
-     &  pzaverage, pzsum, volsum, totfluxi, totfluxn
+     &  pzaverage, pzsum, volsum, totfluxi, totfluxn,
+     &  vbc(nCv,0:ns-1),csbc(nCv,0:ns-1)
 #ifdef WG_TODO
      1  ,volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
@@ -1167,14 +1168,30 @@ c   (ionising_core option)
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
-            wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
+            wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
+     &            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &              dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &              mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
             if (mompar(is,ib,2).lt.0.5_R8) then
               cs = sqrt(pz(iCv1)/rz(iCv1))
+              t0 = 2.0_R8*cs*abs(wrk)
+              vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
+              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
+     &                                       vbnd*sign(1.0_R8,wrk)
+              csbc(iCv1,is) = cs
             else
               cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &          (am(is)*mp))
+              t0 = 2.0_R8*cs*abs(wrk)
+              vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
+              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
+     &                                       vbnd*sign(1.0_R8,wrk)
+              vbc(iCv1,is) = max(vbc(iCv1,is)*sign(1.0_R8,wrk),
+     &                           wrk*pl%ua(iCv2,is))*sign(1.0_R8,wrk)
+              csbc(iCv1,is) = cs
             endif
-            if (wrk < geo%Qalfmin) then
+            if (abs(wrk) < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) =
      &         -geo%fcS(iFc)*conpar(is,ib,1)*cs*geo%Qalfmax
@@ -1208,8 +1225,13 @@ c   (ionising_core option)
                 endif
               endif
             else
+              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               srw%sna0(iCv1,0,is) = 0.0_R8
-              srw%sna0(iCv1,1,is) = -s1*mompar(is,ib,1)*cs
+              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*conpar(is,ib,1)*
+     &          max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
+     &          sign(1.0_R8,wrk)+vbnd)
               if (conpar(is,ib,2).gt.0.0_R8) then
                 srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
      .           co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
@@ -3158,41 +3180,18 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             if (wrk < geo%Qalfmin) then
               srw%smo0(iCv1,0,is)=
      .          VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
-     .         (0.0_R8*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .         (-cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .         (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ua(iCv2,is))
               srw%smo0(iCv1,1,is)=
      .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
             else
-              s1hz = geo%fcPbshz(iFc)
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
-              if (mompar(is,ib,2).lt.0.5_R8) then
-                cs = sqrt(pz(iCv1)/rz(iCv1))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-              else
-                cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
-     &                    (am(is)*mp))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-                vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
-     &           vbnd)
-              endif
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
-     &         mompar(is,ib,1)*vbnd
+     &         mompar(is,ib,1)*vbc(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
               srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
-     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
+     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
+     &          abs(geo%fcPbshz(iFc))                                   !srv 07.05.09 }
             endif
           enddo                                                         !srv 01.02.09 }
 
@@ -5939,16 +5938,20 @@ cxpb code segment analog to b2tfhi
      &           min(0.0_R8,t0)/pl%ti(iCv1)
               endif
             else
-              s1 = abs(geo%fcPbs(iFc))
               do is = 0, ns-1
                 if(is_neutral(is)) cycle
-                t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)
+                vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &                  dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &                  mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+                t0 = t0 + pl%na(iCv1,is)*geo%fcS(iFc)*
+     &          max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
+     &          sign(1.0_R8,wrk)+vbnd)
                 if (conpar(is,ib,2).gt.0.0_R8)
      &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &              *pl%na(iCv1,is)
               enddo
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &         enipar(ib,1)*t0*cs*s1 -
+     &         enipar(ib,1)*t0 -
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
      &         fac_he_anom_bc*enipar(ib,2)*t1*geo%fcS(iFc)
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -7414,31 +7417,43 @@ c              fchi=0.0_R8
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
           vte  = sqrt(pl%te(iCv1)/me)
           t0 = 0.0_R8
-          wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-          if (wrk < geo%Qalfmin) then
-            s1 = abs(geo%fcS(iFc))*geo%Qalfmax
+          wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)
+          if (abs(wrk) < geo%Qalfmin) then
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%po)
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%po)
+            srw%sch0(iCv1,0)= PBIG*geo%fcS(iFc)*
+     .         (-cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .         (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%po(iCv2))
+            srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
           else
-            s1 = abs(geo%fcPbs(iFc))
-          endif
-          do is = 0, ns-1
-            if(is_neutral(is)) cycle
-            t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*cs*s1*
-     *        pl%na(iCv1,is)
-          enddo
-          fchi = qe*t0
-          fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
-     &      expu2(min(0.0_R8,                                            !lkw 31.03.2023
-     &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
-          seec = gammae
-          t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
+            s1 = geo%fcS(iFc)
+            do is = 0, ns-1
+              if(is_neutral(is)) cycle
+              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*s1*
+     &            max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
+     &            sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
+            enddo
+            fchi = qe*t0
+            fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*abs(wrk)*
+     &        expu2(min(0.0_R8,max(-50.0_R8,                               !lkw 31.03.2023
+     &        -qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
+            seec = gammae
+            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
 *    ..compute charge source
-          srw%sch0(iCv1,0) = srw%sch0(iCv1,0) +
-     &      (1.0_R8-seec)*fche-fchi + t0*pl%po(iCv1)
-          srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
+            srw%sch0(iCv1,0) = srw%sch0(iCv1,0) +
+     &        (1.0_R8-seec)*fche-fchi + t0*pl%po(iCv1)
+            srw%sch0(iCv1,1) = srw%sch0(iCv1,1) - t0
+          endif
 #ifdef B25_EIRENE
 *     ..set sheath potential drop for Eirene
           if (switch%eirene_sheath_pot.eq.1) then
