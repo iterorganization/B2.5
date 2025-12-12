@@ -824,7 +824,7 @@ cxpb size is changed in b2mod_dimensions
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
      &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
-     &          (fb_type(ifb).eq.27)) )
+     &          (fb_type(ifb).eq.22).or.(fb_type(ifb).eq.27)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -2121,9 +2121,9 @@ cxpb size is changed in b2mod_dimensions
                 call calc_puff_pump_b25(switch,
      &           mpg, nCv, dv, pl, sr,
      &           is_start, is_end, sna_pump, sna_puff, sna_core)
-                if (sna_pump < -1.0_R8) then
+                if (sna_pump < -0.0_R8) then
                   fb_rescale(ifb) = max(0.0_R8,
-     &              (sna_pump - sna_core)*fb_rescale(ifb))
+     &              (abs(sna_pump) - sna_core)*fb_rescale(ifb))
                 endif
 #ifdef B25_EIRENE
               else
@@ -2485,12 +2485,10 @@ cxpb size is changed in b2mod_dimensions
                   call calc_puff_pump_b25(switch,
      &             mpg, nCv, dv, pl, sr,
      &             is_start, is_end, sna_pump, sna_puff, sna_core)
-                  if (sna_pump < -1.0_R8) then
-                    if (abs(1.0_R8-fb_rescale(ifb)).ge.1.0e-6_R8) then
-                      saved_fb_actuator(ifb) =
-     &                 abs((sna_puff+sna_core)/sna_pump)
-     &                 *saved_fb_actuator(ifb)/fb_rescale(ifb)
-                    endif
+                  if (sna_pump < 0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &               abs((sna_puff+sna_core)/sna_pump)
+     &               *saved_fb_actuator(ifb)/fb_rescale(ifb)
                   endif
 #ifdef B25_EIRENE
                 else
@@ -2526,14 +2524,14 @@ cxpb size is changed in b2mod_dimensions
               else
                 if (switch%use_eirene.eq.0) then
                   if (switch%recycle_afn.eq.0 .or.
-     &                fb_species(ifb).gt.1) then
-
+     &                  nint(zn(fb_species(ifb))).ne.1) then
+        
                     do istra = 1, nbc
                       if (bccon(is_start,istra).eq.10 .and.
      &                   (istra.eq.fb_ib(ifb).or.fb_ib(ifb).eq.0)) then
                         do ibc = 1, mpg%bcCvP(istra,2)
                           conpar(is_start,istra,1) =
-     &                     saved_fb_actuator(ifb)
+     &                     -saved_fb_actuator(ifb)
                         enddo
                       endif
                     enddo
@@ -2543,7 +2541,7 @@ cxpb size is changed in b2mod_dimensions
      &                  .and. (species_start(istra) .eq. is_start).and.
      &                   (istra.eq.fb_ib(ifb).or.fb_ib(ifb).eq.0)) then
                         b2recyc(is_start,istra) =
-     &                   (1.0_R8+saved_fb_actuator(ifb))
+     &                   (1.0_R8-saved_fb_actuator(ifb))
                         recyc(is_start,istra) =
      &                   b2recyc(is_start,istra)
                       endif
@@ -2565,21 +2563,13 @@ cxpb size is changed in b2mod_dimensions
             end select
 
             if (fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3)
+     &          fb_actuator(ifb).eq.3 .or.
+     &          fb_actuator(ifb).eq.8)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
           endif
 
-          if (fb_actuator(ifb).eq.8) then
-            if (switch%recycle_afn.eq.0.or.fb_species(ifb).gt.1) then
-              write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
-     &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
-            else
-              write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
-     &         b2espcr(fb_species(ifb)), (1.0_R8+saved_fb_actuator(ifb))
-            endif
-          endif
 
           feedback_namelist_used = feedback_namelist_used .or.
      &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3 .or.
@@ -2848,7 +2838,7 @@ cxpb size is changed in b2mod_dimensions
 
       sna_pump = 0.0_R8
 
-      if (switch%recycle_afn.eq.0.or.is_start.gt.1) then
+      if (switch%recycle_afn.eq.0.or.nint(zn(is_start)).ne.1) then
         do istra = 1, nbc
           if (bccon(is_start,istra).eq.10) then
             do ib = 1, mpg%bcCvP(istra,2)
