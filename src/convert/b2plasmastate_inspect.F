@@ -144,7 +144,7 @@
 !*   ..overwrite with values provided in b2mn.dat
 !      call read_switches(switch)
 !*   ..check the values of the switches
-!      call check_switches(switch,ns)
+!      call check_switches(switch,ns,nspecies)
 !*   ..read geometry and mapping
 !      call read_b2fgmtry (ninp(1), mpg, geo)
 !      call init_geometry (mpg, geo, switch)

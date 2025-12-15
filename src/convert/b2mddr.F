@@ -97,7 +97,6 @@
       call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
-      call check_switches(switch,ns)
 *   ..read geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
@@ -112,6 +111,7 @@
 *   ..read species data
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
+      call check_switches(switch,ns,nspecies)
 *   ..read plasma state
       call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *   ..test plasma state and fluxes

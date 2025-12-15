@@ -104,8 +104,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
-      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),                  !lk 19.09.07
-     &    k2(nCv), collisnumf(mpg%nFc), collisnumef(mpg%nFc)
+      real (kind=R8) :: tauia(nCv,0:ns-1),                            !lk 19.09.07
+     &    collisnumf(mpg%nFc), collisnumef(mpg%nFc)
       real (kind=R8) :: inctran
 #ifdef ASTRA
      & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
@@ -411,8 +411,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. calculate collisionality parameter nu_star
        nu1 = 0.0_R8                                                   !lk 12.05.11{
        k1 = 0.58_R8
-       nu2 = 0.0_R8
-       k2 = 1.6_R8
+       co%nu2 = 0.0_R8
+       co%k2 = 1.6_R8
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
        tau = t2/dv%lnlam*pl%te/ev*sqrt(pl%te/ev)/dv%ne2
@@ -426,14 +426,14 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &        +1.53_R8*nu1(iCv))
      &        +0.52_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
      &        /(1.0_R8+0.89_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
-             nu2(iCv) = geo%ftConn(iFt)/(tauia(iCv,ismain)
+             co%nu2(iCv) = geo%ftConn(iFt)/(tauia(iCv,ismain)
      &        *sqrt(pl%ti(iCv)/(mp*am(ismain)))
      &        *2.0_R8*pi*geo%ftEps(iFt)**1.5_R8)
-             k2(iCv) = (0.66_R8+1.88_R8*sqrt(geo%ftEps(iFt))
+             co%k2(iCv) = (0.66_R8+1.88_R8*sqrt(geo%ftEps(iFt))
      &        -1.54_R8*geo%ftEps(iFt))
-     &        /(1.0_R8+1.03_R8*sqrt(nu2(iCv))+0.31_R8*nu2(iCv))
-     &        +1.17_R8*(geo%ftEps(iFt)**3)*nu2(iCv)
-     &        /(1.0_R8+0.74_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
+     &        /(1.0_R8+1.03_R8*sqrt(co%nu2(iCv))+0.31_R8*co%nu2(iCv))
+     &        +1.17_R8*(geo%ftEps(iFt)**3)*co%nu2(iCv)
+     &        /(1.0_R8+0.74_R8*sqrt(geo%ftEps(iFt)**3)*co%nu2(iCv))
            endif
          endif
        enddo                                                          !lk 19.09.07 }
@@ -524,7 +524,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &        sqrt(geo%ftEps(iFt)**3)
             co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
             co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
-            co%f_luc_ki_c(iCv) = 1.0_R8/k2(iCv)*1.60_R8*
+            co%f_luc_ki_c(iCv) = 1.0_R8/co%k2(iCv)*1.60_R8*
      &        sqrt(geo%ftEps(iFt)**3)
             co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
