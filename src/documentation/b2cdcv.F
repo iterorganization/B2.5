@@ -93,18 +93,21 @@
 *     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
 *     fcQgam(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector vector and the normal vector
-*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
+*     of face iFc, in the poloidal plane.
+*     It will hold that 0.lt.fcQgam(,).le.1.
 *
 *     fcQalf - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
 *     fcQalf(iFc,1) specifies sin(t), where t is the included angle
-*     between the magnetic field vector and the face normal.
+*     between the magnetic field vector and the face normal, in the
+*     poloidal plane.
 *     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 *
 *     fcQbet - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
 *     fcQbet(iFc,1) specifies sin(t), where t is the included angle
-*     between the cell-connector and the magnetic field vector.
+*     between the cell-connector and the magnetic field vector, in
+*     the poloidal plane.
 *     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 *
 *     fcPbs - (1:nFc) real*8 array.

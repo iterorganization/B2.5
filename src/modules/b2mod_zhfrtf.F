@@ -8,7 +8,7 @@
       integer, allocatable, save ::
      &  is_i(:)
       real (kind=R8), allocatable, save ::
-     &  z2n_xy(:,:), nal(:,:), Ia(:,:), av_ualpha(:,:),
+     &  z2n_cv(:,:), nal(:,:), Ia(:,:), av_ualpha(:,:),
      &  gt_Ac(:,:), gtalc(:,:), avm_u(:), rho_A_rel(:,:),
      &  gavm_uc(:), Z_to_m1_ast(:,:)
       real (kind=R8), allocatable, save ::
@@ -27,7 +27,7 @@
 *  3. description
 *
 *     This module contains:
-*     z2n_xy: squared charge weighted average density of the isonuclear sequence
+*     z2n_cv: squared charge weighted average density of the isonuclear sequence
 *     nal: average density of the isonuclear sequence
 *     Ia: ratio of the squared charge weighted density of an ion to
 *         the squared charge weighted average density of its isonuclear sequence
@@ -55,7 +55,7 @@
         endif
       enddo
 
-      allocate(z2n_xy(nCv,0:nspecies-1))
+      allocate(z2n_cv(nCv,0:nspecies-1))
       allocate(nal(nCv,0:nspecies-1))
       allocate(Ia(nCv,0:ns-1))
       allocate(av_ualpha(nCv,0:nspecies-1))
@@ -73,7 +73,7 @@
       implicit none
       if (.not.allocated(is_i)) return
       deallocate(is_i)
-      deallocate(z2n_xy)
+      deallocate(z2n_cv)
       deallocate(nal)
       deallocate(Ia)
       deallocate(av_ualpha)
@@ -132,7 +132,7 @@
 *  3. description
 *
 *     This routine computes:
-*     z2n_xy: squared charge weighted average density
+*     z2n_cv: squared charge weighted average density
 *             of the isonuclear sequence
 *     nal: average density of the isonuclear sequence
 *     Ia: ratio of the squared charge weighted density to
@@ -144,11 +144,11 @@
 *-----------------------------------------------------------------------
 
 *   ..calculate the average Z**2*n and numerical density of the isonuclear sequence
-      z2n_xy = 0.0_R8
+      z2n_cv = 0.0_R8
       nal = 0.0_R8
       do inucl = 0, nspecies-1
         do iz = 1, znnucl_int(inucl)
-          z2n_xy(:,inucl) = z2n_xy(:,inucl) +
+          z2n_cv(:,inucl) = z2n_cv(:,inucl) +
      &      iz**2*na(:,nucl2s(inucl,iz))
           nal(:,inucl) = nal(:,inucl) +
      &      na(:,nucl2s(inucl,iz))
@@ -162,7 +162,7 @@
       do inucl = 0, nspecies-1
         do iz= 1, znnucl_int(inucl)
           Ia(:,nucl2s(inucl,iz)) =
-     &      iz**2*na(:,nucl2s(inucl,iz))/z2n_xy(:,inucl)
+     &      iz**2*na(:,nucl2s(inucl,iz))/z2n_cv(:,inucl)
           av_ualpha(:,inucl) = av_ualpha(:,inucl) +
      &      Ia(:,nucl2s(inucl,iz))*ua(:,nucl2s(inucl,iz))
           Z_to_m1_ast(:,inucl) = Z_to_m1_ast(:,inucl) +
@@ -312,10 +312,10 @@
       end subroutine b2mod_zhfrtf_tgta
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p)
+      subroutine b2mod_zhfrtf_fr(iCv,is,coef,smfr_p,corr_fria)
       implicit none
       integer :: iCv, is, inucl
-      real (kind=R8) :: coef
+      real (kind=R8) :: coef, corr_fria
       real (kind=R8), DIMENSION(0:1) :: smfr_p
 *-----------------------------------------------------------------------
 *.documentation
@@ -337,28 +337,29 @@
 *   ..the first part of the friction force
       temp=0
       do inucl = 0, nspecies-1
-        temp=temp+z2n_xy(iCv,inucl)*
+        temp=temp+z2n_cv(iCv,inucl)*
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)
       enddo
-      smfr_p(1)=-coef*temp
+      smfr_p(1)=-coef*temp*corr_fria
 
 *   ..the second part of the friction force
       temp=0
       do inucl = 0, nspecies-1
-        temp=temp+z2n_xy(iCv,inucl)*
+        temp=temp+z2n_cv(iCv,inucl)*
      &   rmu(inucl,s2nucl(is)-1)*c_R_w(iCv,inucl,s2nucl(is)-1)*
      &   av_ualpha(iCv,inucl)
       enddo
-      smfr_p(0)=coef*temp
+      smfr_p(0)=coef*temp*corr_fria
 
       return
       end subroutine b2mod_zhfrtf_fr
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tf(iCv,is,zhcscorr,nais,smtf,smtf_nofl)
+      subroutine b2mod_zhfrtf_tf(iCv,is,zhcscorr,nais,smtf,smtf_nofl,
+     .  corr_tfia)
       implicit none
       integer :: iCv, is, zhcscorr
-      real (kind=R8) :: smtf, smtf_nofl,nais
+      real (kind=R8) :: smtf, smtf_nofl, corr_tfia, nais
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -397,6 +398,8 @@
      &    Ia(iCv,is)*gtalc(iCv,s2nucl(is)-1))
       endif
 
+      smtf = smtf*corr_tfia
+      smtf_nofl = smtf_nofl*corr_tfia
       return
       end subroutine b2mod_zhfrtf_tf
 
