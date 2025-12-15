@@ -1935,12 +1935,12 @@ c b2tqna
       call ipgetr ('b2tqna_ballooning', s % b2tqna_ballooning)
       call ipgetr ('b2tqna_bb_ref', s % b2tqna_bb_ref)
       call ipgetr ('b2tqna_ballooning_rescale',
-     & s%b2tqna_ballooning_rescale)
-      call ipgeti ('b2tqna_ballooning_sig', s%b2tqna_ballooning_sig)
-      call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
-      call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
-      call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
-      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)
+     & s % b2tqna_ballooning_rescale)
+      call ipgeti ('b2tqna_ballooning_sig', s % b2tqna_ballooning_sig)
+      call ipgeti ('b2tqna_limit_coeff', s % b2tqna_limit_coeff)
+      call ipgetr ('b2tqna_pfr_rescale', s % b2tqna_pfr_rescale)
+      call ipgetr ('b2tqna_divsol_rescale', s % b2tqna_divsol_rescale)
+      call ipgetr ('b2tqna_cfvma', s % b2tqna_cfvma)
 
       call ipgetr ('b2tqna_te_alfa1', s%te_alfa1)
       call xertst (0.0_R8.le.s%te_alfa1,
@@ -1963,7 +1963,7 @@ c b2tqna
       call xertst (0.0_R8.le.s%ti_alfa1,
      &      'faulty argument b2tqna_ti_alfa1')
       call ipgetr ('b2tqna_ti_alfa2', s%ti_alfa2)
-      call xertst (0.0_R8.le.s%ti_alfa1,
+      call xertst (0.0_R8.le.s%ti_alfa2,
      &      'faulty argument b2tqna_ti_alfa2')
       call ipgetr ('b2tqna_ti_alfa3', s%ti_alfa3)
       call xertst (0.0_R8.le.s%ti_alfa3,
