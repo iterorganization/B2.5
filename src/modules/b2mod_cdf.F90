@@ -38,7 +38,7 @@ contains
     integer :: nyadim, nyidim
     integer :: nydim, nybldim, nytldim, nytrdim, nybrdim
     ! variable ids
-    integer :: ntstepid, jxiid, jxaid, jsepid, timesaid, &
+    integer :: ntstepid, icsepimpid, icsepompid, timesaid, &
          cvlistiid, dsiid, cvlistaid, dsaid, &
          fclistlid, cvlistlid, cnlistlid, dslid, dsLTid, dsLPid, &
          fclistrid, cvlistrid, cnlistrid, dsrid, dsRTid, dsRPid, &
@@ -193,6 +193,9 @@ contains
       iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
       call check_cdf_status(iret)
       if (nimp.gt.0) then
+        dims(1) = 0
+        iret = nf_def_var(ncid, 'icsepimp', NCDOUBLE, 0, dims, icsepimpid)
+        call check_cdf_status(iret)
         dims(1) = nyidim
         iret = nf_def_var(ncid, 'cvlisti', NCDOUBLE, 1, dims, cvlistiid)
         call check_cdf_status(iret)
@@ -200,6 +203,9 @@ contains
         call check_cdf_status(iret)
       endif
       if (nomp.gt.0) then
+        dims(1) = 0
+        iret = nf_def_var(ncid, 'icsepomp', NCDOUBLE, 0, dims, icsepompid)
+        call check_cdf_status(iret)
         dims(1) = nyadim
         iret = nf_def_var(ncid, 'cvlista', NCDOUBLE, 1, dims, cvlistaid)
         call check_cdf_status(iret)
@@ -1123,6 +1129,8 @@ contains
       iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
       call check_cdf_status(iret)
       if (nimp.gt.0) then
+        iret = nf_put_att_text(ncid, icsepimpid, 'long_name', 41, 'volume index, inboard midplane separatrix')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlistiid, 'long_name', 30, 'volumes list, inboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsiid, 'long_name', 35, 'radial coordinate, inboard midplane')
@@ -1131,6 +1139,8 @@ contains
         call check_cdf_status(iret)
       endif
       if (nomp.gt.0) then
+        iret = nf_put_att_text(ncid, icsepompid, 'long_name', 42, 'volume index, outboard midplane separatrix')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlistaid, 'long_name', 31, 'volumes list, outboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, dsaid, 'long_name', 36, 'radial coordinate, outboard midplane')
