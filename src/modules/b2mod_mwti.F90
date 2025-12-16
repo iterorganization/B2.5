@@ -176,7 +176,7 @@ contains
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1)
     real (kind=R8) :: &
-         timesa(1), batchsa(1), tstepn(1)
+         timesa(1), batchsa(1), tstepn(1), icsepimpn(1), icsepompn(1)
     real (kind=R8), allocatable, save :: dsl(:), dsi(:), dsa(:), dsr(:), dstl(:), dstr(:)
     real (kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
     real (kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
@@ -1977,6 +1977,8 @@ contains
       tstepn(1) = ntstep
       call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
       if (nimp.gt.0) then
+        icsepimpn(1) = icsepimp
+        call rwcdf(rw,ncid,'icsepimp',imap,icsepimpn,iret)
         allocate(slice(1:nimp))
         slice = real(imp(1:nimp), kind=R8)
         call rwcdf(rw,ncid,'cvlisti',imap,slice,iret)
@@ -1984,6 +1986,8 @@ contains
         call rwcdf(rw,ncid,'dsi',imap,dsi,iret)
       endif
       if (nomp.gt.0) then
+        icsepompn(1) = icsepomp
+        call rwcdf(rw,ncid,'icsepomp',imap,icsepompn,iret)
         allocate(slice(1:nomp))
         slice = real(omp(1:nomp), kind=R8)
         call rwcdf(rw,ncid,'cvlista',imap,slice,iret)
