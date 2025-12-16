@@ -563,7 +563,7 @@
       allocate(b2stbr_bas_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2stbr_bas_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbc_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
-      allocate(b2stbc_smo_bal(-1:nxd,-1:nyd,0:nsd-1))      
+      allocate(b2stbc_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbm_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2stbm_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(ext_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
@@ -1044,7 +1044,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2stbr_bas_smo0to3)
       deallocate(b2stbr_bas_smo_bal)
       deallocate(b2stbc_smo0to3)
-      deallocate(b2stbc_smo_bal)      
+      deallocate(b2stbc_smo_bal)
       deallocate(b2stbm_smo0to3)
       deallocate(b2stbm_smo_bal)
       deallocate(ext_smo0to3)
@@ -1501,7 +1501,7 @@ cdjm Jan2017 Eirene arrays for electron heat balance:
       eirene_mc_eael_she_bal=0.0_R8
       eirene_mc_emel_she_bal=0.0_R8
       eirene_mc_eiel_she_bal=0.0_R8
-      eirene_mc_epel_she_bal=0.0_R8      
+      eirene_mc_epel_she_bal=0.0_R8
 cdjm Jun2017 Time-averaged arrays for electron heat balance:
       allocate(eirene_mc_eael_she_bal_av(-1:nxd,-1:nyd,1:nstrad))
       allocate(eirene_mc_emel_she_bal_av(-1:nxd,-1:nyd,1:nstrad))
@@ -1669,7 +1669,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       real (kind=R8):: nb(-1:nx,-1:ny)
 *   ..local variables
       integer ix,iy
-      
+
       do ix=-1,nx
         do iy=-1,ny
           b2stbr_phys_sna_bal(ix,iy,isb)=
@@ -1717,7 +1717,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       intrinsic size
 
       nstrad = size(eirene_mc_papl_sna_bal,4)
-      
+
       do ix=-1,nx
         do iy=-1,ny
           if (allocated(eirene_mc_papl_sna_bal)) then
@@ -2452,7 +2452,7 @@ cdjm Update ion heat sources
       if (balance_average.ne.0) then
         if (ntim < 0) then
            avmlt = rratio(1,itim)
-           curmlt = 0._R8
+           curmlt = 0.0_R8
         else
            avmlt = 1.0_R8
            curmlt = 1.0_R8
@@ -2654,7 +2654,7 @@ cdjm Update ion heat sources
      &                         curmlt*b2stbr_phys_she_bal
       b2stbr_bas_she_bal_av = avmlt*b2stbr_bas_she_bal_av +
      &                        curmlt*b2stbr_bas_she_bal
-      b2stbr_first_flight_she_bal_av = 
+      b2stbr_first_flight_she_bal_av =
      &            avmlt*b2stbr_first_flight_she_bal_av +
      &            curmlt*b2stbr_first_flight_she_bal
       b2stbc_she_bal_av = avmlt*b2stbc_she_bal_av +
@@ -2726,7 +2726,7 @@ cdjm Update ion heat sources
      &                         curmlt*b2stbr_phys_shi_bal
       b2stbr_bas_shi_bal_av = avmlt*b2stbr_bas_shi_bal_av +
      &                        curmlt*b2stbr_bas_shi_bal
-      b2stbr_first_flight_shi_bal_av = 
+      b2stbr_first_flight_shi_bal_av =
      &            avmlt*b2stbr_first_flight_shi_bal_av +
      &            curmlt*b2stbr_first_flight_shi_bal
       b2stbc_shi_bal_av = avmlt*b2stbc_shi_bal_av +
@@ -2832,7 +2832,7 @@ cdjm Update ion heat sources
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
-      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8), save :: fac_hz = 1.0_R8
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
