@@ -3010,7 +3010,7 @@ c new CDF movie option
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
                 old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
                 call ids_get( idx, "summary", old_summary, status )
                 if ( status.ne.0 ) then
                   write(*,*) 'Error opening old summary IDS !'
@@ -3765,7 +3765,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               old_start_time = 0.0_IDS_real
               old_end_time = IDS_REAL_INVALID
               old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
               call ids_get( idx, "summary", old_summary, status )
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old summary IDS !'
@@ -4074,14 +4074,17 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      radiation )
         call dealloc_batch_edge(
-     &      batch_profiles, batch_sources,
+     &      batch_profiles, batch_sources
 #if IMAS_MAJOR_VERSION > 3
-     &      batch_plasma_profiles, batch_plasma_sources,
+     &    , batch_plasma_profiles, batch_plasma_sources
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-     &      summary,
+     &    , summary
 #endif
-     &      description )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &    , description
+#endif
+     &      )
         call close_ual(idx)
 #endif
       end if

@@ -224,14 +224,9 @@ contains
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
           uri = 'imas:mdsplus?path='//trim(ids_path)
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
-#endif
-#else
-          allocate( summary%identifier(1) )
-          summary%identifier = trim(uri)
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
 #else
@@ -516,15 +511,10 @@ contains
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
           uri = 'imas:mdsplus?path='//trim(ids_path)
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           if (do_summary) then
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             allocate( description%uri(1) )
             description%uri = trim(uri)
-#else
-            allocate( summary%identifier(1) )
-            summary%identifier = trim(uri)
-#endif
           end if
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
@@ -603,15 +593,15 @@ contains
     end subroutine put_batch_edge
 
     subroutine dealloc_batch_edge( &
-            &   batch_profiles, batch_sources, &
+            &   batch_profiles, batch_sources &
 #if IMAS_MAJOR_VERSION > 3
-            &   batch_plasma_profiles, batch_plasma_sources, &
+            & , batch_plasma_profiles, batch_plasma_sources &
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-            &   summary, &
+            & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-            &   description &
+            & , description &
 #endif
             &   )
         implicit none
@@ -862,12 +852,9 @@ contains
 #endif
           &  "and radiation IDS"
 
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
         allocate( description%uri(1) )
         description%uri = trim(uri)
-#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        allocate( summary%identifier(1) )
-        summary%identifier = trim(uri)
 #endif
         if (new_eq_ggd) then
           write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
@@ -1007,9 +994,6 @@ contains
 #if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
-#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-          allocate( summary%identifier(1) )
-          summary%identifier = trim(uri)
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call ids_put( idx, "dataset_description", description, status )
