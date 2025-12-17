@@ -188,24 +188,6 @@ module b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
-#if AL_MAJOR_VERSION < 5
-    use imas_midplane_identifier &     ! IGNORE
-     & , only : midplane_identifier
-    use imas_neutrals_identifier &     ! IGNORE
-     & , only : neutrals_identifier
-    use imas_radiation_identifier &    ! IGNORE
-     & , only : radiation_identifier
-    use imas_edge_source_identifier &  ! IGNORE
-     & , only : edge_source_identifier
-#else
-    use al_midplane_identifier &       ! IGNORE
-     & , only : midplane_identifier
-    use al_neutrals_identifier &       ! IGNORE
-     & , only : neutrals_identifier
-    use al_radiation_identifier &      ! IGNORE
-     & , only : radiation_identifier
-    use al_edge_source_identifier &    ! IGNORE
-     & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
     use al_midplane_identifier &       ! IGNORE
      & , only : set_midplane_identifier => set_identifier, &
@@ -218,7 +200,24 @@ module b2mod_ual_io
      & , only : set_edge_source_identifier => set_identifier
     use al_plasma_source_identifier &  ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
-#endif
+#elif AL_MAJOR_VERSION > 4
+    use al_midplane_identifier &       ! IGNORE
+     & , only : midplane_identifier
+    use al_neutrals_identifier &       ! IGNORE
+     & , only : neutrals_identifier
+    use al_radiation_identifier &      ! IGNORE
+     & , only : radiation_identifier
+    use al_edge_source_identifier &    ! IGNORE
+     & , only : edge_source_identifier
+#else
+    use imas_midplane_identifier &     ! IGNORE
+     & , only : midplane_identifier
+    use imas_neutrals_identifier &     ! IGNORE
+     & , only : neutrals_identifier
+    use imas_radiation_identifier &    ! IGNORE
+     & , only : radiation_identifier
+    use imas_edge_source_identifier &  ! IGNORE
+     & , only : edge_source_identifier
 #endif
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
@@ -232,6 +231,10 @@ module b2mod_ual_io
 #if IMAS_MAJOR_VERSION > 3
     use ids_schemas &     ! IGNORE
      & , only : ids_code_constant
+#if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary_constant_flt_0d_2
+#endif
 #endif
 #if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
@@ -1536,43 +1539,47 @@ contains
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
           select case (is_codes(eb2spcr(is)))
           case ('H')
-            call write_sourced_value( summary%composition%hydrogen, frac )
+            call write_sourced_constant_2( summary%composition%hydrogen, frac )
           case ('D')
-            call write_sourced_value( summary%composition%deuterium, frac )
+            call write_sourced_constant_2( summary%composition%deuterium, frac )
           case ('T')
-            call write_sourced_value( summary%composition%tritium, frac )
+            call write_sourced_constant_2( summary%composition%tritium, frac )
           case ('DT')
-            call write_sourced_value( summary%composition%deuterium_tritium, frac )
+            call write_sourced_constant_2( summary%composition%deuterium_tritium, frac )
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
-              call write_sourced_value( summary%composition%helium_3, frac )
+              call write_sourced_constant_2( summary%composition%helium_3, frac )
             else if (nint(am(eb2spcr(is))).eq.4) then
-              call write_sourced_value( summary%composition%helium_4, frac )
+              call write_sourced_constant_2( summary%composition%helium_4, frac )
             end if
           case ('Li')
-            call write_sourced_value( summary%composition%lithium, frac )
+            call write_sourced_constant_2( summary%composition%lithium, frac )
           case ('Be')
-            call write_sourced_value( summary%composition%beryllium, frac )
+            call write_sourced_constant_2( summary%composition%beryllium, frac )
           case ('B')
-            call write_sourced_value( summary%composition%boron, frac )
+            call write_sourced_constant_2( summary%composition%boron, frac )
           case ('C')
-            call write_sourced_value( summary%composition%carbon, frac )
+            call write_sourced_constant_2( summary%composition%carbon, frac )
           case ('N')
-            call write_sourced_value( summary%composition%nitrogen, frac )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+            call write_sourced_constant( summary%composition%nitrogen, frac )
+#else
+            call write_sourced_constant_2( summary%composition%nitrogen, frac )
+#endif
           case ('O')
-            call write_sourced_value( summary%composition%oxygen, frac )
+            call write_sourced_constant_2( summary%composition%oxygen, frac )
           case ('Ne')
-            call write_sourced_value( summary%composition%neon, frac )
+            call write_sourced_constant_2( summary%composition%neon, frac )
           case ('Ar')
-            call write_sourced_value( summary%composition%argon, frac )
+            call write_sourced_constant_2( summary%composition%argon, frac )
           case ('Fe')
-            call write_sourced_value( summary%composition%iron, frac )
+            call write_sourced_constant_2( summary%composition%iron, frac )
           case ('Xe')
-            call write_sourced_value( summary%composition%xenon, frac )
+            call write_sourced_constant_2( summary%composition%xenon, frac )
           case ('W')
-            call write_sourced_value( summary%composition%tungsten, frac )
+            call write_sourced_constant_2( summary%composition%tungsten, frac )
           case ('Kr')
-            call write_sourced_value( summary%composition%krypton, frac )
+            call write_sourced_constant_2( summary%composition%krypton, frac )
           end select
         end do
 #endif
@@ -4963,7 +4970,6 @@ contains
                 &   b2CellData = tmpCv )
             end if
 #endif
-
             !! pe: Electron pressure
             call b2xppe( nx, ny, ne, te, pe)
             call write_quantity( edge_grid,                           &
@@ -5210,8 +5216,8 @@ contains
                       &   value = rpt(:,:,ispion(is,js)) )
 #endif
                 end do
-              else
 #ifdef B25_EIRENE
+              else
                 !! Test ion pressure
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
@@ -7184,7 +7190,7 @@ contains
 #endif
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
               case ('DT')
-                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium_tritium, nisep )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%deuterium_tritium, nisep )
 #endif
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
@@ -7616,6 +7622,7 @@ contains
         !! Internal variables
         integer :: i, is, js, ks, ion_charge_int, nc
         integer :: batch_index
+        integer :: ns    !< Total number of B2.5 species
         real(IDS_real) :: batch_slice_value   !< Time slice value
         character(len=13) :: spclabel         !< Species label
         character(len=5) :: hlp_frm
@@ -7642,6 +7649,7 @@ contains
 
         !! Preparing database for writing
         call IDS_init
+        ns = size( na, 3 )
         homogeneous_time = 1
         if ( present( time_IN ) ) then
             time = time_IN
@@ -7792,8 +7800,6 @@ contains
           allocate( description%simulation%workflow(1) )
           description%simulation%workflow = source
 #else
-          if ( present( time_IN ) ) &
-            &  summary%simulation%time_current = time_IN
           allocate( summary%simulation%workflow(1) )
           summary%simulation%workflow = source
 #endif
@@ -8235,43 +8241,47 @@ contains
             if (u.gt.0.0_IDS_real) frac = frac / u
             select case (is_codes(eb2spcr(is)))
             case ('H')
-              call write_sourced_value( summary%composition%hydrogen, frac )
+              call write_sourced_constant_2( summary%composition%hydrogen, frac )
             case ('D')
-              call write_sourced_value( summary%composition%deuterium, frac )
+              call write_sourced_constant_2( summary%composition%deuterium, frac )
             case ('T')
-              call write_sourced_value( summary%composition%tritium, frac )
+              call write_sourced_constant_2( summary%composition%tritium, frac )
             case ('DT')
-              call write_sourced_value( summary%composition%deuterium_tritium, frac )
+              call write_sourced_constant_2( summary%composition%deuterium_tritium, frac )
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
-                call write_sourced_value( summary%composition%helium_3, frac )
+                call write_sourced_constant_2( summary%composition%helium_3, frac )
               else if (nint(am(eb2spcr(is))).eq.4) then
-                call write_sourced_value( summary%composition%helium_4, frac )
+                call write_sourced_constant_2( summary%composition%helium_4, frac )
               end if
             case ('Li')
-              call write_sourced_value( summary%composition%lithium, frac )
+              call write_sourced_constant_2( summary%composition%lithium, frac )
             case ('Be')
-              call write_sourced_value( summary%composition%beryllium, frac )
+              call write_sourced_constant_2( summary%composition%beryllium, frac )
             case ('B')
-              call write_sourced_value( summary%composition%boron, frac )
+              call write_sourced_constant_2( summary%composition%boron, frac )
             case ('C')
-              call write_sourced_value( summary%composition%carbon, frac )
+              call write_sourced_constant_2( summary%composition%carbon, frac )
             case ('N')
-              call write_sourced_value( summary%composition%nitrogen, frac )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+              call write_sourced_constant( summary%composition%nitrogen, frac )
+#else
+              call write_sourced_constant_2( summary%composition%nitrogen, frac )
+#endif
             case ('O')
-              call write_sourced_value( summary%composition%oxygen, frac )
+              call write_sourced_constant_2( summary%composition%oxygen, frac )
             case ('Ne')
-              call write_sourced_value( summary%composition%neon, frac )
+              call write_sourced_constant_2( summary%composition%neon, frac )
             case ('Ar')
-              call write_sourced_value( summary%composition%argon, frac )
+              call write_sourced_constant_2( summary%composition%argon, frac )
             case ('Fe')
-              call write_sourced_value( summary%composition%iron, frac )
+              call write_sourced_constant_2( summary%composition%iron, frac )
             case ('Xe')
-              call write_sourced_value( summary%composition%xenon, frac )
+              call write_sourced_constant_2( summary%composition%xenon, frac )
             case ('W')
-              call write_sourced_value( summary%composition%tungsten, frac )
+              call write_sourced_constant_2( summary%composition%tungsten, frac )
             case ('Kr')
-              call write_sourced_value( summary%composition%krypton, frac )
+              call write_sourced_constant_2( summary%composition%krypton, frac )
             end select
           end do
 #endif
@@ -10487,6 +10497,19 @@ contains
 
     return
     end subroutine write_sourced_constant
+
+    subroutine write_sourced_constant_2( val, value )
+    implicit none
+    type(ids_summary_constant_flt_0d_2) :: val
+        !< Type of IDS data structure, designed for sourced real constant data handling
+    real(IDS_real), intent(in) :: value
+
+    val%value = value
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_constant_2
 
     subroutine write_sourced_int_constant( ival, ivalue )
     implicit none

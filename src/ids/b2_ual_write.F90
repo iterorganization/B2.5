@@ -403,7 +403,7 @@ program b2_ual_write
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
         old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         call ids_get( idx, "summary", old_summary, status)
         if ( status.ne.0 ) then
           write(0,*) 'Error opening old summary IDS !'
@@ -646,12 +646,13 @@ program b2_ual_write
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-        &   summary, &
+        & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-        &   description &
+        & , description &
 #endif
         &   )
     call close_ual(idx)
