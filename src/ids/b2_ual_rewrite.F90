@@ -434,7 +434,7 @@ program b2_ual_rewrite
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
       call ids_get( idx, "summary", old_summary, status )
       if ( status.ne.0 ) then
         write(0,*) 'Error opening old summary IDS !'
@@ -698,7 +698,8 @@ program b2_ual_rewrite
 #endif
       end if
     end if
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -706,12 +707,13 @@ program b2_ual_rewrite
         &   divertors, &
 #endif
         &   radiation, wall )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-        &   summary, &
+        & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-        &   description &
+        & , description &
 #endif
         &   )
     call close_ual(idx)

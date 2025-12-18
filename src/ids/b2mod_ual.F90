@@ -123,7 +123,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -201,14 +201,9 @@ contains
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
           uri = 'imas:mdsplus?path='//trim(ids_path)
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
-#endif
-#else
-          allocate( summary%identifier(1) )
-          summary%identifier = trim(uri)
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
 #else
@@ -328,7 +323,8 @@ contains
 
     end subroutine put_ids_edge
 
-    subroutine dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine dealloc_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
@@ -346,7 +342,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -457,15 +453,10 @@ contains
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
           uri = 'imas:mdsplus?path='//trim(ids_path)
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           if (do_summary) then
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             allocate( description%uri(1) )
             description%uri = trim(uri)
-#else
-            allocate( summary%identifier(1) )
-            summary%identifier = trim(uri)
-#endif
           end if
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
@@ -543,12 +534,13 @@ contains
 
     end subroutine put_batch_edge
 
-    subroutine dealloc_batch_edge( batch_profiles, batch_sources, &
+    subroutine dealloc_batch_edge( &
+            &   batch_profiles, batch_sources &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-            &   summary, &
+            & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-            &   description &
+            & , description &
 #endif
             &   )
         implicit none
@@ -612,7 +604,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -696,7 +688,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -749,12 +741,9 @@ contains
 #endif
           &  "wall, and radiation IDS"
 
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
         allocate( description%uri(1) )
         description%uri = trim(uri)
-#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        allocate( summary%identifier(1) )
-        summary%identifier = trim(uri)
 #endif
         if (new_eq_ggd) then
           write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
@@ -866,9 +855,6 @@ contains
 #if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
-#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-          allocate( summary%identifier(1) )
-          summary%identifier = trim(uri)
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call ids_put( idx, "dataset_description", description, status )

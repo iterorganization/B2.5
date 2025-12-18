@@ -597,12 +597,11 @@ c****************************************************************
                 end if
               end do
             else
-              write(*,*),'nstsi=',is, 'is not defined!'
+              write(*,'(a,i4,a)') 'nstsi=',is,' is not defined!'
             end if
           end do
           deallocate(surf_type)
         end if
-
 
         if (switch%use_eirene.ne.0) then
 c*** Puffing/seeding rate and recycling source
@@ -732,7 +731,6 @@ c     boundaries should be added to a global balance as a wall recycling source
 
 !     End of the loop over isonuclear sequence (ls)
       enddo
-
 
 c********* Debug output **************
       if(debug_flags(90).gt.0) then
