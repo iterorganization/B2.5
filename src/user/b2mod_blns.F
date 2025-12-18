@@ -139,9 +139,9 @@ c
 c
       integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls,
      ,        kks, iCv, iFc, ib, ibc, it
-      integer idir, ixf, iyf
+      integer idir, ixf, iyf, find_loc
 
-      logical first !, hlp_lw, hlp_lt
+      logical first, is_cv_tar(mpg%nCv)
 
       real (kind=R8) :: hlp_pls(nbcd,ns)
       integer use_recyceir
@@ -192,8 +192,8 @@ c======================================================================
 
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
-        print *,'=== Regions of the grid:'
 #ifdef WG_DEBUG
+        print *,'=== Regions of the grid:'
         l=ny+1
         n=mod(l-1,10)+1
         i=(nx+2)/10+1
@@ -207,8 +207,8 @@ c<<<
           end do
           l=l-1
         end do
-#endif
         write(*,'()')
+#endif
 c>>>
 c
 
@@ -348,13 +348,16 @@ c**********************************
 ! The flows of B2 fluids
 c**********************************
       nCv = mpg%nCv
+      is_cv_tar = .false.
 !     Loop over isonuclear sequences
       do is=0,ns-1
         k = b2espcr(is)
-
         do it=1,mpg%nStr
           do iy=1,mpg%divFcP(it,2)
             iFc=mpg%divFc(mpg%divFcP(it,1) + iy - 1)
+            if (is.eq.0)
+     &        is_cv_tar(maxval(mpg%fcCv(iFc,1:2))) = .true.
+
             if (is_neutral(is).and.switch%use_eirene.eq.0) then
               flxnt(k) =
      &          flxnt(k)+mpg%divFcOr(mpg%divFcP(it,1) + iy - 1)*
@@ -379,12 +382,17 @@ c**********************************
      &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
               endif
             else
-              if (switch%mdf_fnb.eq.0) then
-              flxic(k) = flxic(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
-              else
+              if (is_neutral(is).and.switch%use_eirene.eq.0) then
+                flxnc(k) = flxnc(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &               (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+              elseif(.not.is_neutral(is)) then
+                if (switch%mdf_fnb.eq.0) then
                 flxic(k) = flxic(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &             (st%dv%fna_mdf(iFc,0,is)+st%dv%fna_mdf(iFc,1,is))
+     &               (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+                else
+                  flxic(k) = flxic(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &               (st%dv%fna_mdf(iFc,0,is)+st%dv%fna_mdf(iFc,1,is))
+                endif
               endif
             endif
           enddo
@@ -397,6 +405,62 @@ c**********************************
         enddo
       end do
       flxiw = flxiw - flxit
+
+      if (switch%use_eirene.eq.0) then
+        do is=0,ns-1
+          k = b2espcr(is)
+          ic = eb2spcr(k)
+          if (switch%recycle_afn.eq.0.or.nint(zn(ic)).ne.1) then
+            do ib = 1, nbc
+              if (bccon(ic,ib).eq.10) then
+                do i = 1, mpg%bcCvP(ib,2)
+                  iCv = mpg%bcCv(mpg%bcCvP(ib,1)+i-1,1)
+                  if (is_cv_tar(iCv)) then
+                    flxnt_pump(k) = flxnt_pump(k) - st%sr%sna(iCv,0,is)
+     &                -st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                  else
+                    flxnw_pump(k) = flxnw_pump(k) - st%sr%sna(iCv,0,is)
+     &                -st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                  endif
+                enddo
+              endif
+            enddo
+          else
+            do ib = 1, nstrai
+              ibc = find_loc(BCSTART, NBC, RCSTART(ib))
+              if (recyc(ic,ib).lt.1.0_R8) then
+                do i = 1, mpg%bcCvP(ibc,2)
+                  iCv = mpg%bcCv(mpg%bcCvP(ibc,1)+i-1,1)
+                  if (is_cv_tar(iCv)) then
+                    flxnt_pump(k) = flxnt_pump(k) - st%sr%sna(iCv,0,is)
+     &                -st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                  else
+                    flxnw_pump(k) = flxnw_pump(k) - st%sr%sna(iCv,0,is)
+     &                -st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                  endif
+                enddo
+              endif
+            enddo
+          endif
+          if (ic.eq.is) then
+            do ib = 1, nbc
+              do i = 1, mpg%bcCvP(ib,2)
+                iCv = mpg%bcCv(mpg%bcCvP(ib,1)+i-1,1)
+                if (is_cv_tar(iCv)) then
+                  flxnt_rec(k) = flxnt_rec(k) + st%sr%sna(iCv,0,is)
+     &              +st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                else
+                  flxnw_rec(k) = flxnw_rec(k) + st%sr%sna(iCv,0,is)
+     &              +st%pl%na(iCv,is)*st%sr%sna(iCv,1,is)
+                endif
+              enddo
+            enddo
+          else
+            flxis(k) = flxis(k) + sum(st%sr%sna(1:mpg%nCi,0,is)
+     &        +st%pl%na(1:mpg%nCi,is)*st%sr%sna(1:mpg%nCi,1,is))
+          endif
+        enddo
+      endif
 
       do iCv=1,mpg%nCi
         if (mpg%cvReg(iCv).eq.0) cycle
@@ -436,229 +500,10 @@ c**********************************
         enddo
       enddo
 
-      do ls = 1,nspecies
-#ifdef WG_TODO
-        kks=eb2spcr(ls)+1
-c<<<
-        if(debug_flags(90).gt.0) then
-          print *,'%%# Species # ',ls
-          print *,'%%# eb2spcr(ls) = ',eb2spcr(ls)
-          print *,'%%# nfluids(ls) = ',nfluids(ls)
-        end if
-c>>>
-
-!       Loop over species within given isonuclear sequence
-c***        EB2SPCR(ls) points to the first B2 fluid (i.e. the neutral fluid) corresponding to the isonuclear sequence labeled by ls
-c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) corresponding to the isonuclear sequence labeled by ls
-        do is = EB2SPCR(ls), EB2SPCR(ls) + NFLUIDS(ls)
-
-!         Loop over B2 boundaries
-          do ic = 1,nbc
-
-            if (BCCHAR(IC).eq.'S') then
-              idir  = 1
-              bsign = 1.0_R8
-            else if (BCCHAR(IC).eq.'N') then
-              idir  = 1
-              bsign =-1.0_R8
-            else if (BCCHAR(IC).eq.'W') then
-              idir  = 0
-              bsign = 1.0_R8
-            else if (BCCHAR(IC).eq.'E') then
-              idir  = 0
-              bsign =-1.0_R8
-            else
-              cycle
-            end if
-
-!           Loop over poloidal coordinate along this boundary
-            do ix = 1, BC_LIST_SIZE(ic)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!             Check whether it is a southern boundary
-              if (BCCHAR(ic).EQ.'S') then
-                ixf = topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                iyf = topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-              else if (BCCHAR(ic).EQ.'N') then
-                ixf = BC_LIST_X(ix,ic)
-                iyf = BC_LIST_Y(ix,ic)
-              else if (BCCHAR(ic).EQ.'W') then
-                ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-              else if (BCCHAR(ic).eq.'E') then
-                ixf = BC_LIST_X(ix,ic)
-                iyf = BC_LIST_Y(ix,ic)
-              end if
-
-!             Check whether this is part of the core boundary
-              if (core_boundary(ic)) then
-! Count fluid neutrals if not coupled to Eirene
-                if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnc(ls) = flxnc(ls) +
-     .             bsign*fna(ixf,iyf,idir,is)
-                else if (.not.is_neutral(is)) then ! not neutral
-                  if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
-                    flxic(ls) = flxic(ls) +
-     .               bsign*fna(ixf,iyf,idir,is)
-                  else
-                    flxic(ls) = flxic(ls) +
-     .               bsign*fna_mdf(ixf,iyf,idir,is)
-                  endif
-                  if(debug_flags(90).gt.0) then
-                    hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .               bsign*fna(ixf,iyf,idir,is)
-                  endif
-                endif    ! if (is_neutral(is)) ...
-              else if (idir.eq.1) then      ! radial wall boundary
-
-                if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnw(ls) = flxnw(ls) +
-     &             bsign*fna(ixf,iyf,idir,is)
-
-                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
-     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
-
-                else if (.not.is_neutral(is)) then
-
-                  flxiw(ls) = flxiw(ls) +
-     &             bsign*fna(ixf,iyf,idir,is)
-c<<<
-                  if(debug_flags(90).gt.0) then
-                    hlp_pls(ic,ls)=hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,idir,is)
-                  endif
-                endif
-
-              else if (idir.eq.0) then      ! target boundaries
-
-                if (is_neutral(is).and.use_eirene.eq.0) then
-                  flxnt(ls) = flxnt(ls) +
-     &             bsign*fna(ixf,iyf,idir,is)
-
-                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
-     &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
-
-                else if (.not.is_neutral(is)) then
-                  flxit(ls) = flxit(ls) +
-     &             bsign*fna(ixf,iyf,idir,is)
-
-                  if(debug_flags(90).gt.0) then
-
-                    hlpit_lp(ls) = hlpit_lp(ls) +
-     .               bsign*fna(ixf,iyf,idir,is)
-
-                    hlp_pls(ic,ls) = hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,idir,is)
-                  endif
-                endif
-
-              endif     ! boundary types
-
-!           End of the loop over poloidal coordinate along the boundary
-            enddo
-
-            if (is_neutral(is).and.use_eirene.eq.0) then
-
-! Compute the puffing rate
-              if ((BCCON(is,ic).eq.8  .or.
-     &             BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
-     &             CONPAR(is,ic,1) .gt. 0.0_R8) then
-                flxnp(ls) = flxnp(ls) + CONPAR(is,ic,1)
-              endif
-
-! Compute neutral flux due to ion recycling
-! and neutral pumped flux
-              if (BCCHAR(ic).EQ.'W' .or. BCCHAR(ic).EQ.'E') then
-
-!FIXME
-                  flxnt_rec(ls) = flxnt_rec(ls) + sna_stbr_neut(ls,ic)
-
-                  flxnt_pump(ls) = flxnt_pump(ls) +
-     &                                    sna_stbc_neut(ls,ic)
-
-                  flxnt_sput(ls) = flxnt_sput(ls) +
-     &                                    sna_stbr_sput(ls,ic)
-
-              elseif ( BCCHAR(ic).EQ.'N' .or.
-     &                (BCCHAR(ic).EQ.'S' .and. .not.core_boundary(ic) )
-     &                   ) then
-
-!FIXME
-                    flxnw_rec(ls) = flxnw_rec(ls) + sna_stbr_neut(ls,ic)
-
-                    flxnw_sput(ls) = flxnw_sput(ls) +
-     &                                    sna_stbr_sput(ls,ic)
-
-!             Exclude surfaces with puffing/seeding (for fluid neutrals)
-                    if (.not.((BCCON(is,ic).eq.5 .or. BCCON(is,ic).eq.8
-     &  .or. BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
-     &   CONPAR(is,ic,1) .gt. 0.0_R8)) then
-
-                      flxnw_pump(ls) = flxnw_pump(ls) +
-     &                                    sna_stbc_neut(ls,ic)
-                    endif
-
-              endif
-            endif
-
-!         End of the loop over B2 boundaries
-          enddo
-
-!!!!!
-! Compute the sum of ionisation sources for all ionized states of given isonuclear sequence and the time derivative term
-!!!!!
-          do iy=0,ny-1
-            do ix=0,nx-1
-
-              j=region(ix,iy,0)
-
-              if (j.ne.0 .and. leftix(ix,iy).ne.-2
-     &                   .and. rightix(ix,iy).ne.nx+1) then
-
-                if (solveco(is,j)) then
-                  if (style_b2mndt.eq.2) then
-                    hlpdt = dtim * time_factor(ix,iy)
-                  else
-                    hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
-                  end if
-                else
-                  hlpdt = 0.0_R8
-                endif
-                if (hlpdt .gt. 0.0_R8 .and. .not. is_neutral(is)) then
-                  flxid(ls) = flxid(ls) +
-     &        (na(ix,iy,is) - na0(ix,iy,is)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
-                endif
-
-                if (is .eq. EB2SPCR(ls)+1) then  ! means the first ionized state
-                  if (use_eirene.ne.0) then
-!     If Eirene is coupled, just take the ionisation source from Eirene for given isonuclear sequence
-                    flxis(ls) = sna_eir(ls)
-                  else
-!     For standalone run take the source of neutrals with the opposite sign
-                    flxis(ls) = flxis(ls) - sna(ix,iy,0,is-1) -
-     1               sna(ix,iy,1,is-1) * na(ix,iy,is-1)
-!     But be careful: the source due to time derivative should be counted
-                    if (hlpdt .gt. 0.0_R8) then
-                      flxis(ls) = flxis(ls) -
-     &       (na(ix,iy,is-1) - na0(ix,iy,is-1)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
-                    endif
-                  endif
-                  flxex(ls) = flxex(ls) + ext_sna(ix,iy,is-1) ! External source
-                endif
-
-
-              endif ! if (j.ne.0 .and. leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-
-            enddo
-          enddo
-
-!       End of the loop over species within given isonuclear sequence (is)
-        enddo
-
 c**********************************
 ! The flows of B2.5 fluids are now computed
 c**********************************
-#endif
+      do ls = 1,nspecies
 c****************************************************************
 ! Now compute the neutral fluxes from Eirene, if Eirene is coupled
         if (switch%use_eirene.ne.0) then
