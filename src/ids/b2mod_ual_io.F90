@@ -2945,7 +2945,7 @@ contains
 #else
           ! Put element data
           call fill_neutral_element( is, js, profiles_ggd%ion( js )%element(1) )
-          call fill_neutral_element( is, js, transportggd(1)%ion( js )%element(1) )
+          call fill_neutral_element( is, js, transport_ggd(1)%ion( js )%element(1) )
 
           ! Put neutral index
           profiles_ggd%ion( js )%neutral_index = b2eatcr(is)
@@ -3790,7 +3790,7 @@ contains
                call fill_neutral_element( is, js, &
                  &  profiles_ggd%neutral( j )%element(1) )
                call fill_neutral_element( is, js, &
-                 &  transport%ggd(1)%neutral( j )%element(1) )
+                 &  transport_ggd(1)%neutral( j )%element(1) )
                profiles_ggd%neutral( j )%name = species_list( js )
                transport_ggd(1)%neutral( j )%name = species_list( js )
                allocate( profiles_ggd%neutral( j )%state(1) )
