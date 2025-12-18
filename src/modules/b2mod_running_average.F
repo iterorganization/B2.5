@@ -775,7 +775,7 @@ c                               =3*nfl for vectorial momentum sources)
 c local variables
       integer :: io, iun, idum(0:3), iex
       character :: check*10, line*51
-      logical :: found, no_vector
+      logical :: found
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
@@ -832,19 +832,10 @@ c local variables
         backspace iun
         call xertst( found,
      .   'Underrelaxed sources not found in b2faveri!')
-        if (no_vector) then
-          call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
-          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
-          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
-          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
-        else
-          call cfruin (iun, 4, idum, 'nCv,nfluids,nstrata,nflv')
-          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
-          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
-          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
-          if (idum(3).ne.nflv)
-     .     call xerrab ('vector dimension not consistent')
-        end if
+        call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
+        if (idum(0).ne.nCv) call xerrab('nCv not consistent')
+        if (idum(1).ne.nfl) call xerrab('nfl not consistent')
+        if (idum(2).ne.nstra) call xerrab('nstra not consistent')
         call cfrure (iun, nCv*nfl*nstra, sni_underrelax,
      .                                  'sni_underrelax')
         if (.not.no_vector) then

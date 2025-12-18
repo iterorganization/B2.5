@@ -241,8 +241,8 @@ module b2mod_ual_io
 # if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
-#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    use al_midplane_identifier &       ! IGNORE
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+   use al_midplane_identifier &        ! IGNORE
      & , only : set_midplane_identifier => set_identifier, &
      &          get_midplane_name => get_name
     use al_neutrals_identifier &       ! IGNORE
@@ -255,7 +255,7 @@ module b2mod_ual_io
      & , only : set_edge_source_identifier => set_identifier
     use al_plasma_source_identifier &  ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
-#  elif AL_MAJOR_VERSION > 4
+#elif AL_MAJOR_VERSION > 4
     use al_midplane_identifier &       ! IGNORE
      & , only : midplane_identifier
     use al_neutrals_identifier &       ! IGNORE
@@ -266,7 +266,7 @@ module b2mod_ual_io
      & , only : radiation_identifier
     use al_edge_source_identifier &    ! IGNORE
      & , only : edge_source_identifier
-#  else
+#else
     use imas_midplane_identifier &     ! IGNORE
      & , only : midplane_identifier
     use imas_neutrals_identifier &     ! IGNORE
@@ -277,9 +277,9 @@ module b2mod_ual_io
      & , only : radiation_identifier
     use imas_edge_source_identifier &  ! IGNORE
      & , only : edge_source_identifier
-#  endif
-# endif
-# if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#endif
+#endif
+#if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
      & , only : ids_identifier, ids_identifier_static
 # endif
@@ -290,17 +290,13 @@ module b2mod_ual_io
 # endif
 # if IMAS_MAJOR_VERSION > 3
     use ids_schemas &     ! IGNORE
-     & , only : ids_code_constant, &
-     &          ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
-#  if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0
+     & , only : ids_code_constant
+#if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0
     use ids_schemas &     ! IGNORE
-     & , only : ids_plasma_profiles_time_slice, &
-     &          ids_plasma_sources_source_ggd, &
-     &          ids_plasma_transport_model_ggd, &
-     &          ids_summary_constant_flt_0d_2
-#  endif
-# endif
-# if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
+     & , only : ids_summary_constant_flt_0d_2
+#endif
+#endif
+#if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
     use amns_module ! IGNORE
 # endif
@@ -1476,11 +1472,11 @@ contains
           case ('C')
             call write_sourced_constant_2( summary%composition%carbon, frac )
           case ('N')
-#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
             call write_sourced_constant( summary%composition%nitrogen, frac )
-#   else
+#else
             call write_sourced_constant_2( summary%composition%nitrogen, frac )
-#   endif
+#endif
           case ('O')
             call write_sourced_constant_2( summary%composition%oxygen, frac )
           case ('Ne')
@@ -2481,14 +2477,7 @@ contains
         do i = 1, nsources
           allocate( edge_sources%source(i)%ggd( time_sind )%ion( nsion ) )
         end do
-# else
-        allocate( profiles_ggd%ion( nsion ) )
-        allocate( transport_ggd(1)%ion( nsion ) )
-        do i = 1, nsources
-          allocate( sources_ggd(i)%ion( nsion ) )
-        end do
-# endif
-# if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
         allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( nsion ) )
         allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( nsion ) )
         allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( nsion ) )
@@ -2497,7 +2486,7 @@ contains
 # if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%process(1)%ggd( time_sind )%ion( nsion ) )
         allocate( radiation%process(2)%ggd( time_sind )%ion( nsion ) )
-# endif
+#endif
         do js = 1, nspecies
 # if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           allocate( edge_profiles%ggd( time_sind )%ion( js )%element(1) )
@@ -3505,7 +3494,7 @@ contains
           allocate( profiles_ggd%neutral( js )%state( ks ) )
           allocate( transport_ggd(1)%neutral( js )%state( ks ) )
           do i = 1, nsources
-            allocate( sources_ggd(i)%neutral( js )%state( ks ) )
+            allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
           end do
 #  endif
 
@@ -3680,24 +3669,6 @@ contains
                    call fill_atom_neutral_type( iatm, &
                   &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type )
                    edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-                end do
-#  else
-                allocate( profiles_ggd%neutral( js )%state( iss )%name(1) )
-                allocate( transport_ggd(1)%neutral( js )%state( iss )%name(1) )
-                profiles_ggd%neutral( js )%state( iss )%name = spclabel
-                transport_ggd(1)%neutral( js )%state( iss )%name = spclabel
-                call fill_atom_neutral_type( iatm, &
-                  &  profiles_ggd%neutral( js )%state( iss )%neutral_type )
-                call fill_atom_neutral_type( iatm, &
-                  &  transport_ggd(1)%neutral( js )%state( iss )%neutral_type )
-                profiles_ggd%neutral( js )%multiple_states_flag = 1
-                transport_ggd(1)%neutral( js )%multiple_states_flag = 1
-                do i = 1, nsources
-                   allocate( sources_ggd(i)%neutral( js )%state( iss )%name(1) )
-                   sources_ggd(i)%neutral( js )%state( iss )%name = spclabel
-                   call fill_atom_neutral_type( iatm, &
-                  &  sources_ggd(i)%neutral( js )%state( iss )%neutral_type )
-                   sources_ggd(i)%neutral( js )%multiple_states_flag = 1
                 end do
                 allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( iss )%name(1) )
                 allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%state( iss )%name(1) )
@@ -4274,17 +4245,17 @@ contains
                call fill_neutral_element( is, js, &
                  &  radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
-#  if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
-#  else
+#else
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
-#  endif
+#endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
                call fill_atom_neutral_type( js, &
@@ -8936,7 +8907,7 @@ contains
 #  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
               case ('DT')
                 call write_sourced_value( summary%local%divertor_target(i)%n_i%deuterium_tritium, nisep )
-#  endif
+#endif
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
 #  if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
@@ -9402,7 +9373,7 @@ contains
             &  description%simulation%time_current = time_IN
           allocate( description%simulation%workflow(1) )
           description%simulation%workflow = source
-#  else
+#else
           allocate( summary%simulation%workflow(1) )
           summary%simulation%workflow = source
 #  endif
@@ -9594,17 +9565,10 @@ contains
           end if
 
           ! Put element data
-# if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call fill_neutral_element( ks, js, &
             &  batch_profiles%ggd( batch_index )%ion( js )%element(1) )
           call fill_neutral_element( ks, js, &
             &  batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
-# else
-          call fill_neutral_element( ks, js, &
-            &  profiles_ggd%ion( js )%element(1) )
-          call fill_neutral_element( ks, js, &
-            &  sources_ggd(1)%ion( js )%element(1) )
-# endif
 
           ! Put neutral index
 # if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -9635,19 +9599,7 @@ contains
           batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
-# else
-          allocate( profiles_ggd%neutral( js )%element(1) )
-          call fill_neutral_element( ks, js, &
-            &  profiles_ggd%neutral( js )%element(1) )
-          profiles_ggd%neutral( js )%ion_index = js
-          profiles_ggd%neutral( js )%multiple_states_flag = 0
-          allocate( sources_ggd(1)%neutral( js )%element(1) )
-          call fill_neutral_element( ks, js, &
-            &  sources_ggd(1)%neutral( js )%element(1) )
-          sources_ggd(1)%neutral( js )%ion_index = js
-          sources_ggd(1)%neutral( js )%multiple_states_flag = 0
-# endif
-# if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%label(1) )
           allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%label(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%label = species_list( js )
@@ -9657,12 +9609,7 @@ contains
           batch_profiles%ggd( batch_index )%neutral( js )%name = species_list( js )
           allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%name = species_list( js )
-# else
-          allocate( profiles_ggd%neutral( js )%name(1) )
-          profiles_ggd%neutral( js )%name = species_list( js )
-          allocate( sources_ggd(1)%neutral( js )%name(1) )
-          sources_ggd(1)%neutral( js )%name = species_list( js )
-# endif
+#endif
 
           ks = ks + 1
         end do
@@ -9731,84 +9678,9 @@ contains
 #   else
           batch_grid = batch_profiles%grid_ggd( batch_index )
           sources_grid = batch_profiles%grid_ggd( batch_index )
-#   endif
-#  endif
+#endif
+#endif
 
-#  if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-          !! na: Ion density
-          ks = 0
-          do is = 1, nspecies
-            if (is_neutral(ks)) ks = ks + 1
-            tmpCv(:) = 0.0_IDS_real
-            do js = 1, nfluids(is)
-              call write_IDS_quantity( batch_grid,                      &
-                  &   val = batch_profiles%ggd( batch_index )%          &
-                  &         ion( is )%state( js )%density,              &
-                  &   value = state_avg%na_mean(:,ks) )
-              tmpCv(:) = tmpCv(:) + state_avg%na_mean(:,ks)
-              ks = ks + 1
-            end do
-            call write_IDS_quantity( batch_grid,                        &
-                &   val = batch_profiles%ggd( batch_index )%            &
-                &         ion(is)%density,                              &
-                &   value = tmpCv )
-          end do
-          !! sna: Ion particle sources
-          ks = 0
-          do is = 1, nspecies
-            if (is_neutral(ks)) ks = ks + 1
-            totCv(:) = 0.0_IDS_real
-            do js = 1, nfluids(is)
-              tmpCv(:) = state_avg%sna_mean(:,ks) / geo%cvVol(:)
-              totCv(:) = totCv(:) + tmpCv(:)
-              call write_cell_scalar( sources_grid,                       &
-                  &   scalar = batch_sources%source(1)%                   &
-                  &   ggd( batch_index )%ion( is )%state( js )%particles, &
-                  &   b2CellData = tmpCv )
-              ks = ks + 1
-            end do
-            call write_cell_scalar( sources_grid,                         &
-                &   scalar = batch_sources%source(1)%                     &
-                &   ggd( batch_index )%ion( is )%particles,               &
-                &   b2CellData = totCv )
-          end do
-          !! ua: Parallel ion velocity
-          ks = 0
-          do is = 1, nspecies
-            if (is_neutral(ks)) ks = ks + 1
-            do js = 1, nfluids(is)
-              call write_cell_vector_component( batch_grid,               &
-                  &   vectorComponent = batch_profiles%                   &
-                  &   ggd( batch_index )%ion( is )%state( js )%velocity,  &
-                  &   b2CellData = state_avg%ua_mean(:,ks),               &
-                  &   vectorID = VEC_ALIGN_PARALLEL_ID )
-              ks = ks + 1
-            end do
-          end do
-          !! smo: Ion parallel momentum sources
-          ks = 0
-          do is = 1, nspecies
-            if (is_neutral(ks)) ks = ks + 1
-            totCv(:) = 0.0_IDS_real
-            do js = 1, nfluids(is)
-              tmpCv(:) = state_avg%smo_mean(:,ks) / geo%cvVol(:)
-              totCv(:) = totCv(:) + tmpCv(:)
-              call write_cell_vector_component( sources_grid,             &
-                  &   vectorComponent = batch_sources%source(1)%          &
-                  &                     ggd( batch_index )%ion( is )%     &
-                  &                     state( js )%momentum,             &
-                  &   b2CellData = tmpCv,                                 &
-                  &   vectorID = VEC_ALIGN_PARALLEL_ID )
-              ks = ks + 1
-            end do
-            call write_cell_vector_component( sources_grid,               &
-                &   vectorComponent = batch_sources%source(1)%            &
-                &                     ggd( batch_index )%ion( is )%       &
-                &                     momentum,                           &
-                &   b2CellData = totCv,                                   &
-                &   vectorID = VEC_ALIGN_PARALLEL_ID )
-          end do
-#  else
           !! na: Ion density
           ks = 0
           do is = 1, nspecies
@@ -10034,11 +9906,11 @@ contains
             case ('C')
               call write_sourced_constant_2( summary%composition%carbon, frac )
             case ('N')
-#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
               call write_sourced_constant( summary%composition%nitrogen, frac )
-#   else
+#else
               call write_sourced_constant_2( summary%composition%nitrogen, frac )
-#   endif
+#endif
             case ('O')
               call write_sourced_constant_2( summary%composition%oxygen, frac )
             case ('Ne')
@@ -10230,8 +10102,8 @@ contains
 
     subroutine write_ids_code( switch, code, commit, description )
     implicit none
-    type (switches), intent(in) :: switch
-    type (ids_code), intent(inout) :: code
+    type(switches), intent(in) :: switch
+    type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
     character(len=ids_string_length), intent(in) :: description
@@ -13571,7 +13443,6 @@ contains
     return
     end subroutine write_sourced_constant
 
-# if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
     subroutine write_sourced_constant_2( val, value )
     implicit none
     type(ids_summary_constant_flt_0d_2) :: val
@@ -13584,7 +13455,6 @@ contains
 
     return
     end subroutine write_sourced_constant_2
-# endif
 
     subroutine write_sourced_int_constant( ival, ivalue )
     implicit none

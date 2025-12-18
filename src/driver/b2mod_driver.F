@@ -4081,9 +4081,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      radiation, wall )
         call dealloc_batch_edge(
      &      batch_profiles, batch_sources
-#if IMAS_MAJOR_VERSION > 3
-     &    , batch_plasma_profiles, batch_plasma_sources
-#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &    , summary
 #endif

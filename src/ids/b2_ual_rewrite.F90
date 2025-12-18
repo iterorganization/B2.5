@@ -741,9 +741,6 @@ program b2_ual_rewrite
     end if
     call dealloc_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
-#if IMAS_MAJOR_VERSION > 3
-        &   plasma_profiles, plasma_sources, plasma_transport, &
-#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -753,9 +750,6 @@ program b2_ual_rewrite
         &   radiation, wall )
     call dealloc_batch_edge( &
         &   batch_profiles, batch_sources &
-#if IMAS_MAJOR_VERSION > 3
-        & , batch_plasma_profiles, batch_plasma_sources &
-#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         & , summary &
 #endif
