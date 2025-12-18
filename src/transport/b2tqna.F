@@ -693,7 +693,7 @@ cdpc
       end subroutine b2tqna
 
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     & vsa0,vla0,hce0, sig0, alf0, hci0)
+     & vsa0,vla0,hce0,sig0,alf0,hci0)
 
       use b2mod_types
       use b2us_map

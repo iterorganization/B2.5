@@ -57,7 +57,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv1, iCv2, iFc, meth, iFt                                 !srv 13.10.06
+      integer iCv1, iCv2, iFc, meth                                      !srv 13.10.06
       integer iVx1, iVx2, iFc1, iFc2, k, j
       real (kind=R8) :: dpo_p, dpo_r, fcHt_tot, a(2), b(2), vx_dir
       character chns*3                                                   !srv 16.09.02
@@ -222,8 +222,8 @@ cwdk                   (original code: simple averaging)
           fcHt_tot = sum(geo%fcHt(mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
      &      mpg%fcs_wall_ind(j,1)+mpg%fcs_wall_ind(j,2)-1)))
           if (switch%b2tfnb_avg_vExB.ge.2)
-     &      write(*,*), "iVx1,iVx2, po_iVx1, po_iVx2",iVx1,iVx2,
-     &          wrkVx(iVx1),wrkVx(iVx2)
+     &      write(*,'(a,2i6,1p,2e15.8)') "iVx1,iVx2,po_iVx1,po_iVx2",
+     &                  iVx1,iVx2,wrkVx(iVx1),wrkVx(iVx2)
           do k=1,mpg%fcs_wall_ind(j,2)
             iFc = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+k-1)
             iCv1 = mpg%fcCv(iFc,1)
@@ -243,9 +243,8 @@ cwdk                   (original code: simple averaging)
      &        vx_dir*(wrkVx(iVx2)-wrkVx(iVx1))*geo%fcQbet(iFc,0)/
      &        (geo%fcQgam(iFc,0)*fcHt_tot)
             if (switch%b2tfnb_avg_vExB.ge.2)
-     &        write(*,*), "iFc,dpo_th,dpo_r",
-     &          iFc, dpo_p, dpo_r
-
+     &        write(*,'(a,i6,1p,2e15.8)') "iFc,dpo_th,dpo_r",
+     &                                     iFc,dpo_p,dpo_r
             dv%vaecrb(iFc,0,isb) =
      &        -switch%poleldr*dv%fac_ExB(iFc)*wrk0(iFc)*dpo_r
             dv%vaecrb(iFc,1,isb) =

@@ -670,8 +670,6 @@ c nfl is the number of species indices for the EIRENE sources sni, smo, and sei,
 c local variables
       integer :: io, iun, idum(0:2), iex
       character :: check*10, line*51
-      character lbli*120
-      character*10 :: version
       logical :: found
 #ifdef LEGACYCOMP
       integer newunit
@@ -717,6 +715,8 @@ c local variables
           end if
         end do
         backspace iun
+        call xertst( found,
+     .   'Underrelaxed sources not found in b2faveri!')
         call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
         if (idum(0).ne.nCv) call xerrab('nCv not consistent')
         if (idum(1).ne.nfl) call xerrab('nfl not consistent')

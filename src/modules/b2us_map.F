@@ -668,8 +668,7 @@
      *                        regcount(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi),
      * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
-      logical :: duplicate, left_match_found, right_match_found,
-     * is_found
+      logical :: duplicate, left_match_found, right_match_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
