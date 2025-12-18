@@ -195,7 +195,7 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-   use al_midplane_identifier &        ! IGNORE
+    use al_midplane_identifier &       ! IGNORE
      & , only : set_midplane_identifier => set_identifier, &
      &          get_midplane_name => get_name
     use al_neutrals_identifier &       ! IGNORE
@@ -9895,36 +9895,20 @@ contains
             sources_ggd(1)%ion( js )%z_ion = ion_charge_int
 #endif
           end if
-          ! Put mass of species
+
+          ! Put element data
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
+          call fill_neutral_element( ks, js, &
+            &  batch_profiles%ggd( batch_index )%ion( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
 #else
-          profiles_ggd%ion( js )%element(1)%a = am( ks )
-          sources_ggd(1)%ion( js )%element(1)%a = am( ks )
+          call fill_neutral_element( ks, js, &
+            &  profiles_ggd%ion( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  sources_ggd(1)%ion( js )%element(1) )
 #endif
-          ! Put nuclear charge
-#if IMAS_MAJOR_VERSION < 4
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
-#elif ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%z_n = nint(zn(ks))
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%z_n = nint(zn(ks))
-#else
-          profiles_ggd%ion( js )%element(1)%z_n = nint(zn(ks))
-          sources_ggd(1)%ion( js )%element(1)%z_n = nint(zn(ks))
-#endif
-          ! Put number of atoms
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-#elif ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
-#else
-          profiles_ggd%ion( js )%element(1)%atoms_n = 1
-          sources_ggd(1)%ion( js )%element(1)%atoms_n = 1
-#endif
+
           ! Put neutral index
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           batch_profiles%ggd( batch_index )%ion( js )%neutral_index = js
@@ -9945,38 +9929,24 @@ contains
           !! List of neutrals
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
           allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
-#if IMAS_MAJOR_VERSION < 4
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
-#else
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = nint(zn(ks))
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = nint(zn(ks))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
-#endif
+          call fill_neutral_element( ks, js, &
+            &  batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
           batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
 #else
           allocate( profiles_ggd%neutral( js )%element(1) )
-          profiles_ggd%neutral( js )%element(1)%a = am( ks )
-          profiles_ggd%neutral( js )%element(1)%z_n = nint(zn(ks))
-          profiles_ggd%neutral( js )%element(1)%atoms_n = 1
+          call fill_neutral_element( ks, js, &
+            &  profiles_ggd%neutral( js )%element(1) )
           profiles_ggd%neutral( js )%ion_index = js
           profiles_ggd%neutral( js )%multiple_states_flag = 0
           allocate( sources_ggd(1)%neutral( js )%element(1) )
-          sources_ggd(1)%neutral( js )%element(1)%a = am( ks )
-          sources_ggd(1)%neutral( js )%element(1)%z_n = nint(zn(ks))
-          sources_ggd(1)%neutral( js )%element(1)%atoms_n = 1
+          call fill_neutral_element( ks, js, &
+            &  sources_ggd(1)%neutral( js )%element(1) )
           sources_ggd(1)%neutral( js )%ion_index = js
           sources_ggd(1)%neutral( js )%multiple_states_flag = 0
 #endif
