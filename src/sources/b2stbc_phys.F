@@ -101,7 +101,7 @@
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
      &  pzaverage, pzsum, volsum, totfluxi, totfluxn,
-     &  vbc(nCv,0:ns-1),csbc(nCv,0:ns-1)
+     &  vbc(nCv,0:ns-1), csbc(nCv,0:ns-1)
 #ifdef WG_TODO
      1  ,volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
@@ -1149,7 +1149,7 @@ c   (ionising_core option)
           if (ncall_b2stbc_phys.eq.0) then
             if (mompar(is,ib,2).lt.0.5_R8) then
               write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .         'BCCON = 14 : sound speed flux ',CONPAR(IS,IB,1),' on ',
+     .         'BCCON = 14 : sound speed flux ',MOMPAR(IS,IB,1),' on ',
      1         BCCHAR(IB),boundary_location(ib),' for species ',IS
             else
               write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
@@ -1194,7 +1194,7 @@ c   (ionising_core option)
             if (abs(wrk) < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) =
-     &         -geo%fcS(iFc)*conpar(is,ib,1)*cs*geo%Qalfmax
+     &         -geo%fcS(iFc)*mompar(is,ib,1)*cs*geo%Qalfmax
               sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.eq.0) then
@@ -1229,7 +1229,7 @@ c   (ionising_core option)
      &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               srw%sna0(iCv1,0,is) = 0.0_R8
-              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*conpar(is,ib,1)*
+              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*mompar(is,ib,1)*
      &          max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
      &          sign(1.0_R8,wrk)+vbnd)
               if (conpar(is,ib,2).gt.0.0_R8) then
@@ -5944,8 +5944,8 @@ cxpb code segment analog to b2tfhi
      &                  dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &                  mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
                 t0 = t0 + pl%na(iCv1,is)*geo%fcS(iFc)*
-     &          max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &          sign(1.0_R8,wrk)+vbnd)
+     &               max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
+     &               sign(1.0_R8,wrk)+vbnd)
                 if (conpar(is,ib,2).gt.0.0_R8)
      &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &              *pl%na(iCv1,is)
@@ -7440,12 +7440,12 @@ c              fchi=0.0_R8
      &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*s1*
-     &            max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &            sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
+     &             max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
+     &             sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
             enddo
             fchi = qe*t0
             fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*abs(wrk)*
-     &        expu2(min(0.0_R8,max(-50.0_R8,                               !lkw 31.03.2023
+     &        expu2(min(0.0_R8,max(-50.0_R8,                             !lkw 31.03.2023
      &        -qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
             seec = gammae
             t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
