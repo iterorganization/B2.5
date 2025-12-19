@@ -239,28 +239,6 @@ module b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
-#if AL_MAJOR_VERSION < 5
-    use imas_midplane_identifier &     ! IGNORE
-     & , only : midplane_identifier
-    use imas_neutrals_identifier &     ! IGNORE
-     & , only : neutrals_identifier
-    use imas_materials_identifier &    ! IGNORE
-     & , only : materials_identifier
-    use imas_radiation_identifier &    ! IGNORE
-     & , only : radiation_identifier
-    use imas_edge_source_identifier &  ! IGNORE
-     & , only : edge_source_identifier
-#else
-    use al_midplane_identifier &       ! IGNORE
-     & , only : midplane_identifier
-    use al_neutrals_identifier &       ! IGNORE
-     & , only : neutrals_identifier
-    use al_materials_identifier &      ! IGNORE
-     & , only : materials_identifier
-    use al_radiation_identifier &      ! IGNORE
-     & , only : radiation_identifier
-    use al_edge_source_identifier &    ! IGNORE
-     & , only : edge_source_identifier
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
    use al_midplane_identifier &        ! IGNORE
      & , only : set_midplane_identifier => set_identifier, &
@@ -275,7 +253,28 @@ module b2mod_ual_io
      & , only : set_edge_source_identifier => set_identifier
     use al_plasma_source_identifier &  ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
-#endif
+#elif AL_MAJOR_VERSION > 4
+    use al_midplane_identifier &       ! IGNORE
+     & , only : midplane_identifier
+    use al_neutrals_identifier &       ! IGNORE
+     & , only : neutrals_identifier
+    use al_materials_identifier &      ! IGNORE
+     & , only : materials_identifier
+    use al_radiation_identifier &      ! IGNORE
+     & , only : radiation_identifier
+    use al_edge_source_identifier &    ! IGNORE
+     & , only : edge_source_identifier
+#else
+    use imas_midplane_identifier &     ! IGNORE
+     & , only : midplane_identifier
+    use imas_neutrals_identifier &     ! IGNORE
+     & , only : neutrals_identifier
+    use imas_materials_identifier &    ! IGNORE
+     & , only : materials_identifier
+    use imas_radiation_identifier &    ! IGNORE
+     & , only : radiation_identifier
+    use imas_edge_source_identifier &  ! IGNORE
+     & , only : edge_source_identifier
 #endif
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
@@ -290,6 +289,10 @@ module b2mod_ual_io
 #if IMAS_MAJOR_VERSION > 3
     use ids_schemas &     ! IGNORE
      & , only : ids_code_constant
+#if IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0
+    use ids_schemas &     ! IGNORE
+     & , only : ids_summary_constant_flt_0d_2
+#endif
 #endif
 #if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
@@ -1299,43 +1302,47 @@ contains
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
           select case (is_codes(eb2spcr(is)))
           case ('H')
-            call write_sourced_value( summary%composition%hydrogen, frac )
+            call write_sourced_constant_2( summary%composition%hydrogen, frac )
           case ('D')
-            call write_sourced_value( summary%composition%deuterium, frac )
+            call write_sourced_constant_2( summary%composition%deuterium, frac )
           case ('T')
-            call write_sourced_value( summary%composition%tritium, frac )
+            call write_sourced_constant_2( summary%composition%tritium, frac )
           case ('DT')
-            call write_sourced_value( summary%composition%deuterium_tritium, frac )
+            call write_sourced_constant_2( summary%composition%deuterium_tritium, frac )
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
-              call write_sourced_value( summary%composition%helium_3, frac )
+              call write_sourced_constant_2( summary%composition%helium_3, frac )
             else if (nint(am(eb2spcr(is))).eq.4) then
-              call write_sourced_value( summary%composition%helium_4, frac )
+              call write_sourced_constant_2( summary%composition%helium_4, frac )
             end if
           case ('Li')
-            call write_sourced_value( summary%composition%lithium, frac )
+            call write_sourced_constant_2( summary%composition%lithium, frac )
           case ('Be')
-            call write_sourced_value( summary%composition%beryllium, frac )
+            call write_sourced_constant_2( summary%composition%beryllium, frac )
           case ('B')
-            call write_sourced_value( summary%composition%boron, frac )
+            call write_sourced_constant_2( summary%composition%boron, frac )
           case ('C')
-            call write_sourced_value( summary%composition%carbon, frac )
+            call write_sourced_constant_2( summary%composition%carbon, frac )
           case ('N')
-            call write_sourced_value( summary%composition%nitrogen, frac )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+            call write_sourced_constant( summary%composition%nitrogen, frac )
+#else
+            call write_sourced_constant_2( summary%composition%nitrogen, frac )
+#endif
           case ('O')
-            call write_sourced_value( summary%composition%oxygen, frac )
+            call write_sourced_constant_2( summary%composition%oxygen, frac )
           case ('Ne')
-            call write_sourced_value( summary%composition%neon, frac )
+            call write_sourced_constant_2( summary%composition%neon, frac )
           case ('Ar')
-            call write_sourced_value( summary%composition%argon, frac )
+            call write_sourced_constant_2( summary%composition%argon, frac )
           case ('Fe')
-            call write_sourced_value( summary%composition%iron, frac )
+            call write_sourced_constant_2( summary%composition%iron, frac )
           case ('Xe')
-            call write_sourced_value( summary%composition%xenon, frac )
+            call write_sourced_constant_2( summary%composition%xenon, frac )
           case ('W')
-            call write_sourced_value( summary%composition%tungsten, frac )
+            call write_sourced_constant_2( summary%composition%tungsten, frac )
           case ('Kr')
-            call write_sourced_value( summary%composition%krypton, frac )
+            call write_sourced_constant_2( summary%composition%krypton, frac )
           end select
         end do
 #endif
@@ -2283,6 +2290,9 @@ contains
 #endif
         allocate( edge_profiles%ggd( time_sind )%ion( nsion ) )
         allocate( edge_transport%model(1)%ggd( time_sind )%ion( nsion ) )
+        do i = 1, nsources
+          allocate( edge_sources%source(i)%ggd( time_sind )%ion( nsion ) )
+        end do
 #if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
         allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( nsion ) )
         allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( nsion ) )
@@ -2293,9 +2303,6 @@ contains
         allocate( radiation%process(1)%ggd( time_sind )%ion( nsion ) )
         allocate( radiation%process(2)%ggd( time_sind )%ion( nsion ) )
 #endif
-        do i = 1, nsources
-          allocate( edge_sources%source(i)%ggd( time_sind )%ion( nsion ) )
-        end do
         do js = 1, nspecies
           allocate( edge_profiles%ggd( time_sind )%ion( js )%element(1) )
           allocate( edge_profiles%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
@@ -3000,7 +3007,7 @@ contains
           allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%state( ks ) )
 #endif
           do i = 1, nsources
-             allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
+            allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
           end do
 
           do js = 1, nspecies
@@ -3155,11 +3162,7 @@ contains
 #endif
                    call fill_atom_neutral_type( iatm, &
                   &  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type )
-                   if (ks.gt.1) then
-                      edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
-                   else
-                      edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-                   end if
+                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 end do
               end do
             end do
@@ -3574,23 +3577,20 @@ contains
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
                call fill_neutral_element( is, js, &
                  &  radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
 #else
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
 #endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
-#else
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
-#endif
                call fill_atom_neutral_type( js, &
                  &  radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type )
 #endif
@@ -6464,7 +6464,7 @@ contains
 #endif
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
               case ('DT')
-                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium_tritium, nisep )
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%deuterium_tritium, nisep )
 #endif
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
@@ -6878,8 +6878,6 @@ contains
           allocate( description%simulation%workflow(1) )
           description%simulation%workflow = source
 #else
-          if ( present( time_IN ) ) &
-            &  summary%simulation%time_current = time_IN
           allocate( summary%simulation%workflow(1) )
           summary%simulation%workflow = source
 #endif
@@ -7002,25 +7000,13 @@ contains
             batch_profiles%ggd( batch_index )%ion( js )%z_ion = ion_charge_int
             batch_sources%source(1)%ggd( batch_index )%ion( js )%z_ion = ion_charge_int
           end if
-          ! Put mass of species
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
-          ! Put nuclear charge
-#if IMAS_MAJOR_VERSION < 4
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
-#else
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%z_n = nint(zn(ks))
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%z_n = nint(zn(ks))
-#endif
-          ! Put number of atoms
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-          batch_profiles%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
-          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
-#endif
+
+          ! Put element data
+          call fill_neutral_element( ks, js, &
+            &  batch_profiles%ggd( batch_index )%ion( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
+
           ! Put neutral index
           batch_profiles%ggd( batch_index )%ion( js )%neutral_index = js
           batch_sources%source(1)%ggd( batch_index )%ion( js )%neutral_index = js
@@ -7030,17 +7016,15 @@ contains
 
           !! List of neutrals
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
-#if IMAS_MAJOR_VERSION < 4
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
-#else
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = nint(zn(ks))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
-#endif
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
+          call fill_neutral_element( ks, js, &
+            &  batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
+          batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
+          batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%label(1) )
           allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%label(1) )
@@ -7048,26 +7032,10 @@ contains
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%label = species_list( js )
 #else
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%name(1) )
-          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%name = species_list( js )
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%name = species_list( js )
 #endif
-          batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
-          batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
-          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
-#if IMAS_MAJOR_VERSION < 4
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
-#else
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = nint(zn(ks))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
-#else
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
-#endif
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
-          batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
 
           ks = ks + 1
         end do
@@ -7138,6 +7106,7 @@ contains
           sources_grid = batch_profiles%grid_ggd( batch_index )
 #endif
 #endif
+
           !! na: Ion density
           ks = 0
           do is = 1, nspecies
@@ -7289,43 +7258,47 @@ contains
             if (u.gt.0.0_IDS_real) frac = frac / u
             select case (is_codes(eb2spcr(is)))
             case ('H')
-              call write_sourced_value( summary%composition%hydrogen, frac )
+              call write_sourced_constant_2( summary%composition%hydrogen, frac )
             case ('D')
-              call write_sourced_value( summary%composition%deuterium, frac )
+              call write_sourced_constant_2( summary%composition%deuterium, frac )
             case ('T')
-              call write_sourced_value( summary%composition%tritium, frac )
+              call write_sourced_constant_2( summary%composition%tritium, frac )
             case ('DT')
-              call write_sourced_value( summary%composition%deuterium_tritium, frac )
+              call write_sourced_constant_2( summary%composition%deuterium_tritium, frac )
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
-                call write_sourced_value( summary%composition%helium_3, frac )
+                call write_sourced_constant_2( summary%composition%helium_3, frac )
               else if (nint(am(eb2spcr(is))).eq.4) then
-                call write_sourced_value( summary%composition%helium_4, frac )
+                call write_sourced_constant_2( summary%composition%helium_4, frac )
               end if
             case ('Li')
-              call write_sourced_value( summary%composition%lithium, frac )
+              call write_sourced_constant_2( summary%composition%lithium, frac )
             case ('Be')
-              call write_sourced_value( summary%composition%beryllium, frac )
+              call write_sourced_constant_2( summary%composition%beryllium, frac )
             case ('B')
-              call write_sourced_value( summary%composition%boron, frac )
+              call write_sourced_constant_2( summary%composition%boron, frac )
             case ('C')
-              call write_sourced_value( summary%composition%carbon, frac )
+              call write_sourced_constant_2( summary%composition%carbon, frac )
             case ('N')
-              call write_sourced_value( summary%composition%nitrogen, frac )
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+              call write_sourced_constant( summary%composition%nitrogen, frac )
+#else
+              call write_sourced_constant_2( summary%composition%nitrogen, frac )
+#endif
             case ('O')
-              call write_sourced_value( summary%composition%oxygen, frac )
+              call write_sourced_constant_2( summary%composition%oxygen, frac )
             case ('Ne')
-              call write_sourced_value( summary%composition%neon, frac )
+              call write_sourced_constant_2( summary%composition%neon, frac )
             case ('Ar')
-              call write_sourced_value( summary%composition%argon, frac )
+              call write_sourced_constant_2( summary%composition%argon, frac )
             case ('Fe')
-              call write_sourced_value( summary%composition%iron, frac )
+              call write_sourced_constant_2( summary%composition%iron, frac )
             case ('Xe')
-              call write_sourced_value( summary%composition%xenon, frac )
+              call write_sourced_constant_2( summary%composition%xenon, frac )
             case ('W')
-              call write_sourced_value( summary%composition%tungsten, frac )
+              call write_sourced_constant_2( summary%composition%tungsten, frac )
             case ('Kr')
-              call write_sourced_value( summary%composition%krypton, frac )
+              call write_sourced_constant_2( summary%composition%krypton, frac )
             end select
           end do
 #endif
@@ -7503,8 +7476,8 @@ contains
 
     subroutine write_ids_code( switch, code, commit, description )
     implicit none
-    type (switches), intent(in) :: switch
-    type (ids_code), intent(inout) :: code
+    type(switches), intent(in) :: switch
+    type(ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
     character(len=ids_string_length), intent(in) :: description
@@ -10858,6 +10831,21 @@ contains
 
     return
     end subroutine write_sourced_constant
+
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+    subroutine write_sourced_constant_2( val, value )
+    implicit none
+    type(ids_summary_constant_flt_0d_2) :: val
+        !< Type of IDS data structure, designed for sourced real constant data handling
+    real(IDS_real), intent(in) :: value
+
+    val%value = value
+    allocate( val%source(1) )
+    val%source = source
+
+    return
+    end subroutine write_sourced_constant_2
+#endif
 
     subroutine write_sourced_int_constant( ival, ivalue )
     implicit none
