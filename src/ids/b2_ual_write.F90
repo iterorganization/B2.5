@@ -105,13 +105,13 @@ program b2_ual_write
      & , only : ids_dataset_description
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &  ! IGNORE
      & , only : ids_summary
     use b2mod_driver &
      & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &  ! IGNORE
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
@@ -638,7 +638,8 @@ program b2_ual_write
         &   treename, shot, run, username, database, version, &
 #endif
         &   idx, new_eq_ggd )
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
