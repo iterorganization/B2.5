@@ -639,6 +639,21 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2us_prep_Qalf_mod_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls style of which boundary faces will be treated as wall (non field-aligned)
+					if b2us_prep_Qalf_mod_style.eq.0 then all faces which abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin will be traeted as wall
+					if b2us_prep_Qalf_mod_style.eq.1 then wall faces must satisfy the following criteria:
+					1. Located at the end of a flux tube
+					2. Have an abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin
+					3. Have at least one neighboring wall face
+					If all faces along a flux tube have abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin,
+					one face is treated as field-aligned (not a wall)
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_temp_ignore_geo</name>
 				<default>0</default>
 				<type>integer</type>
