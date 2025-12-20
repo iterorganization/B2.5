@@ -87,8 +87,8 @@
       real (kind=R8) ::
      *  vti32(nCv),
      &  wrkc(nCv), wrkf(nFc,0:1), wrkf1(nFc,0:1),
-     &  wrkf2(nFc), wrkv(nVx),                                          !srv 02.06.99
-     &  wrkc1(nCv), wrkc2(nCv),                                         !srv 28.08.02
+     &  wrkv(nVx),                                                      !srv 02.06.99
+     &  wrkc1(nCv),                                                     !srv 28.08.02
      &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
 #ifdef WG_TODO
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)                  !lk 31.01.08 }
@@ -406,14 +406,6 @@
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
 
-      if (switch%min_collisions .gt. 0.0_R8) then
-        call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
-        call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
-     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf2,
-     &   wrkc2)
-      else
-        wrkc2 = 1.0_R8
-      endif
 
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
@@ -455,8 +447,6 @@
          visc(:,0) = visc(:,0) + wrkc
         endif
         do iCv = 1, mpg%nCi
-          if (wrkc2(iCv) .le. switch%min_collisions .and.
-     &     .not.mpg%cvOnClosedSurface(iCv)) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then

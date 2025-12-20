@@ -28,7 +28,8 @@
       integer iFc
       character charns*3                                             !srv 12.04.04
       real (kind=R8) ::
-     *   qcl, qfl, tfl, ubv(nVx), dub(nFc), cflmv_loc(nFc), nbf(nFc)
+     *   qcl, qfl, tfl, ubv(nVx), dub(nFc), cflmv_loc(nFc), nbf(nFc),
+     *   wrk
       intrinsic abs
       external xertst
       external b2xvsg
@@ -96,6 +97,12 @@ c       fl = 1.0_R8
           if(.not.(.not.is_neutral(isb) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then     !srv 12.04.08
+            if (switch%min_collisions.gt.0.0_R8) then
+              wrk = switch%cvsa_low_col_mltpl
+              cflmv_loc(iFc) = cflmv_loc(iFc)*
+     &          max(wrk,min(1.0_R8,(collisnumf(iFc)-
+     &          switch%min_collisions)/5.0_R8*(1-wrk)+wrk))
+            endif
             if (collisnumf(iFc) .gt. switch%min_collisions) then
               qcl = -cvsbx(iFc)*dub(iFc)
               qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*              !srv 11.01.13
