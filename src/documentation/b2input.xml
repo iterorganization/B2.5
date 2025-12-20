@@ -3237,7 +3237,15 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied. In addition, viscosity will be turned off in the affected boundary cells.
+					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlmv_cvsa_low_col_mltpl</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Additional multiplier for viscosity flux limit coefficient in area with low number of collisions. Applies only if b2trcl_min_collisions.gt.0.0
 				</description>
 			</switch>
 			<switch>
