@@ -411,11 +411,15 @@ program b2_ual_rewrite
       &                username, database, version, status)
 #endif
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
+#if AL_MAJOR_VERSION > 4
+      write(0,'(2a)') "Reading old IMAS data entry: ", trim(uri)
+#else
+      write(0,'(2a,2i8)') "Reading old IMAS data entry: ", trim(database), shot, run
+#endif
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
       call ids_get( idx, "summary", old_summary, status )
       if ( status.ne.0 ) then
         write(0,*) 'Error opening old summary IDS !'
@@ -657,27 +661,30 @@ program b2_ual_rewrite
         &   uri, &
 #endif
         &   idx, new_eq_ggd )
-    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+    if (.not.streql(shot_string,' ')) then
+      systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
         &  //' -v '//int2str(IMAS_MAJOR_VERSION)
-    write(0,*) trim(systemarg)
-#ifdef NAGFOR
-    call system(systemarg, status, ierror)
-#else
-    call system(systemarg)
-#endif
-    if (.not.same_run_number) then
-! Add superceding information to .yaml file
-      systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
-        &  trim(run_string)//' '//trim(new_run_string)
       write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
       call system(systemarg)
 #endif
+      if (.not.same_run_number) then
+! Add superceding information to .yaml file
+        systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
+          &  trim(run_string)//' '//trim(new_run_string)
+        write(0,*) trim(systemarg)
+#ifdef NAGFOR
+        call system(systemarg, status, ierror)
+#else
+        call system(systemarg)
+#endif
+      end if
     end if
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -685,12 +692,13 @@ program b2_ual_rewrite
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-        &   summary, &
+        & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-        &   description &
+        & , description &
 #endif
         &   )
     call close_ual(idx)

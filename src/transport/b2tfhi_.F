@@ -454,8 +454,8 @@ csw 17feb2012
 csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
            if(b2tfhi_hybr2 .ne. 0) then
             coni0_mdf=dim(chci(ix,iy,0,0), abs(floi0_mdf)*
-     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .    max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .    max(1.0e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
            endif
 
            t0_mdf =coni0_mdf*abs(dti)/(flomx*
@@ -597,11 +597,11 @@ c    of chce for correct orientation of the flow across the face
 csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
           if(b2tfhi_hybr2 .ne. 0) then
             coni0=dim(chci(ix,iy,0,0), abs(floi0)*
-     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .     max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .     max(1.0e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
             coni0_mdf=dim(chci(ix,iy,0,0), abs(floi0_mdf)*
-     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .     max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .     max(1.0e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
           dti0 = dti
@@ -883,7 +883,7 @@ csw 30apr2014 only for TESTING
      .   max(1.0e-30_R8,ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy))))
          coni0_mdf=dim(chci(ix,iy,1,1), abs(floi0_mdf)*
      .   max(0.0_R8,min(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy))))/
-     .   max(1.0-30_R8,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
+     .   max(1.0e-30_R8,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
         endif
 
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
