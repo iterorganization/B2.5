@@ -5943,7 +5943,7 @@ cxpb code segment analog to b2tfhi
                 vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &                  dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &                  mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-                t0 = t0 + pl%na(iCv1,is)*geo%fcS(iFc)*
+                t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)*geo%fcS(iFc)*
      &               max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
      &               sign(1.0_R8,wrk)+vbnd)
                 if (conpar(is,ib,2).gt.0.0_R8)
