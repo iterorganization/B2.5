@@ -523,10 +523,10 @@ endif
 MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
-VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
-MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
-MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
-MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
+VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS_WG
+MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.F90
+MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.f
+MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
 DIMSDIR=${SRCDIR}/modules
 ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
@@ -1479,7 +1479,7 @@ ifdef USE_EIRENE
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
-	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo eirmod_*.F90 eirmod_*.f)`"; \
+	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS_WG > /dev/null; echo eirmod_*.F90 eirmod_*.f)`"; \
 	E="-e 's/ \*\.F90//g' -e 's/ \*\.F//g' -e 's/ eirmod_\*\.F90//g' -e 's/eirmod_\*\.f//g' -e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
