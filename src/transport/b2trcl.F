@@ -224,7 +224,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 !$omp parallel do default(none)
 !$omp& private(is, k, is0)
 !$omp& shared(ns, nCv, nFc, mode, geo, mpg, vsa, cvsa, nscx, iscx)
-!$omp& shared(is_neutral, zn, sigin, csigin)
+!$omp& shared(is_neutral, zn, sigin, csigin, inctran)
 #endif
       do is = 0, ns-1
         call b2txcx (nCv, nFc, inctran,
