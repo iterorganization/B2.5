@@ -482,7 +482,8 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
             wbbv1(ix,iy,2) =(ffbz1(ix,iy,0)+ffbz1(ix,iy,1)) /
      &       (2.0_R8*hzb(ix,iy))
             wbbc1(ix,iy,2) = ffbz1(ix,iy,0) / hzc(ix,iy)
-            if (bottomiy1(ix,iy).gt.-2) wbbc1(ix,iy,0) =
+            if (leftix1(ix,iy).ne.-2) then
+              if (bottomiy1(ix,iy).gt.-2) wbbc1(ix,iy,0) =
      &         (wbbl1(ix,iy,0) * gs1(ix,iy,0) * qc1(ix,iy) +
      &          wbbl1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
      &            gs1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
@@ -490,6 +491,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
      &         (gs1(ix,iy,0) * qc1(ix,iy) +
      &          gs1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
      &          qc1(bottomix1(ix,iy),bottomiy1(ix,iy)) )
+            end if
           end do
           if (bottomiy1(nx1,iy).gt.-2) wbbc1(nx1+1,iy,0) =
      &      (wbbr1(nx1,iy,0) *
@@ -510,6 +512,11 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
      &       wbbc1(ix,iy,0) = wbbl1(ix,iy,0) -
      &        (wbbc1(topix1(ix,iy),topiy1(ix,iy),0) - wbbl1(ix,iy,0))
           end do
+          do ix = -1, nx1
+            if (leftix1(ix,iy).eq.-2)
+     &       wbbc1(ix,iy,0) = wbbl1(ix,iy,0) -
+     &      (wbbc1(rightix1(ix,iy),rightiy1(ix,iy),0) - wbbl1(ix,iy,0))
+          end do
           if (bottomiy1(nx1,iy).eq.-2)
      &     wbbc1(nx1+1,iy,0) = wbbl1(nx1,iy,0) -
      &       (wbbc1(topix1(nx1,iy),topiy1(nx1,iy),0) - wbbl1(nx1,iy,0))
@@ -521,7 +528,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         end do
         wbbc1(nx1+1,ny1+1,0) =
      &   wbbr1(nx1,ny1,0) - (wbbc1(nx1,ny1,0) - wbbl1(nx1,ny1,0))
-        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
+        wbbc1(nx1+1,ny1+1,2) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
 *   .. correct interpolation of magnetic field for diverted island case
 *      as B is not a periodic quantity
         if(periodic_bc.eq.1 .and. nncut.ge.1) then

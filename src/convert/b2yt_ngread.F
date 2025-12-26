@@ -168,7 +168,7 @@ C
         jvftnew = max(jvft44,20240627)
       endif
       WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
-      if(jvftnew.lt.20240311) then
+      if(jvft44.lt.20240311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
         write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44 =   ',
@@ -1071,20 +1071,21 @@ cank
           do k = 1, natmi
             if (iatm1(k).ne.0) then
               eirtxt1(iatm1(k)) = eirtxt(k)
-              wlabsrp1(iatm1(k),:) = wlabsrp(k,:)
+              wlabsrp1(iatm1(k),1:nlim+nsts1) = wlabsrp(k,1:nlim+nsts1)
             end if
           end do
           do k = 1, nmoli
             if (imol1(k).ne.0) then
               eirtxt1(natm1+imol1(k)) = eirtxt(natmi+k)
-              wlabsrp1(natm1+imol1(k),:) = wlabsrp(natmi+k,:)
+              wlabsrp1(natm1+imol1(k),1:nlim+nsts1) =
+     .         wlabsrp(natmi+k,1:nlim+nsts1)
             end if
           end do
           do k = 1, nioni
             if (iion1(k).ne.0) then
               eirtxt1(natm1+nmol1+k) = eirtxt(natmi+nmoli+k)
-              wlabsrp1(natm1+nmol1+iion1(k),:) =
-     .         wlabsrp(natmi+nmoli+k,:)
+              wlabsrp1(natm1+nmol1+iion1(k),1:nlim+nsts1) =
+     .         wlabsrp(natmi+nmoli+k,1:nlim+nsts1)
             end if
           end do
           do k = 1, nplsi_in
@@ -1185,7 +1186,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi_in),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi_in),
-     ,                                                       i=1,nstsi)
+     ,                                                       i=1,nsts1)
           if (lines_for_format(6,nstsi*nplsi_in).gt.
      .        lines_for_format(6,nsts1*nplsi_in)) then
             do i = lines_for_format(6,nsts1*nplsi_in)+1,
@@ -1196,15 +1197,18 @@ cank
 
           allocate (wlpump1(natm1+nmol1+nion1+npls1,nlim+nsts1))
           do k = 1, natmi
-            if (iatm1(k).ne.0) wlpump1(iatm1(k),:) = wlpump(k,:)
+            if (iatm1(k).ne.0)
+     >       wlpump1(iatm1(k),1:nlim+nsts1) = wlpump(k,1:nlim+nsts1)
           end do
           do k = 1, nmoli
             if (imol1(k).ne.0)
-     >       wlpump1(natm1+imol1(k),:) = wlpump(natmi+k,:)
+     >       wlpump1(natm1+imol1(k),1:nlim+nsts1) =
+     .        wlpump(natmi+k,1:nlim+nsts1)
           end do
           do k = 1, nioni
             if (iion1(k).ne.0)
-     >       wlpump1(natm1+nmol1+iion1(k),:) = wlpump(natmi+nmoli+k,:)
+     >       wlpump1(natm1+nmol1+iion1(k),1:nlim+nsts1) =
+     .        wlpump(natmi+nmoli+k,1:nlim+nsts1)
           end do
           do i = 1, nlimi
             wd_old(1:nplsi_in)=wlpump(natmi+nmoli+nioni+1:

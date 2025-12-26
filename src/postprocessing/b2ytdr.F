@@ -13730,6 +13730,7 @@ cxpb We assign to the bundle the value from the highest species from that bundle
       real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
       character*256 :: fold(0:ns-1)
       character*3 :: charns, charns1
+      logical :: found
 
 cxpb This is for converting the content of profile files.
 cxpb This routine is to be used if the profile files contain
@@ -13750,45 +13751,51 @@ cxpb additive quantities such as densities.
         if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
           filenames(is1) = fold(isbegin)
         else if (isbegin.ne.-1) then
+          inquire(file=fold(isbegin),exist=found)
+          if (.not.found) then
+            filenames(is1) = fold(isbegin)
+          else
 cxpb need to write new file with weighted sum of profiles
 cxpb we check the profiles have the same size
 cxpb and use the positions from the last file read
-          write(charns ,'(i3.3)') isbegin
-          write(charns1,'(i3.3)') isend
-          filenames(is1) =
-     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
-          write(nunit,'(a)') trim(filenames(is1))
-          do is = isbegin, isend
-            open(99,file=fold(is1))
-            read(99,*,err=100,end=101) idum
-            if (npoints.eq.0) then
-              npoints = idum
-              allocate(pos(npoints))
-              allocate(values(npoints,isend-isbegin+1))
-              allocate(value1(npoints))
-            else
-              call xertst( idum.eq.npoints,
+            write(charns ,'(i3.3)') isbegin
+            write(charns1,'(i3.3)') isend
+            filenames(is1) =
+     .        trim(fold(isbegin))//'.'//charns//'-'//charns1
+            write(nunit,'(a)') trim(filenames(is1))
+            do is = isbegin, isend
+              open(99,file=fold(is1))
+              read(99,*,err=100,end=101) idum
+              if (npoints.eq.0) then
+                npoints = idum
+                allocate(pos(npoints))
+                allocate(values(npoints,isend-isbegin+1))
+                allocate(value1(npoints))
+              else
+                call xertst( idum.eq.npoints,
      .         'Mismatched profile sizes, conversion case not coded !')
-            end if
+              end if
+              do iy = 1, npoints
+                read(99,*,err=100,end=101)
+     .           pos(iy),values(iy,is-isbegin+1)
+              end do
+              close(99)
+            end do
             do iy = 1, npoints
-              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+              value1(iy) = 0.0_R8
+              do is = isbegin, isend
+                value1(iy) = value1(iy) +
+     .           bundle_frac(is1,is)*values(iy,is-isbegin+1)
+              end do
+            end do
+            open(99,file=trim(filenames(is1)))
+            write(99,*) npoints
+            do iy = 1, npoints
+              write(99,*) pos(iy), value1(iy)
             end do
             close(99)
-          end do
-          do iy = 1, npoints
-            value1(iy) = 0.0_R8
-            do is = isbegin, isend
-              value1(iy) = value1(iy) +
-     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
-            end do
-          end do
-          open(99,file=trim(filenames(is1)))
-          write(99,*) npoints
-          do iy = 1, npoints
-            write(99,*) pos(iy), value1(iy)
-          end do
-          close(99)
-          deallocate(pos,values,value1)
+            deallocate(pos,values,value1)
+          end if
         end if
       end do
 
@@ -13863,6 +13870,7 @@ cxpb We assign to the new bundle a weighted average of the values from the old b
       real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
       character*256 :: fold(0:ns-1)
       character*3 :: charns, charns1
+      logical :: found
 
 cxpb This is for converting the content of profile files.
 cxpb This routine is to be used if the profile files contain
@@ -13885,46 +13893,52 @@ cxpb intensive quantities such as velocities.
         if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
           filenames(is1) = fold(isbegin)
         else if (isbegin.ne.-1) then
+          inquire(file=fold(isbegin),exist=found)
+          if (.not.found) then
+            filenames(is1) = fold(isbegin)
+          else
 cxpb need to write new file with weighted average of profiles
 cxpb we check the profiles have the same size
 cxpb and use the positions from the last file read
-          write(charns ,'(i3.3)') isbegin
-          write(charns1,'(i3.3)') isend
-          filenames(is1) =
-     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
-          write(nunit,'(a)') trim(filenames(is1))
-          do is = isbegin, isend
-            open(99,file=fold(is1))
-            read(99,*,err=100,end=101) idum
-            if (npoints.eq.0) then
-              npoints = idum
-              allocate(pos(npoints))
-              allocate(values(npoints,isend-isbegin+1))
-              allocate(value1(npoints))
-            else
-              call xertst( idum.eq.npoints,
+            write(charns ,'(i3.3)') isbegin
+            write(charns1,'(i3.3)') isend
+            filenames(is1) =
+     .       trim(fold(isbegin))//'.'//charns//'-'//charns1
+            write(nunit,'(a)') trim(filenames(is1))
+            do is = isbegin, isend
+              open(99,file=fold(is1))
+              read(99,*,err=100,end=101) idum
+              if (npoints.eq.0) then
+                npoints = idum
+                allocate(pos(npoints))
+                allocate(values(npoints,isend-isbegin+1))
+                allocate(value1(npoints))
+              else
+                call xertst( idum.eq.npoints,
      .         'Mismatched profile sizes, conversion case not coded !')
-            end if
+              end if
+              do iy = 1, npoints
+                read(99,*,err=100,end=101)
+     .           pos(iy),values(iy,is-isbegin+1)
+              end do
+              close(99)
+            end do
             do iy = 1, npoints
-              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+              value1(iy) = 0.0_R8
+              do is = isbegin, isend
+                value1(iy) = value1(iy) +
+     .           bundle_frac(is1,is)*values(iy,is-isbegin+1)
+              end do
+              value1(iy) = value1(iy) / sum
+            end do
+            open(99,file=trim(filenames(is1)))
+            write(99,*) npoints
+            do iy = 1, npoints
+              write(99,*) pos(iy), value1(iy)
             end do
             close(99)
-          end do
-          do iy = 1, npoints
-            value1(iy) = 0.0_R8
-            do is = isbegin, isend
-              value1(iy) = value1(iy) +
-     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
-            end do
-            value1(iy) = value1(iy) / sum
-          end do
-          open(99,file=trim(filenames(is1)))
-          write(99,*) npoints
-          do iy = 1, npoints
-            write(99,*) pos(iy), value1(iy)
-          end do
-          close(99)
-          deallocate(pos,values,value1)
+            deallocate(pos,values,value1)
+          end if
         end if
       end do
 
