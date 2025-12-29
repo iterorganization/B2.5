@@ -3167,6 +3167,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .        MOMPAR(IS,IB,1),' on boundary ',
      .        BCCHAR(IB),boundary_location(ib),' for species ',IS
             endif
+            call xertst(BCCON(IS,IB).eq.14,
+     &        'BCCON = 14 must be used in conjunction'//
+     &        ' with BCMOM = 13!')
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -5905,6 +5908,12 @@ cxpb code segment analog to b2tfhi
           if(.not.BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 ',
      &      'HAS NOT BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
           if(bceni_15_style.ne.0) write(*,*) "bceni_15_style = 1"
+          do is = 0, ns-1
+            if(is_neutral(is)) cycle
+            call xertst(BCCON(IS,IB).eq.14.or.bceni_15_style.ne.0,
+     &        'BCCON = 14 for all ions must be used in conjunction'//
+     &        ' with BCENI = 15 style = 0!')
+          enddo
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -7414,6 +7423,12 @@ c              fchi=0.0_R8
      &     'BCPOT = 11 : sheath potential current continuity bc',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
      &     ' on ',BCCHAR(IB),boundary_location(ib)
+          do is = 0, ns-1
+            if(is_neutral(is)) cycle
+            call xertst(BCCON(IS,IB).eq.14,
+     &        'BCCON = 14 for all ions must be used in conjunction'//
+     &        ' with BCPOT = 11!')
+          enddo
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
