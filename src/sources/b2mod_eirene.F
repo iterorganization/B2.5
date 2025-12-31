@@ -5309,56 +5309,88 @@ c!###}
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
 
       subroutine store_initial_fort_file(fort_index)
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
       implicit none
 
       integer fort_index
-      character*256 filename
+      character*256 filename, systemarg
       character*8 index_str
       logical ex
+#ifdef NAGFOR
+      integer ierror, status
+#endif
 
-      write(index_str, '(I0)') fort_index
+      write(index_str,'(I0)') fort_index
       filename = fort_lc // trim(index_str)
       call find_file(filename,ex)
+      systemarg = 'cp '//trim(filename)//' '//trim(filename)//'.init'
       if (ex) then
-        call system('cp '//trim(filename)//' '//trim(filename)
-     .      //'.init')
+#ifndef NAGFOR
+        call system(systemarg)
+#else
+        call system(systemarg, status, ierror)
+#endif
       endif
 
       return
       end subroutine store_initial_fort_file
 
       subroutine reinitialize_fort_file(fort_index)
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
       implicit none
 
       integer fort_index
-      character*256 filename
+      character*256 filename, systemarg
       character*8 index_str
       logical ex
+#ifdef NAGFOR
+      integer ierror, status
+#endif
 
-      write(index_str, '(I0)') fort_index
-      filename = fort_lc // trim(index_str) // '.init'
+      write(index_str,'(I0)') fort_index
+      filename = fort_lc//trim(index_str)//'.init'
       call find_file(filename,ex)
+      systemarg =
+     . 'cp '//trim(filename)//' '//trim(fort_lc)//trim(index_str)
       if (ex) then
-        call system('cp '//trim(filename)//' '//trim(fort_lc)
-     .      //index_str)
+#ifndef NAGFOR
+        call system(systemarg)
+#else
+        call system(systemarg, status, ierror)
+#endif
       endif
 
       return
       end subroutine reinitialize_fort_file
 
       subroutine delete_initial_fort_file(fort_index)
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
       implicit none
 
       integer fort_index
-      character*256 filename
+      character*256 filename, systemarg
       character*8 index_str
       logical ex
+#ifdef NAGFOR
+      integer ierror, status
+#endif
 
-      write(index_str, '(I0)') fort_index
-      filename = fort_lc // trim(index_str) // '.init'
+      write(index_str,'(I0)') fort_index
+      filename = fort_lc//trim(index_str)//'.init'
       call find_file(filename,ex)
+      systemarg = 'rm '//trim(filename)
       if (ex) then
-        call system('rm '//trim(filename))
+#ifndef NAGFOR
+        call system(systemarg)
+#else
+        call system(systemarg, status, ierror)
+#endif
       endif
 
       return
