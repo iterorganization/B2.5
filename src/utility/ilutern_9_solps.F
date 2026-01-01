@@ -35,9 +35,10 @@ c ma28 common blocks
      1 irank,abort1,abort2
       real (kind=R8) ::
      *   rtol,themax,big,dxmax,errmax,dres,cgce
-      integer ndrop,maxit,noiter,nsrch,istart,ibig
+      integer ndrop,maxit,noiter,nsrch,istart
+      integer lbig
       common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
-     1 ndrop,maxit,noiter,nsrch,istart,ibig
+     1 ndrop,maxit,noiter,nsrch,istart,lbig
 
 *  -- PROCEDURES --
       INTRINSIC cpu_time
