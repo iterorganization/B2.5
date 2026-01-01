@@ -18,7 +18,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      logical(1) :: lout                                             !srv 16.07.10
+      logical :: lout                                               !srv 16.07.10
       integer nx, ny, ns
       real (kind=R8) ::
      *  dtim, vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),             !srv 10.10.22
