@@ -976,6 +976,14 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>nrings_for_no_speedup_averaging</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of poloidal rings in the confined region (counted from the separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging (CORR_CORE_DN and CORR_CORE_DT) should not be used.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2srdt_*_namelist</name>
 				<description>

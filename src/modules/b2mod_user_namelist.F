@@ -207,7 +207,7 @@ c***  Standard set-up:
       type (switches), intent (inout) :: sw
       integer ic, iFc, iFs, iFs1, iFs2, iFt, iVx1, iVx2
       real (kind=R8) :: distint, dsep,
-     . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
+     . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint 
 
       logical :: file_ok
       character*260 filename
@@ -326,10 +326,10 @@ c***  Standard set-up:
         do i = m%cvVxP(omp(ic),1),
      &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
           iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) cycle
+!!!!  IYS        if (iFs.eq.0) cycle  ! There is nothing bad if vertex (the one at the boundary) lies between flux surfaces
           if (iFs1.eq.0) then
             iFs1 = iFs
-          else if (iFs2.eq.0) then
+          else if (iFs2.eq.0 .and. iFs.ne.iFs1) then
             iFs2 = iFs
           end if
         end do
