@@ -12,6 +12,8 @@
       use b2mod_switches
       use b2mod_numerics_namelist
      , , only : corr_core_dn, min_na
+      use b2mod_user_namelist
+     , , only : ft_omp, ft_ds_omp, icsepomp, omp, nomp
       use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -43,7 +45,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFt, ireg
+      integer i, iCv, iFt, ireg, ic
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk(nCv), wrkv(nVx)
@@ -88,7 +90,8 @@
         tt1 = 0.0_R8
         tt2 = 0.0_R8
         do iCv = 1, mpg%nCi
-          if (mpg%cvOnClosedSurface(iCv)) then       ! IYS 27.03.2019
+          if (mpg%cvOnClosedSurface(iCv) .and.       ! IYS 27.03.2019
+     &      (ft_omp(mpg%cvFt(iCv)) .lt. icsepomp - switch%nrings)) then
             iFt = mpg%cvFt(iCv)
             if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
