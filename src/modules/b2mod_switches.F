@@ -53,6 +53,8 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: csig_an_style
       integer :: user_transport
       integer :: use_min_na_numerics
+      integer :: set_transport_iyref
+      integer :: nrings             ! IYS 27.03.2019
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -717,6 +719,8 @@ c Matrix solver
       s % csig_an_style = 1
       s % user_transport = 0
       s % use_min_na_numerics = 0
+      s % set_transport_iyref = 0
+      s % nrings = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -1400,7 +1404,10 @@ c Matrix solver
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
-      call ipgeti ('b2mndr_use_min_na_numerics', s%use_min_na_numerics)
+      call ipgeti ('b2mndr_use_min_na_numerics',
+     &                       s % use_min_na_numerics)
+      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
+      call ipgeti ('nrings_for_no_speedup_averaging', s % nrings)            ! IYS 27.03.2019
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
