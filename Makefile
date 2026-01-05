@@ -527,7 +527,7 @@ VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS_WG
 MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.F90
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS_WG/eirmod_*.F90
-MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
+MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a
 DIMSDIR=${SRCDIR}/modules
 ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
 DIMSDIR=${SRCDIR}/modules.local
@@ -592,9 +592,6 @@ ${OBJDIR}/libgr_dummy.a:
 
 ${OBJDIR}/libeirene.a:
 	ln -sf ${EIRDIR}/libeirene.a ${OBJDIR}
-
-${OBJDIR}/ioflush.o:
-	ln -sf ${EIRDIR}/ioflush.o ${OBJDIR}
 
 ifneq (${MOD},o)
 ${OBJDIR}/eirmod_extrab25.${MOD}:
