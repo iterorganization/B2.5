@@ -146,6 +146,11 @@
       use ids_schemas   ! IGNORE
      , , only : ids_divertors
 #endif
+#if IMAS_MAJOR_VERSION > 3
+      use ids_schemas   ! IGNORE
+     , , only : ids_plasma_profiles, ids_plasma_sources,
+     ,          ids_plasma_transport
+#endif
       use b2mod_ual
      , , only : put_ids_edge, new_ids_edge, close_ual,
      ,          dealloc_ids_edge, dealloc_batch_edge
@@ -245,6 +250,14 @@
       type(ids_edge_sources) :: edge_sources
       type(ids_edge_sources) :: batch_sources
       type(ids_edge_transport) :: edge_transport
+#if IMAS_MAJOR_VERSION > 3
+      type(ids_plasma_profiles) :: plasma_profiles
+      type(ids_plasma_profiles) :: old_plasma_profiles
+      type(ids_plasma_profiles) :: batch_plasma_profiles
+      type(ids_plasma_sources) :: plasma_sources
+      type(ids_plasma_sources) :: batch_plasma_sources
+      type(ids_plasma_transport) :: plasma_transport
+#endif
       type(ids_radiation) :: radiation
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       type(ids_dataset_description) :: description
@@ -2975,28 +2988,69 @@ c new CDF movie option
               write(*,*) "Reading old IMAS data entry: ",
      .         trim(database), shot, run
               call ids_get( idx, "equilibrium", equilibrium, status )
+#if IMAS_MAJOR_VERSION > 3
+              call ids_get( idx, "plasma_profiles", old_plasma_profiles,
+     .          status )
+              if (status.ne.0)
+     .         call ids_get( idx, "edge_profiles", old_edge_profiles,
+     .          status )
+#else
               call ids_get( idx, "edge_profiles", old_edge_profiles,
      .          status )
+#endif
               if (status.ne.0) then
-                write(*,*) 'Error opening old edge_profiles IDS ! '//
+                write(*,*) 'Error opening old profiles IDS ! '//
      .                     'Will create a new one.'
                 idx = 0
                 continued = .false.
               else
-                num_time_slices = size(old_edge_profiles%time)
-                if (num_time_slices.gt.0) then
-                  ids_end_time = old_edge_profiles%time(num_time_slices)
+#if IMAS_MAJOR_VERSION > 3
+                if (associated(old_plasma_profiles%time)) then
+                  num_time_slices = size(old_plasma_profiles%time)
+                  if (num_time_slices.gt.0) then
+                    ids_end_time =
+     .               old_plasma_profiles%time(num_time_slices)
+                  else
+                    ids_end_time = IDS_REAL_INVALID
+                  end if
+                  call ids_deallocate( old_plasma_profiles )
                 else
-                  ids_end_time = IDS_REAL_INVALID
+#endif
+                  num_time_slices = size(old_edge_profiles%time)
+                  if (num_time_slices.gt.0) then
+                    ids_end_time =
+     .               old_edge_profiles%time(num_time_slices)
+                  else
+                    ids_end_time = IDS_REAL_INVALID
+                  end if
+                  call ids_deallocate( old_edge_profiles )
+#if IMAS_MAJOR_VERSION > 3
                 end if
-                call ids_deallocate( old_edge_profiles )
+#endif
+#if IMAS_MAJOR_VERSION > 3
+                call ids_get( idx, "plasma_profiles/1",
+     .            old_plasma_profiles, status )
+                if (status.ne.0)
+     .           call ids_get( idx, "edge_profiles/1",
+     .            old_batch_profiles, status )
+#else
                 call ids_get( idx, "edge_profiles/1",
      .            old_batch_profiles, status )
+#endif
                 if (status.ne.0) then
                   num_batch_slices = 0
                 else
-                  num_batch_slices = size(old_batch_profiles%time)
-                  call ids_deallocate( old_batch_profiles )
+#if IMAS_MAJOR_VERSION > 3
+                  if (associated(old_plasma_profiles%time)) then
+                    num_batch_slices = size(old_plasma_profiles%time)
+                    call ids_deallocate( old_plasma_profiles )
+                  else
+#endif
+                    num_batch_slices = size(old_batch_profiles%time)
+                    call ids_deallocate( old_batch_profiles )
+#if IMAS_MAJOR_VERSION > 3
+                  end if
+#endif
                 end if
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
@@ -3172,6 +3226,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     time_slice_index = num_time_slices
                     call B25_process_ids(
      &               edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &               plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &               radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &               description,
@@ -3202,6 +3259,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     batch_index = num_batch_slices
                     call B25_av_ids( summary_av,
      &               batch_profiles, batch_sources,
+#if IMAS_MAJOR_VERSION > 3
+     &               batch_plasma_profiles, batch_plasma_sources,
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &               description,
 #endif
@@ -3242,6 +3302,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (process_ids) then
               call B25_process_ids(
      &          edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &          plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &          radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
@@ -3270,6 +3333,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (process_av) then
               call B25_av_ids( summary_av,
      &         batch_profiles, batch_sources,
+#if IMAS_MAJOR_VERSION > 3
+     &         batch_plasma_profiles, batch_plasma_sources,
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &         description,
 #endif
@@ -3292,6 +3358,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               time_slice_index = num_time_slices
               call B25_process_ids(
      &          edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &          plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &          radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
@@ -3325,6 +3394,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               batch_index = num_batch_slices
               call B25_av_ids( summary_av,
      &          batch_profiles, batch_sources,
+#if IMAS_MAJOR_VERSION > 3
+     &          batch_plasma_profiles, batch_plasma_sources,
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
 #endif
@@ -3345,6 +3417,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call new_ids_edge(
      &        edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &        plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &        radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &        description,
@@ -3369,7 +3444,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MAJOR_VERSION > 3
      &        uri,
 #endif
-     &        batch_profiles, batch_sources, equilibrium,
+     &        batch_profiles, batch_sources,
+#if IMAS_MAJOR_VERSION > 3
+     &        batch_plasma_profiles, batch_plasma_sources,
+#endif
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3382,6 +3461,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_ids)
      >       call put_ids_edge(
      &        edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &        plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &        radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &        description,
@@ -3628,6 +3710,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           time_slice_index = num_time_slices
           call B25_process_ids(
      &      edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &      plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
@@ -3887,6 +3972,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 time_slice_index = num_time_slices
                 call B25_process_ids(
      &            edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &            plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &            radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &            description,
@@ -3941,6 +4029,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           if (status.ne.0) idx = 0
           call B25_process_ids(
      &      edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &      plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
@@ -3967,6 +4058,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (ids_replace) then
           call new_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &      plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
@@ -3988,6 +4082,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         else
           call put_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &      plasma_profiles, plasma_sources, plasma_transport,
+#endif
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &      description,
@@ -4011,6 +4108,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         end if
         call dealloc_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
+#if IMAS_MAJOR_VERSION > 3
+     &      plasma_profiles, plasma_sources, plasma_transport,
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
      &      numerics,
 #endif
@@ -4020,6 +4120,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      radiation )
         call dealloc_batch_edge(
      &      batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+     &    , batch_plasma_profiles, batch_plasma_sources
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &    , summary
 #endif
