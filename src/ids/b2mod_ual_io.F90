@@ -3367,7 +3367,7 @@ contains
           end do
 #else
           allocate( profiles_ggd%neutral( nneut ) )
-          allocate( transport_ggd%neutral( nneut ) )
+          allocate( transport_ggd(1)%neutral( nneut ) )
           do i = 1, nsources
             allocate( sources_ggd(i)%neutral( nneut ) )
           end do
@@ -5388,7 +5388,7 @@ contains
                       &   vectorID = VEC_ALIGN_RADIAL_ID )
                     tmpCv(:,:) = smd0_eir_tot(:,:,ispion(is,js)) / vol(:,:)
                     call write_cell_vector_component( sources_grid,     &
-                      &   vectorComponent = sources_ggd(13)%ion( is )   &
+                      &   vectorComponent = sources_ggd(13)%ion( is )%  &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_DIAMAGNETIC_ID )
@@ -7133,7 +7133,7 @@ contains
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
 #else
                      call write_cell_vector_component( edge_grid,            &
-                       &   vectorComponent = profiles_ggd%ggd( time_sind )%  &
+                       &   vectorComponent = profiles_ggd%                   &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
