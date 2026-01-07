@@ -8096,6 +8096,7 @@ contains
                     call write_face_scalar( transport_grid,                   &
                         &   val = transport_ggd(1)%neutral( j )%particles%d_radial, &
                         &   value = cdpa(:,:,:,1,js) )
+                    call write_face_scalar( transport_grid,                   &
                         &   val = transport_ggd(1)%neutral( j )%state(1)%     &
                         &         particles%d_radial,                         &
                         &   value = cdpa(:,:,:,1,js) )
