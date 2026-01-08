@@ -5589,7 +5589,7 @@ contains
                     &   scalar = sources_ggd(5)%electrons%energy,       &
                     &   b2CellData = tmpCv )
             end if
-             if (balance_netcdf.ne.0) then
+            if (balance_netcdf.ne.0) then
                 tmpCv(:,:) = b2stel_she_ion_bal(:,:) / vol(:,:)
                 call write_cell_scalar( sources_grid,                   &
                     &   scalar = sources_ggd(7)%electrons%energy,       &
@@ -6733,7 +6733,7 @@ contains
                    end do
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar( sources_grid,                     &
-                       &   scalar = sources_ggd(12)%neutral( is )%particles, &
+                       &   scalar = sources_ggd(12)%neutral( is )%energy,    &
                        &   b2CellData = tmpCv )
 #endif
                 end do
