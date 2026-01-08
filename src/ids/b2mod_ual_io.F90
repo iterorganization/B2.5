@@ -6929,7 +6929,7 @@ contains
                    end do
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar( sources_grid,                     &
-                       &   scalar = sources_ggd(12)%neutral( is )%particles, &
+                       &   scalar = sources_ggd(12)%neutral( is )%energy,    &
                        &   b2CellData = tmpCv )
 #endif
                 end do
