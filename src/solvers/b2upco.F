@@ -13,7 +13,7 @@
       use b2mod_numerics_namelist
      , , only : corr_core_dn, min_na
       use b2mod_user_namelist
-     , , only : ft_omp, ft_ds_omp, icsepomp, omp, nomp
+     , , only : ft_omp, icsepomp
       use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -112,7 +112,8 @@
           endif
           if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)
-            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
+            if (iFt.gt.0 .and. iFt.le.mpg%nFt 
+     &               .and. tt0(iFt).gt.0.0_R8) then
               t0 = pb(iCv)+tt2(iFt)/tt0(iFt) +
      *         corr_core_dn(isb)*(pb_(iCv)-pb(iCv)-tt2(iFt)/tt0(iFt)) ! IYS 19.12.2017
               if (t0 .lt. pb(iCv)*na_min / nb(iCv)) then
