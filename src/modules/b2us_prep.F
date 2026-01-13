@@ -2586,19 +2586,16 @@
       if (Qalf_mod_style.eq.0) then
         ! Wall faces must have an angle larger than Qalfmin
         do iCv=mpg%nCi+1,mpg%nCv
-          iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
           wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
      &                  / gm%fcBb(iFc,3))
           if (wrk >= gm%Qalfmin)
      &      is_mod_fc(iFc) = .true.
         enddo
       else
-        ! Wall faces must satisfy the following criteria:
-        ! 1. Located at the end of a flux tube
-        ! 2. Have an angle larger than Qalfmin
-        ! 3. Have at least one neighboring wall face
-        ! If all faces along a flux tube have angles larger than Qalfmin,
-        ! one face is treated as field-aligned (not a wall)
+        ! Wall face must be located at either end of a flux tube or satisfy both conditions:
+        ! 1. Have an magnetic field angle larger than Qalfmin and
+        ! 2. Have at least one neighboring wall face
         do iFt = 1, mpg%nFt
           mod_cell_c = 0
           ! Start from the first cell in the flux tube
@@ -2643,8 +2640,10 @@
               exit
             endif
           enddo
-          ! If all faces in a flux tube are qualified as walls,
-          ! mark the one face as field-aligned (not a wall)
+          ! Special case: If every face in the flux tube qualifies as a wall,
+          ! one face is marked as field-aligned instead. We identify the two neighboring
+          ! faces where the magnetic field angle changes sign and designate one of
+          ! them as the field-aligned (non-wall) face.
           if (mod_cell_c >= mpg%ftCvP(iFt,2)) then
             if (mpg%ftCvP(iFt,2) > 4) then
               iFc1 = 0
