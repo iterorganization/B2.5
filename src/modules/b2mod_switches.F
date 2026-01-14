@@ -672,6 +672,9 @@ c Optimization
       integer :: b2optim_reset_iter
       real (kind=R8) :: b2optim_reset_drift
 
+c Matrix solver
+      integer :: use_PARDISO
+
       end type switches
 
       contains
@@ -1379,11 +1382,7 @@ c Optimization
       s % b2optim_reset_param_iter = 1
 
 c Matrix solver
-      s % b2uxus_style = 2
-
-C b2nppo
-      s % b2nppo_restrict_po = 0
-      s % b2txcx_increase_transp_coefs = 0.0_R8
+      s % use_PARDISO = 0 !! can become new default after sufficient testing?!
 
       return
       end subroutine set_defaults_switches
@@ -2204,6 +2203,9 @@ c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
       call ipgeti ('b2optim_reset_iter', s%b2optim_reset_iter)
       call ipgetr ('b2optim_reset_drift', s%b2optim_reset_drift)
+
+c Matrix solver
+      call ipgeti ('use_PARDISO', s % use_PARDISO) 
 
       return
       end subroutine read_switches
