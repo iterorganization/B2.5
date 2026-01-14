@@ -322,7 +322,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt')
       endif 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total',  !srv 18.05.02
+     .             switch%use_PARDISO)
       endif                                                             !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
@@ -483,7 +484,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te')
       endif
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te',     !srv 18.05.02
+     .             switch%use_PARDISO)
       endif                                                            !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
@@ -642,7 +644,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+      call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti',
+     .             switch%use_PARDISO)
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
       endif                                                          !srv 22.05.18
 
@@ -782,9 +785,10 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
-      last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
-      endif                                                          !srv 22.05.18
+        call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn',
+     .             switch%use_PARDISO)
+        last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
+       endif                                                             !srv 22.05.18
       endif
 
 
@@ -919,7 +923,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        enddo
 
 *   ..solve the correction equation
-       call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
+       call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt',
+     .             switch%use_PARDISO)
       endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0) then
@@ -1053,7 +1058,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        enddo
 
 *   ..solve the correction equation
-       call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
+       call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt',
+     .             switch%use_PARDISO)
       endif !solve_keps - enstrophy
 
       if (switch%b2usht_iout.ne.0) then
