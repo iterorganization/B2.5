@@ -897,8 +897,8 @@ c 2002-09-11: logic revised
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
       endif
       NATMI = NATM
       NPLSI = NPLS
@@ -1860,16 +1860,16 @@ c 2002-09-11: logic revised
         case('b2tqin_style')
           cnamip = 'b2tqin_csigin_style'
           todo = csigin_style.eq.0
-        case('b2news_coriolis', 'b2npht_style_shei',
-     &                          'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
+        case('b2news_coriolis','b2npht_style_shei',
+     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap', 'b2tfnb_fnb_nodrift_style',  ! No longer needed
+        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
-     &       'b2stel_fix_recomb_energy', 'b2mndr_redef_pbs',
-     &       'b2news_guard_flows', 'b2news_fac_ref',
-     &       'b2tqna_ixref', 'set_transport_ixref',
-     &       'b2npmo_b2sifr_', 'b2sifr_styl1')
+     &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs',
+     &       'b2news_guard_flows','b2news_fac_ref',
+     &       'b2tqna_ixref','set_transport_ixref',
+     &       'b2npmo_b2sifr_','b2sifr_styl1')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1906,6 +1906,7 @@ c 2002-09-11: logic revised
           end if
         case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
           todo = pulse.eq.0.and.shot.ne.0
+          wait = .true.
           cnamip = 'b2mndr_pulse_number'
           if (todo) iswitch = shot
         case ('b2optim_reset_iter') ! needs to be rewritten as b2optim_reset_drift_iter
@@ -1935,8 +1936,8 @@ c 2002-09-11: logic revised
             cnamip = 'b2mndr_na_new'
           end if
           todo = .false.
-        case('b2tfnb_xfrhie', 'b2tfnb_xfrhiehz',
-     &       'b2tfnb_xfrhie_no_drift')  ! Now obsolete, removed from list
+        case('b2tfnb_xfrhie','b2tfnb_xfrhiehz',
+     &       'b2tfnb_xfrhie_no_drift') ! Now obsolete, removed from list
           todo = .false.
           wait = .true.
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
@@ -1954,7 +1955,7 @@ c 2002-09-11: logic revised
             cnamip = 'b2tfhe_vis_par'
           else
             wait = .true.
-          end if
+          endif
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
@@ -4128,28 +4129,28 @@ cxpb  Start reading input.dat file
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1,NREAC_ADD
           WRITE(IUNOT,'(A80)') ZEILE
           READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,16)
+          call fix_logical_input(zeile,18)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
                                          ! NLTRIMESH
           ELSE
-            READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
           ENDIF
         ELSE
-          call fix_logical_input(zeile,16)
+          call fix_logical_input(zeile,18)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
                                          ! NLTRIMESH
           ELSE
-            READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
           ENDIF
         ENDIF
         IF (streql(eirene_format,'facelift')) then
@@ -4161,13 +4162,15 @@ cxpb  Start reading input.dat file
           ldum(10) = .true.
           ldum(11) = .false.
           ldum(12) = .false.
+          ldum(16) = .true.
+          ldum(17) = .true.
         ELSE
           ldum(10) = .true. ! Make sure we are using the H1RN random generator
         END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
-        WRITE(IUNOT,6665) ldum(0:15)
+        WRITE(IUNOT,6665) ldum(0:17)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -9482,6 +9485,11 @@ cxpb Read first, transform and rewrite
           end do
           ldum(26) = ldum(0)
         end if
+! Add TRCSCL (default = FALSE) in position 27
+        do i = 35, 27, -1
+          ldum(i+1) = ldum(i)
+        end do
+        ldum(27) = .false.
 ! Merge usage of TRCDBGG and TRCGRD
         ldum(6) = ldum(6).or.ldum(33)
         WRITE(IUNOT,6665) ldum(1:36)
@@ -10210,8 +10218,12 @@ C  SKIP READING REST OF THIS BLOCK
             WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
-          READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN,LCHKQUD
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_logical_input(zeile,6)
+          READ (ZEILE,6665) ldum(0:5) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH,LSPRCL,
+                                      ! LOLD31
+          ldum(5) = .false.
+          WRITE(IUNOT,6665) ldum(0:5)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(A72)') ZEILE
           IF (streql(ZEILE(55:66),' ')) THEN   ! input.dat file comes from
@@ -11617,6 +11629,67 @@ cxpb as they no longer necessarily point to the same species
         endif  ! sputter_namelist_used
       endif
 
+*  ..write new b2.feedback_save.parameters if needed
+*   ..we can only do this after the species mapping has been done
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.feedback_save.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
+     &   .and. .not.found .and. .not.same_atoms) then
+        call read_b2us_feedback(99,'    ',feedback_namelist_used)
+        if (maxval(saved_fb_actuator).gt.0.0_R8.or.
+     &      maxval(saved_fb_prev).gt.0.0_R8) then
+          todo = .false.
+          ifb1 = 0
+          do iFb = 1, nFb
+            todo = todo .or.
+     &       ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &         saved_fb_prev(iFb).gt.0.0_R8) .and.
+     &         is1(fb_species(iFb)).ne.fb_species(iFb))
+            if ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &           saved_fb_prev(iFb).gt.0.0_R8).and.
+     &          (is1(fb_species(iFb)).ne.-1.or.
+     .           fb_actuator(iFb).eq.1)) ifb1 = ifb1+1
+          end do
+          if (todo) then
+            allocate(saved_fb_actuator1(1:ifb1))
+            allocate(saved_fb_prev1(1:ifb1))
+            saved_fb_actuator1 = 0.0_R8
+            saved_fb_prev1 = 0.0_R8
+            ifb1 = 0
+            do ifb = 1, nFb
+              if (is1(fb_species(ifb)).ne.-1.or.
+     .            fb_actuator(iFb).eq.1) then
+                ifb1 = ifb1 + 1
+                saved_fb_actuator1(ifb1) = saved_fb_actuator(ifb)
+                saved_fb_prev1(ifb1) = saved_fb_prev(ifb)
+              end if
+            end do
+            write(*,*) 'Writing b2.feedback_save.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
+            open(99,file=new_filename)
+            write(99,'(a9)') '&FEEDBACK'
+            write(hlp_frm,'(a,i2,a)')
+     >       '(a,1p,',ifb1,'(1x,1e15.8,'',''))'
+            if (maxval(saved_fb_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
+     >        (saved_fb_actuator1(ifb),ifb=1,ifb1)
+            if (maxval(saved_fb_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_PREV=',
+     >        (saved_fb_prev1(ifb),ifb=1,ifb1)
+            write(99,'(a1)') '/'
+            close(99)
+            deallocate(saved_fb_actuator1)
+            deallocate(saved_fb_prev1)
+          end if
+        end if
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.feedback_save.parameters'
+        write(*,*) 'No changes needed in b2.feedback_save.parameters'
+      end if
+
 *   ..write new b2.feedback_control.parameters if needed
       filename='b2.feedback_control.parameters'
       call find_file(filename,todo)
@@ -11845,67 +11918,6 @@ cxpb as they no longer necessarily point to the same species
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'
-      end if
-
-*  ..write new b2.feedback_save.parameters if needed
-*   ..we can only do this after the species mapping has been done
-      filename='b2.feedback_save.parameters'
-      call find_file(filename,todo)
-      new_filename = 'b2.feedback_save.parameters.2'
-      call find_file(new_filename,found)
-      if (found) write(6,*) trim(new_filename),' already present!'
-      if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
-     &   .and. .not.found .and. .not.same_atoms) then
-        call read_b2us_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_fb_actuator).gt.0.0_R8.or.
-     &      maxval(saved_fb_prev).gt.0.0_R8) then
-          todo = .false.
-          ifb1 = 0
-          do iFb = 1, nFb
-            todo = todo .or.
-     &       ((saved_fb_actuator(iFb).gt.0.0_R8.or.
-     &         saved_fb_prev(iFb).gt.0.0_R8) .and.
-     &         is1(fb_species(iFb)).ne.fb_species(iFb))
-            if ((saved_fb_actuator(iFb).gt.0.0_R8.or.
-     &           saved_fb_prev(iFb).gt.0.0_R8).and.
-     &          (is1(fb_species(iFb)).ne.-1.or.
-     .           fb_actuator(iFb).eq.1)) ifb1 = ifb1+1
-          end do
-          if (todo) then
-            allocate(saved_fb_actuator1(1:ifb1))
-            allocate(saved_fb_prev1(1:ifb1))
-            saved_fb_actuator1 = 0.0_R8
-            saved_fb_prev1 = 0.0_R8
-            ifb1 = 0
-            do ifb = 1, nFb
-              if (is1(fb_species(ifb)).ne.-1.or.
-     .            fb_actuator(iFb).eq.1) then
-                ifb1 = ifb1 + 1
-                saved_fb_actuator1(ifb1) = saved_fb_actuator(ifb)
-                saved_fb_prev1(ifb1) = saved_fb_prev(ifb)
-              end if
-            end do
-            write(*,*) 'Writing b2.feedback_save.parameters.2'
-            write(nout(5),'(a)') trim(new_filename)
-            open(99,file=new_filename)
-            write(99,'(a9)') '&FEEDBACK'
-            write(hlp_frm,'(a,i2,a)')
-     >       '(a,1p,',ifb1,'(1x,1e15.8,'',''))'
-            if (maxval(saved_fb_actuator1).gt.0.0_R8)
-     >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
-     >        (saved_fb_actuator1(ifb),ifb=1,ifb1)
-            if (maxval(saved_fb_prev1).gt.0.0_R8)
-     >       write(99,hlp_frm) 'SAVED_FB_PREV=',
-     >        (saved_fb_prev1(ifb),ifb=1,ifb1)
-            write(99,'(a1)') '/'
-            close(99)
-            deallocate(saved_fb_actuator1)
-            deallocate(saved_fb_prev1)
-          end if
-        end if
-      else if (todo) then
-        write(nout(5),'(a)') 'b2.feedback_save.parameters'
-        write(*,*) 'No changes needed in b2.feedback_save.parameters'
       end if
 
 *   ..write new b2.optimization.parameters, if needed
