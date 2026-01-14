@@ -190,7 +190,8 @@
 
 *   ..solve the correction equation
       write(*,'(1x,a,a)') 'Calling b2uxus from '//trim(name)
-      call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
+      call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name,           !srv 18.03.10
+     .             switch%use_PARDISO)
 
       if (switch%b2uspo_iout.ne.0) then                               !srv 08.07.08 {
         if (in_parallel()) then
