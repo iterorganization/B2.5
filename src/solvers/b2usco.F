@@ -226,7 +226,8 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)            !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name,            !srv 18.05.02
+     .             switch%use_PARDISO)
 *   ..redo the scaling
 ! $AD II-LOOP
       do iCv = 1, nCv
