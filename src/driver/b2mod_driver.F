@@ -1589,8 +1589,8 @@ csw 09oct2012
         NREAC=7
         IUNOUT=6
         CALL EIRENE_DEFAULTS_USR
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
 #else
         call xerrab
