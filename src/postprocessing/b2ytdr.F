@@ -1966,7 +1966,7 @@ c 2002-09-11: logic revised
             cnamip = 'b2tfhe_vis_par'
           else
             wait = .true.
-          end if
+          endif
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
@@ -4136,18 +4136,30 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:7)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
-        ENDIF
-        READ (IUNIN,'(A80)') ZEILE
-        call fix_logical_input(zeile,20)
-        IF (streql(eirene_format,'facelift')) then
-          READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                       ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                       ! NLTRIMESH
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,18)
+          IF (streql(eirene_format,'facelift')) then
+            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
+          ELSE
+            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
+                                         ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
+          ENDIF
         ELSE
-          READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                       ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                       ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
+          call fix_logical_input(zeile,18)
+          IF (streql(eirene_format,'facelift')) then
+            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
+          ELSE
+            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
+                                         ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
+          ENDIF
         ENDIF
         IF (streql(eirene_format,'facelift')) then
           ldum(14) = ldum(8)
@@ -4170,7 +4182,7 @@ cxpb  Start reading input.dat file
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
-        WRITE(IUNOT,6665) ldum(0:19)
+        WRITE(IUNOT,6665) ldum(0:17)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -9541,13 +9553,11 @@ cxpb Read first, transform and rewrite
           end do
           ldum(26) = ldum(0)
         end if
-        if (.not.streql(eirene_format,'msv')) then
 ! Add TRCSCL (default = FALSE) in position 27
-          do i = 35, 27, -1
-            ldum(i+1) = ldum(i)
-          end do
-          ldum(27) = .false.
-        end if
+        do i = 35, 27, -1
+          ldum(i+1) = ldum(i)
+        end do
+        ldum(27) = .false.
 ! Merge usage of TRCDBGG and TRCGRD
         ldum(6) = ldum(6).or.ldum(33)
         WRITE(IUNOT,6665) ldum(1:36)
@@ -11710,22 +11720,26 @@ cxpb as they no longer necessarily point to the same species
           ifb1 = 0
           do iFb = 1, nFb
             todo = todo .or.
-     &       ((saved_fb_actuator(is-1).gt.0.0_R8.or.
-     &         saved_fb_prev(is-1).gt.0.0_R8) .and.
-     &         ispecies1(is).ne.is)
-            is = is+1
+     &       ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &         saved_fb_prev(iFb).gt.0.0_R8) .and.
+     &         is1(fb_species(iFb)).ne.fb_species(iFb))
+            if ((saved_fb_actuator(iFb).gt.0.0_R8.or.
+     &           saved_fb_prev(iFb).gt.0.0_R8).and.
+     &          (is1(fb_species(iFb)).ne.-1.or.
+     .           fb_actuator(iFb).eq.1)) ifb1 = ifb1+1
           end do
           if (todo) then
-            allocate(saved_fb_actuator1(0:nspecies1-1))
-            allocate(saved_fb_prev1(0:nspecies1-1))
+            allocate(saved_fb_actuator1(1:ifb1))
+            allocate(saved_fb_prev1(1:ifb1))
             saved_fb_actuator1 = 0.0_R8
             saved_fb_prev1 = 0.0_R8
-            do is = 1, nspecies
-              if (ispecies1(is).ne.-1) then
-                saved_fb_actuator1(ispecies1(is)-1) =
-     .           saved_fb_actuator(is-1)
-                saved_fb_prev1(ispecies1(is)-1) =
-     .           saved_fb_prev(is-1)
+            ifb1 = 0
+            do ifb = 1, nFb
+              if (is1(fb_species(ifb)).ne.-1.or.
+     .            fb_actuator(iFb).eq.1) then
+                ifb1 = ifb1 + 1
+                saved_fb_actuator1(ifb1) = saved_fb_actuator(ifb)
+                saved_fb_prev1(ifb1) = saved_fb_prev(ifb)
               end if
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
@@ -11733,13 +11747,13 @@ cxpb as they no longer necessarily point to the same species
             open(99,file=new_filename)
             write(99,'(a9)') '&FEEDBACK'
             write(hlp_frm,'(a,i2,a)')
-     >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
+     >       '(a,1p,',ifb1,'(1x,1e15.8,'',''))'
             if (maxval(saved_fb_actuator1).gt.0.0_R8)
      >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
-     >        (saved_fb_actuator1(is),is=0,nspecies1-1)
+     >        (saved_fb_actuator1(ifb),ifb=1,ifb1)
             if (maxval(saved_fb_prev1).gt.0.0_R8)
      >       write(99,hlp_frm) 'SAVED_FB_PREV=',
-     >        (saved_fb_prev1(is),is=0,nspecies1-1)
+     >        (saved_fb_prev1(ifb),ifb=1,ifb1)
             write(99,'(a1)') '/'
             close(99)
             deallocate(saved_fb_actuator1)
