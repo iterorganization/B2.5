@@ -22,7 +22,7 @@
      &         eirene_mc_pipl_sna0to1, eirene_mc_pppl_sna0to1,
      &         eirene_mc_core_sna0to1, eirene_mc_mapl_smo0to3,
      &         eirene_mc_mmpl_smo0to3, eirene_mc_mipl_smo0to3,
-     &         eirene_mc_cppv_smo0to3, eirene_mc_eael_she0to3,
+     &         eirene_mc_mppl_smo0to3, eirene_mc_eael_she0to3,
      &         eirene_mc_emel_she0to3, eirene_mc_eiel_she0to3,
      &         eirene_mc_epel_she0to3, eirene_mc_eapl_shi0to3,
      &         eirene_mc_empl_shi0to3, eirene_mc_eipl_shi0to3,
@@ -80,7 +80,7 @@
      .  sni_av_papl(:,:,:), sni_av_pmpl(:,:,:),
      .  sni_av_pipl(:,:,:), sni_av_pppl(:,:,:),
      .  smo_av_mapl(:,:,:), smo_av_mmpl(:,:,:),
-     .  smo_av_mipl(:,:,:), smo_av_cppv(:,:,:),
+     .  smo_av_mipl(:,:,:), smo_av_mppl(:,:,:),
      .  see_av_eael(:,:), see_av_emel(:,:),
      .  see_av_eiel(:,:), see_av_epel(:,:),
      .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
@@ -133,7 +133,7 @@
      &  sni_h_papl(:,:,:,:), sni_h_pmpl(:,:,:,:),
      &  sni_h_pipl(:,:,:,:), sni_h_pppl(:,:,:,:),
      &  smo_h_mapl(:,:,:,:), smo_h_mmpl(:,:,:,:),
-     &  smo_h_mipl(:,:,:,:), smo_h_cppv(:,:,:,:),
+     &  smo_h_mipl(:,:,:,:), smo_h_mppl(:,:,:,:),
      &  sne_h_pael(:,:,:), sne_h_pmel(:,:,:),
      &  sne_h_piel(:,:,:),
      &  see_h_eael(:,:,:), see_h_emel(:,:,:),
@@ -148,7 +148,7 @@
      &  sni_s_papl(:,:,:), sni_s_pmpl(:,:,:),
      &  sni_s_pipl(:,:,:), sni_s_pppl(:,:,:),
      &  smo_s_mapl(:,:,:), smo_s_mmpl(:,:,:),
-     &  smo_s_mipl(:,:,:), smo_s_cppv(:,:,:),
+     &  smo_s_mipl(:,:,:), smo_s_mppl(:,:,:),
      &  sne_s_pael(:,:), sne_s_pmel(:,:),
      &  sne_s_piel(:,:),
      &  see_s_eael(:,:), see_s_emel(:,:),
@@ -165,7 +165,7 @@
       contains
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
-     1 sna0, smo0, she0, shi0, shn0,
+     1 sna0, smo0, smr0, smd0, she0, shi0, shn0,
      & main_call, switch, geo, mpg, st, st_ext)
       use b2mod_subsys
       implicit none
@@ -173,6 +173,7 @@
       real (kind=R8) ::
      * dtim,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
+     & smr0(nCv,0:3,0:ns-1), smd0(nCv,0:3,0:ns-1),
      & she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
       logical main_call                                           !dpc
       type (switches), intent (inout) :: switch
@@ -1439,9 +1440,13 @@ c!###}
                 if(.not.is_neutral(is).or.lneustra) then !{
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
-     *                   sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
-     *                   smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+nfl,istrai)=
+     *               smo(ic,fluids_list(is)+nfl,istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+2*nfl,istrai)=
+     *               smo(ic,fluids_list(is)+2*nfl,istrai)*hlp_scl(ls)
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
      *                  switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -1466,8 +1471,8 @@ c!###}
                       smo_mipl(ic,fluids_list(is),istrai)=
      *                     smo_mipl(ic,fluids_list(is),istrai)*
      *                     hlp_scl(ls)
-                      smo_cppv(ic,fluids_list(is),istrai)=
-     *                     smo_cppv(ic,fluids_list(is),istrai)*
+                      smo_mppl(ic,fluids_list(is),istrai)=
+     *                     smo_mppl(ic,fluids_list(is),istrai)*
      *                     hlp_scl(ls)
                     endif
 #endif
@@ -1648,9 +1653,13 @@ c>>>
                 if(.not.is_neutral(is).or.lneustra) then !{
                   if(lstrascl(istrai,ls).gt.0) then !{
                     sni(ic,fluids_list(is),istrai)=
-     *                 sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
-     *                 smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+nfl,istrai)=
+     *               smo(ic,fluids_list(is)+nfl,istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+2*nfl,istrai)=
+     *               smo(ic,fluids_list(is)+2*nfl,istrai)*hlp_scl(ls)
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
      *                  switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -1675,8 +1684,8 @@ c>>>
                       smo_mipl(ic,fluids_list(is),istrai)=
      *                   smo_mipl(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
-                      smo_cppv(ic,fluids_list(is),istrai)=
-     *                   smo_cppv(ic,fluids_list(is),istrai)*
+                      smo_mppl(ic,fluids_list(is),istrai)=
+     *                   smo_mppl(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
                     endif
 #endif
@@ -1900,9 +1909,13 @@ c*** Here only the second pass of correction
                 if(lstrascl(istrai,ls).gt.0) then !{
                   do ic=1,nCv !{
                     sni(ic,fluids_list(is),istrai)=
-     *                 sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               sni(ic,fluids_list(is),istrai)*hlp_scl(ls)
                     smo(ic,fluids_list(is),istrai)=
-     *                 smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+     *               smo(ic,fluids_list(is),istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+nfl,istrai)=
+     *               smo(ic,fluids_list(is)+nfl,istrai)*hlp_scl(ls)
+                    smo(ic,fluids_list(is)+2*nfl,istrai)=
+     *               smo(ic,fluids_list(is)+2*nfl,istrai)*hlp_scl(ls)
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
      *                  switch%write_eirene_sources.ne.0) then !djm Jan2017
@@ -1927,8 +1940,8 @@ c*** Here only the second pass of correction
                       smo_mipl(ic,fluids_list(is),istrai)=
      *                   smo_mipl(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
-                      smo_cppv(ic,fluids_list(is),istrai)=
-     *                   smo_cppv(ic,fluids_list(is),istrai)*
+                      smo_mppl(ic,fluids_list(is),istrai)=
+     *                   smo_mppl(ic,fluids_list(is),istrai)*
      *                   hlp_scl(ls)
                     endif
 #endif
@@ -2149,7 +2162,7 @@ c              it is NOT IYSs style)
           allocate(smo_av_mapl(size(smo,1),size(smo,2),size(smo,3)))
           allocate(smo_av_mmpl(size(smo,1),size(smo,2),size(smo,3)))
           allocate(smo_av_mipl(size(smo,1),size(smo,2),size(smo,3)))
-          allocate(smo_av_cppv(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(smo_av_mppl(size(smo,1),size(smo,2),size(smo,3)))
           allocate(sei_av_eapl(size(sei,1),size(sei,2),size(sei,3)))
           allocate(sei_av_empl(size(sei,1),size(sei,2),size(sei,3)))
           allocate(sei_av_eipl(size(sei,1),size(sei,2),size(sei,3)))
@@ -2177,7 +2190,7 @@ c              it is NOT IYSs style)
           smo_av_mapl=0.0_R8
           smo_av_mmpl=0.0_R8
           smo_av_mipl=0.0_R8
-          smo_av_cppv=0.0_R8
+          smo_av_mppl=0.0_R8
           see_av_eael=0.0_R8
           see_av_emel=0.0_R8
           see_av_eiel=0.0_R8
@@ -2221,7 +2234,7 @@ c              it is NOT IYSs style)
            smo_av_mapl=0.0_R8
            smo_av_mmpl=0.0_R8
            smo_av_mipl=0.0_R8
-           smo_av_cppv=0.0_R8
+           smo_av_mppl=0.0_R8
            see_av_eael=0.0_R8
            see_av_emel=0.0_R8
            see_av_eiel=0.0_R8
@@ -2265,7 +2278,7 @@ c              it is NOT IYSs style)
           smo_av_mapl = smo_av_mapl + smo_mapl
           smo_av_mmpl = smo_av_mmpl + smo_mmpl
           smo_av_mipl = smo_av_mipl + smo_mipl
-          smo_av_cppv = smo_av_cppv + smo_cppv
+          smo_av_mppl = smo_av_mppl + smo_mppl
           sei_av_eapl = sei_av_eapl + sei_eapl
           sei_av_empl = sei_av_empl + sei_empl
           sei_av_eipl = sei_av_eipl + sei_eipl
@@ -2320,7 +2333,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           smo_h_mapl(:,:,:,ihist) = smo_mapl
           smo_h_mmpl(:,:,:,ihist) = smo_mmpl
           smo_h_mipl(:,:,:,ihist) = smo_mipl
-          smo_h_cppv(:,:,:,ihist) = smo_cppv
+          smo_h_mppl(:,:,:,ihist) = smo_mppl
           sne_h_pael(:,:,ihist) = sne_pael
           sne_h_pmel(:,:,ihist) = sne_pmel
           sne_h_piel(:,:,ihist) = sne_piel
@@ -2374,7 +2387,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
           smo_av_mapl = 0.0_R8
           smo_av_mmpl = 0.0_R8
           smo_av_mipl = 0.0_R8
-          smo_av_cppv = 0.0_R8
+          smo_av_mppl = 0.0_R8
           see_av_eael = 0.0_R8
           see_av_emel = 0.0_R8
           see_av_eiel = 0.0_R8
@@ -2417,7 +2430,7 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
            smo_av_mapl = smo_av_mapl + smo_h_mapl(:,:,:,ih)
            smo_av_mmpl = smo_av_mmpl + smo_h_mmpl(:,:,:,ih)
            smo_av_mipl = smo_av_mipl + smo_h_mipl(:,:,:,ih)
-           smo_av_cppv = smo_av_cppv + smo_h_cppv(:,:,:,ih)
+           smo_av_mppl = smo_av_mppl + smo_h_mppl(:,:,:,ih)
            see_av_eael = see_av_eael + see_h_eael(:,:,ih)
            see_av_emel = see_av_emel + see_h_emel(:,:,ih)
            see_av_eiel = see_av_eiel + see_h_eiel(:,:,ih)
@@ -2457,7 +2470,7 @@ cc Read saved sources
         if (ihist.eq.1.and..not.full_history
      .               .and.relax_continue.eq.1)then
           call read_underrelaxed_sources(size(sni,1),size(sni,2),
-     .                                   size(sni,3))
+     .                                   size(sni,3),size(smo,2))
           sni_s = sni_underrelax
           smo_s = smo_underrelax
           sei_s = sei_underrelax
@@ -2502,7 +2515,7 @@ cc Read saved sources
           smo_s_mapl = smo_s_mapl*relax + smo_mapl/dble(ih_end)
           smo_s_mmpl = smo_s_mmpl*relax + smo_mmpl/dble(ih_end)
           smo_s_mipl = smo_s_mipl*relax + smo_mipl/dble(ih_end)
-          smo_s_cppv = smo_s_cppv*relax + smo_cppv/dble(ih_end)
+          smo_s_mppl = smo_s_mppl*relax + smo_mppl/dble(ih_end)
           see_s_eael = see_s_eael*relax + see_eael/dble(ih_end)
           see_s_emel = see_s_emel*relax + see_emel/dble(ih_end)
           see_s_eiel = see_s_eiel*relax + see_eiel/dble(ih_end)
@@ -2555,7 +2568,7 @@ cc Read saved sources
           smo_av_mapl = smo_s_mapl*dble(ih_end)
           smo_av_mmpl = smo_s_mmpl*dble(ih_end)
           smo_av_mipl = smo_s_mipl*dble(ih_end)
-          smo_av_cppv = smo_s_cppv*dble(ih_end)
+          smo_av_mppl = smo_s_mppl*dble(ih_end)
           sei_av_eapl = sei_s_eapl*dble(ih_end)
           sei_av_empl = sei_s_empl*dble(ih_end)
           sei_av_eipl = sei_s_eipl*dble(ih_end)
@@ -2610,16 +2623,16 @@ cc Read saved sources
          gs_smo_d(3,2) = size(smo_mipl,2)
          gs_smo_d(3,3) = size(smo_mipl,3)
 
-         gs_smo_d(4,1) = size(smo_cppv,1)
-         gs_smo_d(4,2) = size(smo_cppv,2)
-         gs_smo_d(4,3) = size(smo_cppv,3)
+         gs_smo_d(4,1) = size(smo_mppl,1)
+         gs_smo_d(4,2) = size(smo_mppl,2)
+         gs_smo_d(4,3) = size(smo_mppl,3)
 
 #if(defined(_OPENMP))
 !$OMP PARALLEL DEFAULT(NONE)
 !$OMP& SHARED(sni_av_papl,sni_av_pmpl,sni_av_pipl,sni_av_pppl)
 !$OMP& SHARED(sni_papl,sni_pmpl,sni_pipl,sni_pppl)
-!$OMP& SHARED(smo_av_mapl,smo_av_mmpl,smo_av_mipl,smo_av_cppv)
-!$OMP& SHARED(smo_mapl,smo_mmpl,smo_mipl,smo_cppv)
+!$OMP& SHARED(smo_av_mapl,smo_av_mmpl,smo_av_mipl,smo_av_mppl)
+!$OMP& SHARED(smo_mapl,smo_mmpl,smo_mipl,smo_mppl)
 !$OMP& SHARED(gs_sni_d1,gs_sni_d2,gs_sni_d3)
 !$OMP& SHARED(gs_smo_d)
 !$OMP& PRIVATE(gs_i1,gs_i2,gs_i3)
@@ -2697,8 +2710,8 @@ cc Read saved sources
         do gs_i3=1,gs_smo_d(4,3)
           do gs_i2=1,gs_smo_d(4,2)
             do gs_i1=1,gs_smo_d(4,1)
-              smo_av_cppv(gs_i1,gs_i2,gs_i3) =
-     &         smo_cppv(gs_i1,gs_i2,gs_i3)
+              smo_av_mppl(gs_i1,gs_i2,gs_i3) =
+     &         smo_mppl(gs_i1,gs_i2,gs_i3)
             end do
           end do
         end do
@@ -2925,7 +2938,7 @@ c   and apply linearisation
 !$OMP& SHARED(eirene_mc_papl_sna0to1,eirene_mc_pmpl_sna0to1)
 !$OMP& SHARED(eirene_mc_pipl_sna0to1,eirene_mc_pppl_sna0to1)
 !$OMP& SHARED(eirene_mc_mapl_smo0to3,eirene_mc_mmpl_smo0to3)
-!$OMP& SHARED(eirene_mc_mipl_smo0to3,eirene_mc_cppv_smo0to3)
+!$OMP& SHARED(eirene_mc_mipl_smo0to3,eirene_mc_mppl_smo0to3)
 !$OMP& SHARED(nCv,ns,gs_copy_NSTRAT)
 !$OMP& PRIVATE(gs_ic,gs_idim,gs_is,gs_istra)
 #endif
@@ -2987,7 +3000,7 @@ c   and apply linearisation
      &           gs_is,gs_istra) = 0.0_R8
                 eirene_mc_mipl_smo0to3(gs_ic,gs_idim,
      &           gs_is,gs_istra) = 0.0_R8
-                eirene_mc_cppv_smo0to3(gs_ic,gs_idim,
+                eirene_mc_mppl_smo0to3(gs_ic,gs_idim,
      &           gs_is,gs_istra) = 0.0_R8
               end do
             end do
@@ -3042,6 +3055,7 @@ csw 26feb2014 averaging
 c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)
                   t00=sni_av(ic,ifl,istrai)*gs_prod_4
+
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
      1               'a default option that has been determined ' //
@@ -3244,7 +3258,7 @@ c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
      *                   gs_prod_4 *
      *                   sclstra(j,istrai) *
      *                   geo%cvHz(ic)
-                    t0_p=smo_av_cppv(ic,ifl,istrai)*
+                    t0_p=smo_av_mppl(ic,ifl,istrai)*
      *                   gs_prod_4 *
      *                   sclstra(j,istrai) *
      *                   geo%cvHz(ic)
@@ -3274,8 +3288,8 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_mipl_smo0to3(ic,0,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ic,0,is,istrai)+
      &                   (1.0_R8+rf0*st%pl%ua(ic,is)/vthe)*t0_i
-                        eirene_mc_cppv_smo0to3(ic,0,is,istrai)=
-     &                   eirene_mc_cppv_smo0to3(ic,0,is,istrai)+
+                        eirene_mc_mppl_smo0to3(ic,0,is,istrai)=
+     &                   eirene_mc_mppl_smo0to3(ic,0,is,istrai)+
      &                   (1.0_R8+rf0*st%pl%ua(ic,is)/vthe)*t0_p
                         eirene_mc_mapl_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ic,1,is,istrai)-
@@ -3286,8 +3300,8 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_mipl_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ic,1,is,istrai)-
      &                   rf0*t0_i/vthe
-                        eirene_mc_cppv_smo0to3(ic,1,is,istrai)=
-     &                   eirene_mc_cppv_smo0to3(ic,1,is,istrai)-
+                        eirene_mc_mppl_smo0to3(ic,1,is,istrai)=
+     &                   eirene_mc_mppl_smo0to3(ic,1,is,istrai)-
      &                   rf0*t0_p/vthe
                       else
                         eirene_mc_mapl_smo0to3(ic,0,is,istrai)=
@@ -3299,8 +3313,8 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_mipl_smo0to3(ic,0,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ic,0,is,istrai)+
      &                   (1.0_R8-rf0*st%pl%ua(ic,is)/vthe)*t0_i
-                        eirene_mc_cppv_smo0to3(ic,0,is,istrai)=
-     &                   eirene_mc_cppv_smo0to3(ic,0,is,istrai)+
+                        eirene_mc_mppl_smo0to3(ic,0,is,istrai)=
+     &                   eirene_mc_mppl_smo0to3(ic,0,is,istrai)+
      &                   (1.0_R8-rf0*st%pl%ua(ic,is)/vthe)*t0_p
                         eirene_mc_mapl_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ic,1,is,istrai)+
@@ -3311,8 +3325,8 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_mipl_smo0to3(ic,1,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ic,1,is,istrai)+
      &                   rf0*t0_i/vthe
-                        eirene_mc_cppv_smo0to3(ic,1,is,istrai)=
-     &                   eirene_mc_cppv_smo0to3(ic,1,is,istrai)+
+                        eirene_mc_mppl_smo0to3(ic,1,is,istrai)=
+     &                   eirene_mc_mppl_smo0to3(ic,1,is,istrai)+
      &                   rf0*t0_p/vthe
                       endif
                     endif
@@ -3328,8 +3342,8 @@ cdjm Jan2017 Calculate linearised components of source
      &                 eirene_mc_mmpl_smo0to3(ic,0,is,istrai)+t0_m
                       eirene_mc_mipl_smo0to3(ic,0,is,istrai)=
      &                 eirene_mc_mipl_smo0to3(ic,0,is,istrai)+t0_i
-                      eirene_mc_cppv_smo0to3(ic,0,is,istrai)=
-     &                 eirene_mc_cppv_smo0to3(ic,0,is,istrai)+t0_p
+                      eirene_mc_mppl_smo0to3(ic,0,is,istrai)=
+     &                 eirene_mc_mppl_smo0to3(ic,0,is,istrai)+t0_p
                     endif
 #endif
                   end if !}
@@ -3359,6 +3373,16 @@ c*** before correction (r), after correction (c), after iteration (i)
                     src_mo(0,3,b2espcr(is))=src_mo(0,3,b2espcr(is))+t0
                     src_ms(0,3)=src_ms(0,3)+t0
                   endif
+c Radial momentum source component
+                  t0=smo_av(ic,nfl+ifl,istrai)*
+     *             gs_prod_4 * sclstra(j,istrai) *
+     *             geo%cvHz(ic)
+                  smr0(ic,0,is)=smr0(ic,0,is)+t0
+c Diamagnetic momentum source component
+                  t0=smo_av(ic,2*nfl+ifl,istrai)*
+     *             gs_prod_4 * sclstra(j,istrai) *
+     *             geo%cvHz(ic)
+                  smd0(ic,0,is)=smd0(ic,0,is)+t0
                 end if !}
             end do !}  ! ic
           end if !}
@@ -3731,7 +3755,6 @@ csw 06mar2012 momentum source
 csw 26feb2014 averaging
 c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-
                     t2=smo_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
@@ -3743,7 +3766,7 @@ c     *               recyctmp*flux_scale(istrai)
                       t2_ipl=
      *                 smo_av_mipl(ic,ifl,istrai)*gs_prod_4
                       t2_ppl=
-     *                 smo_av_cppv(ic,ifl,istrai)*gs_prod_4
+     *                 smo_av_mppl(ic,ifl,istrai)*gs_prod_4
                     endif
 #endif
 
@@ -3762,7 +3785,6 @@ csw 06mar2012 particle source
 csw 26feb2014 averaging
 c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-
                     t3=sni_av(ic,ifl,istrai)*gs_prod_4
 #ifndef FIXED_POINT
                     if (balance_netcdf.ne.0 .or.
@@ -4293,7 +4315,7 @@ csw 26feb2014
          deallocate(smo_av_mapl)
          deallocate(smo_av_mmpl)
          deallocate(smo_av_mipl)
-         deallocate(smo_av_cppv)
+         deallocate(smo_av_mppl)
          deallocate(see_av_eael)
          deallocate(see_av_emel)
          deallocate(see_av_eiel)
@@ -4305,8 +4327,9 @@ csw 26feb2014
        endif
       endif
       if(nhist.gt.1 .or. nrelax.gt.1) then
-        call save_underrelaxed_sources (size(sni,1),size(sni,2),
-     .                  size(sni,3),sni_s,smo_s, sei_s,see_s)
+        call save_underrelaxed_sources (
+     .   size(sni,1),size(sni,2),size(smo,2),size(sni,3),
+     .   sni_s,smo_s,sei_s,see_s)
       endif
       if(nhist.gt.1 .or. n_avg_repeat.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
@@ -4593,7 +4616,7 @@ c!###}
      .                    size(smo,2), size(smo,3), nhistd))
         allocate(smo_h_mipl(size(smo,1),
      .                    size(smo,2), size(smo,3), nhistd))
-        allocate(smo_h_cppv(size(smo,1),
+        allocate(smo_h_mppl(size(smo,1),
      .                    size(smo,2), size(smo,3), nhistd))
         allocate(sne_h_pael(size(see,1),
      .                    size(see,2), nhistd))
@@ -4657,7 +4680,7 @@ c!###}
       deallocate(smo_h_mapl)
       deallocate(smo_h_mmpl)
       deallocate(smo_h_mipl)
-      deallocate(smo_h_cppv)
+      deallocate(smo_h_mppl)
       deallocate(see_h_eael)
       deallocate(see_h_emel)
       deallocate(see_h_eiel)
@@ -4705,7 +4728,7 @@ c!###}
         smo_h_mapl = 0.0_R8
         smo_h_mmpl = 0.0_R8
         smo_h_mipl = 0.0_R8
-        smo_h_cppv = 0.0_R8
+        smo_h_mppl = 0.0_R8
         see_h_eael = 0.0_R8
         see_h_emel = 0.0_R8
         see_h_eiel = 0.0_R8
@@ -4772,7 +4795,7 @@ c!###}
      .                      size(smo,2), size(smo,3)))
         allocate(smo_s_mipl(size(smo,1),
      .                      size(smo,2), size(smo,3)))
-        allocate(smo_s_cppv(size(smo,1),
+        allocate(smo_s_mppl(size(smo,1),
      .                      size(smo,2), size(smo,3)))
         allocate(sne_s_pael(size(see,1),
      .                      size(see,2)))
@@ -4892,7 +4915,7 @@ c!###}
         deallocate(smo_s_mapl)
         deallocate(smo_s_mmpl)
         deallocate(smo_s_mipl)
-        deallocate(smo_s_cppv)
+        deallocate(smo_s_mppl)
         deallocate(see_s_eael)
         deallocate(see_s_emel)
         deallocate(see_s_eiel)
@@ -5004,7 +5027,7 @@ c!###}
         smo_s_mapl = smo_s_mapl + smo_mapl
         smo_s_mmpl = smo_s_mmpl + smo_mmpl
         smo_s_mipl = smo_s_mipl + smo_mipl
-        smo_s_cppv = smo_s_cppv + smo_cppv
+        smo_s_mppl = smo_s_mppl + smo_mppl
         see_s_eael = see_s_eael + see_eael
         see_s_emel = see_s_emel + see_emel
         see_s_eiel = see_s_eiel + see_eiel
@@ -5121,7 +5144,7 @@ c!###}
         smo_mapl = smo_s_mapl/dble(n_avg_repeat)
         smo_mmpl = smo_s_mmpl/dble(n_avg_repeat)
         smo_mipl = smo_s_mipl/dble(n_avg_repeat)
-        smo_cppv = smo_s_cppv/dble(n_avg_repeat)
+        smo_mppl = smo_s_mppl/dble(n_avg_repeat)
         see_eael = see_s_eael/dble(n_avg_repeat)
         see_emel = see_s_emel/dble(n_avg_repeat)
         see_eiel = see_s_eiel/dble(n_avg_repeat)
@@ -5225,7 +5248,7 @@ c!###}
         smo_s_mapl = 0.0_R8
         smo_s_mmpl = 0.0_R8
         smo_s_mipl = 0.0_R8
-        smo_s_cppv = 0.0_R8
+        smo_s_mppl = 0.0_R8
         see_s_eael = 0.0_R8
         see_s_emel = 0.0_R8
         see_s_eiel = 0.0_R8

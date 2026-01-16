@@ -128,8 +128,8 @@
      *, t_frac, t0
 #endif
       real (kind=R8) ::                                              !srv 29.04.10 {
-     &  sna0_eir(nCv,0:1,0:ns-1),
-     &  smo0_eir(nCv,0:3,0:ns-1),
+     &  sna0_eir(nCv,0:1,0:ns-1), smo0_eir(nCv,0:3,0:ns-1),
+     &  smr0_eir(nCv,0:3,0:ns-1), smd0_eir(nCv,0:3,0:ns-1),
      &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
@@ -336,6 +336,8 @@
       call sfill (nCv*nscx, 0.0_R8, shi0_ff, 1)
       call sfill (nCv*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
+      call sfill (nCv*4*ns, 0.0_R8, smr0_eir, 1)
+      call sfill (nCv*4*ns, 0.0_R8, smd0_eir, 1)
       call sfill (nCv*4, 0.0_R8, she0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shn0_eir, 1)
@@ -549,7 +551,8 @@ c   --> better solution wanted here..
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
-     &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
+     &                 sna0_eir, smo0_eir, smr0_eir, smd0_eir,
+     &                 she0_eir, shi0_eir, shn0_eir,
      &                 main_call, switch, geo, mpg, st, st_ext)
 
 *   ..main part of implementation of method of effective sources (ES)
@@ -685,6 +688,7 @@ c   --> better solution wanted here..
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
 cwdk note: with new variables sna0_eir_tot, smo0_eir_tot,
+cxpb       smr0_eir_tot, smd0_eir_tot,
 cwdk       she0_eir_tot and shi0_eir_tot now available,
 cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
@@ -695,6 +699,8 @@ cwdk       down in this routine
      &      smo0_eir(:,1,is)*st%pl%ua(:,is) +
      &      smo0_eir(:,2,is)*am(is)*mp*st%pl%na(:,is) +
      &      smo0_eir(:,3,is)*am(is)*mp*st%pl%na(:,is)*st%pl%ua(:,is)
+          st%srw%smr0_eir_tot(:,is) = smr0_eir(:,0,is)
+          st%srw%smd0_eir_tot(:,is) = smd0_eir(:,0,is)
         enddo
         st%srw%she0_eir_tot = she0_eir(:,0) + she0_eir(:,1)*st%pl%te +
      &    she0_eir(:,2)*st%dv%ne + she0_eir(:,3)*st%dv%ne*st%pl%te
@@ -712,12 +718,15 @@ cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
 cwdk i.e. fully replaced by the averaged values from b2faveri
           sna0_eir = 0.0_R8
           smo0_eir = 0.0_R8
+          smr0_eir = 0.0_R8
+          smd0_eir = 0.0_R8
           she0_eir = 0.0_R8
           shi0_eir = 0.0_R8
 
 cwdk get the averaged sources
           call run_av_get_sources(
      &     st%srw%sna0_eir_tot, st%srw%smo0_eir_tot,
+     &     st%srw%smr0_eir_tot, st%srw%smd0_eir_tot,
      &     st%srw%she0_eir_tot, st%srw%shi0_eir_tot,
      &     st%srw%shn0_eir_tot,
      &     nCv, ns, st_avg)
@@ -727,6 +736,8 @@ cwdk these are now put back into the constant part of the sources (0-component)
           do is = 0, ns-1
             sna0_eir(:,0,is) = st%srw%sna0_eir_tot(:,is)
             smo0_eir(:,0,is) = st%srw%smo0_eir_tot(:,is)
+            smr0_eir(:,0,is) = st%srw%smr0_eir_tot(:,is)
+            smd0_eir(:,0,is) = st%srw%smd0_eir_tot(:,is)
           enddo
           she0_eir(:,0) = st%srw%she0_eir_tot
           shi0_eir(:,0) = st%srw%shi0_eir_tot
@@ -740,7 +751,8 @@ cwdk these are now put back into the constant part of the sources (0-component)
         if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
           st%srw%shi0 = st%srw%shi0 + shn0_eir
         elseif (switch%tn_style.eq.1) then !! pure ion energy equation
-          !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
+          !! combination of condensation reactions (leading to non-zero shn from eirene)
+          !! and tn_style = 1 is not allowed.
           call xertst (SUM(shn0_eir).eq.0,
      &     'shn_eir.ne.0 is not allowed for tn_style = 1')
         else                               !! separate neutral energy equation
