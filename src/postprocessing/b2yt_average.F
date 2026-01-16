@@ -191,10 +191,10 @@
 
       if (b2faveri_version.ge.'03.000.008') then
         call cfrure (99, n2*ns, sna_mean, 'sna_mean')
-        call cfrure_opt (99, n2, dummy  , 'sne_mean')
+        call cfrure_opt (99, n2, wrk0   , 'sne_mean')
         call cfrure (99, n2,    she_mean, 'she_mean')
         call cfrure (99, n2,    shi_mean, 'shi_mean')
-        call cfrure_opt (99, n2, dummy  , 'sch_mean')
+        call cfrure_opt (99, n2, wrk0   , 'sch_mean')
         call cfrure (99, n2*ns, smo_mean, 'smo_mean')
         if (b2faveri_version.ge.'03.000.009'.and.
      &      b2faveri_version.ne.'03.001.000'.and.
