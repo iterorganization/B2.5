@@ -233,7 +233,9 @@
      .            b2sihs_divue, b2sihs_divua, b2sihs_exbe, b2sihs_exba,
      .            b2sihs_visa, b2sihs_fraa, b2sihs_str
         real(R8), dimension(:,:), allocatable :: sna0_eir_tot,
-     .                                           smo0_eir_tot
+     .                                           smo0_eir_tot,
+     .                                           smr0_eir_tot,
+     .                                           smd0_eir_tot
         real(R8), dimension(:), allocatable :: sne0_eir_tot,
      .                                         she0_eir_tot,
      .                                         shi0_eir_tot,
@@ -356,13 +358,15 @@
         real(R8), dimension(:), allocatable :: te_mean, ti_mean,
      .                                         po_mean,
      .                                         kt_mean, zt_mean
-        real(R8), dimension(:,:), allocatable :: sna_mean, smo_mean
+        real(R8), dimension(:,:), allocatable :: sna_mean, smo_mean,
+     .                                           smr_mean, smd_mean
         real(R8), dimension(:), allocatable :: she_mean, shi_mean,
      .                                         shn_mean
         real(R8), dimension(:,:), allocatable :: e_na, e_ua
         real(R8), dimension(:), allocatable :: e_te, e_ti, e_po,
      .                                         e_kt, e_zt
-        real(R8), dimension(:,:), allocatable :: e_sna, e_smo
+        real(R8), dimension(:,:), allocatable :: e_sna,
+     .                                         e_smo, e_smr, e_smd
         real(R8), dimension(:), allocatable :: e_she, e_shi, e_shn
       end type B2Average
 
@@ -1845,6 +1849,8 @@
 
       allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smr0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smd0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sne0_eir_tot( nCv ), SOURCE=0._R8 )
       allocate( srw % she0_eir_tot( nCv ), SOURCE=0._R8 )
       allocate( srw % shn0_eir_tot( nCv ), SOURCE=0._R8 )
@@ -1923,6 +1929,8 @@
 
       allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ) )
       allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ) )
+      allocate( srw % smr0_eir_tot( nCv, 0:ns-1 ) )
+      allocate( srw % smd0_eir_tot( nCv, 0:ns-1 ) )
       allocate( srw % sne0_eir_tot( nCv ) )
       allocate( srw % she0_eir_tot( nCv ) )
       allocate( srw % shi0_eir_tot( nCv ) )
@@ -2001,6 +2009,8 @@
 
       srw % sna0_eir_tot = 0.0_R8
       srw % smo0_eir_tot = 0.0_R8
+      srw % smr0_eir_tot = 0.0_R8
+      srw % smd0_eir_tot = 0.0_R8
       srw % sne0_eir_tot = 0.0_R8
       srw % she0_eir_tot = 0.0_R8
       srw % shi0_eir_tot = 0.0_R8
@@ -2088,6 +2098,8 @@
 
       deallocate( srw % sna0_eir_tot )
       deallocate( srw % smo0_eir_tot )
+      deallocate( srw % smr0_eir_tot )
+      deallocate( srw % smd0_eir_tot )
       deallocate( srw % sne0_eir_tot )
       deallocate( srw % she0_eir_tot )
       deallocate( srw % shi0_eir_tot )
@@ -3096,6 +3108,8 @@
         call cfrure (ninp, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
         call cfrure (ninp, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
         call cfrure (ninp, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfrure (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
+        call cfrure (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smd0_eir')
         call cfrure (ninp, nCv,    st % srw % she0_eir_tot, 'she0_eir')
         call cfrure (ninp, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
         call cfrure (ninp, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
@@ -3339,6 +3353,8 @@
         call cfwure (nout, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
         call cfwure (nout, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
         call cfwure (nout, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfwure (nout, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
+        call cfwure (nout, nCv*ns, st % srw % smd0_eir_tot, 'smd0_eir')
         call cfwure (nout, nCv,    st % srw % she0_eir_tot, 'she0_eir')
         call cfwure (nout, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
         call cfwure (nout, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')

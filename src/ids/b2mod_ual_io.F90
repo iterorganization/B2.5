@@ -5600,12 +5600,28 @@ contains
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%smo0_eir_tot(:,ispion(is,js)) / &
                       &   geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid,      &
-                      &   vectorComponent = edge_sources%source(13)%     &
-                      &                     ggd( time_sind )%ion( is )%  &
-                      &                     state( js )%momentum,        &
-                      &   b2CellData = tmpCv,                            &
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%smr0_eir_tot(:,ispion(is,js)) / &
+                      &   geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
+                    tmpCv(:) = state%srw%smd0_eir_tot(:,ispion(is,js)) / &
+                      &   geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = edge_sources%source(13)%    &
+                      &                     ggd( time_sind )%ion( is )% &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_DIAMAGNETIC_ID )
                   end do
                 end if
 #   endif
@@ -5799,6 +5815,18 @@ contains
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                    tmpCv(:) = state%srw%smr0_eir_tot(:,ispion(is,js)) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = sources_ggd(13)%ion( is )%  &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_RADIAL_ID )
+                    tmpCv(:) = state%srw%smd0_eir_tot(:,ispion(is,js)) / geo%cvVol(:)
+                    call write_cell_vector_component( sources_grid,     &
+                      &   vectorComponent = sources_ggd(13)%ion( is )%  &
+                      &                     state( js )%momentum,       &
+                      &   b2CellData = tmpCv,                           &
+                      &   vectorID = VEC_ALIGN_DIAMAGNETIC_ID )
                   end do
                 end if
 #   endif
