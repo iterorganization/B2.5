@@ -1652,6 +1652,10 @@ contains
       call check_cdf_status(iret)
 
       ! Western edge (inboard divertor for LSN, outboard divertor for USN) quantities
+      iret = nf_put_att_text(ncid, na3dlid, 'long_name', 35, 'fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, na3dlid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 30, 'electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
