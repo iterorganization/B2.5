@@ -232,23 +232,23 @@ c 2002-09-11: logic revised
      . ua_mean(:,:,:), po_mean(:,:),
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
-     . sna_mean(:,:,:), sne_mean(:,:),
-     . smo_mean(:,:,:),
-     . she_mean(:,:), shi_mean(:,:), sch_mean(:,:),
-     . e_sna(:,:,:), e_sne(:,:),
-     . e_smo(:,:,:),
-     . e_she(:,:), e_shi(:,:), e_sch(:,:)
+     . sna_mean(:,:,:),
+     . smo_mean(:,:,:), smr_mean(:,:,:), smd_mean(:,:,:),
+     . she_mean(:,:), shi_mean(:,:),
+     . e_sna(:,:,:),
+     . e_smo(:,:,:), e_smr(:,:,:), e_smd(:,:,:),
+     . e_she(:,:), e_shi(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
      . ua1_mean(:,:,:), po1_mean(:,:),
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
-     . sna1_mean(:,:,:), sne1_mean(:,:),
-     . smo1_mean(:,:,:),
-     . she1_mean(:,:), shi1_mean(:,:), sch1_mean(:,:),
-     . e_sna1(:,:,:), e_sne1(:,:),
-     . e_smo1(:,:,:),
-     . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
+     . sna1_mean(:,:,:),
+     . smo1_mean(:,:,:), smr1_mean(:,:,:), smd1_mean(:,:,:),
+     . she1_mean(:,:), shi1_mean(:,:),
+     . e_sna1(:,:,:),
+     . e_smo1(:,:,:), e_smr1(:,:,:), e_smd1(:,:,:),
+     . e_she1(:,:), e_shi1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:,:), fna1(:,:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -1082,17 +1082,17 @@ c 2002-09-11: logic revised
       allocate(e_ti(-1:nx,-1:ny))
       allocate(e_po(-1:nx,-1:ny))
       allocate(sna_mean(-1:nx,-1:ny,0:ns-1))
-      allocate(sne_mean(-1:nx,-1:ny))
       allocate(smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(smr_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(smd_mean(-1:nx,-1:ny,0:ns-1))
       allocate(she_mean(-1:nx,-1:ny))
       allocate(shi_mean(-1:nx,-1:ny))
-      allocate(sch_mean(-1:nx,-1:ny))
       allocate(e_sna(-1:nx,-1:ny,0:ns-1))
-      allocate(e_sne(-1:nx,-1:ny))
       allocate(e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate(e_smr(-1:nx,-1:ny,0:ns-1))
+      allocate(e_smd(-1:nx,-1:ny,0:ns-1))
       allocate(e_she(-1:nx,-1:ny))
       allocate(e_shi(-1:nx,-1:ny))
-      allocate(e_sch(-1:nx,-1:ny))
       allocate(na1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(ua1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(te1_mean(-1:nx1,-1:ny1))
@@ -1104,17 +1104,17 @@ c 2002-09-11: logic revised
       allocate(e_ti1(-1:nx1,-1:ny1))
       allocate(e_po1(-1:nx1,-1:ny1))
       allocate(sna1_mean(-1:nx1,-1:ny1,0:ns1-1))
-      allocate(sne1_mean(-1:nx1,-1:ny1))
       allocate(smo1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(smr1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(smd1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(she1_mean(-1:nx1,-1:ny1))
       allocate(shi1_mean(-1:nx1,-1:ny1))
-      allocate(sch1_mean(-1:nx1,-1:ny1))
       allocate(e_sna1(-1:nx1,-1:ny1,0:ns1-1))
-      allocate(e_sne1(-1:nx1,-1:ny1))
       allocate(e_smo1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_smr1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_smd1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(e_she1(-1:nx1,-1:ny1))
       allocate(e_shi1(-1:nx1,-1:ny1))
-      allocate(e_sch1(-1:nx1,-1:ny1))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -1278,15 +1278,15 @@ c 2002-09-11: logic revised
      &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
-     &    sna_mean, sne_mean, smo_mean,
-     &    she_mean, shi_mean, sch_mean,
-     &    e_sna, e_sne, e_smo, e_she, e_shi, e_sch,
+     &    sna_mean, smo_mean, smr_mean, smd_mean,
+     &    she_mean, shi_mean,
+     &    e_sna, e_smo, e_smr, e_smd, e_she, e_shi,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
-     &    sna1_mean, sne1_mean, smo1_mean,
-     &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1,
-     &    e_she1, e_shi1, e_sch1)
+     &    sna1_mean, smo1_mean, smr1_mean, smd1_mean,
+     &    she1_mean, shi1_mean,
+     &    e_sna1, e_smo1, e_smr1, e_smd1,
+     &    e_she1, e_shi1)
       end if
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
@@ -1354,10 +1354,9 @@ c 2002-09-11: logic revised
      &    naver, ntotdt, lblmn, zamin1, zamax1, zn1, am1,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
      &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
-     &    sna1_mean, sne1_mean, smo1_mean,
-     &    she1_mean, shi1_mean, sch1_mean,
-     &    e_sna1, e_sne1, e_smo1,
-     &    e_she1, e_shi1, e_sch1)
+     &    sna1_mean, smo1_mean, smr1_mean, smd1_mean,
+     &    she1_mean, shi1_mean,
+     &    e_sna1, e_smo1, e_smr1, e_smd1, e_she1, e_shi1)
       end if
 
 * ..check for need to transform other input files:
@@ -8572,7 +8571,7 @@ cxpb  to see if some strata need to be removed
           ISCLS(ISTRAI) = transform_tally(IVLSF(ISTRAI).eq.1,
      .      ISCLT(ISTRAI),ISCLS(ISTRAI),
      .      iatm1,imol1,iion1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
-     .      natmi1,nmol1,nion1)
+     .      natmi1,nmol1,nion1,nplsi1)
           READ (IUNIN,'(A80)') ZEILE
           call fix_logical_input(zeile,5)
           READ (ZEILE,6665) NLATM(ISTRAI),NLMOL(ISTRAI),
@@ -8997,7 +8996,7 @@ cxpb Read first, transform and rewrite
           IGH(J) = transform_tally(.true.,IIH(J),IGH(J),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           savesigv(J) = IGH(J).NE.0
           if (savesigv(J)) NSIGV1 = NSIGV1 + 1
   913   CONTINUE
@@ -9007,7 +9006,7 @@ cxpb Read first, transform and rewrite
           IGHW(J) = transform_tally(.false.,IIHW(J),IGHW(J),
      .                              iatm1,imol1,iion1,ipls1,
      .                              nphoti,natmi,nmoli,nioni,nplsi,
-     .                              natmi1,nmol1,nion1)
+     .                              natmi1,nmol1,nion1,nplsi1)
           savesigs(J) = IGHW(J).NE.0
           if (savesigs(J)) NSIGS1 = NSIGS1 + 1
   914   CONTINUE
@@ -9017,11 +9016,11 @@ cxpb Read first, transform and rewrite
           IGHC(1,J) = transform_tally(.true.,IIHC(1,J),IGHC(1,J),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           IGHC(2,J) = transform_tally(.true.,IIHC(2,J),IGHC(2,J),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           savesigc(J) = IGHC(1,J).NE.0 .AND. IGHC(2,J).NE.0
           if (savesigc(J)) NSIGC1 = NSIGC1 + 1
   915   CONTINUE
@@ -9119,7 +9118,7 @@ cxpb Read first, transform and rewrite
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
-     .                                natmi1,nmol1,nion1)
+     .                                natmi1,nmol1,nion1,nplsi1)
             WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLA(J)
@@ -9170,7 +9169,7 @@ cxpb Read first, transform and rewrite
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
-     .                                natmi1,nmol1,nion1)
+     .                                natmi1,nmol1,nion1,nplsi1)
             WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLC(J)
@@ -9228,7 +9227,7 @@ cxpb Read first, transform and rewrite
               idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
               IF (idum(1).lt.10) THEN
                 WRITE(CHRTAL(I+1:J-1),'(i1)') idum(1)
               ELSE
@@ -9295,7 +9294,7 @@ cxpb Read first, transform and rewrite
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
-     .                                natmi1,nmol1,nion1)
+     .                                natmi1,nmol1,nion1,nplsi1)
             WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLW(J)
@@ -9353,7 +9352,7 @@ cxpb Read first, transform and rewrite
               idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                  iatm1,imol1,iion1,ipls1,
      .                                  nphoti,natmi,nmoli,nioni,nplsi,
-     .                                  natmi1,nmol1,nion1)
+     .                                  natmi1,nmol1,nion1,nplsi1)
               IF (idum(1).lt.10) THEN
                 WRITE(CHRTAL(I+1:J-1),'(i1)') idum(1)
               ELSE
@@ -9518,11 +9517,11 @@ cxpb Read first, transform and rewrite
           idum(2) = transform_tally(.true.,idum(0),idum(2),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           idum(3) = transform_tally(.true.,idum(0),idum(3),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           WRITE(IUNOT,6666) idum(0:4)
  1120   CONTINUE
         READ (IUNIN,6666) NSURPR
@@ -9532,11 +9531,11 @@ cxpb Read first, transform and rewrite
           idum(2) = transform_tally(.false.,idum(0),idum(2),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           idum(3) = transform_tally(.false.,idum(0),idum(3),
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
           WRITE(IUNOT,6666) idum(0:4)
  1130   CONTINUE
  1131   READ (IUNIN,'(A80)') ZEILE
@@ -9720,7 +9719,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
               idum(1) = transform_tally(.true.,NTL,ISPL,
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
               idum(2) = NTL
               idum(3) = convert_eirene
      .         (non_commensurate,2,NR1ST/2,NPLIN2,nx,ny,nx1,ny1,1)
@@ -9773,7 +9772,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
               idum(1) = transform_tally(.true.,NTL,ISPL,
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
               idum(2) = NTL
               IF (ldum(2)) THEN  ! LPRAD
                 idum(3) = convert_eirene(non_commensurate,
@@ -10074,7 +10073,7 @@ CVK DATA FOR POSTPROCESSING WINDOWS
                KMOD = transform_tally(.true.,KINT,KMOD,
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,nplsi1)
                idum(K) = kint*100 + kmod
              END DO
              WRITE(IUNOT,6666) (idum(k),k=1,idum(0))
@@ -10089,7 +10088,7 @@ CVK DATA FOR POSTPROCESSING WINDOWS
                  KMOD = transform_tally(.false.,KINT,KMOD,
      .                                  iatm1,imol1,iion1,ipls1,
      .                                  nphoti,natmi,nmoli,nioni,nplsi,
-     .                                  natmi1,nmol1,nion1)
+     .                                  natmi1,nmol1,nion1,nplsi1)
                  idum(K) = kint*100 + kmod
                END DO
                WRITE(IUNOT,6666) (idum(k),k=1,idum(0))
@@ -10142,7 +10141,7 @@ C  SKIP READING REST OF THIS BLOCK
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
-     .                                natmi1,nmol1,nion1)
+     .                                natmi1,nmol1,nion1,nplsi1)
             WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
             READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTAL(J,NTALT)
             READ (IUNIN,'(A72)') ZEILEN(ILINE+3) ! TXTSPC,TXTUNT
@@ -10426,7 +10425,7 @@ C  HERE: EIRENE SURFACE TALLIES
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,imol1,iion1,ipls1,
      .                                nphoti,natmi,nmoli,nioni,nplsi,
-     .                                natmi1,nmol1,nion1)
+     .                                natmi1,nmol1,nion1,nplsi1)
             WRITE(IUNOT,'(6I6)') idum(0:2)
  3050     CONTINUE
         ENDIF
@@ -12402,17 +12401,17 @@ cxpb as they no longer necessarily point to the same species
       deallocate(e_ti)
       deallocate(e_po)
       deallocate(sna_mean)
-      deallocate(sne_mean)
       deallocate(smo_mean)
+      deallocate(smr_mean)
+      deallocate(smd_mean)
       deallocate(she_mean)
       deallocate(shi_mean)
-      deallocate(sch_mean)
       deallocate(e_sna)
-      deallocate(e_sne)
       deallocate(e_smo)
+      deallocate(e_smr)
+      deallocate(e_smd)
       deallocate(e_she)
       deallocate(e_shi)
-      deallocate(e_sch)
       deallocate(na1_mean)
       deallocate(ua1_mean)
       deallocate(te1_mean)
@@ -12424,17 +12423,17 @@ cxpb as they no longer necessarily point to the same species
       deallocate(e_ti1)
       deallocate(e_po1)
       deallocate(sna1_mean)
-      deallocate(sne1_mean)
       deallocate(smo1_mean)
+      deallocate(smr1_mean)
+      deallocate(smd1_mean)
       deallocate(she1_mean)
       deallocate(shi1_mean)
-      deallocate(sch1_mean)
       deallocate(e_sna1)
-      deallocate(e_sne1)
       deallocate(e_smo1)
+      deallocate(e_smr1)
+      deallocate(e_smd1)
       deallocate(e_she1)
       deallocate(e_shi1)
-      deallocate(e_sch1)
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_CINIT
       CALL EIRENE_DEALLOC_CTRIG
@@ -13607,11 +13606,11 @@ C
       integer function transform_tally(lvol,itally,ispc,
      .                                 iatm1,imol1,iion1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nmol1,nion1)
+     .                                 natmi1,nmol1,nion1,npls1)
       implicit none
       logical lvol
       integer itally, ispc
-      integer nphoti,natmi,natmi1,nmoli,nmol1,nioni,nion1,nplsi
+      integer nphoti,natmi,natmi1,nmoli,nmol1,nioni,nion1,nplsi,npls1
       integer iatm1(natmi), imol1(nmoli), iion1(nioni), ipls1(nplsi)
 
       IF (ispc.eq.0) THEN
@@ -13641,13 +13640,23 @@ C
         ELSE IF (itally.eq.14 .or. itally.eq.20 .or. itally.eq.26
      &      .or. itally.eq.32 .or. itally.eq.38 .or. itally.eq.44
      &      .or. itally.eq.50 .or. itally.eq.56 .or. itally.eq.79
-     &      .or. itally.eq.84 .or. itally.eq.97 .or. itally.eq.98
-     &      .or. itally.eq.99 .or. itally.eq.100
-     &                        .or. itally.eq.-2 .or. itally.eq.-4
+     &      .or. itally.eq.84 .or. itally.eq.-2 .or. itally.eq.-4
      &      .or. itally.eq.-5 .or. itally.eq.-6 .or. itally.eq.-7
-     &      .or. itally.eq.-13.or. itally.eq.-24.or. itally.eq.-26)
-     &   THEN ! these are NPLS volume tallies
+     &      .or. itally.eq.-13.or. itally.eq.-26) THEN ! these are NPLS volume tallies
           transform_tally = ipls1(ispc)
+        ELSE IF (itally.eq.97 .or. itally.eq.98 .or. itally.eq.99
+     &      .or. itally.eq.100.or. itally.eq.-24) THEN ! these are -3:3*NPLS vectorial tallies
+          IF (ispc.lt.0) THEN
+            transform_tally = ispc
+          ELSE IF (ispc.le.nplsi) THEN
+            transform_tally = ipls1(ispc)
+          ELSE IF (ispc.le.2*nplsi) THEN
+            transform_tally = npls1+ipls1(ispc-nplsi)
+          ELSE IF (ispc.le.3*nplsi) THEN
+            transform_tally = 2*npls1+ipls1(ispc-2*nplsi)
+          ELSE
+            transform_tally = 0
+          END IF
         ELSE
           transform_tally = ispc
         ENDIF

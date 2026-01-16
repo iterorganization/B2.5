@@ -125,11 +125,11 @@
      *  eirene_mc_mapl_smo0to3(:,:,:,:),
      *  eirene_mc_mmpl_smo0to3(:,:,:,:),
      *  eirene_mc_mipl_smo0to3(:,:,:,:),
-     *  eirene_mc_cppv_smo0to3(:,:,:,:),
+     *  eirene_mc_mppl_smo0to3(:,:,:,:),
      *  eirene_mc_mapl_smo_bal(:,:,:),
      *  eirene_mc_mmpl_smo_bal(:,:,:),
      *  eirene_mc_mipl_smo_bal(:,:,:),
-     *  eirene_mc_cppv_smo_bal(:,:,:),
+     *  eirene_mc_mppl_smo_bal(:,:,:),
      *  b2stbm_smo0to3(:,:,:),
      *  b2stbm_smo_bal(:,:),
      *  ext_smo0to3(:,:,:),
@@ -202,7 +202,7 @@
      *  eirene_mc_mapl_smo_bal_av(:,:,:),
      *  eirene_mc_mmpl_smo_bal_av(:,:,:),
      *  eirene_mc_mipl_smo_bal_av(:,:,:),
-     *  eirene_mc_cppv_smo_bal_av(:,:,:),
+     *  eirene_mc_mppl_smo_bal_av(:,:,:),
      *  b2stbm_smo_bal_av(:,:),
      *  ext_smo_bal_av(:,:),
      *  b2stel_smq_ion_bal_av(:,:),
@@ -1419,19 +1419,19 @@ cdjm Jan2017 Eirene arrays for momentum balance:
       allocate(
      & eirene_mc_mipl_smo0to3(nCv,0:3,0:nsd-1,1:nstrad))
       allocate(
-     & eirene_mc_cppv_smo0to3(nCv,0:3,0:nsd-1,1:nstrad))
+     & eirene_mc_mppl_smo0to3(nCv,0:3,0:nsd-1,1:nstrad))
       allocate(eirene_mc_mapl_smo_bal(nCv,0:nsd-1,1:nstrad))
       allocate(eirene_mc_mmpl_smo_bal(nCv,0:nsd-1,1:nstrad))
       allocate(eirene_mc_mipl_smo_bal(nCv,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_cppv_smo_bal(nCv,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_mppl_smo_bal(nCv,0:nsd-1,1:nstrad))
       eirene_mc_mapl_smo0to3=0.0_R8
       eirene_mc_mmpl_smo0to3=0.0_R8
       eirene_mc_mipl_smo0to3=0.0_R8
-      eirene_mc_cppv_smo0to3=0.0_R8
+      eirene_mc_mppl_smo0to3=0.0_R8
       eirene_mc_mapl_smo_bal=0.0_R8
       eirene_mc_mmpl_smo_bal=0.0_R8
       eirene_mc_mipl_smo_bal=0.0_R8
-      eirene_mc_cppv_smo_bal=0.0_R8
+      eirene_mc_mppl_smo_bal=0.0_R8
 cdjm Jun2017 Time-averaged arrays for momentum balance:
       allocate(
      & eirene_mc_mapl_smo_bal_av(nCv,0:nsd-1,1:nstrad))
@@ -1440,7 +1440,7 @@ cdjm Jun2017 Time-averaged arrays for momentum balance:
       allocate(
      & eirene_mc_mipl_smo_bal_av(nCv,0:nsd-1,1:nstrad))
       allocate(
-     & eirene_mc_cppv_smo_bal_av(nCv,0:nsd-1,1:nstrad))
+     & eirene_mc_mppl_smo_bal_av(nCv,0:nsd-1,1:nstrad))
 cdjm Jan2017 Eirene arrays for electron heat balance:
       allocate(eirene_mc_eael_she0to3(nCv,0:3,1:nstrad))
       allocate(eirene_mc_emel_she0to3(nCv,0:3,1:nstrad))
@@ -1570,11 +1570,11 @@ cdjm Jan2017 Eirene arrays for momentum balance:
       deallocate(eirene_mc_mapl_smo0to3)
       deallocate(eirene_mc_mmpl_smo0to3)
       deallocate(eirene_mc_mipl_smo0to3)
-      deallocate(eirene_mc_cppv_smo0to3)
+      deallocate(eirene_mc_mppl_smo0to3)
       deallocate(eirene_mc_mapl_smo_bal)
       deallocate(eirene_mc_mmpl_smo_bal)
       deallocate(eirene_mc_mipl_smo_bal)
-      deallocate(eirene_mc_cppv_smo_bal)
+      deallocate(eirene_mc_mppl_smo_bal)
 cdjm Jan2017 Eirene arrays for electron heat balance:
       deallocate(eirene_mc_eael_she0to3)
       deallocate(eirene_mc_emel_she0to3)
@@ -1870,11 +1870,11 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &       eirene_mc_mipl_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
      &       eirene_mc_mipl_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
      &                                                 ub(iCv)
-            eirene_mc_cppv_smo_bal(iCv,isb,istrai)=
-     &       eirene_mc_cppv_smo0to3(iCv,0,isb,istrai)+
-     &       eirene_mc_cppv_smo0to3(iCv,1,isb,istrai)*ub(iCv)+
-     &       eirene_mc_cppv_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
-     &       eirene_mc_cppv_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
+            eirene_mc_mppl_smo_bal(iCv,isb,istrai)=
+     &       eirene_mc_mppl_smo0to3(iCv,0,isb,istrai)+
+     &       eirene_mc_mppl_smo0to3(iCv,1,isb,istrai)*ub(iCv)+
+     &       eirene_mc_mppl_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
+     &       eirene_mc_mppl_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
      &                                                 ub(iCv)
           enddo
         endif
@@ -2219,7 +2219,7 @@ cdjm Update ion heat sources
           eirene_mc_mapl_smo_bal_av=0.0_R8
           eirene_mc_mmpl_smo_bal_av=0.0_R8
           eirene_mc_mipl_smo_bal_av=0.0_R8
-          eirene_mc_cppv_smo_bal_av=0.0_R8
+          eirene_mc_mppl_smo_bal_av=0.0_R8
         endif
         b2stbm_smo_bal_av=0.0_R8
         ext_smo_bal_av=0.0_R8
@@ -2465,8 +2465,8 @@ cdjm Update ion heat sources
      &                              curmlt*eirene_mc_mmpl_smo_bal
         eirene_mc_mipl_smo_bal_av = avmlt*eirene_mc_mipl_smo_bal_av +
      &                              curmlt*eirene_mc_mipl_smo_bal
-        eirene_mc_cppv_smo_bal_av = avmlt*eirene_mc_cppv_smo_bal_av +
-     &                              curmlt*eirene_mc_cppv_smo_bal
+        eirene_mc_mppl_smo_bal_av = avmlt*eirene_mc_mppl_smo_bal_av +
+     &                              curmlt*eirene_mc_mppl_smo_bal
       endif
       b2stbm_smo_bal_av = avmlt*b2stbm_smo_bal_av +
      &                    curmlt*b2stbm_smo_bal
@@ -3157,8 +3157,8 @@ cdjm Update ion heat sources
      &                     eirene_mc_mmpl_smo_bal_av,vdims,3)
         call write_cdf_double(ncid,'eirene_mc_mipl_smo_bal',
      &                     eirene_mc_mipl_smo_bal_av,vdims,3)
-        call write_cdf_double(ncid,'eirene_mc_cppv_smo_bal',
-     &                     eirene_mc_cppv_smo_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_mppl_smo_bal',
+     &                     eirene_mc_mppl_smo_bal_av,vdims,3)
         vdims(2)=eirnatmid
         call write_cdf_double(ncid,'eirene_mc_paat_sna_bal',
      &                     eirene_mc_paat_sna_bal_av,vdims,3)
