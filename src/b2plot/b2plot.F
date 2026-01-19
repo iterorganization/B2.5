@@ -56,6 +56,7 @@ c 2002-09-11: logic revised
       use eirmod_wneutrals
       use eirmod_infcop
       use eirmod_braeir
+      use eirmod_ccoupl
       use eirmod_cestim
       use eirmod_coutau
      , , only: eirene_dealloc_coutau

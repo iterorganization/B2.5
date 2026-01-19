@@ -465,7 +465,7 @@
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, abs, sqrt
-      external b2xbzb, intface, intvertex, xerrab, xertst
+      external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
       call ipgeti ('b2mndr_temp_ignore_geo', temp_ignore_geo)
 
