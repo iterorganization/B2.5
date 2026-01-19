@@ -181,6 +181,7 @@ c 2002-09-11: logic revised
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
+      integer nrings, nrings1
       integer iyref, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
@@ -606,7 +607,7 @@ c 2002-09-11: logic revised
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/0/
+      data iy_nocoreExB/0/, nrings/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
@@ -1429,6 +1430,7 @@ c 2002-09-11: logic revised
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
+      call ipgeti ('nrings_for_no_speedup_averaging', nrings)
       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
       call ipgeti ('b2stbc_isfeedback', isfeedback)
@@ -1700,6 +1702,12 @@ c 2002-09-11: logic revised
       if (iy_nocoreExB.eq.-1) iy_nocoreExB = 1
       if (iy_nocoreExB.gt.0) iy_nocoreExB = conformal_convert
      .  (non_commensurate,2,jxa,iy_nocoreExB,nx,ny,nx1,ny1,2)
+      if (nrings.ne.0) then
+        nrings1 = jsep1 - conformal_convert
+     .   (non_commensurate,2,jxa,jsep-nrings,nx,ny,nx1,ny1,0)
+      else
+        nrings1 = 0
+      endif
       bc_type16_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type16_ref-2,nx,ny,nx1,ny1,2)
       bc_type20_ref = 2 + conformal_convert
@@ -1811,6 +1819,8 @@ c 2002-09-11: logic revised
           iswitch = isfeedback
         case('b2news_iy_nocoreExB')
           iswitch = iy_nocoreExB
+        case('nrings_for_no_speedup_averaging')
+          iswitch = nrings1
         case('b2stbc_type16_ref')
           iswitch = bc_type16_ref
         case('b2stbc_type20_ref')
