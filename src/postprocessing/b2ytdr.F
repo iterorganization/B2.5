@@ -78,7 +78,7 @@ c 2002-09-11: logic revised
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
-     , , only : nlimi, nstsi, ntrfrm
+     , , only : nlimi, nstsi
 #else
       use b2mod_braeir
 #endif
@@ -10228,7 +10228,7 @@ C  SKIP READING REST OF THIS BLOCK
           IF (streql(ZEILE(55:66),' ')) THEN   ! input.dat file comes from
                                                ! a structured case
             READ (ZEILE,6666) idum(0:8)        ! NFLA,NCUTB,NCUTL,IMF,
-                                               ! ntfrm,nfull,ibrad,ibpol,ibtor
+                                               ! ntrfrm,nfull,ibrad,ibpol,ibtor
             idum(1) = idum(4)
             idum(2) = idum(5)
             if (idum(6).eq.0) then
