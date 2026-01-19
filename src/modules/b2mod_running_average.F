@@ -293,7 +293,7 @@ c local variables
       implicit none
       type(B2Average), intent(inout) :: avg
 
-      if (.not.allocated(avg%na_mean)) then
+      if (allocated(avg%na_mean)) then
 
         deallocate (avg%na_mean)
         deallocate (avg%ua_mean)
@@ -326,7 +326,7 @@ c local variables
 
       endif
 
-      if (.not.allocated(sni_underrelax)) then
+      if (allocated(sni_underrelax)) then
 
         deallocate (sni_underrelax)
         deallocate (smo_underrelax)

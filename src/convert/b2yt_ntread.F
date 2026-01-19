@@ -36,6 +36,7 @@ c
       use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cinit
+      use eirmod_ccoupl
       use eirmod_cestim
       use eirmod_eirbra
      ,   , only : ncvtot
