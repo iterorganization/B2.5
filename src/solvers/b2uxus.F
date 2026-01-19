@@ -99,7 +99,7 @@
        call ipgeti ('b2ux9p_style', style)
        call xertst (0.le.style.and.style.lt.3,
      &   'faulty internal parameter style')
-       call ipgeti ('b2ux9p_cpu', cpu)
+       call ipgeti ('b2uxus_cpu', cpu)
        if(style.eq.2) then
          mult_nonzero=1
          mult_solvdim=15
