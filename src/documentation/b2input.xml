@@ -3816,7 +3816,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux5p_cpu</name>
+				<name>b2uxus_cpu</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
