@@ -1,6 +1,6 @@
       module b2mod_PARDISO
       use b2mod_types
-      use b2mod_ma28_for_us !! the storage of the matrix in triplet format is in this module....perhaps change later on
+      use b2mod_ma28_for_us !! the storage of the matrix in triplet format is in this module....perhaps move later on
       implicit none
 
       contains 
@@ -12,29 +12,42 @@
       implicit none
 
       !--------------------------------------
+      ! TODO. At list of optional todos: 
+      ! 1. The initialization phase can be moved to a separate routine and the parameters can be saved in the module. 
+      ! 2. The solver settings can perhaps be further optimized for B2.5 matrices.
+      ! 3. The shape of the stencils for each equation remains unchanged throughout the equations. It might be possible to save and store some 
+      !    pre-computed info per equation to prevent re-computing it at every equation. 
+
+      !--------------------------------------
       ! Arguments
       integer, intent(in) :: nCv, nz
       character*(*) :: name
-      real(R8), intent(in) :: b(nCv)
-      real(R8), intent(out) :: sol(nCv)
+      real(R8), intent(in) :: b(nCv)       !! right-hand side
+      real(R8), intent(out) :: sol(nCv)    !! solution
       integer, intent(out) :: flag
 
       !--------------------------------------
       ! Internal MKL PARDISO variables
-      integer :: ia_t(nz), ja_t(nz)
+      integer :: ia_t(nz), ja_t(nz)        !! ia_t, ja_t, a_t = matrix in triplet format
       real(R8) :: a_t(nz)
       integer(R8) :: pt(64)  ! internal solver memory pointer
       integer :: iparm(64)
       integer :: maxfct, mnum, mtype, phase, nrhs
       integer :: error
       integer :: i
-      integer :: ia(nCv+1), ja(nz)
+      integer :: ia(nCv+1), ja(nz)         !! ia, ja, a = matrix in CSR format, needed by PARDISO
       real(R8), dimension(:) :: a(nz)
 
+
+      !--------------------------------------
+      ! Read in matrix from b2mod_ma28 (storage can perhaps be moved in the future)
       ia_t = irnh(1:nz)
       ja_t = icnh(1:nz)
       a_t = a1h(1:nz)
 
+
+      !--------------------------------------
+      ! Convert triplet to CSR format
       call TripletToCSR(nCv, nz, ia_t, ja_t, a_t, ia, ja, a)
 
       !--------------------------------------
@@ -48,6 +61,7 @@
       nrhs = 1
       error = 0
 
+      !--------------------------------------
       ! Initialize default iparm
       iparm(1) = 1       ! use default parameters
       iparm(2) = 2       ! Fill-in reordering from METIS (optional)
@@ -70,7 +84,8 @@
       iparm(19) = 0
       iparm(20) = 0
 
-cc override some settings to match ma28 almost exactly
+      !--------------------------------------
+      ! Override some default settings to match ma28 almost exactly
       iparm(10) = 13   ! pivoting strategy
       iparm(11) = 1    ! scaling
       iparm(13) = 1    ! matching-based ordering
