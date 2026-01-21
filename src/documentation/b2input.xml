@@ -6685,7 +6685,7 @@
 				<default>2000</default>
 				<type>integer</type>
 				<description>
-					Maximum number of points needed to describe a region contour in Eirene.
+					Obsolete. Maximum number of points needed to describe a region contour in Eirene.
 				</description>
 			</switch>
 			<switch>

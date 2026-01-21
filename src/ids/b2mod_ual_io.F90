@@ -75,7 +75,8 @@ module b2mod_ual_io
     use eirmod_comusr &
      & , only : natmi, nmoli, nioni, nplsi, nphoti, &
      &          nmassa, nchara, nmassm, ncharm, &
-     &          nprt, nchrgi, nchari
+     &          nprt, nchrgi, nchari, &
+     &          lkindm, lkindi, lkindp
     use eirmod_comsou &
      & , only : nlatm, nlmol, nspez, &
      &          eirene_alloc_comsou

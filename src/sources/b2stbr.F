@@ -29,6 +29,7 @@
 #ifdef B25_EIRENE
       use b2mod_eirene
      ,  , only : eirene_mc
+      use eirmod_comusr
       use eirmod_wneutrals
       use b2mod_running_average
      & , only : run_av_get_sources
@@ -140,7 +141,7 @@
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies),
      &  sna_eir(nspecies)
       real (kind=R8), allocatable, save :: t1(:)
-      integer ip, j, nplsi
+      integer ip, j
 #endif
       integer sput_src,
 #ifdef WG_TODO

@@ -59,7 +59,7 @@ c 2002-09-11: logic revised
      , , tio => ti0, til => ti1, teo => te0, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
-     , , only : NMASSA, NCHARA,
+     , , only : NMASSA, NCHARA, lkindp, lkindm, lkindi,
      ,          eirene_alloc_comusr, eirene_dealloc_comusr
       use eirmod_comprt
      , , istr => istra
@@ -73,7 +73,7 @@ c 2002-09-11: logic revised
       use eirmod_wneutrals
      , , only : eirene_wneutrals_init, eirene_wneutrals_dealloc
       use eirmod_extrab25
-     , , only : lkindp, lkindm, lkindi, texta,
+     , , only : texta,
      ,          eirene_extrab25_eirpbls_init
       use eirmod_solps
       use eirmod_clogau
@@ -11199,8 +11199,6 @@ cxpb as they no longer necessarily point to the same species
           end do
         endif
 #endif
-        if (maxpoin.ne.2000) write(99,'(1x,a,i6,a)')
-     >   'MAXPOIN=', maxpoin,','
         if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')

@@ -193,7 +193,7 @@ cank }
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, nsns,
-     .     dbg_eir_mc, debug_flags(100), neutrals_count
+     .     dbg_eir_mc, debug_flags(100), neutrals_count, maxpoin
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -202,12 +202,9 @@ cank }
       real (kind=R8), save :: neutrals_time_switch
       real (kind=R8), save :: neut_scl_lim
 
-#ifndef B25_EIRENE
-#ifndef NO_B2_CHEM_SPUT
+#if ( !defined(B25_EIRENE) && !defined(NO_B2_CHEM_SPUT) )
       real (kind=R8), save :: fchar_chemical
       integer, save :: igass_chemical, itsput_chemical, issput_chemical
-#endif
-      integer, save :: MAXPOIN
 #endif
 
 csw 21feb2012
@@ -492,7 +489,6 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       else
         l_neutflux=0
       endif
-      MAXPOIN=2000
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.
@@ -794,7 +790,6 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
-      call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
       call xertst (0.0_R8.le.eirene_step_dt,
@@ -806,6 +801,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      . 'faulty input neutrals_time_mod')
       call xertst (0.0_R8.le.neutrals_time_switch,
      . 'faulty input neutrals_time_switch')
+
       do istra = 1, nstrat
         if (crcstra(istra).eq.'N') then
           if (old_style(istra)) then
@@ -1479,7 +1475,6 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
-      call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
       call xertst (0.0_R8.le.eirene_step_dt,
