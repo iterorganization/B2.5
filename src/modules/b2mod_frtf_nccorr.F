@@ -68,13 +68,13 @@
 
 !.......................................................................
 
-      subroutine b2mod_frtf_nccorr_prep(nCv,nFt,mpg,geo,pl,co,rt,zeff)
+      subroutine b2mod_frtf_nccorr_prep(nCv,mpg,geo,pl,co,rt,zeff)
       use b2us_geo
       use b2us_map
       use b2us_plasma
       implicit none
 
-      integer :: nCv, nFt
+      integer :: nCv
       type (mapping) :: mpg
       type (geometry) :: geo
       type (B2Plasma) :: pl
@@ -163,7 +163,7 @@
 
       corr_spec = switch%Zhdanov_nc_spec - 1
       call ipgeti ('b2sifrtf_iout', iout)
-      call b2mod_frtf_nccorr_prep(nCv,nFt,mpg,geo,pl,co,rt,zeff)
+      call b2mod_frtf_nccorr_prep(nCv,mpg,geo,pl,co,rt,zeff)
       corr_fria_D=0.0_R8
       corr_tfia_D=0.0_R8
       corr_fria=1.0_R8
