@@ -38,7 +38,7 @@
       integer :: ia(nCv+1), ja(nz)         !! ia, ja, a = matrix in CSR format, needed by PARDISO
       real(R8), dimension(:) :: a(nz)
 
-
+#ifdef PARDISO
       !--------------------------------------
       ! Read in matrix from b2mod_ma28 (storage can perhaps be moved in the future)
       ia_t = irnh(1:nz)
@@ -133,6 +133,10 @@
       phase = -1
       call pardiso(pt, maxfct, mnum, mtype, phase, nCv, a, ia, ja, 
      .          0, nrhs, iparm, 0, b, sol, error)
+#else
+      call xerrab('PARDISO not available! Link and re-compile with'//
+     . ' PARDISO library')
+#endif
 
       end subroutine SolvePARDISO
 
