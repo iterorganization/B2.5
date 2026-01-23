@@ -7,6 +7,9 @@ ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
 GLI_HOME  ?= ${EBROOTGLI}
 endif
+ifdef MKLROOT
+LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 ifeq (,$(findstring CentOS,$(OS)))
@@ -108,7 +111,6 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

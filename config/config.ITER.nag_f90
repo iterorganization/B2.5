@@ -5,6 +5,9 @@ LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lXext `pkg
 endif
 LD_NAG    ?= `pkg-config openblas --libs`
 LD_NETCDF ?=
+ifdef MKLROOT
+LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
@@ -51,7 +54,7 @@ BLD = ar rucv
 
 GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
 
 ifdef SOLPS_MPI
   SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
