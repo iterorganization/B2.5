@@ -4561,12 +4561,12 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux9p_style</name>
+				<name>b2uxus_style</name>
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of 9-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy.
-					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended! style.eq.0 and style.eq.1 will return an error.
+					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy. Style.eq.3 = PARDISO (Intel MKL)
+					NOTE: style 0 and 1 are depreciated. PARDISO is faster than MA28 but requires MKL on your system. 
 				</description>
 			</switch>
 			<switch>
