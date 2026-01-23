@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name,      !sv 13.10.06 {
-     .             use_PARDISO)
+     .             style)
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map
@@ -13,7 +13,7 @@
       use b2mod_PARDISO
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt, use_PARDISO
+      integer nCv, itcnt, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv)
@@ -42,7 +42,8 @@
 *     routine is an interface to one of two solvers. If the internal
 *     parameter "style" has the value 0 then a solver based on Stone's
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
-*     solver is used.
+*     solver is used. if style.eq.2 then MA28copy is used. if style.eq.3
+*     then PARDISO (Intel MKL) is used. 
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -68,7 +69,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, cpu, flag
+      integer ncall, cpu, flag
       real (kind=R8) ::
      *   cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
@@ -81,8 +82,8 @@
       external xertst, ipgeti, ipgetr,
      &  xerrab, ilutern_us
 *   ..initialization
-      save ncall, style, cpu
-      data ncall/0/, style/2/, cpu/0/
+      save ncall, cpu
+      data ncall/0/, cpu/0/
 
 #ifdef _OPENMP
 !$omp threadprivate(ind, iasave, jasave, nz, ncall, style, cpu)
@@ -96,11 +97,10 @@
       call subini ('b2uxus')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2ux9p_style', style)
-       call xertst (0.le.style.and.style.lt.3,
+       call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
        call ipgeti ('b2uxus_cpu', cpu)
-       if(style.eq.2) then
+       if(style.eq.2.or.style.eq.3) then
          mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
@@ -128,7 +128,7 @@
         call xerrab ('b2uxus: Style 0 is not implemented')
       else if (style.eq.1) then
         call xerrab ('b2uxus: Style 1 is not implemented')
-      else if (style.eq.2) then
+      else if (style.eq.2.or.style.eq.3) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
       endif
@@ -150,13 +150,17 @@
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-       if (use_PARDISO.eq.0) then 
          !! ma28 solver, default
-         call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
-       else 
-         !! experiment, PARDISO solver 
-         call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)    
-       endif
+       call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
+      else if (style.eq.3) then
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     *                  ind, iasave, jasave, name)
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+              !! experiment, PARDISO solver 
+       call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),

@@ -616,7 +616,7 @@ c Optimization
       integer :: b2optim_reset_param_iter
 
 c Matrix solver
-      integer :: use_PARDISO
+      integer :: b2uxus_style
 
       end type switches
 
@@ -1253,7 +1253,7 @@ c Optimization
       s % b2optim_reset_param_iter = 1
 
 c Matrix solver
-      s % use_PARDISO = 0 !! can become new default after sufficient testing?!
+      s % b2uxus_style = 2
 
       return
       end subroutine set_defaults_switches
@@ -1934,7 +1934,7 @@ c Optimization
      & s % b2optim_reset_param_iter)
 
 c Matrix solver
-      call ipgeti ('use_PARDISO', s % use_PARDISO) 
+      call ipgeti ('b2uxus_style', s % b2uxus_style) 
 
       return
       end subroutine read_switches

@@ -379,7 +379,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total',  !srv 18.05.02
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
       endif                                                             !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
@@ -551,7 +551,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te',     !srv 18.05.02
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
       endif                                                            !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
@@ -721,7 +721,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti',
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
 !svdk do not update last_solve_9, not yet supported
 #else
@@ -887,7 +887,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
         call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn',
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
 !svdk do not update last_solve_9, not yet supported
 #else
@@ -1038,7 +1038,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt',
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
       endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
@@ -1179,7 +1179,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt',
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
       endif !solve_keps - enstrophy
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then

@@ -235,7 +235,7 @@
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name,              !srv 18.03.10
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
 
       if (switch%b2usmo_iout.ne.0) then                                  !srv 17.06.02 {
         if (in_parallel()) then
