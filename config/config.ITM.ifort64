@@ -10,6 +10,10 @@ GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR      ?= ${EBROOTOPENBLAS}
 LD_NAG      ?= `pkg-config openblas --libs`
 
+ifdef MKLROOT
+LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
+
 DEFINES += -DNO_OPT # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding

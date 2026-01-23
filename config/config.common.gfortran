@@ -66,7 +66,7 @@ BLD = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NAG} ${LD_NETCDF}
+LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
 
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11

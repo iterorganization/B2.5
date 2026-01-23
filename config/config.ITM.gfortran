@@ -13,6 +13,9 @@ LD_NCARG ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_MSCL ?= `pkg-config mscl --libs`
 LD_NAG ?= `pkg-config openblas --libs`
 LD_MPI ?= -L${MPDIR}/lib -lmpi
+ifdef MKLROOT
+LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
 
 DEFINES += -DNO_OPT
 
