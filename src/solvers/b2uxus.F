@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name,      !sv 13.10.06 {
-     .             use_PARDISO)
+     .             style)
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map
@@ -13,7 +13,7 @@
       use b2mod_PARDISO
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt, use_PARDISO
+      integer nCv, itcnt, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv)
@@ -69,7 +69,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, cpu, flag
+      integer ncall, cpu, flag
       real (kind=R8) ::
      *   cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
@@ -154,13 +154,17 @@
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-       if (use_PARDISO.eq.0) then 
          !! ma28 solver, default
-         call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
-       else 
-         !! experiment, PARDISO solver 
-         call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)    
-       endif
+       call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
+      else if (style.eq.3) then
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     *                  ind, iasave, jasave, name)
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+              !! experiment, PARDISO solver 
+       call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
