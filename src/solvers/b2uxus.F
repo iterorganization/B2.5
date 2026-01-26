@@ -86,7 +86,7 @@
       data ncall/0/, cpu/0/
 
 #ifdef _OPENMP
-!$omp threadprivate(ind, iasave, jasave, nz, ncall, style, cpu)
+!$omp threadprivate(ind, iasave, jasave, nz, ncall, cpu)
 #endif
 
 *-----------------------------------------------------------------------
