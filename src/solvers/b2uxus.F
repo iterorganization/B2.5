@@ -85,10 +85,6 @@
       save ncall, cpu
       data ncall/0/, cpu/0/
 
-#ifdef _OPENMP
-!$omp threadprivate(ind, iasave, jasave, nz, ncall, style, cpu)
-#endif
-
 *-----------------------------------------------------------------------
 *.computation
 
