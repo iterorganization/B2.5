@@ -9420,8 +9420,9 @@ cxpb Read first, transform and rewrite
                 EXIT
               ENDIF
             END DO
-            READ (ZEILEN(ILINE+1),6666) idum(0:6) ! ISPSRF, IPTYP, IPSPZ, ISPTYP, NSPS,
-                                                  ! ISRFCLL, IDIREC
+            call fix_integer_input(ZEILEN(ILINE+1),8)
+            READ (ZEILEN(ILINE+1),6666) idum(0:7) ! ISPSRF, IPTYP, IPSPZ, ISPTYP, NSPS,
+                                                  ! ISRFCLL, IDIREC, ISPOPT
             IF (idum(2).GT.0) THEN
               IF (idum(1).EQ.1) THEN
                 IF (iatm1(idum(2)).GT.0) THEN
@@ -9459,6 +9460,10 @@ cxpb Read first, transform and rewrite
                 ILINE = ILINE + 3
               ELSE
                 ILINE = ILINE + 2
+              END IF
+              IF (idum(7).EQ.2) THEN
+                READ (IUNIN,'(A80)') ZEILEN(ILINE+1) ! ISPLDEG
+                ILINE = ILINE + 1
               END IF
             END IF
           END DO
