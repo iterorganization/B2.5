@@ -786,7 +786,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
         call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn',
-     .             switch%use_PARDISO)
+     .             switch%b2uxus_style)
         last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
        endif                                                             !srv 22.05.18
       endif

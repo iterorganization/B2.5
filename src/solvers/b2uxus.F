@@ -272,17 +272,6 @@
       if(kwrite_bnr.eq.ncall) then
 !!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
-        if (in_parallel()) then !!FR in parallel do not write this file
-#ifdef _OPENMP
-!$OMP MASTER
-#endif
-          write(*,*)'OpenMP: warning: running in parallel the ',
-     1    'st_us_matrix_binary_ file ',
-     2    'will not be written out'
-#ifdef _OPENMP
-!$OMP END MASTER
-#endif
-        else
 !        write(*,*) 'Opening 76'
 !        open(76,file=
 !     &   'st_9_rhs_binary_'//trim(name)//'.dat',form='unformatted')
@@ -299,19 +288,8 @@
             write(77) ia(i), ja(i), a(i)
           enddo
           close(77)
-        endif
       endif
       if(kwrite_fmt.eq.ncall) then
-        if (in_parallel()) then !!FR in parallel do not write this file
-#ifdef _OPENMP
-!$OMP MASTER
-#endif
-          write(*,*)'OpenMP: warning: running in parallel the ',
-     1     'st_us_matrix_ file will not be written out'
-#ifdef _OPENMP
-!$OMP END MASTER
-#endif
-        else
 !        write(*,*) 'Opening 76'
 !        open(76,file='st_9_rhs_'//trim(name)//'.dat')
 !         write(76,*) n
@@ -325,7 +303,6 @@
             write(77,*) ia(i), ja(i), a(i)
           enddo
           close(77)
-        endif
       endif
 
       ncall = ncall + 1
