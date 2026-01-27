@@ -2142,7 +2142,7 @@ cxpb size is changed in b2mod_dimensions
                   write(*,'(a,i6,es17.6)')'Total pump',ifb,sna_pump
                   write(*,'(a,i6,es17.6)')'Total core',ifb,sna_core
                   fb_rescale(ifb) = max(0.0_R8,
-     &              (sna_pump - sna_core)*fb_rescale(ifb))
+     &              (sna_pump - sna_core)*fb_rescale(ifb) - sna_puff)
 #endif
               endif
 
