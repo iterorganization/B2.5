@@ -2423,9 +2423,6 @@ c 2002-09-11: logic revised
               bccon(is,ib) = 24  ! must move number because of clash in numbering
             end if
           end do
-          if (bcene(ib).eq.3) enepar(ib,1) = 0.0_R8 ! make sure this parameter
-           ! is set to zero as it is not used and can lead to
-           ! confusion when moving to BCENE=15 where it is meaningful
           if (bceni(ib).eq.21 .and.
      .        (streql(solps_version,'5.0') .or.
      .         streql(solps_version,'5.1'))) then
