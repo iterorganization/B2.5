@@ -2956,7 +2956,7 @@ c   and apply linearisation
         endif !}
       enddo !}
       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
-      gs_copy_NSTRAT = NSTRAT
+        gs_copy_NSTRAT = NSTRAT
 #if(defined(_OPENMP))
 !$OMP PARALLEL DEFAULT(NONE)
 !$OMP& SHARED(eirene_mc_pael_sne0to1,eirene_mc_pmel_sne0to1)
@@ -2973,47 +2973,20 @@ c   and apply linearisation
 !$OMP DO COLLAPSE(4)
 #endif
 
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_idim=0,1
-          do gs_iy=-1,ny
-            do gs_ix=-1,nx
-              eirene_mc_pael_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)= !djm Jan2017
-     &          0.0_R8
-              eirene_mc_pmel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
-     &          0.0_R8
-              eirene_mc_piel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
-     &          0.0_R8
-            end do
-          end do
-        end do
-      end do
-
-#if(defined(_OPENMP))
-!$OMP END DO
-#endif
-
-#if(defined(_OPENMP))
-!$OMP DO COLLAPSE(5)
-#endif
-
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_is=0,ns-1
+        do gs_istra=1,gs_copy_NSTRAT
           do gs_idim=0,1
             do gs_iy=-1,ny
               do gs_ix=-1,nx
-                eirene_mc_papl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pmpl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pipl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_pppl_sna0to1(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
+                eirene_mc_pael_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)= !djm Jan2017
+     &            0.0_R8
+                eirene_mc_pmel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
+     &            0.0_R8
+                eirene_mc_piel_sne0to1(gs_ix,gs_iy,gs_idim,gs_istra)=
+     &            0.0_R8
               end do
             end do
           end do
         end do
-      end do
 
 #if(defined(_OPENMP))
 !$OMP END DO
@@ -3023,24 +2996,51 @@ c   and apply linearisation
 !$OMP DO COLLAPSE(5)
 #endif
 
-      do gs_istra=1,gs_copy_NSTRAT
-        do gs_is=0,ns-1
-          do gs_idim=0,3
-            do gs_iy=-1,ny
-              do gs_ix=-1,nx
-                eirene_mc_mapl_smo0to3(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mmpl_smo0to3(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mipl_smo0to3(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
-                eirene_mc_mppl_smo0to3(gs_ix,gs_iy,gs_idim,
-     &             gs_is,gs_istra) = 0.0_R8
+        do gs_istra=1,gs_copy_NSTRAT
+          do gs_is=0,ns-1
+            do gs_idim=0,1
+              do gs_iy=-1,ny
+                do gs_ix=-1,nx
+                  eirene_mc_papl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_pmpl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_pipl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_pppl_sna0to1(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                end do
               end do
             end do
           end do
         end do
-      end do
+
+#if(defined(_OPENMP))
+!$OMP END DO
+#endif
+
+#if(defined(_OPENMP))
+!$OMP DO COLLAPSE(5)
+#endif
+
+        do gs_istra=1,gs_copy_NSTRAT
+          do gs_is=0,ns-1
+            do gs_idim=0,3
+              do gs_iy=-1,ny
+                do gs_ix=-1,nx
+                  eirene_mc_mapl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mmpl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mipl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                  eirene_mc_mppl_smo0to3(gs_ix,gs_iy,gs_idim,
+     &               gs_is,gs_istra) = 0.0_R8
+                end do
+              end do
+            end do
+          end do
+        end do
 
 #if(defined(_OPENMP))
 !$OMP END DO

@@ -1033,8 +1033,8 @@ c 2002-09-11: logic revised
       endif
       call get_nxt(nx,nxtl,nxtr)
 *   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te, ti,
+     &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -2485,6 +2485,9 @@ c 2002-09-11: logic revised
               bccon(is,ib) = 24  ! must move number because of clash in numbering
             end if
           end do
+          if (bcene(ib).eq.3) enepar(ib,1) = 0.0_R8 ! make sure this parameter
+           ! is set to zero as it is not used and can lead to
+           ! confusion when moving to BCENE=15 where it is meaningful
           if (bceni(ib).eq.21 .and.
      .        (streql(solps_version,'5.0') .or.
      .         streql(solps_version,'5.1'))) then
@@ -4282,18 +4285,26 @@ cxpb  Start reading input.dat file
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 109
         ELSE
+          call fix_integer_input(zeile,10)
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
             idum(0) = -1
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
-            idum(7) = 1
+            idum(7) = idum(2)
+            idum(2) = 0
             idum(8) = 0
-          ELSE
+            idum(9) = 0
+          ELSE IF (.not.streql(eirene_format,'msv')) THEN
             READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
+            idum(8) = 0
+            idum(9) = 0
             if (b2fstate_version.le.'03.000.006') idum(0)=-1
+          ELSE
+            READ (ZEILE,6666) idum(0:9)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
+                                         ! NTIME0,NTIME,NEVNTMAX,NVNMXTR
           END IF
           NMODE = idum(1)
           nfilek = b2idez(idum(3),4,5)
@@ -4312,7 +4323,7 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
           nfilel = b2idez(idum(3),3,5)
           if (nfilel.ne.0.and.nfilel.lt.5) idum(3) = idum(3) + 500  ! ensure "short" fort.13 format
-          WRITE(IUNOT,6666) idum(0:8)
+          WRITE(IUNOT,6666) idum(0:9)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
         IF ((INDEX(ZEILE,'F') + INDEX(ZEILE,'f') + INDEX(ZEILE,'T') +
@@ -4320,30 +4331,18 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:7)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
-          READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,20)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
-          ENDIF
+        ENDIF
+        READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,20)
+        IF (streql(eirene_format,'facelift')) then
+          READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                       ! NLTRIMESH
         ELSE
-          call fix_logical_input(zeile,19)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
-          ENDIF
+          READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
+                                       ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
         ENDIF
         IF (streql(eirene_format,'facelift')) then
           ldum(14) = ldum(8)

@@ -93,7 +93,6 @@ c local
       call batch_average_sq (n2*ns, smd0_eir_tot, e_smd, itp, naver)
 
       call subend ()
-
       return
       end subroutine running_average
 
@@ -329,8 +328,8 @@ c local variables
 
          else
 
-            write (*,*) ' NO FILE b2faveri FOUND '
-            write (*,*) ' AVERAGING STARTS FROM ZERO '
+            write (*,*) ' NO FILE b2faveri FOUND'
+            write (*,*) ' AVERAGING STARTS FROM ZERO'
 
          end if
 
@@ -339,7 +338,6 @@ c local variables
       end if
 
       call subend ()
-
       return
       end subroutine run_av_init
 
@@ -471,12 +469,11 @@ c local variables
          call cfwure (iun, n2*ns, e_smd, 'e_smd')
 
       end if
-!
+
       close (iun)
       write (*,*) ' file ',savefile,' written '
 
       call subend ()
-
       return
       end subroutine run_av_save
 
@@ -497,7 +494,6 @@ c local variables
       po_arg = po_mean
 
       call subend ()
-
       return
       end subroutine run_av_get_plasma
 
