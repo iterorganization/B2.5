@@ -3108,8 +3108,10 @@
         call cfrure (ninp, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
         call cfrure (ninp, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
         call cfrure (ninp, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
-        call cfrure (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
-        call cfrure (ninp, nCv*ns, st % srw % smd0_eir_tot, 'smd0_eir')
+        call cfrure_opt
+     .              (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
+        call cfrure_opt
+     .              (ninp, nCv*ns, st % srw % smd0_eir_tot, 'smd0_eir')
         call cfrure (ninp, nCv,    st % srw % she0_eir_tot, 'she0_eir')
         call cfrure (ninp, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
         call cfrure (ninp, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
