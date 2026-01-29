@@ -311,7 +311,7 @@
      &                       sec(-1,-1),work(-1,-1,1,is))
           sec(-1:nx,-1:ny) = smd0_eir_tot(-1:nx,-1:ny,is)
      &                             / hz(-1:nx,-1:ny) / vol(-1:nx,-1:ny)
-          call intfacev(nx, ny, bottomix, bottomiy, vol,
+          call intfacev(nx,ny,bottomix,bottomiy,vol,
      &                       sec(-1,-1),work(-1,-1,0,is))      
           call intfaceh(nx,ny,leftix,leftiy,vol,
      &                       sec(-1,-1),work(-1,-1,2,is))      
