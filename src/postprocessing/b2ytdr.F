@@ -2423,6 +2423,9 @@ c 2002-09-11: logic revised
               bccon(is,ib) = 24  ! must move number because of clash in numbering
             end if
           end do
+          if (bcene(ib).eq.3) enepar(ib,1) = 0.0_R8 ! make sure this parameter
+           ! is set to zero as it is not used and can lead to
+           ! confusion when moving to BCENE=15 where it is meaningful
           if (bceni(ib).eq.21 .and.
      .        (streql(solps_version,'5.0') .or.
      .         streql(solps_version,'5.1'))) then
@@ -4091,18 +4094,26 @@ cxpb  Start reading input.dat file
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 109
         ELSE
+          call fix_integer_input(zeile,10)
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
             idum(0) = -1
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
-            idum(7) = 1
+            idum(7) = idum(2)
+            idum(2) = 0
             idum(8) = 0
-          ELSE
+            idum(9) = 0
+          ELSE IF (.not.streql(eirene_format,'msv')) THEN
             READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
+            idum(8) = 0
+            idum(9) = 0
             if (b2fstate_version.le.'03.000.006') idum(0)=-1
+          ELSE
+            READ (ZEILE,6666) idum(0:9)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
+                                         ! NTIME0,NTIME,NEVNTMAX,NVNMXTR
           END IF
           NMODE = idum(1)
           nfilek = b2idez(idum(3),4,5)
@@ -4121,7 +4132,7 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
           nfilel = b2idez(idum(3),3,5)
           if (nfilel.ne.0.and.nfilel.lt.5) idum(3) = idum(3) + 500  ! ensure "short" fort.13 format
-          WRITE(IUNOT,6666) idum(0:8)
+          WRITE(IUNOT,6666) idum(0:9)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
         IF ((INDEX(ZEILE,'F') + INDEX(ZEILE,'f') + INDEX(ZEILE,'T') +
