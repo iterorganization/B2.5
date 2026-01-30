@@ -144,7 +144,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer i, j, is, iCv, iFc, ireg
+    integer i, j, k, is, iCv, iFc, ireg
     integer target_offset
 
     real(kind=R8) :: fettmp, fdir
@@ -260,7 +260,7 @@ contains
           enddo
           close(99)
         case (2)
-          if (mpg%nnreg(0).ge.7) then
+          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
@@ -1994,135 +1994,169 @@ contains
         deallocate(slice)
         call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
       endif
-      if (maxval(mpg%strDiv).ge.1) then
-        allocate(fclist(mpg%divFcP(1,2)))
-        allocate(cvlist(mpg%divFcP(1,2)))
-        allocate(cnlist(mpg%divFcP(1,2)))
-        allocate(slice(mpg%divFcP(1,2)))
-        fclist(1:mpg%divFcp(1,2)) = &
-       &   mpg%divFc(mpg%divFcP(1,1):mpg%divFcP(1,1)+mpg%divFcP(1,2)-1)
-        do i = mpg%divFcP(1,1), mpg%divFcP(1,1)+mpg%divFcP(1,2)-1
-          j = i - mpg%divFcP(1,1) + 1
-          iFc = mpg%divFc(i)
-          iCv1 = mpg%fcCv(iFc,1)
-          iCv2 = mpg%fcCv(iFc,2)
-          if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
-            & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
-            cvlist(j) = iCv1
+      do k = 1, maxval(mpg%strDiv)
+        select case (k)
+        case (1)
+          allocate(fclist(mpg%divFcP(1,2)))
+          allocate(cvlist(mpg%divFcP(1,2)))
+          allocate(cnlist(mpg%divFcP(1,2)))
+          allocate(slice(mpg%divFcP(1,2)))
+          fclist(1:mpg%divFcp(1,2)) = &
+         &   mpg%divFc(mpg%divFcP(1,1):mpg%divFcP(1,1)+mpg%divFcP(1,2)-1)
+          do i = mpg%divFcP(1,1), mpg%divFcP(1,1)+mpg%divFcP(1,2)-1
+            j = i - mpg%divFcP(1,1) + 1
+            iFc = mpg%divFc(i)
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
+              & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
+              cvlist(j) = iCv1
+            else
+              cvlist(j) = iCv2
+            end if
+            if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
+            if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
+          end do
+          slice = real(fclist, kind=R8)
+          call rwcdf(rw,ncid,'fclistl',imap,slice,iret)
+          slice = real(cvlist, kind=R8)
+          call rwcdf(rw,ncid,'cvlistl',imap,slice,iret)
+          slice = real(cnlist, kind=R8)
+          call rwcdf(rw,ncid,'cnlistl',imap,slice,iret)
+          deallocate(fclist,cvlist,cnlist,slice)
+          call rwcdf(rw,ncid,'dsl',imap,dsl,iret)
+          call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
+          call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
+        case (2)
+          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1) then
+            allocate(fclist(mpg%divFcP(2,2)))
+            allocate(cvlist(mpg%divFcP(2,2)))
+            allocate(cnlist(mpg%divFcP(2,2)))
+            allocate(slice(mpg%divFcP(2,2)))
+            fclist(1:mpg%divFcp(2,2)) = &
+         &   mpg%divFc(mpg%divFcP(2,1):mpg%divFcP(2,1)+mpg%divFcP(2,2)-1)
+            do i = mpg%divFcP(2,1), mpg%divFcP(2,1)+mpg%divFcP(2,2)-1
+              j = i - mpg%divFcP(2,1) + 1
+              iFc = mpg%divFc(i)
+              iCv1 = mpg%fcCv(iFc,1)
+              iCv2 = mpg%fcCv(iFc,2)
+              if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
+                & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
+                cvlist(j) = iCv1
+              else
+                cvlist(j) = iCv2
+              end if
+              if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
+              if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
+            end do
+            slice = real(fclist, kind=R8)
+            call rwcdf(rw,ncid,'fclisttl',imap,slice,iret)
+            slice = real(cvlist, kind=R8)
+            call rwcdf(rw,ncid,'cvlisttl',imap,slice,iret)
+            slice = real(cnlist, kind=R8)
+            call rwcdf(rw,ncid,'cnlisttl',imap,slice,iret)
+            deallocate(fclist,cvlist,cnlist,slice)
+            call rwcdf(rw,ncid,'dstl',imap,dstl,iret)
+            call rwcdf(rw,ncid,'dsTLT',imap,dsTLT,iret)
+            call rwcdf(rw,ncid,'dsTLP',imap,dsTLP,iret)  
           else
-            cvlist(j) = iCv2
-          end if
-          if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
-          if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
-        end do
-        slice = real(fclist, kind=R8)
-        call rwcdf(rw,ncid,'fclistl',imap,slice,iret)
-        slice = real(cvlist, kind=R8)
-        call rwcdf(rw,ncid,'cvlistl',imap,slice,iret)
-        slice = real(cnlist, kind=R8)
-        call rwcdf(rw,ncid,'cnlistl',imap,slice,iret)
-        deallocate(fclist,cvlist,cnlist,slice)
-        call rwcdf(rw,ncid,'dsl',imap,dsl,iret)
-        call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
-        call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
-      endif
-      if (maxval(mpg%strDiv).ge.2) then
-        ireg=maxval(mpg%strDiv)
-        allocate(fclist(mpg%divFcP(ireg,2)))
-        allocate(cvlist(mpg%divFcP(ireg,2)))
-        allocate(cnlist(mpg%divFcP(ireg,2)))
-        allocate(slice(mpg%divFcP(ireg,2)))
-        fclist(1:mpg%divFcp(ireg,2)) = &
-     &   mpg%divFc(mpg%divFcP(ireg,1):mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1)
-        do i = mpg%divFcP(ireg,1), mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1
-          j = i - mpg%divFcP(ireg,1) + 1
-          iFc = mpg%divFc(i)
-          iCv1 = mpg%fcCv(iFc,1)
-          iCv2 = mpg%fcCv(iFc,2)
-          if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
-            & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
-            cvlist(j) = iCv1
-          else
-            cvlist(j) = iCv2
-          end if
-          if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
-          if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
-        end do
-        slice = real(fclist, kind=R8)
-        call rwcdf(rw,ncid,'fclistr',imap,slice,iret)
-        slice = real(cvlist, kind=R8)
-        call rwcdf(rw,ncid,'cvlistr',imap,slice,iret)
-        slice = real(cnlist, kind=R8)
-        call rwcdf(rw,ncid,'cnlistr',imap,slice,iret)
-        deallocate(fclist,cvlist,cnlist,slice)
-        call rwcdf(rw,ncid,'dsr',imap,dsr,iret)    
-        call rwcdf(rw,ncid,'dsRT',imap,dsRT,iret)   
-        call rwcdf(rw,ncid,'dsRP',imap,dsRP,iret)  
-      end if
-      if (maxval(mpg%strDiv).ge.4) then
-        allocate(fclist(mpg%divFcP(2,2)))
-        allocate(cvlist(mpg%divFcP(2,2)))
-        allocate(cnlist(mpg%divFcP(2,2)))
-        allocate(slice(mpg%divFcP(2,2)))
-        fclist(1:mpg%divFcp(2,2)) = &
-     &   mpg%divFc(mpg%divFcP(2,1):mpg%divFcP(2,1)+mpg%divFcP(2,2)-1)
-        do i = mpg%divFcP(2,1), mpg%divFcP(2,1)+mpg%divFcP(2,2)-1
-          j = i - mpg%divFcP(2,1) + 1
-          iFc = mpg%divFc(i)
-          iCv1 = mpg%fcCv(iFc,1)
-          iCv2 = mpg%fcCv(iFc,2)
-          if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
-            & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
-            cvlist(j) = iCv1
-          else
-            cvlist(j) = iCv2
-          end if
-          if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
-          if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
-        end do
-        slice = real(fclist, kind=R8)
-        call rwcdf(rw,ncid,'fclisttl',imap,slice,iret)
-        slice = real(cvlist, kind=R8)
-        call rwcdf(rw,ncid,'cvlisttl',imap,slice,iret)
-        slice = real(cnlist, kind=R8)
-        call rwcdf(rw,ncid,'cnlisttl',imap,slice,iret)
-        deallocate(fclist,cvlist,cnlist,slice)
-        call rwcdf(rw,ncid,'dstl',imap,dstl,iret)
-        call rwcdf(rw,ncid,'dsTLT',imap,dsTLT,iret)
-        call rwcdf(rw,ncid,'dsTLP',imap,dsTLP,iret)  
-      endif
-      if (maxval(mpg%strDiv).ge.3) then
-        allocate(fclist(mpg%divFcP(3,2)))
-        allocate(cvlist(mpg%divFcP(3,2)))
-        allocate(cnlist(mpg%divFcP(3,2)))
-        allocate(slice(mpg%divFcP(3,2)))
-        fclist(1:mpg%divFcp(3,2)) = &
-     &   mpg%divFc(mpg%divFcP(3,1):mpg%divFcP(3,1)+mpg%divFcP(3,2)-1)
-        do i = mpg%divFcP(3,1), mpg%divFcP(3,1)+mpg%divFcP(3,2)-1
-          j = i - mpg%divFcP(3,1) + 1
-          iFc = mpg%divFc(i)
-          iCv1 = mpg%fcCv(iFc,1)
-          iCv2 = mpg%fcCv(iFc,2)
-          if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
-            & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
-            cvlist(j) = iCv1
-          else
-            cvlist(j) = iCv2
-          end if
-          if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
-          if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
-        end do
-        slice = real(fclist, kind=R8)
-        call rwcdf(rw,ncid,'fclisttr',imap,slice,iret)
-        slice = real(cvlist, kind=R8)
-        call rwcdf(rw,ncid,'cvlisttr',imap,slice,iret)
-        slice = real(cnlist, kind=R8)
-        call rwcdf(rw,ncid,'cnlisttr',imap,slice,iret)
-        deallocate(fclist,cvlist,cnlist,slice)
-        call rwcdf(rw,ncid,'dstr',imap,dstr,iret)  
-        call rwcdf(rw,ncid,'dsTRT',imap,dsTRT,iret)
-        call rwcdf(rw,ncid,'dsTRP',imap,dsTRP,iret)  
-      end if
+            ireg=maxval(mpg%strDiv)
+            allocate(fclist(mpg%divFcP(ireg,2)))
+            allocate(cvlist(mpg%divFcP(ireg,2)))
+            allocate(cnlist(mpg%divFcP(ireg,2)))
+            allocate(slice(mpg%divFcP(ireg,2)))
+            fclist(1:mpg%divFcp(ireg,2)) = &
+         &   mpg%divFc(mpg%divFcP(ireg,1):mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1)
+            do i = mpg%divFcP(ireg,1), mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1
+              j = i - mpg%divFcP(ireg,1) + 1
+              iFc = mpg%divFc(i)
+              iCv1 = mpg%fcCv(iFc,1)
+              iCv2 = mpg%fcCv(iFc,2)
+              if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
+                & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
+                cvlist(j) = iCv1
+              else
+                cvlist(j) = iCv2
+              end if
+              if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
+              if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
+            end do
+            slice = real(fclist, kind=R8)
+            call rwcdf(rw,ncid,'fclistr',imap,slice,iret)
+            slice = real(cvlist, kind=R8)
+            call rwcdf(rw,ncid,'cvlistr',imap,slice,iret)
+            slice = real(cnlist, kind=R8)
+            call rwcdf(rw,ncid,'cnlistr',imap,slice,iret)
+            deallocate(fclist,cvlist,cnlist,slice)
+            call rwcdf(rw,ncid,'dsr',imap,dsr,iret)    
+            call rwcdf(rw,ncid,'dsRT',imap,dsRT,iret)   
+            call rwcdf(rw,ncid,'dsRP',imap,dsRP,iret)  
+          endif
+        case (3)
+          allocate(fclist(mpg%divFcP(3,2)))
+          allocate(cvlist(mpg%divFcP(3,2)))
+          allocate(cnlist(mpg%divFcP(3,2)))
+          allocate(slice(mpg%divFcP(3,2)))
+          fclist(1:mpg%divFcp(3,2)) = &
+       &   mpg%divFc(mpg%divFcP(3,1):mpg%divFcP(3,1)+mpg%divFcP(3,2)-1)
+          do i = mpg%divFcP(3,1), mpg%divFcP(3,1)+mpg%divFcP(3,2)-1
+            j = i - mpg%divFcP(3,1) + 1
+            iFc = mpg%divFc(i)
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
+              & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
+              cvlist(j) = iCv1
+            else
+              cvlist(j) = iCv2
+            end if
+            if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
+            if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
+          end do
+          slice = real(fclist, kind=R8)
+          call rwcdf(rw,ncid,'fclisttr',imap,slice,iret)
+          slice = real(cvlist, kind=R8)
+          call rwcdf(rw,ncid,'cvlisttr',imap,slice,iret)
+          slice = real(cnlist, kind=R8)
+          call rwcdf(rw,ncid,'cnlisttr',imap,slice,iret)
+          deallocate(fclist,cvlist,cnlist,slice)
+          call rwcdf(rw,ncid,'dstr',imap,dstr,iret)  
+          call rwcdf(rw,ncid,'dsTRT',imap,dsTRT,iret)
+          call rwcdf(rw,ncid,'dsTRP',imap,dsTRP,iret)  
+        case(4)
+          ireg=maxval(mpg%strDiv)
+          allocate(fclist(mpg%divFcP(ireg,2)))
+          allocate(cvlist(mpg%divFcP(ireg,2)))
+          allocate(cnlist(mpg%divFcP(ireg,2)))
+          allocate(slice(mpg%divFcP(ireg,2)))
+          fclist(1:mpg%divFcp(ireg,2)) = &
+       &   mpg%divFc(mpg%divFcP(ireg,1):mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1)
+          do i = mpg%divFcP(ireg,1), mpg%divFcP(ireg,1)+mpg%divFcP(ireg,2)-1
+            j = i - mpg%divFcP(ireg,1) + 1
+            iFc = mpg%divFc(i)
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            if ((iCv1.le.mpg%nCi.and.target_offset.eq.1).or. &
+              & (iCv1.gt.mpg%nCi.and.target_offset.eq.0)) then
+              cvlist(j) = iCv1
+            else
+              cvlist(j) = iCv2
+            end if
+            if (iCv1.le.mpg%nCi) cnlist(j) = iCv1
+            if (iCv2.le.mpg%nCi) cnlist(j) = iCv2
+          end do
+          slice = real(fclist, kind=R8)
+          call rwcdf(rw,ncid,'fclistr',imap,slice,iret)
+          slice = real(cvlist, kind=R8)
+          call rwcdf(rw,ncid,'cvlistr',imap,slice,iret)
+          slice = real(cnlist, kind=R8)
+          call rwcdf(rw,ncid,'cnlistr',imap,slice,iret)
+          deallocate(fclist,cvlist,cnlist,slice)
+          call rwcdf(rw,ncid,'dsr',imap,dsr,iret)    
+          call rwcdf(rw,ncid,'dsRT',imap,dsRT,iret)   
+          call rwcdf(rw,ncid,'dsRP',imap,dsRP,iret)  
+        end select
+      enddo
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
       if (write_2d .ge. 1) then
         call rwcdf(rw,ncid,'na2d',(/1,1,1/),pl%na,iret)
