@@ -44,6 +44,7 @@
       integer is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
+      integer ni_lb
       integer, save :: write_b25_state_variables = 1
       integer, save :: write_b25_fluxes = 0
       integer, save :: write_b25_sources = 0
@@ -447,12 +448,14 @@
         enddo
         call put_cdf_field3(ncid,'dpa',dummy3,nCv,ns)
         write(*,*) 'put_cdf_field2: hci'
+        ni_lb = lbound(state%dv%ni,2)
         if (switch%tn_style.eq.0) then
-          dummy(:) = state%co%hci0(:)/state%dv%ni(:,0)
+          dummy(:) = state%co%hci0(:)/ state%dv%ni(:,ni_lb)
         else if (switch%tn_style.eq.1) then
-          dummy(:) = state%co%hci0(:)/state%dv%ni(:,1)
+          dummy(:) = state%co%hci0(:)/state%dv%ni(:,ni_lb+1)
         else if (switch%tn_style.eq.2) then
-          dummy(:) = state%co%hci0(:)/(state%dv%ni(:,0)-state%dv%nn(:))
+          dummy(:) = state%co%hci0(:) /
+     .                (state%dv%ni(:,ni_lb) - state%dv%nn(:))
         end if
         call put_cdf_field2(ncid,'hci',dummy,nCv)
         write(*,*) 'put_cdf_field2: hce'
