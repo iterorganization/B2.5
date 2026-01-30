@@ -1561,7 +1561,7 @@ cc BCMOM
 cc BCENE
         if (bcene(ib).eq.3) then
           bcene(ib) = 15
-          enepar(ib,1) = 0.0_R8
+          enepar(ib,1) = enepar(ib,1) - 1.0_R8
           write(*,*) 'Automatically changing BCENE from 3 to 15'
           changed = .true.
         endif
