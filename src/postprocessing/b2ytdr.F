@@ -4139,16 +4139,16 @@ cxpb  Start reading input.dat file
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
-        call fix_logical_input(zeile,19)
+        call fix_logical_input(zeile,20)
         IF (streql(eirene_format,'facelift')) then
           READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                        ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
                                        ! NLTRIMESH
         ELSE
-          READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+          READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                        ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                        ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
+                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
         ENDIF
         IF (streql(eirene_format,'facelift')) then
           ldum(14) = ldum(8)
@@ -4166,11 +4166,12 @@ cxpb  Start reading input.dat file
         END IF
         IF (.not.streql(eirene_format,'msv')) then
           ldum(18)=.true.  ! Add NLSOLEDGE on by default
+          ldum(19)=.false. ! Add NLSPCSPT off by default
         END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
-        WRITE(IUNOT,6665) ldum(0:18)
+        WRITE(IUNOT,6665) ldum(0:19)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
