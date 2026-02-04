@@ -92,6 +92,10 @@
       if (ncall.eq.0) then
        call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
+       if (style.eq.3) then
+         write(*,*) 'PARADISO solver used.'
+         write(0,*) 'PARADISO solver used.'
+       endif
        call ipgeti ('b2uxus_cpu', cpu)
        if(style.eq.2.or.style.eq.3) then
          mult_nonzero=1
