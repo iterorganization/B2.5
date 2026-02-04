@@ -428,7 +428,6 @@ c 2002-09-11: logic revised
      .                        ISCLA(:)
       integer, allocatable :: ILBEG(:), ILEND(:)
       integer, allocatable :: NTGPR1(:)
-      integer :: NCOND
       integer :: INDPR1(12)
       real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
       real (kind=R8) :: ALLOC, MPTS
