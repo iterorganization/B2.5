@@ -195,7 +195,7 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       n2 = nx1*ny1
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)

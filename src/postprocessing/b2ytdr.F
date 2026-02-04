@@ -2041,6 +2041,7 @@ c 2002-09-11: logic revised
      &           b2tfhe_vis_par .eq.1.0_R8
           if (wait) then
             rswitch = b2tvspa_vis_par
+            wait = .false.
           else
             rswitch = b2tfhe_vis_par
           end if
