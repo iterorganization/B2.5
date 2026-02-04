@@ -246,17 +246,11 @@ c
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
-        rewind(45)
-        do while (index(zeile,'*** 14') == 0)
-          read (45,'(A72)') ZEILE
-        end do
-        read (45,'(A72)') ZEILE
-        read (45,'(2I6)') ITMP, NTRFRM
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
         close(45)

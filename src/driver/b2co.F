@@ -263,7 +263,7 @@
       call ipgeti ('b2mwti_ismain0', ismain0)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,file_exists)
       if (file_exists.and.switch%use_eirene.ne.0) then
         open(unit=45,file=filename)

@@ -141,7 +141,7 @@ C
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
       call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),
      .   nstrat,natmi,switch)
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
