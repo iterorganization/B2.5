@@ -110,51 +110,51 @@
 *     The IS loop is moved outside, so that we can calculate parallel in
 *     IS. This will ensure that the output arrays are distributed along
 *     the slowest varying index is.
-      do iy = -1, ny
-       do ix = -1, nx
+       do iy = -1, ny
+        do ix = -1, nx
 *     ..set ltst0
-        ltst0 = rtlt(0).le.log(te(ix,iy)/ev)
+         ltst0 = rtlt(0).le.log(te(ix,iy)/ev)
 *     ..compute abscissae
-        rlte = max(rtlt(0),min(rtlt(rtnt),log(te(ix,iy)/ev)))
-        rlne = max(rtln(0),min(rtln(rtnn),log(ne(ix,iy))))
+         rlte = max(rtlt(0),min(rtlt(rtnt),log(te(ix,iy)/ev)))
+         rlne = max(rtln(0),min(rtln(rtnn),log(ne(ix,iy))))
 *     ..find ite
 *       (linear search starting from previous ite, to establish
 *         0.le.ite.lt.rtnt;
 *         ite.eq.0.or.rtlt(ite).le.rlte;
 *         ite.eq.rtnt-1.or.rlte.lt.rtlt(ite+1).)
-    1   if (ite.lt.rtnt-1) then
-         if (rtlt(ite+1).le.rlte) then
-          ite = ite+1
-          goto 1
+    1    if (ite.lt.rtnt-1) then
+          if (rtlt(ite+1).le.rlte) then
+           ite = ite+1
+           goto 1
+          endif
          endif
-        endif
-    2   if (0.lt.ite) then
-         if (rlte.lt.rtlt(ite)) then
-          ite = ite-1
-          goto 2
+    2    if (0.lt.ite) then
+          if (rlte.lt.rtlt(ite)) then
+           ite = ite-1
+           goto 2
+          endif
          endif
-        endif
 *     ..compute coefficient for linear interpolation
-        fxte = (rlte-rtlt(ite))/(rtlt(ite+1)-rtlt(ite))
+         fxte = (rlte-rtlt(ite))/(rtlt(ite+1)-rtlt(ite))
 *     ..find ine
 *       (linear search starting from previous ine, to establish
 *         0.le.ine.lt.rtnn;
 *         ine.eq.0.or.rtln(ine).le.rlne;
 *         ine.eq.rtnn-1.or.rlne.lt.rtln(ine+1).)
-    3   if (ine.lt.rtnn-1) then
-         if (rtln(ine+1).le.rlne) then
-          ine = ine+1
-          goto 3
+    3    if (ine.lt.rtnn-1) then
+          if (rtln(ine+1).le.rlne) then
+           ine = ine+1
+           goto 3
+          endif
          endif
-        endif
-    4   if (0.lt.ine) then
-         if (rlne.lt.rtln(ine)) then
-          ine = ine-1
-          goto 4
+    4    if (0.lt.ine) then
+          if (rlne.lt.rtln(ine)) then
+           ine = ine-1
+           goto 4
+          endif
          endif
-        endif
 *     ..compute coefficient for linear interpolation
-        fxne = (rlne-rtln(ine))/(rtln(ine+1)-rtln(ine))
+         fxne = (rlne-rtln(ine))/(rtln(ine+1)-rtln(ine))
 *     ..compute log-log rate coefficients
 *      ..compute ionisation rate coefficient
          t0 = (1.0_R8-fxne)*rtlsa(ite,ine,is)+

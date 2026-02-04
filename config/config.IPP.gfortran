@@ -22,7 +22,7 @@ FC      = ${MPI_FC}
 endif
 endif
 
-PKG_KEEP_SYS = 
+PKG_KEEP_SYS =
 
 #!!!Local Variables:
 #!!! mode: Makefile
