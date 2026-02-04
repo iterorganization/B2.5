@@ -4,6 +4,11 @@ endif
 ifeq (${FN},)
 FN = ifort
 endif
+ifeq (${CC},cc)
+ifneq (${FC},ftn)
+CC = icc
+endif
+endif
 # Use of ifx OpenMP is unsafe at the moment
 ifneq (,$(findstring ifx,${FC}))
   ifdef SOLPS_OPENMP
@@ -27,6 +32,8 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   =
 
+# OpenMP compiler options for intel: -openmp is enough
+# Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef COMPILER_REDEF
  INCMOD = -I
  OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
