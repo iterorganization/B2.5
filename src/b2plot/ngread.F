@@ -123,7 +123,7 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
