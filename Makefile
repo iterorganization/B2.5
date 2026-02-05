@@ -1225,6 +1225,25 @@ endif
 endif
 endif
 
+ifeq ($(COMPILER),ifort64)
+ifdef SOLPS_OPENMP
+ifdef USE_EIRENE
+${OBJDIR}/b2ytdr.o : b2ytdr.F
+	@- /bin/rm -f $*.f $*.o $*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FPOPTS} -qoverride-limits ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.f
+else
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > $*.f
+endif
+	${FC} ${FCOPTS} ${FPOPTS} -qoverride-limits ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+endif
+endif
+endif
+endif
+
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
