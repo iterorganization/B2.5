@@ -969,6 +969,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call print_openmp_info()
        call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
        if (switch%Zhdanov_closure.eq.1) then
 *   ..allocate more Zhdanov variables here instead that inside routines
@@ -1556,7 +1557,17 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
@@ -1587,7 +1598,17 @@ csw 09oct2012
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
         NREAC=7
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_SET_PARMMOD(1)
