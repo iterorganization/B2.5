@@ -1684,8 +1684,8 @@ cxpb size is changed in b2mod_dimensions
                 t0 = dv%fht(fbReg(iFc),0)+dv%fht(fbReg(iFc),1)
                 t0 = t1*t0/geo%fcS(fbReg(iFc))
                 if (switch%use_eirene.ne.0) then
-                  t0 = t0 + ewldt_res(b2_fnmti(iFc))
-     .                    - ewldrp_res(b2_fnmti(iFc))
+                  t0 = t0 + ewldt_res(b2_fnmti(fbReg(iFc)))
+     .                    - ewldrp_res(b2_fnmti(fbReg(iFc)))
                 endif
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
