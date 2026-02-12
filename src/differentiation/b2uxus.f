@@ -1,9 +1,9 @@
 
-      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name) 
+      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name, style) 
       use b2mod_types
       use b2us_map
       implicit none
-      integer nCv, itcnt, iCv
+      integer nCv, itcnt, iCv, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv), resfun(nCv)

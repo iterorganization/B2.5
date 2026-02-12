@@ -3,14 +3,14 @@
 
       subroutine b2uxus_dv_dv(nCv, mpg, aa, aad0, aad, aadd, itcnt,
      .  resfun, resfund0, resfund, resfundd, corfun, corfund0, corfund,
-     .  corfundd, name, nbdirs, nbdirs0)
+     .  corfundd, name, style, nbdirs, nbdirs0)
       use b2mod_types
       use b2us_map_diffv_diffv
       use b2mod_subsys
       use b2mod_diffsizes
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt, nbdirs, nbdirs0
+      integer nCv, itcnt, nbdirs, nbdirs0, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv), resfun(nCv)
@@ -59,7 +59,7 @@
      
 *     First solve derivative of A*x=b
       call b2uxus_dv (nCv, mpg, aa, aad0, itcnt, resfun, resfund0,
-     &  corfun, corfund0, name, nbdirs0)
+     &  corfun, corfund0, name, style, nbdirs0)
 
       do nd = 1, nbdirs
 *     Now evaluate yy = bd - Ad*x and yyd = bdd - Add*x - Ad*xd0
@@ -82,7 +82,7 @@
         end do
 *       And finally solve for derivative of A*xd=yy
         call b2uxus_dv (nCv, mpg, aa, aad0, itcnt, yy, yyd,
-     &    corfund(nd, :), corfundd(:, nd, :), name, nbdirs0)
+     &    corfund(nd, :), corfundd(:, nd, :), name, style, nbdirs0)
       end do
 
       call subend ()

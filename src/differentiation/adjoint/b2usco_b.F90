@@ -264,7 +264,7 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !
 !   ..solve the correction equation
 !srv 18.05.02
-  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name, switch%b2uxus_style)
 !$AD II-LOOP
 !   ..redo the scaling
   DO icv=1,ncv
@@ -590,7 +590,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
 !
 !   ..solve the correction equation
 !srv 18.05.02
-  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name, switch%b2uxus_style)
 !$BWD-OF II-LOOP 
   DO icv=1,ncv
     result1 = RSCAL(pb(icv))
@@ -600,7 +600,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
   END DO
   aab = 0.0_R8
   CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, rescb, rescbb, corpb, corpbb, &
-&         name)
+&         name, switch%b2uxus_style)
   CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
   DO icv=1,ncv
