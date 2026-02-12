@@ -2,14 +2,14 @@
 *.specification
 
       subroutine b2uxus_dv(nCv, mpg, aa, aad, itcnt, resfun,  
-     .  resfund, corfun, corfund, name, nbdirs)
+     .  resfund, corfun, corfund, name, style, nbdirs)
       use b2mod_types
       use b2us_map_diffv_diffv
       use b2mod_subsys
       use b2mod_diffsizes
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt, nbdirs
+      integer nCv, itcnt, nbdirs, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv), resfun(nCv)
@@ -59,9 +59,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2uxus_d')
-     
+
 *     First solve the original system of equation
-      call b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name)
+      call b2uxus(nCv, mpg, aa, itcnt, resfun, corfun, name, style)
 
       do nd=1,nbdirs
 *     Now solve the differentiated form Ad*x + A*xd = bd for xd
@@ -74,7 +74,7 @@
      .     :mpg%cvNvP(iCv,1)+mpg%cvNvP(iCv,2)-1)))
         end do
 
-        call b2uxus (nCv, mpg, aa, itcnt, yy, corfund(nd,:), name)
+        call b2uxus(nCv, mpg, aa, itcnt, yy, corfund(nd,:), name, style)
       end do
 
       call subend ()

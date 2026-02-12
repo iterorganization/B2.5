@@ -254,7 +254,7 @@ SUBROUTINE B2USCO_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
 !
 !   ..solve the correction equation
 !srv 18.05.02
-  CALL b2uxus(ncv, mpg, aa, itcnt, rescb, corpb, name)
+  CALL b2uxus(ncv, mpg, aa, itcnt, rescb, corpb, name, switch%b2uxus_style)
 !$AD II-LOOP
 !   ..redo the scaling
   DO icv=1,ncv
@@ -669,7 +669,7 @@ SUBROUTINE B2USCO_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !   ..solve the correction equation
 !srv 18.05.02
   CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, rescb, rescbd, corpb, &
-&                 corpbd, name, nbdirs)
+&                 corpbd, name, switch%b2uxus_style, nbdirs)
 !   ..redo the scaling
   DO icv=1,ncv
     CALL RSCAL_DV(pb(icv), pbd(:, icv), result1, result1d, nbdirs)
@@ -1370,7 +1370,7 @@ SUBROUTINE B2USCO_DV_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !srv 18.05.02
   CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, rescb, rescbd0&
 &             , rescbd, rescbdd, corpb, corpbd0, corpbd, corpbdd, name, &
-&             nbdirs, nbdirs0)
+&             switch%b2uxus_style, nbdirs, nbdirs0)
 !   ..redo the scaling
   DO icv=1,ncv
     CALL RSCAL_DV_DV(pb(icv), pbd0(:, icv), pbd(:, icv), pbdd(:, :, icv)&

@@ -1,18 +1,24 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name)    !sv 13.10.06 {
+      subroutine b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name,      !sv 13.10.06 {
+     .             style)
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map_diffv_diffv
       use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
+      use b2mod_pardiso
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt
+      integer nCv, itcnt, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   aa(13*nCv), resfun(nCv)
-      character*(*) name                                              !sv 18.05.02
+     *   aa(13*nCv)
+      real(kind=R8), intent(inout) :: resfun(nCv)
+      character*(*) name                                                 !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(nCv)
@@ -23,7 +29,7 @@
 *
 *  1. purpose
 *
-*     B2UXUS solves a system of equations on an unstructured mesh. 
+*     B2UXUS solves a system of equations on an unstructured mesh.
 *     This routine is an interface to an iterative or a direct solver;
 *     the choice depends upon an internal parameter.
 *
@@ -36,7 +42,8 @@
 *     routine is an interface to one of two solvers. If the internal
 *     parameter "style" has the value 0 then a solver based on Stone's
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
-*     solver is used.
+*     solver is used. if style.eq.2 then MA28copy is used. if style.eq.3
+*     then PARDISO (Intel MKL) is used. 
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -62,7 +69,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, cpu
+      integer ncall, cpu, flag
       real (kind=R8) ::
      *   cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
@@ -73,10 +80,14 @@
 *   ..procedures
       intrinsic cpu_time
       external xertst, ipgeti, ipgetr,
-     &  slv5pt, iluter, xerrab
+     &  xerrab, ilutern_us
 *   ..initialization
-      save ncall, style, cpu
-      data ncall/0/, style/2/, cpu/0/
+      save ncall, cpu
+      data ncall/0/, cpu/0/
+
+#ifdef _OPENMP
+!$omp threadprivate(ind, iasave, jasave, nz, ncall, cpu)
+#endif
 
 *-----------------------------------------------------------------------
 *.computation
@@ -86,11 +97,10 @@
       call subini ('b2uxus')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2ux9p_style', style)
-       call xertst (0.le.style.and.style.lt.3,
+       call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
-       call ipgeti ('b2ux9p_cpu', cpu)
-       if(style.eq.2) then
+       call ipgeti ('b2uxus_cpu', cpu)
+       if(style.eq.2.or.style.eq.3) then
          mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
@@ -118,7 +128,7 @@
         call xerrab ('b2uxus: Style 0 is not implemented')
       else if (style.eq.1) then
         call xerrab ('b2uxus: Style 1 is not implemented')
-      else if (style.eq.2) then
+      else if (style.eq.2.or.style.eq.3) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
       endif
@@ -136,13 +146,21 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 ind, iasave, jasave, name)       
+     *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-*    ..use ma28
-       call cpu_time(cpu_start)
+         !! ma28 solver, default
        call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
+      else if (style.eq.3) then
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     *                  ind, iasave, jasave, name)
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+              !! experiment, PARDISO solver 
+       call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
@@ -162,6 +180,7 @@
      *                      ind, iasave, jasave, name)
       use b2mod_types
       use b2us_map_diffv_diffv
+      use b2mod_openmp
       implicit none
 *  ..input
       integer nCv, nnz
@@ -197,6 +216,10 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
+
+#ifdef _OPENMP
+!$omp threadprivate(lfirst, ncall, kwrite_fmt, kwrite_bnr)
+#endif
 
       if(ncall.eq.0) then
         call ipgeti ('storage_us_kwrite_fmt', kwrite_fmt)
@@ -255,6 +278,19 @@
       endif
 
       if(kwrite_bnr.eq.ncall) then
+!!FR The b2_matrix file will not write out correctly if code runs in parallel
+!!FR thus ensure that the code will not be executed if accessed in parallel region.
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'st_us_matrix_binary_ file ',
+     2    'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
 !        write(*,*) 'Opening 76'
 !        open(76,file=
 !     &   'st_9_rhs_binary_'//trim(name)//'.dat',form='unformatted')
@@ -263,16 +299,27 @@
 !          write(76) r1(i)
 !         enddo
 !        close(76)
-        write(*,*) 'Opening 77'
-        open(77,file=
+          write(*,*) 'Opening 77'
+          open(77,file=
      &   'st_us_matrix_binary_'//trim(name)//'.dat',form='unformatted') !srv 11.03.13
-        write(77) nCv, k
-        do i=1,k
-          write(77) ia(i), ja(i), a(i)
-        enddo
-        close(77)
+          write(77) nCv, k
+          do i=1,k
+            write(77) ia(i), ja(i), a(i)
+          enddo
+          close(77)
+        endif
       endif
       if(kwrite_fmt.eq.ncall) then
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'st_us_matrix_ file will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
 !        write(*,*) 'Opening 76'
 !        open(76,file='st_9_rhs_'//trim(name)//'.dat')
 !         write(76,*) n
@@ -280,15 +327,15 @@
 !          write(76,*) r1(i)
 !         enddo
 !        close(76)
-        open(77,file='st_us_matrix_'//trim(name)//'.dat')
-        write(77,*) nCv, k
-        do i=1,k
-          write(77,*) ia(i), ja(i), a(i)
-        enddo
-        close(77)
+          open(77,file='st_us_matrix_'//trim(name)//'.dat')
+          write(77,*) nCv, k
+          do i=1,k
+            write(77,*) ia(i), ja(i), a(i)
+          enddo
+          close(77)
+        endif
       endif
 
       ncall = ncall + 1
       return
-
       end subroutine storage_us                                     !sv 22.11.06

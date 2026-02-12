@@ -10,7 +10,7 @@
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
-      use b2mod_PARDISO
+      use b2mod_pardiso
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt, style
