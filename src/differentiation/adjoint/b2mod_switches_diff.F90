@@ -632,6 +632,7 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2optim_reset_drift_iter
       REAL(kind=r8) :: b2optim_reset_drift
       INTEGER :: b2optim_reset_param_iter
+      INTEGER :: b2uxus_style
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFF
       REAL(kind=r8) :: mass_multiplicator
@@ -1519,6 +1520,9 @@ CONTAINS
     s%b2optim_reset_drift = 0.4_R8
     s%b2optim_reset_param_iter = 1
 !
+! Matrix solver
+    s%b2uxus_style = 2
+!
     RETURN
   END SUBROUTINE SET_DEFAULTS_SWITCHES
 
@@ -2182,6 +2186,9 @@ CONTAINS
     CALL IPGETI('b2optim_reset_drift_iter', s%b2optim_reset_drift_iter)
     CALL IPGETR('b2optim_reset_drift', s%b2optim_reset_drift)
     CALL IPGETI('b2optim_reset_param_iter', s%b2optim_reset_param_iter)
+!
+! Matrix solver
+    CALL IPGETI('b2uxus_style', s%b2uxus_style)
 !
     RETURN
   END SUBROUTINE READ_SWITCHES

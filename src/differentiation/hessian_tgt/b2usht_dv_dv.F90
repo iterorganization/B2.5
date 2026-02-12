@@ -857,7 +857,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 !srv 18.05.02
     CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, resht, &
 &               reshtd0, reshtd, reshtdd, cortt, corttd0, corttd, &
-&               corttdd, 'b2usht_total', nbdirs, nbdirs0)
+&               corttdd, 'b2usht_total', switch%b2uxus_style, nbdirs, nbdirs0)
   ELSE
     con0d = 0.d0
     flo0dd = 0.D0
@@ -1363,7 +1363,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 !srv 18.05.02
     CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, reshe, &
 &               reshed0, reshed, reshedd, corte, corted0, corted, &
-&               cortedd, 'b2usht_Te', nbdirs, nbdirs0)
+&               cortedd, 'b2usht_Te', switch%b2uxus_style, nbdirs, nbdirs0)
   ELSE
     result1dd = 0.D0
   END IF
@@ -1830,7 +1830,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 !   ..solve the correction equation
     CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, reshi, &
 &               reshid0, reshid, reshidd, corti, cortid0, cortid, &
-&               cortidd, 'b2usht_Ti', nbdirs, nbdirs0)
+&               cortidd, 'b2usht_Ti', switch%b2uxus_style, nbdirs, nbdirs0)
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
   END IF
 !
@@ -2232,7 +2232,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 !   ..solve the correction equation
       CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, reshn, &
 &                 reshnd0, reshnd, reshndd, cortn, cortnd0, cortnd, &
-&                 cortndd, 'b2usht_Tn', nbdirs, nbdirs0)
+&                 cortndd, 'b2usht_Tn', switch%b2uxus_style, nbdirs, nbdirs0)
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
     END IF
   END IF
@@ -2638,7 +2638,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
     corktd0 = 0.D0
     CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, reskt, &
 &               resktd0, resktd, resktdd, corkt, corktd0, corktd, &
-&               corktdd, 'b2usht_kt', nbdirs, nbdirs0)
+&               corktdd, 'b2usht_kt', switch%b2uxus_style, nbdirs, nbdirs0)
   ELSE
     DO nd0=1,nbdirs0
       corktdd(nd0, :, :) = 0.D0
@@ -3039,7 +3039,7 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
     corztd0 = 0.D0
     CALL B2UXUS_DV_DV(ncv, mpg, aa, aad0, aad, aadd, itcnt, reszt, &
 &               resztd0, resztd, resztdd, corzt, corztd0, corztd, &
-&               corztdd, 'b2usht_zt', nbdirs, nbdirs0)
+&               corztdd, 'b2usht_zt', switch%b2uxus_style, nbdirs, nbdirs0)
   ELSE
     corztd = 0.d0
     corztd0 = 0.D0
@@ -3577,7 +3577,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !   ..solve the correction equation
 !srv 18.05.02
     CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, resht, reshtd, cortt&
-&                   , corttd, 'b2usht_total', nbdirs)
+&                   , corttd, 'b2usht_total', switch%b2uxus_style, nbdirs)
   ELSE
     con0d = 0.d0
   END IF
@@ -3843,7 +3843,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !   ..solve the correction equation
 !srv 18.05.02
     CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, reshe, reshed, corte&
-&                   , corted, 'b2usht_Te', nbdirs)
+&                   , corted, 'b2usht_Te', switch%b2uxus_style, nbdirs)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -4094,7 +4094,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !
 !   ..solve the correction equation
     CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, reshi, reshid, corti&
-&                   , cortid, 'b2usht_Ti', nbdirs)
+&                   , cortid, 'b2usht_Ti', switch%b2uxus_style, nbdirs)
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
   END IF
 !
@@ -4313,7 +4313,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !
 !   ..solve the correction equation
       CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, reshn, reshnd, &
-&                     cortn, cortnd, 'b2usht_Tn', nbdirs)
+&                     cortn, cortnd, 'b2usht_Tn', switch%b2uxus_style, nbdirs)
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
     END IF
   END IF
@@ -4531,7 +4531,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !   ..solve the correction equation
     corktd = 0.d0
     CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, reskt, resktd, corkt&
-&                   , corktd, 'b2usht_kt', nbdirs)
+&                   , corktd, 'b2usht_kt', switch%b2uxus_style, nbdirs)
   ELSE
     corktd = 0.d0
   END IF
@@ -4745,7 +4745,7 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 !   ..solve the correction equation
     corztd = 0.d0
     CALL b2uxus_dv(ncv, mpg, aa, aad, itcnt, reszt, resztd, corzt&
-&                   , corztd, 'b2usht_zt', nbdirs)
+&                   , corztd, 'b2usht_zt', switch%b2uxus_style, nbdirs)
   ELSE
     corztd = 0.d0
   END IF
@@ -5122,7 +5122,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
 !   ..solve the correction equation
 !srv 18.05.02
     CALL b2uxus(ncv, mpg, aa, itcnt, resht, cortt, 'b2usht_total'&
-&               )
+&               , switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -5286,7 +5286,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
 &                                                  'b2usht_aa_te')
 !   ..solve the correction equation
 !srv 18.05.02
-    CALL b2uxus(ncv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')
+    CALL b2uxus(ncv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -5444,7 +5444,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
 &                                                  'b2usht_aa_ti')
 !
 !   ..solve the correction equation
-    CALL b2uxus(ncv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+    CALL b2uxus(ncv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti', switch%b2uxus_style)
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
   END IF
 !
@@ -5583,7 +5583,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
       END DO
 !
 !   ..solve the correction equation
-      CALL b2uxus(ncv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
+      CALL b2uxus(ncv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn', switch%b2uxus_style)
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
     END IF
   END IF
@@ -5718,7 +5718,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
     END DO
 !
 !   ..solve the correction equation
-    CALL b2uxus(ncv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
+    CALL b2uxus(ncv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -5850,7 +5850,7 @@ SUBROUTINE B2USHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
     END DO
 !
 !   ..solve the correction equation
-    CALL b2uxus(ncv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
+    CALL b2uxus(ncv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
