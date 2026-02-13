@@ -59,7 +59,7 @@ c
       save width
 
 *  -- PROCEDURES --
-      character*32 :: get_Eir_hash
+      character*40 :: get_Eir_hash
       external ipgeti, ipgetr, xertst, get_Eir_hash
 #endif
 
@@ -163,7 +163,7 @@ C
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
-      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_Eir_hash()
+      WRITE(47,'(I6,2X,i8,2x,a40)') ntrii,jvftnew,get_Eir_hash()
       READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')
@@ -532,7 +532,7 @@ C
         write(nwrite,'(a)') fort_lc//'46_aver.2'
         rewind(48)
         read (48,*) jvft46
-        write(49,'(2x,i8,2x,a32)') jvftnew,get_Eir_hash()
+        write(49,'(2x,i8,2x,a40)') jvftnew,get_Eir_hash()
         read (48,'(e16.8)') aver_frac46
         write(49,'(e16.8)') aver_frac46
         read (46,*) idummy

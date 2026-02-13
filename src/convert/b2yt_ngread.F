@@ -115,7 +115,7 @@ c
 
 *  -- PROCEDURES --
       integer convert_eirdiag, conformal_convert, lines_for_format
-      character*32 :: get_Eir_hash
+      character*40 :: get_Eir_hash
       logical streql
       EXTERNAL GFSUB2
       external ipgeti, streql, get_Eir_hash
@@ -167,7 +167,7 @@ C
       else
         jvftnew = max(jvft44_in,20240627)
       endif
-      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a40)') nx1,ny1,jvftnew,get_Eir_hash()
       if(jvft44_in.lt.20240311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
@@ -1942,7 +1942,7 @@ cank
         write(nwrite,'(a)') fort_lc//'44_aver.2'
         rewind(48)
         READ (48,'(I4,2X,I4,2x,i8)') nnx,nny,jvft44
-        write(49,'(I4,2X,I4,2x,i8,2x,a32)')
+        write(49,'(I4,2X,I4,2x,i8,2x,a40)')
      .                               nx1,ny1,jvftnew,get_Eir_hash()
         read (48,'(e16.8)') aver_frac
         write(49,'(e16.8)') aver_frac
