@@ -10820,8 +10820,8 @@ contains
 #ifdef B25_EIRENE
     integer p
     character*8 eirene_version
-    character*32 Eirene_git_version
-    character*32 get_Eir_hash
+    character*40 Eirene_git_version
+    character*40 get_Eir_hash
 #endif
 #ifdef AMNS
     type (amns_handle_type) :: amns
