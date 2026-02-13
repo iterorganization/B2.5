@@ -122,7 +122,7 @@ c
 *  -- PROCEDURES --
 #ifdef WG_TODO
       integer convert_eirdiag, conformal_convert, lines_for_format
-      character*32 :: get_Eir_hash
+      character*40 :: get_Eir_hash
       logical streql
       external streql, get_Eir_hash
 #endif
@@ -176,7 +176,7 @@ C
       else
         jvftnew = max(jvft44_in,20260128)
       endif
-      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a40)') nx1,ny1,jvftnew,get_Eir_hash()
       if(jvft44_in.lt.20240311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
