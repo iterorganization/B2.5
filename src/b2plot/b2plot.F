@@ -534,22 +534,24 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      &         'faulty b2mndr_ismain')
       call xertst (.not.is_neutral(ismain),
      &         'ismain cannot refer to a neutral species')
-       found = .false.
-       is = ismain
-       do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
-     &                      .and. nint(am(is)).eq.nint(am(ismain))) then
-           ismain0 = is
-           found = .true.
-         end if
-         is = is - 1
-       end do
-       if (.not.found.and.ismain.ne.1) ismain0 = ismain
-       call ipgeti ('b2mwti_ismain0', ismain0)
-       call xertst (0.le.ismain0.and.ismain0.lt.ns,
-     .   'invalid main neutral species index ismain0')
-       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
-     .   'invalid main neutral species index ismain0')
+      state%pl%ismain = ismain
+      found = .false.
+      is = ismain
+      do while (is.ge.0 .and. .not.found)
+        if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                     .and. nint(am(is)).eq.nint(am(ismain))) then
+          ismain0 = is
+          found = .true.
+        end if
+        is = is - 1
+      end do
+      if (.not.found.and.ismain.ne.1) ismain0 = ismain
+      call ipgeti ('b2mwti_ismain0', ismain0)
+      call xertst (0.le.ismain0.and.ismain0.lt.ns,
+     .  'invalid main neutral species index ismain0')
+      call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
+     .  'invalid main neutral species index ismain0')
+      state%pl%ismain0 = ismain0
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 
