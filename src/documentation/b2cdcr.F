@@ -520,6 +520,9 @@
 *
 *     B2UPPO corrects the electric potential po.
 *
+*     B2URBP checks the convergence of the electric potential at
+*     the targets using relative (EPSR) and/or absolute (EPSA) criteria.
+*
 *     B2URMO computes the residual of the parallel momentum balance
 *     equation for one atomic species.
 *

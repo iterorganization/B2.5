@@ -814,6 +814,38 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2news_m_iter_pot</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Number of optional supplementary potential equation solver iterations invoked by b2news_m in dynamic (time-dependent) mode in order to improve convergence of the electric potential at the targets. .
+				</description>
+			</switch>
+			<switch>
+				<name>b2urbp_epsr</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+				<description>
+					Relative criterion for convergence of electric potential at the targets.
+				</description>
+			</switch>
+			<switch>
+				<name>b2urbp_epsa</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+				<description>
+					Absolute criterion for convergence of electric potential at the targets.
+				</description>
+			</switch>
+			<switch>
+				<name>b2urbp_iout</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If non-zero, then four files are produced in the output/ directory, namely convergence_of_iterations_for_po.dat, norms_of_respo_during_iterations.dat, res_at_inner_plate_bcpot=11.dat, and res_at_outer_plate_bcpot=11.dat .
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_cpu</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -3490,7 +3522,7 @@
 			</switchgroup>
 			<switch>
 				<name>eirene_format</name>
-				<default>iter</default>
+				<default>msv</default>
 				<type>string</type>
 				<description>
 					This switch is to be provided within b2yt.dat to indicate to the b2yt converter the format of the original Eirene input.dat file to be modified. The accepted values are (case-insensitive):

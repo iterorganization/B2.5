@@ -370,7 +370,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call, 'all')     !xpb !srv 19.04.25
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
       elseif(style.eq.1) then

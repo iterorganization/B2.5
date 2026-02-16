@@ -36,7 +36,7 @@
      *   dtim, rxf
 *   ..output arguments                                                    !xpb
       integer ierr
-      logical wrong_flow, ramp_call
+      logical wrong_flow, ramp_call, main_call                            !srv 19.04.25
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -80,14 +80,17 @@
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
-     &                 iout_b2nppo = 0, iout_b2wdat = 0
+     &                 iout_b2nppo = 0, iout_b2wdat = 0,
+     &                 iout_b2urbp = 0                                   !srv 19.04.25
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
       integer, save :: get_residuals = 0                                 !srv 22.05.18
       integer, save :: visper_all_ions = 1
+      integer, save :: indnum = 0                                        !srv 19.04.25
       real (kind=R8) ::
      *  potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
+      integer :: ipot                                                    !srv 19.04.25
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
       real (kind=R8), save :: na_min = 1.0e4_R8, na_new = 1.0e14_R8
@@ -99,7 +102,7 @@
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  zero(-1:nx,-1:ny),                                               !lk 31.01.08 {
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fne_53(-1:nx,-1:ny,0:1)
+     &  fne_53(-1:nx,-1:ny,0:1), rs(1:6)                                 !srv 19.04.25
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical first_pass_5, first_pass_7, first_pass_9, first_pass_11
       logical inverted_ua, new_matrix
@@ -126,6 +129,9 @@
       integer, save :: n_avg_repeat = 1
       integer, save :: use_eirene = 0
       integer, save :: ramp_slow = 0
+      integer, save :: iter_pot = 1                                     !srv 19.04.25
+      integer, save :: ntim_step_out = 1                                !srv 19.04.25
+      logical :: conv                                                   !srv 19.04.25
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -185,6 +191,7 @@
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                          !srv 16.07.10 }
        call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
+       call ipgeti ('b2urbp_iout', iout_b2urbp)                          !srv 19.04.25
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
        call ipgeti ('b2news_guard_flows', guard_flows)                   !xpb
        call ipgeti ('b2news_area_fix', area_fix)                         !srv 09.03.09
@@ -291,6 +298,14 @@ csw 26feb2014 some extra variables
        call ipgeti ('b2sigp_style', ue_style)
        call ipgeti ('get_residuals', get_residuals)                      !srv 22.05.18
        call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
+       call ipgeti ('b2news_m_iter_pot', iter_pot)                       !srv 19.04.25
+       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)               !srv 19.04.25 {
+       if(iout_b2urbp.ne.0) then
+         open(700,file='output/norms_of_respo_during_iterations.dat')
+!         write(700,'(4x,a,4x,a,6(4x,a,4x))') 'ncall','niter',
+!     &       'nres1','nres2','nres3','nres4','nres5','nres6'
+         open(701,file='output/convergence_of_iterations_for_po.dat')
+       endif                                                             !srv 19.04.25
       endif                                                              !srv 02.07.08
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -921,7 +936,11 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &    fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,    !srv 08.09.21
      &    fchin_a, fch, fch_p, fchdia, fchin,                            !IYS 17.10.2023
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
-        if (solving(3)) then
+
+        conv = .false.
+        do ipot=1,iter_pot                                               !srv 19.04.25
+         if(conv) cycle
+         if (solving(3)) then
 *   ..solve the potential equation
           if (vis_per.eq.0.0_R8) then                                    !srv 22.12.19 06.07.00
             new_matrix = .false.
@@ -938,13 +957,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &       solvepo, ncall, rxf2, ne, te, conc, avisper_a, bvisper_a,
      &       cvisper_a, sch, po, fch, respo, corpo, ier0)
           endif                                                          !srv 06.07.00
-          t0=0.0_R8
-crfs      do iy = 0, ny-1
-          do iy = -1, ny
-crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
-            t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
-          enddo
-          write(*,*) 'respo before solving',t0
+          if(iout_b2urbp.ge.1.and.mod(ncall,ntim_step_out).eq.0) then    !srv 19.04.25 {
+            call norm_res(nx, ny, respo, rs, 'before solving')
+          endif                                                          !srv 19.04.25 }
           call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
           call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
@@ -958,25 +973,70 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
      &      fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,  !srv 08.09.21
      &      fchin_a, fch, fch_p, fchdia, fchin,                          !IYS 17.10.2023
      &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
+*   ..recompute sch only
+          wrong_flow = .false.                                           !srv 19.04.25 {
+          main_call  = .false.
+          call b2stbc (nx, ny, ns, ismain, ismain0,
+     &      BoRiS, facdrift, fac_ExB,                                    !xpb
+     &      na, ua, uadia, vedia, vadia, veecrb, vaecrb,
+     .      te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna,
+     1      fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &      fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,    !srv 16.02.12
+     &      fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,     !srv 25.02.00 13.10.06
+     &      fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,         !srv 21.10.02
+     &      fchinert, fchanml,
+     2      cdna, chce, chve, chci, chvi, calf,                          !xpb
+     &      sna, smo, she, shi, sch, sne, wrong_flow, main_call, 'pot')  !srv 19.04.25
+          if(iout_b2urbp .eq. 2) then
+            call my_out(70,nx,ny,sch(-1,-1,0),'b2news_m_sch0')
+            call my_out(70,nx,ny,sch(-1,-1,1),'b2news_m_sch1')
+            call my_out(70,nx,ny,sch(-1,-1,2),'b2news_m_sch2')
+            call my_out(70,nx,ny,sch(-1,-1,3),'b2news_m_sch3')
+            wrk0=sch(:,:,0)+sch(:,:,1)*po+
+     &           sch(:,:,2)*ne+sch(:,:,3)*po*ne(:,:)
+            call my_out(70,nx,ny,wrk0,'b2news_m_sch')
+            call my_out(70,nx,ny,fch(-1,-1,0),'b2news_m_fchx')
+            call my_out(70,nx,ny,fch(-1,-1,1),'b2news_m_fchy')
+          endif
 *   ..compute new residual following the tradition
           call b2ursd (nx, ny, ne, po, sch, fch, wrk0)
-          t0=0.0_R8
-crfs      do iy = 0, ny-1
-          do iy = -1, ny
-crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
-            t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
-          enddo
-          write(*,*) 'respo after solving',t0
-        else
+          indnum = indnum + 1                                            !srv 19.04.25 {
+          if(iout_b2urbp.ge.1.and.mod(ncall,ntim_step_out).eq.0) then
+            call norm_res(nx, ny, wrk0, rs(4), 'after solving ')
+            write(700,'(3i9,6es13.4)') indnum, ncall, ipot, rs
+          endif                                                          !srv 19.04.25 }
+         else
           if(get_residuals.eq.1)
-     &       call b2ursd (nx, ny, ne, po, sch, fch, respo)
-        endif
-      endif           ! if pot_eq                                        !srv 13.07.05
+     &     call b2ursd (nx, ny, ne, po, sch, fch, respo)
+         endif
+         if(iout.ne.0) then                                              !srv 12.07.05 {
+           if(ipot.eq.1) call my_out(70,nx,ny,respo,'b2news_m_respo')
+           call my_out(70,nx,ny,po,'b2news_m_po')
+           if(ipot.eq.iter_pot) call my_out(70,nx,ny,wrk0,
+     &                                      'b2news_m_respo_after')
+         endif                                                           !srv 12.07.05 }
 
-      if(iout .ne. 0) then                                               !srv 12.07.05 {
-        call my_out(70,nx,ny,respo,'b2news_m_respo')
-        call my_out(70,nx,ny,po,'b2news_m_po')
-      endif                                                              !srv 12.07.05 }
+         call b2urbp(nx, ny, ns, vol, rza, pbs, po, te, ti, ne, na,
+     &               fch, sch, .true., conv)
+         if(conv) then
+           if(iout_b2urbp.ne.0) then
+             write(701,"(a,i5,a)") ' Convergence achieved in ',ipot,
+     &                             ' iterations'
+           endif
+           write(*,"(a,i5,a)") ' Convergence achieved in ',ipot,
+     &                         ' iterations'
+         endif                                                           !srv 19.04.25 }
+
+        enddo          ! ipot                                            !srv 19.04.25
+
+        if(iout_b2urbp.ne.0 .and. .not.conv) then
+          write(701,'(a,i5,a)') ' Convergence not achieved within ',
+     &                iter_pot, ' iterations'
+        endif
+        if (.not.conv)
+     &   write(*,'(a,i5,a)') ' Convergence not achieved within ',
+     &                iter_pot,' iterations'
+      endif           ! if pot_eq                                        !srv 13.07.05
 
       if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -1359,6 +1419,40 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       call subend ()
       return
 
+      contains
+
+      subroutine norm_res(nx, ny, respo, rs, text)                       !srv 19.04.25 {
+      implicit none
+      integer nx, ny
+      real (kind=R8) :: respo(-1:nx,-1:ny), rs(3)
+      character(*) :: text
+*     For diagnostic purposes, norm_res calculates the sum
+*     of the residual moduli with and without boundaries.
+*     It is used if the b2urbp_iout key is nonzero.
+
+      t0=0.0_R8
+      do iy = -1, ny
+        t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
+      enddo
+      write(*,'(a,i3,a,e21.13)') ' ipot =',ipot,
+     &  ' respo with boundaries '//text,t0
+      rs(1)=t0  ! respo with boundaries
+      t0=0.0_R8
+      do iy = 0, ny-1
+        t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
+      enddo
+      rs(2)=t0 ! respo without N and S boundaries
+      t0=0.0_R8
+      do iy = -1, ny
+        do ix = -1, nx
+          if (resignore(ix,iy,1).eq.0) cycle
+          t0 = t0 + abs(respo(ix,iy))
+        enddo
+      enddo
+      rs(3)=t0 !  respo without boundaries
+
+      return
+      end subroutine norm_res                                            !srv 19.04.25 }
 *-----------------------------------------------------------------------
 *.end b2news_m
 
