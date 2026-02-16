@@ -976,7 +976,7 @@
         call b2trnu (ns, nnucl_tral, zmaxmax)
         call xertst (nnucl_tral.eq.nspecies,
      &   'Error while building isonuclear sequences!')
-        call alloc_b2mod_mrel(nspecies,zmaxmax,ns)
+        call alloc_b2mod_mrel(nspecies, zmaxmax, ns)
         call alloc_b2mod_zhco(nspecies, nCv)
         call alloc_b2mod_zhfrtf(nCv, ns)
         if (switch%zh_dist_fun.eq.1) then
@@ -1010,6 +1010,7 @@
      .  'invalid main plasma species index ismain')
        call xertst (.not.is_neutral(ismain),
      .  'invalid main plasma species ismain; must not be neutral')
+       state%pl%ismain = ismain
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
@@ -1026,6 +1027,7 @@
      .   'invalid main neutral species index ismain0')
        call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      .   'invalid main neutral species index ismain0')
+       state%pl%ismain0 = ismain0
        call ipgetr ('b2mndr_min_areshe', min_areshe)                     !jwk
        call xertst (min_areshe.ge.0.0_R8,                                !jwk
      &      'faulty internal parameter min_areshe')                      !jwk

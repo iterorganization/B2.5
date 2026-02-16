@@ -3897,7 +3897,7 @@
 			</switchgroup>
 			<switch>
 				<name>eirene_format</name>
-				<default>iter</default>
+				<default>msv</default>
 				<type>string</type>
 				<description>
 					This switch is to be provided within b2yt.dat to indicate to the b2yt converter the format of the original Eirene input.dat file to be modified. The accepted values are (case-insensitive):
@@ -3906,6 +3906,7 @@
 					'facelift' for input files from SOLPS5.1 runs
 					'juelich' for input files from Juelich Eirene versions (2008 and younger)
 					'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
+					'msv' for input files from the Eirene Milestone Version
 				</description>
 			</switch>
 			<switch>
