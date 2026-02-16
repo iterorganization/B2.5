@@ -517,7 +517,7 @@ c 2002-09-11: logic revised
       character*8 varname, spcname
       character*2 stratum_number
       character*256 adasfile
-      data eirene_format / 'iter' /
+      data eirene_format / 'msv' /
       character*8, allocatable ::
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
       character*8, allocatable :: TEXTP1(:)
