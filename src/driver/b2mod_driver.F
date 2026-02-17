@@ -969,13 +969,14 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call print_openmp_info()
        call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
        if (switch%Zhdanov_closure.eq.1) then
 *   ..allocate more Zhdanov variables here instead that inside routines
         call b2trnu (ns, nnucl_tral, zmaxmax)
         call xertst (nnucl_tral.eq.nspecies,
      &   'Error while building isonuclear sequences!')
-        call alloc_b2mod_mrel(nspecies,zmaxmax,ns)
+        call alloc_b2mod_mrel(nspecies, zmaxmax, ns)
         call alloc_b2mod_zhco(nspecies, nCv)
         call alloc_b2mod_zhfrtf(nCv, ns)
         if (switch%zh_dist_fun.eq.1) then
@@ -1009,6 +1010,7 @@
      .  'invalid main plasma species index ismain')
        call xertst (.not.is_neutral(ismain),
      .  'invalid main plasma species ismain; must not be neutral')
+       state%pl%ismain = ismain
        found = .false.
        is = ismain
        do while (is.ge.0 .and. .not.found)
@@ -1025,6 +1027,7 @@
      .   'invalid main neutral species index ismain0')
        call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      .   'invalid main neutral species index ismain0')
+       state%pl%ismain0 = ismain0
        call ipgetr ('b2mndr_min_areshe', min_areshe)                     !jwk
        call xertst (min_areshe.ge.0.0_R8,                                !jwk
      &      'faulty internal parameter min_areshe')                      !jwk
@@ -1556,7 +1559,17 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6
+#ifdef USE_OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
@@ -1587,7 +1600,17 @@ csw 09oct2012
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
         NREAC=7
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP PARALLEL
+#endif
+#endif
         IUNOUT=6
+#ifdef _OPENMP
+#ifndef USE_EXT_OPENMP
+!$OMP END PARALLEL
+#endif
+#endif
         CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_SET_PARMMOD(1)

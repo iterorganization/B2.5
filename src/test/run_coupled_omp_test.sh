@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run B2 OpenMP test using 1 and [max_threads] threads, compare the results.
+# Script to run B2.5-Eirene OpenMP test using 1 and [max_threads] threads, compare the results.
 #
 # Usage:
 # run_omp_test benchmark rundir [steps] [max_threads]
@@ -8,7 +8,7 @@
 # benchmark -- the name of a benchmark like AUG_16151_D+C+He, ITER_535_D+He+Ar, etc.
 # rundir    -- is the subdirectory specific for the test case, a few examples:
 #
-#   ./run_omp_test.sh AUG_16151_D+C+He 16151_1.6MW_2.0e19_D=0.4_chi=1.6_standalone
+#   ./run_omp_test.sh AUG_16151_D+C+He run_coupled_OpenMP_for_CI
 #   ./run_omp_test.sh ITER_535_D+He+Ar standalone
 #   ./run_omp_test.sh ITER_2171_D+He+Be+Ne standalone
 #
@@ -89,12 +89,40 @@ function run_test {
   if [ -s b2.wall_save.parameters.i ]; then
     mv b2.wall_save.parameters.i b2.wall_save.parameters
   fi
+  if [ -s b2time.nc.i ]; then
+    mv b2time.nc.i b2time.nc
+  fi
+  if [ -s b2batch.nc.i ]; then
+    mv b2batch.nc.i b2batch.nc
+  fi
+  if [ -s b2tallies.nc.i ]; then
+    mv b2tallies.nc.i b2tallies.nc
+  fi
+  if [ -s fort.10.i ]; then
+    mv fort.10.i fort.10
+  fi
+  if [ -s fort.11.i ]; then
+    mv fort.11.i fort.11
+  fi
+  if [ -s fort.13.i ]; then
+    mv fort.13.i fort.13
+  fi
+  if [ -s fort.14.i ]; then
+    mv fort.14.i fort.14
+  fi
+  if [ -s fort.15.i ]; then
+    mv fort.15.i fort.15
+  fi
+  if [ -s fort.44.i ]; then
+    mv fort.44.i fort.44
+  fi
+  if [ -s fort.46.i ]; then
+    mv fort.46.i fort.46
+  fi
   touch b2fstati
+  setup_baserun_eirene_links
   # Change the number of time steps
   sed -i "s/\('b2mndr_ntim'\s*\)'[0-9]\+'/\1'$3'/" b2mn.dat
-
-  # Disable Eirene
-  sed -i "s/\('b2mndr_eirene'\s*\)'1'/\1'0'/" b2mn.dat
 
   # Turn off excessive I/O for the 98 species test case
   sed -i "s/\('b2npmo_iout' *\)'.'/\1'0'/" b2mn.dat
@@ -117,18 +145,18 @@ function run_test {
   fi
 
   if [ $4 -eq 1 ]; then
-    echo Running B2.5 in serial mode
-    b2run -o $MPI_OPTS -s b2mn 2>&1 | tee run.log
+    echo Running B2.5-Eirene in serial mode
+    b2run $MPI_OPTS b2mn 2>&1 | tee run.log
   else
-    echo Running B2.5 using $4 threads
-    b2run -o $MPI_OPTS -s -t $4 b2mn 2>&1 | tee run.log
+    echo Running B2.5-Eirene using $4 threads
+    b2run $MPI_OPTS -t $4 b2mn 2>&1 | tee run.log
   fi
   cd ..
 }
 
 DATESTAMP=$(datestamp)
 
-# Run B2.5 with 1 and MAX_THREADS cores
+# Run B2.5-Eirene with 1 and MAX_THREADS cores
 run_test $SOURCEDIR test1_$DATESTAMP $STEPS 1
 run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 
@@ -136,5 +164,5 @@ run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 # run_checks will call check_b2_output, make sure it is compiled
 # cd $SOLPSTOP/modules/B2.5/src/test/
 # ifort -g -O2 check_b2_output.F90 -o check_b2_output
-$SOLPSTOP/modules/B2.5/src/test/run_checks.sh $SOURCEDIR test1_$DATESTAMP
-$SOLPSTOP/modules/B2.5/src/test/run_checks.sh test1_$DATESTAMP test2_$DATESTAMP
+$SOLPSTOP/modules/B2.5/src/test/run_checks_OpenMP_CI_coupled.sh $SOURCEDIR test1_$DATESTAMP
+$SOLPSTOP/modules/B2.5/src/test/run_checks_OpenMP_CI_coupled.sh test1_$DATESTAMP test2_$DATESTAMP
