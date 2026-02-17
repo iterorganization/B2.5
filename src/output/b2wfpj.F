@@ -75,6 +75,7 @@
 
 *   ..local variables
       integer n2, ix, iy, is, ix0, iy0, ix1, iy1
+      real (kind=R8) :: tn(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
      * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
@@ -154,14 +155,14 @@
        write (nprt,104) 'po', po(ix0,iy0), ix0, iy0,
      &   po(ix1,iy1), ix1, iy1
 *    ..write min and max of pa
-#ifdef WG_TODO
+       tn = ti
        do is = 0, ns-1
-        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
+        call b2xppb (n2, rza(-1,-1,is), na(-1,-1,is),
+     &    te, ti, tn, is, wrk0)
         call b2xxmm (nx, ny, wrk0, 0, ix0, iy0, ix1, iy1)
         write (nprt,103) 'pa', is, wrk0(ix0,iy0), ix0, iy0,
      &    wrk0(ix1,iy1), ix1, iy1
        enddo
-#endif
 *    ..write min and max of pr
        call b2xxmm (nx, ny, pr, 0, ix0, iy0, ix1, iy1)
        write (nprt,104) 'pr', pr(ix0,iy0), ix0, iy0,

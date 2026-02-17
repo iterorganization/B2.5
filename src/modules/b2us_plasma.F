@@ -3108,8 +3108,10 @@
         call cfrure (ninp, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
         call cfrure (ninp, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
         call cfrure (ninp, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
-        call cfrure (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
-        call cfrure (ninp, nCv*ns, st % srw % smd0_eir_tot, 'smd0_eir')
+        call cfrure_opt
+     .              (ninp, nCv*ns, st % srw % smr0_eir_tot, 'smr0_eir')
+        call cfrure_opt
+     .              (ninp, nCv*ns, st % srw % smd0_eir_tot, 'smd0_eir')
         call cfrure (ninp, nCv,    st % srw % she0_eir_tot, 'she0_eir')
         call cfrure (ninp, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
         call cfrure (ninp, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
@@ -3129,12 +3131,12 @@
         call cfrure (ninp, nCv,    st % srw % b2sihs_str, 'b2sihs_str')
         call cfrure (ninp, nCv,    st % srw % b2sihs_visa,
      .                                                  'b2sihs_visa')
-        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smaf,
-     .                                                  'b2nmpo_smaf')
-        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smag,
-     .                                                  'b2nmpo_smag')
-        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smav,
-     .                                                  'b2nmpo_smav')
+        call cfrure_opt (ninp, nCv*4*ns, st % srw % b2npmo_smaf,
+     .                                                  'b2npmo_smaf')
+        call cfrure_opt (ninp, nCv*4*ns, st % srw % b2npmo_smag,
+     .                                                  'b2npmo_smag')
+        call cfrure_opt (ninp, nCv*4*ns, st % srw % b2npmo_smav,
+     .                                                  'b2npmo_smav')
         call cfrure (ninp, nCv*ns, st % srw % smcf, 'smcf')
         call cfrure (ninp, nCv*ns, st % srw % smfr, 'smfr')
         call cfrure (ninp, nCv*ns, st % srw % smpr, 'smpr')
@@ -3375,11 +3377,11 @@
         call cfwure (nout, nCv,    st % srw % b2sihs_visa,
      .                                                  'b2sihs_visa')
         call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smaf,
-     .                                                  'b2nmpo_smaf')
+     .                                                  'b2npmo_smaf')
         call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smag,
-     .                                                  'b2nmpo_smag')
+     .                                                  'b2npmo_smag')
         call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smav,
-     .                                                  'b2nmpo_smav')
+     .                                                  'b2npmo_smav')
         call cfwure (nout, nCv*ns, st % srw % smcf, 'smcf')
         call cfwure (nout, nCv*ns, st % srw % smfr, 'smfr')
         call cfwure (nout, nCv*ns, st % srw % smpr, 'smpr')

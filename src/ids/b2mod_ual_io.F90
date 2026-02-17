@@ -747,6 +747,7 @@ contains
               balance_netcdf = 0
             end if
           end if
+          state%pl%ismain = ismain
           match_found = .false.
           is = ismain
           do while (is.ge.0 .and. .not.match_found)
@@ -759,6 +760,7 @@ contains
           end do
           if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
           call ipgeti ('b2mwti_ismain0', ismain0)
+          state%pl%ismain0 = ismain0
         end if
 # ifdef B25_EIRENE
         if (ids_from_43.eq.0) then
@@ -10244,8 +10246,8 @@ contains
 #  ifdef B25_EIRENE
     integer p
     character*8 eirene_version
-    character*32 Eirene_git_version
-    character*32 get_Eir_hash
+    character*40 Eirene_git_version
+    character*40 get_Eir_hash
 #  endif
 #  ifdef AMNS
     type (amns_handle_type) :: amns

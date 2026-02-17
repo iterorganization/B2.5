@@ -25062,11 +25062,11 @@ CONTAINS
       CALL CFRURE(ninp, ncv, st%srw%b2sihs_str, 'b2sihs_str')
       CALL CFRURE(ninp, ncv, st%srw%b2sihs_visa, 'b2sihs_visa')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smaf, 'b2nmpo_smaf')
+      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smaf, 'b2npmo_smaf')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smag, 'b2nmpo_smag')
+      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smag, 'b2npmo_smag')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smav, 'b2nmpo_smav')
+      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smav, 'b2npmo_smav')
       arg1 = ncv*ns
       CALL CFRURE(ninp, arg1, st%srw%smcf, 'smcf')
       arg1 = ncv*ns
@@ -25414,11 +25414,11 @@ CONTAINS
       CALL CFWURE(nout, ncv, st%srw%b2sihs_str, 'b2sihs_str')
       CALL CFWURE(nout, ncv, st%srw%b2sihs_visa, 'b2sihs_visa')
       arg1 = ncv*4*ns
-      CALL CFWURE(nout, arg1, st%srw%b2npmo_smaf, 'b2nmpo_smaf')
+      CALL CFWURE(nout, arg1, st%srw%b2npmo_smaf, 'b2npmo_smaf')
       arg1 = ncv*4*ns
-      CALL CFWURE(nout, arg1, st%srw%b2npmo_smag, 'b2nmpo_smag')
+      CALL CFWURE(nout, arg1, st%srw%b2npmo_smag, 'b2npmo_smag')
       arg1 = ncv*4*ns
-      CALL CFWURE(nout, arg1, st%srw%b2npmo_smav, 'b2nmpo_smav')
+      CALL CFWURE(nout, arg1, st%srw%b2npmo_smav, 'b2npmo_smav')
       arg1 = ncv*ns
       CALL CFWURE(nout, arg1, st%srw%smcf, 'smcf')
       arg1 = ncv*ns

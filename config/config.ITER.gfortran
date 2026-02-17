@@ -48,13 +48,16 @@ endif
 
 # Needed in addition to config.common.gfortran because of test below
 GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
+
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
+ifndef SOLPS_OPENMP
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
+endif
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
-FCOPTS += -march=sandybridge
+FCOPTS += -march=native
 endif
 
 ifdef SOLPS_DEBUG

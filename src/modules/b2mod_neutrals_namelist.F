@@ -45,15 +45,21 @@ cank }
       use eirmod_wneutrals
       use eirmod_parmmod
      & , only : nlim, nsts, nlimps
+      use eirmod_comusr    ! IGNORE
+     , , only : ntime
+      use eirmod_comnnl    ! IGNORE
 #else
-      use parmmod        ! IGNORE
+      use parmmod          ! IGNORE
      & , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
-      use braeir         ! IGNORE
+      use braeir           ! IGNORE
      & , only : itsput_chemical, issput_chemical, igass_chemical,
      &          chemical_sputter_yield, fchar_chemical
-      use eirdiag        ! IGNORE
+      use eirdiag          ! IGNORE
      & , only : nnatmi, nnmoli, nnioni, nnstsi
-      use ceirsrt        ! IGNORE
+      use ceirsrt          ! IGNORE
+      use comusr           ! IGNORE
+     , , only : ntime
+      use comnnl           ! IGNORE
 #endif
       use eirmod_solps
 #else
@@ -686,18 +692,46 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 cxpb  In Eirene facelift the time stratum is handled separately
 cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         if (crcstra(nstrai).eq.'T') then
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai-1
+          end if
+#else
           nstrat=nstrai
+#endif
           nstrai=nstrai-1
         elseif (crcstra(nstrai+1).eq.'T') then
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai
+          end if
+#else
           nstrat=nstrai+1
-        elseif (switch%use_eirene.ne.0) then
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
+#endif
         else
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+          else
+            nstrat=nstrai
+          endif
+#else
           nstrat=nstrai
+#endif
         endif
 
         allocate(old_style(nstrat))
@@ -736,14 +770,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
-     1 'Note: chemical_erosion_redep_fac = ',
-     2 chemical_erosion_redep_fac
+     1  'Note: chemical_erosion_redep_fac = ',
+     2   chemical_erosion_redep_fac
       if(chemical_erosion_be_fac)
      1 write(*,*) 'Note: suppression of chemical sputtering by Be ',
-     2 'is active with parameters ',
-     3 chemical_erosion_be_fac_a,
-     4 chemical_erosion_be_fac_b,
-     5 chemical_erosion_be_fac_c
+     2  'is active with parameters ',
+     3   chemical_erosion_be_fac_a,
+     4   chemical_erosion_be_fac_b,
+     5   chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
         do is = 1, nnatmi
@@ -909,11 +943,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      &   'faulty input mol')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
-          call xertst(0.0_R8.le.mrecyc(is,istra), 'faulty input mrecyc')
-          call xertst (0.0_R8.le.erecyc(is,istra),
-     .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
      .     'faulty input mrecyc')
+          call xertst (0.0_R8.le.erecyc(is,istra),
+     .     'faulty input erecyc')
           call xertst (0.0_R8.le.rcion(is,istra), 'faulty input rcion')
           call xertst (0.0_R8.le.phys_sput(is,istra),
      .     'faulty input phys_sput')
@@ -1021,7 +1054,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       enddo
       do is = 1, nnioni
         call xertst(0.le.lionscl(is).and.lionscl(is).le.nspecies,
-     .   'faulty input lionscl')
+     &   'faulty input lionscl')
       end do
       do is = 1, nnstsi
         call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,
@@ -1082,6 +1115,25 @@ c<<<
         print '(3x,50i5)',(msns(2,j),j=1,n)
       end if !}
 c>>>
+      if (debug_flags(90).gt.0) then !{
+        if (debug_flags(91).eq.0) debug_flags(91)=nnstsi-1
+        call xertst(debug_flags(90).le.nsts.and.
+     .              debug_flags(91).le.nsts.and.
+     .              debug_flags(91).ge.debug_flags(90),
+     .   'faulty non-standard surface number in debug_flags')
+        if (debug_flags(92).eq.-1) debug_flags(92)=1
+        if (debug_flags(93).eq.-1) debug_flags(93)=nstrat
+        if (debug_flags(94).eq.-1) debug_flags(94)=0
+        if (debug_flags(95).eq.-1) debug_flags(95)=0
+        call xertst(
+     .    debug_flags(92).ge.0.and.debug_flags(92).le.nstrat.and.
+     .    debug_flags(93).le.nstrat.and.
+     .    debug_flags(93).ge.debug_flags(92).and.
+     .    debug_flags(94).ge.0.and.debug_flags(94).le.nstrat.and.
+     .    debug_flags(95).le.nstrat.and.
+     .    debug_flags(95).ge.debug_flags(94),
+     .   'faulty stratum number in debug_flags')
+      end if !}
 
       do j=1,nstrai !{
         hlp=0.0_R8
@@ -1106,7 +1158,7 @@ c>>>
           endif
         endif
       enddo
-      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return
@@ -1340,26 +1392,54 @@ c.. Test consistency with physical edges within the computational domain
 cxpb  In Eirene facelift the time stratum is handled separately
 cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         if (crcstra(nstrai).eq.'T') then
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai-1
+          end if
+#else
           nstrat=nstrai
+#endif
           nstrai=nstrai-1
         elseif (crcstra(nstrai+1).eq.'T') then
-          nstrat=nstrai+1
-        elseif (switch%use_eirene.ne.0) then
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
-          if (switch%recycle_afn.ne.0) then
-            do is = 0, ns-1
-              if (nint(zn(is)).eq.1) then
-                erecyc(is,nstrat) = 0.0_R8
-                mrecyc(is,nstrat) = 0.0_R8
-              end if
-            end do
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai
           end if
+#else
+          nstrat=nstrai+1
+#endif
         else
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+            if (switch%recycle_afn.ne.0) then
+              do is = 0, ns-1
+                if (nint(zn(is)).eq.1) then
+                  erecyc(is,nstrat) = 0.0_R8
+                  mrecyc(is,nstrat) = 0.0_R8
+                end if
+              end do
+            end if
+          else
+            nstrat=nstrai
+          endif
+#else
           nstrat=nstrai
+#endif
         endif
 
         m%nRc = nstrat
