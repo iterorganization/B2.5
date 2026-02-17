@@ -655,12 +655,7 @@ contains
       fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(iCv,1): &
                                  &  m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
       g%cvY(iCv) = fcY
-      m%cvFt(iCv) = maxval(m%cvFt)
-    enddo
-
-    ! add flux tubes of guard cells
-    do iCv = nnCv+1,m%nCv
-
+      m%cvFt(iCv) = 0
     enddo
 
     ! calculate cvFpsi , cvBt and cvBp in routine b2agbb in b2agfs.f
