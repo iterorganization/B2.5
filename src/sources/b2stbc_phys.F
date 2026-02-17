@@ -14,7 +14,7 @@
      &  wrong_flow, main_call, diagno,
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      1  b2stbc_fchy_dia_coreonly, secmodel, area_fix,
-     2  sheath_drift_fix)
+     2  sheath_drift_fix, bc_for_equations)                           !srv 19.04.25
       use b2mod_types
       use b2mod_geo
       use b2mod_math
@@ -82,6 +82,14 @@
       real (kind=R8) ::
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
       logical main_call                                               !xpb
+      character(3) :: bc_for_equations                                !srv 19.04.25
+*     bc_for_equations indicates for which equations the boundary conditions
+*     will be calculated
+*       'all' for all equations as normal
+*       'spc' for density equations
+*       'ene' for energy equations
+*       'pot' for electric potential equation
+
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -649,10 +657,24 @@ cwdk  now need to recompute full diamagnetic component for ud
           END DO
         ENDIF
 
-        call b2stbc_phys_species(IB)
-        call b2stbc_phys_ene(IB)
-        call b2stbc_phys_eni(IB)
-        call b2stbc_phys_pot(IB)
+        select case(bc_for_equations)                                      !srv 19.04.25 {
+        case('all')
+          call b2stbc_phys_species(IB)
+          call b2stbc_phys_ene(IB)
+          call b2stbc_phys_eni(IB)
+          call b2stbc_phys_pot(IB)
+        case('spc')
+          call b2stbc_phys_species(IB)
+        case('ene')
+          call b2stbc_phys_ene(IB)
+        case('eni')
+          call b2stbc_phys_eni(IB)
+        case('pot')
+          call b2stbc_phys_pot(IB)
+        case default
+          CALL XERRAB
+     &     ('B2STBC -- incorrect value of bc_for_eqations')
+        end select                                                        !srv 19.04.25 }
       END DO
 
 * ---------------------------------------------------------------------
