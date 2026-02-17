@@ -122,7 +122,7 @@ c
 *  -- PROCEDURES --
 #ifdef WG_TODO
       integer convert_eirdiag, conformal_convert, lines_for_format
-      character*32 :: get_Eir_hash
+      character*40 :: get_Eir_hash
       logical streql
       external streql, get_Eir_hash
 #endif
@@ -174,9 +174,9 @@ C
       else if (streql(solps_version,'5.1')) then
         jvftnew = min(jvft44_in,20130210)
       else
-        jvftnew = max(jvft44_in,20240627)
+        jvftnew = max(jvft44_in,20260128)
       endif
-      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a40)') nx1,ny1,jvftnew,get_Eir_hash()
       if(jvft44_in.lt.20240311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
@@ -196,6 +196,7 @@ C
       write(*,'(3a,6i5)') ' Dimensions in ',fort_lc,'44.2 = ',
      . nx1,ny1,natm1,nmol1,nion1,npls1
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
+      call xertst(nplsi_in.le.npls,'NGREAD: NPLSI > NPLS')
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -203,7 +204,7 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       n2 = nx1*ny1
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
@@ -866,11 +867,11 @@ cank-960727
         allocate(wldpp1(nlimps,npls1,0:nstrai+1))
         allocate(wldpa1(nlimps,natm1,0:nstrai+1))
         allocate(wldpm1(nlimps,nmol1,0:nstrai+1))
-        allocate(wd_old(nplsi))
+        allocate(wd_old(nplsi_in))
         allocate(wd_new(npls1))
         do i = 1, nlimps
-          wd_old(1:nplsi)=wldpp(i,1:nplsi,0)
-          call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+          wd_old(1:nplsi_in)=wldpp(i,1:nplsi_in,0)
+          call e_bundle_transmit_r(nplsi_in,npls1,e_bundle_contr,
      .     wd_old,wd_new,1)
           wldpp1(i,1:npls1,0)=wd_new(1:npls1)
         end do
@@ -934,8 +935,8 @@ cank-960727
             if (.not.savestratum(istra)) cycle
             istra1=istra1+1
             do i = 1, nlimps
-              wd_old(1:nplsi)=wldpp(i,1:nplsi,istra)
-              call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+              wd_old(1:nplsi_in)=wldpp(i,1:nplsi_in,istra)
+              call e_bundle_transmit_r(nplsi_in,npls1,e_bundle_contr,
      .         wd_old,wd_new,1)
               wldpp1(i,1:npls1,istra)=wd_new(1:npls1)
             end do
@@ -1060,8 +1061,8 @@ cank
               end do
             end if
           else
-            read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),
+            read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi_in),
      ,                                                      i=1,nlimi)
             read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi_in),
      ,                                                      i=1,nsts1)
@@ -1096,16 +1097,16 @@ cank
      .         wlabsrp(natmi+nmoli+k,1:nlim+nsts1)
             end if
           end do
-          do k = 1, nplsi
+          do k = 1, nplsi_in
             if (ipls1(k).ne.0) then
               eirtxt1(natm1+nmol1+nion1+ipls1(k)) =
      .         eirtxt(natmi+nmoli+nioni+k)
             end if
           end do
           do i = 1, nlimi
-            wd_old(1:nplsi)=wlabsrp(natmi+nmoli+nioni+1:
-     .                              natmi+nmoli+nioni+nplsi,i)
-            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+            wd_old(1:nplsi_in)=wlabsrp(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi_in,i)
+            call e_bundle_transmit_r(nplsi_in,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
            wlabsrp1(natm1+nmol1+nion1+1:natm1+nmol1+nion1+npls1,i)=
      .      wd_new(1:npls1)
@@ -1191,9 +1192,9 @@ cank
           end if
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi_in),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi_in),
      ,                                                       i=1,nsts1)
           if (lines_for_format(6,nstsi*nplsi_in).gt.
      .        lines_for_format(6,nsts1*nplsi_in)) then
@@ -1219,9 +1220,9 @@ cank
      .        wlpump(natmi+nmoli+k,1:nlim+nsts1)
           end do
           do i = 1, nlimi
-            wd_old(1:nplsi)=wlpump(natmi+nmoli+nioni+1:
-     .                             natmi+nmoli+nioni+nplsi,i)
-            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+            wd_old(1:nplsi_in)=wlpump(natmi+nmoli+nioni+1:
+     .                             natmi+nmoli+nioni+nplsi_in,i)
+            call e_bundle_transmit_r(nplsi_in,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
            wlpump1(natm1+nmol1+nion1+1:natm1+nmol1+nion1+npls1,i)=
      .      wd_new(1:npls1)
@@ -1419,8 +1420,8 @@ cank
      ,                                i=1,NCL)
               k=k+nioni
               call read_title(44)
-              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi_in),
      ,                                i=1,NCL)
             end if
             if (jvft44_in.ge.20201006) then
@@ -1488,22 +1489,26 @@ cank
      .              ((wldsptm1res(j,i),j=1,nmol1),i=1,NCL)
               allocate (wlpump1res(natm1+nmol1+nioni+npls1,NCL))
               do k = 1, natmi
-                if (iatm1(k).ne.0)
-     >           wlpump1res(iatm1(k),:) = wlpump_res(k,:)
+                if (iatm1(k).ne.0) then
+                  wlpump1res(iatm1(k),1:NCL) = wlpump_res(k,1:NCL)
+                end if
               end do
               do k = 1, nmoli
-                if (imol1(k).ne.0)
-     >           wlpump1res(natm1+imol1(k),:) = wlpump_res(natmi+k,:)
+                if (imol1(k).ne.0) then
+                  wlpump1res(natm1+imol1(k),1:NCL) =
+     .             wlpump_res(natmi+k,1:NCL)
+                end if
               end do
               do k = 1, nioni
-                if (iion1(k).ne.0)
-     >           wlpump1res(natm1+nmol1+k,:) =
-     .                     wlpump_res(natmi+nmoli+k,:)
+                if (iion1(k).ne.0) then
+                  wlpump1res(natm1+nmol1+k,1:NCL) =
+     .                     wlpump_res(natmi+nmoli+k,1:NCL)
+                end if
               end do
               do i = 1, NCL
-                wd_old(1:nplsi)=wlpump_res(natmi+nmoli+nioni+1:
-     .                                     natmi+nmoli+nioni+nplsi,i)
-                call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+                wd_old(1:nplsi_in)=wlpump_res(natmi+nmoli+nioni+1:
+     .                                     natmi+nmoli+nioni+nplsi_in,i)
+                call e_bundle_transmit_r(nplsi_in,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
                 wlpump1res(natm1+nmol1+nion1+1:
      .                     natm1+nmol1+nion1+npls1,i)=
@@ -1570,7 +1575,7 @@ cank
               WRITE(45,1028)
               k=k+nioni
               call read_title(44)
-              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
               write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
               READ (44,1028)
               WRITE(45,1028)

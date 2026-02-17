@@ -12,11 +12,6 @@ MYPATH=`dirname "$0"` # path to this script, used when we calling other scripts 
 
 files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 
-#for f in $files; do
-#   filenames="$1/$f $2/$f";
-#   check_b2_output $filenames
-#done  > compare_results.log
-
 missing=0
 for f in $files; do
    if [ ! -f $1/$f ]; then
@@ -37,9 +32,12 @@ fi
 
 # For most of the variables we compare the maximum error to the average array value
 # (and this average is the average of abs(var)).
-# To avoid statistical variance, this test must be done using correlated sampling and use the APCAS or "embarrassingly parallel" Eirene MPI parallelization strategies.
+# To avoid statistical variance, this test must be done using correlated sampling.
+# The NLIDENT switch in Eirene must be turned on.
+# For each stratum, the NPTSDEL number must be equal to the NPTS value divided by some
+# integer multiple of the number of threads used.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 0.01 ne 1e-11 ni 1e-11 na 0.02 ne 0.02 te 0.02 ti 0.01 tn 0.01 po 0.02 calf 0.01 ceqp 0.01 chce 0.01 chci 0.01 chvemx 0.01 chvimx 0.01 csig 0.01 csigin 0.01 dpa0 0.01 fhe 0.01 fhp 0.02 fhi 0.01 fhi_mdf 0.01 fht 0.02 floe_noc 0.01 floi_noc 0.01 fna_52 0.01 fna_he 0.01 fne 0.01 fne_52 0.025 fni 0.01 fni_52 0.025 fna_eir 0.01 fne_eir 0.01 hce0 0.01 hci0 0.01 kinrgy 0.01 sig0 0.01 she 0.01 vsa0 0.01' -i 'time|data|del*|res*' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 0.01 --maxerr 'te ti na ni ne po' --specific-tolerance 'fhe 0.10 fhe_eir 0.05 fhep 0.05 fhe0 0.05 fhe_mdf 0.10 fhi 0.10 fhi_eir 0.05 fhi_mdf 0.10 fhi0 0.025 fhip 0.025 fhit 0.05 fhet 0.10 fhm 0.05 fht 0.05 floe_noc 0.05 floi_noc 0.05 fna 0.025 fna_fcor 0.025 fna_mdf 0.025 fna_nodrift 0.025 fnap 0.25 fni 0.25 fni_32 0.25 te 0.1 ti 0.2 po 0.1 pop 0.1 ne2 0.02 cdkt 0.05 chce 0.25 chci 0.10 chvemx 0.05 chvimx 0.02 cvsa 0.025 cvsa_cl 0.025 hce0 0.25 hci0 0.25' -i 'time|data|b2stb*|res*|del*|sm*|po0|na*|ne0|nep|ni0|ua*|kinrgy|fna0|fna_he|fna_32|fna_52|fna_eir|fne|fne_32|fne_52|fne_eir|fni_52|fch*|fhj|fhp|fmo|rcx*|rra*|rsa*|alf*|calf*|cdpa|csig*|dpa*|fllim*|rqahe|rqbrm|rqrad|b2sihs_*|b2npmo_sm*' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successful

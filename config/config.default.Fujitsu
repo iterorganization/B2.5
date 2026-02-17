@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-#ifndef LD_SONNET
-#  $(error LD_SONNET not defined)
-#endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 # DEFINES += -DNO_CDF

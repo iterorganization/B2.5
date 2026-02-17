@@ -66,7 +66,7 @@ c
       save width
 
 *  -- PROCEDURES --
-      character*32 :: get_Eir_hash
+      character*40 :: get_Eir_hash
       external ipgeti, ipgetr, xertst, get_Eir_hash
 #endif
 
@@ -168,7 +168,7 @@ C
       write(*,*) 'Writing '//trim(filename)
 C
       READ(46,*,END=99,ERR=99) ncvtot,jvft46
-      WRITE(47,'(I6,2X,i8,2x,a32)') ncvtot,jvftnew,get_Eir_hash()
+      WRITE(47,'(I6,2X,i8,2x,a40)') ncvtot,jvftnew,get_Eir_hash()
       READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')
