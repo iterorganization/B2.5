@@ -11,7 +11,8 @@
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)      !xpb
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call,      !xpb
+     &  bc_for_equations)                                               !srv 19.04.25
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -71,6 +72,15 @@
      2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
      3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1)
       logical main_call                                                  !xpb
+      character(3) :: bc_for_equations                                   !srv 19.04.25
+*     bc_for_equations indicates for which equations the boundary conditions
+*     will be calculated
+*       'all' for all equations as normal
+*       'spc' for density and parallel momentum equations
+*       'ene' for electron energy equations
+*       'eni' for ion energy equations
+*       'pot' for electric potential equation
+
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -208,12 +218,27 @@
      .   'WARNING! Kinetic secondary emission expects HYDROGEN plasmas!'
       endif
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0_R8, smo0, 1)
-      call sfill (n2*2, 0.0_R8, sne0, 1)
-      call sfill (n2*4, 0.0_R8, she0, 1)
-      call sfill (n2*4, 0.0_R8, shi0, 1)
-      call sfill (n2*4, 0.0_R8, sch0, 1)
+      select case(bc_for_equations)                                      !srv 19.04.25 {
+      case('all')
+        call sfill (n2*2*ns, 0.0_R8, sna0, 1)
+        call sfill (n2*4*ns, 0.0_R8, smo0, 1)
+        call sfill (n2*2, 0.0_R8, sne0, 1)
+        call sfill (n2*4, 0.0_R8, she0, 1)
+        call sfill (n2*4, 0.0_R8, shi0, 1)
+        call sfill (n2*4, 0.0_R8, sch0, 1)
+      case('spc')
+        call sfill (n2*2*ns, 0.0_R8, sna0, 1)
+        call sfill (n2*4*ns, 0.0_R8, smo0, 1)
+      case('ene')
+        call sfill (n2*4, 0.0_R8, she0, 1)
+      case('eni')
+        call sfill (n2*4, 0.0_R8, shi0, 1)
+      case('pot')
+        call sfill (n2*4, 0.0_R8, sch0, 1)
+      case default
+        CALL XERRAB
+     1   ('B2STBC -- incorrect value of bc_for_eqations')
+      end select                                                        !srv 19.04.25 }
 
 * ..compute standard form volume sources
 *   (This code placed here for want of a better location)
@@ -409,7 +434,7 @@
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &   b2stbc_fchy_dia_coreonly, secmodel, area_fix,
-     &   sheath_drift_fix)
+     &   sheath_drift_fix, bc_for_equations)                             !srv 19.04.25
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
         if(lbndusr) then
