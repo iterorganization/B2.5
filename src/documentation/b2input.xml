@@ -989,6 +989,14 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>nrings_for_no_speedup_averaging</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of poloidal rings in the confined region (counted from the separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging (CORR_CORE_DN and CORR_CORE_DT) should not be used.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2srdt_*_namelist</name>
 				<description>
@@ -1665,7 +1673,7 @@
 					nesepm_pfr is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the PFR region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the PFR South boundary indices pfrregno1 and pfrregno2). will apply fb_type=3, fb_rescale=1, fb_actuator=1 on region defined pfrregno1
 					ndes is the total particle (neutrals + ions) content of the species whose neutral species has index isfeedback. This is controlled through particle input of neutrals species isfeedback through the	private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2). will apply fb_type=14, fb_rescale=1, fb_actuator=1 on region defined by pfrregno1. WARNING: in the structured code this switch was asking for BCCON=12, so density BC for fluid neutrals feedback but then it switches to gas puff for kinetic neutrals. Now it is ONLY gas puff.
 					private_flux_puff NOT YET CONVERTED TO WG CODE! is the particle flow of species isfeedback through the private flux region boundary. This is controlled through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2).
-					All but the first of these feedback schemes ("nesepm") can also be run though an Eirene neutral gas puff. In that case, one should set an appropriate gas puffing stratum in the Eirene input file input.dat, as well as in the b2.neutrals.parameters file. The code will assume, unless told otherwise through the use of "eirene_nesepm_istra", that the first stratum of type 'C' found in b2.neutrals.parameters is the stratum used for the feedback. If "eirene_nesepm_istra" is set to a positive number, the code will consider the feedback stratum to be the stratum in the "eirene_nesepm_istra"-th position in b2.neutrals.parameters.
+					All but the first of these feedback schemes ("nesepm") can also be run though an Eirene neutral gas puff. In that case, one should set an appropriate gas puffing stratum in the Eirene input file, as well as in the b2.neutrals.parameters file. The code will assume, unless told otherwise through the use of "eirene_nesepm_istra", that the first stratum of type 'C' found in b2.neutrals.parameters is the stratum used for the feedback. If "eirene_nesepm_istra" is set to a positive number, the code will consider the feedback stratum to be the stratum in the "eirene_nesepm_istra"-th position in b2.neutrals.parameters.
 					b2stbc_iyped is the index in the OMP CV list (defined with RZOMP in b2.user.parameters) of the pedestal cell (defaults to icsepomp/2).
 				</description>
 				<switch>
@@ -3918,7 +3926,7 @@
 			</switchgroup>
 			<switch>
 				<name>eirene_format</name>
-				<default>iter</default>
+				<default>msv</default>
 				<type>string</type>
 				<description>
 					This switch is to be provided within b2yt.dat to indicate to the b2yt converter the format of the original Eirene input.dat file to be modified. The accepted values are (case-insensitive):
@@ -3927,6 +3935,7 @@
 					'facelift' for input files from SOLPS5.1 runs
 					'juelich' for input files from Juelich Eirene versions (2008 and younger)
 					'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
+					'msv' for input files from the Eirene Milestone Version
 				</description>
 			</switch>
 			<switch>
@@ -6464,7 +6473,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTS)</type>
 				<description>
-					Contains the indices of Eirene non-standard surfaces (block 3A in input.dat) corresponding to core boundaries.
+					Contains the indices of Eirene non-standard surfaces (block 3A of the Eirene input file) corresponding to core boundaries.
 				</description>
 			</switch>
 			<switch>
@@ -6472,7 +6481,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTS)</type>
 				<description>
-					Contains the indices of Eirene non-standard surfaces (block 3A in input.dat) corresponding to target boundaries.
+					Contains the indices of Eirene non-standard surfaces (block 3A of the Eirene input file) corresponding to target boundaries.
 				</description>
 			</switch>
 			<switch>
@@ -6706,7 +6715,7 @@
 				<default>2000</default>
 				<type>integer</type>
 				<description>
-					Maximum number of points needed to describe a region contour in Eirene.
+					Obsolete. Maximum number of points needed to describe a region contour in Eirene.
 				</description>
 			</switch>
 			<switch>

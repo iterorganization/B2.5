@@ -6,7 +6,7 @@
 !     that arises in the Gaussian Likelihood function.
 !     C must be a positive definite matrix stored in packed
 !     format according to https://netlib.org/lapack/explore-html/de/d49/group__double_o_t_h_e_rsolve_ga59a299a18cb0af017ee2c972ae7defb5.html
-      integer, intent (in) :: n !leading dimensions of vectors/matrices
+      integer, intent (in) :: n !leading dimension of vectors/matrices
       real(kind=R8), intent (in) :: z(n) !RHS
       real(kind=R8), intent (in) :: C(n*(n+1)/2) !Covariance matrix in packed format
       real(kind=R8), intent (out) :: res(n) !result of the system
@@ -14,7 +14,7 @@
       real(kind=R8), intent (out) :: U(n*(n+1)/2) !Cholesky factorization of C (not actually used later on if not for adjoint AD)
       integer, intent (in) :: icf !cost function number (only used for error purposes)
 !     local variables to avoid aliasing in dppsv
-      real(kind=R8) ::  dd(n)
+      real(kind=R8) :: dd(n)
       integer :: info, ii
 
       call subini('solve_covariance')

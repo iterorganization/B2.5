@@ -169,7 +169,11 @@
       call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
-      iFt = mpg%cvFt(omp(1))                                     !sv 24.03.99
+      if (omp(1).le.mpg%nCi) then
+        iFt = mpg%cvFt(omp(1))                                   !sv 24.03.99
+      else
+        iFt = mpg%cvFt(omp(2))
+      endif
       tesum(1)=0.0_R8
       tisum(1)=0.0_R8
       nasum(:,1)=0.0_R8

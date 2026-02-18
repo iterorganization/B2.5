@@ -122,7 +122,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
-     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),ntrfrm,
+     *  ndim(2,wklng),nedim(2,wklng),nwdim(2,wklng),
      *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average,
      *  ixref,iyref
 cank 960511
