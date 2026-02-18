@@ -101,7 +101,7 @@ c       fl = 1.0_R8
               wrk = switch%cvsa_low_col_mltpl
               cflmv_loc(iFc) = cflmv_loc(iFc)*
      &          max(wrk,min(1.0_R8,(collisnumf(iFc)-
-     &          switch%min_collisions)/5.0_R8*(1-wrk)+wrk))
+     &          switch%min_collisions)/5.0_R8*(1.0_R8-wrk)+wrk))
             endif
             if (collisnumf(iFc) .gt. switch%min_collisions) then
               qcl = -cvsbx(iFc)*dub(iFc)
