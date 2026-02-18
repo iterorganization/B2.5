@@ -643,12 +643,12 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls which boundary faces are treated as wall (non field-aligned).
+					Controls which boundary faces are treated as wall (not field-aligned).
 					If b2us_prep_Qalf_mod_style.eq.0 then all faces with abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin are treated as walls.
 					If b2us_prep_Qalf_mod_style.eq.1 then wall faces must be located at the end of a flux tube, or satisfy both conditions:
 					1. abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin
 					2. have at least one neighboring wall face
-					If all faces along a flux tube have abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, then one face where magnetic field angle changes its sign is treated as field-aligned (not a wall).
+					If all faces along a flux surface have abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, then the face where the magnetic field angle changes sign is treated as field-aligned (not a wall).
 				</description>
 			</switch>
 			<switch>
@@ -3266,7 +3266,7 @@
 				<default>0.1</default>
 				<type>real</type>
 				<description>
-					Additional multiplier for viscosity flux limit coefficient in area with low number of collisions. Applies only if b2trcl_min_collisions.gt.0.0
+					Additional multiplier for viscosity flux limit coefficient in area with low number of collisions. Applies only if b2trcl_min_collisions is non-zero.
 				</description>
 			</switch>
 			<switch>
