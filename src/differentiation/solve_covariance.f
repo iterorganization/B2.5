@@ -3,7 +3,7 @@
       use b2mod_types
       use b2mod_subsys
       implicit none
-      integer, intent (in) :: n !leading dimensions of vectors/matrices
+      integer, intent (in) :: n !leading dimension of vectors/matrices
       real(kind=R8), intent (in) :: z(n) !RHS
       real(kind=R8), intent (in) :: C(n*(n+1)/2) !Covariance matrix in packed format
       real(kind=R8), intent (out) :: res(n) !result of the system
@@ -15,11 +15,11 @@
 !csc This is a dummy routine to be fed to Tapenade isntead of the real solve_covariance, 
 !    such that only the necessary dependencies are created
       do ii=1,n
-        res(ii) = z(ii)*C(ii)
+        res(ii) = z(ii)*C(ii+(ii-1)*ii/2)
       end do
       dummy=1.0_R8
-      do ii=1,n*(n+1)/2
-        dummy = dummy*C(ii)
+      do ii=1,n
+        dummy = dummy*C(ii+(ii-1)*ii/2)
       enddo
       LdetC = log(dummy)
       U = C

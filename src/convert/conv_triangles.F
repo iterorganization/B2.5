@@ -10,6 +10,7 @@
       use b2us_plasma
       use b2us_prep
 #ifdef B25_EIRENE
+      use eirmod_ccoupl
       use eirmod_module_avltree
 #endif
       implicit none
@@ -31,7 +32,7 @@
      .           i1, i2, i3, idum, i, nel2,
      .           is, is1, is2, ifc, icv, icut, ixt, iyt,
      .           ix, iy, isig, iused, ineir,
-     .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
+     .           ismin, ismax, icmin, icmax, cfce(4,3),
      .           ixl, ixr, iv, icside
 
       real(R8), allocatable :: xc_old(:), yc_old(:)
