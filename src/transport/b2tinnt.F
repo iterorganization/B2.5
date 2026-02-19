@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
-     &       facdrift, fac_ExB, pl, fna,
+     &       facdrift, fac_ExB, pl, srw, fna,
      &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
@@ -34,6 +34,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Rates), intent (in) :: rt
+      type (B2SourceWork), intent (in) :: srw
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fchin(nFc,0:1)
@@ -181,11 +182,11 @@
 !! density-weighted average of the velocities, needed for spatially hybrid fluid-kinetic neutrals
               do iCv=1,nCv
                 vntrc(iCv,0) = (vntrc_fluid(iCv,0)*na_fluid(iCv,is0) +
-     &                         vntrc_kin(iCv,0)*na_kin(iCv,is0))/
-     &                         na_tot(iCv,is0)
+     &                          vntrc_kin(iCv,0)*na_kin(iCv,is0))/
+     &                          na_tot(iCv,is0)
                 vntrc(iCv,1) = (vntrc_fluid(iCv,1)*na_fluid(iCv,is0) +
-     &                         vntrc_kin(iCv,1)*na_kin(iCv,is0))/
-     &                         na_tot(iCv,is0)
+     &                          vntrc_kin(iCv,1)*na_kin(iCv,is0))/
+     &                          na_tot(iCv,is0)
               enddo
 *      ..interpolate velocities in the cell face
               call intface(nCv, nFc, mpg%fcCv, geo%fcVol, vntrc(:,0),

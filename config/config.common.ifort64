@@ -32,6 +32,8 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   =
 
+# OpenMP compiler options for intel: -openmp is enough
+# Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef COMPILER_REDEF
  INCMOD = -I
  OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o

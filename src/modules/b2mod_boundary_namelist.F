@@ -1007,7 +1007,7 @@ c.. Test consistency with region boundaries
      >             m%mxnbc, m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
             write(ss,'(i3)') ib
-            call xertst(nbcfc.gt.0, 
+            call xertst(nbcfc.gt.0,
      &        'No faces found for boundary condition = '//ss)
             m%bcFcP(ib,2) = nbcfc
           else
@@ -1367,7 +1367,7 @@ cwdk also need to correct for degenerate faces?
      >                       m%mxnbc, m%bcFc, m%bcFcOr, m, idb)
           end do  ! iss
           write(ss,'(i3)') ib
-          call xertst(bcl(ib).gt.0, 
+          call xertst(bcl(ib).gt.0,
      &      'No faces found for boundary condition = '//ss)
           m%bcFcP(ib,2) = bcl(ib)
         else
@@ -1574,36 +1574,37 @@ cc BCMOM
             bcmom(is,ib) = 13
             write(*,*) 'Automatically changing BCMOM from 3 to 13'
             changed = .true.
-          endif 
+          endif
         enddo
 cc BCENE
-        if (bcene(ib).eq.3) then 
+        if (bcene(ib).eq.3) then
           bcene(ib) = 15
+          enepar(ib,1) = enepar(ib,1) - 1.0_R8
           write(*,*) 'Automatically changing BCENE from 3 to 15'
           changed = .true.
-        endif 
-        if (bcene(ib).eq.12) then 
+        endif
+        if (bcene(ib).eq.12) then
           bcene(ib) = 15
           write(*,*) 'Automatically changing BCENE from 12 to 15'
           changed = .true.
-        endif 
+        endif
 cc BCENI
-        if (bceni(ib).eq.3) then 
+        if (bceni(ib).eq.3) then
           bceni(ib) = 15
           write(*,*) 'Automatically changing BCENI from 3 to 15'
           changed = .true.
-        endif 
-        if (bceni(ib).eq.12) then 
+        endif
+        if (bceni(ib).eq.12) then
           bceni(ib) = 15
           write(*,*) 'Automatically changing BCENI from 12 to 15'
           changed = .true.
-        endif 
+        endif
 cc BCPOT
-        if (bcpot(ib).eq.3) then 
+        if (bcpot(ib).eq.3) then
           bcpot(ib) = 11
           write(*,*) 'Automatically changing BCPOT from 3 to 11'
           changed = .true.
-        endif 
+        endif
       enddo
 
       if (changed) then
