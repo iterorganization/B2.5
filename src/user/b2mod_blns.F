@@ -109,6 +109,8 @@ c*** Column headers:
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
+      use eirmod_comusr
+     ,   , only : lkindp
       use eirmod_wneutrals
       use eirmod_clgin
      ,   , only : iliin

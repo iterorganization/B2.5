@@ -2462,11 +2462,11 @@
       type (geometry), intent (out) :: gm
       integer, save :: mod_hc = 0, set_beta = 0
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp,
-     *   iFt, l
-      logical :: iscvsb(mpg%nCv)
-      integer :: wrkVx(mpg%nVx)
-      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk,
-     *  cur_len(2), cen_len(2), a(2)
+     *   iFt, l, mod_cell_c, iFc1
+      logical :: iscvsb(mpg%nCv), is_mod_fc(mpg%nFc)
+      integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
+      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
+     *  cur_len(2), cen_len(2)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
