@@ -3,6 +3,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      &   , ncv_eir => ncv
+      use eirmod_comusr
       use eirmod_eirbra
       use eirmod_wneutrals
       use eirmod_extrab25

@@ -35,8 +35,6 @@ ifdef COMPILER_REDEF
   FCOPTS  += -O2
  endif
 else
-# OpenMP compiler options for intel: -openmp is enough
-# Might also want -parallel to auto-parallelize loops without openmp directives
  ifndef SOLPS_DEBUG
   FCOPTS  += -O2 -xHost
  else

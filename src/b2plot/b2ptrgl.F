@@ -21,6 +21,8 @@ c======================================================================
      . , only : natm
       use eirmod_wneutrals
       use eirmod_eirbra
+      use eirmod_comusr
+     . , only : lkindp
       use eirmod_ccona
       use eirmod_cinit
 #else

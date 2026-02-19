@@ -54,6 +54,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: user_transport
       integer :: use_min_na_numerics
       integer :: set_transport_iyref
+      integer :: nrings             ! IYS 27.03.2019
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -186,6 +187,7 @@ c switches for far-sol flux limiting options
       real (kind=R8) :: b2tlmv_ni_max
       real (kind=R8) :: b2tlmv_cflmv_min
       real (kind=R8) :: min_collisions
+      real (kind=R8) :: cvsa_low_col_mltpl
 
 c iout switches
       integer :: iout_b2wdat
@@ -682,6 +684,7 @@ c Optimization
       s % user_transport = 0
       s % use_min_na_numerics = 0
       s % set_transport_iyref = 0
+      s % nrings = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -1013,6 +1016,7 @@ c far-SOL flux limiting options
       s % b2tlmv_ni_max = 1.0e18_R8
       s % b2tlmv_cflmv_min = 0.5e0_R8
       s % min_collisions = 0.0_R8
+      s % cvsa_low_col_mltpl = 0.1_R8
 
 c geometry
       s % fcHz_style = 1
@@ -1350,6 +1354,7 @@ c Optimization
       call ipgeti ('b2mndr_use_min_na_numerics',
      &                       s % use_min_na_numerics)
       call ipgeti ('set_transport_iyref', s % set_transport_iyref)
+      call ipgeti ('nrings_for_no_speedup_averaging', s % nrings)            ! IYS 27.03.2019
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
@@ -1480,6 +1485,7 @@ c far sol flux limiting
       call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
       call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
       call ipgetr ('b2trcl_min_collisions', s % min_collisions)
+      call ipgetr ('b2tlmv_cvsa_low_col_mltpl', s % cvsa_low_col_mltpl)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)

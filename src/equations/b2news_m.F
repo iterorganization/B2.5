@@ -560,12 +560,14 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
         st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
+     &     st_ext)
       else if (switch%pot_eq.eq.2) then                                  !srv 11.01.12
         st%pl%po        = 3.1_R8*st%pl%te/qe
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
+     &     st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
         if (b2news_solving(3)) then
@@ -578,7 +580,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
         endif
 *   ..compute currents                                                   !srv 29.01.20 {
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
+     &     st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
           if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
@@ -604,7 +607,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           write(*,*) 'respo before solving',t0
 *   ..recompute currents
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
+     &     st_ext)
 *   ..compute new residual following the tradition
           call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)
