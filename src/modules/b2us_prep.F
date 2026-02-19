@@ -2465,7 +2465,8 @@
      *   iFt, l, mod_cell_c, iFc1
       logical :: iscvsb(mpg%nCv), is_mod_fc(mpg%nFc)
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
-      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2)
+      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
+     *  cur_len(2), cen_len(2)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
