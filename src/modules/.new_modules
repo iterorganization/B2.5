@@ -1,2 +1,3 @@
 Modularized various common blocks
 Neoclassical corrections to Zhdanov-Grad closure for impurities
+Renamed Eirene interface directory from couple_SOLPS-ITER to couple_SOLPS_WG

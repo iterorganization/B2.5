@@ -56,6 +56,7 @@ c 2002-09-11: logic revised
       use eirmod_wneutrals
       use eirmod_infcop
       use eirmod_braeir
+      use eirmod_ccoupl
       use eirmod_cestim
       use eirmod_coutau
      , , only: eirene_dealloc_coutau
@@ -245,17 +246,11 @@ c
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
-        rewind(45)
-        do while (index(zeile,'*** 14') == 0)
-          read (45,'(A72)') ZEILE
-        end do
-        read (45,'(A72)') ZEILE
-        read (45,'(2I6)') ITMP, NTRFRM
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
         close(45)
@@ -292,8 +287,8 @@ c
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
       endif
 #else
@@ -539,22 +534,24 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      &         'faulty b2mndr_ismain')
       call xertst (.not.is_neutral(ismain),
      &         'ismain cannot refer to a neutral species')
-       found = .false.
-       is = ismain
-       do while (is.ge.0 .and. .not.found)
-         if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
-     &                      .and. nint(am(is)).eq.nint(am(ismain))) then
-           ismain0 = is
-           found = .true.
-         end if
-         is = is - 1
-       end do
-       if (.not.found.and.ismain.ne.1) ismain0 = ismain
-       call ipgeti ('b2mwti_ismain0', ismain0)
-       call xertst (0.le.ismain0.and.ismain0.lt.ns,
-     .   'invalid main neutral species index ismain0')
-       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
-     .   'invalid main neutral species index ismain0')
+      state%pl%ismain = ismain
+      found = .false.
+      is = ismain
+      do while (is.ge.0 .and. .not.found)
+        if (is_neutral(is) .and. nint(zn(is)).eq.nint(zn(ismain))
+     &                     .and. nint(am(is)).eq.nint(am(ismain))) then
+          ismain0 = is
+          found = .true.
+        end if
+        is = is - 1
+      end do
+      if (.not.found.and.ismain.ne.1) ismain0 = ismain
+      call ipgeti ('b2mwti_ismain0', ismain0)
+      call xertst (0.le.ismain0.and.ismain0.lt.ns,
+     .  'invalid main neutral species index ismain0')
+      call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
+     .  'invalid main neutral species index ismain0')
+      state%pl%ismain0 = ismain0
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 
