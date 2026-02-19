@@ -166,7 +166,8 @@ c
          localarea=copyarea
       else
          localarea=copyarea(1:iend-1)
-         copyarea(1:256)=copyarea(iend+1:256)
+         copyarea(1:256-iend)=copyarea(iend+1:256)
+         copyarea(256-iend+1:256)=repeat(' ',iend)
       endif
       close(lu)
       if (.not.streql(localarea,' ')) then

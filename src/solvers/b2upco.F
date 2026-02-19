@@ -12,6 +12,8 @@
       use b2mod_switches
       use b2mod_numerics_namelist
      , , only : corr_core_dn, min_na
+      use b2mod_user_namelist
+     , , only : ft_omp, icsepomp
       use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -43,7 +45,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFt, ireg
+      integer i, iCv, iFt, ireg, ic
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk(nCv), wrkv(nVx)
@@ -88,12 +90,13 @@
         tt1 = 0.0_R8
         tt2 = 0.0_R8
         do iCv = 1, mpg%nCi
-          if (mpg%cvOnClosedSurface(iCv)) then       ! IYS 27.03.2019
+          if (mpg%cvOnClosedSurface(iCv) .and.       ! IYS 27.03.2019
+     &        ft_omp(mpg%cvFt(iCv)) .lt. icsepomp - switch%nrings ) then
             iFt = mpg%cvFt(iCv)
             if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
-            tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*(nb_(iCv)-nb(iCv))
-            tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*(pb_(iCv)-pb(iCv))
+              tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
+              tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*(nb_(iCv)-nb(iCv))
+              tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*(pb_(iCv)-pb(iCv))
             endif
           endif
         enddo
@@ -107,24 +110,30 @@
           else
             na_min = min_na(isb,mpg%cvReg(iCv))
           endif
-          if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+          if(mpg%cvOnClosedSurface(iCv).and.iCv.le.mpg%nCi) then    ! IYS 27.03.2019
             iFt = mpg%cvFt(iCv)
-            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-              t0 = pb(iCv)+tt2(iFt)/tt0(iFt) +
-     *         corr_core_dn(isb)*(pb_(iCv)-pb(iCv)-tt2(iFt)/tt0(iFt)) ! IYS 19.12.2017
-              if (t0 .lt. pb(iCv)*na_min / nb(iCv)) then
-                too_low_density(iFt) = .true.
-                cycle
+            if (iFt.gt.0 .and. iFt.le.mpg%nFt) then
+              if (tt0(iFt).gt.0.0_R8) then
+                t0 = pb(iCv)+tt2(iFt)/tt0(iFt) +
+     *           corr_core_dn(isb)*(pb_(iCv)-pb(iCv)-tt2(iFt)/tt0(iFt)) ! IYS 19.12.2017
+                if (t0 .lt. pb(iCv)*na_min / nb(iCv)) then
+                  too_low_density(iFt) = .true.
+                  cycle
+                else
+                  pb(iCv) = t0
+                endif
+                t0 = nb(iCv)+tt1(iFt)/tt0(iFt) +
+     *           corr_core_dn(isb)*(nb_(iCv)-nb(iCv)-tt1(iFt)/tt0(iFt))   ! IYS 19.12.2017
+                if (t0 .lt. na_min) then
+                  too_low_density(iFt) = .true.
+                  cycle
+                else
+                  nb(iCv) = t0
+                endif
               else
-                pb(iCv) = t0
-              endif
-              t0 = nb(iCv)+tt1(iFt)/tt0(iFt) +
-     *         corr_core_dn(isb)*(nb_(iCv)-nb(iCv)-tt1(iFt)/tt0(iFt))   ! IYS 19.12.2017
-              if (t0 .lt. na_min) then
-                too_low_density(iFt) = .true.
-                cycle
-              else
-                nb(iCv) = t0
+                ! in core, but not deeper than nrings => normal correction
+                nb(iCv) = nb_(iCv)
+                pb(iCv) = pb_(iCv)
               endif
             else
               ! in core, but not part of a flux tube in the mesh => normal correction

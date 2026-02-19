@@ -158,6 +158,14 @@ cwdk store effective viscosity, for use in viscous heating
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz
 
+      if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
+        write (chns,'(i3.3)') isb
+        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_fhm_gradua_th'//chns)
+        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_fhm_gradua_r'//chns)
+        call my_out_us(70,nFc,1,flf(1,0),'b2urmo_fhm_ua_th'//chns)
+        call my_out_us(70,nFc,1,flf(1,1),'b2urmo_fhm_ua_r'//chns)
+      endif
+
 * ..compute residual
 *   ..contribution from right hand side
       resmb = smb(:,0) + smb(:,1)*ub + smb(:,2)*rob + smb(:,3)*rob*ub

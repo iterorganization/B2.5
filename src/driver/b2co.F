@@ -249,6 +249,7 @@
 *   ..truncate tracing files
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
+      state%pl%ismain = ismain
       match_found = .false.
       is = ismain
       do while (is.ge.0 .and. .not.match_found)
@@ -261,9 +262,10 @@
       end do
       if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
       call ipgeti ('b2mwti_ismain0', ismain0)
+      state%pl%ismain0 = ismain0
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,file_exists)
       if (file_exists.and.switch%use_eirene.ne.0) then
         open(unit=45,file=filename)
@@ -300,8 +302,8 @@
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
-        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_INIT_CINIT
       endif
 #endif

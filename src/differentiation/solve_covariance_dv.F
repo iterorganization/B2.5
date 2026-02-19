@@ -6,7 +6,7 @@
       implicit none
 !     This routines solves the system res=C^-1*z also in its forward
 !     differentiated form 
-      integer, intent (in) :: n !leading dimensions of vectors/matrices
+      integer, intent (in) :: n !leading dimension of vectors/matrices
       real(kind=R8), intent (in) :: z(n) !RHS
       real(kind=R8), intent (in) :: zd(nbdirsmax,n) !RHS diff'ed
       real(kind=R8), intent (in) :: C(n*(n+1)/2) !Covariance matrix in packed format

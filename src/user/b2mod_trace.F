@@ -223,6 +223,8 @@ c======================================================================
       subroutine b2trcs
       implicit none
 c*** - to be called BEFORE each timestep
+      l2rdldt = .false.
+      l2rdldw = .false.
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blncs
       if(filedata(ntrc_ble)) call b2blnes

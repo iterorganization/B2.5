@@ -23,11 +23,15 @@
       real (kind=R8), allocatable, save ::
      .                             sna_mean(:,:,:),
      .                             smo_mean(:,:,:),
+     .                             smr_mean(:,:,:),
+     .                             smd_mean(:,:,:),
      .                             she_mean(:,:),
      .                             shi_mean(:,:)
       real (kind=R8), allocatable, save ::
      .                             e_sna(:,:,:),
      .                             e_smo(:,:,:),
+     .                             e_smr(:,:,:),
+     .                             e_smd(:,:,:),
      .                             e_she(:,:),
      .                             e_shi(:,:)
 
@@ -77,6 +81,10 @@ c local
      .                                            itp, naver)
       call batch_average (nCv*ns, srw%smo0_eir_tot, avg%smo_mean,
      .                                            itp, naver)
+      call batch_average (nCv*ns, srw%smr0_eir_tot, avg%smr_mean,
+     .                                            itp, naver)
+      call batch_average (nCv*ns, srw%smd0_eir_tot, avg%smd_mean,
+     .                                            itp, naver)
 
 *  calculate squared averaged plasma profiles
       call batch_average_sq (nCv*ns, pl%na, avg%e_na, itp, naver)
@@ -96,6 +104,10 @@ c local
       call batch_average_sq (nCv,    srw%shn0_eir_tot, avg%e_shn,
      .                                            itp, naver)
       call batch_average_sq (nCv*ns, srw%smo0_eir_tot, avg%e_smo,
+     .                                            itp, naver)
+      call batch_average_sq (nCv*ns, srw%smr0_eir_tot, avg%e_smr,
+     .                                            itp, naver)
+      call batch_average_sq (nCv*ns, srw%smd0_eir_tot, avg%e_smd,
      .                                            itp, naver)
 
       call subend ()
@@ -137,11 +149,15 @@ c local variables
 
          allocate (avg%sna_mean(nCv,0:ns-1))
          allocate (avg%smo_mean(nCv,0:ns-1))
+         allocate (avg%smr_mean(nCv,0:ns-1))
+         allocate (avg%smd_mean(nCv,0:ns-1))
          allocate (avg%she_mean(nCv))
          allocate (avg%shi_mean(nCv))
          allocate (avg%shn_mean(nCv))
          allocate (avg%e_sna(nCv,0:ns-1))
          allocate (avg%e_smo(nCv,0:ns-1))
+         allocate (avg%e_smr(nCv,0:ns-1))
+         allocate (avg%e_smd(nCv,0:ns-1))
          allocate (avg%e_she(nCv))
          allocate (avg%e_shi(nCv))
          allocate (avg%e_shn(nCv))
@@ -170,16 +186,21 @@ c local variables
       avg % shi_mean = 0.0_R8
       avg % shn_mean = 0.0_R8
       avg % smo_mean = 0.0_R8
+      avg % smr_mean = 0.0_R8
+      avg % smd_mean = 0.0_R8
       avg % e_sna = 0.0_R8
       avg % e_she = 0.0_R8
       avg % e_shi = 0.0_R8
       avg % e_shn = 0.0_R8
       avg % e_smo = 0.0_R8
+      avg % e_smr = 0.0_R8
+      avg % e_smd = 0.0_R8
 
       if (iav_cont > 0) then
 
          naver = 0
          ntotdt = 0
+
 #ifndef LEGACYCOMP
          open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
@@ -188,6 +209,7 @@ c local variables
          open (unit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 #endif
+
          io = iex
          read (iun,'(A10)',iostat=io) check
 *  read 2d averaged plasma profiles from b2fstati_run_av
@@ -217,6 +239,10 @@ c local variables
               call cfrure (iun, nCv,    avg%shi_mean, 'shi_mean')
               call cfrure (iun, nCv,    avg%shn_mean, 'shn_mean')
               call cfrure (iun, nCv*ns, avg%smo_mean, 'smo_mean')
+              if (b2faveri_version.ge.'03.002.001') then
+                call cfrure (iun, nCv*ns, avg%smr_mean, 'smr_mean')
+                call cfrure (iun, nCv*ns, avg%smd_mean, 'smd_mean')
+              end if
             end if
 
 *  read 2d averaged squared plasma profiles from b2fstati_run_var
@@ -235,6 +261,11 @@ c local variables
               call cfrure (iun, nCv,    avg%e_shi, 'e_shi')
               call cfrure (iun, nCv,    avg%e_shn, 'e_shn')
               call cfrure (iun, nCv*ns, avg%e_smo, 'e_smo')
+              if (b2faveri_version.ge.'03.002.001') then
+                call cfrure (iun, nCv*ns, avg%e_smr, 'e_smr')
+                call cfrure (iun, nCv*ns, avg%e_smd, 'e_smd')
+              end if
+
             end if
 
          else
@@ -256,7 +287,7 @@ c local variables
       implicit none
       type(B2Average), intent(inout) :: avg
 
-      if (.not.allocated(avg%na_mean)) then
+      if (allocated(avg%na_mean)) then
 
         deallocate (avg%na_mean)
         deallocate (avg%ua_mean)
@@ -274,18 +305,22 @@ c local variables
         deallocate (avg%e_zt)
         deallocate (avg%sna_mean)
         deallocate (avg%smo_mean)
+        deallocate (avg%smr_mean)
+        deallocate (avg%smd_mean)
         deallocate (avg%she_mean)
         deallocate (avg%shi_mean)
         deallocate (avg%shn_mean)
         deallocate (avg%e_sna)
         deallocate (avg%e_smo)
+        deallocate (avg%e_smr)
+        deallocate (avg%e_smd)
         deallocate (avg%e_she)
         deallocate (avg%e_shi)
         deallocate (avg%e_shn)
 
       endif
 
-      if (.not.allocated(sni_underrelax)) then
+      if (allocated(sni_underrelax)) then
 
         deallocate (sni_underrelax)
         deallocate (smo_underrelax)
@@ -304,7 +339,7 @@ c local variables
       type(B2Average), intent(in) :: avg
       character(*) :: savefile
 c local variables
-      integer :: idum(0:2), iun
+      integer :: idum(0:3), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
 #ifdef LEGACYCOMP
@@ -360,6 +395,8 @@ c local variables
          call cfwure (iun, nCv,    avg%shi_mean, 'shi_mean')
          call cfwure (iun, nCv,    avg%shn_mean, 'shn_mean')
          call cfwure (iun, nCv*ns, avg%smo_mean, 'smo_mean')
+         call cfwure (iun, nCv*ns, avg%smr_mean, 'smr_mean')
+         call cfwure (iun, nCv*ns, avg%smd_mean, 'smd_mean')
 
       end if
 
@@ -380,6 +417,8 @@ c local variables
          call cfwure (iun, nCv,    avg%e_shi, 'e_shi')
          call cfwure (iun, nCv,    avg%e_shn, 'e_shn')
          call cfwure (iun, nCv*ns, avg%e_smo, 'e_smo')
+         call cfwure (iun, nCv*ns, avg%e_smr, 'e_smr')
+         call cfwure (iun, nCv*ns, avg%e_smd, 'e_smd')
 
       end if
 
@@ -389,15 +428,16 @@ c local variables
          idum(0) = nCv
          idum(1) = nfluids
          idum(2) = nstrata
-         call cfwuin (iun, 3, idum, 'nCv,nfluids,nstrata')
+         idum(3) = size(smo_underrelax,2)
+         call cfwuin (iun, 4, idum, 'nCv,nfluids,nstrata,nflv')
          call cfwure (iun, nCv*nfluids*nstrata, sni_underrelax,
-     .                                          'sni_underrelax')
-         call cfwure (iun, nCv*nfluids*nstrata, smo_underrelax,
-     .                                          'smo_underrelax')
+     .                                         'sni_underrelax')
+         call cfwure (iun, nCv*idum(3)*nstrata, smo_underrelax,
+     .                                         'smo_underrelax')
          call cfwure (iun, nCv*nfluids*nstrata, sei_underrelax,
-     .                                          'sei_underrelax')
+     .                                         'sei_underrelax')
          call cfwure (iun, nCv*nstrata, see_underrelax,
-     .                                          'see_underrelax')
+     .                                         'see_underrelax')
       end if
 
       close (iun)
@@ -430,13 +470,15 @@ c local variables
       return
       end subroutine run_av_get_plasma
 
-      subroutine run_av_get_sources (sna_out, smo_out, she_out, shi_out,
-     &                               shn_out, nCv, ns, avg)
+      subroutine run_av_get_sources (sna_out, smo_out, smr_out, smd_out,
+     &                               she_out, shi_out, shn_out,
+     &                               nCv, ns, avg)
       implicit none
       integer, intent(in) :: nCv, ns
       type(B2Average), intent(in) :: avg
       real (kind=R8), intent(out) ::
      *  sna_out(nCv,0:ns-1), smo_out(nCv,0:ns-1),
+     &  smr_out(nCv,0:ns-1), smd_out(nCv,0:ns-1),
      &  she_out(nCv), shi_out(nCv), shn_out(nCv)
 
       call subini ('run_av_get_sources')
@@ -445,6 +487,8 @@ c only the total sources are averaged, not the linearised components.
 
       sna_out = avg%sna_mean
       smo_out = avg%smo_mean
+      smr_out = avg%smr_mean
+      smd_out = avg%smd_mean
       she_out = avg%she_mean
       shi_out = avg%shi_mean
       shn_out = avg%shn_mean
@@ -454,13 +498,14 @@ c only the total sources are averaged, not the linearised components.
       end subroutine run_av_get_sources
 
 
-      subroutine save_underrelaxed_sources (nCv,nfl,nstra,sni_s,smo_s,
-     .                                      sei_s,see_s)
+      subroutine save_underrelaxed_sources (nCv,nfl,nflv,nstra,
+     .                                      sni_s,smo_s,sei_s,see_s)
       implicit none
 c input
-      integer, intent(in) :: nCv, nfl, nstra
-      real(kind=R8), intent(in) :: sni_s(nCv,nfl,nstra),
-     .  smo_s(nCv,nfl,nstra), sei_s(nCv,nfl,nstra), see_s(nCv,nstra)
+      integer, intent(in) :: nCv, nfl, nflv, nstra
+      real(kind=R8), intent(in) ::
+     .  sni_s(nCv,nfl,nstra), smo_s(nCv,nflv,nstra),
+     .  sei_s(nCv,nfl,nstra), see_s(nCv,nstra)
 c     type(B2Average), intent(in) :: avg
 
 
@@ -471,7 +516,7 @@ c     type(B2Average), intent(in) :: avg
 
       if (.not.allocated(sni_underrelax)) then
          allocate (sni_underrelax(nCv,nfl,nstra))
-         allocate (smo_underrelax(nCv,nfl,nstra))
+         allocate (smo_underrelax(nCv,nflv,nstra))
          allocate (sei_underrelax(nCv,nfl,nstra))
          allocate (see_underrelax(nCv,nstra))
       end if
@@ -515,12 +560,40 @@ c     type(B2Average), intent(in) :: avg
 
       allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
       allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate (smr_mean(-1:nx,-1:ny,0:ns-1))
+      allocate (smd_mean(-1:nx,-1:ny,0:ns-1))
       allocate (she_mean(-1:nx,-1:ny))
       allocate (shi_mean(-1:nx,-1:ny))
       allocate (e_sna(-1:nx,-1:ny,0:ns-1))
       allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate (e_smr(-1:nx,-1:ny,0:ns-1))
+      allocate (e_smd(-1:nx,-1:ny,0:ns-1))
       allocate (e_she(-1:nx,-1:ny))
       allocate (e_shi(-1:nx,-1:ny))
+
+      na_mean = 0.0_R8
+      te_mean = 0.0_R8
+      ti_mean = 0.0_R8
+      ua_mean = 0.0_R8
+      po_mean = 0.0_R8
+      e_na = 0.0_R8
+      e_te = 0.0_R8
+      e_ti = 0.0_R8
+      e_ua = 0.0_R8
+      e_po = 0.0_R8
+
+      sna_mean = 0.0_R8
+      she_mean = 0.0_R8
+      shi_mean = 0.0_R8
+      smo_mean = 0.0_R8
+      smr_mean = 0.0_R8
+      smd_mean = 0.0_R8
+      e_sna = 0.0_R8
+      e_she = 0.0_R8
+      e_shi = 0.0_R8
+      e_smo = 0.0_R8
+      e_smr = 0.0_R8
+      e_smd = 0.0_R8
 
 #ifndef LEGACYCOMP
       open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
@@ -553,11 +626,16 @@ c     type(B2Average), intent(in) :: avg
 
         if (b2faveri_version.ge.'03.000.008') then
           call cfrure (iun, n2*ns, sna_mean, 'sna_mean')
-          call cfrure (iun, n2,    dummy,    'sne_mean')
+          call cfrure_opt (iun, n2,   dummy, 'sne_mean')
           call cfrure (iun, n2,    she_mean, 'she_mean')
           call cfrure (iun, n2,    shi_mean, 'shi_mean')
-          call cfrure (iun, n2,    dummy,    'sch_mean')
+          call cfrure_opt (iun, n2,   dummy, 'sch_mean')
           call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+          if (b2faveri_version.ge.'03.000.009'.and.
+     &        b2faveri_version.ne.'03.001.000') then
+            call cfrure (iun, n2*ns, smr_mean, 'smr_mean')
+            call cfrure (iun, n2*ns, smd_mean, 'smd_mean')
+          end if
         else
           zero = 0.0_R8
           call b2xpne_st ( nx, ny, ns, rza, na_mean, zero, ne_mean)
@@ -565,7 +643,7 @@ c     type(B2Average), intent(in) :: avg
           call cfrure (iun, n2*2*ns, swrk2s, 'sna_mean')
           sna_mean(:,:,:) = swrk2s(:,:,0,:) +
      .                      swrk2s(:,:,1,:) * na_mean(:,:,:)
-          call cfrure (iun, n2*2,    swrk2 , 'sne_mean')
+          call cfrure_opt (iun, n2*2, swrk2, 'sne_mean')
           call cfrure (iun, n2*4,    swrk4 , 'she_mean')
           she_mean(:,:) = swrk4(:,:,0) +
      .                    swrk4(:,:,1) * ne_mean(:,:) +
@@ -576,7 +654,7 @@ c     type(B2Average), intent(in) :: avg
      .                    swrk4(:,:,1) * ni_mean(:,:,0) +
      .                    swrk4(:,:,2) * ti_mean(:,:) +
      .                    swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
-          call cfrure (iun, n2*4,    swrk4 , 'sch_mean')
+          call cfrure_opt (iun, n2*4, swrk4, 'sch_mean')
           call cfrure (iun, n2*4*ns, swrk4s, 'smo_mean')
           do is = 0, ns-1
             smo_mean(:,:,is) = swrk4s(:,:,0,is) +
@@ -599,16 +677,21 @@ c     type(B2Average), intent(in) :: avg
 
           if (b2faveri_version.ge.'03.000.008') then
             call cfrure (iun, n2*ns, e_sna, 'e_sna')
-            call cfrure (iun, n2,    dummy, 'e_sne')
+            call cfrure_opt (iun, n2,dummy, 'e_sne')
             call cfrure (iun, n2,    e_she, 'e_she')
             call cfrure (iun, n2,    e_shi, 'e_shi')
-            call cfrure (iun, n2,    dummy, 'e_sch')
+            call cfrure_opt (iun, n2,dummy, 'e_sch')
             call cfrure (iun, n2*ns, e_smo, 'e_smo')
+            if (b2faveri_version.ge.'03.000.009'.and.
+     &          b2faveri_version.ne.'03.001.000') then
+              call cfrure (iun, n2*ns, e_smr, 'e_smr')
+              call cfrure (iun, n2*ns, e_smd, 'e_smd')
+            end if
           else
             call cfrure (iun, n2*2*ns, swrk2s, 'e_sna')
             e_sna(:,:,:) = swrk2s(:,:,0,:) +
      .                     swrk2s(:,:,1,:) * na_mean(:,:,:)
-            call cfrure (iun, n2*2,    swrk2 , 'e_sne')
+            call cfrure_opt (iun, n2*2, swrk2, 'e_sne')
             call cfrure (iun, n2*4,    swrk4 , 'e_she')
             e_she(:,:) = swrk4(:,:,0) +
      .                   swrk4(:,:,1) * ne_mean(:,:) +
@@ -619,7 +702,7 @@ c     type(B2Average), intent(in) :: avg
      .                   swrk4(:,:,1) * ni_mean(:,:,0) +
      .                   swrk4(:,:,2) * ti_mean(:,:) +
      .                   swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
-            call cfrure (iun, n2*4,    swrk4 , 'e_sch')
+            call cfrure_opt (iun, n2*4, swrk4, 'e_sch')
             call cfrure (iun, n2*4*ns, swrk4s, 'e_smo')
             do is = 0, ns-1
               e_smo(:,:,is) = swrk4s(:,:,0,is) +
@@ -652,27 +735,33 @@ c     type(B2Average), intent(in) :: avg
       deallocate (e_po)
       deallocate (sna_mean)
       deallocate (smo_mean)
+      deallocate (smr_mean)
+      deallocate (smd_mean)
       deallocate (she_mean)
       deallocate (shi_mean)
       deallocate (e_sna)
       deallocate (e_smo)
+      deallocate (e_smr)
+      deallocate (e_smd)
       deallocate (e_she)
       deallocate (e_shi)
 
       return
       end subroutine dealloc_avg_st
 
-      subroutine read_underrelaxed_sources(nCv, nfl, nstra)
+      subroutine read_underrelaxed_sources(nCv, nfl, nstra, nflv)
       implicit none
 c input
-      integer, intent(in) :: nCv, nfl, nstra
-c nfl is the number of species indices for the EIRENE sources sni, smo, and sei, =/= ns in B2.5
+      integer, intent(in) :: nCv, nfl, nstra, nflv
+c nfl is the number of species indices for the EIRENE sources
+c sni, smo, smr, smd, and sei, =/= ns in B2.5
+c nflv is the number of species multiplied by the dimensionality
+c      of the momentum sources (=nfl for parallel momentum only,
+c                               =3*nfl for vectorial momentum sources)
 c local variables
-      integer :: io, iun, idum(0:2), iex
+      integer :: io, iun, idum(0:3), iex
       character :: check*10, line*51
-      character lbli*120
-      character*10 :: version
-      logical :: found
+      logical :: found, no_vector
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
@@ -682,7 +771,7 @@ c local variables
 
       if(.not.allocated(sni_underrelax)) then
           allocate (sni_underrelax(nCv,nfl,nstra))
-          allocate (smo_underrelax(nCv,nfl,nstra))
+          allocate (smo_underrelax(nCv,nflv,nstra))
           allocate (sei_underrelax(nCv,nfl,nstra))
           allocate (see_underrelax(nCv,nstra))
       end if
@@ -711,25 +800,48 @@ c local variables
             call xerrab('Underrelaxed sources not found before EOF')
           end if
           if (trim(line) ==
+     .    '*cf:    int                4    nCv,nfluids,nstrata,nflv')
+     .     then
+            found = .true.
+            no_vector = .false.
+            exit
+          elseif (trim(line) ==
      .    '*cf:    int                3    nCv,nfluids,nstrata') then
             found = .true.
+            no_vector = .true.
             exit
           end if
         end do
         backspace iun
-        call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
-        if (idum(0).ne.nCv) call xerrab('nCv not consistent')
-        if (idum(1).ne.nfl) call xerrab('nfl not consistent')
-        if (idum(2).ne.nstra) call xerrab('nstra not consistent')
+        call xertst( found,
+     .   'Underrelaxed sources not found in b2faveri!')
+        if (no_vector) then
+          call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
+          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
+          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
+          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
+        else
+          call cfruin (iun, 4, idum, 'nCv,nfluids,nstrata,nflv')
+          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
+          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
+          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
+          if (idum(3).ne.nflv)
+     .     call xerrab ('vector dimension not consistent')
+        end if
         call cfrure (iun, nCv*nfl*nstra, sni_underrelax,
      .                                  'sni_underrelax')
-        call cfrure (iun, nCv*nfl*nstra, smo_underrelax,
-     .                                  'smo_underrelax')
+        if (.not.no_vector) then
+          call cfrure (iun, nCv*nflv*nstra, smo_underrelax,
+     .                                     'smo_underrelax')
+        else
+          call cfrure (iun, nCv*nfl*nstra, smo_underrelax(:,1:nfl,:),
+     .                                    'smo_underrelax')
+        end if
         call cfrure (iun, nCv*nfl*nstra, sei_underrelax,
      .                                  'sei_underrelax')
         call cfrure (iun, nCv*nstra,    see_underrelax,
      .                                 'see_underrelax')
-        write (*,*) ' eirene_underrelaxed_sources read succesfully '
+        write (*,*) 'Eirene underrelaxed sources read successfully'
       else
         call xerrab('NO FILE b2faveri FOUND')
       end if

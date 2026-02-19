@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,            !srv 29.01.20 {
-     &  geo, mpg, pl, dv, co, co_ns, rt, st_ext)
+     &  geo, mpg, pl, dv, co, co_ns, rt, srw, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
@@ -34,8 +34,9 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type(B2Plasma), intent (in) :: pl
-      type(B2Rates), intent (in) :: rt
+      type (B2Plasma), intent (in) :: pl
+      type (B2Rates), intent (in) :: rt
+      type (B2SourceWork), intent (in) :: srw
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
@@ -123,7 +124,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       else
 *     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
         call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
-     &    dv%facdrift, dv%fac_ExB, pl,
+     &    dv%facdrift, dv%fac_ExB, pl, srw,
      &    dv%fna, co%csigin, dv%fchin)                                   !srv 11.05.09
 *     ..compute poloidal and radial components of divergent part of diamagnetic current
         call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv)
