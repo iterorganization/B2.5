@@ -45,7 +45,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFt, ireg, ic
+      integer i, iCv, iFt, ireg
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk(nCv), wrkv(nVx)
