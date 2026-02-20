@@ -26,6 +26,8 @@
       integer :: i
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)
+      real (kind=R8), allocatable :: dsl(:), dsi(:), dsa(:),
+     1     dsr(:), dstl(:), dstr(:)
       real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifndef NO_GETENV
@@ -42,8 +44,6 @@
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
-      real (kind=R8), allocatable :: dsl(:), dsi(:), dsa(:),
-     1     dsr(:), dstl(:), dstr(:)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
@@ -57,6 +57,7 @@
       write(*,*) 'b2co_time_cdf ...'
 
       call xertst (1.le.ns, 'faulty parameter ns')
+      call xertst (0.le.nnatmi, 'faulty parameter nnatmi')
       call xertst (0.le.nnmoli, 'faulty parameter nnmoli')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty parameter ismain')

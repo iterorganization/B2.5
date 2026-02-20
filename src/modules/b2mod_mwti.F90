@@ -126,6 +126,7 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
+         namxip(ns,nncutmax), namxap(ns,nncutmax), &
          pomxip(nncutmax), pomxap(nncutmax)
 #ifdef WG_TODO
     real (kind=R8) :: &
@@ -144,19 +145,23 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer i, j, k, is, iCv, iFc, ireg
+    integer i, j, is, iCv, iFc, ireg
     integer target_offset
 
-    real(kind=R8) :: fettmp, fdir
-    real(kind=R8), allocatable :: ptf(:,:), taf(:,:), uaf(:,:)
+    real (kind=R8) :: fettmp, fdir
+    real (kind=R8), allocatable :: ptf(:,:), taf(:,:), uaf(:,:)
+    real (kind=R8), allocatable, save :: dsl(:), dsi(:), dsa(:), dsr(:), dstl(:), dstr(:)
+    real (kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
+    real (kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
     integer, save :: write_2d = 0
     integer, save :: nc, ntstep, nastep
     integer, save :: gridGeometry, plasmaGeometry
     integer, allocatable :: fclist(:)
+    logical :: file_exists
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
     integer, allocatable :: cvlist(:), cnlist(:)
-    integer imap(maxvdims), iret, iCv1, iCv2, iFt, iatm, imol, cvtrg
+    integer imap(maxvdims), iret, iCv1, iCv2, iFt, iatm, imol, k, cvtrg
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8), allocatable :: fcOr(:)
@@ -171,18 +176,13 @@ contains
          dnsepm(nncutmax), dpsepm(nncutmax), kesepm(nncutmax), &
          kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
          vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax), &
-         namxip(ns,nncutmax), namxap(ns,nncutmax), &
          ktsepm(nncutmax), ktsepi(nncutmax), ktsepa(nncutmax)
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1)
     real (kind=R8) :: &
          timesa(1), batchsa(1), tstepn(1), icsepimpn(1), icsepompn(1)
-    real (kind=R8), allocatable, save :: dsl(:), dsi(:), dsa(:), dsr(:), dstl(:), dstr(:)
-    real (kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
-    real (kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
     real (kind=R8), allocatable :: slice(:), slice_ns(:,:), slice_natm(:,:), slice_nmol(:,:), wrkc(:)
     logical ex
-    logical :: file_exists
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
