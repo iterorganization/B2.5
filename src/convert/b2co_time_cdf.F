@@ -18,6 +18,7 @@
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
+      real (kind=R8) :: dsl(-1:ny), dsi(-1:ny), dsa(-1:ny), dsr(-1:ny)
 #ifndef NO_CDF
       real (kind=R8) :: tim
       logical :: batch_only
@@ -37,8 +38,7 @@
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
-      real (kind=R8) :: dsl(-1:ny), dsi(-1:ny), dsa(-1:ny),
-     1     dsr(-1:ny), dstl(-1:ny), dstr(-1:ny)
+      real (kind=R8) :: dstl(-1:ny), dstr(-1:ny)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
@@ -51,6 +51,9 @@
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
+      call xertst (1.le.ns, 'faulty parameter ns')
+      call xertst (0.le.nnatmi, 'faulty parameter nnatmi')
+      call xertst (0.le.nnmoli, 'faulty parameter nnmoli')
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)

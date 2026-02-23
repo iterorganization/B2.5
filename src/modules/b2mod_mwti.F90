@@ -118,7 +118,8 @@ contains
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
          pomxip(nncutmax), pomxap(nncutmax), &
-         tpmxip(nncutmax), tpmxap(nncutmax)
+         tpmxip(nncutmax), tpmxap(nncutmax), &
+         namxip(ns,nncutmax), namxap(ns,nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
@@ -142,6 +143,10 @@ contains
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
     integer, save :: ntstep, nastep
+    real(kind=R8), allocatable, save :: dsl(:), dsi(:), dsa(:), dsr(:), dstl(:), dstr(:)
+    real(kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
+    real(kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
+    logical :: file_exists
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
     integer, save :: nya, nyi, nybl, nybr, nytl, nytr
@@ -158,8 +163,7 @@ contains
          posepi(nncutmax), posepm(nncutmax), posepa(nncutmax), &
          dnsepm(nncutmax), dpsepm(nncutmax), kesepm(nncutmax), &
          kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
-         vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax), &
-         namxip(ns,nncutmax), namxap(ns,nncutmax)
+         vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax)
     real (kind=R8), allocatable :: &
          na3dl(:,:), na3di(:,:), na3da(:,:), na3dr(:,:), na3dtl(:,:), na3dtr(:,:), &
          fn3dl(:,:), fn3dr(:,:), fn3dtl(:,:), fn3dtr(:,:), &
@@ -176,12 +180,8 @@ contains
          jxan(1), jxin(1), jsepn(1)
     real (kind=R8) :: &
          timesa(1), batchsa(1)
-    real(kind=R8), allocatable, save :: dsl(:), dsi(:), dsa(:), dsr(:), dstl(:), dstr(:)
-    real(kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
-    real(kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
     real (kind=R8), save :: stim = 0.0_R8
     logical ex
-    logical :: file_exists
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
