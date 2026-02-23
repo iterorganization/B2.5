@@ -1,4 +1,4 @@
-      subroutine b2urbp(nx, ny, ns, vol, rza, pbs, po, te, ti, ne, na,
+      subroutine b2urbp(nx, ny, ns, rza, pbs, po, te, ti, ne, na,
      &                  fch, sch, nmb, conv)
       use b2mod_types
       use b2mod_indirect
@@ -10,7 +10,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer :: nx, ny, ns
-      real (kind=R8) :: vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
+      real (kind=R8) :: po(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny)
       real (kind=R8) :: pbs(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), sch(-1:nx,-1:ny,0:3)
@@ -36,13 +36,13 @@
 *.declarations
 
 *   ..local variables
-      integer :: ix, iy, is, iw, j
+      integer :: ix, iy, is, iw
       integer, parameter :: maxd = 14
       real (kind=R8) :: pz(-1:nx,-1:ny), rz(-1:nx,-1:ny)
       real (kind=R8) :: s1, vte, cs, t0, fchi, fche, fch_real_bc,
      &     wdim(maxd)
-      real (kind=R8) :: fchi_code, fche_code, fch_code, seec, dif,
-     &     res, dif_real_bc, res_code, res_bc, fch_sch
+      real (kind=R8) :: fch_code, seec,
+     &     res, dif_real_bc, res_bc, fch_sch
       real (kind=R8),save :: epsr=1.0e-2_R8, epsa=1.0e-2_R8
       character(7), save :: folder
       integer, save :: iappend = 0
@@ -100,13 +100,11 @@
      &                sch(ix,iy,2)*ne(ix,iy)+
      &                sch(ix,iy,3)*po(ix,iy)*ne(ix,iy)
             res_bc = fch_sch - fch(rightix(ix,iy),rightiy(ix,iy),0)
-            if(abs(res_bc).ge.abs(fch(rightix(ix,iy),rightiy(ix,iy),0))*
-     *                                        epsr+epsa) conv=.false.
+            if(abs(res_bc).ge.
+     .         abs(fch(rightix(ix,iy),rightiy(ix,iy),0))*epsr+epsa)
+     >       conv=.false.
 
             if(iout.ne.0) then
-              fchi_code = qe*t0
-              fche_code = sqrt(1.0_R8/(2.0_R8*pi))*qe*ne(ix,iy)*vte*s1*
-     &         expu2(max(-50.0_R8,min(0.0_R8,-qe*po(ix,iy)/te(ix,iy))))
               seec = gammae
               t0 = max(fchi,(1.0_R8-seec)*fche)*qe/te(ix,iy)
               fch_code = (1.0_R8-seec)*fche-fchi
@@ -162,12 +160,10 @@
      &                  sch(ix,iy,2)*ne(ix,iy)+
      &                  sch(ix,iy,3)*po(ix,iy)*ne(ix,iy))
             res_bc = fch_sch - fch(ix,iy,0)
-            if(abs(res_bc).ge.abs(fch(ix,iy,0))*epsr+epsa) conv=.false.
+            if(abs(res_bc).ge.abs(fch(ix,iy,0))*epsr+epsa)
+     >       conv=.false.
 
             if(iout.ne.0) then
-              fchi_code = qe*t0
-              fche_code = sqrt(1.0_R8/(2.0_R8*pi))*qe*ne(ix,iy)*vte*s1*
-     &         expu2(max(-50.0_R8,min(0.0_R8,-qe*po(ix,iy)/te(ix,iy))))
               seec = gammae
               t0 = max(fchi,(1.0_R8-seec)*fche)*qe/te(ix,iy)
               fch_code = -((1.0_R8-seec)*fche-fchi)

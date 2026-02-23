@@ -1016,9 +1016,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &                                      'b2news_m_respo_after')
          endif                                                           !srv 12.07.05 }
 
-         call b2urbp(nx, ny, ns, vol, rza, pbs, po, te, ti, ne, na,
+         call b2urbp(nx, ny, ns, rza, pbs, po, te, ti, ne, na,
      &               fch, sch, .true., conv)
-         if(conv) then
+         if(conv .and. solving(3)) then
            if(iout_b2urbp.ne.0) then
              write(701,"(a,i5,a)") ' Convergence achieved in ',ipot,
      &                             ' iterations'
@@ -1027,13 +1027,13 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &                         ' iterations'
          endif                                                           !srv 19.04.25 }
 
-        enddo          ! ipot                                            !srv 19.04.25
+        enddo         ! ipot                                             !srv 19.04.25
 
-        if(iout_b2urbp.ne.0 .and. .not.conv) then
+        if(iout_b2urbp.ne.0 .and. .not.conv .and. solving(3)) then
           write(701,'(a,i5,a)') ' Convergence not achieved within ',
      &                iter_pot, ' iterations'
         endif
-        if (.not.conv)
+        if (.not.conv .and. solving(3))
      &   write(*,'(a,i5,a)') ' Convergence not achieved within ',
      &                iter_pot,' iterations'
       endif           ! if pot_eq                                        !srv 13.07.05
@@ -1424,32 +1424,33 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       subroutine norm_res(nx, ny, respo, rs, text)                       !srv 19.04.25 {
       implicit none
       integer nx, ny
+      integer ix, iy
       real (kind=R8) :: respo(-1:nx,-1:ny), rs(3)
       character(*) :: text
 *     For diagnostic purposes, norm_res calculates the sum
 *     of the residual moduli with and without boundaries.
 *     It is used if the b2urbp_iout key is nonzero.
 
-      t0=0.0_R8
+      t0 = 0.0_R8
       do iy = -1, ny
         t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
       enddo
       write(*,'(a,i3,a,e21.13)') ' ipot =',ipot,
      &  ' respo with boundaries '//text,t0
-      rs(1)=t0  ! respo with boundaries
-      t0=0.0_R8
+      rs(1) = t0  ! respo with boundaries
+      t0 = 0.0_R8
       do iy = 0, ny-1
         t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
       enddo
-      rs(2)=t0 ! respo without N and S boundaries
-      t0=0.0_R8
+      rs(2) = t0 ! respo without N and S boundaries
+      t0 = 0.0_R8
       do iy = -1, ny
         do ix = -1, nx
           if (resignore(ix,iy,1).eq.0) cycle
           t0 = t0 + abs(respo(ix,iy))
         enddo
       enddo
-      rs(3)=t0 !  respo without boundaries
+      rs(3) = t0 !  respo without boundaries
 
       return
       end subroutine norm_res                                            !srv 19.04.25 }
