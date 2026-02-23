@@ -394,7 +394,8 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0,
+     .                       nnatmi, nnmoli
 #ifndef NO_CDF
      .                     , tim, .false.
 #endif
@@ -410,7 +411,8 @@
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0,
+     .                       nnatmi, nnmoli
 #ifndef NO_CDF
      .                     , tim, .true.
 #endif
@@ -469,9 +471,9 @@
           call b2co_movies_cdf
 #ifndef NO_CDF
 #ifdef B25_EIRENE
-     .     (nCv, ns, nnatmi, nnmoli, ncvtot, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, ncvtot, tim)
 #else
-     .     (nCv, ns, nnatmi, nnmoli, 0, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, 0, tim)
 #endif
 #endif
           write(*,*) 'Returned from b2co_movies_cdf'
