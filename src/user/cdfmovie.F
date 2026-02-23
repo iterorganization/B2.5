@@ -1,6 +1,6 @@
       subroutine cdfmovie
 #ifndef NO_CDF
-     . (ncid,nCv,nCi,ns,geo,state,switch)
+     . (ncid,nCv,nFc,nCi,ns,geo,state,switch)
       use b2mod_types
       use b2mod_time
       use b2us_geo
@@ -8,6 +8,7 @@
       use b2mod_dimensions
       use b2mod_movies
       use b2mod_constants
+      use b2mod_b2cmpa
 #ifdef B25_EIRENE
       use eirmod_parmmod
      ,   , ncv_eir => ncv
@@ -22,7 +23,7 @@
       use b2mod_switches
       use b2mod_subsys
       implicit none
-      integer ncid, nCv, nCi, ns
+      integer ncid, nCv, nFc, nCi, ns
       type (geometry), intent(in) :: geo
       type (B2State), intent(in) :: state
       type (switches), intent(in) :: switch
@@ -30,7 +31,8 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns)
+      real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns),
+     & dummynFc(1:nFc), dummy3nFc(1:nFc, 1:ns)
 #ifdef B25_EIRENE
       integer nstrad
       integer iatmi, imoli, istra
@@ -42,9 +44,13 @@
       integer is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
+      integer ni_lb
       integer, save :: write_b25_state_variables = 1
+      integer, save :: write_b25_fluxes = 0
       integer, save :: write_b25_sources = 0
+      integer, save :: write_b25_transport = 0
       integer, save :: write_eirene_state_variables = 0
+      integer, save :: write_eirene_fluxes = 0
       integer, save :: write_eirene_sources = 0
       integer, save :: write_triangles = 0
       character*256, save :: filename
@@ -54,9 +60,12 @@
 
       call ipgeti ('cdfmovie_b25_state_variables',
      1  write_b25_state_variables)
+      call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
       call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
+      call ipgeti ('cdfmovie_b25_transport', write_b25_transport)
       call ipgeti ('cdfmovie_eirene_state_variables',
      1  write_eirene_state_variables)
+      call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       call ipgeti ('cdfmovie_triangles', write_triangles)
 
@@ -78,111 +87,169 @@
           end if
 #ifdef B25_EIRENE
           call create_cdf_start(ncid, filename,
-     &     nCv, ns, nnatmi, nnmoli, ncvtot)
+     &     nCv, nFc, ns, nnatmi, nnmoli, ncvtot)
 #else
           call create_cdf_start(ncid, filename,
-     &     nCv, ns, nnatmi, nnmoli, nCi+1)
+     &     nCv, nFc, ns, nnatmi, nnmoli, nCi+1)
 #endif
           if (write_b25_state_variables.ge.1) then
-            call create_cdf_field3(ncid, 'na', 1,
+            call create_cdf_field3(ncid, 'na', 1, 1,
      1       'Ion density', 'm^-3')
-            call create_cdf_field2(ncid, 'ne',
+            call create_cdf_field2(ncid, 'ne', 1,
      1       'Electron density', 'm^-3')
-            call create_cdf_field2(ncid, 'te',
+            call create_cdf_field3(ncid, 'ua', 1, 1,
+     1       'Ion parallel velocity', 'm s^-1')
+            call create_cdf_field2(ncid, 'te', 1,
      1       'Electron temperature', 'eV')
-            call create_cdf_field2(ncid, 'ti',
+            call create_cdf_field2(ncid, 'ti', 1,
      1       'Ion temperature', 'eV')
-            call create_cdf_field2(ncid, 'po',
+            call create_cdf_field2(ncid, 'po', 1,
      1       'Electric potential', 'V')
           endif
+          if (write_b25_fluxes.ge.1) then
+            call create_cdf_field3(ncid, 'fnax', 2, 1,
+     1       'Poloidal particle flux', 's^-1')
+            call create_cdf_field3(ncid, 'fnay', 2, 1,
+     1       'Radial particle flux', 's^-1')
+            call create_cdf_field2(ncid, 'fhex', 2,
+     1       'Poloidal electron heat flux', 'W')
+            call create_cdf_field2(ncid, 'fhey', 2,
+     1       'Radial electron heat flux', 'W')
+            call create_cdf_field2(ncid, 'fhix', 2,
+     1       'Poloidal ion heat flux', 'W')
+            call create_cdf_field2(ncid, 'fhiy', 2,
+     1       'Radial ion heat flux', 'W')
+            call create_cdf_field2(ncid, 'fchx', 2,
+     1       'Poloidal electric current', 'A')
+            call create_cdf_field2(ncid, 'fchy', 2,
+     1       'Radial electric current', 'A')
+          endif
           if (write_b25_sources.ge.1) then
-            call create_cdf_field3(ncid, 'rsana', 1,
+            call create_cdf_field3(ncid, 'rsana', 1, 1,
      1       'Volumetric ionisation rate', 'm^-3 s^-1')
-            call create_cdf_field3(ncid, 'rsahi', 1,
+            call create_cdf_field3(ncid, 'rsahi', 1, 1,
      1       'Volumetric ionisation energy source/sink', 'W m^-3')
-            call create_cdf_field2(ncid, 'rsahisum',
+            call create_cdf_field2(ncid, 'rsahisum', 1,
      1       'Total volumetric ionisation energy source/sink',
      2       'W m^-3')
-            call create_cdf_field3(ncid, 'rrana', 1,
+            call create_cdf_field3(ncid, 'rrana', 1, 1,
      1       'Volumetric recombination rate', 'm^-3 s^-1')
-            call create_cdf_field3(ncid, 'rrahi', 1,
+            call create_cdf_field3(ncid, 'rrahi', 1, 1,
      1       'Volumetric recombination energy source/sink',
      2       'W m^-3')
-            call create_cdf_field2(ncid, 'rrahisum',
+            call create_cdf_field2(ncid, 'rrahisum', 1,
      1       'Total volumetric recombination energy source/sink',
      2       'W m^-3')
-            call create_cdf_field3(ncid, 'rcxna', 1,
+            call create_cdf_field3(ncid, 'rcxna', 1, 1,
      1       'Volumetric charge exchange rate', 'm^-3 s^-1')
-            call create_cdf_field3(ncid, 'rcxhi', 1,
+            call create_cdf_field3(ncid, 'rcxhi', 1, 1,
      1       'Volumetric charge exchange energy source/sink',
      2       'W m^-3')
-            call create_cdf_field2(ncid, 'rcxhisum',
+            call create_cdf_field2(ncid, 'rcxhisum', 1,
      1       'Total volumetric charge exchange energy source/sink',
      2       'W m^-3')
-            call create_cdf_field3(ncid, 'rqahe', 1,
+            call create_cdf_field3(ncid, 'rqahe', 1, 1,
      1       'Volumetric electron cooling rate', 'W m^-3')
-            call create_cdf_field2(ncid, 'rqahesum',
+            call create_cdf_field2(ncid, 'rqahesum', 1,
      1       'Total volumetric electron cooling rate', 'W m^-3')
-            call create_cdf_field3(ncid, 'rqrad', 1,
+            call create_cdf_field3(ncid, 'rqrad', 1, 1,
      1       'Volumetric line radiation rate', 'W m^-3')
-            call create_cdf_field2(ncid, 'rqradsum',
+            call create_cdf_field2(ncid, 'rqradsum', 1,
      1       'Total volumetric line radiation rate', 'W m^-3')
           endif
+          if (write_b25_transport.ge.1) then
+            call create_cdf_field3(ncid, 'dna', 1, 1,
+     1       'Particle density-driven diffusivity', 'm^-2 s^-1')
+            call create_cdf_field3(ncid, 'dpa', 1, 1,
+     1       'Particle pressure-driven diffusivity', 'm^-2 s^-1')
+            call create_cdf_field2(ncid, 'hci', 1,
+     1       'Ion thermal anomalous diffusivity', 'm^-2 s^-1')
+            call create_cdf_field2(ncid, 'hce', 1,
+     1       'Electron thermal anomalous diffusivity', 'm^-2 s^-1')     
+            call create_cdf_field3(ncid, 'vlax', 1, 1,
+     1       'Poloidal anomalous pinch velocity', 'm s^-1')
+            call create_cdf_field3(ncid, 'vlay', 1, 1,
+     1       'Radial anomalous pinch velocity', 'm s^-1')
+            call create_cdf_field3(ncid, 'vsa', 1, 1,
+     1       'Anomalous viscosity', 'm kg^-1 s^-1') 
+          endif   
 #ifdef B25_EIRENE
           if (write_eirene_state_variables.ge.1) then
             if(nnatmi.gt.0) then
-              call create_cdf_field3(ncid, 'dab2', 2,
+              call create_cdf_field3(ncid, 'dab2', 1, 2,
      1         'Atom density', 'm^-3')
-              call create_cdf_field3(ncid, 'tab2', 2,
+              call create_cdf_field3(ncid, 'tab2', 1, 2,
      1         'Atom temperature', 'eV')
             endif
             if(nnmoli.gt.0) then
-              call create_cdf_field3(ncid, 'dmb2', 3,
+              call create_cdf_field3(ncid, 'dmb2', 1, 3,
      1         'Molecular density', 'm^-3')
-              call create_cdf_field3(ncid, 'tmb2', 3,
+              call create_cdf_field3(ncid, 'tmb2', 1, 3,
      1         'Molecule temperature', 'eV')
+            endif
+          endif
+          if (write_eirene_fluxes.ge.1) then
+            if(nnatmi.gt.0) then
+              call create_cdf_field3(ncid, 'rfluxa', 1, 2,
+     1         'Atomic radial flux density', 'm^-2 s^-1')
+              call create_cdf_field3(ncid, 'pfluxa', 1, 2,
+     1         'Atomic poloidal flux density', 'm^-2 s^-1')
+              call create_cdf_field3(ncid, 'refluxa', 1, 2,
+     1         'Atomic radial energy flux density', 'W m^-2')
+              call create_cdf_field3(ncid, 'pefluxa', 1, 2,
+     1         'Atomic poloidal energy flux density', 'W m^-2')
+            endif
+            if(nnmoli.gt.0) then
+              call create_cdf_field3(ncid, 'rfluxm', 1, 3,
+     1         'Molecular radial flux density', 'm^-2 s^-1')
+              call create_cdf_field3(ncid, 'pfluxm', 1, 3,
+     1         'Molecular poloidal flux density', 'm^-2 s^-1')
+              call create_cdf_field3(ncid, 'refluxm', 1, 3,
+     1         'Molecular radial energy flux density', 'W m^-2')
+              call create_cdf_field3(ncid, 'pefluxm', 1, 3,
+     1         'Molecular poloidal energy flux density', 'W m^-2')
             endif
           endif
           if (write_eirene_sources.ge.1) then
             if(nnatmi.gt.0) then
-              call create_cdf_field3(ncid, 'eirene_papl_sna', 1,
+              call create_cdf_field3(ncid, 'eirene_papl_sna', 1, 1,
      1         'Particle source from atom-plasma interactions',
      2         'm^-3 s^-1')
-              call create_cdf_field3(ncid, 'eirene_pppl_sna', 1,
+              call create_cdf_field3(ncid, 'eirene_pppl_sna', 1, 1,
      1         'Particle source from recombinations',
      2         'm^-3 s^-1')
-              call create_cdf_field2(ncid, 'eirene_eael_she',
+              call create_cdf_field2(ncid, 'eirene_eael_she', 1,
      1         'Electron energy source from atom-plasma interactions',
      2         'W m^-3')
-              call create_cdf_field2(ncid, 'eirene_epel_she',
+              call create_cdf_field2(ncid, 'eirene_epel_she', 1,
      1         'Electron energy source from recombinations',
      2         'W m^-3')
-              call create_cdf_field2(ncid, 'eirene_eapl_shi',
+              call create_cdf_field2(ncid, 'eirene_eapl_shi', 1,
      1         'Ion energy source from atom-plasma interactions',
      2         'W m^-3')
-              call create_cdf_field2(ncid, 'eirene_eppl_shi',
+              call create_cdf_field2(ncid, 'eirene_eppl_shi', 1,
      1         'Ion energy source from recombinations',
      2         'W m^-3')
-              call create_cdf_field3(ncid, 'eneutrad', 2,
+              call create_cdf_field3(ncid, 'eneutrad', 1, 2,
      1         'Volumetric radiation rate due to atoms', 'W m^-3')
-              call create_cdf_field2(ncid, 'eneutradsum',
+              call create_cdf_field2(ncid, 'eneutradsum', 1,
      1         'Total volumetric radiation rate due to atoms',
      2         'W m^-3')
             endif
             if(nnmoli.gt.0) then
-              call create_cdf_field3(ncid, 'eirene_pmpl_sna', 1,
+              call create_cdf_field3(ncid, 'eirene_pmpl_sna', 1, 1,
      1         'Particle source from molecule-plasma interactions',
      2         'm^-3 s^-1')
-              call create_cdf_field2(ncid, 'eirene_emel_she',
+              call create_cdf_field2(ncid, 'eirene_emel_she', 1,
      1         'Electron energy source from molecule-plasma ' //
      2         'interactions', 'W m^-3')
-              call create_cdf_field2(ncid, 'eirene_empl_shi',
+              call create_cdf_field2(ncid, 'eirene_empl_shi', 1,
      1         'Ion energy source from molecule-plasma ' //
      2         'interactions', 'W m^-3')
-              call create_cdf_field3(ncid, 'emolrad', 3,
+              call create_cdf_field3(ncid, 'emolrad', 1, 3,
      1         'Volumetric radiation rate due to molecules',
      2         'W m^-3')
-             call create_cdf_field2(ncid, 'emolradsum',
+             call create_cdf_field2(ncid, 'emolradsum', 1,
      1         'Total volumetric radiation rate due to molecules',
      2         'W m^-3')
             endif
@@ -209,7 +276,7 @@
             write(6,'(a)') trim(filename_tri)//' will be created'
           end if
           call create_cdf_start(ncid, filename_tri,
-     &     nCv, ns, nnatmi, nnmoli, ncvtot-1)
+     &     nCv, nFc, ns, nnatmi, nnmoli, ncvtot-1)
           if (nnatmi.gt.0) then
             call create_cdf_field_tri(ncid, 'pdena', 1,
      1       'Atom particle density', 'm^-3')
@@ -248,6 +315,8 @@
         call put_cdf_field3(ncid,'na',state%pl%na,nCv,ns)
         write(*,*) 'put_cdf_field2: ne'
         call put_cdf_field2(ncid,'ne',state%dv%ne,nCv)
+        write(*,*) 'put_cdf_field3: ua'
+        call put_cdf_field3(ncid,'ua',state%pl%ua,nCv,ns)
         write(*,*) 'put_cdf_field2: te'
         dummy(:) = state%pl%te(:)/qe
         call put_cdf_field2(ncid,'te',dummy,nCv)
@@ -256,6 +325,32 @@
         call put_cdf_field2(ncid,'ti',dummy,nCv)
         write(*,*) 'put_cdf_field2: po'
         call put_cdf_field2(ncid,'po',state%pl%po,nCv)
+      endif
+      if (write_b25_fluxes.ge.1) then
+        dummy3nFc(:,:) = state%dv%fna(:,0,:)
+        write(*,*) 'put_cdf_field3: fnax'
+        call put_cdf_field3(ncid,'fnax',dummy3nFc,nFc,ns)
+        dummy3nFc(:,:) = state%dv%fna(:,1,:)
+        write(*,*) 'put_cdf_field3: fnay'
+        call put_cdf_field3(ncid,'fnay',dummy3nFc,nFc,ns)
+        dummynFc(:) = state%dv%fhe(:,0)
+        write(*,*) 'put_cdf_field2: fhex'
+        call put_cdf_field2(ncid,'fhex',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhe(:,1)
+        write(*,*) 'put_cdf_field2: fhey'
+        call put_cdf_field2(ncid,'fhey',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhi(:,0)
+        write(*,*) 'put_cdf_field2: fhix'
+        call put_cdf_field2(ncid,'fhix',dummynFc,nFc)
+        dummynFc(:) = state%dv%fhi(:,1)
+        write(*,*) 'put_cdf_field2: fhiy'
+        call put_cdf_field2(ncid,'fhiy',dummynFc,nFc)
+        dummynFc(:) = state%dv%fch(:,0)
+        write(*,*) 'put_cdf_field2: fchx'
+        call put_cdf_field2(ncid,'fchx',dummynFc,nFc)
+        dummynFc(:) = state%dv%fch(:,1)
+        write(*,*) 'put_cdf_field2: fchy'
+        call put_cdf_field2(ncid,'fchy',dummynFc,nFc)
       endif
       if (write_b25_sources.ge.1) then
         dummy3 = 0.0_R8
@@ -339,6 +434,46 @@
         write(*,*) 'put_cdf_field2: rqradsum'
         call put_cdf_field2(ncid,'rqradsum',dummy,nCv)
       endif
+      if (write_b25_transport.ge.1) then
+        write(*,*) 'put_cdf_field3: dna'
+        call put_cdf_field3(ncid,'dna',state%co%dna0,nCv,ns)
+        write(*,*) 'put_cdf_field3: dpa'
+        do is=0,ns-1
+          if (switch%tn_style.eq.0) then
+            dummy3(:,is) = state%co%dpa0(:,is)*(state%rt%rza(:,is)* 
+     .            state%pl%te(:)+state%pl%ti(:))
+          else
+            dummy3(:,is) = state%co%dpa0(:,is)*state%pl%tn(:)
+          endif
+        enddo
+        call put_cdf_field3(ncid,'dpa',dummy3,nCv,ns)
+        write(*,*) 'put_cdf_field2: hci'
+        ni_lb = lbound(state%dv%ni,2)
+        if (switch%tn_style.eq.0) then
+          dummy(:) = state%co%hci0(:)/ state%dv%ni(:,ni_lb)
+        else if (switch%tn_style.eq.1) then
+          dummy(:) = state%co%hci0(:)/state%dv%ni(:,ni_lb+1)
+        else if (switch%tn_style.eq.2) then
+          dummy(:) = state%co%hci0(:) /
+     .                (state%dv%ni(:,ni_lb) - state%dv%nn(:))
+        end if
+        call put_cdf_field2(ncid,'hci',dummy,nCv)
+        write(*,*) 'put_cdf_field2: hce'
+        dummy(:) = state%co%hce0(:)/state%dv%ne(:)
+        call put_cdf_field2(ncid,'hce',dummy,nCv)
+        write(*,*) 'put_cdf_field3: vlax'
+        dummy3(:,:) = state%co%vla0(:,0,:)
+        call put_cdf_field3(ncid,'vlax',dummy3,nCv,ns)
+        write(*,*) 'put_cdf_field3: vlay'
+        dummy3(:,:) = state%co%vla0(:,1,:)
+        call put_cdf_field3(ncid,'vlay',dummy3,nCv,ns)
+        write(*,*) 'put_cdf_field3: vsa'
+        do is=0,ns-1
+          dummy3(:,is) = state%co%vsa0(:,is)/(mp*am(is)*  
+     .        state%pl%na(:,is))
+        enddo
+        call put_cdf_field3(ncid,'vsa',dummy3,nCv,ns)
+      endif
 #ifdef B25_EIRENE
       if (write_eirene_state_variables.ge.1) then
         if(nnatmi.gt.0) then
@@ -360,6 +495,52 @@
           dummy3mol(1:nCv,1:nnmoli) = tmb2(1:nCv,1:nnmoli,1)/qe
           write(*,*) 'put_cdf_field3: tmb2'
           call put_cdf_field3(ncid,'tmb2',dummy3mol,nCv,nnmoli)
+        endif
+      endif
+      if (write_eirene_fluxes.ge.1) then
+        if(nnatmi.gt.0) then
+          dummy3atm = 0.0_R8
+          dummy3atm(1:nCv,1:nnatmi) =
+     .     rfluxa(1:nCv,1:nnatmi,1)
+          write(*,*) 'put_cdf_field3: rfluxa'
+          call put_cdf_field3(ncid,'rfluxa',dummy3atm,nCv,nnatmi)
+          dummy3atm = 0.0_R8
+          dummy3atm(1:nCv,1:nnatmi) =
+     .     pfluxa(1:nCv,1:nnatmi,1)
+          write(*,*) 'put_cdf_field3: pfluxa'
+          call put_cdf_field3(ncid,'pfluxa',dummy3atm,nCv,nnatmi)
+          dummy3atm = 0.0_R8
+          dummy3atm(1:nCv,1:nnatmi) =
+     .     refluxa(1:nCv,1:nnatmi,1)
+          write(*,*) 'put_cdf_field3: refluxa'
+          call put_cdf_field3(ncid,'refluxa',dummy3atm,nCv,nnatmi)
+          dummy3atm = 0.0_R8
+          dummy3atm(1:nCv,1:nnatmi) =
+     .     pefluxa(1:nCv,1:nnatmi,1)
+          write(*,*) 'put_cdf_field3: pefluxa'
+          call put_cdf_field3(ncid,'pefluxa',dummy3atm,nCv,nnatmi)
+        endif
+        if(nnmoli.gt.0) then
+          dummy3mol = 0.0_R8
+          dummy3mol(1:nCv,1:nnmoli) =
+     .     rfluxm(1:nCv,1:nnmoli,1)
+          write(*,*) 'put_cdf_field3: rfluxm'
+          call put_cdf_field3(ncid,'rfluxm',dummy3mol,nCv,nnmoli)
+          dummy3mol = 0.0_R8
+          dummy3mol(1:nCv,1:nnmoli) =
+     .     pfluxm(1:nCv,1:nnmoli,1)
+          write(*,*) 'put_cdf_field3: pfluxm'
+          call put_cdf_field3(ncid,'pfluxm',dummy3mol,nCv,nnmoli)
+          dummy3mol = 0.0_R8
+          dummy3mol(1:nCv,1:nnmoli) =
+     .     refluxm(1:nCv,1:nnmoli,1)
+          write(*,*) 'put_cdf_field3: refluxm'
+          call put_cdf_field3(ncid,'refluxm',dummy3mol,nCv,nnmoli)
+          dummy3mol = 0.0_R8
+          dummy3mol(1:nCv,1:nnmoli) =
+     .     pefluxm(1:nCv,1:nnmoli,1)
+          write(*,*) 'put_cdf_field3: pefluxm'
+          call put_cdf_field3(ncid,'pefluxm',dummy3mol,nCv,nnmoli)
         endif
       endif
       if (write_eirene_sources.ge.1) then
