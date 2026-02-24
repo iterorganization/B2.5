@@ -2645,14 +2645,14 @@
           ! For that purpose, we chose the face where the magnetic field angle
           ! changes sign and designate it as the field-aligned (non-wall) face.
           if (mod_cell_c >= mpg%ftCvP(iFt,2)) then
-            if (mpg%ftCvP(iFt,2) > 4) then
+            if (mpg%ftCvP(iFt,2) > 2) then
               iFc1 = 0
-              do l = 2, mpg%ftCvP(iFt,2) - 1
+              do l = 1, mpg%ftCvP(iFt,2)
                 iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
                 do k = 1, mpg%cvFcP(iCv,2)
                   iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
                   if (mpg%fcLbl(iFc) > 0) then
-                    if (l > 2) then
+                    if (l > 1) then
                       a = 1.0_R8
                       if (mpg%fcCv(iFc,2) .lt. mpg%fcCv(iFc,1))
      &                  a(1) = -1.0_R8
@@ -2660,7 +2660,7 @@
      &                  a(2) = -1.0_R8
                       if (sign(1.0_R8, gm%fcQalf(iFc,0)*a(1))
      &                 /= sign(1.0_R8, gm%fcQalf(iFc1,0)*a(2))) then
-                        if (l < mpg%ftCvP(iFt,2) - 1) then
+                        if (l < mpg%ftCvP(iFt,2)) then
                           is_mod_fc(iFc) = .false.
                         else
                           is_mod_fc(iFc1) = .false.
