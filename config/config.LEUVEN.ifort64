@@ -32,7 +32,6 @@ FCOPTS   = -g -C -debug all -traceback -check all
 #-warn interfaces
 else
 FCOPTS   = -O2 -xHost
-endif
 
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -fp-model=precise
