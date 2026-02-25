@@ -169,8 +169,7 @@
       call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
-! csc omp array contains guard cells, so take second element (assuming they are sorted)
-      iFt = mpg%cvFt(omp(2))                                     !sv 24.03.99
+      iFt = mpg%cvFt(omp(1))                                     !sv 24.03.99
       tesum(1)=0.0_R8
       tisum(1)=0.0_R8
       nasum(:,1)=0.0_R8
