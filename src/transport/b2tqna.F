@@ -106,7 +106,7 @@
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
       integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0   !srv 02.12.04
-      integer, save :: neo_time_steps = 1, nstg2=1
+      integer, save :: neo_time_steps = 1, nstg2 = 1
       integer, save :: neo_output = 0
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
@@ -2928,7 +2928,6 @@ c        write(*,*) '0: ix = ',ix,' in region ', region(ix,0,0)
 c        write(*,*) 'ny: ix = ',ix,' in region ', region(ix,ny,0)
 c      enddo
 
-
 *   ..obtain input
         call ipgeti ('b2tqna_transpbgr_namelist', transpbgr_namelist)
         if(transpbgr_namelist.ge.1) then
@@ -3021,7 +3020,7 @@ c      enddo
             do is2=0,ns-1
               if((abs(am(is2)-amh(is)).lt.0.5_R8).and.
      &           (abs((zamin(is2)+zamax(is2))/2.0_R8-zah(is)).lt.
-     .              0.5_R8)) then
+     .            0.5_R8)) then
                 isort(ispecies,istate)=is2
               endif
             enddo
@@ -3046,8 +3045,8 @@ c      enddo
         is=0
         do ispecies=0,nsl-1
           if (nclh(ispecies).ne.0) then
-             nclh(is)=nclh(ispecies)
-             is=is+1
+            nclh(is)=nclh(ispecies)
+            is=is+1
           endif
         enddo
         is=0
@@ -3097,71 +3096,71 @@ c      enddo
           thet=0._R8
           ilp(iy)=0._R8
           do ix=ixref,-1,-1
-           if (on_closed_surface(ix,iy)) then
-             theta(ix,iy)=thet
-             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=thet
+              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(leftix(ix,iy),leftiy(ix,iy)))
-             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(rightix(ix,iy),rightiy(ix,iy)))
-            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &                  hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &                  hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &                (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(leftix(ix,iy),leftiy(ix,iy)))
+              hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &                  hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &                  hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &                (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(rightix(ix,iy),rightiy(ix,iy)))
+              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
      &           ((hxpface+hxnface)/2._R8+hxface)
-            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
      &              bb(ix,iy,0)
-           endif
+            endif
           enddo
           do ix=nx,ixref+1,-1
-           if (on_closed_surface(ix,iy)) then
-             theta(ix,iy)=thet
-             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
-     &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
-     &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(leftix(ix,iy),leftiy(ix,iy)))
-             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(rightix(ix,iy),rightiy(ix,iy)))
-            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=thet
+              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
+     &               (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
+              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &                  hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &                  hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &                (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(leftix(ix,iy),leftiy(ix,iy)))
+              hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &                  hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &                  hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &                (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(rightix(ix,iy),rightiy(ix,iy)))
+              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
      &           ((hxpface+hxnface)/2._R8+hxface)
-            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
      &              bb(ix,iy,0)
-           endif
+            endif
           enddo
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-           if (on_closed_surface(ix,iy)) then
-            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
-           endif
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
+            endif
           enddo
         enddo
 
