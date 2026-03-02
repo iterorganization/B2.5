@@ -214,7 +214,7 @@ contains
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
         select case (i)
         case (1)
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl')
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl')
           open(99,file='dsL')
           do j = 1, mpg%divFcP(i,2)
             write(99,*) geo%fcS(fclist(j))
@@ -227,7 +227,7 @@ contains
           close(99)
         case (2)
           if (mpg%nnreg(0).ge.7) then
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl')
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl')
             open(99,file='dsTL')
             do j = 1, mpg%divFcP(i,2)
               write(99,*) geo%fcS(fclist(j))
@@ -239,7 +239,7 @@ contains
             enddo
             close(99)
           else
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr')
             open(99,file='dsR')
             do j = 1, mpg%divFcP(i,2)
               write(99,*) geo%fcS(fclist(j))
@@ -252,7 +252,7 @@ contains
             close(99)
           end if
         case (3)
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr')
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr')
           open(99,file='dsTR')
           do j = 1, mpg%divFcP(i,2)
             write(99,*) geo%fcS(fclist(j))
@@ -264,7 +264,7 @@ contains
           enddo
           close(99)
         case (4)
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr')
           open(99,file='dsR')
           do j = 1, mpg%divFcP(i,2)
             write(99,*) geo%fcS(fclist(j))

@@ -89,33 +89,33 @@
             allocate(dsl(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
         case (2)
           if (mpg%nnreg(0).ge.7) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl',dstl)
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
           else
             if (.not. allocated(dsr)) then
               allocate(dsr(1:mpg%divFcP(i,2)))
             endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
           end if
         case (3)
           if (.not. allocated(dstr)) then
             allocate(dstr(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr',dstr)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
         case (4)
           if (.not. allocated(dsr)) then
             allocate(dsr(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
         end select
         deallocate(fclist)
       end do
