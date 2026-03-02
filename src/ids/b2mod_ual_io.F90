@@ -3562,7 +3562,6 @@ contains
              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%label = species_list( js )
 #    endif
 #   else
-             ks = size( profiles_ggd%neutral( js )%state )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%name(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%name(1) )
              allocate( wall%global_quantities%neutral( js )%name(1) )
@@ -3594,6 +3593,7 @@ contains
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = js
              end do
 #  else
+             ks = size( profiles_ggd%neutral( js )%state )
              allocate( profiles_ggd%neutral( js )%element(1) )
              allocate( profiles_ggd%neutral( js )%name(1) )
              allocate( transport_ggd(1)%neutral( js )%element(1) )
