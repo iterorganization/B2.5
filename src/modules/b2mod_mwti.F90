@@ -126,8 +126,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         namxip(ns,nncutmax), namxap(ns,nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         namxip(ns,nncutmax), namxap(ns,nncutmax)
 #ifdef WG_TODO
     real (kind=R8) :: &
          tpmxip(nncutmax), tpmxap(nncutmax)
@@ -206,7 +206,8 @@ contains
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &
          'invalid main plasma species index ismain')
-    call xertst (is_neutral(ismain0).or.ismain0.eq.ismain, &
+    call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
+         (is_neutral(ismain0).or.ismain0.eq.ismain), &
          'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
@@ -3068,71 +3069,71 @@ contains
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
       do is = 0, ns-1
-         nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
+        nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
       tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
       tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
+        nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
       tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
       tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
+        nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
       tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
       tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
+        namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
       temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
       timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
       pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
+        namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
       temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
@@ -3283,7 +3284,7 @@ contains
   deallocate(dabsepi_av)
   deallocate(tabsepi_av)
   deallocate(dmbsepi_av)
-  deallocate(tmbsepi_av) 
+  deallocate(tmbsepi_av)
   deallocate(posepi_av)
   deallocate(nasepm_av)
   deallocate(nesepm_av)
@@ -3292,7 +3293,7 @@ contains
   deallocate(dabsepm_av)
   deallocate(tabsepm_av)
   deallocate(dmbsepm_av)
-  deallocate(tmbsepm_av) 
+  deallocate(tmbsepm_av)
   deallocate(posepm_av)
   deallocate(nasepa_av)
   deallocate(nesepa_av)
@@ -3301,7 +3302,7 @@ contains
   deallocate(dabsepa_av)
   deallocate(tabsepa_av)
   deallocate(dmbsepa_av)
-  deallocate(tmbsepa_av) 
+  deallocate(tmbsepa_av)
   deallocate(posepa_av)
   deallocate(namxip_av)
   deallocate(nemxip_av)
@@ -3323,7 +3324,7 @@ contains
   deallocate(dabsepi_std)
   deallocate(tabsepi_std)
   deallocate(dmbsepi_std)
-  deallocate(tmbsepi_std) 
+  deallocate(tmbsepi_std)
   deallocate(posepi_std)
   deallocate(nasepm_std)
   deallocate(nesepm_std)
@@ -3332,7 +3333,7 @@ contains
   deallocate(dabsepm_std)
   deallocate(tabsepm_std)
   deallocate(dmbsepm_std)
-  deallocate(tmbsepm_std) 
+  deallocate(tmbsepm_std)
   deallocate(posepm_std)
   deallocate(nasepa_std)
   deallocate(nesepa_std)
@@ -3341,7 +3342,7 @@ contains
   deallocate(dabsepa_std)
   deallocate(tabsepa_std)
   deallocate(dmbsepa_std)
-  deallocate(tmbsepa_std) 
+  deallocate(tmbsepa_std)
   deallocate(posepa_std)
   deallocate(namxip_std)
   deallocate(nemxip_std)
