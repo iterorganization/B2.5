@@ -259,7 +259,8 @@ contains
       else
         open(99,file='dsL')
       end if
-      do iy=-1,ny
+      dsLT = 0.0_R8
+      do iy=iylstrt,iylend
         if(region(-1,iy,0).ne.0) then
           write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)
           dsLT(iy) = gs(rightix(-1,iy),rightiy(-1,iy),0)
@@ -272,7 +273,8 @@ contains
       else
         open(99,file='dsR')
       end if
-      do iy=-1,ny
+      dsRT = 0.0_R8
+      do iy=iyrstrt,iyrend
         if(region(nx,iy,0).ne.0) then
           write(99,*) gs(nx,iy,0)
           dsRT(iy) = gs(nx,iy,0)
@@ -286,6 +288,7 @@ contains
         else
           open(99,file='dsTL')
         end if
+        dsTLT = 0.0_R8
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)
           dsTLT(iy) = gs(ixtl,iy,0)
@@ -297,6 +300,7 @@ contains
         else
           open(99,file='dsTR')
         end if
+        dsTRT = 0.0_R8
         do iy=iytrstrt,iytrend
           write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)
           dsTRT(iy) = gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)
@@ -305,7 +309,8 @@ contains
       endif
       ! Poloidal contact areas
       open(99,file='dsLP')
-      do iy=-1,ny
+      dsLP = 0.0_R8
+      do iy=iylstrt,iylend
         if(region(-1,iy,0).ne.0) then
           write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy),0)
           dsLP(iy) = gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy),0)
@@ -313,7 +318,8 @@ contains
       enddo
       close(99)
       open(99,file='dsRP')
-      do iy=-1,ny
+      dsRP = 0.0_R8
+      do iy=iyrstrt,iyrend
         if(region(nx,iy,0).ne.0) then
           write(99,*) gs(nx,iy,0)*qc(nx,iy,0)
           dsRP(iy) = gs(nx,iy,0)*qc(nx,iy,0)
@@ -322,12 +328,14 @@ contains
       close(99)
       if (nnreg(0).ge.7) then
         open(99,file='dsTLP')
+        dsTLP = 0.0_R8
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)*qc(ixtl,iy,0)
           dsTLP(iy) = gs(ixtl,iy,0)*qc(ixtl,iy,0)
         enddo
         close(99)
         open(99,file='dsTRP')
+        dsTRP = 0.0_R8
         do iy=iytrstrt,iytrend
           write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy),0)
           dsTRP(iy) = gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy),0)
@@ -898,7 +906,7 @@ contains
 #ifndef NO_CDF
     if(nnreg(0).ne.2) then
       do is = 0, ns-1
-         nasepi(is+1,1) = 0.5_R8 * (na(-1+target_offset,jsep,is) + na(topix(-1+target_offset,jsep), topiy(-1+target_offset,jsep), &
+        nasepi(is+1,1) = 0.5_R8 * (na(-1+target_offset,jsep,is) + na(topix(-1+target_offset,jsep), topiy(-1+target_offset,jsep), &
          is))
       end do
       nesepi(1) = 0.5_R8 * (ne(-1+target_offset,jsep)+ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
@@ -906,17 +914,17 @@ contains
       tisepi(1) = 0.5_R8/ev * (ti(-1+target_offset,jsep) + ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi(iatm,1) = 0.5_R8 * (dab2(target_offset,jsep+1,iatm,1) + dab2(topix(target_offset,jsep+1), &
+          dabsepi(iatm,1) = 0.5_R8 * (dab2(target_offset,jsep+1,iatm,1) + dab2(topix(target_offset,jsep+1), &
            topiy(target_offset,jsep+1), iatm, 1))
-           tabsepi(iatm,1) = 0.5_R8/ev * (tab2(target_offset,jsep+1,iatm,1) + tab2(topix(target_offset,jsep+1), &
+          tabsepi(iatm,1) = 0.5_R8/ev * (tab2(target_offset,jsep+1,iatm,1) + tab2(topix(target_offset,jsep+1), &
            topiy(target_offset,jsep+1), iatm, 1))
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi(imol,1) = 0.5_R8 * (dmb2(target_offset,jsep+1,iatm,1) + dmb2(topix(target_offset,jsep+1), &
+          dmbsepi(imol,1) = 0.5_R8 * (dmb2(target_offset,jsep+1,imol,1) + dmb2(topix(target_offset,jsep+1), &
            topiy(target_offset,jsep+1), imol, 1))
-           tmbsepi(imol,1) = 0.5_R8/ev * (tmb2(target_offset,jsep+1,iatm,1) + tmb2(topix(target_offset,jsep+1), &
+          tmbsepi(imol,1) = 0.5_R8/ev * (tmb2(target_offset,jsep+1,imol,1) + tmb2(topix(target_offset,jsep+1), &
            topiy(target_offset,jsep+1), imol, 1))
         end do
       endif
@@ -928,21 +936,21 @@ contains
       posepi(1) = 0.5_R8 * (po(-1+target_offset,jsep) + po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
     else
       do is = 0, ns-1
-         nasepi(is+1,1) = na(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep),is)
+        nasepi(is+1,1) = na(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep),is)
       end do
       nesepi(1) = ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       tesepi(1) = 1.0_R8/ev * te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       tisepi(1) = 1.0_R8/ev * ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi(iatm,1) = dab2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
-           tabsepi(iatm,1) = 1.0_R8/ev * tab2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
+          dabsepi(iatm,1) = dab2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
+          tabsepi(iatm,1) = 1.0_R8/ev * tab2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi(imol,1) = dmb2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
-           tmbsepi(imol,1) = 1.0_R8/ev * tmb2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),iatm,1)
+          dmbsepi(imol,1) = dmb2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),imol,1)
+          tmbsepi(imol,1) = 1.0_R8/ev * tmb2(topix(target_offset,jsep+1),topiy(target_offset,jsep+1),imol,1)
         end do
       endif
       if(xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
@@ -953,21 +961,21 @@ contains
       posepi(1) = po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
     endif
     do is = 0, ns-1
-       nasepm(is+1,1) = 0.5_R8 * (na(jxa,jsep,is)+ na(topix(jxa,jsep),topiy(jxa,jsep),is))
+      nasepm(is+1,1) = 0.5_R8 * (na(jxa,jsep,is)+ na(topix(jxa,jsep),topiy(jxa,jsep),is))
     end do
     nesepm(1) = 0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep)))
     tesepm(1) = 0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
     tisepm(1) = 0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
     if (nnatmi.gt.0) then
       do iatm=1,nnatmi
-         dabsepm(iatm,1) = 0.5_R8 * (dab2(jxa+1,jsep+1,iatm,1)+ dab2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),iatm,1))
-         tabsepm(iatm,1) = 0.5_R8 * (tab2(jxa+1,jsep+1,iatm,1)+ tab2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),iatm,1))/ev
+        dabsepm(iatm,1) = 0.5_R8 * (dab2(jxa+1,jsep+1,iatm,1)+ dab2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),iatm,1))
+        tabsepm(iatm,1) = 0.5_R8 * (tab2(jxa+1,jsep+1,iatm,1)+ tab2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),iatm,1))/ev
       end do
     endif
     if (nnmoli.gt.0) then
       do imol=1,nnmoli
-         dmbsepm(imol,1) = 0.5_R8 * (dmb2(jxa+1,jsep+1,imol,1)+ dmb2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),imol,1))
-         tmbsepm(imol,1) = 0.5_R8 * (tmb2(jxa+1,jsep+1,imol,1)+ tmb2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),imol,1))/ev
+        dmbsepm(imol,1) = 0.5_R8 * (dmb2(jxa+1,jsep+1,imol,1)+ dmb2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),imol,1))
+        tmbsepm(imol,1) = 0.5_R8 * (tmb2(jxa+1,jsep+1,imol,1)+ tmb2(topix(jxa+1,jsep+1),topiy(jxa+1,jsep+1),imol,1))/ev
       end do
     endif
     posepm(1) = 0.5_R8 * (po(jxa,jsep)+ po(topix(jxa,jsep),topiy(jxa,jsep)))
@@ -991,24 +999,24 @@ contains
          (mp*am(ismain)*na(topix(jxa,jsep),topiy(jxa,jsep),ismain)))
     if(nnreg(0).ne.2) then
       do is = 0, ns-1
-         nasepa(is+1,1) = 0.5_R8 * (na(nx-target_offset,jsep,is)+ na(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep),is))
+        nasepa(is+1,1) = 0.5_R8 * (na(nx-target_offset,jsep,is)+ na(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep),is))
       end do
       nesepa(1) = 0.5_R8 * (ne(nx-target_offset,jsep)+ ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
       tesepa(1) = 0.5_R8/ev * (te(nx-target_offset,jsep)+ te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
       tisepa(1) = 0.5_R8/ev * (ti(nx-target_offset,jsep)+ ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa(iatm,1) = 0.5_R8 * (dab2(nx-target_offset+1,jsep+1,iatm,1) + dab2(topix(nx-target_offset+1,jsep+1), &
+          dabsepa(iatm,1) = 0.5_R8 * (dab2(nx-target_offset+1,jsep+1,iatm,1) + dab2(topix(nx-target_offset+1,jsep+1), &
            topiy(nx-target_offset+1,jsep+1), iatm, 1))
-           tabsepa(iatm,1) = 0.5_R8/ev * (tab2(nx-target_offset+1,jsep+1,iatm,1) + tab2(topix(nx-target_offset+1,jsep+1), &
+          tabsepa(iatm,1) = 0.5_R8/ev * (tab2(nx-target_offset+1,jsep+1,iatm,1) + tab2(topix(nx-target_offset+1,jsep+1), &
            topiy(nx-target_offset+1,jsep+1), iatm, 1))
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa(imol,1) = 0.5_R8 * (dmb2(nx-target_offset+1,jsep+1,iatm,1) + dmb2(topix(nx-target_offset+1,jsep+1), &
+          dmbsepa(imol,1) = 0.5_R8 * (dmb2(nx-target_offset+1,jsep+1,imol,1) + dmb2(topix(nx-target_offset+1,jsep+1), &
            topiy(nx-target_offset+1,jsep+1), imol, 1))
-           tmbsepa(imol,1) = 0.5_R8/ev * (tmb2(nx-target_offset+1,jsep+1,iatm,1) + tmb2(topix(nx-target_offset+1,jsep+1), &
+          tmbsepa(imol,1) = 0.5_R8/ev * (tmb2(nx-target_offset+1,jsep+1,imol,1) + tmb2(topix(nx-target_offset+1,jsep+1), &
            topiy(nx-target_offset+1,jsep+1), imol, 1))
         end do
       endif
@@ -1020,21 +1028,21 @@ contains
       posepa(1) = 0.5_R8 *(po(nx-target_offset,jsep)+po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
     else
       do is = 0, ns-1
-         nasepa(is+1,1) = na(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep),is)
+        nasepa(is+1,1) = na(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep),is)
       end do
       nesepa(1) = ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       tesepa(1) = 1.0_R8/ev*te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       tisepa(1) = 1.0_R8/ev*ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa(iatm,1) = dab2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
-           tabsepa(iatm,1) = 1.0_R8/ev*tab2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
+          dabsepa(iatm,1) = dab2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
+          tabsepa(iatm,1) = 1.0_R8/ev*tab2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa(imol,1) = dmb2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
-           tmbsepa(imol,1) = 1.0_R8/ev*tmb2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),iatm,1)
+          dmbsepa(imol,1) = dmb2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),imol,1)
+          tmbsepa(imol,1) = 1.0_R8/ev*tmb2(topix(nx-target_offset+1,jsep+1),topiy(nx-target_offset+1,jsep+1),imol,1)
         end do
       endif
       if(xymap(topix(nx,jsep),topiy(nx,jsep)).gt.0) then
@@ -1046,7 +1054,7 @@ contains
     endif
     if(nncut.eq.2) then
       do is = 0, ns-1
-         nasepa(is+1,2) = 0.5_R8 * (na(ixtr+target_offset,jsep,is)+na(topix(ixtr+target_offset,jsep),&
+        nasepa(is+1,2) = 0.5_R8 * (na(ixtr+target_offset,jsep,is)+na(topix(ixtr+target_offset,jsep),&
          topiy(ixtr+target_offset,jsep),is))
       end do
       nesepa(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+ne(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
@@ -1054,17 +1062,17 @@ contains
       tisepa(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+ti(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))/ev
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa(iatm,2) = 0.5_R8 * (dab2(ixtr+target_offset+1,jsep+1,iatm,1) + dab2(topix(ixtr+target_offset+1,jsep+1), &
+          dabsepa(iatm,2) = 0.5_R8 * (dab2(ixtr+target_offset+1,jsep+1,iatm,1) + dab2(topix(ixtr+target_offset+1,jsep+1), &
            topiy(ixtr+target_offset+1,jsep+1), iatm, 1))
-           tabsepa(iatm,2) = 0.5_R8 * (tab2(ixtr+target_offset+1,jsep+1,iatm,1) + tab2(topix(ixtr+target_offset+1,jsep+1), &
+          tabsepa(iatm,2) = 0.5_R8 * (tab2(ixtr+target_offset+1,jsep+1,iatm,1) + tab2(topix(ixtr+target_offset+1,jsep+1), &
            topiy(ixtr+target_offset+1,jsep+1), iatm, 1))/ev
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa(imol,2) = 0.5_R8 * (dmb2(ixtr+target_offset+1,jsep+1,iatm,1) + dmb2(topix(ixtr+target_offset+1,jsep+1), &
+          dmbsepa(imol,2) = 0.5_R8 * (dmb2(ixtr+target_offset+1,jsep+1,imol,1) + dmb2(topix(ixtr+target_offset+1,jsep+1), &
            topiy(ixtr+target_offset+1,jsep+1), imol, 1))
-           tmbsepa(imol,2) = 0.5_R8 * (tmb2(ixtr+target_offset+1,jsep+1,iatm,1) + tmb2(topix(ixtr+target_offset+1,jsep+1), &
+          tmbsepa(imol,2) = 0.5_R8 * (tmb2(ixtr+target_offset+1,jsep+1,imol,1) + tmb2(topix(ixtr+target_offset+1,jsep+1), &
            topiy(ixtr+target_offset+1,jsep+1), imol, 1))/ev
         end do
       endif
@@ -1075,21 +1083,21 @@ contains
       endif
       posepa(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+ po(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
       do is = 0, ns-1
-         nasepm(is+1,2) = 0.5_R8 * (na(jxi,jsep,is)+ na(topix(jxi,jsep),topiy(jxi,jsep),is))
+        nasepm(is+1,2) = 0.5_R8 * (na(jxi,jsep,is)+ na(topix(jxi,jsep),topiy(jxi,jsep),is))
       end do
       nesepm(2) = 0.5_R8 * (ne(jxi,jsep)+ ne(topix(jxi,jsep),topiy(jxi,jsep)))
       tesepm(2) = 0.5_R8 * (te(jxi,jsep)+ te(topix(jxi,jsep),topiy(jxi,jsep)))/ev
       tisepm(2) = 0.5_R8 * (ti(jxi,jsep)+ ti(topix(jxi,jsep),topiy(jxi,jsep)))/ev
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepm(iatm,2) = 0.5_R8 * (dab2(jxi+1,jsep+1,iatm,1)+ dab2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),iatm,1))
-           tabsepm(iatm,2) = 0.5_R8 * (tab2(jxi+1,jsep+1,iatm,1)+ tab2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),iatm,1))/ev
+          dabsepm(iatm,2) = 0.5_R8 * (dab2(jxi+1,jsep+1,iatm,1)+ dab2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),iatm,1))
+          tabsepm(iatm,2) = 0.5_R8 * (tab2(jxi+1,jsep+1,iatm,1)+ tab2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),iatm,1))/ev
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepm(imol,2) = 0.5_R8 * (dmb2(jxi+1,jsep+1,imol,1)+ dmb2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),imol,1))
-           tmbsepm(imol,2) = 0.5_R8 * (tmb2(jxi+1,jsep+1,imol,1)+ tmb2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),imol,1))/ev
+          dmbsepm(imol,2) = 0.5_R8 * (dmb2(jxi+1,jsep+1,imol,1)+ dmb2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),imol,1))
+          tmbsepm(imol,2) = 0.5_R8 * (tmb2(jxi+1,jsep+1,imol,1)+ tmb2(topix(jxi+1,jsep+1),topiy(jxi+1,jsep+1),imol,1))/ev
         end do
       endif
       posepm(2) = 0.5_R8 * (po(jxi,jsep)+ po(topix(jxi,jsep),topiy(jxi,jsep)))
@@ -1110,7 +1118,7 @@ contains
            vsa0(jxi,jsep,ismain)/(mp*am(ismain)*na(jxi,jsep,ismain)) + vsa0(topix(jxi,jsep),topiy(jxi,jsep),ismain)/ &
            (mp*am(ismain)*na(topix(jxi,jsep),topiy(jxi,jsep),ismain)))
       do is = 0, ns-1
-         nasepi(is+1,2) = 0.5_R8 * (na(ixtl-target_offset,jsep,is)+ na(topix(ixtl-target_offset,jsep), &
+        nasepi(is+1,2) = 0.5_R8 * (na(ixtl-target_offset,jsep,is)+ na(topix(ixtl-target_offset,jsep), &
          topiy(ixtl-target_offset,jsep),is))
       end do
       nesepi(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+ ne(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))
@@ -1118,17 +1126,17 @@ contains
       tisepi(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+ ti(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))/ev
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi(iatm,2) = 0.5_R8 * (dab2(ixtl-target_offset+1,jsep+1,iatm,1) + dab2(topix(ixtl-target_offset+1,jsep+1), &
+          dabsepi(iatm,2) = 0.5_R8 * (dab2(ixtl-target_offset+1,jsep+1,iatm,1) + dab2(topix(ixtl-target_offset+1,jsep+1), &
            topiy(ixtl-target_offset+1,jsep+1), iatm, 1))
-           tabsepi(iatm,2) = 0.5_R8 * (tab2(ixtl-target_offset+1,jsep+1,iatm,1) + tab2(topix(ixtl-target_offset+1,jsep+1), &
+          tabsepi(iatm,2) = 0.5_R8 * (tab2(ixtl-target_offset+1,jsep+1,iatm,1) + tab2(topix(ixtl-target_offset+1,jsep+1), &
            topiy(ixtl-target_offset+1,jsep+1), iatm, 1))/ev
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi(imol,2) = 0.5_R8 * (dmb2(ixtl-target_offset+1,jsep+1,iatm,1) + dmb2(topix(ixtl-target_offset+1,jsep+1), &
+          dmbsepi(imol,2) = 0.5_R8 * (dmb2(ixtl-target_offset+1,jsep+1,imol,1) + dmb2(topix(ixtl-target_offset+1,jsep+1), &
            topiy(ixtl-target_offset+1,jsep+1), imol, 1))
-           tmbsepi(imol,2) = 0.5_R8 * (tmb2(ixtl-target_offset+1,jsep+1,iatm,1) + tmb2(topix(ixtl-target_offset+1,jsep+1), &
+          tmbsepi(imol,2) = 0.5_R8 * (tmb2(ixtl-target_offset+1,jsep+1,imol,1) + tmb2(topix(ixtl-target_offset+1,jsep+1), &
            topiy(ixtl-target_offset+1,jsep+1), imol, 1))/ev
         end do
       endif
@@ -1140,41 +1148,41 @@ contains
       posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
     endif
     do is = 0, ns-1
-       nasepa(is+1,nc+1:nncutmax) = 0.0_R8
+      nasepa(is+1,nc+1:nncutmax) = 0.0_R8
     end do
     nesepa(nc+1:nncutmax) = 0.0_R8
     tesepa(nc+1:nncutmax) = 0.0_R8
     tisepa(nc+1:nncutmax) = 0.0_R8
     if (nnatmi.gt.0) then
       do iatm=1,nnatmi
-         dabsepa(iatm,nc+1:nncutmax) = 0.0_R8
-         tabsepa(iatm,nc+1:nncutmax) = 0.0_R8
+        dabsepa(iatm,nc+1:nncutmax) = 0.0_R8
+        tabsepa(iatm,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     if (nnmoli.gt.0) then
       do imol=1,nnmoli
-         dmbsepa(imol,nc+1:nncutmax) = 0.0_R8
-         tmbsepa(imol,nc+1:nncutmax) = 0.0_R8
+        dmbsepa(imol,nc+1:nncutmax) = 0.0_R8
+        tmbsepa(imol,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     tpsepa(nc+1:nncutmax) = 0.0_R8
     posepa(nc+1:nncutmax) = 0.0_R8
     do is = 0, ns-1
-       nasepm(is+1,nc+1:nncutmax) = 0.0_R8
+      nasepm(is+1,nc+1:nncutmax) = 0.0_R8
     end do
     nesepm(nc+1:nncutmax) = 0.0_R8
     tesepm(nc+1:nncutmax) = 0.0_R8
     tisepm(nc+1:nncutmax) = 0.0_R8
     if (nnatmi.gt.0) then
       do iatm=1,nnatmi
-         dabsepm(iatm,nc+1:nncutmax) = 0.0_R8
-         tabsepm(iatm,nc+1:nncutmax) = 0.0_R8
+        dabsepm(iatm,nc+1:nncutmax) = 0.0_R8
+        tabsepm(iatm,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     if (nnmoli.gt.0) then
       do imol=1,nnmoli
-         dmbsepm(imol,nc+1:nncutmax) = 0.0_R8
-         tmbsepm(imol,nc+1:nncutmax) = 0.0_R8
+        dmbsepm(imol,nc+1:nncutmax) = 0.0_R8
+        tmbsepm(imol,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     posepm(nc+1:nncutmax) = 0.0_R8
@@ -1186,7 +1194,7 @@ contains
     vysepm(nc+1:nncutmax) = 0.0_R8
     vssepm(nc+1:nncutmax) = 0.0_R8
     do is = 0, ns-1
-       nasepi(is+1,nc+1:nncutmax) = 0.0_R8
+      nasepi(is+1,nc+1:nncutmax) = 0.0_R8
     end do
     nesepi(nc+1:nncutmax) = 0.0_R8
     tesepi(nc+1:nncutmax) = 0.0_R8
@@ -1194,14 +1202,14 @@ contains
     tpsepi(nc+1:nncutmax) = 0.0_R8
     if (nnatmi.gt.0) then
       do iatm=1,nnatmi
-         dabsepi(iatm,nc+1:nncutmax) = 0.0_R8
-         tabsepi(iatm,nc+1:nncutmax) = 0.0_R8
+        dabsepi(iatm,nc+1:nncutmax) = 0.0_R8
+        tabsepi(iatm,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     if (nnmoli.gt.0) then
       do imol=1,nnmoli
-         dmbsepi(imol,nc+1:nncutmax) = 0.0_R8
-         tmbsepi(imol,nc+1:nncutmax) = 0.0_R8
+        dmbsepi(imol,nc+1:nncutmax) = 0.0_R8
+        tmbsepi(imol,nc+1:nncutmax) = 0.0_R8
       end do
     endif
     posepi(nc+1:nncutmax) = 0.0_R8
@@ -1448,25 +1456,25 @@ contains
       call rwcdf(rw,ncid,'jxa',imap,jxan,iret)
       jsepn(1) = jsep
       call rwcdf(rw,ncid,'jsep',imap,jsepn,iret)
-      call rwcdf(rw,ncid,'dsl',imap,dsl,iret)
-      call rwcdf(rw,ncid,'dsi',imap,dsi,iret)
-      call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
-      call rwcdf(rw,ncid,'dsr',imap,dsr,iret)    
+      call rwcdf(rw,ncid,'dsl',imap,dsl(iylstrt:iylend),iret)
+      call rwcdf(rw,ncid,'dsi',imap,dsi(iyistrt:iyiend),iret)
+      call rwcdf(rw,ncid,'dsa',imap,dsa(iyastrt:iyaend),iret)
+      call rwcdf(rw,ncid,'dsr',imap,dsr(iyrstrt:iyrend),iret)
       if (nnreg(0).ge.7) then
-        call rwcdf(rw,ncid,'dstl',imap,dstl,iret)
-        call rwcdf(rw,ncid,'dstr',imap,dstr,iret)  
+        call rwcdf(rw,ncid,'dstl',imap,dstl(iytlstrt:iytlend),iret)
+        call rwcdf(rw,ncid,'dstr',imap,dstr(iytrstrt:iytrend),iret)
       endif
-      call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
-      call rwcdf(rw,ncid,'dsRT',imap,dsRT,iret)    
+      call rwcdf(rw,ncid,'dsLT',imap,dsLT(iylstrt:iylend),iret)
+      call rwcdf(rw,ncid,'dsRT',imap,dsRT(iyrstrt:iyrend),iret)
       if (nnreg(0).ge.7) then
-        call rwcdf(rw,ncid,'dsTLT',imap,dsTLT,iret)
-        call rwcdf(rw,ncid,'dsTRT',imap,dsTRT,iret)  
+        call rwcdf(rw,ncid,'dsTLT',imap,dsTLT(iytlstrt:iytlend),iret)
+        call rwcdf(rw,ncid,'dsTRT',imap,dsTRT(iytrstrt:iytrend),iret)
       endif
-      call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
-      call rwcdf(rw,ncid,'dsRP',imap,dsRP,iret)    
+      call rwcdf(rw,ncid,'dsLP',imap,dsLP(iylstrt:iylend),iret)
+      call rwcdf(rw,ncid,'dsRP',imap,dsRP(iyrstrt:iyrend),iret)
       if (nnreg(0).ge.7) then
-        call rwcdf(rw,ncid,'dsTLP',imap,dsTLP,iret)
-        call rwcdf(rw,ncid,'dsTRP',imap,dsTRP,iret)  
+        call rwcdf(rw,ncid,'dsTLP',imap,dsTLP(iytlstrt:iytlend),iret)
+        call rwcdf(rw,ncid,'dsTRP',imap,dsTRP(iytrstrt:iytrend),iret)
       endif
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
       if (write_2d .ge. 1) then
@@ -1883,38 +1891,38 @@ contains
 
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-          dab3dl(2:ny+1, iatm)=dab2(1,1:ny,iatm,1)
-          dab3di(2:ny+1, iatm)=dab2(jxi+1,1:ny,iatm,1)
-          dab3da(2:ny+1, iatm)=dab2(jxa+1,1:ny,iatm,1)
-          dab3dr(2:ny+1, iatm)=dab2(nx,1:ny,iatm,1)
-          tab3dl(2:ny+1, iatm)=tab2(1,1:ny,iatm,1)
-          tab3di(2:ny+1, iatm)=tab2(jxi+1,1:ny,iatm,1)
-          tab3da(2:ny+1, iatm)=tab2(jxa+1,1:ny,iatm,1)
-          tab3dr(2:ny+1, iatm)=tab2(nx,1:ny,iatm,1)
+          dab3dl(:, iatm)=dab2(1,iylstrt+1:iylend+1,iatm,1)
+          dab3di(:, iatm)=dab2(jxi+1,iyistrt+1:iyiend+1,iatm,1)
+          dab3da(:, iatm)=dab2(jxa+1,iyastrt+1:iyaend+1,iatm,1)
+          dab3dr(:, iatm)=dab2(nx,iyrstrt+1:iyrend+1,iatm,1)
+          tab3dl(:, iatm)=tab2(1,iylstrt+1:iylend+1,iatm,1)
+          tab3di(:, iatm)=tab2(jxi+1,iyistrt+1:iyiend+1,iatm,1)
+          tab3da(:, iatm)=tab2(jxa+1,iyastrt+1:iyaend+1,iatm,1)
+          tab3dr(:, iatm)=tab2(nx,iyrstrt+1:iyrend+1,iatm,1)
           if (nnreg(0).ge.7) then
-            dab3dtl(2:ny+1, iatm)=dab2(ixtl,1:ny,iatm,1)
-            dab3dtr(2:ny+1, iatm)=dab2(ixtr+1,1:ny,iatm,1)
-            tab3dtl(2:ny+1, iatm)=tab2(ixtl,1:ny,iatm,1)
-            tab3dtr(2:ny+1, iatm)=tab2(ixtr+1,1:ny,iatm,1)
+            dab3dtl(:, iatm)=dab2(ixtl,iytlstrt+1:iytlend+1,iatm,1)
+            dab3dtr(:, iatm)=dab2(ixtr+1,iytrstrt+1:iytrend+1,iatm,1)
+            tab3dtl(:, iatm)=tab2(ixtl,iytlstrt+1:iytlend+1,iatm,1)
+            tab3dtr(:, iatm)=tab2(ixtr+1,iytrstrt+1:iytrend+1,iatm,1)
           endif
         enddo
       endif
 
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-          dmb3dl(2:ny+1, imol)=dmb2(1,1:ny,imol,1)
-          dmb3di(2:ny+1, imol)=dmb2(jxi+1,1:ny,imol,1)
-          dmb3da(2:ny+1, imol)=dmb2(jxa+1,1:ny,imol,1)
-          dmb3dr(2:ny+1, imol)=dmb2(nx,1:ny,imol,1)
-          tmb3dl(2:ny+1, imol)=tmb2(1,1:ny,imol,1)
-          tmb3di(2:ny+1, imol)=tmb2(jxi+1,1:ny,imol,1)
-          tmb3da(2:ny+1, imol)=tmb2(jxa+1,1:ny,imol,1)
-          tmb3dr(2:ny+1, imol)=tmb2(nx,1:ny,imol,1)
+          dmb3dl(:, imol)=dmb2(1,iylstrt+1:iylend+1,imol,1)
+          dmb3di(:, imol)=dmb2(jxi+1,iyistrt+1:iyiend+1,imol,1)
+          dmb3da(:, imol)=dmb2(jxa+1,iyastrt+1:iyaend+1,imol,1)
+          dmb3dr(:, imol)=dmb2(nx,iyrstrt+1:iyrend+1,imol,1)
+          tmb3dl(:, imol)=tmb2(1,iylstrt+1:iylend+1,imol,1)
+          tmb3di(:, imol)=tmb2(jxi+1,iyistrt+1:iyiend+1,imol,1)
+          tmb3da(:, imol)=tmb2(jxa+1,iyastrt+1:iyaend+1,imol,1)
+          tmb3dr(:, imol)=tmb2(nx,iyrstrt+1:iyrend+1,imol,1)
           if (nnreg(0).ge.7) then
-            dmb3dtl(2:ny+1, imol)=dmb2(ixtl,1:ny,imol,1)
-            dmb3dtr(2:ny+1, imol)=dmb2(ixtr+1,1:ny,imol,1)
-            tmb3dtl(2:ny+1, imol)=tmb2(ixtl,1:ny,imol,1)
-            tmb3dtr(2:ny+1, imol)=tmb2(ixtr+1,1:ny,imol,1)
+            dmb3dtl(:, imol)=dmb2(ixtl,iytlstrt+1:iytlend+1,imol,1)
+            dmb3dtr(:, imol)=dmb2(ixtr+1,iytrstrt+1:iytrend+1,imol,1)
+            tmb3dtl(:, imol)=tmb2(ixtl,iytlstrt+1:iytlend+1,imol,1)
+            tmb3dtr(:, imol)=tmb2(ixtr+1,iytrstrt+1:iytrend+1,imol,1)
           endif
         enddo
       endif
@@ -2064,71 +2072,71 @@ contains
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
       do is = 0, ns-1
-         nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
+        nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
       tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
       tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
+        nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
       tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
       tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
+        nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
       tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
       tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
+        namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
       temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
       timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
       pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
+        namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
       temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
@@ -2193,6 +2201,7 @@ contains
       call rwcdf(rw,ncid,'temxap_av',imap,temxap_av,iret)
       call rwcdf(rw,ncid,'timxap_av',imap,timxap_av,iret)
       call rwcdf(rw,ncid,'pomxap_av',imap,pomxap_av,iret)
+
 !wdk standard deviations
       call rwcdf(rw,ncid,'nasepm_std',(/1,1,nncutmax/),nasepm_std,iret)
       call rwcdf(rw,ncid,'nesepm_std',imap,nesepm_std,iret)
@@ -2269,7 +2278,7 @@ contains
   deallocate(dabsepi_av)
   deallocate(tabsepi_av)
   deallocate(dmbsepi_av)
-  deallocate(tmbsepi_av) 
+  deallocate(tmbsepi_av)
   deallocate(posepi_av)
   deallocate(nasepm_av)
   deallocate(nesepm_av)
@@ -2278,7 +2287,7 @@ contains
   deallocate(dabsepm_av)
   deallocate(tabsepm_av)
   deallocate(dmbsepm_av)
-  deallocate(tmbsepm_av) 
+  deallocate(tmbsepm_av)
   deallocate(posepm_av)
   deallocate(nasepa_av)
   deallocate(nesepa_av)
@@ -2287,7 +2296,7 @@ contains
   deallocate(dabsepa_av)
   deallocate(tabsepa_av)
   deallocate(dmbsepa_av)
-  deallocate(tmbsepa_av) 
+  deallocate(tmbsepa_av)
   deallocate(posepa_av)
   deallocate(namxip_av)
   deallocate(nemxip_av)
@@ -2306,7 +2315,7 @@ contains
   deallocate(dabsepi_std)
   deallocate(tabsepi_std)
   deallocate(dmbsepi_std)
-  deallocate(tmbsepi_std) 
+  deallocate(tmbsepi_std)
   deallocate(posepi_std)
   deallocate(nasepm_std)
   deallocate(nesepm_std)
@@ -2315,7 +2324,7 @@ contains
   deallocate(dabsepm_std)
   deallocate(tabsepm_std)
   deallocate(dmbsepm_std)
-  deallocate(tmbsepm_std) 
+  deallocate(tmbsepm_std)
   deallocate(posepm_std)
   deallocate(nasepa_std)
   deallocate(nesepa_std)
@@ -2324,7 +2333,7 @@ contains
   deallocate(dabsepa_std)
   deallocate(tabsepa_std)
   deallocate(dmbsepa_std)
-  deallocate(tmbsepa_std) 
+  deallocate(tmbsepa_std)
   deallocate(posepa_std)
   deallocate(namxip_std)
   deallocate(nemxip_std)
@@ -2514,9 +2523,9 @@ contains
       iret = nf_def_var(ncid, 'dsr', NCDOUBLE, 1, dims, dsrid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'dsRT', NCDOUBLE, 1, dims, dsRTid)
-      call check_cdf_status(iret) 
+      call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'dsRP', NCDOUBLE, 1, dims, dsRPid)
-      call check_cdf_status(iret) 
+      call check_cdf_status(iret)
       if(nytl.gt.0) then
         dims(1) = nytldim
         iret = nf_def_var(ncid, 'dstl', NCDOUBLE, 1, dims, dstlid)
@@ -2678,7 +2687,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'fchxap', NCDOUBLE, 2, dims, fchxapid)
       call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'nasepi', NCDOUBLE, 3, (/ncdim,nsdim,timedim/), nasepiid)
+      iret = nf_def_var(ncid, 'nasepi', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepiid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepi', NCDOUBLE, 2, dims, nesepiid)
       call check_cdf_status(iret)
@@ -2687,22 +2696,22 @@ contains
       iret = nf_def_var(ncid, 'tisepi', NCDOUBLE, 2, dims, tisepiid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret = nf_def_var(ncid, 'dabsepi', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), dabsepiid)
+        iret = nf_def_var(ncid, 'dabsepi', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepiid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tabsepi', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), tabsepiid)
+        iret = nf_def_var(ncid, 'tabsepi', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepiid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret = nf_def_var(ncid, 'dmbsepi', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), dmbsepiid)
+        iret = nf_def_var(ncid, 'dmbsepi', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepiid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tmbsepi', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), tmbsepiid)
+        iret = nf_def_var(ncid, 'tmbsepi', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepiid)
         call check_cdf_status(iret)
       endif
       iret = nf_def_var(ncid, 'tpsepi', NCDOUBLE, 2, dims, tpsepiid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'posepi', NCDOUBLE, 2, dims, posepiid)
       call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'nasepm', NCDOUBLE, 3, (/ncdim,nsdim,timedim/), nasepmid)
+      iret = nf_def_var(ncid, 'nasepm', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepmid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepm', NCDOUBLE, 2, dims, nesepmid)
       call check_cdf_status(iret)
@@ -2711,15 +2720,15 @@ contains
       iret = nf_def_var(ncid, 'tisepm', NCDOUBLE, 2, dims, tisepmid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret = nf_def_var(ncid, 'dabsepm', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), dabsepmid)
+        iret = nf_def_var(ncid, 'dabsepm', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepmid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tabsepm', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), tabsepmid)
+        iret = nf_def_var(ncid, 'tabsepm', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepmid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret = nf_def_var(ncid, 'dmbsepm', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), dmbsepmid)
+        iret = nf_def_var(ncid, 'dmbsepm', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepmid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tmbsepm', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), tmbsepmid)
+        iret = nf_def_var(ncid, 'tmbsepm', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepmid)
         call check_cdf_status(iret)
       endif
       iret = nf_def_var(ncid, 'posepm', NCDOUBLE, 2, dims, posepmid)
@@ -2738,7 +2747,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'vssepm', NCDOUBLE, 2, dims, vssepmid)
       call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'nasepa', NCDOUBLE, 3, (/ncdim,nsdim,timedim/), nasepaid)
+      iret = nf_def_var(ncid, 'nasepa', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepaid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepa', NCDOUBLE, 2, dims, nesepaid)
       call check_cdf_status(iret)
@@ -2747,22 +2756,22 @@ contains
       iret = nf_def_var(ncid, 'tisepa', NCDOUBLE, 2, dims, tisepaid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret = nf_def_var(ncid, 'dabsepa', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), dabsepaid)
+        iret = nf_def_var(ncid, 'dabsepa', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepaid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tabsepa', NCDOUBLE, 3, (/ncdim,natmdim,timedim/), tabsepaid)
+        iret = nf_def_var(ncid, 'tabsepa', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepaid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret = nf_def_var(ncid, 'dmbsepa', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), dmbsepaid)
+        iret = nf_def_var(ncid, 'dmbsepa', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepaid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'tmbsepa', NCDOUBLE, 3, (/ncdim,nmoldim,timedim/), tmbsepaid)
+        iret = nf_def_var(ncid, 'tmbsepa', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepaid)
         call check_cdf_status(iret)
       endif
       iret = nf_def_var(ncid, 'tpsepa', NCDOUBLE, 2, dims, tpsepaid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'posepa', NCDOUBLE, 2, dims, posepaid)
       call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'namxip', NCDOUBLE, 3, (/ncdim,nsdim,timedim/), namxipid)
+      iret = nf_def_var(ncid, 'namxip', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), namxipid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nemxip', NCDOUBLE, 2, dims, nemxipid)
       call check_cdf_status(iret)
@@ -2774,7 +2783,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'pomxip', NCDOUBLE, 2, dims, pomxipid)
       call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'namxap', NCDOUBLE, 3, (/ncdim,nsdim,timedim/), namxapid)
+      iret = nf_def_var(ncid, 'namxap', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), namxapid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nemxap', NCDOUBLE, 2, dims, nemxapid)
       call check_cdf_status(iret)
@@ -2941,6 +2950,7 @@ contains
         iret = nf_def_var(ncid, 'mn3dtl', NCDOUBLE, 2, dims, mn3dtlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
+        call check_cdf_status(iret)
         if (nnatmi.gt.0) then
           iret = nf_def_var(ncid, 'dab3dtl', NCDOUBLE, 3, (/nytldim,natmdim,timedim/), dab3dtlid)
           call check_cdf_status(iret)
@@ -3150,7 +3160,7 @@ contains
       call check_cdf_status(iret)
       dims(1) = ncdim
       dims(2) = batchdim
-      iret  = nf_def_var(ncid, 'nasepm_av', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepm_avid)
+      iret  = nf_def_var(ncid, 'nasepm_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepm_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepm_avid)
       call check_cdf_status(iret)
@@ -3159,20 +3169,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepm_avid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepm_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepm_avid)
+        iret  = nf_def_var(ncid, 'dabsepm_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepm_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepm_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepm_avid)
+        iret  = nf_def_var(ncid, 'tabsepm_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepm_avid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepm_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepm_avid)
+        iret  = nf_def_var(ncid, 'dmbsepm_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepm_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepm_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepm_avid)
+        iret  = nf_def_var(ncid, 'tmbsepm_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepm_avid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepm_avid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'nasepi_av', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepi_avid)
+      iret  = nf_def_var(ncid, 'nasepi_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepi_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepi_avid)
       call check_cdf_status(iret)
@@ -3181,20 +3191,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepi_avid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepi_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepi_avid)
+        iret  = nf_def_var(ncid, 'dabsepi_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepi_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepi_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepi_avid)
+        iret  = nf_def_var(ncid, 'tabsepi_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepi_avid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepi_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepi_avid)
+        iret  = nf_def_var(ncid, 'dmbsepi_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepi_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepi_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepi_avid)
+        iret  = nf_def_var(ncid, 'tmbsepi_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepi_avid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepi_avid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'nasepa_av', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepa_avid)
+      iret  = nf_def_var(ncid, 'nasepa_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepa_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepa_avid)
       call check_cdf_status(iret)
@@ -3203,20 +3213,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepa_avid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepa_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepa_avid)
+        iret  = nf_def_var(ncid, 'dabsepa_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepa_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepa_av', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepa_avid)
+        iret  = nf_def_var(ncid, 'tabsepa_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepa_avid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepa_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepa_avid)
+        iret  = nf_def_var(ncid, 'dmbsepa_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepa_avid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepa_av', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepa_avid)
+        iret  = nf_def_var(ncid, 'tmbsepa_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepa_avid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepa_avid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'namxip_av', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), namxip_avid)
+      iret  = nf_def_var(ncid, 'namxip_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxip_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxip_avid)
       call check_cdf_status(iret)
@@ -3226,7 +3236,7 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxip_avid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'namxap_av', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), namxap_avid)
+      iret  = nf_def_var(ncid, 'namxap_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxap_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxap_avid)
       call check_cdf_status(iret)
@@ -3236,7 +3246,7 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxap_avid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'nasepm_std', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepm_stdid)
+      iret  = nf_def_var(ncid, 'nasepm_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepm_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepm_std', NCDOUBLE, 2, dims, nesepm_stdid)
       call check_cdf_status(iret)
@@ -3245,20 +3255,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepm_std', NCDOUBLE, 2, dims, tisepm_stdid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepm_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepm_stdid)
+        iret  = nf_def_var(ncid, 'dabsepm_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepm_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepm_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepm_stdid)
+        iret  = nf_def_var(ncid, 'tabsepm_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepm_stdid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepm_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepm_stdid)
+        iret  = nf_def_var(ncid, 'dmbsepm_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepm_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepm_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepm_stdid)
+        iret  = nf_def_var(ncid, 'tmbsepm_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepm_stdid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepm_std', NCDOUBLE, 2, dims, posepm_stdid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'nasepi_std', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepi_stdid)
+      iret  = nf_def_var(ncid, 'nasepi_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepi_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepi_std', NCDOUBLE, 2, dims, nesepi_stdid)
       call check_cdf_status(iret)
@@ -3267,20 +3277,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepi_std', NCDOUBLE, 2, dims, tisepi_stdid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepi_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepi_stdid)
+        iret  = nf_def_var(ncid, 'dabsepi_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepi_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepi_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepi_stdid)
+        iret  = nf_def_var(ncid, 'tabsepi_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepi_stdid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepi_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepi_stdid)
+        iret  = nf_def_var(ncid, 'dmbsepi_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepi_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepi_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepi_stdid)
+        iret  = nf_def_var(ncid, 'tmbsepi_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepi_stdid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepi_std', NCDOUBLE, 2, dims, posepi_stdid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'nasepa_std', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), nasepa_stdid)
+      iret  = nf_def_var(ncid, 'nasepa_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepa_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepa_std', NCDOUBLE, 2, dims, nesepa_stdid)
       call check_cdf_status(iret)
@@ -3289,20 +3299,20 @@ contains
       iret  = nf_def_var(ncid, 'tisepa_std', NCDOUBLE, 2, dims, tisepa_stdid)
       call check_cdf_status(iret)
       if (nnatmi.gt.0) then
-        iret  = nf_def_var(ncid, 'dabsepa_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), dabsepa_stdid)
+        iret  = nf_def_var(ncid, 'dabsepa_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepa_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tabsepa_std', NCDOUBLE, 3, (/ncdim,natmdim,batchdim/), tabsepa_stdid)
+        iret  = nf_def_var(ncid, 'tabsepa_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepa_stdid)
         call check_cdf_status(iret)
       endif
       if (nnmoli.gt.0) then
-        iret  = nf_def_var(ncid, 'dmbsepa_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), dmbsepa_stdid)
+        iret  = nf_def_var(ncid, 'dmbsepa_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepa_stdid)
         call check_cdf_status(iret)
-        iret  = nf_def_var(ncid, 'tmbsepa_std', NCDOUBLE, 3, (/ncdim,nmoldim,batchdim/), tmbsepa_stdid)
+        iret  = nf_def_var(ncid, 'tmbsepa_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepa_stdid)
         call check_cdf_status(iret)
       endif
       iret  = nf_def_var(ncid, 'posepa_std', NCDOUBLE, 2, dims, posepa_stdid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'namxip_std', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), namxip_stdid)
+      iret  = nf_def_var(ncid, 'namxip_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxip_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxip_std', NCDOUBLE, 2, dims, nemxip_stdid)
       call check_cdf_status(iret)
@@ -3312,7 +3322,7 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxip_std', NCDOUBLE, 2, dims, pomxip_stdid)
       call check_cdf_status(iret)
-      iret  = nf_def_var(ncid, 'namxap_std', NCDOUBLE, 3, (/ncdim,nsdim,batchdim/), namxap_stdid)
+      iret  = nf_def_var(ncid, 'namxap_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxap_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxap_std', NCDOUBLE, 2, dims, nemxap_stdid)
       call check_cdf_status(iret)
@@ -3350,7 +3360,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dsLPid, 'units', 3, 'm^2')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dsrid, 'long_name', 30, 'radial coordinate, Easter edge')
+      iret = nf_put_att_text(ncid, dsrid, 'long_name', 31, 'radial coordinate, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dsrid, 'units', 2, 'm ')
       call check_cdf_status(iret)
@@ -3712,43 +3722,43 @@ contains
       call check_cdf_status(iret)
 
       ! internal flux quantities
-      iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, fnisipid, 'long_name', 52, 'poloidal particle flux, into Western divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnisipid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, feesipid, 'long_name', 59, 'poloidal electron energy flux, into Western divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feesipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, feisipid, 'long_name', 54, 'poloidal ion energy flux, into Western divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 67, 'poloidal total internal energy flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 65, 'poloidal total internal energy flux, into Western divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, fchsipid, 'long_name', 46, 'poloidal current, into Western divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchsipid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fnisapid, 'long_name', 54, 'poloidal particle flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, fnisapid, 'long_name', 52, 'poloidal particle flux, into Eastern divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnisapid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feesapid, 'long_name', 61, 'poloidal electron energy flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, feesapid, 'long_name', 59, 'poloidal electron energy flux, into Eastern divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feesapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feisapid, 'long_name', 56, 'poloidal ion energy flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, feisapid, 'long_name', 54, 'poloidal ion energy flux, into Eastern divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 67, 'poloidal total internal energy flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 65, 'poloidal total internal energy flux, into Eastern divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchsapid, 'long_name', 48, 'poloidal current, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, fchsapid, 'long_name', 46, 'poloidal current, into Eastern divertor throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchsapid, 'units', 2, 'A ')
       call check_cdf_status(iret)
@@ -4841,6 +4851,7 @@ contains
     intrinsic sqrt
 
     call subini ('output_ds')
+    ds = 0.0_R8
     iystart=-1
     do while (region(iref,iystart,0).eq.0 .and. iystart.lt.ny)
       iystart=iystart+1

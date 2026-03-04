@@ -1296,32 +1296,32 @@ contains
         end do
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         !! Total sources
-        call set_edge_source_identifier( edge_sources%source(1)%identifier, "Total" )
+        call set_edge_source_identifier( edge_sources%source(1)%identifier, "total" )
         !! Background sources
-        call set_edge_source_identifier( edge_sources%source(2)%identifier, "Background" )
+        call set_edge_source_identifier( edge_sources%source(2)%identifier, "background" )
         !! Prescribed sources
-        call set_edge_source_identifier( edge_sources%source(3)%identifier, "Prescribed" )
+        call set_edge_source_identifier( edge_sources%source(3)%identifier, "prescribed" )
         !! Time derivative
-        call set_edge_source_identifier( edge_sources%source(4)%identifier, "Time derivative" )
+        call set_edge_source_identifier( edge_sources%source(4)%identifier, "time_derivative" )
         !! Atomic ionization
-        call set_edge_source_identifier( edge_sources%source(5)%identifier, "Atomic ionization" )
+        call set_edge_source_identifier( edge_sources%source(5)%identifier, "atomic_ionization" )
         !! Molecular ionization
-        call set_edge_source_identifier( edge_sources%source(6)%identifier, "Molecular ionization" )
+        call set_edge_source_identifier( edge_sources%source(6)%identifier, "molecular_ionization" )
         !! Ionization
-        call set_edge_source_identifier( edge_sources%source(7)%identifier, "Ionization" )
+        call set_edge_source_identifier( edge_sources%source(7)%identifier, "ionization" )
         !! Recombination
-        call set_edge_source_identifier( edge_sources%source(8)%identifier, "Recombination" )
+        call set_edge_source_identifier( edge_sources%source(8)%identifier, "recombination" )
         !! Charge exchange
-        call set_edge_source_identifier( edge_sources%source(9)%identifier, "Charge exchange" )
+        call set_edge_source_identifier( edge_sources%source(9)%identifier, "charge_exchange" )
         !! Collisional equipartition
-        call set_edge_source_identifier( edge_sources%source(10)%identifier, "Equipartition" )
+        call set_edge_source_identifier( edge_sources%source(10)%identifier, "collisional_equipartition" )
         !! Ohmic
-        call set_edge_source_identifier( edge_sources%source(11)%identifier, "Ohmic" )
+        call set_edge_source_identifier( edge_sources%source(11)%identifier, "ohmic" )
         !! Radiation
-        call set_edge_source_identifier( edge_sources%source(12)%identifier, "Radiation" )
+        call set_edge_source_identifier( edge_sources%source(12)%identifier, "radiation" )
 #ifdef B25_EIRENE
         !! Neutrals
-        call set_edge_source_identifier( edge_sources%source(13)%identifier, "Neutrals" )
+        call set_edge_source_identifier( edge_sources%source(13)%identifier, "neutrals" )
 #endif
 #elif ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
@@ -1439,32 +1439,32 @@ contains
         end do
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         !! Total sources
-        call set_plasma_source_identifier( plasma_sources%source(1)%identifier, "Total" )
+        call set_plasma_source_identifier( plasma_sources%source(1)%identifier, "total" )
         !! Background sources
-        call set_plasma_source_identifier( plasma_sources%source(2)%identifier, "Background" )
+        call set_plasma_source_identifier( plasma_sources%source(2)%identifier, "background" )
         !! Prescribed sources
-        call set_plasma_source_identifier( plasma_sources%source(3)%identifier, "Prescribed" )
+        call set_plasma_source_identifier( plasma_sources%source(3)%identifier, "prescribed" )
         !! Time derivative
-        call set_plasma_source_identifier( plasma_sources%source(4)%identifier, "Time derivative" )
+        call set_plasma_source_identifier( plasma_sources%source(4)%identifier, "time_derivative" )
         !! Atomic ionization
-        call set_plasma_source_identifier( plasma_sources%source(5)%identifier, "Atomic ionization" )
+        call set_plasma_source_identifier( plasma_sources%source(5)%identifier, "atomic_ionization" )
         !! Molecular ionization
-        call set_plasma_source_identifier( plasma_sources%source(6)%identifier, "Molecular ionization" )
+        call set_plasma_source_identifier( plasma_sources%source(6)%identifier, "molecular_ionization" )
         !! Ionization
-        call set_plasma_source_identifier( plasma_sources%source(7)%identifier, "Ionization" )
+        call set_plasma_source_identifier( plasma_sources%source(7)%identifier, "ionization" )
         !! Recombination
-        call set_plasma_source_identifier( plasma_sources%source(8)%identifier, "Recombination" )
+        call set_plasma_source_identifier( plasma_sources%source(8)%identifier, "recombination" )
         !! Charge exchange
-        call set_plasma_source_identifier( plasma_sources%source(9)%identifier, "Charge exchange" )
+        call set_plasma_source_identifier( plasma_sources%source(9)%identifier, "charge_exchange" )
         !! Collisional equipartition
-        call set_plasma_source_identifier( plasma_sources%source(10)%identifier, "Equipartition" )
+        call set_plasma_source_identifier( plasma_sources%source(10)%identifier, "collisional_equipartition" )
         !! Ohmic
-        call set_plasma_source_identifier( plasma_sources%source(11)%identifier, "Ohmic" )
+        call set_plasma_source_identifier( plasma_sources%source(11)%identifier, "ohmic" )
         !! Radiation
-        call set_plasma_source_identifier( plasma_sources%source(12)%identifier, "Radiation" )
+        call set_plasma_source_identifier( plasma_sources%source(12)%identifier, "radiation" )
 #ifdef B25_EIRENE
         !! Neutrals
-        call set_plasma_source_identifier( plasma_sources%source(13)%identifier, "Neutrals" )
+        call set_plasma_source_identifier( plasma_sources%source(13)%identifier, "neutrals" )
 #endif
 #else
         !! Total sources
@@ -3433,6 +3433,7 @@ contains
           do js = 1, nspecies
              is = eb2spcr(js)
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+             ks = size( edge_profiles%ggd( time_sind )%neutral( js )%state )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
              call fill_neutral_element( is, js, &
@@ -3466,6 +3467,7 @@ contains
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = js
              end do
 #else
+             ks = size( profiles_ggd%neutral( js )%state )
              allocate( profiles_ggd%neutral( js )%element(1) )
              allocate( profiles_ggd%neutral( js )%name(1) )
              allocate( transport_ggd(1)%neutral( js )%element(1) )
@@ -3873,7 +3875,11 @@ contains
         if (use_eirene.ne.0) then
           allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
           do is = 1, nneut
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              ks = size( edge_profiles%ggd( time_sind )%neutral( is )%state )
+#else
+             ks = size( profiles_ggd%neutral( is )%state )
+#endif
              allocate( radiation%process(3)%ggd( time_sind )%neutral( is )%state( ks ) )
           end do
 
@@ -9878,7 +9884,7 @@ contains
 #ifdef B25_EIRENE
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         !! Neutrals
-        call set_edge_source_identifier( batch_sources%source(1)%identifier, "Neutrals" )
+        call set_edge_source_identifier( batch_sources%source(1)%identifier, "neutrals" )
 #elif ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
         call write_source_identifier( &
@@ -11710,7 +11716,7 @@ contains
       neutral_type%description = "Kinetic neutral atoms from Eirene"
     else
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-      call set_neutral_type_identifier( neutral_type, "Thermal")
+      call set_neutral_type_identifier( neutral_type, "thermal")
 #elif ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       allocate( neutral_type%name(1) )
       allocate( neutral_type%description(1) )

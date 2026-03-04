@@ -165,7 +165,7 @@ c 2002-09-11: logic revised
       integer neutrals_namelist, use_eirene, redef_gmtry_save
       integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
-      integer transport_namelist, transport_inputfile
+      integer transport_namelist, transport_inputfile, user_transport
       integer atomic_physics_rescale_flag
       integer ismain, ismain0, isfeedback, isfb
       integer nsmin, nsmax, ns1min, ns1max
@@ -577,6 +577,8 @@ c 2002-09-11: logic revised
       logical elm_dynamics_multiple
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
+      logical neo_ns_set(0:ns-1)
+      logical, allocatable :: neo_ns1_set(:)
 *   ..procedures
       integer len_of_digits, trace_convert
 #ifdef B25_EIRENE
@@ -607,6 +609,7 @@ c 2002-09-11: logic revised
       data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
+      data user_transport/0/
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
@@ -637,6 +640,7 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
+      namelist /neoclassical_transport/ neo_ns_set
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -1429,6 +1433,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
       call ipgeti ('b2tqna_transport_namelist', transport_namelist)
+      call ipgeti ('b2tqna_user_transport', user_transport)
       call ipgeti ('b2tqna_inputfile', transport_inputfile)
       call ipgeti ('b2sral_inputfile', sources_inputfile)
       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
@@ -1476,7 +1481,7 @@ c 2002-09-11: logic revised
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
       call ipgeti ('b2tqna_neoclassical_iystart', neoclassical_iystart)
-      call ipgeti ('b2tqna_neoclassical_iyend', neoclassical_iyend) 
+      call ipgeti ('b2tqna_neoclassical_iyend', neoclassical_iyend)
       call ipgeti ('b2tqna_iy1', iy1)
       call ipgeti ('b2tqna_iy2', iy2)
       call ipgeti ('b2tqna_ix1', ix1)
@@ -1549,6 +1554,9 @@ c 2002-09-11: logic revised
       call find_file(filename,found)
       todo = todo .or. found
       filename='b2.feedback_control.parameters'
+      call find_file(filename,found)
+      todo = todo .or. found
+      filename='b2.neoclassical_transport.parameters'
       call find_file(filename,found)
       todo = todo .or. found
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
@@ -12536,6 +12544,54 @@ cxpb as they no longer necessarily point to the same species
       else if (todo) then
         write(nout(5),'(a)') 'b2.user.parameters'
         write(*,*) 'No changes needed in b2.user.parameters'
+      end if
+
+*  ..write new b2.neoclassical_transport.parameters if needed
+      filename='b2.neoclassical_transport.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.neoclassical_transport.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if((user_transport.eq.8.or.todo)
+     &   .and. .not.found .and. .not.same_bundling) then
+        open(99,file=filename)
+        write(*,*) 'Reading ',trim(filename)
+        read(99,neoclassical_transport)
+        close(99)
+        write(*,*) 'Read ',trim(filename)
+        if (any(neo_ns_set(0:ns-1).eqv..false.)) then
+          todo = .false.
+          is = 0
+          do while (.not.todo .and. is.lt.ns)
+            todo = todo .or.
+     &       (.not.neo_ns_set(is) .and. is1(is).ne.is)
+            is = is+1
+          end do
+          if (todo) then
+            allocate(neo_ns1_set(0:ns1-1))
+            neo_ns1_set = .true.
+            do is = 0, ns1-1
+              if (is1(is).ne.-1) then
+                neo_ns1_set(is1(is)) = neo_ns_set(is)
+              end if
+            end do
+            write(*,*) 'Writing b2.neoclassical_transport.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
+            open(99,file=new_filename)
+            write(99,'(a23)') '&NEOCLASSICAL_TRANSPORT'
+            write(hlp_frm, '(a,i3,a)') '(1x,a,',ns1,'l1,a)'
+            if (any(neo_ns1_set(0:ns1-1).eqv..false.))
+     >       write(99,hlp_frm)
+     .       'NEO_NS_SET=',(neo_ns1_set(is),is=0,ns-1),','
+            write(99,'(a1)') '/'
+            close(99)
+            deallocate(neo_ns1_set)
+          end if
+        end if
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.neoclassical_transport.parameters'
+        write(*,*) 'No changes needed in '//
+     .             'b2.neoclassical_transport.parameters'
       end if
 
 *   ..write new b2yq.dat, if needed

@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10, save :: newversion ='03.001.001'
+      character*10, save :: newversion ='03.001.002'
       character*10, parameter :: default_version = '00.000.000'
 
       character*10, save ::
