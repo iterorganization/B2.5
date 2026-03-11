@@ -100,7 +100,6 @@ endif
 ifdef SOLPSTOP
   NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
   NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
-  NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
 
 # Defines MPI_VERSION, which is the MPI version number
@@ -814,6 +813,29 @@ endif
 endif
 endif
 
+ifeq ($(COMPILER),pgf90)
+${OBJDIR}/b2ytdr.o : b2ytdr.F
+	@- /bin/rm -f $*.f $*.o $*.${MOD}
+ifeq ($(strip $(CPP)),)
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+	${FC} ${FPOPTS} -O0 -g -C -Mbackslash -Mchkptr -Mchkstk ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+endif
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.f
+else
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > $*.f
+endif
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+else
+	${FC} ${FPOPTS} -O0 -g -C -Mbackslash -Mchkptr -Mchkstk ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+endif
+endif
+endif
+
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
@@ -860,8 +882,8 @@ ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-	@-ln -sf $@ ${NCXDIR}/$*
-	@-ln -sf ${NCXDIR}/nc2text_simple ${NCXDIR}/nc2text
+	@-ln -sf $@ ${NCODIR}/$*
+	@-ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 else
 	$(warning Compiler type was redefined: skipping!)
 endif
@@ -874,7 +896,7 @@ ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
-	@-ln -sf $@ ${NCXDIR}/$*
+	@-ln -sf $@ ${NCODIR}/$*
 endif
 else
 	$(warning Compiler type was redefined: skipping!)

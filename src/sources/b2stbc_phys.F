@@ -86,8 +86,9 @@
 *     bc_for_equations indicates for which equations the boundary conditions
 *     will be calculated
 *       'all' for all equations as normal
-*       'spc' for density equations
-*       'ene' for energy equations
+*       'spc' for density and parallel momentum equations
+*       'ene' for electron energy equations
+*       'eni' for ion energy equations
 *       'pot' for electric potential equation
 
 *   ..output arguments (unspecified on entry)
@@ -10620,7 +10621,6 @@ cxpb Careful here because of BC number clash
           CALL XERRAB ('B2STBC -- BCENI=28, NOT AVAILABLE FOR N,S')
         ENDIF
 
-* -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       case default
         write(*,*) BCENI(IB)
         call xerrab ('BCENI out of bounds')
