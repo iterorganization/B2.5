@@ -422,7 +422,24 @@ contains
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store run data related to the divertor plates
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        integer :: i_src
+#endif
+
         if (.not.associated( edge_profiles%ids_properties%comment )) return
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        if (associated(edge_profiles%ggd)) nullify(edge_profiles%ggd)
+        if (associated(edge_sources%source)) then
+          do i_src = 1, size(edge_sources%source)
+            if (associated(edge_sources%source(i_src)%ggd)) &
+               &   nullify(edge_sources%source(i_src)%ggd)
+          end do
+        end if
+        if (associated(edge_transport%model)) then
+          if (associated(edge_transport%model(1)%ggd)) &
+             &   nullify(edge_transport%model(1)%ggd)
+        end if
+#endif
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
@@ -641,7 +658,20 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        integer :: i_src
+#endif
+
         if (associated( batch_profiles%ids_properties%comment ) ) then
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          if (associated(batch_profiles%ggd)) nullify(batch_profiles%ggd)
+          if (associated(batch_sources%source)) then
+            do i_src = 1, size(batch_sources%source)
+              if (associated(batch_sources%source(i_src)%ggd)) &
+                 &   nullify(batch_sources%source(i_src)%ggd)
+            end do
+          end if
+#endif
           call ids_deallocate( batch_profiles )
           call ids_deallocate( batch_sources )
 #if IMAS_MAJOR_VERSION > 3
