@@ -156,7 +156,11 @@ c>>>
 c*** Check the topology of the grid and the list of target edges
 
       if(ntrgsa.gt.0) then !{
-        ntrgs=ntrgsa
+        if (ntrgsa.eq.4 .and. mpg%nXpt.le.1) then
+          ntrgs=2
+        else
+          ntrgs=ntrgsa
+        endif
         if (ntrgs.eq.1) then
           if (mtrgedge(2,1).gt.0) ltrgedge(1,1)=mtrgedge(2,1)
           if (mtrgedge(1,1).gt.0) ltrgedge(2,1)=mtrgedge(1,1)
