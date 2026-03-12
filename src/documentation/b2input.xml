@@ -3732,15 +3732,71 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					If non-zero, the movie file b2movies.nc is generated, containing several 2d quantities. Gives the real-time interval between writes of movie frames in b2movies.nc. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie files b2movies.nc and eirenemovies.nc are generated (the second one only in case of coupled runs), containing several multidimensional quantities. Gives the real-time interval between writes of movie frames in b2movies.nc and eirenemovies.nc. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
-				<name>cdfmovie_fields</name>
+				<name>cdfmovie_b25_state_variables</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Controls the quantities outputted to b2movies.nc. If cdfmovie_fields.ge.1 then only the main state variables (na, ne, Te, Ti, etc.) are written with each write to b2movies.nc. If cdfmovie_fields.ge.2 then additional quantities (e.g. fluxes, particle and energy sources) are also included.
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_state_variables.ge.1 then the plasma state variables (na, ne, Te, Ti, etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_fluxes.ge.1 then the plasma fluxes (fna(x/y), fhe(x/y), fhi(x/y), etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_transport</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_transport.ge.1 then the anomalous transport coefficients over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_state_variables</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_state_variables.ge.1 then neutrals state variables (densities and temperatures for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_fluxes.ge.1 then the neutrals fluxes (particle and energy fluxes for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_sources.ge.1 then the plasma sources due to plasma-neutrals interactions (particle and energy sources for each fluid species, and neutrals radiation from atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_triangles</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to eirenemovies.nc. If cdfmovie_triangles.ge.1 then particle density, energy density and x-, y- and z-directed momentum density for atoms and molecules on the Eirene triangular grid are outputted, in case of coupled runs.
 				</description>
 			</switch>
 			<switch>
