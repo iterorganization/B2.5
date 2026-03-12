@@ -3086,6 +3086,7 @@ contains
               is = ispion(js,ks)
               spclabel = trim(textin(is-1))
               call shrink_label(spclabel)
+              nelems = count ( micmp( 1:natmi, is ) > 0 )
 #  if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
               allocate( &
                 &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%element( nelems ) )
@@ -3140,7 +3141,6 @@ contains
                     &                                                     spclabel
               end do
 #   endif
-              nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
               allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element( nelems ) )
               call fill_mol_ion_elements( nelems, is, &
@@ -3163,7 +3163,6 @@ contains
                   &                                                       spclabel
               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( ks )%name = &
                   &                                                       spclabel
-              nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( profiles_ggd%ion( js )%element( nelems ) )
               allocate( transport_ggd(1)%ion( js )%element( nelems ) )
               call fill_mol_ion_elements( nelems, is, &
@@ -5118,8 +5117,7 @@ contains
                       &   b2CellData = tmpCv )
                 end do
                 call write_cell_scalar( sources_grid,                       &
-                      &   scalar = edge_sources%source(1)%                  &
-                      &   ggd( time_sind )%ion( is )%particles,             &
+                      &   scalar = sources_ggd(1)%ion( is )%particles,      &
                       &   b2CellData = totCv )
                 totCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
