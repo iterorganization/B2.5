@@ -271,6 +271,35 @@ c***  Standard set-up:
         end do
         ic = ic + 1
       end do
+
+*    ..Check if a separatrix was found based on iFssep. If not, see if
+*      additional topological data is available
+      if (.not. found) then 
+        if (m%hasTopologicalData) then 
+*        ..Print message          
+          print *, 'read_b2mod_user_namelist: looking for ' // 
+     &      'separatrix based on topological data'
+          ic = 1
+          do while (ic.le.nomp .and..not.found)
+            do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+              iFc = m%cvFc(i)
+              if (any(m%fcFs(iFc) == m%alliFssep) ) then
+                icsepomp = ic + 1
+                ifsepomp = iFc
+                found = .true.
+              end if
+            end do
+            ic = ic + 1
+          end do
+        end if 
+      end if 
+*    ..Final check
+      if (.not. found) then 
+        call xerrab('read_b2mod_user_namelist: could not find ' // 
+     &   'separatrix position in OMP list')
+      end if 
+
 ! csc get psi for each OMP cell
       psi_omp = 0.0_R8
       do ic = 1, nomp
@@ -522,6 +551,34 @@ c*** Set default values according to current species list
         end do
         ic = ic + 1
       end do
+      
+*    ..Check if a separatrix was found based on iFssep. If not, see if
+*      additional topological data is available
+      if (.not. found) then 
+        if (m%hasTopologicalData) then 
+*        ..Print message          
+          print *, 'read_b2mod_user_namelist: looking for ' // 
+     &      'separatrix based on topological data'
+          ic = 1
+          do while (ic.le.nimp .and..not.found)
+            do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+              iFc = m%cvFc(i)
+              if (any(m%fcFs(iFc) == m%alliFssep) ) then
+                icsepimp = ic + 1
+                ifsepimp = iFc
+                found = .true.
+              end if
+            end do
+            ic = ic + 1
+          end do
+        end if 
+      end if 
+*    ..Final check
+      if (.not. found) then 
+        call xerrab('read_b2mod_user_namelist: could not find ' // 
+     &   'separatrix position in OMP list')
+      end if 
 ! csc get psi for each OMP cell
       psi_imp = 0.0_R8
       do ic = 1, nimp
