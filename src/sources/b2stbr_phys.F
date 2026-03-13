@@ -1318,12 +1318,14 @@ cxpb  We now must remove the energy lost in ionizing the promptly redeposited ma
 cxpb  but from the electrons
                   t3=-t0*ev*rpi(ixn,iyn,target_intcode(itrack)+1)*
      1              ytmp*f_redep(ixn,iyn,target_intcode(itrack))/
-     2             (1.0_R8-f_redep(ixn,iyn,target_intcode(itrack))*yself)
+     2             (1.0_R8-f_redep(ixn,iyn,target_intcode(itrack))*
+     3              yself)
 cxpb  We must now add the energy brought back in by the self-sputtered material
                   t2=t2+t0*f_redep(ixn,iyn,target_intcode(itrack))*
      1              ytmp*eself*(pof-Phi_app)*
      .              zaf(target_intcode(itrack)+1)*ev/
-     2             (1.0_R8-f_redep(ixn,iyn,target_intcode(itrack))*yself)
+     2             (1.0_R8-f_redep(ixn,iyn,target_intcode(itrack))*
+     3              yself)
                   physical_sputtering_energy(iwall,is) =
      &             physical_sputtering_energy(iwall,is) + ztmp
                   if (output.ge.11) then
