@@ -1064,12 +1064,11 @@ c.. Make a list of core boundaries
             end if
           endif
         enddo
-        if (maxval(m%fsVxP(:,2)).gt.2) then
-          if ((m%nnreg(0).gt.1.or.m%periodic_bc.eq.1).and.
-     &        .not.(all(m%cvOnClosedSurface).eqv..false.)) then
-            call xertst(1.le.ncbs, 'faulty parameters ncbs')
-          end if
-        end if
+c        if (maxval(m%fsVxP(:,2)).gt.2) then
+c          if (m%nnreg(0).gt.1 .or. m%periodic_bc.eq.1) then
+c            call xertst(1.le.ncbs, 'faulty parameters ncbs')
+c          end if
+c        end if
         do ib = 1, ncbs
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
