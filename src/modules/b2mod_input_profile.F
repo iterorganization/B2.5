@@ -998,8 +998,11 @@ c     Calculate poloidal angle theta (same code used in b2tqna.F)
 !           write(*,*) 'zwischen,ifail=',ifail
             call E01BFF(ndat,r,f,d,ndim,pr,pf,ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            if (elm_data)
-     >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            if (elm_data) then
+              call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            else
+              pelm=pf
+            endif
 
             if (new_files) then
 
