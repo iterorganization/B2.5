@@ -195,23 +195,7 @@
         allocate (m%imapFcy(-1:m%nx,-1:m%ny))
         allocate (m%imapVx(-1:m%nx,-1:m%ny))
         allocate (m%icornVx(1:m%nx))
-      ! Allocate additional topological data if available
-      if (m%hasTopologicalData) then 
-        allocate(m%Xpt(m%nXpt))
-        allocate(m%strVx(m%nStr))
-        allocate(m%strVxP(m%nXpt, 2))
-        allocate(m%tgVx(m%nTgc))
-        allocate(m%strDiv(m%nStr))
-        allocate(m%divFcP(m%nDiv, 2))
-        allocate(m%divFc(m%nfcDiv)) 
-        allocate(m%isPrimaryXpt(m%nXpt))
-        allocate(m%XptFsID(m%nXpt))
-        allocate(m%strFsID(m%nStr))
-        allocate(m%tgFsID(m%nTgc))
-        allocate(m%strXpt(m%nStr))
-        allocate(m%XptStrP(m%nXpt, 2))
-        allocate(m%tgDiv(m%nTgc))
-      end if 
+      
 
 #ifdef DBG
         allocate (imapCv(-1:m%nx,-1:m%ny))
@@ -232,6 +216,24 @@
         allocate (imapVx(0,0))
 #endif
       endif
+
+      ! Allocate additional topological data if available
+      if (m%hasTopologicalData) then 
+        allocate(m%Xpt(m%nXpt))
+        allocate(m%strVx(m%nStr))
+        allocate(m%strVxP(m%nXpt, 2))
+        allocate(m%tgVx(m%nTgc))
+        allocate(m%strDiv(m%nStr))
+        allocate(m%divFcP(m%nDiv, 2))
+        allocate(m%divFc(m%nfcDiv)) 
+        allocate(m%isPrimaryXpt(m%nXpt))
+        allocate(m%XptFsID(m%nXpt))
+        allocate(m%strFsID(m%nStr))
+        allocate(m%tgFsID(m%nTgc))
+        allocate(m%strXpt(m%nStr))
+        allocate(m%XptStrP(m%nXpt, 2))
+        allocate(m%tgDiv(m%nTgc))
+      end if 
 
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
