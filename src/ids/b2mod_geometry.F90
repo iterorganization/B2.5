@@ -571,9 +571,9 @@ contains
     ! magnetic field topology
     if (mpg%hasTopologicalData) then 
         geometryId = GEOMETRY_GENERAL
-        if (first) then
+        if (firstgmid) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_GENERAL")
-            first = .false.
+            firstgmid = .false.
         end if
         return 
     end if
@@ -643,9 +643,9 @@ contains
         active = .false.
         if (size(mpg%Xpt) == 1) then 
             geometryId = GEOMETRY_SN
-            if (first) then
+            if (firstgmid) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
-                first = .false.
+                firstgmid = .false.
             end if
             return
         else 

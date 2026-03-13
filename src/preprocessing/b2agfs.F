@@ -384,14 +384,14 @@
               enddo
 
             else ! for artificial slab constant magnetic field
-                g%cvBb(:,0) = g%cvBp(1)
+                g%cvBb(:,0) = cvBp(1)
                 g%cvBb(:,1) = 0
-                g%cvBb(:,2) = g%cvBt(1)
-                g%cvBb(:,3) = sqrt( g%cvBp(1)**2 + g%cvBt(1)**2)
-                g%fcBb(:,0) = g%cvBp(1)
+                g%cvBb(:,2) = cvBt(1)
+                g%cvBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
+                g%fcBb(:,0) = cvBp(1)
                 g%fcBb(:,1) = 0
-                g%fcBb(:,2) = g%cvBt(1)
-                g%fcBb(:,3) = sqrt( g%cvBp(1)**2 + g%cvBt(1)**2)
+                g%fcBb(:,2) = cvBt(1)
+                g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
             endif        
            else
              call xerrab('Grid version not greater than or equal to' //

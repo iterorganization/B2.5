@@ -17,7 +17,7 @@
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
-     &             nOpt, nCornVx, 
+     &             nOpt, nCornVx, nFci, 
      &             ncvOMP, ncvIMP, nfcOMP, nfcIMP
         integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
 

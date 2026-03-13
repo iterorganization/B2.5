@@ -236,7 +236,6 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
         write (*,*) 'Reading unstructured b2fgmtry...'
         call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg, 
      &   lblgm, isymm)
-        switch%isymm = isymm
 
 *     ..allocate mapping and geometry
         call alloc_mapping (mpg)

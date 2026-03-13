@@ -170,7 +170,7 @@ contains
      call ipgetc ('b2agfs_geometry', local_sonnet)
      if(open_file(lun,local_sonnet, 'data.local/meshes|data/meshes')) then
        call cfverr(lun,grid_version)
-       if(s%istyle.eq.-1) then
+       if(istyle.eq.-1) then
          ! Carre grid input
          if (grid_version >= "03.002.000") then
            ! obtain nCv, nFc, nVx from geometry file

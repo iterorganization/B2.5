@@ -238,7 +238,7 @@ csw
       endif
 *   ..obtain mapping/geometry dimensions from file
       call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg, 
-     &  cdum, switch%isymm)
+     &  cdum, isymm)
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)
