@@ -412,7 +412,9 @@ contains
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store run data related to the divertor plates
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         integer :: i_src
+#endif
 
         if (.not.associated( edge_profiles%ids_properties%comment )) return
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
@@ -645,7 +647,9 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         integer :: i_src
+#endif
 
         if (associated( batch_profiles%ids_properties%comment ) ) then
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
