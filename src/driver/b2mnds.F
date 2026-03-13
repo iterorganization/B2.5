@@ -163,13 +163,13 @@
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
 *   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
+      !call cfruch (ninp(1), 120, lblgm, 'label')
 #if ( defined(JET) || defined(IMAS) )
       labgeo=lblgm
       labgeo=lblgm
 #endif
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
+      !call cfruin (ninp(1), 1, idum, 'isymm')
+      !isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read default physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
