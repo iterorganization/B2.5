@@ -813,18 +813,24 @@ endif
 endif
 
 ifeq ($(COMPILER),pgf90)
-ifndef SOLPS_OPENMP
 ${OBJDIR}/b2ytdr.o : b2ytdr.F
 	@- /bin/rm -f $*.f $*.o $*.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FPOPTS} -O0 ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+	${FC} ${FPOPTS} -O0 -Mbackslash -C -g -Mchkptr -Mchkstk ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+endif
 else
 ifeq ($(strip $(SED)),)
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.f
 else
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > $*.f
 endif
-	${FC} ${FCOPTS} ${FPOPTS} -O0 ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+else
+	${FC} ${FPOPTS} -O0 -Mbackslash -C -g -Mchkptr -Mchkstk ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
 endif
 endif
 endif
