@@ -13,7 +13,7 @@ ifndef LD_NAG
 endif
 
 ifdef MKLROOT
-LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+LD_MKL  ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
 endif
 
 CPP      = /lib/cpp -traditional
@@ -35,21 +35,6 @@ endif
 
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -fp-model=precise
-endif
-
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
 endif
 
 ifdef TAO

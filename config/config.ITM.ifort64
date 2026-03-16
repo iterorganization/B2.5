@@ -11,7 +11,7 @@ NAGDIR      ?= ${EBROOTOPENBLAS}
 LD_NAG      ?= `pkg-config openblas --libs`
 
 ifdef MKLROOT
-LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+LD_MKL      ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
 endif
 
 DEFINES += -DNO_OPT # -DNO_CDF

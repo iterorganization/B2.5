@@ -15,7 +15,7 @@ module b2mod_cdf
 contains
 
 #ifndef SOLPS4_3
-  subroutine b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnmoli, &
+  subroutine b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
    write_2d, ncid, batch_only, iret)
     use b2mod_constants
     use b2mod_user_namelist &
@@ -24,7 +24,7 @@ contains
     implicit none
 #   include <netcdf.inc>
     type (mapping), intent(in) :: mpg
-    integer, intent(in) :: ns, ismain, ismain0, nnmoli
+    integer, intent(in) :: ns, ismain, ismain0, nnatmi, nnmoli
     integer nCv, nFc, nc, iret
     integer nya, nyi
     integer nybl, nytl, nytr, nybr
@@ -34,36 +34,49 @@ contains
     ! NetCDF id
     integer  ncid
     ! dimension ids
-    integer :: ncvdim, nfcdim, nsdim, timedim, batchdim, ncdim, idirdim
+    integer :: ncvdim, nfcdim, nsdim, natmdim, nmoldim, timedim, batchdim, ncdim, idirdim
     integer :: nyadim, nyidim
     integer :: nydim, nybldim, nytldim, nytrdim, nybrdim
     ! variable ids
-    integer :: ntstepid, timesaid, fnixipid, feexipid, feixipid, &
-         fnixapid, feexapid, feixapid, nesepiid, tesepiid, tisepiid, &
-         nesepmid, tesepmid, tisepmid, nesepaid, tesepaid, tisepaid, &
-         nemxipid, temxipid, timxipid, nemxapid, temxapid, timxapid, &
+    integer :: ntstepid, icsepimpid, icsepompid, timesaid, &
+         cvlistiid, dsiid, cvlistaid, dsaid, &
+         fclistlid, cvlistlid, cnlistlid, dslid, dsLTid, dsLPid, &
+         fclistrid, cvlistrid, cnlistrid, dsrid, dsRTid, dsRPid, &
+         fclisttlid, cvlisttlid, cnlisttlid, dstlid, dsTLTid, dsTLPid, &
+         fclisttrid, cvlisttrid, cnlisttrid, dstrid, dsTRTid, dsTRPid, &
+         fnixipid, feexipid, feixipid, fnixapid, feexapid, feixapid, &
+         nasepiid, nesepiid, tesepiid, tisepiid, dabsepiid, dmbsepiid, tabsepiid, tmbsepiid, &
+         nasepmid, nesepmid, tesepmid, tisepmid, dabsepmid, dmbsepmid, tabsepmid, tmbsepmid, &
+         nasepaid, nesepaid, tesepaid, tisepaid, dabsepaid, dmbsepaid, tabsepaid, tmbsepaid, &
+         namxipid, nemxipid, temxipid, timxipid, namxapid, nemxapid, temxapid, timxapid, &
          fniyipid, feeyipid, feiyipid, fniyapid, feeyapid, feiyapid, &
          pwmxipid, pwmxapid, tmneid, tmteid, tmtiid, &
          tmhacoreid, tmhasolid, tmhadivid, &
          fnisipid, feesipid, feisipid, fnisapid, &
          feesapid, feisapid, fnisippid, feesippid, feisippid, fnisappid, &
-         feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, an3dlid, mn3dlid, &
-         ne3diid, te3diid, ti3diid, an3diid, mn3diid, &
-         ne3daid, te3daid, ti3daid, an3daid, mn3daid, &
-         ne3drid, te3drid, ti3drid, an3drid, mn3drid, &
+         feesappid, feisappid, &
+         na3dlid, ne3dlid, te3dlid, ti3dlid, an3dlid, mn3dlid, &
+         na3diid, ne3diid, te3diid, ti3diid, an3diid, mn3diid, &
+         na3daid, ne3daid, te3daid, ti3daid, an3daid, mn3daid, &
+         na3drid, ne3drid, te3drid, ti3drid, an3drid, mn3drid, &
          fn3dlid, fe3dlid, fi3dlid, fn3drid, fe3drid, fi3drid, &
          fetxipid, fetxapid, fetyipid, fetyapid, &
-         fetsipid, fetsapid, fetsippid, fetsappid
+         fetsipid, fetsapid, fetsippid, fetsappid, &
+         dab3dlid, dab3diid, dab3daid, dab3drid, tab3dlid, tab3diid, tab3daid, tab3drid, &
+         dmb3dlid, dmb3diid, dmb3daid, dmb3drid, tmb3dlid, tmb3diid, tmb3daid, tmb3drid, &
+         dab3dtlid, dab3dtrid, tab3dtlid, tab3dtrid, dmb3dtlid, dmb3dtrid, tmb3dtlid, tmb3dtrid
     integer :: an3dtlid, mn3dtlid, an3dtrid, mn3dtrid, &
-         ne3dtlid, te3dtlid, ti3dtlid, ne3dtrid, te3dtrid, &
-         ti3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
-         fe3dtrid, fi3dtrid, fc3dtlid, fc3dtrid, &
+         na3dtlid, ne3dtlid, te3dtlid, ti3dtlid, &
+         na3dtrid, ne3dtrid, te3dtrid, ti3dtrid, &
+         fn3dtlid, fe3dtlid, fi3dtlid, &
+         fn3dtrid, fe3dtrid, fi3dtrid, &
+         fc3dtlid, fc3dtrid, &
          fl3dtlid, fl3dtrid, fo3dtlid, fo3dtrid, &
          ft3dtlid, ft3dtrid, po3dtlid, po3dtrid
 #ifdef WG_TODO
     integer :: tp3dtlid, tp3dtrid
 #endif
-    integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
+    integer :: na2did, ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
          rsana2did, rrahi2did, rrana2did, rcxhi2did, rcxna2did, rqrad2did, &
          rqahe2did, fch2did, fhe2did, fhi2did, fna2did
     integer :: fchxipid, fchxapid, posepiid, posepmid, posepaid, &
@@ -83,18 +96,24 @@ contains
 #endif
          ktsepmid, ktsepaid, ktsepiid, &
          nastepid, ntimbatchid, batchsaid, &
-         nesepm_avid, tesepm_avid, tisepm_avid, posepm_avid, &
-         nesepi_avid, tesepi_avid, tisepi_avid, posepi_avid, &
-         nesepa_avid, tesepa_avid, tisepa_avid, posepa_avid, &
-         nemxip_avid, temxip_avid, timxip_avid, pomxip_avid, &
-         nemxap_avid, temxap_avid, timxap_avid, pomxap_avid, &
-         ktsepm_avid, ktsepi_avid, ktsepa_avid, &
-         nesepm_stdid, tesepm_stdid, tisepm_stdid, posepm_stdid, &
-         nesepi_stdid, tesepi_stdid, tisepi_stdid, posepi_stdid, &
-         nesepa_stdid, tesepa_stdid, tisepa_stdid, posepa_stdid, &
-         nemxip_stdid, temxip_stdid, timxip_stdid, pomxip_stdid, &
-         nemxap_stdid, temxap_stdid, timxap_stdid, pomxap_stdid, &
-         ktsepm_stdid, ktsepi_stdid, ktsepa_stdid
+         nasepm_avid, nesepm_avid, tesepm_avid, tisepm_avid, posepm_avid, &
+         dabsepm_avid, tabsepm_avid, dmbsepm_avid, tmbsepm_avid, &
+         nasepi_avid, nesepi_avid, tesepi_avid, tisepi_avid, posepi_avid, &
+         dabsepi_avid, tabsepi_avid, dmbsepi_avid, tmbsepi_avid, &
+         nasepa_avid, nesepa_avid, tesepa_avid, tisepa_avid, posepa_avid, &
+         dabsepa_avid, tabsepa_avid, dmbsepa_avid, tmbsepa_avid, &
+         namxip_avid, nemxip_avid, temxip_avid, timxip_avid, pomxip_avid, &
+         namxap_avid, nemxap_avid, temxap_avid, timxap_avid, pomxap_avid, &
+         nasepm_stdid, nesepm_stdid, tesepm_stdid, tisepm_stdid, posepm_stdid, &
+         dabsepm_stdid, tabsepm_stdid, dmbsepm_stdid, tmbsepm_stdid, &
+         nasepi_stdid, nesepi_stdid, tesepi_stdid, tisepi_stdid, posepi_stdid, &
+         dabsepi_stdid, tabsepi_stdid, dmbsepi_stdid, tmbsepi_stdid, &
+         nasepa_stdid, nesepa_stdid, tesepa_stdid, tisepa_stdid, posepa_stdid, &
+         dabsepa_stdid, tabsepa_stdid, dmbsepa_stdid, tmbsepa_stdid, &
+         namxip_stdid, nemxip_stdid, temxip_stdid, timxip_stdid, pomxip_stdid, &
+         namxap_stdid, nemxap_stdid, temxap_stdid, timxap_stdid, pomxap_stdid, &
+         ktsepm_stdid, ktsepi_stdid, ktsepa_stdid, &
+         ktsepm_avid, ktsepi_avid, ktsepa_avid
     ! variable shapes
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
@@ -136,11 +155,29 @@ contains
       end if
       iret = nf_def_dim(ncid, 'ns', ns, nsdim)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_def_dim(ncid, 'natm', nnatmi, natmdim)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_def_dim(ncid, 'nmol', nnmoli, nmoldim)
+        call check_cdf_status(iret)
+      endif
       iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
       call check_cdf_status(iret)
       iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
       call check_cdf_status(iret)
     else
+      iret = nf_def_dim(ncid, 'ns', ns, nsdim)
+      call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_def_dim(ncid, 'natm', nnatmi, natmdim)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_def_dim(ncid, 'nmol', nnmoli, nmoldim)
+        call check_cdf_status(iret)
+      endif
       iret = nf_def_dim(ncid, 'batch', ncunlim, batchdim)
       call check_cdf_status(iret)
     end if
@@ -155,8 +192,94 @@ contains
       dims(1) = timedim
       iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
       call check_cdf_status(iret)
+      if (nimp.gt.0) then
+        dims(1) = 0
+        iret = nf_def_var(ncid, 'icsepimp', NCDOUBLE, 0, dims, icsepimpid)
+        call check_cdf_status(iret)
+        dims(1) = nyidim
+        iret = nf_def_var(ncid, 'cvlisti', NCDOUBLE, 1, dims, cvlistiid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsi', NCDOUBLE, 1, dims, dsiid)
+        call check_cdf_status(iret)
+      endif
+      if (nomp.gt.0) then
+        dims(1) = 0
+        iret = nf_def_var(ncid, 'icsepomp', NCDOUBLE, 0, dims, icsepompid)
+        call check_cdf_status(iret)
+        dims(1) = nyadim
+        iret = nf_def_var(ncid, 'cvlista', NCDOUBLE, 1, dims, cvlistaid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsa', NCDOUBLE, 1, dims, dsaid)
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.1) then
+        dims(1) = nybldim
+        iret = nf_def_var(ncid, 'fclistl', NCDOUBLE, 1, dims, fclistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlistl', NCDOUBLE, 1, dims, cvlistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlistl', NCDOUBLE, 1, dims, cnlistlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsl', NCDOUBLE, 1, dims, dslid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsLT', NCDOUBLE, 1, dims, dsLTid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsLP', NCDOUBLE, 1, dims, dsLPid)
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.2) then
+        dims(1) = nybrdim
+        iret = nf_def_var(ncid, 'fclistr', NCDOUBLE, 1, dims, fclistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlistr', NCDOUBLE, 1, dims, cvlistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlistr', NCDOUBLE, 1, dims, cnlistrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsr', NCDOUBLE, 1, dims, dsrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsRT', NCDOUBLE, 1, dims, dsRTid)
+        call check_cdf_status(iret) 
+        iret = nf_def_var(ncid, 'dsRP', NCDOUBLE, 1, dims, dsRPid)
+        call check_cdf_status(iret) 
+      endif
+      if (maxval(mpg%strDiv).ge.4) then
+        dims(1) = nytldim
+        iret = nf_def_var(ncid, 'fclisttl', NCDOUBLE, 1, dims, fclisttlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlisttl', NCDOUBLE, 1, dims, cvlisttlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlisttl', NCDOUBLE, 1, dims, cnlisttlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dstl', NCDOUBLE, 1, dims, dstlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsTLT', NCDOUBLE, 1, dims, dsTLTid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsTLP', NCDOUBLE, 1, dims, dsTLPid)
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.3) then
+        dims(1) = nytrdim
+        iret = nf_def_var(ncid, 'fclisttr', NCDOUBLE, 1, dims, fclisttrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cvlisttr', NCDOUBLE, 1, dims, cvlisttrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'cnlisttr', NCDOUBLE, 1, dims, cnlisttrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dstr', NCDOUBLE, 1, dims, dstrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsTRT', NCDOUBLE, 1, dims, dsTRTid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dsTRP', NCDOUBLE, 1, dims, dsTRPid)
+        call check_cdf_status(iret)
+      endif
       dvals(1) = 1.0_R8/ev
       if (write_2d .ge. 1) then
+        iret = nf_def_var(ncid, 'na2d', NCDOUBLE, 3, (/ncvdim,nsdim,timedim/), na2did)
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, na2did, 'long_name', 2, 'na')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, na2did, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne2d', NCDOUBLE, 2, (/ncvdim,timedim/), ne2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
@@ -289,12 +412,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'fchxap', NCDOUBLE, 2, dims, fchxapid)
       call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nasepi', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepiid)
+      call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepi', NCDOUBLE, 2, dims, nesepiid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tesepi', NCDOUBLE, 2, dims, tesepiid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tisepi', NCDOUBLE, 2, dims, tisepiid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_def_var(ncid, 'dabsepi', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepiid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tabsepi', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepiid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_def_var(ncid, 'dmbsepi', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepiid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tmbsepi', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepiid)
+        call check_cdf_status(iret)
+      endif
 #ifdef WG_TODO
       iret = nf_def_var(ncid, 'tpsepi', NCDOUBLE, 2, dims, tpsepiid)
       call check_cdf_status(iret)
@@ -303,12 +440,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'ktsepi', NCDOUBLE, 2, dims, ktsepiid)
       call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nasepm', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepmid)
+      call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepm', NCDOUBLE, 2, dims, nesepmid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tesepm', NCDOUBLE, 2, dims, tesepmid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tisepm', NCDOUBLE, 2, dims, tisepmid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_def_var(ncid, 'dabsepm', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepmid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tabsepm', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepmid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_def_var(ncid, 'dmbsepm', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepmid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tmbsepm', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepmid)
+        call check_cdf_status(iret)
+      endif
       iret = nf_def_var(ncid, 'posepm', NCDOUBLE, 2, dims, posepmid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'ktsepm', NCDOUBLE, 2, dims, ktsepmid)
@@ -327,12 +478,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'vssepm', NCDOUBLE, 2, dims, vssepmid)
       call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nasepa', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), nasepaid)
+      call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nesepa', NCDOUBLE, 2, dims, nesepaid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tesepa', NCDOUBLE, 2, dims, tesepaid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tisepa', NCDOUBLE, 2, dims, tisepaid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_def_var(ncid, 'dabsepa', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), dabsepaid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tabsepa', NCDOUBLE, 3, (/natmdim,ncdim,timedim/), tabsepaid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_def_var(ncid, 'dmbsepa', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), dmbsepaid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tmbsepa', NCDOUBLE, 3, (/nmoldim,ncdim,timedim/), tmbsepaid)
+        call check_cdf_status(iret)
+      endif
 #ifdef WG_TODO
       iret = nf_def_var(ncid, 'tpsepa', NCDOUBLE, 2, dims, tpsepaid)
       call check_cdf_status(iret)
@@ -340,6 +505,8 @@ contains
       iret = nf_def_var(ncid, 'posepa', NCDOUBLE, 2, dims, posepaid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'ktsepa', NCDOUBLE, 2, dims, ktsepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'namxip', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), namxipid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nemxip', NCDOUBLE, 2, dims, nemxipid)
       call check_cdf_status(iret)
@@ -352,6 +519,8 @@ contains
       call check_cdf_status(iret)
 #endif
       iret = nf_def_var(ncid, 'pomxip', NCDOUBLE, 2, dims, pomxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'namxap', NCDOUBLE, 3, (/nsdim,ncdim,timedim/), namxapid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'nemxap', NCDOUBLE, 2, dims, nemxapid)
       call check_cdf_status(iret)
@@ -448,7 +617,7 @@ contains
       if (maxval(mpg%strDiv).ge.2) then
         dims(2) = timedim
         dims(1) = nybldim
-        iret = nf_def_var(ncid, 'fn3dl', NCDOUBLE, 2, dims, fn3dlid)
+        iret = nf_def_var(ncid, 'fn3dl', NCDOUBLE, 3, (/nybldim,nsdim,timedim/), fn3dlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fe3dl', NCDOUBLE, 2, dims, fe3dlid)
         call check_cdf_status(iret)
@@ -461,6 +630,8 @@ contains
         iret = nf_def_var(ncid, 'fl3dl', NCDOUBLE, 2, dims, fl3dlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fo3dl', NCDOUBLE, 2, dims, fo3dlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'na3dl', NCDOUBLE, 3, (/nybldim,nsdim,timedim/), na3dlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3dl', NCDOUBLE, 2, dims, ne3dlid)
         call check_cdf_status(iret)
@@ -482,8 +653,22 @@ contains
         iret = nf_def_var(ncid, 'tp3dl', NCDOUBLE, 2, dims, tp3dlid)
         call check_cdf_status(iret)
 #endif
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3dl', NCDOUBLE, 3, (/nybldim,natmdim,timedim/), dab3dlid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3dl', NCDOUBLE, 3, (/nybldim,natmdim,timedim/), tab3dlid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3dl', NCDOUBLE, 3, (/nybldim,nmoldim,timedim/), dmb3dlid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3dl', NCDOUBLE, 3, (/nybldim,nmoldim,timedim/), tmb3dlid)
+          call check_cdf_status(iret)
+        endif
         dims(2) = timedim
         dims(1) = nybrdim
+        iret = nf_def_var(ncid, 'na3dr', NCDOUBLE, 3, (/nybrdim,nsdim,timedim/), na3drid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3dr', NCDOUBLE, 2, dims, ne3drid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'te3dr', NCDOUBLE, 2, dims, te3drid)
@@ -500,7 +685,7 @@ contains
           iret = nf_def_var(ncid, 'mn3dr', NCDOUBLE, 2, dims, mn3drid)
           call check_cdf_status(iret)
         end if
-        iret = nf_def_var(ncid, 'fn3dr', NCDOUBLE, 2, dims, fn3drid)
+        iret = nf_def_var(ncid, 'fn3dr', NCDOUBLE, 3, (/nybrdim,nsdim,timedim/), fn3drid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fe3dr', NCDOUBLE, 2, dims, fe3drid)
         call check_cdf_status(iret)
@@ -518,11 +703,23 @@ contains
         iret = nf_def_var(ncid, 'tp3dr', NCDOUBLE, 2, dims, tp3drid)
         call check_cdf_status(iret)
 #endif
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3dr', NCDOUBLE, 3, (/nybrdim,natmdim,timedim/), dab3drid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3dr', NCDOUBLE, 3, (/nybrdim,natmdim,timedim/), tab3drid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3dr', NCDOUBLE, 3, (/nybrdim,nmoldim,timedim/), dmb3drid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3dr', NCDOUBLE, 3, (/nybrdim,nmoldim,timedim/), tmb3drid)
+          call check_cdf_status(iret)
+        endif
       end if
       if(maxval(mpg%strDiv).ge.4) then
         dims(2) = timedim
         dims(1) = nytldim
-        iret = nf_def_var(ncid, 'fn3dtl', NCDOUBLE, 2, dims, fn3dtlid)
+        iret = nf_def_var(ncid, 'fn3dtl', NCDOUBLE, 3, (/nytldim,nsdim,timedim/), fn3dtlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fe3dtl', NCDOUBLE, 2, dims, fe3dtlid)
         call check_cdf_status(iret)
@@ -535,6 +732,8 @@ contains
         iret = nf_def_var(ncid, 'fl3dtl', NCDOUBLE, 2, dims, fl3dtlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fo3dtl', NCDOUBLE, 2, dims, fo3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'na3dtl', NCDOUBLE, 3, (/nytldim,nsdim,timedim/), na3dtlid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3dtl', NCDOUBLE, 2, dims, ne3dtlid)
         call check_cdf_status(iret)
@@ -556,8 +755,22 @@ contains
         iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
         call check_cdf_status(iret)
 #endif
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3dtl', NCDOUBLE, 3, (/nytldim,natmdim,timedim/), dab3dtlid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3dtl', NCDOUBLE, 3, (/nytldim,natmdim,timedim/), tab3dtlid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3dtl', NCDOUBLE, 3, (/nytldim,nmoldim,timedim/), dmb3dtlid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3dtl', NCDOUBLE, 3, (/nytldim,nmoldim,timedim/), tmb3dtlid)
+          call check_cdf_status(iret)
+        endif
         dims(2) = timedim
         dims(1) = nytrdim
+        iret = nf_def_var(ncid, 'na3dtr', NCDOUBLE, 3, (/nytrdim,nsdim,timedim/), na3dtrid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3dtr', NCDOUBLE, 2, dims, ne3dtrid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'te3dtr', NCDOUBLE, 2, dims, te3dtrid)
@@ -574,7 +787,7 @@ contains
           iret = nf_def_var(ncid, 'mn3dtr', NCDOUBLE, 2, dims, mn3dtrid)
           call check_cdf_status(iret)
         end if
-        iret = nf_def_var(ncid, 'fn3dtr', NCDOUBLE, 2, dims, fn3dtrid)
+        iret = nf_def_var(ncid, 'fn3dtr', NCDOUBLE, 3, (/nytrdim,nsdim,timedim/), fn3dtrid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'fe3dtr', NCDOUBLE, 2, dims, fe3dtrid)
         call check_cdf_status(iret)
@@ -592,10 +805,24 @@ contains
         iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
         call check_cdf_status(iret)
 #endif
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3dtr', NCDOUBLE, 3, (/nytrdim,natmdim,timedim/), dab3dtrid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3dtr', NCDOUBLE, 3, (/nytrdim,natmdim,timedim/), tab3dtrid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3dtr', NCDOUBLE, 3, (/nytrdim,nmoldim,timedim/), dmb3dtrid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3dtr', NCDOUBLE, 3, (/nytrdim,nmoldim,timedim/), tmb3dtrid)
+          call check_cdf_status(iret)
+        endif
       endif
       if (nimp.gt.0) then
         dims(2) = timedim
         dims(1) = nyidim
+        iret = nf_def_var(ncid, 'na3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), na3diid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
@@ -612,9 +839,9 @@ contains
           iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
           call check_cdf_status(iret)
         end if
-        iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
+        iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), dn3diid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
+        iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), dp3diid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
         call check_cdf_status(iret)
@@ -624,16 +851,30 @@ contains
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
+        iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), vx3diid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
+        iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), vy3diid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
+        iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 3, (/nyidim,nsdim,timedim/), vs3diid)
         call check_cdf_status(iret)
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3di', NCDOUBLE, 3, (/nyidim,natmdim,timedim/), dab3diid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3di', NCDOUBLE, 3, (/nyidim,natmdim,timedim/), tab3diid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3di', NCDOUBLE, 3, (/nyidim,nmoldim,timedim/), dmb3diid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3di', NCDOUBLE, 3, (/nyidim,nmoldim,timedim/), tmb3diid)
+          call check_cdf_status(iret)
+        endif
       end if
       if (nomp.gt.0) then
         dims(2) = timedim
         dims(1) = nyadim
+        iret = nf_def_var(ncid, 'na3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), na3daid)
+        call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
@@ -650,9 +891,9 @@ contains
           iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
           call check_cdf_status(iret)
         end if
-        iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
+        iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), dn3daid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
+        iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), dp3daid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
         call check_cdf_status(iret)
@@ -662,12 +903,24 @@ contains
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
+        iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), vx3daid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
+        iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), vy3daid)
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
+        iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 3, (/nyadim,nsdim,timedim/), vs3daid)
         call check_cdf_status(iret)
+        if (nnatmi.gt.0) then
+          iret = nf_def_var(ncid, 'dab3da', NCDOUBLE, 3, (/nyadim,natmdim,timedim/), dab3daid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tab3da', NCDOUBLE, 3, (/nyadim,natmdim,timedim/), tab3daid)
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_def_var(ncid, 'dmb3da', NCDOUBLE, 3, (/nyadim,nmoldim,timedim/), dmb3daid)
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'tmb3da', NCDOUBLE, 3, (/nyadim,nmoldim,timedim/), tmb3daid)
+          call check_cdf_status(iret)
+        endif
       end if
     endif !not.batch_only
 
@@ -683,15 +936,31 @@ contains
       call check_cdf_status(iret)
       dims(1) = ncdim
       dims(2) = batchdim
+      iret  = nf_def_var(ncid, 'nasepm_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepm_avid)
+      call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepm_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tesepm_av', NCDOUBLE, 2, dims, tesepm_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepm_avid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepm_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepm_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepm_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepm_avid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepm_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepm_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepm_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepm_avid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepm_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepm_av', NCDOUBLE, 2, dims, ktsepm_avid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'nasepi_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepi_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepi_avid)
       call check_cdf_status(iret)
@@ -699,9 +968,23 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepi_avid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepi_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepi_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepi_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepi_avid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepi_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepi_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepi_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepi_avid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepi_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepi_av', NCDOUBLE, 2, dims, ktsepi_avid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'nasepa_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepa_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepa_avid)
       call check_cdf_status(iret)
@@ -709,9 +992,23 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepa_avid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepa_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepa_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepa_av', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepa_avid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepa_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepa_avid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepa_av', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepa_avid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepa_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepa_av', NCDOUBLE, 2, dims, ktsepa_avid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'namxip_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxip_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxip_avid)
       call check_cdf_status(iret)
@@ -721,6 +1018,8 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxip_avid)
       call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'namxap_av', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxap_avid)
+      call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxap_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'temxap_av', NCDOUBLE, 2, dims, temxap_avid)
@@ -729,15 +1028,31 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxap_avid)
       call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'nasepm_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepm_stdid)
+      call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepm_std', NCDOUBLE, 2, dims, nesepm_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tesepm_std', NCDOUBLE, 2, dims, tesepm_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepm_std', NCDOUBLE, 2, dims, tisepm_stdid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepm_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepm_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepm_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepm_stdid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepm_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepm_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepm_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepm_stdid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepm_std', NCDOUBLE, 2, dims, posepm_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepm_std', NCDOUBLE, 2, dims, ktsepm_stdid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'nasepi_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepi_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepi_std', NCDOUBLE, 2, dims, nesepi_stdid)
       call check_cdf_status(iret)
@@ -745,9 +1060,23 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepi_std', NCDOUBLE, 2, dims, tisepi_stdid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepi_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepi_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepi_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepi_stdid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepi_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepi_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepi_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepi_stdid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepi_std', NCDOUBLE, 2, dims, posepi_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepi_std', NCDOUBLE, 2, dims, ktsepi_stdid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'nasepa_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), nasepa_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nesepa_std', NCDOUBLE, 2, dims, nesepa_stdid)
       call check_cdf_status(iret)
@@ -755,9 +1084,23 @@ contains
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepa_std', NCDOUBLE, 2, dims, tisepa_stdid)
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret  = nf_def_var(ncid, 'dabsepa_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), dabsepa_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tabsepa_std', NCDOUBLE, 3, (/natmdim,ncdim,batchdim/), tabsepa_stdid)
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret  = nf_def_var(ncid, 'dmbsepa_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), dmbsepa_stdid)
+        call check_cdf_status(iret)
+        iret  = nf_def_var(ncid, 'tmbsepa_std', NCDOUBLE, 3, (/nmoldim,ncdim,batchdim/), tmbsepa_stdid)
+        call check_cdf_status(iret)
+      endif
       iret  = nf_def_var(ncid, 'posepa_std', NCDOUBLE, 2, dims, posepa_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepa_std', NCDOUBLE, 2, dims, ktsepa_stdid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'namxip_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxip_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxip_std', NCDOUBLE, 2, dims, nemxip_stdid)
       call check_cdf_status(iret)
@@ -766,6 +1109,8 @@ contains
       iret  = nf_def_var(ncid, 'timxip_std', NCDOUBLE, 2, dims, timxip_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'pomxip_std', NCDOUBLE, 2, dims, pomxip_stdid)
+      call check_cdf_status(iret)
+      iret  = nf_def_var(ncid, 'namxap_std', NCDOUBLE, 3, (/nsdim,ncdim,batchdim/), namxap_stdid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'nemxap_std', NCDOUBLE, 2, dims, nemxap_stdid)
       call check_cdf_status(iret)
@@ -783,6 +1128,106 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
       call check_cdf_status(iret)
+      if (nimp.gt.0) then
+        iret = nf_put_att_text(ncid, icsepimpid, 'long_name', 41, 'volume index, inboard midplane separatrix')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistiid, 'long_name', 30, 'volumes list, inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsiid, 'long_name', 35, 'radial coordinate, inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsiid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+      endif
+      if (nomp.gt.0) then
+        iret = nf_put_att_text(ncid, icsepompid, 'long_name', 42, 'volume index, outboard midplane separatrix')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistaid, 'long_name', 31, 'volumes list, outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsaid, 'long_name', 36, 'radial coordinate, outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsaid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.1) then
+        iret = nf_put_att_text(ncid, fclistlid, 'long_name', 29, 'cell faces list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistlid, 'long_name', 34, 'control volumes list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlistlid, 'long_name', 43, 'neutrals control volumes list, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dslid, 'long_name', 31, 'radial coordinate, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dslid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLTid, 'long_name', 26, 'target areas, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLPid, 'long_name', 35, 'poloial contact areas, Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsLPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.2) then
+        iret = nf_put_att_text(ncid, fclistrid, 'long_name', 29, 'cell faces list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlistrid, 'long_name', 34, 'control volumes list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlistrid, 'long_name', 43, 'neutrals control volumes list, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsrid, 'long_name', 31, 'radial coordinate, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsrid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRTid, 'long_name', 26, 'target areas, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRPid, 'long_name', 36, 'poloidal contact areas, Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsRPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.4) then
+        iret = nf_put_att_text(ncid, fclisttlid, 'long_name', 39, 'cell faces list, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlisttlid, 'long_name', 44, 'control volumes list, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlisttlid, 'long_name', 53, 'neutrals control volumes list, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dstlid, 'long_name', 41, 'radial coordinate, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dstlid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTLTid, 'long_name', 36, 'target areas, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTLTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTLPid, 'long_name', 46, 'poloidal contact areas, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTLPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
+      if (maxval(mpg%strDiv).ge.3) then
+        iret = nf_put_att_text(ncid, fclisttrid, 'long_name', 40, 'cell faces list, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cvlisttrid, 'long_name', 45, 'control volumes list, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, cnlisttrid, 'long_name', 54, 'neutrals control volumes list, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dstrid, 'long_name', 42, 'radial coordinate, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dstrid, 'units', 2, 'm ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTRTid, 'long_name', 37, 'target areas, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTRTid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTRPid, 'long_name', 47, 'poloidal contact areas, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dsTRPid, 'units', 3, 'm^2')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, fnixipid, 'long_name', 47, 'integrated poloidal particle flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnixipid, 'units', 4, 's^-1')
@@ -823,6 +1268,10 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchxapid, 'units', 2, 'A ')
       call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepiid, 'long_name', 46, 'separatrix fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepiid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepiid, 'long_name', 41, 'separatrix electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepiid, 'units', 4, 'm^-3')
@@ -835,6 +1284,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepiid, 'long_name', 46, 'separatrix atom density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepiid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepiid, 'long_name', 50, 'separatrix atom temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepiid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepiid, 'long_name', 50, 'separatrix molecule density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepiid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepiid, 'long_name', 54, 'separatrix molecule temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepiid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
 #ifdef WG_TODO
       iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 42, 'separatrix plate temperature, Western edge')
       call check_cdf_status(iret)
@@ -849,6 +1318,10 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepmid, 'long_name', 48, 'separatrix fluid species density, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepmid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepmid, 'long_name', 43, 'separatrix electron density, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepmid, 'units', 4, 'm^-3')
@@ -861,6 +1334,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepmid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepmid, 'long_name', 48, 'separatrix atom density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepmid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepmid, 'long_name', 52, 'separatrix atom temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepmid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepmid, 'long_name', 52, 'separatrix molecule density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepmid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepmid, 'long_name', 56, 'separatrix molecule temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepmid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepmid, 'long_name', 36, 'separatrix potential, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepmid, 'units', 2, 'V ')
@@ -899,6 +1392,10 @@ contains
       iret = nf_put_att_text(ncid, vssepmid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
 
+      iret = nf_put_att_text(ncid, nasepaid, 'long_name', 46, 'separatrix fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepaid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepaid, 'long_name', 41, 'separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepaid, 'units', 4, 'm^-3')
@@ -911,6 +1408,26 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepaid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepaid, 'long_name', 46, 'separatrix atom density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepaid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepaid, 'long_name', 50, 'separatrix atom temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepaid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepaid, 'long_name', 50, 'separatrix molecule density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepaid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepaid, 'long_name', 54, 'separatrix molecule temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepaid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
 #ifdef WG_TODO
       iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 42, 'separatrix plate temperature, Eastern edge')
       call check_cdf_status(iret)
@@ -924,6 +1441,10 @@ contains
       iret = nf_put_att_text(ncid, ktsepaid, 'long_name', 50, 'separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepaid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxipid, 'long_name', 43, 'maximum fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxipid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxipid, 'long_name', 38, 'maximum electron density, Western edge')
       call check_cdf_status(iret)
@@ -946,6 +1467,10 @@ contains
       iret = nf_put_att_text(ncid, pomxipid, 'long_name', 31, 'maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxipid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxapid, 'long_name', 43, 'maximum fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxapid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxapid, 'long_name', 38, 'maximum electron density, Eastern edge')
       call check_cdf_status(iret)
@@ -1127,6 +1652,10 @@ contains
       call check_cdf_status(iret)
 
       ! Western edge (inboard divertor for LSN, outboard divertor for USN) quantities
+      iret = nf_put_att_text(ncid, na3dlid, 'long_name', 35, 'fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, na3dlid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 30, 'electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
@@ -1154,7 +1683,7 @@ contains
       iret = nf_put_att_text(ncid, po3dlid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       if (ismain0.ne.ismain) then
-        iret = nf_put_att_text(ncid, an3dlid, 'long_name', 26, 'atom density, Western edge')
+        iret = nf_put_att_text(ncid, an3dlid, 'long_name', 41, 'atom density (main species), Western edge')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, an3dlid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
@@ -1165,8 +1694,32 @@ contains
         iret = nf_put_att_text(ncid, mn3dlid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
       end if
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dab3dlid, 'long_name', 35, 'atom density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dab3dlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3dlid, 'long_name', 39, 'atom temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3dlid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tab3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmb3dlid, 'long_name', 39, 'molecule density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmb3dlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3dlid, 'long_name', 43, 'molecule temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3dlid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tmb3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
       dvals(1) = -1.0_R8
-      iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 40, 'poloidal main species flux, Western edge')
+      iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 32, 'poloidal atom flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fn3dlid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
@@ -1210,6 +1763,10 @@ contains
       call check_cdf_status(iret)
 
       ! inboard midplane quantities
+      iret = nf_put_att_text(ncid, na3diid, 'long_name', 39, 'fluid species density, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, na3diid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3diid, 'long_name', 34, 'electron density, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3diid, 'units', 4, 'm^-3')
@@ -1232,7 +1789,7 @@ contains
       iret = nf_put_att_text(ncid, po3diid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       if (ismain0.ne.ismain) then
-        iret = nf_put_att_text(ncid, an3diid, 'long_name', 30, 'atom density, inboard midplane')
+        iret = nf_put_att_text(ncid, an3diid, 'long_name', 45, 'atom density (main species), inboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, an3diid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
@@ -1243,11 +1800,11 @@ contains
         iret = nf_put_att_text(ncid, mn3diid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
       end if
-      iret = nf_put_att_text(ncid, dn3diid, 'long_name', 39, 'diffusion coefficient, inboard midplane')
+      iret = nf_put_att_text(ncid, dn3diid, 'long_name', 40, 'diffusion coefficients, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dn3diid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dp3diid, 'long_name', 48, 'pressure diffusion coefficient, inboard midplane')
+      iret = nf_put_att_text(ncid, dp3diid, 'long_name', 49, 'pressure diffusion coefficients, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dp3diid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
@@ -1267,20 +1824,49 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ki3diid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vx3diid, 'long_name', 41, 'poloidal pinch velocity, inboard midplane')
+      iret = nf_put_att_text(ncid, vx3diid, 'long_name', 43, 'poloidal pinch velocities, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vx3diid, 'units', 6, 'm.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vy3diid, 'long_name', 39, 'radial pinch velocity, inboard midplane')
+      iret = nf_put_att_text(ncid, vy3diid, 'long_name', 41, 'radial pinch velocities, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vy3diid, 'units', 6, 'm.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vs3diid, 'long_name', 39, 'viscosity coefficient, inboard midplane')
+      iret = nf_put_att_text(ncid, vs3diid, 'long_name', 40, 'viscosity coefficients, inboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dab3diid, 'long_name', 39, 'atom density (Eirene), inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dab3diid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3diid, 'long_name', 43, 'atom temperature (Eirene), inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3diid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tab3diid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmb3diid, 'long_name', 43, 'molecule density (Eirene), inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmb3diid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3diid, 'long_name', 47, 'molecule temperature (Eirene), inboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3diid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tmb3diid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+
       ! upper inboard divertor quantities
       if(maxval(mpg%strDiv).ge.4) then
+        iret = nf_put_att_text(ncid, na3dtlid, 'long_name', 45, 'fluid species density, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, na3dtlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne3dtlid, 'units', 4, 'm^-3')
@@ -1308,7 +1894,7 @@ contains
         iret = nf_put_att_text(ncid, po3dtlid, 'units', 2, 'V ')
         call check_cdf_status(iret)
         if (ismain0.ne.ismain) then
-          iret = nf_put_att_text(ncid, an3dtlid, 'long_name', 36, 'atom density, upper inboard divertor')
+          iret = nf_put_att_text(ncid, an3dtlid, 'long_name', 51, 'atom density (main species), upper inboard divertor')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, an3dtlid, 'units', 4, 'm^-3')
           call check_cdf_status(iret)
@@ -1319,7 +1905,7 @@ contains
           iret = nf_put_att_text(ncid, mn3dtlid, 'units', 4, 'm^-3')
           call check_cdf_status(iret)
         end if
-        iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', 50, 'poloidal main species flux, upper inboard divertor')
+        iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', 42, 'poloidal atom flux, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, fn3dtlid, 'units', 4, 's^-1')
         call check_cdf_status(iret)
@@ -1347,8 +1933,37 @@ contains
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
         call check_cdf_status(iret)
+        if (nnatmi.gt.0) then
+          iret = nf_put_att_text(ncid, dab3dtlid, 'long_name', 45, 'atom density (Eirene), upper inboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, dab3dtlid, 'units', 4, 'm^-3')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tab3dtlid, 'long_name', 49, 'atom temperature (Eirene), upper inboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tab3dtlid, 'units', 2, 'eV')
+          call check_cdf_status(iret)
+          iret = nf_put_att_double(ncid, tab3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_put_att_text(ncid, dmb3dtlid, 'long_name', 49, 'molecule density (Eirene), upper inboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, dmb3dtlid, 'units', 4, 'm^-3')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tmb3dtlid, 'long_name', 53, 'molecule temperature (Eirene), upper inboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tmb3dtlid, 'units', 2, 'eV')
+          call check_cdf_status(iret)
+          iret = nf_put_att_double(ncid, tmb3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
+          call check_cdf_status(iret)
+        endif
       endif
+
       ! outboard midplane quantities
+      iret = nf_put_att_text(ncid, na3daid, 'long_name', 40, 'fluid species density, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, na3daid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3daid, 'units', 4, 'm^-3')
@@ -1370,7 +1985,7 @@ contains
       iret = nf_put_att_text(ncid, po3daid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       if (ismain0.ne.ismain) then
-        iret = nf_put_att_text(ncid, an3daid, 'long_name', 31, 'atom density, outboard midplane')
+        iret = nf_put_att_text(ncid, an3daid, 'long_name', 46, 'atom density (main species), outboard midplane')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, an3daid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
@@ -1381,11 +1996,11 @@ contains
         iret = nf_put_att_text(ncid, mn3daid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
       end if
-      iret = nf_put_att_text(ncid, dn3daid, 'long_name', 40, 'diffusion coefficient, outboard midplane')
+      iret = nf_put_att_text(ncid, dn3daid, 'long_name', 41, 'diffusion coefficients, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dn3daid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, dp3daid, 'long_name', 49, 'pressure diffusion coefficient, outboard midplane')
+      iret = nf_put_att_text(ncid, dp3daid, 'long_name', 50, 'pressure diffusion coefficients, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, dp3daid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
@@ -1405,20 +2020,48 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ki3daid, 'units', 8, 'm^2.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vx3daid, 'long_name', 42, 'poloidal pinch velocity, outboard midplane')
+      iret = nf_put_att_text(ncid, vx3daid, 'long_name', 44, 'poloidal pinch velocities, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vx3daid, 'units', 6, 'm.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vy3daid, 'long_name', 40, 'radial pinch velocity, outboard midplane')
+      iret = nf_put_att_text(ncid, vy3daid, 'long_name', 42, 'radial pinch velocities, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vy3daid, 'units', 6, 'm.s^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, vs3daid, 'long_name', 40, 'viscosity coefficient, outboard midplane')
+      iret = nf_put_att_text(ncid, vs3daid, 'long_name', 41, 'viscosity coefficients, outboard midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vs3daid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dab3daid, 'long_name', 40, 'atom density (Eirene), outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dab3daid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3daid, 'long_name', 44, 'atom temperature (Eirene), outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3daid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tab3daid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmb3daid, 'long_name', 44, 'molecule density (Eirene), outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmb3daid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3daid, 'long_name', 48, 'molecule temperature (Eirene), outboard midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3daid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tmb3daid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
 
       ! Eastern edge (outboard divertor for LSN, inboard divertor for USN) quantities
+      iret = nf_put_att_text(ncid, na3drid, 'long_name', 35, 'fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, na3drid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3drid, 'long_name', 30, 'electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3drid, 'units', 4, 'm^-3')
@@ -1446,7 +2089,7 @@ contains
       iret = nf_put_att_text(ncid, po3drid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       if (ismain0.ne.ismain) then
-        iret = nf_put_att_text(ncid, an3drid, 'long_name', 26, 'atom density, Eastern edge')
+        iret = nf_put_att_text(ncid, an3drid, 'long_name', 41, 'atom density (main species), Eastern edge')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, an3drid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
@@ -1457,7 +2100,7 @@ contains
         iret = nf_put_att_text(ncid, mn3drid, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
       end if
-      iret = nf_put_att_text(ncid, fn3drid, 'long_name', 40, 'poloidal main species flux, Eastern edge')
+      iret = nf_put_att_text(ncid, fn3drid, 'long_name', 32, 'poloidal atom flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fn3drid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
@@ -1485,8 +2128,37 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dab3drid, 'long_name', 35, 'atom density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dab3drid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3drid, 'long_name', 39, 'atom temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tab3drid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tab3drid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmb3drid, 'long_name', 39, 'molecule density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmb3drid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3drid, 'long_name', 43, 'molecule temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmb3drid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, tmb3drid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
+
       ! upper outboard divertor quantities
       if(maxval(mpg%strDiv).ge.4) then
+        iret = nf_put_att_text(ncid, na3dtrid, 'long_name', 46, 'fluid species density, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, na3dtrid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne3dtrid, 'units', 4, 'm^-3')
@@ -1514,7 +2186,7 @@ contains
         iret = nf_put_att_text(ncid, po3dtrid, 'units', 2, 'V ')
         call check_cdf_status(iret)
         if (ismain0.ne.ismain) then
-          iret = nf_put_att_text(ncid, an3dtrid, 'long_name', 37, 'atom density, upper outboard divertor')
+          iret = nf_put_att_text(ncid, an3dtrid, 'long_name', 52, 'atom density (main species), upper outboard divertor')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, an3dtrid, 'units', 4, 'm^-3')
           call check_cdf_status(iret)
@@ -1526,7 +2198,7 @@ contains
           call check_cdf_status(iret)
         end if
         dvals(1) = -1.0_R8
-        iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', 51, 'poloidal main species flux, upper outboard divertor')
+        iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', 43, 'poloidal atom flux, upper outboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, fn3dtrid, 'units', 4, 's^-1')
         call check_cdf_status(iret)
@@ -1568,9 +2240,39 @@ contains
         call check_cdf_status(iret)
         iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
+        dvals(1) = 1.0_R8/ev
+        if (nnatmi.gt.0) then
+          iret = nf_put_att_text(ncid, dab3dtrid, 'long_name', 46, 'atom density (Eirene), upper outboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, dab3dtrid, 'units', 4, 'm^-3')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tab3dtrid, 'long_name', 50, 'atom temperature (Eirene), upper outboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tab3dtrid, 'units', 2, 'eV')
+          call check_cdf_status(iret)
+          iret = nf_put_att_double(ncid, tab3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+          call check_cdf_status(iret)
+        endif
+        if (nnmoli.gt.0) then
+          iret = nf_put_att_text(ncid, dmb3dtrid, 'long_name', 50, 'molecule density (Eirene), upper outboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, dmb3dtrid, 'units', 4, 'm^-3')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tmb3dtrid, 'long_name', 54, 'molecule temperature (Eirene), upper outboard divertor')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, tmb3dtrid, 'units', 2, 'eV')
+          call check_cdf_status(iret)
+          iret = nf_put_att_double(ncid, tmb3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+          call check_cdf_status(iret)
+        endif
       endif
     else
+
     !wdk averaged quantities
+      iret = nf_put_att_text(ncid, nasepm_avid, 'long_name', 57, 'averaged separatrix fluid species density, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepm_avid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepm_avid, 'long_name', 52, 'averaged separatrix electron density, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepm_avid, 'units', 4, 'm^-3')
@@ -1583,6 +2285,27 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepm_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepm_avid, 'long_name', 57, 'averaged separatrix atom density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepm_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepm_avid, 'long_name', 61, 'averaged separatrix atom temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepm_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepm_avid, 'long_name', 61, 'averaged separatrix molecule density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepm_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepm_avid, 'long_name', 65, &
+        'averaged separatrix molecule temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepm_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepm_avid, 'long_name', 45, 'averaged separatrix potential, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepm_avid, 'units', 2, 'V ')
@@ -1590,6 +2313,10 @@ contains
       iret = nf_put_att_text(ncid, ktsepm_avid, 'long_name', 60, 'averaged separatrix turbulent kinetic energy, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepm_avid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepi_avid, 'long_name', 55, 'averaged separatrix fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepi_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepi_avid, 'long_name', 50, 'averaged separatrix electron density, Western edge')
       call check_cdf_status(iret)
@@ -1603,6 +2330,27 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepi_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepi_avid, 'long_name', 55, 'averaged separatrix atom density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepi_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepi_avid, 'long_name', 59, 'averaged separatrix atom temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepi_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepi_avid, 'long_name', 59, 'averaged separatrix molecule density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepi_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepi_avid, 'long_name', 63, &
+        'averaged separatrix molecule temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepi_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepi_avid, 'long_name', 43, 'averaged separatrix potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_avid, 'units', 2, 'V ')
@@ -1610,6 +2358,10 @@ contains
       iret = nf_put_att_text(ncid, ktsepi_avid, 'long_name', 58, 'averaged separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_avid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepa_avid, 'long_name', 55, 'averaged separatrix fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepa_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepa_avid, 'long_name', 50, 'averaged separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
@@ -1623,6 +2375,27 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepa_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepa_avid, 'long_name', 55, 'averaged separatrix atom density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepa_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepa_avid, 'long_name', 59, 'averaged separatrix atom temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepa_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepa_avid, 'long_name', 59, 'averaged separatrix molecule density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepa_avid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepa_avid, 'long_name', 63, &
+        'averaged separatrix molecule temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepa_avid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepa_avid, 'long_name', 43, 'averaged separatrix potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepa_avid, 'units', 2, 'V ')
@@ -1630,6 +2403,10 @@ contains
       iret = nf_put_att_text(ncid, ktsepa_avid, 'long_name', 58, 'averaged separatrix turbulent kinetic energy, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepa_avid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxip_avid, 'long_name', 52, 'averaged maximum fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxip_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxip_avid, 'long_name', 47, 'averaged maximum electron density, Western edge')
       call check_cdf_status(iret)
@@ -1646,6 +2423,10 @@ contains
       iret = nf_put_att_text(ncid, pomxip_avid, 'long_name', 40, 'averaged maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxip_avid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxap_avid, 'long_name', 52, 'averaged maximum fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxap_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxap_avid, 'long_name', 47, 'averaged maximum electron density, Eastern edge')
       call check_cdf_status(iret)
@@ -1665,6 +2446,10 @@ contains
       call check_cdf_status(iret)
 
     !wdk standard deviation of averaged quantities
+      iret = nf_put_att_text(ncid, nasepm_stdid, 'long_name', 60, 'variance of separatrix fluid species density, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepm_stdid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepm_stdid, 'long_name', 55, 'variance of separatrix electron density, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepm_stdid, 'units', 4, 'm^-3')
@@ -1677,6 +2462,29 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepm_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepm_stdid, 'long_name', 60, 'variance of separatrix atom density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepm_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepm_stdid, 'long_name', 64, &
+        'variance of separatrix atom temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepm_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepm_stdid, 'long_name', 64, &
+        'variance of separatrix molecule density (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepm_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepm_stdid, 'long_name', 68, &
+        'variance of separatrix molecule temperature (Eirene), outer midplane')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepm_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepm_stdid, 'long_name', 48, 'variance of separatrix potential, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepm_stdid, 'units', 2, 'V ')
@@ -1685,6 +2493,10 @@ contains
            'variance of separatrix turbulent kinetic energy, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepm_stdid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepi_stdid, 'long_name', 58, 'variance of separatrix fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepi_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepi_stdid, 'long_name', 53, 'variance of separatrix electron density, Western edge')
       call check_cdf_status(iret)
@@ -1698,6 +2510,29 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepi_stdid, 'long_name', 58, 'variance of separatrix atom density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepi_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepi_stdid, 'long_name', 62, &
+        'variance of separatrix atom temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepi_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepi_stdid, 'long_name', 62, &
+          'variance of separatrix molecule density (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepi_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepi_stdid, 'long_name', 66, &
+        'variance of separatrix molecule temperature (Eirene), Western edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepi_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepi_stdid, 'long_name', 46, 'variance of separatrix potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
@@ -1706,6 +2541,10 @@ contains
            'variance of separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepa_stdid, 'long_name', 58, 'variance of separatrix fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nasepa_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepa_stdid, 'long_name', 53, 'variance of separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
@@ -1719,6 +2558,29 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepa_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
+      if (nnatmi.gt.0) then
+        iret = nf_put_att_text(ncid, dabsepa_stdid, 'long_name', 58, 'variance of separatrix atom density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dabsepa_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepa_stdid, 'long_name', 62, &
+        'variance of separatrix atom temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tabsepa_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
+      if (nnmoli.gt.0) then
+        iret = nf_put_att_text(ncid, dmbsepa_stdid, 'long_name', 62, &
+        'variance of separatrix molecule density (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, dmbsepa_stdid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepa_stdid, 'long_name', 66, &
+        'variance of separatrix molecule temperature (Eirene), Eastern edge')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tmbsepa_stdid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+      endif
       iret = nf_put_att_text(ncid, posepa_stdid, 'long_name', 46, 'variance of separatrix potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepa_stdid, 'units', 2, 'V ')
@@ -1727,6 +2589,10 @@ contains
            'variance of separatrix turbulent kinetic energy, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepa_stdid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxip_stdid, 'long_name', 55, 'variance of maximum fluid species density, Western edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxip_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxip_stdid, 'long_name', 50, 'variance of maximum electron density, Western edge')
       call check_cdf_status(iret)
@@ -1743,6 +2609,10 @@ contains
       iret = nf_put_att_text(ncid, pomxip_stdid, 'long_name', 43, 'variance of maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxip_stdid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxap_stdid, 'long_name', 55, 'variance of maximum fluid species density, Eastern edge')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, namxap_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxap_stdid, 'long_name', 50, 'variance of maximum electron density, Eastern edge')
       call check_cdf_status(iret)

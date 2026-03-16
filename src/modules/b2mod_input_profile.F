@@ -688,8 +688,11 @@ cdjm Jan2017 Keep linearised sources for balance
             ndim = nomp ! FIXME
             call E01BFF(ndat,r,f,d,ndim,pr,pf,ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            if (elm_data)
-     >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            if (elm_data) then
+              call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            else
+              pelm=pf
+            endif
 
             if (tr_ip_new_files) then
 
@@ -1047,7 +1050,7 @@ c*** Clear data to forget previous profiles
       integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: r(nrr),pr(nrr),prtmp
-      real(kind=R8), allocatable :: pra(:), prdsa(:)
+      real(kind=R8), allocatable :: pra(:), prdsa(:), dsp(:)
       integer ncall, nya
       character*256 filenamer
       logical exist
@@ -1060,7 +1063,8 @@ c*** Clear data to forget previous profiles
         if (nomp.gt.0) then
           allocate(pra(nomp))
           allocate(prdsa(nomp))
-          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp')
+          allocate(dsp(nomp))
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp',dsp)
         end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif

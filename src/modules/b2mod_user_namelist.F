@@ -209,7 +209,7 @@ c***  Standard set-up:
       real (kind=R8) :: distint, dsep,
      . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
 
-      logical :: file_ok
+      logical :: file_ok, on_wall, wall_face(2)
       character*260 filename
       integer i
       logical done, ifail, found
@@ -323,18 +323,35 @@ c***  Standard set-up:
         iFt = m%cvFt(omp(ic))
         if (iFt.eq.0) cycle
         ft_omp(iFt) = ic
+        wall_face = .false.
         do i = m%cvVxP(omp(ic),1),
      &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
           iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) cycle
-          if (iFs1.eq.0) then
+          if (iFs.eq.0) then ! check if this is a wall vertex
+            on_wall = .false.
+            do j = m%vxFcP(m%cvVx(i),1),
+     &             m%vxFcP(m%cvVx(i),1) + m%vxFcP(m%cvVx(i),2) - 1
+              iFc = m%vxFc(j)
+              on_wall = on_wall .or. m%fcLbl(iFc).ne.0
+              if (on_wall) then
+                if (iFs1.eq.0) wall_face(1) = .true.
+                if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
+              end if
+            end do
+          endif
+          if (iFs1.eq.0 .and. iFs.ne.0) then
             iFs1 = iFs
-          else if (iFs2.eq.0) then
+          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
         end do
-        if (iFs1.ne.0.and.iFs2.ne.0)
-     >   ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
+        if (iFs1.ne.0.and.iFs2.ne.0) then
+          ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
+        else if (wall_face(1)) then
+          ft_ds_omp(iFt) = fs_ds_omp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
+        else if (wall_face(2)) then
+          ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
+        end if
       end do
 cxpb set default switches depending on midplane location
       if (sw%set_transport_iyref.eq.0) then
@@ -561,18 +578,35 @@ c*** Set default values according to current species list
         iFt = m%cvFt(imp(ic))
         if (iFt.eq.0) cycle
         ft_imp(iFt) = ic
+        wall_face = .false.
         do i = m%cvVxP(imp(ic),1),
      &         m%cvVxP(imp(ic),1) + m%cvVxP(imp(ic),2) - 1
           iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) cycle
-          if (iFs1.eq.0) then
+          if (iFs.eq.0) then ! check if this is a wall vertex
+            on_wall = .false.
+            do j = m%vxFcP(m%cvVx(i),1),
+     &             m%vxFcP(m%cvVx(i),1) + m%vxFcP(m%cvVx(i),2) - 1
+              iFc = m%vxFc(j)
+              on_wall = on_wall .or. m%fcLbl(iFc).ne.0
+              if (on_wall) then
+                if (iFs1.eq.0) wall_face(1) = .true.
+                if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
+              end if
+            end do
+          endif
+          if (iFs1.eq.0 .and. iFs.ne.0) then
             iFs1 = iFs
-          else if (iFs2.eq.0) then
+          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
         end do
-        if (iFs1.ne.0.and.iFs2.ne.0)
-     >   ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
+        if (iFs1.ne.0.and.iFs2.ne.0) then
+          ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
+        else if (wall_face(1)) then
+          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
+        else if (wall_face(2)) then
+          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
+        end if
       end do
       if (.not.found) write(*,'(a/a/a)')
      &  'Warning: did not find separatrix location in IMP definition,',
