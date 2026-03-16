@@ -42,7 +42,7 @@
 *     routine is an interface to one of two solvers. If the internal
 *     parameter "style" has the value 0 then a solver based on Stone's
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
-*     solver is used. if style.eq.2 then MA28copy is used. if style.eq.3
+*     solver is used. If style.eq.2 then MA28copy is used. If style.eq.3
 *     then PARDISO (Intel MKL) is used. 
 *
 *
@@ -144,22 +144,22 @@
 *    ..use slv5pt
        call xerrab ('b2uxus: Style 1 is not implemented')
       else if (style.eq.2) then
+*    ..use ma28 (default)
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-         !! ma28 solver, default
        call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
       else if (style.eq.3) then
+*    ..use PARDISO
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-              !! experiment, PARDISO solver 
        call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
       endif
       call cpu_time(cpu_end)

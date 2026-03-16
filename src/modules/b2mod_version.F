@@ -336,14 +336,22 @@ c                                 Replaced redef_pbs by redef_gmtry in b2fgmtry
 c                                 Added wbbl to b2fgmtry
 c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma
 c    Version 03.000.008  14.04.21 Reduced size of batch averaged sources to only include total values
+c    Version 03.000.009  22.06.23 Added radial and diamagnetic components to batch averaged sources
+c    Version 03.000.010  25.02.26 Added multi-species netCDF tally output
+c                                 Open-source release
 c
 c    Version 03.001.000  16.12.15 Introduction of 9-point stencil
 c                                 Redimensioning of most flux arrays, to take into account both poloidal and radial flows across each cell face
 c                                 Introduced routines from computation of ue (b2xpue.F)
+c    Version 03.001.001  28.06.23 Added radial and diamagnetic components to batch averaged sources
+c    Version 03.001.002  04.03.26 Added multi-species netCDF tally output
+c                                 Open-source release
 c
 c    Version 03.002.000  11.07.18 Initial Wide-Grids code version
 c                                 Complete overhaul of b2fgmtry
 c                                 New organization of plasma data structures
 c    Version 03.002.001  25.06.25 Added Qalfmin/max variables to b2fgmtry
 c                                 Added srw arrays to b2fplasma
+c                                 Added multi-species netCDF tally output
+c                                 Open-source release
 c
