@@ -19,7 +19,7 @@
       ! UMFPACK package thereof) and the manual included there. Below,
       ! we provide a brief description in the interface of the expected
       ! arguments for each function. 
-    
+#ifdef UMFPACK
       interface 
         ! Defaults
         subroutine UmfpackDefaultsDI(control)  
@@ -187,7 +187,7 @@
         end subroutine
 
       end interface   
-    
+#endif
       contains
 
 
@@ -233,7 +233,7 @@
 
         type(c_ptr)        :: symbolic, numeric
 
-
+#ifdef UMFPACK
         ! Read in matrix from b2mod_ma28 (storage can perhaps be moved in the future)
         Arow = irnh(1:nnz)-1
         Acol = icnh(1:nnz)-1
@@ -285,7 +285,10 @@
 
         ! Cast flag
         flag = nint(info(1))
-
+#else
+        call xerrab('UMFPACK not available! Link and re-compile with'//
+     .   ' UMFPACK library')
+#endif
       end subroutine
 
       
