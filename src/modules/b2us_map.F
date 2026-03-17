@@ -11,7 +11,7 @@
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
      .          init_mapping, get_version,
-     .          calc_add_connectivity
+     .          calc_add_connectivity, update_guard_cells
 
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
@@ -1631,6 +1631,60 @@ cwdk  can be derived directly from data in that file
 
       return
       end subroutine calc_add_connectivity
+
+
+
+**********************************************************************
+!> Computes additional data of guard cells based
+!! on the connectivity data of the traduitoutb2us file. Currently, 
+!! this is only the flux tube number of the guard cell, which is set
+!! equal to the flux tube number of the adjacent boundary cell (it is 
+!! assumed that the guard cell connectivity has been updated before)
+      subroutine update_guard_cells(m)
+
+      !!.. arguments
+      type(mapping)   :: m 
+
+      !!.. local variables
+      integer         :: iCv, tf, tc 
+
+
+      ! add flux tubes of guard cells
+      do iCv = m%nCi+1,m%nCv
+        ! Get guard cell face (should have only one face)
+        if (m%cvFcP(iCv, 2) /= 1) then 
+          print *, 'cell number: ', iCv 
+          call xerrab('create_guard_cells: guard cell does not have ' // 
+     .      'exactly one face, unexpected')
+        end if 
+        tf = m%cvFc(m%cvFcP(iCv, 1))
+
+        ! Get non-guard cell neighbour of this face
+        if (m%fcCv(tf, 1) == iCv ) then 
+          tc = m%fcCv(tf, 2)
+        elseif (m%fcCv(tf, 2) == iCv) then 
+          tc = m%fcCv(tf, 1)
+        else 
+          ! Guard cell not present on either side - unexpected
+          call xerrab('create_guard_cells: guard cell not found as ' // 
+     .      'neighbour of boundary face - inconsistency in ' // 
+     .      'interconnectivity, check input')
+        end if 
+
+        ! Check if it is non-zero
+        if (tc == 0) then 
+          call xerrab('create_guard_cells: non-guard cell of  ' // 
+     .      'boundary face has zero ID - inconsistency in , ' //
+     .      'interconnectivity check input')
+        end if 
+
+        ! Assign the flux tube value 
+        m%cvFt(iCv) = m%cvFt(tc)
+        print *, m%cvFt(tc), m%cvFt(iCv)
+      enddo
+
+
+      end subroutine
 
 **********************************************************************
 
