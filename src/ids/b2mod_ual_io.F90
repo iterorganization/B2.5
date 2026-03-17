@@ -195,34 +195,38 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-    use al_midplane_identifier &       ! IGNORE
+    use al_midplane_identifier &        ! IGNORE
      & , only : set_midplane_identifier => set_identifier, &
      &          get_midplane_name => get_name
-    use al_neutrals_identifier &       ! IGNORE
+    use al_neutrals_identifier &        ! IGNORE
      & , only : set_neutral_type_identifier => set_identifier
-    use al_radiation_identifier &      ! IGNORE
+    use al_radiation_identifier &       ! IGNORE
      & , only : set_radiation_identifier => set_identifier
-    use al_edge_source_identifier &    ! IGNORE
+    use al_edge_source_identifier &     ! IGNORE
      & , only : set_edge_source_identifier => set_identifier
-    use al_plasma_source_identifier &  ! IGNORE
+    use al_plasma_source_identifier &   ! IGNORE
      & , only : set_plasma_source_identifier => set_identifier
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+    use al_occurrence_type_identifier & ! IGNORE
+     & , only : set_occurrence_type_identifier => set_identifier
+#endif
 #elif AL_MAJOR_VERSION > 4
-    use al_midplane_identifier &       ! IGNORE
+    use al_midplane_identifier &        ! IGNORE
      & , only : midplane_identifier
-    use al_neutrals_identifier &       ! IGNORE
+    use al_neutrals_identifier &        ! IGNORE
      & , only : neutrals_identifier
-    use al_radiation_identifier &      ! IGNORE
+    use al_radiation_identifier &       ! IGNORE
      & , only : radiation_identifier
-    use al_edge_source_identifier &    ! IGNORE
+    use al_edge_source_identifier &     ! IGNORE
      & , only : edge_source_identifier
 #else
-    use imas_midplane_identifier &     ! IGNORE
+    use imas_midplane_identifier &      ! IGNORE
      & , only : midplane_identifier
-    use imas_neutrals_identifier &     ! IGNORE
+    use imas_neutrals_identifier &      ! IGNORE
      & , only : neutrals_identifier
-    use imas_radiation_identifier &    ! IGNORE
+    use imas_radiation_identifier &     ! IGNORE
      & , only : radiation_identifier
-    use imas_edge_source_identifier &  ! IGNORE
+    use imas_edge_source_identifier &   ! IGNORE
      & , only : edge_source_identifier
 #endif
 #endif
@@ -1109,6 +1113,14 @@ contains
           &  homogeneous_time )
         call write_ids_properties( plasma_sources%ids_properties, &
           &  homogeneous_time )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+        call set_occurrence_type_identifier( &
+          &  plasma_profiles%ids_properties%occurrence_type, 'edge' )
+        call set_occurrence_type_identifier( &
+          &  plasma_transport%ids_properties%occurrence_type, 'edge' )
+        call set_occurrence_type_identifier( &
+          &  plasma_sources%ids_properties%occurrence_type, 'edge' )
+#endif
 #endif
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
@@ -9813,6 +9825,12 @@ contains
           &  homogeneous_time )
         call write_ids_properties( batch_plasma_sources%ids_properties, &
           &  homogeneous_time )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+        call set_occurrence_type_identifier( &
+          &  batch_plasma_profiles%ids_properties%occurrence_type, 'edge' )
+        call set_occurrence_type_identifier( &
+          &  batch_plasma_sources%ids_properties%occurrence_type, 'edge' )
+#endif
 #endif
         if ( do_description ) then
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
