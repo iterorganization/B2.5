@@ -294,10 +294,34 @@ c***  Standard set-up:
           end do
         end if 
       end if 
+
+*    ..If not found, take a random flux surface in that list
+      if (.not. found ) then 
+        print *,' read_b2mod_user_namelist: could not find  ' // 
+     &     'separatrix in omp list, taking random flux surface in ' //
+     &     'that list...'
+        ic = 1
+        do while (ic.le.nomp .and..not.found)
+          do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+            iFc = m%cvFc(i)
+            if (any(m%fcFs(iFc) == m%alliFssep) ) then
+              icsepomp = ic + 1
+              ifsepomp = iFc
+              found = .true.
+            end if
+          end do
+          ic = ic + 1
+        end do
+      end if 
+
 *    ..Final check
       if (.not. found) then 
         call xerrab('read_b2mod_user_namelist: could not find ' // 
      &   'separatrix position in OMP list')
+      else 
+        print *, 'read_b2mod_user_namelist: taking ifsepomp = ', 
+     &   ifsepomp
       end if 
 
 ! csc get psi for each OMP cell
@@ -574,10 +598,33 @@ c*** Set default values according to current species list
           end do
         end if 
       end if 
+*    ..If not found, take a random flux surface in that list
+      if (.not. found ) then 
+        print *,' read_b2mod_user_namelist: could not find  ' // 
+     &    'separatrix in imp list, taking random flux surface in  ' //
+     &    'that list...'
+        ic = 1
+        do while (ic.le.nimp .and..not.found)
+          do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+            iFc = m%cvFc(i)
+            if (any(m%fcFs(iFc) == m%alliFssep) ) then
+              icsepimp = ic + 1
+              ifsepimp = iFc
+              found = .true.
+            end if
+          end do
+          ic = ic + 1
+        end do
+      end if 
+
 *    ..Final check
       if (.not. found) then 
         call xerrab('read_b2mod_user_namelist: could not find ' // 
      &   'separatrix position in OMP list')
+      else 
+         print *, 'read_b2mod_user_namelist: taking ifsepimp = ',  
+     &    ifsepimp
       end if 
 ! csc get psi for each OMP cell
       psi_imp = 0.0_R8
