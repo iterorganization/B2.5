@@ -305,7 +305,7 @@ c***  Standard set-up:
           do i = m%cvFcP(omp(ic),1),
      &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
             iFc = m%cvFc(i)
-            if (any(m%fcFs(iFc) == m%alliFssep) ) then
+            if (m%fcFs(iFc) /= 0)  then
               icsepomp = ic + 1
               ifsepomp = iFc
               found = .true.
@@ -399,8 +399,8 @@ c***  Standard set-up:
         if (iFs1.ne.0.and.iFs2.ne.0) then
           ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
         else if (wall_face(1)) then
-          ft_ds_omp(iFt) = fs_ds_omp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
-        else
+          ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
+        else if (wall_face(2)) then
           ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
         end if
       end do
@@ -608,8 +608,8 @@ c*** Set default values according to current species list
           do i = m%cvFcP(imp(ic),1),
      &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
             iFc = m%cvFc(i)
-            if (any(m%fcFs(iFc) == m%alliFssep) ) then
-              icsepimp = ic + 1
+            if (m%fcFs(iFc) /= 0) then
+               icsepimp = ic + 1
               ifsepimp = iFc
               found = .true.
             end if
@@ -703,8 +703,8 @@ c*** Set default values according to current species list
         if (iFs1.ne.0.and.iFs2.ne.0) then
           ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
         else if (wall_face(1)) then
-          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(imp(ic))
-        else
+          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
+        else if (wall_face(2)) then
           ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
         end if
       end do
