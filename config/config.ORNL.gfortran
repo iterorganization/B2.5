@@ -23,6 +23,13 @@ FC      = ${MPI_FC}
 endif
 endif
 
+MKLROOT=/usr/lib/x86_64-linux-gnu
+
+ifdef MKLROOT
+LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
+
+
 ifdef SOLPS_DEBUG
 #FCOPTS = -finit-local-zero
 FCOPTS = -frange-check -Wcharacter-truncation -fcheck=all \
