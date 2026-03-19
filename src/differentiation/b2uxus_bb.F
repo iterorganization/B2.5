@@ -136,6 +136,7 @@
 *    ..use slv5pt
        call xerrab ('b2uxus_b: Style 1 is not implemented')
       else if (style.eq.2) then
+*    ..use ma28 (default)
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
@@ -146,10 +147,10 @@
        icnh = dummy 
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-         !! ma28 solver, default
 *csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
        call ILUTERN_US(NCV, NZ, corfunb, incrbb, name)
       else if (style.eq.3) then
+*    ..use PARDISO
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
@@ -160,7 +161,6 @@
        icnh = dummy 
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-              !! experiment, PARDISO solver
 *csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
        call SolvePARDISO(NCV, NZ, corfunb, incrbb, name, flag)  
       endif
