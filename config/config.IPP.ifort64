@@ -9,9 +9,6 @@ LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/tokp/work/so
 NAGDIR      ?= /tokp/work/dpc/SOLPS-ITER/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
 MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
-ifdef MKLROOT
-LD_MKL      ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-endif
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 

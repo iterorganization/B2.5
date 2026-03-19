@@ -4275,8 +4275,8 @@
 				<description>
 					If eirene_underrelax_continue.eq.1, the underrelaxed Eirene sources from the end of the previous simulation are read in, to continue the run without restart effects. The underrelaxed sources are saved in b2favere. The procedure is as follows:
 					Step 1: when activating eirene_underrelax for the first time in a simulation, eirene_underrelax_continue should be 0, as the saved sources are not yet present. Set b2mndt_av to 1 to write out b2favere at the end of a run.
-					Step 2: When continuing the run, set eirene_underrelax_continue to 1. The b2favere from the previous run will be converted to b2faveri automatically by the b2run script. 
-					Note: the reading of the underrelaxed sources from b2faveri is independent of the reading of the averaged plasma states by '’b2mndr_av_read'. 
+					Step 2: When continuing the run, set eirene_underrelax_continue to 1. The b2favere from the previous run will be converted to b2faveri automatically by the b2run script.
+					Note: the reading of the underrelaxed sources from b2faveri is independent of the reading of the averaged plasma states by '’b2mndr_av_read'.
 				</description>
 			</switch>
 			<switch>
@@ -4652,7 +4652,7 @@
 				<type>integer</type>
 				<description>
 					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy. Style.eq.3 = PARDISO (Intel MKL)
-					NOTE: style 0 and 1 are depreciated. PARDISO is faster than MA28 but requires MKL on your system. 
+					NOTE: style 0 and 1 are deprecated. PARDISO is faster than MA28 but requires MKL on your system.
 				</description>
 			</switch>
 			<switch>

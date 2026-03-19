@@ -340,7 +340,11 @@ c***  Standard set-up:
             end do
           endif
           if (iFs1.eq.0 .and. iFs.ne.0) then
-            iFs1 = iFs
+            if (wall_face(1)) then
+              iFs2 = iFs
+            else
+              iFs1 = iFs
+            end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
@@ -595,7 +599,11 @@ c*** Set default values according to current species list
             end do
           endif
           if (iFs1.eq.0 .and. iFs.ne.0) then
-            iFs1 = iFs
+            if (wall_face(1)) then
+              iFs2 = iFs
+            else
+              iFs1 = iFs
+            end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
@@ -603,9 +611,9 @@ c*** Set default values according to current species list
         if (iFs1.ne.0.and.iFs2.ne.0) then
           ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
         else if (wall_face(1)) then
-          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
+          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(imp(ic))
         else if (wall_face(2)) then
-          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
+          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
         end if
       end do
       if (.not.found) write(*,'(a/a/a)')
