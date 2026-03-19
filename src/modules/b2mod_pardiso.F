@@ -5,46 +5,40 @@
 
       contains 
 
-
       subroutine SolvePARDISO(nCv, nz, b, sol, name, flag)
-
-      use, intrinsic :: iso_c_binding, only: c_int
       implicit none
 
       !--------------------------------------
-      ! TODO. At list of optional todos: 
-      ! 1. The initialization phase can be moved to a separate routine and the parameters can be saved in the module. 
+      ! TODO. At list of optional todos:
+      ! 1. The initialization phase can be moved to a separate routine and the parameters can be saved in the module.
       ! 2. The solver settings can perhaps be further optimized for B2.5 matrices.
-      ! 3. The shape of the stencils for each equation remains unchanged throughout the equations. It might be possible to save and store some 
-      !    pre-computed info per equation to prevent re-computing it at every equation. 
-
+      ! 3. The shape of the stencils for each equation remains unchanged throughout the equations. It might be possible to save and store some
+      !    pre-computed info per equation to prevent re-computing it at every equation.
       !--------------------------------------
       ! Arguments
       integer, intent(in) :: nCv, nz
       character*(*) :: name
-      real(R8), intent(in) :: b(nCv)       !! right-hand side
-      real(R8), intent(out) :: sol(nCv)    !! solution
+      real(kind=R8), intent(in) :: b(nCv)       !! right-hand side
+      real(kind=R8), intent(out) :: sol(nCv)    !! solution
       integer, intent(out) :: flag
 
+#ifdef PARDISO
       !--------------------------------------
       ! Internal MKL PARDISO variables
       integer :: ia_t(nz), ja_t(nz)        !! ia_t, ja_t, a_t = matrix in triplet format
-      real(R8) :: a_t(nz)
-      integer(R8) :: pt(64)  ! internal solver memory pointer
+      real(kind=R8) :: a_t(nz)
+      integer(kind=I8) :: pt(64)  ! internal solver memory pointer
       integer :: iparm(64)
       integer :: maxfct, mnum, mtype, phase, nrhs
       integer :: error
-      integer :: i
       integer :: ia(nCv+1), ja(nz)         !! ia, ja, a = matrix in CSR format, needed by PARDISO
-      real(R8), dimension(:) :: a(nz)
+      real(kind=R8) :: a(nz)
 
-#ifdef PARDISO
       !--------------------------------------
       ! Read in matrix from b2mod_ma28 (storage can perhaps be moved in the future)
       ia_t = irnh(1:nz)
       ja_t = icnh(1:nz)
       a_t = a1h(1:nz)
-
 
       !--------------------------------------
       ! Convert triplet to CSR format
@@ -52,7 +46,7 @@
 
       !--------------------------------------
       ! Initialization
-      pt = 0_8
+      pt = 0_I8
       iparm = 0
       maxfct = 1
       mnum = 1
@@ -98,6 +92,7 @@
 
       if (error /= 0) then
         print *, 'SolvePARDISO: Analysis failed with error =', error
+        print *, 'Called from ',trim(name)
         flag = error
         return
       endif
@@ -110,6 +105,7 @@
 
       if (error /= 0) then
         print *, 'SolvePARDISO: Factorization failed with error =',error
+        print *, 'Called from ',trim(name)
         flag = error
         return
       endif
@@ -122,6 +118,7 @@
 
       if (error /= 0) then
         print *, 'SolvePARDISO: Solve failed with error =', error
+        print *, 'Called from ',trim(name)
         flag = error
         return
       endif
@@ -134,31 +131,32 @@
       call pardiso(pt, maxfct, mnum, mtype, phase, nCv, a, ia, ja, 
      .          0, nrhs, iparm, 0, b, sol, error)
 #else
+      flag = -1
+      sol = 0.0_R8
       call xerrab('PARDISO not available! Link and re-compile with'//
      . ' PARDISO library')
 #endif
-
+      return
       end subroutine SolvePARDISO
 
 
       subroutine TripletToCSR(n, nz, irn, jcn, a_triplet, ia, ja,
      .                         a_csr)
-
       implicit none
       integer, intent(in) :: n       ! Number of rows
       integer, intent(in) :: nz      ! Number of nonzeros
       integer, intent(in) :: irn(nz) ! Row indices (1-based)
       integer, intent(in) :: jcn(nz) ! Column indices (1-based)
-      real(R8), intent(in) :: a_triplet(nz) ! Values
+      real(kind=R8), intent(in) :: a_triplet(nz) ! Values
 
       integer, intent(out) :: ia(n+1) ! Row pointers (CSR)
       integer, intent(out) :: ja(nz)  ! Column indices (CSR)
-      real(R8), intent(out) :: a_csr(nz) ! Values in CSR
+      real(kind=R8), intent(out) :: a_csr(nz) ! Values in CSR
 
       ! Local variables
       integer :: i, row
       integer, allocatable :: row_counts(:)
-      integer :: ptr, pos
+      integer :: ptr
 
       !-----------------------------------
       ! Step 1: count number of nonzeros per row
@@ -177,6 +175,7 @@
         ia(i+1) = ia(i) + row_counts(i)
       end do
 
+      !-----------------------------------
       ! Step 3: temporary position array to track fill
       row_counts = 0
 
@@ -192,8 +191,8 @@
 
       !-----------------------------------
       deallocate(row_counts)
+
+      return
       end subroutine TripletToCSR
-
-
 
       end module b2mod_pardiso

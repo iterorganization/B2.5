@@ -8,9 +8,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifdef MKLROOT
-LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-endif
 
 CPP = /lib/cpp -traditional
 

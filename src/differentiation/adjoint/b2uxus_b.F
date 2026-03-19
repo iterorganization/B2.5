@@ -167,7 +167,7 @@
       resfunb = resfunb + incrbb
 
 *csc  Obtain x, solution of the original system A*x=b
-      call b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, style, name)
+      call b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name, style)
 *     Obtain Ab(i,j) = -x(j)*bb(i)
       do iCv=1,nCv
         do iNv=1,mpg%cvNvP(iCv,2)

@@ -10,9 +10,6 @@ LD_NAG    ?= -L${NAGDIR}/lib -lnag_nag
 else
 LD_NAG    ?= `pkg-config openblas --libs`
 endif
-ifdef MKLROOT
-LD_MKL    ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
-endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 ifeq (,$(findstring CentOS,$(OS)))
