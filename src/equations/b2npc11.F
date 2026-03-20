@@ -188,7 +188,7 @@
 *    ..test edge values of fnb
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
-
+      nap(:,:,isb) = nb !djm 04.03.26 restoring this line
       if(style_b2mndt.eq.2) then                                         !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nx, ny, isb, guard_flows, dtim,
