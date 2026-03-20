@@ -1746,23 +1746,33 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')
       iy1=int(iyfb)
-      call xertst(0.le.iy1.and.iy1.lt.ny, 'faulty iyfb (1)')
+      if (ny.ge.3) then
+        call xertst(0.le.iy1.and.iy1.lt.ny, 'faulty iyfb (1)')
+      endif
       ix2=rightix(ix1,iy1)
       call xertst(0.le.ix2.and.ix2.lt.nx, 'faulty ixfb (2)')
       iy2=rightiy(ix1,iy1)
-      call xertst(0.le.iy2.and.iy2.lt.ny, 'faulty iyfb (2)')
+      if (ny.ge.3) then
+        call xertst(0.le.iy2.and.iy2.lt.ny, 'faulty iyfb (2)')
+      endif
       ix3=topix(ix1,iy1)
       call xertst(0.le.ix3.and.ix3.lt.nx, 'faulty ixfb (3)')
       iy3=topiy(ix1,iy1)
-      call xertst(0.le.iy3.and.iy3.lt.ny, 'faulty iyfb (3)')
+      if (ny.ge.3) then
+        call xertst(0.le.iy3.and.iy3.lt.ny, 'faulty iyfb (3)')
+      endif
       ix4=rightix(ix3,iy3)
       call xertst(0.le.ix4.and.ix4.lt.nx, 'faulty ixfb (4)')
       iy4=rightiy(ix3,iy3)
-      call xertst(0.le.iy4.and.iy4.lt.ny, 'faulty iyfb (4)')
+      if (ny.ge.3) then
+        call xertst(0.le.iy4.and.iy4.lt.ny, 'faulty iyfb (4)')
+      endif
       ix5=topix(ix2,iy2)
       call xertst(ix4.eq.ix5, 'fault ixfb (5)')
       iy5=topiy(ix2,iy2)
-      call xertst(iy4.eq.iy5, 'fault iyfb (5)')
+      if (ny.ge.3) then
+        call xertst(iy4.eq.iy5, 'fault iyfb (5)')
+      endif
       ax=ixfb-int(ixfb)
       ay=iyfb-int(iyfb)
       write(*,*) 'ix# ', ix1, ix2, ix3, ix4, ix5

@@ -347,6 +347,7 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
+      uap = ua !djm 04.03.26 restoring this line
       if(style_b2mndt.eq.2) then                                       !srv 07.07.21 {
 *  .. calculate time-dependent source
        call b2smdt (nx, ny, ns, dtim, hz, vol, na, uap, smodt, .false.)
