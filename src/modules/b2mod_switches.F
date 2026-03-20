@@ -2773,10 +2773,6 @@ c ECH model
         call xerrab ('b2sral_ECH_out should be either 0 (no output) ' //
      &   'or 1 (standard output)')
       endif
-      if(((s%ech_coupling.eq.1.and.s%ech_gaussian_type.gt.1).or.
-     &   (s%ech_coupling.gt.1)).and.s%ech_Zdep.le.0.0_R8) then
-        call xerrab ('b2sral_ECH_Zdep must be .gt. 0.0')
-      endif
 
 c ICH model
       if(s%ich_out.ne.0.and.s%use_ich.eq.0) then
