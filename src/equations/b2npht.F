@@ -247,7 +247,9 @@
         enddo
       enddo
 * ..main computation
-      if(style_b2mndt.eq.2) then                                         !srv 07.07.21 {
+      tep = te !djm 04.03.26 restoring this line
+      tip = ti !djm 04.03.26 restoring this line
+      if(style_b2mndt.eq.2) then !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2shdt (nx, ny, ns, dtim, BoRiS,
      &    vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
