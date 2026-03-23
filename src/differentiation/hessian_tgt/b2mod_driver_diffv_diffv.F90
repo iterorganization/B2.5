@@ -2748,10 +2748,10 @@ CONTAINS
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
@@ -4596,10 +4596,10 @@ CONTAINS
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
@@ -6391,10 +6391,10 @@ CONTAINS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
     INTRINSIC SIZE
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
@@ -7945,10 +7945,10 @@ CONTAINS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
     INTRINSIC SIZE
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
