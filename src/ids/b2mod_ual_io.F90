@@ -1566,6 +1566,7 @@ contains
           &  description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
+#endif
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
@@ -1580,11 +1581,10 @@ contains
         description%machine = database
         description%pulse = shot
 #endif
-#else
+#endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         if ( present( time_step_IN ) ) &
           &  summary%simulation%time_step = time_step_IN
-        if ( present ( time_IN ) ) &
-          &  summary%simulation%time_current = time_IN
         allocate( summary%simulation%workflow(1) )
         summary%simulation%workflow = source
         summary%simulation%time_begin = run_start_time_IN
@@ -1597,6 +1597,8 @@ contains
         allocate( summary%machine(1) )
         summary%machine = database
         summary%pulse = shot
+        allocate( summary%description(1) )
+        summary%description = comment
 #endif
 
         i=index(B25_git_version,'-')
@@ -2581,7 +2583,6 @@ contains
 #endif
         deallocate(wrdtrg)
         call dealloc_b2plot_wall_loading
-#endif
 
         !! Write grid & grid subsets/subgrids
 #if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
@@ -6181,19 +6182,11 @@ contains
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_square_average,               &
                       &   value = rz2(:,:,ispion(is,js)) )
-#if IMAS_MAJOR_VERSION > 3
-                !! Ionization potential
-                  call write_quantity( edge_grid,                           &
-                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
-                      &         state( js )%ionization_potential,           &
-                      &   value = rpt(:,:,ispion(is,js)) )
-#else
                 !! Ionisation potential
                   call write_quantity( edge_grid,                           &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionisation_potential,           &
                       &   value = rpt(:,:,ispion(is,js)) )
-#endif
 #else
                 !! pb : Ion pressure
                 totCv(:,:) = 0.0_IDS_real
@@ -9059,6 +9052,11 @@ contains
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, -v )
 #endif
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('B')
+            call write_sourced_value( summary%local%separatrix%n_i%boron, nisep )
+            call write_sourced_value( summary%local%separatrix_average%n_i%boron, u )
+#endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
 #if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
@@ -9253,6 +9251,10 @@ contains
               call write_sourced_value( summary%local%limiter%n_i%lithium, nisep )
             case ('Be')
               call write_sourced_value( summary%local%limiter%n_i%beryllium, nisep )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+            case ('B')
+              call write_sourced_value( summary%local%limiter%n_i%boron, nisep )
+#endif
             case ('C')
               call write_sourced_value( summary%local%limiter%n_i%carbon, nisep )
             case ('N')
@@ -9384,6 +9386,10 @@ contains
                 call write_sourced_value( summary%local%divertor_target(i)%n_i%beryllium, nisep )
 #else
                 call write_sourced_value( summary%local%divertor_plate(i)%n_i%beryllium, nisep )
+#endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+              case ('B')
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%boron, nisep )
 #endif
               case ('C')
 #if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
@@ -9953,15 +9959,6 @@ contains
           description%imas_version = version
           allocate( description%dd_version(1) )
           description%dd_version = imas_version
-#elif ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
-          description%type%index = 2
-          allocate( description%type%name(1) )
-          allocate( description%type%description(1) )
-          description%type%name = "simulation"
-          description%type%description = "Simulation results from "//trim(source)
-          allocate( description%machine(1) )
-          description%machine = database
-          description%pulse = shot
 #elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           summary%type%index = 2
           allocate( summary%type%name(1) )
@@ -9971,6 +9968,8 @@ contains
           allocate( summary%machine(1) )
           summary%machine = database
           summary%pulse = shot
+          allocate( summary%description(1) )
+          summary%description = comment
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           if ( present( time_IN ) ) &
@@ -11874,6 +11873,9 @@ contains
     endif
 
     call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real/5.0_IDS_real )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+    call write_sourced_value( summary%fusion%power_total, fusion_power*1.0e6_IDS_real )
+#endif
 
     call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
     gsum = 0.0_IDS_real

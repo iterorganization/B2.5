@@ -1433,6 +1433,8 @@ contains
     else
       write(iun,'(a,a)') 'alias: ',trim(uri)
     end if
+    write(iun,'(a)') 'metadata:'
+    write(iun,'(a,a)') '- description : ', trim(label)
     write(iun,'(a)') 'inputs:'
     do i = 1, ninpf
       call find_file_with_path(trim(input_file_list(i)),exist,file_path)
