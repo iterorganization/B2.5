@@ -112,6 +112,10 @@ program b2_ual_write
     use b2mod_ual    &
      & , only : put_ids_edge, dealloc_ids_edge, dealloc_batch_edge, &
      &          b25_process_ids, close_ual
+#if AL_MAJOR_VERSION > 4
+    use b2mod_ual    &
+     & , only : write_manifest, uri, imasdir
+#endif
    use ids_schemas   &  ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_equilibrium
@@ -170,11 +174,11 @@ program b2_ual_write
     integer narg, cptArg, l, m, status, tmp_run, time_slice_index
 #if AL_MAJOR_VERSION > 4
     character*256 olddir
-    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+    character(len=STRMAXLEN) :: uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
     character*16 usrnam, run_user
-    character*256 imasdir, home_dir, path, systemarg
+    character*256 home_dir, path, systemarg
     logical absolute_path, not_default
     external usrnam
 
@@ -712,6 +716,9 @@ program b2_ual_write
 #endif
         &   )
     call close_ual(idx)
+#if AL_MAJOR_VERSION > 4
+    call write_manifest
+#endif
 
 end program b2_ual_write
 

@@ -291,8 +291,12 @@ program b2_ual_write_b2mod
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_equilibrium
     use b2mod_ual &
-     & , only : new_ids_edge, put_ids_edge, close_ual, &
+     & , only : put_ids_edge, close_ual, &
      &          dealloc_ids_edge, dealloc_batch_edge
+#if AL_MAJOR_VERSION > 4
+    use b2mod_ual &
+     & , only : write_manifest, uri, imasdir
+#endif
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -362,11 +366,11 @@ program b2_ual_write_b2mod
     character(len=24) :: run_string
     character(len=24) :: argName
     character(len=24) :: treename
-    character(len=256) :: systemarg, imasdir, home_dir, path
+    character(len=256) :: systemarg, home_dir, path
     logical :: new_run, absolute_path
 #if AL_MAJOR_VERSION > 4
     character*256 olddir
-    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+    character(len=STRMAXLEN) :: uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
 
@@ -926,6 +930,9 @@ program b2_ual_write_b2mod
 #endif
         &   )
     call close_ual(idx)
+#if AL_MAJOR_VERSION > 4
+    call write_manifest
+#endif
 
     write(0,*) " Running b2mn_fin"
     call b2mn_fin

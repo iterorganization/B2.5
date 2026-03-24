@@ -154,6 +154,10 @@
       use b2mod_ual
      , , only : put_ids_edge, new_ids_edge, close_ual,
      ,          dealloc_ids_edge, dealloc_batch_edge
+#if AL_MAJOR_VERSION > 4
+      use b2mod_ual
+     , , only : write_manifest, uri, imasdir
+#endif
       use b2mod_ual_io
      , , only : b25_process_ids, b25_av_ids,
      ,          num_time_slices, num_batch_slices
@@ -386,7 +390,7 @@
       logical ex, found
 #ifdef IMAS
       integer l, m
-      character(len=256) :: home_dir, imasdir, zeile, path
+      character(len=256) :: home_dir, zeile, path
       character(len=24) :: device_env
       logical absolute_path, not_default
 #ifndef NO_GETENV
@@ -2017,7 +2021,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       endif                                                          !srv 26.02.18 {
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns0,
-     & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+     &     ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns0, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns0, ev, te, ne,
@@ -2426,7 +2430,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
 #if AL_MAJOR_VERSION > 4
       character(len=:), allocatable :: message
-      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+      character(len=STRMAXLEN) :: uri_source, uri_dest
       character(len=256) :: olddir
 #endif
 #endif
@@ -3444,16 +3448,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &        divertors,
 #endif
-#if IMAS_MAJOR_VERSION > 3
-     &        uri,
-#endif
      &        idx, new_eq_ggd )
             new_eq_ggd = new_eq_ggd .and. .not.write_ids
             if (write_av)
      &       call new_batch_edge( idx,
-#if IMAS_MAJOR_VERSION > 3
-     &        uri,
-#endif
      &        batch_profiles, batch_sources,
 #if IMAS_MAJOR_VERSION > 3
      &        batch_plasma_profiles, batch_plasma_sources,
@@ -3555,7 +3553,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       character*512 systemarg
 #if AL_MAJOR_VERSION > 4
       character(len=:), allocatable :: message
-      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+      character(len=STRMAXLEN) :: uri_source, uri_dest
       character(len=256) :: olddir
 #endif
       logical streql
@@ -4085,9 +4083,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
-#if IMAS_MAJOR_VERSION > 3
-     &      uri,
-#endif
      &      idx, new_eq_ggd )
         else
           call put_ids_edge(
@@ -4141,6 +4136,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      )
         call close_ual(idx)
+#if AL_MAJOR_VERSION > 4
+        call write_manifest
+#endif
 #endif
       end if
 
@@ -4151,9 +4149,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 * finalise eirene_mc
       if(use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nx,ny,ns,BoRiS)
+        call eirene_mc_final(nx,ny,ns,BoRiS)
 #else
-         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
+        call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
 
