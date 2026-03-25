@@ -339,13 +339,15 @@ c***  Standard set-up:
               end if
             end do
           endif
-          if (iFs1.eq.0 .and. iFs.ne.0) then
+          if (iFs1.eq.0 .and. iFs.ne.0
+     &        .and. fs_ds_omp(iFs).ne.-999.0_R8) then
             if (wall_face(1)) then
               iFs2 = iFs
             else
               iFs1 = iFs
             end if
-          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
+          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0
+     &        .and. fs_ds_omp(iFs).ne.-999.0_R8) then
             iFs2 = iFs
           end if
         end do
@@ -598,13 +600,15 @@ c*** Set default values according to current species list
               end if
             end do
           endif
-          if (iFs1.eq.0 .and. iFs.ne.0) then
+          if (iFs1.eq.0 .and. iFs.ne.0
+     &        .and. fs_ds_imp(iFs).ne.-999.0_R8) then
             if (wall_face(1)) then
               iFs2 = iFs
             else
               iFs1 = iFs
             end if
-          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
+          else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0
+     &        .and. fs_ds_imp(iFs).ne.-999.0_R8) then
             iFs2 = iFs
           end if
         end do
