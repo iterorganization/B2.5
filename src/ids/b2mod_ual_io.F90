@@ -1389,11 +1389,12 @@ contains
           &  description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
-#   if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+#  endif
+#  if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
-#   endif
-#   if IMAS_MAJOR_VERSION > 3
+#  endif
+#  if IMAS_MAJOR_VERSION > 3
         description%type%index = 2
         allocate( description%type%name(1) )
         allocate( description%type%description(1) )
@@ -1402,12 +1403,11 @@ contains
         allocate( description%machine(1) )
         description%machine = database
         description%pulse = shot
-#   endif
-#  else
+#  endif
+# endif
+# if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         if ( present( time_step_IN ) ) &
           &  summary%simulation%time_step = time_step_IN
-        if ( present ( time_IN ) ) &
-          &  summary%simulation%time_current = time_IN
         allocate( summary%simulation%workflow(1) )
         summary%simulation%workflow = source
         summary%simulation%time_begin = run_start_time_IN
@@ -1420,7 +1420,9 @@ contains
         allocate( summary%machine(1) )
         summary%machine = database
         summary%pulse = shot
-#  endif
+        allocate( summary%description(1) )
+        summary%description = comment
+# endif
 
         i=index(B25_git_version,'-')
         if (i.gt.0) then
@@ -1429,20 +1431,20 @@ contains
           write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
         endif
 
-#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_midplane( divertors%midplane, midplane_id )
         call write_ids_midplane( edge_profiles%midplane, midplane_id )
         call write_ids_midplane( edge_sources%midplane, midplane_id )
         call write_ids_midplane( edge_transport%midplane, midplane_id )
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
         call write_ids_midplane( plasma_profiles%midplane, midplane_id )
         call write_ids_midplane( plasma_sources%midplane, midplane_id )
         call write_ids_midplane( plasma_transport%midplane, midplane_id )
-#   endif
-        call write_ids_midplane( summary%midplane, midplane_id )
 #  endif
+        call write_ids_midplane( summary%midplane, midplane_id )
+# endif
 
-#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+# if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         nesum = 0.0_IDS_real
         do iCv = 1, mpg%nCi
           if (.not.mpg%cvOnClosedSurface(iCv)) cycle
@@ -1484,11 +1486,11 @@ contains
           case ('C')
             call write_sourced_constant_2( summary%composition%carbon, frac )
           case ('N')
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+#  if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
             call write_sourced_constant( summary%composition%nitrogen, frac )
-#else
+#  else
             call write_sourced_constant_2( summary%composition%nitrogen, frac )
-#endif
+#  endif
           case ('O')
             call write_sourced_constant_2( summary%composition%oxygen, frac )
           case ('Ne')
@@ -1505,7 +1507,7 @@ contains
             call write_sourced_constant_2( summary%composition%krypton, frac )
           end select
         end do
-#  endif
+# endif
 
         if (mpg%iFssep.ne.US_GRID_UNDEFINED) then
           u = 0.0_IDS_real
@@ -1526,9 +1528,9 @@ contains
             end do
           end if
           if (u.ne.0.0_IDS_real) then
-#  if ( IMAS_MINOR_VERSION > 28 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 28 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_value( summary%global_quantities%power_loss, u )
-#  endif
+# endif
           end if
         end if
 
@@ -1554,7 +1556,7 @@ contains
               u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
               if (match_found) frac = frac + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
             end do
-#  ifdef B25_EIRENE
+# ifdef B25_EIRENE
             do is = 1, natmi
               u = u - eneutrad(iCv,is,0)
               if (match_found) frac = frac - eneutrad(iCv,is,0)
@@ -1567,18 +1569,18 @@ contains
               u = u - eionrad(iCv,is,0)
               if (match_found) frac = frac - eionrad(iCv,is,0)
             end do
-#  endif
+# endif
           end do
           if (u.ne.0.0_IDS_real) then
             call write_sourced_value( summary%global_quantities%power_radiated, u )
           end if
-#  if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           if (frac.ne.0.0_IDS_real) then
             call write_sourced_value( summary%global_quantities%power_radiated_inside_lcfs, frac )
             call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, &
               &  u - frac )
           end if
-#  endif
+# endif
         case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
             &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
             &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
@@ -1590,7 +1592,7 @@ contains
             do is = 0, ns-1
               u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
             end do
-#  ifdef B25_EIRENE
+# ifdef B25_EIRENE
             do is = 1, natmi
               u = u - eneutrad(iCv,is,0)
             end do
@@ -1600,16 +1602,16 @@ contains
             do is = 1, nioni
               u = u - eionrad(iCv,is,0)
             end do
-#  endif
+# endif
           end do
-#  if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           if (u.ne.0.0_IDS_real) then
             call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, u )
           end if
-#  endif
+# endif
         end select
 
-#  if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         iactive = 0
         do i = 1, mpg%nXpt
           if (mpg%vxFs(mpg%Xpt(i)).eq.mpg%iFssep .or. &
@@ -1677,9 +1679,9 @@ contains
             end if
           end if
         end select
-#  endif
+# endif
 
-#  if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+# if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         if ( mpg%nStr.gt.0 ) then
           allocate( ion_power( maxval(mpg%strDiv) ) )
           allocate( electron_power( maxval(mpg%strDiv) ) )
@@ -1809,17 +1811,17 @@ contains
                 divertors%divertor(i)%name = 'Divertor '//int2str(i)
                 divertors%divertor(i)%target(1)%name = 'Target '//int2str(i)
               end if
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
               allocate( divertors%divertor(i)%description(1) )
               divertors%divertor(i)%description = plate_name(i)
               allocate( divertors%divertor(i)%target(1)%description(1) )
               divertors%divertor(i)%target(1)%description = plate_name(i)
-#   else
+#  else
               allocate( divertors%divertor(i)%identifier(1) )
               divertors%divertor(i)%identifier = plate_name(i)
               allocate( divertors%divertor(i)%target(1)%identifier(1) )
               divertors%divertor(i)%target(1)%identifier = plate_name(i)
-#   endif
+#  endif
               divertors%divertor(i)%target(1)%extension_r = extension_r(i)
               divertors%divertor(i)%target(1)%extension_z = extension_z(i)
               call write_timed_value( &
@@ -1885,14 +1887,14 @@ contains
               call write_timed_value( &
                 &  divertors%divertor(i)%power_currents, &
                 &  power_currents(i) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
               call write_timed_value( &
                 &  divertors%divertor(i)%target(1)%current_incident, &
                 &  current_incident(i) )
               call write_timed_value( &
                 &  divertors%divertor(i)%current_incident, &
                 &  current_incident(i) )
-#   endif
+#  endif
               u = 0.0_IDS_real
               do is = 1, natmi
                 u = u + (wldra(nlim+ltns(1),is,0) + wldpa(nlim+ltns(1),is,0) ) &
@@ -1920,7 +1922,7 @@ contains
           allocate( divertors%divertor(1)%target(2) )
           allocate( divertors%divertor(1)%target(1)%name(1) )
           allocate( divertors%divertor(1)%target(2)%name(1) )
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
           allocate( divertors%divertor(1)%description(1) )
           allocate( divertors%divertor(1)%target(1)%description(1) )
           allocate( divertors%divertor(1)%target(2)%description(1) )
@@ -1933,7 +1935,7 @@ contains
             divertors%divertor(1)%target(1)%description = "OD"
             divertors%divertor(1)%target(2)%description = "ID"
           end if
-#   else
+#  else
           allocate( divertors%divertor(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(2)%identifier(1) )
@@ -1946,7 +1948,7 @@ contains
             divertors%divertor(1)%target(1)%identifier = "OD"
             divertors%divertor(1)%target(2)%identifier = "ID"
           end if
-#   endif
+#  endif
           divertors%divertor(1)%target(1)%extension_r = extension_r(1)
           divertors%divertor(1)%target(1)%extension_z = extension_z(1)
           divertors%divertor(1)%target(2)%extension_r = extension_r(2)
@@ -1992,11 +1994,11 @@ contains
             call write_timed_value( &
               &  divertors%divertor(1)%target(i)%power_currents, &
               &  power_currents(i) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
             call write_timed_value( &
               &  divertors%divertor(1)%target(i)%current_incident, &
               &  current_incident(i) )
-#   endif
+#  endif
           end do
           call write_timed_value( &
             &  divertors%divertor(1)%wetted_area, &
@@ -2028,11 +2030,11 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%current_incident, &
             &  power_currents(1)+power_currents(2) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
           call write_timed_value( &
             &  divertors%divertor(1)%current_incident, &
             &  current_incident(1)+current_incident(2) )
-#   endif
+#  endif
           u = 0.0_IDS_real
           do is = 1, natmi
             u = u + (wldra(nlim+ltns(1),is,0) + wldra(nlim+ltns(2),is,0) + &
@@ -2060,21 +2062,21 @@ contains
           allocate( divertors%divertor(1)%target(2)%name(1) )
           allocate( divertors%divertor(2)%target(1)%name(1) )
           allocate( divertors%divertor(2)%target(2)%name(1) )
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
           allocate( divertors%divertor(1)%description(1) )
           allocate( divertors%divertor(2)%description(1) )
           allocate( divertors%divertor(1)%target(1)%description(1) )
           allocate( divertors%divertor(1)%target(2)%description(1) )
           allocate( divertors%divertor(2)%target(1)%description(1) )
           allocate( divertors%divertor(2)%target(2)%description(1) )
-#   else
+#  else
           allocate( divertors%divertor(1)%identifier(1) )
           allocate( divertors%divertor(2)%identifier(1) )
           allocate( divertors%divertor(1)%target(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(2)%identifier(1) )
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
-#endif
+#  endif
           if ( plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
           &    plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
@@ -2083,21 +2085,21 @@ contains
             divertors%divertor(1)%target(2)%name = "Lower outer target"
             divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
             divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
             divertors%divertor(1)%description = 'LD'
             divertors%divertor(2)%description = 'LSFD'
             divertors%divertor(1)%target(1)%description = "LID"
             divertors%divertor(1)%target(2)%description = "LOD"
             divertors%divertor(2)%target(1)%description = "LSFOD"
             divertors%divertor(2)%target(2)%description = "LSFID"
-#   else
+#  else
             divertors%divertor(1)%identifier = 'LD'
             divertors%divertor(2)%identifier = 'LSFD'
             divertors%divertor(1)%target(1)%identifier = "LID"
             divertors%divertor(1)%target(2)%identifier = "LOD"
             divertors%divertor(2)%target(1)%identifier = "LSFOD"
             divertors%divertor(2)%target(2)%identifier = "LSFID"
-#   endif
+#  endif
           else
             divertors%divertor(1)%name = 'Lower divertor'
             divertors%divertor(2)%name = 'Upper divertor'
@@ -2105,21 +2107,21 @@ contains
             divertors%divertor(1)%target(2)%name = "Lower outer target"
             divertors%divertor(2)%target(1)%name = "Upper inner target"
             divertors%divertor(2)%target(2)%name = "Upper outer target"
-#   if IMAS_MAJOR_VERSION > 3
+#  if IMAS_MAJOR_VERSION > 3
             divertors%divertor(1)%description = 'LD'
             divertors%divertor(2)%description = 'UD'
             divertors%divertor(1)%target(1)%description = "LID"
             divertors%divertor(1)%target(2)%description = "LOD"
             divertors%divertor(2)%target(1)%description = "UID"
             divertors%divertor(2)%target(2)%description = "UOD"
-#   else
+#  else
             divertors%divertor(1)%identifier = 'LD'
             divertors%divertor(2)%identifier = 'UD'
             divertors%divertor(1)%target(1)%identifier = "LID"
             divertors%divertor(1)%target(2)%identifier = "LOD"
             divertors%divertor(2)%target(1)%identifier = "UID"
             divertors%divertor(2)%target(2)%identifier = "UOD"
-#   endif
+#  endif
           endif
           do i = 1, maxval(mpg%strDiv)
             if (i.eq.1.or.i.eq.4) then
@@ -2160,11 +2162,11 @@ contains
             call write_timed_value( &
               &  divertors%divertor(k)%target(i)%power_currents, &
               &  power_currents(i) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
             call write_timed_value( &
               &  divertors%divertor(k)%target(i)%current_incident, &
               &  current_incident(i) )
-#   endif
+#  endif
           end do
           call write_timed_value( &
             &  divertors%divertor(1)%wetted_area, &
@@ -2196,11 +2198,11 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%current_incident, &
             &  power_currents(1)+power_currents(4) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
           call write_timed_value( &
             &  divertors%divertor(1)%current_incident, &
             &  current_incident(1)+current_incident(4) )
-#   endif
+#  endif
           u = 0.0_IDS_real
           do is = 1, natmi
             u = u + (wldra(nlim+ltns(1),is,0) + wldra(nlim+ltns(4),is,0) + &
@@ -2247,11 +2249,11 @@ contains
           call write_timed_value( &
             &  divertors%divertor(2)%current_incident, &
             &  power_currents(2)+power_currents(3) )
-#   if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
+#  if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
           call write_timed_value( &
             &  divertors%divertor(2)%current_incident, &
             &  current_incident(2)+current_incident(3) )
-#   endif
+#  endif
           u = 0.0_IDS_real
           do is = 1, natmi
             u = u + (wldra(nlim+ltns(2),is,0) + wldra(nlim+ltns(3),is,0) + &
@@ -2269,7 +2271,7 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, u )
         end select
-#   if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+#  if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         allocate( &
           &  wall%global_quantities%electrons%power_inner_target( num_time_slices ) )
         allocate( &
@@ -2290,7 +2292,7 @@ contains
           &  wall%global_quantities%power_density_outer_target_max( num_time_slices ) )
         wall%global_quantities%power_density_outer_target_max( time_sind ) = &
           & power_flux_peak(maxval(mpg%strDiv))
-#   endif
+#  endif
         deallocate( ion_power )
         deallocate( electron_power )
         deallocate( power_incident )
@@ -2303,7 +2305,6 @@ contains
         deallocate( power_recombination_plasma )
         deallocate( power_recombination_neutrals )
         deallocate( current_incident )
-#  endif
 # endif
 
         !! Write grid & grid subsets/subgrids
@@ -4291,11 +4292,11 @@ contains
         if (switch%use_eirene.ne.0) then
           allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
           do is = 1, nneut
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+#  if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              ks = size( edge_profiles%ggd( time_sind )%neutral( is )%state )
-#else
+#  else
              ks = size( profiles_ggd%neutral( is )%state )
-#endif
+#  endif
              allocate( radiation%process(3)%ggd( time_sind )%neutral( is )%state( ks ) )
           end do
 
@@ -6492,19 +6493,11 @@ contains
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_square_average,               &
                       &   value = state%rt%rz2(:,ispion(is,js)) )
-#   if IMAS_MAJOR_VERSION > 3
-                !! Ionization potential
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
-                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
-                      &         state( js )%ionization_potential,           &
-                      &   value = state%rt%rpt(:,ispion(is,js)) )
-#   else
                 !! Ionisation potential
                   call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionisation_potential,           &
                       &   value = state%rt%rpt(:,ispion(is,js)) )
-#   endif
 #  else
                 !! pb : Ion pressure
                 totCv(:) = 0.0_IDS_real
@@ -8646,6 +8639,11 @@ contains
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, -v )
 #   endif
 #  endif
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('B')
+            call write_sourced_value( summary%local%separatrix%n_i%boron, nisep )
+            call write_sourced_value( summary%local%separatrix_average%n_i%boron, u )
+#  endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
 #  if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
@@ -8836,6 +8834,10 @@ contains
               call write_sourced_value( summary%local%limiter%n_i%lithium, nisep )
             case ('Be')
               call write_sourced_value( summary%local%limiter%n_i%beryllium, nisep )
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+            case ('B')
+              call write_sourced_value( summary%local%limiter%n_i%boron, nisep )
+#  endif
             case ('C')
               call write_sourced_value( summary%local%limiter%n_i%carbon, nisep )
             case ('N')
@@ -8949,6 +8951,10 @@ contains
                 call write_sourced_value( summary%local%divertor_target(i)%n_i%beryllium, nisep )
 #  else
                 call write_sourced_value( summary%local%divertor_plate(i)%n_i%beryllium, nisep )
+#  endif
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+              case ('B')
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%boron, nisep )
 #  endif
               case ('C')
 #  if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
@@ -9371,15 +9377,6 @@ contains
           description%imas_version = version
           allocate( description%dd_version(1) )
           description%dd_version = imas_version
-#  elif ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
-          description%type%index = 2
-          allocate( description%type%name(1) )
-          allocate( description%type%description(1) )
-          description%type%name = "simulation"
-          description%type%description = "Simulation results from "//trim(source)
-          allocate( description%machine(1) )
-          description%machine = database
-          description%pulse = shot
 #  elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           summary%type%index = 2
           allocate( summary%type%name(1) )
@@ -9389,6 +9386,8 @@ contains
           allocate( summary%machine(1) )
           summary%machine = database
           summary%pulse = shot
+          allocate( summary%description(1) )
+          summary%description = comment
 #  endif
 #  if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           if ( present( time_IN ) ) &
@@ -11183,6 +11182,9 @@ contains
     endif
 
     call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real/5.0_IDS_real )
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+    call write_sourced_value( summary%fusion%power_total, fusion_power*1.0e6_IDS_real )
+#  endif
 
     call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
     allocate( gas_puff( nneut ) )
