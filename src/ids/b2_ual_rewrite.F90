@@ -112,6 +112,10 @@ program b2_ual_rewrite
     use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge, &
      &          dealloc_ids_edge, dealloc_batch_edge, close_ual
+#if AL_MAJOR_VERSION > 4
+    use b2mod_ual &
+     & , only : write_manifest, uri, imasdir
+#endif
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -179,10 +183,10 @@ program b2_ual_rewrite
     integer narg, cptArg, l, m, new_run, status, tmp_run
     integer idum(0:2)
     character*16 usrnam, run_user
-    character*256 path, new_path, imasdir, home_dir, systemarg
+    character*256 path, new_path, home_dir, systemarg
     logical same_run_number, absolute_path, not_default
 #if AL_MAJOR_VERSION > 4
-    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+    character(len=STRMAXLEN) :: uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
     data new_run / 0 /
@@ -696,9 +700,6 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-#if IMAS_MAJOR_VERSION > 3
-        &   uri, &
-#endif
         &   idx, new_eq_ggd )
     if (.not.streql(shot_string,' ')) then
       systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
@@ -747,6 +748,9 @@ program b2_ual_rewrite
 #endif
         &   )
     call close_ual(idx)
+#if AL_MAJOR_VERSION > 4
+    call write_manifest
+#endif
 
 end program b2_ual_rewrite
 
