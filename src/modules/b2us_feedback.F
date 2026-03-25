@@ -1812,6 +1812,8 @@ cxpb size is changed in b2mod_dimensions
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   if (is_neutral(is)) cycle
+                  if (abs(geo%fcPbs(iFc)/geo%fcS(iFc))
+     .                  .lt.geo%Qalfmin) cycle
                   zaf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      .             rt%rza(1,is))
                   t0 = t0 + t1*(dv%fna(iFc,0,is)+
