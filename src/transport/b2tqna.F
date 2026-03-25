@@ -821,7 +821,7 @@ cdpc
           enddo
           hce0(iCv) = hce0(iCv)*switch%te_alfa3
         else
-          write(*, '(a,1i4,1i3,2es1.2,a)') 'b2tqna: iCv,iFt,ds_o,imp=',
+          write(*, '(a,1i6,1i4,2es12.3,a)') 'b2tqna: iCv,iFt,ds_o,imp=',
      &     iCv,iFt,ft_ds_omp(iFt),ft_ds_imp(iFt),' was not detected!'
         endif
         ! special treatment for sig0 and al0
