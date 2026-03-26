@@ -485,15 +485,15 @@ DBGAD = ${OBJDIR}/adDebug.o
 
 .PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
-DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
-ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
-NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
-DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_DD: VERSION ${MNHEXE}
-TANGENT: VERSION ${MNDEXE} ${OPTEXE}
-ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
-HESS_TGT: VERSION ${MNHEXE}
+DEFAULT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
+ALL: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
+NOPLOT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
+DIFF_D: VERSION AM_FILES ${MNDEXE} ${OPTEXE}
+DIFF_B: VERSION AM_FILES ${MNBEXE} ${OPTEXE}
+DIFF_DD: VERSION AM_FILES ${MNHEXE}
+TANGENT: VERSION AM_FILES ${MNDEXE} ${OPTEXE}
+ADJOINT: VERSION AM_FILES ${MNBEXE} ${OPTEXE}
+HESS_TGT: VERSION AM_FILES ${MNHEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -526,7 +526,7 @@ ALL: ${NCEXE} ${NREXE} nc2text
 NOPLOT: ${NCEXE} ${NREXE} nc2text
 endif
 endif
-MAIN: VERSION ${MNEXE}
+MAIN: VERSION AM_FILES ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS_WG
@@ -1400,7 +1400,15 @@ endif
 	${MAKE} depend
 
 AM_FILES: ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
-	cd ${AMDIR} ; retrieve_fnn_datasets
+
+${AMDIR}/dbe.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
+
+${AMDIR}/dc.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
+
+${AMDIR}/dw.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
 
 include ${OBJDIR}/dependencies
 ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
