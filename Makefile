@@ -12,6 +12,7 @@ DOCDIR   = ${SRCDIR}/documentation
 PYTHON  ?= python
 TAGSLIST =
 SOLPSINCLUDE ?=
+AMDIR    = ${SRCB2}/Database/trim.data/refl.data
 
 MAKETAGS ?= ctags -e -f
 
@@ -482,7 +483,7 @@ JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
@@ -1394,8 +1395,12 @@ endif
 	${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} local
+	${MAKE} AM_FILES
 	${MAKE} listobj
 	${MAKE} depend
+
+AM_FILES: ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
+	cd ${AMDIR} ; retrieve_fnn_datasets
 
 include ${OBJDIR}/dependencies
 ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)

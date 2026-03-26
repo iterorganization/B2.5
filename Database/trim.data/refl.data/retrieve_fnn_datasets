@@ -1,0 +1,7 @@
+#!/bin/tcsh
+
+wget https://zenodo.org/records/19232546/files/dbe.fnn
+
+wget https://zenodo.org/records/19232546/files/dc.fnn
+
+wget https://zenodo.org/records/19232546/files/dw.fnn

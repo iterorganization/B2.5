@@ -31,6 +31,11 @@ lib/
 # ignore local files created by scripts
 grep.lis
 
+# ignore imported dataset files
+dbe.fnn
+dc.fnn
+dw.fnn
+
 # genmod
 *__genmod*
 
