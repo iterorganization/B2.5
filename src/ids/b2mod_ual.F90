@@ -89,6 +89,11 @@ module b2mod_ual
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
   public ids_divertors
 #endif
+#if AL_MAJOR_VERSION > 4
+  public write_manifest
+  character(len=STRMAXLEN), public :: uri
+#endif
+  character(len=256), public :: imasdir
 #endif
 
 contains
@@ -190,7 +195,6 @@ contains
         character*256 :: ids_list
 #if AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
-        character(len=STRMAXLEN) :: uri
         logical, save :: first_pass = .true.
 #endif
 
@@ -511,7 +515,6 @@ contains
         character*256 :: ids_list
 #if AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
-        character(len=STRMAXLEN) :: uri
         logical, save :: first_pass = .true.
 #endif
 
@@ -815,9 +818,6 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
-#if IMAS_MAJOR_VERSION > 3
-            &   uri, &
-#endif
             &   idx, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
@@ -867,9 +867,6 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store data related to the divertor plates
-#endif
-#if IMAS_MAJOR_VERSION > 3
-        character(len=STRMAXLEN), intent(in) :: uri
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
@@ -950,9 +947,6 @@ contains
     end subroutine new_ids_edge
 
     subroutine new_batch_edge( idx, &
-#if IMAS_MAJOR_VERSION > 3
-            &   uri, &
-#endif
             &   batch_profiles, batch_sources, &
 #if IMAS_MAJOR_VERSION > 3
             &   batch_plasma_profiles, batch_plasma_sources, &
@@ -993,9 +987,6 @@ contains
             !< designed to store run summary data
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
-#if IMAS_MAJOR_VERSION > 3
-        character(len=STRMAXLEN), intent(in) :: uri
-#endif
         logical, intent(in) :: do_summary, new_eq_ggd
             !< subsequent data access operation
         integer :: status
@@ -1084,7 +1075,6 @@ contains
         !! Internal variables
 #if AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
-        character(len=STRMAXLEN) :: uri
 #endif
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
@@ -1174,7 +1164,6 @@ contains
         external len_of_digits
 # elif AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
-        character(len=STRMAXLEN) :: uri
 # endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
@@ -1384,6 +1373,131 @@ contains
         idx = 0
 
     end subroutine close_ual
+
+#if AL_MAJOR_VERSION > 4
+    !> Write SimDB manifest for this simulation
+    subroutine write_manifest
+    use b2mod_diag
+#ifdef B25_EIRENE
+    use eirmod_cinit, only : fort_lc
+#endif
+    implicit none
+    integer iun, i, k, l
+    integer, parameter :: ninpf=44, noutf=27, file_len=38
+    character(len=STRMAXLEN) :: alias
+    character(len=256) :: file_path, filename
+    character(len=file_len) :: input_file_list(ninpf)
+    character(len=file_len) :: output_file_list(noutf)
+    logical :: exist, streql
+    external streql
+#ifdef LEGACYCOMP
+    integer newunit
+    external newunit
+#endif
+    data input_file_list/ &
+   & 'b2mn.dat', 'b2fstati', 'b2fgmtry', 'b2frates', 'b2fpardf', &  !5
+   & 'b2faveri', 'fort.33', 'fort.34', 'fort.35', 'input.dat', &  !10
+   & 'fort.15.i', 'fort.14.i', 'fort.13.i', 'fort.12.i', 'fort.11.i', &  !15
+   & 'fort.10.i', 'fort.44.i', 'fort.46.i', &  !18
+   & 'eirene.input.json', 'eirene_add_surfaces.input.json', &  !20
+   & 'eirene_physics_model.input.json', 'user_data.input', &  !22
+   & 'param.dg', 'ratadas.filelist', 'b2.optimization.parameters', &  !25
+   & 'b2.atomic_physics_rescale.parameters', 'b2.feedback_save.parameters.i', &  !27
+   & 'b2.neutrals_save.parameters.i', 'b2.sputter_save.parameters.i', &  !29
+   & 'b2.wall_save.parameters.i', 'b2.transport_models_save.parameters.i', &  !31
+   & 'b2.boundary.parameters', 'b2.feedback_control.parameters', &  !33
+   & 'b2.transport.inputfile', 'b2.sources.profile', 'b2.transport.parameters', &  !36
+   & 'b2.neutrals.parameters', 'b2.numerics.parameters', 'b2.transpbgr.parameters', &  !39
+   & 'b2.user.parameters', 'b2.neoclassical_transport.parameters', &  !41
+   & 'b2tdnc.dat', 'b2thic.dat', 'b2thec.dat'/  !44
+    data output_file_list/ &
+   & 'b2mn.prt', 'b2fparam', 'b2fstate', 'b2fplasma', 'b2favere', &  !5
+   & 'fort.10', 'fort.11', 'fort.12', 'fort.13', 'fort.14', &  !10
+   & 'fort.15', 'fort.44', 'fort.46', 'b2time.nc', 'b2batch.nc', 'b2wall.nc', &  !16
+   & 'b2movies.nc', 'eirenemovies.nc', 'b2tallies.nc', 'balance.nc', &  !20
+   & 'tran', 'shotnumber.history', 'b2.transport_models_save.parameters', &  !23
+   & 'b2.feedback_save.parameters', 'b2.neutrals_save.parameters', &  !25
+   & 'b2.sputter_save.parameters', 'b2.wall_save.parameters'/  !27
+
+#ifndef LEGACYCOMP
+    open (newunit=iun,file='manifest.yaml',form='FORMATTED')
+#else
+    iun = newunit()
+    open (unit=iun,file='manifest.yaml',form='FORMATTED')
+#endif
+#ifdef B25_EIRENE
+    if(.not.streql(fort_lc,'fort.')) then
+      do i = 1, ninpf
+        if (index(input_file_list(i),'fort.').eq.1) then
+          input_file_list(i) = trim(fort_lc)//input_file_list(i)(6:file_len)
+        end if
+      end do
+      do i = 1, noutf
+        if (index(output_file_list(i),'fort.').eq.1) then
+          output_file_list(i) = trim(fort_lc)//output_file_list(i)(6:file_len)
+        end if
+      end do
+    end if
+#endif
+
+    write(iun,'(a)') 'manifest_version: 2'
+    l=index(uri,trim(imasdir))
+    if (l.gt.0) then
+      write(alias,'(a)') trim(uri(l+len(trim(imasdir))+1:))
+      write(iun,'(a,a)') 'alias: ',trim(alias)
+    else
+      write(iun,'(a,a)') 'alias: ',trim(uri)
+    end if
+    write(iun,'(a)') 'metadata:'
+    write(iun,'(a,a)') '- description : ', trim(label)
+    write(iun,'(a)') 'inputs:'
+    do i = 1, ninpf
+      call find_file_with_path(trim(input_file_list(i)),exist,file_path)
+      if (exist) then
+        l=index(file_path,'/b2mn.exe.dir')
+        if (l.gt.0) file_path(l:256) = repeat(' ',257-l)
+        filename = trim(file_path)//'/'//trim(input_file_list(i))
+        inquire(file=trim(filename),exist=exist)
+        if (.not.exist) then ! assume input file in baserun directory
+          k=scan(file_path,'/',.true.)
+          file_path(1:k+7) = file_path(1:k)//'baserun'
+          file_path(k+8:256) = repeat(' ',257-k-8)
+          filename = trim(file_path)//'/'//trim(input_file_list(i))
+        end if
+        write(iun,'(a,a)') '- uri: file://',trim(filename)
+      end if
+    end do
+    write(iun,'(a)') 'outputs:'
+    write(iun,'(a,a)') '- uri: ',trim(uri)
+    do i = 1, noutf
+      call find_file_with_path(trim(output_file_list(i)),exist,file_path)
+      if (exist) then
+        l=index(file_path,'/b2mn.exe.dir')
+        if (l.gt.0) file_path(l:256) = repeat(' ',257-l)
+        write(iun,'(a,a)') '- uri: file://',trim(file_path)//'/'//trim(output_file_list(i))
+      end if
+    end do
+    do i = 1, ntrc_used
+      call find_file_with_path(trim(fn_ntrc(i)),exist,file_path)
+      if (exist) then
+        l=index(file_path,'/b2mn.exe.dir')
+        if (l.gt.0) then
+          k=index(file_path(l+14:),'/tracing')
+          if (k.eq.0) then
+            file_path(l:256) = repeat(' ',257-l)
+          else
+            file_path(l:256-14) = file_path(l+14:256)
+            file_path(256-13:256) = repeat(' ',14)
+          end if
+        end if
+        write(iun,'(a,a)') '- uri: file://',trim(file_path)//'/'//trim(fn_ntrc(i))
+      end if
+    end do
+
+    close(iun)
+    return
+    end subroutine write_manifest
+#endif
 
 end module b2mod_ual
 

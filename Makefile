@@ -306,6 +306,10 @@ ifdef TEST_MAP
 DEFINES += -DTEST_MAP
 endif
 
+ifneq ($(wildcard $(MKLROOT)),)
+DEFINES += -DPARDISO
+endif
+
 # Switches to disable individual OpenMP regions, for debugging
 # uncomment to activate
 #

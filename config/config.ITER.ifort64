@@ -109,7 +109,6 @@ LIBOPT = ${PETSC_LIB}
 CPP    = /lib/cpp -traditional
 endif
 
-
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
