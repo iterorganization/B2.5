@@ -417,7 +417,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
   WRITE(*, '(a,a)') 'Calling b2uxus from ', name
 !srv 18.03.10
   CALL B2UXUS_DV(ncv, mpg, aa, aad, itcnt, resmb, resmbd, corub, corubd&
-&          , name, nbdirs)
+&          , name, switch%b2uxus_style, nbdirs)
 !srv 17.06.02 }
 !
   IF (switch%b2usmo_iout .NE. 0) THEN
@@ -734,7 +734,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
 !   ..solve the correction equation
   WRITE(*, '(a,a)') 'Calling b2uxus from ', name
 !srv 18.03.10
-  CALL B2UXUS(ncv, mpg, aa, itcnt, resmb, corub, name)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, resmb, corub, name, switch%b2uxus_style)
 !srv 17.06.02 }
 !
   IF (switch%b2usmo_iout .NE. 0) THEN

@@ -66,7 +66,7 @@ BLD = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NAG} ${LD_NETCDF}
+LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
 
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11
@@ -135,8 +135,12 @@ ifdef IMAS_PKG_LIST
   IMASLIBS = ${LD_AL}
 endif
 
+ifdef MKLROOT
+  LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
+
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)

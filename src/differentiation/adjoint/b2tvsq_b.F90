@@ -160,7 +160,7 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   REAL(kind=r8) :: tmpb19
   REAL(kind=r8) :: tmp20
   REAL(kind=r8) :: tmpb20
-  REAL(kind=r8), DIMENSION(SIZE(nal, 1)) :: temp8
+  REAL(kind=r8), DIMENSION(ncv) :: temp8
   INTEGER :: ad_from
   INTEGER :: ad_to
   INTEGER*4 :: branch

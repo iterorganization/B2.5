@@ -626,6 +626,9 @@ c Optimization
       real (kind=R8) :: b2optim_reset_drift
       integer :: b2optim_reset_param_iter
 
+c Matrix solver
+      integer :: b2uxus_style
+
       end type switches
 
       contains
@@ -1288,6 +1291,9 @@ c Optimization
       s % b2optim_reset_drift_iter = 2
       s % b2optim_reset_drift = 0.4_R8
       s % b2optim_reset_param_iter = 1
+
+c Matrix solver
+      s % b2uxus_style = 2
 
       return
       end subroutine set_defaults_switches
@@ -2065,6 +2071,9 @@ c Optimization
       call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
       call ipgeti ('b2optim_reset_param_iter',
      & s % b2optim_reset_param_iter)
+
+c Matrix solver
+      call ipgeti ('b2uxus_style', s % b2uxus_style) 
 
       return
       end subroutine read_switches

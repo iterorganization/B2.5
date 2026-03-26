@@ -495,9 +495,9 @@ cxpb
 
       subroutine my_open_file (fd ,fname)
 
-      integer , intent(out) :: fd
+      integer, intent(out) :: fd
 
-      character*(*) ,intent(in) :: fname
+      character*(*), intent(in) :: fname
 
       logical :: bopened
 
@@ -507,6 +507,7 @@ cxpb
       end do
       open (fd, file=fname, form='unformatted')
 
+      return
       end subroutine my_open_file
 
       end module b2mod_impgyro

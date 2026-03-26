@@ -182,6 +182,12 @@ ifdef IMAS_PKG_LIST
   endif
 endif
 
+ifdef MKLROOT
+  ifeq (,$(findstring mkl_intel_lp64,${LD_NAG}))
+    LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+  endif
+endif
+
 ifdef SOLPS_MPI
   DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
@@ -192,7 +198,7 @@ BLD      = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NETCDF} ${LD_NAG}
+LDLIBES += ${LD_NETCDF} ${LD_NAG} ${LD_MKL}
 
 ifdef LD_CATALYST
 CXX      = c++

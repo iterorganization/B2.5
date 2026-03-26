@@ -2,21 +2,26 @@
 *.specification
 
       subroutine b2uxus_b(nCv, mpg, aa, aab, itcnt,   
-     .  resfun, resfunb, corfun, corfunb, name)
+     .  resfun, resfunb, corfun, corfunb, name, style)
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map_diff
-      use b2mod_lwmain
       use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
+      use b2mod_pardiso
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt
+      integer nCv, itcnt, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   aa(13*nCv), resfun(nCv)
+     *   aa(13*nCv)
+      real(kind=R8), intent(inout) :: resfun(nCv)
       real (kind=R8) ::
-     *   aab(13*nCv), resfunb(nCv)
-      character*(*) name 
+     *   aab(13*nCv)
+      real(kind=R8), intent(inout) :: resfunb(nCv)
+      character*(*) name                                                 !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(nCv)
@@ -54,10 +59,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, itmax, iters, itpar, cpu
-      parameter (itmax=100)
+      integer ncall, cpu, flag
       real (kind=R8) ::
-     *   nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+     *   cpu_start, cpu_end, c_end, c_start
       integer, save :: nz
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
       real (kind=R8) :: incrbb(nCv)
@@ -65,12 +69,17 @@
       integer :: iCv, iNv
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min, cpu_time
+      intrinsic cpu_time
       external xertst, ipgeti, ipgetr,
-     &  slv5pt, iluter, xerrab
+     &  xerrab, ilutern_us
 *   ..initialization
-      save ncall, style, cpu
-      data ncall/0/, style/2/, cpu/0/
+      save ncall, cpu
+      data ncall/0/, cpu/0/
+
+#ifdef _OPENMP
+!$omp threadprivate(ind, iasave, jasave, nz, ncall, cpu)
+#endif
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -79,11 +88,10 @@
       call subini ('b2uxus_b')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2ux9p_style', style)
-       call xertst (0.le.style.and.style.lt.3,
+       call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
-       call ipgeti ('b2ux9p_cpu', cpu)
-       if(style.eq.2) then
+       call ipgeti ('b2uxus_cpu', cpu)
+       if(style.eq.2.or.style.eq.3) then
          mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
@@ -111,26 +119,40 @@
         call xerrab ('b2uxus_b: Style 0 is not implemented')
       else if (style.eq.1) then
         call xerrab ('b2uxus_b: Style 1 is not implemented')
-      else if (style.eq.2) then
+      else if (style.eq.2.or.style.eq.3) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
         allocate(dummy(1:solvdim))
       endif
-      write(*,*) 'Allocated space for solver b2uxus'
+      write(*,*) 'Allocated space for solver b2uxus_b'
       endif
 
 *   ..solve the correction equation
       call cpu_time(cpu_start)
       if (style.eq.0) then
 *    ..use iluter
-       call xerrab ('b2uxus: Style 0 is not implemented')
+       call xerrab ('b2uxus_b: Style 0 is not implemented')
       else if (style.eq.1) then
 *    ..use slv5pt
-       call xerrab ('b2uxus: Style 1 is not implemented')
+       call xerrab ('b2uxus_b: Style 1 is not implemented')
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 ind, iasave, jasave, name)       
+     *                  ind, iasave, jasave, name)
+       call cpu_time(c_end)
+*csc  Swap indexes to have transpose matrix
+       dummy = irnh
+       irnh = icnh
+       icnh = dummy
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+         !! ma28 solver, default
+*csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
+       call ILUTERN_US(NCV, NZ, corfunb, incrbb, name)
+      else if (style.eq.3) then
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
 *csc  Swap indexes to have transpose matrix
        dummy = irnh
@@ -138,16 +160,14 @@
        icnh = dummy 
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-*    ..use ma28
-       call cpu_time(cpu_start)
-
+              !! experiment, PARDISO solver
 *csc  Solve the system AT*bb=xb / AT*incrbb=corfunb
-        call ILUTERN_US(NCV, NZ, corfunb, incrbb, name)
-        resfunb = resfunb + incrbb
+       call SolvePARDISO(NCV, NZ, corfunb, incrbb, name, flag)  
       endif
+      resfunb = resfunb + incrbb
 
 *csc  Obtain x, solution of the original system A*x=b
-      call b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name)
+      call b2uxus (nCv, mpg, aa, itcnt, resfun, corfun, name, style)
 *     Obtain Ab(i,j) = -x(j)*bb(i)
       do iCv=1,nCv
         do iNv=1,mpg%cvNvP(iCv,2)
@@ -165,7 +185,7 @@
       ncall = ncall+1
       call subend ()
       return
-         
+
 *-----------------------------------------------------------------------
 *.end b2uxus_b
 
