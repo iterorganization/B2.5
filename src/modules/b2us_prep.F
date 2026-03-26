@@ -2736,7 +2736,6 @@
 
       cvsb = 0
       iscvsb = .false.
-      print *, "fcs:"
       do ind=1,mpg%nCg-1
         do ind1=ind+1,mpg%nCg
           if (mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),1) .or.
@@ -2751,12 +2750,10 @@
         cvsb(ind,1) = maxval(mpg%fcCv(fcsb(ind),1:2))
         cvsb(ind,2) = minval(mpg%fcCv(fcsb(ind),1:2))
         iscvsb(cvsb(ind,2)) = .true.
-        print *, fcsb(ind)
       enddo
 
       cvsb(ind,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
       cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
-      print *, fcsb(mpg%nCg)
 
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
@@ -2879,12 +2876,14 @@
       end do
 
       if (mod_hc.eq.1) then
-
+        ! Recalculate fcHc for effective cells making fcHc
+        ! the same for all boundary faces.
+        ! This is recommended if b2txcx_increase_transp_coefs.gt.1 during the run.
         write(*,*) "Start changing fcHc for effective cells"
         ind=1
         do ind1=2,mpg%nCg
+          ! cycle along the sorted boundary faces
           iFc = fcsb(ind1)
-          wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
           if (mpg%fcLbl(iFc).le.0) then
             ind = ind1
             cycle
@@ -2895,7 +2894,8 @@
             k = ind1-1
             if(((ind1-1) .le. ind) .or.
      &          (minval(mpg%fcCv(fcsb(ind),1:2))
-     &       .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
+     &       .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  ! Second condition for cell with two boundary faces
+              ! If there is only one cell in the flux tube skip this flux tube
               ind = ind1
               cycle
             endif
@@ -2912,6 +2912,8 @@
      &                        mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))+1
             enddo
             print *, "vertices of effective cell:"
+            ! Find the center of the effective cell as the average coordinate
+            ! of all vertices belonging to the effective cell
             meanCv = 0.0_R8
             tmp = 0
             do k=1,mpg%nVx
@@ -2925,6 +2927,10 @@
             meanCv = meanCv/real(tmp,R8)
             write (*,'(2es17.6)') meanCv(1), meanCv(2)
 
+            ! Find the new fcHc for all boundary faces of the effective cell as
+            ! the closest distance between the center of the effective cell and 
+            ! the boundary side of the effective cell. This side consists of
+            ! boundary faces.
             do l=ind,k
               iVx1 = mpg%fcVx(fcsb(l),1)
               iVx2 = mpg%fcVx(fcsb(l),2)
@@ -2948,15 +2954,15 @@
             wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
             write (*,*) "new fcHc:"
             write (*,'(1es17.6)') wrk
-              if (wrk.le.1.0E-08_R8) then
-                write (*,*) "new fcHc too small! Changes will not"//
-     &           " be applied. Calc new fcHc as average value "//
-     &           "of original fcHc."
-                wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
-     &           gm%fcHc(fcsb(ind:ind1-1),2))/(ind1-ind)
-                write (*,*) "new fcHc:"
-                write (*,'(1es17.6)') wrk
-              endif
+            if (wrk.le.1.0E-08_R8) then
+              write (*,*) "new fcHc too small! Changes will not"//
+     &         " be applied. Calc new fcHc as average value "//
+     &         "of original fcHc."
+              wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
+     &         gm%fcHc(fcsb(ind:ind1-1),2))/(ind1-ind)
+              write (*,*) "new fcHc:"
+              write (*,'(1es17.6)') wrk
+            endif
             write(*,*) "----------"
             do k=ind,ind1-1
               iFc = fcsb(k)
