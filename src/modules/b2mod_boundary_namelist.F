@@ -21,7 +21,6 @@ cank }
      *   MOMPAR(:,:,:),
      *   ENEPAR(:,:),
      *   ENIPAR(:,:),
-     *   ENNPAR(:,:),
      *   POTPAR(:,:),
      *   ENKPAR(:,:),
      *   ENZPAR(:,:),
@@ -37,7 +36,6 @@ cank }
      *   BCMOM(:,:),
      *   BCENE(:),
      *   BCENI(:),
-     *   BCENN(:),
      *   BCPOT(:),
      *   BCENK(:),
      *   BCENZ(:),
@@ -61,7 +59,6 @@ cank }
       real (kind=R8), save :: MOMPAR(0:nsdmax-1,NBCD,2)
       real (kind=R8), save :: ENEPAR(NBCD,2)
       real (kind=R8), save :: ENIPAR(NBCD,2)
-      real (kind=R8), save :: ENNPAR(NBCD,2)
       real (kind=R8), save :: POTPAR(NBCD,2)
       real (kind=R8), save :: ENKPAR(NBCD,2)
       real (kind=R8), save :: ENZPAR(NBCD,2)
@@ -78,7 +75,6 @@ cank }
       integer, save :: BCMOM(0:nsdmax-1,NBCD)
       integer, save :: BCENE(NBCD)
       integer, save :: BCENI(NBCD)
-      integer, save :: BCENN(NBCD)
       integer, save :: BCPOT(NBCD)
       integer, save :: BCENK(NBCD)
       integer, save :: BCENZ(NBCD)
@@ -115,9 +111,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       private :: boundary
 
-      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,ENNPAR,POTPAR,
+      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
      1 ENKPAR,ENZPAR,
-     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCENN,BCPOT,BCENK,
+     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,BCENK,
      1 BCENZ,BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,BC_LIST_CHAR,
      2 gammai,gammae,lbndusr,lfeedback,
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
@@ -244,7 +240,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(MOMPAR(0:nsd-1,nbcd_in,2))
       allocate(ENEPAR(nbcd_in,2))
       allocate(ENIPAR(nbcd_in,2))
-      allocate(ENNPAR(nbcd_in,2))
       allocate(POTPAR(nbcd_in,2))
       allocate(ENKPAR(nbcd_in,2))
       allocate(ENZPAR(nbcd_in,2))
@@ -260,7 +255,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(BCMOM(0:nsd-1,nbcd_in))
       allocate(BCENE(nbcd_in))
       allocate(BCENI(nbcd_in))
-      allocate(BCENN(nbcd_in))
       allocate(BCPOT(nbcd_in))
       allocate(BCENK(nbcd_in))
       allocate(BCENZ(nbcd_in))
@@ -302,7 +296,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       bcmom=0
       bcene=0
       bceni=0
-      bcenn=0
       bcpot=0
       bcenk=0
       bcenz=0
@@ -310,7 +303,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       mompar=0.0_R8
       enepar=0.0_R8
       enipar=0.0_R8
-      ennpar=0.0_R8
       potpar=0.0_R8
       enkpar=0.0_R8
       enzpar=0.0_R8
@@ -344,7 +336,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(MOMPAR)
       deallocate(ENEPAR)
       deallocate(ENIPAR)
-      deallocate(ENNPAR)
       deallocate(POTPAR)
       deallocate(ENKPAR)
       deallocate(ENZPAR)
@@ -360,7 +351,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(BCMOM)
       deallocate(BCENE)
       deallocate(BCENI)
-      deallocate(BCENN)
       deallocate(BCPOT)
       deallocate(BCENK)
       deallocate(BCENZ)
@@ -1125,7 +1115,6 @@ c.. Make a list of core boundaries
         enddo
         call xertst (0.le.bcene(ib), 'faulty input bcene')
         call xertst (0.le.bceni(ib), 'faulty input bcene')
-        call xertst (0.le.bcenn(ib), 'faulty input bcenn')
         call xertst (0.le.bcpot(ib), 'faulty input bcpot')
         call xertst (0.le.bcenk(ib), 'faulty input bcenk')
         call xertst (0.le.bcenz(ib), 'faulty input bcenz')
@@ -1474,13 +1463,6 @@ cwdk also need to correct for degenerate faces?
      .       'ENIPAR(1,1)=',(enipar(ib,1),',',ib=1,m%nBc)
       write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))')
      .       'ENIPAR(1,2)=',(enipar(ib,2),',',ib=1,m%nBc)
-
-      write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))')
-     .       'BCENN   =   ',(bcenn(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))')
-     .       'ENNPAR(1,1)=',(ennpar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))')
-     .       'ENNPAR(1,2)=',(ennpar(ib,2),',',ib=1,m%nBc)
 
       write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))')
      .      'BCENK   =   ',(bcenk(ib),',',ib=1,m%nBc)
