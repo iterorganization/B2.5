@@ -8674,6 +8674,10 @@ contains
           case ('B')
             call write_sourced_value( summary%local%separatrix%n_i%boron, nisep )
             call write_sourced_value( summary%local%separatrix_average%n_i%boron, u )
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%boron, -vtor )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%boron, -v )
+#   endif
 #  endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
