@@ -1,21 +1,21 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
 LD_MSCL     ?= -L${SOLPSLIB} -lmscl
-LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
+LD_NETCDF   ?= $(shell pkg-config netcdf-fortran --libs)
 ifdef NCARG_ROOT
-LD_NCARG    ?= `pkg-config ncarg --libs`
+LD_NCARG    ?= $(shell pkg-config ncarg --libs)
 endif
 ifdef SOLPS_MPI
 ifdef SOLPS_OPENMP
-LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
+LD_NAG      ?= $(shell pkg-config sci_mpi_mp --libs)
 else
-LD_NAG      ?= `pkg-config sci_mpi --libs`
+LD_NAG      ?= $(shell pkg-config sci_mpi --libs)
 endif
 else
 ifdef SOLPS_OPENMP
-LD_NAG      ?= `pkg-config sci_mp --libs`
+LD_NAG      ?= $(shell pkg-config sci_mp --libs)
 else
-LD_NAG      ?= `pkg-config sci --libs`
+LD_NAG      ?= $(shell pkg-config sci --libs)
 endif
 endif
 
@@ -25,14 +25,15 @@ DEFINES += -DNO_OPT
 ifndef SOLPS_CPP
   DEFINES += -DCRAY
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
-    DEFINES += -DCONSTANTS_PROVIDED
-    SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
+    CONSTANTS_MINOR_VERSION = $(shell pkg-config fundamental-constants --modversion | cut -d '.' -f 2)
+    DEFINES += -DCONSTANTS_PROVIDED  -DCONSTANTS_MINOR_VERSION=${CONSTANTS_MINOR_VERSION}
+    SOLPSINCLUDE += $(shell pkg-config fundamental-constants --cflags)
     IMAS_PKG_LIST = fundamental-constants
   endif
 endif
 
 ifdef IMAS_PKG_LIST
-  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
+  INCMODS += $(shell pkg-config ${IMAS_PKG_LIST} --cflags)
 endif
 
 ifdef SOLPS_MPI

@@ -1440,6 +1440,8 @@ contains
       call find_file_with_path(trim(input_file_list(i)),exist,file_path)
       if (exist) then
         l=index(file_path,'/b2mn.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_write.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_rewrite.exe.dir')
         if (l.gt.0) file_path(l:256) = repeat(' ',257-l)
         filename = trim(file_path)//'/'//trim(input_file_list(i))
         inquire(file=trim(filename),exist=exist)
@@ -1458,6 +1460,8 @@ contains
       call find_file_with_path(trim(output_file_list(i)),exist,file_path)
       if (exist) then
         l=index(file_path,'/b2mn.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_write.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_rewrite.exe.dir')
         if (l.gt.0) file_path(l:256) = repeat(' ',257-l)
         write(iun,'(a,a)') '- uri: file://',trim(file_path)//'/'//trim(output_file_list(i))
       end if
@@ -1466,6 +1470,8 @@ contains
       call find_file_with_path(trim(fn_ntrc(i)),exist,file_path)
       if (exist) then
         l=index(file_path,'/b2mn.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_write.exe.dir')
+        if (l.eq.0) l=index(file_path,'/b2_ual_rewrite.exe.dir')
         if (l.gt.0) then
           k=index(file_path(l+14:),'/tracing')
           if (k.eq.0) then
