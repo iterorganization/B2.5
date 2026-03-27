@@ -1,6 +1,10 @@
 #ifdef CONSTANTS_PROVIDED
 include 'mathematical_constants.f90'   ! IGNORE
+#if CONSTANTS_MINOR_VERSION > 1
 include 'codata_2022.f90'              ! IGNORE
+#else
+include 'codata_2018.f90'              ! IGNORE
+#endif
 #endif
 
   module b2mod_constants
