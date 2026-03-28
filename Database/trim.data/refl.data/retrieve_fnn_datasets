@@ -1,7 +1,11 @@
 #!/bin/tcsh
 
-wget https://zenodo.org/records/19232546/files/dbe.fnn
+set filelist="dbe.fnn dc.fnn dw.fnn"
 
-wget https://zenodo.org/records/19232546/files/dc.fnn
-
-wget https://zenodo.org/records/19232546/files/dw.fnn
+foreach i ($filelist)
+  if (! -s $i) then
+    wget https://zenodo.org/records/19232546/files/$i
+  else
+    echo $i" file already present"
+  endif
+end
