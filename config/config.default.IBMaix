@@ -88,4 +88,3 @@ LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
