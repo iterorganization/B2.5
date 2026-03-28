@@ -69,4 +69,3 @@ LDOPTS = -Wl"-M,s"
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

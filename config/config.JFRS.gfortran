@@ -40,4 +40,3 @@ LDOPTS += -dynamic -fpic -mcmodel=medium
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
