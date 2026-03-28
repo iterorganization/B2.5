@@ -90,4 +90,3 @@ OBNDEST  = -o ${OBNDIR}/$*.o
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
