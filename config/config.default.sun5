@@ -69,4 +69,3 @@ LDOPTS = ${FCOPTS} -lf77compat
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

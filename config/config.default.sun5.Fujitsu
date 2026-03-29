@@ -74,4 +74,3 @@ LDOPTS = -Bstatic
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
