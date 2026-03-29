@@ -68,4 +68,3 @@ LDOPTS = $(nil)
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

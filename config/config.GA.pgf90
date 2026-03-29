@@ -19,4 +19,3 @@ LDLIBES = -lpgsse1 -lpgsse2
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

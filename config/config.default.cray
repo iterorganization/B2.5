@@ -69,4 +69,3 @@ LDOPTS = -dynamic -hpic
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
