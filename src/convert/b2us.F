@@ -258,6 +258,8 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
+      rewind(ninp(0))
+      call b2rflb (ninp(0), lblmn(61:120))
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
       call b2xvcp (ns)
