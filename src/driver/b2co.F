@@ -188,9 +188,9 @@
        goto 1
     2 continue
 *   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
+*      call cfruch (ninp(1), 120, lblgm, 'label')
+*      call cfruin (ninp(1), 1, idum, 'isymm')
+*      isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..load default values of switches
       call read_first_switches(switch)
