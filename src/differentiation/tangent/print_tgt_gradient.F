@@ -53,7 +53,8 @@
               call xerrab ('partype incompatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
           end do
@@ -163,7 +164,8 @@
             write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
-          write (*,*) '  Cost function gradient '//trim(ss)//': ',
+          write (*,'(a,1pe21.13,1x,2a)')
+     &     '  Cost function gradient '//trim(ss)//': ',
      &      Jd(idir,icf),'wrt',trim(key)
           idir = idir + 1
         endif
@@ -175,7 +177,8 @@
           if (sigma_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -188,7 +191,8 @@
           if (mean_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -201,7 +205,8 @@
           if (shiftopt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -214,7 +219,8 @@
           if (corr_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "corr_length",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
           endif

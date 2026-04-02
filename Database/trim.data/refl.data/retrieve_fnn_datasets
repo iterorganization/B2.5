@@ -5,7 +5,17 @@ set filelist="dbe.fnn dc.fnn dw.fnn"
 foreach i ($filelist)
   if (! -s $i) then
     wget https://zenodo.org/records/19232546/files/$i
+    echo $i" file downloaded from Zenodo record"
   else
-    echo $i" file already present"
+    wget https://zenodo.org/records/19232546/files/$i
+    set oldstamp=`md5sum $i`
+    set newstamp=`md5sum $i.1`
+    if ( "X${oldstamp}X" == "X${newstamp}X") then  
+      echo $i" file already present"
+      rm $i.1
+    else
+      mv $i.1 $i
+      echo $i" file updated to new version"
+    endif
   endif
 end
