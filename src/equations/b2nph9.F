@@ -19,6 +19,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal,
      &          update_balance_sources_heat,
+     &          update_balance_eirene_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
       use b2mod_sources
@@ -109,6 +110,7 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: style = 1                                        !srv 09.07.08
       integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: write_eirene_sources = 0
       integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       character chns*3                                                  !srv 17.07.05
       logical warning_e, warning_i
@@ -191,6 +193,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -238,7 +241,9 @@
       endif
 
 * ..main computation
-      if(style_b2mndt.eq.2) then                                        !srv 07.07.21 {
+      tep = te !djm 04.03.26 restoring this line
+      tip = ti !djm 04.03.26 restoring this line
+      if(style_b2mndt.eq.2) then !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2shdt (nx, ny, ns, dtim, BoRiS,
      &   vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
@@ -268,6 +273,9 @@
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
+      endif
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_heat(nx,ny,ne,ni,te,ti)
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21

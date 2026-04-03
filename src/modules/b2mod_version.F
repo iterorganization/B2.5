@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10, save :: newversion ='03.000.009'
+      character*10, save :: newversion ='03.000.010'
       character*10, parameter :: default_version = '00.000.000'
 
       character*10, save ::
@@ -335,4 +335,6 @@ c                                 Added wbbl to b2fgmtry
 c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma
 c    Version 03.000.008  14.04.21 Reduced size of batch averaged sources to only include total values
 c    Version 03.000.009  22.06.23 Added radial and diamagnetic components to batch averaged sources
+c    Version 03.000.010  25.02.26 Added multi-species netCDF tally output
+c                                 Open-source release
 c

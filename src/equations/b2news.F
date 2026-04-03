@@ -445,31 +445,32 @@ cxpb  Force a restart of the matrix builds on the first instance of every call
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna)
 #endif
-!        do is = 0, ns-1
+!        do is=0,ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
-         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
-         call b2tfnb (nx, ny, is, ismain,                                !srv 08.09.01
-     1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,          !iyv 06.02.14
-     1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &    vadia(-1,-1,0,is), wadia(-1,-1,0,is),                          !xpb
-     &    ne, te, ti, bb, hx, hy, hz, gs, qc,                            !srv 09.01.01
-     &    po, cvla(-1,-1,0,is), cdna(-1,-1,0,is),
-     &    cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                            !srv 13.10.06
-     &    cvlahz(-1,-1,0,is),
-     &    cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),                        !srv 09.01.01 15.12.05
-     &    fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),              !srv 08.09.21
-     &    fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &    fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                    !srv 20.09.06, IYS 17.10.2023
-     &    fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &    fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                      !srv 01.10.99 21.01.00
-     &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
-     1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &    fna_53(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
+          call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
+     &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !iyv 06.02.14
+     1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
+     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
+     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,          !srv 09.01.01
+     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
+     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
+     &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
+     &   fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),               !srv 08.09.21
+     &   fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &   fchvisq_a(-1,-1,0,is), fchin_a(-1,-1,0,is),                     !srv 20.09.06, IYS 17.10.2023
+     &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
+     &   fna_fcor(-1,-1,0,is),
+     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
+     &   fna_mdf(-1,-1,0,is),                                            !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_53(-1,-1,0,is),
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .true.)                                                         !djm Jan2017
         enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP1) )
 !$OMP END PARALLEL DO
@@ -514,10 +515,10 @@ cxpb  Force a restart of the matrix builds on the first instance of every call
 *     ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+        call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
         call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
         call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-        call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)
-        call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)                    !srv 25.06.21 }
+        call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                    !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -614,12 +615,13 @@ cxpb
 !$OMP& SHARED(is_neutral, uadia, ncall, ncallout, resmo, corua)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
 !$OMP& SHARED(cssb, vaecrb, vadia, wadia)
-!$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
-!$OMP& SHARED(cddi, cdde, cvlahz, cdnahz, cdpahz, fchvispar)
-!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq, fchvispar_a, fchin)
-!$OMP& SHARED(fchvisper_a, fchinert_a, fchanml_a, fchvisq_a, fchin_a)
-!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, po)
+!$OMP& SHARED(cvla, cdna, cdpa, cddi, cdde, cvlahz, cdnahz, cdpahz)
+!$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq, fchin)
+!$OMP& SHARED(fchvispar_a, fchvisper_a, fchinert_a)
+!$OMP& SHARED(fchanml_a, fchvisq_a, fchin_a)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
 !$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna, use_b2npc9)

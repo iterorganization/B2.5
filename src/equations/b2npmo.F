@@ -20,7 +20,8 @@
      2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum,
-     2          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -28,7 +29,11 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_zhfrtf                                                 !som 13.08.21
-     1 , only : rho_A_rel, avm_u
+     1 , only : rho_A_rel, avm_u, z2n_xy
+      use b2mod_b2zhco
+     1 , only : c_hTA_an_fl_save, c_R_TA_an_save
+      use b2mod_frtf_nccorr
+     , , only : b2mod_frtf_nccorr_coefs
 #ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_balance
@@ -142,12 +147,14 @@
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
       integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer, save :: write_eirene_sources = 0
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
       integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,          !som 21.03.21
-     &  Zhdanov_tf_fr = 1                                              !som 01.07.21
+     &  Zhdanov_tf_fr = 1,                                             !som 01.07.21
+     &  Zhdanov_nc = 0, Zhdanov_nc_min = 6, Zhdanov_nc_spec = 2
       integer, save :: Zhdanov_visu = 1, Zhdanov_vish = 1              !som 13.08.21 18.10.21
       real (kind=R8), save :: smbvi_factor = 1.0_R8                    !som 14.12.21
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
@@ -270,6 +277,7 @@
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
         impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
@@ -283,6 +291,18 @@
         call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
         call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)              !som 18.10.21
         call ipgetr ('b2npmo_smbvi_factor', smbvi_factor)              !som 14.12.21
+        call ipgeti ('b2tral_Zhdanov_nc', Zhdanov_nc)
+        call ipgeti ('b2tral_Zhdanov_nc_min', Zhdanov_nc_min)
+        Zhdanov_nc_spec = nspecies
+        call ipgeti ('b2tral_Zhdanov_nc_spec', Zhdanov_nc_spec)
+        call xertst (nspecies.ge.Zhdanov_nc_spec,
+     .               'Zhdanov_nc_spec.gt.nspecies !')
+        if (Zhdanov_nc_min.lt.6) then
+          write(0,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+          write(6,'(2a)') 'Warning: It is not recommended to set',
+     .      ' Zhdanov_nc_min.lt.6 !'
+        endif
         if (.not.main_lightest .and. style.eq.2 .and.
      .      Zhdanov_closure.eq.0) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
@@ -327,6 +347,7 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
+      uap = ua !djm 04.03.26 restoring this line
       if(style_b2mndt.eq.2) then                                       !srv 07.07.21 {
 *  .. calculate time-dependent source
        call b2smdt (nx, ny, ns, dtim, hz, vol, na, uap, smodt, .false.)
@@ -489,12 +510,12 @@
 !$OMP& SHARED(nsmin, nsmax, ismain)
 !$OMP& SHARED(style, b2sifr_ver, style_b2mndt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl)
-!$OMP& SHARED(balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(balance_netcdf, write_eirene_sources, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue)
 !$OMP& SHARED(zetap, zetae, gti, gte)
-!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff, z2n_xy)
 !$OMP& SHARED(rz2, ne_ext, ro)
 !$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
@@ -540,9 +561,11 @@
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
 !$OMP& SHARED(Zhdanov_closure, Zhdanov_test)
 !$OMP& SHARED(Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(Zhdanov_nc, Zhdanov_nc_min, Zhdanov_nc_spec)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
+!$OMP& SHARED(c_hTA_an_fl_save, c_R_TA_an_save)
 !$OMP& SHARED(last_solve_5)
 !$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
 !$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
@@ -563,6 +586,10 @@
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
        if(style.eq.2) then                                             !srv 13.01.17
+        if (Zhdanov_nc.eq.1 .and. Zhdanov_closure.eq.1)
+     &    call b2mod_frtf_nccorr_coefs(na,nx,ny,ns,ismain,rza,
+     &      rz2,Zhdanov_nc_min,Zhdanov_nc_spec-1,
+     &      c_hTA_an_fl_save,c_R_TA_an_save,z2n_xy,zeff)
          call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,            !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
@@ -739,6 +766,10 @@ cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+       endif
+       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+         call update_balance_eirene_sources_momentum(
+     &    nx,ny,is,ua(-1,-1,is),rob)
        endif
 
 *    ..compute residual

@@ -24,7 +24,7 @@ endif
 endif
 
 ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all
+FCOPTS   = -g -C -debug all -warn interfaces -traceback -check all
 else
 FCOPTS   = -O2 -xHost
 endif
@@ -33,4 +33,3 @@ endif
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

@@ -1,4 +1,5 @@
-      subroutine b2co_time_cdf(nx, ny, ns, tim, batch_only)
+      subroutine b2co_time_cdf(nx, ny, ns, nnatmi, nnmoli, tim,
+     .                         batch_only)
       use b2mod_types
       use b2mod_geo
       use b2mod_mwti
@@ -9,13 +10,14 @@
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nx, ny, ns
+      integer :: nx, ny, ns, nnatmi, nnmoli
       real (kind=R8) :: tim
       logical :: batch_only
       integer :: jxi, jxa, jsep
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
+      real (kind=R8) :: dsl(-1:ny), dsi(-1:ny), dsa(-1:ny), dsr(-1:ny)
 #ifndef NO_CDF
 #ifndef NO_GETENV
       integer lenval, ierror
@@ -33,6 +35,7 @@
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
+      real (kind=R8) :: dstl(-1:ny), dstr(-1:ny)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
@@ -45,14 +48,19 @@
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
+      call xertst (1.le.ns, 'faulty parameter ns')
+      call xertst (0.le.nnatmi, 'faulty parameter nnatmi')
+      call xertst (0.le.nnmoli, 'faulty parameter nnmoli')
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
       call ipgeti ('b2mwti_target_offset', target_offset)
-      call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+      call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,
+     .  'dsl',dsl)
+      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi',dsi)
+      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa',dsa)
+      call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,
+     .  'dsr',dsr)
       call xertst (0.lt.ns, 'faulty argument ns')
 #ifndef NO_CDF
       if (nnreg(0).ge.7) then
@@ -67,9 +75,9 @@
           ixtr=ixtr+1
         enddo
         call output_ds(ny,ixtl,-target_offset,jsep,
-     .                                        iytlstrt,iytlend,'dstl')
+     .     iytlstrt,iytlend,'dstl',dstl)
         call output_ds(ny,ixtr,+target_offset,jsep,
-     .                                        iytrstrt,iytrend,'dstr')
+     .     iytrstrt,iytrend,'dstr',dstr)
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -222,8 +230,8 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
-     .                 nya, nyi, nc, ns, write_2d, ncid2,
-     .                 batch_only, iret)
+     .                 nya, nyi, nc, ns, nnatmi, nnmoli, write_2d,
+     .                 ncid2, batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 

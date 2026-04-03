@@ -2,17 +2,17 @@
       use b2mod_types
       use b2mod_constants
 #ifndef NO_CDF
-      integer, save :: nxdim, nydim, nsdim, natmdim, nmoldim,
+      integer, save :: nxdim, nydim, ntridim, nsdim, natmdim, nmoldim,
      & timedim, ntstep
 
       contains
 
       subroutine create_cdf_start(ncid, filename,
-     & nx, ny, ns, natm, nmol)
+     & nx, ny, ns, natm, nmol, ntri)
       implicit none
 #     include <netcdf.inc>
       character*(*) filename
-      integer ncid, nx, ny, ns, natm, nmol
+      integer ncid, nx, ny, ns, natm, nmol, ntri
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -22,17 +22,31 @@
       iret = nf_create (filename, NF_WRITE, ncid)
       call check_cdf_status(iret)
 * define dimensions
-      iret = nf_def_dim(ncid, 'nx', nx, nxdim)
-      call check_cdf_status(iret)
-      iret = nf_def_dim(ncid, 'ny', ny, nydim)
-      call check_cdf_status(iret)
-      iret = nf_def_dim(ncid, 'ns', ns, nsdim)
-      call check_cdf_status(iret)
-      if(natm.gt.0) then
-        iret = nf_def_dim(ncid, 'natm', natm, natmdim)
+      if (index(trim(filename), 'b2movies') .gt. 0) then
+        iret = nf_def_dim(ncid, 'nx', nx, nxdim)
+        call check_cdf_status(iret)
+        iret = nf_def_dim(ncid, 'ny', ny, nydim)
+        call check_cdf_status(iret)
+        iret = nf_def_dim(ncid, 'ns', ns, nsdim)
+        call check_cdf_status(iret)
+        if(natm.gt.0) then
+          iret = nf_def_dim(ncid, 'natm', natm, natmdim)
+          call check_cdf_status(iret)
+        endif
+        if(nmol.gt.0) then
+          iret = nf_def_dim(ncid, 'nmol', nmol, nmoldim)
+          call check_cdf_status(iret)
+        endif
       endif
-      if(nmol.gt.0) then
-        iret = nf_def_dim(ncid, 'nmol', nmol, nmoldim)
+      if (index(trim(filename), 'eirenemovies') .gt. 0) then
+        iret = nf_def_dim(ncid, 'ntri', ntri, ntridim)
+        call check_cdf_status(iret)
+        iret = nf_def_dim(ncid, 'natm', natm, natmdim)
+        call check_cdf_status(iret)
+        if(nmol.gt.0) then
+          iret = nf_def_dim(ncid, 'nmol', nmol, nmoldim)
+          call check_cdf_status(iret)
+        endif
       endif
       iret = nf_def_dim(ncid, 'time', NF_UNLIMITED, timedim)
       call check_cdf_status(iret)
@@ -109,6 +123,41 @@
       call check_cdf_status(iret)
       return
       end subroutine create_cdf_field3
+
+      subroutine create_cdf_field_tri(ncid, name, itype, long_name,
+     &      units)
+      implicit none
+#     include <netcdf.inc>
+      character*(*) name, long_name, units
+* file id
+      integer ncid, itype
+* variable shapes
+      integer dims(3)
+* dimensions and variables
+      integer iret
+      integer z_trit_id
+* define variable
+      dims(1) = ntridim
+      type: select case (itype)
+      case(1)
+        dims(2) = natmdim
+      case(2)
+        dims(2) = nmoldim
+      case default type
+        write(*,*) 'Undefined "itype" in create_cdf_field_tri ',itype
+        call xerrab ('Undefined itype value')
+      end select type      
+      dims(3) = timedim
+      iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_trit_id)
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_trit_id, 'long_name',
+     1 len_trim(long_name), trim(long_name))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text (ncid, z_trit_id, 'units',
+     1 len_trim(units), trim(units))
+      call check_cdf_status(iret)
+      return
+      end subroutine create_cdf_field_tri
 
       subroutine create_cdf_end(ncid)
       implicit none
@@ -214,6 +263,30 @@ c
       call check_cdf_status(iret)
       return
       end subroutine put_cdf_field3
+
+      subroutine put_cdf_field_tri(ncid, name, z_trit, ntri, ns)
+      implicit none
+#     include <netcdf.inc>
+      integer ncid
+      character*(*) name
+      integer ntri, ns
+      real (kind=R8) :: z_trit(ntri, ns)
+      integer iret
+      integer varid
+      integer start(3), count(3)
+c
+      iret=nf_inq_varid(ncid,name,varid)
+      call check_cdf_status(iret)
+      start(1)=1
+      start(2)=1
+      start(3)=ntstep
+      count(1)=ntri
+      count(2)=ns
+      count(3)=1
+      iret=nf_put_vara_double(ncid,varid,start,count,z_trit)
+      call check_cdf_status(iret)
+      return
+      end subroutine put_cdf_field_tri
 
       subroutine put_cdf_end(ncid)
       implicit none

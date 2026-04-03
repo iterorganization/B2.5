@@ -8,6 +8,7 @@ c     03/21/97 bhs
 c     09/12/07 xpb : source CODATA 2006 (http://www.nist.gov/)
 c     19/03/18 xpb : source CODATA 2014 (http://www.nist.gov/)
 c     03/06/19 xpb : source CODATA 2018 (http://www.nist.gov/)
+c     26/03/26 xpb : source CODATA 2022 (http://www.nist.gov/)
 c     -------------------------------------------------------------------------
 
       real (kind=R8) ::

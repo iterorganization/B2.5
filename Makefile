@@ -100,7 +100,6 @@ endif
 ifdef SOLPSTOP
   NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
   NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
-  NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
 
 # Defines MPI_VERSION, which is the MPI version number
@@ -168,6 +167,9 @@ endif
 endif
 endif
 
+# Compiler options with no optimizations
+FNOPTS = $(shell echo ${FCOPTS} | sed -e 's:-O[1-3]:-O0:')
+
 # If compiling with Paraview Catalyst
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
@@ -208,7 +210,9 @@ TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*
 ifdef USE_MPI
 DPFINES += ${USE_MPI}
 else
+ifeq ($(shell [ -d ${SOLPSTOP}/modules/solps4-5/src/Eirene_commons ] && echo yes || echo no ),yes)
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
+endif
 endif
 ifdef USE_OPENMP
 DPFINES += ${USE_OPENMP}
@@ -234,8 +238,17 @@ endif
 # compiler options (ifort -qopenmp or similar)
 
 ifdef SOLPS_OPENMP
-#DPFINES += -DNO_OPENMP_B2XPFE
-#DPFINES += -DNO_OPENMP_B2SIFRTF
+#DPFINES += -DNO_OPENMP_B2NEWS_LOOP1
+#DPFINES += -DNO_OPENMP_B2NEWS_LOOP2
+#DPFINES += -DNO_OPENMP_B2NEWS_LOOP3
+#DPFINES += -DNO_OPENMP_B2NEWS_LOOP4
+#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#DPFINES += -DNO_OPENMP_B2NPMO
+#DPFINES += -DNO_OPENMP_B2SIFRTF_LOOP1
+#DPFINES += -DNO_OPENMP_B2SIFRTF_LOOP2
 #DPFINES += -DNO_OPENMP_B2SIHS
 #DPFINES += -DNO_OPENMP_B2SPCX
 #DPFINES += -DNO_OPENMP_B2SPEL
@@ -246,17 +259,9 @@ ifdef SOLPS_OPENMP
 #DPFINES += -DNO_OPENMP_B2STBR
 #DPFINES += -DNO_OPENMP_B2STCX
 #DPFINES += -DNO_OPENMP_B2STEL
+#DPFINES += -DNO_OPENMP_B2XPFE
 #DPFINES += -DNO_OPENMP_MYBLAS
 #DPFINES += -DNO_OPENMP_SFILL
-#DPFINES += -DNO_OPENMP_B2NEWS_LOOP1
-#DPFINES += -DNO_OPENMP_B2NEWS_LOOP2
-#DPFINES += -DNO_OPENMP_B2NEWS_LOOP3
-#DPFINES += -DNO_OPENMP_B2NEWS_LOOP4
-#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
-#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
-#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
-#DPFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
-#DPFINES += -DNO_OPENMP_B2NPMO
 endif
 
 VHEAD =
@@ -398,7 +403,7 @@ DIMSDIR=${SRCDIR}/modules.local
 endif
 DEFINES += -DDIMENSIONS_MODULE
 else
-# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRMOD}/eirmod_improved_strategy.o ${EIRDIR}/eirmod_infcop.o ${EIRMOD}/eirmod_json.o ${EIRMOD}/eirmod_mcarlo.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_openfile.o ${EIRDIR}/eirmod_openmp.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_reflec.o ${EIRDIR}/eirmod_refusr.o ${EIRDIR}/eirmod_sheath.o ${EIRDIR}/eirmod_solps.o ${EIRDIR}/eirmod_sputer.o ${EIRDIR}/eirmod_statis.o
+# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_improved_strategy.o ${EIRDIR}/eirmod_infcop.o ${EIRDIR}/eirmod_json.o ${EIRDIR}/eirmod_mcarlo.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_openfile.o ${EIRDIR}/eirmod_openmp.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_reflec.o ${EIRDIR}/eirmod_refusr.o ${EIRDIR}/eirmod_sheath.o ${EIRDIR}/eirmod_solps.o ${EIRDIR}/eirmod_sputer.o ${EIRDIR}/eirmod_statis.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
 ifdef LD_CATALYST
@@ -603,7 +608,7 @@ ${OBJDIR}/eirmod_eirdiag.${MOD}:
 ${OBJDIR}/eirmod_improved_strategy.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_improved_strategy.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_openfile.${MOD} ${OBJDIR}/eirmod_refusr.${MOD}
+${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_json.${MOD} ${OBJDIR}/eirmod_openfile.${MOD} ${OBJDIR}/eirmod_refusr.${MOD}
 	@ln -sf ${EIRDIR}/eirmod_infcop.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_json.${MOD}:
@@ -807,6 +812,29 @@ endif
 endif
 endif
 
+ifeq ($(COMPILER),pgf90)
+${OBJDIR}/b2ytdr.o : b2ytdr.F
+	@- /bin/rm -f $*.f $*.o $*.${MOD}
+ifeq ($(strip $(CPP)),)
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+	${FC} ${FPOPTS} -O0 -Mbackslash -C -g -Mchkptr -Mchkstk ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+endif
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.f
+else
+	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > $*.f
+endif
+ifndef SOLPS_DEBUG
+	${FC} ${FPOPTS} -O0 -Mbackslash ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+else
+	${FC} ${FPOPTS} -O0 -Mbackslash -C -g -Mchkptr -Mchkstk ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -module ${OBJDIR} -o $*.o $*.f
+endif
+endif
+endif
+
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${IMASLIBS} ${PLLIBES} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
@@ -853,8 +881,8 @@ ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-	@-ln -sf $@ ${NCXDIR}/$*
-	@-ln -sf ${NCXDIR}/nc2text_simple ${NCXDIR}/nc2text
+	@-ln -sf $@ ${NCODIR}/$*
+	@-ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 else
 	$(warning Compiler type was redefined: skipping!)
 endif
@@ -867,7 +895,7 @@ ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
-	@-ln -sf $@ ${NCXDIR}/$*
+	@-ln -sf $@ ${NCODIR}/$*
 endif
 else
 	$(warning Compiler type was redefined: skipping!)
@@ -1014,7 +1042,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
 
-listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+listobj: local ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -1153,7 +1181,7 @@ ${SRCLOCAL}/b2local.F:
 	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end" >> ${SRCLOCAL}/b2local.F
+	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
 
 ${MODLOCAL}/b2mod_local.F:
 	mkdir -p ${MODLOCAL}
@@ -1161,7 +1189,7 @@ ${MODLOCAL}/b2mod_local.F:
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end" >> ${MODLOCAL}/b2mod_local.F
+	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
 
 ${INCLOCAL}/b2local.h:
 	mkdir -p ${INCLOCAL}

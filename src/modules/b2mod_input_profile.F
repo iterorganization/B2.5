@@ -466,6 +466,7 @@ cdjm Jan2017 Keep linearised sources for balance
       integer:: i,nx,ny,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
+      real (kind=R8) :: dsp(-1:ny)
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
       character*256 filename
@@ -502,7 +503,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1   'faulty argument for sources profile ixref')
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument for sources profile iyref')
-        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp',dsp)
       endif
 
       filename='dsp'
@@ -675,11 +676,12 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_constants
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_geo
       IMPLICIT NONE
       integer :: nx,ny,ns
       integer :: iy,ix,i,ifail,spec,nspec,iiy,iir,
      &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
-     &      kind_coeff,kind_data,isc
+     &      kind_coeff,kind_data,isc,idy
       integer :: ixwidth(nscale), ixmean(nscale)
 
       real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) ::
@@ -690,19 +692,29 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8), save :: scaling_width(nscale)
       real(kind=R8), save :: scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
-     &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
-     &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
+     &    pelm(nrr),felm(nrr),delm(nrr),prof(-1:nx,nrr),
+     &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1),
+     &    pelm_rescaled(-1:nx,nrr)
       character*256, save :: transport_filename
       real (kind=R8), save :: transport_time_mod
       real (kind=R8), save :: transport_time_switch
-      real (kind=R8), save :: elm_time_begin, elm_time_end
+      real (kind=R8), save :: elm_time_begin(nkind_coeff), 
+     1 elm_time_plateau(nkind_coeff), elm_time_recovery(nkind_coeff),
+     2 elm_time_end(nkind_coeff), elm_crash_factor(nkind_coeff),
+     3 elm_recovery_factor(nkind_coeff), elm_ballooning_exp(nkind_coeff)
       real (kind=R8), save :: elm_time_period
+      real (kind=R8) :: frac_elm
       real (kind=R8) :: poloidal_scale_factor
+      real (kind=R8) :: elm_poloidal_scaling_factor(-1:nx,nkind_coeff)
+      real (kind=R8) :: thet, ilp(-1:ny), ilpb, hxface, hxpface, hxnface
+      real (kind=R8) :: theta(-1:nx,-1:ny)
       integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer, save :: elm_ix_begin, elm_ix_end
+      integer, save :: elm_ix_begin, elm_ix_end, elm_ixref
       logical, save :: region_flags(NNREGMAX,nkind_coeff), no_pflux,
-     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data,
-     2 no_div
+     1 no_div, poloidal_scaling(nscale), elm_crash_time(nkind_coeff),
+     2 elm_plateau_time(nkind_coeff), elm_recovery_time(nkind_coeff),
+     3 elm_crash_region, elm_plateau_region, elm_recovery_region,
+     4 elm_data, elm_dynamics_multiple
       character*260 filename
       character*26 hlp_frm
       integer, save :: elm_count
@@ -712,9 +724,11 @@ cdjm Jan2017 Keep linearised sources for balance
       namelist /transport/ ndata, tdata, addspec,
      1   transport_filename, transport_time_mod, transport_time_switch,
      2   scaling_ix_begin, scaling_ix_end, scaling_strength,
-     3   region_flags, no_pflux, poloidal_scaling, scaling_width,
-     4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end, no_div
+     3   region_flags, poloidal_scaling, scaling_width,
+     4   elm_time_begin, elm_time_plateau, elm_time_recovery,
+     5   elm_time_end, elm_time_period, elm_ix_begin, elm_ix_end, 
+     6   elm_ixref, elm_crash_factor, elm_recovery_factor,
+     7   elm_ballooning_exp, elm_dynamics_multiple, no_pflux, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
      1 transport_time_mod/0.0_R8/, transport_time_switch/0.0_R8/
@@ -791,12 +805,161 @@ cdjm Jan2017 Keep linearised sources for balance
      .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
       if (elm_time_period.gt.0.) then
-        elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
-     &           mod(tim,elm_time_period).le.elm_time_end
+        if (elm_dynamics_multiple) then
+          do kind_coeff=1,nkind_coeff
+            if (elm_time_plateau(kind_coeff).gt.0. .and. 
+     1              elm_time_recovery(kind_coeff).gt.0.) then
+              if (elm_time_begin(kind_coeff).eq.
+     1                elm_time_plateau(kind_coeff)) then
+                elm_crash_time(kind_coeff)=.false.
+              else
+                elm_crash_time(kind_coeff)=mod(tim,elm_time_period).ge.
+     &                  elm_time_begin(kind_coeff).and.
+     &                  mod(tim,elm_time_period).le.
+     &                  elm_time_plateau(kind_coeff)
+              endif
+              elm_plateau_time(kind_coeff)=mod(tim,elm_time_period).ge.
+     &                  elm_time_plateau(kind_coeff).and.
+     &                  mod(tim,elm_time_period).le.
+     &                  elm_time_recovery(kind_coeff)
+              if (elm_time_recovery(kind_coeff).eq.
+     1                elm_time_end(kind_coeff)) then
+                elm_recovery_time(kind_coeff)=.false.
+              else
+                elm_recovery_time(kind_coeff)=mod(tim,elm_time_period)
+     &                 .ge.elm_time_recovery(kind_coeff).and.
+     &                 mod(tim,elm_time_period).le.
+     &                 elm_time_end(kind_coeff)
+              endif
+            else
+              elm_crash_time(kind_coeff)=.false.
+              elm_plateau_time(kind_coeff)=mod(tim,elm_time_period).ge.
+     &                  elm_time_begin(kind_coeff)
+     &                 .and.mod(tim,elm_time_period)
+     &                 .le.elm_time_end(kind_coeff)
+              elm_recovery_time(kind_coeff)=.false.
+            endif
+          enddo
+        else
+          if (elm_time_plateau(1).gt.0. .and. 
+     1            elm_time_recovery(1).gt.0.) then
+            if (elm_time_begin(1).eq.elm_time_plateau(1)) then
+              elm_crash_time(1)=.false.
+            else
+              elm_crash_time(1)=mod(tim,elm_time_period)
+     &               .ge.elm_time_begin(1).and.
+     &               mod(tim,elm_time_period).le.elm_time_plateau(1)
+            endif
+            elm_plateau_time(1)=mod(tim,elm_time_period)
+     &               .ge.elm_time_plateau(1).and.
+     &               mod(tim,elm_time_period).le.elm_time_recovery(1)
+            if (elm_time_recovery(1).eq.elm_time_end(1)) then
+              elm_recovery_time(1)=.false.
+            else
+              elm_recovery_time(1)=mod(tim,elm_time_period).ge.
+     &               elm_time_recovery(1).and.
+     &               mod(tim,elm_time_period).le.elm_time_end(1)
+            endif
+          else
+            elm_crash_time(1)=.false.
+            elm_plateau_time(1)=mod(tim,elm_time_period).ge.
+     &               elm_time_begin(1).and.mod(tim,elm_time_period)
+     &               .le.elm_time_end(1)
+            elm_recovery_time(1)=.false.
+          endif
+        endif
       else
-        elm_time=.false.
+        if (elm_dynamics_multiple) then
+          do kind_coeff=1,nkind_coeff
+            elm_crash_time(kind_coeff)=.false.
+            elm_plateau_time(kind_coeff)=.false.
+            elm_recovery_time(kind_coeff)=.false.
+          enddo
+        else
+          elm_crash_time(1)=.false.
+          elm_plateau_time(1)=.false.
+          elm_recovery_time(1)=.false.
+        endif
       endif
       elm_data = maxval(tdata(3,:,:,:)).gt.0.0_R8
+
+c     Calculate poloidal angle theta (same code used in b2tqna.F)
+      do iy=-1,ny
+        do ix=-1,nx
+          theta(ix,iy)=-1.0_R8
+        enddo
+      enddo
+      do iy=0,ny
+        thet=0._R8
+        ilp(iy)=0._R8
+        do ix=elm_ixref,-1,-1
+           if (on_closed_surface(ix,iy)) then
+             theta(ix,iy)=thet
+             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+     &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
+     &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
+             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &              vol(leftix(ix,iy),leftiy(ix,iy)))
+             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &              vol(rightix(ix,iy),rightiy(ix,iy)))
+            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+     &           ((hxpface+hxnface)/2._R8+hxface)
+            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+     &              bb(ix,iy,0)
+           endif
+        enddo
+        do ix=nx,elm_ixref+1,-1
+           if (on_closed_surface(ix,iy)) then
+             theta(ix,iy)=thet
+             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+     &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
+     &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
+             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &              vol(leftix(ix,iy),leftiy(ix,iy)))
+             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &              vol(rightix(ix,iy),rightiy(ix,iy)))
+            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+     &           ((hxpface+hxnface)/2._R8+hxface)
+            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+     &              bb(ix,iy,0)
+           endif
+        enddo
+        theta(elm_ixref,iy)=thet
+        ilpb=thet
+        do ix=-1,nx
+           if (on_closed_surface(ix,iy)) then
+            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
+           endif
+        enddo
+      enddo
 
 !        write (*,*) 'vor loop'
       iloop=0
@@ -835,8 +998,11 @@ cdjm Jan2017 Keep linearised sources for balance
 !           write(*,*) 'zwischen,ifail=',ifail
             call E01BFF(ndat,r,f,d,ndim,pr,pf,ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            if (elm_data)
-     >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            if (elm_data) then
+              call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+            else
+              pelm=pf
+            endif
 
             if (new_files) then
 
@@ -902,61 +1068,153 @@ cdjm Jan2017 Keep linearised sources for balance
      $                         (2.0_R8*scaling_width(isc)**2)))
                     endif
                    enddo
-                   elm_region=elm_time.and.elm_data.and.
-     &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+
+                   if (elm_dynamics_multiple) then
+                     elm_crash_region=
+     &                      elm_crash_time(kind_coeff).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                     elm_plateau_region=
+     &                      elm_plateau_time(kind_coeff).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                     elm_recovery_region=
+     &                      elm_recovery_time(kind_coeff).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                   else
+                     elm_crash_region=
+     &                      elm_crash_time(1).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                     elm_plateau_region=
+     &                      elm_plateau_time(1).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                     elm_recovery_region=
+     &                      elm_recovery_time(1).and.elm_data
+     &                     .and.ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+                   endif
+
+                   if (theta(ix,0).eq.-1.0_R8.and.
+     $              elm_ballooning_exp(kind_coeff).ne.0.0_R8) then
+                     elm_poloidal_scaling_factor(ix,kind_coeff) = 0.0_R8
+                   else
+                     elm_poloidal_scaling_factor(ix,kind_coeff) = 
+     &                 abs(cos((theta(ix,0)-2.0_R8*acos(-1.0_R8))
+     &                 /2.0_R8))**elm_ballooning_exp(kind_coeff)
+                   endif
+
+                   if (elm_poloidal_scaling_factor(ix,kind_coeff)
+     $                 .lt.1.0e-10_R8) then
+                       elm_poloidal_scaling_factor(ix,kind_coeff)=0.0_R8
+                   endif
+
+                   do idy=1,ndim
+                      pelm_rescaled(ix,idy)=
+     &                  pf(idy)*(1.0_R8-
+     &                  elm_poloidal_scaling_factor(ix,kind_coeff))+
+     &                  pelm(idy)*
+     &                  elm_poloidal_scaling_factor(ix,kind_coeff)
+                   enddo
 
                    if(.not.
      1              (.not.region_flags(iir,kind_coeff).or.
      1              (lpflux.and.no_pflux).or.
      1              (ldiv.and.no_div))) then
 
-                    if (elm_region) then
-                      prof(1:ndim)=pelm(1:ndim)
+                    if (elm_crash_region) then
+                      if (elm_dynamics_multiple) then
+                        frac_elm =
+     &                     log(1.0_R8+elm_crash_factor(kind_coeff)*
+     &                     ((mod(tim,elm_time_period)-
+     &                     elm_time_begin(kind_coeff))/
+     &                     (elm_time_plateau(kind_coeff)-
+     &                     elm_time_begin(kind_coeff))))/
+     &                     log(1.0_R8+elm_crash_factor(kind_coeff))
+                      else
+                        frac_elm =
+     &                     log(1.0_R8+elm_crash_factor(1)*
+     &                     ((mod(tim,elm_time_period)-
+     &                     elm_time_begin(1))/
+     &                     (elm_time_plateau(1)-
+     &                     elm_time_begin(1))))/
+     &                     log(1.0_R8+elm_crash_factor(1))
+                      endif
+                      do idy=1,ndim
+                        prof(ix,idy)=
+     &                    pf(idy)+(frac_elm)*
+     &                    (pelm_rescaled(ix,idy)-pf(idy))
+                      enddo
+                    elseif (elm_plateau_region) then
+                      prof(ix,1:ndim)=pelm_rescaled(ix,1:ndim)
+                    elseif (elm_recovery_region) then
+                      if (elm_dynamics_multiple) then
+                        frac_elm =
+     &                     (exp(-elm_recovery_factor(kind_coeff)*
+     &                     ((mod(tim,elm_time_period)-
+     &                     elm_time_recovery(kind_coeff))
+     &                     /(elm_time_end(kind_coeff)-
+     &                     elm_time_recovery(kind_coeff))))-
+     &                     exp(-elm_recovery_factor(kind_coeff)))/
+     &                     (1.0_R8-
+     &                     exp(-elm_recovery_factor(kind_coeff)))
+                      else
+                        frac_elm =
+     &                     (exp(-elm_recovery_factor(1)*
+     &                     ((mod(tim,elm_time_period)-
+     &                     elm_time_recovery(1))
+     &                     /(elm_time_end(1)-
+     &                     elm_time_recovery(1))))-
+     &                     exp(-elm_recovery_factor(1)))/
+     &                     (1.0_R8-
+     &                     exp(-elm_recovery_factor(1)))
+                      endif
+                      do idy=1,ndim
+                        prof(ix,idy)=
+     &                    pf(idy)+(frac_elm)*
+     &                    (pelm_rescaled(ix,idy)-pf(idy))
+                      enddo
                     else
-                      prof(1:ndim)=pf(1:ndim)
+                      prof(ix,1:ndim)=pf(1:ndim)
                     endif
 
                     if (kind_coeff.eq.1) then
                       dna0(ix,iiy,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(ix,iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.2) then
                       dpa0(ix,iiy,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor/
+     1                 prof(ix,iy)*poloidal_scale_factor/
      &                 (rza(ix,iiy,nsp(is))*te(ix,iiy)+ti(ix,iiy))
 
                     elseif (kind_coeff.eq.3) then
                       hcib(ix,iiy,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy)*na(ix,iiy,nsp(is))
+     &                 prof(ix,iy)*na(ix,iiy,nsp(is))
 
                     elseif (kind_coeff.eq.4) then
-                      hce0(ix,iiy)=prof(iy)*ne(ix,iiy)*
+                      hce0(ix,iiy)=prof(ix,iy)*ne(ix,iiy)*
      1                 poloidal_scale_factor
 
                     elseif (kind_coeff.eq.5) then
                       vla0(ix,iiy,0,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(ix,iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.6) then
                       vla0(ix,iiy,1,nsp(is))=
-     1                 prof(iy)*poloidal_scale_factor
+     1                 prof(ix,iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
                       vsa0(ix,iiy,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy)*mp*am(nsp(is))*na(ix,iiy,nsp(is))
+     1                 prof(ix,iy)*mp*am(nsp(is))*na(ix,iiy,nsp(is))
 
                     elseif (kind_coeff.eq.8) then
                       if (csig_an_style.eq.0) then
-                        sig0(ix,iiy)=prof(iy)*qe*ne(ix,iiy)*
+                        sig0(ix,iiy)=prof(ix,iy)*qe*ne(ix,iiy)*
      1                   poloidal_scale_factor
                       elseif(csig_an_style.eq.1) then
-                        sig0(ix,iiy)=prof(iy)*qe*ne(nmdpl,-1)*
+                        sig0(ix,iiy)=prof(ix,iy)*qe*ne(nmdpl,-1)*
      1                   poloidal_scale_factor
                       endif
 
                     elseif (kind_coeff.eq.9) then
                       alf0(ix,iiy)=poloidal_scale_factor*
-     1                 prof(iy)*ne(ix,iiy)*
+     1                 prof(ix,iy)*ne(ix,iiy)*
      2                 sqrt(qe/te(ix,iiy))
 
                     else
@@ -1062,6 +1320,7 @@ cdjm Jan2017 Keep linearised sources for balance
 
       subroutine read_transport_input
       implicit none
+      integer jxa, jxi, jsep
       logical file_ok
 
 c*** Clear data to forget previous profiles
@@ -1076,11 +1335,19 @@ c*** Clear data to forget previous profiles
       scaling_width=0.0_R8
       scaling_ix_begin=-2
       scaling_ix_end=-2
-      elm_time_begin=0.0_R8
-      elm_time_end=0.0_R8
+      elm_dynamics_multiple=.false.
+      elm_time_begin(:)=0.0_R8
+      elm_time_plateau(:)=0.0_R8
+      elm_time_recovery(:)=0.0_R8
+      elm_time_end(:)=0.0_R8
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
+      call get_jsep(nx,ny,jxi,jxa,jsep)
+      elm_ixref = jxa
+      elm_crash_factor(:)=1.0e-10_R8
+      elm_recovery_factor(:)=1.0e-10_R8
+      elm_ballooning_exp(:)=0.0_R8
       transport_time_mod=0.0_R8
       transport_time_switch=0.0_R8
       call find_file(filename,file_ok)
@@ -1117,6 +1384,7 @@ c*** Clear data to forget previous profiles
       integer:: i,nx,ny,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
+      real (kind=R8) :: dsp(-1:ny)
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
       character*256 filename
@@ -1142,7 +1410,7 @@ c*** Clear data to forget previous profiles
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp',dsp)
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 

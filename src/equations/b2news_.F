@@ -85,7 +85,7 @@
       integer, save :: get_residuals = 0                                 !srv 22.05.18
       integer, save :: visper_all_ions = 1
       real (kind=R8) ::
-     *   potok
+     *  potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
@@ -114,14 +114,15 @@
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
-*   ..initialization
+*   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
-     1   xfm3/1.0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,          !srv 09.07.99 09.03.09
-     2   vis_per/1.0_R8/, no_current/0/                                 !srv 06.07.00
+     1  xfm3/1.0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,           !srv 09.07.99 09.03.09
+     2  vis_per/1.0_R8/, no_current/0/                                  !srv 06.07.00
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
+      integer, save :: n_avg_repeat = 1
       integer, save :: use_eirene = 0
       integer, save :: ramp_slow = 0
 *
@@ -256,26 +257,32 @@ csw 26feb2014 some extra variables
        call ipgeti ('eirene_neutr_avg', neutr_avg)
        call ipgeti ('eirene_underrelax', nrelax)
        call ipgeti ('b2stbr_eir_src_nhist', nhist)
+       call ipgeti ('eirene_averaging_multiple_calls', n_avg_repeat)
        call ipgeti ('b2mndt_nstg2', nstg2)
        if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
          write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
        endif
-       call xertst (.not.(
-     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
-     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
-     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
+       call xertst(.not.(
+     .    (neutr_avg.gt.1 .and.
+     .      (nhist.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nhist.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nrelax.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (nrelax.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.n_avg_repeat.gt.1)) .or.
+     .    (n_avg_repeat.gt.1 .and.
+     .      (neutr_avg.gt.1.or.nhist.gt.1.or.nrelax.gt.1)) ),
+     .  'Cannot have simultaneous multiple Eirene averaging schemes!')
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
-          nsmin=ns
+         nsmin=ns
        elseif(nsmin.lt.0) then
-          nsmin=0
+         nsmin=0
        endif
        call ipgeti ('b2news_nsmax', nsmax)
        if(nsmax.gt.ns) then
-          nsmax=ns
+         nsmax=ns
        elseif(nsmax.lt.0) then
-          nsmax=0
+         nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
@@ -285,7 +292,7 @@ csw 26feb2014 some extra variables
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
       zero(-1:nx,-1:ny) = 0.0_R8
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
@@ -349,11 +356,11 @@ csw 01oct2012 initialize potential if necessary
       if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
-     &    1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
-     &    1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
       call xertst (0.0_R8.le.minval(fac_vis) .and.
-     &    1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
+     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 * ..main computation
 *   ..compute ni, ne, ne2
       call b2xpni (nx, ny, ns, na, ni)
@@ -377,17 +384,18 @@ csw 01oct2012 initialize potential if necessary
      * cvsahz_uAdp_albe, cvsahz_uBdp_al,                                 !som 22.12.23
      * cvsa_uAdp_albe, cvsa_uBdp_al,                                     !som 26.04.24
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
+*                                                                        !srv 09.03.21 {
+*   ..recompute currents
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, hy1, bb,                         !srv 19.02.21
      &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
      &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
      &              fchvispar_a, fchvispar)                              !som 18.08.21
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
-     &              na, ua, facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 19.02.21
-     &              vol, hy1, po, ti, na,
-     &              avisper_a, bvisper_a, cvisper_a,
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
+     &              facdrift, fchinert_a, fchinert)
+      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, hy1,               !srv 10.10.17 19.02.21
+     &              po, ti, na, avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
@@ -530,7 +538,7 @@ c   extra call at this place within internal iteration)
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
      &    snadt, smodt, shedt, shidt, schdt, snedt, .false.)             !srv 11.09.09 {
-*   ..add to previous contributions
+*     ..add to previous contributions
         call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
         call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
         call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
@@ -598,9 +606,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, hy1, bb,                         !srv 19.02.21
-     &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,
+     &              na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,             !som 18.08.21
      &              cvsa_uAdp_albe, cvsa_uBdp_al,                        !som 26.04.24
-     &              fchvispar_a, fchvispar)                              !som 18.08.21
+     &              fchvispar_a, fchvispar)
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
      &              na, ua, facdrift, fchinert_a, fchinert)
       call b2tvspr (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 19.02.21
@@ -633,16 +641,16 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& SHARED(last_solve_9, last_solve_11)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
-!$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
-!$OMP& SHARED(zn, zamax)
+!$OMP& SHARED(topiy, na, rza, zn, zamax, te, ti, am, ua, ne)
 !$OMP& SHARED(is_neutral, uadia, ncall, resmo, corua)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
-!$OMP& SHARED(cssb, vaecrb, vadia)
-!$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po)
+!$OMP& SHARED(cssb, vaecrb, vadia, wadia)
+!$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, po)
 !$OMP& SHARED(cvla, cdna, cdpa, cddi, cdde, cvlahz, cdnahz, cdpahz)
 !$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq, fchin)
-!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
-!$OMP& SHARED(fchin_a, fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
+!$OMP& SHARED(fchvispar_a, fchvisper_a, fchinert_a)
+!$OMP& SHARED(fchanml_a, fchvisq_a, fchin_a)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch)
 !$OMP& SHARED(fna_mdf, fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
@@ -693,7 +701,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,          !srv 19.05.03 08.10.04  04.02.05
+     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,          !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is),                                             !srv 09.01.01 15.12.05
@@ -933,7 +941,7 @@ csw 16oct2012 init ier0
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
 *   ..solve the potential equation
-          if (vis_per.eq.0.0e0_R8) then                                  !srv 22.12.19 06.07.00
+          if (vis_per.eq.0.0_R8) then                                    !srv 22.12.19 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
               new_matrix = new_matrix.or.

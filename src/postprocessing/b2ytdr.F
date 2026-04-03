@@ -165,7 +165,7 @@ c 2002-09-11: logic revised
       integer neutrals_namelist, use_eirene, redef_gmtry_save
       integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
-      integer transport_namelist, transport_inputfile
+      integer transport_namelist, transport_inputfile, user_transport
       integer atomic_physics_rescale_flag
       integer ismain, ismain0, isfeedback, isfb
       integer nsmin, nsmax, ns1min, ns1max
@@ -177,14 +177,16 @@ c 2002-09-11: logic revised
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
-      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
-      integer mw_jxa1, mw_jsep1, iyped1
+      integer neoclassical_iystart, neoclassical_iyend
+      integer neoclassical_iystart1, neoclassical_iyend1
+      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, jsep_cnv, jxa_cnv, iyped
+      integer mw_jxa1, mw_jsep1, jsep1cnv, jxa1cnv, iyped1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
-      integer elm_ix_begin, elm_ix_end
+      integer elm_ix_begin, elm_ix_end, elm_ixref
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
@@ -480,7 +482,10 @@ c 2002-09-11: logic revised
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  elm_time_begin, elm_time_end, elm_time_period,
+     .  elm_time_begin(nkind_coeff), elm_time_plateau(nkind_coeff),
+     .  elm_time_recovery(nkind_coeff), elm_time_end(nkind_coeff),
+     .  elm_crash_factor(nkind_coeff), elm_recovery_factor(nkind_coeff),
+     .  elm_ballooning_exp(nkind_coeff), elm_time_period,
      .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
@@ -517,7 +522,7 @@ c 2002-09-11: logic revised
       character*8 varname, spcname
       character*2 stratum_number
       character*256 adasfile
-      data eirene_format / 'iter' /
+      data eirene_format / 'msv' /
       character*8, allocatable ::
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
       character*8, allocatable :: TEXTP1(:)
@@ -569,8 +574,11 @@ c 2002-09-11: logic revised
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical region_flags1(NNREGMAX,nkind_coeff)
       logical poloidal_scaling(nscale), prdone, axdone, spdone
+      logical elm_dynamics_multiple
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
+      logical neo_ns_set(0:ns-1)
+      logical, allocatable :: neo_ns1_set(:)
 *   ..procedures
       integer len_of_digits, trace_convert
 #ifdef B25_EIRENE
@@ -601,6 +609,7 @@ c 2002-09-11: logic revised
       data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
+      data user_transport/0/
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
@@ -624,11 +633,14 @@ c 2002-09-11: logic revised
      1   transport_filename, transport_time_mod,
      2   transport_time_switch, scaling_ix_begin, scaling_ix_end,
      3   scaling_strength, region_flags, no_pflux, poloidal_scaling,
-     4   scaling_width, elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
+     4   scaling_width, elm_time_begin, elm_time_plateau,
+     5   elm_time_recovery, elm_time_end, elm_time_period,
+     6   elm_crash_factor, elm_recovery_factor, elm_ballooning_exp,
+     7   elm_dynamics_multiple, elm_ix_begin, elm_ix_end, elm_ixref
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
+      namelist /neoclassical_transport/ neo_ns_set
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -1033,8 +1045,8 @@ c 2002-09-11: logic revised
       endif
       call get_nxt(nx,nxtl,nxtr)
 *   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te, ti,
+     &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -1410,6 +1422,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
       call ipgeti ('b2tqna_transport_namelist', transport_namelist)
+      call ipgeti ('b2tqna_user_transport', user_transport)
       call ipgeti ('b2tqna_inputfile', transport_inputfile)
       call ipgeti ('b2sral_inputfile', sources_inputfile)
       call ipgeti ('b2stbc_feedback', b2stbc_feedback)
@@ -1456,6 +1469,8 @@ c 2002-09-11: logic revised
       call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
+      call ipgeti ('b2tqna_neoclassical_iystart', neoclassical_iystart)
+      call ipgeti ('b2tqna_neoclassical_iyend', neoclassical_iyend)
       call ipgeti ('b2tqna_iy1', iy1)
       call ipgeti ('b2tqna_iy2', iy2)
       call ipgeti ('b2tqna_ix1', ix1)
@@ -1466,6 +1481,10 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_ix2', mw_ix2)
       call ipgeti ('b2tqna_mw_jxa', mw_jxa)
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
+      jxa_cnv = jxa
+      jsep_cnv = jsep
+      call ipgeti ('b2tqna_jxa_cnv', jxa_cnv)
+      call ipgeti ('b2tqna_jsep_cnv', jsep_cnv)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
       call ipgeti ('b2news_coriolis', coriolis)
@@ -1524,6 +1543,9 @@ c 2002-09-11: logic revised
       call find_file(filename,found)
       todo = todo .or. found
       filename='b2.feedback_control.parameters'
+      call find_file(filename,found)
+      todo = todo .or. found
+      filename='b2.neoclassical_transport.parameters'
       call find_file(filename,found)
       todo = todo .or. found
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
@@ -1745,6 +1767,10 @@ c 2002-09-11: logic revised
       endif
       iyped1 = conformal_convert
      .   (non_commensurate,2,jxa,iyped,nx,ny,nx1,ny1,4)
+      neoclassical_iystart1 = conformal_convert
+     .   (non_commensurate,2,jxa,neoclassical_iystart,nx,ny,nx1,ny1,0)
+      neoclassical_iyend1 = conformal_convert
+     .   (non_commensurate,2,jxa,neoclassical_iyend,nx,ny,nx1,ny1,2)
       iy11 = conformal_convert
      .   (non_commensurate,2,ix1,iy1,nx,ny,nx1,ny1,0)
       iy21 = conformal_convert
@@ -1774,6 +1800,20 @@ c 2002-09-11: logic revised
      .    nx,ny,nx1,ny1,2)
       else
         mw_jsep1 = jsep1
+      endif
+      if (jxa_cnv.ge.0) then
+        jxa1cnv =
+     .   conformal_convert(non_commensurate,1,jxa_cnv,jsep_cnv,
+     .    nx,ny,nx1,ny1,4)
+      else
+        jxa1cnv = jxa1
+      endif
+      if (jsep_cnv.ge.0) then
+        jsep1cnv =
+     .   conformal_convert(non_commensurate,2,jxa_cnv,jsep_cnv,
+     .    nx,ny,nx1,ny1,2)
+      else
+        jsep1cnv = jsep1
       endif
       if (jxa.ne.-2) then
         jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
@@ -1860,6 +1900,10 @@ c 2002-09-11: logic revised
           iswitch = ixref1
         case('set_transport_iyref')
           iswitch = iyref1
+        case('b2tqna_neoclassical_iystart')
+          iswitch = neoclassical_iystart1
+        case('b2tqna_neoclassical_iyend')
+          iswitch = neoclassical_iyend1
         case('b2tqna_iy1')
           iswitch = iy11
         case('b2tqna_iy2')
@@ -1880,6 +1924,10 @@ c 2002-09-11: logic revised
           iswitch = mw_jxa1
         case('b2tqna_mw_jsep')
           iswitch = mw_jsep1
+        case('b2tqna_jxa_cnv')
+          iswitch = jxa1cnv
+        case('b2tqna_jsep_cnv')
+          iswitch = jsep1cnv
         case('b2mwti_jxa')
           iswitch = jxa1
         case('b2mwti_jxi')
@@ -2008,6 +2056,7 @@ c 2002-09-11: logic revised
      &           b2tfhe_vis_par .eq.1.0_R8
           if (wait) then
             rswitch = b2tvspa_vis_par
+            wait = .false.
           else
             rswitch = b2tfhe_vis_par
           end if
@@ -2862,11 +2911,18 @@ c 2002-09-11: logic revised
           scaling_width=0.0_R8
           scaling_ix_begin=-2
           scaling_ix_end=-2
-          elm_time_begin=0.0_R8
-          elm_time_end=0.0_R8
+          elm_dynamics_multiple=.false.
+          elm_time_begin(:)=0.0_R8
+          elm_time_plateau(:)=0.0_R8
+          elm_time_recovery(:)=0.0_R8
+          elm_time_end(:)=0.0_R8
           elm_time_period=0.0_R8
           elm_ix_begin=-2
           elm_ix_end=-2
+          elm_ixref = jxa
+          elm_crash_factor(:)=1.0e-10_R8
+          elm_recovery_factor(:)=1.0e-10_R8
+          elm_ballooning_exp(:)=0.0_R8
           transport_filename='b2.transport.inputfile'
           transport_time_mod=0.0_R8
           transport_time_switch=0.0_R8
@@ -3072,12 +3128,39 @@ cxpb We must ensure we have not already listed this additional species
           if (maxval(scaling_width(1:nscale)).gt.0.0_R8)
      >       write(99,hlp_frm)
      .       'SCALING_WIDTH=',scaling_width(1:nscale)
-          if (elm_time_begin.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'ELM_TIME_BEGIN=',elm_time_begin,','
-          if (elm_time_end.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'ELM_TIME_END=',elm_time_end,','
+          if (elm_dynamics_multiple) then
+            write(99,'(1x,a)') 'ELM_DYNAMICS_MULTIPLE=T,'
+          endif
+          if (any(elm_time_begin.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_BEGIN=', elm_time_begin, ','
+          end if
+          if (any(elm_time_plateau.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_PLATEAU=', elm_time_plateau, ','
+          end if
+          if (any(elm_time_recovery.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_RECOVERY=', elm_time_recovery, ','
+          end if
+          if (any(elm_time_end.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_TIME_END=', elm_time_end, ','
+          end if
           if (elm_time_period.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_PERIOD=',elm_time_period,','
+          if (any(elm_crash_factor.ne.1.0e-10_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_CRASH_FACTOR=', elm_crash_factor, ','
+          end if
+          if (any(elm_recovery_factor.ne.1.0e-10_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_RECOVERY_FACTOR=', elm_recovery_factor, ','
+          end if
+          if (any(elm_ballooning_exp.ne.0.0_R8)) then
+               write(99,'(1x,a,1p,9(g10.3,:,","),a)')
+     .          'ELM_BALLOONING_EXP=', elm_ballooning_exp, ','
+          end if
           if (elm_ix_begin.ne.-2) then
             elm_ix_begin = conformal_convert(non_commensurate,1,
      .       elm_ix_begin,jsep,nx,ny,nx1,ny1,1)
@@ -3089,6 +3172,12 @@ cxpb We must ensure we have not already listed this additional species
      .       elm_ix_end,jsep,nx,ny,nx1,ny1,3)
             write(99,'(1x,a,i4,a)')
      .       'ELM_IX_END=',elm_ix_end,','
+          endif
+          if (elm_ixref.ne.jxa) then
+            elm_ixref = conformal_convert(non_commensurate,1,
+     .       elm_ixref,jsep,nx,ny,nx1,ny1,3)
+            write(99,'(1x,a,i4,a)')
+     .       'ELM_IXREF=',elm_ixref,','
           endif
           write(99,'(a1)') '/'
           close(99)
@@ -4225,7 +4314,8 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+          case ('H','D','T','DT',
+     &          'He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
             continue
           case default
             no_sputtering = .false.
@@ -4235,7 +4325,7 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','C','Ne','Ar','N','Be')
+          case ('H','D','T','DT','He','C','Ne','Ar','N','Be')
             continue
           case default
             adas_correct = b2fstate_version.gt.'03.000.007'
@@ -4259,18 +4349,26 @@ cxpb  Start reading input.dat file
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 109
         ELSE
+          call fix_integer_input(zeile,10)
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
             idum(0) = -1
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
-            idum(7) = 1
+            idum(7) = idum(2)
+            idum(2) = 0
             idum(8) = 0
-          ELSE
+            idum(9) = 0
+          ELSE IF (.not.streql(eirene_format,'msv')) THEN
             READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
+            idum(8) = 0
+            idum(9) = 0
             if (b2fstate_version.le.'03.000.006') idum(0)=-1
+          ELSE
+            READ (ZEILE,6666) idum(0:9)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
+                                         ! NTIME0,NTIME,NEVNTMAX,NVNMXTR
           END IF
           NMODE = idum(1)
           nfilek = b2idez(idum(3),4,5)
@@ -4289,7 +4387,7 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
           nfilel = b2idez(idum(3),3,5)
           if (nfilel.ne.0.and.nfilel.lt.5) idum(3) = idum(3) + 500  ! ensure "short" fort.13 format
-          WRITE(IUNOT,6666) idum(0:8)
+          WRITE(IUNOT,6666) idum(0:9)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
         IF ((INDEX(ZEILE,'F') + INDEX(ZEILE,'f') + INDEX(ZEILE,'T') +
@@ -4297,30 +4395,18 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:7)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
-          READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,19)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
-          ENDIF
+        ENDIF
+        READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,20)
+        IF (streql(eirene_format,'facelift')) then
+          READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                       ! NLTRIMESH
         ELSE
-          call fix_logical_input(zeile,19)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
-          ENDIF
+          READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
+                                       ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
         ENDIF
         IF (streql(eirene_format,'facelift')) then
           ldum(14) = ldum(8)
@@ -4338,12 +4424,13 @@ cxpb  Start reading input.dat file
         END IF
         IF (.not.streql(eirene_format,'msv')) then
           ldum(18)=.true.  ! Add NLSOLEDGE on by default
+          ldum(19)=.false. ! Add NLSPCSPT off by default
         END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
         NLTRIMESH = ldum(15)
-        WRITE(IUNOT,6665) ldum(0:18) ! NLTRIMESH now moved to block 14
+        WRITE(IUNOT,6665) ldum(0:19) ! NLTRIMESH now moved to block 14
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -12448,6 +12535,54 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'No changes needed in b2.user.parameters'
       end if
 
+*  ..write new b2.neoclassical_transport.parameters if needed
+      filename='b2.neoclassical_transport.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.neoclassical_transport.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if((user_transport.eq.8.or.todo)
+     &   .and. .not.found .and. .not.same_bundling) then
+        open(99,file=filename)
+        write(*,*) 'Reading ',trim(filename)
+        read(99,neoclassical_transport)
+        close(99)
+        write(*,*) 'Read ',trim(filename)
+        if (any(neo_ns_set(0:ns-1).eqv..false.)) then
+          todo = .false.
+          is = 0
+          do while (.not.todo .and. is.lt.ns)
+            todo = todo .or.
+     &       (.not.neo_ns_set(is) .and. is1(is).ne.is)
+            is = is+1
+          end do
+          if (todo) then
+            allocate(neo_ns1_set(0:ns1-1))
+            neo_ns1_set = .true.
+            do is = 0, ns1-1
+              if (is1(is).ne.-1) then
+                neo_ns1_set(is1(is)) = neo_ns_set(is)
+              end if
+            end do
+            write(*,*) 'Writing b2.neoclassical_transport.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
+            open(99,file=new_filename)
+            write(99,'(a23)') '&NEOCLASSICAL_TRANSPORT'
+            write(hlp_frm, '(a,i3,a)') '(1x,a,',ns1,'l1,a)'
+            if (any(neo_ns1_set(0:ns1-1).eqv..false.))
+     >       write(99,hlp_frm)
+     .       'NEO_NS_SET=',(neo_ns1_set(is),is=0,ns-1),','
+            write(99,'(a1)') '/'
+            close(99)
+            deallocate(neo_ns1_set)
+          end if
+        end if
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.neoclassical_transport.parameters'
+        write(*,*) 'No changes needed in '//
+     .             'b2.neoclassical_transport.parameters'
+      end if
+
 *   ..write new b2yq.dat, if needed
       filename='b2yq.dat'
       call find_file(filename,todo)
@@ -13648,6 +13783,7 @@ cxpb We assign to the bundle the value from the highest species from that bundle
       real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
       character*256 :: fold(0:ns-1)
       character*3 :: charns, charns1
+      logical :: found
 
 cxpb This is for converting the content of profile files.
 cxpb This routine is to be used if the profile files contain
@@ -13668,45 +13804,51 @@ cxpb additive quantities such as densities.
         if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
           filenames(is1) = fold(isbegin)
         else if (isbegin.ne.-1) then
+          inquire(file=fold(isbegin),exist=found)
+          if (.not.found) then
+            filenames(is1) = fold(isbegin)
+          else
 cxpb need to write new file with weighted sum of profiles
 cxpb we check the profiles have the same size
 cxpb and use the positions from the last file read
-          write(charns ,'(i3.3)') isbegin
-          write(charns1,'(i3.3)') isend
-          filenames(is1) =
-     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
-          write(nunit,'(a)') trim(filenames(is1))
-          do is = isbegin, isend
-            open(99,file=fold(is1))
-            read(99,*,err=100,end=101) idum
-            if (npoints.eq.0) then
-              npoints = idum
-              allocate(pos(npoints))
-              allocate(values(npoints,isend-isbegin+1))
-              allocate(value1(npoints))
-            else
-              call xertst( idum.eq.npoints,
+            write(charns ,'(i3.3)') isbegin
+            write(charns1,'(i3.3)') isend
+            filenames(is1) =
+     .        trim(fold(isbegin))//'.'//charns//'-'//charns1
+            write(nunit,'(a)') trim(filenames(is1))
+            do is = isbegin, isend
+              open(99,file=fold(is1))
+              read(99,*,err=100,end=101) idum
+              if (npoints.eq.0) then
+                npoints = idum
+                allocate(pos(npoints))
+                allocate(values(npoints,isend-isbegin+1))
+                allocate(value1(npoints))
+              else
+                call xertst( idum.eq.npoints,
      .         'Mismatched profile sizes, conversion case not coded !')
-            end if
+              end if
+              do iy = 1, npoints
+                read(99,*,err=100,end=101)
+     .           pos(iy),values(iy,is-isbegin+1)
+              end do
+              close(99)
+            end do
             do iy = 1, npoints
-              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+              value1(iy) = 0.0_R8
+              do is = isbegin, isend
+                value1(iy) = value1(iy) +
+     .           bundle_frac(is1,is)*values(iy,is-isbegin+1)
+              end do
+            end do
+            open(99,file=trim(filenames(is1)))
+            write(99,*) npoints
+            do iy = 1, npoints
+              write(99,*) pos(iy), value1(iy)
             end do
             close(99)
-          end do
-          do iy = 1, npoints
-            value1(iy) = 0.0_R8
-            do is = isbegin, isend
-              value1(iy) = value1(iy) +
-     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
-            end do
-          end do
-          open(99,file=trim(filenames(is1)))
-          write(99,*) npoints
-          do iy = 1, npoints
-            write(99,*) pos(iy), value1(iy)
-          end do
-          close(99)
-          deallocate(pos,values,value1)
+            deallocate(pos,values,value1)
+          end if
         end if
       end do
 
@@ -13781,6 +13923,7 @@ cxpb We assign to the new bundle a weighted average of the values from the old b
       real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
       character*256 :: fold(0:ns-1)
       character*3 :: charns, charns1
+      logical :: found
 
 cxpb This is for converting the content of profile files.
 cxpb This routine is to be used if the profile files contain
@@ -13803,46 +13946,52 @@ cxpb intensive quantities such as velocities.
         if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
           filenames(is1) = fold(isbegin)
         else if (isbegin.ne.-1) then
+          inquire(file=fold(isbegin),exist=found)
+          if (.not.found) then
+            filenames(is1) = fold(isbegin)
+          else
 cxpb need to write new file with weighted average of profiles
 cxpb we check the profiles have the same size
 cxpb and use the positions from the last file read
-          write(charns ,'(i3.3)') isbegin
-          write(charns1,'(i3.3)') isend
-          filenames(is1) =
-     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
-          write(nunit,'(a)') trim(filenames(is1))
-          do is = isbegin, isend
-            open(99,file=fold(is1))
-            read(99,*,err=100,end=101) idum
-            if (npoints.eq.0) then
-              npoints = idum
-              allocate(pos(npoints))
-              allocate(values(npoints,isend-isbegin+1))
-              allocate(value1(npoints))
-            else
-              call xertst( idum.eq.npoints,
+            write(charns ,'(i3.3)') isbegin
+            write(charns1,'(i3.3)') isend
+            filenames(is1) =
+     .       trim(fold(isbegin))//'.'//charns//'-'//charns1
+            write(nunit,'(a)') trim(filenames(is1))
+            do is = isbegin, isend
+              open(99,file=fold(is1))
+              read(99,*,err=100,end=101) idum
+              if (npoints.eq.0) then
+                npoints = idum
+                allocate(pos(npoints))
+                allocate(values(npoints,isend-isbegin+1))
+                allocate(value1(npoints))
+              else
+                call xertst( idum.eq.npoints,
      .         'Mismatched profile sizes, conversion case not coded !')
-            end if
+              end if
+              do iy = 1, npoints
+                read(99,*,err=100,end=101)
+     .           pos(iy),values(iy,is-isbegin+1)
+              end do
+              close(99)
+            end do
             do iy = 1, npoints
-              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+              value1(iy) = 0.0_R8
+              do is = isbegin, isend
+                value1(iy) = value1(iy) +
+     .           bundle_frac(is1,is)*values(iy,is-isbegin+1)
+              end do
+              value1(iy) = value1(iy) / sum
+            end do
+            open(99,file=trim(filenames(is1)))
+            write(99,*) npoints
+            do iy = 1, npoints
+              write(99,*) pos(iy), value1(iy)
             end do
             close(99)
-          end do
-          do iy = 1, npoints
-            value1(iy) = 0.0_R8
-            do is = isbegin, isend
-              value1(iy) = value1(iy) +
-     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
-            end do
-            value1(iy) = value1(iy) / sum
-          end do
-          open(99,file=trim(filenames(is1)))
-          write(99,*) npoints
-          do iy = 1, npoints
-            write(99,*) pos(iy), value1(iy)
-          end do
-          close(99)
-          deallocate(pos,values,value1)
+            deallocate(pos,values,value1)
+          end if
         end if
       end do
 

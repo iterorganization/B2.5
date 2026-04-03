@@ -10,7 +10,9 @@
       use b2mod_indirect
       use b2mod_openmp
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,        !djm Jan2017
+     & ,only : update_balance_sources_particles,                        !djm Jan2017
+     &         update_balance_eirene_sources_particles,
+     &         balance_netcdf,                                          !djm Jan2017
      &         tot_sna0to1, fna_tot                                     !djm Mar2019
       use b2mod_subsys
       use b2mod_sources
@@ -70,6 +72,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       integer, save :: get_residuals = 0                           !srv 22.05.18
       integer, save :: style_b2mndt = 1                            !srv 07.07.21
+      integer, save :: write_eirene_sources = 0
       character chns*3                                             !srv 04.07.08
       logical warning
 #ifdef _OPENMP
@@ -151,6 +154,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -182,7 +186,7 @@
 *    ..test edge values of fnb
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
-
+      nap(:,:,isb) = nb !djm 04.03.26 restoring this line
       if(style_b2mndt.eq.2) then                                        !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nx, ny, isb, guard_flows, dtim,
@@ -196,6 +200,9 @@ cdjm Jan2017 update particle source components for balance
         tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
         fna_tot(:,:,:,isb)=fnb     !djm Mar2019
         call update_balance_sources_particles(nx,ny,isb,nb)
+      endif
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles(nx,ny,isb,nb)
       endif
 
 * ..particle balance

@@ -106,6 +106,8 @@
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
       integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0   !srv 02.12.04
+      integer, save :: neo_time_steps = 1, nstg2 = 1
+      integer, save :: neo_output = 0
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
@@ -172,6 +174,10 @@
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
         call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
+        call ipgeti ('b2tqna_neoclassical_time_steps', neo_time_steps)
+        call ipgeti ('b2tqna_neoclassical_output', 
+     1      neo_output)
+        call ipgeti ('b2mndt_nstg2', nstg2)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -467,7 +473,7 @@ c mw added transport
 c mw end
       elseif(user_transport.eq.6) then                                    !srv 13.06.08
 !! FIXME: Need to fix clash with ank blobby transport model
-        call set_transport_srv(nx, ny, ns, bb, na, te, ti,
+        call set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te, ti,
      &  ni, ne, ne2, hy, hy1, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &  hcib, hce0, sig0, alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
@@ -481,7 +487,8 @@ c mw end
         endif
         call set_transport_neo(nx, ny, ns, hx, hy1, vol, crx, cry,
      &   conn, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
-     &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0)
+     &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0, neo_time_steps,
+     &   neo_output, nstg2, jsep)
 c ank added blobby transport
 !! FIXME: Was user_transport.eq.6 in 4.x, 5.0/5.1
       elseif(user_transport.eq.9) then
@@ -735,7 +742,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       return
       end subroutine set_transport
 
-      subroutine set_transport_srv(nx, ny, ns, bb, na, te,      !srv 12.06.08 {
+      subroutine set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te,     !SOM 17.07.19 !srv 12.06.08 {
      &  ti, ni, ne, ne2, hy, hy1, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &  hcib, hce0, sig0, alf0, wrk0)
       use b2mod_types
@@ -746,13 +753,15 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_transport_namelist      !SOM 17.07.19
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, jsep, jxa
+      integer, save :: jsep_cnv, jxa_cnv
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -769,6 +778,9 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: vla0_cnv(-1:nx,-1:ny,0:1,0:ns-1)
+      real (kind=R8) :: vout_cnv_single, pw0_cnv_single,
+     &  pw1_cnv_single, pw2_cnv_single
 *   ..common blocks
 *   ..local variables
       integer ncall, n2, ix, iy, is
@@ -917,6 +929,23 @@ c
        call ipgetr ('b2tqna_vl_delta2', vl_delta2)
        call xertst (0.le.vl_delta1,'faulty argument b2tqna_vl_delta1')
        call xertst (0.le.vl_delta2,'faulty argument b2tqna_vl_delta2') !srv 19.04.10 }
+
+       vout_cnv_single = 0.0_R8
+       pw0_cnv_single = 1.0_R8
+       pw1_cnv_single = 5.0_R8
+       pw2_cnv_single = 2.0_R8
+       jsep_cnv = jsep
+       jxa_cnv = jxa
+       call ipgetr ('b2tqna_vout_cnv', vout_cnv_single)          !SOM 17.07.19
+       call ipgetr ('b2tqna_pw0_cnv', pw0_cnv_single)
+       call ipgetr ('b2tqna_pw1_cnv', pw1_cnv_single)
+       call ipgetr ('b2tqna_pw2_cnv', pw2_cnv_single)
+       call ipgeti ('b2tqna_jsep_cnv', jsep_cnv)
+       call ipgeti ('b2tqna_jxa_cnv', jxa_cnv)
+       vout_cnv = vout_cnv_single
+       pw0_cnv = pw0_cnv_single
+       pw1_cnv = pw1_cnv_single
+       pw2_cnv = pw2_cnv_single
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -1000,6 +1029,10 @@ c
           enddo
         enddo
       enddo
+
+      vla0_cnv = 0.0_R8                                               !som 17.07.19
+      call set_transport_blob(nx, ny, ns, jsep_cnv, jxa_cnv, vla0_cnv)
+      vla0 = vla0 + vla0_cnv
 
       if(iout.ne.0) then                                              !srv 15.06.08 {
        do is = 0,ns-1
@@ -2681,7 +2714,7 @@ c*** We only apply this in the outer SOL region
       subroutine set_transport_neo(nx, ny, ns, hx, hy1, vol,
      &  crx, cry, conn, bb, na, te, ti, ni, ne,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
-     &  hvi0, hve0)
+     &  hvi0, hve0, neo_time_steps, neo_output, nstg2, jsep)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -2695,7 +2728,8 @@ c*** We only apply this in the outer SOL region
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, jsep
+      integer neo_time_steps, neo_output, nstg2
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -2721,7 +2755,8 @@ c*** We only apply this in the outer SOL region
       save ncall, ixref, iyref, transpbgr_namelist
       data transpbgr_namelist/1/
 *   ..local variables for neoclassical transport
-      integer, save :: ic
+      integer, save :: ic, iystart, iyend, dna_set, vla_set, hci_set,
+     *                 hvi_set, hce_set, hve_set
       integer :: istate,ispecies,ishift
       integer :: isorth(0:nsdecl,0:nzdecl-1), nclh(0:nsdecl), nslh
       real (kind=R8) ::
@@ -2737,6 +2772,10 @@ c*** We only apply this in the outer SOL region
      &   cellface(0:nsdecl,0:nzdecl-1,-1:ny,1:5)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
+      character*256 filename
+      logical ex
+      logical, save :: neo_ns_set(0:nsdecl)
+      namelist /neoclassical_transport/ neo_ns_set
 *   ..set the accuracy
       parameter (epsn=1.e-3)
       real (kind=R8) ::
@@ -2752,6 +2791,13 @@ c*** We only apply this in the outer SOL region
      &   gradnsav(0:nsdecl,0:nzdecl-1,-1:ny),
      &   tforce(0:nsdecl,0:nzdecl-1,1:2,-1:ny)
 
+      real (kind=R8), allocatable :: dd_output(:,:)
+      real (kind=R8), allocatable :: vvn_output(:,:)
+      real (kind=R8), allocatable :: chi_i_output(:,:)
+      real (kind=R8), allocatable :: vwt_i_output(:,:)
+      real (kind=R8), allocatable :: chi_e_output(:)
+      real (kind=R8), allocatable :: vwt_e_output(:)
+
 *   ..procedures
       external ipgeti, ipgetr, b2xvsg, fluxav, sfluxav,
      &         tfluxav, neodv, neochi
@@ -2765,7 +2811,8 @@ c*** We only apply this in the outer SOL region
 *     mind that B2 already calculates the classical transport !
 *     avoid double transport, 0+4 for cross-checks only !
       data ic /3/
-
+      data dna_set /1/, vla_set /1/, hci_set /1/, hvi_set /1/, 
+     *     hce_set /1/, hve_set /1/
 *   ..subprogram start-up calls
       call subini ('set_transport_neo')
       if (ncall.eq.0) then
@@ -2801,6 +2848,16 @@ c*** We only apply this in the outer SOL region
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
         call ipgeti ('neoclassical_ic', ic)
+        iystart = -1
+        iyend = jsep
+        call ipgeti ('b2tqna_neoclassical_iystart', iystart)
+        call ipgeti ('b2tqna_neoclassical_iyend', iyend)
+        call ipgeti ('b2tqna_neoclassical_dna', dna_set)
+        call ipgeti ('b2tqna_neoclassical_vla', vla_set)
+        call ipgeti ('b2tqna_neoclassical_hci', hci_set)
+        call ipgeti ('b2tqna_neoclassical_hvi', hvi_set)
+        call ipgeti ('b2tqna_neoclassical_hce', hce_set)
+        call ipgeti ('b2tqna_neoclassical_hve', hve_set)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
         write(*,*) 'NEOART option ', ic, ' has been used'
@@ -2832,6 +2889,24 @@ c*** We only apply this in the outer SOL region
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
       endif
 
+*   ..read species indices for which to calculate
+*     the neoclassical transport coefficients
+      neo_ns_set=.true.
+      filename='b2.neoclassical_transport.parameters'
+      call find_file(filename,ex)
+      if(ex) then
+        open(99,file=filename)
+        write(*,*) 'Reading ',trim(filename)
+#ifdef USE_MPI
+        read(99,neoclassical_transport,err=999)
+#else
+        read(99,neoclassical_transport)
+#endif
+        write(*,neoclassical_transport)
+        close(99)
+        write(*,*) 'Read ',trim(filename)
+      endif
+
 *   ..main
 
 *   ..initialize densities and temperatures
@@ -2853,136 +2928,135 @@ c        write(*,*) '0: ix = ',ix,' in region ', region(ix,0,0)
 c        write(*,*) 'ny: ix = ',ix,' in region ', region(ix,ny,0)
 c      enddo
 
-
 *   ..obtain input
-      call ipgeti ('b2tqna_transpbgr_namelist', transpbgr_namelist)
-      if(transpbgr_namelist.ge.1) then
-        call read_b2mod_transpbgr_namelist
-        call write_b2mod_transpbgr_namelist
-      endif
+        call ipgeti ('b2tqna_transpbgr_namelist', transpbgr_namelist)
+        if(transpbgr_namelist.ge.1) then
+          call read_b2mod_transpbgr_namelist
+          call write_b2mod_transpbgr_namelist
+        endif
 
 *    ..loop voltage eparr (to be included in a separate routine!)
 *       default value:
-      eparr=0.0_R8
+        eparr=0.0_R8
 *       read scalar from b2mn.dat
-      call ipgetr ('b2tqna_eparr', eparr)
-      write(*,*) 'eparr =', eparr
+        call ipgetr ('b2tqna_eparr', eparr)
+        write(*,*) 'eparr =', eparr
 
 *   ..initialize geometric parameters
-      do iy=-1,ny
-        bav_(iy)=0.0_R8
-        b2av_(iy)=0.0_R8
-        bi2a_(iy)=0.0_R8
-        rbt_(iy)=0.0_R8
-        bgradp_(iy)=0.0_R8
-        dpsidr_(iy)=0.0_R8
-        rnq_(iy)=0.0_R8
-        fc_(iy)=0.0_R8
-        gclass_(iy)=0.0_R8
-        do is=1,mmx
-          fm_(is,iy)=0.0_R8
+        do iy=-1,ny
+          bav_(iy)=0.0_R8
+          b2av_(iy)=0.0_R8
+          bi2a_(iy)=0.0_R8
+          rbt_(iy)=0.0_R8
+          bgradp_(iy)=0.0_R8
+          dpsidr_(iy)=0.0_R8
+          rnq_(iy)=0.0_R8
+          fc_(iy)=0.0_R8
+          gclass_(iy)=0.0_R8
+          do is=1,mmx
+            fm_(is,iy)=0.0_R8
+          enddo
+          r2i_(iy)=0.0_R8
+          rho_(iy)=0.0_R8
         enddo
-        r2i_(iy)=0.0_R8
-        rho_(iy)=0.0_R8
-      enddo
 
 *   ..split species into species and charge states
-      do ispecies=0,nsdecl
-        ncl(ispecies)=0
-        do istate=0,nzdecl-1
-          isort(ispecies,istate)=0
+        do ispecies=0,nsdecl
+          ncl(ispecies)=0
+          do istate=0,nzdecl-1
+            isort(ispecies,istate)=0
+          enddo
         enddo
-      enddo
-      do is=0,ns-1
-        zah(is)=(zamin(is)+zamax(is))/2.0_R8
-        if (zamin(is).ne.zamax(is)) then
-          write(6,*) 'Warning: '//
-     .     'neoclassical transport model may not be accurate '//
-     .     'for bundled charge states!'
-        end if
-        amh(is)=am(is)
-      enddo
-      do is=0,ns-2
-        zacomp=zah(is)
-        amcomp=amh(is)
-        ispecies=is
-        do is2=is+1,ns-1
-          if((abs(amh(is2)-amcomp).lt.0.5_R8).and.
-     &       (zah(is2).lt.zacomp)) then
-            zacomp=zah(is2)
-            ispecies=is2
-          elseif(amh(is2).lt.amcomp) then
-            amcomp=amh(is2)
-            zacomp=zah(is2)
-            ispecies=is2
-          endif
+        do is=0,ns-1
+          zah(is)=(zamin(is)+zamax(is))/2.0_R8
+          if (zamin(is).ne.zamax(is)) then
+            write(6,*) 'Warning: '//
+     .       'neoclassical transport model may not be accurate '//
+     .       'for bundled charge states!'
+          end if
+          amh(is)=am(is)
         enddo
-        zah(ispecies)=zah(is)
-        amh(ispecies)=amh(is)
-        zah(is)=zacomp
-        amh(is)=amcomp
-      enddo
-      ispecies=1
-      istate=1
-      amcomp=amh(0)
-      do is=1,ns-1
-        if((amh(is)-amcomp).gt.0.5_R8) then
-          ncl(ispecies-1)=istate
-          ispecies=ispecies+1
+        do is=0,ns-2
+          zacomp=zah(is)
           amcomp=amh(is)
-          istate=1
-        elseif(abs(amh(is)-amcomp).lt.0.5_R8) then
-          istate=istate+1
-        endif
-      enddo
-
-      ncl(ispecies-1)=istate
-
-      nsl=ispecies
-
-      is=0
-      do ispecies=0,nsl-1
-        do istate=0,ncl(ispecies)-1
-          do is2=0,ns-1
-            if((abs(am(is2)-amh(is)).lt.0.5_R8).and.
-     &         (abs((zamin(is2)+zamax(is2))/2.0_R8-zah(is)).lt.
-     .            0.5_R8)) then
-              isort(ispecies,istate)=is2
+          ispecies=is
+          do is2=is+1,ns-1
+            if((abs(amh(is2)-amcomp).lt.0.5_R8).and.
+     &         (zah(is2).lt.zacomp)) then
+              zacomp=zah(is2)
+              ispecies=is2
+            elseif(amh(is2).lt.amcomp) then
+              amcomp=amh(is2)
+              zacomp=zah(is2)
+              ispecies=is2
             endif
           enddo
-          is=is+1
+          zah(ispecies)=zah(is)
+          amh(ispecies)=amh(is)
+          zah(is)=zacomp
+          amh(is)=amcomp
         enddo
-      enddo
-
-*   ..remove neutrals from list
-      do ispecies=0,nsl-1
-        nclh(ispecies)=ncl(ispecies)
-      enddo
-      nslh=nsl
-      isorth=isort
-      do ispecies=0,nsl-1
-        do istate=0,ncl(ispecies)-1
-          if (is_neutral(isort(ispecies,istate))) then
-            nclh(ispecies)=nclh(ispecies)-1
-            if (nclh(ispecies).eq.0) nslh=nslh-1
+        ispecies=1
+        istate=1
+        amcomp=amh(0)
+        do is=1,ns-1
+          if((amh(is)-amcomp).gt.0.5_R8) then
+            ncl(ispecies-1)=istate
+            ispecies=ispecies+1
+            amcomp=amh(is)
+            istate=1
+          elseif(abs(amh(is)-amcomp).lt.0.5_R8) then
+            istate=istate+1
           endif
         enddo
-      enddo
-      is=0
-      do ispecies=0,nsl-1
-        if (nclh(ispecies).ne.0) then
-           nclh(is)=nclh(ispecies)
-           is=is+1
-        endif
-      enddo
-      is=0
-      is2=0
-      do ispecies=0,nsl-1
-        do istate=0,ncl(ispecies)-1
-          if (.not. is_neutral(isorth(ispecies,istate))) then
-            isort(is,is2)=isorth(ispecies,istate)
-            is2=is2+1
-            if (is2.gt.(nclh(is)-1)) then
+
+        ncl(ispecies-1)=istate
+
+        nsl=ispecies
+
+        is=0
+        do ispecies=0,nsl-1
+          do istate=0,ncl(ispecies)-1
+            do is2=0,ns-1
+              if((abs(am(is2)-amh(is)).lt.0.5_R8).and.
+     &           (abs((zamin(is2)+zamax(is2))/2.0_R8-zah(is)).lt.
+     .            0.5_R8)) then
+                isort(ispecies,istate)=is2
+              endif
+            enddo
+            is=is+1
+          enddo
+        enddo
+
+*   ..remove neutrals from list
+        do ispecies=0,nsl-1
+          nclh(ispecies)=ncl(ispecies)
+        enddo
+        nslh=nsl
+        isorth=isort
+        do ispecies=0,nsl-1
+          do istate=0,ncl(ispecies)-1
+            if (is_neutral(isort(ispecies,istate))) then
+              nclh(ispecies)=nclh(ispecies)-1
+              if (nclh(ispecies).eq.0) nslh=nslh-1
+            endif
+          enddo
+        enddo
+        is=0
+        do ispecies=0,nsl-1
+          if (nclh(ispecies).ne.0) then
+            nclh(is)=nclh(ispecies)
+            is=is+1
+          endif
+        enddo
+        is=0
+        is2=0
+        do ispecies=0,nsl-1
+          do istate=0,ncl(ispecies)-1
+            if (.not. is_neutral(isorth(ispecies,istate))) then
+              isort(is,is2)=isorth(ispecies,istate)
+              is2=is2+1
+              if (is2.gt.(nclh(is)-1)) then
                 is=is+1
                 is2=0
               endif
@@ -3022,71 +3096,71 @@ c      enddo
           thet=0._R8
           ilp(iy)=0._R8
           do ix=ixref,-1,-1
-           if (on_closed_surface(ix,iy)) then
-             theta(ix,iy)=thet
-             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=thet
+              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(leftix(ix,iy),leftiy(ix,iy)))
-             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(rightix(ix,iy),rightiy(ix,iy)))
-            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &                  hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &                  hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &                (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(leftix(ix,iy),leftiy(ix,iy)))
+              hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &                  hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &                  hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &                (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(rightix(ix,iy),rightiy(ix,iy)))
+              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
      &           ((hxpface+hxnface)/2._R8+hxface)
-            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
      &              bb(ix,iy,0)
-           endif
+            endif
           enddo
           do ix=nx,ixref+1,-1
-           if (on_closed_surface(ix,iy)) then
-             theta(ix,iy)=thet
-             hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
-     &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
-     &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-             hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &              hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
-     &              hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &              bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
-     &              vol(leftix(ix,iy),leftiy(ix,iy)))
-             hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
-     &              hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
-     &              hx(rightix(ix,iy),rightiy(ix,iy)))/
-     &              (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &              bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
-     &              vol(rightix(ix,iy),rightiy(ix,iy)))
-            thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=thet
+              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
+     &               (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
+              hxpface=(vol(leftix(ix,iy),leftiy(ix,iy))*
+     &                  hx(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))*
+     &                  hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &                (vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &                     bottomiy(leftix(ix,iy),leftiy(ix,iy)))+
+     &                 vol(leftix(ix,iy),leftiy(ix,iy)))
+              hxnface=(vol(rightix(ix,iy),rightiy(ix,iy))*
+     &                  hx(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))*
+     &                  hx(rightix(ix,iy),rightiy(ix,iy)))/
+     &                (vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &                     bottomiy(rightix(ix,iy),rightiy(ix,iy)))+
+     &                 vol(rightix(ix,iy),rightiy(ix,iy)))
+              thet=thet+0.5_R8*bb(ix,iy,3)/bb(ix,iy,0)*
      &           ((hxpface+hxnface)/2._R8+hxface)
-            ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
+              ilp(iy)=ilp(iy)+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/
      &              bb(ix,iy,0)
-           endif
+            endif
           enddo
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-           if (on_closed_surface(ix,iy)) then
-            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
-           endif
+            if (on_closed_surface(ix,iy)) then
+              theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
+            endif
           enddo
         enddo
 
@@ -3186,9 +3260,14 @@ c      enddo
       endif
 
 
-*   ..now calculate the neoclassical transport (if newneo set)
-
-      if (newneo) then
+*   ..now calculate the neoclassical transport
+*   ..coefficients are recalculated only every neo_time_steps B2.5 time steps.
+*   ..newneo sets whether the coefficients are recalculated during the
+*     several calls of b2tqna occurring within every B2.5 time step.
+*   ..TO FIX: for now only works if nstg0=1 and nstg1=1, in which case
+*     there are 2+nstg2 calls of b2tqna for every B2.5 time step
+      if ((mod(ncall,(2+nstg2)*neo_time_steps) .ge. 1 .and. mod(ncall,   &
+     &     (2+nstg2)*neo_time_steps).le. (2+nstg2)) .and. newneo) then 
 
 *   ..loop over flux surfaces
        do iy=0,ny
@@ -3272,13 +3351,22 @@ c      enddo
           r2i=r2i_(iy)
           rho=rho_(iy)
 
+          if (iy >= iystart .and. iy <= iyend) then
+
 *    ..calculate the diffusion coefficients
-          call neodv(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
-     &               epsn,dd(:,:,iy),vvn(:,:,iy),vtn(:,:,iy))
+           if (dna_set == 1 .or. vla_set == 1 .or. neo_output == 1) then
+            call neodv(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,
+     &                 eparr,epsn,dd(:,:,iy),vvn(:,:,iy),vtn(:,:,iy))
+           endif
 
 *    ..calculate the heat conduction coefficients
-          call neochi(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
-     &                epsn,kappa(:,:,iy),chi(:,:,iy),vw(:,:,iy))
+           if (hci_set == 1 .or. hvi_set == 1 .or. hce_set == 1 
+     &       .or. hve_set == 1 .or. neo_output == 1) then
+            call neochi(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,
+     &                  eparr,epsn,kappa(:,:,iy),chi(:,:,iy),vw(:,:,iy))
+           endif
+
+          endif
 
 *    ..calculate thermal conductivity and heat pinch from
 *        q(i,j) = - kappa(i,j)*grad.T(i) + vw(i,j)*T(i)
@@ -3467,6 +3555,60 @@ c      close(14)
        write(*,*) 'use previous neoclassical transport coefficients'
       endif
 
+*   ..output the neoclassical transport coefficients to the b2neo.nc file
+*   ..TO FIX: for now only works if nstg0=1 and nstg1=1, in which case
+*     there are 2+nstg2 calls of b2tqna for every B2.5 time step
+
+#ifndef NO_CDF
+
+      if (neo_output == 1) then
+
+       if (ncall.ne.0 .and. (mod(ncall,(2+nstg2)*neo_time_steps)         &
+     &    .eq. 0)) then 
+
+           allocate(dd_output(ny+2,ns))
+           allocate(vvn_output(ny+2,ns))
+           allocate(chi_i_output(ny+2,ns))
+           allocate(vwt_i_output(ny+2,ns))
+           allocate(chi_e_output(ny+2))
+           allocate(vwt_e_output(ny+2))     
+
+           dd_output=0.0_R8
+           vvn_output=0.0_R8
+           chi_i_output=0.0_R8
+           vwt_i_output=0.0_R8
+           chi_e_output=0.0_R8
+           vwt_e_output=0.0_R8
+
+           do iy=-1,ny
+              do ispecies=0,nsl-2
+               do istate=0,ncl(ispecies)-1
+                is=isort(ispecies,istate)
+                dd_output(iy+2,is+1)=(dd(ispecies,istate,iy))
+                vvn_output(iy+2,is+1)=(vvn(ispecies,istate,iy))
+                chi_i_output(iy+2,is+1)=(chi(ispecies,istate,iy))
+                vwt_i_output(iy+2,is+1)=(vwt(ispecies,istate,iy))
+               enddo
+              enddo
+              chi_e_output(iy+2)=(chi(nsl-1,0,iy))
+              vwt_e_output(iy+2)=(vwt(nsl-1,0,iy))
+           enddo
+
+           call b2neooutput(ny,ns,dd_output,vvn_output,
+     &      chi_i_output,vwt_i_output,chi_e_output,vwt_e_output)
+
+           deallocate(dd_output)
+           deallocate(vvn_output)
+           deallocate(chi_i_output)
+           deallocate(vwt_i_output)
+           deallocate(chi_e_output)
+           deallocate(vwt_e_output)
+
+       endif
+
+      endif
+
+#endif
 
 !       if (mod(ncall,200).eq.0) then
 !         write(*,*) 'temperature output', ncall
@@ -3522,29 +3664,47 @@ c      close(14)
       do ix=-1,nx
        do iy=-1,ny
         if (on_closed_surface(ix,iy)) then
-         do ispecies=0,nsl-2
-          do istate=0,ncl(ispecies)-1
-           is=isort(ispecies,istate)
-           dna0(ix,iy,is)=dna0(ix,iy,is)+dd(ispecies,istate,iy)*
-     &                    (hy1(ix,iy)/hy1(ixref,iy))**2
-           vla0(ix,iy,1,is)=vla0(ix,iy,1,is)+
-     &        vvn(ispecies,istate,iy)*(hy1(ix,iy)/hy1(ixref,iy))
-           dfhcb=chi(ispecies,istate,iy)*
-     &           (hy1(ix,iy)/hy1(ixref,iy))**2
-           hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
-           hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
-           hvi0(ix,iy,1)=hvi0(ix,iy,1)+vwt(ispecies,istate,iy)*
-     &           (hy1(ix,iy)/hy1(ixref,iy))*na(ix,iy,is)/
-     &           (ni(ix,iy,0)+ni_ext(ix,iy,0))
+         if (iy >= iystart .and. iy <= iyend) then
+          do ispecies=0,nsl-2
+           do istate=0,ncl(ispecies)-1
+            is=isort(ispecies,istate)
+            if (dna_set == 1) then
+             if (neo_ns_set(is)) then
+              dna0(ix,iy,is)=dna0(ix,iy,is)+dd(ispecies,istate,iy)*
+     &                       (hy1(ix,iy)/hy1(ixref,iy))**2
+             endif
+            endif
+            if (vla_set == 1) then
+             if (neo_ns_set(is)) then
+              vla0(ix,iy,1,is)=vla0(ix,iy,1,is)+
+     &           vvn(ispecies,istate,iy)*(hy1(ix,iy)/hy1(ixref,iy))
+             endif
+            endif
+            if (hci_set == 1) then
+             dfhcb=chi(ispecies,istate,iy)*
+     &             (hy1(ix,iy)/hy1(ixref,iy))**2
+             hci0(ix,iy)=hci0(ix,iy)+dfhcb*na(ix,iy,is)
+             hcib(ix,iy,is)=hcib(ix,iy,is)+dfhcb*na(ix,iy,is)
+            endif
+            if (hvi_set == 1) then
+             hvi0(ix,iy,1)=hvi0(ix,iy,1)+vwt(ispecies,istate,iy)*
+     &             (hy1(ix,iy)/hy1(ixref,iy))*na(ix,iy,is)/
+     &             (ni(ix,iy,0)+ni_ext(ix,iy,0))
+            endif
+           enddo
           enddo
-         enddo
-         dfhce=chi(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))**2
-         if (dfhce.lt.0) then
-           write(*,*) 'dfhce(',ix,',',iy,')=',dfhce
+          if (hce_set == 1) then
+           dfhce=chi(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))**2
+           if (dfhce.lt.0) then
+             write(*,*) 'dfhce(',ix,',',iy,')=',dfhce
+           endif
+          hce0(ix,iy)=hce0(ix,iy)+dfhce*ne(ix,iy)
+          endif
+          if (hve_set == 1) then
+           hve0(ix,iy,1)=hve0(ix,iy,1)+
+     &        vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
          endif
-         hce0(ix,iy)=hce0(ix,iy)+dfhce*ne(ix,iy)
-         hve0(ix,iy,1)=hve0(ix,iy,1)+
-     &      vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
+         endif
 
 *   ..set constant anomalous transport in the SOL and divertor regions
         elseif (.not.on_closed_surface(ix,iy)) then
@@ -3568,7 +3728,209 @@ c      close(14)
       call subend ()
       return
 
+#ifdef USE_MPI
+  999 call xerrab
+     . ('Error while reading NEOCLASSICAL_TRANSPORT namelist!')
+#endif
+
       end subroutine set_transport_neo
+
+#ifndef NO_CDF
+
+      subroutine b2neooutput(ny,ns,dd_output,vvn_output,
+     &  chi_i_output,vwt_i_output,chi_e_output,vwt_e_output)
+
+      use b2mod_types
+      use b2mod_time
+      use b2mod_mwti
+      use b2mod_subsys
+
+      implicit none
+
+#     include <netcdf.inc>
+
+      integer ncall
+
+      integer, save :: ntstep, nastep
+      integer, save :: ncid
+      integer iret, is, ispecies, istate, ix, ixref, iy
+      integer ns,nsl,ncl,ny
+      integer nvars, natts, ndims, unlimid
+      real (kind=R8) :: tstepn(1), timesa(1)
+      real (kind=R8) :: dd_output(ny+2,ns), vvn_output(ny+2,ns),
+     &  chi_i_output(ny+2,ns), vwt_i_output(ny+2,ns),
+     &  chi_e_output(ny+2), vwt_e_output(ny+2)
+
+      logical ex
+      character*5 rw
+      character*256, save :: filename
+      save ncall
+      data ncall/0/
+      external check_cdf_status
+
+      call subini ('b2neooutput')
+
+      if (ncall.eq.0) then
+
+        filename='b2neo.nc'
+
+        ntstep = 0
+        call b2crneocdf(filename,ny,ns,iret)
+        call check_cdf_status(iret)
+        iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
+        call check_cdf_status(iret)
+
+        rw='write'
+        tstepn(1) = ntstep
+        call rwcdf(rw, ncid, 'ntstep', (/1/), tstepn, iret)
+        call check_cdf_status(iret)
+        iret = nf_close(ncid)
+        call check_cdf_status(iret)
+
+      endif
+
+      ntstep = ntstep + 1
+      call rwcdf_settime ('time', ntstep)
+      timesa(1) = tim
+
+      rw = 'write'
+      iret = nf_open(filename, or(NF_WRITE,NF_SHARE), ncid)
+      call check_cdf_status(iret)
+      tstepn(1) = ntstep
+      call rwcdf(rw,ncid,'ntstep',(/1/),tstepn,iret)
+      call rwcdf(rw,ncid,'timesa',(/1/),timesa,iret)
+      call rwcdf(rw,ncid,'dd',(/1,1,1/),dd_output,iret)
+      call rwcdf(rw,ncid,'vvn',(/1,1,1/),vvn_output,iret)
+      call rwcdf(rw,ncid,'chi_i',(/1,1,1/),chi_i_output,iret)
+      call rwcdf(rw,ncid,'vwt_i',(/1,1,1/),vwt_i_output,iret)
+      call rwcdf(rw,ncid,'chi_e',(/1,1/),chi_e_output,iret)
+      call rwcdf(rw,ncid,'vwt_e',(/1,1/),vwt_e_output,iret)
+
+      iret = nf_close(ncid)
+      call check_cdf_status(iret)
+
+      ncall = ncall+1
+      call subend()
+      return
+
+      end subroutine b2neooutput
+
+      subroutine b2crneocdf(filename,ny,ns,iret)
+#     include <netcdf.inc>
+      integer ny, ns, iret
+      character*256 :: filename
+      ! NetCDF id
+      integer  ncid
+      ! dimension ids
+      integer :: timedim
+      ! variable ids
+      integer :: ntstepid, timesaid,
+     &           ddid, vvnid, chiiid, vwtiid, chieid, vwteid
+      ! variable shapes
+      integer :: dims(2)
+      ! CDF format variable
+      integer, save :: cdf_default = 0
+      ! Procedures
+      external ipgeti, check_cdf_status
+
+      ! Create and enter define mode
+      call ipgeti ('b2mndr_cdf_default', cdf_default)
+      if (cdf_default.eq.3 .or. cdf_default.eq.4) then
+        iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+      else
+        iret = nf_create(trim(filename), ncclob, ncid)
+      end if
+      call check_cdf_status(iret)
+
+      ! define dimensions
+      iret = nf_def_dim(ncid, 'ny', ny+2, nydim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'ns', ns, nsdim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
+      call check_cdf_status(iret)
+
+      ! define variables
+      dims(1) = 0
+      iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0,
+     &      dims, ntstepid)
+      call check_cdf_status(iret)
+      dims(1) = timedim
+      iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1,        
+     &      dims, timesaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dd', NCDOUBLE, 3, 
+     &      (/nydim,nsdim,timedim/), ddid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vvn', NCDOUBLE, 3, 
+     &      (/nydim,nsdim,timedim/), vvnid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'chi_i', NCDOUBLE, 3, 
+     &      (/nydim,nsdim,timedim/), chiiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vwt_i', NCDOUBLE, 3, 
+     &      (/nydim,nsdim,timedim/), vwtiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'chi_e', NCDOUBLE, 2, 
+     &      (/nydim,timedim/), chieid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vwt_e', NCDOUBLE, 2, 
+     &      (/nydim,timedim/), vwteid)
+      call check_cdf_status(iret)
+
+      ! assign attributes
+      iret = nf_put_att_text(ncid, timesaid,
+     &  'long_name', 4,'time')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timesaid,
+     %  'units', 2, 's ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ddid,
+     &  'long_name', 20, 'particle diffusivity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ddid,
+     &  'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vvnid,
+     &  'long_name', 26, 'radial convective velocity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vvnid,
+     &  'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, chiiid,
+     &  'long_name', 24, 'ion thermal conductivity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, chiiid,
+     &  'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vwtiid,
+     &  'long_name', 35, 'radial ion thermal strange velocity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vwtiid,
+     &  'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, chieid,
+     &  'long_name', 29, 'electron thermal conductivity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, chieid,
+     &  'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vwteid,
+     &  'long_name', 40, 'radial electron thermal strange velocity')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vwteid,
+     &  'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      ! leave define mode
+      iret = nf_enddef(ncid)
+      call check_cdf_status(iret)
+      iret = nf_close(ncid)
+      call check_cdf_status(iret)
+      return
+
+      end subroutine b2crneocdf
+
+#endif
 
       subroutine set_profile(fnm, n, coord, fun)                        !srv 01.03.07 {
       use b2mod_types

@@ -493,9 +493,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(micmp)
       deallocate(lcns)
       deallocate(ltns)
+      deallocate(ktns)
       deallocate(lsns)
       deallocate(ksns)
-      deallocate(ktns)
       deallocate(msns)
       deallocate(textan)
       if (allocated(textmn)) deallocate(textmn)
@@ -600,6 +600,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai
 #endif
         endif
+
         allocate(old_style(nstrat))
         do is = 1, nstrat
           if (rc_list_size(is).eq.0) then
@@ -643,9 +644,10 @@ c
       end do
 
 *   ..set additional variables
-      do is = 1, nstrat
-        if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
-     &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
+      do istra = 1, nstrat
+        if (crcstra(istra).ne.'N' .and. crcstra(istra).ne.'S' .and.
+     &      crcstra(istra).ne.'W' .and. crcstra(istra).ne.'E')
+     &      targsp(istra,:)=-1
       end do
 
 *   ..test input

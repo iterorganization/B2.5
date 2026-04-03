@@ -397,7 +397,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-           call b2xtvc (nx, ny, nx1, ny1,
+            call b2xtvc (nx, ny, nx1, ny1,
      &        smr_mean(-1,-1,is), smr1_mean(-1,-1,is1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
@@ -411,7 +411,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-           call b2xtvc (nx, ny, nx1, ny1,
+            call b2xtvc (nx, ny, nx1, ny1,
      &        smd_mean(-1,-1,is), smd1_mean(-1,-1,is1),
      &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,

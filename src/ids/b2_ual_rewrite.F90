@@ -46,6 +46,16 @@
 !!        !< data on edge plasma transport. Energy terms correspond to the
 !!        !< full kinetic energy equation (i.e. the energy flux takes into
 !!        !< account the energy transported by the particle flux)
+!!      type(ids_plasma_profiles) :: plasma_profiles !< IDS designed to store
+!!        !< data on plasma profiles
+!!      type (ids_plasma_sources) :: plasma_sources !< IDS designed to store
+!!        !< data on plasma sources. Energy terms correspond to the full
+!!        !< kinetic energy equation (i.e. the energy flux takes into account
+!!        !< the energy transported by the particle flux)
+!!      type (ids_plasma_transport) :: plasma_transport !< IDS designed to store
+!!        !< data on plasma transport. Energy terms correspond to the
+!!        !< full kinetic energy equation (i.e. the energy flux takes into
+!!        !< account the energy transported by the particle flux)
 !!      type (ids_radiation) :: radiation !< IDS designed to store
 !!        !< data on radiation emitted by the plasma species
 !!      type (ids_dataset_description) :: description !< IDS designed to store
@@ -71,6 +81,11 @@ program b2_ual_rewrite
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          equilibrium, batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+    use b2mod_driver &
+     & , only : plasma_profiles, plasma_sources, plasma_transport, &
+     &          batch_plasma_profiles, batch_plasma_sources
+#endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use b2mod_driver &
      & , only : old_description, description
@@ -96,6 +111,10 @@ program b2_ual_rewrite
     use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge, &
      &          dealloc_ids_edge, dealloc_batch_edge, close_ual
+#if AL_MAJOR_VERSION > 4
+    use b2mod_ual &
+     & , only : write_manifest, uri, imasdir
+#endif
     use b2mod_ual_io &
      & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -115,6 +134,10 @@ program b2_ual_rewrite
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
+#endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas &   ! IGNORE
+     & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
     use ids_schemas &   ! IGNORE
@@ -152,10 +175,10 @@ program b2_ual_rewrite
     character(len=24) :: argName
     integer narg, cptArg, l, m, new_run, status, tmp_run
     character*16 usrnam, run_user
-    character*256 path, new_path, imasdir, home_dir, systemarg
+    character*256 path, new_path, home_dir, systemarg
     logical same_run_number, absolute_path, not_default
 #if AL_MAJOR_VERSION > 4
-    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+    character(len=STRMAXLEN) :: uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
     data new_run / 0 /
@@ -410,11 +433,15 @@ program b2_ual_rewrite
       &                username, database, version, status)
 #endif
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
+#if AL_MAJOR_VERSION > 4
+      write(0,'(2a)') "Reading old IMAS data entry: ", trim(uri)
+#else
+      write(0,'(2a,2i8)') "Reading old IMAS data entry: ", trim(database), shot, run
+#endif
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       old_imas_version = 'x.xx.x'
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
       call ids_get( idx, "summary", old_summary, status )
       if ( status.ne.0 ) then
         write(0,*) 'Error opening old summary IDS !'
@@ -612,6 +639,9 @@ program b2_ual_rewrite
     !! Create/Write the set data to IDSs
     call B25_process_ids( &
       &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+      &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
       &  radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       &  description, &
@@ -638,6 +668,9 @@ program b2_ual_rewrite
     write(*,*) "START new_ids_edge"
     call new_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
         &   radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         &   description, &
@@ -652,32 +685,34 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         &   divertors, &
 #endif
-#if IMAS_MAJOR_VERSION > 3
-        &   uri, &
-#endif
         &   idx, new_eq_ggd )
-    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+    if (.not.streql(shot_string,' ')) then
+      systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
         &  //' -v '//int2str(IMAS_MAJOR_VERSION)
-    write(0,*) trim(systemarg)
-#ifdef NAGFOR
-    call system(systemarg, status, ierror)
-#else
-    call system(systemarg)
-#endif
-    if (.not.same_run_number) then
-! Add superceding information to .yaml file
-      systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
-        &  trim(run_string)//' '//trim(new_run_string)
       write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
       call system(systemarg)
 #endif
+      if (.not.same_run_number) then
+! Add superceding information to .yaml file
+        systemarg = 'IDS_yaml_replace '//trim(shot_string)//' '// &
+          &  trim(run_string)//' '//trim(new_run_string)
+        write(0,*) trim(systemarg)
+#ifdef NAGFOR
+        call system(systemarg, status, ierror)
+#else
+        call system(systemarg)
+#endif
+      end if
     end if
     call dealloc_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -686,15 +721,21 @@ program b2_ual_rewrite
 #endif
         &   radiation )
     call dealloc_batch_edge( &
-        &   batch_profiles, batch_sources, &
+        &   batch_profiles, batch_sources &
+#if IMAS_MAJOR_VERSION > 3
+        & , batch_plasma_profiles, batch_plasma_sources &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-        &   summary, &
+        & , summary &
 #endif
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
-        &   description &
+        & , description &
 #endif
         &   )
     call close_ual(idx)
+#if AL_MAJOR_VERSION > 4
+    call write_manifest
+#endif
 
 end program b2_ual_rewrite
 
