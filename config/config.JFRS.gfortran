@@ -1,22 +1,22 @@
 # Test whether necessary variables are set
 MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
 ifdef NCARG_ROOT
-LD_NCARG    ?= `pkg-config ncarg --libs`
+LD_NCARG    ?= $(shell pkg-config ncarg --libs)
 endif
 LD_MSCL     ?= -L${SOLPSLIB} -lmscl
 ifdef SOLPS_MPI
-LD_NETCDF   ?= `pkg-config pnetcdf --libs`
+LD_NETCDF   ?= $(shell pkg-config pnetcdf --libs)
 ifdef SOLPS_OPENMP
-LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
+LD_NAG      ?= $(shell pkg-config sci_mpi_mp --libs)
 else
-LD_NAG      ?= `pkg-config sci_mpi --libs`
+LD_NAG      ?= $(shell pkg-config sci_mpi --libs)
 endif
 else
-LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
+LD_NETCDF   ?= $(shell pkg-config netcdf-fortran --libs)
 ifdef SOLPS_OPENMP
-LD_NAG      ?= `pkg-config sci_mp --libs`
+LD_NAG      ?= $(shell pkg-config sci_mp --libs)
 else
-LD_NAG      ?= `pkg-config sci --libs`
+LD_NAG      ?= $(shell pkg-config sci --libs)
 endif
 endif
 
@@ -40,4 +40,3 @@ LDOPTS += -dynamic -fpic -mcmodel=medium
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

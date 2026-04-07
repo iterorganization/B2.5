@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
-LD_MSCL   ?= `pkg-config mscl --libs`
+LD_MSCL   ?= $(shell pkg-config mscl --libs)
 ifdef NCARG_ROOT
-LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lXrender -lbz2 -lz # for NCARG v6.x.x
+LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lXext $(shell pkg-config cairo --libs) -lfontconfig -lfreetype -lpng -lXrender -lbz2 -lz # for NCARG v6.x.x
 endif
-LD_NAG    ?= `pkg-config openblas --libs`
+LD_NAG    ?= $(shell pkg-config openblas --libs)
 LD_NETCDF ?=
 ifdef MKLROOT
 LD_MKL ?=  -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
@@ -15,14 +15,15 @@ ifndef SOLPS_CPP
   NO_MPI ?= true
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
-    DEFINES += -DCONSTANTS_PROVIDED
+    CONSTANTS_MINOR_VERSION = $(shell pkg-config fundamental-constants --modversion | cut -d '.' -f 2)
+    DEFINES += -DCONSTANTS_PROVIDED -DCONSTANTS_MINOR_VERSION=${CONSTANTS_MINOR_VERSION}
     IMAS_PKG_LIST = fundamental-constants
-    SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    INCMODS += `pkg-config fundamental-constants --cflags`
+    SOLPSINCLUDE += $(shell pkg-config fundamental-constants --cflags)
+    INCMODS += $(shell pkg-config fundamental-constants --cflags)
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
-      SOLPSINCLUDE += `pkg-config petsc --cflags`
+      SOLPSINCLUDE += $(shell pkg-config petsc --cflags)
       IMAS_PKG_LIST += petsc
     endif
   endif
@@ -66,7 +67,7 @@ ifdef LD_CATALYST
 endif
 
 ifdef IMAS_PKG_LIST
-  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
+  INCMODS += $(shell pkg-config ${IMAS_PKG_LIST} --cflags)
   IMASLIBS = ${LD_AL}
 endif
 
@@ -81,4 +82,3 @@ DBLSED = sed -e s:\#PREC\#:d:g
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-
