@@ -54,10 +54,12 @@
               call xerrab ('partype incompatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             do ip0 = 1, npar_opt
-              write (*,*) '  Cost function hessian '//trim(ss)//': ',
+              write (*,'(a,1pe21.13,1x,2a)')
+     &         '  Cost function hessian '//trim(ss)//': ',
      &          Jdd(idir,ip0,icf),'wrt',trim(key)
             enddo
             idir = idir + 1
@@ -168,10 +170,12 @@
             write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
-          write (*,*) '  Cost function gradient '//trim(ss)//': ',
+          write (*,'(a,1pe21.13,1x,2a)')
+     &     '  Cost function gradient '//trim(ss)//': ',
      &      Jd(idir,icf),'wrt',trim(key)
           do ip0 = 1, npar_opt
-            write (*,*) '  Cost function hessian '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function hessian '//trim(ss)//': ',
      &        Jdd(idir,ip0,icf),'wrt',trim(key)
           end do
           idir = idir + 1
@@ -184,10 +188,12 @@
           if (sigma_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             do ip0 = 1, npar_opt
-              write (*,*) '  Cost function hessian '//trim(ss)//': ',
+              write (*,'(a,1pe21.13,1x,2a)')
+     &         '  Cost function hessian '//trim(ss)//': ',
      &          Jdd(idir,ip0,icf),'wrt',trim(key)
             enddo
             idir = idir + 1
@@ -201,10 +207,12 @@
           if (mean_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             do ip0 = 1, npar_opt
-              write (*,*) '  Cost function hessian '//trim(ss)//': ',
+              write (*,'(a,1pe21.13,1x,2a)')
+     &         '  Cost function hessian '//trim(ss)//': ',
      &          Jdd(idir,ip0,icf),'wrt',trim(key)
             enddo
             idir = idir + 1
@@ -218,10 +226,12 @@
           if (shiftopt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             do ip0 = 1, npar_opt
-              write (*,*) '  Cost function hessian '//trim(ss)//': ',
+              write (*,'(a,1pe21.13,1x,2a)')
+     &         '  Cost function hessian '//trim(ss)//': ',
      &          Jdd(idir,ip0,icf),'wrt',trim(key)
             enddo
             idir = idir + 1
@@ -235,10 +245,12 @@
           if (corr_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "corr_length",ss2
-            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             do ip0 = 1, npar_opt
-              write (*,*) '  Cost function hessian '//trim(ss)//': ',
+              write (*,'(a,1pe21.13,1x,2a)')
+     &         '  Cost function hessian '//trim(ss)//': ',
      &          Jdd(idir,ip0,icf),'wrt',trim(key)
             enddo
             idir = idir + 1
