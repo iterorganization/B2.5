@@ -242,8 +242,8 @@ cpax
         else
          dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
          scur = 1.5_R8/qe*(fchinert(ix,iy,0)+fchvispar(ix,iy,0)
-     &                      +fchanml(ix,iy,0)+fchvisper(ix,iy,0)
-     &                      +fchvisq(ix,iy,0))*xcur
+     &                    +fchanml(ix,iy,0)+vis_per*fchvisper(ix,iy,0)
+     &                    +vis_q*fchvisq(ix,iy,0))*xcur
          floi0 = 1.5_R8*fni(ix,iy,0)+chvi(ix,iy,0)*
      &       (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &           +flidia(ix,iy,0) ! *signmf                             !srv 25.01.02 18.01.07 11.01.13

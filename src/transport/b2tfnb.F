@@ -911,8 +911,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          if(.not.is_neutral(isb)) then                                  !srv 08.09.21
           scur =
      &     (fchinert_b(ix,iy,0)+fchvispar_b(ix,iy,0)
-     &     +fchvisper_b(ix,iy,0)+fchin_b(ix,iy,0)
-     &     +fchanml_b(ix,iy,0)+fchvisq_b(ix,iy,0))*xcur/
+     &     +vis_per*fchvisper_b(ix,iy,0)+fchin_b(ix,iy,0)
+     &     +fchanml_b(ix,iy,0)+vis_q*fchvisq_b(ix,iy,0))*xcur/
      &     (zb(ix,iy)*qe*
      &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)          !srv 08.09.21
          else
