@@ -2150,7 +2150,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfhe_vis_per for numerical stability reasons.
 				</description>
 			</switch>
@@ -2159,7 +2159,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					vis_q is a multiplier to the heat viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_q is a multiplier to the heat viscosity current contributions to the ion flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>

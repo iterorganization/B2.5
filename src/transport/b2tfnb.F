@@ -1086,14 +1086,14 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
          if(.not.is_neutral(isb)) then                                  !srv 08.09.21
           scur =
      &     (fchinert_b(ix,iy,0,0)+fchvispar_b(ix,iy,0,0)
-     &     +fchvisper_b(ix,iy,0,0)+fchin_b(ix,iy,0,0)
-     &     +fchanml_b(ix,iy,0,0)+fchvisq_b(ix,iy,0,0))*xcur/
+     &     +vis_per*fchvisper_b(ix,iy,0,0)+fchin_b(ix,iy,0,0)
+     &     +fchanml_b(ix,iy,0,0)+vis_q*fchvisq_b(ix,iy,0,0))*xcur/
      &     (zb(ix,iy)*qe*
      &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)          !srv 08.09.21
           scur9 =
      &     (fchinert_b(ix,iy,0,1)+fchvispar_b(ix,iy,0,1)
-     &     +fchvisper_b(ix,iy,0,1)+fchin_b(ix,iy,0,1)
-     &     +fchanml_b(ix,iy,0,1)+fchvisq_b(ix,iy,0,1))*ycur/
+     &     +vis_per*fchvisper_b(ix,iy,0,1)+fchin_b(ix,iy,0,1)
+     &     +fchanml_b(ix,iy,0,1)+vis_q*fchvisq_b(ix,iy,0,1))*ycur/
      &     (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
          else
           scur = 0.0_R8

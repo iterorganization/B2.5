@@ -262,8 +262,8 @@ cpax
         else
          dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
          scur = 1.5_R8/qe*(fchinert(ix,iy,0,0)+fchvispar(ix,iy,0,0)
-     &                      +fchanml(ix,iy,0,0)+fchvisper(ix,iy,0,0)
-     &                      +fchvisq(ix,iy,0,0))*xcur
+     &                 +fchanml(ix,iy,0,0)+vis_per*fchvisper(ix,iy,0,0)
+     &                 +vis_q*fchvisq(ix,iy,0,0))*xcur
          scur9 = 1.5_R8/qe*(fchinert(ix,iy,0,1)+fchvispar(ix,iy,0,1)    !lk 30.05.11
      &                 +fchanml(ix,iy,0,1)+vis_per*fchvisper(ix,iy,0,1) !srv 02.10.17
      &                 +vis_q*fchvisq(ix,iy,0,1))*ycur                  !lk 30.05.11 !srv 02.10.17

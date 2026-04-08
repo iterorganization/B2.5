@@ -175,8 +175,7 @@
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
         call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
         call ipgeti ('b2tqna_neoclassical_time_steps', neo_time_steps)
-        call ipgeti ('b2tqna_neoclassical_output', 
-     1      neo_output)
+        call ipgeti ('b2tqna_neoclassical_output', neo_output)
         call ipgeti ('b2mndt_nstg2', nstg2)
       endif
 *   ..set n2
