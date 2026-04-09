@@ -222,7 +222,7 @@ c
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
       NTRC(ntrc_bln) = 73
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
-      NTRC(ntrc_bls) = 74                        ! IYS 07.11.2018
+      NTRC(ntrc_bls) = 74                         ! IYS 07.11.2018
       fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'

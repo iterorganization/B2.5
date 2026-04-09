@@ -199,8 +199,8 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
 *   ..contributions from currents
       scur(:,0) = 1.5_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
-     &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*
-     &                                          switch%b2tfnb_xcur +
+     &  dv%fchanml(:,0) + switch%fnb_vis_per*dv%fchvisper(:,0) +
+     &  switch%fnb_vis_q*dv%fchvisq(:,0))*switch%b2tfnb_xcur +
      &  1.5_R8/qe*dv%fchviskt(:,0)
       scur(:,1) = 1.5_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
      &  dv%fchanml(:,1) + switch%fnb_vis_per*dv%fchvisper(:,1) +

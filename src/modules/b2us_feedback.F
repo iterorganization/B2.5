@@ -64,7 +64,7 @@
      & fb_current_prev(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
-     & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
+     & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1-DEF_NSTS,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
@@ -470,11 +470,11 @@ cxpb size is changed in b2mod_dimensions
 ! now add the feedbacks turned on with switches into the new format
 ! the idea should be that any switch overrides what is in b2.feedback_control.parameters
       if (fnaycore.ne.-1.0e30_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_fnaycore not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_fnaycore not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.10) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -492,11 +492,11 @@ cxpb size is changed in b2mod_dimensions
         fb_istra(ifbb) = nesepm_istra
       endif
       if (fheycore.ne.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_fheycore not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_fheycore not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.11) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.11) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -512,11 +512,11 @@ cxpb size is changed in b2mod_dimensions
         fb_alpha(ifbb) = fheycore_alpha
       endif
       if (fhiycore.ne.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.12) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.12) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -532,11 +532,11 @@ cxpb size is changed in b2mod_dimensions
         fb_alpha(ifbb) = fhiycore_alpha
       endif
       if (fchycore.ne.-1.0e30_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_fchycore not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -552,11 +552,11 @@ cxpb size is changed in b2mod_dimensions
         fb_alpha(ifbb) = fchycore_alpha
       endif
       if (ndes.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_ndes not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_ndes not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -573,11 +573,11 @@ cxpb size is changed in b2mod_dimensions
         fb_istra(ifbb) = nesepm_istra
       endif
       if (nesepm.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_nesepm not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -595,11 +595,11 @@ cxpb size is changed in b2mod_dimensions
         fb_overshoot(ifbb) = nesepm_overshoot
       endif
       if (nesepm_sol.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_nesepm_sol not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm_sol not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -621,11 +621,11 @@ cxpb size is changed in b2mod_dimensions
         fb_istra(ifbb) = nesepm_istra
       endif
       if (ndes_sol.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_ndes_sol not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_ndes_sol not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.14) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -646,11 +646,11 @@ cxpb size is changed in b2mod_dimensions
         fb_istra(ifbb) = nesepm_istra
       endif
       if (nesepm_pfr.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_nesepm_pfr not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_nesepm_pfr not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.3) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -677,7 +677,7 @@ cxpb size is changed in b2mod_dimensions
      &  'not fully backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.13) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -702,7 +702,7 @@ cxpb size is changed in b2mod_dimensions
      &  'not fully backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.15) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.15) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -724,11 +724,11 @@ cxpb size is changed in b2mod_dimensions
         fb_istra(ifbb) = nesepm_istra
       endif
       if (nepedm_sol.gt.0.0_R8) then
-        write(*,*) 'WARNING! Feedback b2stbc_nepedm_sol not fully'//
+        write(*,*) 'WARNING! Feedback b2stbc_nepedm_sol not fully '//
      &  'backward compatible in WG'
         ifbb=0
         do ifb=1,nFb
-          if (fb_type(ifb).eq.16) ifbb=ifb !to override what is present..
+          if (fb_type(ifb).eq.16) ifbb=ifb !to override what is present
         enddo
         if (ifbb.eq.0) then
           nFb = nFb + 1
@@ -752,9 +752,9 @@ cxpb size is changed in b2mod_dimensions
         if(fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
-     1      'faulty internal parameter fb_istra')
+     1     'faulty internal parameter fb_istra')
           call xertst (crcstra(fb_istra(ifb)).eq.'C',
-     1      'Stratum fb_istra is not declared as a puff stratum!')
+     1     'Stratum fb_istra is not declared as a puff stratum!')
         else
           do istrai = 1, nstrat
             if(fb_istra(ifb).le.0.and.CRCSTRA(istrai).EQ.'C') then
@@ -789,8 +789,13 @@ cxpb size is changed in b2mod_dimensions
      .   'faulty parameter fb_rescale_option!')
         call xertst(0.le.fb_actuator(iFb),
      .   'faulty parameter fb_actuator!')
-        call xertst((-1.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc)
-     .    .or.(fb_actuator(iFb).eq.8.and.abs(fb_ib(iFb)).le.nsts),
+        call xertst( (fb_actuator(iFb).ne.8 .and.
+     .   ((0.lt.fb_ib(iFb).and.fb_ib(iFb).le.nbc).or.
+     .    fb_ib(iFb).eq.(-1-DEF_NSTS))) .or.
+     .   (fb_actuator(iFb).eq.8.and.
+     .    ((abs(fb_ib(iFb)).le.nsts.and.switch%use_eirene.ne.0).or.
+     .     (0.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc.and.
+     .      switch%use_eirene.eq.0))),
      .   'faulty parameter fb_ib!')
         call xertst(0.le.fb_istra(iFb).and.fb_istra(iFb).le.nstrai,
      .   'faulty parameter fb_istra!')
@@ -807,11 +812,13 @@ cxpb size is changed in b2mod_dimensions
 
       consistent = .true.
       do ifb = 1, nFb
-        if (((fb_ib(ifb).le.0.and.switch%use_eirene.eq.0) .and.   ! not using EIRENE, but no fb_ib
-     &       (fb_istra(ifb).le.0 .and. switch%use_eirene.ne.0     ! using EIRENE, but no puff stratum
+        if (((fb_ib(ifb).le.0.and.switch%use_eirene.eq.0) .or.   ! not using EIRENE, but no fb_ib
+     &       (fb_istra(ifb).le.0 .and. switch%use_eirene.ne.0    ! using EIRENE, but no puff stratum
      &        .and.fb_actuator(ifb).eq.1)) .and.
-     &      .not.fb_actuator(ifb).eq.2)                           ! feedback not 2 => either puff stratum or fb_ib needed
-     &    call xerrab('Init_feedback: fb_ib<=0 and actuator=/2')
+     &      .not.fb_actuator(ifb).eq.2 .and.                     ! feedback not 2 => either puff stratum or fb_ib needed
+     &      .not.fb_actuator(ifb).eq.8 )                         ! feedback = 8 values already tested above
+     &    call xerrab
+     .     ('Init_feedback: fb_ib <= 0 and actuator != (2 or 8)')
         call xertst(0.le.fb_species(ifb).and.fb_species(ifb).le.ns-1,
      &    'Init_feedback: fb_species>ns!')
         iatm = b2espcr(fb_species(ifb))
@@ -820,7 +827,7 @@ cxpb size is changed in b2mod_dimensions
           is00 = eb2spcr(b2espcr(fb_species(ifbb)))
           call xertst(.not.(is0.eq.is00),'init_feedback: cannot '//
      &     'define multiple feedbacks on same atom sequence')
-          if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
+          if ( (fb_type(ifb).eq.fb_type(ifbb)) .and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
      &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
@@ -866,12 +873,6 @@ cxpb size is changed in b2mod_dimensions
       end do
       consistent = consistent .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
-      do ifb = 1, nFb
-        if (fb_ib(ifb).ge.0) cycle
-        consistent = consistent .and.
-     &    .not.((fb_actuator(ifb).eq.1.and.switch%use_eirene.eq.0) .or.
-     &           fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
-      end do
       do ifb = 1, nFb
         if (fb_actuator(ifb).eq.1) cycle
         consistent = consistent .and.
@@ -2046,7 +2047,7 @@ cxpb size is changed in b2mod_dimensions
                 t0 = 0.0_R8
                 is_start=-1
                 is_end=-1
-                do is=0, ns-1
+                do is = 0, ns-1
                   if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                     if(is_start.eq.-1) is_start=is
                     do iCv = 1, mpg%nCi
@@ -2065,7 +2066,7 @@ cxpb size is changed in b2mod_dimensions
                         if(mpg%cvOnClosedSurface(iCv)) cycle
                         if(mpg%cvReg(iCv).eq.0) cycle
                         t0 = t0 + dab2(iCv,iatm,1)*geo%cvVol(iCv)
-                        do imol=1,nnmoli
+                        do imol = 1, nnmoli
                           if (mlcmp(iatm,imol).gt.0) then
                             t0 = t0 + dmb2(iCv,imol,1)*mlcmp(iatm,imol)*
      &                                geo%cvVol(iCv)
@@ -2077,17 +2078,21 @@ cxpb size is changed in b2mod_dimensions
                 endif
 #endif
                 if (ncall.eq.0.and.saved_fb_prev(ifb).le.0.0_R8)
-     &            saved_fb_prev(ifb) = t0
+     &           saved_fb_prev(ifb) = t0
+                if (fb_current(ifb).ne.0.0_R8) then
                   fb_rescale(ifb) = fb_alpha(ifb)*
      .             ((fb_target(ifb)/fb_current(ifb) - 1.0_R8)*t0/ddtim +
      .              (saved_fb_prev(ifb) - t0)/dt_prev)
-                  fb_current_prev(ifb) = t0
+                 else
+                   fb_rescale(ifb) = 1.0_R8
+                 end if
+                 fb_current_prev(ifb) = t0
               else
                 if (ncall.eq.0.and.saved_fb_prev(ifb).le.0.0_R8)
-     &            saved_fb_prev(ifb) = fb_current(ifb)
-                  fb_rescale(ifb) = fb_alpha(ifb)*
-     .             ((fb_target(ifb) - fb_current(ifb))/ddtim +
-     .             (saved_fb_prev(ifb) - fb_current(ifb))/dt_prev)
+     &           saved_fb_prev(ifb) = fb_current(ifb)
+                fb_rescale(ifb) = fb_alpha(ifb)*
+     .           ((fb_target(ifb) - fb_current(ifb))/ddtim +
+     .            (saved_fb_prev(ifb) - fb_current(ifb))/dt_prev)
               endif
 
             case (9) ! puff depending from pump rescaled by tanh_log with plateau
@@ -2105,16 +2110,12 @@ cxpb size is changed in b2mod_dimensions
               t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
               if(fb_current(ifb) < t0) then
                 fb_rescale(ifb) = 2.0_R8 **
-     &             (tanh(log(t0 /
-     &             fb_current(ifb))/
-     &             fb_beta(ifb))*
-     &             log(fb_alpha(ifb))/log(2.0_R8))
+     &           (tanh(log(t0 / fb_current(ifb))/ fb_beta(ifb))*
+     &            log(fb_alpha(ifb))/log(2.0_R8))
               elseif(fb_current(ifb) > t1) then
                 fb_rescale(ifb) = 2.0_R8 **
-     &             (tanh(log(t1 /
-     &             fb_current(ifb))/
-     &             fb_beta(ifb))*
-     &             log(fb_alpha(ifb))/log(2.0_R8))
+     &           (tanh(log(t1 / fb_current(ifb))/ fb_beta(ifb))*
+     &            log(fb_alpha(ifb))/log(2.0_R8))
               else
                 fb_rescale(ifb) = 1.0_R8
               endif
@@ -2140,9 +2141,9 @@ cxpb size is changed in b2mod_dimensions
      &                  species_start(istra)) cycle
                     sna_puff = sna_puff + userfluxparm(istra,1)
                   enddo
-                  write(*,'(a,i6,es17.6)')'Total puff',ifb,sna_puff
-                  write(*,'(a,i6,es17.6)')'Total pump',ifb,sna_pump
-                  write(*,'(a,i6,es17.6)')'Total core',ifb,sna_core
+                  write(*,'(a,i6,es17.6)') 'Total puff',ifb,sna_puff
+                  write(*,'(a,i6,es17.6)') 'Total pump',ifb,sna_pump
+                  write(*,'(a,i6,es17.6)') 'Total core',ifb,sna_core
                   fb_rescale(ifb) = max(0.0_R8,
      &              (sna_pump - sna_core)*fb_rescale(ifb) - sna_puff)
 #endif
@@ -2174,33 +2175,32 @@ cxpb size is changed in b2mod_dimensions
                 write(*,'(a,a,i3)')
      &           'compute_feedback_actuator: using ',
      &           'gas_puff for sequence ',
-     &           b2espcr(fb_species(ifb))
+     &            b2espcr(fb_species(ifb))
               endif
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
                 if (switch%use_eirene.eq.0) then
                   if (conpar(is_start, fb_ib(ifb), 1).gt.0.0_R8) then
                     saved_fb_actuator(ifb) =
-     &                conpar(is_start, fb_ib(ifb), 1)
+     &               conpar(is_start, fb_ib(ifb), 1)
                     write(message,'(a,i3,a,i2,a)')
      .               'Initial gas puff strength set by CONPAR(',
-     .               is_start,',',fb_ib(ifb),',1) !'
+     .                is_start,',',fb_ib(ifb),',1) !'
                   else
                     saved_fb_actuator(ifb) = 1.0e18_R8
-                      write(*,*) 'Warning!  ','The gas puff was ',
-     .                 'started with an initial rate of 1e18!'
+                    write(*,*) 'Warning!  ','The gas puff was ',
+     .               'started with an initial rate of 1e18!'
                   endif
+                else if (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
+                  saved_fb_actuator(ifb) =
+     &             userfluxparm(fb_istra(ifb),1)
+                  write(message,'(a,i3,a,i2,a)')
+     .             'Initial gas puff strength set by USERFLUXPARM(',
+     .              fb_istra(ifb),',1)  !'
                 else
-     .            if (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
-                    saved_fb_actuator(ifb) =
-     &                userfluxparm(fb_istra(ifb),1)
-                    write(message,'(a,i3,a,i2,a)')
-     .               'Initial gas puff strength set by USERFLUXPARM(',
-     .               fb_istra(ifb),',1)  !'
-                  else
-                    saved_fb_actuator(ifb) = 1.0e18_R8
-                      write(*,*) 'Warning!  ','The gas puff was ',
-     .                 'started with an initial rate of 1e18!'
+                  saved_fb_actuator(ifb) = 1.0e18_R8
+                  write(*,*) 'Warning!  ','The gas puff was ',
+     .             'started with an initial rate of 1e18!'
                 endif
               endif
 
@@ -2294,9 +2294,9 @@ cxpb size is changed in b2mod_dimensions
             case (3) ! charged species particle flux
 
               if(ncall.eq.0) then
-                     write(*,'(a,a,i3)')
-     &           'compute_feedback_actuator: using ',
-     &           'boundary flux condition for sequence ',
+               write(*,'(a,a,i3)')
+     &          'compute_feedback_actuator: using ',
+     &          'boundary flux condition for sequence ',
      &           b2espcr(fb_species(ifb))
               endif
 
@@ -2304,50 +2304,47 @@ cxpb size is changed in b2mod_dimensions
               is_end = eb2spcr(b2espcr(fb_species(ifb))) +
      &          nfluids(b2espcr(fb_species(ifb)))
 
-              if(feedback_namelist_used .and.
-     &             ncall .eq. 0 .and.
-     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             conpar(is_end, fb_ib(ifb), 1)
+              if (feedback_namelist_used .and.
+     &            ncall .eq. 0 .and.
+     &            saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &         saved_fb_actuator(ifb) =
+     &          conpar(is_end, fb_ib(ifb), 1)
 
               if (fb_type(ifb).eq.6) then !csc, this is for backward compatibility, can probably be removed
                 saved_fb_actuator(ifb) =
-     &             (1.0_R8 - fb_alpha(ifb)) *
-     &             saved_fb_actuator(ifb) +
-     &             fb_rescale(ifb)
+     &           (1.0_R8 - fb_alpha(ifb)) *
+     &           saved_fb_actuator(ifb) +
+     &           fb_rescale(ifb)
               else
                 if (fb_rescale_option(ifb).lt.4) then
                   saved_fb_actuator(ifb) =
-     &              saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &             saved_fb_actuator(ifb) * fb_rescale(ifb)
                 else
                   saved_fb_actuator(ifb) =
-     &              fb_rescale(ifb)
+     &             fb_rescale(ifb)
                 endif
               end if
 
-              if(fb_puff_min(ifb) .ge. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             max(fb_puff_min(ifb),
-     &             saved_fb_actuator(ifb))
-              if(fb_puff_max(ifb) .gt. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             min(fb_puff_max(ifb),
-     &             saved_fb_actuator(ifb))
+              if (fb_puff_min(ifb) .ge. 0.0_R8)
+     &         saved_fb_actuator(ifb) =
+     &          max(fb_puff_min(ifb),saved_fb_actuator(ifb))
+              if (fb_puff_max(ifb) .gt. 0.0_R8)
+     &         saved_fb_actuator(ifb) =
+     &          min(fb_puff_max(ifb),saved_fb_actuator(ifb))
 
-              if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
-     &             fb_current(ifb) .gt.
-     &             fb_target(ifb) *
-     &             fb_overshoot(ifb)) then
-                 total_flux = 0.0_R8
+              if (fb_overshoot(ifb) .gt. 1.0_R8 .and.
+     &            fb_current(ifb) .gt.
+     &            fb_target(ifb) * fb_overshoot(ifb)) then
+                total_flux = 0.0_R8
               else
-                 total_flux = saved_fb_actuator(ifb)
+                total_flux = saved_fb_actuator(ifb)
               endif
 
               if (fb_type(ifb).eq.6) then
                 do is = is_start, is_end
                   iss = is-is_start+1
                   conpar(is, fb_ib(ifb), 1) =
-     &              total_flux * charge_frac(iss)
+     &             total_flux * charge_frac(iss)
                 end do
               else
                 conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
@@ -2356,23 +2353,22 @@ cxpb size is changed in b2mod_dimensions
             case (4) ! electron heat flux
 
               if(ncall.eq.0) then
-                     write(*,'(a,a)')
+                write(*,'(a,a)')
      &           'compute_feedback_actuator: using ',
      &           'electron heat flux boundary condition'
               endif
 
-              if(feedback_namelist_used .and.
-     &             ncall .eq. 0 .and.
-     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             enepar(fb_ib(ifb), 1)
+              if (feedback_namelist_used .and.
+     &            ncall .eq. 0 .and.
+     &            saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &         saved_fb_actuator(ifb) = enepar(fb_ib(ifb), 1)
 
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+     &           fb_rescale(ifb)
               end if
 
               enepar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
@@ -2380,23 +2376,22 @@ cxpb size is changed in b2mod_dimensions
             case (5) ! ion heat flux
 
               if(ncall.eq.0) then
-                     write(*,'(a,a)')
+                write(*,'(a,a)')
      &           'compute_feedback_actuator: using ',
      &           'ion heat flux boundary condition'
               endif
 
-              if(feedback_namelist_used .and.
-     &             ncall .eq. 0 .and.
-     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             enipar(fb_ib(ifb), 1)
+              if (feedback_namelist_used .and.
+     &            ncall .eq. 0 .and.
+     &            saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &         saved_fb_actuator(ifb) = enipar(fb_ib(ifb), 1)
 
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+     &           fb_rescale(ifb)
               end if
 
               enipar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
@@ -2404,23 +2399,22 @@ cxpb size is changed in b2mod_dimensions
             case (6) ! current
 
               if(ncall.eq.0) then
-                     write(*,'(a,a)')
+                write(*,'(a,a)')
      &           'compute_feedback_actuator: using ',
      &           'electric current boundary condition'
               endif
 
-              if(feedback_namelist_used .and.
-     &             ncall .eq. 0 .and.
-     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             potpar(fb_ib(ifb), 1)
+              if (feedback_namelist_used .and.
+     &            ncall .eq. 0 .and.
+     &            saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &         saved_fb_actuator(ifb) = potpar(fb_ib(ifb), 1)
 
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+     &           fb_rescale(ifb)
               end if
 
               potpar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
@@ -2428,48 +2422,47 @@ cxpb size is changed in b2mod_dimensions
             case (7) ! density
 
               if(ncall.eq.0) then
-                     write(*,'(a,a,i3)')
+                write(*,'(a,a,i3)')
      &           'compute_feedback_actuator: using ',
      &           'density condition for sequence ',
-     &           b2espcr(fb_species(ifb))
+     &            b2espcr(fb_species(ifb))
               endif
 
-              if(
-     &             ncall .eq. 0 .and.
-     &             saved_fb_actuator(ifb) .eq. 0.0_R8)
-     &             saved_fb_actuator(ifb) =
-     &             conpar(fb_species(ifb),fb_ib(ifb), 1)
+              if (ncall .eq. 0 .and.
+     &            saved_fb_actuator(ifb) .eq. 0.0_R8)
+     &         saved_fb_actuator(ifb) =
+     &          conpar(fb_species(ifb), fb_ib(ifb), 1)
 
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
+     &           saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+     &           fb_rescale(ifb)
               end if
 
               conpar(fb_species(ifb),fb_ib(ifb), 1) =
-     &          saved_fb_actuator(ifb)
+     &         saved_fb_actuator(ifb)
 
             case (8) ! pump
 
               if(ncall.eq.0) then
                 if (fb_ib(ifb).eq.0) then
                   write(*,'(a,a)')
-     &              'compute_feedback_actuator: using ',
-     &              'gas pump for all sequences'
+     &             'compute_feedback_actuator: using ',
+     &             'gas pump for all isonuclear sequences'
                 elseif (fb_ib(ifb).lt.0) then
                   write(*,'(a,a,i3,a,i3)')
-     &              'compute_feedback_actuator: using ',
-     &              'gas pump for sequence ',
+     &             'compute_feedback_actuator: using ',
+     &             'gas pump for isonuclear sequence ',
      &              b2espcr(fb_species(ifb)),
-     &              ' at non-default standard surface number',
+     &             ' at non-default standard surface number',
      &              abs(fb_ib(ifb))
                 else
                   write(*,'(a,a,a,i3)')
-     &              'compute_feedback_actuator: using ',
-     &              'gas pump for all sequences',
-     &              ' at non-default standard surface number',
+     &             'compute_feedback_actuator: using ',
+     &             'gas pump for all isonuclear sequences ',
+     &             'at non-default standard surface number',
      &              fb_ib(ifb)
                 endif
               endif
@@ -2526,8 +2519,7 @@ cxpb size is changed in b2mod_dimensions
               else
                 if (switch%use_eirene.eq.0) then
                   if (switch%recycle_afn.eq.0 .or.
-     &                  nint(zn(fb_species(ifb))).ne.1) then
-        
+     &                nint(zn(fb_species(ifb))).ne.1) then
                     do istra = 1, nbc
                       if (bccon(is_start,istra).eq.10 .and.
      &                   (istra.eq.fb_ib(ifb).or.fb_ib(ifb).eq.0)) then
@@ -2645,7 +2637,7 @@ cxpb size is changed in b2mod_dimensions
       use b2mod_feedback
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: is, ix, iy, iCv, iss, ifbreg
+      integer :: is, ix, iy, iCv, ifb, iss, ifbreg
       logical :: done
 
       nFb = nspecies !number of feedback imposed
@@ -2660,11 +2652,15 @@ cxpb size is changed in b2mod_dimensions
       fb_const(1:nfb) = na_feedback_const(0:nspecies-1)
       fb_time(1:nfb) = na_feedback_time(0:nspecies-1)
       fb_ib(1:nfb) = na_feedback_ib(0:nspecies-1)
+      do ifb = 1, nfb
+        if (fb_ib(ifb).eq.-1.and.fb_actuator(ifb).ne.8)
+     >   fb_ib(ifb) = -1-DEF_NSTS
+      end do
       fb_puff_min(1:nfb) = na_feedback_puff_min(0:nspecies-1)
       fb_puff_max(1:nfb) = na_feedback_puff_max(0:nspecies-1)
       fb_overshoot(1:nfb) = na_feedback_overshoot(0:nspecies-1)
       ifbreg = 1
-      do is = 0,nspecies-1
+      do is = 0, nspecies-1
         fb_species(is+1) = eb2spcr(is+1) !new format specifies feedbacks on fluid species
         if (na_feedback_ix1(is).gt.-2.or.na_feedback_ix2(is).gt.-2.or.
      &      na_feedback_iy1(is).gt.-2.or.na_feedback_iy2(is).gt.-2) then

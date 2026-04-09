@@ -11856,8 +11856,8 @@ cxpb as they no longer necessarily point to the same species
         allocate(fb_reg1(nMxFbReg))
         allocate(fb_regp1(1:nfb1,2))
         allocate(fb_reg_par1(1:nfb1,2))
-        allocate(fb_istra1(1:nfb1-1))
-        allocate(fb_ib1(1:nfb1-1))
+        allocate(fb_istra1(1:nfb1))
+        allocate(fb_ib1(1:nfb1))
         allocate(fb_species1(1:nfb1))
         allocate(fb_alpha1(1:nfb1))
         allocate(fb_beta1(1:nfb1))
@@ -11895,6 +11895,9 @@ cxpb as they no longer necessarily point to the same species
             end if
             fb_istra1(ifb1) = istra1(fb_istra(iFb))
             fb_ib1(ifb1) = fb_ib(iFb)
+            if (fb_ib1(ifb1).lt.0 .and. fb_actuator1(ifb1).ne.8) then
+              fb_ib1(ifb1) = -1-DEF_NSTS
+            end if
             if (is1(fb_species(iFb)).ne.-1) then
               fb_species1(ifb1) = is1(fb_species(iFb))
             else
