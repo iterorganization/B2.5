@@ -270,6 +270,7 @@ cdjm Jan2017 update particle source components for balance
      .    'b2npco_fna_mdf_th'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
+        call my_out_us(70,nCv,0,dv%dnadt(1,isb),'b2npco_dnadt'//chns)
       endif
 
 * ..return

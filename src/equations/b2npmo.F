@@ -117,7 +117,7 @@
      6  pr(nCv), pz(nCv), rob1(nCv), pb1(nCv),
      8  ehxp(nCv), smt(nCv,0:3), cst,                                  !srv 17.01.14
      9  flct(nFc,0:1), wrk1(nCv), wrks(nCv),
-     1  smqdu(nCv), wrk0(nCv), wrk2(nCv),
+     1  smqdu(nCv), wrk0(nCv), wrk2(nCv), wrk3(nCv,0:ns-1),
      2  ctcfb(nCv), ctcft(nCv),                                        !srv 06.04.07
      3  zeff(nCv), zmff(nCv),                                          !srv 13.01.17 {
      4  ce1(nCv), ce2(nCv),
@@ -541,9 +541,10 @@ cdjm Jan2017 update momentum source components for balance
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
-         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
-     &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
-     &    psnl%ua(:,is)/dtim
+         wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
+     &    psnl%na(:,is))*psnl%ua(:,is)/dtim
+         wrk3(mpg%nCi+1:mpg%nCv,is) = 0.0_R8
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*wrk3(:,is)
          smb = smb + sr%smodt(:,:,is)
        endif
 
@@ -920,6 +921,7 @@ c     ..compare 9-pt stencil matrix
         write (chns,'(i3.3)') is                                        !srv 18.05.02
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
         call my_out_us(70,nCv,0,dv%dmodt(1,is),'b2npmo_dmodt'//chns)
+        call my_out_us(70,nCv,0,wrk3(1,is),'b2npmo_mavadnadt'//chns)
        enddo
       endif                                                             !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then
