@@ -197,61 +197,64 @@ cwdk                   (original code: simple averaging)
         dv%vaecrb(:,1,isb) =  switch%radeldr*dv%fac_ExB*wrk0*dpo(:,0)
 
         if (switch%b2tfnb_avg_vExB.ge.1) then
-        call intvertex(nCv,nVx,mpg,geo%vxVol,pl%po,wrkVx)
-        do j=1,mpg%nFci
-          if (mpg%fcs_wall_ind(j,2).eq.1
-     &      .or. mpg%fcs_wall_type(j).ne.2) cycle
-          iFc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1))
-          iFc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+1)
-          if (mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,1) .or.
-     &        mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,2)) then
-            iVx1 = mpg%fcVx(iFc1,1)
-          else
-            iVx1 = mpg%fcVx(iFc1,2)
-          endif
-          iFc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+
-     &      mpg%fcs_wall_ind(j,2)-1)
-          iFc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+
-     &      mpg%fcs_wall_ind(j,2)-2)
-          if (mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,1) .or.
-     &        mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,2)) then
-            iVx2 = mpg%fcVx(iFc1,1)
-          else
-            iVx2 = mpg%fcVx(iFc1,2)
-          endif
-          fcHt_tot = sum(geo%fcHt(mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
-     &      mpg%fcs_wall_ind(j,1)+mpg%fcs_wall_ind(j,2)-1)))
-          if (switch%b2tfnb_avg_vExB.ge.2)
-     &      write(*,'(a,2i6,1p,2e15.8)') "iVx1,iVx2,po_iVx1,po_iVx2",
-     &                  iVx1,iVx2,wrkVx(iVx1),wrkVx(iVx2)
-          do k=1,mpg%fcs_wall_ind(j,2)
-            iFc = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+k-1)
-            iCv1 = mpg%fcCv(iFc,1)
-            iCv2 = mpg%fcCv(iFc,2)
-            a(1) = geo%vxX(mpg%fcVx(iFc,2))-geo%vxX(mpg%fcVx(iFc,1))
-            a(2) = geo%vxY(mpg%fcVx(iFc,2))-geo%vxY(mpg%fcVx(iFc,1))
-            b(1) = geo%vxX(iVx2)-geo%vxX(iVx1)
-            b(2) = geo%vxY(iVx2)-geo%vxY(iVx1)
-            vx_dir = sign(1.0_R8,a(1)*b(1)+a(2)*b(2))
-            dpo_p = (pl%po(iCv2)-pl%po(iCv1))*geo%fcQalf(iFc,0)/
-     &        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2)))+
-     &        vx_dir*(wrkVx(iVx2)-wrkVx(iVx1))*geo%fcQbet(iFc,1)/
-     &        (geo%fcQgam(iFc,0)*fcHt_tot)
-
-            dpo_r = (pl%po(iCv2)-pl%po(iCv1))*geo%fcQalf(iFc,1)/
-     &        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2)))+
-     &        vx_dir*(wrkVx(iVx2)-wrkVx(iVx1))*geo%fcQbet(iFc,0)/
-     &        (geo%fcQgam(iFc,0)*fcHt_tot)
+          call intvertex(nCv,nVx,mpg,geo%vxVol,pl%po,wrkVx)
+          do j=1,mpg%nFci
+            if (mpg%fcs_wall_ind(j,2).eq.1 .or.
+     &          mpg%fcs_wall_type(j).ne.2) cycle
+            iFc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1))
+            iFc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+1)
+            if (mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,1) .or.
+     &          mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,2)) then
+              iVx1 = mpg%fcVx(iFc1,1)
+            else
+              iVx1 = mpg%fcVx(iFc1,2)
+            endif
+            iFc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+
+     &                          mpg%fcs_wall_ind(j,2)-1)
+            iFc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+
+     &                          mpg%fcs_wall_ind(j,2)-2)
+            if (mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,1) .or.
+     &          mpg%fcVx(iFc1,2).eq.mpg%fcVx(iFc2,2)) then
+              iVx2 = mpg%fcVx(iFc1,1)
+            else
+              iVx2 = mpg%fcVx(iFc1,2)
+            endif
+            fcHt_tot =
+     &       sum(geo%fcHt(mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
+     &                                 mpg%fcs_wall_ind(j,1)+
+     &                                 mpg%fcs_wall_ind(j,2)-1)))
             if (switch%b2tfnb_avg_vExB.ge.2)
-     &        write(*,'(a,i6,1p,2e15.8)') "iFc,dpo_th,dpo_r",
-     &                                     iFc,dpo_p,dpo_r
-            dv%vaecrb(iFc,0,isb) =
-     &        -switch%poleldr*dv%fac_ExB(iFc)*wrk0(iFc)*dpo_r
-            dv%vaecrb(iFc,1,isb) =
-     &        switch%radeldr*dv%fac_ExB(iFc)*wrk0(iFc)*dpo_p
+     &       write(*,'(a,2i6,1p,2e15.8)') "iVx1,iVx2,po_iVx1,po_iVx2",
+     &                              iVx1,iVx2,wrkVx(iVx1),wrkVx(iVx2)
+            do k=1,mpg%fcs_wall_ind(j,2)
+              iFc = mpg%fcs_wall(mpg%fcs_wall_ind(j,1)+k-1)
+              iCv1 = mpg%fcCv(iFc,1)
+              iCv2 = mpg%fcCv(iFc,2)
+              a(1) = geo%vxX(mpg%fcVx(iFc,2))-geo%vxX(mpg%fcVx(iFc,1))
+              a(2) = geo%vxY(mpg%fcVx(iFc,2))-geo%vxY(mpg%fcVx(iFc,1))
+              b(1) = geo%vxX(iVx2)-geo%vxX(iVx1)
+              b(2) = geo%vxY(iVx2)-geo%vxY(iVx1)
+              vx_dir = sign(1.0_R8,a(1)*b(1)+a(2)*b(2))
+              dpo_p = (pl%po(iCv2)-pl%po(iCv1))*geo%fcQalf(iFc,0)/
+     &         (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2)))+
+     &          vx_dir*(wrkVx(iVx2)-wrkVx(iVx1))*geo%fcQbet(iFc,1)/
+     &         (geo%fcQgam(iFc,0)*fcHt_tot)
+
+              dpo_r = (pl%po(iCv2)-pl%po(iCv1))*geo%fcQalf(iFc,1)/
+     &         (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2)))+
+     &          vx_dir*(wrkVx(iVx2)-wrkVx(iVx1))*geo%fcQbet(iFc,0)/
+     &         (geo%fcQgam(iFc,0)*fcHt_tot)
+              if (switch%b2tfnb_avg_vExB.ge.2)
+     &         write(*,'(a,i6,1p,2e15.8)') "iFc,dpo_th,dpo_r",
+     &                                      iFc,dpo_p,dpo_r
+              dv%vaecrb(iFc,0,isb) =
+     &         -switch%poleldr*dv%fac_ExB(iFc)*wrk0(iFc)*dpo_r
+              dv%vaecrb(iFc,1,isb) =
+     &          switch%radeldr*dv%fac_ExB(iFc)*wrk0(iFc)*dpo_p
             end do
           enddo
         endif
+
 *     ..restriction ExB drift
         xcount = 0
         if (switch%ion_vlct_restrict.eq.2) then                          !iyv 06.02.14 {
@@ -448,8 +451,9 @@ cwdk                   (original code: simple averaging)
       if (.not.is_neutral(isb)) then
         scur(:,0) =
      &     (dv%fchinert_a(:,0,isb) + dv%fchvispar_a(:,0,isb) +
-     &      dv%fchvisper_a(:,0,isb) + dv%fchanml_a(:,0,isb)  +
-     &      dv%fchvisq_a(:,0,isb))*switch%b2tfnb_xcur/
+     &      switch%fnb_vis_per*dv%fchvisper_a(:,0,isb) +
+     &      dv%fchanml_a(:,0,isb)  +
+     &      switch%fnb_vis_q*dv%fchvisq_a(:,0,isb))*switch%b2tfnb_xcur/
      &     (rzf*qe*nbf) +
      &      dv%fchviskt_a(:,0,isb)/(rzf*qe*nbf)
         scur(:,1) =

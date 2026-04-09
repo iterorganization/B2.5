@@ -2466,7 +2466,7 @@
       logical :: iscvsb(mpg%nCv), is_mod_fc(mpg%nFc)
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
       real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
-     *  cur_len(2), cen_len(2)
+     *   cur_len(2), cen_len(2)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
@@ -2929,8 +2929,8 @@
 
             ! Find the new fcHc for all boundary faces of the effective cell as
             ! the closest distance between the center of the effective cell and 
-            ! the boundary side of the effective cell. This side consists of
-            ! boundary faces.
+            ! the boundary side of the effective cell. This side can consist of
+            ! multiple boundary faces.
             do l=ind,k
               iVx1 = mpg%fcVx(fcsb(l),1)
               iVx2 = mpg%fcVx(fcsb(l),2)
@@ -2945,7 +2945,7 @@
               if (wrk >= 0.0_R8 .and. wrk <= 1.0_R8) then
                 meanFc(1) = a(1)+wrk*cur_len(1)
                 meanFc(2) = a(2)+wrk*cur_len(2)
-                write(*,*) "Closest point:"
+                write (*,*) "Closest point:"
                 write (*,'(2es17.6)') meanFc(1), meanFc(2)
                 exit
               endif
@@ -2954,9 +2954,9 @@
             wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
             write (*,*) "new fcHc:"
             write (*,'(1es17.6)') wrk
-            if (wrk.le.1.0E-08_R8) then
-              write (*,*) "new fcHc too small! Changes will not"//
-     &         " be applied. Calc new fcHc as average value "//
+            if (wrk.le.1.0e-08_R8) then
+              write (*,*) "new fcHc too small! Changes will not "//
+     &         "be applied. Set new fcHc as average value "//
      &         "of original fcHc."
               wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
      &         gm%fcHc(fcsb(ind:ind1-1),2))/(ind1-ind)
