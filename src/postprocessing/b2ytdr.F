@@ -11862,6 +11862,7 @@ cxpb as they no longer necessarily point to the same species
         nfb1 = 0
         fb_reg1 = 0
         fb_regp1 = 0
+<<<<<<< HEAD
         do is = 1, nspecies
           if (ispecies1(is).ne.-1) then
             nfb1 = nfb1 + 1
@@ -11872,6 +11873,41 @@ cxpb as they no longer necessarily point to the same species
      .       fb_rescale_option(is-1)
             fb_actuator1(ispecies1(is)-1) = fb_actuator(is-1)
             fb_reg_par1(ispecies1(is)-1,1:2) = fb_reg_par(is-1,1:2)
+=======
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) nfb1=nfb1+1
+        end do
+        allocate(fb_target1(1:nfb1))
+        allocate(fb_type1(1:nfb1))
+        allocate(fb_type_inverse1(1:nfb1))
+        allocate(fb_rescale_option1(1:nfb1))
+        allocate(fb_actuator1(1:nfb1))
+        allocate(fb_reg1(nMxFbReg))
+        allocate(fb_regp1(1:nfb1,2))
+        allocate(fb_reg_par1(1:nfb1,2))
+        allocate(fb_istra1(1:nfb1))
+        allocate(fb_ib1(1:nfb1))
+        allocate(fb_species1(1:nfb1))
+        allocate(fb_alpha1(1:nfb1))
+        allocate(fb_beta1(1:nfb1))
+        allocate(fb_const1(1:nfb1))
+        allocate(fb_time1(1:nfb1))
+        allocate(fb_puff_min1(1:nfb1))
+        allocate(fb_puff_max1(1:nfb1))
+        allocate(fb_overshoot1(1:nfb1))
+        ifb1 = 0
+        do iFb = 1, nFb
+          if (is1(fb_species(iFb)).ne.-1 .or.
+     .        fb_actuator(iFb).eq.1) then
+            ifb1 = ifb1 + 1
+            fb_target1(ifb1) = fb_target(iFb)
+            fb_type1(ifb1) = fb_type(iFb)
+            fb_type_inverse1(ifb1) = fb_type_inverse(iFb)
+            fb_rescale_option1(ifb1) = fb_rescale_option(iFb)
+            fb_actuator1(ifb1) = fb_actuator(iFb)
+            fb_reg_par1(ifb1,1:2) = fb_reg_par(iFb,1:2)
+>>>>>>> 3382f178e (- Changing default FB_IB value to avoid unintentional surface assignment for albedo feedback scheme)
             if (maxval(fb_reg).gt.0) then
               if (fb_regp(is-1,2).gt.0) then
                 fb_regp1(ispecies1(is)-1,2) = fb_regp(is-1,2)
@@ -11889,10 +11925,13 @@ cxpb as they no longer necessarily point to the same species
               end if
               is_previous = ispecies1(is)-1
             end if
-            fb_istra1(ispecies1(is)-1) = istra1(fb_istra(is-1))
-            fb_ib1(ispecies1(is)-1) = fb_ib(is-1)
-            if (is1(fb_species(is-1)).ne.-1) then
-              fb_species1(ispecies1(is)-1) = is1(fb_species(is-1))
+            fb_istra1(ifb1) = istra1(fb_istra(iFb))
+            fb_ib1(ifb1) = fb_ib(iFb)
+            if (fb_ib1(ifb1).lt.0 .and. fb_actuator1(ifb1).ne.8) then
+              fb_ib1(ifb1) = -1-DEF_NSTS
+            end if
+            if (is1(fb_species(iFb)).ne.-1) then
+              fb_species1(ifb1) = is1(fb_species(iFb))
             else
               if (fb_actuator(is-1).eq.1) then
                 fb_species1(ispecies1(is)-1) = ismain0
