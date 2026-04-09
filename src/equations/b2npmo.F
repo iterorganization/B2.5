@@ -339,7 +339,7 @@ c time-dependent treatment
 !$omp& private(wrkf, wrk1, smb, ro)
 !$omp& private(smbfrea, smbfria, smbtfea, smbtfia)
 !$omp& private(smbch, smbtf, smbvtmp)
-!$omp& private(smbgp, flubv, wrk2, smbvh,smbvv)
+!$omp& private(smbgp, flubv, wrk2, smbvh,smbvv, wrk3)
 !$omp& private(smbcf, ctcfb, smban, cvcb)
 !$omp& private(smbvi, rho_b_rel)
 !$omp& private(chns, wrks, aa, wrkff, wrkfff)
