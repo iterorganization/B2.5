@@ -737,6 +737,7 @@ contains
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
               firstgmid = .false.
             end if
+            return 
         elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
             geometryID = GEOMETRY_SN
             if (firstgmid) then
