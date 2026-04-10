@@ -646,7 +646,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       return
       end subroutine dealloc_b2mod_neutrals_save
 
-      subroutine read_neutrals_namelist_st(nx, ny, ns, switch, dotest)
+      subroutine read_neutrals_namelist_st(nx, ny, ns, dotest)
       use b2mod_wall
      & , only : track_index, ntrack, track_species
       use b2mod_indirect
@@ -654,9 +654,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
-      use b2mod_switches
       implicit none
-      type(switches), intent(in) :: switch
       integer nx, ny, ns
       logical dotest
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
@@ -2182,7 +2180,7 @@ cwdk also need to correct for degenerate faces?
       subroutine rc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
-#ifdef WG_DEBUG
+#ifdef DBG
       integer :: iout, ian, ien, i
 #endif
 #ifdef LEGACYCOMP
@@ -2220,7 +2218,7 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
-#ifdef WG_DEBUG
+#ifdef DBG
 #ifndef LEGACYCOMP
       open (newunit=iout,file='rc.testout')
 #else

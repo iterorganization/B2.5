@@ -117,6 +117,7 @@ c*** Column headers:
 #endif
       use b2us_map
       use b2us_geo
+      use b2us_debug
       use b2us_plasma
       use b2mod_switches
 
@@ -136,23 +137,27 @@ c
       type(B2state), intent(in) :: st
       type (B2StateExt), intent (in) :: st_ext
       type(switches), intent(in) :: switch
-      integer nCv, ns
+      integer ns
       real (kind=R8) :: dtim
 c
-      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls,
+      integer i, j, k, ic, ii, is, iy, js, ks, ls,
      ,        kks, iCv, iFc, ib, ibc, it
-      integer idir, ixf, iyf, find_loc
+#if ( defined(DBG) || defined(B25_EIRENE) )
+      integer, save :: l
+#endif
+#ifdef DBG
+      integer, save :: m, n
+#endif
+      integer find_loc
 
       logical first, is_cv_tar(mpg%nCv)
 
-      real (kind=R8) :: hlp_pls(nbcd,ns)
       integer use_recyceir
       real (kind=R8) :: recyctmp
 
 c>>>
 c
-      real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput,
-     &                        bsign, hlp_nw, hlp_pump
+      real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput, hlp_nw, hlp_pump
       logical
      &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
 
@@ -182,7 +187,7 @@ c----------------------------------------------------------------------
 c
       data first / .true. /
 c----------------------------------------------------------------------
-      save i, j, k, l, m, n, ic, is, ix, iy,
+      save i, j, k, ic, is, iy,
      1 js, ks, ls, kks, use_recyceir, first
 c======================================================================
 
@@ -194,18 +199,18 @@ c======================================================================
 
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
-#ifdef WG_DEBUG
+#ifdef DBG
         print *,'=== Regions of the grid:'
-        l=ny+1
+        l=ny_st+1
         n=mod(l-1,10)+1
-        i=(nx+2)/10+1
+        i=(nx_st+2)/10+1
         write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
-        do k=0,ny-1
+        do k=0,ny_st-1
           m=l
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
+            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx_st)
           end do
           l=l-1
         end do
@@ -276,7 +281,6 @@ c      do i=1,nlimps
 #endif
 
 c<<<
-      hlp_pls = 0.0_R8
       hlpit_lp = 0.0_R8
 
       if(debug_flags(90).gt.0.and.switch%use_eirene.ne.0) then
@@ -349,7 +353,6 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c**********************************
 ! The flows of B2 fluids
 c**********************************
-      nCv = mpg%nCv
       is_cv_tar = .false.
 !     Loop over isonuclear sequences
       do is=0,ns-1
@@ -612,6 +615,7 @@ c*** Puffing/seeding rate and recycling source
 
           hlp_pump_counted = .FALSE.
 
+          kks=eb2spcr(ls)
           do ic = 1,nstrat
 
             if(use_recyceir.gt.0) then

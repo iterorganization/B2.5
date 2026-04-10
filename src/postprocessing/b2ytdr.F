@@ -1518,7 +1518,7 @@ c 2002-09-11: logic revised
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
      .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-        call read_neutrals_namelist(nx, ny, ns, switch, .false.)
+        call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
@@ -11539,7 +11539,7 @@ cxpb as they no longer necessarily point to the same species
          filename = neutrals_filename
          new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
-         call read_neutrals_namelist(nx, ny, ns, switch, .false.)
+         call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
      >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)

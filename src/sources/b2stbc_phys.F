@@ -96,7 +96,7 @@
       integer, save :: bc_type16_kinetic_energy = 0
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
-     *  vte, s1, s1hz, fche, fchi, t0, t1, t2,                          !srv 15.11.07
+     *  vte, s1, fche, fchi, t0, t1, t2,                                !srv 15.11.07
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),

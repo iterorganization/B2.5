@@ -992,8 +992,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, ibc, istra, i, j, k, l, ic, iFs, find_loc,
-     & iatm, imol
+     & is_end, iss, ibc, istra, i, j, k, l, ic, iFs, iatm, imol
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real (kind=R8) :: sum_e, total_flux, vol_feedback, sum_s,

@@ -26,7 +26,7 @@
      &          nscale, transport_ip_time_switch, transport_ip_time_mod
       use b2mod_ad
      & , only : my_out_folder,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tqna,

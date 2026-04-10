@@ -47,7 +47,7 @@
 #endif
       use b2mod_ad
      & , only : my_out_folder, in_no_of_start_points,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbr_phys, ncall_b2stbr,

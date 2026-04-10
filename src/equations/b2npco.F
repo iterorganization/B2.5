@@ -27,7 +27,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2upco, ncall_b2usco, my_out_folder,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2ursc

@@ -52,7 +52,7 @@
      &          rmd2_mdf, mdm_mdf, znnucl
       use b2mod_ad
      & , only : my_out_folder, nnucl_tral,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
