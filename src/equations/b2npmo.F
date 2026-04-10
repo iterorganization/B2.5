@@ -33,7 +33,7 @@
      & , only : ncall_b2usmo, nsmooth_siav_zh,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                             !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf, icase_sifr
@@ -339,7 +339,7 @@ c time-dependent treatment
 !$omp& private(wrkf, wrk1, smb, ro)
 !$omp& private(smbfrea, smbfria, smbtfea, smbtfia)
 !$omp& private(smbch, smbtf, smbvtmp)
-!$omp& private(smbgp, flubv, wrk2, smbvh,smbvv, wrk3)
+!$omp& private(smbgp, flubv, wrk2, smbvh, smbvv, wrk3)
 !$omp& private(smbcf, ctcfb, smban, cvcb)
 !$omp& private(smbvi, rho_b_rel)
 !$omp& private(chns, wrks, aa, wrkff, wrkfff)

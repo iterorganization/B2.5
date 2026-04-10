@@ -115,7 +115,7 @@
 **********************************************************************
 
       subroutine alloc_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
 
@@ -165,7 +165,7 @@
         allocate (m%imapFcy(-1:m%nx,-1:m%ny))
         allocate (m%imapVx(-1:m%nx,-1:m%ny))
         allocate (m%icornVx(1:m%nx))
-#ifdef WG_DEBUG
+#ifdef DBG
         allocate (imapCv(-1:m%nx,-1:m%ny))
         allocate (imapFcx(-1:m%nx,-1:m%ny))
         allocate (imapFcy(-1:m%nx,-1:m%ny))
@@ -177,7 +177,7 @@
         allocate (m%imapFcy(0,0))
         allocate (m%imapVx(0,0))
         allocate (m%icornVx(0))
-#ifdef WG_DEBUG
+#ifdef DBG
         allocate (imapCv(0,0))
         allocate (imapFcx(0,0))
         allocate (imapFcy(0,0))
@@ -213,7 +213,7 @@
 **********************************************************************
 
       subroutine initialize_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       implicit none
@@ -260,7 +260,7 @@
         m%imapFcy = 0
         m%imapVx = 0
         m%icornVx = 0
-#ifdef WG_DEBUG
+#ifdef DBG
         imapCv = 0
         imapFcx = 0
         imapFcy = 0
@@ -297,7 +297,7 @@
 **********************************************************************
 
       subroutine dealloc_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
 
@@ -363,7 +363,7 @@
       deallocate (m%imapVx)
       deallocate (m%icornVx)
       if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
-#ifdef WG_DEBUG
+#ifdef DBG
       deallocate (imapCv)
       deallocate (imapFcx)
       deallocate (imapFcy)
@@ -511,7 +511,7 @@
 **********************************************************************
 
       subroutine read_mapping (iun, mpg)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       implicit none
@@ -520,7 +520,7 @@
       type (mapping), intent (inout) :: mpg
       external cfruin, cfrure
 
-#ifdef WG_DEBUG
+#ifdef DBG
       nx_st = mpg%nx
       ny_st = mpg%ny
       isClassicalGrid = mpg%isClassicalGrid
@@ -566,7 +566,7 @@
       call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
-#ifdef WG_DEBUG
+#ifdef DBG
       imapCv  = mpg%imapCv
       imapFcx = mpg%imapFcx
       imapFcy = mpg%imapFcy

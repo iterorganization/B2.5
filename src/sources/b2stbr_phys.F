@@ -22,6 +22,20 @@
       use b2us_map
       use b2us_plasma
       use b2mod_recycle
+      use b2mod_ad
+     & , only : ncall_b2stbr_phys
+#ifndef NAGFOR
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : my_out_folder
+#ifdef DBG
+     &        , my_out_sf                                               !srv 27.06.21
+#endif
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
