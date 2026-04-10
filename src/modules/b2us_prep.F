@@ -44,7 +44,7 @@
 ***********************************************************************
 
       subroutine calc_mapping(nx, ny, m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
      .  , isStructured => isClassicalGrid
 #endif
@@ -95,7 +95,7 @@
 
       write (*,*) 'Creating mapping ...'
 
-#ifdef WG_DEBUG
+#ifdef DBG
       nx_st = nx
       ny_st = ny
 #endif
@@ -1342,7 +1342,7 @@
 
       write (*,*) 'Merged vertices'
 
-#ifdef WG_DEBUG
+#ifdef DBG
       imapCv  = m%imapCv
       imapFcx = m%imapFcx
       imapFcy = m%imapFcy
@@ -2455,8 +2455,9 @@
       implicit none
       integer, intent(in) :: nx, ny
       integer :: ix, iy, ic, iFc, iVx, iFs, iCv, iVx1, iVx2
-#ifdef WG_DEBUG
-      integer :: i, j, idb
+#ifdef DBG
+      integer :: i, idb
+      logical :: lfound
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -2752,8 +2753,8 @@
         iscvsb(cvsb(ind,2)) = .true.
       enddo
 
-      cvsb(ind,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
-      cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
+      cvsb(mpg%nCg,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
+      cvsb(mpg%nCg,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
 
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
@@ -2801,50 +2802,50 @@
         end do
       end do
 
-#ifdef WG_DEBUG
+#ifdef DBG
 #ifndef LEGACYCOMP
       open (newunit=idb,file='debug.out')
 #else
       idb = newunit()
       open (unit=idb,file='debug.out')
 #endif
-      do ix = 236, 238
-        do iy = 8, 12
-          write (idb,'(2i6)') ix, iy
-          write (idb,'(2es17.6)') crx(ix,iy,0),cry(ix,iy,0)
-          write (idb,'(2es17.6)') crx(ix,iy,1),cry(ix,iy,1)
-          write (idb,'(2es17.6)') crx(ix,iy,3),cry(ix,iy,3)
-          write (idb,'(2es17.6)') crx(ix,iy,2),cry(ix,iy,2)
-          write (idb,'(2es17.6)') crx(ix,iy,0),cry(ix,iy,0)
-       end do
-      end do
+c$$$      do ix = 236, 238
+c$$$        do iy = 8, 12
+c$$$          write (idb,'(2i6)') ix, iy
+c$$$          write (idb,'(2es17.6)') crx(ix,iy,0), cry(ix,iy,0)
+c$$$          write (idb,'(2es17.6)') crx(ix,iy,1), cry(ix,iy,1)
+c$$$          write (idb,'(2es17.6)') crx(ix,iy,3), cry(ix,iy,3)
+c$$$          write (idb,'(2es17.6)') crx(ix,iy,2), cry(ix,iy,2)
+c$$$          write (idb,'(2es17.6)') crx(ix,iy,0), cry(ix,iy,0)
+c$$$       end do
+c$$$      end do
 
-      write (idb,*)
-      do ix = 235, 250
-        do iy = 5, 12
-          ic = mpg%imapcv(ix,iy)
-          write (idb,'(a,3i6)') 'ix,iy,ic ',ix,iy,ic
-          write (idb,'(a,5i6)') 'cflags ',cflags(ix,iy,:)
-          if (ic == 0) cycle
-          write (idb,*) 'faces '
-          do i = 1,mpg%cvFcP(ic,2)
-            iFc=mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
-            iVx1 = mpg%fcVx(iFc,1)
-            iVx2 = mpg%fcVx(iFc,2)
-            write (idb,'(3i6,4es16.7)') iFc, iVx1, iVx2,
-     .        gm%vxX(iVx1), gm%vxY(iVx1),
-     .        gm%vxX(iVx2), gm%vxY(iVx2)
-          end do
-          do i = 1, 7
-            write (idb,*)
-          end do
-        end do
-      end do
+c$$$      write (idb,*)
+c$$$      do ix = 235, 250
+c$$$        do iy = 5, 12
+c$$$          ic = mpg%imapcv(ix,iy)
+c$$$          write (idb,'(a,3i6)') 'ix,iy,ic ',ix,iy,ic
+c$$$          write (idb,'(a,5i6)') 'cflags ',cflags(ix,iy,:)
+c$$$          if (ic == 0) cycle
+c$$$          write (idb,*) 'faces '
+c$$$          do i = 1,mpg%cvFcP(ic,2)
+c$$$            iFc=mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
+c$$$            iVx1 = mpg%fcVx(iFc,1)
+c$$$            iVx2 = mpg%fcVx(iFc,2)
+c$$$            write (idb,'(3i6,4es16.7)') iFc, iVx1, iVx2,
+c$$$     .        gm%vxX(iVx1), gm%vxY(iVx1),
+c$$$     .        gm%vxX(iVx2), gm%vxY(iVx2)
+c$$$          end do
+c$$$          do i = 1, 7
+c$$$            write (idb,*)
+c$$$          end do
+c$$$        end do
+c$$$      end do
 
       write (idb,*)
       write (idb,*)
       write (idb,*) ' cell coordinates '
-      do ic = 1, nCv
+      do ic = 1, mpg%nCv
         write (idb,'(a,3i6)') 'ic ',ic
         do i = 1, mpg%cvVxP(ic,2)
           iVx = mpg%cvVx(mpg%cvVxP(ic,1)+i-1)
@@ -2852,7 +2853,7 @@
             write (idb,'(i6)') iVx
             cycle
           end if
-          write (idb,'(i6,2es16.7)') iVx, gm%vxX(iVx),gm%vxY(iVx)
+          write (idb,'(i6,2es16.7)') iVx, gm%vxX(iVx), gm%vxY(iVx)
         end do
         write (idb,*)
       end do
@@ -2860,10 +2861,15 @@
       write (idb,*)
       write (idb,*)
       write (idb,*) ' indices of unset vertices '
-      do i = 1, nVx
-        if (gm%vxX(i)**2+gm%vxY(i)**2 == 2._R8*666._R8*666._R8)
-     .    write (idb,'(i6,2es16.7)') i, gm%vxX(i),gm%vxY(i)
+      lfound = .false.
+      do i = 1, mpg%nVx
+        if (gm%vxX(i)**2+gm%vxY(i)**2 == 2._R8*666._R8*666._R8) then
+          lfound = .true.
+          write (idb,'(i6,2es16.7)') i, gm%vxX(i), gm%vxY(i)
+        end if
       end do
+      if (.not.lfound) write (idb,*) ' None. '
+      write (idb,*)
       close (idb)
 #endif
 ! Psi for each flux surface
@@ -2900,7 +2906,7 @@
               cycle
             endif
             write(*,*) "boundary faces of cell:"
-            write (*,*) fcsb(ind:k)
+            write(*,*) fcsb(ind:k)
 
             wrkVx = 0
             do k=ind,ind1-1

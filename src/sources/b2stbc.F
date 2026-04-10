@@ -29,7 +29,7 @@
      &          mompar
       use b2mod_ad
      & , only : my_out_folder,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbc_phys, nsdmax

@@ -6,11 +6,11 @@ c     File names will be appended with "*_st.dat".
       
       use b2mod_types
       use b2mod_ad_diffv
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif     
       implicit none
-#ifdef WG_DEBUG
+#ifdef DBG
       integer ix, iy
       integer :: iarr_st(-1:nx_st,-1:ny_st), 
      .  iarrf_st(-1:nx_st,-1:ny_st,0:1)
@@ -44,7 +44,7 @@ c     File names will be appended with "*_st.dat".
  20     continue
       end if
       
-#ifdef WG_DEBUG
+#ifdef DBG
       if (isClassicalGrid.eq.0) then
 #endif
 !        filename = trim(folder)//trim(first_name)//'_us.dat'
@@ -60,7 +60,7 @@ c     File names will be appended with "*_st.dat".
           write (nwrite,hlp_frm) ic, iarr_us(ic)
         end do
         close (nwrite)
-#ifdef WG_DEBUG
+#ifdef DBG
       else
 
       if (flag.eq.1) then
