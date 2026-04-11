@@ -2462,9 +2462,11 @@
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
       integer, save :: mod_hc = 0, set_beta = 0
-      integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp,
-     *   iFt, l, mod_cell_c, iFc1
-      logical :: iscvsb(mpg%nCv), is_mod_fc(mpg%nFc)
+      integer :: fcBoundary(mpg%nCg), cvBoundary(mpg%nCg,2), k,
+     *   ind, ind1, tmp, iFt, iFt1, l, mod_cell_c, iFc1, istart,
+     *   iend
+      logical :: cvAlongBoundary(mpg%nCv), is_mod_fc(mpg%nFc),
+     *   is_found
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
       real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
      *   cur_len(2), cen_len(2)
@@ -2729,40 +2731,56 @@
         endif
       enddo
 
+      ! fcBoundary contains the ordered list of faces along the boundary
       k = 1
       do ic=mpg%nCi+1,mpg%nCv
-        fcsb(k) = mpg%cvFc(mpg%cvFcP(ic,1))
+        fcBoundary(k) = mpg%cvFc(mpg%cvFcP(ic,1))
         k = k+1
       enddo
 
-      cvsb = 0
-      iscvsb = .false.
+      ! cvBoundary(:,1) contains the ordered list of guard boundary cells along the boundary
+      ! cvBoundary(:,2) contains the ordered list of volume boundary cells along the boundary
+      cvBoundary = 0
+      ! cvAlongBoundary indicates whether the control volume is connected to a boundary cell
+      cvAlongBoundary = .false.
       do ind=1,mpg%nCg-1
+        iFt = mpg%cvFt(minval(mpg%fcCv(fcBoundary(ind),1:2)))
+        is_found = .false.
         do ind1=ind+1,mpg%nCg
-          if (mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),1) .or.
-     &        mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),2) .or.
-     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),1) .or.
-     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),2)) then
-            tmp = fcsb(ind+1)
-            fcsb(ind+1) = fcsb(ind1)
-            fcsb(ind1) = tmp
+          ! look for the neighbor for face from both sides but
+          ! priority is given to the face in the same flux tube
+          iFt1 = mpg%cvFt(minval(mpg%fcCv(fcBoundary(ind1),1:2)))
+          if ((mpg%fcVx(fcBoundary(ind),1) ==
+     &                          mpg%fcVx(fcBoundary(ind1),1) .or.
+     &        mpg%fcVx(fcBoundary(ind),1) ==
+     &                          mpg%fcVx(fcBoundary(ind1),2) .or.
+     &        mpg%fcVx(fcBoundary(ind),2) ==
+     &                          mpg%fcVx(fcBoundary(ind1),1) .or.
+     &        mpg%fcVx(fcBoundary(ind),2) ==
+     &                          mpg%fcVx(fcBoundary(ind1),2)) .and.
+     &        (.not.is_found .or. iFt.eq.iFt1)) then
+            is_found = .true.
+            tmp = fcBoundary(ind+1)
+            fcBoundary(ind+1) = fcBoundary(ind1)
+            fcBoundary(ind1) = tmp
           endif
         enddo
-        cvsb(ind,1) = maxval(mpg%fcCv(fcsb(ind),1:2))
-        cvsb(ind,2) = minval(mpg%fcCv(fcsb(ind),1:2))
-        iscvsb(cvsb(ind,2)) = .true.
+        cvBoundary(ind,1) = maxval(mpg%fcCv(fcBoundary(ind),1:2))
+        cvBoundary(ind,2) = minval(mpg%fcCv(fcBoundary(ind),1:2))
+        cvAlongBoundary(cvBoundary(ind,2)) = .true.
       enddo
 
-      cvsb(mpg%nCg,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
-      cvsb(mpg%nCg,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
+      cvBoundary(mpg%nCg,1) = maxval(mpg%fcCv(fcBoundary(mpg%nCg),1:2))
+      cvBoundary(mpg%nCg,2) = minval(mpg%fcCv(fcBoundary(mpg%nCg),1:2))
+      cvAlongBoundary(cvBoundary(mpg%nCg,2)) = .true.
 
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
           do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
             iFc = mpg%ftFc(k)
             if (mpg%fcLbl(iFc).gt.0) cycle
-            if (.not.iscvsb(mpg%fcCv(iFc,1)) .and.
-     &          .not.iscvsb(mpg%fcCv(iFc,2))) cycle
+            if (.not.cvAlongBoundary(mpg%fcCv(iFc,1)) .and.
+     &          .not.cvAlongBoundary(mpg%fcCv(iFc,2))) cycle
             bz_sign = sign(1.0_R8,gm%cvEb(mpg%fcCv(iFc,1),2))
             if (gm%fcQbet(iFc,0)*bz_sign < 0.0_R8) then
               gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
@@ -2886,32 +2904,49 @@ c$$$      end do
         ! the same for all boundary faces.
         ! This is recommended if b2txcx_increase_transp_coefs.gt.1 during the run.
         write(*,*) "Start changing fcHc for effective cells"
-        ind=1
+        istart=1
         do ind1=2,mpg%nCg
-          ! cycle along the sorted boundary faces
-          iFc = fcsb(ind1)
-          if (mpg%fcLbl(iFc).le.0) then
-            ind = ind1
+          ! Cycle along the ordered list of boundary faces
+          if (mpg%fcLbl(fcBoundary(ind1)).le.0) then
+            istart = ind1
             cycle
           endif
-          if (mpg%cvFt(minval(mpg%fcCv(iFc,:))).ne.
-     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))) then
-
-            k = ind1-1
-            if(((ind1-1) .le. ind) .or.
-     &          (minval(mpg%fcCv(fcsb(ind),1:2))
-     &       .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  ! Second condition for cell with two boundary faces
-              ! If there is only one cell in the flux tube skip this flux tube
-              ind = ind1
+          iFt  = mpg%cvFt(minval(mpg%fcCv(fcBoundary(ind1),:)))
+          iFt1 = mpg%cvFt(minval(mpg%fcCv(fcBoundary(ind1-1),:)))
+          if ((iFt.ne.iFt1) .or.
+     &           ((iFt.eq.iFt1) .and. (ind1.eq.mpg%nCg))) then
+            if ((iFt.eq.iFt1) .and. (ind1.eq.mpg%nCg)) then
+              ! If this is the end of the loop define the boundaries of
+              ! the possible effective cell from istart to ind1(iend)
+              iend = ind1
+            else
+              ! If the current (ind1) face belongs to another flux tube
+              ! we use faces from istart to ind1-1(iend) to define
+              ! effective cell
+              iend = ind1-1
+            endif
+            ! If there is only one cell in the flux tube or ends of the
+            ! flux tube belong to the same cell we skip this flux tube
+            if((iend .le. istart) .or.
+     &          (minval(mpg%fcCv(fcBoundary(istart),1:2))
+     &       .eq.minval(mpg%fcCv(fcBoundary(iend),1:2)))) then
+              istart = ind1
               cycle
             endif
             write(*,*) "boundary faces of cell:"
-            write(*,*) fcsb(ind:k)
+            write(*,*) fcBoundary(istart:iend)
 
+            ! Count all vertices which belong to the effective cell
             wrkVx = 0
-            do k=ind,ind1-1
-              iCv = cvsb(k,2)
-              if (cvsb(k,2).eq.cvsb(k-1,2)) cycle
+            iCv = cvBoundary(istart,2)
+            ! Handle the first volumed boundary cell separately
+            wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) =
+     &      wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))+1
+            do l=istart+1,iend
+              iCv = cvBoundary(l,2)
+              if (cvBoundary(l,2).eq.cvBoundary(l-1,2)) cycle
               wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
      &                       mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) =
      &         wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
@@ -2919,14 +2954,14 @@ c$$$      end do
             enddo
             print *, "vertices of effective cell:"
             ! Find the center of the effective cell as the average coordinate
-            ! of all vertices belonging to the effective cell
+            ! of all vertices belonging to the effective cell based on wrkVx
             meanCv = 0.0_R8
             tmp = 0
-            do k=1,mpg%nVx
-              if (wrkVx(k).ge.1) then
-                print *, k
-                meanCv(1) = meanCv(1) + gm%vxX(k)
-                meanCv(2) = meanCv(2) + gm%vxY(k)
+            do l=1,mpg%nVx
+              if (wrkVx(l).ge.1) then
+                print *, l
+                meanCv(1) = meanCv(1) + gm%vxX(l)
+                meanCv(2) = meanCv(2) + gm%vxY(l)
                 tmp = tmp + 1
               endif
             enddo
@@ -2934,12 +2969,12 @@ c$$$      end do
             write (*,'(2es17.6)') meanCv(1), meanCv(2)
 
             ! Find the new fcHc for all boundary faces of the effective cell as
-            ! the closest distance between the center of the effective cell and 
+            ! the closest distance between the center of the effective cell and
             ! the boundary side of the effective cell. This side can consist of
             ! multiple boundary faces.
-            do l=ind,k
-              iVx1 = mpg%fcVx(fcsb(l),1)
-              iVx2 = mpg%fcVx(fcsb(l),2)
+            do l=istart,iend
+              iVx1 = mpg%fcVx(fcBoundary(l),1)
+              iVx2 = mpg%fcVx(fcBoundary(l),2)
               a(1) = gm%vxX(iVx1)
               a(2) = gm%vxY(iVx1)
               cur_len(1) = gm%vxX(iVx2)-a(1)
@@ -2964,14 +2999,14 @@ c$$$      end do
               write (*,*) "new fcHc too small! Changes will not "//
      &         "be applied. Set new fcHc as average value "//
      &         "of original fcHc."
-              wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
-     &         gm%fcHc(fcsb(ind:ind1-1),2))/(ind1-ind)
+              wrk = sum(gm%fcHc(fcBoundary(istart:iend),1)+
+     &         gm%fcHc(fcBoundary(istart:iend),2))/(iend+1-istart)
               write (*,*) "new fcHc:"
               write (*,'(1es17.6)') wrk
             endif
             write(*,*) "----------"
-            do k=ind,ind1-1
-              iFc = fcsb(k)
+            do k=istart,iend
+              iFc = fcBoundary(k)
               if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
                 gm%fcHc(iFc,1) = wrk
                 gm%fcHc(iFc,2) = 0.01_R8*gm%fcHc(iFc,1)
@@ -2980,7 +3015,8 @@ c$$$      end do
                 gm%fcHc(iFc,1) = 0.01_R8*gm%fcHc(iFc,2)
               endif
             enddo
-            ind = ind1
+            ! Define possible start of the next effective cell as ind1
+            istart = ind1
           endif
         enddo
       endif
