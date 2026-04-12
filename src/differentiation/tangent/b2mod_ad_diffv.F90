@@ -29,6 +29,9 @@ MODULE B2MOD_AD_DIFFV
   PARAMETER (nncf=def_ncf)
 !
   CHARACTER(len=7), SAVE :: my_out_folder
+#ifdef DBG
+  CHARACTER(len=16), SAVE :: my_out_sf(0:1)
+#endif
   CHARACTER(len=256), SAVE :: filename_b2w
 !
   INTEGER, SAVE :: ntstep_b2wall=0
