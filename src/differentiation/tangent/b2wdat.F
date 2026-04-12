@@ -51,7 +51,7 @@
 
       integer iRFc, nRFc, icell
 #ifdef DBG
-      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy,
+      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy, nx, ny,
      ,        ilast_closed_surface, ifirst_open_surface
       logical first
       logical found
