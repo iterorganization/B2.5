@@ -11612,9 +11612,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             filename = pot_fn(ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_pot(-1:ny,ib),ny,
-     .           potpar(ib,1),potpar(ib,2))
-
+     .       BCPOS(IB),profile_pot(-1:ny,ib),ny,
+     .       potpar(ib,1),potpar(ib,2))
           endif
           IF (BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
