@@ -4451,8 +4451,8 @@ c test
             t1 = 0.0_R8
             do is = 0, ns-1
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
-     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
+     >         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &                   rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
             t0 = max(0.0_R8, (abs(geo%fcPbs(iFc))*t0*cs -               !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))    !srv 25.12.06 11.01.13 20.09.17
@@ -6124,7 +6124,13 @@ c test
           !    See Eirene manual for details.
             do is = 0, ns-1
               if(.not.is_neutral(is)) then
-                t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+                vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
+                t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
+                t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
+     &                    (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
+                dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
+     &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
+                t0 = t0 + dsh*mompar(is,ib,1)*pl%na(iCv1,is)
                 if (conpar(is,ib,2).gt.0.0_R8)
      &            t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &             *pl%na(iCv1,is)
@@ -8740,7 +8746,7 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           t1 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)
               if (conpar(is,ib,2).gt.0.0_R8)
      &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif
@@ -9029,7 +9035,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           t1 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)
               if (conpar(is,ib,2).gt.0.0_R8)
      &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif

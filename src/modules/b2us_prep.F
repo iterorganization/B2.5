@@ -2410,7 +2410,6 @@
         ! => sort first according to 'ix', then according to 'iy'
         m%icornVx(1:icount-1:2) = icornVx(1:nvertpf)
         m%icornVx(2:icount  :2) = icornVx(nvertpf+1:icount)
-
       else
         ! just copy over => check consistency with conv_surface_models!
         m%icornVx(1:icount) = icornvx(1:icount)
@@ -2418,8 +2417,16 @@
 
       deallocate(icornvx)
 
-      write (*,*) 'Found ', icount, ' points to be adapted in block 15:'
-      write (*,*) m%icornVx(1:icount)
+      if (icount.eq.0) then
+        write (*,*) 'Found no points to be adapted in block 15'
+      else if (icount.eq.1) then
+        write (*,*) 'Found 1 point to be adapted in block 15:'
+        write (*,*) m%icornVx(1)
+      else
+        write (*,'(a,i4,a)')
+     .   'Found ',icount,' points to be adapted in block 15:'
+        write (*,*) m%icornVx(1:icount)
+      end if
 
       deallocate (icorner)
       deallocate (ighostcv)
