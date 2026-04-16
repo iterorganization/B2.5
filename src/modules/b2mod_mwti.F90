@@ -665,96 +665,100 @@ contains
     end if
     fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
     namxip = 0.0_R8; nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8
-    do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
-      iFc = mpg%divFc(i)
-      if (mpg%fcCv(iFc,1).le.mpg%nCi) then
-        iCv = mpg%fcCv(iFc,1)
-      else
-        iCv = mpg%fcCv(iFc,2)
-      end if
-      fnixip(1) = fnixip(1) + &
-        &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
-      feexip(1) = feexip(1) + &
-        &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
-      feixip(1) = feixip(1) + &
-        &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
-      fchxip(1) = fchxip(1) + &
-        &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
-      fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
-        &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
-        &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
-      do is = 0, ext%ns-1
-        fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
+    if (allocated(mpg%divFcP)) then
+      do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
+        iFc = mpg%divFc(i)
+        if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+          iCv = mpg%fcCv(iFc,1)
+        else
+          iCv = mpg%fcCv(iFc,2)
+        end if
+        fnixip(1) = fnixip(1) + &
+          &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexip(1) = feexip(1) + &
+          &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixip(1) = feixip(1) + &
+          &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxip(1) = fchxip(1) + &
+          &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
+          &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+          &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
+        do is = 0, ext%ns-1
+          fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
           & (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2+taf(iFc,is))*(1.0_R8-switch%BoRiS))* &
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
+        end do
+        fetxip(1) = fetxip(1) + fettmp
+        do is = 0, ns-1
+          namxip(is+1,1) = max(namxip(is+1,1), pl%na(iCv,is) )
+        end do
+        nemxip(1) = max(nemxip(1), dv%ne(iCv) )
+        temxip(1) = max(temxip(1), pl%te(iCv) )
+        timxip(1) = max(timxip(1), pl%ti(iCv) )
+        pomxip(1) = max(pomxip(1), pl%po(iCv) )
+        pwmxip(1) = max(pwmxip(1), abs(fettmp)/geo%fcS(iFc) )
       end do
-      fetxip(1) = fetxip(1) + fettmp
-      do is = 0, ns-1
-        namxip(is+1,1) = max(namxip(is+1,1), pl%na(iCv,is) )
-      end do
-      nemxip(1) = max(nemxip(1), dv%ne(iCv) )
-      temxip(1) = max(temxip(1), pl%te(iCv) )
-      timxip(1) = max(timxip(1), pl%ti(iCv) )
-      pomxip(1) = max(pomxip(1), pl%po(iCv) )
-      pwmxip(1) = max(pwmxip(1), abs(fettmp)/geo%fcS(iFc) )
-    end do
 #ifdef WG_TODO
-    tpmxip = 0.0_R8
-    ix = -1 ! 1
-    ix_off  = ix + target_offset
-    do iy = iylstrt,iylend
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
-        tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
-      endif
-    enddo
+      tpmxip = 0.0_R8
+      ix = -1 ! 1
+      ix_off  = ix + target_offset
+      do iy = iylstrt,iylend
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+          tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
+        endif
+      enddo
 #endif
+    end if
 
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     namxap = 0.0_R8; nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
-    do i = mpg%divFcP(maxval(mpg%strDiv),1), &
-         & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
-      iFc = mpg%divFc(i)
-      if (mpg%fcCv(iFc,1).le.mpg%nCi) then
-        iCv = mpg%fcCv(iFc,1)
-      else
-        iCv = mpg%fcCv(iFc,2)
-      end if
-      fnixap(1) = fnixap(1) + &
-        &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
-      feexap(1) = feexap(1) + &
-        &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
-      feixap(1) = feixap(1) + &
-        &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
-      fchxap(1) = fchxap(1) + &
-        &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
-      fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
-        &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
-        &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
-      do is = 0, ext%ns-1
-        fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
+    if (maxval(mpg%strDiv).gt.0) then
+      do i = mpg%divFcP(maxval(mpg%strDiv),1), &
+           & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
+        iFc = mpg%divFc(i)
+        if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+          iCv = mpg%fcCv(iFc,1)
+        else
+          iCv = mpg%fcCv(iFc,2)
+        end if
+        fnixap(1) = fnixap(1) + &
+          &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexap(1) = feexap(1) + &
+          &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixap(1) = feixap(1) + &
+          &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxap(1) = fchxap(1) + &
+          &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
+          &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+          &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
+        do is = 0, ext%ns-1
+          fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
           & (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2+taf(iFc,is))*(1.0_R8-switch%BoRiS))* &
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
+        end do
+        fetxap(1) = fetxap(1) + fettmp
+        do is = 0, ns-1
+          namxap(is+1,1) = max(namxap(is+1,1), pl%na(iCv,is) )
+        end do
+        nemxap(1) = max(nemxap(1), dv%ne(iCv) )
+        temxap(1) = max(temxap(1), pl%te(iCv) )
+        timxap(1) = max(timxap(1), pl%ti(iCv) )
+        pomxap(1) = max(pomxap(1), pl%po(iCv) )
+        pwmxap(1) = max(pwmxap(1), abs(fettmp)/geo%fcS(iFc) )
       end do
-      fetxap(1) = fetxap(1) + fettmp
-      do is = 0, ns-1
-        namxap(is+1,1) = max(namxap(is+1,1), pl%na(iCv,is) )
-      end do
-      nemxap(1) = max(nemxap(1), dv%ne(iCv) )
-      temxap(1) = max(temxap(1), pl%te(iCv) )
-      timxap(1) = max(timxap(1), pl%ti(iCv) )
-      pomxap(1) = max(pomxap(1), pl%po(iCv) )
-      pwmxap(1) = max(pwmxap(1), abs(fettmp)/geo%fcS(iFc) )
-    end do
 #ifdef WG_TODO
-    tpmxap = 0.0_R8
-    ix = nx ! 2
-    ix_off  = ix - target_offset
-    do iy = iyrstrt,iyrend
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
-        tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
-      endif
-    enddo
+      tpmxap = 0.0_R8
+      ix = nx ! 2
+      ix_off  = ix - target_offset
+      do iy = iyrstrt,iyrend
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+          tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
+        endif
+      enddo
 #endif
+    end if
 
     if(mpg%nXpt.ge.2.and.maxval(mpg%strDiv).gt.2) then
       do i = mpg%divFcP(2,1), mpg%divFcP(2,1) + mpg%divFcP(2,2) - 1

@@ -248,7 +248,7 @@ cxpb size is changed in b2mod_dimensions
       integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
-      logical consistent, done
+      logical consistent, valid, done
 
       call subini('init_feedback')
       call read_b2us_feedback_control(99)
@@ -838,37 +838,53 @@ cxpb size is changed in b2mod_dimensions
         is_start = is0+1
         is_end = is0+nfluids(iatm)
         if (fb_actuator(ifb).ne.2) then
-          consistent = consistent .and.
-     &     ((fb_target(ifb) .eq. 0.0_R8 .or.
-     &       fb_type(ifb) .eq. 0 .or.
-     &       fb_rescale_option(ifb) .eq. 0 .or.
-     &       fb_actuator(ifb) .eq. 0) .or.
+          valid = (fb_target(ifb) .eq. 0.0_R8 .or.
+     &             fb_type(ifb) .eq. 0 .or.
+     &             fb_rescale_option(ifb) .eq. 0 .or.
+     &             fb_actuator(ifb) .eq. 0)
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
-     &      (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &       ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
-     &        switch%use_eirene.ne.0) ) .or.
-     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
-     &       maxval(bccon(is_start:is_end,
-     .                    fb_ib(ifb))).eq.8 .and.
-     &       minval(bccon(is_start:is_end,
-     .                    fb_ib(ifb))).eq.8 .and.
-     &       fb_type(ifb).eq.6) .or.
-     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
-     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
-     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
-     &       .not.fb_type(ifb).eq.6) .or.
-     &      (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
-     &       bcene(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
-     &       bceni(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 6 .and. !current
-     &       bcpot(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 7 .and. !density
-     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
-     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)) .or.
-     &       fb_actuator(ifb) .eq. 8)
+          if (fb_actuator(ifb).eq.1 .and. .not.valid) then
+            if (switch%use_eirene.eq.0) then ! neutral flux
+              valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+              if (valid) valid = bccon(is0,fb_ib(ifb)).eq.8
+            else ! gas puff
+              valid = fb_istra(ifb).ge.1 .and. fb_istra(ifb).le.nstrai
+            end if
+          end if
+          if (fb_actuator(ifb).eq.3 .and. .not.valid) then !charged particle flux
+            valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+            if (valid) valid =
+     &        (maxval(bccon(is_start:is_end,fb_ib(ifb))).eq.8 .and.
+     &         minval(bccon(is_start:is_end,fb_ib(ifb))).eq.8 .and.
+     &         fb_type(ifb).eq.6) .or.
+     &       ((bccon(fb_species(ifb),fb_ib(ifb)).eq.8 .or.
+     &         bccon(fb_species(ifb),fb_ib(ifb)).eq.13 ) .and.
+     &         .not.fb_type(ifb).eq.6)
+          end if
+          if (fb_actuator(ifb).eq.4 .and. .not.valid) then !electron heat flux
+            valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+            if (valid) valid = bcene(fb_ib(ifb)) .eq. 8
+          end if
+          if (fb_actuator(ifb).eq.5 .and. .not.valid) then !ion heat flux
+            valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+            if (valid) valid = bceni(fb_ib(ifb)) .eq. 8
+          end if
+          if (fb_actuator(ifb).eq.6 .and. .not.valid) then !current
+            valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+            if (valid) valid = bcpot(fb_ib(ifb)) .eq. 8
+          end if
+          if (fb_actuator(ifb).eq.7 .and. .not.valid) then !density
+            valid = fb_ib(ifb).ge.1 .and. fb_ib(ifb).le.nbc
+            if (valid) valid =
+     &       bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
+     &       bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28
+          end if
+          if (fb_actuator(ifb).eq.8 .and. .not.valid) then !pump albedo
+            valid = fb_ib(ifb).ge.-nsts .and. fb_ib(ifb).le.nbc
+          end if
+          consistent = consistent .and. valid
         end if
       end do
       consistent = consistent .or. b2sral_style.eq.1 .or.
@@ -1020,9 +1036,9 @@ cxpb size is changed in b2mod_dimensions
 ! 3/ apply this in some way based on "fb_actuator"
 
         do ifb = 1, nFb
-          if( fb_type(ifb) .gt. 0 .and.
-     &        fb_rescale_option(ifb) .gt. 0 .and.
-     &        fb_actuator(ifb) .gt.0) then
+          if( fb_type(ifb).gt.0 .and.
+     &        fb_rescale_option(ifb).gt.0 .and.
+     &        fb_actuator(ifb).gt.0 ) then
 
 ! phase 1:
             select case(fb_type(ifb))
@@ -1912,8 +1928,12 @@ cxpb size is changed in b2mod_dimensions
      &            b2espcr(fb_species(ifb))
               endif
 
-              fb_rescale(ifb) = fb_target(ifb) /
+              if (fb_current(ifb).ne.0.0_R8) then
+                fb_rescale(ifb) = fb_target(ifb) /
      &             fb_current(ifb)
+              else
+                fb_rescale(ifb) = 1.0_R8
+              endif
 
             case (3) ! rescale slowed by tanh_log
 
