@@ -154,7 +154,6 @@ c
 
       integer use_recyceir
       real (kind=R8) :: recyctmp
-
 c>>>
 c
       real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput, hlp_nw, hlp_pump
@@ -200,21 +199,35 @@ c======================================================================
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 #ifdef DBG
-        print *,'=== Regions of the grid:'
-        l=ny_st+1
-        n=mod(l-1,10)+1
-        i=(nx_st+2)/10+1
-        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
-        do k=0,ny_st-1
-          m=l
-          l=max(0,m-n+1)
-          n=10
-          do j=m-1,l-1,-1
-            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx_st)
+        if (mpg%isClassicalGrid.eq.1) then
+          if (.not.allocated(region))
+     .     allocate(region(-1:nx_st,-1:ny_st,0:2))
+          do j=-1,ny_st
+            do i=-1,nx_st
+              iCv=mpg%imapCv(i,j)
+              if (iCv.ne.0) then
+                region(i,j,0)=mpg%cvReg(iCv)
+              else
+                region(i,j,0)=0
+              end if
+            end do
           end do
-          l=l-1
-        end do
-        write(*,'()')
+          print *,'=== Regions of the grid:'
+          l=ny_st+1
+          n=mod(l-1,10)+1
+          i=(nx_st+2)/10+1
+          write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
+          do k=0,ny_st-1
+            m=l
+            l=max(0,m-n+1)
+            n=10
+            do j=m-1,l-1,-1
+              write(*,hlp_prt) j,(region(i,j,0),i=-1,nx_st)
+            end do
+            l=l-1
+          end do
+          write(*,'()')
+        end if
 #endif
 c>>>
 c

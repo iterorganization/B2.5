@@ -204,7 +204,7 @@
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
       real (kind=R8) :: denom
 
-      denom = quadArea(x0,y0,x1,y1,x2,y2,x3,y3)
+      denom = quadArea(x0,y0,x2,y2,x3,y3,x1,y1)
       if (denom.gt.0.0_R8) then
         quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3)
      &   * triangleArea(x0,y0,x1,y1,x3,y3)

@@ -577,8 +577,8 @@ c*** Set default values according to current species list
         if (iFt.eq.0) cycle
         ft_imp(iFt) = ic
         wall_face = .false.
-        do i = m%cvFcP(omp(ic),1),
-     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+        do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
           iFc = m%cvFc(i)
           iFs = m%fcFs(iFc)
           on_wall = m%fcLbl(iFc).ne.0
@@ -608,7 +608,7 @@ c*** Set default values according to current species list
      &  'Warning: did not find separatrix location in IMP definition,',
      &  '         check specification of RZIMP in b2.user.parameters',
      &  '         if IMP is needed.'
-      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
+      if (m%isClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
       if (m%iFssep2.gt.0) then

@@ -12,7 +12,7 @@
 !
 !
 !
-SUBROUTINE MY_OUT(nwrite, nx, ny, flag, fun, first_name)
+SUBROUTINE MY_OUT(nwrite, nx, ny, fun, first_name)
 !wdk  This routine is intended to write cell-centered fields on an
 !     structured grid for "original" B2.5 grids.
 !
@@ -20,8 +20,7 @@ SUBROUTINE MY_OUT(nwrite, nx, ny, flag, fun, first_name)
   USE B2MOD_AD_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-! flag = 0 for cell centers;
-  INTEGER :: nwrite, nx, ny, flag
+  INTEGER :: nwrite, nx, ny
   REAL(kind=r8) :: fun(-1:nx,-1:ny)
   CHARACTER(len=*) :: first_name
 !

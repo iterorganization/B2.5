@@ -145,10 +145,9 @@
 *      ..find the number of the last closed surface in CORE
          ilast_closed_surface = -2
          n_closed_surface = 0
-         ix = nx/2    !  nmdpl; may not work for DN?
-         do iy = -1, ny
-          if(mpg%imapCv(ix,iy) /= 0) then
-           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = 1, nomp
+          if(omp(iy).le.mpg%nCi) then
+           if(mpg%cvOnClosedSurface(omp(iy))) then
             n_closed_surface = n_closed_surface + 1
             ilast_closed_surface = iy
            endif
@@ -159,9 +158,9 @@
 *      ..find the number of the first open surface in SOL
          ifirst_open_surface = ilast_closed_surface
          found = .false.
-         do iy = ilast_closed_surface + 1, ny
-          if(mpg%imapCv(ix,iy) /= 0 .and. .not.found) then
-           if(.not.mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = ilast_closed_surface + 1, nomp
+          if(omp(iy).le.mpg%nCi .and. .not.found) then
+           if(.not.mpg%cvOnClosedSurface(omp(iy))) then
             ifirst_open_surface = iy
             found = .true.
            endif
@@ -178,9 +177,9 @@
           if(mpg%imapCv(ix,iy) /= 0) then
            if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
             if(first) then
-                nmdpl = ix
-                nmdpl_i = ix
-                first = .false.
+               nmdpl = ix
+               nmdpl_i = ix
+               first = .false.
             endif
             if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
      &         geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix
