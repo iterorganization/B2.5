@@ -483,7 +483,7 @@ JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text ensure_adas
 
 DEFAULT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
@@ -527,6 +527,12 @@ NOPLOT: ${NCEXE} ${NREXE} nc2text
 endif
 endif
 MAIN: VERSION AM_FILES ${MNEXE}
+ifdef SOLPSTOP
+DEFAULT: ensure_adas
+ALL: ensure_adas
+NOPLOT: ensure_adas
+MAIN: ensure_adas
+endif
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS_WG
@@ -1509,3 +1515,9 @@ else
 	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND\n" > ${OBJDIR}/mpi_version.f90 ; \
 	${FC} ${FCOPTS} ${FPOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk
 endif
+
+ensure_adas:
+	@if [ ! -d "${SOLPSTOP}/modules/adas" ] || [ -z "$$(ls -A "${SOLPSTOP}/modules/adas" 2>/dev/null)" ]; then \
+	echo "ADAS directory missing or empty: running fetch_adas_datafiles"; \
+	fetch_adas_datafiles; \
+	fi
