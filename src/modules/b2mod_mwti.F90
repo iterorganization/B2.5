@@ -126,8 +126,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         namxip(ns,nncutmax), namxap(ns,nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         namxip(ns,nncutmax), namxap(ns,nncutmax)
 #ifdef WG_TODO
     real (kind=R8) :: &
          tpmxip(nncutmax), tpmxap(nncutmax)
@@ -206,7 +206,8 @@ contains
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &
          'invalid main plasma species index ismain')
-    call xertst (is_neutral(ismain0).or.ismain0.eq.ismain, &
+    call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
+         (is_neutral(ismain0).or.ismain0.eq.ismain), &
          'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
@@ -241,7 +242,7 @@ contains
           if (.not. allocated(dsl)) then
             allocate(dsl(1:mpg%divFcP(i,2)), dsLT(1:mpg%divFcP(i,2)), dsLP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
           inquire(file='dsL', exist=file_exists)
           if (file_exists) then
             open(99,file='dsLT')
@@ -264,7 +265,7 @@ contains
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl',dstl)
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
             inquire(file='dsTL', exist=file_exists)
             if (file_exists) then
               open(99,file='dsTLT')
@@ -286,7 +287,7 @@ contains
             if (.not. allocated(dsr)) then
               allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
             inquire(file='dsR', exist=file_exists)
             if (file_exists) then
               open(99,file='dsRT')
@@ -309,7 +310,7 @@ contains
           if (.not. allocated(dstr)) then
             allocate(dstr(1:mpg%divFcP(i,2)), dsTRT(1:mpg%divFcP(i,2)), dsTRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr',dstr)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
           inquire(file='dsTR', exist=file_exists)
           if (file_exists) then
             open(99,file='dsTRT')
@@ -331,7 +332,7 @@ contains
           if (.not. allocated(dsr)) then
             allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
           if (file_exists) then
             open(99,file='dsRT')
           else
@@ -664,96 +665,100 @@ contains
     end if
     fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
     namxip = 0.0_R8; nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8
-    do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
-      iFc = mpg%divFc(i)
-      if (mpg%fcCv(iFc,1).le.mpg%nCi) then
-        iCv = mpg%fcCv(iFc,1)
-      else
-        iCv = mpg%fcCv(iFc,2)
-      end if
-      fnixip(1) = fnixip(1) + &
-        &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
-      feexip(1) = feexip(1) + &
-        &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
-      feixip(1) = feixip(1) + &
-        &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
-      fchxip(1) = fchxip(1) + &
-        &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
-      fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
-        &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
-        &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
-      do is = 0, ext%ns-1
-        fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
+    if (allocated(mpg%divFcP)) then
+      do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
+        iFc = mpg%divFc(i)
+        if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+          iCv = mpg%fcCv(iFc,1)
+        else
+          iCv = mpg%fcCv(iFc,2)
+        end if
+        fnixip(1) = fnixip(1) + &
+          &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexip(1) = feexip(1) + &
+          &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixip(1) = feixip(1) + &
+          &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxip(1) = fchxip(1) + &
+          &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
+          &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+          &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
+        do is = 0, ext%ns-1
+          fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
           & (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2+taf(iFc,is))*(1.0_R8-switch%BoRiS))* &
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
+        end do
+        fetxip(1) = fetxip(1) + fettmp
+        do is = 0, ns-1
+          namxip(is+1,1) = max(namxip(is+1,1), pl%na(iCv,is) )
+        end do
+        nemxip(1) = max(nemxip(1), dv%ne(iCv) )
+        temxip(1) = max(temxip(1), pl%te(iCv) )
+        timxip(1) = max(timxip(1), pl%ti(iCv) )
+        pomxip(1) = max(pomxip(1), pl%po(iCv) )
+        pwmxip(1) = max(pwmxip(1), abs(fettmp)/geo%fcS(iFc) )
       end do
-      fetxip(1) = fetxip(1) + fettmp
-      do is = 0, ns-1
-        namxip(is+1,1) = max(namxip(is+1,1), pl%na(iCv,is) )
-      end do
-      nemxip(1) = max(nemxip(1), dv%ne(iCv) )
-      temxip(1) = max(temxip(1), pl%te(iCv) )
-      timxip(1) = max(timxip(1), pl%ti(iCv) )
-      pomxip(1) = max(pomxip(1), pl%po(iCv) )
-      pwmxip(1) = max(pwmxip(1), abs(fettmp)/geo%fcS(iFc) )
-    end do
 #ifdef WG_TODO
-    tpmxip = 0.0_R8
-    ix = -1 ! 1
-    ix_off  = ix + target_offset
-    do iy = iylstrt,iylend
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
-        tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
-      endif
-    enddo
+      tpmxip = 0.0_R8
+      ix = -1 ! 1
+      ix_off  = ix + target_offset
+      do iy = iylstrt,iylend
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+          tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
+        endif
+      enddo
 #endif
+    end if
 
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     namxap = 0.0_R8; nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
-    do i = mpg%divFcP(maxval(mpg%strDiv),1), &
-         & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
-      iFc = mpg%divFc(i)
-      if (mpg%fcCv(iFc,1).le.mpg%nCi) then
-        iCv = mpg%fcCv(iFc,1)
-      else
-        iCv = mpg%fcCv(iFc,2)
-      end if
-      fnixap(1) = fnixap(1) + &
-        &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
-      feexap(1) = feexap(1) + &
-        &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
-      feixap(1) = feixap(1) + &
-        &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
-      fchxap(1) = fchxap(1) + &
-        &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
-      fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
-        &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
-        &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
-      do is = 0, ext%ns-1
-        fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
+    if (maxval(mpg%strDiv).gt.0) then
+      do i = mpg%divFcP(maxval(mpg%strDiv),1), &
+           & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
+        iFc = mpg%divFc(i)
+        if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+          iCv = mpg%fcCv(iFc,1)
+        else
+          iCv = mpg%fcCv(iFc,2)
+        end if
+        fnixap(1) = fnixap(1) + &
+          &  mpg%divFcOr(i)*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexap(1) = feexap(1) + &
+          &  mpg%divFcOr(i)*(dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixap(1) = feixap(1) + &
+          &  mpg%divFcOr(i)*(dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxap(1) = fchxap(1) + &
+          &  mpg%divFcOr(i)*(dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = mpg%divFcOr(i)*(dv%fht(iFc,0) + dv%fht(iFc,1) - &
+          &                      dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+          &                      ext%fhi(iFc,0) + ext%fhi(iFc,1) )
+        do is = 0, ext%ns-1
+          fettmp = fettmp + mpg%divFcOr(i)*(ptf(iFc,is)*ev + &
           & (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2+taf(iFc,is))*(1.0_R8-switch%BoRiS))* &
           & (ext%fa(iFc,0,is)+ext%fa(iFc,1,is))
+        end do
+        fetxap(1) = fetxap(1) + fettmp
+        do is = 0, ns-1
+          namxap(is+1,1) = max(namxap(is+1,1), pl%na(iCv,is) )
+        end do
+        nemxap(1) = max(nemxap(1), dv%ne(iCv) )
+        temxap(1) = max(temxap(1), pl%te(iCv) )
+        timxap(1) = max(timxap(1), pl%ti(iCv) )
+        pomxap(1) = max(pomxap(1), pl%po(iCv) )
+        pwmxap(1) = max(pwmxap(1), abs(fettmp)/geo%fcS(iFc) )
       end do
-      fetxap(1) = fetxap(1) + fettmp
-      do is = 0, ns-1
-        namxap(is+1,1) = max(namxap(is+1,1), pl%na(iCv,is) )
-      end do
-      nemxap(1) = max(nemxap(1), dv%ne(iCv) )
-      temxap(1) = max(temxap(1), pl%te(iCv) )
-      timxap(1) = max(timxap(1), pl%ti(iCv) )
-      pomxap(1) = max(pomxap(1), pl%po(iCv) )
-      pwmxap(1) = max(pwmxap(1), abs(fettmp)/geo%fcS(iFc) )
-    end do
 #ifdef WG_TODO
-    tpmxap = 0.0_R8
-    ix = nx ! 2
-    ix_off  = ix - target_offset
-    do iy = iyrstrt,iyrend
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
-        tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
-      endif
-    enddo
+      tpmxap = 0.0_R8
+      ix = nx ! 2
+      ix_off  = ix - target_offset
+      do iy = iyrstrt,iyrend
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+          tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
+        endif
+      enddo
 #endif
+    end if
 
     if(mpg%nXpt.ge.2.and.maxval(mpg%strDiv).gt.2) then
       do i = mpg%divFcP(2,1), mpg%divFcP(2,1) + mpg%divFcP(2,2) - 1
@@ -2158,29 +2163,30 @@ contains
         end select
       enddo
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
-      if (write_2d .ge. 1) then
-        call rwcdf(rw,ncid,'na2d',(/1,1,1/),pl%na,iret)
-        call rwcdf(rw,ncid,'ne2d',(/1,1/),dv%ne,iret)
-        call rwcdf(rw,ncid,'te2d',(/1,1/),pl%te,iret)
-        call rwcdf(rw,ncid,'ti2d',(/1,1/),pl%ti,iret)
-        if (write_2d .ge. 2) then
-          call rwcdf(rw,ncid,'po2d',(/1,1/),pl%po,iret)
-          call rwcdf(rw,ncid,'kin2d',(/1,1/),dv%kinrgy,iret)
-          call rwcdf(rw,ncid,'rsahi2d',(/1,1/),srw%rsahi,iret)
-          call rwcdf(rw,ncid,'rsana2d',(/1,1/),srw%rsana,iret)
-          call rwcdf(rw,ncid,'rrahi2d',(/1,1/),srw%rrahi,iret)
-          call rwcdf(rw,ncid,'rrana2d',(/1,1/),srw%rrana,iret)
-          call rwcdf(rw,ncid,'rcxhi2d',(/1,1/),srw%rcxhi,iret)
-          call rwcdf(rw,ncid,'rcxna2d',(/1,1/),srw%rcxna,iret)
-          call rwcdf(rw,ncid,'rqrad2d',(/1,1/),srw%rqrad,iret)
-          call rwcdf(rw,ncid,'fhe2d',(/1,1/),dv%fhe,iret)
-          call rwcdf(rw,ncid,'fhi2d',(/1,1/),dv%fhi,iret)
-          call rwcdf(rw,ncid,'fch2d',(/1,1/),dv%fch,iret)
-          call rwcdf(rw,ncid,'fna2d',(/1,1,1/),dv%fna,iret)
-        endif
-      endif
       imap(1)=1
       imap(2)=1
+      imap(3)=1
+      if (write_2d .ge. 1) then
+        call rwcdf(rw,ncid,'na2d',imap,pl%na,iret)
+        call rwcdf(rw,ncid,'ne2d',imap,dv%ne,iret)
+        call rwcdf(rw,ncid,'te2d',imap,pl%te,iret)
+        call rwcdf(rw,ncid,'ti2d',imap,pl%ti,iret)
+        if (write_2d .ge. 2) then
+          call rwcdf(rw,ncid,'po2d',imap,pl%po,iret)
+          call rwcdf(rw,ncid,'kin2d',imap,dv%kinrgy,iret)
+          call rwcdf(rw,ncid,'rsahi2d',imap,srw%rsahi,iret)
+          call rwcdf(rw,ncid,'rsana2d',imap,srw%rsana,iret)
+          call rwcdf(rw,ncid,'rrahi2d',imap,srw%rrahi,iret)
+          call rwcdf(rw,ncid,'rrana2d',imap,srw%rrana,iret)
+          call rwcdf(rw,ncid,'rcxhi2d',imap,srw%rcxhi,iret)
+          call rwcdf(rw,ncid,'rcxna2d',imap,srw%rcxna,iret)
+          call rwcdf(rw,ncid,'rqrad2d',imap,srw%rqrad,iret)
+          call rwcdf(rw,ncid,'fhe2d',imap,dv%fhe,iret)
+          call rwcdf(rw,ncid,'fhi2d',imap,dv%fhi,iret)
+          call rwcdf(rw,ncid,'fch2d',imap,dv%fch,iret)
+          call rwcdf(rw,ncid,'fna2d',imap,dv%fna,iret)
+        endif
+      endif
       call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
       call rwcdf(rw,ncid,'feexip',imap,feexip,iret)
       call rwcdf(rw,ncid,'feixip',imap,feixip,iret)
@@ -2192,31 +2198,31 @@ contains
       call rwcdf(rw,ncid,'fetxap',imap,fetxap,iret)
       call rwcdf(rw,ncid,'fchxap',imap,fchxap,iret)
 
-      call rwcdf(rw,ncid,'nasepi',(/1,1,1/),nasepi,iret)
+      call rwcdf(rw,ncid,'nasepi',imap,nasepi,iret)
       call rwcdf(rw,ncid,'nesepi',imap,nesepi,iret)
       call rwcdf(rw,ncid,'tesepi',imap,tesepi,iret)
       call rwcdf(rw,ncid,'tisepi',imap,tisepi,iret)
       if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepi',(/1,1,1/),dabsepi,iret)
-        call rwcdf(rw,ncid,'tabsepi',(/1,1,1/),tabsepi,iret)
+        call rwcdf(rw,ncid,'dabsepi',imap,dabsepi,iret)
+        call rwcdf(rw,ncid,'tabsepi',imap,tabsepi,iret)
       endif
       if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepi',(/1,1,1/),dmbsepi,iret)
-        call rwcdf(rw,ncid,'tmbsepi',(/1,1,1/),tmbsepi,iret)
+        call rwcdf(rw,ncid,'dmbsepi',imap,dmbsepi,iret)
+        call rwcdf(rw,ncid,'tmbsepi',imap,tmbsepi,iret)
       endif
       call rwcdf(rw,ncid,'posepi',imap,posepi,iret)
       call rwcdf(rw,ncid,'ktsepi',imap,ktsepi,iret)
-      call rwcdf(rw,ncid,'nasepm',(/1,1,1/),nasepm,iret)
+      call rwcdf(rw,ncid,'nasepm',imap,nasepm,iret)
       call rwcdf(rw,ncid,'nesepm',imap,nesepm,iret)
       call rwcdf(rw,ncid,'tesepm',imap,tesepm,iret)
       call rwcdf(rw,ncid,'tisepm',imap,tisepm,iret)
       if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepm',(/1,1,1/),dabsepm,iret)
-        call rwcdf(rw,ncid,'tabsepm',(/1,1,1/),tabsepm,iret)
+        call rwcdf(rw,ncid,'dabsepm',imap,dabsepm,iret)
+        call rwcdf(rw,ncid,'tabsepm',imap,tabsepm,iret)
       endif
       if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepm',(/1,1,1/),dmbsepm,iret)
-        call rwcdf(rw,ncid,'tmbsepm',(/1,1,1/),tmbsepm,iret)
+        call rwcdf(rw,ncid,'dmbsepm',imap,dmbsepm,iret)
+        call rwcdf(rw,ncid,'tmbsepm',imap,tmbsepm,iret)
       endif
       call rwcdf(rw,ncid,'posepm',imap,posepm,iret)
       call rwcdf(rw,ncid,'ktsepm',imap,ktsepm,iret)
@@ -2227,26 +2233,26 @@ contains
       call rwcdf(rw,ncid,'vxsepm',imap,vxsepm,iret)
       call rwcdf(rw,ncid,'vysepm',imap,vysepm,iret)
       call rwcdf(rw,ncid,'vssepm',imap,vssepm,iret)
-      call rwcdf(rw,ncid,'nasepa',(/1,1,1/),nasepa,iret)
+      call rwcdf(rw,ncid,'nasepa',imap,nasepa,iret)
       call rwcdf(rw,ncid,'nesepa',imap,nesepa,iret)
       call rwcdf(rw,ncid,'tesepa',imap,tesepa,iret)
       call rwcdf(rw,ncid,'tisepa',imap,tisepa,iret)
       if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepa',(/1,1,1/),dabsepa,iret)
-        call rwcdf(rw,ncid,'tabsepa',(/1,1,1/),tabsepa,iret)
+        call rwcdf(rw,ncid,'dabsepa',imap,dabsepa,iret)
+        call rwcdf(rw,ncid,'tabsepa',imap,tabsepa,iret)
       endif
       if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepa',(/1,1,1/),dmbsepa,iret)
-        call rwcdf(rw,ncid,'tmbsepa',(/1,1,1/),tmbsepa,iret)
+        call rwcdf(rw,ncid,'dmbsepa',imap,dmbsepa,iret)
+        call rwcdf(rw,ncid,'tmbsepa',imap,tmbsepa,iret)
       endif
       call rwcdf(rw,ncid,'posepa',imap,posepa,iret)
       call rwcdf(rw,ncid,'ktsepa',imap,ktsepa,iret)
-      call rwcdf(rw,ncid,'namxip',(/1,1,1/),namxip,iret)
+      call rwcdf(rw,ncid,'namxip',imap,namxip,iret)
       call rwcdf(rw,ncid,'nemxip',imap,nemxip,iret)
       call rwcdf(rw,ncid,'temxip',imap,temxip,iret)
       call rwcdf(rw,ncid,'timxip',imap,timxip,iret)
       call rwcdf(rw,ncid,'pomxip',imap,pomxip,iret)
-      call rwcdf(rw,ncid,'namxap',(/1,1,1/),namxap,iret)
+      call rwcdf(rw,ncid,'namxap',imap,namxap,iret)
       call rwcdf(rw,ncid,'nemxap',imap,nemxap,iret)
       call rwcdf(rw,ncid,'temxap',imap,temxap,iret)
       call rwcdf(rw,ncid,'timxap',imap,timxap,iret)
@@ -2331,7 +2337,8 @@ contains
         do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
-        call rwcdf(rw,ncid,'na3dl',(/1,1,1/),slice_ns,iret)
+        imap(3)=1
+        call rwcdf(rw,ncid,'na3dl',imap,slice_ns,iret)
         slice(:) = dv%ne(cvlist(:))
         call rwcdf(rw,ncid,'ne3dl',imap,slice,iret)
         slice(:) = pl%te(cvlist(:))
@@ -2344,7 +2351,7 @@ contains
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                               &          dv%fna(fclist(:),1,is))
         end do
-        call rwcdf(rw,ncid,'fn3dl',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'fn3dl',imap,slice_ns,iret)
         slice(:) = fcOr(:)*(dv%fhe(fclist(:),0) + dv%fhe(fclist(:),1))
         call rwcdf(rw,ncid,'fe3dl',imap,slice,iret)
         slice(:) = fcOr(:)*(dv%fhi(fclist(:),0) + dv%fhi(fclist(:),1))
@@ -2381,21 +2388,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = dab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3dl',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3dl',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = tab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3dl',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3dl',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(:,imol) = dmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3dl',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3dl',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(:,imol) = tmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3dl',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3dl',imap,slice_nmol,iret)
         endif
         deallocate(fclist,cvlist,cnlist,fcOr)
         deallocate(slice)
@@ -2410,6 +2417,7 @@ contains
       if (nimp.gt.0) then
         imap(1)=1     ! i
         imap(2)=1
+        imap(3)=1
         allocate(slice(nimp))
         allocate(slice_ns(nimp,ns))
         if (nnatmi.gt.0) then
@@ -2421,7 +2429,7 @@ contains
         do is = 0, ns-1
           slice_ns(1:nimp,is+1) = pl%na(imp(1:nimp),is)
         end do
-        call rwcdf(rw,ncid,'na3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'na3di',imap,slice_ns,iret)
         slice(1:nimp)=dv%ne(imp(1:nimp))
         call rwcdf(rw,ncid,'ne3di',imap,slice,iret)
         slice(1:nimp)=pl%te(imp(1:nimp))
@@ -2434,21 +2442,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(1:nimp,iatm) = dab2(imp(1:nimp),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3di',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3di',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(1:nimp,iatm) = tab2(imp(1:nimp),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3di',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3di',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(1:nimp,imol) = dmb2(imp(1:nimp),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3di',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3di',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(1:nimp,imol) = tmb2(imp(1:nimp),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3di',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3di',imap,slice_nmol,iret)
         endif
         deallocate(slice)
         deallocate(slice_ns)
@@ -2462,6 +2470,7 @@ contains
       if (nomp.gt.0) then
         imap(1)=1     ! a
         imap(2)=1
+        imap(3)=1
         allocate(slice(nomp))
         allocate(slice_ns(nomp,ns))
         if (nnatmi.gt.0) then
@@ -2473,7 +2482,7 @@ contains
         do is = 0, ns-1
           slice_ns(1:nomp,is+1) = pl%na(omp(1:nomp),is)
         end do
-        call rwcdf(rw,ncid,'na3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'na3da',imap,slice_ns,iret)
         slice(1:nomp)=dv%ne(omp(1:nomp))
         call rwcdf(rw,ncid,'ne3da',imap,slice,iret)
         slice(1:nomp)=pl%te(omp(1:nomp))
@@ -2486,21 +2495,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(1:nomp,iatm) = dab2(omp(1:nomp),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3da',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3da',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(1:nomp,iatm) = tab2(omp(1:nomp),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3da',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3da',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(1:nomp,imol) = dmb2(omp(1:nomp),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3da',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3da',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(1:nomp,imol) = tmb2(omp(1:nomp),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3da',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3da',imap,slice_nmol,iret)
         endif
         deallocate(slice)
         deallocate(slice_ns)
@@ -2514,6 +2523,7 @@ contains
       if (maxval(mpg%strDiv).ge.2) then
         imap(1)=1     ! br
         imap(2)=1
+        imap(3)=1
         ireg=maxval(mpg%strDiv)
         allocate(slice(mpg%divFcP(ireg,2)))
         allocate(slice_ns(mpg%divFcP(ireg,2),ns))
@@ -2549,7 +2559,7 @@ contains
         do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
-        call rwcdf(rw,ncid,'na3dr',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'na3dr',imap,slice_ns,iret)
         slice(:) = dv%ne(cvlist(:))
         call rwcdf(rw,ncid,'ne3dr',imap,slice,iret)
         slice(:) = pl%te(cvlist(:))
@@ -2562,7 +2572,7 @@ contains
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
-        call rwcdf(rw,ncid,'fn3dr',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'fn3dr',imap,slice_ns,iret)
         slice(:) = fcOr(:)*(dv%fhe(fclist(:),0) + dv%fhe(fclist(:),1))
         call rwcdf(rw,ncid,'fe3dr',imap,slice,iret)
         slice(:) = fcOr(:)*(dv%fhi(fclist(:),0) + dv%fhi(fclist(:),1))
@@ -2599,21 +2609,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = dab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3dr',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3dr',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = tab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3dr',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3dr',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(:,imol) = dmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3dr',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3dr',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(:,imol) = tmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3dr',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3dr',imap,slice_nmol,iret)
         endif
         deallocate(fclist,cvlist,cnlist,fcOr)
         deallocate(slice)
@@ -2628,6 +2638,7 @@ contains
       if (maxval(mpg%strDiv).ge.3) then
         imap(1)=1     ! tr
         imap(2)=1
+        imap(3)=1
         allocate(slice(mpg%divFcP(3,2)))
         allocate(slice_ns(mpg%divFcP(3,2),ns))
         if (nnatmi.gt.0) then
@@ -2662,7 +2673,7 @@ contains
         do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
-        call rwcdf(rw,ncid,'na3dtr',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'na3dtr',imap,slice_ns,iret)
         slice(:) = dv%ne(cvlist(:))
         call rwcdf(rw,ncid,'ne3dtr',imap,slice,iret)
         slice(:) = pl%te(cvlist(:))
@@ -2675,7 +2686,7 @@ contains
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
-        call rwcdf(rw,ncid,'fn3dtr',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'fn3dtr',imap,slice_ns,iret)
         slice(:) = fcOr(:)*(dv%fhe(fclist(:),0) + dv%fhe(fclist(:),1))
         call rwcdf(rw,ncid,'fe3dtr',imap,slice,iret)
         slice(:) = fcOr(:)*(dv%fhi(fclist(:),0) + dv%fhi(fclist(:),1))
@@ -2712,21 +2723,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = dab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3dtr',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3dtr',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = tab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3dtr',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3dtr',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(:,imol) = dmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3dtr',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3dtr',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(:,imol) = tmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3dtr',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3dtr',imap,slice_nmol,iret)
         endif
         deallocate(fclist,cvlist,cnlist,fcOr)
         deallocate(slice)
@@ -2741,6 +2752,7 @@ contains
       if (maxval(mpg%strDiv).ge.4) then
         imap(1)=1     ! tl
         imap(2)=1
+        imap(3)=1
         allocate(slice(mpg%divFcP(2,2)))
         allocate(slice_ns(mpg%divFcP(2,2),ns))
         if (nnatmi.gt.0) then
@@ -2775,7 +2787,7 @@ contains
         do is = 0, ns-1
           slice_ns(:,is+1) = pl%na(cvlist(:),is)
         end do
-        call rwcdf(rw,ncid,'na3dtl',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'na3dtl',imap,slice_ns,iret)
         slice(:) = dv%ne(cvlist(:))
         call rwcdf(rw,ncid,'ne3dtl',imap,slice,iret)
         slice(:) = pl%te(cvlist(:))
@@ -2788,7 +2800,7 @@ contains
           slice_ns(:,is+1) = fcOr(:)*(dv%fna(fclist(:),0,is) + &
                                        & dv%fna(fclist(:),1,is))
         end do
-        call rwcdf(rw,ncid,'fn3dtl',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'fn3dtl',imap,slice_ns,iret)
         slice(:) = fcOr(:)*(dv%fhe(fclist(:),0) + dv%fhe(fclist(:),1))
         call rwcdf(rw,ncid,'fe3dtl',imap,slice,iret)
         slice(:) = fcOr(:)*(dv%fhi(fclist(:),0) + dv%fhi(fclist(:),1))
@@ -2825,21 +2837,21 @@ contains
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = dab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'dab3dtl',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'dab3dtl',imap,slice_natm,iret)
           do iatm = 1, nnatmi
             slice_natm(:,iatm) = tab2(cnlist(:),iatm,1)
           end do
-          call rwcdf(rw,ncid,'tab3dtl',(/1,1,1/),slice_natm,iret)
+          call rwcdf(rw,ncid,'tab3dtl',imap,slice_natm,iret)
         endif
         if (nnmoli.gt.0) then
           do imol = 1, nnmoli
             slice_nmol(:,imol) = dmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'dmb3dtl',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'dmb3dtl',imap,slice_nmol,iret)
           do imol = 1, nnmoli
             slice_nmol(:,imol) = tmb2(cnlist(:),imol,1)
           end do
-          call rwcdf(rw,ncid,'tmb3dtl',(/1,1,1/),slice_nmol,iret)
+          call rwcdf(rw,ncid,'tmb3dtl',imap,slice_nmol,iret)
         endif
         deallocate(fclist,cvlist,cnlist,fcOr)
         deallocate(slice)
@@ -2854,6 +2866,7 @@ contains
     !
       imap(1)=1
       imap(2)=1
+      imap(3)=1
       if (nimp.gt.0) then
         if (ismain0.ne.ismain) then
           allocate(slice(nimp))
@@ -2899,7 +2912,7 @@ contains
         do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%dna0(imp(1:nimp),is)
         end do
-        call rwcdf(rw,ncid,'dn3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'dn3di',imap,slice_ns,iret)
         if (switch%tn_style.eq.0) then
           do is = 0, ns-1
             slice_ns(1:nimp,is+1) = co%dpa0(imp(1:nimp),is)* &
@@ -2910,7 +2923,7 @@ contains
             slice_ns(1:nimp,is+1) = co%dpa0(imp(1:nimp),is)*pl%tn(imp(1:nimp))
           end do
         end if
-        call rwcdf(rw,ncid,'dp3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'dp3di',imap,slice_ns,iret)
         slice(1:nimp)=co%hce0(imp(1:nimp))/dv%ne(imp(1:nimp))
         call rwcdf(rw,ncid,'ke3di',imap,slice,iret)
         if (switch%tn_style.eq.0) then
@@ -2924,15 +2937,15 @@ contains
         do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vla0(imp(1:nimp),0,is)
         end do
-        call rwcdf(rw,ncid,'vx3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vx3di',imap,slice_ns,iret)
         do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vla0(imp(1:nimp),1,is)
         end do
-        call rwcdf(rw,ncid,'vy3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vy3di',imap,slice_ns,iret)
         do is = 0, ns-1
           slice_ns(1:nimp,is+1) = co%vsa0(imp(1:nimp),is)/(mp*am(is)*pl%na(imp(1:nimp),is))
         end do
-        call rwcdf(rw,ncid,'vs3di',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vs3di',imap,slice_ns,iret)
         deallocate(slice)
         deallocate(slice_ns)
       end if
@@ -2942,7 +2955,7 @@ contains
         do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%dna0(omp(1:nomp),is)
         end do
-        call rwcdf(rw,ncid,'dn3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'dn3da',imap,slice_ns,iret)
         if (switch%tn_style.eq.0) then
           do is = 0, ns-1
             slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)* &
@@ -2953,7 +2966,7 @@ contains
             slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)*pl%tn(omp(1:nomp))
           end do
         end if
-        call rwcdf(rw,ncid,'dp3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'dp3da',imap,slice_ns,iret)
         slice(1:nomp)=co%hce0(omp(1:nomp))/dv%ne(omp(1:nomp))
         call rwcdf(rw,ncid,'ke3da',imap,slice,iret)
         if (switch%tn_style.eq.0) then
@@ -2967,15 +2980,15 @@ contains
         do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vla0(omp(1:nomp),0,is)
         end do
-        call rwcdf(rw,ncid,'vx3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vx3da',imap,slice_ns,iret)
         do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vla0(omp(1:nomp),1,is)
         end do
-        call rwcdf(rw,ncid,'vy3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vy3da',imap,slice_ns,iret)
         do is = 0, ns-1
           slice_ns(1:nomp,is+1) = co%vsa0(omp(1:nomp),is)/(mp*am(is)*pl%na(omp(1:nomp),is))
         end do
-        call rwcdf(rw,ncid,'vs3da',(/1,1,1/),slice_ns,iret)
+        call rwcdf(rw,ncid,'vs3da',imap,slice_ns,iret)
         deallocate(slice)
         deallocate(slice_ns)
       end if
@@ -3068,71 +3081,71 @@ contains
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
       do is = 0, ns-1
-         nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
+        nasepm_std(is+1,1:nc) = (abs(nasepm_std(is+1,1:nc) - nasepm_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
       tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
       tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepm_std(iatm,1:nc) = (abs(dabsepm_std(iatm,1:nc) - dabsepm_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepm_std(iatm,1:nc) = (abs(tabsepm_std(iatm,1:nc) - tabsepm_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepm_std(imol,1:nc) = (abs(dmbsepm_std(imol,1:nc) - dmbsepm_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepm_std(imol,1:nc) = (abs(tmbsepm_std(imol,1:nc) - tmbsepm_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
+        nasepi_std(is+1,1:nc) = (abs(nasepi_std(is+1,1:nc) - nasepi_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
       tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
       tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepi_std(iatm,1:nc) = (abs(dabsepi_std(iatm,1:nc) - dabsepi_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepi_std(iatm,1:nc) = (abs(tabsepi_std(iatm,1:nc) - tabsepi_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepi_std(imol,1:nc) = (abs(dmbsepi_std(imol,1:nc) - dmbsepi_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepi_std(imol,1:nc) = (abs(tmbsepi_std(imol,1:nc) - tmbsepi_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
+        nasepa_std(is+1,1:nc) = (abs(nasepa_std(is+1,1:nc) - nasepa_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
       tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
       tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
       if (nnatmi.gt.0) then
         do iatm=1,nnatmi
-           dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
-           tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          dabsepa_std(iatm,1:nc) = (abs(dabsepa_std(iatm,1:nc) - dabsepa_av(iatm,1:nc)**2)*fac)**0.5
+          tabsepa_std(iatm,1:nc) = (abs(tabsepa_std(iatm,1:nc) - tabsepa_av(iatm,1:nc)**2)*fac)**0.5
         end do
       endif
       if (nnmoli.gt.0) then
         do imol=1,nnmoli
-           dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
-           tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          dmbsepa_std(imol,1:nc) = (abs(dmbsepa_std(imol,1:nc) - dmbsepa_av(imol,1:nc)**2)*fac)**0.5
+          tmbsepa_std(imol,1:nc) = (abs(tmbsepa_std(imol,1:nc) - tmbsepa_av(imol,1:nc)**2)*fac)**0.5
         end do
       endif
       posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
+        namxip_std(is+1,1:nc) = (abs(namxip_std(is+1,1:nc) - namxip_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
       temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
       timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
       pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
       do is = 0, ns-1
-         namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
+        namxap_std(is+1,1:nc) = (abs(namxap_std(is+1,1:nc) - namxap_av(is+1,1:nc)**2)*fac)**0.5
       end do
       nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
       temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
@@ -3151,112 +3164,104 @@ contains
 !wdk averages
       imap(1)=1
       imap(2)=nncutmax
-      call rwcdf(rw,ncid,'nasepm_av',(/1,1,nncutmax/),nasepm_av,iret)
       call rwcdf(rw,ncid,'nesepm_av',imap,nesepm_av,iret)
       call rwcdf(rw,ncid,'tesepm_av',imap,tesepm_av,iret)
       call rwcdf(rw,ncid,'tisepm_av',imap,tisepm_av,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepm_av',(/1,1,nncutmax/),dabsepm_av,iret)
-        call rwcdf(rw,ncid,'tabsepm_av',(/1,1,nncutmax/),tabsepm_av,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepm_av',(/1,1,nncutmax/),dmbsepm_av,iret)
-        call rwcdf(rw,ncid,'tmbsepm_av',(/1,1,nncutmax/),tmbsepm_av,iret)
-      endif
       call rwcdf(rw,ncid,'posepm_av',imap,posepm_av,iret)
       call rwcdf(rw,ncid,'ktsepm_av',imap,ktsepm_av,iret)
-      call rwcdf(rw,ncid,'nasepi_av',(/1,1,nncutmax/),nasepi_av,iret)
       call rwcdf(rw,ncid,'nesepi_av',imap,nesepi_av,iret)
       call rwcdf(rw,ncid,'tesepi_av',imap,tesepi_av,iret)
       call rwcdf(rw,ncid,'tisepi_av',imap,tisepi_av,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepi_av',(/1,1,nncutmax/),dabsepi_av,iret)
-        call rwcdf(rw,ncid,'tabsepi_av',(/1,1,nncutmax/),tabsepi_av,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepi_av',(/1,1,nncutmax/),dmbsepi_av,iret)
-        call rwcdf(rw,ncid,'tmbsepi_av',(/1,1,nncutmax/),tmbsepi_av,iret)
-      endif
       call rwcdf(rw,ncid,'posepi_av',imap,posepi_av,iret)
       call rwcdf(rw,ncid,'ktsepi_av',imap,ktsepi_av,iret)
-      call rwcdf(rw,ncid,'nasepa_av',(/1,1,nncutmax/),nasepa_av,iret)
       call rwcdf(rw,ncid,'nesepa_av',imap,nesepa_av,iret)
       call rwcdf(rw,ncid,'tesepa_av',imap,tesepa_av,iret)
       call rwcdf(rw,ncid,'tisepa_av',imap,tisepa_av,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepa_av',(/1,1,nncutmax/),dabsepa_av,iret)
-        call rwcdf(rw,ncid,'tabsepa_av',(/1,1,nncutmax/),tabsepa_av,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepa_av',(/1,1,nncutmax/),dmbsepa_av,iret)
-        call rwcdf(rw,ncid,'tmbsepa_av',(/1,1,nncutmax/),tmbsepa_av,iret)
-      endif
       call rwcdf(rw,ncid,'posepa_av',imap,posepa_av,iret)
       call rwcdf(rw,ncid,'ktsepa_av',imap,ktsepa_av,iret)
-      call rwcdf(rw,ncid,'namxip_av',(/1,1,nncutmax/),namxip_av,iret)
       call rwcdf(rw,ncid,'nemxip_av',imap,nemxip_av,iret)
       call rwcdf(rw,ncid,'temxip_av',imap,temxip_av,iret)
       call rwcdf(rw,ncid,'timxip_av',imap,timxip_av,iret)
       call rwcdf(rw,ncid,'pomxip_av',imap,pomxip_av,iret)
-      call rwcdf(rw,ncid,'namxap_av',(/1,1,nncutmax/),namxap_av,iret)
       call rwcdf(rw,ncid,'nemxap_av',imap,nemxap_av,iret)
       call rwcdf(rw,ncid,'temxap_av',imap,temxap_av,iret)
       call rwcdf(rw,ncid,'timxap_av',imap,timxap_av,iret)
       call rwcdf(rw,ncid,'pomxap_av',imap,pomxap_av,iret)
+      imap(1)=1
+      imap(2)=1
+      imap(3)=nncutmax
+      call rwcdf(rw,ncid,'nasepm_av',imap,nasepm_av,iret)
+      call rwcdf(rw,ncid,'nasepi_av',imap,nasepi_av,iret)
+      call rwcdf(rw,ncid,'nasepa_av',imap,nasepa_av,iret)
+      call rwcdf(rw,ncid,'namxip_av',imap,namxip_av,iret)
+      call rwcdf(rw,ncid,'namxap_av',imap,namxap_av,iret)
+      if (nnatmi.gt.0) then
+        call rwcdf(rw,ncid,'dabsepm_av',imap,dabsepm_av,iret)
+        call rwcdf(rw,ncid,'tabsepm_av',imap,tabsepm_av,iret)
+        call rwcdf(rw,ncid,'dabsepi_av',imap,dabsepi_av,iret)
+        call rwcdf(rw,ncid,'tabsepi_av',imap,tabsepi_av,iret)
+        call rwcdf(rw,ncid,'dabsepa_av',imap,dabsepa_av,iret)
+        call rwcdf(rw,ncid,'tabsepa_av',imap,tabsepa_av,iret)
+      endif
+      if (nnmoli.gt.0) then
+        call rwcdf(rw,ncid,'dmbsepm_av',imap,dmbsepm_av,iret)
+        call rwcdf(rw,ncid,'tmbsepm_av',imap,tmbsepm_av,iret)
+        call rwcdf(rw,ncid,'dmbsepi_av',imap,dmbsepi_av,iret)
+        call rwcdf(rw,ncid,'tmbsepi_av',imap,tmbsepi_av,iret)
+        call rwcdf(rw,ncid,'dmbsepa_av',imap,dmbsepa_av,iret)
+        call rwcdf(rw,ncid,'tmbsepa_av',imap,tmbsepa_av,iret)
+      endif
 
 !wdk standard deviations
-      call rwcdf(rw,ncid,'nasepm_std',(/1,1,nncutmax/),nasepm_std,iret)
+      imap(1)=1
+      imap(2)=nncutmax
       call rwcdf(rw,ncid,'nesepm_std',imap,nesepm_std,iret)
       call rwcdf(rw,ncid,'tesepm_std',imap,tesepm_std,iret)
       call rwcdf(rw,ncid,'tisepm_std',imap,tisepm_std,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepm_std',(/1,1,nncutmax/),dabsepm_std,iret)
-        call rwcdf(rw,ncid,'tabsepm_std',(/1,1,nncutmax/),tabsepm_std,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepm_std',(/1,1,nncutmax/),dmbsepm_std,iret)
-        call rwcdf(rw,ncid,'tmbsepm_std',(/1,1,nncutmax/),tmbsepm_std,iret)
-      endif
       call rwcdf(rw,ncid,'posepm_std',imap,posepm_std,iret)
       call rwcdf(rw,ncid,'ktsepm_std',imap,ktsepm_std,iret)
-      call rwcdf(rw,ncid,'nasepi_std',(/1,1,nncutmax/),nasepi_std,iret)
       call rwcdf(rw,ncid,'nesepi_std',imap,nesepi_std,iret)
       call rwcdf(rw,ncid,'tesepi_std',imap,tesepi_std,iret)
       call rwcdf(rw,ncid,'tisepi_std',imap,tisepi_std,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepi_std',(/1,1,nncutmax/),dabsepi_std,iret)
-        call rwcdf(rw,ncid,'tabsepi_std',(/1,1,nncutmax/),tabsepi_std,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepi_std',(/1,1,nncutmax/),dmbsepi_std,iret)
-        call rwcdf(rw,ncid,'tmbsepi_std',(/1,1,nncutmax/),tmbsepi_std,iret)
-      endif
       call rwcdf(rw,ncid,'posepi_std',imap,posepi_std,iret)
       call rwcdf(rw,ncid,'ktsepi_std',imap,ktsepi_std,iret)
-      call rwcdf(rw,ncid,'nasepa_std',(/1,1,nncutmax/),nasepa_std,iret)
       call rwcdf(rw,ncid,'nesepa_std',imap,nesepa_std,iret)
       call rwcdf(rw,ncid,'tesepa_std',imap,tesepa_std,iret)
       call rwcdf(rw,ncid,'tisepa_std',imap,tisepa_std,iret)
-      if (nnatmi.gt.0) then
-        call rwcdf(rw,ncid,'dabsepa_std',(/1,1,nncutmax/),dabsepa_std,iret)
-        call rwcdf(rw,ncid,'tabsepa_std',(/1,1,nncutmax/),tabsepa_std,iret)
-      endif
-      if (nnmoli.gt.0) then
-        call rwcdf(rw,ncid,'dmbsepa_std',(/1,1,nncutmax/),dmbsepa_std,iret)
-        call rwcdf(rw,ncid,'tmbsepa_std',(/1,1,nncutmax/),tmbsepa_std,iret)
-      endif
       call rwcdf(rw,ncid,'posepa_std',imap,posepa_std,iret)
       call rwcdf(rw,ncid,'ktsepa_std',imap,ktsepa_std,iret)
-      call rwcdf(rw,ncid,'namxip_std',(/1,1,nncutmax/),namxip_std,iret)
       call rwcdf(rw,ncid,'nemxip_std',imap,nemxip_std,iret)
       call rwcdf(rw,ncid,'temxip_std',imap,temxip_std,iret)
       call rwcdf(rw,ncid,'timxip_std',imap,timxip_std,iret)
       call rwcdf(rw,ncid,'pomxip_std',imap,pomxip_std,iret)
-      call rwcdf(rw,ncid,'namxap_std',(/1,1,nncutmax/),namxap_std,iret)
       call rwcdf(rw,ncid,'nemxap_std',imap,nemxap_std,iret)
       call rwcdf(rw,ncid,'temxap_std',imap,temxap_std,iret)
       call rwcdf(rw,ncid,'timxap_std',imap,timxap_std,iret)
       call rwcdf(rw,ncid,'pomxap_std',imap,pomxap_std,iret)
+      imap(1)=1
+      imap(2)=1
+      imap(3)=nncutmax
+      call rwcdf(rw,ncid,'nasepm_std',imap,nasepm_std,iret)
+      call rwcdf(rw,ncid,'nasepi_std',imap,nasepi_std,iret)
+      call rwcdf(rw,ncid,'nasepa_std',imap,nasepa_std,iret)
+      call rwcdf(rw,ncid,'namxip_std',imap,namxip_std,iret)
+      call rwcdf(rw,ncid,'namxap_std',imap,namxap_std,iret)
+      if (nnatmi.gt.0) then
+        call rwcdf(rw,ncid,'dabsepm_std',imap,dabsepm_std,iret)
+        call rwcdf(rw,ncid,'tabsepm_std',imap,tabsepm_std,iret)
+        call rwcdf(rw,ncid,'dabsepi_std',imap,dabsepi_std,iret)
+        call rwcdf(rw,ncid,'tabsepi_std',imap,tabsepi_std,iret)
+        call rwcdf(rw,ncid,'dabsepa_std',imap,dabsepa_std,iret)
+        call rwcdf(rw,ncid,'tabsepa_std',imap,tabsepa_std,iret)
+      endif
+      if (nnmoli.gt.0) then
+        call rwcdf(rw,ncid,'dmbsepm_std',imap,dmbsepm_std,iret)
+        call rwcdf(rw,ncid,'tmbsepm_std',imap,tmbsepm_std,iret)
+        call rwcdf(rw,ncid,'dmbsepi_std',imap,dmbsepi_std,iret)
+        call rwcdf(rw,ncid,'tmbsepi_std',imap,tmbsepi_std,iret)
+        call rwcdf(rw,ncid,'dmbsepa_std',imap,dmbsepa_std,iret)
+        call rwcdf(rw,ncid,'tmbsepa_std',imap,tmbsepa_std,iret)
+      endif
       iret = nf_close(ncid)
       call check_cdf_status(iret)
     endif !lwav
@@ -3283,7 +3288,7 @@ contains
   deallocate(dabsepi_av)
   deallocate(tabsepi_av)
   deallocate(dmbsepi_av)
-  deallocate(tmbsepi_av) 
+  deallocate(tmbsepi_av)
   deallocate(posepi_av)
   deallocate(nasepm_av)
   deallocate(nesepm_av)
@@ -3292,7 +3297,7 @@ contains
   deallocate(dabsepm_av)
   deallocate(tabsepm_av)
   deallocate(dmbsepm_av)
-  deallocate(tmbsepm_av) 
+  deallocate(tmbsepm_av)
   deallocate(posepm_av)
   deallocate(nasepa_av)
   deallocate(nesepa_av)
@@ -3301,7 +3306,7 @@ contains
   deallocate(dabsepa_av)
   deallocate(tabsepa_av)
   deallocate(dmbsepa_av)
-  deallocate(tmbsepa_av) 
+  deallocate(tmbsepa_av)
   deallocate(posepa_av)
   deallocate(namxip_av)
   deallocate(nemxip_av)
@@ -3323,7 +3328,7 @@ contains
   deallocate(dabsepi_std)
   deallocate(tabsepi_std)
   deallocate(dmbsepi_std)
-  deallocate(tmbsepi_std) 
+  deallocate(tmbsepi_std)
   deallocate(posepi_std)
   deallocate(nasepm_std)
   deallocate(nesepm_std)
@@ -3332,7 +3337,7 @@ contains
   deallocate(dabsepm_std)
   deallocate(tabsepm_std)
   deallocate(dmbsepm_std)
-  deallocate(tmbsepm_std) 
+  deallocate(tmbsepm_std)
   deallocate(posepm_std)
   deallocate(nasepa_std)
   deallocate(nesepa_std)
@@ -3341,7 +3346,7 @@ contains
   deallocate(dabsepa_std)
   deallocate(tabsepa_std)
   deallocate(dmbsepa_std)
-  deallocate(tmbsepa_std) 
+  deallocate(tmbsepa_std)
   deallocate(posepa_std)
   deallocate(namxip_std)
   deallocate(nemxip_std)
@@ -3409,14 +3414,14 @@ contains
     character*(*) filename
     integer i
 
-    ds(1)= 0.5_R8 * geo%fcHt(fclist(1))
-    do i=2,nlist
-      ds(i)=ds(i-1)+ 0.5 * (geo%fcHt(fclist(i-1)) + geo%fcHt(fclist(i)))
+    ds(1) = 0.5_R8 * geo%fcHt(fclist(1))
+    do i = 2, nlist
+      ds(i) = ds(i-1)+ 0.5_R8 * (geo%fcHt(fclist(i-1)) + geo%fcHt(fclist(i)))
     enddo
     if(isep.ne.0) then
-      ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
-      do i=1,nlist
-        ds(i)=ds(i)-ds_offset
+      ds_offset = (ds(isep)+ds(isep+1))/2.0_R8
+      do i = 1, nlist
+        ds(i) = ds(i) - ds_offset
       enddo
     endif
     open(99,file=filename)

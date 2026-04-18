@@ -1084,7 +1084,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
     END DO
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, reszt, resztb, corzt, corztb&
-&           , 'b2usht_zt')
+&           , 'b2usht_zt', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -1274,7 +1274,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (branch .EQ. 0) THEN
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, reskt, resktb, corkt, corktb&
-&           , 'b2usht_kt')
+&           , 'b2usht_kt', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -1462,7 +1462,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (branch .EQ. 0) THEN
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, reshn, reshnb, cortn, cortnb&
-&           , 'b2usht_Tn')
+&           , 'b2usht_Tn', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -1651,7 +1651,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (branch .EQ. 0) THEN
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, reshi, reshib, corti, cortib&
-&           , 'b2usht_Ti')
+&           , 'b2usht_Ti', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -1851,7 +1851,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (branch .EQ. 0) THEN
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, reshe, resheb, corte, corteb&
-&           , 'b2usht_Te')
+&           , 'b2usht_Te', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -2061,7 +2061,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
   IF (branch .EQ. 0) THEN
   aab = 0.0_R8
     CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, resht, reshtb, cortt, corttb&
-&           , 'b2usht_total')
+&           , 'b2usht_total', switch%b2uxus_style)
     CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -2715,7 +2715,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 !   ..solve the correction equation
 !srv 18.05.02
     CALL B2UXUS(ncv, mpg, aa, itcnt, resht, cortt, 'b2usht_total'&
-&               )
+&               , switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -2884,7 +2884,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 &                                                  'b2usht_aa_te')
 !   ..solve the correction equation
 !srv 18.05.02
-    CALL B2UXUS(ncv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')
+    CALL B2UXUS(ncv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -3047,7 +3047,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
 &                                                  'b2usht_aa_ti')
 !
 !   ..solve the correction equation
-    CALL B2UXUS(ncv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+    CALL B2UXUS(ncv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti', switch%b2uxus_style)
     last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
   END IF
 !
@@ -3196,7 +3196,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
       END DO
 !
 !   ..solve the correction equation
-      CALL B2UXUS(ncv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
+      CALL B2UXUS(ncv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn', switch%b2uxus_style)
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
     END IF
   END IF
@@ -3337,7 +3337,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     END DO
 !
 !   ..solve the correction equation
-    CALL B2UXUS(ncv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
+    CALL B2UXUS(ncv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN
@@ -3475,7 +3475,7 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
     END DO
 !
 !   ..solve the correction equation
-    CALL B2UXUS(ncv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
+    CALL B2UXUS(ncv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt', switch%b2uxus_style)
   END IF
 !
   IF (switch%b2usht_iout .NE. 0) THEN

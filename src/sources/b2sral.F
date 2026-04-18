@@ -47,7 +47,7 @@
 #endif
       use b2mod_ad
      & , only : my_out_folder, in_no_of_start_points,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbr_phys, ncall_b2stbr,
@@ -256,7 +256,7 @@
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
-     &    st%srw, st%psnc, st%psnl, wrong_flow, main_call)
+     &    st%sr, st%srw, st%psnc, st%psnl, wrong_flow, main_call)
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0

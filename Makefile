@@ -12,6 +12,7 @@ DOCDIR   = ${SRCDIR}/documentation
 PYTHON  ?= python
 TAGSLIST =
 SOLPSINCLUDE ?=
+AMDIR    = ${SRCB2}/Database/trim.data/refl.data
 
 MAKETAGS ?= ctags -e -f
 
@@ -130,7 +131,6 @@ endif
 ifdef SOLPSTOP
   NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
   NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
-  NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
 
 # Defines MPI_VERSION, which is the MPI version number
@@ -307,6 +307,10 @@ ifdef TEST_MAP
 DEFINES += -DTEST_MAP
 endif
 
+ifneq ($(wildcard $(MKLROOT)),)
+DEFINES += -DPARDISO
+endif
+
 # Switches to disable individual OpenMP regions, for debugging
 # uncomment to activate
 #
@@ -479,17 +483,17 @@ JSONAD = ${OBJDIR}/json.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text ensure_adas
 
-DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
-ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
-NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
-DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_DD: VERSION ${MNHEXE}
-TANGENT: VERSION ${MNDEXE} ${OPTEXE}
-ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
-HESS_TGT: VERSION ${MNHEXE}
+DEFAULT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
+ALL: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
+NOPLOT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
+DIFF_D: VERSION AM_FILES ${MNDEXE} ${OPTEXE}
+DIFF_B: VERSION AM_FILES ${MNBEXE} ${OPTEXE}
+DIFF_DD: VERSION AM_FILES ${MNHEXE}
+TANGENT: VERSION AM_FILES ${MNDEXE} ${OPTEXE}
+ADJOINT: VERSION AM_FILES ${MNBEXE} ${OPTEXE}
+HESS_TGT: VERSION AM_FILES ${MNHEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -522,7 +526,13 @@ ALL: ${NCEXE} ${NREXE} nc2text
 NOPLOT: ${NCEXE} ${NREXE} nc2text
 endif
 endif
-MAIN: VERSION ${MNEXE}
+MAIN: VERSION AM_FILES ${MNEXE}
+ifdef SOLPSTOP
+DEFAULT: ensure_adas
+ALL: ensure_adas
+NOPLOT: ensure_adas
+MAIN: ensure_adas
+endif
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS_WG
@@ -1106,8 +1116,8 @@ ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-	@-ln -sf $@ ${NCXDIR}/$*
-	@-ln -sf ${NCXDIR}/nc2text_simple ${NCXDIR}/nc2text
+	@-ln -sf $@ ${NCODIR}/$*
+	@-ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 else
 	$(warning Compiler type was redefined: skipping!)
 endif
@@ -1120,7 +1130,7 @@ ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
-	@-ln -sf $@ ${NCXDIR}/$*
+	@-ln -sf $@ ${NCODIR}/$*
 endif
 else
 	$(warning Compiler type was redefined: skipping!)
@@ -1391,8 +1401,20 @@ endif
 	${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} local
+	${MAKE} AM_FILES
 	${MAKE} listobj
 	${MAKE} depend
+
+AM_FILES: ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
+
+${AMDIR}/dbe.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
+
+${AMDIR}/dc.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
+
+${AMDIR}/dw.fnn: ${AMDIR}/retrieve_fnn_datasets
+	cd ${AMDIR} ; ./retrieve_fnn_datasets
 
 include ${OBJDIR}/dependencies
 ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
@@ -1493,3 +1515,9 @@ else
 	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND\n" > ${OBJDIR}/mpi_version.f90 ; \
 	${FC} ${FCOPTS} ${FPOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk
 endif
+
+ensure_adas:
+	@if [ ! -d "${SOLPSTOP}/modules/adas" ] || [ -z "$$(ls -A "${SOLPSTOP}/modules/adas" 2>/dev/null)" ]; then \
+	echo "ADAS directory missing or empty: running fetch_adas_datafiles"; \
+	fetch_adas_datafiles; \
+	fi

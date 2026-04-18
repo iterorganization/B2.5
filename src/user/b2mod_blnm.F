@@ -140,71 +140,73 @@ c
         call b2xppz(mpg%nCv, ns,
      .   state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, pr,
      .   state_ext)
-        do ic=1,2
-          done = .false.
-          if (ic.eq.1) then
-            it=1
-          else
-            it=maxval(mpg%strDiv)
-          end if
-          do iy = 1, mpg%divFcP(it,2)
-            iFc = mpg%divFc(mpg%divFcP(it,1)+iy-1)
-            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-            iFt = mpg%cvFt(iCv)
-            iCx = 0
-            iCn = iCv
-            iCb = iCv
-            if (iFt.eq.0) cycle
-            do while (iCx.eq.0.and..not.done(iFt))
-              iCp = 0
-              do i = mpg%cvFcP(iCn,1),
-     .               mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
-                if (iCp.ne.0) cycle
-                iFn = mpg%cvFc(i)
-                if (mpg%fcFs(iFn).ne.0) cycle
-                if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
-     .              mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
-                if (mpg%fcCv(iFn,1).eq.iCn .and. mpg%fcCv(iFn,2).ne.iCb)
-     >           then
-                  iCp = mpg%fcCv(iFn,2)
-                  iFp = iFn
-                end if
-                if (mpg%fcCv(iFn,2).eq.iCn .and. mpg%fcCv(iFn,1).ne.iCb)
-     >           then
-                  iCp = mpg%fcCv(iFn,1)
-                  iFp = iFn
-                end if
-              end do
+        if (maxval(mpg%strDiv).gt.0) then
+          do ic=1,2
+            done = .false.
+            if (ic.eq.1) then
+              it=1
+            else
+              it=maxval(mpg%strDiv)
+            end if
+            do iy = 1, mpg%divFcP(it,2)
+              iFc = mpg%divFc(mpg%divFcP(it,1)+iy-1)
+              iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+              iFt = mpg%cvFt(iCv)
+              iCx = 0
+              iCn = iCv
+              iCb = iCv
+              if (iFt.eq.0) cycle
+              do while (iCx.eq.0.and..not.done(iFt))
+                iCp = 0
+                do i = mpg%cvFcP(iCn,1),
+     .                 mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
+                  if (iCp.ne.0) cycle
+                  iFn = mpg%cvFc(i)
+                  if (mpg%fcFs(iFn).ne.0) cycle
+                  if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
+     .                mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
+                  if (mpg%fcCv(iFn,1).eq.iCn .and.
+     &                 mpg%fcCv(iFn,2).ne.iCb) then
+                    iCp = mpg%fcCv(iFn,2)
+                    iFp = iFn
+                  end if
+                  if (mpg%fcCv(iFn,2).eq.iCn .and.
+     &                mpg%fcCv(iFn,1).ne.iCb) then
+                    iCp = mpg%fcCv(iFn,1)
+                    iFp = iFn
+                  end if
+                end do
 ! In case of a shaved flux tube, we may have started in the wrong direction
 ! The algorithm will however always work
 ! when starting from the triangle tip cell
-              if (iCp.eq.0) then
-                iCx = -1
-                cycle
-              end if
-              iCb = iCn
-              iCn = iCp
-              if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
-                iCx = iCn
-                done(iFt) = .true.
-                do is=0,ns-1
-                  if (.not.is_neutral(is)) then
-                    if (ic.eq.1) then
-                      hlp_fi=hlp_fi+state%dv%fmo(iFp,0,is)
-                    else
-                      hlp_fo=hlp_fo+state%dv%fmo(iFp,0,is)
-                    end if
-                  end if
-                end do
-                if (ic.eq.1) then
-                  hlp_pi=hlp_pi+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
-                else
-                  hlp_po=hlp_po+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                if (iCp.eq.0) then
+                  iCx = -1
+                  cycle
                 end if
-              end if
+                iCb = iCn
+                iCn = iCp
+                if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
+                  iCx = iCn
+                  done(iFt) = .true.
+                  do is=0,ns-1
+                    if (.not.is_neutral(is)) then
+                      if (ic.eq.1) then
+                        hlp_fi=hlp_fi+state%dv%fmo(iFp,0,is)
+                      else
+                        hlp_fo=hlp_fo+state%dv%fmo(iFp,0,is)
+                      end if
+                    end if
+                  end do
+                  if (ic.eq.1) then
+                    hlp_pi=hlp_pi+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                  else
+                    hlp_po=hlp_po+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                  end if
+                end if
+              end do
             end do
           end do
-        end do
+        end if
         prsup(1)=hlp_pi
         prsup(2)=hlp_po
         flmup(1)=hlp_fi
@@ -213,28 +215,30 @@ c
         hlp_po=0.0_R8
         hlp_fi=0.0_R8
         hlp_fo=0.0_R8
-        do i = 1, mpg%divFcP(1,2)
-          iFc = mpg%divFc(mpg%divFcP(1,1)+i-1)
-          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          hlp_pi=hlp_pi+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
-          do is=0,ns-1
-            if (.not.is_neutral(is))
-     >       hlp_fi=hlp_fi+
-     .        (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
-     .         mpg%divFcOr(mpg%divFcP(1,1)+i-1)
+        if (maxval(mpg%strDiv).gt.0) then
+          do i = 1, mpg%divFcP(1,2)
+            iFc = mpg%divFc(mpg%divFcP(1,1)+i-1)
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            hlp_pi=hlp_pi+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
+            do is=0,ns-1
+              if (.not.is_neutral(is))
+     >         hlp_fi=hlp_fi+
+     .          (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
+     .           mpg%divFcOr(mpg%divFcP(1,1)+i-1)
+            end do
           end do
-        end do
-        do i = 1, mpg%divFcP(maxval(mpg%strDiv),2)
-          iFc = mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
-          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          hlp_po=hlp_po+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
-          do is=0,ns-1
-            if (.not.is_neutral(is))
-     >       hlp_fo=hlp_fo+
-     .        (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
-     .         mpg%divFcOr(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+          do i = 1, mpg%divFcP(maxval(mpg%strDiv),2)
+            iFc = mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            hlp_po=hlp_po+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
+            do is=0,ns-1
+              if (.not.is_neutral(is))
+     >         hlp_fo=hlp_fo+
+     .          (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
+     .           mpg%divFcOr(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+            end do
           end do
-        end do
+        end if
         prstg(1)=hlp_pi
         prstg(2)=hlp_po
         flmtg(1)=hlp_fi
@@ -289,12 +293,14 @@ c
         rsfrc(1)=prstg(1)+flmtg(1)+prsnu(1)+prsmf(1)-prsup(1)-flmup(1)
         rsfrc(2)=prsup(2)+flmup(2)+prsnu(2)+prsmf(2)-prstg(2)-flmtg(2)
         do ic=1,2
-          rlptg(ic)=prstg(ic)/prsup(ic)
-          rlmup(ic)=flmup(ic)/prsup(ic)
-          rlmtg(ic)=flmtg(ic)/prsup(ic)
-          rlfnu(ic)=prsnu(ic)/prsup(ic)
-          rlfmf(ic)=prsmf(ic)/prsup(ic)
-          rlres(ic)=rsfrc(ic)/prsup(ic)
+          if (prsup(ic).gt.0.0_R8) then
+            rlptg(ic)=prstg(ic)/prsup(ic)
+            rlmup(ic)=flmup(ic)/prsup(ic)
+            rlmtg(ic)=flmtg(ic)/prsup(ic)
+            rlfnu(ic)=prsnu(ic)/prsup(ic)
+            rlfmf(ic)=prsmf(ic)/prsup(ic)
+            rlres(ic)=rsfrc(ic)/prsup(ic)
+          end if
         end do
       end if !}
       if(ank_tracing.eq.0) return

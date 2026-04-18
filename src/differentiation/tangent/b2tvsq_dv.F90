@@ -130,7 +130,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   REAL(r8) :: temp8
   REAL(kind=r8), DIMENSION(nFc) :: temp9
   REAL(kind=r8), DIMENSION(nfc) :: temp10
-  REAL(kind=r8), DIMENSION(SIZE(nal, 1)) :: temp11
+  REAL(kind=r8), DIMENSION(nCv) :: temp11
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
 !.computation

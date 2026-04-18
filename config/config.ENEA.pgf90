@@ -28,4 +28,3 @@ LDLIBES = -L/afs/efda-itm.eu/project/switm/netcdf/amd64_pgi/lib -lnetcdff -lnetc
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

@@ -1249,6 +1249,60 @@
         write (*,*) 'This option limits post-processing options.'
       endif
 
+      if (allocated(mpg%fcs_wall)) then
+      ! Count nFci
+        mpg%nFci = 0
+        do j = 2, mpg%nCg
+          if (maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j), 1:2))) /=
+     &        maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
+            mpg%nFci = mpg%nFci + 1
+          end if
+        end do
+        mpg%nFci = mpg%nFci + 1
+
+        allocate(mpg%fcs_wall_ind(mpg%nFci, 2),
+     &           mpg%fcs_wall_type(mpg%nFci))
+
+        ! Populate mapping array
+        k = 1
+        i = 1
+        do j = 2, mpg%nCg
+          if (maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j), 1:2))) /=
+     &        maxval(mpg%cvFt(mpg%fcCv(mpg%fcs_wall(j-1), 1:2)))) then
+            mpg%fcs_wall_ind(k, 1) = i
+            mpg%fcs_wall_ind(k, 2) = j - i
+            if (mpg%cvOnClosedSurface
+     &          (minval(mpg%fcCv(mpg%fcs_wall(i), 1:2)))) then
+              mpg%fcs_wall_type(k) = 1
+            else
+              mpg%fcs_wall_type(k) = 2
+            end if
+            k = k + 1
+            i = j
+          end if
+        end do
+
+        ! Handle last entry
+        mpg%fcs_wall_ind(mpg%nFci, 1) = mpg%fcs_wall_ind(mpg%nFci-1, 1)
+     &    + mpg%fcs_wall_ind(mpg%nFci-1, 2)
+        mpg%fcs_wall_ind(mpg%nFci, 2) = mpg%nCg -
+     &    mpg%fcs_wall_ind(mpg%nFci, 1) + 1
+        if (mpg%cvOnClosedSurface
+     &      (minval(mpg%fcCv(mpg%fcs_wall(i), 1:2)))) then
+          mpg%fcs_wall_type(k) = 1
+        else
+          mpg%fcs_wall_type(k) = 2
+        end if
+      endif
+
+      write(*,*) "list of boundary faces in one flux tube and type:"
+      do j=1,mpg%nFci
+        write(*,'(4i4)') j, mpg%fcs_wall_ind(j,1),
+     &                      mpg%fcs_wall_ind(j,2), mpg%fcs_wall_type(j)
+        write(*,*) mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
+     &                          mpg%fcs_wall_ind(j,1)+
+     &                          mpg%fcs_wall_ind(j,2)-1)
+      enddo
       return
       end subroutine init_geometry
 

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, sr, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
@@ -29,7 +29,7 @@
      &          mompar
       use b2mod_ad
      & , only : my_out_folder,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2stbc_phys, nsdmax
@@ -46,6 +46,7 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
+      type (B2Source), intent (in) :: sr
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
@@ -343,7 +344,7 @@
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &    call compute_feedback(nCv, nFc, ns, ismain,
-     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl,
+     &     switch, geo, mpg, pl, dv, rt, sr, srw, psnc, psnl,
      &     main_call)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'

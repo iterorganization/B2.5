@@ -96,7 +96,7 @@
       integer, save :: bc_type16_kinetic_energy = 0
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
-     *  vte, s1, s1hz, fche, fchi, t0, t1, t2,                          !srv 15.11.07
+     *  vte, s1, fche, fchi, t0, t1, t2,                                !srv 15.11.07
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
@@ -1158,8 +1158,6 @@ c   (ionising_core option)
      .          MOMPAR(IS,IB,1),' on boundary ',
      .          BCCHAR(IB),boundary_location(ib),' for species ',IS
             endif
-            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
-     1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             call xertst(CONPAR(IS,IB,2).ge.0.0_R8,
      1       'BCCON = 14, CONPAR(,,2) < 0 not allowed!')
           endif
@@ -1177,16 +1175,14 @@ c   (ionising_core option)
               cs = sqrt(pz(iCv1)/rz(iCv1))
               t0 = 2.0_R8*cs*abs(wrk)
               vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
-     &                                       vbnd*sign(1.0_R8,wrk)
+              vbc(iCv1,is) = cs*wrk-vbnd*sign(1.0_R8,wrk)
               csbc(iCv1,is) = cs
             else
               cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &          (am(is)*mp))
               t0 = 2.0_R8*cs*abs(wrk)
               vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
-     &                                       vbnd*sign(1.0_R8,wrk)
+              vbc(iCv1,is) = cs*wrk-vbnd*sign(1.0_R8,wrk)
               vbc(iCv1,is) = max(vbc(iCv1,is)*sign(1.0_R8,wrk),
      &                           wrk*pl%ua(iCv2,is))*sign(1.0_R8,wrk)
               csbc(iCv1,is) = cs
@@ -3159,14 +3155,17 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .         'BCMOM = 13 : from b2stbc_spb parallel momentum bc '//
      .         'with mompar1 =', MOMPAR(IS,IB,1),
      1         ' and mompar2 =', MOMPAR(IS,IB,2),' on ',
-     2         BCCHAR(IB),boundary_location(ib),' for species ',IS
+     2          BCCHAR(IB),boundary_location(ib),' for species ',IS
             else
               write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
-     .        'BCMOM = 13 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
-     .        'sheath BC, with MOMPAR(:,:,1) = ',
-     .        MOMPAR(IS,IB,1),' on boundary ',
-     .        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .         'BCMOM = 13 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
+     .         'sheath BC, with MOMPAR(:,:,1) = ',
+     .          MOMPAR(IS,IB,1),' on boundary ',
+     .          BCCHAR(IB),boundary_location(ib),' for species ',IS
             endif
+            call xertst(BCCON(IS,IB).eq.14,
+     &       'BCCON = 14 must be used in conjunction '//
+     &       'with BCMOM = 13!')
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -3186,32 +3185,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
               srw%smo0(iCv1,1,is)=
      .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
             else
-              s1hz = geo%fcPbshz(iFc)
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
-              if (mompar(is,ib,2).lt.0.5_R8) then
-                cs = sqrt(pz(iCv1)/rz(iCv1))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-              else
-                cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
-     &                    (am(is)*mp))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-                vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
-     &           vbnd)
-              endif
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
-     &         mompar(is,ib,1)*vbnd
+     &         mompar(is,ib,1)*vbc(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
               srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &          abs(geo%fcPbshz(iFc))                                   !srv 07.05.09 }
@@ -4343,8 +4319,8 @@ cxpb code segment analog to b2tfhe
             t1 = 0.0_R8
             do is = 0, ns-1
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
-     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
+     >         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &                   rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
             t0 = max(0.0_R8, (abs(geo%fcPbs(iFc))*t0*cs -               !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))    !srv 25.12.06 11.01.13 20.09.17
@@ -5917,6 +5893,7 @@ cxpb code segment analog to b2tfhi
           write(*,*) 'BCENI=15 - should have BCCON=14 for all ions'
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17
+          if (bceni_15_style.ne.0) write(*,*) "bceni_15_style <> 0"
           BCCON14_IS(IB) = .TRUE.
           DO IS = 0, NS-1
             IF(.NOT.IS_NEUTRAL(IS)) THEN
@@ -5925,9 +5902,13 @@ cxpb code segment analog to b2tfhi
           ENDDO
           if (BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 HAS ',
      &      'BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
-          if(.not.BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
-          if(bceni_15_style.ne.0) write(*,*) "bceni_15_style = 1"
+          if(.not.BCCON14_IS(IB)) then
+            write(*,'(a,a,i3,a)') 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
+            if (bceni_15_style.eq.0) call xerrab(
+     &       'When BCENI=15 and bceni_15_style.eq.0, '//
+     &       'one must have BCCON=14 for all ion species!')
+          endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -5993,7 +5974,7 @@ cxpb code segment analog to b2tfhi
      &                    (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
                 dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
      &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
-                t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
+                t0 = t0 + dsh*mompar(is,ib,1)*pl%na(iCv1,is)
                 if (conpar(is,ib,2).gt.0.0_R8)
      &           t1 = t1 + fac_he_anom_bc*
      &            enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
@@ -7437,6 +7418,12 @@ c              fchi=0.0_R8
      &     'BCPOT = 11 : sheath potential current continuity bc',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
      &     ' on ',BCCHAR(IB),boundary_location(ib)
+          do is = 0, ns-1
+            if(is_neutral(is)) cycle
+            call xertst(BCCON(IS,IB).eq.14,
+     &       'When BCPOT=11, '//
+     &       'one must have BCCON=14 for all ion species!')
+          enddo
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -7462,7 +7449,7 @@ c              fchi=0.0_R8
               vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*s1*
+              t0 = t0 + rt%rza(iCv1,is)*mompar(is,ib,1)*s1*
      &             max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
      &             sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
             enddo
@@ -8574,14 +8561,14 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           t1 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)
               if (conpar(is,ib,2).gt.0.0_R8)
      &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif
           enddo
           srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -
      &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))*
-     &     (1.0_R8 + switch%b2tfhi_fflokt)  -
+     &     (1.0_R8 + switch%b2tfhi_fflokt) -
      &      enkpar(ib,2)*t1*geo%fcS(iFc)
 cwdk    Todo: corrections for BCCON.ne.14
         enddo
@@ -8863,7 +8850,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           t1 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)
               if (conpar(is,ib,2).gt.0.0_R8)
      &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif

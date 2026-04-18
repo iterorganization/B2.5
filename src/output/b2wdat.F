@@ -9,7 +9,7 @@
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : natm, nmol, nstra,  npls
+     * , only : natm, nmol, nstra, npls
       use eirmod_wneutrals
 #endif
       use b2us_geo
@@ -17,7 +17,7 @@
       use b2us_plasma
       use b2mod_user_namelist
      , , only : nomp, omp, icsepomp, nimp, imp, icsepimp
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       use b2mod_subsys
@@ -50,8 +50,8 @@
       integer, save :: ishift=0                                    !srv 05.11.09
 
       integer iRFc, nRFc, icell
-#ifdef WG_DEBUG
-      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy,
+#ifdef DBG
+      integer nmdpl, nmdpl_i, n_closed_surface, nx, ny, ix, iy,
      ,        ilast_closed_surface, ifirst_open_surface
       logical first
       logical found
@@ -123,7 +123,7 @@
       nCv = mpg%nCv
       nFc = mpg%nFc
       nVx = mpg%nVx
-#ifdef WG_DEBUG
+#ifdef DBG
       ! At the moment, some output is only supported for grids that were
       ! originally structured
       if (mpg%isClassicalGrid.eq.1) then
@@ -139,16 +139,15 @@
 #endif
 
 *   ..initialisation
-#ifdef WG_DEBUG
+#ifdef DBG
       if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
          ilast_closed_surface = -2
          n_closed_surface = 0
-         ix = nx/2    !  nmdpl; may not work for DN?
-         do iy = -1, ny
-          if(mpg%imapCv(ix,iy) /= 0) then
-           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = 1, nomp
+          if(omp(iy).le.mpg%nCi) then
+           if(mpg%cvOnClosedSurface(omp(iy))) then
             n_closed_surface = n_closed_surface + 1
             ilast_closed_surface = iy
            endif
@@ -159,9 +158,9 @@
 *      ..find the number of the first open surface in SOL
          ifirst_open_surface = ilast_closed_surface
          found = .false.
-         do iy = ilast_closed_surface + 1, ny
-          if(mpg%imapCv(ix,iy) /= 0 .and. .not.found) then
-           if(.not.mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = ilast_closed_surface + 1, nomp
+          if(omp(iy).le.mpg%nCi .and. .not.found) then
+           if(.not.mpg%cvOnClosedSurface(omp(iy))) then
             ifirst_open_surface = iy
             found = .true.
            endif
@@ -178,9 +177,9 @@
           if(mpg%imapCv(ix,iy) /= 0) then
            if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
             if(first) then
-                nmdpl = ix
-                nmdpl_i = ix
-                first = .false.
+               nmdpl = ix
+               nmdpl_i = ix
+               first = .false.
             endif
             if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
      &         geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix
@@ -415,7 +414,7 @@
          write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
          close(70)
 
-#ifdef WG_DEBUG
+#ifdef DBG
        if (mpg%isClassicalGrid.eq.1) then
          open(70,file=trim(folder)//'info.dat')
          write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
@@ -502,7 +501,7 @@
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
       endif                                                             !srv   end for iout=3
 
-#ifdef WG_DEBUG
+#ifdef DBG
       if (mpg%isClassicalGrid.eq.1) then
 
 *    ..deallocate arrays for structured format

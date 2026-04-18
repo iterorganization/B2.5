@@ -2300,10 +2300,10 @@ CONTAINS
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
     REAL(r8) :: x1b
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
@@ -2320,10 +2320,10 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
-    LOGICAL, DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: mask
-    LOGICAL, DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: mask0
-    LOGICAL, DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: mask1
-    LOGICAL, DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: mask2
+    LOGICAL, DIMENSION(mpg%ncv, 0:ns-1) :: mask
+    LOGICAL, DIMENSION(mpg%ncv, 0:ns-1) :: mask0
+    LOGICAL, DIMENSION(mpg%ncv, 0:ns-1) :: mask1
+    LOGICAL, DIMENSION(mpg%ncv, 0:ns-1) :: mask2
     LOGICAL, DIMENSION(mpg%nCv) :: mask3
     REAL(kind=r8) :: result10
     REAL(kind=r8) :: result20
@@ -3866,10 +3866,10 @@ CONTAINS
     INTRINSIC MAXVAL
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
-    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
-    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
-    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
-    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs2
+    REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs3
     REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2

@@ -22,7 +22,7 @@
      &          z_to_m1_ast
       use b2mod_ad
      & , only : my_out_folder, ncall_b2xehx, ncall_b2tcpa,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2ttia, nsmooth_tvsq

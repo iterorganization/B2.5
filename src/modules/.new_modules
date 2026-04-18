@@ -1,3 +1,5 @@
 Modularized various common blocks
 Neoclassical corrections to Zhdanov-Grad closure for impurities
 Renamed Eirene interface directory from couple_SOLPS-ITER to couple_SOLPS_WG
+Added new PARDISO solver option
+Added b2mod_blns which produces the tracing/blnn_SPb.trc file

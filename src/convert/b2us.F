@@ -479,7 +479,7 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
           endif
           call alloc_b2mod_neutrals
      .     (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
-          call read_neutrals_namelist(nx, ny, ns, switch, .false.)
+          call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else

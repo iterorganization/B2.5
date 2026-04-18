@@ -121,7 +121,7 @@ c
       integer ns
       real (kind=R8) :: dtim
 c
-      integer i, j, k, l, m, ic, ii, is, js, ks, ls,
+      integer i, j, k, l, m, n, ic, ii, is, js, ks, ls,
      ,        kks, iCv, ilks, iFc
       integer, save :: geometryType
       logical first, hlp_lw, hlp_lt
@@ -167,7 +167,7 @@ c----------------------------------------------------------------------
 c
       data first / .true. /
 c----------------------------------------------------------------------
-      save i, k, l, m, ic, is,
+      save i, k, l, m, n, ic, is,
      1 js, ks, ls, kks, use_recyceir,
      2 first, hlp_lw, hlp_lt, hlp_tt,
      3 hlpit_l,hlpit_r,
@@ -179,23 +179,36 @@ c======================================================================
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         geometryType = geometryId( mpg, geo, 1 )
-#ifdef WG_TODO
-        print *,'=== Regions of the grid:'
-        l=ny+1
-        n=mod(l-1,10)+1
-        i=(nx+2)/10+1
-        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
-        do k=0,ny-1
-          m=l
-          l=max(0,m-n+1)
-          n=10
-          do j=m-1,l-1,-1
-            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
+        if (mpg%isClassicalGrid.eq.1) then
+          if (.not.allocated(region))
+     .     allocate(region(-1:mpg%nx,-1:mpg%ny,0:2))
+          do j=-1,mpg%ny
+            do i=-1,mpg%nx
+              iCv=mpg%imapCv(i,j)
+              if (iCv.ne.0) then
+                region(i,j,0)=mpg%cvReg(iCv)
+              else
+                region(i,j,0)=0
+              end if
+            end do
           end do
-          l=l-1
-        end do
-        write(*,'()')
-#endif
+          print *,'=== Regions of the grid:'
+          l=mpg%ny+1
+          n=mod(l-1,10)+1
+          i=(mpg%nx+2)/10+1
+          write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
+          do k=0,mpg%ny-1
+            m=l
+            l=max(0,m-n+1)
+            n=10
+            do j=m-1,l-1,-1
+              write(*,hlp_prt) j,(region(i,j,0),i=-1,mpg%nx)
+            end do
+            l=l-1
+          end do
+          write(*,'()')
+          deallocate(region)
+        end if
 c>>>
 c
 c*** Initialisation

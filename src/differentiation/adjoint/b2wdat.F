@@ -17,7 +17,7 @@
       use b2us_plasma_diff
       use b2mod_user_namelist_diff
      , , only : nomp, omp, icsepomp, nimp, imp, icsepimp
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       use b2mod_subsys
@@ -50,8 +50,8 @@
       integer, save :: ishift=0                                    !srv 05.11.09
 
       integer iRFc, nRFc, icell
-#ifdef WG_DEBUG
-      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy,
+#ifdef DBG
+      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy, nx, ny,
      ,        ilast_closed_surface, ifirst_open_surface
       logical first
       logical found
@@ -123,7 +123,7 @@
       nCv = mpg%nCv
       nFc = mpg%nFc
       nVx = mpg%nVx
-#ifdef WG_DEBUG
+#ifdef DBG
       ! At the moment, some output is only supported for grids that were
       ! originally structured
       if (mpg%isClassicalGrid.eq.1) then
@@ -139,7 +139,7 @@
 #endif
 
 *   ..initialisation
-#ifdef WG_DEBUG
+#ifdef DBG
       if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
@@ -415,7 +415,7 @@
          write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
          close(70)
 
-#ifdef WG_DEBUG
+#ifdef DBG
        if (mpg%isClassicalGrid.eq.1) then
          open(70,file=trim(folder)//'info.dat')
          write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
@@ -502,7 +502,7 @@
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
       endif                                                             !srv   end for iout=3
 
-#ifdef WG_DEBUG
+#ifdef DBG
       if (mpg%isClassicalGrid.eq.1) then
 
 *    ..deallocate arrays for structured format

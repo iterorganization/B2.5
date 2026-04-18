@@ -3,16 +3,18 @@
 
       subroutine b2uxus_b_dv(nCv, mpg, aa, aad, aab, aabd, itcnt,   
      .  resfun, resfund, resfunb, resfunbd, corfun, corfund, corfunb,
-     .  corfnubd, name, nbdirs)
+     .  corfnubd, name, style, nbdirs)
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map_diff_diffv
-      use b2mod_lwmain
       use b2mod_subsys
-      use b2mod_diffsizes
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
+      use b2mod_pardiso
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, itcnt, nbdirs
+      integer nCv, itcnt, nbdirs, style
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   aa(13*nCv), resfun(nCv)
@@ -35,7 +37,6 @@
 *   ..common blocks
 
 *-----------------------------------------------------------------------
-*
 *     Rearranged routine which solves a linear system of equation A*x=b
 *     differentiated the first time in adjoint mode and the second in
 *     tangent vector mode
@@ -63,10 +64,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, itmax, iters, itpar, cpu
-      parameter (itmax=100)
+      integer ncall, cpu, flag
       real (kind=R8) ::
-     *   nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+     *   cpu_start, cpu_end, c_end, c_start
       integer, save :: nz
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
       real (kind=R8) :: incrbb(nCv), incrbbd(nbdirsmax, nCv),
@@ -75,12 +75,17 @@
       integer :: iCv, iNv
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min, cpu_time
+      intrinsic cpu_time
       external xertst, ipgeti, ipgetr,
-     &  slv5pt, iluter, xerrab
+     &  xerrab, ilutern_us
 *   ..initialization
-      save ncall, style, cpu
-      data ncall/0/, style/2/, cpu/0/
+      save ncall, cpu
+      data ncall/0/, cpu/0/
+
+#ifdef _OPENMP
+!$omp threadprivate(ind, iasave, jasave, nz, ncall, cpu)
+#endif
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -89,11 +94,10 @@
       call subini ('b2uxus_b_dv')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2ux9p_style', style)
-       call xertst (0.le.style.and.style.lt.3,
+       call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
-       call ipgeti ('b2ux9p_cpu', cpu)
-       if(style.eq.2) then
+       call ipgeti ('b2uxus_cpu', cpu)
+       if(style.eq.2.or.style.eq.3) then
          mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
@@ -121,26 +125,26 @@
         call xerrab ('b2uxus_b: Style 0 is not implemented')
       else if (style.eq.1) then
         call xerrab ('b2uxus_b: Style 1 is not implemented')
-      else if (style.eq.2) then
+      else if (style.eq.2.or.style.eq.3) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
         allocate(dummy(1:solvdim))
       endif
-      write(*,*) 'Allocated space for solver b2uxus'
+      write(*,*) 'Allocated space for solver b2uxus_b_dv'
       endif
 
 *   ..solve the correction equation
       call cpu_time(cpu_start)
       if (style.eq.0) then
 *    ..use iluter
-       call xerrab ('b2uxus: Style 0 is not implemented')
+       call xerrab ('b2uxus_b_dv: Style 0 is not implemented')
       else if (style.eq.1) then
 *    ..use slv5pt
-       call xerrab ('b2uxus: Style 1 is not implemented')
+       call xerrab ('b2uxus_b_dv: Style 1 is not implemented')
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     &                 ind, iasave, jasave, name)       
+     *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
 *csc  Swap indexes to have transpose matrix
        dummy = irnh
@@ -198,12 +202,73 @@
         call ILUTERN_US(NCV, NZ, yy(nd,:), incrbbd(nd,:), name)
         resfunbd(nd,:) = resfunbd(nd,:) + incrbbd(nd,:)
        end do
-       resfunb = resfunb + incrbb
+      else if (style.eq.3) then
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     *                  ind, iasave, jasave, name)
+       call cpu_time(c_end)
+*csc  Swap indexes to have transpose matrix
+       dummy = irnh
+       irnh = icnh
+       icnh = dummy
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+
+*csc   Solve the system d(AT*bb)=d(xb) / d(AT*incrbb)=d(corfunb)
+*      which gives ATd*bb + AT*bbd = xbd
+*      so that AT*bbd = xbd - ATd*bb = yy
+*      thus first solve AT*bb=xb  to obtain bb
+       call SolvePARDISO(NCV, NZ, corfunb, incrbb, name, flag)
+
+*      Now do yy = xbd - ATd*bb for each direction
+       do nd = 1, nbdirs
+         yy(nd,:) = xbd(nd,:)
+*        Call storage_us for matrix ATd
+         call cpu_time(c_start)
+         call storage_us (nCv, mpg, aad(nd,:), n_nonzeros, irnh, icnh,
+     &                 a1h, nz, ind, iasave, jasave, name)       
+         call cpu_time(c_end)
+         if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
+*        Swap indexes to have transpose matrix
+         dummy = irnh
+         irnh = icnh
+         icnh = dummy
+*        calculate yy = yy - ATd*bb
+!      from Wouter
+!      i,j,aij
+!        j,b
+!     do ii=1,nnz
+         !get i,j
+         ! ci = ci + aij*bj
+         do nn = 1, n_nonzeros
+           i = irnh(nn)
+           j = icnh(nn)
+           yy(nd,i) = yy(nd,i) - a1h(nn)*incrbb(j)
+         end do
+       end do
+*      And finally solve AT*bbd = yy
+*      Call storage_us for matrix ATd
+       call cpu_time(c_start)
+       call storage_us (nCv, mpg, aad(nd,:), n_nonzeros, irnh, icnh,
+     &                 a1h, nz, ind, iasave, jasave, name)       
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &             c_end-c_start
+*      Swap indexes to have transpose matrix
+       dummy = irnh
+       irnh = icnh
+       icnh = dummy
+       do nd = 1, nbdirs
+        call SolvePARDISO(NCV, NZ, yy(nd,:), incrbbd(nd,:), name, flag)
+        resfunbd(nd,:) = resfunbd(nd,:) + incrbbd(nd,:)
+       end do
       endif
+      resfunb = resfunb + incrbb
 
 *csc  solve d(A*x)=d(b) in tangent mode
       call b2uxus_dv (nCv, mpg, aa, aad, itcnt, resfun, resfund, corfun,
-     & corfund, name, nbdirs)
+     & corfund, name, style, nbdirs)
 *     Perform Abd(nd,i,j) = Abd(nd,i,j) -xd(nd,j)*incrbb(i)-x(j)*incrbbd(nd,i)
 *     and Ab(i,j) = Ab(i,j) -x(j)*bb(i)
       do iCv=1,nCv
@@ -229,9 +294,8 @@
       ncall = ncall+1
       call subend ()
       return
-         
+
 *-----------------------------------------------------------------------
 *.end b2uxus_b_dv
 
       end subroutine b2uxus_b_dv
-

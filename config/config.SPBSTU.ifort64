@@ -9,6 +9,10 @@
 #LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 #LD_NAG      ?= -L${NAGDIR} -lnag
 
+ifdef MKLROOT
+LD_MKL ?=  -L${MKLROOT}/lib/intel64  -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+endif
+
 CPP        = /lib/cpp -traditional
 
 #MPI_FC   ?= mpif90
@@ -52,4 +56,3 @@ endif
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
-

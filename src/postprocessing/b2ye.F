@@ -19,7 +19,7 @@
 #     include <netcdf.inc>
 
       integer :: nastep, ntim_batch, ntotdt, naver
-      integer, parameter :: nncutmax = DEF_NCUT
+      integer, parameter :: nncutmax = max(1,DEF_NCUT)
       integer :: imap(maxvdims), iret, ncid, iout
       real (kind=R8), allocatable, save ::
      *      batchsa(:)

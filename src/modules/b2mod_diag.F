@@ -66,17 +66,19 @@ c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
 c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
 c***
 c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
 
       integer len_ntrc, ntrc_used
-      parameter (len_ntrc=10)
+      parameter (len_ntrc=11)
       integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
-     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
+     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep,
+     ,        ntrc_bls
       parameter (ntrc_srt=1, ntrc_tst=2,  ntrc_res=3, ntrc_src=4,
      ,           ntrc_bln=5, ntrc_ble=6,  ntrc_int=7, ntrc_usr=8,
-     ,           ntrc_blm=9, ntrc_sep=10)
+     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
       integer lenfnm, mhdr
@@ -214,12 +216,14 @@ c
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
       NTRC(ntrc_srt) = 59
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
-      NTRC(ntrc_res) = 72
+      NTRC(ntrc_res) = 71
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
-      NTRC(ntrc_src) = 73
+      NTRC(ntrc_src) = 72
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
-      NTRC(ntrc_bln) = 74
+      NTRC(ntrc_bln) = 73
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
+      NTRC(ntrc_bls) = 74                         ! IYS 07.11.2018
+      fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
       NTRC(ntrc_int) = 76
