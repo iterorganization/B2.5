@@ -59,7 +59,8 @@
           do ii = 1, spatial_points(ip)
             grad(idir) = tdatab(2,ii,partype(ip),paris(ip))
             grad(idir) = grad(idir) + par_opt_physb(idir)
-            write (*,*) '  Cost function gradient 1: ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
           end do
@@ -208,7 +209,8 @@
             call xerrab ('partype out of bounds')
           end select
           grad(idir) = grad(idir) + par_opt_physb(idir)
-          write (*,*) '  Cost function gradient 1: ',
+          write (*,'(a,1pe21.13,1x,2a)')
+     &     '  Cost function gradient 1: ',
      &      grad(idir),'wrt',trim(key)
           idir = idir + 1
         endif
@@ -221,7 +223,8 @@
             grad(idir) = sigmab(ip)
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
-            write (*,*) '  Cost function gradient 1: ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -235,7 +238,8 @@
             grad(idir) = meanb(ip)
             write(ss2,"(I3)") ip
             write (key, *) "mean",ss2
-            write (*,*) '  Cost function gradient 1: ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -249,7 +253,8 @@
             grad(idir) = shiftb(ip)
             write(ss2,"(I3)") ip
             write (key, *) "shift",ss2
-            write (*,*) '  Cost function gradient 1: ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
           endif
@@ -263,7 +268,8 @@
             grad(idir) = corr_lengthb(ip)
             write(ss2,"(I3)") ip
             write (key, *) "corr_length",ss2
-            write (*,*) '  Cost function gradient 1: ',
+            write (*,'(a,1pe21.13,1x,2a)')
+     &       '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1
           endif

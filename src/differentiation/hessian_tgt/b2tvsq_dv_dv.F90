@@ -204,8 +204,8 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
   REAL(kind=r8), DIMENSION(nfc) :: temp9
   REAL(kind=r8), DIMENSION(nfc) :: temp10
   INTRINSIC SIZE
-  REAL(kind=r8), DIMENSION(SIZE(nal, 1)) :: temp11
-  REAL(kind=r8), DIMENSION(nbdirsmax0, SIZE(nal, 1)) :: temp11d
+  REAL(kind=r8), DIMENSION(ncv) :: temp11
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp11d
   INTEGER :: nbdirs
   INTEGER :: nd0
   REAL(kind=r8) :: temp12
@@ -2065,7 +2065,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
   REAL(kind=r8), DIMENSION(nfc) :: temp9
   REAL(kind=r8), DIMENSION(nfc) :: temp10
   INTRINSIC SIZE
-  REAL(kind=r8), DIMENSION(SIZE(nal, 1)) :: temp11
+  REAL(kind=r8), DIMENSION(ncv) :: temp11
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
 !.computation

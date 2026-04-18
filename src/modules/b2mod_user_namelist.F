@@ -324,23 +324,21 @@ c***  Standard set-up:
         if (iFt.eq.0) cycle
         ft_omp(iFt) = ic
         wall_face = .false.
-        do i = m%cvVxP(omp(ic),1),
-     &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
-          iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) then ! check if this is a wall vertex
-            on_wall = .false.
-            do j = m%vxFcP(m%cvVx(i),1),
-     &             m%vxFcP(m%cvVx(i),1) + m%vxFcP(m%cvVx(i),2) - 1
-              iFc = m%vxFc(j)
-              on_wall = on_wall .or. m%fcLbl(iFc).ne.0
-              if (on_wall) then
-                if (iFs1.eq.0) wall_face(1) = .true.
-                if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
-              end if
-            end do
-          endif
+        do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+          iFc = m%cvFc(i)
+          iFs = m%fcFs(iFc)
+          on_wall = m%fcLbl(iFc).ne.0
+          if (on_wall) then
+            if (iFs1.eq.0) wall_face(1) = .true.
+            if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
+          end if
           if (iFs1.eq.0 .and. iFs.ne.0) then
-            iFs1 = iFs
+            if (wall_face(1)) then
+              iFs2 = iFs
+            else
+              iFs1 = iFs
+            end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
@@ -349,7 +347,7 @@ c***  Standard set-up:
           ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
         else if (wall_face(1)) then
           ft_ds_omp(iFt) = fs_ds_omp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
-        else if (wall_face(2)) then
+        else
           ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
         end if
       end do
@@ -579,23 +577,21 @@ c*** Set default values according to current species list
         if (iFt.eq.0) cycle
         ft_imp(iFt) = ic
         wall_face = .false.
-        do i = m%cvVxP(imp(ic),1),
-     &         m%cvVxP(imp(ic),1) + m%cvVxP(imp(ic),2) - 1
-          iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) then ! check if this is a wall vertex
-            on_wall = .false.
-            do j = m%vxFcP(m%cvVx(i),1),
-     &             m%vxFcP(m%cvVx(i),1) + m%vxFcP(m%cvVx(i),2) - 1
-              iFc = m%vxFc(j)
-              on_wall = on_wall .or. m%fcLbl(iFc).ne.0
-              if (on_wall) then
-                if (iFs1.eq.0) wall_face(1) = .true.
-                if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
-              end if
-            end do
-          endif
+        do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+          iFc = m%cvFc(i)
+          iFs = m%fcFs(iFc)
+          on_wall = m%fcLbl(iFc).ne.0
+          if (on_wall) then
+            if (iFs1.eq.0) wall_face(1) = .true.
+            if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
+          end if
           if (iFs1.eq.0 .and. iFs.ne.0) then
-            iFs1 = iFs
+            if (wall_face(1)) then
+              iFs2 = iFs
+            else
+              iFs1 = iFs
+            end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
@@ -603,16 +599,16 @@ c*** Set default values according to current species list
         if (iFs1.ne.0.and.iFs2.ne.0) then
           ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
         else if (wall_face(1)) then
-          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
-        else if (wall_face(2)) then
-          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
+          ft_ds_imp(iFt) = fs_ds_imp(iFs2)+0.5_R8*geo%cvHy(imp(ic))
+        else
+          ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
         end if
       end do
       if (.not.found) write(*,'(a/a/a)')
      &  'Warning: did not find separatrix location in IMP definition,',
      &  '         check specification of RZIMP in b2.user.parameters',
      &  '         if IMP is needed.'
-      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
+      if (m%isClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
       if (m%iFssep2.gt.0) then

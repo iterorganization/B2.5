@@ -346,7 +346,6 @@ cxpb
      > call alloc_b2mod_external_dummy(nxd,nyd)
       initialised_externals=.true.
       return
-
       end subroutine read_b2mod_external
 
       end module b2mod_external

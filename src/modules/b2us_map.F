@@ -118,6 +118,7 @@
         logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
         integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
         integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
+        integer, allocatable :: fcs_wall_type(:)       ! (nFci) indicates type of boundary: 1 - boundary faces inside the separatrix, 2 - other boundary faces.
 
         end type mapping
 
@@ -126,7 +127,7 @@
 **********************************************************************
 
       subroutine alloc_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
 
@@ -176,7 +177,7 @@
         allocate (m%imapFcy(-1:m%nx,-1:m%ny))
         allocate (m%imapVx(-1:m%nx,-1:m%ny))
         allocate (m%icornVx(1:m%nx))
-#ifdef WG_DEBUG
+#ifdef DBG
         allocate (imapCv(-1:m%nx,-1:m%ny))
         allocate (imapFcx(-1:m%nx,-1:m%ny))
         allocate (imapFcy(-1:m%nx,-1:m%ny))
@@ -188,7 +189,7 @@
         allocate (m%imapFcy(0,0))
         allocate (m%imapVx(0,0))
         allocate (m%icornVx(0))
-#ifdef WG_DEBUG
+#ifdef DBG
         allocate (imapCv(0,0))
         allocate (imapFcx(0,0))
         allocate (imapFcy(0,0))
@@ -224,7 +225,7 @@
 **********************************************************************
 
       subroutine initialize_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       implicit none
@@ -271,7 +272,7 @@
         m%imapFcy = 0
         m%imapVx = 0
         m%icornVx = 0
-#ifdef WG_DEBUG
+#ifdef DBG
         imapCv = 0
         imapFcx = 0
         imapFcy = 0
@@ -308,7 +309,7 @@
 **********************************************************************
 
       subroutine dealloc_mapping (m)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
 
@@ -374,7 +375,7 @@
       deallocate (m%imapVx)
       deallocate (m%icornVx)
       if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
-#ifdef WG_DEBUG
+#ifdef DBG
       deallocate (imapCv)
       deallocate (imapFcx)
       deallocate (imapFcy)
@@ -395,6 +396,7 @@
       if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
       if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
       if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
+      if (allocated(m%fcs_wall_type)) deallocate(m%fcs_wall_type)
 
       return
       end subroutine dealloc_mapping
@@ -528,7 +530,7 @@
 **********************************************************************
 
       subroutine read_mapping (iun, mpg)
-#ifdef WG_DEBUG
+#ifdef DBG
       use b2us_debug
 #endif
       implicit none
@@ -537,7 +539,7 @@
       type (mapping), intent (inout) :: mpg
       external cfruin, cfrure
 
-#ifdef WG_DEBUG
+#ifdef DBG
       nx_st = mpg%nx
       ny_st = mpg%ny
       isClassicalGrid = mpg%isClassicalGrid
@@ -583,7 +585,7 @@
       call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
-#ifdef WG_DEBUG
+#ifdef DBG
       imapCv  = mpg%imapCv
       imapFcx = mpg%imapFcx
       imapFcy = mpg%imapFcy
@@ -666,8 +668,7 @@
      *                        regcount(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi),
      * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
-      logical :: duplicate, left_match_found, right_match_found,
-     * is_found
+      logical :: duplicate, left_match_found, right_match_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -1151,58 +1152,18 @@ cwdk  can be derived directly from data in that file
         k = k+1
       enddo
 
-      m%nFci = 0
       do k=1,m%nCg
-        is_found = .false.
         do l=k+1,m%nCg
           if (m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),1) .or.
      &        m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),2) .or.
      &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),1) .or.
      &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),2)) then
-            is_found = .true.
             inew = m%fcs_wall(k+1)
             m%fcs_wall(k+1) = m%fcs_wall(l)
             m%fcs_wall(l) = inew
-            if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &          maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-              m%nFci = m%nFci+1
-            endif
             exit
           endif
         enddo
-        if (.not.is_found) then
-          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
-            m%nFci = m%nFci+1
-          endif
-        endif
-      enddo
-      allocate(m%fcs_wall_ind(m%nFci,2))
-      j = 1
-      l = 1
-      do k=1,m%nCg-1
-        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-          m%fcs_wall_ind(l,1) = j
-          m%fcs_wall_ind(l,2) = k-j+1
-          j = k+1
-          l = l+1
-        endif
-      enddo
-      ! Doing the last cell by hand if it is on its own flux tube
-      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
-     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
-        m%fcs_wall_ind(l,1) = m%nCg
-        m%fcs_wall_ind(l,2) = 1
-      end if
-
-      write(*,*) "list of boundary faces in one flux tube:"
-      do j=1,m%nFci
-        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
-        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
-        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
-     &                        m%fcs_wall_ind(j,1)+m%fcs_wall_ind(j,2)-1)
       enddo
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc

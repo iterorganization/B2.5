@@ -747,7 +747,7 @@ c
                       !tmp: less strict test, until computation in carre & b2ag streamlined
                       if (abs(bp(ix,iy) - bb_tmp(ix,iy,0)) > 1e-3 .or.
      $                    abs(bt(ix,iy) - bb_tmp(ix,iy,2)) > 1e-3) then
-                         write (*,'(a,2i5,4e15.8)')
+                         write (*,'(a,2i5,1p,4(1x,e15.8))')
      $                    "b2agfs_st: not matching carre bb at",
      $                        ix, iy, bp(ix,iy), bt(ix,iy),
      $                                bb_tmp(ix,iy,0), bb_tmp(ix,iy,2)

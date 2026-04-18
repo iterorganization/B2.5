@@ -211,7 +211,7 @@ SUBROUTINE B2USPO_B(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   END DO
   aab = 0.0_R8
   CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, respo, respob, corpo, corpob, &
-&         name)
+&         name, switch%b2uxus_style)
   CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
 !$BWD-OF II-LOOP 
   DO icv=1,ncv
@@ -585,7 +585,7 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 !   ..solve the correction equation
   WRITE(*, '(1x,a,a)') 'Calling b2uxus from '//TRIM(name)
 !srv 18.03.10
-  CALL B2UXUS(ncv, mpg, aa, itcnt, respo, corpo, name)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, respo, corpo, name, switch%b2uxus_style)
 !
   IF (switch%b2uspo_iout .NE. 0) THEN
 !srv 08.07.08 {

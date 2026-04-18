@@ -461,6 +461,14 @@ c b2tqna
       real (kind=R8) :: b2tqna_min_df0
       real (kind=R8) :: b2tqna_max_df0
       real (kind=R8) :: b2tqna_cfvma
+      real (kind=R8) :: bar_width, sig_bar_width, sig_sol_width
+      real (kind=R8) :: sol_width, lfs_sol_width, hfs_sol_width,
+     *  na_alfa1, na_alfa2, na_alfa3, na_alfa4,
+     *  te_alfa1, te_alfa2, te_alfa3, te_alfa4,
+     *  ti_alfa1, ti_alfa2, ti_alfa3, ti_alfa4,
+     *  vsa_alfa1, vsa_alfa2, vsa_alfa3, vsa_alfa4,
+     *  vla_alfa1, vla_alfa2, vla_alfa3, vla_alfa4,
+     *  sig_alfa1, sig_alfa2
       integer :: b2tqna_new_df0
       integer :: b2tqna_ixref
       integer :: b2tqna_transport_inputfile
@@ -532,6 +540,7 @@ c b2srst
 
 c b2tfnb
       integer :: b2tfnb_no_hybr
+      integer :: b2tfnb_avg_vExB
       real (kind=R8) :: b2tfnb_flux_limit_min_ti
 
 c b2srsm
@@ -616,6 +625,9 @@ c Optimization
       integer :: b2optim_reset_drift_iter
       real (kind=R8) :: b2optim_reset_drift
       integer :: b2optim_reset_param_iter
+
+c Matrix solver
+      integer :: b2uxus_style
 
       end type switches
 
@@ -1100,6 +1112,32 @@ c b2tqna
       s % b2tqna_transport_inputfile = 0
       s % b2tqna_ballooning_sig = 1
       s % b2tqna_limit_coeff = 0
+      s % bar_width = 0.0_R8
+      s % sol_width = 0.0_R8
+      s % sig_bar_width = 0.0_R8
+      s % sig_sol_width = 0.0_R8
+      s % na_alfa1 = 1.0_R8
+      s % na_alfa2 = 1.0_R8
+      s % na_alfa3 = 1.0_R8
+      s % na_alfa4 = 0.0_R8
+      s % te_alfa1 = 1.0_R8
+      s % te_alfa2 = 1.0_R8
+      s % te_alfa3 = 1.0_R8
+      s % te_alfa4 = 0.0_R8
+      s % ti_alfa1 = 1.0_R8
+      s % ti_alfa2 = 1.0_R8
+      s % ti_alfa3 = 1.0_R8
+      s % ti_alfa4 = 0.0_R8
+      s % vsa_alfa1 = 1.0_R8
+      s % vsa_alfa2 = 1.0_R8
+      s % vsa_alfa3 = 1.0_R8
+      s % vsa_alfa4 = 0.0_R8
+      s % vla_alfa1 = 1.0_R8
+      s % vla_alfa2 = 1.0_R8
+      s % vla_alfa3 = 1.0_R8
+      s % vla_alfa4 = 0.0_R8
+      s % sig_alfa1 = 1.0_R8
+      s % sig_alfa2 = 1.0_R8
 
 c fch_anomalous
       s % anml_all_ions = 1
@@ -1166,6 +1204,7 @@ c b2sihs_
 
 c b2tfnb
       s % b2tfnb_no_hybr = 0
+      s % b2tfnb_avg_vExB = 0
       s % b2tfnb_flux_limit_min_ti = 0.0_R8
 
 c b2srsm
@@ -1253,6 +1292,9 @@ c Optimization
       s % b2optim_reset_drift = 0.4_R8
       s % b2optim_reset_param_iter = 1
 
+c Matrix solver
+      s % b2uxus_style = 2
+
       return
       end subroutine set_defaults_switches
 
@@ -1275,7 +1317,7 @@ c Optimization
 
       implicit none
       type (switches), intent (inout) :: s
-      external ipgeti, ipgetr
+      external ipgeti, ipgetr, xertst
 
       call alloc_switches (s)
 
@@ -1756,38 +1798,132 @@ c b2tqna
       call ipgetr ('b2tqna_divsol_rescale', s % b2tqna_divsol_rescale)
       call ipgetr ('b2tqna_cfvma', s % b2tqna_cfvma)
 
+      call ipgetr ('b2tqna_te_alfa1', s % te_alfa1)
+      call xertst (0.0_R8.le.s%te_alfa1,
+     & 'faulty argument b2tqna_te_alfa1')
+      call ipgetr ('b2tqna_te_alfa2', s % te_alfa2)
+      call xertst (0.0_R8.le.s%te_alfa2,
+     & 'faulty argument b2tqna_te_alfa2')
+      call ipgetr ('b2tqna_te_alfa3', s % te_alfa3)
+      call xertst (0.0_R8.le.s%te_alfa3,
+     & 'faulty argument b2tqna_te_alfa3')
+      call ipgetr ('b2tqna_te_alfa4', s % te_alfa4)
+      call xertst (0.0_R8.le.s%te_alfa4,
+     & 'faulty argument b2tqna_te_alfa4')
+
+      s%ti_alfa1 = s%te_alfa1
+      s%ti_alfa2 = s%te_alfa2
+      s%ti_alfa3 = s%te_alfa3
+      s%ti_alfa4 = s%te_alfa4
+      call ipgetr ('b2tqna_ti_alfa1', s % ti_alfa1)
+      call xertst (0.0_R8.le.s%ti_alfa1,
+     & 'faulty argument b2tqna_ti_alfa1')
+      call ipgetr ('b2tqna_ti_alfa2', s % ti_alfa2)
+      call xertst (0.0_R8.le.s%ti_alfa2,
+     & 'faulty argument b2tqna_ti_alfa2')
+      call ipgetr ('b2tqna_ti_alfa3', s % ti_alfa3)
+      call xertst (0.0_R8.le.s%ti_alfa3,
+     & 'faulty argument b2tqna_ti_alfa3')
+      call ipgetr ('b2tqna_ti_alfa4', s % ti_alfa4)
+      call xertst (0.0_R8.le.s%ti_alfa4,
+     & 'faulty argument b2tqna_ti_alfa4')
+
+      call ipgetr ('b2tqna_na_alfa1', s % na_alfa1)
+      call xertst (0.0_R8.le.s%na_alfa1,
+     & 'faulty argument b2tqna_na_alfa1')
+      call ipgetr ('b2tqna_na_alfa2', s % na_alfa2)
+      call xertst (0.0_R8.le.s%na_alfa2,
+     & 'faulty argument b2tqna_na_alfa2')
+      call ipgetr ('b2tqna_na_alfa3', s % na_alfa3)
+      call xertst (0.0_R8.le.s%na_alfa3,
+     & 'faulty argument b2tqna_na_alfa3')
+      call ipgetr ('b2tqna_na_alfa4', s % na_alfa4)
+      call xertst (0.0_R8.le.s%na_alfa4,
+     & 'faulty argument b2tqna_na_alfa4')
+
+      s%vsa_alfa1 = s%na_alfa1
+      s%vsa_alfa2 = s%na_alfa2
+      s%vsa_alfa3 = s%na_alfa3
+      s%vsa_alfa4 = s%na_alfa4
+      call ipgetr ('b2tqna_vsa_alfa1', s % vsa_alfa1)
+      call xertst (0.0_R8.le.s%vsa_alfa1,
+     & 'faulty argument b2tqna_vsa_alfa1')
+      call ipgetr ('b2tqna_vsa_alfa2', s % vsa_alfa2)
+      call xertst (0.0_R8.le.s%vsa_alfa2,
+     & 'faulty argument b2tqna_vsa_alfa2')
+      call ipgetr ('b2tqna_vsa_alfa3', s % vsa_alfa3)
+      call xertst (0.0_R8.le.s%vsa_alfa3,
+     & 'faulty argument b2tqna_vsa_alfa3')
+      call ipgetr ('b2tqna_vsa_alfa4', s % vsa_alfa4)
+      call xertst (0.0_R8.le.s%vsa_alfa4,
+     & 'faulty argument b2tqna_vsa_alfa4')
+
+      call ipgetr ('b2tqna_vla_alfa1', s % vla_alfa1)
+      call ipgetr ('b2tqna_vla_alfa2', s % vla_alfa2)
+      call ipgetr ('b2tqna_vla_alfa3', s % vla_alfa3)
+      call ipgetr ('b2tqna_vla_alfa4', s % vla_alfa4)
+
+      call ipgetr ('b2tqna_sig_alfa1', s % sig_alfa1)
+      call xertst (0.0_R8.le.s%sig_alfa1,
+     & 'faulty argument b2tqna_sig_alfa1')
+      call ipgetr ('b2tqna_sig_alfa2', s % sig_alfa2)
+      call xertst (0.0_R8.le.s%sig_alfa2,
+     & 'faulty argument b2tqna_sig_alfa2')
+
+      call ipgetr ('b2tqna_bar_width', s % bar_width)
+      call xertst (0.0_R8.le.s%bar_width,
+     & 'faulty argument b2tqna_bar_width')
+      call ipgetr ('b2tqna_sig_bar_width', s % sig_bar_width)
+      call xertst (0.0_R8.le.s%sig_bar_width,
+     & 'faulty argument b2tqna_sig_bar_width')
+      call ipgetr ('b2tqna_sol_width', s % sol_width)
+      call xertst (0.0_R8.le.s%sol_width,
+     & 'faulty argument b2tqna_sol_width')
+      s%lfs_sol_width = s%sol_width
+      s%hfs_sol_width = s%sol_width
+      s%sig_sol_width = s%sol_width
+      call ipgetr ('b2tqna_hfs_sol_width', s % hfs_sol_width)
+      call xertst (0.0_R8.le.s%hfs_sol_width,
+     & 'faulty argument b2tqna_hfs_sol_width')
+      call ipgetr ('b2tqna_lfs_sol_width', s % lfs_sol_width)
+      call xertst (0.0_R8.le.s%lfs_sol_width,
+     & 'faulty argument b2tqna_lfs_sol_width')
+      call ipgetr ('b2tqna_sig_sol_width', s % sig_sol_width)
+      call xertst (0.0_R8.le.s%sig_sol_width,
+     & 'faulty argument b2tqna_sig_sol_width')
+
 c fch anomalous
       call ipgeti ('b2tanml_anml_all_ions', s % anml_all_ions)
       call ipgetr ('b2tfhe_anomalous', s % fch_anomalous)
-       if (s%fch_anomalous.eq.1.0_R8)
-     &  call ipgetr ('b2tanml_anomalous', s % fch_anomalous) ! for backward compatibility
+      if (s%fch_anomalous.eq.1.0_R8)
+     & call ipgetr ('b2tanml_anomalous', s % fch_anomalous) ! for backward compatibility
 
 c b2stbm
       call ipgetr ('b2stbm_linearisation', s % b2stbm_linearisation)
       if (s%b2stbm_linearisation.eq.1.0_R8)   ! for backward compatibility
-     &  call ipgetr ('b2stbm_linearization', s % b2stbm_linearisation)
+     & call ipgetr ('b2stbm_linearization', s % b2stbm_linearisation)
       call ipgeti ('b2stbm_impgyro_mod', s % b2stbm_impgyro_mod)
       call ipgeti ('b2stbm_internal_energy_sources',
-     &  s % b2stbm_internal_energy_sources)
+     & s % b2stbm_internal_energy_sources)
 
 c b2stbr
       call ipgeti ('b2stbr_potential_at_guard_cell',
-     &  s % b2stbr_potential_at_guard_cell)
+     & s % b2stbr_potential_at_guard_cell)
       call ipgeti ('b2stbr_temperature_at_guard_cell',
-     &  s % b2stbr_temperature_at_guard_cell)
+     & s % b2stbr_temperature_at_guard_cell)
       call ipgeti ('b2stbc_coreregno', s % b2stbr_coreregno)
       call ipgeti ('b2stbr_first_flight', s % b2stbr_first_flight)
       call ipgeti ('b2stbr_sput_frac_flag', s % b2stbr_sput_frac_flag)
       call ipgeti ('b2stbr_b2wall_netcdf', s % b2stbr_b2wall_netcdf)
       call ipgetr ('b2stbr_core_sources_rescale',
-     &  s % b2stbr_core_sources_rescale)
+     & s % b2stbr_core_sources_rescale)
       call ipgetr ('b2stbr_sput_frc', s % b2stbr_sput_frc)
       call ipgetr ('b2stbr_alpha', s % b2stbr_alpha)
       if(s%b2stbr_sput_frac_flag.ne.0) then
         call ipgetr ('b2stbr_sput_mixed_alpha',
-     &    s % b2stbr_sput_mixed_alpha)
+     &   s % b2stbr_sput_mixed_alpha)
         call ipgetr ('b2stbr_sput_mixed_beta',
-     &    s % b2stbr_sput_mixed_beta)
+     &   s % b2stbr_sput_mixed_beta)
       endif
       if(s%b2stbr_sput_frc.ne.0.0_R8) then
         call ipgetr ('b2stbr_sput_chem_alpha',
@@ -1839,7 +1975,7 @@ c b2srst
 
 c b2tfnb
       call ipgetr ('b2tfnb_flux_limit_min_ti',
-     &  s % b2tfnb_flux_limit_min_ti)
+     & s % b2tfnb_flux_limit_min_ti)
       s % b2tfnb_flux_limit_min_ti = s % b2tfnb_flux_limit_min_ti*ev
       call ipgeti ('b2tfnb_no_hybr', s % b2tfnb_no_hybr)
 
@@ -1894,9 +2030,6 @@ c b2siav
       call ipgeti ('b2siav_iout', s % b2siav_iout)
       call ipgeti ('b2siav_style_qip', s % b2siav_qstyle)            !srv 28.03.06
 
-c b2trcl
-      call ipgetr ('b2trcl_cvsa_mltpl', s % cvsa_mltpl)              !iyv 06.12.13
-
 c b2stbc
       call ipgeti ('b2stbc_bcene_16_style', s % bcene_16_style)
       call ipgeti ('b2stbc_bceni_16_style', s % bceni_16_style)
@@ -1914,16 +2047,20 @@ c b2stbc
       call ipgetr ('b2stbc_stab_coeff_sheath_ti',
      &                                s % stab_coeff_sheath_ti)
 
-c b2trno
-      call ipgetr ('b2trno_con_e_stochastic', s % b2trno_alpha_stoch)  !lk 31.01.08
-
 c Feedback
       call ipgeti ('b2stbc_feedback', s % b2stbc_feedback)
 
 c b2nppo
       call ipgetr ('b2nppo_restr_po', s % b2nppo_restr_po)
+
+c Transport
+      call ipgetr ('b2trcl_cvsa_mltpl', s % cvsa_mltpl)              !iyv 06.12.13
+      call ipgetr ('b2trno_con_e_stochastic', s % b2trno_alpha_stoch)  !lk 31.01.08
       call ipgetr ('b2txcx_increase_transp_coefs',
-     &      s % b2txcx_increase_transp_coefs)
+     & s % b2txcx_increase_transp_coefs)
+      call ipgeti ('b2tfnb_avg_vExB', s % b2tfnb_avg_vExB)
+      if (s % b2txcx_increase_transp_coefs.gt.1.0_R8)
+     & s % b2tfnb_avg_vExB = max(1, s % b2tfnb_avg_vExB)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s % b2optim_save_states)
@@ -1932,6 +2069,9 @@ c Optimization
       call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
       call ipgeti ('b2optim_reset_param_iter',
      & s % b2optim_reset_param_iter)
+
+c Matrix solver
+      call ipgeti ('b2uxus_style', s % b2uxus_style) 
 
       return
       end subroutine read_switches

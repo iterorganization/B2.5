@@ -1,22 +1,22 @@
 # Test whether necessary variables are set
 OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 NODENAME  ?= $(shell echo `hostname`)
-LD_MSCL   ?= `pkg-config mscl --libs`
+LD_MSCL   ?= $(shell pkg-config mscl --libs)
 ifdef NCARG_ROOT
 #LD_NCARG ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11
-LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
+LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext $(shell pkg-config cairo --libs) -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
 GLI_HOME  ?= ${EBROOTGLI}
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 ifeq (,$(findstring CentOS,$(OS)))
-LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+LD_NETCDF  = $(shell pkg-config netcdf-fortran --libs)
 else
 LD_NETCDF ?= `nf-config --flibs`
 endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
-INCMODS   += `pkg-config netcdf-fortran --cflags`
+INCMODS   += $(shell pkg-config netcdf-fortran --cflags)
 endif
 else
 ifndef SOLPS_CPP
@@ -29,7 +29,7 @@ ifndef SOLPS_CPP
 DEFINES   += -DNAG22 -DNO_F01AAF
 endif
 else
-LD_NAG    ?= `pkg-config openblas --libs`
+LD_NAG    ?= $(shell pkg-config openblas --libs)
 ifndef SOLPS_CPP
 DEFINES   += -DNO_NAG
 endif
@@ -108,7 +108,6 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

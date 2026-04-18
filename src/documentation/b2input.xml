@@ -627,7 +627,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2us_prep_mod_hc.eq.1 then the length between cell face center and neighboring cell centers (fcHc) will be modified.	It will be the same for neighboring boundary faces belonging to the same flux tube. For all boundary faces it will be recalculated to decrease the distance between boundary face and guard cell centers.
+					If b2us_prep_mod_hc.eq.1 then the length between cell face center and neighboring cell centers (fcHc) will be modified.	It will be the same for neighboring boundary faces belonging to the same flux tube. For all boundary faces it will be recalculated to decrease the distance between the boundary face and guard cell centers. It is recommended to use this switch if b2txcx_increase_transp_coefs.gt.1 during the run.
 				</description>
 			</switch>
 			<switch>
@@ -635,7 +635,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube.
+					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube. It is recommended to use this switch if b2txcx_increase_transp_coefs.gt.1 during the run.
 				</description>
 			</switch>
 			<switch>
@@ -2132,7 +2132,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfhe_vis_per for numerical stability reasons.
 				</description>
 			</switch>
@@ -2141,7 +2141,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					vis_q is a multiplier to the heat viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_q is a multiplier to the heat viscosity current contributions to the ion flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -2167,6 +2167,7 @@
 				<description>
 					The last switch is subservient to b2tqna_user_transport, and only used if user_transport.ne.0. When this is the case, the electron perpendicular heat diffusivity and anomalous perpendicular particle transport coefficient are scaled so as to maintain the required_te_gradient (in units of eV/m), at the iyref-th radial ring along the outer midplane. By default, this is the ring immediately inside the separatrix.
 					The transport_eta switches are activated when user_transport.eq.3 and allow modifications of the electron heat conductivity according to a constant eta (Grad Te / Grad Ne) model. See routine set_transport_eta code for details.
+					The user_transport.eq.6 setting allows for the provision of an H-mode-like transport barrier with transport multipliers for the core region, near and far SOL, and, optionally, the divertor regions.
 					A model for disruption transport coefficients is available with user_transport.eq.7. See routine set_transport_disruption code for details. Not yet available for WG.
 					The value user_transport.eq.8 activates the neoclassical model for computation of the transport coefficients in the core. See routine set_transport_neo and subroutines called for details. Implemented from the NEOART package.
 				</description>
@@ -2204,6 +2205,230 @@
 					<name>set_transport_required_te_gradient</name>
 					<default>5.0e4</default>
 					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_bar_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of transport barrier where *_alfa1 multipliers will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_sol_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Otherwise the width is measured along the inner midplane if the flux tube crosses it. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_lfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of LFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the LFS if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_hfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of HFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the inner midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the HFS if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_bar_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of transport barrier where b2tqna_sig_alfa1 multiplier will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of SOL where b2tqna_sig_alfa2 multiplier will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If te_alfa4.gt.0, multiplier to the electron thermal conductivity inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Multiplier to the ion thermal conductivity inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If ti_alfa4.gt.0, ion thermal conductivity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If na_alfa4.gt.0, anomalous diffusivity with respect to grad(na) multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If vsa_alfa4.gt.0, anomalous viscosity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If vla_alfa4.gt.0, anomalous velocity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -3901,7 +4126,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux5p_cpu</name>
+				<name>b2uxus_cpu</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
@@ -4275,8 +4500,8 @@
 				<description>
 					If eirene_underrelax_continue.eq.1, the underrelaxed Eirene sources from the end of the previous simulation are read in, to continue the run without restart effects. The underrelaxed sources are saved in b2favere. The procedure is as follows:
 					Step 1: when activating eirene_underrelax for the first time in a simulation, eirene_underrelax_continue should be 0, as the saved sources are not yet present. Set b2mndt_av to 1 to write out b2favere at the end of a run.
-					Step 2: When continuing the run, set eirene_underrelax_continue to 1. The b2favere from the previous run will be converted to b2faveri automatically by the b2run script. 
-					Note: the reading of the underrelaxed sources from b2faveri is independent of the reading of the averaged plasma states by '’b2mndr_av_read'. 
+					Step 2: When continuing the run, set eirene_underrelax_continue to 1. The b2favere from the previous run will be converted to b2faveri automatically by the b2run script.
+					Note: the reading of the underrelaxed sources from b2faveri is independent of the reading of the averaged plasma states by '’b2mndr_av_read'.
 				</description>
 			</switch>
 			<switch>
@@ -4647,12 +4872,12 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux9p_style</name>
+				<name>b2uxus_style</name>
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of 9-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy.
-					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended! style.eq.0 and style.eq.1 will return an error.
+					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy. Style.eq.3 = PARDISO (Intel MKL)
+					NOTE: style 0 and 1 are deprecated. PARDISO is faster than MA28 but requires MKL on your system.
 				</description>
 			</switch>
 			<switch>
@@ -5891,6 +6116,16 @@
 					style_int_vel.eq.0: interpolation based on cell connector lengths.
 					style_int_vel.eq.1: interpolation based on cell volumes.
 					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_avg_vExB</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tfnb_avg_vExB.eq.1, then the ExB drift velocity will be averaged over the set of shaved cells at the end of flux tube in contact with the wall.
+					If b2tfnb_avg_vExB.eq.2, then additional output will be printed during this averaging.
+					If b2txcx_increase_transp_coefs.gt.1, the b2tfnb_avg_vExB is set to at least 1 automatically.
 				</description>
 			</switch>
 		</category>
@@ -7328,7 +7563,7 @@
 					11 : should not be used for feedbacks anymore, not converted to WG code.
 					12 : should not be used for feedbacks anymore, not converted to WG code.
 					13 : particle density to achieve specified total flux, CONPAR(,,1) is the specified flux crossing the boundary flux surface, CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used), CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
-					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5, the sound speed is defined separately for each ionization state. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length.
+					14 : sound speed velocity flux, MOMPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5, the sound speed is defined separately for each ionization state. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length.
 					15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 					16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					18 : prescribe total main ion particle flux, used with ASTRA coupling. Not yet available for WG.
@@ -7820,6 +8055,7 @@
 						6: rescale slowed by fb_alpha (SOLPS4 style)
 						7: If fb_target/fb_current &lt; (1-fb_const) or &gt; (1+fb_const), the rescaling coincides with FB_RESCALE.eq.3. Otherwise no rescaling is applied.
 						8: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence outside the separatrix (including contributions from Eirene species).
+						9: This is the same as option 7, multiplied by the pumping rate.
 				</description>
 			</switch>
 			<switch>
@@ -7836,6 +8072,10 @@
 					5: ion heat flux BC
 					6: current BC
 					7: density BC
+					8: Pumping albedo coefficient.
+						If FB_IB.eq.0, albedo changes at all boundaries and surfaces where it is not unity. This applies to all isonuclear sequences.
+						If FB_IB.lt.0, albedo changes where FB_IB.eq.index of Eirene non-default standard surface. This applies only to the isonuclear sequence for which this FB_ACTUATOR is set.
+						If FB_IB.gt.0, albedo changes where FB_IB.eq.index of Eirene non-default standard surface for coupled runs or the index of the boundary conditon in b2.boundary.parameters for fluid neutrals runs. This then applies to all isonuclear sequences.
 				</description>
 			</switch>
 			<switch>
@@ -7901,10 +8141,10 @@
 			</switch>
 			<switch>
 				<name>FB_IB</name>
-				<default>-1</default>
+				<default>-1-DEF_NSTS</default>
 				<type>integer array of size (NFB)</type>
 				<description>
-					Index of boundary condition through which the feedback is being applied.
+					Index of boundary condition through which the feedback is being applied. For FB_ACTUATOR.eq.8, abs(FB_IB) stands for the index of the Eirene non-default standard surface where the pumping albedo is being modified (for coupled runs).
 				</description>
 			</switch>
 			<switch>

@@ -32,7 +32,7 @@
      & , only : ncall_b2sihs_
 #ifndef NAGFOR
      &        , ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
-#ifdef WG_DEBUG
+#ifdef DBG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2sifrtf, ncall_b2ttia

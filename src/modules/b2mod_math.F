@@ -160,7 +160,7 @@
       return
       end function ltst
 
-  !> Area of triangle given by vertex coordinates
+      !> Area of triangle given by vertex coordinates
       function triangleArea( x0, y0, x1, y1, x2, y2 )
       implicit none
       real (kind=R8) :: triangleArea
@@ -170,100 +170,119 @@
       return
       end function triangleArea
 
-  !> Coordinates of centroid of a triangle given by vertex coordinates
+      !> Coordinates of centroid of a triangle given by vertex coordinates
       function triangleCentroid( x0, y0, x1, y1, x2, y2 )
       implicit none
       real (kind=R8) :: triangleCentroid(0:1)
       real (kind=R8) :: x0, y0, x1, y1, x2, y2
+
       triangleCentroid(0) = ( x0 + x1 + x2 ) / 3.0_R8
       triangleCentroid(1) = ( y0 + y1 + y2 ) / 3.0_R8
+
       return
       end function triangleCentroid
 
-  !> Area of quadrangle given by vertex coordinates
-  !> The vertices must be in sequence! (=> structured)
+      !> Area of quadrangle given by vertex coordinates
+      !> The vertices must be in sequence! (=> structured)
       function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
       implicit none
       real (kind=R8) :: quadArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
 
-      quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
-     .           TriangleArea(x2, y2, x3, y3, x0, y0)
+      quadArea = triangleArea(x0, y0, x1, y1, x2, y2) +
+     .           triangleArea(x2, y2, x3, y3, x0, y0)
 
+      return
       end function quadArea
 
-  !> Coordinates of centroid of a quadrangle given by vertex coordinates
-  !> Corners are numbered in the B2 convention 2-3
-  !>                                           0-1
+      !> Coordinates of centroid of a quadrangle given by vertex coordinates
+      !> Corners are numbered in the B2 convention 2-3
+      !>                                           0-1
       function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       implicit none
       real (kind=R8) :: quadCentroid(0:1)
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+      real (kind=R8) :: denom
 
-      quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3) 
-     &   * triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleCentroid(x0,y0,x2,y2,x3,y3) 
-     &   * triangleArea(x0,y0,x2,y2,x3,y3) ) 
-     &   / ( triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
+      denom = quadArea(x0,y0,x2,y2,x3,y3,x1,y1)
+      if (denom.gt.0.0_R8) then
+        quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3)
+     &   * triangleArea(x0,y0,x1,y1,x3,y3)
+     &   + triangleCentroid(x0,y0,x2,y2,x3,y3)
+     &   * triangleArea(x0,y0,x2,y2,x3,y3) )
+     &   / denom
+      else
+        quadCentroid(0) = (x0 + x1 + x2 + x3) / 4.0_R8
+        quadCentroid(1) = (y0 + y1 + y2 + y3) / 4.0_R8
+      end if
+
       return
       end function quadCentroid
 
       !> Area of a convex pentagonal cell
       !> The vertices must be in sequence
 
-      function pentArea(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+      function pentArea( x0, y0, x1, y1, x2, y2, x3, y3, x4, y4 )
       implicit none
       real (kind=R8) :: pentArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
 
-      pentArea = triangleArea(x0, y0, x1, y1, x2, y2) + 
-     .         triangleArea(x2, y2, x3, y3, x4, y4) +
-     .         triangleArea(x2, y2, x0, y0, x4, y4)
- 
+      pentArea = triangleArea(x0, y0, x1, y1, x2, y2) +
+     .           triangleArea(x2, y2, x3, y3, x4, y4) +
+     .           triangleArea(x2, y2, x0, y0, x4, y4)
+
       return
       end function pentArea
 
       !> Centroid of convex pentagonal cell
-      !> The vertices must be in sequence      
-      function pentCentroid( x0,y0,x1,y1,x2,y2,x3,y3,x4,y4)
+      !> The vertices must be in sequence
+      function pentCentroid( x0, y0, x1, y1, x2, y2, x3, y3, x4, y4 )
       implicit none
       real (kind=R8) :: pentCentroid(0:1)
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+      real (kind=R8) :: denom
 
-      pentCentroid = (triangleCentroid(x0, y0, x1, y1, x2, y2)
-     &  * triangleArea(x0, y0, x1, y1, x2, y2) 
-     &  + triangleCentroid(x2, y2, x3, y3, x4, y4) 
-     &  * triangleArea(x2, y2, x3, y3, x4, y4)  
-     &  + triangleCentroid(x2, y2, x0, y0, x4, y4)
-     &  * triangleArea(x2, y2, x0, y0, x4, y4) )
-     &  / (triangleArea(x0, y0, x1, y1, x2, y2)  
-     &  + triangleArea(x2, y2, x3, y3, x4, y4)
-     &  + triangleArea(x2, y2, x0, y0, x4, y4))
+      denom = pentArea(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+      if (denom.gt.0.0_R8) then
+        pentCentroid = (triangleCentroid(x0, y0, x1, y1, x2, y2)
+     &    * triangleArea(x0, y0, x1, y1, x2, y2)
+     &    + triangleCentroid(x2, y2, x3, y3, x4, y4)
+     &    * triangleArea(x2, y2, x3, y3, x4, y4)
+     &    + triangleCentroid(x2, y2, x0, y0, x4, y4)
+     &    * triangleArea(x2, y2, x0, y0, x4, y4) )
+     &    / denom
+      else
+        pentCentroid(0) = ( x0 + x1 + x2 + x3 + x4 ) / 5.0_R8
+        pentCentroid(1) = ( y0 + y1 + y2 + y3 + y4 ) / 5.0_R8
+      endif
 
       return
       end function pentCentroid
 
-  !> Average of a quantity given on the vertices of
-  !> an arbitrary quadrangular cell
-  !> Corners are numbered in the B2 convention 2-3
-  !>                                           0-1
-      function averageVertex( f0, x0, y0, f1, x1, y1, 
+      !> Average of a quantity given on the vertices of
+      !> an arbitrary quadrangular cell
+      !> Corners are numbered in the B2 convention 2-3
+      !>                                           0-1
+      function averageVertex( f0, x0, y0, f1, x1, y1,
      &                        f2, x2, y2, f3, x3, y3 )
       implicit none
       real (kind=R8) :: averageVertex
       real (kind=R8) :: f0, f1, f2, f3
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      real (kind=R8) :: a0, a1, a2, a3
-  
+      real (kind=R8) :: a0, a1, a2, a3, denom
+
       a0 = TriangleArea( x2, y2, x0, y0, x1, y1 )
       a1 = TriangleArea( x0, y0, x1, y1, x3, y3 )
       a2 = TriangleArea( x0, y0, x2, y2, x3, y3 )
       a3 = TriangleArea( x2, y2, x3, y3, x1, y1 )
- 
-      averageVertex = (f0*a0 + f1*a1 + f2*a2 + f3*a3) /  
-     &                (a0 + a1 + a2 + a3)
- 
+      denom = a0 + a1 + a2 + a3
+
+      if (denom.gt.0.0_R8) then
+        averageVertex = ( f0*a0 + f1*a1 + f2*a2 + f3*a3 ) / denom
+      else
+        averageVertex = ( f0 + f1 + f2 + f3 ) / 4.0_R8
+      endif
+
       return
       end function averageVertex
 

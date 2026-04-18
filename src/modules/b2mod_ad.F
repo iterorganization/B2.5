@@ -13,7 +13,7 @@
       parameter (nncf=DEF_NCF)
 
       character(7), save :: my_out_folder
-#ifdef WG_DEBUG
+#ifdef DBG
       character(16), save :: my_out_sf(0:1)
 #endif
       character*256, save :: filename_b2w

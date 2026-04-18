@@ -105,7 +105,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER*4 :: branch
-  REAL(kind=r8), DIMENSION(SIZE(nal, 1)) :: temp
+  REAL(kind=r8), DIMENSION(ncv) :: temp
   REAL(kind=r8), DIMENSION(nfc) :: tempb
   REAL(kind=r8), DIMENSION(nfc) :: tempb0
   INTEGER :: ad_to
