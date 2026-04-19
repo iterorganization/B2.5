@@ -609,7 +609,6 @@ contains
     !integer :: facenumbers(nGhostCell)
     integer :: facenumbers(m%nCg)  ! too big
     real(kind=R8) :: fcX, fcY
-    intrinsic maxval
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
 

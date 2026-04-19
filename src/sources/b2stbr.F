@@ -141,7 +141,7 @@
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies),
      &  sna_eir(nspecies)
       real (kind=R8), allocatable, save :: t1(:)
-      integer ip, j
+      integer ip
 #endif
       integer sput_src,
 #ifdef WG_TODO
