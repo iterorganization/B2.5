@@ -2963,7 +2963,7 @@ cxpb size is changed in b2mod_dimensions
       logical :: set_for_all_sorts, is_albedo_changed
 
       real (kind=R8) :: t0
-      integer ja, l, jm, k, ilim
+      integer ja, l, jm, ilim
 
       is_albedo_changed = .false.
       if (ists >= 0) set_for_all_sorts = .true.
