@@ -292,8 +292,8 @@ c***  surface area
       integer i, j, k, l, m, n, i0, is, iCv, iFc, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
-      integer ia, ias, ic, im, iyp, js, ks, ls
-      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+      integer ia, ias, ic, im, js, ks, ls
+      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_s, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
       logical is_target
 #endif
