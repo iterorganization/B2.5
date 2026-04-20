@@ -249,7 +249,8 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
 !!          nflai=nflai+1
           if (fluids_list(is) == 0) cycle
           nflai = fluids_list(is)
-          call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
+          call xertst (nflai.le.NFL,
+     .     'eirene_mc: increase NFLA in block 14 of Eirene input file')
           amb(nflai)=am(is)
           znb(nflai)=zn(is)
           if (zamin(is) == zamax(is)) then
