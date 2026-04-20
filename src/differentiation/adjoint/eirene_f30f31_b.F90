@@ -369,7 +369,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !!          nflai=nflai+1
     IF (fluids_list(is) .NE. 0) THEN
       nflai = fluids_list(is)
-      CALL XERTST(nflai .LE. nfl, 'eirene_mc: increase size of nfl')
+      CALL XERTST(nflai .LE. nfl,&
+&             'eirene_mc: increase NFLA in block 14 of Eirene input file')
       amb(nflai) = am(is)
       znb(nflai) = zn(is)
       IF (zamin(is) .EQ. zamax(is)) THEN
