@@ -240,7 +240,8 @@ c
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           nflai=nflai+1
-          call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
+          call xertst (nflai.le.NFL,
+     .     'eirene_mc: increase NFLA in block 14 of Eirene input file')
 * cell centred
           do iy=-1,ny
             do ix=-1,nx
