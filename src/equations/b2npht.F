@@ -321,12 +321,18 @@ cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
 cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
 cc while the second contribution corresponds to T dn/dt
         wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
+        do iCv=1,mpg%nCi
+          wrk1(iCv) = wrk1(iCv)/(dtee(mpg%cvReg(iCv))*rxf)
+        enddo
         wrk1(mpg%nCi+1:mpg%nCv) = 0.0_R8
         sr%shedt(:,0) = sr%shedt(:,0) - wrk1*ts_factor
         she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
           wrk2 = 1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
      &           *psnl%ti/dtim*geo%cvVol
+          do iCv=1,mpg%nCi
+            wrk2(iCv) = wrk2(iCv)/(dtei(mpg%cvReg(iCv))*rxf)
+          enddo
           wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
           sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
           shi0 = shi0 + sr%shidt
