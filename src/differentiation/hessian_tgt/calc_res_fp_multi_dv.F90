@@ -17,13 +17,15 @@ SUBROUTINE CALC_RES_FP_MULTI_NODIFF(nbdirs, ncv, ns, tn_style, &
   USE B2MOD_TYPES
   USE B2US_PLASMA_DIFFV_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_PAR_OPT_DIFFV_DIFFV, ONLY: par_rescale
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ncv, ns, nbdirs, tn_style, solve_keps
   TYPE(B2DIAGNOSTIC_DIFFV), INTENT(IN) :: diagd
   REAL(kind=r8), INTENT(INOUT) :: res_max
 !-----------------------------------------------------------------------
 !     calc_res_fp_multi calculates a maximum residual for the vector   
-!     tangent fixed point form of the B2.5 time iteration scheme.
+!     tangent fixed point form of the B2.5 time iteration scheme,
+!     normalized by the par_rescale factors from b2.optimization.parameters.
 !-----------------------------------------------------------------------
   INTEGER :: is, nd
   INTRINSIC ANY
@@ -33,61 +35,29 @@ SUBROUTINE CALC_RES_FP_MULTI_NODIFF(nbdirs, ncv, ns, tn_style, &
   DO nd=1,nbdirs
     DO is=0,ns-1
       IF (ANY(solveco(is, :))) THEN
-        IF (res_max .LT. diagd%aresco(nd, is)) THEN
-          res_max = diagd%aresco(nd, is)
-        ELSE
-          res_max = res_max
-        END IF
+        res_max = MAX(res_max, diagd%aresco(nd, is)/par_rescale(nd))
       END IF
       IF (ANY(solvemo(is, :))) THEN
-        IF (res_max .LT. diagd%aresmo(nd, is)) THEN
-          res_max = diagd%aresmo(nd, is)
-        ELSE
-          res_max = res_max
-        END IF
+        res_max = MAX(res_max, diagd%aresmo(nd, is)/par_rescale(nd))
       END IF
     END DO
     IF (ANY(solvepo)) THEN
-      IF (res_max .LT. diagd%arespo(nd)) THEN
-        res_max = diagd%arespo(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%arespo(nd)/par_rescale(nd))
     END IF
     IF (ANY(solveee)) THEN
-      IF (res_max .LT. diagd%areshe(nd)) THEN
-        res_max = diagd%areshe(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%areshe(nd)/par_rescale(nd))
     END IF
     IF (ANY(solveei)) THEN
-      IF (res_max .LT. diagd%areshi(nd)) THEN
-        res_max = diagd%areshi(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%areshi(nd)/par_rescale(nd))
     END IF
     IF (ANY(solveen) .AND. tn_style .EQ. 2) THEN
-      IF (res_max .LT. diagd%areshn(nd)) THEN
-        res_max = diagd%areshn(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%areshn(nd)/par_rescale(nd))
     END IF
     IF (ANY(solvekt) .AND. solve_keps .GE. 1) THEN
-      IF (res_max .LT. diagd%areskt(nd)) THEN
-        res_max = diagd%areskt(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%areskt(nd)/par_rescale(nd))
     END IF
     IF (ANY(solvezt) .AND. solve_keps .EQ. 2) THEN
-      IF (res_max .LT. diagd%areszt(nd)) THEN
-        res_max = diagd%areszt(nd)
-      ELSE
-        res_max = res_max
-      END IF
+      res_max = MAX(res_max, diagd%areszt(nd)/par_rescale(nd))
     END IF
   END DO
 !
