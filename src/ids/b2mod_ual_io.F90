@@ -6564,7 +6564,7 @@ contains
                       &         z_square_average,                             &
                       &   value = state%rt%rz2(:,ispion(is,js)) )
                 !! Ionization potential
-#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION < 2 )
                   call write_IDS_quantity( edge_grid,                         &
                       &   val = profiles_ggd%ion( is )%                       &
                       &         state( js )%ionisation_potential,             &
@@ -8674,7 +8674,7 @@ contains
           case ('B')
             call write_sourced_value( summary%local%separatrix%n_i%boron, nisep )
             call write_sourced_value( summary%local%separatrix_average%n_i%boron, u )
-#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
             call write_sourced_value( summary%local%separatrix%velocity_phi%boron, -vtor )
             call write_sourced_value( summary%local%separatrix_average%velocity_phi%boron, -v )
 #   endif
@@ -11406,8 +11406,12 @@ contains
         case ('T')
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
         case ('DT')
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
+          call add_sourced_value( summary%gas_injection_rates%deuterium_tritium, gpff )
+#  else
           call add_sourced_value( summary%gas_injection_rates%deuterium, gpff/2.0_R8 )
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff/2.0_R8 )
+#  endif
         case ('He')
           if (nint(am(is)).eq.3) then
             call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
@@ -11420,6 +11424,11 @@ contains
         case ('Be')
           call add_sourced_value( summary%gas_injection_rates%beryllium, gpff*zn(is) )
           summary%gas_injection_rates%impurity_seeding%value = 1
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
+        case ('B')
+          call add_sourced_value( summary%gas_injection_rates%boron, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+#  endif
         case ('C')
           call add_sourced_value( summary%gas_injection_rates%carbon, gpff*zn(is) )
           summary%gas_injection_rates%impurity_seeding%value = 1
