@@ -2756,10 +2756,10 @@ contains
         allocate(slice(mpg%divFcP(2,2)))
         allocate(slice_ns(mpg%divFcP(2,2),ns))
         if (nnatmi.gt.0) then
-          allocate(slice_natm(mpg%divFcP(1,2),nnatmi))
+          allocate(slice_natm(mpg%divFcP(2,2),nnatmi))
         endif
         if (nnmoli.gt.0) then
-          allocate(slice_nmol(mpg%divFcP(1,2),nnmoli))
+          allocate(slice_nmol(mpg%divFcP(2,2),nnmoli))
         endif
         allocate(fclist(mpg%divFcP(2,2)))
         allocate(cvlist(mpg%divFcP(2,2)))
@@ -3030,6 +3030,7 @@ contains
       call rwcdf(rw,ncid,'tpmxap',imap,tpmxap,iret)
       imap(1)=1
       imap(2)=1
+      allocate(slice(-1:ny))
       slice=0.0_R8
       if(minval(xymap(-1,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(-1,0),1)
@@ -3068,6 +3069,7 @@ contains
         endif
         call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
       endif
+      deallocate(slice)
 #endif
       iret = nf_close(ncid)
       call check_cdf_status(iret)
