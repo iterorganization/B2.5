@@ -159,7 +159,9 @@ static u_int64_t maxBlocks = 0 ;
    its own stack. If the stack is compiled with OpenMP support and then used
    in a program with no OpenMP parallel regions, the stack will work as
    expected without using any extra resources. */
+#ifdef _OPENMP
 #pragma omp threadprivate(tappos, tapblock, curStack, adbitbuf, adbitibuf, topRepetitionPoint)
+#endif
 
 // pre-declare a few prototypes.
 void showLocation(DoubleChainedBlock *locBlock, int loc) ;
