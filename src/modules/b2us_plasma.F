@@ -93,6 +93,7 @@
         ! coupling coefficients
         real(R8), dimension(:,:,:), allocatable :: pcca
         real(R8), dimension(:,:), allocatable :: pccm
+        real(R8), dimension(:,:), allocatable :: pcc_mol
 
         ! derived state quantities
         ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
@@ -112,6 +113,16 @@
         real(R8), dimension(:,:), allocatable :: dnadt, dmodt
         real(R8), dimension(:), allocatable :: dhedt, dhidt, dhndt,
      .                                         dktdt, dztdt
+
+        ! For fluid molecules (to be rearranged later on, and species to be generalized)
+        real(R8), allocatable :: fn_mol(:,:), fm_mol(:,:), fh_mol(:,:),  !! fluxes
+     .                           fn_mol_fcor(:,:)
+        real(R8), allocatable :: dndt_mol(:), dmdt_mol(:), dhdt_mol(:)   !! time derivatives
+        real(R8), allocatable :: resco_mol(:), resmo_mol(:), resh_mol(:) !! residuals
+        real(R8), allocatable :: flo_mol(:,:), con_mol(:,:,:)            !! coefficients for linearization (continuity)
+        real(R8), allocatable :: floh_mol(:,:), conh_mol(:,:,:)          !! coefficients for linearization (heat) (similar to coni, cone etc)
+        real(R8), allocatable :: coru_mol(:), corp_mol(:), cort_mol(:)   !! correction steps   
+        real(R8), allocatable :: uu_mol(:), vv_mol(:), ww_mol(:)         !! 3D velocities (uu = poloidal, vv = radial, ww = toroidal)
 
       end type B2Derivatives
 
@@ -169,6 +180,13 @@
      .                           f_luc_ke_c, f_luc_ki_c
 
         real(R8), allocatable, dimension(:) :: cssb
+
+        ! For molecules (species to be generalized)
+        real(R8), allocatable, dimension(:) :: dp_mol, 
+     .            vs_mol,  hc_mol
+        real(R8), allocatable, dimension(:,:) :: cdp_mol, cvs_mol,
+     .            chc_mol, cdphz_mol, cvshz_mol, cvshz_mol_eff
+
       end type B2Coeff
 
       type B2Coeff_nspecies
@@ -198,6 +216,11 @@
         real(R8), dimension(:,:,:), allocatable :: smodt, snadt
         real(R8), dimension(:), allocatable :: skt_diss, skt_prod
       end type B2Source
+
+      type B2SourceMol
+        real(R8), dimension(:,:), allocatable :: sn_mol, sm_mol, sh_mol,
+     .            sn_dt_mol, sm_dt_mol, sh_dt_mol
+      end type B2SourceMol
 
       type B2SourceEir
         real(R8), dimension(:,:), allocatable :: sch, she, shi, sne
@@ -257,12 +280,22 @@
      .                                             rlqr
         ! nCv, is
         real(R8), allocatable, dimension(:,:) :: rza, rz2, rpt, rpi
+
+       ! nCv, dir, is, for fluid molecules
+        real(R8), allocatable, dimension(:,:,:) :: rl_nd, rl_d, rl_di1,
+     .         rl_ic, rl_ec_m, rl_ec_E, rl_dr, rl_de, rl_di2, 
+     .         rl_ec_m_d, rl_ec_m_r
       end type B2Rates
 
 ! Type for data transfer in b2sral
       type B2RatesWork
         real(R8), allocatable :: rsa(:,:), rra(:,:), rqa(:,:), rrd(:,:),
      .                           rbr(:,:), rcx(:,:), rqr(:,:)
+
+        real(R8), allocatable :: r_nd(:,:), r_d(:,:), r_di1(:,:), 
+     .            r_ic(:,:), r_ec_m(:,:), r_ec_E(:,:),
+     .            r_dr(:,:), r_de(:,:), r_di2(:,:), r_ec_m_d(:,:),
+     .            r_ec_m_r(:,:)
       end type B2RatesWork
 
 ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -304,6 +337,9 @@
         ! b2mod_diag
         real (R8), allocatable :: rescoreg(:,:) , resmoreg(:,:),
      .                            reshereg(:), reshireg(:)
+
+        ! fluid molecules
+        real (R8) :: aresco_mol, aresmo_mol, aresh_mol
       end type B2Diagnostic
 
       type B2Update
@@ -329,6 +365,7 @@
         type(B2PlasmaSnapshot) :: psnl, psnc
         type(B2Diagnostic) :: diag
         type(B2Update) :: update
+        type(B2SourceMol) :: sr_mol
       end type B2State
 
 ! External plasma
@@ -389,7 +426,7 @@
       call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnc )
 !WG_TODO      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
       call createB2Update( nCv, ns, st % update )
-
+      call createB2SourceMol( nCv, st % sr_mol )
       return
       end subroutine createB2State
 
@@ -409,7 +446,7 @@
       call destroyB2PlasmaSnapshot( st % psnc )
       call destroyB2Diagnostic( st % diag )
       call destroyB2Update( st % update )
-
+      call destroyB2SourceMol( st % sr_mol )
       return
       end subroutine destroyB2State
 
@@ -571,6 +608,18 @@
       allocate( coeff%hcix_c( nCv ), SOURCE=0._R8 )
 
       allocate( coeff%cssb( nFc ), SOURCE=0._R8 )
+
+      ! Molecules
+      allocate( coeff%dp_mol( nCv ), SOURCE=0._R8 )
+      allocate( coeff%vs_mol( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hc_mol( nCv ), SOURCE=0._R8 )
+      allocate( coeff%cdp_mol( nFc,0:1 ), SOURCE=0._R8 )
+      allocate( coeff%cvs_mol( nFc,0:1 ), SOURCE=0._R8 )
+      allocate( coeff%chc_mol( nFc,0:1 ), SOURCE=0._R8 )
+      allocate( coeff%cdphz_mol( nFc,0:1 ), SOURCE=0._R8 )
+      allocate( coeff%cvshz_mol( nFc,0:1 ), SOURCE=0._R8 )
+      allocate( coeff%cvshz_mol_eff( nFc,0:1 ), SOURCE=0._R8 )
+
 #else
       allocate( coeff % calf( nFc, 0:1 ) )
       allocate( coeff % calf_cl( nFc, 0:1 ) )
@@ -675,6 +724,17 @@
 
       allocate( coeff%cssb( nFc ) )
 
+      ! Molecules
+      allocate( coeff%dp_mol( nCv ) )
+      allocate( coeff%vs_mol( nCv ) )
+      allocate( coeff%hc_mol( nCv ) )
+      allocate( coeff%cdp_mol( nFc,0:1 ) )
+      allocate( coeff%cvs_mol( nFc,0:1 ) )
+      allocate( coeff%chc_mol( nFc,0:1 ) )
+      allocate( coeff%cdphz_mol( nFc,0:1 ) )
+      allocate( coeff%cvshz_mol( nFc,0:1 ) )
+      allocate( coeff%cvshz_mol_eff( nFc,0:1 ) )
+
       coeff % calf = 0._R8
       coeff % calf_cl = 0._R8
       coeff % calf_an = 0._R8
@@ -776,6 +836,17 @@
       coeff % hcix_c = 0._R8
 
       coeff % cssb =0._R8
+
+      ! Molecules
+      coeff % dp_mol = 0._R8
+      coeff % vs_mol = 0._R8
+      coeff % hc_mol = 0._R8
+      coeff % cdp_mol = 0._R8
+      coeff % cvs_mol = 0._R8
+      coeff % chc_mol = 0._R8
+      coeff % cdphz_mol = 0._R8
+      coeff % cvshz_mol = 0._R8
+      coeff % cvshz_mol_eff = 0._R8
 #endif
       return
       end subroutine createB2Coeff
@@ -1422,12 +1493,15 @@
 #ifndef LEGACYCOMP
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % pcc_mol( nCv, 0:1 ), SOURCE=0._R8 )
 #else
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ) )
       allocate( dv % pccm( nCv, 0:1 ) )
+      allocate( dv % pcc_mol( nCv, 0:1 ) )
 
       dv % pcca = 0._R8
       dv % pccm = 0._R8
+      dv % pcc_mol = 0._R8
 #endif
 
 ! time derivatives
@@ -1445,6 +1519,48 @@
       dv % dhndt = 0.0_R8
       dv % dktdt = 0.0_R8
       dv % dztdt = 0.0_R8
+
+      ! molecules
+      allocate( dv % fn_mol( nFc,0:1) )
+      allocate( dv % fm_mol( nFc,0:1) )
+      allocate( dv % fh_mol( nFc,0:1) )
+      allocate( dv % dndt_mol( nCv) )
+      allocate( dv % dmdt_mol( nCv) )
+      allocate( dv % dhdt_mol( nCv) )
+      allocate( dv % resco_mol( nCv) )
+      allocate( dv % resmo_mol( nCv) )
+      allocate( dv % resh_mol( nCv) )
+      allocate( dv % fn_mol_fcor( nFc,0:1) )
+      allocate( dv % flo_mol (nFc, 0:1) )
+      allocate( dv % con_mol (nFc, 0:1, 0:4) )
+      allocate( dv % coru_mol( nCv ) )
+      allocate( dv % corp_mol( nCv ) )
+      allocate( dv % cort_mol( nCv ) )
+      allocate( dv % floh_mol (nFc, 0:1) )
+      allocate( dv % conh_mol (nFc, 0:1, 0:2) )
+      allocate( dv % uu_mol( nCv ) )
+      allocate( dv % vv_mol( nCv ) )
+      allocate( dv % ww_mol( nCv ) )
+      dv % fn_mol = 0.0_R8
+      dv % fm_mol = 0.0_R8
+      dv % fh_mol = 0.0_R8
+      dv % dndt_mol = 0.0_R8
+      dv % dmdt_mol = 0.0_R8
+      dv % dhdt_mol = 0.0_R8
+      dv % resco_mol = 0.0_R8
+      dv % resmo_mol = 0.0_R8
+      dv % resh_mol = 0.0_R8
+      dv % fn_mol_fcor = 0.0_R8
+      dv % flo_mol = 0.0_R8
+      dv % con_mol = 0.0_R8
+      dv % coru_mol = 0.0_R8
+      dv % corp_mol = 0.0_R8
+      dv % cort_mol = 0.0_R8
+      dv % floh_mol = 0.0_R8
+      dv % conh_mol = 0.0_R8
+      dv % uu_mol = 0.0_R8
+      dv % vv_mol = 0.0_R8
+      dv % ww_mol = 0.0_R8
 
       return
       end subroutine createB2Derivatives
@@ -1609,6 +1725,28 @@
       deallocate( dv % dhndt )
       deallocate( dv % dktdt )
       deallocate( dv % dztdt )
+
+! Molecules
+      deallocate( dv % fn_mol )
+      deallocate( dv % fm_mol )
+      deallocate( dv % fh_mol )
+      deallocate( dv % dndt_mol )
+      deallocate( dv % dmdt_mol )
+      deallocate( dv % dhdt_mol )
+      deallocate( dv % resco_mol )
+      deallocate( dv % resmo_mol )
+      deallocate( dv % resh_mol )
+      deallocate( dv % fn_mol_fcor )
+      deallocate( dv % flo_mol )
+      deallocate( dv % con_mol )
+      deallocate( dv % coru_mol )
+      deallocate( dv % corp_mol )
+      deallocate( dv % cort_mol )
+      deallocate( dv % floh_mol )
+      deallocate( dv % conh_mol )
+      deallocate( dv % uu_mol )
+      deallocate( dv % vv_mol )
+      deallocate( dv % ww_mol )
 
       return
       end subroutine destroyB2Derivatives
@@ -2109,6 +2247,52 @@
       return
       end subroutine destroyB2SourceWork
 
+      subroutine createB2SourceMol( nCv, sr_mol )
+      integer, intent(in) :: nCv
+      type(B2SourceMol), intent(inout) :: sr_mol
+
+      if (allocated(sr_mol % sn_mol)) return
+#ifndef LEGACYCOMP
+            allocate( sr_mol % sn_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sh_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sn_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sh_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
+#else
+            allocate( sr_mol % sn_mol( nCv, 0:1 ) )
+            allocate( sr_mol % sm_mol( nCv, 0:1 ) )
+            allocate( sr_mol % sh_mol( nCv, 0:1 ) )
+            allocate( sr_mol % sn_dt_mol( nCv, 0:1 ) )
+            allocate( sr_mol % sm_dt_mol( nCv, 0:1 ) )
+            allocate( sr_mol % sh_dt_mol( nCv, 0:1 ) )
+      
+            sr_mol % sn_mol = 0._R8
+            sr_mol % sm_mol = 0._R8
+            sr_mol % sh_mol = 0._R8
+            sr_mol % sn_dt_mol = 0._R8
+            sr_mol % sm_dt_mol = 0._R8
+            sr_mol % sh_dt_mol = 0._R8
+#endif
+      
+      return
+      end subroutine createB2SourceMol
+
+      subroutine destroyB2SourceMol( sr_mol )
+      type(B2SourceMol), intent(inout) :: sr_mol
+
+      if (.not.allocated(sr_mol % sn_mol)) return
+
+      deallocate( sr_mol % sn_mol )
+      deallocate( sr_mol % sm_mol )
+      deallocate( sr_mol % sh_mol )
+      deallocate( sr_mol % sn_dt_mol )
+      deallocate( sr_mol % sm_dt_mol )
+      deallocate( sr_mol % sh_dt_mol )
+
+      return
+      end subroutine destroyB2SourceMol
+
 
       subroutine createB2Rates( nCv, ns, rt )
 !      use b2mod_rates
@@ -2209,6 +2393,86 @@
       end subroutine destroyB2Rates
 
 
+      subroutine createB2Rates_mol( nCv, nms, rt )
+!      use b2mod_rates
+
+      integer, intent(in) :: nCv, nms
+      type(B2Rates), intent(inout) :: rt
+
+      if (allocated(rt % rl_nd)) return
+#ifndef LEGACYCOMP
+
+
+      allocate( rt % rl_nd ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_d  ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_di1( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_ic ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_ec_m(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_ec_E(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_dr ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_de ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_di2( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_ec_m_d(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rt % rl_ec_m_r(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
+
+
+#else
+
+
+      allocate( rt % rl_nd ( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_d  ( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_di1( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_ic ( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_ec_m(nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_ec_E(nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_dr ( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_de ( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_di2( nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_ec_m_d(nCv, 0:1, 0:nms-1 ) )
+      allocate( rt % rl_ec_m_r(nCv, 0:1, 0:nms-1 ) )
+
+
+      rt % rl_nd  = 0
+      rt % rl_d   = 0
+      rt % rl_di1 = 0
+      rt % rl_ic  = 0
+      rt % rl_ec_m= 0
+      rt % rl_ec_E= 0
+      rt % rl_dr  = 0
+      rt % rl_de  = 0
+      rt % rl_di2 = 0
+      rt % rl_ec_m_d= 0
+      rt % rl_ec_m_r= 0
+
+
+
+#endif
+      return
+      end subroutine createB2Rates_mol
+
+
+      subroutine destroyB2Rates_mol( rt )
+      type(B2Rates), intent(inout) :: rt
+
+      if (.not.allocated(rt % rl_nd)) return
+
+      deallocate( rt % rl_nd )
+      deallocate( rt % rl_d )
+      deallocate( rt % rl_di1 )
+      deallocate( rt % rl_ic )
+      deallocate( rt % rl_ec_m )
+      deallocate( rt % rl_ec_E )
+      deallocate( rt % rl_dr )
+      deallocate( rt % rl_de )
+      deallocate( rt % rl_di2 )
+      deallocate( rt % rl_ec_m_d )
+      deallocate( rt % rl_ec_m_r )
+
+
+      return
+      end subroutine destroyB2Rates_mol
+
+
       subroutine createB2RatesWork( nCv, ns, rtw )
       integer, intent(in) :: nCv, ns
       type(B2RatesWork), intent(inout) :: rtw
@@ -2256,6 +2520,75 @@
       if ( allocated( rtw % rqr ) ) deallocate( rtw % rqr )
       return
       end subroutine destroyB2RatesWork
+
+            subroutine createB2RatesWork_mol( nCv, nms, rtw )
+      integer, intent(in) :: nCv, nms
+      type(B2RatesWork), intent(inout) :: rtw
+
+      if (allocated(rtw % r_nd)) return
+#ifndef LEGACYCOMP
+      allocate( rtw % r_nd ( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_d  ( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_di1( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_ic ( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_ec_m(nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_ec_E(nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_dr ( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_de ( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_di2( nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_ec_m_d(nCv, 0:nms-1 ), SOURCE=0._R8 )
+      allocate( rtw % r_ec_m_r(nCv, 0:nms-1 ), SOURCE=0._R8 )
+
+#else
+      allocate( rtw % r_nd ( nCv, 0:nms-1 ) )
+      allocate( rtw % r_d  ( nCv, 0:nms-1 ) )
+      allocate( rtw % r_di1( nCv, 0:nms-1 ) )
+      allocate( rtw % r_ic ( nCv, 0:nms-1 ) )
+      allocate( rtw % r_ec_m(nCv, 0:nms-1 ) )
+      allocate( rtw % r_ec_E(nCv, 0:nms-1 ) )
+      allocate( rtw % r_dr ( nCv, 0:nms-1 ) )
+      allocate( rtw % r_de ( nCv, 0:nms-1 ) )
+      allocate( rtw % r_di2( nCv, 0:nms-1 ) )
+      allocate( rtw % r_ec_m_d(nCv, 0:nms-1 ) )
+      allocate( rtw % r_ec_m_r(nCv, 0:nms-1 ) )
+
+
+      rtw % r_nd  = 0._R8
+      rtw % r_d   = 0._R8
+      rtw % r_di1 = 0._R8
+      rtw % r_ic  = 0._R8
+      rtw % r_ec_m= 0._R8
+      rtw % r_ec_E= 0._R8
+      rtw % r_dr  = 0._R8
+      rtw % r_de  = 0._R8
+      rtw % r_di2 = 0._R8
+      rtw % r_ec_m_d= 0._R8
+      rtw % r_ec_m_r= 0._R8
+
+
+#endif
+
+      return
+      end subroutine createB2RatesWork_mol
+
+
+      subroutine destroyB2RatesWork_mol( rtw )
+      type(B2RatesWork), intent(inout) :: rtw
+
+      if ( allocated( rtw % r_nd ) )  deallocate( rtw % r_nd )
+      if ( allocated( rtw % r_d ) )   deallocate( rtw % r_d )
+      if ( allocated( rtw % r_di1 ) ) deallocate( rtw % r_di1 )
+      if ( allocated( rtw % r_ic ) )  deallocate( rtw % r_ic )
+      if ( allocated( rtw % r_ec_m) )  deallocate( rtw % r_ec_m )
+      if ( allocated( rtw % r_ec_E) )  deallocate( rtw % r_ec_E )
+      if ( allocated( rtw % r_dr ) )  deallocate( rtw % r_dr )
+      if ( allocated( rtw % r_de ) )  deallocate( rtw % r_de )
+      if ( allocated( rtw % r_di2 ) ) deallocate( rtw % r_di2 )
+      if ( allocated( rtw % r_ec_m_d) )  deallocate( rtw % r_ec_m_d )
+      if ( allocated( rtw % r_ec_m_r) )  deallocate( rtw % r_ec_m_r )
+
+      return
+      end subroutine destroyB2RatesWork_mol
 
 
       subroutine createB2PlasmaSnapshot( nCv, nFc, ns, snap )

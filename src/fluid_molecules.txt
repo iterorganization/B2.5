@@ -1,0 +1,61 @@
+driver/b2mnds.F:      if (switch%fluid_molecules.ne.0) then
+driver/b2mndt.F:        if (switch%fluid_molecules.ne.0) then
+driver/b2mndt.F:            if (switch%fluid_molecules.ne.0) then
+driver/b2mndt.F:           if (switch%fluid_molecules.ne.0) then
+driver/b2mndt.F:            if (switch%fluid_molecules.ne.0) then
+driver/b2mndt.F:                if (switch%fluid_molecules.ne.0) then
+driver/b2mod_driver.F:      use b2mod_fluid_molecules
+driver/b2mod_driver.F:      use b2mod_fluid_molecules
+driver/b2mod_driver.F:      if (switch%fluid_molecules.ne.0) then
+driver/b2mxar_mol.F:      use b2mod_fluid_molecules
+driver/b2mwqt_mol.F:      use b2mod_fluid_molecules
+equations/b2news_.F:      use b2mod_fluid_molecules
+equations/b2news_.F:      if (switch%fluid_molecules.ne.0) then
+equations/b2npco_mol.F:      use b2mod_fluid_molecules
+equations/b2npmo_mol.F:      use b2mod_fluid_molecules
+equations/b2npht_mol.F:      use b2mod_fluid_molecules
+modules/b2mod_recycle.F:     &            fm_rec_mol,n_rec_mol,fe_rec_mol, fluid_molecules)
+modules/b2mod_recycle.F:     &     use_uy_uz_0, fluid_molecules
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0.and.no_trim.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.eq.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      if (fluid_molecules.ne.0) then
+modules/b2mod_recycle.F:      use b2mod_fluid_molecules
+modules/b2mod_recycle.F:      use b2mod_fluid_molecules
+modules/b2mod_switches.F:      integer :: fluid_molecules 
+modules/b2mod_switches.F:      s % fluid_molecules = 0
+modules/b2mod_switches.F:      call ipgeti ('fluid_molecules', s % fluid_molecules) 
+modules/b2mod_fluid_molecules.F:      module b2mod_fluid_molecules
+modules/b2mod_fluid_molecules.F:      end module b2mod_fluid_molecules
+solvers/b2upht_mol.F:      use b2mod_fluid_molecules
+sources/b2sral.F:      use b2mod_fluid_molecules
+sources/b2sral.F:      if (switch%fluid_molecules.ne.0) then
+sources/b2sral.F:      if (switch%fluid_molecules.ne.0) then
+sources/b2sral.F:      if (switch%fluid_molecules.ne.0) then
+sources/b2stbc_phys.F:      use b2mod_fluid_molecules
+sources/b2stbr_phys.F:      use b2mod_fluid_molecules
+sources/b2stbr_phys.F:     &                    switch%fluid_molecules.ne.0) then  
+sources/b2stbr_phys.F:        if (switch%fluid_molecules.ne.0) then
+sources/b2stbr_phys.F:        if (switch%fluid_molecules.ne.0) then
+sources/b2stbr_phys.F:     &              switch%fluid_molecules)
+sources/b2stbr_phys.F:             if (switch%fluid_molecules.ne.0) then
+sources/b2stbr_phys.F:             if (switch%fluid_molecules.ne.0) then
+sources/b2stbr_phys.F:             if (switch%fluid_molecules.ne.0) then
+sources/b2stfm.F:      use b2mod_fluid_molecules
+sources/b2spfm.F:      use b2mod_fluid_molecules
+sources/b2sihs_mol.F:      use b2mod_fluid_molecules
+sources/b2srst_mol.F:      use b2mod_fluid_molecules
+sources/b2srdt_mol.F:      use b2mod_fluid_molecules
+transport/b2tqna.F:      if(switch%fluid_molecules.ne.0) then
+transport/b2tqna.F:      use b2mod_fluid_molecules
+transport/b2trno.F:      use b2mod_fluid_molecules
+transport/b2trno.F:      if (switch%fluid_molecules.ne.0) then
+transport/b2trno.F:      if (switch%fluid_molecules.ne.0) then
+transport/b2trno.F:      if (switch%fluid_molecules.ne.0) then
+transport/b2tfn_mol.F:      use b2mod_fluid_molecules
+transport/b2tfh_mol.F:      use b2mod_fluid_molecules
+transport/b2tfcc_mol.F:      use b2mod_fluid_molecules

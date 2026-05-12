@@ -56,6 +56,8 @@
      &          ncall_b2tfrn, senepar, senipar, sconpar,
      &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
 #endif
+      use b2mod_fluid_molecules
+     & , only : background_was_read, read_molecules_background_ext
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -245,9 +247,24 @@
      &   st%pl, st%dv, st%co, st%rt, st_ext)
 !wdk      endif                                                         !srv 14.07.10 }
 
+      if (switch%fluid_molecules.ne.0) then
+        if (background_was_read.eq.0) then
+          call read_molecules_background_ext(nCv)
+        endif
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sn_mol, 1) !! TODO where to place best?
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol, 1)
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sh_mol, 1)
+      endif
+
 * ..compute source coefficients
 *   ..compute electron rate coefficients
       call b2sqel (nCv, ns, ismain, switch, ev, st%pl%te, st%rt, st%rtw)
+*   ..compute molecular rate coefficients
+      if (switch%fluid_molecules.ne.0) then
+        !! TODO when and where to get nms? now hardcoded as 1
+        call b2sqfm (nCv, 1, ismain, switch, ev, st%pl%te, st%pl%ti,  
+     .               st%rt, st%rtw)
+      endif
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.                                              !xpb
       if(switch%b2sral_style.eq.0 .or. switch%b2sral_style.eq.2) then   !srv 28.07.08 03.11.17
@@ -256,7 +273,8 @@
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
-     &    st%sr, st%srw, st%psnc, st%psnl, wrong_flow, main_call)
+     &    st%sr, st%srw, st%sr_mol, st%psnc, st%psnl, wrong_flow, 
+     &    main_call)
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0
@@ -368,6 +386,12 @@
         call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
+      endif
+
+*   ..compute fluid molecule sources (optimal position in code to be determined later)
+      if (switch%fluid_molecules.ne.0) then
+        call b2stfm (nCv, nFc, ns, switch, geo, mpg,
+     &               st%pl, st%dv, st%rt, st%rtw, st%sr_mol)
       endif
 
 *   ..compute sources due to electron-atom processes

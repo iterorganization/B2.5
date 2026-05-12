@@ -3,7 +3,7 @@
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, co, rt, st_ext, sr, srw,
-     &  psnc, psnl, wrong_flow, main_call)
+     &  sr_mol, psnc, psnl, wrong_flow, main_call)
       use b2mod_types
       use b2mod_constants
 #ifndef FIXED_POINT
@@ -53,6 +53,7 @@
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
+      type (B2SourceWork), intent (inout) :: sr_mol
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -349,7 +350,7 @@
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
-     &   switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
+     &   switch, geo, mpg, pl, dv, co, rt, st_ext, srw, sr_mol,
      &   wrong_flow, main_call, praverage)
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'

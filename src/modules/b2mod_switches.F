@@ -626,6 +626,36 @@ c Optimization
       real (kind=R8) :: b2optim_reset_drift
       integer :: b2optim_reset_param_iter
 
+c Fluid molecules
+      integer :: fluid_molecules 
+      integer :: read_molecules_ext
+      integer :: b2stfm_iout 
+      integer :: b2stfm_recompute_molion
+      integer :: b2tfmol_iout
+      integer :: b2tfn_mol_ionv
+      integer :: b2tfn_mol_conv
+      integer :: b2tral_mode_mol
+      integer :: b2sihs_mol
+      integer :: b2stfm_diff_coeff_ene_style
+      integer :: b2stfm_debug_icv
+      integer :: b2stfm_ekin_perp
+      real (kind=R8) :: b2stfm_freac_nd
+      real (kind=R8) :: b2stfm_freac_d
+      real (kind=R8) :: b2stfm_freac_di1
+      real (kind=R8) :: b2stfm_freac_ic
+      real (kind=R8) :: b2stfm_freac_ec
+      real (kind=R8) :: b2stfm_freac_dr
+      real (kind=R8) :: b2stfm_freac_de
+      real (kind=R8) :: b2stfm_freac_di2
+      real (kind=R8) :: b2stfm_erp_nd     !! erp = energy reaction products
+      real (kind=R8) :: b2stfm_erp_d 
+      real (kind=R8) :: b2stfm_erp_di1
+      real (kind=R8) :: b2stfm_erp_dr
+      real (kind=R8) :: b2stfm_erp_de
+      real (kind=R8) :: b2stfm_erp_di2
+      real (kind=R8) :: b2tqna_mol_sf    !! scale factor for viscosity (to experiment)
+      real (kind=R8) :: b2tqna_mol_sfd   !! scale factor for diffusion coefficient and heat conduction
+
 c Matrix solver
       integer :: b2uxus_style
 
@@ -1291,6 +1321,36 @@ c Optimization
       s % b2optim_reset_drift_iter = 2
       s % b2optim_reset_drift = 0.4_R8
       s % b2optim_reset_param_iter = 1
+
+c Fluid molecules
+      s % fluid_molecules = 0
+      s % read_molecules_ext = 0
+      s % b2stfm_iout = 0
+      s % b2stfm_recompute_molion = 0
+      s % b2tfmol_iout = 0
+      s % b2tfn_mol_ionv = 0
+      s % b2tfn_mol_conv = 1
+      s % b2tral_mode_mol = -1
+      s % b2sihs_mol = 1
+      s % b2stfm_diff_coeff_ene_style = 0
+      s % b2stfm_debug_icv = 0
+      s % b2stfm_ekin_perp = 0
+      s % b2stfm_freac_nd  = 1.0_R8
+      s % b2stfm_freac_d   = 1.0_R8
+      s % b2stfm_freac_di1 = 1.0_R8
+      s % b2stfm_freac_ic  = 1.0_R8
+      s % b2stfm_freac_ec  = 1.0_R8
+      s % b2stfm_freac_dr  = 1.0_R8
+      s % b2stfm_freac_de  = 1.0_R8
+      s % b2stfm_freac_di2 = 1.0_R8
+      s % b2stfm_erp_nd    = 0.0_R8  !! erp = energy reaction products
+      s % b2stfm_erp_d     = 0.0_R8 
+      s % b2stfm_erp_di1   = 0.0_R8 
+      s % b2stfm_erp_dr    = 0.0_R8 
+      s % b2stfm_erp_de    = 0.0_R8 
+      s % b2stfm_erp_di2   = 0.0_R8 
+      s % b2tqna_mol_sf    = 1.0_R8 
+      s % b2tqna_mol_sfd   = 1.0_R8 
 
 c Matrix solver
       s % b2uxus_style = 2
@@ -2069,6 +2129,39 @@ c Optimization
       call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
       call ipgeti ('b2optim_reset_param_iter',
      & s % b2optim_reset_param_iter)
+
+
+c Fluid molecules
+      call ipgeti ('fluid_molecules', s % fluid_molecules) 
+      call ipgeti ('read_molecules_ext', s % read_molecules_ext) 
+      call ipgeti ('b2stfm_iout', s % b2stfm_iout)
+      call ipgeti ('b2stfm_recompute_molion', 
+     .             s % b2stfm_recompute_molion)  
+      call ipgeti ('b2tfmol_iout', s % b2tfmol_iout)
+      call ipgeti ('b2tfn_mol_ionv', s % b2tfn_mol_ionv)
+      call ipgeti ('b2tfn_mol_conv', s % b2tfn_mol_conv)
+      call ipgeti ('b2tral_mode_mol', s % b2tral_mode_mol)
+      call ipgeti ('b2sihs_mol', s % b2sihs_mol)
+      call ipgeti ('b2stfm_diff_coeff_ene_style', 
+     .              s % b2stfm_diff_coeff_ene_style)
+      call ipgeti ('b2stfm_debug_icv', s % b2stfm_debug_icv)
+      call ipgeti ('b2stfm_ekin_perp', s % b2stfm_ekin_perp)
+      call ipgetr ('b2stfm_freac_nd', s % b2stfm_freac_nd) 
+      call ipgetr ('b2stfm_freac_d',  s % b2stfm_freac_d) 
+      call ipgetr ('b2stfm_freac_di1',s % b2stfm_freac_di1) 
+      call ipgetr ('b2stfm_freac_ic', s % b2stfm_freac_ic) 
+      call ipgetr ('b2stfm_freac_ec', s % b2stfm_freac_ec) 
+      call ipgetr ('b2stfm_freac_dr', s % b2stfm_freac_dr) 
+      call ipgetr ('b2stfm_freac_de', s % b2stfm_freac_de) 
+      call ipgetr ('b2stfm_freac_di2',s % b2stfm_freac_di2) 
+      call ipgetr ('b2stfm_erp_nd',   s % b2stfm_erp_nd) 
+      call ipgetr ('b2stfm_erp_d',    s % b2stfm_erp_d) 
+      call ipgetr ('b2stfm_erp_di1',  s % b2stfm_erp_di1) 
+      call ipgetr ('b2stfm_erp_dr',   s % b2stfm_erp_dr) 
+      call ipgetr ('b2stfm_erp_de',   s % b2stfm_erp_de) 
+      call ipgetr ('b2stfm_erp_di2',  s % b2stfm_erp_di2) 
+      call ipgetr ('b2tqna_mol_sf',   s % b2tqna_mol_sf) 
+      call ipgetr ('b2tqna_mol_sfd',   s % b2tqna_mol_sfd) 
 
 c Matrix solver
       call ipgeti ('b2uxus_style', s % b2uxus_style) 

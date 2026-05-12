@@ -77,9 +77,9 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer nout(0:11)
+      integer nout(0:13)
 #else
-      integer nout(0:10)
+      integer nout(0:13)
 #endif
       integer nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
@@ -302,6 +302,17 @@ ctmp.dpc
         else
          write(*,*) 'DPC: b2mndt: no CX reactions'
         endif
+
+*    ..compute log-log molecular rate coefficients
+        if (switch%fluid_molecules.ne.0) then
+!! TODO where and when to read nms? For now nms = 1 hardcoded...
+          if (ncall_b2mndt.eq.0) then
+            call createB2Rates_mol(nCv,1,st%rt)
+            call createB2RatesWork_mol(nCv,1,st%rtw)
+          endif
+          call b2spfm (nCv, 1, st%pl%te, st%pl%ti, st%dv%ne, 
+     .                 st%pl%ua(:,1), st%rt, st%dv) !! TODO generalize index 
+        endif
 ctmp.dpc
 *    ..intermediate iteration
         istg(1) = 0
@@ -387,6 +398,10 @@ ctmp.dpc
      &       st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
      &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
+            if (switch%fluid_molecules.ne.0) then
+              call b2srdt_mol (nCv, ns, dtim, switch, geo, mpg,
+     &        st%sr_mol)
+            endif
           endif
 
           if(switch%equation_sources.ne.0) then                          !srv 26.02.18 {
@@ -410,6 +425,9 @@ ctmp.dpc
      &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
+           if (switch%fluid_molecules.ne.0) then
+              call b2srst_mol (nCv, switch, st%sr_mol)
+           endif
 *       (smq is inherently stable.)
 *     ..inner iteration
           istg(2) = 0
@@ -468,6 +486,10 @@ ctmp.dpc
 *      ..compute norms of the residuals
             call b2mxar (nCv, ns, switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
+            if (switch%fluid_molecules.ne.0) then
+              call b2mxar_mol (nCv, switch,
+     &         geo, mpg, st%pl, st%dv, st%diag)
+            endif
             quit_residual=test_residual.and.
      &       ((st%diag%areshe*switch%nstg_areshe).le.
      &        (switch%nstg_areshe*switch%nstg_areshe)
@@ -498,6 +520,11 @@ ctmp.dpc
                 call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &           switch, geo, st%pl, st%dv, st%diag)
                 flush(nout(4))
+                if (switch%fluid_molecules.ne.0) then
+                  call b2mwqt_mol (nout(12), nCv, itim, b2mndt_itcnt,
+     &             switch, geo, st%pl, st%dv, st%diag)
+                  flush(nout(6))
+                endif
               endif
             endif
 *      ..maybe detailed monitor

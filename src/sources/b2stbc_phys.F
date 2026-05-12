@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw, sr_mol,
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
@@ -36,6 +36,8 @@
      &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
      *  NUEOUT, FS, FFAC, DFS, S2
 #endif
+      use b2mod_fluid_molecules
+     & , only : am_d2, nm_ext, um_ext, tm_ext
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -53,6 +55,7 @@
       logical main_call                                              !xpb
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
+      type (B2SourceMol), intent (inout) :: sr_mol
       logical wrong_flow                                             !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -8913,6 +8916,132 @@ cwdk    Todo: corrections for BCCON.ne.14
         call xerrab ('BCENZ out of bounds')
 
       end select
+
+      
+* -- BOUNDARY CONDITIONS FOR CONTINUITY EQUATION MOLECULES -- 
+      select case (BCCON_MOL(IB))
+
+      case (0)
+        continue
+
+      case default
+        write(*,*) BCCON_MOL(IB)
+        call xerrab ('Nothing implemented yet for BCCON_MOL')
+
+
+      end select 
+
+* -- BOUNDARY CONDITIONS FOR PARALLEL MOMENTUM EQUATION MOLECULES -- 
+      select case (BCMOM_MOL(IB))
+
+      case (0)
+        continue
+
+* -- BCMOM_MOL=1 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL =  1 : specified parallel velocity ',
+     .      MOMPAR_MOL(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          sr_mol%sm_mol(iCv1,0)=
+     .       VBIG*NE00*am_d2*mompar_mol(ib,1)*geo%fcS(iFc)*
+     .       geo%fcHz(iFc)
+          sr_mol%sm_mol(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
+        enddo
+
+* -- BCMOM_MOL=2 -- PRESCRIBE THE GRADIENT OF THE PARALLEL VELOCITY
+
+        case (2)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM_MOL =  2 : parallel velocity gradient ',
+     .       MOMPAR_MOL(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
+            sr_mol%sm_mol(iCv1,0)=
+     .         VBIG*am_d2*nm_ext(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)*
+     .         (mompar_mol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + um_ext(iCv2,0))
+            sr_mol%sm_mol(iCv1,1)=
+     .        -VBIG*am_d2*nm_ext(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
+      case default
+        write(*,*) BCMOM_MOL(IB)
+        call xerrab ('Nothing implemented yet for BCMOM_MOL')
+
+
+      end select 
+
+* -- BOUNDARY CONDITIONS FOR ENERGY EQUATION MOLECULES -- 
+      select case (BCENE_MOL(IB))
+
+      case (0)
+        continue
+
+* -- BCENE_MOL=1 -- PRESCRIBE THE VALUE OF THE FLUID MOLECULE TEMPERATURE
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified molecular temperature ',ENEPAR_MOL(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENEPAR_MOL(IB,1).gt.0.0_R8,
+     1     'BCENE_MOL = 1, ENEPAR_MOL(,1) !> 0')
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          sr_mol%sh_mol(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)
+     .                              *enepar_mol(iB,1)*EV
+          sr_mol%sh_mol(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+* -- BCENE_MOL=2 -- PRESCRIBE THE GRADIENT OF THE FLUID MOLECULE TEMPERATURE
+
+      case (2)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)'),
+     .     'BCENE_MOL =  2 : fluid molecule temperature gradient ',
+     .     ENEPAR_MOL(ib,1),' on ',BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%te)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%te)
+          sr_mol%sh_mol(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
+     .       (EV*enepar_mol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + tm_ext(iCv2,0))
+          sr_mol%sh_mol(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+
+      case default
+        write(*,*) BCENE_MOL(IB)
+        call xerrab ('BCENE_MOL out of bounds')
+
+      end select 
 
       enddo
 #ifdef WG_TODO

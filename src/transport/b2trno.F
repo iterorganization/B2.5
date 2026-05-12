@@ -11,6 +11,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_fluid_molecules
       use b2mod_ad
      & , only : ncall_b2trno
 #ifndef NAGFOR
@@ -87,7 +88,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, mode, k, cvs(2)
+      integer iCv, iFc, is, mode, k, cvs(2), mode_mol
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
       integer, save :: set_chcb_0 = 0
@@ -99,11 +100,13 @@
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
      *  wrk(nFc), wrk1(nFc,2), wrkfc(nFc), wrkc(nCv), wrkcc(nCv), wrk0,
-     1  hvi0(nCv,0:1), hve0(nCv,0:1),
-     2  flc(nFc,0:1,0:ns-1),
-     3  flv(nFc,0:1,0:ns-1),
-     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1),
-     5  inctran
+     *  hvi0(nCv,0:1), hve0(nCv,0:1),
+     *  flc(nFc,0:1,0:ns-1),
+     *  flv(nFc,0:1,0:ns-1),
+     *  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1),
+     *  inctran,
+     *  flc0(nFc,0:1), cdpm0(nFc), cvsm0(nFc), chcm0(nFc)
+
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -155,6 +158,7 @@
       endif
 
       mode = switch%b2tral_mode
+      mode_mol = switch%b2tral_mode_mol
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
@@ -162,7 +166,7 @@
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
      &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
-     &  co%hci_ExB)
+     &  co%hci_ExB, co%dp_mol, co%vs_mol, co%hc_mol)
 *   ..incorporate geometry
 
       inctran = switch%b2txcx_increase_transp_coefs
@@ -226,6 +230,36 @@
      & mode, geo, mpg, geo%fcVol, geo%fcS,
      & co%dna_ExB, co%cdna_ExB(1,1))
 
+      if (switch%fluid_molecules.ne.0) then
+        call b2txcx (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dp_mol(1:nCv), co%cdp_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dp_mol(1:nCv), co%cdp_mol(1:nFc,1))
+        call b2txcc (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dp_mol(1:nCv), cdpm0(1:nFc))
+        call b2txcx (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vs_mol(1:nCv), co%cvs_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vs_mol(1:nCv), co%cvs_mol(1:nFc,1))
+        call b2txcc (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vs_mol(1:nCv), cvsm0(1:nFc))
+        call b2txcx (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hc_mol(1:nCv), co%chc_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hc_mol(1:nCv), co%chc_mol(1:nFc,1))
+        call b2txcc (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hc_mol(1:nCv), chcm0(1:nFc))
+      endif 
+
 *   ..incorporate geometry and hz                                     !srv 09.01.01
       wrk = geo%fcS*geo%fcHz
       do iFc = 1, nFc
@@ -271,6 +305,21 @@
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
 !$omp end do
 #endif 
+
+      if (switch%fluid_molecules.ne.0) then
+        call b2txcx (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg, wrk1, wrk,
+     &   co%dp_mol(1:nCv), co%cdphz_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, wrk1, wrk,
+     &   co%dp_mol(1:nCv), co%cdphz_mol(1:nFc,1))
+        call b2txcx (nCv, nFc, inctran,
+     &   mode_mol, geo, mpg,wrk1, wrk,
+     &   co%vs_mol(1:nCv), co%cvshz_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, wrk1, wrk,
+     &   co%vs_mol(1:nCv), co%cvshz_mol(1:nFc,1))
+      endif 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
       if (switch%transport_afn.eq.1) then
@@ -292,6 +341,19 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 !$omp end do
 #endif 
       endif
+
+*   ..Correction for fluid molecule model, similarly as for AFN                   
+c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
+      if (switch%fluid_molecules.ne.0) then
+        wrkc =  co%dp_mol*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   wrkc, co%cdp_mol(1:nFc,0))
+        call b2txcy (nCv, nFc,
+     &   mode_mol, geo, mpg, geo%fcVol, geo%fcS,
+     &   wrkc, co%cdp_mol(1:nFc,1))
+      endif 
+
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
 !$omp end parallel
 #endif 
@@ -518,6 +580,25 @@ c the logic statements below could be simplfied but for now we go for readabilit
       call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
       wrk(:) = co%cdkt(:,1)*geo%fcQalf(:,1)
       call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
+
+
+      if(switch%fluid_molecules.ne.0) then  
+         
+*   .. apply flux limit to neutral molecule contribution to cdpa and cdpahz
+        call b2tlc0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0),
+     &     pl%te, tm_ext(:,0), tm_ext(:,0), rt%rza, cdpm0, co%cdp_mol, 
+     &     co%cdphz_mol, flc0)
+
+*   .. apply flux limit to neutrals contribution to cvsa and cvsahz
+c        call b2tlv0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0), 
+c     &    um_ext(:,0), pl%te, tm_ext(:,0), rt%rza, cvsm0, co%cvs_mol, 
+c     &    co%cvshz_mol, flc0)
+
+*     ..apply flux limit to neutrals contribution to chcb
+        call b2tlh0 (nCv, nFc, nVx, 1, switch, geo, mpg,
+     &         nm_ext(:,0), tm_ext(:,0), tm_ext(:,0),
+     &         chcm0, co%chc_mol, flc0)
+      endif        
 
       if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then      !srv 19.05.10 {
        do is = 0, ns-1

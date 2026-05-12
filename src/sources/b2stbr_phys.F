@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
+     &  dtim, switch, geo, mpg, pl, dv, co, rt, st_ext, srw, sr_mol,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  sput_src, sput_chem_model, reflection_on, sputter_energy_on,
@@ -22,6 +22,7 @@
       use b2us_map
       use b2us_plasma
       use b2mod_recycle
+      use b2mod_fluid_molecules
       use b2mod_ad
      & , only : ncall_b2stbr_phys
 #ifndef NAGFOR
@@ -54,6 +55,7 @@
      &  f_redep(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
+      type (B2SourceMol), intent (inout) :: sr_mol
       real (kind=R8) ::
      &  shi0_ff(nCv,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
@@ -532,6 +534,16 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
       endif
 
+      if (switch%b2stbr_phys_iout.eq.1.and.
+     &                    switch%fluid_molecules.ne.0) then  
+         wrk0 = sr_mol%sn_mol(:,0)+sr_mol%sn_mol(:,1)*nm_ext(:,0)     
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sn_mol')
+         wrk0 = sr_mol%sm_mol(:,0)+sr_mol%sm_mol(:,1)*um_ext(:,0)     
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sm_mol')
+         wrk0 = sr_mol%sh_mol(:,0)+sr_mol%sh_mol(:,1)*tm_ext(:,0)     
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sh_mol')
+       endif
+
 #ifdef WG_TODO
       if(reflection_max.gt.1.0_R8 .or.
      .  ((main_call.and.switch%b2stbr_output.ge.1).or.
@@ -571,7 +583,7 @@ c dnndz           the gradient of the main neutral species density across the bo
       logical lcore, found
 
       integer is0, is1, is2, is, isi, k, iwall
-      real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1),
+      real (kind=R8) :: tef, tif, tnf, tmf, taf, zaf(0:ns-1),
      &     rpf(0:ns-1), ptf, t0
 #ifdef WG_TODO
      &   , sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
@@ -586,7 +598,11 @@ c new variables for advanced fluid neutral reflection/recycling model
       real (kind=R8) :: fnni,fmomni,nni,nnwwni,feneni,fnnrefl,fnnrec,
      &     fmomrefl,fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,
      &     nnrec,nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
-     &     sina, cosa
+     &     sina, cosa, smon_mol, q_conv_mol,
+     &     fn_rec_mol, fm_rec_mol, fe_rec_mol, n_rec_mol,
+     &     fn_inc_mol, fm_inc_mol, fe_inc_mol, n_inc_mol, nww_inc_mol,
+     &     fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol, 
+     &     nww_refl_mol, n_mol_sum, nww_mol_sum
 
 #ifdef WG_TODO
       iwall=xymap(ix,iy)
@@ -733,6 +749,9 @@ c and this strata should be ignored here
         tef = pl%te(iCv)
         tif = pl%ti(iCv)
         tnf = pl%tn(iCv)
+        if (switch%fluid_molecules.ne.0) then
+          tmf = tm_ext(iCv,0)
+        endif
       else
         tef = (pl%te(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
      &         pl%te(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
@@ -743,6 +762,11 @@ c and this strata should be ignored here
         tnf = (pl%tn(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
      &         pl%tn(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
      &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+        if (switch%fluid_molecules.ne.0) then
+          tmf = (tm_ext(mpg%fcCv(iFc,1),0)*geo%fcHc(iFc,2)+
+     &         tm_ext(mpg%fcCv(iFc,2),0)*geo%fcHc(iFc,1))/
+     &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+        endif
       endif
       if (switch%b2stbr_potential_at_guard_cell.eq.1) then
 !        write(6,*) 'Potential taken at guard cell (phys)'
@@ -816,6 +840,8 @@ cmb   Loop implicitly expects that the species are arranged per isonuclear seque
       is1 = 0
       nnsum = 0.0_R8
       nnwwnsum = 0.0_R8
+      n_mol_sum = 0.0_R8
+      nww_mol_sum = 0.0_R8
       do is = nsmin, nsmax
          if (nint(zn(is0)).ne.nint(zn(is)).or.
      &       amtol.lt.abs(am(is0)-am(is))) then
@@ -921,13 +947,19 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              dv%fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,
      &              cosa, sina, switch%use_uy_uz_0,
-     &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
+     &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec,
+     &              fn_rec_mol,fm_rec_mol, n_rec_mol, fe_rec_mol, 
+     &              switch%fluid_molecules)
              else
                 fnnrec = 0.0_R8
                 fmomrec = 0.0_R8
                 nnrec = 0.0_R8
                 nnwwnrec = 0.0_R8
                 fenerec = 0.0_R8
+                fn_rec_mol = 0.0_R8
+                fm_rec_mol = 0.0_R8
+                fe_rec_mol = 0.0_R8
+                n_rec_mol = 0.0_R8
              endif
 
              snan =
@@ -955,6 +987,14 @@ cmb   net neutral energy source from recycling
              if (switch%AFN_out.ne.0) then
                fmomrec_out(iCv)   = fmomrec
                fenerec_out(iCv)   = fenerec
+             endif
+
+             if (switch%fluid_molecules.ne.0) then
+              sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_rec_mol
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_rec_mol
+     .                                *geo%cvhz(iCv)
+              sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_rec_mol
+              n_mol_sum = n_mol_sum + n_rec_mol
              endif
 
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
@@ -1113,6 +1153,34 @@ c temporary switch to evaluate the effect.
      &          switch%neutral_sources_rescale*strasclfl(istra)
              endif
 
+
+cc Take care of fluid molecules hitting the wall and coming back as molecules
+             if (switch%fluid_molecules.ne.0) then
+              !! incident molecules
+              call CalcIncidentFluxesMolecules(iCv,iCn,iFc,is0,isign,
+     &              farea,pl,tmf,geo,cosa,sina,fn_inc_mol,
+     &              fm_inc_mol,n_inc_mol,nww_inc_mol,fe_inc_mol)
+
+              !! reflected molecules
+              call CalcReflectedFluxesMolecules(iCv,iCn,iFc,
+     &            isign, is0, farea, b2recyc(is,istra), pl, tmf,
+     &            geo, mpg, cosa,sina, fn_refl_mol,
+     &            fm_refl_mol, n_refl_mol, nww_refl_mol, fe_refl_mol)
+
+              sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) - fn_inc_mol  !! careful with signs, only fn_inc_mol is defined positive when going into the wall
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
+     .                                *geo%cvhz(iCv)
+              sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_inc_mol
+              sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refl_mol
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refl_mol
+     .                                *geo%cvhz(iCv)
+              sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refl_mol
+              n_mol_sum = n_mol_sum + n_inc_mol
+              nww_mol_sum = nww_mol_sum + nww_inc_mol
+              n_mol_sum = n_mol_sum + n_refl_mol
+              nww_mol_sum = nww_mol_sum + nww_refl_mol
+             endif
+
            endif
            if (nint(zamax(is)).eq.nint(zn(is))) then   !! see eq. 62-63 of the main reference.
              if (nnsum.eq.0.0_R8) nnsum = 1.0_R8
@@ -1124,6 +1192,16 @@ c temporary switch to evaluate the effect.
      &            switch%neutral_sources_rescale*strasclfl(istra)
              nnsum = 0.0_R8
              nnwwnsum = 0.0_R8
+
+             if (switch%fluid_molecules.ne.0) then
+              smon_mol = -isign*
+     &            cosa*2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/  !! TODO generalize mass
+     &            n_mol_sum*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &            geo%cvHz(iCv)
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon
+              n_mol_sum = 0.0_R8
+              nww_mol_sum = 0.0_R8
+             endif
            endif
 
        endif !! end KU Leuven advanced fluid neutral models

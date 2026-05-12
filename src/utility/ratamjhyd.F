@@ -18,6 +18,8 @@
      &  rtqa(0:nt,0:nn,0:nz), rtcx(0:nt,0:nn,0:nz),
      &  rtrd(0:nt,0:nn,0:nz), rtbr(0:nt,0:nn,0:nz),
      &  rtqr(0:nt,0:nn,0:nz)
+      real (kind=R8) ::
+     *  rttt(0:nt), rtnt(0:nn)
       integer :: iend
 *-----------------------------------------------------------------------
 *.documentation
@@ -538,6 +540,54 @@ c       write(*,*) 'CX rate table'
 c       do it = 0,nt
 c         write (*,*) (rates(it,jn),jn=0,nn)
 c       enddo
+       case ('H.2')
+        write(*,*) 'Calculate T-only dependent rate coeff'
+*   ..Truncate tables to user-defined bounds
+         rttt = rtt
+         rtnt = rtn
+         do ii = 0,nn
+           if (rtn(ii)<nmin) then
+             rtnt(ii) = nmin
+             if (ii.EQ.0) then
+               write(*,*) 'densities bounded below at ', nmin, ' m^-3'
+              endif
+           else if (rtn(ii)>nmax) then
+             rtnt(ii) = nmax
+             if (ii.EQ.nn) then
+               write(*,*) 'densities bounded above at ', nmax, ' m^-3'
+             endif
+           endif
+         enddo
+         do ii = 0,nt
+           if (rttt(ii)<tmin) then
+            rttt(ii) = tmin
+            if (ii.EQ.0) then
+              write(*,*) 'temperatures bounded below at ', tmin, ' eV'
+            endif
+         else if (rttt(ii)>tmax) then
+           rttt(ii) = tmax
+           if (ii.EQ.nt) then
+             write(*,*) 'temperatures bounded above at ', tmax, ' eV'
+           endif
+         endif
+         enddo
+         do J=1,9
+           D11(J-1,0)=CREAC(J,1,IR)
+         enddo
+cc the table is still technically written out as a function of ne
+         do it=0,nt
+           do jn=0,nn
+             TEF=LOG(rttt(it))+LOG(0.5_R8) !! TODO generalize, now test for D instead of H
+cc            DEF=LOG(rtnt(jn)*1.0e-8_R8*1.0e-6_R8)
+             dnnn=0.0
+             do I=0,8
+               TEI=TEF**I
+               DNNN=DNNN+D11(I,0)*TEI
+             enddo
+c         --Convert from cm**3/s to m**3/s
+             rates(it,jn)=exp(dnnn)*1.0e-6_R8
+           enddo
+         enddo
        case ('H.4','H.10')
 *   ..Truncate tables to user-defined bounds
         rttt = rtt
@@ -659,3 +709,53 @@ c         --Convert from cm**3/s to m**3/s
       end function maxwell1d
 
       end subroutine get_amjhyd_rates
+
+      subroutine get_amjhyd_rates_h3(filnam,h123,reac,crc,am,
+     . nt,ntr,n_mcoll,rtt,rttr,rt_mcoll,rates_m,rates_E)
+      use b2mod_types
+      use b2mod_math
+      use b2mod_eirreac
+      use b2mod_constants
+      IMPLICIT NONE
+c     Input/output variables
+      integer, intent(in) :: nt,ntr, n_mcoll
+      real (kind=R8) ::
+     . rtt(0:nt),rttr(0:ntr), rt_mcoll(0:n_mcoll), 
+     . rates_m(0:nt,0:ntr,0:n_mcoll),
+     . rates_E(0:nt,0:ntr)
+      real(kind=R8), intent(in) :: am
+c     Local variables
+      real (kind=R8) ::  D11(0:8,0:8)
+   
+      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
+   
+c     Local variables
+      integer i,j, IR, N_int
+
+      call ipgeti('b2amdr_N_int', N_int)
+   
+cc adapted version for elastic collisions. Testing phase ...
+*   ..set cutlo
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+   
+*     ..Read Amjuel data
+      IR=1
+      CREAC = 0.0_R8
+      CALL SLREAC_b2plot(IR,FILNAM,H123,REAC,CRC)
+      select case (H123)
+      case ('H.3')
+        do J=1,9
+        do I=1,9
+          D11(J-1,I-1)=CREAC(J,I,IR)
+        enddo
+        enddo
+        call integrate_elastic_collisions(4.0_R8*mp, 2.0_R8*mp, rtt, nt, 
+     .       rttr, ntr,rt_mcoll, n_mcoll, 
+     .       D11, N_int, rates_m, rates_E)
+      case default
+        call xerrab('This function is only for H3 elastic collisions')
+      end select
+   
+      return
+   
+      end subroutine get_amjhyd_rates_h3

@@ -419,7 +419,7 @@ endif
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
-PROG_AM = b2ab.exe b2ar.exe
+PROG_AM = b2ab.exe b2ar.exe b2am.exe
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2ai.exe b2fu.exe b2ts.exe b2uf.exe b2us.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe b2plasmastate_inspect.exe calc_atomic_data.exe
 PROG_CO = b2co.exe

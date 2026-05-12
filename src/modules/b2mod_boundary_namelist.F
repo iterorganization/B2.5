@@ -25,7 +25,8 @@ cank }
      *   ENKPAR(:,:),
      *   ENZPAR(:,:),
      *   NIISO(:),
-     *   BC_FACE_ORI(:,:)
+     *   BC_FACE_ORI(:,:),
+     *   CONPAR_MOL(:,:), MOMPAR_MOL(:,:), ENEPAR_MOL(:,:)
       integer, allocatable, save ::
      *   BCPOS(:),
      *   BCSTART(:),
@@ -48,7 +49,8 @@ cank }
      *   BC_LIST_X(:,:),
      *   BC_LIST_Y(:,:),
      *   NBCFACES(:),
-     *   BC_FACES(:,:)
+     *   BC_FACES(:,:),
+     *   BCCON_MOL(:), BCMOM_MOL(:), BCENE_MOL(:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
      *   ACCHAR(:)
@@ -62,6 +64,8 @@ cank }
       real (kind=R8), save :: POTPAR(NBCD,2)
       real (kind=R8), save :: ENKPAR(NBCD,2)
       real (kind=R8), save :: ENZPAR(NBCD,2)
+      real (kind=R8), save :: CONPAR_MOL(NBCD,2), MOMPAR_MOL(NBCD,2),
+     .                        ENEPAR_MOL(NBCD,2)
       integer, save :: BCPOS(NBCD)
       integer, save :: BCSTART(NBCD)
       integer, save :: BCEND(NBCD)
@@ -78,6 +82,7 @@ cank }
       integer, save :: BCPOT(NBCD)
       integer, save :: BCENK(NBCD)
       integer, save :: BCENZ(NBCD)
+      integer, save :: BCCON_MOL(NBCD), BCMOM_MOL(NBCD), BCENE_MOL(NBCD)
       character*1, save :: BCCHAR(NBCD)
       character*1, save :: ACCHAR(NBCD)
       integer, save :: NXISO1(NNISOD)
@@ -119,7 +124,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs, write_nml_bnd
+     6 lcbs, write_nml_bnd,
+     7 BCCON_MOL, BCMOM_MOL, BCENE_MOL, 
+     8 CONPAR_MOL, MOMPAR_MOL, ENEPAR_MOL
 
       contains
 
@@ -267,6 +274,12 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(NIISO(0:nsd-1))
       allocate(lcbs(nbcd_in))
       allocate(BCCON14_IS(nbcd_in))
+      allocate(BCCON_MOL(nbcd_in))
+      allocate(BCMOM_MOL(nbcd_in))
+      allocate(BCENE_MOL(nbcd_in))
+      allocate(CONPAR_MOL(nbcd_in,2))
+      allocate(MOMPAR_MOL(nbcd_in,2))
+      allocate(ENEPAR_MOL(nbcd_in,2))
 #else
 #ifdef WG_OUT
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
@@ -323,6 +336,12 @@ csw 18feb2014 added for correct implementation of boundary conditions
       boundary_filename='b2.boundary.parameters'
       boundary_time_mod=0.0_R8
       boundary_time_switch=0.0_R8
+      bccon_mol=0
+      bcmom_mol=0
+      bcene_mol=0
+      conpar_mol = 0.0_R8
+      mompar_mol = 0.0_R8
+      enepar_mol = 0.0_R8
 
       return
       end subroutine alloc_b2mod_boundary
@@ -363,6 +382,12 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(NIISO)
       deallocate(LCBS)
       deallocate(BCCON14_IS)
+      deallocate(BCCON_MOL)
+      deallocate(BCMOM_MOL)
+      deallocate(BCENE_MOL)
+      deallocate(CONPAR_MOL)
+      deallocate(MOMPAR_MOL)
+      deallocate(ENEPAR_MOL)
 #endif
       deallocate(isOnFluxBoundary)
 

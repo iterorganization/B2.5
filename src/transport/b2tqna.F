@@ -4,7 +4,7 @@
       subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &   switch, geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0,
      &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,
-     &   dzt0, dna_ExB, hce_ExB, hci_ExB)
+     &   dzt0, dna_ExB, hce_ExB, hci_ExB, dp_mol, vs_mol, hc_mol)
       use b2mod_types
       use b2mod_math
       use b2mod_transport_namelist
@@ -54,6 +54,8 @@
      *  hce0(nCv), sig0(nCv), alf0(nCv),
      &  hvi0(nCv,0:1), hve0(nCv,0:1), dkt0(nCv), dzt0(nCv),
      &  dna_ExB(nCv), hce_ExB(nCv), hci_ExB(nCv)
+      real (kind=R8) ::
+     *  dp_mol(nCv), vs_mol(nCv), hc_mol(nCv) 
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv)
@@ -565,6 +567,13 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
      &   ns, nscx, iscx, switch,
      &   pl, dv, rt,
      &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
+      endif
+
+      if(switch%fluid_molecules.ne.0) then
+        call set_transport_mol(nCv,
+     &   switch,
+     &   pl, dv, rt,
+     &   dp_mol,vs_mol, hc_mol)
       endif
 
 cdpc
@@ -3304,3 +3313,53 @@ cwdk same dna_ExB for all ion species
       return
 
       end subroutine set_transport_keps
+
+      !! TODO generalize for different species
+      subroutine set_transport_mol(nCv, switch,
+     &   pl, dv, rt,
+     &   dp_mol, vs_mol, hc_mol)
+      use b2mod_types
+      use b2mod_constants
+      use b2mod_b2cmpa
+      use b2mod_b2cmpt
+      use b2mod_switches
+      use b2us_plasma
+      use b2mod_subsys
+      use b2mod_fluid_molecules
+      implicit none
+
+*   ..input arguments (unchanged on exit)
+      integer nCv
+      type (switches), intent (in) :: switch
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+*   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     *  dp_mol(nCv), vs_mol(nCv), hc_mol(nCv)
+*   ..workspace arguments (unspecified on entry and on exit)
+      real (kind=R8) :: pm(nCv), SF, SFd
+
+*   ..subprogram start-up calls
+      call subini ('set_transport_mol')
+
+      SF = switch%b2tqna_mol_sf 
+      SFd = switch%b2tqna_mol_sfd
+
+      pm = tm_ext(:,0)*nm_ext(:,0) !! molecular pressure
+
+
+      dp_mol = diff_coeff*SFd
+      vs_mol = diff_coeff*pm*(am_d2*mp)*SF
+      hc_mol = 5.0_R8/2.0_R8*diff_coeff_ene*pm*SFd    !! diff_coeff_ene is either equal to diff_coeff, or based on Kel,ene instead of Kel,m
+
+      if(switch%b2tqna_iout.ne.0) then   
+        call my_out_us(70,nCv,0,dp_mol,'b2tqna_dp_mol')
+        call my_out_us(70,nCv,0,vs_mol,'b2tqna_vs_mol')
+        call my_out_us(70,nCv,0,hc_mol,'b2tqna_hc_mol')
+      endif                         
+
+*   ..return
+      call subend ()
+      return
+      end subroutine set_transport_mol

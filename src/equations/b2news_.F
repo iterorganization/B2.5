@@ -74,6 +74,7 @@
 #endif
       use b2mod_ad
       use b2mod_subsys
+      use b2mod_fluid_molecules
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -837,6 +838,70 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
         write(*,*) 'Calling b2stbr_neutr_scl'
         call b2stbr_neutr_scl(nCv, nFc, ns, mpg, geo, st, switch)
         write(*,*) 'Called b2stbr_neutr_scl'
+      endif
+
+      
+cc concentrate everything related to fluid molecules here for now.
+cc at this point, the fluid molecules do not yet interacting with plasma and atoms, so the order compared to the other equations is not yet relevant.
+      if (switch%fluid_molecules.ne.0) then
+        call set_limits_mol_state(nCv)
+
+cc particle fluxes
+        call b2tfn_mol (nCv, nFc, nVx,
+     &   switch, geo, mpg, st%pl, st%dv, st%co)
+
+cc dummy npmo call for pcc_mol
+        call b2npmo_mol (nCv, nFc, nVx,
+     &    switch, geo, mpg, ncall_b2news_, 0.0_R8, dtim,
+     &    st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
+        st%dv%resmo_mol = 0.0_R8
+
+cc particle fluxes
+        call b2tfn_mol (nCv, nFc, nVx,
+     &   switch, geo, mpg, st%pl, st%dv, st%co)
+
+cc momentum update
+        if (solvemo_mol) then
+          call b2npmo_mol (nCv, nFc, nVx,
+     &     switch, geo, mpg, ncall_b2news_, rxf1, dtim,
+     &     st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
+        endif
+
+cc re-evaluate particle fluxes
+        call b2tfn_mol (nCv, nFc, nVx,
+     &   switch, geo, mpg, st%pl, st%dv, st%co)
+
+cc continuity update
+        if (solveco_mol) then
+          call b2npco_mol (nCv, nFc, nVx, mpg%nnreg(0), solvemo_mol,                     
+     &    solvedum, rxf0, dtim, switch, geo, mpg,
+     &    st%pl, st%dv, st%sr_mol, st%psnl)
+        endif
+
+cc re-evaluate particle fluxes
+        call b2tfn_mol (nCv, nFc, nVx,
+     &   switch, geo, mpg, st%pl, st%dv, st%co)
+
+cc heat fluxes
+cc initialize floh and conh
+        st%dv%floh_mol = 0.0_R8
+        st%dv%conh_mol = 0.0_R8
+        call b2tfh_mol(nCv, nFc, nVx, switch, geo, mpg,         
+     &  st%pl, st%dv, st%co)  
+
+        call b2tfcc_mol (nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  st%pl, st%dv, st%co)
+
+cc heat equation update
+        if (solvee_mol) then
+          call b2npht_mol (nCv, nFc, nVx, switch, geo, mpg,
+     &    ncall_b2news_, solvemo_mol, rxf3,                     !! TODO replace solveei by something new
+     &    dtim, st%pl, st%dv, st%co, st%rt, st%sr_mol,
+     &    st%psnl) 
+        endif    
+
+        call set_limits_mol_state(nCv)
+
       endif
 
 * ..return

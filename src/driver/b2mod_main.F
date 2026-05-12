@@ -94,6 +94,8 @@
 *     nout(9): un*formatted; provides the final differentiated state.
 *     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
 *     nout(11): formatted; postprocessor output. [JET]
+*     nout(12): un*formatted; b2ftrace_mol
+*     nout(13): un*formatted; b2mol_end
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -139,9 +141,9 @@
 
 *   ..local variables
 #ifdef JET
-      integer ninp(0:6), nout(0:11), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:6), nout(0:13), nCv, nFc, nVx, ns, ns0
 #else
-      integer ninp(0:6), nout(0:10), nCv, nFc, nVx, ns, ns0
+      integer ninp(0:6), nout(0:13), nCv, nFc, nVx, ns, ns0
 #endif
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -161,9 +163,9 @@
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68,69,70,71/
+      data nout/60,61,62,63,64,65,66,67,68,69,70,71,72,73/
 #else
-      data nout/60,61,62,63,64,65,66,67,68,69,70/
+      data nout/60,61,62,63,64,65,66,67,68,69,70,72,73/
 #endif
 
       contains
@@ -221,6 +223,8 @@ csw
       call cfopen (nout(3),'b2fmovie','new','un*formatted')
       call cfopen (nout(4),'b2ftrace','new','un*formatted')
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
+      call cfopen (nout(12),'b2ftrace_mol','new','un*formatted')
+      call cfopen (nout(13),'b2mol_end','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                             !xpb

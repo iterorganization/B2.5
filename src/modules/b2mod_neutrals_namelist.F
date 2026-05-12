@@ -114,8 +114,9 @@ cank }
      *   maxw(:),                                 !nh 11.07.18
      *   maxw_eff(:),
      *   mol(:)                                   !nh 31.03.21
+     *   no_trim,
       real (kind=R8), allocatable, save ::
-     *   RCFE(:), RCFI(:), e_fc
+     *   RCFE(:), RCFI(:), e_fc, e_wall, nm_min_ext
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:), time_dep_puff_func(:)
       character*1, allocatable, save ::
@@ -135,7 +136,7 @@ cank }
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
-      real (kind=R8), save :: e_fc
+      real (kind=R8), save :: e_fc, e_wall, nm_min_ext
       real (kind=R8), save :: recyceir(NSTRAID)
       real (kind=R8), save :: USERFLUXPARM(NSTRAID,2)
       real (kind=R8), save :: volrecstart(NSTRAID)
@@ -185,6 +186,7 @@ cank }
       integer, save :: maxw(NSTRAID)
       integer, save :: maxw_eff(NSTRAID)
       integer, save :: mol(NSTRAID)
+      integer, save :: no_trim
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
@@ -260,6 +262,7 @@ csw 21feb2012
      .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
      .  e_fc,      !mb Franck-Condon energy contribution
      .  accel_ion, !mb flag for ion acceleration through sheath potential
+     .  e_wall, no_trim, nm_min_ext,
      .  strasclfl, nrelax_sni, nrelax_smo, nrelax_see, nrelax_sei
 
       interface read_neutrals_namelist
@@ -433,6 +436,9 @@ cmb  Default Franck-Condon energy is 2eV per atom
       e_fc= 3.0_R8
 cmb  Default is to accelerate ions everywhere with sheath potential (target & wall)
       accel_ion = 1
+      e_wall =  0.1_R8   !! temperature for molecules born at wall
+      no_trim = 0        !! by default, calculate fast and thermal fractions from TRIM. If no_trim = 1, all incident particles return as molecules. 
+      nm_min_ext = 1.0e10_R8
       RCION=0.0_R8
       recyceir=1.0_R8
       USERFLUXPARM=0.0_R8

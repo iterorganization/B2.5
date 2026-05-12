@@ -71,6 +71,7 @@
       use b2us_io
       use b2us_data
       use b2mod_par_opt
+      use b2mod_fluid_molecules
       use b2mod_b2plot
      , , only : wklng, nlimi, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
@@ -359,9 +360,9 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:6), nout(0:11)
+      integer ninp(0:6), nout(0:13)
 #else
-      integer ninp(0:6), nout(0:10)
+      integer ninp(0:6), nout(0:13)
 #endif
       integer nCv, nFc, nVx, ns, ns0
 *   ..output arguments (unspecified on entry)
@@ -2189,6 +2190,7 @@ c new CDF movie option (1st frame at t=0)
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, ns, J)
+      use b2mod_fluid_molecules
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -2233,9 +2235,9 @@ c new CDF movie option (1st frame at t=0)
 #endif
       implicit none
 #ifdef JET
-      integer nout(0:11), ns, idum(0:9)
+      integer nout(0:13), ns, idum(0:9)
 #else
-      integer nout(0:10), ns, idum(0:9)
+      integer nout(0:13), ns, idum(0:9)
 #endif
 #ifdef WG_TODO
       integer nx, ny
@@ -3429,9 +3431,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      & , only : old_erosion, old_deposition
       implicit none
 #ifdef JET
-      integer nout(0:11), ns, idum(0:9)
+      integer nout(0:13), ns, idum(0:9)
 #else
-      integer nout(0:10), ns, idum(0:9)
+      integer nout(0:13), ns, idum(0:9)
 #endif
 #ifdef WG_TODO
       integer nx, ny
@@ -3529,6 +3531,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
+
+      if (switch%fluid_molecules.ne.0) then
+          call write_mol_state(nout(13),nCv)
+      endif 
 
 *   ..mms steady-state error analysis
       if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then          !srv 26.02.18 {

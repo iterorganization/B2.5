@@ -34,6 +34,8 @@
      *   solvezt(:),
      *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
+      logical, save ::
+         solveco_mol, solvemo_mol, solvee_mol
 #else
       integer, save :: dtfts(1:DEF_NYD)
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
@@ -60,6 +62,7 @@
       logical, save :: solvezt(0:CVREGMAX)
       logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
       logical, save :: do_sna_corr_core(DEF_NATM)          ! IYS 10.03.2023
+      logical, save :: solveco_mol, solvemo_mol, solvee_mol
 #endif
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
@@ -86,8 +89,8 @@
      & min_na,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
      & sna_corr, taumax, do_sna_corr_core,
-     & dtfts, dtee_ft, dtmo_ft, dtco_ft, dtei_ft
-
+     & dtfts, dtee_ft, dtmo_ft, dtco_ft, dtei_ft,
+     & solveco_mol, solvemo_mol, solvee_mol
       contains
 
       subroutine alloc_b2mod_numerics(nCv,nsd,nnreg,switch)
@@ -181,6 +184,9 @@
       ts_factor=1.0_R8
       write(*,*) 'Allocated space for b2mod_numerics'              !srv 11.11.09
       b2mod_numerics_allocated = .true.
+      solveco_mol = .true.
+      solvemo_mol = .true.
+      solvee_mol = .true.
 
       return
       end subroutine alloc_b2mod_numerics

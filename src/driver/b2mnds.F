@@ -103,6 +103,8 @@
      &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
+      integer, save :: ninp_mol
+      data ninp_mol/57/
 *   ..procedures
       logical is_comment
       external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
@@ -305,6 +307,12 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
       call b2mwq0 (nout(4), ns, switch)
+
+*   ..read molecular rate data (optional) (needs to be after reading of switches)
+      if (switch%fluid_molecules.ne.0) then
+        call cfopen(ninp_mol,'b2frates_mol','old','un*formatted')
+        call b2rurc_mol(ninp_mol)
+      endif
 
 * ..return
       call subend ()
