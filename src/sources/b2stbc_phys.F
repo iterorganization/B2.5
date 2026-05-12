@@ -98,6 +98,7 @@
       integer :: nlimiter
       real (kind=R8) :: Lpar, Dion, c_sound, vthn, Dneut,
      1                  lambda, lambda_ene, lambda_eni
+      real (kind=R8) :: prescr_dens, Tgauge
 ! End new variables
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
@@ -2713,6 +2714,47 @@ c   (ionising_core option)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
      .        VBIG*geo%fcS(iFc)*(pl%na(iCv2,is) + t4 - t2)
+            srw%sna0(iCv1,1,is) =
+     .       -VBIG*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+
+* -- BCCON=30  Fixed density based on pressure
+!ap 2026.03.31 implemented to reproduce baratron pressure in TCV
+!   pressure should be in mbar, then converted in Pa in the code
+
+        case (30)
+          if(ncall_b2stbc_phys.eq.0) then
+            if (CONPAR(IS,IB,1).eq.0.0_R8) then
+              CONPAR(IS,IB,1) = switch%b2mndr_na_min
+              call xerrab('Zero pressure not allowed.')
+            endif
+            if(.not.is_neutral(is)) then
+              call xerrab('BCCON = 30 should be used for neutral '//
+     1          'species only.')
+            endif
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCCON =  30 : constant pressure ',CONPAR(IS,IB,1),' on ',
+     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1),2)
+          endif
+          if (switch%T_wall.gt.0.0_R8) then
+            Tgauge = switch%T_wall*eV
+          else
+            write(*,*) 'switch%T_wall is 0.0.'
+            write(*,*) 'Imposing Tgauge = 0.025eV'
+            Tgauge = 0.025_R8*eV
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2) ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1) ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) ! number of the guard cell face
+            prescr_dens = conpar(is,ib,1)*100/Tgauge* ! multiplication x100: mbar-to-Pa
+     .        sqrt(Tgauge/pl%ti(iCv1))
+            write(*,'(a,1p,g14.7,a,i3)')
+     .       'Density is ',prescr_dens,' for species ',IS
+            srw%sna0(iCv1,0,is) =
+     .        VBIG*geo%fcS(iFc)*prescr_dens
             srw%sna0(iCv1,1,is) =
      .       -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
