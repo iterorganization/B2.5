@@ -590,9 +590,9 @@ c the logic statements below could be simplfied but for now we go for readabilit
      &     co%cdphz_mol, flc0)
 
 *   .. apply flux limit to neutrals contribution to cvsa and cvsahz
-c        call b2tlv0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0), 
-c     &    um_ext(:,0), pl%te, tm_ext(:,0), rt%rza, cvsm0, co%cvs_mol, 
-c     &    co%cvshz_mol, flc0)
+        call b2tlv0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0), 
+     &    um_ext(:,0), pl%te, tm_ext(:,0), rt%rza, cvsm0, co%cvs_mol, 
+     &    co%cvshz_mol, flc0)
 
 *     ..apply flux limit to neutrals contribution to chcb
         call b2tlh0 (nCv, nFc, nVx, 1, switch, geo, mpg,
