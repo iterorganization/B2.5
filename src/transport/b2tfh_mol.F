@@ -67,8 +67,8 @@
 
 *   ..interpolate nm and tm to cell faces
 
-      call intface(nCv,nFc,mpg%fcCv,wght,tm_ext(:,0),tmf)
-      call intface(nCv,nFc,mpg%fcCv,wght,nm_ext(:,0),nmf)
+      call intface(nCv,nFc,mpg%fcCv,wght,t_mol(:,0),tmf)
+      call intface(nCv,nFc,mpg%fcCv,wght,n_mol(:,0),nmf)
 
 
 *   ..convective coefficients
@@ -77,7 +77,7 @@
       flo0(:,1) = 1.5_R8*dv%fn_mol(:,1)
 
 *   ..apply discretization scheme
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,tm_ext(:,0),flo0,
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,t_mol(:,0),flo0,
      &  co%chc_mol,dv%fh_mol,dumm1,dumm2)
 
 *   ..compute flo, con

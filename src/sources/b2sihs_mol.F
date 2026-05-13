@@ -70,9 +70,9 @@
       call sfill (nCv*4, 0.0_R8, sh_du_mol, 1)
       call sfill (nCv*4, 0.0_R8, sh_va_mol, 1)
       call sfill (nCv*4, 0.0_R8, sh_vc_mol, 1)    
-      um = um_ext(:,0)
-      nm = nm_ext(:,0)
-      tm = tm_ext(:,0)                      
+      um = u_mol(:,0)
+      nm = n_mol(:,0)
+      tm = t_mol(:,0)                      
                     
 
 *   ..contribution from divergence um

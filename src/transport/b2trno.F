@@ -585,18 +585,18 @@ c the logic statements below could be simplfied but for now we go for readabilit
       if(switch%fluid_molecules.ne.0) then  
          
 *   .. apply flux limit to neutral molecule contribution to cdpa and cdpahz
-        call b2tlc0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0),
-     &     pl%te, tm_ext(:,0), tm_ext(:,0), rt%rza, cdpm0, co%cdp_mol, 
+        call b2tlc0 (nCv, nFc, nVx, 1, switch, geo, mpg, n_mol(:,0),
+     &     pl%te, t_mol(:,0), t_mol(:,0), rt%rza, cdpm0, co%cdp_mol, 
      &     co%cdphz_mol, flc0)
 
 *   .. apply flux limit to neutrals contribution to cvsa and cvsahz
-        call b2tlv0 (nCv, nFc, nVx, 1, switch, geo, mpg, nm_ext(:,0), 
-     &    um_ext(:,0), pl%te, tm_ext(:,0), rt%rza, cvsm0, co%cvs_mol, 
+        call b2tlv0 (nCv, nFc, nVx, 1, switch, geo, mpg, n_mol(:,0), 
+     &    u_mol(:,0), pl%te, t_mol(:,0), rt%rza, cvsm0, co%cvs_mol, 
      &    co%cvshz_mol, flc0)
 
 *     ..apply flux limit to neutrals contribution to chcb
         call b2tlh0 (nCv, nFc, nVx, 1, switch, geo, mpg,
-     &         nm_ext(:,0), tm_ext(:,0), tm_ext(:,0),
+     &         n_mol(:,0), t_mol(:,0), t_mol(:,0),
      &         chcm0, co%chc_mol, flc0)
       endif        
 

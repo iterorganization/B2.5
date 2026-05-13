@@ -122,7 +122,6 @@
         real(R8), allocatable :: flo_mol(:,:), con_mol(:,:,:)            !! coefficients for linearization (continuity)
         real(R8), allocatable :: floh_mol(:,:), conh_mol(:,:,:)          !! coefficients for linearization (heat) (similar to coni, cone etc)
         real(R8), allocatable :: coru_mol(:), corp_mol(:), cort_mol(:)   !! correction steps   
-        real(R8), allocatable :: uu_mol(:), vv_mol(:), ww_mol(:)         !! 3D velocities (uu = poloidal, vv = radial, ww = toroidal)
 
       end type B2Derivatives
 
@@ -1538,9 +1537,6 @@
       allocate( dv % cort_mol( nCv ) )
       allocate( dv % floh_mol (nFc, 0:1) )
       allocate( dv % conh_mol (nFc, 0:1, 0:2) )
-      allocate( dv % uu_mol( nCv ) )
-      allocate( dv % vv_mol( nCv ) )
-      allocate( dv % ww_mol( nCv ) )
       dv % fn_mol = 0.0_R8
       dv % fm_mol = 0.0_R8
       dv % fh_mol = 0.0_R8
@@ -1558,9 +1554,6 @@
       dv % cort_mol = 0.0_R8
       dv % floh_mol = 0.0_R8
       dv % conh_mol = 0.0_R8
-      dv % uu_mol = 0.0_R8
-      dv % vv_mol = 0.0_R8
-      dv % ww_mol = 0.0_R8
 
       return
       end subroutine createB2Derivatives
@@ -1744,9 +1737,6 @@
       deallocate( dv % cort_mol )
       deallocate( dv % floh_mol )
       deallocate( dv % conh_mol )
-      deallocate( dv % uu_mol )
-      deallocate( dv % vv_mol )
-      deallocate( dv % ww_mol )
 
       return
       end subroutine destroyB2Derivatives

@@ -90,10 +90,10 @@
 
 *   ..compute ro
       mass = mp*am_d2
-      ro = nm_ext(:,0)*mass
+      ro = n_mol(:,0)*mass
  
 *   ..compute gtm
-      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, tm_ext(:,0), wrkv, gtm)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, t_mol(:,0), wrkv, gtm)
 
 
 *   ..initialise
@@ -107,11 +107,11 @@
 *   ..compute individual species corrections
 
 *    ..compute pm
-      pm = tm_ext(:,0)*nm_ext(:,0)
+      pm = t_mol(:,0)*n_mol(:,0)
 
 *    ..compute pressure gradient term
       call b2sigp (nCv, nFc, nVx, 0, switch, geo, mpg, zeroes_c,
-     &   nm_ext(:,0), tm_ext(:,0), tm_ext(:,0), dv%ne, pl%te, pl%po, 
+     &   n_mol(:,0), t_mol(:,0), t_mol(:,0), dv%ne, pl%te, pl%po, 
      &   sm_gp, wrk0, wrk1)
 *    ..compute flub
        flub = am_d2*mp*dv%fn_mol_fcor
@@ -123,12 +123,12 @@
                
 *    ..compute flcb, cvcb
       call b2nxfc (nCv, nFc, nVx, 0, switch, geo, mpg, ro,
-     &  um_ext(:,0), flub, co%cvshz_mol(:,:), flcb, cvcb,
+     &  u_mol(:,0), flub, co%cvshz_mol(:,:), flcb, cvcb,
      &  wrkf0)
 
 *    ..compute centrifugal force term                                  
       call b2sicf (nCv, nFc, nVx, 0, am_d2*mp, switch,  geo, mpg,   
-     *   nm_ext(:,0), um_ext(:,0), sm_cf, ctcfb, wrk0)
+     *   n_mol(:,0), u_mol(:,0), sm_cf, ctcfb, wrk0)
 
 *    ..compute total parallel momentum source
       sm_mol(:,0) = sr_mol%sm_mol(:,0)
@@ -139,7 +139,7 @@
       call b2saxpy (nCv*4, 1.0_R8, sm_cf, 1, sm_mol, 1)   
 
 *    ..compute residual
-      call b2urmo (nCv, nFc, nVx, switch, geo, mpg, 0, um_ext(:,0),
+      call b2urmo (nCv, nFc, nVx, switch, geo, mpg, 0, u_mol(:,0),
      &    ro, sm_mol, flub, co%cvshz_mol(:,:), dv%resmo_mol(:),
      &    dv%fm_mol(:,:), zeroes_f, co%cvshz_mol_eff(:,:))      
 
@@ -153,21 +153,21 @@
       ro1 = ro !csc to avoid aliasing in Tapenade
       call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &    b2npmo_solvedum, itcnt, rxg_npmo_mol, ro, ro1, pm,
-     &    pm1, um_ext(:,0), sm_mol,
+     &    pm1, u_mol(:,0), sm_mol,
      &    flcb, cvcb, dv%resmo_mol, ctcfb, dv%coru_mol,
      &    dv%pcc_mol(:,:), aa, wrk1, 'b2usmo_mol')
 
 
 cc print out sources before update
       if(switch%b2tfmol_iout.ne.0) then     
-        wrk0 = sm_gp(:,0) + sm_gp(:,1)*um_ext(:,0) + 
-     &         sm_gp(:,2)*rob + sm_gp(:,3)*rob*um_ext(:,0)  
+        wrk0 = sm_gp(:,0) + sm_gp(:,1)*u_mol(:,0) + 
+     &         sm_gp(:,2)*rob + sm_gp(:,3)*rob*u_mol(:,0)  
         call my_out_us(70,nCv,0,wrk0,'b2npmo_mol_smgp')
-        wrk0 = sm_cf(:,0) + sm_cf(:,1)*um_ext(:,0) + 
-     &         sm_cf(:,2)*rob + sm_cf(:,3)*rob*um_ext(:,0)  
+        wrk0 = sm_cf(:,0) + sm_cf(:,1)*u_mol(:,0) + 
+     &         sm_cf(:,2)*rob + sm_cf(:,3)*rob*u_mol(:,0)  
         call my_out_us(70,nCv,0,wrk0,'b2npmo_mol_smcf')
-        wrk0 = sm_mol(:,0) + sm_mol(:,1)*um_ext(:,0) + 
-     &         sm_mol(:,2)*rob + sm_mol(:,3)*rob*um_ext(:,0)  
+        wrk0 = sm_mol(:,0) + sm_mol(:,1)*u_mol(:,0) + 
+     &         sm_mol(:,2)*rob + sm_mol(:,3)*rob*u_mol(:,0)  
         call my_out_us(70,nCv,0,wrk0,'b2npmo_mol_tot')
         call my_out_us(70,nFc,1,dv%fm_mol(:,0),
      .                   'b2npmo_mol_fm_th')
@@ -181,17 +181,17 @@ cc print out sources before update
 *   ..apply correction
       if (rxf.ne.0.0_R8) then
        do iCv = 1, nCv
-        um_ext(iCv,0) = um_ext(iCv,0) + rxf*dv%coru_mol(iCv)
+        u_mol(iCv,0) = u_mol(iCv,0) + rxf*dv%coru_mol(iCv)
        enddo
       endif
 
       if( switch%ion_vlct_restrict .ne. 0 ) then                       
         do iCv = 1, nCv
-          cst=sqrt(tm_ext(iCv,0)/(mp*am_d2))
-          if( abs(um_ext(iCv,0)).gt.
+          cst=sqrt(t_mol(iCv,0)/(mp*am_d2))
+          if( abs(u_mol(iCv,0)).gt.
      .         switch%ion_vlct_restrict_M*cst ) then
-              um_ext(iCv,0)= sign(switch%ion_vlct_restrict_M*cst,
-     .                              um_ext(iCv,0))                     
+              u_mol(iCv,0)= sign(switch%ion_vlct_restrict_M*cst,
+     .                              u_mol(iCv,0))                     
           endif
         enddo
       endif
@@ -199,11 +199,11 @@ cc print out sources before update
       if( switch%ion_vlct_restrict_core .ne. 0 ) then                       
         do iCv = 1, nCv
           if (mpg%cvOnClosedSurface(iCv)) then
-            cst=sqrt(tm_ext(iCv,0)/(mp*am_d2))
-            if( abs(um_ext(iCv,0)).gt.
+            cst=sqrt(t_mol(iCv,0)/(mp*am_d2))
+            if( abs(u_mol(iCv,0)).gt.
      .         switch%ion_vlct_restrict_core_M*cst ) then
-              um_ext(iCv,0)= sign(switch%ion_vlct_restrict_core_M*cst,
-     .                              um_ext(iCv,0))                     
+              u_mol(iCv,0)= sign(switch%ion_vlct_restrict_core_M*cst,
+     .                              u_mol(iCv,0))                     
             endif
           endif
         enddo
@@ -214,7 +214,7 @@ cc print out sources before update
 *   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
         dv%dmdt_mol = ( -sr_mol%sm_dt_mol(:,0)                        
-     &    - sr_mol%sm_dt_mol(:,1)*um_ext(:,0))/ts_factor
+     &    - sr_mol%sm_dt_mol(:,1)*u_mol(:,0))/ts_factor
 
 *   ..correct pcca
 cc      call b2nxcm (nCv, ns, dv%pccm, dv%pcca) TODO ?? Not needed for a single momentum equation (only needed for total momentum equation for all species)

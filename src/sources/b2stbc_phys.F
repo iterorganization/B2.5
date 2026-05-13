@@ -37,7 +37,7 @@
      *  NUEOUT, FS, FFAC, DFS, S2
 #endif
       use b2mod_fluid_molecules
-     & , only : am_d2, nm_ext, um_ext, tm_ext
+     & , only : am_d2, n_mol, u_mol, t_mol
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -1549,7 +1549,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                     ix = nlim + lcns(k)
                     totfluxn = totfluxn -
      &               wldna(ix,isa,0) + wldra(ix,isa,0) + wldpa(ix,isa,0)
-                    do ism = 1, nnmoli
+                    do ism = 1, nn_moli
                       if (mlcmp(isa,ism).gt.0) then
                         totfluxn = totfluxn - mlcmp(isa,ism) *
      &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
@@ -2033,7 +2033,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                     ix = nlim + lcns(k)
                     totfluxn = totfluxn -
      &               wldna(ix,isa,0) + wldra(ix,isa,0) + wldpa(ix,isa,0)
-                    do ism = 1, nnmoli
+                    do ism = 1, nn_moli
                       if (mlcmp(isa,ism).gt.0) then
                         totfluxn = totfluxn - mlcmp(isa,ism) *
      &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
@@ -2517,7 +2517,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                     totfluxn = totfluxn -
      &                 (wldna(ix,isa,0) - wldra(ix,isa,0)
      &                                  - wldpa(ix,isa,0))
-                    do ism = 1, nnmoli
+                    do ism = 1, nn_moli
                       if (mlcmp(isa,ism).gt.0) then
                         totfluxn = totfluxn - mlcmp(isa,ism) *
      &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
@@ -8972,13 +8972,13 @@ cwdk    Todo: corrections for BCCON.ne.14
             t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             sr_mol%sm_mol(iCv1,0)=
-     .         VBIG*am_d2*nm_ext(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)*
+     .         VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (mompar_mol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + um_ext(iCv2,0))
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + u_mol(iCv2,0))
             sr_mol%sm_mol(iCv1,1)=
-     .        -VBIG*am_d2*nm_ext(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)
+     .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
       case default
@@ -9032,7 +9032,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      .       (EV*enepar_mol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
      .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + tm_ext(iCv2,0))
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + t_mol(iCv2,0))
           sr_mol%sh_mol(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 

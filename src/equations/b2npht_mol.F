@@ -87,14 +87,14 @@
        call b2xvsg (nCv, sr_mol%sh_mol(1,1), 1, 'sh_mol1', '.le.')
 
 *    ..test sign of tm
-       call b2xvsg (nCv, tm_ext(:,0), 1, 'tm', '.gt.')
+       call b2xvsg (nCv, t_mol(:,0), 1, 'tm', '.gt.')
 
       endif
 
 * ..initizalization
-      tm0 = tm_ext(:,0)
-      nm0 = nm_ext(:,0)
-      um0 = um_ext(:,0)
+      tm0 = t_mol(:,0)
+      nm0 = n_mol(:,0)
+      um0 = u_mol(:,0)
       sh_final(:,0) = sr_mol%sh_mol(:,0)
       sh_final(:,1) = sr_mol%sh_mol(:,1)
       sh_final(:,2) = 0.0_R8
@@ -131,7 +131,7 @@ cc        switch%b2uxus_style = 2
       dv%dhdt_mol = - ( sr_mol%sh_dt_mol(:,0)
      &       +sr_mol%sh_dt_mol(:,1)*tm0)/ts_factor
 
-      tm_ext(:,0) = tm0
+      t_mol(:,0) = tm0
 
       if(switch%b2tfmol_iout.ne.0) then       
         call my_out_us(70,nCv,0,tm0,'b2npht_mol_tm')

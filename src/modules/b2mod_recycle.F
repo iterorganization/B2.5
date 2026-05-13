@@ -1781,11 +1781,11 @@ c     Internal variables
 
       call subini ('CalcIncidentFluxesMolecules')
 c     Initialize/calculate some variables
-c      nmf = nm_ext(iCv,ism)
+c      nmf = n_mol(iCv,ism)
 
-      nmf = nm_ext(iCn,ism) !! experiment, take from iCn instead of iCv
-      tm =  tm_ext(iCn,ism)
-      umf = um_ext(iCn,ism)
+      nmf = n_mol(iCn,ism) !! experiment, take from iCn instead of iCv
+      tm =  t_mol(iCn,ism)
+      umf = u_mol(iCn,ism)
 
 
       mm = am(ism)*mp*2.0_R8 !! TODO generalize, molecule mass
@@ -1873,12 +1873,12 @@ c     Internal variables
 
       call subini ('CalcReflectedFluxesMolecules') !! TODO merge this function with the incident one? Lot of code duplication
 c     Initialize/calculate some variables
-c      nmf = nm_ext(iCv,ism)
-c      umf = um_ext(iCv,ism)
+c      nmf = n_mol(iCv,ism)
+c      umf = u_mol(iCv,ism)
 
-      nmf = nm_ext(iCn,ism) !! experiment, take from iCn instead of iCv
-      tm =  tm_ext(iCn,ism)
-      umf = um_ext(iCn,ism)
+      nmf = n_mol(iCn,ism) !! experiment, take from iCn instead of iCv
+      tm =  t_mol(iCn,ism)
+      umf = u_mol(iCn,ism)
 
       mm = am(ism)*mp*2.0_R8 !! TODO generalize
       pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)

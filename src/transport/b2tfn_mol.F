@@ -81,30 +81,30 @@
 
 *   ..interpolate nm and pm to cell faces
       weight = 1.0_R8
-      call intface(nCv,nFc,mpg%fcCv,weight,nm_ext(:,0),nmf)
-      call intface(nCv,nFc,mpg%fcCv,weight,tm_ext(:,0),tmf)
+      call intface(nCv,nFc,mpg%fcCv,weight,n_mol(:,0),nmf)
+      call intface(nCv,nFc,mpg%fcCv,weight,t_mol(:,0),tmf)
 
 *   ..compute differences of pm at cell faces and poloidal gradients
 *     at cell centers
-      pm = nm_ext(:,0)*tm_ext(:,0)
+      pm = n_mol(:,0)*t_mol(:,0)
       call diff(nCv, nFc, nVx, 0, geo, mpg, pm, wrkVx, dpm)
       call gradc_p(nCv, nFc, nVx, 1, geo, mpg, pm, wrkVx,
      &  dpmc)
 
 *   ..precompute kmpr and its differences
-      kmpr = nm_ext(:,0) / pm
+      kmpr = n_mol(:,0) / pm
       call intvertex(nCv,nVx,mpg,geo%vxVol,kmpr,kmprv)
 
 *   ..interpolate um to cell faces
       if(switch%b2tfnb_style_int_vel.eq.0) then
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,um_ext(:,0),umf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,u_mol(:,0),umf)
       else
-        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,um_ext(:,0),umf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,u_mol(:,0),umf)
       endif
 
 *   ..quantities needed for the ion-convective part in the pressure-diffusion equation
       !! equilibrium density
-      nm_eq = nm_ext(:,0)*beta_eq
+      nm_eq = n_mol(:,0)*beta_eq
       call intface(nCv,nFc,mpg%fcCv,weight,nm_eq,nm_eqf)
       call intface(nCv,nFc,mpg%fcCv,weight,coeff_vi,coeff_vif)
 
@@ -144,15 +144,15 @@
       endif
 
 *   ..apply discretization scheme for density-part of fna_mdf
-      call calcflow(nCv, nFc, nVx, meth, geo, mpg, nm_ext(:,0),
+      call calcflow(nCv, nFc, nVx, meth, geo, mpg, n_mol(:,0),
      &     flo, zeroes_fc0, fn_mol0,
      &     dummy_fc0, dummy_fc1)
 
 *   ..compute Rhie-Chow term
       do iFc = 1, nFc
         cdpm_RC(iFc,0) = switch%b2npco_pcm1*0.5_R8*geo%fcPbs(iFc)*
-     &   (dv%pcc_mol(mpg%fcCv(iFc,1),1)*nm_ext(mpg%fcCv(iFc,1),0) +
-     &    dv%pcc_mol(mpg%fcCv(iFc,2),1)*nm_ext(mpg%fcCv(iFc,2),0))/
+     &   (dv%pcc_mol(mpg%fcCv(iFc,1),1)*n_mol(mpg%fcCv(iFc,1),0) +
+     &    dv%pcc_mol(mpg%fcCv(iFc,2),1)*n_mol(mpg%fcCv(iFc,2),0))/
      &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
         dpbm(iFc) = 0.5_R8*geo%fcQgam(iFc,0)*
      &   (dpmc(mpg%fcCv(iFc,1)) + dpmc(mpg%fcCv(iFc,2)))*
@@ -221,10 +221,15 @@ c compute vv, ww and uu
        call intcell(nFc, nCv, mpg, mpg%intcellR,
      &               vv,vvc)
        pit2c = abs(geo%cvBb(:,2))/geo%cvBb(:,3)
-       wwc = nmi_ext(:,0)/nm_ext(:,0)*pit2c*pl%ua(:,is_main_ion)
-       dv%uu_mol = uuc
-       dv%vv_mol = vvc
-       dv%ww_mol = wwc
+       wwc = n_moli(:,0)/n_mol(:,0)*pit2c*pl%ua(:,is_main_ion)
+
+       if (switch%b2stfm_recompute_perp_vels.ne.0) then
+         u_pol_mol(:,0) = uuc
+         u_rad_mol(:,0) = vvc
+         u_tor_mol(:,0) = wwc
+       else 
+cc molecule velocities are kept at the value read from the input mol_bg
+       endif
 
       if(switch%b2tfmol_iout .eq. 1 ) then      
        call my_out_us(70,nFc,1,dv%fn_mol(:,0),'b2tfn_mol_th')

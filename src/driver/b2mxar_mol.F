@@ -57,9 +57,9 @@
       navi = 0.0_R8
       movi = 0.0_R8
       do iCv = 1, mpg%nCi
-          navi = navi+geo%cvVol(iCv)*nm_ext(iCv,0)
+          navi = navi+geo%cvVol(iCv)*n_mol(iCv,0)
           movi = movi+geo%cvVol(iCv)*
-     &      nm_ext(iCv,0)*sqrt(tm_ext(iCv,0)*am_d2*mp)
+     &      n_mol(iCv,0)*sqrt(t_mol(iCv,0)*am_d2*mp)
 
       enddo
       t0 = 0.0_R8
@@ -75,7 +75,7 @@
 *   ..compute prvm
       prvm = 0.0_R8
       do iCv = 1, mpg%nCi
-        prvm = prvm+geo%cvVol(iCv)*nm_ext(iCv,0)*tm_ext(iCv,0)
+        prvm = prvm+geo%cvVol(iCv)*n_mol(iCv,0)*t_mol(iCv,0)
       enddo
 *   ..compute aresh_mol
       t0 = 0.0_R8

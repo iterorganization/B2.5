@@ -49,12 +49,12 @@
 *   ..modify sn
 
       do iCv = 1, nCv
-        t0 = sr_mol%sn_mol(iCv,0)+sr_mol%sn_mol(iCv,1)*nm_ext(iCv,0)
+        t0 = sr_mol%sn_mol(iCv,0)+sr_mol%sn_mol(iCv,1)*n_mol(iCv,0)
         sr_mol%sn_mol(iCv,0) =
      &     max(sr_mol%sn_mol(iCv,0),(1.0_R8+switch%b2srst_rf0)*t0,
      &     -switch%b2srst_rf0*t0)
-        sr_mol%sn_mol(iCv,1) = (1.0_R8/nm_ext(iCv,0))*
-     &     min(sr_mol%sn_mol(iCv,1)*nm_ext(iCv,0),-switch%b2srst_rf0*t0,
+        sr_mol%sn_mol(iCv,1) = (1.0_R8/n_mol(iCv,0))*
+     &     min(sr_mol%sn_mol(iCv,1)*n_mol(iCv,0),-switch%b2srst_rf0*t0,
      &     (1.0_R8+switch%b2srst_rf0)*t0)
       enddo
 
@@ -63,7 +63,7 @@
       do iCv = 1, nCv
 *      ..make sm(,,1) negative
         sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0)+
-     &     max(0.0_R8,sr_mol%sm_mol(iCv,1))*um_ext(iCv,0)
+     &     max(0.0_R8,sr_mol%sm_mol(iCv,1))*u_mol(iCv,0)
         sr_mol%sm_mol(iCv,1) = min(sr_mol%sm_mol(iCv,1),0.0_R8)
       enddo
 
@@ -72,12 +72,12 @@
 
       do iCv = 1, nCv
 *     ..modify sh(,0:1)
-        t0 = sr_mol%sh_mol(iCv,0)+sr_mol%sh_mol(iCv,1)*tm_ext(iCv,0)
+        t0 = sr_mol%sh_mol(iCv,0)+sr_mol%sh_mol(iCv,1)*t_mol(iCv,0)
         sr_mol%sh_mol(iCv,0) = 
      &        max(sr_mol%sh_mol(iCv,0),(1.0_R8+switch%b2srst_rf1)*t0,
      &                  -switch%b2srst_rf1*t0)
-        sr_mol%sh_mol(iCv,1) = (1.0_R8/tm_ext(iCv,0))*
-     &    min(sr_mol%sh_mol(iCv,1)*tm_ext(iCv,0),-switch%b2srst_rf1*t0,
+        sr_mol%sh_mol(iCv,1) = (1.0_R8/t_mol(iCv,0))*
+     &    min(sr_mol%sh_mol(iCv,1)*t_mol(iCv,0),-switch%b2srst_rf1*t0,
      &    (1.0_R8+switch%b2srst_rf1)*t0)
       enddo
 

@@ -53,12 +53,12 @@
 
 *   ..interpolate te and ti to cell faces
       wght = 1.0_R8
-      tm = tm_ext(:,0)
+      tm = t_mol(:,0)
       call intface(nCv,nFc,mpg%fcCv,wght,tm,tmf)
 
 * ..correct coefficients
 
-      nw = nm_ext(:,0)
+      nw = n_mol(:,0)
 
 *    ..pre-compute radial differences nw
       call diff(nCv, nFc, nVx, 0, geo, mpg, nw, wrkVx, dnw)

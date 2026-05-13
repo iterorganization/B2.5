@@ -639,6 +639,7 @@ c Fluid molecules
       integer :: b2stfm_diff_coeff_ene_style
       integer :: b2stfm_debug_icv
       integer :: b2stfm_ekin_perp
+      integer :: b2stfm_recompute_perp_vels
       real (kind=R8) :: b2stfm_freac_nd
       real (kind=R8) :: b2stfm_freac_d
       real (kind=R8) :: b2stfm_freac_di1
@@ -1335,6 +1336,7 @@ c Fluid molecules
       s % b2stfm_diff_coeff_ene_style = 0
       s % b2stfm_debug_icv = 0
       s % b2stfm_ekin_perp = 0
+      s % b2stfm_recompute_perp_vels = 0
       s % b2stfm_freac_nd  = 1.0_R8
       s % b2stfm_freac_d   = 1.0_R8
       s % b2stfm_freac_di1 = 1.0_R8
@@ -2146,6 +2148,8 @@ c Fluid molecules
      .              s % b2stfm_diff_coeff_ene_style)
       call ipgeti ('b2stfm_debug_icv', s % b2stfm_debug_icv)
       call ipgeti ('b2stfm_ekin_perp', s % b2stfm_ekin_perp)
+      call ipgeti ('b2stfm_recompute_perp_vels', 
+     .             s % b2stfm_recompute_perp_vels)  
       call ipgetr ('b2stfm_freac_nd', s % b2stfm_freac_nd) 
       call ipgetr ('b2stfm_freac_d',  s % b2stfm_freac_d) 
       call ipgetr ('b2stfm_freac_di1',s % b2stfm_freac_di1) 

@@ -64,7 +64,7 @@
       do iCv = 1, mpg%nCi
         ttim=dtim*time_factor(iCv)
         t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*ts_factor    
-        sr_mol%sn_dt_mol(iCv,0) = t0*nm_ext(iCv,0)
+        sr_mol%sn_dt_mol(iCv,0) = t0*n_mol(iCv,0)
         sr_mol%sn_dt_mol(iCv,1) = -t0
       enddo
 
@@ -74,9 +74,9 @@
         ttim=dtim*time_factor(iCv)
         t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv) 
      &         *ts_factor
-        sr_mol%sm_dt_mol(iCv,0) = t0*am_d2*mp*nm_ext(iCv,0)*
-     &                            um_ext(iCv,0)
-        sr_mol%sm_dt_mol(iCv,1) =-t0*am_d2*mp*nm_ext(iCv,0)
+        sr_mol%sm_dt_mol(iCv,0) = t0*am_d2*mp*n_mol(iCv,0)*
+     &                            u_mol(iCv,0)
+        sr_mol%sm_dt_mol(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
       enddo
 
 *   ..modify sh_dt_mol
@@ -84,8 +84,8 @@
       do iCv = 1, mpg%nCi
         ttim=dtim*time_factor(iCv)
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
-        sr_mol%sh_dt_mol(iCv,0) = 1.5_R8*t0*nm_ext(iCv,0)*tm_ext(iCv,0)
-        sr_mol%sh_dt_mol(iCv,1) =-1.5_R8*t0*nm_ext(iCv,0)
+        sr_mol%sh_dt_mol(iCv,0) = 1.5_R8*t0*n_mol(iCv,0)*t_mol(iCv,0)
+        sr_mol%sh_dt_mol(iCv,1) =-1.5_R8*t0*n_mol(iCv,0)
       enddo
 
 *   ..add to total sources

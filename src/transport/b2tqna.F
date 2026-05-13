@@ -3346,7 +3346,7 @@ cwdk same dna_ExB for all ion species
       SF = switch%b2tqna_mol_sf 
       SFd = switch%b2tqna_mol_sfd
 
-      pm = tm_ext(:,0)*nm_ext(:,0) !! molecular pressure
+      pm = t_mol(:,0)*n_mol(:,0) !! molecular pressure
 
 
       dp_mol = diff_coeff*SFd

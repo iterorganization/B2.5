@@ -247,11 +247,11 @@ cc more complex treatment for elastic collisions
 *   ..loop over cells
       do iCv = 1,nCv
 *     ..compute abscissae
-        tr = tm_ext(iCv,0)/ti(iCv) !! ratio of molecule to ion temperature
+        tr = t_mol(iCv,0)/ti(iCv) !! ratio of molecule to ion temperature
         vth = sqrt(2.0_R8*ti(iCv)/(mp*am(1))) !! TODO generalize species
-        mcoll_p = abs(um_ext(iCv,0)-ua(iCv))/vth !! velocity difference in parallel direction expressed as Mach number   
-        mcoll_d = abs(uu_ext(iCv,0))/vth !! velocity difference in diamagnetic direction expressed as Mach number  (neglecting ion component)
-        mcoll_r = abs(vv_ext(iCv,0))/vth !! velocity difference in radial direction expressed as Mach number  (neglecting ion component)
+        mcoll_p = abs(u_mol(iCv,0)-ua(iCv))/vth !! velocity difference in parallel direction expressed as Mach number   
+        mcoll_d = abs(u_pol_mol(iCv,0))/vth !! velocity difference in diamagnetic direction expressed as Mach number  (neglecting ion component)
+        mcoll_r = abs(u_rad_mol(iCv,0))/vth !! velocity difference in radial direction expressed as Mach number  (neglecting ion component)
         rlti = max(rtlt(0),min(rtlt(rtnt),log(ti(iCv)/ev)))
         rltr = max(rtltr(0),min(rtltr(rtntr),log(tr)))
         rl_mcoll_p = max(rtl_mcoll(0),min(rtl_mcoll(rtn_mcoll),

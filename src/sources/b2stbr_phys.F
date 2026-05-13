@@ -536,11 +536,11 @@ c for KUL recycling/reflection model
 
       if (switch%b2stbr_phys_iout.eq.1.and.
      &                    switch%fluid_molecules.ne.0) then  
-         wrk0 = sr_mol%sn_mol(:,0)+sr_mol%sn_mol(:,1)*nm_ext(:,0)     
+         wrk0 = sr_mol%sn_mol(:,0)+sr_mol%sn_mol(:,1)*n_mol(:,0)     
          call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sn_mol')
-         wrk0 = sr_mol%sm_mol(:,0)+sr_mol%sm_mol(:,1)*um_ext(:,0)     
+         wrk0 = sr_mol%sm_mol(:,0)+sr_mol%sm_mol(:,1)*u_mol(:,0)     
          call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sm_mol')
-         wrk0 = sr_mol%sh_mol(:,0)+sr_mol%sh_mol(:,1)*tm_ext(:,0)     
+         wrk0 = sr_mol%sh_mol(:,0)+sr_mol%sh_mol(:,1)*t_mol(:,0)     
          call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sh_mol')
        endif
 
@@ -750,7 +750,7 @@ c and this strata should be ignored here
         tif = pl%ti(iCv)
         tnf = pl%tn(iCv)
         if (switch%fluid_molecules.ne.0) then
-          tmf = tm_ext(iCv,0)
+          tmf = t_mol(iCv,0)
         endif
       else
         tef = (pl%te(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
@@ -763,8 +763,8 @@ c and this strata should be ignored here
      &         pl%tn(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
      &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
         if (switch%fluid_molecules.ne.0) then
-          tmf = (tm_ext(mpg%fcCv(iFc,1),0)*geo%fcHc(iFc,2)+
-     &         tm_ext(mpg%fcCv(iFc,2),0)*geo%fcHc(iFc,1))/
+          tmf = (t_mol(mpg%fcCv(iFc,1),0)*geo%fcHc(iFc,2)+
+     &         t_mol(mpg%fcCv(iFc,2),0)*geo%fcHc(iFc,1))/
      &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
         endif
       endif

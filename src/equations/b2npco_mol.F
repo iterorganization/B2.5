@@ -79,9 +79,9 @@
 
 *   ..initizalization
       rxg_npco_mol = switch%b2npco_rxg
-      nm = nm_ext(:,0)
-      pm = nm*tm_ext(:,0)
-      um = um_ext(:,0)
+      nm = n_mol(:,0)
+      pm = nm*t_mol(:,0)
+      um = u_mol(:,0)
 
 *   ..extensive tests on first few calls
       if (ncall_b2npco_mol.lt.3) then
@@ -124,8 +124,8 @@
      &                   -sr_mol%sn_dt_mol(:,0))
 
 *   ..update states
-      nm_ext(:,0) = nm
-      um_ext(:,0) = um 
+      n_mol(:,0) = nm
+      u_mol(:,0) = um 
 
 *    ..output quantities for continuity equation
       if(switch%b2tfmol_iout.ne.0) then       
