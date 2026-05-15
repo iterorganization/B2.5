@@ -15,7 +15,11 @@ ifeq (${FN},)
 endif
 ifeq (${CC},cc)
   ifneq (${FC},ftn)
-    CC = icc
+    ifneq ($(shell command -v icc 2>/dev/null),)
+      CC = icc
+    else
+      CC = icx
+    endif
   endif
 endif
 # Use of ifx OpenMP is unsafe at the moment, but only swap if a usable ifort
