@@ -33,7 +33,6 @@ endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -fp-model=precise
 endif
-endif
 
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
