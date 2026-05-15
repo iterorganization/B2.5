@@ -1,23 +1,35 @@
+# FN is the serial Fortran compiler used to build the netCDF utility programs.
+# If still unset (e.g. setup script exported FC=ifx without setting FN), pick
+# ifort when available, otherwise fall back to the same driver as FC.
 ifeq (${FC},f77)
-FC = ifort
+  ifneq ($(shell command -v ifort 2>/dev/null),)
+    FC = ifort
+  endif
 endif
 ifeq (${FN},)
-FN = ifort
+  ifneq ($(shell command -v ifort 2>/dev/null),)
+    FN = ifort
+  else
+    FN = ${FC}
+  endif
 endif
 ifeq (${CC},cc)
-ifneq (${FC},ftn)
-CC = icc
+  ifneq (${FC},ftn)
+    CC = icc
+  endif
 endif
-endif
-# Use of ifx OpenMP is unsafe at the moment
+# Use of ifx OpenMP is unsafe at the moment, but only swap if a usable ifort
+# is present (intel-compilers 2025.x onwards ships only ifx).
 ifneq (,$(findstring ifx,${FC}))
   ifdef SOLPS_OPENMP
-    FN = ifort
-    MPI_FC = mpiifort
-    ifdef SOLPS_MPI
-      FC = ${MPI_FC}
-    else
-      FC = ifort
+    ifneq ($(shell command -v ifort 2>/dev/null),)
+      FN = ifort
+      MPI_FC = mpiifort
+      ifdef SOLPS_MPI
+        FC = ${MPI_FC}
+      else
+        FC = ifort
+      endif
     endif
   endif
 endif
