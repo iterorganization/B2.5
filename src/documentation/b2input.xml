@@ -638,6 +638,27 @@
 					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube. It is recommended to use this switch if b2txcx_increase_transp_coefs.gt.1 during the run.
 				</description>
 			</switch>
+			<switch>
+				<name>b2us_prep_Qalf_mod_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls which boundary faces are treated as wall (not field-aligned).
+					If b2us_prep_Qalf_mod_style.eq.0 then all faces with abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin are treated as walls.
+					If b2us_prep_Qalf_mod_style.eq.1 then wall faces must be located at the end of a flux tube, or satisfy both conditions:
+					1. abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin
+					2. have at least one neighboring wall face
+					If all faces along a flux surface have abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, then the face where the magnetic field angle changes sign is treated as field-aligned (not a wall).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_temp_ignore_geo</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch (b2mndr_temp_ignore_geo.eq.1) allows to run geometrically complex unstructured cases that do not yet fit in any specified case categorization. This switch should disappear as the integration of new unstructured grid generators with SOLPS / IMAS matures. Activating this switch makes it impossible to use or get correct results from some integrated post-processing options. The B2.5-EIRENE solution algorithm is unaffected.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -1841,7 +1862,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations  must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
 				</description>
 			</switch>
 			<switch>
@@ -2432,6 +2453,320 @@
 					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each neutral species.
 				</description>
 				<switch>
+					<name>b2tqna_bar_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of transport barrier where *_alfa1 multipliers will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_sol_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Otherwise the width is measured along the inner midplane if the flux tube crosses it. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+			</switchgroup>
+			<switch>
+				<name>b2tqna_new_df0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2tqna_ballooning</name>
+				<description>
+					Ballooning model switches. If ballooning.ne.0, then all transport coefficients in cell (i) are rescaled by a factor of ballooning_rescale*abs(bb_ref/bb(i))**ballooning .
+					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default), the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
+				</description>
+				<switch>
+				<name>b2tqna_lfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of LFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the LFS if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_hfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of HFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the inner midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the HFS if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_bar_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of transport barrier where b2tqna_sig_alfa1 multiplier will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of SOL where b2tqna_sig_alfa2 multiplier will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width if used. Only used if b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ballooning_sig</name>
+					<default>1</default>
+					<type>integer</type>
+				</switch>
+			</switchgroup>
+			<switch>
+				<name>b2tqna_pfr_rescale</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Scaling factor for all ion and electron transport coefficients inside private flux regions.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_divsol_rescale</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Scaling factor for all ion and electron transport coefficients inside divertor SOL regions.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier of the friction term between charged species (only ions in case b2sigp_style.eq.2).
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_phm1</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2sigp_style.eq.2, multiplier to the friction force term between electrons and ions.
+					Otherwise, multiplier of the ehxp term in the older expression for the thermal force.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_phm2</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier of the electron thermal gradient term in the thermal force term and parallel current
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_phm3</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier of the ion thermal gradient term in the thermal force term.
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2sifr_limth*</name>
+				<description>
+					Parameters for the computation of the thermal force term.
+				</description>
+				<switch>
+					<name>b2tqna_te_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If te_alfa4.gt.0, multiplier to the electron thermal conductivity inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Multiplier to the ion thermal conductivity inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2tlnl_*</name>
+				<description>
+					If lambda is positive, the Coulomb logarithm is set to lambda.
+					If lambda is negative, then abs(lambda) is the lower bound to be used when computing the Coulomb logarithm according to the NRL formulae.
+					The computation of the Coulomb logarithm takes place in b2tlnl.
+					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ii, _ee, and _ei, respectively, make use of the calculation according to Wesson.
+				</description>
+				<switch>
+					<name>b2tqna_ti_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If ti_alfa4.gt.0, ion thermal conductivity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If na_alfa4.gt.0, anomalous diffusivity with respect to grad(na) multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If vsa_alfa4.gt.0, anomalous viscosity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						If vla_alfa4.gt.0, anomalous velocity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_sig_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2tqna_m*</name>
+				<description>
+					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each neutral species.
+				</description>
+				<switch>
 					<name>b2tqna_max_df0</name>
 					<default>1e30</default>
 					<type>real</type>
@@ -2709,6 +3044,33 @@
 				<type>integer</type>
 				<description>
 					If style = 0 then the original form of the viscosity flux limit is used, otherwise the SPb flux limit is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlhe_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+					If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlhi_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+					If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlmv_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+					If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -3226,241 +3588,6 @@
 				</switch>
 			</switchgroup>
 			<switch>
-				<name>b2tqna_transport_bohm</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Main switch to turn on the Bohm-like transport model.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_purediff</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 0, SOLPS will use a pure diffusion Bohm-like transport (ref. T. Wauter et al. 2020, Plasma Phys. Control. Fusion 62 105010, 2020), otherwise a convection-diffusion model will be used. For the convection velocity, see switch b2tqna_bohm_ExB.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_ExB</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					If 0, formula 9 from T. Wauter et al. 2020 is used to evaluate the convection velocity.
-                                        If 1, formula 8 is instead used to evaluate the electric field and the convection velocity is E/B.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_viscosity</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 0, no viscosity will be computed in a Bohm-like way.
-                                        If 1, viscosity effects will be included. (to be tested!)
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_average</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-                                        If 1, the density average of transport coefficients is calculated and the results assigned to all species.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_iout</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 1, writes the output for the Bohm transport model.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_gammaD</name>
-				<default>0.00</default>
-				<type>real</type>
-				<description>
-					Sets the correction for energy transport (the energy confinement is poorer compared to the particle confinement).
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_dnafact</name>
-				<default>0.00</default>
-				<type>real</type>
-				<description>
-					Sets the tuning factor for the diffusion coefficient.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_bohm_vlafact</name>
-				<default>0.00</default>
-				<type>real</type>
-				<description>
-					Sets the tuning factor for the convection velocity.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_major_radius</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Major radius of the machine.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_minor_radius</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Minor radius of the machine.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2tqna_vessel_half_height</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Half-height of the vessel.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_use_ECH</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Main switch to turn on the ECH model for power Electron Cyclotron power deposition.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_out</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 1, writes the output for the ECH model.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_harmonics</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Sets the harmonic at which ECH power is injected.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_coupling</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Coupling = 0 -- Fixed fraction of the power is injected as a Dirac's delta in volumes intersected at given radial position.
-                                        Coupling = 1 -- Fixed fraction of the power is injected with a Gaussial(-like) distribution.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_power</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the amount of injected ECH power [in W].
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_absorption_frac</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the fraction of ECH power that will be absorbed. 
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_Rdep</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the radial position at which ECH power is injected.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_RFfrequency</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the frequency for power injection (without the 2*pi multiplier!).
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_ECH_gauss_symm</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 1, a poloidally-symmetric Gaussian(-like) distribution is used. This switch is used for 1D radial simulations only.
-				</description>
-			</switch>
-                        <switch>
-                                <name>b2sral_ECH_gauss_width</name>
-                                <default>0.0</default>
-                                <type>real</type>
-                                <description>
-                                       Sets the width (i.e. the standard deviation) for the Gaussian(-like) distribution of the ECH power. 
-                                </description>
-                        </switch>
-                        <switch>
-				<name>b2sral_losses_poloidal</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Turns on the imposed losses due to motion in the poloidal direction.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_losses_limiters</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Turns on the imposed losses due to limiter presence.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_losses_drifts</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Turns on the imposed losses due to drifts.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_nlimiters</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Sets the number of limiters.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_artloss_out</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 1, writes the output for the Artificial Losses model.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_limiter_width</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the fraction of the limiters' width. Limiters will 'extend' into the domain from R0-a0 to R0-lim_width*a0 and from R0+lim_width*a0 to R0+a0.
-				</description>
-			</switch>
-                        <switch>
-				<name>b2sral_Twall</name>
-				<default>0.02587</default>
-				<type>real</type>
-				<description>
-					Sets the wall temperature at which neutral atoms from the limiters come back into the domain. Default value is set to be equal to 300K.
-				</description>
-			</switch>
-			<switch>
 				<name>b2tfhi_fsigkt</name>
 				<default>0.1</default>
 				<type>real</type>
@@ -3582,6 +3709,251 @@
 					If set to 0, uses multiplier 5/2 for the anomalous convective and conductive heat fluxes associated with anomalous density transport, as per the SOLPS5.2 physics model.
 					If set to 1 (default), uses multiplier 3/2 for the anomalous convective and conductive heat fluxes associated with electrostatic ExB drift turbulence, consistent with the keps-model derivation.
 					If set to 2 (experimental), additionally assumes the corresponding physical fluxes across surfaces/boundaries to have multiplier 3/2.
+				</description>
+				<switch>
+					<name>b2tqna_keps_init</name>
+					<default>1.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_keps_inc</name>
+					<default>1.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
+            <switch>
+				<name>b2tqna_transport_bohm</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch to turn on the Bohm-like transport model.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_purediff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 0, SOLPS will use a pure diffusion Bohm-like transport (ref. T. Wauter et al. 2020, Plasma Phys. Control. Fusion 62 105010, 2020), otherwise a convection-diffusion model will be used. For the convection velocity, see switch b2tqna_bohm_ExB.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_ExB</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If 0, formula 9 from T. Wauter et al. 2020 is used to evaluate the convection velocity.
+                                        If 1, formula 8 is instead used to evaluate the electric field and the convection velocity is E/B.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_viscosity</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 0, no viscosity will be computed in a Bohm-like way.
+                                        If 1, viscosity effects will be included. (to be tested!)
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_average</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+                                        If 1, the density average of transport coefficients is calculated and the results assigned to all species.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_iout</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 1, writes the output for the Bohm transport model.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_gammaD</name>
+				<default>0.00</default>
+				<type>real</type>
+				<description>
+					Sets the correction for energy transport (the energy confinement is poorer compared to the particle confinement).
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_dnafact</name>
+				<default>0.00</default>
+				<type>real</type>
+				<description>
+					Sets the tuning factor for the diffusion coefficient.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_bohm_vlafact</name>
+				<default>0.00</default>
+				<type>real</type>
+				<description>
+					Sets the tuning factor for the convection velocity.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_major_radius</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Major radius of the machine.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_minor_radius</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Minor radius of the machine.
+				</description>
+			</switch>
+            <switch>
+				<name>b2tqna_vessel_half_height</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Half-height of the vessel.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_use_ECH</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Main switch to turn on the ECH model for power Electron Cyclotron power deposition.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 1, writes the output for the ECH model.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_harmonics</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Sets the harmonic at which ECH power is injected.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_coupling</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Coupling = 0 -- Fixed fraction of the power is injected as a Dirac's delta in volumes intersected at given radial position.
+                                        Coupling = 1 -- Fixed fraction of the power is injected with a Gaussial(-like) distribution.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_power</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the amount of injected ECH power [in W].
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_absorption_frac</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the fraction of ECH power that will be absorbed. 
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_Rdep</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the radial position at which ECH power is injected.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_RFfrequency</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the frequency for power injection (without the 2*pi multiplier!).
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_ECH_gauss_symm</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 1, a poloidally-symmetric Gaussian(-like) distribution is used. This switch is used for 1D radial simulations only.
+				</description>
+			</switch>
+            <switch>
+                <name>b2sral_ECH_gauss_width</name>
+                <default>0.0</default>
+                <type>real</type>
+                <description>
+                    Sets the width (i.e. the standard deviation) for the Gaussian(-like) distribution of the ECH power. 
+                </description>
+            </switch>
+            <switch>
+				<name>b2sral_losses_poloidal</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the imposed losses due to motion in the poloidal direction.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_losses_limiters</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the imposed losses due to limiter presence.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_losses_drifts</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Turns on the imposed losses due to drifts.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_nlimiters</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Sets the number of limiters.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_artloss_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 1, writes the output for the Artificial Losses model.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_limiter_width</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the fraction of the limiters' width. Limiters will 'extend' into the domain from R0-a0 to R0-lim_width*a0 and from R0+lim_width*a0 to R0+a0.
+				</description>
+			</switch>
+            <switch>
+				<name>b2sral_Twall</name>
+				<default>0.02587</default>
+				<type>real</type>
+				<description>
+					Sets the wall temperature at which neutral atoms from the limiters come back into the domain. Default value is set to be equal to 300K.
 				</description>
 			</switch>
 			<switch>
@@ -3871,10 +4243,8 @@
 					Anomalous velocity in parallel momentum balance equation.
 				</description>
 			</switch>
-			<switch>
-				<name>b2trcl_min_collisions</name>
-				<default>0.0</default>
-				<type>real</type>
+			<switchgroup>
+				<name>b2tstbc_bc_ref*</name>
 				<description>
 					Under-relaxation factors related to feedback schemes for boundary conditions.
 				</description>
@@ -3965,15 +4335,71 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					If non-zero, the movie file b2movies.nc is generated, containing several 2d quantities. Gives the real-time interval between writes of movie frames in b2movies.nc. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie files b2movies.nc and eirenemovies.nc are generated (the second one only in case of coupled runs), containing several multidimensional quantities. Gives the real-time interval between writes of movie frames in b2movies.nc and eirenemovies.nc. If non-zero, must be at least as large as the simulation timestep.
 				</description>
 			</switch>
 			<switch>
-				<name>cdfmovie_fields</name>
+				<name>cdfmovie_b25_state_variables</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Controls the quantities outputted to b2movies.nc. If cdfmovie_fields.ge.1 then only the main state variables (na, ne, Te, Ti, etc.) are written with each write to b2movies.nc. If cdfmovie_fields.ge.2 then additional quantities (e.g. fluxes, particle and energy sources) are also included.
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_state_variables.ge.1 then the plasma state variables (na, ne, Te, Ti, etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_fluxes.ge.1 then the plasma fluxes (fna(x/y), fhe(x/y), fhi(x/y), etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_transport</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_transport.ge.1 then the anomalous transport coefficients over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_state_variables</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_state_variables.ge.1 then neutrals state variables (densities and temperatures for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_fluxes.ge.1 then the neutrals fluxes (particle and energy fluxes for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_sources.ge.1 then the plasma sources due to plasma-neutrals interactions (particle and energy sources for each fluid species, and neutrals radiation from atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_triangles</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to eirenemovies.nc. If cdfmovie_triangles.ge.1 then particle density, energy density and x-, y- and z-directed momentum density for atoms and molecules on the Eirene triangular grid are outputted, in case of coupled runs.
 				</description>
 			</switch>
 			<switch>
@@ -4276,6 +4702,8 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+		</category>
+		<category name="Output">
 			<switch>
 				<name>b2mndr_inverse_ua</name>
 				<default>0</default>
@@ -4710,7 +5138,58 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+					If ion_vlct_restrict.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than M times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than M the local ion sound speed.
+					M is given by b2npmo_ion_vlct_restrict_M.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_M</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Determines M for ion_vlct_restrict.ne.0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_core</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ion_vlct_restrict_core.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than core_M times the global plasma sound speed, on closed flux surfaces. This option does not affect the ExB speeds. core_M is given by b2npmo_ion_vlct_restrict_core_M. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_core_M</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Determines core_M for ion_vlct_restrict_core.ne.0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_abs</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ion_vlct_restrict_abs.ne.0, the parallel speed of ions and fluid neutrals is limited to max_ua, regardless of the Mach number. This option can be used to stabilize cases where the Mach restriction is not sufficient, but even more care is needed to make sure the limit is not too active in the converged result. max_ua is given by b2npmo_ion_vlct_restrict_ua. The diagnostics mechanism is also controlled by b2npmo_vlct_diagno.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_ion_vlct_restrict_ua</name>
+				<default>+c</default>
+				<type>real</type>
+				<description>
+					Determines max_ua for ion_vlct_restrict_abs.ne.0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ua_max</name>
+				<default>1.0e6</default>
+				<type>real</type>
+				<description>
+					Puts a hard limit on the absolute value of the parallel velocity, but applies only to fluid neutrals and in case the spatially hybrid fluid-kinetic model is active (spatial_hybrid.ne.0).
+					This switch was introduced when b2npmo_ion_vlct_restrict only applied to ions. Now that b2npmo_ion_vlct_restrict also applies to fluid neutrals, the removal of b2mndr_ua_max can be considered.
+					For now it is kept for backward compatibility with published results.
 				</description>
 			</switch>
 			<switch>
@@ -4721,7 +5200,6 @@
 					If b2nppo_restr_po.ne.0.0, the electric potential is restricted such that its ratio (in absolute value) with the electron temperature (in eV) does not exceed b2nppo_restr_po.
 					If b2nppo_restr_po is negative, the limit only applies to regions of negative electric potential.
 					Only applies on open field lines.
-					Only applies if abs(b2nppo_restr_po).gt.1.0.
 				</description>
 			</switch>
 			<switch>
@@ -4729,55 +5207,65 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
+					If b2upht_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (i.e. Te/Ti >= rte_min).
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shivis</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.1, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.2, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shivis.eq.3, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shi</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+					If b2sihs_shi.ne.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to b2sihs_shi value as default (individual keys can still be overwritten by b2sihs_shi* and b2sihs_shivis that take proprity over b2sihs_shi).
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidu.eq.0 then shidu (ion heat source due to divergence of velocity) will be zero in boundary-volume cells.
+					If b2sihs_shidu.eq.1, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidu.eq.2, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shidu.eq.3, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.1, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.2, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the  ones that belong to the core and target boundaries.
+					If b2sihs_shidd.eq.3, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
-      <switch>
+			<switch>
 				<name>b2sihs_shedu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shedu.eq.0 then shidu (electron heat source due to divergence of velocity) will be zero in boundary-volume cells.
+					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedu.eq.2, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedu.eq.3, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
-      <switch>
+			<switch>
 				<name>b2sihs_shedd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shedd.eq.0 then shidu (electron heat source due to divergence of drift velocity) will be zero in boundary-volume cells.
+					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedd.eq.2, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedd.eq.3, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall boundary.
 				</description>
 			</switch>
 			<switch>
@@ -4968,6 +5456,24 @@
 					<default>10</default>
 					<type>integer</type>
 				</switch>
+				<switch>
+					<name>eirene_ua_max</name>
+					<default>+c</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>eirene_ua_min</name>
+					<default>-c</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>eirene_M_max</name>
+					<default>1e30</default>
+					<type>real</type>
+					<description>
+						If the Mach number based on the total fluid velocity of a background species exceeds eirene_M_max, all velocity components passed to Eirene are restricted to make the Mach number equal to eirene_M_max. It is an additional restriction on top of eirene_ua_min and eirene_ua_max.
+					</description>
+				</switch>
 			</switchgroup>
 			<switch>
 				<name>b2ux5p_style</name>
@@ -5139,7 +5645,7 @@
 			</switch>
 			<switch>
 				<name>b2txcx_increase_transp_coefs</name>
-				<default>0</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
 					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity). Must be greater than 1.0 to have an effect. Only acts on cells faces between two boundary cells.
@@ -5151,7 +5657,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If set_chcb_0.eq.1, sets radial components of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa) equals to zero on not field-aligned boundary faces (as defined by b2us_prep_Qalfmin). Also decreases the same radial components by a b2txcx_increase_transp_coefs factor on not field-aligned faces between two neighbouring boundary cells. Always on if b2txcx_increase_transp_coefs.gt.1.0.
+					If set_chcb_0.eq.1, sets radial components of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa, viscosity) equals to zero on not field-aligned boundary faces (as defined by b2us_prep_Qalfmin). Also decreases the same radial components by a b2txcx_increase_transp_coefs factor on not field-aligned faces between two neighbouring boundary cells. Always on if b2txcx_increase_transp_coefs.gt.1.0.
 				</description>
 			</switch>
 			<switch>
@@ -5173,7 +5679,7 @@
 					Initial density (in m^{-3}) put in all cells for all new species if not overwritten by initial state file. This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 				</description>
 			</switch>
-		        <switch>
+			<switch>
 				<name>b2mndr_use_min_na_numerics</name>
 				<default>0</default>
 				<type>integer</type>
@@ -5392,8 +5898,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
-					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
+					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated.
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
 					The scheme is meant to be used in time-dependent mode  (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -5405,7 +5911,7 @@
 				<description>
 					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
 					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup. 
+					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup.
 					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -5417,6 +5923,67 @@
 				<description>
 					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
 					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Option to use a cell-based spatially varying false timestep computed at runtime based on local criteria. Can only be used in steady-state mode (b2mndt_style=1). In their current implementation, the methods can be used in conjunction with region-based multipliers (DTCO etc.) but not with flux-tube-based appraoches (DTCO_FTS etc.) and not with the core suppression mechanism (CORE_DT_SUPPRESSION).
+					If 0, no cell-based timestep multiplier.
+					If 1, local timestep based on the electron temperature. The baseline timestep (b2mndr_dtim) is applied below b2mndt_var_te_min. Above b2mndt_var_te_max, the baseline timestep is multiplied by b2mndt_var_mult. Log-log interpolation is used in between.
+					If 2, local timestep based on the ratio of the source strengths compared to the particle/momentum/energy content of each cell. dt2 = abs(content)/abs(S)/Fs, where 'content' is the particle, parallel momentum, ion heat, or electron heat content of a cell, 'Fs' is a safety factor, and 'S' is the strength of the source terms. The included contributions are those computed by EIRENE, and B2.5 contributions due to ionization, recombination and CX (e.g. ionization between higher ionization stages or CX when using fluid neutrals). Other source contributions are not included because they are only computed after the calculation of the timestepping sources. The final timestep is determined as dt = min(max(dt2,b2mndr_dt),b2mndr_dt*b2mndt_var_mult), such that the user can retain control over the minimum and maximum timestep.
+					If 3, CFL-criterion based on drift velocities. Highly experimental. Still under development. See code for details.
+					If 4, combination of 3 and 2. Highly experimental. Still under development. See code for details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_mult</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Maximum multiplier to the timestep when using b2mndt_var_style > 0.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_te_min</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					The electron temperature below which the baseline timestep is used when using b2mndt_var_style = 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_te_max</name>
+				<default>1.0e30</default>
+				<type>real</type>
+				<description>
+					The electron temperature above which the maximum timestep is used when using b2mndt_var_style = 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style2_SF</name>
+				<default>10.0</default>
+				<type>real</type>
+				<description>
+					Safety factor Fs when using b2mndt_var_style = 2 or 4.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style3_Cmax</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					CFL (Courant-Friedrichs-Lewy) limit when using b2mndt_var_style = 3 or 4.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_var_style_nfilter</name>
+				<default>1</default>
+				<type>real</type>
+				<description>
+					When using b2mndt_var_style = 3, carry over the minimum timestep between neighbours nfilter times. (Highly experimental).
 				</description>
 			</switch>
 			<switch>
@@ -6857,7 +7424,7 @@
 			<switch>
 				<name>DBG_EIR_MC</name>
 				<default>0</default>
-				<type>integer</type>
+				<type>integer array of size (100)</type>
 				<description>
 					Debug output control for eirene_mc routine. See code for usage.
 				</description>
@@ -7096,6 +7663,10 @@
 					Used to set the parameters for the functional form of the time-dependent gas puff function. For use with TIME_DEP_PUFF_FUNC and TIME_DEP_PUFF_CASE.
 				</description>
 			</switch>
+			<!-- The following note is to help with documentation!-->
+			<note>
+				The following are active only if NO_B2_CHEM_SPUT is not defined among the compiler options and are used to override the Eirene chemical sputtering settings:
+			</note>
 			<switch>
 				<name>NGPDATA</name>
 				<default>0</default>
@@ -7145,6 +7716,17 @@
 					Passed to Eirene. Eirene atomic species index of the sputtered particle. If igass_chemical &gt; natmi, the data from chemical_sputter_yield is not used and the yield from the Eirene surface blocks is used instead.
 				</description>
 			</switch>
+		</category>
+		<category name="b2.wall_save.parameters">
+			<introduction>
+				<namelist>WALL_SAVE</namelist>
+				<description>
+					Read if present in the run directory.
+					Automatically generated by B2.5 but can be modified by user.
+					Contains data describing the state of the walls lining the vacuum vessel.
+					These data are used for smooth restarts and are not really intended for human use.
+				</description>
+			</introduction>
 			<switch>
 				<name>ITSPUT_CHEMICAL</name>
 				<default>0</default>
@@ -7400,7 +7982,7 @@
 				<description>
 					Contains the atomic numbers Z of the various elements present within the surface layer of wall element (iwall). Defaults to 6 for the first value, 0 otherwise.
 				</description>
-			</switch>
+			</introduction>
 			<switch>
 				<name>LAYER_RELCONSTITUENTS</name>
 				<type>real array of size (NWALL,6+NTRACK)</type>
@@ -7484,6 +8066,12 @@
 					Indicate the shot number to overwrite (to be used only when updating an already saved run with 'resave_mds' script).
 					Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
 				</description>
+			</introduction>
+			<switch>
+				<name>NBC</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>Number of boundary segments.</description>
 			</switch>
 		</category>
 		<category name="b2.boundary.parameters">
@@ -7630,7 +8218,7 @@
 					24 : constant density feedback scaled by density on the ring 'bc_type21_ref' away. CONPAR(,,1) specifies the desired density in m<sup>-3</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Not yet available for WG.
 					25 : feedback boundary condition: prescribe the average value of the density and add the poloidal density variation from the neighbouring radial ring. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=21 fails). It is recommended to use this boundary condition together with the corresponding condition on ion temperature (BCENI=26,27). CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					26 : feedback boundary condition: prescribe the total ion flux and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=22 fails). It is recommended to use this boundary condition together with a corresponding condition on the ion temperature (BCENI=26,27). The total desired flux is summed over all BCCON=26 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
-					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density of the highest ionization stage. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
+					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					28 : Prescribe the flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. Only intended for core boundaries. CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					29 : Feedback on the total particle flux, by imposing a flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Intended for core boundaries only.
 				</description>
@@ -7653,7 +8241,7 @@
 					10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m.
 					11 : Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used. Not yet available for WG.
 					12 : condition from b2stbc_spb for the parallel momentum.
-					13 : drift-compatible sheath boundary condition for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5 sound speed is defined separately for each ionization state.
+					13 : drift-compatible sheath boundary condition for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5, the sound speed is defined separately for each ionization state.
 					14 : condition from b2stbc_spb for the parallel momentum
 					15 : prescribe the value of the parallel velocity, scaled with B_average/B_local. Not yet available for WG.
 					16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
@@ -7680,8 +8268,8 @@
 					11 : not used
 					12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>. Obsolete. Replace with drift-compatible BCENE = 15.
 					13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
-					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
+					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>. The energy loss also includes an electrostatic term as &alpha; ENEPAR(,2) C<sub>s</sub>,collective e &Phi; n<sub>e</sub>.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used). Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Recommended to replace [16] for high densities.
 					18 : fractional drop condition. Experimental. Attempts to set the guard cell temperature to be (1 - ENEPAR(,1)) times the boundary cell temperature.
@@ -7713,7 +8301,7 @@
 					12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>. Obsolete. Replace with drift-compatible BCENI = 15.
 					13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
 					14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>.
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_ti will be used). Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 					18 : fractional drop condition.  Experimental. Attempts to set the guard cell temperature to be (1 - ENIPAR(,1)) times the boundary cell temperature.
@@ -7961,7 +8549,7 @@
 				<default>0.0</default>
 				<type>real array of size (NSPECIES)</type>
 				<description>
-					Last value of the density used for the feedback control for each isonuclear sequence.
+					Last value of the target quantity used for the feedback control for each isonuclear sequence.
 				</description>
 			</switch>
 		</category>
@@ -8397,7 +8985,7 @@
 				<description>
 					If ADDSPEC(is,ikind,spec).ge.0, then the transport coefficient profile of type (ikind) from species (spec) is also used for species with index ADDSPEC(is,ikind,spec).
 				</description>
-			</switch>
+			</introduction>
 			<switch>
 				<name>TRANSPORT_IP_FILENAME</name>
 				<default>b2.transport.inputfile</default>
@@ -8572,7 +9160,7 @@
 				<description>
 					Multiplier to the time used in solving the parallel momentum equation of species (is) in region (ireg).
 				</description>
-			</switch>
+			</introduction>
 			<switch>
 				<name>DTEE</name>
 				<default>1.0</default>
@@ -8788,6 +9376,14 @@
 				<type>logical array of size (1:NSPECIES)</type>
 				<description>
 					Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
+				</description>
+			</switch>
+			<switch>
+				<name>MIN_NA</name>
+				<default>b2mndr_na_min</default>
+				<type>real array of size (0:NS-1,0:NREG)</type>
+				<description>
+					Species- and region-dependent minimum density. Only used if 'b2mndr_use_min_na_numerics.ne.0'. The default value is the one set by b2mndr_na_min.
 				</description>
 			</switch>
 			<switch>
@@ -9300,22 +9896,6 @@
 					Labels for the neutral data surface groups.
 				</description>
 			</switch>
-      <switch>
-				<name>NPFR_CVS</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of control volumes which are written in PFR_CVS
-				</description>
-			</switch>
-       <switch>
-				<name>PFR_CVS</name>
-				<default>0</default>
-				<type>integer array of size (100)</type>
-				<description>
-					Control volumes, where average neutral pressure for fb_type.eq.20 is calced.
-				</description>
-			</switch>
 			<switch>
 				<name>NPFR_CVS</name>
 				<default>0</default>
@@ -9406,7 +9986,7 @@
 					Read if 'b2optim_namelist' is set to 1.
 					Necessary for sensitivity and optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
 				</description>
-			</introduction>
+			</switch>
 			<switch>
 				<name>NCF</name>
 				<default>0</default>

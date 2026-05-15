@@ -10,7 +10,8 @@
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
      &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop
@@ -179,11 +180,10 @@ c Artificial losses module
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16 !fc 29.03.24
-      integer, save :: b2mndr_redef_pbs = 0
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      integer, save :: shot = 0, run = 0, ids_save = 0
+      integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -369,12 +369,6 @@ c Artificial losses module
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -716,18 +710,21 @@ c Artificial losses module
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
 *      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
-*     logu(rtrqa), where rtrqa is the electron heat loss rate
-*     coefficient at electron temperature rtt(i) and electron density
-*     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
-*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient
+*     at electron temperature rtt(i) and electron density rtn(j) for
+*     processes starting from charge state k, excluding the contributions
+*     coming from potential energy of recombination and other recombination
+*     process contributions. In short, it includes the processes not
+*     accounted for in Eirene.
+*     rtqa has dimension eV*m**3/s.
+*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies the
+*     logu(rtrqr), where rtrqr is the electron heat loss rate
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used. rtqr has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -1001,6 +998,7 @@ c Artificial losses module
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
+#endif
        if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
        if(switch%equation_sources.ne.0)
@@ -1193,7 +1191,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,is,:)=rtlsa(:,0,:)
              rtlra(:,is,:)=rtlra(:,0,:)
              rtlqa(:,is,:)=rtlqa(:,0,:)
-             rtlqa_ra(:,is,:)=rtlqa_ra(:,0,:)                        !mb 22.05.18
+             rtlqr(:,is,:)=rtlqr(:,0,:)                        !mb 22.05.18
              rtlcx(:,is,:)=rtlcx(:,0,:)
              rtlrd(:,is,:)=rtlrd(:,0,:)
              rtlbr(:,is,:)=rtlbr(:,0,:)
@@ -1240,7 +1238,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,:,is)=rtlsa(:,:,is)+log(rescale_sa(is))
              rtlra(:,:,is)=rtlra(:,:,is)+log(rescale_ra(is))
              rtlqa(:,:,is)=rtlqa(:,:,is)+log(rescale_qa(is))
-             rtlqa_ra(:,:,is)=rtlqa_ra(:,:,is)+log(rescale_qa(is))
+             rtlqr(:,:,is)=rtlqr(:,:,is)+log(rescale_qa(is))
              rtlcx(:,:,is)=rtlcx(:,:,is)+log(rescale_cx(is))
              rtlrd(:,:,is)=rtlrd(:,:,is)+log(rescale_rd(is))
              rtlbr(:,:,is)=rtlbr(:,:,is)+log(rescale_br(is))
@@ -1442,11 +1440,6 @@ csw 09oct2012
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
          not_default = not_default.or.(shot.gt.0.and.run.ge.0)
-         imasdir = trim(home_dir)//'/public/imasdb/'
-     &           //trim(database)//'/'//trim(version)
-#if AL_MAJOR_VERSION < 5
-     &           //'/0'
-#endif
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -1792,10 +1785,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else
-        call xerrab ('b2mndr -- specify BCs using boundary_namelist')
+        call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                               !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                                  !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -2162,7 +2155,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2231,6 +2224,25 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf, znnucl, mu, mu_mdf
+      use b2mod_input_profile
+     & , only : sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata
+      use b2mod_facdrift_exb
+     & , only : iy_nocoreexb, facdrift_tanh_a, facdrift_tanh_b,
+     &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
+     &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
+     &          fac_vis_profile
 #endif
       use b2mod_ad
 #ifdef IMAS
@@ -2556,7 +2568,7 @@ c new CDF movie option
         if(tim.ge.(save_cdfmovie_time-dtim/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -3537,11 +3549,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       close(nout(7))
 
 *   ..mms steady-state error analysis
-      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then                 !srv 26.02.18 {
+      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then          !srv 26.02.18 {
         call calc_err(nCv, ns, state%pl, switch, itim, mpg)
       endif                                                              !srv 26.02.18 }
       if(switch%b2mndr_iout.ne.0) then
-        if(switch%use_mms.eq.0) then                                            !srv 29.11.18 {
+        if(switch%use_mms.eq.0) then                                     !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3604,7 +3616,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
+        call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -4076,6 +4088,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      radiation, wall )
         call dealloc_batch_edge(
      &      batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+     &    , batch_plasma_profiles, batch_plasma_sources
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &    , summary
 #endif
@@ -4165,9 +4180,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
       if(switch%boundary_sources.ne.0)
-     &  call dealloc_b2mod_boundary_sources     !srv 26.02.18
+     & call dealloc_b2mod_boundary_sources                              !srv 26.02.18
       if(switch%equation_sources.ne.0)
-     &  call dealloc_b2mod_equation_sources     !srv 26.02.18
+     & call dealloc_b2mod_equation_sources                              !srv 26.02.18
       call dealloc_b2mod_b2plot
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR

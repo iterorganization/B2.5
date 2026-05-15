@@ -22,7 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
-c*  lsns          : Eirene recycling 'non-default surfaces'
+c*  lsns          : Eirene recycling 'non-default surfaces' for the strata
 c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
@@ -107,10 +107,15 @@ cank }
      *   b2species_start(:), b2species_end(:),
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
-     1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:)
-     *   accel_ion(:)
-     *   maxw(:),                                      !nh 11.07.18
+     1   mlcmp(:,:), micmp(:,:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     2   ngpdata(:), time_dep_puff_case(:),
+     *   accel_ion(:),
+     *   maxw(:),                                 !nh 11.07.18
+     *   maxw_eff(:),
+     *   mol(:)                                   !nh 31.03.21
+      real (kind=R8), allocatable, save ::
+     *   RCFE(:), RCFI(:), e_fc
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:), time_dep_puff_func(:)
       character*1, allocatable, save ::
@@ -126,6 +131,7 @@ cank }
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: RECYCM(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
@@ -177,6 +183,8 @@ cank }
       integer, save :: eb2spcr(1:natmid)
       integer, save :: accel_ion(NSTRAID)
       integer, save :: maxw(NSTRAID)
+      integer, save :: maxw_eff(NSTRAID)
+      integer, save :: mol(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       character*1, save :: ARCSTRA(NSTRAID)
@@ -191,7 +199,7 @@ cank }
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, nsns,
-     .     dbg_eir_mc, debug_flags(100), neutrals_count
+     .     dbg_eir_mc, debug_flags(100), neutrals_count, maxpoin
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -232,8 +240,8 @@ csw 21feb2012
 #endif
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
-     .  species_start, species_end,
-     .  maxw,
+     .  species_start, species_end, b2species_start, b2species_end,
+     .  maxw, maxw_eff, mol,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
      ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
@@ -320,7 +328,11 @@ csw 21feb2012
       allocate(HYB_TYPE(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
+      allocate(b2species_start(NSTRAID))
+      allocate(b2species_end(NSTRAID))
       allocate(maxw(NSTRAID))
+      allocate(maxw_eff(NSTRAID))
+      allocate(mol(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
       allocate(eb2atcr(natm_in))
@@ -417,9 +429,9 @@ cmb   b2recyc is set negative here to check whether the field was read. If not r
           ERECYC(is,:)=0.3_R8
         endif
       enddo
-cmb  Default Franck-condon energy is 2eV per atom
-      e_fc= 2.0_R8  
-cmb  Default is to accelerate ions everywhere with sheath potential (target & wall) 
+cmb  Default Franck-Condon energy is 2eV per atom
+      e_fc= 3.0_R8
+cmb  Default is to accelerate ions everywhere with sheath potential (target & wall)
       accel_ion = 1
       RCION=0.0_R8
       recyceir=1.0_R8
@@ -442,7 +454,12 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       volrecwt=0.1_R8
       species_start(:)=0
       species_end(:)=nsd-1
-      maxw(:) = 0
+cmb   b2species_start and end are set -100 here to check whether the field was read. If not recyc is copied into b2recyc
+      b2species_start(:)=-100
+      b2species_end(:)=-100
+      maxw(:) = 1
+      maxw_eff(:) = 1
+      mol(:) = 0
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -585,7 +602,11 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(HYB_TYPE)
       deallocate(species_start)
       deallocate(species_end)
+      deallocate(b2species_start)
+      deallocate(b2species_end)
       deallocate(maxw)
+      deallocate(maxw_eff)
+      deallocate(mol)
       deallocate(b2eatcr)
       deallocate(b2espcr)
       deallocate(eb2atcr)
@@ -694,13 +715,19 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           end if
 #else
           nstrat=nstrai+1
-        elseif (switch%use_eirene.ne.0) then
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
+#endif
         else
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+          else
+            nstrat=nstrai
+          endif
+#else
           nstrat=nstrai
         endif
 
@@ -908,8 +935,9 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      &   species_end(istra).lt.ns, 'faulty input species_end')
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
-        call xertst ((0.eq.maxw(istra)).or.
-     &    (1.eq.maxw(istra)), 'faulty input maxw')
+        call xertst (4.gt.maxw(istra), 'faulty input maxw')
+        call xertst (0.le.mol(istra).and.mol(istra).le.1,
+     &   'faulty input mol')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
@@ -1386,22 +1414,29 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           end if
 #else
           nstrat=nstrai+1
-        elseif (switch%use_eirene.ne.0) then
-          nstrat=nstrai+1
-          crcstra(nstrat)='T'
-          rcpos(nstrat)=0
-          rcstart(nstrat)=0
-          rcend(nstrat)=0
-          if (switch%recycle_afn.ne.0) then
-            do is = 0, ns-1
-              if (nint(zn(is)).eq.1) then
-                erecyc(is,nstrat) = 0.0_R8
-                mrecyc(is,nstrat) = 0.0_R8
-              end if
-            end do
-          end if
+#endif
         else
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+            crcstra(nstrat)='T'
+            rcpos(nstrat)=0
+            rcstart(nstrat)=0
+            rcend(nstrat)=0
+            if (switch%recycle_afn.ne.0) then
+              do is = 0, ns-1
+                if (nint(zn(is)).eq.1) then
+                  erecyc(is,nstrat) = 0.0_R8
+                  mrecyc(is,nstrat) = 0.0_R8
+                end if
+              end do
+            end if
+          else
+            nstrat=nstrai
+          endif
+#else
           nstrat=nstrai
+#endif
         endif
 
         m%nRc = nstrat

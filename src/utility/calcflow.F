@@ -42,9 +42,8 @@
 *   ..local variables
       integer iFc
       real (kind=R8) ::
-     *  funf(nFc), dfun(nFc,0:1), funv(nVx), fl, df, t0, t1,con2,
-     *  term1, term2
-      real (kind=R8), save :: eps = 1.0e-60_R8
+     *  dfun(nFc,0:1), funv(nVx), t0
+      real (kind=R8), parameter :: eps = 1.0e-60_R8
 
 *   ..procedures
       real (kind=R8) ::
@@ -98,22 +97,13 @@
        do iFc = 1, nFc
 
 *    ..poloidal flow
-        t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
-     &    0.5_R8*abs(flo(iFc,0)))/(geo%fcQalf(iFc,0) + eps)!! 
-!!
-!!        flowf(iFc,0) =
-!!     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
-!!        flow(iFc,0) = 
-!!     &    flowf(iFc,0) - t0*dfun(iFc,0)
-        con2 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0))
-        flowf(iFc,0) =
-     &               flo(iFc,0)*funf(iFc)
-        flow(iFc,0) = 
-     &    flowf(iFc,0) - con2*dfun(iFc,0)
+        t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) -
+     &    0.5_R8*abs(flo(iFc,0)))/(geo%fcQalf(iFc,0) + eps)!!
 
-        term1 = flo(iFc,0)*funf(iFc)
-        term2 = con2*dfun(iFc,0)
-         
+        flowf(iFc,0) =
+     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
+        flow(iFc,0) =
+     &    flowf(iFc,0) - t0*dfun(iFc,0)
 
 *    ..radial flow
         t0 = (hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) -

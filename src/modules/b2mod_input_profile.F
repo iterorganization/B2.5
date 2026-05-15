@@ -533,7 +533,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_user_namelist
      , , only : nomp, omp, icsepomp
       IMPLICIT NONE
-      integer, intent (in) :: nCv, nFc, ns
+      integer, intent (in) :: nCv, ns
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -724,8 +724,8 @@ cdjm Jan2017 Keep linearised sources for balance
                 else
                   iy2=iy
                 endif
-                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
-     &                                     mpg%ftCvP(iFt,2) - 1
+                do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                    mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
                   lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3

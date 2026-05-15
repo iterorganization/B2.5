@@ -93,7 +93,7 @@
 !$omp& default(none)
 !$omp& private(is, iCv, t0)
 !$omp& shared(ns, nCv)
-!$omp& shared(na,ua,te,ti,po,ne,tn,snest, kt, zt)
+!$omp& shared(na, ua, te, ti, po, ne, tn, snest, kt, zt)
 !$omp& shared(snast, smost, shest, shist, sktst, sztst, schst)
 !$omp& shared(sr, switch, b2srst_kt_eps, b2srst_zt_eps)
 !$omp do
@@ -102,7 +102,7 @@
        do iCv = 1, nCv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
          t0 = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na(iCv,is)
          sr%sna(iCv,0,is) =
      &     max(sr%sna(iCv,0,is),(1.0_R8+switch%b2srst_rf0)*t0,
@@ -125,7 +125,7 @@
 !WG_TODO       endif                                                         !srv 01.07.08 }
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do 
+!$omp end do
 #endif
 *   ..modify smo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
@@ -144,7 +144,7 @@
        enddo
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do 
+!$omp end do
 #endif
 *   ..modify she, shi, sch, skt, szt
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
@@ -238,7 +238,7 @@
      &   (1.0_R8+switch%b2srst_rf3)*t0)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do 
+!$omp end do
 #endif
 
 *   ..calculate the source coefficients of numerical stabilisation.
@@ -286,7 +286,7 @@ cdjm Jan2017 Store for balance
 !         call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
-      if (switch%b2npht_iout.eq.1 .or. 
+      if (switch%b2npht_iout.eq.1 .or.
      &                              switch%iout_b2wdat.eq.4)   then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne

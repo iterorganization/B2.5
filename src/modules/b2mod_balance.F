@@ -1870,11 +1870,11 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &       eirene_mc_mipl_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
      &       eirene_mc_mipl_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
      &                                                 ub(iCv)
-            eirene_mc_cppv_smo_bal(iCv,isb,istrai)=
-     &       eirene_mc_cppv_smo0to3(iCv,0,isb,istrai)+
-     &       eirene_mc_cppv_smo0to3(iCv,1,isb,istrai)*ub(iCv)+
-     &       eirene_mc_cppv_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
-     &       eirene_mc_cppv_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
+            eirene_mc_mppl_smo_bal(iCv,isb,istrai)=
+     &       eirene_mc_mppl_smo0to3(iCv,0,isb,istrai)+
+     &       eirene_mc_mppl_smo0to3(iCv,1,isb,istrai)*ub(iCv)+
+     &       eirene_mc_mppl_smo0to3(iCv,2,isb,istrai)*rob(iCv)+
+     &       eirene_mc_mppl_smo0to3(iCv,3,isb,istrai)*rob(iCv)*
      &                                                 ub(iCv)
           enddo
         endif
@@ -2082,6 +2082,9 @@ cxpb We also treat the electron particle sources
             eirene_mc_pmel_sne_bal(iCv,istrai)=
      &       eirene_mc_pmel_sne0to1(iCv,0,istrai)+
      &       eirene_mc_pmel_sne0to1(iCv,1,istrai)*ne(iCv)
+            eirene_mc_piel_sne_bal(iCv,istrai)=
+     &       eirene_mc_piel_sne0to1(iCv,0,istrai)+
+     &       eirene_mc_piel_sne0to1(iCv,1,istrai)*ne(iCv)
             eirene_mc_eael_she_bal(iCv,istrai)=
      &       eirene_mc_eael_she0to3(iCv,0,istrai)+
      &       eirene_mc_eael_she0to3(iCv,1,istrai)*te(iCv)+

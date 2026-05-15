@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sicf (nCv, nFc, nVx, isb, mb, switch, geo, mpg,     !srv 09.07.01 28.01.02 22.07.05
-     *                  nb, ub, smbcf, ctcf, wrk0)                     !srv 06.04.07
+      subroutine b2sicf (nCv, nFc, nVx, isb, mb, switch, geo, mpg,      !srv 09.07.01 28.01.02 22.07.05
+     *                   nb, ub, smbcf, ctcf, wrk0)                     !srv 06.04.07
       use b2mod_types
       use b2mod_constants
       use b2mod_switches
@@ -96,11 +96,11 @@ cdjm Store linearised source for balance
       if (switch%b2sicf_iout.ne.0) then                                 !srv 17.06.02 {
 #ifdef _OPENMP
 !$OMP MASTER
-         write(*,*) 'B2SICF OpenMP warning: no file output in ',
-     &              'parallel mode'
+        write(*,*) 'B2SICF OpenMP warning: no file output in ',
+     &             'parallel mode'
 !$OMP END MASTER
 #else
-      write (chns,'(i3.3)') isb
+        write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
           call my_out_us(70,nCv,0,smbcf(1,k),

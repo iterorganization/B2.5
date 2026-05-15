@@ -82,12 +82,15 @@
        use b2us_plasma
        use b2us_map
        use b2mod_numerics_namelist
+#ifdef LEGACYCOMP
+       use b2mod_math
+#endif
        implicit none
        type (B2Plasma), intent (in) :: pl
        type (switches), intent (in) :: switch
        type (mapping), intent(in) :: mpg
-       integer nCv, ns
-       integer is, iCv, ind, i, itim                                    !srv 09.07.18
+       integer nCv, ns, itim
+       integer i, is, iCv, ind                                          !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(nCv,0:ns-1), exact_ua(nCv,0:ns-1),
      &    exact_te(nCv), exact_ti(nCv), exact_tn(nCv),
@@ -98,7 +101,7 @@
        character*27 filename
        logical b2news_solving(4)
 
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
 #endif
 
@@ -111,7 +114,7 @@
        enddo
        call read_b2mod_numerics_namelist(nCv,ns,
      &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     &      switch%b2mndt_style)
+     &      switch%b2mndt_style,.false.)
 
        write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'_us.dat')
@@ -140,7 +143,7 @@
      &                    'na'//chns//'_precise')
            era = pl%na(:,is)-exact_na(:,is)
            call my_out_us(70,nCv,0,era,'na'//chns//'_aerr')
-           ind = maxloc(abs(era),1)                                       !srv 09.07.18
+           ind = maxloc(abs(era),1)                                     !srv 09.07.18
            write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
      &          ' Max|eraNa',chns,'|','=',abs(era(ind)),
      &          '   is in iCv = ', ind
@@ -148,36 +151,36 @@
              err = abs(era)/exact_na(:,is)
              ind = maxloc(err,1)
              write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
-     &        ' Max|eraNa',chns,'/Na',chns,'|   =',err(ind),              !srv 09.07.18
+     &        ' Max|eraNa',chns,'/Na',chns,'|   =',err(ind),            !srv 09.07.18
      &        '   is in iCv = ', ind
              call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
            else
              write(71,'(a,a3,a,a3,a,a4)')
-     &        ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
+     &        ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'               !srv 09.07.18
            endif
 
-#ifdef F2003
-           L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
+#ifndef LEGACYCOMP
+           L2norm=norm2(exact_na(:,is))                                 !srv 09.07.18 {
 #else
            L2norm=norm2(nCv,exact_na(:,is))
 #endif
            if(L2norm.ne.0.0_R8) then
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' L2eraNa',chns,'/L2Na',chns,'    =',
-#ifdef F2003
-     &          norm2(era)/L2norm
+#ifndef LEGACYCOMP
+     &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
 #endif
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' C_eraNa',chns,'/C_Na',chns,'    =',
-     &          maxval(abs(era))/maxval(abs(exact_na(:,is)))
+     &        maxval(abs(era))/maxval(abs(exact_na(:,is)))
            else
              write(71,'(a,a3,a,a3,a,a4)')
      &        ' L2eraNa',chns,'/L2Na',chns,'    =',' Inf'
              write(71,'(a,a3,a,a3,a,a4)')
      &        ' C_eraNa',chns,'/C_Na',chns,'    =',' Inf'
-           endif                                                          !srv 09.07.18 }
+           endif                                                        !srv 09.07.18 }
 
            write(71,*)
          enddo
@@ -186,7 +189,7 @@
        if (b2news_solving(4)) then
          if (any(solveee(0:mpg%nnreg(0)))) then
            call calc_err_cc(nCv, 'te', pl%te, exact_te, qe,
-     &                      switch, itim)                                 !srv 29.12.18
+     &                      switch, itim)                               !srv 29.12.18
          endif
          if (any(solveei(0:mpg%nnreg(0)))) then
            call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe,
@@ -220,7 +223,7 @@
      &                    'ua'//chns//'_precise')
            era = pl%ua(:,is)-exact_ua(:,is)
            call my_out_us(70,nCv,0,era,'ua'//chns//'_aerr')
-           ind = maxloc(abs(era),1)                                       !srv 09.07.18
+           ind = maxloc(abs(era),1)                                     !srv 09.07.18
            write(71,'(a,a3,a,8x,a,es10.3,a,i7)')
      &      ' Max|eraUa',chns,'|','=',abs(era(ind)),
      &      '   is in iCv = ', ind
@@ -228,36 +231,36 @@
              err = abs(era/exact_ua(:,is))
              ind = maxloc(err,1)
              write(71,'(a,a3,a,a3,a,es10.3,a,i7)')
-     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',err(ind),              !srv 09.07.18
+     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',err(ind),            !srv 09.07.18
      &        '   is in iCv = ', ind
              call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
            else
              write(71,'(a,a3,a,a3,a,a4)')
-     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
+     &        ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'               !srv 09.07.18
            endif
 
-#ifdef F2003
-           L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
+#ifndef LEGACYCOMP
+           L2norm=norm2(exact_ua(:,is))                                 !srv 09.07.18 {
 #else
            L2norm=norm2(nCv,exact_ua(:,is))
 #endif
            if(L2norm.ne.0.0_R8) then
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' L2eraUa',chns,'/L2Ua',chns,'    =',
-#ifdef F2003
-     &          norm2(era)/L2norm
+#ifndef LEGACYCOMP
+     &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
 #endif
              write(71,'(a,a3,a,a3,a,es10.3)')
      &        ' C_eraUa',chns,'/C_Ua',chns,'    =',
-     &          maxval(abs(era))/maxval(abs(exact_ua(:,is)))
+     &        maxval(abs(era))/maxval(abs(exact_ua(:,is)))
            else
              write(71,'(a,a3,a,a3,a,a4)')
      &        ' L2eraUa',chns,'/L2Ua',chns,'    =',' Inf'
              write(71,'(a,a3,a,a3,a,a4)')
      &        ' C_eraUa',chns,'/C_Ua',chns,'    =',' Inf'
-           endif                                                          !srv 09.07.18 }
+           endif                                                        !srv 09.07.18 }
 
            write(71,*)
          enddo
@@ -301,6 +304,9 @@
      . switch, itim)
        use b2mod_types
        use b2mod_switches
+#ifdef LEGACYCOMP
+       use b2mod_math
+#endif
        implicit none
        integer nCv
        character(*) :: nmvar
@@ -312,8 +318,7 @@
        character(32) :: pass
        character*4 chitim
        type (switches), intent (in) :: switch
-
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
 #endif
 

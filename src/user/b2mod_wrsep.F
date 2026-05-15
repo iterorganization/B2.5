@@ -97,12 +97,7 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine b2wrsep(geo,mpg,st,st_ext, ns,switch)
-      use b2mod_geo
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-     . , only : sna
+      subroutine b2wrsep(mpg,geo,ns,state,state_ext,switch)
       use b2mod_tallies
       use b2mod_switches
       use b2mod_constants
@@ -115,19 +110,17 @@ c----------------------------------------------------------------------
 #else
       use b2mod_eirbra
 #endif
-      use b2us_map
       use b2us_geo
+      use b2us_map
       use b2us_plasma
-      use b2mod_switches
       implicit none
 
-      type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: geo
-      type(B2state), intent(in) :: st
-      type (B2StateExt), intent (in) :: st_ext
-      type(switches), intent(in) :: switch
-
-      real (kind=R8) :: BoRiS
+      integer ns
+      type (mapping) :: mpg
+      type (geometry) :: geo
+      type (B2State) :: state
+      type (B2StateExt) :: state_ext
+      type (switches) :: switch
 c
 c*** Global values
       real (kind=R8) ::
@@ -144,9 +137,8 @@ c*** Global values
 
 c*** Local variables of general use
       real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v, t0, wrkf ,zeff(mpg%nCv)
-      integer iFc, iFc1, iFc2, ic1, ic2, iCv
-      integer i,j,k,l,ia,is,ns,is_start,is_end
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(mpg%nCv)
+      integer i,j,k,l,ia,ic,is,iCn,iCv,iFc,iFs
 
       save
 c======================================================================
@@ -180,87 +172,32 @@ c
       hlp_v=0.0_R8
       hlp_nesp = 0.0_R8
       hlp_qesp = 0.0_R8
-      hlp_qisp = 0.0_R8 
-      hlp_qtsp = 0.0_R8 
+      hlp_qisp = 0.0_R8
+      hlp_qtsp = 0.0_R8
 c
 c*** Compute the data
 c
-      call b2xzef (mpg%nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne,
-     & zeff, st_ext)    
-      do i = mpg%fsFcP(mpg%iFssep,1), mpg%fsFcP(mpg%iFssep,1)
-     &  +mpg%fsFcP(mpg%iFssep,2)-1
-        iFc = mpg%fsFc(i)
-        ic1 = mpg%fcCv(iFc,1)
-        ic2 = mpg%fcCv(iFc,2)
-        if(mpg%cvOnClosedSurface(ic1) .or. 
-     &    mpg%cvOnClosedSurface(ic2)) then
-          wrkf = (st%dv%ne(ic1)*geo%fcHc(iFc,2) 
-     &      + st%dv%ne(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
-          hlp_nesp = hlp_nesp + wrkf*geo%fcS(iFc)
-          hlp_v = hlp_v + geo%fcS(iFc)
-
-          hlp_qesp = hlp_qesp+st%dv%fhe_mdf(iFc,1)
-          hlp_qisp = hlp_qisp+st%dv%fhi_mdf(iFc,1)
-
-          hlp_tesp = hlp_tesp + (st%pl%te(ic1)*geo%fcHc(iFc,2) 
-     &      + st%pl%te(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
-     &      *wrkf*geo%fcS(iFc) 
-          hlp_tisp = hlp_tisp + (st%pl%ti(ic1)*geo%fcHc(iFc,2) 
-     &      + st%pl%ti(ic2) *geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
-     &      *wrkf*geo%fcS(iFc) 
-
-          hlp_zesp = hlp_zesp + (zeff(ic1)*geo%fcHc(iFc,2) 
-     &      + zeff(ic2)*geo%fcHc(iFc,1))/sum(geo%fcHc(iFc,:))
-     &      *wrkf*geo%fcS(iFc) 
-          is=0
-          do j=1,nspecies !{
-            do k=1,nfluids(j) !{
-              is=is+1
-              t0 = (st%pl%na(ic1,ions_list(is))*geo%fcHc(iFc,2) 
-     &        + st%pl%na(ic2,ions_list(is))*geo%fcHc(iFc,1)) 
-     &        /sum(geo%fcHc(iFc,:)) *geo%fcS(iFc)
-              nisi_tmp(is)=nisi_tmp(is)+t0
-              gisi_tmp(is) = gisi_tmp(is)+
-     &          st%dv%fna_mdf(iFc,1,ions_list(is))
-              nisp_tmp(j)=nisp_tmp(j)+t0
-              gisp_tmp(j) = gisp_tmp(j)+
-     &          st%dv%fna_mdf(iFc,1,ions_list(is))
-            enddo
-          enddo
-        endif
-      enddo
-      do j=1,nspecies
-        do iCv=1,mpg%nCv
-          if (mpg%cvOnClosedSurface(iCv)) then
-            if (switch%use_eirene.eq.0) then
-              gasp_tmp(j) = gasp_tmp(j)-st%sr%sna(iCv,0,eb2spcr(j))-
-     &        st%sr%sna(iCv,1,eb2spcr(j))*st%pl%na(iCv,eb2spcr(j))
-            else
-              gasp_tmp(j) = gasp_tmp(j)+
-     &          st%srw%sna0_eir_tot(iCv,eb2spcr(j)+1)
-            endif
-          endif
-        enddo
-      enddo
-      hlp_tesp = hlp_tesp/hlp_nesp/qe
-      hlp_tisp = hlp_tisp/hlp_nesp/qe
-      hlp_zesp = hlp_zesp/hlp_nesp
-      hlp_nesp = hlp_nesp/hlp_v
-      nisp_tmp = nisp_tmp/hlp_v
-      nisi_tmp = nisi_tmp/hlp_v
-      hlp_qtsp = hlp_qesp+hlp_qisp
-      if(hlp_nesp.gt.0.0_R8) then
-        nrsr_tmp = nisp_tmp/hlp_nesp
-      end if 
-      nrsri_tmp = nisp_tmp/sum(nisp_tmp)
-
-#ifdef WG_TODO
-      call b2xzef_st(nx,ny,ns,rz2,na,ne,zeff)
-      iy=jsep+1
-      do ix=0,nx-1 !{
-        if(on_closed_surface(ix,jsep)) then !{
-c          v=vol(ix,iy)
-          v=gs(ix,iy,1)
+      call b2xzef(mpg%nCv, ns, state%rt%rz2, state%pl%na,
+     .  state%dv%ne, zeff, state_ext)
+      do ic=1,2
+       if (ic.eq.2.and.geometryType.ne.GEOMETRY_CDN) cycle
+       if (ic.eq.1) then
+         iFs = mpg%iFssep
+       else
+         iFs = mpg%iFssep2
+       end if
+       do i=1,mpg%fsFcP(iFs,2) !{
+        iFc = mpg%fsFc(mpg%fsFcP(iFs,1)+i-1)
+        if (mpg%cvReg(mpg%fcCv(iFc,1)).gt.mpg%cvReg(mpg%fcCv(iFc,2)))
+     >   then
+          iCv = mpg%fcCv(iFc,1)
+          iCn = mpg%fcCv(iFc,2)
+        else
+          iCv = mpg%fcCv(iFc,2)
+          iCn = mpg%fcCv(iFc,1)
+        end if
+        if(mpg%cvOnClosedSurface(iCn)) then !{
+          v=geo%fcS(iFc)
           hlp_i=0.0_R8
           do is=0,ns-1 !{
             if (.not.is_neutral(is)) hlp_i=hlp_i+state%pl%na(iCv,is)
@@ -337,7 +274,7 @@ c          v=vol(ix,iy)
         if(mpg%nnreg(0).ge.7.and.(i.eq.5.or.i.eq.6)) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
-#ifdef WG_TODO
+
       is=0
       do j=1,nspecies !{
         if(hlp_nesp.gt.0.0_R8) then !{
@@ -379,7 +316,7 @@ c          v=vol(ix,iy)
           end do !}
         end if !}
       end do !}
-#endif
+
       if(hlp_nesp.gt.0.0_R8) then !{
         hlp_tesp=hlp_tesp/hlp_nesp/qe
         hlp_zesp=hlp_zesp/hlp_nesp
@@ -480,11 +417,16 @@ c
       end subroutine b2wrsep
 c======================================================================
 
-      subroutine b2wrsepi(ns,switch)
+      subroutine b2wrsepi(mpg,geo,ns,switch)
+      use b2us_geo
+      use b2us_map
       use b2mod_switches
       implicit none
+      integer, intent(in) :: ns
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (in) :: geo
       type (switches), intent (in) :: switch
-      integer i, j, k, nv, ns
+      integer i, j, k, nv
       character hlp_c
       logical ex, warn_tmp
 c----------------------------------------------------------------------
@@ -506,6 +448,11 @@ c----------------------------------------------------------------------
             filedata(ltrc)=.false.
           end if !}
         end do !}
+      end if !}
+      if(mpg%nncut.ne.1 .and. mpg%nncut.ne.2) then !{
+        write(*,*)
+     .   '!!! b2wrsep: nncut = ',mpg%nncut,' - no tracing data'
+        filedata(ltrc)=.false.
       end if !}
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -601,7 +548,7 @@ c*** New file
 
         write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
      ,   '(a1,6x,a4,4x,',ng_tmp,'(5x,a8,1x),',
-     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),1x,',
+     ,                   ns_tmp*nsp_tmp,'(4x,a8,a2),2x,',
      ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',

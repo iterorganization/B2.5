@@ -131,7 +131,10 @@ contains
 
     external xertst, xerrab, streql, b2agx0, open_file, cfruin
 
-     call b2agx0 (ninp(0), nCv, nFc, nVx) ! nog issue met deze functie
+     nCv = 0
+     nFc = 0
+     nVx = 0
+     call b2agx0 (ninp(0), nCv, nFc, nVx) ! still an issue with this function
 
      ! istyle == -1
      ! means Carre grid input

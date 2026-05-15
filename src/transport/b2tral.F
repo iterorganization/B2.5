@@ -161,6 +161,14 @@
      &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
         call alloc_input_profile(nCv,ns)
+        call alloc_b2mod_zhco_amfact (nspecies)                         !som 21.01.22
+        amfact(0:nspecies-1) = 1.0_R8
+        if (switch%amfact_on.ne.0) then
+         do is=0, nspecies-1
+          write (chns,'(i3.3)') is
+          call ipgetr ('b2tral_amfact_'//chns, amfact(is))
+         enddo
+        endif
       end if
 
 * ..compute transport coefficients

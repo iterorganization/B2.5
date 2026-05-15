@@ -18,7 +18,7 @@
       real (kind=R8) ::
      *   aa(13*nCv)
       real(kind=R8), intent(inout) :: resfun(nCv)
-      character*(*) name                                              !sv 18.05.02
+      character*(*) name                                                 !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(nCv)
@@ -42,7 +42,7 @@
 *     routine is an interface to one of two solvers. If the internal
 *     parameter "style" has the value 0 then a solver based on Stone's
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
-*     solver is used. if style.eq.2 then MA28copy is used. if style.eq.3
+*     solver is used. If style.eq.2 then MA28copy is used. If style.eq.3
 *     then PARDISO (Intel MKL) is used. 
 *
 *
@@ -100,8 +100,8 @@
        call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
        if (style.eq.3) then
-         write(*,*) 'PARADISO solver used.'
-         write(0,*) 'PARADISO solver used.'
+         write(*,*) 'PARDISO solver used.'
+         write(0,*) 'PARDISO solver used.'
        endif
        call ipgeti ('b2uxus_cpu', cpu)
        if(style.eq.2.or.style.eq.3) then
@@ -148,22 +148,22 @@
 *    ..use slv5pt
        call xerrab ('b2uxus: Style 1 is not implemented')
       else if (style.eq.2) then
+*    ..use ma28 (default)
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-         !! ma28 solver, default
        call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
       else if (style.eq.3) then
+*    ..use PARDISO
        call cpu_time(c_start)
        call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
      *                  ind, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-              !! experiment, PARDISO solver 
        call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
       endif
       call cpu_time(cpu_end)
@@ -223,7 +223,7 @@
 
 #ifdef _OPENMP
 !$omp threadprivate(lfirst, ncall, kwrite_fmt, kwrite_bnr)
-#endif 
+#endif
 
       if(ncall.eq.0) then
         call ipgeti ('storage_us_kwrite_fmt', kwrite_fmt)
@@ -312,14 +312,14 @@
           enddo
           close(77)
         endif
-      endif 
+      endif
       if(kwrite_fmt.eq.ncall) then
         if (in_parallel()) then !!FR in parallel do not write this file
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-        write(*,*)'OpenMP: warning: running in parallel the ',
-     1    'st_us_matrix_ file will not be written out'
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1     'st_us_matrix_ file will not be written out'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -341,4 +341,5 @@
       endif
 
       ncall = ncall + 1
+      return
       end subroutine storage_us                                     !sv 22.11.06

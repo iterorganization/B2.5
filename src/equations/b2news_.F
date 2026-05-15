@@ -51,7 +51,8 @@
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_wall
@@ -321,7 +322,7 @@ csw 01oct2012 initialize potential if necessary
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
       call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0,
      &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
       call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
@@ -350,14 +351,14 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
      &    st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
-     &    st%psnc, st%psnl, st_ext, ier0)
+     &    st%psnl, st_ext)
 
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
 !! FR possible loop (1) for use with OpenMP
-!$omp parallel do default(none) 
+!$omp parallel do default(none)
 !$omp& private(is)
 !$omp& shared(nCv, nFc, nVx, switch, st, ismain, geo, mpg)
 #endif
@@ -475,7 +476,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !!FR Possible loop (2) for use with OpenMP
 ! Note: need to copy in all global variables from the ma28 solver...
 !$omp parallel do default(none)
-!$omp& private(is, iCv, solvedum, solvedm2,ier0,na_min)
+!$omp& private(is, iCv, solvedum, solvedm2,na_min)
 !$omp& firstprivate(last_solve_9) lastprivate(last_solve_9)
 !$omp& shared(switch, st, geo, mpg)
 !$omp& shared(is_neutral, nCv, nFc, nVx, ns, ismain, solveco, solvemo)
@@ -491,7 +492,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
             na_min = min_na(is,mpg%cvReg(iCv))
           endif
           st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
-     &      na_min),switch%b2mndr_na_max)                  !srv 24.04.09
+     &      na_min),switch%b2mndr_na_max)                                !srv 24.04.09
         enddo
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
         if (switch%spatial_hybrid.ne.0.and.is_neutral(is)) then
@@ -513,14 +514,14 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
           call restart_ma28_for_us
-#else 
+#else
           new_matrix = .false.
           do ireg = 0, mpg%nnreg(0)
             new_matrix = new_matrix.or.
      &       solveco(is,ireg).neqv.last_solve_9(ireg)
           end do
           if(new_matrix.or..true.) call restart_ma28_for_us
-#endif 
+#endif
           call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                      !srv 22.05.18
      &      b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
      &      ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
@@ -540,7 +541,6 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
-    
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 !$omp end parallel do
 !! FR End of loop (2)
@@ -673,11 +673,11 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 !! FR possible loop (3) for use with OpenMP
 !$omp parallel do default(none)
-!$omp& private(is) 
+!$omp& private(is)
 !$omp& shared(nCv, nFc, nVx, ismain, switch, geo, mpg, st, ns)
 #ifdef DBG
 !$omp& shared(zamin, zamax)
-#endif 
+#endif
 #endif
       do is = 0, ns-1
 *   ..compute partial pressure
@@ -690,6 +690,10 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
+!$OMP END PARALLEL DO
+!!FR End of loop (3)
+#endif
 
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 !$OMP END PARALLEL DO
@@ -758,7 +762,6 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !lkw20.03.2023{
       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
-
       do is=0,ns-1
         st%dv%ue = st%dv%ue +
      &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)

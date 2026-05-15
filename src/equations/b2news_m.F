@@ -51,7 +51,8 @@
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_wall
@@ -320,7 +321,7 @@ csw 01oct2012 initialize potential if necessary
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
       call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0,
      &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
       call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
@@ -371,10 +372,10 @@ c b2npmo with rxf = 0 and recompute fluxes.
           if (switch%use_min_na_numerics.eq.0) then  !! scalar value from b2mn.dat
             na_min = switch%b2mndr_na_min
           else                                       !! use species- and region-based value from b2.numerics.parameters
-            na_min = min_na(is,mpg%cvReg(iCv))   
+            na_min = min_na(is,mpg%cvReg(iCv))
           endif
           st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
-     &      na_min),switch%b2mndr_na_max)                 !srv 24.04.09
+     &      na_min),switch%b2mndr_na_max)                                !srv 24.04.09
         enddo
 *    ..compute partial pressure
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -488,8 +489,6 @@ c   extra call at this place within internal iteration)
         call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &    switch, geo, mpg, st, st_ext, st_avg, wrong_flow, .false.)
-
-#ifdef WG_TODO
         if(wrong_flow) then
           inverted_ua = .true.
           write(*,*) 'b2news_m: wrong_flow returned from b2sral'
@@ -536,12 +535,12 @@ c   extra call at this place within internal iteration)
         wrk0 = wrk0 + st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
       enddo
       wrk0 = wrk0 + st_ext%ue*st_ext%ne
-      wrk0 = wrk0/st%dv%ne                                                  !srv 05.03.11
-      if(switch%b2news_iout.ne.0) then                                                 !srv 05.07.17
-        call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
-     &       st_ext)
+      wrk0 = wrk0/st%dv%ne                                               !srv 05.03.11
+      if(switch%b2news_iout.ne.0) then                                   !srv 05.07.17
+        call b2xzef (nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff,
+     &   st_ext)
         call b2xpic (nCv, ns, qe, st%rt%rza, geo%cvBb,
-     &    st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
+     &   st%pl%na, st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
         call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
         call my_out_us(70,nCv,0,st%dv%fch_pi_c,'b2news__fch_pi_c')
@@ -709,11 +708,10 @@ c      with diamagnetic drift part                                       !srv 13
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, .true.)                              !djm Jan2017
-      st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
-      st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
-
-      call b2xpen (nCv, nFc, ns, mpg,
+     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
+      st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
+      st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
      &  st%pl%ti, st%pl%tn, st%pl%po,

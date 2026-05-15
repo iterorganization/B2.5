@@ -238,7 +238,7 @@ c     integer kgl4_tmp(2)
       equivalence (equg4_tmp(1), hlp_albll),
      ,     (equg4_tmp(1), al_bll_mx), (equg4_tmp(2), al_bll_ic)
       real (kind=R8) :: wtarg(DEF_NYD,2*DEF_NCUT),
-     *      wnutrg(DEF_NYD,2*DEF_NCUT), wnutpr(DEF_NYD,2*DEF_NCUT)
+     ,     wnutrg(DEF_NYD,2*DEF_NCUT),wnutpr(DEF_NYD,2*DEF_NCUT)
       real(kind=R8) :: wrad(DEF_NYD,2*DEF_NCUT,0:DEF_NATM)
 
 c*** PFR flow values
@@ -281,7 +281,7 @@ c***  surface area
      ,  (equr_tmp(1,1,3),hlp_vlpfs)
 
       real (kind=R8) ::
-     *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
+     *  hlp, hlp_pi, hlp_si, hlp_po, hlp_so,
      ,  hlp_he, hlp_hep,
      ,  hlp_ne_he_c, hlp_ne_he_s,
      ,  hlp_alcff
@@ -289,7 +289,7 @@ c***  surface area
      *  d, e, s, x, kef, taf, uaf
       real (kind=R8) :: pz(1:mpg%nCv), pv(1:mpg%nVx), grpz(1:mpg%nCv),
      *  albll(1:mpg%nCi)
-      integer i, j, k, l, m, n, i0, is, iCv, iFc, irt,
+      integer i, j, k, l, m, n, i0, is, iCv, iFc, iFt, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, ias, ic, im, js, ks, ls
@@ -1033,14 +1033,14 @@ c*** Neutral flux across the side walls
 
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-            do js=1,nsns !{
+            do js=1,nsts !{
               is_target = .false.
               do ic=1,ntns !{
-                is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+                is_target = is_target.or.js.eq.ltns(ic)
               end do !}
               if (.not.is_target) then !{
-                ks = abs(lsns(js))+nnlimi
-                if (iliin(abs(lsns(js))).gt.0) then !{
+                ks = js+nnlimi
+                if (iliin(js).gt.0) then !{
                   hlpnw=hlpnw+wldna(ks,ls,0)-wldra(ks,ls,0)
                   do j=1,nnmoli !{
                     if(mlcmp(ls,j).gt.0) hlpnw=hlpnw+
@@ -1075,12 +1075,11 @@ c*** we must remove targets and transparent surfaces from that list
 
 c*** Calculate the helium-related data
 
-       if(hlp_dbg) then !{
-         print '(a,1p,2i4,1e12.3)',
+        if(hlp_dbg) then !{
+          print '(a,1p,2i4,1e12.3)',
      ,           '%%## j_he_at,nhetrgtx,fusion_power =',
      ,                 j_he_at,nhetrgtx,fusion_power      !###
-       endif !}
-        if(fusion_power.gt.0.0_R8) then !{
+        endif !}
 
 c*** Re-scale the helium density upstream to meet both throughput and
 c*** pumping speed
@@ -1143,10 +1142,11 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 
       wtarg=0.0_R8
-      call b2ptrdl(wrad)
+      wnutpr=0.0_R8
+      wnutrg=0.0_R8
+      call b2ptrdl(DEF_NYD,2*DEF_NCUT,wrad,.true.)
 c West target
       hlp_ppwi=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(1,2) !{
         iFc=mpg%divFc(mpg%divFcP(1,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1166,7 +1166,6 @@ c West target
 #ifdef B25_EIRENE
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
-        wnutrg(i,1)=0.0_R8
         do is=1,nnatmi
           wnutrg(i,1)=wnutrg(i,1)+ewlda_res(is,ias)-ewldea_res(is,ias)
         end do
@@ -1182,7 +1181,6 @@ c West target
       end do !}
 c East target
       hlp_ppwo=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(maxval(mpg%strDiv),2) !{
         iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1202,7 +1200,6 @@ c East target
 #ifdef B25_EIRENE
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
-        wnutrg(i,maxval(mpg%strDiv))=0.0_R8
         do is=1,nnatmi
           wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
      .     ewlda_res(is,ias)-ewldea_res(is,ias)
@@ -1221,7 +1218,6 @@ c East target
 
       if(maxval(mpg%strDiv).gt.2) then !{
         hlp_pwou=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1241,7 +1237,6 @@ c East target
 #ifdef B25_EIRENE
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
-          wnutrg(i,2)=0.0_R8
           do is=1,nnatmi
             wnutrg(i,2)=wnutrg(i,2)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
@@ -1258,7 +1253,6 @@ c East target
         end do !}
 
         hlp_pwiu=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1278,7 +1272,6 @@ c East target
 #ifdef B25_EIRENE
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
-          wnutrg(i,3)=0.0_R8
           do is=1,nnatmi
             wnutrg(i,3)=wnutrg(i,3)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
@@ -1392,7 +1385,8 @@ c*** Calculate the neutral flows in PFR
         do j=1,nspecies !{
 caap          hlp=1.0_R8/2.7e20_R8
 caap          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
-caap     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
+caap     ,       species_list(j).eq.'T' .or. species_list(j).eq.'DT')
+caap     ,      hlp=0.5_R8*hlp
 caap no need to convert to molecular throughput here
           hlp=1.0_R8
           do i=ipfrgrp(k),jpfrgrp(k) !{
@@ -1533,8 +1527,8 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_dod=0.0_R8
       hlp_isat=0.0_R8
       mgl3_tmp=0
-      call b2xppz(mpg%nCv,ns,st%dv%ne,st%pl%na,st%pl%te,st%pl%ti,pz,
-     . st_ext)
+      call b2xppz(mpg%nCv, ns, st%dv%ne, st%pl%na,
+     .  st%pl%te, st%pl%ti, pz, st_ext)
 
       if(hlp_dbg) print *,'### print_isat=',print_isat    !###
 
@@ -1543,8 +1537,15 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
         do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
           iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          iFt=mpg%cvFt(iCv)
           e=2.0_R8*pz(iCv)
-          if(e.gt.0.0_R8) d=min(d,pz(iCv)/e)
+          if(e.gt.0.0_R8.and.iFt.gt.0) then
+            if (nimp.gt.0.and.k.le.maxval(mpg%strDiv)/2) then
+              d=min(d,pz(imp(ft_imp(iFt)))/e)
+            else
+              d=min(d,pz(omp(ft_omp(iFt)))/e)
+            end if
+          end if
           if(hlp_dbg) print *,'e,d=',e,d  !###
         end do !}
         hlp_dod(itg_tmp(k))=d
@@ -1573,7 +1574,8 @@ c*** find the maximum ballooning factor and its location
 
       al_bll_mx=0.0_R8
       al_bll_ic=0.0_R8
-      call gradc_r(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg, pz, pv, grpz)
+      call gradc_r(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo,
+     . mpg, pz, pv, grpz)
       do iCv=1,mpg%nCi
         if(mpg%cvOnClosedSurface(iCv) .and. mpg%cvReg(iCv).ne.0) then
           albll(iCv)=abs(grpz(iCv))*hlp_alcff
@@ -1585,7 +1587,7 @@ c*** find the maximum ballooning factor and its location
           endif
         endif
       enddo
-      if(hlp_dbg) print '(1x,a,2i6,1e12.4)',
+      if(hlp_dbg) print '(1x,a,1i6,1e12.4)',
      . "all_bll_ic,albll_mx, =>",nint(al_bll_ic),al_bll_mx
 
 c=======================================================================
@@ -2056,7 +2058,7 @@ c*** New file
         write(lun,700) lv,ng_tmp,np_tmp,ns_tmp,na_tmp
         write(lun,'(2a)') '#  ',label
         write(hlp_frm,'(a,i3,a)')
-     ,   '(''# time'',8x,',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(2x,a))'
+     ,   '(''# time'',8x,',ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp,'(3x,a))'
 #ifdef DBG
         print *,'b2usrtrc frm:',trim(hlp_frm)  !###
 #endif

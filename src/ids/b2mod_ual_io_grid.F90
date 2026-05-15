@@ -1080,7 +1080,12 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+         call set_ggd_geometry_content_identifier( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content, "node_coordinates" )
+         call set_ggd_geometry_content_identifier( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content, "unspecified" )
+#elif ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
@@ -1419,7 +1424,6 @@ contains
             end select
 
             do iRegion = 1, regionCount(geoId, iType)
-                iPrivateB2 = iPrivateB2 - 1
                 select case(iType)
                 case( REGIONTYPE_CELL )
                   RegionDescription = "Volumetric B2.5 internal region #"// &
@@ -1441,11 +1445,11 @@ contains
 
                 if ( size(indexList2d,1) > 0 ) then
                   GSubsetCount = GSubsetCount + 1
-                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//    &
-                    &   " add (private) grid subset #"//                &
-                    &   int2str(GSubsetCount)//                         &
-                    &   " for iType "//int2str( iType )//", iRegion "// &
-                    &   int2str( regionNumber(geoId, iType, iRegion) )  &
+                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//     &
+                    &   " add (private) grid subset #"//                 &
+                    &   int2str(GSubsetCount)//                          &
+                    &   " for iType "//int2str( iType )//", iRegion "//  &
+                    &   int2str( regionNumber(geoId, iType, iRegion) )   &
                     &   //": "//regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list
@@ -2435,8 +2439,6 @@ contains
                 &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
                 &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
-
-          end if
 
           end if
 

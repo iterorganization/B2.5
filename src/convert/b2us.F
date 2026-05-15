@@ -538,10 +538,10 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
           call read_b2mod_feedback(99,'    ',found)
           if (found) then
             if (maxval(saved_na_feedback_actuator).gt.0.0_R8)
-     &       saved_fb_actuator(0:nspecies-1)=
+     &       saved_fb_actuator(1:nspecies)=
      &        saved_na_feedback_actuator(0:nspecies-1)
             if (maxval(saved_na_feedback_prev).gt.0.0_R8)
-     &       saved_fb_prev(0:nspecies-1)=
+     &       saved_fb_prev(1:nspecies)=
      &        saved_na_feedback_prev(0:nspecies-1)
             call write_fbsave
           end if

@@ -225,9 +225,9 @@
 !$OMP& PRIVATE(i)
 !$OMP& SHARED(sx,sy,sa,n)
 #endif
-      do i = 0, n-1
-      sy(i) = sy(i)+sa*sx(i)
-      enddo
+       do i = 0, n-1
+        sy(i) = sy(i)+sa*sx(i)
+       enddo
       else
       ix = ibase(n,incx)
       iy = ibase(n,incy)

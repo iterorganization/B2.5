@@ -56,8 +56,6 @@
       floe    = 0.0_R8
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0_R8) then
-       do is = 0, ns-1                                                   !srv 12.05.11
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 
 *   ..precompute face and vertex values of nete2
         nete  = ne*te
@@ -72,10 +70,12 @@
         fhePSch(:,1) =  2.5_R8*switch%fhePSch*facdrift*cdde(:,1)*
      &    geo%fcQalf(:,1)*dnete2(:,0)
 *     ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi_eff,floe0,cone0)
-         do iFc = 1, nFc
+        cdde_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cdde(:,1)*
+     &    geo%fcQalf(:,1)
+        cdde_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cdde(:,0)*
+     &    geo%fcQalf(:,0)
+        call calccoef(nCv,nFc,nVx,0,geo,dumm0,cdde_eff,floe0,cone0)
+        do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
      &      (nete(mpg%fcCv(iFc,1))+nete(mpg%fcCv(iFc,2))) -
      &       cone0(iFc,0)*

@@ -258,24 +258,6 @@ program b2_ual_write
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
 #endif
-    write(*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
-    ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-    call ntread
-#endif
-    ! read plasma state
-    call cfopen(56,'b2fplasma','old','unformatted')
-    call cfverr(56, b2fplasma_version)
-    ! obtain parameters from b2fplasma file
-    call cfruin (56,3,idum,'nCv,nFc,ns')
-    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
-     &           idum(2).eq.state%pl%ns, &
-     &          'faulty input nCv, nFc, ns from b2fplasma file')
-    call read_b2fplasma(56, mpg%nCv, mpg%nFc, state%pl%ns, state)
-
     call ipgeti('b2mndr_pulse_number', shot )
     if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )
@@ -503,6 +485,7 @@ program b2_ual_write
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+#endif
         else if ( streql(old_imas_version,'x.xx.x') ) then
           call xerrab ('Old IMAS data entry is incomplete !')
         end if
@@ -724,6 +707,9 @@ program b2_ual_write
         &   idx, new_eq_ggd )
     call dealloc_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -733,6 +719,9 @@ program b2_ual_write
         &   radiation, wall )
     call dealloc_batch_edge( &
         &   batch_profiles, batch_sources &
+#if IMAS_MAJOR_VERSION > 3
+        & , batch_plasma_profiles, batch_plasma_sources &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         & , summary &
 #endif

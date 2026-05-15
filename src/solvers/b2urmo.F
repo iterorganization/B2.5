@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nCv, nFc, nVx, switch, geo, mpg,  isb, ub, rob, 
+      subroutine b2urmo (nCv, nFc, nVx, switch, geo, mpg, isb, ub, rob,
      .  smb, flub, cvsb, resmb, fmb, fkb, cvsb_eff)                      !srv 02.06.11
       use b2mod_types
       use b2mod_switches
@@ -9,7 +9,7 @@
       use b2us_map
       use b2mod_openmp
 #ifndef FIXED_POINT
-      use b2mod_balance                                                         !djm Jan2017
+      use b2mod_balance                                                  !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
 #endif
 ! csc The following are not necessary for computation but are needed
@@ -104,7 +104,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       endif
 
 * ..compute flux
-cwdk note: compared to original code, flv is now based on "effective" 
+cwdk note: compared to original code, flv is now based on "effective"
 cwdk       viscosity, and will be zero if cvsb is zero
       call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                       geo,mpg,ub,flub,cvsb,fmb,flf,flv)
@@ -122,24 +122,28 @@ cwdk store effective viscosity, for use in viscous heating
 #endif
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
-        if (in_parallel()) then 
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-        if (ncall_b2urmo==0) then
-          write(*,*) 'b2urmo OpenMP warning: no file output ',
-     &               'in parallel mode'
-        end if
+          if (ncall_b2urmo==0) then
+           write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &                'in parallel mode'
+          end if
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
         else
-       write (chns,'(i3.3)') isb
-       call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
-       call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
-       call my_out_us(70,nFc,1,flf(1,0),'b2urmo_etaPat_ua_th'//chns)
-       call my_out_us(70,nFc,1,flf(1,1),'b2urmo_etaPat_ua_r'//chns)
-      endif  
+          write (chns,'(i3.3)') isb
+          call my_out_us(70,nFc,1,flv(1,0),
+     .                   'b2urmo_etaPat_gradua_th'//chns)
+          call my_out_us(70,nFc,1,flv(1,1),
+     .                   'b2urmo_etaPat_gradua_r'//chns)
+          call my_out_us(70,nFc,1,flf(1,0),
+     .                   'b2urmo_etaPat_ua_th'//chns)
+          call my_out_us(70,nFc,1,flf(1,1),
+     .                   'b2urmo_etaPat_ua_r'//chns)
+        endif
       endif
 
 * ..compute kinetic energy flux
@@ -168,9 +172,9 @@ cwdk store effective viscosity, for use in viscous heating
 
 *   ..contribution from fmb
       do iFc = 1, nFc
-        resmb(mpg%fcCv(iFc,1)) = 
+        resmb(mpg%fcCv(iFc,1)) =
      &    resmb(mpg%fcCv(iFc,1)) - fmb(iFc,0) - fmb(iFc,1)
-        resmb(mpg%fcCv(iFc,2)) = 
+        resmb(mpg%fcCv(iFc,2)) =
      &    resmb(mpg%fcCv(iFc,2)) + fmb(iFc,0) + fmb(iFc,1)
       enddo
 

@@ -52,7 +52,8 @@
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used
+     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
+     &          fb_current_prev
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_zhfrtf
@@ -133,7 +134,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: ramp_slow, ier0, iCv
+      integer :: iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: flag_startup = 0                                  !fc: local variable used to start-up BDF2 scheme with an IE first time-step
       logical domoqt, wrong_flow                                         !xpb
@@ -172,9 +173,9 @@
        endif
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
        if(switch%equation_sources.ne.0)
-     &   call read_equation_sources(nCv, ns, switch, itim, mpg)
+     &  call read_equation_sources(nCv, ns, switch, itim, mpg)
        if(switch%boundary_sources.ne.0)
-     &   call read_boundary_sources(nCv, ns, switch, itim, mpg)    !srv 26.02.18 }
+     &  call read_boundary_sources(nCv, ns, switch, itim, mpg)          !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (switch%b2mndt_style.eq.2) then
@@ -388,7 +389,7 @@ ctmp.dpc
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
           endif
 
-          if(switch%equation_sources.ne.0) then                                 !srv 26.02.18 {
+          if(switch%equation_sources.ne.0) then                          !srv 26.02.18 {
             do iCv = 1,mpg%nCi
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
@@ -434,28 +435,9 @@ ctmp.dpc
 
             elseif (switch%b2mndt_style.eq.2) then
 
-              !fc: if using BDF2, the first iteration must use IE to start-up the scheme
-              if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
-                switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
-                ts_factor=1.0_R8
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
-                  ts_factor=2.0_R8
-                endif
-                flag_startup=1 !fc: startup done
-              endif
-
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
-
-              if (flag_startup.eq.1) then
-                switch%b2mndt_bdf=2 !fc: if start-up done, switch back to BDF2 time-stepping scheme
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=1 ! turn off CKN scheme after startup
-                endif
-                ts_factor = 3.0_R8/2.0_R8
-              endif
 
             else
               call xerrab('b2mndt_style should be 1 or 2')
@@ -512,7 +494,7 @@ ctmp.dpc
      &       (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
             if (domoqt) then
-              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then              !srv 31.01.07
+              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then     !srv 31.01.07
                 call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &           switch, geo, st%pl, st%dv, st%diag)
                 flush(nout(4))
@@ -592,8 +574,8 @@ ctmp.dpc
             call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
-     &       switch%b2mndt_rxf, dtim, st%pl, st%dv, st%co, st%rt,
-     &       st%sr, st%srw, st%psnc, st%psnl, st_ext, ier0)
+     &       switch%b2mndt_rxf, dtim,
+     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st%psnl, st_ext)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1

@@ -94,7 +94,6 @@ c local
       call batch_average_sq (nCv*ns, pl%ua, avg%e_ua, itp, naver)
       call batch_average_sq (nCv,    pl%kt, avg%e_kt, itp, naver)
       call batch_average_sq (nCv,    pl%zt, avg%e_zt, itp, naver)
-      
       call batch_average_sq (nCv*ns, srw%sna0_eir_tot, avg%e_sna,
      .                                            itp, naver)
       call batch_average_sq (nCv,    srw%she0_eir_tot, avg%e_she,
@@ -111,7 +110,6 @@ c local
      .                                            itp, naver)
 
       call subend ()
-
       return
       end subroutine running_average
 
@@ -162,10 +160,7 @@ c local variables
          allocate (avg%e_she(nCv))
          allocate (avg%e_shi(nCv))
          allocate (avg%e_shn(nCv))
-
       end if
-
-
 
       naver = 0
       ntotdt = 0
@@ -274,8 +269,8 @@ c local variables
 
          else
 
-            write (*,*) ' NO FILE b2faveri FOUND '
-            write (*,*) ' AVERAGING STARTS FROM ZERO '
+            write (*,*) ' NO FILE b2faveri FOUND'
+            write (*,*) ' AVERAGING STARTS FROM ZERO'
 
          end if
 
@@ -284,10 +279,8 @@ c local variables
       end if
 
       call subend ()
-
       return
       end subroutine run_av_init
-
 
       subroutine run_av_fin( avg )
       implicit none
@@ -372,8 +365,7 @@ c local variables
 
 *   ..get label
          call b2xxid ('b2mn', lble(1:60))
-         lble(61:120) =
-     *  '                                                            '
+         lble(61:120) = repeat(' ',60)
 
 *   ..write header
          idum(0) = nCv
@@ -428,7 +420,6 @@ c local variables
          call cfwure (iun, nCv*ns, avg%e_smd, 'e_smd')
 
       end if
-!
 
 *  write underrelaxed Eirene sources for smooth restart with eirene_underrelaxation
 
@@ -452,11 +443,10 @@ c local variables
       write (*,*) ' file ',savefile,' written '
 
       call subend ()
-
       return
       end subroutine run_av_save
 
-      subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg, 
+      subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg,
      &                          po_arg, kt_arg, zt_arg, nCv, ns, avg)
       implicit none
       integer, intent(in) :: nCv, ns
@@ -476,7 +466,6 @@ c local variables
       zt_arg = avg%zt_mean
 
       call subend ()
-
       return
       end subroutine run_av_get_plasma
 
@@ -504,7 +493,6 @@ c only the total sources are averaged, not the linearised components.
       shn_out = avg%shn_mean
 
       call subend ()
-
       return
       end subroutine run_av_get_sources
 
@@ -532,15 +520,12 @@ c     type(B2Average), intent(in) :: avg
          allocate (see_underrelax(nCv,nstra))
       end if
 
-
-
       sni_underrelax = sni_s
       smo_underrelax = smo_s
       sei_underrelax = sei_s
       see_underrelax = see_s
 
       call subend ()
-
       return
       end subroutine save_underrelaxed_sources
 
@@ -775,14 +760,13 @@ c                               =3*nfl for vectorial momentum sources)
 c local variables
       integer :: io, iun, idum(0:3), iex
       character :: check*10, line*51
-      logical :: found
+      logical :: found, no_vector
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
       call subini ('read_underrelaxed_sources')
-
 
       if(.not.allocated(sni_underrelax)) then
           allocate (sni_underrelax(nCv,nfl,nstra))
@@ -794,8 +778,6 @@ c local variables
       smo_underrelax = 0.0_R8
       sei_underrelax = 0.0_R8
       see_underrelax = 0.0_R8
-
-
 
 #ifndef LEGACYCOMP
       open (newunit=iun,file='b2faveri',
@@ -832,10 +814,19 @@ c local variables
         backspace iun
         call xertst( found,
      .   'Underrelaxed sources not found in b2faveri!')
-        call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
-        if (idum(0).ne.nCv) call xerrab('nCv not consistent')
-        if (idum(1).ne.nfl) call xerrab('nfl not consistent')
-        if (idum(2).ne.nstra) call xerrab('nstra not consistent')
+        if (no_vector) then
+          call cfruin (iun, 3, idum, 'nCv,nfluids,nstrata')
+          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
+          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
+          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
+        else
+          call cfruin (iun, 4, idum, 'nCv,nfluids,nstrata,nflv')
+          if (idum(0).ne.nCv) call xerrab ('nCv not consistent')
+          if (idum(1).ne.nfl) call xerrab ('nfl not consistent')
+          if (idum(2).ne.nstra) call xerrab ('nstra not consistent')
+          if (idum(3).ne.nflv)
+     .     call xerrab ('vector dimension not consistent')
+        end if
         call cfrure (iun, nCv*nfl*nstra, sni_underrelax,
      .                                  'sni_underrelax')
         if (.not.no_vector) then
@@ -855,12 +846,8 @@ c local variables
       end if
       close (iun)
 
-
       call subend ()
       return
       end subroutine read_underrelaxed_sources
 
       end module b2mod_running_average
-
-
- 

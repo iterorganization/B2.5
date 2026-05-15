@@ -94,7 +94,7 @@
 
           if (switch%b2siav_qstyle .eq. 0) then
 
-            do iFt = 1, mpg%nFt 
+            do iFt = 1, mpg%nFt
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
@@ -142,7 +142,7 @@
 
           if (switch%b2siav_qstyle.eq.1) then
 
-            do iFt = 1, mpg%nFt 
+            do iFt = 1, mpg%nFt
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
@@ -174,7 +174,7 @@
           nu1    = 0.0_R8
           alpha1 = 0.0_R8
           kt_neo = 0.0_R8                                               !iyv 02.12.13
-          do iFt = 1, mpg%nFt 
+          do iFt = 1, mpg%nFt
             if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                 iCv = mpg%ftCv(ic)
@@ -229,12 +229,12 @@
 *       ..compute qipgen
           qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))
 
-*       ..gradient qipgen in cell centers   
-          !wdk modified computation compared to structured code to 
+*       ..gradient qipgen in cell centers
+          !wdk modified computation compared to structured code to
           !wdk facilitate implementation on unstructured grids
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrk0)
           wrk0 = wrk0*geo%cvBb(:,0)/geo%cvBb(:,3)**3*tauia1*alpha1
-          
+
 *       ..finally calculate the r.h.s. contribution to the parallel balance
 *         corresponding to parallel viscosity connected with heat flow
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
@@ -284,34 +284,38 @@
       endif                                                             !srv 26.10.08
 
       if (switch%b2siav_iout.ne.0) then                                 !srv 17.06.02 {
-        if (in_parallel()) then 
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-         write(*,*) 'B2SIAV OpenMP warning: no file output in ',
-     &              'parallel mode'
+          write(*,*) 'B2SIAV OpenMP warning: no file output in ',
+     &               'parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
         else
-        write (chns,'(i3.3)') isb
-        call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
-        call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
-        call my_out_us(70,nCv,0,tauia1,'b2siav_tauia1')
-        do k=0,3
-          write (chk,'(i1)') k
-          call my_out_us(70,nCv,0,smbvv(1,k),'b2siav_smovv'//chk//chns)
-          call my_out_us(70,nCv,0,smbvh(1,k),'b2siav_smovh'//chk//chns)
-        enddo
-        wrks=smbvv(:,0)+smbvv(:,1)*ub+
-     &       smbvv(:,2)*nb*mb+smbvv(:,3)*ub*nb*mb
-        call my_out_us(70,nCv,0,wrks,'b2siav_smovv'//chns)
-        wrks=smbvh(:,0)+smbvh(:,1)*ub+
-     &       smbvh(:,2)*nb*mb+smbvh(:,3)*ub*nb*mb
-        call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
-        call my_out_us(70,nFc,1,cvsbhz_cl(1,0),'b2siav_cvsbhz_th'//chns)
-        call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhz_r'//chns)
-      endif
+          write (chns,'(i3.3)') isb
+          call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
+          call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
+          call my_out_us(70,nCv,0,tauia1,'b2siav_tauia1')
+          do k=0,3
+            write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,smbvv(1,k),
+     &                                   'b2siav_smovv'//chk//chns)
+            call my_out_us(70,nCv,0,smbvh(1,k),
+     &                                   'b2siav_smovh'//chk//chns)
+          enddo
+          wrks=smbvv(:,0)+smbvv(:,1)*ub+
+     &         smbvv(:,2)*nb*mb+smbvv(:,3)*ub*nb*mb
+          call my_out_us(70,nCv,0,wrks,'b2siav_smovv'//chns)
+          wrks=smbvh(:,0)+smbvh(:,1)*ub+
+     &         smbvh(:,2)*nb*mb+smbvh(:,3)*ub*nb*mb
+          call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
+          call my_out_us(70,nFc,1,cvsbhz_cl(1,0),
+     &                                   'b2siav_cvsbhz_th'//chns)
+          call my_out_us(70,nFc,1,cvsbhz_cl(1,1),
+     &                                   'b2siav_cvsbhz_r'//chns)
+        endif
       endif                                                             !srv 17.06.02 }
 
 #ifndef FIXED_POINT

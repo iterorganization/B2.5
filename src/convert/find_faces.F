@@ -13,7 +13,7 @@
       
       type (mapping), intent (inout) :: m
 
-      integer :: icoss, ncoss,
+      integer :: ncoss, icoss,
      .           iFc1, i, imn, imx,
      .           ncout, istart
       integer, allocatable :: fcss(:), indfc(:)

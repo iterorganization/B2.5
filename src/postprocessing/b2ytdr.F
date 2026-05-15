@@ -176,8 +176,8 @@ c 2002-09-11: logic revised
       integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
-      integer atomic_physics_rescale_flag
-      integer ismain, ismain0, isfb, is_previous, nfb1
+      integer atomic_physics_rescale_flag, reset_iter
+      integer ismain, ismain0, isfb, is_previous, iFb, ifb1, nfb1
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
@@ -194,9 +194,8 @@ c 2002-09-11: logic revised
       integer lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor, b2ux7p_style
+      integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
       integer naver, ntotdt, ntfts
-      integer ncon, nele_jac
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8, chns*3
       character*4 solps_version
@@ -280,11 +279,11 @@ c 2002-09-11: logic revised
      5 fb_puff_min1(:), fb_puff_max1(:),
      6 fb_const1(:), fb_overshoot1(:),
      7 fb_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:)
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3
@@ -483,9 +482,9 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat_ip, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
-     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
-     .  b2stbc_Qalfmin, b2us_prep_Qalfmin,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
+     .  b2stbc_Qalfmin, b2us_prep_Qalfmin, fac_aniso,
+     .  sources_time_mod_ip, sources_time_switch_ip, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -3822,6 +3821,17 @@ cxpb This will need to be checked !!!
      .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
             deallocate(sna_corr1)
           end if
+          if(minval(min_na(0:ns-1,0:nnreg(0))).ne.na_min .or.
+     &       maxval(min_na(0:ns-1,0:nnreg(0))).ne.na_min) then
+            do ireg = 0, nnreg(0)
+              cftmp(0:ns-1)=min_na(0:ns-1,ireg)
+              call convert_bundle_r
+     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+              min_na(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              write(99,hlp_frm)
+     .         'MIN_NA(0,',ireg,')=',(min_na(is,ireg),is=0,ns1-1)
+            enddo
+          endif
           if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
      &      .or. b2stbr_taumax.ne.0.05_R8) then
             allocate(taumax1(1:nspecies1))
@@ -4136,30 +4146,18 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:7)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
-          READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,18)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
-          ENDIF
+        ENDIF
+        READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,20)
+        IF (streql(eirene_format,'facelift')) then
+          READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                       ! NLTRIMESH
         ELSE
-          call fix_logical_input(zeile,18)
-          IF (streql(eirene_format,'facelift')) then
-            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
-                                         ! NLTRIMESH
-          ELSE
-            READ (ZEILE,6665) ldum(0:17) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
-                                         ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON
-          ENDIF
+          READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                       ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
+                                       ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                       ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
         ENDIF
         IF (streql(eirene_format,'facelift')) then
           ldum(14) = ldum(8)
@@ -4182,7 +4180,7 @@ cxpb  Start reading input.dat file
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
-        WRITE(IUNOT,6665) ldum(0:17)
+        WRITE(IUNOT,6665) ldum(0:19)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -9553,11 +9551,13 @@ cxpb Read first, transform and rewrite
           end do
           ldum(26) = ldum(0)
         end if
+        if (.not.streql(eirene_format,'msv')) then
 ! Add TRCSCL (default = FALSE) in position 27
-        do i = 35, 27, -1
-          ldum(i+1) = ldum(i)
-        end do
-        ldum(27) = .false.
+          do i = 35, 27, -1
+            ldum(i+1) = ldum(i)
+          end do
+          ldum(27) = .false.
+        end if
 ! Merge usage of TRCDBGG and TRCGRD
         ldum(6) = ldum(6).or.ldum(33)
         WRITE(IUNOT,6665) ldum(1:36)
@@ -11773,24 +11773,6 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
-        allocate(fb_target1(0:nspecies1-1))
-        allocate(fb_type1(0:nspecies1-1))
-        allocate(fb_type_inverse1(0:nspecies1-1))
-        allocate(fb_rescale_option1(0:nspecies1-1))
-        allocate(fb_actuator1(0:nspecies1-1))
-        allocate(fb_reg1(nMxFbReg))
-        allocate(fb_regp1(0:nspecies1-1,2))
-        allocate(fb_reg_par1(0:nspecies1-1,2))
-        allocate(fb_istra1(0:nspecies1-1))
-        allocate(fb_ib1(0:nspecies1-1))
-        allocate(fb_species1(0:nspecies1-1))
-        allocate(fb_alpha1(0:nspecies1-1))
-        allocate(fb_beta1(0:nspecies1-1))
-        allocate(fb_const1(0:nspecies1-1))
-        allocate(fb_time1(0:nspecies1-1))
-        allocate(fb_puff_min1(0:nspecies1-1))
-        allocate(fb_puff_max1(0:nspecies1-1))
-        allocate(fb_overshoot1(0:nspecies1-1))
         call read_b2us_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
@@ -11863,6 +11845,7 @@ cxpb as they no longer necessarily point to the same species
         fb_reg1 = 0
         fb_regp1 = 0
 <<<<<<< HEAD
+<<<<<<< HEAD
         do is = 1, nspecies
           if (ispecies1(is).ne.-1) then
             nfb1 = nfb1 + 1
@@ -11874,6 +11857,8 @@ cxpb as they no longer necessarily point to the same species
             fb_actuator1(ispecies1(is)-1) = fb_actuator(is-1)
             fb_reg_par1(ispecies1(is)-1,1:2) = fb_reg_par(is-1,1:2)
 =======
+=======
+>>>>>>> origin/feature/wg-release
         do iFb = 1, nFb
           if (is1(fb_species(iFb)).ne.-1 .or.
      .        fb_actuator(iFb).eq.1) nfb1=nfb1+1
@@ -11907,6 +11892,7 @@ cxpb as they no longer necessarily point to the same species
             fb_rescale_option1(ifb1) = fb_rescale_option(iFb)
             fb_actuator1(ifb1) = fb_actuator(iFb)
             fb_reg_par1(ifb1,1:2) = fb_reg_par(iFb,1:2)
+<<<<<<< HEAD
 >>>>>>> 3382f178e (- Changing default FB_IB value to avoid unintentional surface assignment for albedo feedback scheme)
             if (maxval(fb_reg).gt.0) then
               if (fb_regp(is-1,2).gt.0) then
@@ -11924,6 +11910,23 @@ cxpb as they no longer necessarily point to the same species
      .                  fb_regp(is-1,1)+fb_regp(is-1,2)-1)
               end if
               is_previous = ispecies1(is)-1
+=======
+            if (maxval(fb_reg).gt.0) then
+              if (fb_regp(iFb,2).gt.0) then
+                fb_regp1(ifb1,2) = fb_regp(iFb,2)
+                if (ifb1.eq.1) then
+                  fb_regp1(ifb1,1) = 1
+                else
+                  fb_regp1(ifb1,1) =
+     .             fb_regp1(is_previous,1)+fb_regp1(is_previous,2)
+                end if
+                fb_reg1(fb_regp1(ifb1,1):
+     .                  fb_regp1(ifb1,1)+fb_regp1(ifb1,2)-1) =
+     .           fb_reg(fb_regp(iFb,1):
+     .                  fb_regp(iFb,1)+fb_regp(iFb,2)-1)
+              end if
+              is_previous = ifb1
+>>>>>>> origin/feature/wg-release
             end if
             fb_istra1(ifb1) = istra1(fb_istra(iFb))
             fb_ib1(ifb1) = fb_ib(iFb)
@@ -11933,6 +11936,7 @@ cxpb as they no longer necessarily point to the same species
             if (is1(fb_species(iFb)).ne.-1) then
               fb_species1(ifb1) = is1(fb_species(iFb))
             else
+<<<<<<< HEAD
               if (fb_actuator(is-1).eq.1) then
                 fb_species1(ispecies1(is)-1) = ismain0
               else
@@ -11946,10 +11950,26 @@ cxpb as they no longer necessarily point to the same species
             fb_puff_max1(ispecies1(is)-1) = fb_puff_max(is-1)
             fb_overshoot1(ispecies1(is)-1) = fb_overshoot(is-1)
             fb_time1(ispecies1(is)-1) = fb_time(is-1)
+=======
+              if (fb_actuator(iFb).eq.1) then
+                fb_species1(ifb1) = ismain0
+              else
+                fb_species1(ifb1) = ismain
+              endif
+            end if
+            fb_alpha1(ifb1) = fb_alpha(iFb)
+            fb_beta1(ifb1) = fb_beta(iFb)
+            fb_const1(ifb1) = fb_const(iFb)
+            fb_puff_min1(ifb1) = fb_puff_min(iFb)
+            fb_puff_max1(ifb1) = fb_puff_max(iFb)
+            fb_overshoot1(ifb1) = fb_overshoot(iFb)
+            fb_time1(ifb1) = fb_time(iFb)
+>>>>>>> origin/feature/wg-release
           end if
         end do
         write(99,'(a,i2,a)') 'NFB=',nfb1,','
         write(hlp_frm,'(a,i2,a)')
+<<<<<<< HEAD
      .   '(1x,a,t20,',nspecies1,'(1x,i2,'',''))'
         if (maxval(fb_type1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
@@ -12016,6 +12036,55 @@ cxpb as they no longer necessarily point to the same species
         if (any(fb_type_inverse1(0:nspecies1-1)))
      >   write(99,hlp_frm)
      .     'FB_TYPE_INVERSE=',fb_type_inverse1(0:nspecies1-1)
+=======
+     .   '(1x,a,t20,',nfb1,'(1x,i2,'',''))'
+        if (maxval(fb_type1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_TYPE=',fb_type1(1:nfb1)
+        if (maxval(fb_rescale_option1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm)
+     .     'FB_RESCALE_OPTION=',fb_rescale_option1(1:nfb1)
+        if (maxval(fb_actuator1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ACTUATOR=',fb_actuator1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'(1x,i4,'',''))'
+        if (maxval(fb_ib1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_IB=',fb_ib1(1:nfb1)
+        if (maxval(fb_species1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_SPECIES=',fb_species1(1:nfb1)
+        if (maxval(fb_reg_par1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REG_PAR(1,1)=',fb_reg_par1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REG_PAR(1,2)=',fb_reg_par1(1:nfb1,2)
+        end if
+        if (maxval(fb_regp1(1:nfb1,1:2)).gt.0) then
+          write(99,hlp_frm) 'FB_REGP(1,1)=',fb_regp1(1:nfb1,1)
+          write(99,hlp_frm) 'FB_REGP(1,2)=',fb_regp1(1:nfb1,2)
+        end if
+        if (maxval(fb_istra1(1:nfb1)).gt.0)
+     >   write(99,hlp_frm) 'FB_ISTRA=',fb_istra1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)')
+     .   '(1x,a,t20,1p,',nfb1,'(1x,g10.3,'',''))'
+        if (maxval(fb_target1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TARGET=',fb_target1(1:nfb1)
+        if (maxval(fb_alpha1(1:nfb1)).ne.0.001_R8 .or.
+     &      minval(fb_alpha1(1:nfb1)).ne.0.001_R8)
+     >   write(99,hlp_frm) 'FB_ALPHA=',fb_alpha1(1:nfb1)
+        if (maxval(fb_beta1(1:nfb1)).ne.1.0_R8 .or.
+     &      minval(fb_beta1(1:nfb1)).ne.1.0_R8)
+     >   write(99,hlp_frm) 'FB_BETA=',fb_beta1(1:nfb1)
+        if (maxval(fb_const1(1:nfb1)).ne.0.0_R8 .or.
+     &      minval(fb_const1(1:nfb1)).ne.0.0_R8)
+     >   write(99,hlp_frm) 'FB_CONST=',fb_const1(1:nfb1)
+        if (maxval(fb_puff_min1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MIN=',fb_puff_min1(1:nfb1)
+        if (maxval(fb_puff_max1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_PUFF_MAX=',fb_puff_max1(1:nfb1)
+        if (maxval(fb_overshoot1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_OVERSHOOT=', fb_overshoot1(1:nfb1)
+        if (maxval(fb_time1(1:nfb1)).gt.0.0_R8)
+     >   write(99,hlp_frm) 'FB_TIME=',fb_time1(1:nfb1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nfb1,'l1,'',''))'
+        if (any(fb_type_inverse1(1:nfb1)))
+     >   write(99,hlp_frm) 'FB_TYPE_INVERSE=',fb_type_inverse1(1:nfb1)
+>>>>>>> origin/feature/wg-release
         if (maxval(fb_reg1).gt.0) then
           write(hlp_frm,'(a,i4,a)')
      .     '(1x,a,',fb_regp(is_previous,1)+fb_regp(is_previous,2)-1,

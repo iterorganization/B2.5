@@ -67,7 +67,8 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename,rzomp,rzimp
+     ,  filedata,user_filename,rzomp,rzimp,
+     ,  Te_det_threshold,q95_albll,R0_albll,B0_albll,trgshp
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -212,9 +213,6 @@ c***  Standard set-up:
       character*260 filename
       integer i
       logical done, ifail, found
-      integer :: omp_ci(m%nCi), imp_ci(m%nCi), omp_fc(m%nFc),
-     &           imp_fc(m%nFc), nomp_ci, nimp_ci, nomp_fc, nimp_fc
-      real (kind=R8) :: XI(m%nFc), YI(m%nFc) !ap used for improved cv_inters
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
@@ -245,9 +243,8 @@ c***  Standard set-up:
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
-       call cv_intersections (geo, m, rzomp, omp, omp_ci, omp_fc, nomp,
-     & nomp_ci, nomp_fc, nromp, XI, YI, 1, ifail)      
-       call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
+      call cv_intersections (geo, m, rzomp, omp, nomp, nromp, 1, ifail)
+      call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
@@ -320,8 +317,7 @@ c***  Standard set-up:
         end if
       end do
       do ic = 1, nomp
-! Exclude guard cell, since processing a guard cell may overwrite a correct distance computed one iteration before for regular cell if it is in the same flux tube
-        if (omp(ic) > m%nCi) cycle
+        if (omp(ic).gt.m%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(omp(ic))
@@ -503,8 +499,7 @@ c*** Set default values according to current species list
 ! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
       imp = 0
-      call cv_intersections (geo, m, rzimp, imp, imp_ci, imp_fc, nimp,
-     & nimp_ci, nimp_fc, nromp, XI, YI, 1, ifail)
+      call cv_intersections (geo, m, rzimp, imp, nimp, nromp, 1, ifail)
       call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
       do ic=2,nimp
         if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
@@ -575,7 +570,7 @@ c*** Set default values according to current species list
         end if
       end do
       do ic = 1, nimp
-        if (imp(ic) > m%nCi) cycle
+        if (imp(ic).gt.m%nCi) cycle ! do not do guard cells
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(imp(ic))

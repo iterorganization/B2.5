@@ -129,19 +129,6 @@
       intrinsic sqrt
       external xertst, sfill, ipgeti, ipgetr
 *   ..initialisation
-      data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
-     1  user_transport/0/, transport_inputfile/0/,
-     2  ballooning/0.0_R8/, bb_ref/0.0_R8/, ballooning_rescale/1.0_R8/,
-     3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
-     4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
-     5  neutral_sources_rescale/1.0_R8/
-*   ..statement functions
-      addup(t0,t1)=t0+t1
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-c lvn3
-*   ..local variables for future sbroutine set_transport_kul
-      integer is2, k2
-      real (kind=R8) :: dcx2,vcx2, ic2, dion2
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries
@@ -530,7 +517,6 @@ c User transport options
       else
         call xerrab('transport model undefined or not yet converted')
       endif
-
 #ifdef WG_TODO
       if(user_transport.eq.0) then
 c do nothing
@@ -599,25 +585,19 @@ c ap  implementation of Bohm-like transport model 12.07.2023-?
 cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
-            poloidal_scale_factor=
-     1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
-     1       switch%b2tqna_ballooning*
-     1       switch%b2tqna_ballooning_rescale
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) then
-                dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
-                dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
-                vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
-                vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
-                hci0(iCv)=hci0(iCv)+
-     1           hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
-                hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
-              endif
-            enddo
-            hce0(iCv)=hce0(iCv)*poloidal_scale_factor
-            if (switch%b2tqna_ballooning_sig.ne.0)  then
-              sig0(iCv)=sig0(iCv)*poloidal_scale_factor
-              alf0(iCv)=alf0(iCv)*poloidal_scale_factor
+          poloidal_scale_factor=
+     1     (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
+     1      switch%b2tqna_ballooning*
+     1      switch%b2tqna_ballooning_rescale
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+              dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
+              dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
+              vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
+              vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
+              hci0(iCv)=hci0(iCv)+
+     1         hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
+              hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
             endif
           enddo
           hce0(iCv)=hce0(iCv)*poloidal_scale_factor
@@ -3236,10 +3216,6 @@ c*******************************************************************************
       call subend ()
       return
       end subroutine set_transport_afn
-
-c**************************************************************************************
-c*******************     New KU Leuven k-epsilon transport model  *********************
-c**************************************************************************************
 
       subroutine set_transport_keps(
      &     nCv, nFc, nVx, ns, ismain, switch, geo, mpg,

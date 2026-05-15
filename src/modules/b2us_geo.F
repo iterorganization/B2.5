@@ -74,6 +74,10 @@
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
 
+        real (kind=R8) :: signmf  ! Direction of poloidal field
+                                  ! +1: Going clockwise around plasma
+                                  ! -1: Going counterclockwise around plasma
+
         real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
@@ -451,8 +455,8 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
-     &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
-     &           i1, i2, inv_dist(mpg%nVx)
+     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
+     &           inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0
@@ -1115,7 +1119,6 @@
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
-
       if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
@@ -1238,6 +1241,13 @@
      &   'No matching face found for strike point !')
        end do
       end if
+
+      else
+        write (*,*) 'Warning: temp_ignore_geo switch used'
+        write (*,*) 'This is a temporary solution to run unstructured',
+     & ' geometries that do not fit in existing case categorizations.'
+        write (*,*) 'This option limits post-processing options.'
+      endif
 
       if (allocated(mpg%fcs_wall)) then
       ! Count nFci

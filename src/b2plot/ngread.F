@@ -517,14 +517,14 @@ cank
           end if
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi_in),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi_in),
      ,                                          i=1,min(nstsi,nstsi_in))
-          if (lines_for_format(6,nstsi_in*nplsi).gt.
-     .        lines_for_format(6,nstsi*nplsi)) then
-            do i = lines_for_format(6,nstsi*nplsi)+1,
-     .             lines_for_format(6,nstsi_in*nplsi)
+          if (lines_for_format(6,nstsi_in*nplsi_in).gt.
+     .        lines_for_format(6,nstsi*nplsi_in)) then
+            do i = lines_for_format(6,nstsi*nplsi_in)+1,
+     .             lines_for_format(6,nstsi_in*nplsi_in)
               read(44,1028)
             end do
           end if
@@ -572,14 +572,14 @@ cank
           end if
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi_in)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi_in),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi_in),
      ,                                          i=1,min(nstsi,nstsi_in))
-          if (lines_for_format(6,nstsi_in*nplsi).gt.
-     .        lines_for_format(6,nstsi*nplsi)) then
-            do i = lines_for_format(6,nstsi*nplsi)+1,
-     .             lines_for_format(6,nstsi_in*nplsi)
+          if (lines_for_format(6,nstsi_in*nplsi_in).gt.
+     .        lines_for_format(6,nstsi*nplsi_in)) then
+            do i = lines_for_format(6,nstsi*nplsi_in)+1,
+     .             lines_for_format(6,nstsi_in*nplsi_in)
               read(44,1028)
             end do
           end if

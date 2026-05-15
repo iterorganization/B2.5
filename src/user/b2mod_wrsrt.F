@@ -77,7 +77,6 @@ c-----------------------------------------------------------------------
       use b2us_map
       use b2us_geo
       use b2us_plasma
-      use b2mod_indirect
       implicit none
 c
       integer, intent(in) :: ns

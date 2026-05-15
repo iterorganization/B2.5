@@ -257,24 +257,6 @@ program b2_ual_rewrite
 #endif
     ids_path = ' '
     same_run_number = .true.
-    write (*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
-    ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-    call ntread
-#endif
-    ! read plasma state
-    call cfopen(56,'b2fplasma','old','unformatted')
-    call cfverr(56, b2fplasma_version)
-    ! obtain parameters from b2fplasma file
-    call cfruin (56,3,idum,'nCv,nFc,ns')
-    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
-     &           idum(2).eq.state%pl%ns, &
-     &          'faulty input nCv, nFc, ns from b2fplasma file')
-    call read_b2fplasma(56, mpg%nCv, mpg%nFc, ns, state)
-
     call ipgeti('b2mndr_pulse_number', shot )
     if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     if (shot.gt.0) then
@@ -719,10 +701,11 @@ program b2_ual_rewrite
         &   divertors, &
 #endif
         &   idx, new_eq_ggd )
-    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
+    if (.not.streql(shot_string,' ')) then
+      systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
         &  //' -v '//int2str(IMAS_MAJOR_VERSION)
-    write(0,*) trim(systemarg)
+      write(0,*) trim(systemarg)
 #ifdef NAGFOR
       call system(systemarg, status, ierror)
 #else
@@ -742,6 +725,9 @@ program b2_ual_rewrite
     end if
     call dealloc_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -751,6 +737,9 @@ program b2_ual_rewrite
         &   radiation, wall )
     call dealloc_batch_edge( &
         &   batch_profiles, batch_sources &
+#if IMAS_MAJOR_VERSION > 3
+        & , batch_plasma_profiles, batch_plasma_sources &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         & , summary &
 #endif

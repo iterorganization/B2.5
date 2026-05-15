@@ -242,11 +242,6 @@ CONTAINS
     xl = -(inf_opt*10.0_R8)
     xu = inf_opt*10.0_R8
     par_rescale = 1.0_R8
-    nele_jac = 0
-    nnjac = 0
-    jcol = 0
-    jrow = 0
-    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.
@@ -1076,11 +1071,6 @@ CONTAINS
     xl = -(inf_opt*10.0_R8)
     xu = inf_opt*10.0_R8
     par_rescale = 1.0_R8
-    nele_jac = 0
-    nnjac = 0
-    jcol = 0
-    jrow = 0
-    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.

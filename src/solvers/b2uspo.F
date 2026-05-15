@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, 
+      subroutine b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt,
      &  switch, geo,
      &  mpg, ne, te, conc, sch, respo, corpo, aa, name)                  !srv 18.03.10
       use b2mod_types
@@ -19,7 +19,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
-      character*(*) name                                             !srv 18.03.10
+      character*(*) name                                                 !srv 18.03.10
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -91,12 +91,12 @@
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from conc(:,0) ('5-point' contributions)
         t1 = -conc(iFc,0)
-        t2 = -conc(iFc,0) 
+        t2 = -conc(iFc,0)
         if (solvereg(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -105,9 +105,9 @@
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from conc(:,1) ('9-point' contributions)
@@ -193,12 +193,13 @@
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name,           !srv 18.03.10
      .             switch%b2uxus_style)
 
-      if (switch%b2uspo_iout.ne.0) then                                          !srv 08.07.08 {
-        if (in_parallel()) then 
+      if (switch%b2uspo_iout.ne.0) then                               !srv 08.07.08 {
+        if (in_parallel()) then
 #ifdef _OPENMP
 !$OMP MASTER
 #endif
-         write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
+          write(*,*)
+     .     'b2uspo OpenMP warning: no file I/O in parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -207,24 +208,20 @@
             write (chark,'(i1)') k
             call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)
           enddo
-#ifdef WG_TODO
-          call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2uspo_aam6')
-          call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2uspo_aam5')
-          call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2uspo_aam4')
-          call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2uspo_aam3')
-          call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2uspo_aam2')
-          call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2uspo_aam1')
-          call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2uspo_aam0')
-          call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2uspo_aap1')
-          call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2uspo_aap2')
-          call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2uspo_aap3')
-          call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2uspo_aap4')
-          call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2uspo_aap5')
-          call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2uspo_aap6')
-#endif
+          do k=1,maxval(mpg%cvNvP(1:nCv,2))
+            write (charnv,'(i2.2)') k
+            do iCv = 1, nCv
+              if (k.le.mpg%cvNvP(iCv,2)) then
+                wrk(iCv) = aa(mpg%cvNvP(iCv,1)+k-1)
+              else
+                wrk(iCv) = 0.0_R8
+              end if
+            end do
+            call my_out_us(70,nCv,0,wrk,'b2uspo_aam'//charnv)
+          end do
           call my_out_us(70,nCv,0,respo,'b2uspo_respo')
           call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
-        end if 
+        end if
       endif
 
 * ..return

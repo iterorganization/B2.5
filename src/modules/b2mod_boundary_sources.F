@@ -49,15 +49,14 @@
 
       subroutine read_boundary_sources(nCv, ns, switch, itim, mpg)
       use b2mod_types
-      use b2mod_boundary_namelist
       use b2mod_switches
       use b2mod_numerics_namelist
       use b2us_map
       implicit none
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      integer nCv, ns
-      integer is, iCv, i, itim
+      integer nCv, ns, itim
+      integer i, is, iCv
       logical b2news_solving(4)
       character*36 filename
       logical lexist
@@ -72,12 +71,12 @@
        enddo
        call read_b2mod_numerics_namelist(nCv,ns,
      &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     &      switch%b2mndt_style)
+     &      switch%b2mndt_style, .false.)
 
 !      Read MMS inputs
 
       if (b2news_solving(2).and.
-     &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
+     &    any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
         if (switch%use_mms.eq.1) then
           filename='bv_na_us.dat'
           call find_file(filename,lexist)
@@ -97,7 +96,7 @@
       endif
 
       if (b2news_solving(1).and.
-     &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
+     &    any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
         if (switch%use_mms.eq.1) then
           filename='bv_ua_us.dat'
           call find_file(filename,lexist)
@@ -156,7 +155,7 @@
       endif
 
       if (b2news_solving(3).and.
-     &     any(solvepo(0:mpg%nnreg(0)))) then
+     &    any(solvepo(0:mpg%nnreg(0)))) then
         filename='bv_po_us.dat'
         call find_file(filename,lexist)
         call xertst(lexist,'File '//trim(filename)//' not found')

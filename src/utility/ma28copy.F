@@ -562,7 +562,6 @@ c
       data zero /0.0_R8/
       blockl = lenoff(1).ge.0
 
-
 c iw1(i,3)  is set to the block in which row i lies and the
 c     inverse permutations to ip and iq are set in iw1(.,1) and
 c     iw1(.,2) resp.
@@ -2143,7 +2142,6 @@ c see block data for comments on variables in common.
 !$OMP THREADPRIVATE(/ma30edc/,/ma30idc/,/ma30gdc/)
 #endif
 c
-c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
@@ -3548,7 +3546,6 @@ c     common /ma28gdc/ idisp(2)
       use b2mod_types
       implicit none
 
-      
 c although all common block variables do not have default values,
 c     we comment on all the common block variables here.
 c

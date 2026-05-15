@@ -143,9 +143,6 @@ c***  see E. Kaveeva et al 2018 Nucl. Fusion 58 126018)
       if(filedata(ntrc_bls)) call b2blns(geo,mpg,st,st_ext,switch,ns,
      .                                   dtim)
       if(filedata(ntrc_srt)) call b2wrsrt(ns,geo,mpg,st)
-c*** Separatrix data
-      if(filedata(ntrc_sep)) call b2wrsep(geo,mpg,st,st_ext,ns,switch)
-#ifdef WG_TODO
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(mpg,geo,ns,st,st_ext,switch)
 c*** Parallel momentum balance

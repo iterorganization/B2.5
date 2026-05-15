@@ -129,8 +129,8 @@
      *, t_frac, t0
 #endif
       real (kind=R8) ::                                              !srv 29.04.10 {
-     &  sna0_eir(nCv,0:1,0:ns-1),
-     &  smo0_eir(nCv,0:3,0:ns-1),
+     &  sna0_eir(nCv,0:1,0:ns-1), smo0_eir(nCv,0:3,0:ns-1),
+     &  smr0_eir(nCv,0:3,0:ns-1), smd0_eir(nCv,0:3,0:ns-1),
      &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
@@ -401,63 +401,11 @@ c   --> better solution wanted here..
 #ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
-        endif
-#endif
-        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, BoRiS, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &  tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &  neutral_sources_rescale, core_sources_rescale,  
-     &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
-     &  sput_chem_model, therm_evap, sput_res,  
-     &  reflection_on, sputter_energy_on, main_call, output, 
-     &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
-     1  sput_mixed_alpha, sput_mixed_beta,
-     2  new_sputter_namelist, shi0_ff, f_redep,
-     3  potential_at_guard_cell, recycled_neutrals_contr)
-#ifdef WG_TODO
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=sna0-snatmp
-          b2stbr_phys_smo0to3=smo0-smotmp
-          b2stbr_phys_she0to3=she0-shetmp
-          b2stbr_phys_shi0to3=shi0-shitmp
-        endif
-#endif
-       else
-#ifdef WG_TODO
-        if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
-        endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &   coreregno, coreregn2, output,
-     &   neutral_sources_rescale, core_sources_rescale,
-     &   sput_src, sput_frc, sput_phys,
-     &   sput_chem_alpha, sput_phys_alpha, alpha,
-     &   sput_chem_model, therm_evap, sput_res,
-     &   reflection_on, sputter_energy_on, main_call,
-     &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff,
-     &   f_redep, potential_at_guard_cell, recycled_neutrals_contr)
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_bas_sna0to1=sna0-snatmp
-          b2stbr_bas_smo0to3=smo0-smotmp
-          b2stbr_bas_she0to3=she0-shetmp
-          b2stbr_bas_shi0to3=shi0-shitmp
-        endif
+         snatmp=st%srw%sna0
+         smotmp=st%srw%smo0
+         shetmp=st%srw%she0
+         shitmp=st%srw%shi0
+       endif
 #endif
        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
@@ -1274,6 +1222,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_recycle
+      use b2mod_switches
       use b2us_map
       use b2mod_subsys
       use b2mod_dimensions
@@ -1296,10 +1245,10 @@ c        write(*,*) 'Called neutr_scl'
 *   ..local variables
 #ifdef WG_TODO
       integer nCg_tmp, ns_tmp
-      integer is, istra,nbnd2
-      integer use_eirene, neutrals_namelist
-      integer sput_src, sput_chem_model,kul_recycle
-      real (kind=R8) :: sput_frc
+#endif
+      integer is, istra
+      integer neutrals_namelist
+      integer sput_src, sput_chem_model
       logical new_sputter_namelist, catch_up, wall_namelist_used
 #ifdef WG_TODO
       character*256 filename
@@ -1308,9 +1257,8 @@ c        write(*,*) 'Called neutr_scl'
       intrinsic mod
       external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
-      data use_eirene/0/, neutrals_namelist/0/,
-     *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/,
-     *  kul_recycle/1/
+      data neutrals_namelist/0/,
+     *  sput_src/1/, sput_chem_model/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -1327,8 +1275,7 @@ c        write(*,*) 'Called neutr_scl'
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
       call ipgeti ('b2stbr_sput_chem_model', sput_chem_model)
-      call ipgeti ('b2stbr_kul_recycle', kul_recycle)              !mb  12.07.17 
-      if(sput_frc.ne.0.0_R8) then
+      if(switch%b2stbr_sput_frc.ne.0.0_R8) then
         call xertst (0.le.sput_src.and.sput_src.lt.ns,
      1     'faulty b2stbr_sput_src')
         call xertst (sput_dst.lt.ns, 'faulty b2stbr_sput_dst')
@@ -1481,9 +1428,11 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       nCg_sp = nCg_tmp
       ns_sp = ns_tmp
 #endif
-cmb  Load pre-evaluated integrals for advanced recyling model based on TRIM data
-      nbnd2 = 60 !! TODO
-      if (kul_recycle.eq.1) call read_recycle_DCfnn(ns,nbnd2)            !mb 12.07.17
+
+cmb  Load pre-evaluated integrals for advanced recyling mocdel based on TRIM data
+      if (switch%recycle_afn.eq.1) then
+        call read_recycle_fnn(ns,mpg%nCg,switch%afn_bcs_use_coarse)            !mb 12.07.17
+      endif
       call subend ()
       return
 

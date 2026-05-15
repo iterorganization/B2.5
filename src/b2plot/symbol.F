@@ -98,4 +98,6 @@ c	    write(*,*) rval
         if(icnt.le.8) cval(icnt:icnt)=c
         goto 20
       endif
+
+      return
       end subroutine symbol

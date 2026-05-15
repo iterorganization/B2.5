@@ -11,6 +11,7 @@
      1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
      2          b2stbc_shi0to3,balance_netcdf
       use b2mod_openmp
+#endif
       use b2us_feedback
       use b2mod_b2cmpa
       use b2mod_time
@@ -70,23 +71,21 @@
       integer i, j, is, iCv, iFc, iFt
       real (kind=R8) :: praverage(2)
       real (kind=R8) :: wrk(nFc)
-      integer regcnt, ixx
       real (kind=R8) ::
      &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
-     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
-     1   sum_sch0, sum_vol
-!WG_TODO      integer element_done(-1:nx)
+     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
+#ifdef WG_TODO
+      integer ixx, regcnt, element_done(-1:nx)
+      real (kind=R8) :: t0, testqe, testqi, sum_sch0, sum_vol
+#endif
       real (kind=R8) :: intface_s
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti, intface_s
-      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
-#ifdef WG_TODO
-     & , b2stbc_bas                                          !srv 27.06.21
-#endif
+      external b2xvsg, b2xvps, b2stbc_phys
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -171,7 +170,11 @@
       call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
-      iFt = mpg%cvFt(omp(1))                                     !sv 24.03.99
+      if (omp(1).le.mpg%nCi) then
+        iFt = mpg%cvFt(omp(1))                                   !sv 24.03.99
+      else
+        iFt = mpg%cvFt(omp(2))
+      endif
       tesum(1)=0.0_R8
       tisum(1)=0.0_R8
       nasum(:,1)=0.0_R8
@@ -230,11 +233,11 @@
                 taf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      &           st_ext%ta(1,is))
                 prsum(1)=prsum(1) + nxf*taf*geo%cvVol(iCv)*
-     2           geo%fcBb(iFc,2)*geo%fcHz(iFC)
+     2           geo%fcBb(iFc,2)*geo%cvHz(iCv)
                 if (.not.st_ext%is_neutral(is)) then
                   zxf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      &             st_ext%za(1,is))
-                  qisum(1)=qisum(1)-2.5_R8*geo%fcHz(iFc)*
+                  qisum(1)=qisum(1)-2.5_R8*geo%cvHz(iFc)*
      3             nxf*taf**2*geo%fcBb(iFc,2)/(qe*zxf)*geo%fcS(iFc)
                 endif
               enddo
@@ -242,7 +245,7 @@
               volsum(1)=volsum(1) + geo%cvVol(iCv)
             endif                                                        !xpb
           enddo
-        endif                                                            !xpb
+        endif
       enddo                                                      !sv 24.03.99
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
 !$omp end parallel do

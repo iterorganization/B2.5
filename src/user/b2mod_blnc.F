@@ -560,23 +560,21 @@ c*** Flux across the side walls
           end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
-c*** we must remove targets and transparent surfaces from that list
-          do js=1,nsns !{
+c*** we must remove targets, core boundaries and transparent surfaces from that list
+          do js=1,nsts !{
             is_target = .false.
             do ic=1,ntns !{
-              is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+              is_target = is_target.or.js.eq.ltns(ic).or.js.eq.lcns(ic)
             end do !}
             if (.not.is_target) then !{
-              ilks = abs(lsns(js))+nnlimi
-              if (iliin(abs(lsns(js))).gt.0) then !{
+              ilks = js+nnlimi
+              if (iliin(ilks).gt.0) then !{
                 do j=1,nnatmi !{
                   if(latmscl(j).eq.ls) then !{
-                    hlpnw=hlpnw-
-     .               wldna(ilks,j,0)+wldra(ilks,j,0)+wldpa(ilks,j,0)
+                    hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
                     do ic=1,nnmoli !{
                       if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .                 (wldnm(ilks,ic,0)
-     .                 -wldrm(ilks,ic,0)-wldpm(ilks,ic,0))
+     .                           (wldnm(ilks,ic,0)-wldrm(ilks,ic,0))
                     end do !}
                   end if !}
                 end do !}
@@ -638,7 +636,7 @@ c<<<
                       hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
                     end do
                     print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp,wldpp= ',
+     ,                 '%%# i,k,hlp_wldpp= ',
      ,                      i,k,hlp_wldpp
                   end if
 c>>>

@@ -103,6 +103,18 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
+!        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
+!        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
+!        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
+!        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+
+!        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
+
+        real (kind=R8) :: OMPr(1:2)
+        real (kind=R8) :: OMPz(1:2)
+        real (kind=R8) :: IMPr(1:2)
+        real (kind=R8) :: IMPz(1:2)
+
         logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
         integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
         integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
@@ -188,7 +200,6 @@
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
-      
 !      allocate (m%cvOMP(m%ncvOMP))
 !      allocate (m%cvIMP(m%ncvIMP))
 !      allocate (m%fcOMP(m%nfcOMP))
@@ -280,8 +291,8 @@
 !      m%fcOMP = 0
 !      m%fcIMP = 0
 
-!      m%Xpoint = 0 
-     
+!      m%Xpoint = 0
+
       m%OMPr = 0
       m%OMPz = 0
       m%IMPr = 0
@@ -373,6 +384,13 @@
       deallocate (m%fcLbl)
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
+
+!      deallocate (m%cvOMP)
+!      deallocate (m%cvIMP)
+!      deallocate (m%fcOMP)
+!      deallocate (m%fcIMP)
+
+!      deallocate (m%Xpoint)
 
       if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
       if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
@@ -641,7 +659,7 @@
       integer :: i, j, k, l, indd
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
-      integer :: totalcount, fscount, iactive, icount, fccount, 
+      integer :: totalcount, fscount, iactive, icount, fccount,
      *           artificial_slab = 0, found = 0
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
@@ -745,8 +763,7 @@ cwdk  can be derived directly from data in that file
       m%fsVx(1:m%nFsVxmx) = indFsVx(1:m%nFsVxmx)
       deallocate(indFsVx)
 
-
-!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface. 
+!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
       allocate(indXpt(m%nVx))
       indXpt = 0
       m%nXpt = 0
@@ -759,7 +776,7 @@ cwdk  can be derived directly from data in that file
             if (m%fcFs(iFc).eq.0) cycle
             fccount = fccount + 1
           end do
-          if (fccount.eq.4) then 
+          if (fccount.eq.4) then
             m%nXpt = m%nXpt + 1
             indXpt(m%nXpt) = iVx
             if (iactive.eq.0) then
@@ -773,11 +790,11 @@ cwdk  can be derived directly from data in that file
         end if
       end do
 
-!! use a different approach for slab cases with cuts, 
+!! use a different approach for slab cases with cuts,
 !! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
 !! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
       call ipgeti ('artificial_slab', artificial_slab)
-      if (m%nXpt.eq.0.and.artificial_slab.eq.1) then 
+      if (m%nXpt.eq.0.and.artificial_slab.eq.1) then
         do iVx = 1, m%nVx
           if (found.eq.1) cycle
           if (m%vxCvP(iVx,2).ge.4) then
@@ -786,8 +803,8 @@ cwdk  can be derived directly from data in that file
               iCv = m%vxCv(i)
               regcount(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
             end do
-            if (ANY(regcount==1).and.ANY(regcount==2).and. 
-     &          (ANY(regcount==3).or.ANY(regcount==4))) then
+            if (ANY(regcount==1).and.ANY(regcount==2).and.
+     &         (ANY(regcount==3).or.ANY(regcount==4))) then
               m%nXpt = m%nXpt + 1
               indXpt(m%nXpt) = iVx
               found = 1
@@ -1088,16 +1105,20 @@ cwdk  can be derived directly from data in that file
         deallocate(indFc)
        end if
       end if
-      if (allocated(freg)) then 
+
+      if (allocated(freg)) then
         deallocate(freg)
-      endif
+      else
+        write(*,*) 'Targetless topology detected :'
+        write(*,*) 'Strike point data not defined'
+      end if
 
       allocate(m%cvAlongBoundary(m%nCv))
       m%cvAlongBoundary = .false.
       fcsbcounter = 0
       do iCv=m%nCi+1,m%nCv
         iFc = m%cvFc(m%cvFcP(iCv,1))
-        if (m%fcLbl(iFc) .le. 0) cycle
+        if (m%fcLbl(iFc).le.0) cycle
         fcsbcounter(m%fcLbl(iFc)) = fcsbcounter(m%fcLbl(iFc))+1
         fcsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = iFc
         iCv1 = m%fcCv(iFc,1)

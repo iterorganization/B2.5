@@ -104,8 +104,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
-      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),                  !lk 19.09.07
-     &    k2(nCv), collisnumf(mpg%nFc), collisnumef(mpg%nFc)
+      real (kind=R8) :: tauia(nCv,0:ns-1),                            !lk 19.09.07
+     &    collisnumf(mpg%nFc), collisnumef(mpg%nFc)
       real (kind=R8) :: inctran
 #ifdef ASTRA
      & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
@@ -136,8 +136,6 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-      if (ncall_b2trcl.eq.0) then
-      endif
 *   ..set internal parameters on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
@@ -207,13 +205,14 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         enddo
       enddo
 *   ..incorporate geometry with hz                                     !srv 09.01.01
+      inctran = switch%b2txcx_increase_transp_coefs
       wrk = geo%fcS*geo%fcHz
       do iFc = 1, nFc
         wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8,
+       call b2txcx (nCv, nFc, inctran,
      &  mode, geo, mpg, wrk1, wrk, vsa(:,0,is), cvsahz(:,0,is))
        call b2txcy (nCv, nFc,
      &  mode, geo, mpg, wrk1, wrk, vsa(:,1,is), cvsahz(:,1,is))
@@ -228,7 +227,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 !$omp& shared(is_neutral, zn, sigin, csigin, inctran)
 #endif
       do is = 0, ns-1
-        call b2txcx (nCv, nFc, 0.0_R8,
+        call b2txcx (nCv, nFc, inctran,
      &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,0,is), cvsa(:,0,is))
         call b2txcy (nCv, nFc,
      &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,1,is), cvsa(:,1,is))
@@ -244,7 +243,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           endif
         enddo
       enddo
-      inctran = switch%b2txcx_increase_transp_coefs
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRCL))
+!$omp end parallel do
+#endif
+
       call b2txcx (nCv, nFc, inctran,
      & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,0), chce(:,0))
       call b2txcy (nCv, nFc,
@@ -302,6 +304,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       co%f_luc_et = 1.0_R8
       co%f_luc_sg = 1.0_R8
       co%f_luc_al = 1.0_R8                                            !srv 13.01.17 }
+      co%alpha1f = 1.0_R8
+      co%f_luc_ke_c = 1.0_R8
+      co%f_luc_ki_c = 1.0_R8
       if(switch%lluciani.eq.1) then   ! connection length formulation
        !wdk There is implicit assumption here that flux tubes exist in the grid.
        !wdk Need to generalize to truly unstructured grids; using fcConn at each
@@ -608,7 +613,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. save chce(:,0) after applying Luciani
       wrk = chce(:,0)                                                 !srv 13.01.17
 
-      if (switch%min_collisions .gt. 0.0_R8) then
+      if (switch%min_collisions.gt.0.0_R8) then
         call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
      &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
      &   wrkc)
@@ -631,14 +636,14 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          if (collisnumef(iFc) .gt. switch%min_collisions) then
-            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-            t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
-     &        b2trcl_cutlo)
+          if (collisnumef(iFc).gt.switch%min_collisions) then
+           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                             dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
+     &      b2trcl_cutlo)
           else
-            t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(0)*max(collisnumef(iFc), 1.0e-16_R8))**(-1)
           endif
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
@@ -651,8 +656,8 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
-     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))))) then
+     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           if (collisnumf(iFc) .gt. switch%min_collisions) then
            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
      &                            +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
@@ -660,7 +665,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
           else
-           t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(1)*max(collisnumf(iFc), 1.0e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
@@ -736,7 +741,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg,
      &   pl%na(:,is),
-     &   pl%ti, pl%ua(:,is), collisnumf, vsaf_cl(:,0,is), 
+     &   pl%ti, pl%ua(:,is), collisnumf, vsaf_cl(:,0,is),
      &   cvsa(:,0,is), cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   ..computation conductivity of kt due to classical parallel current

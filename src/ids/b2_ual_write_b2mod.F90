@@ -354,6 +354,7 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
+    use eirmod_cgeom
     use eirmod_extrab25
 #endif
 
@@ -590,6 +591,7 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     else
       CALL EIRENE_ALLOC_COMUSR(1)
+      CALL EIRENE_ALLOC_CGEOM(1)
       call eirene_extrab25_eirpbls_init(nmol,nion,npls)
       call ntread
 #endif
@@ -701,6 +703,7 @@ program b2_ual_write_b2mod
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+#endif
         else if ( streql(old_imas_version,'x.xx.x') ) then
           call xerrab ('Old IMAS data entry is incomplete !')
         end if
@@ -924,6 +927,9 @@ program b2_ual_write_b2mod
         &   idx, new_eq_ggd )
     call dealloc_ids_edge( &
         &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -933,6 +939,9 @@ program b2_ual_write_b2mod
         &   radiation, wall )
     call dealloc_batch_edge( &
         &   batch_profiles, batch_sources &
+#if IMAS_MAJOR_VERSION > 3
+        & , batch_plasma_profiles, batch_plasma_sources &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         & , summary &
 #endif

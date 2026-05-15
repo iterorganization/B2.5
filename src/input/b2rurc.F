@@ -226,10 +226,14 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
-      if (version.ge.'03.000.007') then
-        call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
+      if (version.ge.'03.002.000') then
+        rtlqr = 0.0_R8
+        call cfrure_dep (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr,
+     .                                                'rtlqa_ra')
+        if (maxval(rtlqr).eq.0.0_R8.and.minval(rtlqr).eq.0.0_R8)
+     >   call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr, 'rtlqr')
       else
-        rtlqa_ra = lnzero
+        rtlqr = lnzero
       end if
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if(version.ge.'01.001.016') then

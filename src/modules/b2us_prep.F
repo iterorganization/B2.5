@@ -2022,12 +2022,12 @@
                          call xerrab ('Did not find start of flux tube')
                        endif
                       endif
-                      iCv = iCv + 2
+                      iCv = iCv + 1
                       iFcc = iFcc + 1
-                      m%ftCv(iCv-1) = iCg
-                      m%cvFt(iCg) = iFt
-                      ftCvP(iFt,1) = iCv-1
-                      ftCvP(ift,2) = 2
+                      !m%ftCv(iCv-1) = iCg
+                      m%cvFt(iCg) = 0
+                      ftCvP(iFt,1) = iCv
+                      ftCvP(ift,2) = 1
                      elseif (on_closed_surface(ix,iy)) then
                       iFc = m%imapFcx(ix,iy)
                       if (iFc.eq.0) call xerrab (
@@ -2048,7 +2048,7 @@
                      ftReg(iFt) = reg(ixreg,iyreg)
                      ftLbl(iFt) = ilbl
                      istrtt = 1
-                    else
+                    else ! istartt not eq -1
                      iFc = m%imapFcx(ix,iy)
                      if (iFc.eq.0) call xerrab (
      .                 'Problem with flux tube identification')
@@ -2105,11 +2105,11 @@
                        endif
                       endif
                       if (lfound) then
-                        iCv = iCv + 1
+                        !iCv = iCv + 1
                         iFcc = iFcc + 1
-                        m%ftCv(iCv) = iCg
-                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
-                        m%cvFt(iCg) = iFt
+                        !m%ftCv(iCv) = iCg
+                        !ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                        m%cvFt(iCg) = 0
                         m%ftFc(iFcc) = iFc
                         ftFcP(iFt,2) = ftFcP(iFt,2) + 1
                         istrtt = -1
@@ -2140,25 +2140,25 @@
                     endif
                     if (lfound) then
                       ! we are in guard cell flux tube
-                      lgtube = .true.
-                      if (istrtt==-1) then
-                        iFt = iFt + 1
-                        iCv = iCv + 1
-                        m%ftCv(iCv) = ic
-                        m%cvFt(ic) = iFt
-                        ftCvP(iFt,1) = iCv
-                        ftCvP(iFt,2) = 1
-                        ftFcP(iFt,1) = iFcc
-                        ftFcP(iFt,2) = 0
-                        ftReg(iFt) = reg(ixreg,iyreg)
-                        ftLbl(iFt) = ilbl
-                        istrtt = 1
-                      else
-                        iCv = iCv + 1
-                        m%ftCv(iCv) = ic
-                        m%cvFt(ic) = iFt
-                        ftCvP(iFt,2) = ftCvP(iFt,2) + 1
-                      endif
+                      !lgtube = .true.
+                      !if (istrtt==-1) then
+                      !  iFt = iFt + 1
+                      !  iCv = iCv + 1
+                      !  m%ftCv(iCv) = ic
+                      !  m%cvFt(ic) = iFt
+                      !  ftCvP(iFt,1) = iCv
+                      !  ftCvP(iFt,2) = 1
+                      !  ftFcP(iFt,1) = iFcc
+                      !  ftFcP(iFt,2) = 0
+                      !  ftReg(iFt) = reg(ixreg,iyreg)
+                      !  ftLbl(iFt) = ilbl
+                      !  istrtt = 1
+                      !else
+                      !  iCv = iCv + 1
+                      !  m%ftCv(iCv) = ic
+                      !  m%cvFt(ic) = iFt
+                      !  ftCvP(iFt,2) = ftCvP(iFt,2) + 1
+                      !endif
                     elseif (lgtube) then
                       istrtt = -1
                     endif
@@ -2196,7 +2196,7 @@
         end do !iyreg
 
         ! To avoid segmentation fault error we check if guessed amount
-        ! of faces and cells is bigger than found amount faces and cells.
+        ! of faces and cells is bigger than found amount of faces and cells.
         call xertst (iFccy.le.m%nFc, 'iFccy.gt.nFc!')
         call xertst (iFcc.le.m%nFc, 'iFcc.gt.nFc!')
         call xertst (iCv.le.m%nCv, 'iCv.gt.nCv!')
@@ -2496,6 +2496,7 @@
       call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
       call ipgeti('b2us_prep_mod_hc',mod_hc)
       call ipgeti('b2us_prep_set_beta_0',set_beta)
+      call ipgeti('b2us_prep_Qalf_mod_style',Qalf_mod_style)
       write (*,*) "Qalfmin=",gm%Qalfmin
       write (*,*) "Qalfmax=",gm%Qalfmax
       write (*,*) "Pbs reduce factor=",pbs_red_fac
@@ -2590,12 +2591,109 @@
         end do
       end do
 
+      ! Determine which boundary faces should be treated as wall faces
+      is_mod_fc = .false.
+      if (Qalf_mod_style.eq.0) then
+        ! Wall faces must have an angle larger than Qalfmin
+        do iCv=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+          wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
+     &                  / gm%fcBb(iFc,3))
+          if (wrk >= gm%Qalfmin)
+     &      is_mod_fc(iFc) = .true.
+        enddo
+      else
+        ! Wall faces must be located at either end of a flux tube
+        ! or satisfy both conditions:
+        ! 1. Have a magnetic field angle larger than Qalfmin AND
+        ! 2. Have at least one neighboring wall face
+        do iFt = 1, mpg%nFt
+          mod_cell_c = 0
+          ! Identify the first cells in the flux tube and their wall faces
+          do l = 1, mpg%ftCvP(iFt,2)
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
+            wrk = 0.0_R8
+            do k = 1, mpg%cvFcP(iCv,2)
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
+              if (mpg%fcLbl(iFc) > 0) then
+                wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
+     &                  / gm%fcBb(iFc,3))
+                if (wrk >= gm%Qalfmin .or. l == 1) then
+                  is_mod_fc(iFc) = .true.
+                  mod_cell_c = mod_cell_c + 1
+                else
+                  exit
+                endif
+              endif
+            enddo
+            if (wrk < gm%Qalfmin) then
+              exit
+            endif
+          enddo
+          ! Identify the last cells in the flux tube and their wall faces
+          do l = mpg%ftCvP(iFt,2), 1, -1
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
+            wrk = 0.0_R8
+            do k = 1, mpg%cvFcP(iCv,2)
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
+              if (mpg%fcLbl(iFc) > 0) then
+                wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
+     &                  / gm%fcBb(iFc,3))
+                if (wrk >= gm%Qalfmin .or. l == mpg%ftCvP(iFt,2)) then
+                  is_mod_fc(iFc) = .true.
+                  mod_cell_c = mod_cell_c + 1
+                else
+                  exit
+                endif
+              endif
+            enddo
+            if (wrk < gm%Qalfmin) then
+              exit
+            endif
+          enddo
+          ! Special case: If every face in the flux tube qualifies as a wall,
+          ! one face must be marked as field-aligned.
+          ! For that purpose, we chose the face where the magnetic field angle
+          ! changes sign and designate it as the field-aligned (non-wall) face.
+          if (mod_cell_c >= mpg%ftCvP(iFt,2)) then
+            if (mpg%ftCvP(iFt,2) > 2) then
+              iFc1 = 0
+              do l = 1, mpg%ftCvP(iFt,2)
+                iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
+                do k = 1, mpg%cvFcP(iCv,2)
+                  iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
+                  if (mpg%fcLbl(iFc) > 0) then
+                    if (l > 1) then
+                      a = 1.0_R8
+                      if (mpg%fcCv(iFc,2) .lt. mpg%fcCv(iFc,1))
+     &                  a(1) = -1.0_R8
+                      if (mpg%fcCv(iFc1,2) .lt. mpg%fcCv(iFc1,1))
+     &                  a(2) = -1.0_R8
+                      if (sign(1.0_R8, gm%fcQalf(iFc,0)*a(1))
+     &                 /= sign(1.0_R8, gm%fcQalf(iFc1,0)*a(2))) then
+                        if (l < mpg%ftCvP(iFt,2)) then
+                          is_mod_fc(iFc) = .false.
+                        else
+                          is_mod_fc(iFc1) = .false.
+                        endif
+                      endif
+                    endif
+                    iFc1 = iFc
+                    exit
+                  endif
+                enddo
+              enddo
+            endif
+          endif
+        enddo
+      endif
+      ! modify angles for these faces
       do ic=mpg%nCi+1,mpg%nCv
         iFc = mpg%cvFc(mpg%cvFcP(ic,1))
         if (mpg%fcLbl(iFc) .le. 0) cycle
         bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
         wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
-        if (wrk >= gm%Qalfmin) then
+        if (is_mod_fc(iFc)) then
           if (wrk < gm%Qalfmax) then
             gm%fcPbs(iFc) = gm%Qalfmax*gm%fcS(iFc)*
      .         sign(1.0_R8,gm%fcPbs(iFc))
@@ -2683,7 +2781,6 @@
       cvBoundary(mpg%nCg,2) = minval(mpg%fcCv(fcBoundary(mpg%nCg),1:2))
       cvAlongBoundary(cvBoundary(mpg%nCg,2)) = .true.
 
-
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
           do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
@@ -2701,7 +2798,7 @@
               gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
               gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
             endif
-            gm%fcQbet(iFc,1) =  0.0_R8
+            gm%fcQbet(iFc,1) = 0.0_R8
           enddo
         enddo
       endif
@@ -3138,7 +3235,7 @@ c$$$      end do
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
+          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3233,7 +3330,7 @@ c$$$      end do
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
+          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3332,7 +3429,7 @@ c$$$      end do
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
+          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3428,7 +3525,7 @@ c$$$      end do
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
+          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3755,16 +3852,7 @@ c$$$      end do
       call createB2Plasma( mpg%nCv, ns, st % pl )
       call createB2Derivatives( mpg%nCv, mpg%nFc, ns, st % dv )
 
-*   ..allocate modules for structured grid
-      if (.not.allocated(fch))  call alloc_b2mod_plasma(nx,ny,ns)
-      if (.not.allocated(ceqp)) call alloc_b2mod_transport(nx,ny,ns)
-      if (.not.allocated(dna0)) 
-     .    call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      if (.not.allocated(conb))  call alloc_b2mod_work(nx,ny,ns)
-      if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
-      if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
-      if (.not.allocated(rlqa_ra))  call alloc_b2mod_rates(nx,ny,ns)
-      if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
+!     nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -4252,7 +4340,7 @@ c$$$      end do
           rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
           rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
           rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
           rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
           rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
           rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
@@ -4264,94 +4352,6 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
-          endif
-        end do
-      end do
-      
-! gueard cells iy = -1 and iy = ny
-      do ix = 0, nx-1
-        iy = -1
-        if(mpg%imapCv(ix,iy)/=0) then
-          ic =  mpg%imapCv(ix,iy)
-
-! B2plasma
-        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
-        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
-        po(ix,iy)        = st % pl % po(ic)
-        te(ix,iy)        = st % pl % te(ic)
-        ti(ix,iy)        = st % pl % ti(ic)
-
-! B2coeff
-        ceqp(ix,iy) = st % co % ceqp(ic)
-
-! from b2coeffwork
-        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
-        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
-        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
-        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
-        hci0(ix,iy)            = st % co % hci0(ic)
-        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
-        hce0(ix,iy)            = st % co % hce0(ic)
-        sig0(ix,iy)            = st % co % sig0(ic)
-        alf0(ix,iy)            = st % co % alf0(ic)
-        
-! kinetic energy
-        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
-     
-! derived state quantities
-        ne(ix,iy)     = st % dv % ne(ic)
-        ne2(ix,iy)    = st % dv % ne2(ic)
-        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!       ue(ix,iy)     = st % dv % ue(ic)
-        
-! residuals
-        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
-        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
-        respo(ix,iy)        = st % dv % respo(ic)
-        reshe(ix,iy)        = st % dv % reshe(ic)
-        reshi(ix,iy)        = st % dv % reshi(ic)
-!       resht(ix,iy)        = st % dv % resht(ic)
-        resmt(ix,iy)        = st % dv % resmt(ic)
-      
-! corrections
-        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
-        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
-        corut(ix,iy)        = st % dv % corut(ic)
-        corpo(ix,iy)        = st % dv % corpo(ic)
-!       cortt(ix,iy)        = st % dv % cortt(ic)
-        corte(ix,iy)        = st % dv % corte(ic)
-        corti(ix,iy)        = st % dv % corti(ic)
-      
-! coupling coefficients
-        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
-        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
-        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
-        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
-        
-! B2SourceWork
-        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
-        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
-        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
-        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
-        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
-       
-! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
-
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         iy = ny
@@ -4441,21 +4441,21 @@ c$$$      end do
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 
@@ -4548,21 +4548,21 @@ c$$$      end do
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         ix = nx
@@ -4652,21 +4652,21 @@ c$$$      end do
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
-        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 
@@ -5213,7 +5213,7 @@ c$$$      end do
         real (kind=R8) :: ri(2), zi(2)
         integer :: ix, iy, ix1, ix2, iyi, iyo, iymin, iymax, iout,
      .             n_omp, n_imp, n_sep, nxtl, nxtr
-        integer :: autodet = 1
+        integer :: autodet = 1, artificial_slab = 0
         character*24 hlp_frm, filename
         logical file_ok
 #ifdef LEGACYCOMP
