@@ -82,6 +82,7 @@
      &     gti(nCv,0:1), u_res_b(nCv)
 *   ..procedures
       intrinsic sqrt
+
 *-----------------------------------------------------------------------
 *.computation
 

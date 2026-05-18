@@ -63,7 +63,6 @@ c  Tp = Target surface temperature (K).
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
       common /location/ iwall, ns
-      
 
       integer, save :: npde, nw, niw
       integer, allocatable, save :: iw(:)

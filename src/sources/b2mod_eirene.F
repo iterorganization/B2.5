@@ -299,7 +299,6 @@ csw 26mar2013
 csw 26feb2014
       integer, save :: ihist=0, neutr_avg=0
       integer, save :: ih_end
-      logical, save :: lneustra
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
       integer, save :: relax_continue = 0
@@ -2481,12 +2480,13 @@ cc Read saved sources
         if (ihist.eq.nrelax) full_history = .true.
         if (ihist.eq.nrelax+1) ihist = 1
         write(*,*)
-     .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist !! TODO: different message for advanced
+     .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist
         if (full_history) then
          ih_end = nrelax
         else
          ih_end = ihist
         end if
+
         relax = rratio(ih_end-1,ih_end)
         sni_s = sni_s*relax + sni/dble(ih_end)
         smo_s = smo_s*relax + smo/dble(ih_end)
