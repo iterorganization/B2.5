@@ -2451,6 +2451,7 @@
       return
       end subroutine destroyB2PlasmaSnapshot
 
+
       subroutine createB2Diagnostic( nCv, ns, nnreg, diag )
 
       integer, intent(in) :: nCv, ns, nnreg(0:1)

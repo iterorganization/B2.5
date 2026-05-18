@@ -1710,6 +1710,7 @@ cxpb size is changed in b2mod_dimensions
               else
                 fb_current(ifb) = fb_target(ifb)
               endif
+
             case (24) ! peak electron temperature at specific boundary
 
               if(ncall.eq.0) then
@@ -2567,6 +2568,7 @@ cxpb size is changed in b2mod_dimensions
 #endif
                 endif
               endif
+
             case default
               write(*,*) 'fb_actuator not coded ',
      &          fb_type(ifb)

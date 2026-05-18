@@ -200,6 +200,7 @@
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
+
 !      allocate (m%cvOMP(m%ncvOMP))
 !      allocate (m%cvIMP(m%ncvIMP))
 !      allocate (m%fcOMP(m%nfcOMP))

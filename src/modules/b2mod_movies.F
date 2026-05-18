@@ -94,7 +94,7 @@
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
-      end subroutine create_cdf_field3
+      end subroutine create_cdf_field2
 
       subroutine create_cdf_field3(ncid, name, stype, itype, long_name, 
      &      units)
@@ -102,8 +102,6 @@
 #     include <netcdf.inc>
       integer ncid, stype, itype
       character*(*) name, long_name, units
-* file id
-      integer ncid, itype
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -141,7 +139,7 @@
      1 len_trim(units), trim(units))
       call check_cdf_status(iret)
       return
-      end subroutine create_cdf_field_tri
+      end subroutine create_cdf_field3
 
       subroutine create_cdf_field_tri(ncid, name, itype, long_name,
      &      units)

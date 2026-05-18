@@ -729,6 +729,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           endif
 #else
           nstrat=nstrai
+#endif
         endif
 
         allocate(old_style(nstrat))

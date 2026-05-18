@@ -108,16 +108,6 @@
 *     state k. rtqr only includes the contribution of recombination
 *     which replaces AMJUEL when Eirene is not used. rtrqr has
 *     dimension eV*m**3/s.
-
-*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
-*     coefficient at electron temperature rtt(i)
-*     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
-*     dimension eV*m**3/s.
-
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient

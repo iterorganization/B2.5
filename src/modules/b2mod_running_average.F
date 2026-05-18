@@ -94,6 +94,7 @@ c local
       call batch_average_sq (nCv*ns, pl%ua, avg%e_ua, itp, naver)
       call batch_average_sq (nCv,    pl%kt, avg%e_kt, itp, naver)
       call batch_average_sq (nCv,    pl%zt, avg%e_zt, itp, naver)
+
       call batch_average_sq (nCv*ns, srw%sna0_eir_tot, avg%e_sna,
      .                                            itp, naver)
       call batch_average_sq (nCv,    srw%she0_eir_tot, avg%e_she,
