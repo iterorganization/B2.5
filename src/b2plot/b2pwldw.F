@@ -999,8 +999,6 @@ c                    print *,'j,js,wo = ',j,js,wo    !###
                   else !}{
                     wi(jj)=0.0_R8
                   end if !}
-                else if (abs(lsns(j)).gt.0 .and. grid_mode.eq.2) then !}{
-                  wi(ltgs(j))=1.0_R8
                 else !}{
                   write(*,*) 'b2pwldw: no Eirene surface for target ',j,
      ,              ' - no neutral load onto the target calculated'

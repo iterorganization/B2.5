@@ -1529,7 +1529,6 @@ c*** Now change also the new plot zone according to the CW or CCW order
         deallocate(leirlis_old)
         deallocate(lb25lis_old)
       end do !}
-#endif
 
 #ifdef DBG
       do il=2,nwldprt !{
