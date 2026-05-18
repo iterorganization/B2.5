@@ -162,7 +162,7 @@
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
      &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
-     &  co%hci_ExB)
+     &  co%hci_ExB, co%dna_bohm, co%vla_bohm, co%vsa_bohm)
 *   ..incorporate geometry
 
       inctran = switch%b2txcx_increase_transp_coefs
