@@ -258,7 +258,6 @@
           call create_cdf_end(ncid)
         endif
       endif
-#endif
 
 #ifdef B25_EIRENE
       if (ncall.eq.0 .and. write_triangles.ge.1) then

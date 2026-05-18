@@ -70,7 +70,6 @@
      .  'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
-
 * ..implement the correction
 *   ..compute wrk
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk)

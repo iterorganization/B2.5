@@ -675,6 +675,8 @@ c<<<
      ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
      ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
 c>>>
+              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
+              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
             end if
           end if
         end do
