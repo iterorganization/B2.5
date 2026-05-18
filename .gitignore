@@ -32,9 +32,9 @@ lib/
 grep.lis
 
 # ignore imported dataset files
-dbe.fnn
-dc.fnn
-dw.fnn
+Database/trim.data/refl.data/dbe.fnn
+Database/trim.data/refl.data/dc.fnn
+Database/trim.data/refl.data/dw.fnn
 
 # genmod
 *__genmod*
