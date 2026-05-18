@@ -155,7 +155,6 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
 cdpc
       if(nwrite.gt.0 .and. .not. in_parallel()) then
         if(nwrite.gt.ncall) then
-          
           if(ncall.eq.0) then
             write(*,*) 'Opening 79'
             open(79,file='b2_9_matrix')
@@ -174,7 +173,7 @@ cdpc
            write(*,*) 'Closing 79'
            close(79)
         endif
-      endif 
+      endif
 cdpc
       if(lfirst_ilu9) then
         write(*,*) 'ilutern_9: nz = ',nz

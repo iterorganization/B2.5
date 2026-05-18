@@ -195,7 +195,6 @@ cdpc
           endif
         endif
       endif
-      endif 
 cdpc
       if(lfirst_ilu_us) then
         write(*,*) 'ilutern_us: nz = ',nz

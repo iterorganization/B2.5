@@ -16,7 +16,6 @@
 *   ..output arguments
       real (kind=R8), intent(out) ::
      *   dfunp(nFc)
-      integer cvs(2)
 *-----------------------------------------------------------------------
 *.documentation
 *

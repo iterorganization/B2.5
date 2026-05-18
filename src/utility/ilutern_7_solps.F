@@ -261,8 +261,6 @@ cdpc
           endif
         endif
       endif
-      endif
-      endif
 cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then

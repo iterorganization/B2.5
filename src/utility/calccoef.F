@@ -13,7 +13,6 @@
 *   ..output arguments
       real (kind=R8) ::
      *   flo0(nFc,0:1), con0(nFc,0:1)
-      integer cvs(2)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -70,6 +69,7 @@
        enddo
 
       elseif (meth .eq. 1) then ! UPWIND scheme
+
        do iFc = 1, nFc
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
