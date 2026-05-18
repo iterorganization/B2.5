@@ -320,33 +320,47 @@ c time-dependent treatment                                              !srv 07.
 cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
 cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
 cc while the second contribution corresponds to T dn/dt
-        wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
-        wrk1(mpg%nCi+1:mpg%nCv) = 0.0_R8
-        sr%shedt(:,0) = sr%shedt(:,0) - wrk1*ts_factor
+        sr%shedt(:,0) = sr%shedt(:,0) -1.5_R8*(dv%ne-psnl%ne)
+     &                *ts_factor*psnl%te/dtim*geo%cvVol
+c        wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
+c        wrk1(mpg%nCi+1:mpg%nCv) = 0.0_R8
+c        sr%shedt(:,0) = sr%shedt(:,0) - wrk1*ts_factor
         she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
-          wrk2 = 1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
-     &           *psnl%ti/dtim*geo%cvVol
-          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
-          sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
+          sr%shidt(:,0) = sr%shidt(:,0)
+          &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+          &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+c          wrk2 = 1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+c     &           *psnl%ti/dtim*geo%cvVol
+c          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
+c          sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
           shi0 = shi0 + sr%shidt
         elseif (switch%tn_style.eq.1) then   ! pure ion energy equation
-          wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *psnl%ti/dtim*geo%cvVol
-          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
           sr%shidt(:,0) = sr%shidt(:,0)
-     &                      - wrk2*ts_factor
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+c          wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+c     &           *psnl%ti/dtim*geo%cvVol
+c          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
+c          sr%shidt(:,0) = sr%shidt(:,0)
+c     &                      - wrk2*ts_factor
           shi0 = shi0 + sr%shidt
         else                                 ! separate ion and neutral energy equation
-          wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *ts_factor*psnl%ti/dtim*geo%cvVol
-          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
-          sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
+          sr%shidt(:,0) = sr%shidt(:,0)
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+c          wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+c     &           *ts_factor*psnl%ti/dtim*geo%cvVol
+c          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
+c          sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
           shi0 = shi0 + sr%shidt
-          wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))
-     &           *psnl%tn/dtim*geo%cvVol
-          wrk3(mpg%nCi+1:mpg%nCv) = 0.0_R8
-          sr%shndt(:,0) = sr%shndt(:,0) - wrk3*ts_factor
+          sr%shndt(:,0) = sr%shndt(:,0)
+     &                      -1.5_R8*(dv%nn(:)-psnl%nn(:))
+     &                      *ts_factor*psnl%tn/dtim*geo%cvVol
+c          wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))
+c     &           *psnl%tn/dtim*geo%cvVol
+c          wrk3(mpg%nCi+1:mpg%nCv) = 0.0_R8
+c          sr%shndt(:,0) = sr%shndt(:,0) - wrk3*ts_factor
           shn0 = shn0 + sr%shndt
         endif
         if (switch%solve_keps.gt.0) then

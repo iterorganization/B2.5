@@ -541,10 +541,13 @@ cdjm Jan2017 update momentum source components for balance
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
-         wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
-     &    psnl%na(:,is))*psnl%ua(:,is)/dtim
-         wrk3(mpg%nCi+1:mpg%nCv,is) = 0.0_R8
-         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*wrk3(:,is)
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
+     &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
+     &    psnl%ua(:,is)/dtim
+c         wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
+c     &    psnl%na(:,is))*psnl%ua(:,is)/dtim
+c         wrk3(mpg%nCi+1:mpg%nCv,is) = 0.0_R8
+c         sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*wrk3(:,is)
          smb = smb + sr%smodt(:,:,is)
        endif
 
