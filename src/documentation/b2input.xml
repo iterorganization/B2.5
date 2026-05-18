@@ -2453,320 +2453,6 @@
 					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each neutral species.
 				</description>
 				<switch>
-					<name>b2tqna_bar_width</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						Width of transport barrier where *_alfa1 multipliers will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-				<name>b2tqna_sol_width</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						Width of SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Otherwise the width is measured along the inner midplane if the flux tube crosses it. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-			</switchgroup>
-			<switch>
-				<name>b2tqna_new_df0</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
-				</description>
-			</switch>
-			<switchgroup>
-				<name>b2tqna_ballooning</name>
-				<description>
-					Ballooning model switches. If ballooning.ne.0, then all transport coefficients in cell (i) are rescaled by a factor of ballooning_rescale*abs(bb_ref/bb(i))**ballooning .
-					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default), the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
-				</description>
-				<switch>
-				<name>b2tqna_lfs_sol_width</name>
-					<default>b2tqna_sol_width</default>
-					<type>real</type>
-					<description>
-						Width of LFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the LFS if used. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_hfs_sol_width</name>
-					<default>b2tqna_sol_width</default>
-					<type>real</type>
-					<description>
-						Width of HFS SOL where *_alfa2 multipliers will be applied (in meters). Width is measured along the inner midplane if the flux tube crosses it. Supersedes b2tqna_sol_width on the HFS if used. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_sig_bar_width</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						Width of transport barrier where b2tqna_sig_alfa1 multiplier will be applied (in meters). Width is measured along the outer midplane, moving radially inward towards the core. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_sig_sol_width</name>
-					<default>b2tqna_sol_width</default>
-					<type>real</type>
-					<description>
-						Width of SOL where b2tqna_sig_alfa2 multiplier will be applied (in meters). Width is measured along the outer midplane if the flux tube crosses it. Supersedes b2tqna_sol_width if used. Only used if b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_te_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Electron thermal conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_ballooning_sig</name>
-					<default>1</default>
-					<type>integer</type>
-				</switch>
-			</switchgroup>
-			<switch>
-				<name>b2tqna_pfr_rescale</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Scaling factor for all ion and electron transport coefficients inside private flux regions.
-				</description>
-			</switch>
-			<switch>
-				<name>b2tqna_divsol_rescale</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Scaling factor for all ion and electron transport coefficients inside divertor SOL regions.
-				</description>
-			</switch>
-			<switch>
-				<name>b2sifr_phm0</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Multiplier of the friction term between charged species (only ions in case b2sigp_style.eq.2).
-				</description>
-			</switch>
-			<switch>
-				<name>b2sifr_phm1</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					If b2sigp_style.eq.2, multiplier to the friction force term between electrons and ions.
-					Otherwise, multiplier of the ehxp term in the older expression for the thermal force.
-				</description>
-			</switch>
-			<switch>
-				<name>b2sifr_phm2</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Multiplier of the electron thermal gradient term in the thermal force term and parallel current
-				</description>
-			</switch>
-			<switch>
-				<name>b2sifr_phm3</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Multiplier of the ion thermal gradient term in the thermal force term.
-				</description>
-			</switch>
-			<switchgroup>
-				<name>b2sifr_limth*</name>
-				<description>
-					Parameters for the computation of the thermal force term.
-				</description>
-				<switch>
-					<name>b2tqna_te_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Electron thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_te_alfa3</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Electron thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_te_alfa4</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						If te_alfa4.gt.0, multiplier to the electron thermal conductivity inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_ti_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Multiplier to the ion thermal conductivity inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-			</switchgroup>
-			<switchgroup>
-				<name>b2tlnl_*</name>
-				<description>
-					If lambda is positive, the Coulomb logarithm is set to lambda.
-					If lambda is negative, then abs(lambda) is the lower bound to be used when computing the Coulomb logarithm according to the NRL formulae.
-					The computation of the Coulomb logarithm takes place in b2tlnl.
-					The default formula is to use the Braginskii formulation, which will give the same answer for electron-electron (ee), electron-ion (ei), and ion-ion (ii) collisions. Respectively, non-default values of '1', '2' and '3' for b2tlnl_ii, _ee, and _ei, respectively, make use of the calculation according to Wesson.
-				</description>
-				<switch>
-					<name>b2tqna_ti_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Ion thermal conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_ti_alfa3</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Ion thermal conductivity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_ti_alfa4</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						If ti_alfa4.gt.0, ion thermal conductivity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_na_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous diffusivity with respect to grad(na) multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_na_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous diffusivity with respect to grad(na) multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_na_alfa3</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous diffusivity with respect to grad(na) multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_na_alfa4</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						If na_alfa4.gt.0, anomalous diffusivity with respect to grad(na) multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vsa_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous viscosity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vsa_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous viscosity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vsa_alfa3</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous viscosity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vsa_alfa4</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						If vsa_alfa4.gt.0, anomalous viscosity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vla_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous velocity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vla_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous velocity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vla_alfa3</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous velocity multiplier inside the far SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_vla_alfa4</name>
-					<default>0.0</default>
-					<type>real</type>
-					<description>
-						If vla_alfa4.gt.0, anomalous velocity multiplier inside the divertor regions. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_sig_alfa1</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous conductivity multiplier inside the transport barrier. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-				<switch>
-					<name>b2tqna_sig_alfa2</name>
-					<default>1.0</default>
-					<type>real</type>
-					<description>
-						Anomalous conductivity multiplier inside the near SOL. Only used when b2tqna_user_transport.eq.6.
-					</description>
-				</switch>
-			</switchgroup>
-			<switchgroup>
-				<name>b2tqna_m*</name>
-				<description>
-					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each neutral species.
-				</description>
-				<switch>
 					<name>b2tqna_max_df0</name>
 					<default>1e30</default>
 					<type>real</type>
@@ -3044,33 +2730,6 @@
 				<type>integer</type>
 				<description>
 					If style = 0 then the original form of the viscosity flux limit is used, otherwise the SPb flux limit is used.
-				</description>
-			</switch>
-			<switch>
-				<name>b2tlhe_far_sol</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-					If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
-				</description>
-			</switch>
-			<switch>
-				<name>b2tlhi_far_sol</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-					If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
-				</description>
-			</switch>
-			<switch>
-				<name>b2tlmv_far_sol</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-					If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -3710,17 +3369,7 @@
 					If set to 1 (default), uses multiplier 3/2 for the anomalous convective and conductive heat fluxes associated with electrostatic ExB drift turbulence, consistent with the keps-model derivation.
 					If set to 2 (experimental), additionally assumes the corresponding physical fluxes across surfaces/boundaries to have multiplier 3/2.
 				</description>
-				<switch>
-					<name>b2tqna_keps_init</name>
-					<default>1.0</default>
-					<type>real</type>
-				</switch>
-				<switch>
-					<name>b2tqna_keps_inc</name>
-					<default>1.0</default>
-					<type>real</type>
-				</switch>
-			</switchgroup>
+			</switch>
             <switch>
 				<name>b2tqna_transport_bohm</name>
 				<default>0</default>
@@ -4702,8 +4351,6 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
-		</category>
-		<category name="Output">
 			<switch>
 				<name>b2mndr_inverse_ua</name>
 				<default>0</default>
@@ -5455,24 +5102,6 @@
 					<name>b2uxus_mult_solvdim1</name>
 					<default>10</default>
 					<type>integer</type>
-				</switch>
-				<switch>
-					<name>eirene_ua_max</name>
-					<default>+c</default>
-					<type>real</type>
-				</switch>
-				<switch>
-					<name>eirene_ua_min</name>
-					<default>-c</default>
-					<type>real</type>
-				</switch>
-				<switch>
-					<name>eirene_M_max</name>
-					<default>1e30</default>
-					<type>real</type>
-					<description>
-						If the Mach number based on the total fluid velocity of a background species exceeds eirene_M_max, all velocity components passed to Eirene are restricted to make the Mach number equal to eirene_M_max. It is an additional restriction on top of eirene_ua_min and eirene_ua_max.
-					</description>
 				</switch>
 			</switchgroup>
 			<switch>
@@ -7424,7 +7053,7 @@
 			<switch>
 				<name>DBG_EIR_MC</name>
 				<default>0</default>
-				<type>integer array of size (100)</type>
+				<type>integer</type>
 				<description>
 					Debug output control for eirene_mc routine. See code for usage.
 				</description>
@@ -7663,10 +7292,6 @@
 					Used to set the parameters for the functional form of the time-dependent gas puff function. For use with TIME_DEP_PUFF_FUNC and TIME_DEP_PUFF_CASE.
 				</description>
 			</switch>
-			<!-- The following note is to help with documentation!-->
-			<note>
-				The following are active only if NO_B2_CHEM_SPUT is not defined among the compiler options and are used to override the Eirene chemical sputtering settings:
-			</note>
 			<switch>
 				<name>NGPDATA</name>
 				<default>0</default>
@@ -7716,17 +7341,6 @@
 					Passed to Eirene. Eirene atomic species index of the sputtered particle. If igass_chemical &gt; natmi, the data from chemical_sputter_yield is not used and the yield from the Eirene surface blocks is used instead.
 				</description>
 			</switch>
-		</category>
-		<category name="b2.wall_save.parameters">
-			<introduction>
-				<namelist>WALL_SAVE</namelist>
-				<description>
-					Read if present in the run directory.
-					Automatically generated by B2.5 but can be modified by user.
-					Contains data describing the state of the walls lining the vacuum vessel.
-					These data are used for smooth restarts and are not really intended for human use.
-				</description>
-			</introduction>
 			<switch>
 				<name>ITSPUT_CHEMICAL</name>
 				<default>0</default>
@@ -7982,7 +7596,7 @@
 				<description>
 					Contains the atomic numbers Z of the various elements present within the surface layer of wall element (iwall). Defaults to 6 for the first value, 0 otherwise.
 				</description>
-			</introduction>
+			</switch>
 			<switch>
 				<name>LAYER_RELCONSTITUENTS</name>
 				<type>real array of size (NWALL,6+NTRACK)</type>
@@ -8066,12 +7680,6 @@
 					Indicate the shot number to overwrite (to be used only when updating an already saved run with 'resave_mds' script).
 					Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
 				</description>
-			</introduction>
-			<switch>
-				<name>NBC</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>Number of boundary segments.</description>
 			</switch>
 		</category>
 		<category name="b2.boundary.parameters">
@@ -8985,7 +8593,7 @@
 				<description>
 					If ADDSPEC(is,ikind,spec).ge.0, then the transport coefficient profile of type (ikind) from species (spec) is also used for species with index ADDSPEC(is,ikind,spec).
 				</description>
-			</introduction>
+			</switch>
 			<switch>
 				<name>TRANSPORT_IP_FILENAME</name>
 				<default>b2.transport.inputfile</default>
@@ -9160,7 +8768,7 @@
 				<description>
 					Multiplier to the time used in solving the parallel momentum equation of species (is) in region (ireg).
 				</description>
-			</introduction>
+			</switch>
 			<switch>
 				<name>DTEE</name>
 				<default>1.0</default>
@@ -9986,7 +9594,7 @@
 					Read if 'b2optim_namelist' is set to 1.
 					Necessary for sensitivity and optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
 				</description>
-			</switch>
+			</introduction>
 			<switch>
 				<name>NCF</name>
 				<default>0</default>
