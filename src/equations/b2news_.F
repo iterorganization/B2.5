@@ -695,11 +695,6 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !!FR End of loop (3)
 #endif
 
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
-!$OMP END PARALLEL DO
-!!FR End of loop (3)
-#endif
-
 *   ..compute fne_he, fni_he
 c      with diamagnetic drift part                                       !srv 13.05.99
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe,

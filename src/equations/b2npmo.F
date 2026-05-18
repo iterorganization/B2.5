@@ -705,7 +705,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nFc*2, 1.0_R8, flcb, 1, flct, 1)
         call b2saxpy (nFc*2, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
-       endif                !srv 22.05.18
+       endif                                                            !srv 22.05.18
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
 !$omp end parallel do
@@ -913,6 +913,7 @@ c     ..compare 9-pt stencil matrix
      &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
      &    /ts_factor
       enddo
+
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
@@ -927,10 +928,10 @@ c     ..compare 9-pt stencil matrix
        call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')           !srv 11.01.13
        call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')            !srv 11.01.13
       endif                                                             !srv 12.07.02 }
+
 * ..return
       ncall_b2npmo = ncall_b2npmo+1
       call subend ()
-
       return
 *-----------------------------------------------------------------------
 *.end b2npmo
