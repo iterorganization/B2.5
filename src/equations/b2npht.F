@@ -328,8 +328,8 @@ c        sr%shedt(:,0) = sr%shedt(:,0) - wrk1*ts_factor
         she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
           sr%shidt(:,0) = sr%shidt(:,0)
-          &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
-          &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+     &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
 c          wrk2 = 1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
 c     &           *psnl%ti/dtim*geo%cvVol
 c          wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
