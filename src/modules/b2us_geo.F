@@ -1296,13 +1296,13 @@
       endif
 
       write(*,*) "list of boundary faces in one flux tube and type:"
-      do j=1,mpg%nFci
-        write(*,'(4i4)') j, mpg%fcs_wall_ind(j,1),
-     &                      mpg%fcs_wall_ind(j,2), mpg%fcs_wall_type(j)
-        write(*,*) mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
-     &                          mpg%fcs_wall_ind(j,1)+
-     &                          mpg%fcs_wall_ind(j,2)-1)
-      enddo
+c      do j=1,mpg%nFci
+c        write(*,'(4i4)') j, mpg%fcs_wall_ind(j,1),
+c     &                      mpg%fcs_wall_ind(j,2), mpg%fcs_wall_type(j)
+c        write(*,*) mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
+c     &                          mpg%fcs_wall_ind(j,1)+
+c     &                          mpg%fcs_wall_ind(j,2)-1)
+c      enddo
       return
       end subroutine init_geometry
 
