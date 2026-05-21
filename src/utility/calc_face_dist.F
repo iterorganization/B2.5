@@ -36,7 +36,7 @@ c     Internal variables
       call sfill (mpg%nCi, 0.0_R8, segmdist, 1)
       totaldist = 0.0_R8
 
-      call cv_intersections (geo, mpg, segment, list_cv, list_ci,
+      call cv_intersections2 (geo, mpg, segment, list_cv, list_ci,
      &   list_fc, nncv, nnci, nnfc, nCv, XI, YI, 1, ifail)
 
       do iFc = 1, nnfc-1

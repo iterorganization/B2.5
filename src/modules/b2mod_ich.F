@@ -354,14 +354,14 @@ c      i_R_Rp = 1 !!TODO
       segment = reshape((/ Rp_min, minval(geo%vxY)-crction,
      &       Rp_min, maxval(geo%vxY)+crction /), shape(segment))
 
-        call cv_intersections (geo, mpg, segment, list_cv_Rp_min,
+        call cv_intersections2 (geo, mpg, segment, list_cv_Rp_min,
      &   list_ci_Rp_min, list_fc_Rp_min, nncv_Rp_min, nnci_Rp_min,
      &   nnfc_Rp_min, nCv, XI, YI, 1, ifail)
 
       segment = reshape((/ switch%ich_Rdep, minval(geo%vxY)-crction,
      &      switch%ich_Rdep, maxval(geo%vxY)+crction /), shape(segment))
 
-        call cv_intersections (geo, mpg, segment, list_cv_R_ant,
+        call cv_intersections2 (geo, mpg, segment, list_cv_R_ant,
      &   list_ci_R_ant, list_fc_R_ant, nncv_R_ant, nnci_R_ant,
      &   nnfc_R_ant, nCv, XI, YI, 1, ifail)
 
@@ -370,7 +370,7 @@ c      i_R_Rp = 1 !!TODO
      &          maxval(geo%vxY)/2.0_R8, maxval(geo%vxX)+crction,
      &          maxval(geo%vxY)/2.0_R8 /), shape(segment))
 
-        call cv_intersections (geo, mpg, segment, list_cv_Z, list_ci_Z,
+        call cv_intersections2 (geo, mpg, segment, list_cv_Z, list_ci_Z,
      &   list_fc_Z, nncv_Z, nnci_Z, nnfc_Z, nCv, XI, YI, 1, ifail)
 
 

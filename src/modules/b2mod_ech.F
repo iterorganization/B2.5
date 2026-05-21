@@ -340,7 +340,7 @@ c-----------------Locate resonance-----------------
         segment = reshape((/ R_res, minval(geo%vxY)-crction,
      &       R_res, maxval(geo%vxY)+crction /), shape(segment))
 
-        call cv_intersections (geo, mpg, segment, list_cv, list_ci,
+        call cv_intersections2 (geo, mpg, segment, list_cv, list_ci,
      &   list_fc, nncv, nnci, nnfc, nCv, XI, YI, 1, ifail)
 
         call sfill (nCv, wce, wceV, 1)
