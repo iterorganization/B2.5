@@ -1259,10 +1259,16 @@
           end if
         end do
         mpg%nFci = mpg%nFci + 1
+        write (*,*) '=================================='
+        write (*,*) 'nFci counted'
+        write (*,*) 'nFci = ', mpg%nFci
+        write (*,*) '=================================='
 
         allocate(mpg%fcs_wall_ind(mpg%nFci, 2),
      &           mpg%fcs_wall_type(mpg%nFci))
+      endif
 
+      if(mpg%nFci.gt.1) then !ap solution to avoid crash of TCV72542 case
         ! Populate mapping array
         k = 1
         i = 1
@@ -1293,16 +1299,16 @@
         else
           mpg%fcs_wall_type(k) = 2
         end if
+      
+        write(*,*) "list of boundary faces in one flux tube and type:"
+        do j=1,mpg%nFci
+          write(*,'(4i4)') j, mpg%fcs_wall_ind(j,1),
+     &                       mpg%fcs_wall_ind(j,2), mpg%fcs_wall_type(j)
+          write(*,*) mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
+     &                            mpg%fcs_wall_ind(j,1)+
+     &                            mpg%fcs_wall_ind(j,2)-1)
+        enddo
       endif
-
-      write(*,*) "list of boundary faces in one flux tube and type:"
-c      do j=1,mpg%nFci
-c        write(*,'(4i4)') j, mpg%fcs_wall_ind(j,1),
-c     &                      mpg%fcs_wall_ind(j,2), mpg%fcs_wall_type(j)
-c        write(*,*) mpg%fcs_wall(mpg%fcs_wall_ind(j,1):
-c     &                          mpg%fcs_wall_ind(j,1)+
-c     &                          mpg%fcs_wall_ind(j,2)-1)
-c      enddo
       return
       end subroutine init_geometry
 

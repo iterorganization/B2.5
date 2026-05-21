@@ -242,7 +242,9 @@ contains
           if (.not. allocated(dsl)) then
             allocate(dsl(1:mpg%divFcP(i,2)), dsLT(1:mpg%divFcP(i,2)), dsLP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
+          if (mpg%ifdiv(i)-1.gt.0) then
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
+          endif
           inquire(file='dsL', exist=file_exists)
           if (file_exists) then
             open(99,file='dsLT')
@@ -265,7 +267,9 @@ contains
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
+            if (mpg%ifdiv(i)-1.gt.0) then
+              call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
+            endif
             inquire(file='dsTL', exist=file_exists)
             if (file_exists) then
               open(99,file='dsTLT')
@@ -287,7 +291,9 @@ contains
             if (.not. allocated(dsr)) then
               allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+            if (mpg%ifdiv(i)-1.gt.0) then
+              call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+            endif
             inquire(file='dsR', exist=file_exists)
             if (file_exists) then
               open(99,file='dsRT')
@@ -310,7 +316,9 @@ contains
           if (.not. allocated(dstr)) then
             allocate(dstr(1:mpg%divFcP(i,2)), dsTRT(1:mpg%divFcP(i,2)), dsTRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
+          if (mpg%ifdiv(i)-1.gt.0) then
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
+          endif
           inquire(file='dsTR', exist=file_exists)
           if (file_exists) then
             open(99,file='dsTRT')
@@ -332,7 +340,9 @@ contains
           if (.not. allocated(dsr)) then
             allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+          if (mpg%ifdiv(i)-1.gt.0) then
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+          endif
           if (file_exists) then
             open(99,file='dsRT')
           else
