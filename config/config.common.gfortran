@@ -36,7 +36,10 @@ ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
 ifeq ($(UNAME), Darwin)
 FCOPTS += -msve-vector-bits=512
 else
+ARCH := $(shell uname -m)
+ifneq ($(ARCH), aarch64)
 FCOPTS += -mprefer-vector-width=512
+endif
 endif
 endif
 ifdef SOLPS_DEBUG
