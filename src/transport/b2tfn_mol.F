@@ -53,7 +53,7 @@
      *   dpmc(nCv)           !! poloidal pressure gradient at cell center
       real (kind=R8) ::      !! only for postprocessing
      *  ww(nFc), vv(nFc), uu(nFc), 
-     *  wwc(nCv), vvc(nCv), uuc(nCv), pit2c(nCv)  
+     *  wwc(nCv), vvc(nCv), uuc(nCv), pitc(nCv), pit2c(nCv)  
       real (kind=R8) ::      !! test
      *  tmf(nFc), dtm(nFc,0:1), dp_mol_f(nFc)              
       real (kind=R8), parameter :: eps = 1.0e-10_R8
@@ -220,13 +220,15 @@ c compute vv, ww and uu
      &               uu,uuc)
        call intcell(nFc, nCv, mpg, mpg%intcellR,
      &               vv,vvc)
+       pitc = abs(geo%cvBb(:,0))/geo%cvBb(:,3)
        pit2c = abs(geo%cvBb(:,2))/geo%cvBb(:,3)
        wwc = n_moli(:,0)/n_mol(:,0)*pit2c*pl%ua(:,is_main_ion)
 
        if (switch%b2stfm_recompute_perp_vels.ne.0) then
          u_pol_mol(:,0) = uuc
          u_rad_mol(:,0) = vvc
-         u_tor_mol(:,0) = wwc
+         u_tor_mol(:,0) = wwc !! TODO?
+         u_dia_mol(:,0) = (u_pol_mol(:,0)-u_mol(:,0)*pitc)/pit2c
        else 
 cc molecule velocities are kept at the value read from the input mol_bg
        endif

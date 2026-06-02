@@ -47,6 +47,7 @@
 *   ..local variables
       integer iCv, is, ism
       character chns*3!,
+      real (kind=R8) :: pit(nCv), pit2(nCv)
       real (kind=R8) :: !! rate, number of reaction events per cell per second
      *  rate_d(nCv),  !! dissociation
      *  rate_nd(nCv), !! non-dissociative ionization
@@ -197,14 +198,19 @@ cc temporary, total energy source, for benchmarking with matlab
       call sfill (nCv, 0.0_R8, se_mol_ec, 1)
       call sfill (nCv, 0.0_R8, se_mol_tot, 1)
 
+cc set diamagnetic velocity
+      pit = dabs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
+      pit2 = dabs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
+      u_dia_mol(:,0) = (u_pol_mol(:,0)-u_mol(:,0)*pit)/pit2
+
       m_D2 = am_d2*mp
       mr = (am(1)*am_d2)/(am(1)+am_d2)*mp
       if (switch%b2stfm_ekin_perp.eq.0) then
         vsq = u_mol(:,0)**2
         vsqi = u_moli(:,0)**2
       else
-        vsq = u_mol(:,0)**2+u_pol_mol(:,0)**2+u_rad_mol(:,0)**2
-        vsqi = u_moli(:,0)**2+u_pol_mol(:,0)**2+u_rad_mol(:,0)**2
+        vsq = u_mol(:,0)**2+u_dia_mol(:,0)**2+u_rad_mol(:,0)**2
+        vsqi = u_moli(:,0)**2+u_dia_mol(:,0)**2+u_rad_mol(:,0)**2
       endif
 
 
@@ -641,7 +647,7 @@ cc elastic collisions, ion energy source
              call integrate_elastic_collisions_cell(mp*am_d2, mp*am(1), 
      *        t_mol(iCv,ism)/ev, pl%ti(iCv)/ev, pl%ua(iCv,1), 0.0_R8,
      *        0.0_R8,u_mol(iCv,ism), u_rad_mol(iCv,ism),
-     *        u_pol_mol(iCv,ism))
+     *        u_dia_mol(iCv,ism))
             endif
             !! total energy, thermal part
             t0 =  rate_ec_E(iCv)*1.5_R8*(t_mol(iCv,ism)-pl%ti(iCv))  
@@ -656,9 +662,9 @@ cc elastic collisions, ion energy source
               Vcom_d = 0.0_R8
               Vcom_r = 0.0_R8
             else !! take also into account perpendicular mechanical work
-              F_d = mr*rate_ec_m_d(iCv)*u_pol_mol(iCv,ism) !! force on ions, diamagnetic TODO check dia vs poloidal
+              F_d = mr*rate_ec_m_d(iCv)*u_dia_mol(iCv,ism) !! force on ions, diamagnetic 
               F_r = mr*rate_ec_m_r(iCv)*u_rad_mol(iCv,ism) !! force on ions, radial
-              Vcom_d = (am_d2*u_pol_mol(iCv,ism))/(am_d2+am(1))  !! center-of-mass diamagnetic velocity, neglecting ion contribution
+              Vcom_d = (am_d2*u_dia_mol(iCv,ism))/(am_d2+am(1))  !! center-of-mass diamagnetic velocity, neglecting ion contribution
               Vcom_r = (am_d2*u_rad_mol(iCv,ism))/(am_d2+am(1))  !! center-of-mass radial velocity, neglecting ion contribution
             endif
             wrk(iCv) = F_p*Vcom_p + F_d*Vcom_d + F_r*Vcom_r
