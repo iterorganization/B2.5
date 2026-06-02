@@ -113,6 +113,9 @@
 
 * ..Optionally, calculate a local (cell-based) multiplier to the timestep.
 *   mult_dt will be 1.0 if b2mndt_var_style = 0 (default).
+* The schemes activated by b2mndt_var_style are explained in the paper:
+* Van Uytven, Wim, and Wouter Dekeyser. "Speed‐Up of Plasma Boundary Simulations Through Underrelaxation and Local Timestepping."
+* Contributions to Plasma Physics (2026): e70136.
       call get_mult_dt(switch%b2mndt_var_style, dtim, dv, geo, mpg,
      &     nCv, mpg%nFc, ns, te, ti, na, ua, switch%b2mndt_var_te_min,
      &     switch%b2mndt_var_te_max, switch%b2mndt_var_mult,
