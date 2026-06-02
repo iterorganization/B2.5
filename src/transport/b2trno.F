@@ -176,6 +176,7 @@
 !$omp& private(is, iFc, wrkc)
 !$omp& shared(nCv, nFc, ns, mode, geo, mpg, co, chcib, wrk, wrk1)
 !$omp& shared(cdpa0, cvsa0, switch, is_neutral, zn, inctran)
+!$omp& shared(mode_mol,cdpm0, cvsm0, chcm0)
 !$omp do
 #endif 
       do is = 0, ns-1
