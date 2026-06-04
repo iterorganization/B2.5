@@ -1096,19 +1096,26 @@ ${OBJDIR}/LISTOBJ: listobj
 
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
+# The version header is assembled in a scratch file first, then atomically
+# moved into the shared src/include only if it changed.  The scratch file lives
+# in the per-build ${OBJDIR} (not the shared source tree) so that two concurrent
+# B2.5 builds (e.g. 'make -jN all' building b25 and b25eirene together, or the
+# CI line 'make -jN solps_nox b25_nox') do not interleave their appends into one
+# shared file and corrupt the generated Fortran.  The final mv is atomic and the
+# content is identical across builds (git-describe output), so it is race-safe.
 ${SRCDIR}/include/git_version_B25.h: force
-	@echo "      character*32 :: git_version_B25 =" > ${SRCDIR}/include/git_version_new.h
-	@echo "     . '`git describe --tags --dirty --always | cut -c 1-32`'" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*32 :: git_version_B25 =" > ${OBJDIR}/git_version_new.h
+	@echo "     . '`git describe --tags --dirty --always | cut -c 1-32`'" >> ${OBJDIR}/git_version_new.h
 ifdef SOLPS_CPP
-	@echo "      character*32 :: git_version_ADAS =" >> ${SRCDIR}/include/git_version_new.h
-	@echo "     . '`( cd $${SOLPSTOP}/modules/adas ; git describe --tags --dirty --always | cut -c 1-32 )`'" >> ${SRCDIR}/include/git_version_new.h
-	@echo "      character*32 :: git_version_SOLPS =" >> ${SRCDIR}/include/git_version_new.h
-	@echo "     . '`( cd $${SOLPSTOP} ; git describe --tags --dirty --always | cut -c 1-32 )`'" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*32 :: git_version_ADAS =" >> ${OBJDIR}/git_version_new.h
+	@echo "     . '`( cd $${SOLPSTOP}/modules/adas ; git describe --tags --dirty --always | cut -c 1-32 )`'" >> ${OBJDIR}/git_version_new.h
+	@echo "      character*32 :: git_version_SOLPS =" >> ${OBJDIR}/git_version_new.h
+	@echo "     . '`( cd $${SOLPSTOP} ; git describe --tags --dirty --always | cut -c 1-32 )`'" >> ${OBJDIR}/git_version_new.h
 else
-	@echo "      character*32 :: git_version_ADAS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
-	@echo "      character*32 :: git_version_SOLPS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*32 :: git_version_ADAS = '0.0.0-0-g0000000'" >> ${OBJDIR}/git_version_new.h
+	@echo "      character*32 :: git_version_SOLPS = '0.0.0-0-g0000000'" >> ${OBJDIR}/git_version_new.h
 endif
-	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
+	@if cmp -s ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${OBJDIR}/git_version_new.h; else mv ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
