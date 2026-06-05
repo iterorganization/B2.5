@@ -426,6 +426,7 @@ program b2_ual_write_b2mod
     if (.not.streql(device_env,' ')) database = device_env
     if (streql(database,'iter')) database = 'ITER'
 #endif
+    imasdir = ' '
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -436,11 +437,13 @@ program b2_ual_write_b2mod
     call ipgetc('b2mndr_device', database )
     call ipgetc('b2mndr_database', database )
 #endif
+    if (streql(imasdir,' ')) then
 #if AL_MAJOR_VERSION > 4
-    imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)
+      imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)
 #else
-    imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)//'/0'
+      imasdir = trim(home_dir)//'/public/imasdb/'//trim(database)//'/'//trim(version)//'/0'
 #endif
+    endif
 
     !! Check if arguments are found
     narg = command_argument_count()
