@@ -213,12 +213,12 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES += ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXX      = c++
-CXXFLAGS = -std=c++11
+  CXX      = c++
+  CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
 endif
 
 ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
+  LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD       = ${FC}

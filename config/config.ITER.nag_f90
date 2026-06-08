@@ -54,7 +54,7 @@ ifdef SOLPS_MPI
 endif
 
 ifdef LD_CATALYST
-  CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
 endif
 
 ifdef IMAS_PKG_LIST
