@@ -44,7 +44,6 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
-      type (B2Coeff), intent (inout) :: co
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)

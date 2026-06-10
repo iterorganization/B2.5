@@ -611,7 +611,8 @@
       character(8)    :: idcod
       character(32)   :: id
 
-      external cfruin, cfrure
+      external cfruin, cfrure, streql
+      logical streql
 
 #ifdef DBG
       nx_st = mpg%nx

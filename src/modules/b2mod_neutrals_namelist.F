@@ -137,7 +137,6 @@ cank }
       real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: e_fc
-      real (kind=R8), save :: e_fc
       real (kind=R8), save :: recyceir(NSTRAID)
       real (kind=R8), save :: USERFLUXPARM(NSTRAID,2)
       real (kind=R8), save :: volrecstart(NSTRAID)
