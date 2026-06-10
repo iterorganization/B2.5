@@ -510,6 +510,9 @@ c time-dependent treatment
        call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv
 #ifndef FIXED_POINT
 cdjm Jan2017 update momentum source components for balance
+!WG_TODO       if (balance_netcdf.ne.0) then
+!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+!WG_TODO       endif
        if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,is)=smb !djm Mar2019
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
@@ -547,7 +550,6 @@ cdjm Jan2017 update momentum source components for balance
          sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*wrk3(:,is)
          smb = smb + sr%smodt(:,:,is)
        endif
-
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18

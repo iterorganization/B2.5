@@ -4139,6 +4139,7 @@ c$$$      end do
       if (.not.allocated(conb))  call alloc_b2mod_work(nx,ny,ns)
       if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
       if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
+      if (.not.allocated(rlqa_ra))  call alloc_b2mod_rates(nx,ny,ns)
       if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
 
 ! cell volumes

@@ -2949,6 +2949,56 @@ c      close(14)
 
       end subroutine set_transport_neo
 
+c lvn2
+c**************************************************************************************
+c*****************     New KU Leuven transport model for neutrals *********************
+c**************************************************************************************
+c      subroutine set_transport_kul(nCv, nFc)
+!!, nVx, ns, nscx, nscxmax, iscx, geo, 
+ !!    &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+ !!    &   hcib, hce0, sig0, alf0, hvi0, hve0)
+c      use b2mod_types
+c      use b2mod_indirect
+c      use b2mod_constants
+c      use b2mod_b2cmpa
+c      use b2mod_b2cmpt
+c      use b2mod_rates
+c      use b2mod_transport_namelist
+c      use b2us_geo
+c      use b2us_map
+c      use b2us_plasma
+c      implicit none
+
+c*   ..input arguments (unchanged on exit)
+c      integer nCv, nFc
+c      call subini ('set_transport_kul')
+!!, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
+!!      type (geometry), intent (in) :: geo
+!!      type (mapping), intent (in) :: mpg
+!!      type (B2Plasma), intent (in) :: pl
+!!      type (B2Derivatives), intent (inout) :: dv
+!!      type (B2Rates), intent (in) :: rt
+!!      type (B2StateExt), intent (in) :: st_ext
+!!*   ..output arguments (unspecified on entry)
+!!      real (kind=R8) ::
+!!     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
+!!     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
+!!     &  hci0(nCv), hcib(nCv,0:ns-1),
+!!     &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
+!!      real (kind=R8) ::
+!!     *  hce0(nCv), sig0(nCv), alf0(nCv),
+!!     &  hvi0(nCv,0:1), hve0(nCv,0:1)
+!!*   ..workspace arguments (unspecified on entry and on exit)
+!!      real (kind=R8) ::
+!!     *  wrk0(nCv)
+
+c*   ..return
+c      call subend ()
+c      return
+c      end subroutine set_transport_kul
+
+
+
       subroutine set_profile(fnm, n, coord, fun)                        !srv 01.03.07 {
       use b2mod_types
       implicit none

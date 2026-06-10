@@ -19,7 +19,8 @@
       integer iFc
       integer cvs(2)
       real (kind=R8) ::
-     *   t0, t1
+     *   t0, t1, term1,term2,term3,term4,term5,term6,term7,term8,
+     *   term9,term10,term11,term12
       intrinsic max, sqrt
       external xertst
 *     ------------------------------------------------------------------
