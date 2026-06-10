@@ -979,7 +979,9 @@ endif
 	${BLD} $@ ${SOLPS4OBJS}
 
 ${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}
+${OBJDIR}/init.o: ${OBJDIR}/eirdiag.${MOD}
 ${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD}
+${OBJDIR}/user_default.o: ${OBJDIR}/eirdiag.${MOD}
 
 ifneq (${MOD},o)
 ${OBJDIR}/adsp.${MOD}: ${OBJDIR}/cadgeo.${MOD} ${OBJDIR}/clogau.${MOD} ${OBJDIR}/comusr.${MOD} ${OBJDIR}/cpes.${MOD} ${OBJDIR}/ctrcei.${MOD} ${OBJDIR}/comprt.${MOD}
