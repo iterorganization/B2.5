@@ -1011,9 +1011,9 @@ ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 # target 'clean' cleans up the directory.
 clean :
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.f90 ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/mpiversion.mk ${OBJDIR}/.delete >& /dev/null
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.f90 ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/mpiversion.mk ${OBJDIR}/.delete > /dev/null 2>&1
 ifneq (${MOD},o)
-	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete >& /dev/null
+	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete > /dev/null 2>&1
 endif
 ifdef SOLPSTOP
 ifdef LD_NETCDF
