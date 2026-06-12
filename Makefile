@@ -112,10 +112,12 @@ else
  endif
 endif
 
+ifndef SKIP_LISTOBJ_INCLUDE
 $(shell awk 'FNR==1{if(!/^OBJS *=/){e=1;exit}} END{exit e}' \
         ${OBJDIR}/LISTOBJ 2>/dev/null || rm -f ${OBJDIR}/LISTOBJ)
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
+endif
 endif
 include ${SRCB2}/config/compile
 MAKES += ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
@@ -1100,8 +1102,11 @@ endif
 # updated whenever modules are added or removed), not on every invocation.
 # listobj is still phony so it can be called explicitly; LISTOBJ as a real
 # file target avoids the "always stale" behaviour of a phony prerequisite.
+# NOTE: SKIP_LISTOBJ_INCLUDE=1 prevents the recursive subprocess from
+# including the still-stale LISTOBJ and immediately re-triggering this rule,
+# which would otherwise cause infinite recursion.
 ${OBJDIR}/LISTOBJ: ${SRCDIR}/modules/.new_modules
-	$(MAKE) listobj
+	$(MAKE) SKIP_LISTOBJ_INCLUDE=1 listobj
 
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
