@@ -112,6 +112,8 @@ else
  endif
 endif
 
+$(shell awk 'FNR==1{if(!/^OBJS *=/){e=1;exit}} END{exit e}' \
+        ${OBJDIR}/LISTOBJ 2>/dev/null || rm -f ${OBJDIR}/LISTOBJ)
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
 endif
@@ -1051,7 +1053,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; ${MAKETAGS} ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
 
-listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+listobj: local ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -1094,7 +1096,12 @@ endif
 	done; \
 	echo "$$lll" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
-${OBJDIR}/LISTOBJ: listobj
+# Rebuild LISTOBJ only when the module structure changes (.new_modules is
+# updated whenever modules are added or removed), not on every invocation.
+# listobj is still phony so it can be called explicitly; LISTOBJ as a real
+# file target avoids the "always stale" behaviour of a phony prerequisite.
+${OBJDIR}/LISTOBJ: ${SRCDIR}/modules/.new_modules
+	$(MAKE) listobj
 
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
@@ -1123,13 +1130,12 @@ ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
-	touch ${OBJDIR}/dependencies
+	printf '# Dummy dependencies file for B2.5\n' > ${OBJDIR}/dependencies
 	${MAKE} tags
 	${MAKE} VERSION
-	${MAKE} local
-	${MAKE} listobj
 	${MAKE} depend
 
+$(shell [ -s ${OBJDIR}/dependencies ] || rm -f ${OBJDIR}/dependencies)
 include ${OBJDIR}/dependencies
 ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
 include ${SRCB2}/config/dependencies.local

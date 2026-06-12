@@ -7792,18 +7792,16 @@ cxpb code segment analog to b2tfhe
           call xertst(.not.streql(ene_fn(ib),' '),
      .     'Electron temperature profile file ENE_FN not specified!')
           if (ENEPAR(IB,2).gt.0.0_R8) then
-            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+            write(*,'(a,a,a,1p,g14.7,a,a,a)')
      .       'BCENE = 23 : electron temperature profile from file ',
      .        trim(ene_fn(ib)),' with a maximum of ',
-     1        ENEPAR(IB,1),' on ',
-     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     1        ENEPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
      1           'BCENE = 23, ENEPAR(,1) !> 0')
           else
-            write(*,'(a,a,a,a,a,a,i3)')
+            write(*,'(a,a,a,a,a)')
      .       'BCENE = 23 : electron temperature profile from file ',
-     .        trim(ene_fn(ib)),' on ',
-     1        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .        trim(ene_fn(ib)),' on ',BCCHAR(IB),boundary_location(ib)
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
@@ -10574,18 +10572,16 @@ cxpb Careful here because of BC number clash
           call xertst(.not.streql(eni_fn(ib),' '),
      .     'Ion temperature profile file ENI_FN not specified!')
           if (ENIPAR(IB,2).gt.0.0_R8) then
-            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+            write(*,'(a,a,a,1p,g14.7,a,a,a)')
      .       'BCENI = 28 : ion temperature profile from file ',
      .        trim(eni_fn(ib)),' with a maximum of ',
-     1        ENIPAR(IB,1),' on ',
-     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     1        ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
      1           'BCENI = 28, ENIPAR(,1) !> 0')
           else
-            write(*,'(a,a,a,a,a,a,i3)')
+            write(*,'(a,a,a,a,a)')
      .       'BCENI = 28 : ion temperature profile from file ',
-     .        trim(eni_fn(ib)),' on ',
-     1        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .        trim(eni_fn(ib)),' on ',BCCHAR(IB),boundary_location(ib)
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
@@ -11595,16 +11591,14 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           call xertst(.not.streql(pot_fn(ib),' '),
      .     'Potential profile file POT_FN not specified!')
           if (POTPAR(IB,2).gt.0.0_R8) then
-            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+            write(*,'(a,a,a,1p,g14.7,a,a,a)')
      .       'BCPOT = 15 : potential profile from file ',
      .        trim(pot_fn(ib)),' with maximum of ',
-     1        POTPAR(IB,1),' on ',
-     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     1        POTPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
           else
-            write(*,'(a,a,a,a,a,a,i3)')
+            write(*,'(a,a,a,a,a)')
      .       'BCPOT = 15 : potential profile from file ',
-     .        trim(pot_fn(ib)),' on ',
-     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .        trim(pot_fn(ib)),' on ',BCCHAR(IB),boundary_location(ib)
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
