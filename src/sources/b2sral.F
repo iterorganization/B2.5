@@ -57,7 +57,7 @@
      &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
 #endif
       use b2mod_fluid_molecules
-     & , only : background_was_read, read_molecules_background_ext
+     & , only : background_was_read, init_molecules_background_ext
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -249,7 +249,8 @@
 
       if (switch%fluid_molecules.ne.0) then
         if (background_was_read.eq.0) then
-          call read_molecules_background_ext(nCv)
+          call init_molecules_background_ext(nCv,nms_fl,
+     &          switch%read_molecules_ext)
         endif
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sn_mol, 1) !! TODO where to place best?
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol, 1)
@@ -391,7 +392,9 @@
 *   ..compute fluid molecule sources (optimal position in code to be determined later)
       if (switch%fluid_molecules.ne.0) then
         call b2stfm (nCv, nFc, ns, switch, geo, mpg,
-     &               st%pl, st%dv, st%rt, st%rtw, st%sr_mol)
+     &               st%pl, st%dv, st%rt, st%rtw, st%sr_mol, st%sr)
+     !! adding the sources to st%sr is done inside the routine itself for now
+     !! FM_TODO: move this outside to be consistent with the other soruces
       endif
 
 *   ..compute sources due to electron-atom processes

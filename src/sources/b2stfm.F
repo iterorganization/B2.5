@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stfm (nCv, nFc, ns,
-     &  switch, geo, mpg, pl, dv, rt, rtw, sr_mol)
+     &  switch, geo, mpg, pl, dv, rt, rtw, sr_mol, sr)
       use b2mod_types
       use b2mod_diag
       use b2mod_tallies
@@ -19,6 +19,7 @@
       use b2mod_subsys
       use b2mod_dimensions
       use b2mod_fluid_molecules
+      use b2mod_neutrals_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain
@@ -30,6 +31,7 @@
       type (B2Rates), intent (in) :: rt
       type (B2RatesWork), intent (in) :: rtw
       type (B2SourceMol), intent (inout) :: sr_mol
+      type (B2Source), intent (inout) :: sr
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -45,7 +47,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, ism
+      integer iCv, is, ism, is_a, is_i
       character chns*3!,
       real (kind=R8) :: pit(nCv), pit2(nCv)
       real (kind=R8) :: !! rate, number of reaction events per cell per second
@@ -215,7 +217,7 @@ cc set diamagnetic velocity
 
 
 * ..compute source terms
-
+cc This part here is kept as an example of how to parallelize the sources. But current implementation is not yet parallel.
 #if ( !defined(NO_OPENMP_B2STFM) && defined(_OPENMP) )
 !svdk Note that we parallellized over iCv here instead of is, since
 !svdk both is and is+1 indices are used and hence race conditions may
@@ -265,10 +267,10 @@ cc TODO !! species are now hardcoded for testing !! create general scheme to see
 cc compute the equilibrium factor for the molecular ion density. nmi = alpha*nm
 cc TODO compare this nmi with the one directly from EIRENE. Should match if all rates consistent. 
       if (.not.allocated(alpha)) then
-        allocate(alpha(nCv,0:nms_ext-1))
-        allocate(nmi_new(nCv,0:nms_ext-1))
+        allocate(alpha(nCv,0:ns_mol-1))
+        allocate(nmi_new(nCv,0:ns_mol-1))
       endif
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           num_a = (dv%ne(iCv)*rtw%r_nd(iCv,ism)*switch%b2stfm_freac_nd + 
      .          pl%na(iCv,1)*rtw%r_ic(iCv,ism)*switch%b2stfm_freac_ic)
@@ -299,7 +301,7 @@ cc non-dissociative ionization
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_nd /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
           do iCv = 1, mpg%nCi
             t0 =  n_mol(iCv,0)*dv%ne(iCv)*rtw%r_nd(iCv,ism)*
      .            freac*geo%cvVol(iCv)
@@ -316,12 +318,14 @@ cc dissociation, particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_d /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) !! B2.5 species index of atom to which reaction product belongs
+          is_i = mol_is_rp_ion(ism)  !! B2.5 species index of atom to which reaction product belongs
           do iCv = 1, mpg%nCi
             t0 =  n_mol(iCv,0)*dv%ne(iCv)*rtw%r_d(iCv,ism)*
      .            freac*geo%cvVol(iCv)
             rate_d(iCv) = t0
-            sna0_d(iCv,0,0) = 2.0_R8*t0
+            sna0_d(iCv,0,is_a) = 2.0_R8*t0
             sn_mol_d(iCv) = -t0
           enddo
         enddo
@@ -333,13 +337,15 @@ cc dissociative ionization, particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_di1 /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi 
             t0 = n_mol(iCv,0)*dv%ne(iCv)*rtw%r_di1(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_di1(iCv) = t0
-            sna0_di1(iCv,0,0) = t0
-            sna0_di1(iCv,0,1) = t0
+            sna0_di1(iCv,0,is_a) = t0
+            sna0_di1(iCv,0,is_i) = t0
             sn_mol_di1(iCv) = -t0
           enddo
         enddo
@@ -351,13 +357,15 @@ cc ion conversion, particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_ic /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi 
             t0 = n_mol(iCv,0)*pl%na(iCv,1)*rtw%r_ic(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_ic(iCv) = t0
-            sna0_ic(iCv,0,0) = t0
-            sna0_ic(iCv,0,1) =-t0
+            sna0_ic(iCv,0,is_a) = t0
+            sna0_ic(iCv,0,is_i) =-t0
             sn_mol_ic(iCv) = -t0
           enddo
         enddo
@@ -369,7 +377,7 @@ cc elastic collisions, no particle source, but set rate
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_ec /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
           do iCv = 1, mpg%nCi 
             t0 = n_mol(iCv,0)*pl%na(iCv,1)*rtw%r_ec_m(iCv,ism)*freac*
      .           geo%cvVol(iCv)
@@ -394,12 +402,13 @@ cc dissociative recombination, particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_dr /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
           do iCv = 1, mpg%nCi 
             t0 = n_moli(iCv,0)*dv%ne(iCv)*rtw%r_dr(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_dr(iCv) = t0
-            sna0_dr(iCv,0,0) = 2.0_R8*t0
+            sna0_dr(iCv,0,is_a) = 2.0_R8*t0
           enddo
         enddo
       endif
@@ -410,13 +419,15 @@ cc dissociative excitation, particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_de /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi 
             t0 = n_moli(iCv,0)*dv%ne(iCv)*rtw%r_de(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_de(iCv) = t0
-            sna0_de(iCv,0,0) = t0
-            sna0_de(iCv,0,1) = t0
+            sna0_de(iCv,0,is_a) = t0
+            sna0_de(iCv,0,is_i) = t0
           enddo
         enddo
       endif
@@ -427,12 +438,13 @@ cc dissociative ionization (2), particle source
         if (freac.ne.1.0_R8) then
           write(*,*) 'freac_di2 /= 1 only for testing !!'
         endif
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi 
             t0 = n_moli(iCv,0)*dv%ne(iCv)*rtw%r_di2(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_di2(iCv) = t0
-            sna0_di2(iCv,0,1) = 2.0_R8*t0
+            sna0_di2(iCv,0,is_i) = 2.0_R8*t0
           enddo
         enddo
       endif
@@ -443,7 +455,7 @@ cc dissociative ionization (2), particle source
 
 cc non-dissociative ionization
       !! creates a molecular ion, no direct momentum transfer to ions or atoms
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_nd(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
           sm_mol_nd(iCv) = -t0
@@ -451,69 +463,79 @@ cc non-dissociative ionization
       enddo
 
 cc dissociation, parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_a = mol_is_rp_atom(ism) 
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_d(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
-          smo0_d(iCv,0,0) = t0
+          smo0_d(iCv,0,is_a) = t0
           sm_mol_d(iCv) = -t0
         enddo
       enddo
 
 cc dissociative ionization (1), parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_a = mol_is_rp_atom(ism) 
+        is_i = mol_is_rp_ion(ism)  
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_di1(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
-          smo0_di1(iCv,0,0) = 0.5_R8*t0 !! momentum equally split over ion and atom
-          smo0_di1(iCv,0,1) = 0.5_R8*t0 
+          smo0_di1(iCv,0,is_a) = 0.5_R8*t0 !! momentum equally split over ion and atom
+          smo0_di1(iCv,0,is_i) = 0.5_R8*t0 
           sm_mol_di1(iCv) = -t0
         enddo
       enddo
 
 cc ion conversion, parallel momentum source
       !! the ion becomes atom
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_a = mol_is_rp_atom(ism) 
+        is_i = mol_is_rp_ion(ism)  
         do iCv = 1, mpg%nCi
           t0 =   am(1)*mp*rate_ic(iCv)*pl%ua(iCv,1)*geo%cvHz(iCv) !! TODO generalize indices
-          smo0_ic(iCv,0,0) =  t0
-          smo0_ic(iCv,0,1) = -t0
+          smo0_ic(iCv,0,is_a) =  t0
+          smo0_ic(iCv,0,is_i) = -t0
           t0 =  am_d2*mp*rate_ic(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
           sm_mol_ic(iCv) = -t0
         enddo
       enddo
 
 cc elastic collisions, parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_i = mol_is_rp_ion(ism)  
         do iCv = 1, mpg%nCi
           t0 =  mr*rate_ec_m(iCv)*(u_mol(iCv,0)-pl%ua(iCv,1))*
      .          geo%cvHz(iCv) 
-          smo0_ec(iCv,0,1) = t0
+          smo0_ec(iCv,0,is_i) = t0
           sm_mol_ec(iCv) = -t0
         enddo
       enddo
 
 cc dissociative recombination, parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_a = mol_is_rp_atom(ism) 
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_dr(iCv)*u_moli(iCv,0)*geo%cvHz(iCv) 
-          smo0_dr(iCv,0,0) =  t0
+          smo0_dr(iCv,0,is_a) =  t0
         enddo
       enddo
 
 
 cc dissociative excitation, parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_a = mol_is_rp_atom(ism) 
+        is_i = mol_is_rp_ion(ism)  
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_de(iCv)*u_moli(iCv,0)*geo%cvHz(iCv) 
-          smo0_de(iCv,0,0) =  0.5_R8*t0
-          smo0_de(iCv,0,1) =  0.5_R8*t0
+          smo0_de(iCv,0,is_a) =  0.5_R8*t0
+          smo0_de(iCv,0,is_i) =  0.5_R8*t0
         enddo
       enddo
 
 cc dissociative ionization (2), parallel momentum source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
+        is_i = mol_is_rp_ion(ism)  
         do iCv = 1, mpg%nCi
           t0 =  am_d2*mp*rate_di2(iCv)*u_moli(iCv,0)*geo%cvHz(iCv) 
-          smo0_di2(iCv,0,1) =  t0
+          smo0_di2(iCv,0,is_i) =  t0
         enddo
       enddo
 
@@ -523,7 +545,7 @@ cc dissociative ionization (2), parallel momentum source
 cc non-dissociative ionization
       if (switch%b2stfm_freac_nd.ge.0.0_R8) then
       !! creates a molecular ion, no direct energy transfer to ions or atoms
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
           do iCv = 1, mpg%nCi
             !! for the molecule itself 
             t0_mol = -rate_nd(iCv)*(1.5_R8*t_mol(iCv,ism) +         
@@ -542,7 +564,9 @@ cc non-dissociative ionization
 
 cc dissociation, ion energy source
       if (switch%b2stfm_freac_d.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_d(iCv)*(1.5_R8*t_mol(iCv,ism) +         
@@ -551,7 +575,7 @@ cc dissociation, ion energy source
             !! conversion total -> internal for atom
             t0 = t0 - pl%ua(iCv,0)*smo0_d(iCv,0,0)/geo%cvHz(iCv) +
      .         0.5_R8*am(0)*mp*sna0_d(iCv,0,0)*pl%ua(iCv,0)**2       
-            shi0_d(iCv,0,0) = t0
+            shi0_d(iCv,0,is_a) = t0
           
             !! for the molecule itself !! TODO generalize reaction product energies to guarantee energy conversvation between ions, electrons and molecules
             t0_mol = -rate_d(iCv)*(1.5_R8*t_mol(iCv,ism) +         
@@ -571,7 +595,9 @@ cc dissociation, ion energy source
 
 cc dissociative ionization (1), ion energy source
       if (switch%b2stfm_freac_di1.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_di1(iCv)*(1.5_R8*t_mol(iCv,ism) + 
@@ -585,8 +611,8 @@ cc dissociative ionization (1), ion energy source
      .         + 0.5_R8*am(1)*mp*sna0_di1(iCv,0,1)*pl%ua(iCv,1)**2  
             t0_a = t0_a  - pl%ua(iCv,0)*smo0_di1(iCv,0,0)/geo%cvHz(iCv)
      .         + 0.5_R8*am(0)*mp*sna0_di1(iCv,0,0)*pl%ua(iCv,0)**2  
-            shi0_di1(iCv,0,0) = t0_i 
-            shi0_di1(iCv,0,1) = t0_a 
+            shi0_di1(iCv,0,is_a) = t0_a 
+            shi0_di1(iCv,0,is_i) = t0_i 
 
             !! for the molecule itself
             t0_mol =  -rate_di1(iCv)*(1.5_R8*t_mol(iCv,ism) + 
@@ -607,7 +633,9 @@ cc dissociative ionization (1), ion energy source
 cc ion conversion, ion energy source
       !! the ion becomes atom
       if (switch%b2stfm_freac_ic.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_ic(iCv)*(1.5_R8*pl%ti(iCv) + 
@@ -620,8 +648,8 @@ cc ion conversion, ion energy source
      .         + 0.5_R8*am(1)*mp*sna0_ic(iCv,0,1)*pl%ua(iCv,1)**2  
             t0_a = t0_a  - pl%ua(iCv,0)*smo0_ic(iCv,0,0)/geo%cvHz(iCv)
      .         + 0.5_R8*am(0)*mp*sna0_ic(iCv,0,0)*pl%ua(iCv,0)**2 
-            shi0_ic(iCv,0,0) =  t0_a
-            shi0_ic(iCv,0,1) =  t0_i
+            shi0_ic(iCv,0,is_a) =  t0_a
+            shi0_ic(iCv,0,is_i) =  t0_i
 
             !! for the molecule
             t0_mol = -rate_ic(iCv)*(1.5_R8*t_mol(iCv,0) + 
@@ -641,7 +669,8 @@ cc ion conversion, ion energy source
 
 cc elastic collisions, ion energy source
       if (switch%b2stfm_freac_ec.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             if (switch%b2stfm_debug_icv.eq.iCv) then !! option to simulate energy transfer due to elastic collisions in detail for one cell. 
              call integrate_elastic_collisions_cell(mp*am_d2, mp*am(1), 
@@ -673,7 +702,7 @@ cc elastic collisions, ion energy source
             t0_mol = -t0 !! save for step below
             !! conversion total -> internal (no particle source in this case)
             t0 = t0 - pl%ua(iCv,1)*smo0_ec(iCv,0,1)/geo%cvHz(iCv) 
-            shi0_ec(iCv,0,1) = t0
+            shi0_ec(iCv,0,is_i) = t0
 
 
             !! for the molecule
@@ -691,7 +720,9 @@ cc elastic collisions, ion energy source
 
 cc dissociative recombination, ion energy source
       if (switch%b2stfm_freac_dr.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_dr(iCv)*(1.5_R8*t_moli(iCv,ism) + 
@@ -706,7 +737,7 @@ cc dissociative recombination, ion energy source
             !! conversion total -> internal
             t0 = t0 - pl%ua(iCv,0)*smo0_dr(iCv,0,0)/geo%cvHz(iCv) +
      .         0.5_R8*am(0)*mp*sna0_dr(iCv,0,0)*pl%ua(iCv,0)**2            
-            shi0_dr(iCv,0,0) =  t0
+            shi0_dr(iCv,0,is_a) =  t0
           enddo
         enddo
       else
@@ -716,7 +747,9 @@ cc dissociative recombination, ion energy source
 
 cc dissociative excitation, ion energy source
       if (switch%b2stfm_freac_dr.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_a = mol_is_rp_atom(ism) 
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_de(iCv)*(1.5_R8*t_moli(iCv,ism) + 
@@ -730,8 +763,8 @@ cc dissociative excitation, ion energy source
      .         0.5_R8*am(1)*mp*sna0_de(iCv,0,1)*pl%ua(iCv,1)**2  
             t0_a = t0_a  - pl%ua(iCv,0)*smo0_de(iCv,0,0)/geo%cvHz(iCv) +
      .         0.5_R8*am(0)*mp*sna0_de(iCv,0,0)*pl%ua(iCv,0)**2  
-            shi0_de(iCv,0,0) = t0_i 
-            shi0_de(iCv,0,1) = t0_a 
+            shi0_de(iCv,0,is_a) = t0_a 
+            shi0_de(iCv,0,is_i) = t0_i 
           enddo
         enddo
       else
@@ -740,7 +773,8 @@ cc dissociative excitation, ion energy source
 
 cc dissociative ionization (2), ion energy source
       if (switch%b2stfm_freac_di2.ge.0.0_R8) then
-        do ism = 0, nms_ext-1
+        do ism = 0, ns_mol-1
+          is_i = mol_is_rp_ion(ism)  
           do iCv = 1, mpg%nCi
             !! total energy
             t0 =  rate_di2(iCv)*(1.5_R8*t_moli(iCv,ism) + 
@@ -749,7 +783,7 @@ cc dissociative ionization (2), ion energy source
             !! conversion total -> internal
             t0 = t0 - pl%ua(iCv,0)*smo0_di2(iCv,0,1)/geo%cvHz(iCv) +
      .         0.5_R8*am(1)*mp*sna0_di2(iCv,0,1)*pl%ua(iCv,1)**2            
-            shi0_di2(iCv,0,1) =  t0
+            shi0_di2(iCv,0,is_i) =  t0
           enddo
         enddo
       else
@@ -760,7 +794,7 @@ cc dissociative ionization (2), ion energy source
 * ..Electron energy sources
 
 cc dissociation , electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  rate_d(iCv)*10.5_R8*ev
           she0_d(iCv,0) = -t0
@@ -768,7 +802,7 @@ cc dissociation , electron energy source
       enddo
 
 cc non-dissociative ionization , electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  rate_nd(iCv)*15.4_R8*ev
           she0_nd(iCv,0) = -t0
@@ -776,7 +810,7 @@ cc non-dissociative ionization , electron energy source
       enddo
 
 cc dissociative ionization (1), electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  rate_di1(iCv)*25.0_R8*ev
           she0_di1(iCv,0) = -t0
@@ -790,7 +824,7 @@ cc elastic collisions
   !! no electron energy sink
 
 cc dissociative recombination, electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           !! special treatment, see H8 AMJUEL
           s0 = -1.681368547011e+01_R8+
@@ -804,7 +838,7 @@ cc dissociative recombination, electron energy source
 
 
 cc dissociative excitation, electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  rate_de(iCv)*10.4_R8*ev
           she0_de(iCv,0) = -t0
@@ -812,7 +846,7 @@ cc dissociative excitation, electron energy source
       enddo
 
 cc dissociative ionization (2), electron energy source
-      do ism = 0, nms_ext-1
+      do ism = 0, ns_mol-1
         do iCv = 1, mpg%nCi
           t0 =  rate_di2(iCv)*15.5_R8*ev
           she0_di2(iCv,0) = -t0
@@ -929,6 +963,18 @@ cc dissociative ionization (2), electron energy source
             beta_num = beta_num + t0
             beta_eq(iCv) = beta_num/beta_denom
       enddo
+
+* ..Add to main source contributions
+      do is = 0, ns-1
+        call b2saxpy (nCv, 1.0_R8, sna0_tot(:,0,is), 1,
+     .                             sr%sna(:,0,is), 1)
+        call b2saxpy (nCv, 1.0_R8, smo0_tot(:,0,is), 1,
+     .                             sr%smq(:,0,is), 1)
+        call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
+     .                             sr%shi(:,0), 1)
+      enddo
+      call b2saxpy (nCv, 1.0_R8,she0_tot(:,0) , 1, sr%she(:,0), 1)
+
 
 
 * ..Write output

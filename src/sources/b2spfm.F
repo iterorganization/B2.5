@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2spfm (nCv, nms, te, ti, ne, ua, rt, dv)
+      subroutine b2spfm (nCv, nms, te, ti, ne, ua, rt, dv, switch)
       use b2mod_types
       use b2mod_b2cmrc_mol
       use b2us_plasma
@@ -9,9 +9,11 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_fluid_molecules
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       type (B2Derivatives), intent (inout) :: dv
+      type (switches), intent (inout) :: switch
       integer nCv, nms
       real (kind=R8) ::
      *  te(nCv), ne(nCv), ti(nCv), ua(nCv)
@@ -78,7 +80,8 @@
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
 
       if (background_was_read.eq.0) then
-        call read_molecules_background_ext(nCv)
+        call init_molecules_background_ext(nCv,nms,
+     &            switch%read_molecules_ext)
       endif
 
 * ..compute rate coefficients

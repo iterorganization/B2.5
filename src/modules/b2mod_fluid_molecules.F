@@ -8,7 +8,7 @@
       use b2mod_subsys
       implicit none
 
-      integer, save :: nms_ext
+      integer, save :: ns_mol
       integer, save :: background_was_read = 0
 
       real (kind=R8), allocatable, save ::
@@ -27,11 +27,13 @@
       contains
 
 
-      subroutine read_molecules_background_ext(nCv)
+      subroutine init_molecules_background_ext(nCv,nms,read_mol_bg)
       implicit none
 
 c input variables
-      integer, intent(in) :: nCv
+      integer, intent(in) :: nCv, nms, read_mol_bg 
+      !! nms = number of moleuclar species read from b2.neutrals
+      !! read_mol_bg = set initial state from mol_bg file (1), or start from flat state (0)
 c local variables
       integer :: io, iun, idum(0:1), iex
       character :: check*10
@@ -40,8 +42,9 @@ c local variables
       external newunit
 #endif
 
-      call subini ('read_molecules_background_ext')
+      call subini ('init_molecules_background_ext')
 
+      if (read_mol_bg.eq.1) then
 #ifndef LEGACYCOMP
       open (newunit=iun,file='mol_bg',
      .    access='SEQUENTIAL',form='FORMATTED',status='OLD',iostat=iex)
@@ -51,43 +54,79 @@ c local variables
      .    access='SEQUENTIAL',form='FORMATTED',status='OLD',iostat=iex)
 #endif
 
-      io = iex
-      read (iun,'(A10)',iostat=io) check
+        io = iex
+        read (iun,'(A10)',iostat=io) check
 *  read background of molecules and molecular ions provided by an external source
-      if (io == 0) then
-        backspace iun
-        call cfruin (iun, 2, idum, 'nCv,nms')
-        if (idum(0).ne.nCv) call xerrab('nCv not consistent')
-        nms_ext = idum(1)
-        if (.not.allocated(n_mol)) then 
-          allocate (n_mol(idum(0),0:idum(1)-1)) !! molecules
-          allocate (u_mol(idum(0),0:idum(1)-1))
-          allocate (t_mol(idum(0),0:idum(1)-1))
-          allocate (n_moli(idum(0),0:idum(1)-1)) !! molecular ions
-          allocate (u_moli(idum(0),0:idum(1)-1))
-          allocate (t_moli(idum(0),0:idum(1)-1))
-          allocate (tau_mol(idum(0)))
-          allocate (beta_eq(idum(0)))
-          allocate (diff_coeff(idum(0)))
-          allocate (coeff_vi(idum(0)))
-          allocate (diff_coeff_ene(idum(0)))
-          allocate (u_tor_mol(idum(0),0:idum(1)-1))
-          allocate (u_pol_mol(idum(0),0:idum(1)-1))
-          allocate (u_dia_mol(idum(0),0:idum(1)-1))
-          allocate (u_rad_mol(idum(0),0:idum(1)-1))
-        endif
-        call cfrure (iun, idum(0)*idum(1), n_mol, 'nm_ext')
-        call cfrure (iun, idum(0)*idum(1), u_mol, 'um_ext')
-        call cfrure (iun, idum(0)*idum(1), t_mol, 'tm_ext')
-        call cfrure (iun, idum(0)*idum(1), n_moli, 'nmi_ext')
-        call cfrure (iun, idum(0)*idum(1), u_moli, 'umi_ext')
-        call cfrure (iun, idum(0)*idum(1), t_moli, 'tmi_ext')
-        call cfrure (iun, idum(0)*idum(1), u_pol_mol, 'uu_ext')
-        call cfrure (iun, idum(0)*idum(1), u_rad_mol, 'vv_ext')
-        write (*,*) ' external molecule background read succesfully '
+        if (io == 0) then
+          backspace iun
+          call cfruin (iun, 2, idum, 'nCv,nms')
+          if (idum(0).ne.nCv) call xerrab('nCv not consistent')
+          if (idum(1).ne.nms) call xerrab('nms not consistent') !! nms from b2.neutrals not equal to the one from mol_bg
+          ns_mol = idum(1)
+          if (.not.allocated(n_mol)) then 
+            allocate (n_mol(idum(0),0:idum(1)-1)) !! molecules
+            allocate (u_mol(idum(0),0:idum(1)-1))
+            allocate (t_mol(idum(0),0:idum(1)-1))
+            allocate (n_moli(idum(0),0:idum(1)-1)) !! molecular ions
+            allocate (u_moli(idum(0),0:idum(1)-1))
+            allocate (t_moli(idum(0),0:idum(1)-1))
+            allocate (tau_mol(idum(0)))
+            allocate (beta_eq(idum(0)))
+            allocate (diff_coeff(idum(0)))
+            allocate (coeff_vi(idum(0)))
+            allocate (diff_coeff_ene(idum(0)))
+            allocate (u_tor_mol(idum(0),0:idum(1)-1))
+            allocate (u_pol_mol(idum(0),0:idum(1)-1))
+            allocate (u_dia_mol(idum(0),0:idum(1)-1))
+            allocate (u_rad_mol(idum(0),0:idum(1)-1))
+          endif
+          call cfrure (iun, idum(0)*idum(1), n_mol, 'nm_ext')
+          call cfrure (iun, idum(0)*idum(1), u_mol, 'um_ext')
+          call cfrure (iun, idum(0)*idum(1), t_mol, 'tm_ext')
+          call cfrure (iun, idum(0)*idum(1), n_moli, 'nmi_ext')
+          call cfrure (iun, idum(0)*idum(1), u_moli, 'umi_ext')
+          call cfrure (iun, idum(0)*idum(1), t_moli, 'tmi_ext')
+          call cfrure (iun, idum(0)*idum(1), u_pol_mol, 'uu_ext')
+          call cfrure (iun, idum(0)*idum(1), u_rad_mol, 'vv_ext')
+          write (*,*) ' external molecule background read succesfully '
+        else
+          call xerrab('NO FILE mol_bg FOUND')
+        end if
       else
-        call xerrab('NO FILE mol_bg FOUND')
-      end if
+        ns_mol = nms
+        if (.not.allocated(n_mol)) then 
+          allocate (n_mol(nCv,0:nms-1)) !! molecules
+          allocate (u_mol(nCv,0:nms-1))
+          allocate (t_mol(nCv,0:nms-1))
+          allocate (n_moli(nCv,0:nms-1)) !! molecular ions
+          allocate (u_moli(nCv,0:nms-1))
+          allocate (t_moli(nCv,0:nms-1))
+          allocate (tau_mol(nCv))
+          allocate (beta_eq(nCv))
+          allocate (diff_coeff(nCv))
+          allocate (coeff_vi(nCv))
+          allocate (diff_coeff_ene(nCv))
+          allocate (u_tor_mol(nCv,0:nms-1))
+          allocate (u_pol_mol(nCv,0:nms-1))
+          allocate (u_dia_mol(nCv,0:nms-1))
+          allocate (u_rad_mol(nCv,0:nms-1))
+        endif
+        n_mol = 1.0e16_R8
+        u_mol = 0.0_R8
+        t_mol = ev*1.0_R8
+        n_moli = 0.0_R8 
+        t_moli = t_mol 
+        u_moli = u_mol 
+        tau_mol = 0.0_R8 
+        beta_eq = 0.0_R8 
+        diff_coeff = 0.0_R8 
+        coeff_vi = 0.0_R8 
+        diff_coeff_ene = 0.0_R8 
+        u_tor_mol = 0.0_R8 
+        u_pol_mol = 0.0_R8 
+        u_dia_mol = 0.0_R8 
+        u_rad_mol = 0.0_R8 
+      endif
 
       call set_limits_mol_state(idum(0))
       background_was_read = 1
@@ -96,7 +135,7 @@ c local variables
 
       call subend ()
       return
-      end subroutine read_molecules_background_ext
+      end subroutine init_molecules_background_ext
 
       subroutine set_limits_mol_state(nCv)
       use b2mod_types
