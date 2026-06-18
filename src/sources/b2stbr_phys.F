@@ -602,7 +602,8 @@ c new variables for advanced fluid neutral reflection/recycling model
      &     fn_rec_mol, fm_rec_mol, fe_rec_mol, n_rec_mol,
      &     fn_inc_mol, fm_inc_mol, fe_inc_mol, n_inc_mol, nww_inc_mol,
      &     fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol, 
-     &     nww_refl_mol, n_mol_sum, nww_mol_sum
+     &     nww_refl_mol, n_mol_sum, nww_mol_sum, fn_refla_mol, 
+     &     fm_refla_mol, fe_refla_mol, n_refla_mol, nww_refla_mol
 
 #ifdef WG_TODO
       iwall=xymap(ix,iy)
@@ -1037,7 +1038,7 @@ c          while B2.5 uses internal energy equations.
                call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
      &              istra,farea,pl,tnf,geo,cosa,sina,
      &              fnni,fmomni,nni,nnwwni,feneni)
-             elseif (maxw(istra).eq.2) then
+             else 
                call CalcIncidentFluxesKn(switch%Kn_b1,
      &              switch%Kn_b2,
      &              iCv,iCn,iFc,isign,
@@ -1047,14 +1048,6 @@ c          while B2.5 uses internal energy equations.
      &              switch%use_uy_uz_0,switch%use_uy_uz_1,
      &              switch%L_macro_AFN,
      &              fnni,fmomni,nni,nnwwni,feneni)
-             else
-               call CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
-     &              is0,is2,isi,istra,
-     &              Phi_app,farea,pl,tif,tnf,tef,pof,
-     &              dv%ne(iCv),geo,rt,dnndy,dnndz,cosa,sina,
-     &              switch%use_uy_uz_0,switch%use_uy_uz_1,
-     &              fnni,fmomni,nni,nnwwni,feneni)
-
              endif
 
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
@@ -1076,7 +1069,9 @@ cmb   net momentum sources from neutral particle reflection
      &              cosa, sina, switch%use_uy_uz_0,switch%use_uy_uz_1,
      &              switch%diffusion_bc_safeguard,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &              fene_el)
+     &              fene_el,
+     &              fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fe_refla_mol, switch%fluid_molecules)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
@@ -1084,8 +1079,9 @@ cmb   net momentum sources from neutral particle reflection
      &              recycm(is,istra),dv%fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &              fene_el)
-               elseif (maxw(istra).eq.2) then
+     &              fene_el,fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fe_refla_mol, switch%fluid_molecules)
+               else 
                  call CalcReflectedFluxesKn(switch%Kn_b1,
      &              switch%Kn_b2,
      &              iCv,iCn,mpg%nCi,
@@ -1096,16 +1092,9 @@ cmb   net momentum sources from neutral particle reflection
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
      &              switch%L_macro_AFN, fnnrefl,fmomrefl,nnrefl,
-     &              nnwwnrefl,fenerefl,fene_el)
-               else
-                 call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
-     &              iFc,isign,is0,is2,isi,istra,iwall,
-     &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              dv%fluid_frac_hyb(iFc),pl,tif,tnf,
-     &              tef,pof,dv%ne(iCv),
-     &              geo,mpg,rt,dnndy,dnndz,
-     &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
-     &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &              nnwwnrefl,fenerefl,fene_el,
+     &              fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fe_refla_mol, switch%fluid_molecules)
                endif
              else
                fnnrefl = 0.0_R8
@@ -1166,19 +1155,27 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
      &            isign, is0, farea, b2recyc(is,istra), pl, tmf,
      &            geo, mpg, cosa,sina, fn_refl_mol,
      &            fm_refl_mol, n_refl_mol, nww_refl_mol, fe_refl_mol)
-
+c contribution from incident molecules
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) - fn_inc_mol  !! careful with signs, only fn_inc_mol is defined positive when going into the wall
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
      .                                *geo%cvhz(iCv)
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_inc_mol
+c contribution from self-reflected molecules
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refl_mol
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refl_mol
      .                                *geo%cvhz(iCv)
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refl_mol
+c contributions from atoms returning as molecules
+              sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refla_mol
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refla_mol
+     .                                *geo%cvhz(iCv)
+              sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refla_mol
               n_mol_sum = n_mol_sum + n_inc_mol
               nww_mol_sum = nww_mol_sum + nww_inc_mol
               n_mol_sum = n_mol_sum + n_refl_mol
-              nww_mol_sum = nww_mol_sum + nww_refl_mol
+              nww_mol_sum = nww_mol_sum + nww_refl_mol !! (contribution is zero for isotropic molecules)
+              n_mol_sum = n_mol_sum + n_refla_mol
+c              nww_mol_sum = nww_mol_sum + nww_refla_mol !!  (contribution is zero for isotropic molecules)
              endif
 
            endif
@@ -1195,10 +1192,10 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
 
              if (switch%fluid_molecules.ne.0) then
               smon_mol = -isign*
-     &            cosa*2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/  !! TODO generalize mass
+     &            cosa*2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/  !! FM_TODO generalize mass
      &            n_mol_sum*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
      &            geo%cvHz(iCv)
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon
+              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol
               n_mol_sum = 0.0_R8
               nww_mol_sum = 0.0_R8
              endif

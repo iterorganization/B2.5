@@ -502,54 +502,6 @@ c     if the Kn is in between, we use a linear interpolation
       return
       end subroutine CalcIncidentFluxesKn
 
-      subroutine CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
-     &            isn,iscx0,isi,istra,
-     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
-     &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,
-     &            fnni,fmomni,nni,nnwwni,feneni)
-c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
-c     It will decide which one to use based on the minimum Knudsen of the neutral atoms.
-c     If the choice is based on Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
-c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
-c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-      use b2mod_b2cmpa
-      use b2us_geo
-      use b2us_plasma
-      use b2mod_neutrals_namelist , only: maxw_eff
-      use b2mod_subsys
-      implicit none
-      type (B2Plasma), intent (in) :: pl
-      type (geometry), intent (in) :: geo
-      type (B2rates), intent (in) :: rt
-      integer, intent(in) :: iCv, iCn, iFc,
-     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
-      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
-     &    pof, nef, isign, dnndy, dnndz, cosa, sina
-c     Output variables
-      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
-     &                               feneni
-
-      call subini ('CalcIncidentFluxesMinKn')
-
-      if (maxw_eff(istra).eq.0) then
-        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
-     &            isn,iscx0,isi,istra,
-     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
-     &            rt,dnndy, dnndz,cosa,sina,
-     &            use_uy_uz_0,use_uy_uz_1,1, !! <- '1': = safeguard for diffusion BCs
-     &            fnni,fmomni,nni,nnwwni,feneni)
-      else
-        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-     &            area,pl,tnf,geo, cosa, sina,
-     &            fnni,fmomni,
-     &            nni,nnwwni,feneni)
-      endif
-
-      call subend ()
-      return
-      end subroutine CalcIncidentFluxesMinKn
-
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            area,pl,tf,geo, cosa, sina,
      &            fnni,fmomni,
@@ -679,7 +631,7 @@ c     Internal variables
      &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,fdni,
      &    intp_3dtable,intp_3dtable00,
      &    tifev,upf,fmoz_mol, fmomrecp_mol, fenec_mol, pnc_mol,
-     &    fna_mol_rec
+     &    fna_mol_rec, m_mol
       real (kind = R8):: tab(0:nM,0:nT,0:nshpottau),ff(0:1,0:1,0:1)
       integer :: is,it,ilT,ilM,ilSh,ip1,ip2,ip3
       external intp_3dtable, intp_3dtable00
@@ -764,7 +716,8 @@ c     Calculate fast and thermal recycled parts
       if (fluid_molecules.eq.0) then
         vt = sqrt(2.0_R8*E_fc*eV/mn)
       else
-        vt = sqrt(2.0_R8*E_wall*eV/mn)
+        m_mol = 2.0_R8*mn !!  FM_TODO generalize masses
+        vt = sqrt(2.0_R8*E_wall*eV/m_mol)
       endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -780,7 +733,7 @@ c     treated kinetically.
      1  fluid_frac_hyb)
 
      !! TODO in current eirene benchmarking cases, pt = 1 by change in input.dat
-      if (fluid_molecules.ne.0) then
+      if (fluid_molecules.ne.0) then !! this piece doesnt do anything at the moment?
       fn_mol(iFc) = fn_mol(iFc) + fna_mol_rec
       endif
 
@@ -792,25 +745,27 @@ c     Recycled momentum flux densities
 
       fmoz = pcorf*mn*rmz1i*cs**2*fdni/(-i1l)*fluid_frac_hyb
 
-      fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*
+      if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
+        fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*
      1  fluid_frac_hyb
-
-      if (fluid_molecules.ne.0) then
-      fmoz_mol = 2.0_R8/3.0_R8*mn*pt*fdni*vt
+      else !! separate contribution for fluid molecules
+        fmoz_mol = 2.0_R8/3.0_R8*m_mol*pt*fdni*vt
       endif
 c       Pressure of recycled neutrals
       pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)*fluid_frac_hyb
 
-      pnc = pnc + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*fluid_frac_hyb
-
-      if (fluid_molecules.ne.0) then
-            pnc_mol = 2.0_R8/3.0_R8*mn*pt*fdni*vt
+      if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
+        pnc=pnc+2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*fluid_frac_hyb
+      else !! separate contribution for fluid molecules
+        pnc_mol = 2.0_R8/3.0_R8*m_mol*pt*fdni*vt
       endif
 c       Density of recycled neutrals
       nnrec = pcorf*rp21i*fdni/(-i1l)*fluid_frac_hyb
-      nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt*fluid_frac_hyb
-      if (fluid_molecules.ne.0) then
-            n_rec_mol = pt*fdni*2.0_R8/vt
+
+      if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
+        nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt*fluid_frac_hyb
+      else !! separate contribution for fluid molecules
+        n_rec_mol = pt*fdni*2.0_R8/vt !! FM_TODO check factor 2 here
       endif
 c       product of density and toroidal velocity
       nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)*
@@ -818,10 +773,11 @@ c       product of density and toroidal velocity
 
 c     recycled total energy flux density of neutrals
       fenec = 0.5_R8*pcorf*mn*re1i*cs**3*fdni/(-i1l)*fluid_frac_hyb
-      fenec = fenec + 0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
 
-      if (fluid_molecules.ne.0) then
-            fenec_mol =  0.5_R8*mn*pt*fdni*vt**2
+      if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
+        fenec=fenec+0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
+      else !! separate contribution for fluid molecules
+        fenec_mol =  0.5_R8*m_mol*pt*fdni*vt**2
       endif
 
 c     Calculate recycled poloidal momentum flux of neutrals
@@ -833,6 +789,9 @@ c     Convert energy flux densities in energy fluxes
       fenerec = fenec*area
 
       if (fluid_molecules.ne.0) then
+            if (recycm.ne.1.0_R8) then 
+              call xerrab('fluid molecules require recycm=1!!')
+            endif
             fn_rec_mol = fna_mol_rec
             fmomrecp_mol = -isign*(fmoz_mol*cosa)*
      2              area +isign*pnc_mol*area*cosa
@@ -850,11 +809,13 @@ c     Convert energy flux densities in energy fluxes
      &            pl,tif,tnf,tef,pof,
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,use_uy_uz_1,safeguard,
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
+     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
+     &            fluid_molecules)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
-      use b2mod_neutrals_namelist , only:E_fc
+      use b2mod_neutrals_namelist , only:E_fc, E_wall
       use b2us_geo
       use b2us_plasma
       use b2us_map
@@ -864,9 +825,9 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
-      integer,intent(in):: iCv, iCn, nCi, iFc,
+      integer,intent(in):: iCv, iCn, nCi, iFc, 
      &    isn, iscx0, isi, iwall, istra, use_uy_uz_0, use_uy_uz_1,
-     &    safeguard
+     &    safeguard, fluid_molecules
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,
      &    sina,cosa, dnndy, dnndz,
@@ -878,7 +839,9 @@ c     Output variables:
 c     fmomni: momentum flux of
 c     incident neutrals.
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
-     &                             nnwwnrefl,fenerefl,fene_el
+     &                             nnwwnrefl,fenerefl,fene_el,
+     &                             fn_refl_mol, fm_refl_mol, 
+     &                             n_refl_mol, fe_refl_mol
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    pf,pcorf,pt,vt,vion,vcx,vtot,
@@ -889,7 +852,8 @@ c     Internal variables
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
      &    intp_2dtable,intp_2dtable0,tifev,t_av,
      &    upf,
-     &    fna_mol_refl
+     &    fna_mol_refl, fmoz_mol, pn_mol, m_mol, fmomreflp_mol,
+     &    fene_mol
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ilT,ilM,ip1,ip2
       external intp_2dtable,intp_2dtable0
@@ -1020,7 +984,12 @@ c     Calculate fast and thermal reflected parts
       pcorf = min(pf,recyc0)/pf
       pt = max(recyc0-pf,1.0E-30_R8)
 
-      vt = sqrt(2.0_R8*E_fc*eV/mn)
+      if (fluid_molecules.eq.0) then
+        vt = sqrt(2.0_R8*E_fc*eV/mn)
+      else
+        m_mol = mn*2.0_R8
+        vt = sqrt(2.0_R8*E_wall*eV/(m_mol)) !! FM_TODO generalize mass
+      endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
 c     once all thermal particles are pumped.
@@ -1038,6 +1007,11 @@ c     the molecules are treated kinetically.
         fnnrefl = 0.0_R8
       endif
 
+cc          !! TODO in current eirene benchmarking cases, pt = 1 by change in input.dat
+cc      if (fluid_molecules.ne.0) then
+cc        fn_mol(iFc) = fn_mol(iFc) + fna_mol_refl
+cc      endif
+
 c     reflected momentum flux densities
       fmox = pcorf*mn*vcx/vtot*(nnf*rmx1i*cs**2 +
      2     1.0_R8/vtot*dnndz*rmx2i*cs**3)*sign(1.0_R8,ux)*fluid_frac_hyb
@@ -1046,27 +1020,46 @@ c     reflected momentum flux densities
       fmoz = pcorf*mn*vcx/vtot*(nnf*rmz1i*cs**2 +
      2     1.0_R8/vtot*dnndz*rmz2i*cs**3)*fluid_frac_hyb
 
-      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+      if (fluid_molecules.eq.0) then 
+        fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
      1  fluid_frac_hyb
+      else
+        fmoz_mol = pt*2.0_R8/3.0_R8*m_mol*fnni_nodrifts*vt
+      endif 
 c       Pressure of reflected neutrals
       pn = pcorf*mn/3.0_R8*vcx/vtot*(nnf*rp11i*cs**2+
      2     1.0_R8/vtot*dnndz*rp12i*cs**3)*fluid_frac_hyb
 
-      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
+      if (fluid_molecules.eq.0) then 
+        pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
      1  fluid_frac_hyb
+      else 
+        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni_nodrifts*vt
+      endif
 c       Density of reflected neutrals
       nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)*
      1  fluid_frac_hyb
-      nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt*
+
+      if (fluid_molecules.eq.0) then 
+        nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt*
      1  fluid_frac_hyb
+      else
+        n_refl_mol = pt*fnni_nodrifts*2.0_R8/vt
+      endif
 c       product of density and toroidal velocity
       nnwwnrefl = pcorf*vcx/vtot*(nnf*rp31i*cs+
      2     1.0_R8/vtot*dnndz*rp32i*cs**2)*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
       fene = 0.5_R8*pcorf*mn*vcx/vtot*(nnf*re1i*cs**3+
      2     1.0_R8/vtot*dnndz*re2i*cs**4)*fluid_frac_hyb
-      fene = fene + (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb
-      fene_el =   - (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb    !! the Franck-Condon energy must at least be provided by the electrons.
+
+      if (fluid_molecules.eq.0) then 
+        fene = fene + (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb
+        fene_el =   - (1-recycm)*pt*fnni_nodrifts*E_fc*ev*fluid_frac_hyb    !! the Franck-Condon energy must at least be provided by the electrons.
+      else 
+        fene_mol = pt*fnni_nodrifts*E_wall*ev
+        fene_el = 0.0_R8  !! no longer needed when using fluid molecules
+      endif
 
 c     Calculate reflected poloidal momentum flux of neutrals
       fmomreflp = -isign*(fmoz*cosa + fmoy*sina)*
@@ -1077,12 +1070,28 @@ c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el =  fene_el*area
 
+c TODO for fluid molecules
+      if (fluid_molecules.ne.0) then
+        fn_refl_mol = fna_mol_refl
+        fmomreflp_mol = -isign*(fmoz_mol*cosa)*
+     .      area +isign*pn_mol*area*cosa
+        fm_refl_mol = pit*fmomreflp_mol 
+        fe_refl_mol = fene_mol*area
+      else
+        fn_refl_mol = 0.0_R8 
+        fm_refl_mol = 0.0_R8 
+        fe_refl_mol = 0.0_R8 
+        n_refl_mol = 0.0_R8
+      endif
+
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
       if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tnf,geo,mpg,cosa,sina,
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
+     &            fn_refl_mol, fm_refl_mol, n_refl_mol,  fe_refl_mol,
+     &            fluid_molecules)
       endif
 
       call subend ()
@@ -1097,7 +1106,9 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, L,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
+     &            fene_el,
+     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
+     &            fluid_molecules)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_b2cmpa
@@ -1110,14 +1121,16 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
-      integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1
+      integer,intent(in):: iCv, iCn, nCi, iFc, 
+     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1,
+     &    fluid_molecules
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,L,
      &    sina,cosa, dnndy, dnndz, Kn_b1 , Kn_b2, fluid_frac_hyb
 c     Output variables:
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
-     &                             nnwwnrefl,fenerefl,fene_el
+     &                             nnwwnrefl,fenerefl,fene_el,
+     &       fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol
 c     Internal variables
       real (kind=R8)::
      &    vion,vcx,vtot,
@@ -1127,6 +1140,10 @@ c     Internal variables
      &    fenereflM,fene_elM
       real (kind = R8):: fnnreflD,fmomreflD,nnreflD,nnwwnreflD,
      &    fenereflD,fene_elD
+      real (kind = R8):: fn_refl_molM, fm_refl_molM, fe_refl_molM,
+     &    n_refl_molM
+      real (kind = R8):: fn_refl_molD, fm_refl_molD, fe_refl_molD,
+     &    n_refl_molD
 
       call subini ('CalcReflectedFluxesKn')
 
@@ -1155,18 +1172,24 @@ c     Calculate rate coefficients at boundary
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
+     &            fene_el,
+     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
+     &            fluid_molecules)
       elseif (Kn.gt.Kn_b2) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tnf,geo, mpg,cosa, sina,
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el)
+     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
+     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
+     &            fluid_molecules)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
      &            tnf,geo, mpg,cosa, sina,
      &            fnnreflM,fmomreflM,nnreflM,nnwwnreflM,fenereflM,
-     &            fene_elM)
+     &            fene_elM,
+     &            fn_refl_molM, fm_refl_molM, n_refl_molM,fe_refl_molM,
+     &            fluid_molecules)
 
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
@@ -1174,7 +1197,9 @@ c     Calculate rate coefficients at boundary
      &            tef,pof,nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnreflD,fmomreflD,nnreflD,nnwwnreflD,fenereflD,
-     &            fene_elD)
+     &            fene_elD,
+     &            fn_refl_molD, fm_refl_molD, n_refl_molD,fe_refl_molD,
+     &            fluid_molecules)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fnnreflD,fnnreflM,fnnrefl)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fmomreflD,fmomreflM,
      &                     fmomrefl)
@@ -1184,80 +1209,34 @@ c     Calculate rate coefficients at boundary
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fenereflD,fenereflM,
      &                     fenerefl)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fene_elD,fene_elM,fene_el)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fn_refl_molD,fn_refl_molM,
+     &                     fn_refl_mol)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fn_refl_molD,fn_refl_molM,
+     &                     fn_refl_mol)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fm_refl_molD,fm_refl_molM,
+     &                     fm_refl_mol)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fe_refl_molD,fe_refl_molM,
+     &                     fe_refl_mol)
+      call CalcLinComb(Kn,Kn_b1,Kn_b2,n_refl_molD,n_refl_molM,
+     &                     n_refl_mol)
+
       endif
 
       call subend ()
       return
       end subroutine CalcReflectedFluxesKn
 
-      subroutine CalcReflectedFluxesMinKn(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
-     &            pl,tif,tnf,tef,pof,
-     &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0, use_uy_uz_1,
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
-c     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
-c     It will decide which one to use based on the minimum Kn of the neutral atoms.
-c     If the choice is based on the Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
-c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
-c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-      use b2mod_b2cmpa
-      use b2us_geo
-      use b2us_plasma
-      use b2us_map
-      use b2mod_neutrals_namelist , only: maxw_eff
-      use b2mod_subsys
-      implicit none
-      type (B2Plasma), intent (in) :: pl
-      type (geometry), intent (in) :: geo
-      type (B2Rates), intent (in) :: rt
-      type (mapping), intent (in) :: mpg
-      integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
-     2    pof,nef,isign,tif,tnf,tef,
-     &    sina,cosa, dnndy, dnndz, fluid_frac_hyb
-c     Output variables:
-      real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
-     &                             nnwwnrefl,fenerefl,fene_el
-
-      call subini ('CalcReflectedFluxesMinKn')
-
-!!    zero out if incident flux has wrong sign
-      if (maxw_eff(istra).eq.0) then
-        call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
-     &            isign,isn,iscx0,isi,istra,iwall,
-     &            Phi_app,area,recyc0,recycm,fluid_frac_hyb,
-     &            pl,tif,tnf,tef,pof,
-     &            nef,geo,mpg,rt,dnndy,dnndz,
-     &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
-      else
-        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
-     &            pl,tnf,geo, mpg,cosa, sina,
-     &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
-      endif
-
-      call subend ()
-      return
-      end subroutine CalcReflectedFluxesMinKn
-
-
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
      &            tf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el)
+     &            fene_el, fn_refl_mol, fm_refl_mol, n_refl_mol,
+     &            fe_refl_mol, fluid_molecules)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
 c     for the incident neutrals.
       use b2mod_b2cmpa
-      use b2mod_neutrals_namelist , only:E_fc
+      use b2mod_neutrals_namelist , only:E_fc, E_wall
       use b2us_plasma
       use b2us_geo
       use b2us_map
@@ -1266,12 +1245,14 @@ c     for the incident neutrals.
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra
+      integer,intent(in):: iCv, nCi, iFc, isn, iwall, istra, 
+     &                     fluid_molecules
       real (kind=R8),intent(in):: area, recyc0, recycm, isign, tf, sina,
      &                            cosa, fluid_frac_hyb
 c     Output variables
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
-     &                             nnwwnrefl,fenerefl,fene_el
+     &                             nnwwnrefl,fenerefl,fene_el,
+     & fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol
 c     Internal variables
       real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,
      &     pit,pit2,mn,nnf,ux,uz,
@@ -1280,7 +1261,8 @@ c     Internal variables
      &     rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &     fnni,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
      &     intp_2dtable,intp_2dtable0,tfev,unf,
-     &     fna_mol_refl
+     &     fna_mol_refl, pn_mol, fmoz_mol, fene_mol, m_mol,
+     &     fmomreflp_mol
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: is,it,ispt,ilT,ilM,ip1,ip2
 *   ..statement functions
@@ -1378,7 +1360,13 @@ c     Calculate fast and thermal reflected parts
       pf = max(nnf*rc1i*cs/fnni,1.0E-30_R8)
       pcorf = min(pf,recyc0)/pf
       pt = max(recyc0-pf,1.0E-30_R8)
-      vt = sqrt(2.0_R8*E_fc*eV/mn)
+
+      if (fluid_molecules.eq.0) then
+        vt = sqrt(2.0_R8*E_fc*eV/mn)
+      else
+        m_mol = 2.0_R8*mn
+        vt = sqrt(2.0_R8*E_wall*eV/m_mol)
+      endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
 c     once all thermal particles are pumped.
@@ -1396,20 +1384,40 @@ c     reflected momentum flux densities
       fmox = pcorf*mn*nnf*rmx1i*cs**2*sign(1.0_R8,ux)*fluid_frac_hyb
       fmoy = 0._R8
       fmoz = pcorf*mn*nnf*rmz1i*cs**2*fluid_frac_hyb
-      fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*
+
+      if (fluid_molecules.eq.0) then
+        fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*
      1   fluid_frac_hyb
+      else 
+        fmoz_mol = pt*2.0_R8/3.0_R8*m_mol*fnni*vt
+      endif
 c     Pressure of reflected neutrals
       pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2*fluid_frac_hyb
-      pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*fluid_frac_hyb
+
+      if (fluid_molecules.eq.0) then
+        pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*fluid_frac_hyb
+      else
+        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni*vt
+      endif
 c     Density of reflected neutrals
       nnrefl = pcorf*nnf*rp21i*fluid_frac_hyb
-      nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt*fluid_frac_hyb
+
+      if (fluid_molecules.eq.0) then
+        nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt*fluid_frac_hyb
+      else
+        n_refl_mol = pt*fnni*2.0_R8/vt
+      endif
 c     Product of density and toroidal velocity
       nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)*fluid_frac_hyb
 c     reflected total energy flux density of neutrals
       fene = 0.5_R8*pcorf*mn*nnf*re1i*cs**3*fluid_frac_hyb
-      fene = fene + (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb
-      fene_el =   - (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb  !! the Franck-Condon energy is provided by the electrons
+
+      if (fluid_molecules.eq.0) then 
+        fene = fene + (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb
+        fene_el =   - (1-recycm)*pt*fnni*E_fc*ev*fluid_frac_hyb  !! the Franck-Condon energy is provided by the electrons
+      else
+        fene_mol = pt*fnni*E_wall*ev
+      endif
 
 c     Calculate reflected poloidal momentum flux of neutrals
       fmomreflp = -isign*(fmoz*cosa + fmoy*sina)*
@@ -1419,6 +1427,20 @@ c     Calculate reflected poloidal momentum flux of neutrals
 c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
       fene_el = fene_el*area
+
+c TODO for fluid molecules
+      if (fluid_molecules.ne.0) then
+        fn_refl_mol = fna_mol_refl
+        fmomreflp_mol = -isign*(fmoz_mol*cosa)*
+     .      area +isign*pn_mol*area*cosa
+        fm_refl_mol = pit*fmomreflp_mol 
+        fe_refl_mol = fene_mol*area
+      else
+        fn_refl_mol = 0.0_R8 
+        fm_refl_mol = 0.0_R8 
+        fe_refl_mol = 0.0_R8 
+        n_refl_mol = 0.0_R8
+      endif
 
       call subend ()
       return
