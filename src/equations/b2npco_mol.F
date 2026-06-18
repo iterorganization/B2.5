@@ -129,7 +129,8 @@
 
 *    ..output quantities for continuity equation
       if(switch%b2tfmol_iout.ne.0) then       
-        call my_out_us(70,nCv,0,pm,'b2npco__mol_pm')
+        call my_out_us(70,nCv,0,pm,'b2npco_mol_pm')
+        call my_out_us(70,nCv,0,dv%resco_mol,'b2npco_resco_mol')
       endif
 
 * ..return
