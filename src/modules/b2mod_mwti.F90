@@ -2962,7 +2962,7 @@ contains
               &  (rt%rza(omp(1:nomp),is)*pl%te(omp(1:nomp))+pl%ti(omp(1:nomp)))
           end do
         else
-          do
+          do is = 0, ns-1
             slice_ns(1:nomp,is+1) = co%dpa0(omp(1:nomp),is)*pl%tn(omp(1:nomp))
           end do
         end if
