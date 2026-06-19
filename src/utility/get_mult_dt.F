@@ -101,11 +101,11 @@ cc Highly experimental work! Use with care.
           wrk00 = uadia_c0(iCv,:)+
      &            geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*ua(iCv,:)
           wrk11 = uadia_c1(iCv,:)
-          Vx_a = maxval(abs(wrk00))
-          Vx_e = abs(vedia_c0(iCv) + veecrb_c0(iCv) + 
+          Vx_a = maxval(dabs(wrk00))
+          Vx_e = dabs(vedia_c0(iCv) + veecrb_c0(iCv) + 
      &           geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*dv%ue(iCv))
-          Vy_a = maxval(abs(wrk11))
-          Vy_e = abs(vedia_c1(iCv) + veecrb_c1(iCv))
+          Vy_a = maxval(dabs(wrk11))
+          Vy_e = dabs(vedia_c1(iCv) + veecrb_c1(iCv))
           dtx = Cmax*hx/max(Vx_a,Vx_e)
           dty = Cmax*hy/max(Vy_a,Vy_e)
           dt3 = min(dtx,dty)
@@ -136,8 +136,8 @@ cc Highly experimental work! Use with care.
           wrk00 = wrk0(iCv,:)
           wrk11 = wrk1(iCv,:)
           do is=0,ns-1
-            Vx = abs(wrk00(is))
-            Vy = abs(wrk11(is))
+            Vx = dabs(wrk00(is))
+            Vy = dabs(wrk11(is))
             dtx = Cmax*hx/(Vx+0.001_R8)
             dty = Cmax*hy/(Vy+0.001_R8)
             dt4 = min(dtx,dty)

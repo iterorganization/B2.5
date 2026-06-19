@@ -2474,7 +2474,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         write(*,*) 'delta ua ',
      *   maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
-     &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
+     &   (dabs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
      &     maxval(dabs((state%pl%na-state%psnc%na)/
@@ -2486,14 +2486,14 @@ csw 09oct2012 set default potential already at this point (BCs)
      &     maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev))),
      &     maxval(dabs((state%pl%po-state%psnc%po)/
-     &    (abs(state%pl%po)+po_eps))),
+     &    (dabs(state%pl%po)+po_eps))),
      &     maxval(dabs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
      &     maxval(dabs((state%pl%zt-state%psnc%zt)/
      &    (state%pl%zt+zt_eps*ev))),
      &     maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
-     &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
+     &   (dabs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then
             write(*,*) 'b2mndr_delta: max_delta > delta_max'
             dtim=max(dt_min,dtim*dt_change_dec)
