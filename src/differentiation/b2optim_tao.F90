@@ -72,7 +72,7 @@
         call TaoSetType(tao,TAOBQNLS,ierr)
         CHKERRA(ierr)
       endif
-#ifdef TAO_NEW
+#if PETSC_VERSION_GT(3,16,0)
       call TaoSetSolution(tao,X,ierr)
 #else
       call TaoSetInitialVector(tao,X,ierr)
@@ -80,26 +80,26 @@
       CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr)
       CHKERRA(ierr)
-#ifdef TAO_NEW
+#if PETSC_VERSION_GT(3,16,0)
       call TaoSetObjectiveAndGradient(tao,PETSC_NULL_VEC,FormFunctionGradient,0,ierr)
 #else
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr)
 #endif
       CHKERRA(ierr)
-#ifdef TAO_NEW
+#if PETSC_VERSION_GT(3,16,0)
       call TaoSetObjective(tao,FormFunction,0,ierr)
 #else
       call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr)
 #endif
       CHKERRA(ierr)
-#ifdef TAO_NEW
+#if PETSC_VERSION_GT(3,16,0)
       call TaoSetGradient(tao,PETSC_NULL_VEC,FormGradient,0,ierr)
 #else
       call TaoSetGradientRoutine(tao,FormGradient,0,ierr)
 #endif
       CHKERRA(ierr)
       if (hessian) then
-#ifdef TAO_NEW
+#if PETSC_VERSION_GT(3,16,0)
         call TaoSetHessian(tao,Hess,Hess,FormHessian,0,ierr)
 #else
         call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr)
@@ -214,7 +214,11 @@
       ierr = 0
 
 !  Allocate storage space for Hessian;
+#if PETSC_VERSION_GE(3,23,0)
+      call MatCreateSeqBAIJ(PETSC_COMM_SELF, npar, npar, npar, 1, PETSC_NULL_INTEGER_ARRAY, Hess, ierr)
+#else
       call MatCreateSeqBAIJ(PETSC_COMM_SELF,npar,npar,npar,1,PETSC_NULL_INTEGER,Hess,ierr)
+#endif
       CHKERRQ(ierr)
       call MatSetOption(Hess,MAT_SYMMETRIC,PETSC_TRUE,ierr)
       CHKERRQ(ierr)
@@ -264,9 +268,17 @@
       PetscScalar F
       PetscReal, pointer :: x_v(:), g_v(:)
 
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArrayRead(XX,x_v,ierr)
+#else
       call VecGetArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArray(grad,g_v,ierr)
+#else
       call VecGetArrayF90(grad,g_v,ierr)
+#endif
       CHKERRQ(ierr)
 
       call reset_drifts_params(XX)
@@ -348,9 +360,17 @@
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
       write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
       write (*,*) 'TAO GRADIENT RESIDUAL:', gradient_res
+#if PETSC_VERSION_GE(3,23,0)
+      call VecRestoreArrayRead(XX,x_v,ierr)
+#else
       call VecRestoreArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
+#if PETSC_VERSION_GE(3,23,0)
+      call VecRestoreArray(grad,g_v,ierr)
+#else
       call VecRestoreArrayF90(grad,g_v,ierr)
+#endif
       CHKERRQ(ierr)
 ! Experimental: write intermediate state file?
       write_state = .false.
@@ -393,7 +413,11 @@
       PetscScalar F
       PetscReal, pointer :: x_v(:)
 
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArrayRead(XX,x_v,ierr)
+#else
       call VecGetArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
 
       call reset_drifts_params(XX)
@@ -456,7 +480,11 @@
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
 
+#if PETSC_VERSION_GE(3,23,0)
+      call VecRestoreArrayRead(XX,x_v,ierr)
+#else
       call VecRestoreArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
       ierr = 0
       end subroutine FormFunction
@@ -485,10 +513,17 @@
       Tao tao
       PetscReal, pointer :: x_v(:), g_v(:)
 
-
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArrayRead(XX,x_v,ierr)
+#else
       call VecGetArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArray(grad,g_v,ierr)
+#else
       call VecGetArrayF90(grad,g_v,ierr)
+#endif
       CHKERRQ(ierr)
 
       call reset_drifts_params(XX)
@@ -591,9 +626,17 @@
         filen = filen + 1
       endif
       iter = iter + 1
+#if PETSC_VERSION_GE(3,23,0)
+      call VecRestoreArrayRead(XX,x_v,ierr)
+#else
       call VecRestoreArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
+#if PETSC_VERSION_GE(3,23,0)
+      call VecRestoreArray(grad,g_v,ierr)
+#else
       call VecRestoreArrayF90(grad,g_v,ierr)
+#endif
       CHKERRQ(ierr)
       ierr = 0
       end subroutine FormGradient
@@ -620,7 +663,7 @@
  !  Compute Hessian entries
       do i=0,npar_opt-1
         v = 1.0
-        call MatSetValues(HH,1,i,1,i,v,INSERT_VALUES,ierr)
+        call MatSetValues(HH,1,[i],1,[i],[v],INSERT_VALUES,ierr)
         CHKERRQ(ierr)
       enddo
 
@@ -646,7 +689,11 @@
       Vec XX, grad
       PetscReal, pointer :: x_v(:)
 
+#if PETSC_VERSION_GE(3,23,0)
+      call VecGetArrayRead(XX,x_v,ierr)
+#else
       call VecGetArrayReadF90(XX,x_v,ierr)
+#endif
       CHKERRQ(ierr)
       ! check if the same value for the current solution has been already used
       ! in FormFunction or FormGradient, if not, then drifts need to be reset to
