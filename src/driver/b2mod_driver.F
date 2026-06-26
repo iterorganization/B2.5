@@ -2226,6 +2226,8 @@ c new CDF movie option (1st frame at t=0)
      &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
      &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
      &          fac_vis_profile
+      use b2mod_frtf_nccorr
+     & , only : corr_tfia, g_hs_style, corr_fria, alpha_hs_style
 #endif
       use b2mod_ad
 #ifdef IMAS

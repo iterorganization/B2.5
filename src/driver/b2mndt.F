@@ -63,7 +63,7 @@
       use b2mod_b2zhco
      & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa, c_r_tb,
      &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact,
-     &          zh_tf_toff
+     &          zh_tf_toff, c_hta_an_fl_save, c_r_ta_an_save
       use b2mod_b2mrel
      & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
      &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
@@ -71,6 +71,8 @@
      &          n6_mdf, n8_mdf, n9_mdf, n10_mdf, n11_mdf, n12_mdf,
      &          n13_mdf, n14_mdf, n15_mdf, n16_mdf, mum_mdf, rmu_mdf,
      &          mdm_mdf, mu, mu_mdf, rmd2_mdf, znnucl
+      use b2mod_frtf_nccorr
+     & , only : corr_tfia, g_hs_style, corr_fria, alpha_hs_style
 #endif
       use b2mod_ad
       use b2mod_subsys

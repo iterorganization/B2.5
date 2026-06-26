@@ -71,6 +71,8 @@
      &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
      &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
      &          mdm_mdf, znnucl, mu, mu_mdf
+      use b2mod_frtf_nccorr
+     & , only : corr_tfia, g_hs_style, corr_fria, alpha_hs_style
 #endif
       use b2mod_ad
       use b2mod_subsys

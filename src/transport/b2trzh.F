@@ -26,7 +26,8 @@
       use b2mod_switches
       use b2mod_ipmain
       use b2mod_frtf_nccorr
-     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
+     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia,
+     &          g_hs_style, alpha_hs_style
       use b2us_geo
       use b2us_map
       use b2us_plasma
