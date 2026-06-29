@@ -10218,7 +10218,7 @@ cxpb Careful here because of BC number clash
      &        ' TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
-              IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .             VBIG * NE00 * (TIS +
@@ -10535,7 +10535,7 @@ cxpb Careful here because of BC number clash
      &        ' TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
-              IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .             VBIG*NE00*
