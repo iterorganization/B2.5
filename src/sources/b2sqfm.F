@@ -113,14 +113,6 @@ cc     & , only : ncall_b2sqfm
          rtw%r_ec_m(iCv,ims) = 
      &     expu(rt%rl_ec_m(iCv,0,ims)+rt%rl_ec_m(iCv,1,ims)*wrk1(iCv))
 
-*      ..compute elastic collision rate coefficient (mom) (diamagnetic bulk velocity difference)
-         rtw%r_ec_m_d(iCv,ims) = 
-     &   expu(rt%rl_ec_m_d(iCv,0,ims)+rt%rl_ec_m_d(iCv,1,ims)*wrk1(iCv))
-
-*      ..compute elastic collision rate coefficient (mom) (radial bulk velocity difference)
-         rtw%r_ec_m_r(iCv,ims) = 
-     &   expu(rt%rl_ec_m_r(iCv,0,ims)+rt%rl_ec_m_r(iCv,1,ims)*wrk1(iCv))
-
 *      ..compute elastic collision rate coefficient (energy)
          rtw%r_ec_E(iCv,ims) = 
      &     expu(rt%rl_ec_E(iCv,0,ims)+rt%rl_ec_E(iCv,1,ims)*wrk1(iCv))

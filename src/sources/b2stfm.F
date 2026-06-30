@@ -56,8 +56,6 @@
      *  rate_di1(nCv),!! dissociative ionization (from neutral molecule)
      *  rate_ic(nCv), !! ion conversion
      *  rate_ec_m(nCv), !! elastic collisions (mom)
-     *  rate_ec_m_d(nCv), !! elastic collisions (mom)
-     *  rate_ec_m_r(nCv), !! elastic collisions (mom)
      *  rate_ec_E(nCv), !! elastic collisions (energy)
      *  rate_dr(nCv), !! dissociative recombination
      *  rate_de(nCv), !! dissociative excitation
@@ -128,8 +126,6 @@ cc molecule sources
       call sfill (nCv, 0.0_R8, rate_di1, 1)
       call sfill (nCv, 0.0_R8, rate_ic, 1)
       call sfill (nCv, 0.0_R8, rate_ec_m, 1)
-      call sfill (nCv, 0.0_R8, rate_ec_m_d, 1)
-      call sfill (nCv, 0.0_R8, rate_ec_m_r, 1)
       call sfill (nCv, 0.0_R8, rate_ec_E, 1)
       call sfill (nCv, 0.0_R8, rate_dr, 1)
       call sfill (nCv, 0.0_R8, rate_de, 1)
@@ -389,12 +385,6 @@ cc elastic collisions, no particle source, but set rate
             t0 = n_mol(iCv,0)*pl%na(iCv,1)*rtw%r_ec_E(iCv,ism)*freac*
      .           geo%cvVol(iCv)
             rate_ec_E(iCv) = t0
-            t0 = n_mol(iCv,0)*pl%na(iCv,1)*rtw%r_ec_m_d(iCv,ism)*freac*
-     .           geo%cvVol(iCv)
-            rate_ec_m_d(iCv) = t0
-            t0 = n_mol(iCv,0)*pl%na(iCv,1)*rtw%r_ec_m_r(iCv,ism)*freac*
-     .           geo%cvVol(iCv)
-            rate_ec_m_r(iCv) = t0
           enddo
         enddo
       endif
@@ -695,8 +685,8 @@ cc elastic collisions, ion energy source
               Vcom_d = 0.0_R8
               Vcom_r = 0.0_R8
             else !! take also into account perpendicular mechanical work
-              F_d = mr*rate_ec_m_d(iCv)*u_dia_mol(iCv,ism) !! force on ions, diamagnetic 
-              F_r = mr*rate_ec_m_r(iCv)*u_rad_mol(iCv,ism) !! force on ions, radial
+              F_d = mr*rate_ec_m(iCv)*u_dia_mol(iCv,ism) !! force on ions, diamagnetic 
+              F_r = mr*rate_ec_m(iCv)*u_rad_mol(iCv,ism) !! force on ions, radial
               Vcom_d = (am_d2*u_dia_mol(iCv,ism))/(am_d2+am(1))  !! center-of-mass diamagnetic velocity, neglecting ion contribution
               Vcom_r = (am_d2*u_rad_mol(iCv,ism))/(am_d2+am(1))  !! center-of-mass radial velocity, neglecting ion contribution
             endif
@@ -911,7 +901,7 @@ cc dissociative ionization (2), electron energy source
 !! Calculate time constant tau for use in the transport model
       do iCv = 1, mpg%nCi
         tau_inv = 0.0_R8
-        t0 =  pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)*switch%b2stfm_freac_ec !! TODO which one to use here??
+        t0 =  pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*switch%b2stfm_freac_ec 
         tau_inv = tau_inv + t0
         t0 =  dv%ne(iCv)*rtw%r_nd(iCv,0)*switch%b2stfm_freac_nd
         tau_inv = tau_inv + t0
@@ -928,10 +918,10 @@ cc dissociative ionization (2), electron energy source
       do iCv = 1, mpg%nCv ! -> these also in guard cells, for computation in guard face conductivities
         vth = sqrt(t_mol(iCv,0)/m_D2)
         t0 = 0.0_R8
-        t0 =  t0 + mr*pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)*   !! mr instead of m_D2 here!
+        t0 =  t0 + mr*pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*   !! mr instead of m_D2 here!
      .                       switch%b2stfm_freac_ec
         mfp(iCV) = vth/
-     .      (pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)*  
+     .      (pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*  
      .                       switch%b2stfm_freac_ec)     !! mean free path
         t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_nd(iCv,0)*
      .                       switch%b2stfm_freac_nd
@@ -942,10 +932,10 @@ cc dissociative ionization (2), electron energy source
         t0 =  t0 + m_D2*pl%na(iCv,1)*rtw%r_ic(iCv,0)*
      .                       switch%b2stfm_freac_ic
         diff_coeff(iCv) = 1.0_R8/t0
-        coeff_vi(iCv) = mr*pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)* 
+        coeff_vi(iCv) = mr*pl%na(iCv,1)*rtw%r_ec_m(iCv,0)* 
      .               switch%b2stfm_freac_ec/t0
         if (switch%b2stfm_diff_coeff_ene_style.ne.0) then
-          t0 = t0 - mr*pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)*   
+          t0 = t0 - mr*pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*   
      .                       switch%b2stfm_freac_ec
           t0 = t0 + mr*pl%na(iCv,1)*rtw%r_ec_E(iCv,0)*   
      .                       switch%b2stfm_freac_ec
@@ -965,7 +955,7 @@ cc dissociative ionization (2), electron energy source
             beta_denom = beta_denom + t0
             t0 =  dv%ne(iCv)*rtw%r_di1(iCv,0)*switch%b2stfm_freac_di1
             beta_denom = beta_denom + t0
-            t0 = pl%na(iCv,1)*rtw%r_ec_m_r(iCv,0)*switch%b2stfm_freac_ec
+            t0 = pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*switch%b2stfm_freac_ec
             beta_denom = beta_denom + t0
             beta_num = beta_num + t0
             t0 =  pl%na(iCv,1)*rtw%r_ic(iCv,0)*switch%b2stfm_freac_ic

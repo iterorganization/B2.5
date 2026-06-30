@@ -54,13 +54,12 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, ims, ite, ine, itr, iti, 
-     *        i_mcoll_p, i_mcoll_d, i_mcoll_r
+      integer iCv, ims, ite, ine, itr, iti, i_mcoll
       logical ltst0
       real (kind=R8) ::
      *   rlte, rlne, fxte, fxne, fxtr, t0, t1, tt, vth, tr,
      *   rltr, rlti, fxti, wrk(0:rtn_mcoll),
-     *   mcoll_p, mcoll_d, mcoll_r, rl_mcoll_p, rl_mcoll_d, rl_mcoll_r
+     *   mcoll, rl_mcoll, deltaV
 *   ..procedures
       intrinsic min, max, log
       external xertst
@@ -252,17 +251,13 @@ cc more complex treatment for elastic collisions
 *     ..compute abscissae
         tr = t_mol(iCv,0)/ti(iCv) !! ratio of molecule to ion temperature
         vth = sqrt(2.0_R8*ti(iCv)/(mp*am(1))) !! TODO generalize species
-        mcoll_p = abs(u_mol(iCv,0)-ua(iCv))/vth !! velocity difference in parallel direction expressed as Mach number   
-        mcoll_d = abs(u_pol_mol(iCv,0))/vth !! velocity difference in diamagnetic direction expressed as Mach number  (neglecting ion component)
-        mcoll_r = abs(u_rad_mol(iCv,0))/vth !! velocity difference in radial direction expressed as Mach number  (neglecting ion component)
+        deltaV = sqrt((u_mol(iCv,0)-ua(iCv))**2 + 
+     .             u_dia_mol(iCv,0)**2 + u_rad_mol(iCv,0)**2) !! velocity difference between ions and molecules
+        mcoll = deltaV/vth !! velocity difference expressed as Mach number   
         rlti = max(rtlt(0),min(rtlt(rtnt),log(ti(iCv)/ev)))
         rltr = max(rtltr(0),min(rtltr(rtntr),log(tr)))
-        rl_mcoll_p = max(rtl_mcoll(0),min(rtl_mcoll(rtn_mcoll),
-     .              log(mcoll_p)))
-        rl_mcoll_d = max(rtl_mcoll(0),min(rtl_mcoll(rtn_mcoll),
-     .              log(mcoll_d)))
-        rl_mcoll_r = max(rtl_mcoll(0),min(rtl_mcoll(rtn_mcoll),
-     .              log(mcoll_r)))
+        rl_mcoll = max(rtl_mcoll(0),min(rtl_mcoll(rtn_mcoll),
+     .              log(mcoll)))
 *     ..find iti
 *       (linear search starting from previous iti, to establish
 *         0.le.ite.lt.rtnt;
@@ -303,51 +298,22 @@ cc more complex treatment for elastic collisions
         fxtr = (rltr-rtltr(itr))/(rtltr(itr+1)-rtltr(itr))
 cc for the velocity difference, we use nearest neighbour instead of interpolation
 *     ..find i_mcoll
-cc parallel
-       wrk = rtl_mcoll-rl_mcoll_p
+       wrk = rtl_mcoll-rl_mcoll
        wrk = abs(wrk)
-       i_mcoll_p = MINLOC(wrk,1)-1 !! MINLOC seems to ignore the 0-indexing (returning 1 if the first element is the smallest, even though that has index 0) -> -1
-cc diamagnetic
-       wrk = rtl_mcoll-rl_mcoll_d
-       wrk = abs(wrk)
-       i_mcoll_d = MINLOC(wrk,1)-1 !! MINLOC seems to ignore the 0-indexing (returning 1 if the first element is the smallest, even though that has index 0) -> -1
-cc radial
-       wrk = rtl_mcoll-rl_mcoll_r
-       wrk = abs(wrk)
-       i_mcoll_r = MINLOC(wrk,1)-1 !! MINLOC seems to ignore the 0-indexing (returning 1 if the first element is the smallest, even though that has index 0) -> -1
+       i_mcoll = MINLOC(wrk,1)-1 !! MINLOC seems to ignore the 0-indexing (returning 1 if the first element is the smallest, even though that has index 0) -> -1
 
 *     ..compute log-log rate coefficients
         do ims = 0, nms-1
 
 *      ..compute elastic collision rate coefficient (parallel momentum)
-         t0 = (1.0_R8-fxtr)*rtl_ec_m(iti,itr,i_mcoll_p,ims)+
-     &        fxtr*rtl_ec_m(iti,itr+1,i_mcoll_p,ims)
-         t1 = (1.0_R8-fxtr)*rtl_ec_m(iti+1,itr,i_mcoll_p,ims)+
-     &        fxtr*rtl_ec_m(iti+1,itr+1,i_mcoll_p,ims)
+         t0 = (1.0_R8-fxtr)*rtl_ec_m(iti,itr,i_mcoll,ims)+
+     &        fxtr*rtl_ec_m(iti,itr+1,i_mcoll,ims)
+         t1 = (1.0_R8-fxtr)*rtl_ec_m(iti+1,itr,i_mcoll,ims)+
+     &        fxtr*rtl_ec_m(iti+1,itr+1,i_mcoll,ims)
          tt = (t1-t0)/(rtlt(iti+1)-rtlt(iti))
          rt%rl_ec_m(iCv,1,ims) = trimg(-20.0_R8,20.0_R8,tt)
          rt%rl_ec_m(iCv,0,ims) =
      &    (1.0_R8-fxti)*t0+fxti*t1-rt%rl_ec_m(iCv,1,ims)*rlti
-
-*      ..compute elastic collision rate coefficient (diamagnetic momentum)
-         t0 = (1.0_R8-fxtr)*rtl_ec_m(iti,itr,i_mcoll_d,ims)+
-     &        fxtr*rtl_ec_m(iti,itr+1,i_mcoll_d,ims)
-         t1 = (1.0_R8-fxtr)*rtl_ec_m(iti+1,itr,i_mcoll_d,ims)+
-     &        fxtr*rtl_ec_m(iti+1,itr+1,i_mcoll_d,ims)
-         tt = (t1-t0)/(rtlt(iti+1)-rtlt(iti))
-         rt%rl_ec_m_d(iCv,1,ims) = trimg(-20.0_R8,20.0_R8,tt)
-         rt%rl_ec_m_d(iCv,0,ims) =
-     &    (1.0_R8-fxti)*t0+fxti*t1-rt%rl_ec_m_d(iCv,1,ims)*rlti
-
-*      ..compute elastic collision rate coefficient (radial momentum)
-         t0 = (1.0_R8-fxtr)*rtl_ec_m(iti,itr,i_mcoll_r,ims)+
-     &        fxtr*rtl_ec_m(iti,itr+1,i_mcoll_r,ims)
-         t1 = (1.0_R8-fxtr)*rtl_ec_m(iti+1,itr,i_mcoll_r,ims)+
-     &        fxtr*rtl_ec_m(iti+1,itr+1,i_mcoll_r,ims)
-         tt = (t1-t0)/(rtlt(iti+1)-rtlt(iti))
-         rt%rl_ec_m_r(iCv,1,ims) = trimg(-20.0_R8,20.0_R8,tt)
-         rt%rl_ec_m_r(iCv,0,ims) =
-     &    (1.0_R8-fxti)*t0+fxti*t1-rt%rl_ec_m_r(iCv,1,ims)*rlti
 
 *      ..compute elastic collision rate coefficient (energy)
          t0 = (1.0_R8-fxtr)*rtl_ec_E(iti,itr,ims)+

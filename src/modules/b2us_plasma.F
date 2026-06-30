@@ -282,8 +282,7 @@
 
        ! nCv, dir, is, for fluid molecules
         real(R8), allocatable, dimension(:,:,:) :: rl_nd, rl_d, rl_di1,
-     .         rl_ic, rl_ec_m, rl_ec_E, rl_dr, rl_de, rl_di2, 
-     .         rl_ec_m_d, rl_ec_m_r
+     .         rl_ic, rl_ec_m, rl_ec_E, rl_dr, rl_de, rl_di2
       end type B2Rates
 
 ! Type for data transfer in b2sral
@@ -293,8 +292,7 @@
 
         real(R8), allocatable :: r_nd(:,:), r_d(:,:), r_di1(:,:), 
      .            r_ic(:,:), r_ec_m(:,:), r_ec_E(:,:),
-     .            r_dr(:,:), r_de(:,:), r_di2(:,:), r_ec_m_d(:,:),
-     .            r_ec_m_r(:,:)
+     .            r_dr(:,:), r_de(:,:), r_di2(:,:)
       end type B2RatesWork
 
 ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -2402,9 +2400,6 @@
       allocate( rt % rl_dr ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
       allocate( rt % rl_de ( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
       allocate( rt % rl_di2( nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
-      allocate( rt % rl_ec_m_d(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
-      allocate( rt % rl_ec_m_r(nCv, 0:1, 0:nms-1 ), SOURCE=0._R8 )
-
 
 #else
 
@@ -2418,9 +2413,6 @@
       allocate( rt % rl_dr ( nCv, 0:1, 0:nms-1 ) )
       allocate( rt % rl_de ( nCv, 0:1, 0:nms-1 ) )
       allocate( rt % rl_di2( nCv, 0:1, 0:nms-1 ) )
-      allocate( rt % rl_ec_m_d(nCv, 0:1, 0:nms-1 ) )
-      allocate( rt % rl_ec_m_r(nCv, 0:1, 0:nms-1 ) )
-
 
       rt % rl_nd  = 0
       rt % rl_d   = 0
@@ -2431,10 +2423,6 @@
       rt % rl_dr  = 0
       rt % rl_de  = 0
       rt % rl_di2 = 0
-      rt % rl_ec_m_d= 0
-      rt % rl_ec_m_r= 0
-
-
 
 #endif
       return
@@ -2455,9 +2443,6 @@
       deallocate( rt % rl_dr )
       deallocate( rt % rl_de )
       deallocate( rt % rl_di2 )
-      deallocate( rt % rl_ec_m_d )
-      deallocate( rt % rl_ec_m_r )
-
 
       return
       end subroutine destroyB2Rates_mol
@@ -2526,8 +2511,6 @@
       allocate( rtw % r_dr ( nCv, 0:nms-1 ), SOURCE=0._R8 )
       allocate( rtw % r_de ( nCv, 0:nms-1 ), SOURCE=0._R8 )
       allocate( rtw % r_di2( nCv, 0:nms-1 ), SOURCE=0._R8 )
-      allocate( rtw % r_ec_m_d(nCv, 0:nms-1 ), SOURCE=0._R8 )
-      allocate( rtw % r_ec_m_r(nCv, 0:nms-1 ), SOURCE=0._R8 )
 
 #else
       allocate( rtw % r_nd ( nCv, 0:nms-1 ) )
@@ -2539,9 +2522,6 @@
       allocate( rtw % r_dr ( nCv, 0:nms-1 ) )
       allocate( rtw % r_de ( nCv, 0:nms-1 ) )
       allocate( rtw % r_di2( nCv, 0:nms-1 ) )
-      allocate( rtw % r_ec_m_d(nCv, 0:nms-1 ) )
-      allocate( rtw % r_ec_m_r(nCv, 0:nms-1 ) )
-
 
       rtw % r_nd  = 0._R8
       rtw % r_d   = 0._R8
@@ -2552,9 +2532,6 @@
       rtw % r_dr  = 0._R8
       rtw % r_de  = 0._R8
       rtw % r_di2 = 0._R8
-      rtw % r_ec_m_d= 0._R8
-      rtw % r_ec_m_r= 0._R8
-
 
 #endif
 
@@ -2574,8 +2551,6 @@
       if ( allocated( rtw % r_dr ) )  deallocate( rtw % r_dr )
       if ( allocated( rtw % r_de ) )  deallocate( rtw % r_de )
       if ( allocated( rtw % r_di2 ) ) deallocate( rtw % r_di2 )
-      if ( allocated( rtw % r_ec_m_d) )  deallocate( rtw % r_ec_m_d )
-      if ( allocated( rtw % r_ec_m_r) )  deallocate( rtw % r_ec_m_r )
 
       return
       end subroutine destroyB2RatesWork_mol
