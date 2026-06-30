@@ -102,7 +102,9 @@ c     output for analysis/debugging
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
-     &                  fnni_out(nCv)
+     &                  fnni_out(nCv),
+     &                  sn_inc_mol_out(nCv), sn_refl_mol_out(nCv),
+     &                  sn_refla_mol_out(nCv), sn_rec_mol_out(nCv)
 *   ..procedures
       intrinsic abs
       external xertst
@@ -272,6 +274,10 @@ c     initialize debugging/analysis arrays
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
         fna_mol      = 0.0_R8  !nh 30.03.21
+        sn_inc_mol_out   = 0.0_R8 
+        sn_rec_mol_out = 0.0_R8
+        sn_refl_mol_out = 0.0_R8 
+        sn_refla_mol_out = 0.0_R8 
 
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn)
@@ -532,6 +538,10 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
         call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
+        call my_out_us(70,nCv,0,sn_rec_mol_out,'sn_rec_mol_out')
+        call my_out_us(70,nCv,0,sn_inc_mol_out,'sn_inc_mol_out')
+        call my_out_us(70,nCv,0,sn_refl_mol_out,'sn_refl_mol_out')
+        call my_out_us(70,nCv,0,sn_refla_mol_out,'sn_refla_mol_out')
       endif
 
       if (switch%b2stbr_phys_iout.eq.1.and.
@@ -988,6 +998,7 @@ cmb   net neutral energy source from recycling
              if (switch%AFN_out.ne.0) then
                fmomrec_out(iCv)   = fmomrec
                fenerec_out(iCv)   = fenerec
+               sn_rec_mol_out(iCv) = fn_rec_mol
              endif
 
              if (switch%fluid_molecules.ne.0) then
@@ -1156,11 +1167,14 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
      &            geo, mpg, cosa,sina, fn_refl_mol,
      &            fm_refl_mol, n_refl_mol, nww_refl_mol, fe_refl_mol)
 c contribution from incident molecules
+              sn_inc_mol_out(iCv) = fn_inc_mol
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) - fn_inc_mol  !! careful with signs, only fn_inc_mol is defined positive when going into the wall
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
      .                                *geo%cvhz(iCv)
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_inc_mol
 c contribution from self-reflected molecules
+              sn_refl_mol_out(iCv) = fn_refl_mol
+              sn_refla_mol_out(iCv) = fn_refla_mol
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refl_mol
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refl_mol
      .                                *geo%cvhz(iCv)
