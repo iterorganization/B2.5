@@ -202,7 +202,6 @@
       cdpm = cdpm_RC + co%cdp_mol(:,:) 
       call calccoef(nCv,nFc,nVx,0,geo,zeroes_fc0,cdpm,flo1,con1)
 
-      ! Add conb, flob to dv !! TODO
       con_tmp(:,:,0) = con_tmp(:,:,0) + con1
       con_tmp(:,0,1) = 0.0_R8                       
       con_tmp(:,1,1) = 0.0_R8                       
@@ -223,6 +222,11 @@ c compute vv, ww and uu
        pitc = abs(geo%cvBb(:,0))/geo%cvBb(:,3)
        pit2c = abs(geo%cvBb(:,2))/geo%cvBb(:,3)
        wwc = n_moli(:,0)/n_mol(:,0)*pit2c*pl%ua(:,is_main_ion)
+
+c limit also these velocity components to avoid numerical issues
+       uuc =sign(min(abs(uuc),um_max),uuc)
+       vvc =sign(min(abs(vvc),um_max),vvc)
+       wwc =sign(min(abs(wwc),um_max),wwc)
 
        if (switch%b2stfm_recompute_perp_vels.ne.0) then
          u_pol_mol(:,0) = uuc

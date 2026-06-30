@@ -23,6 +23,11 @@
  
       real (kind=R8), parameter :: am_d2 = 4.0_R8 !! TODO generalize
 
+      real (kind=R8) :: nm_min, nm_max,
+     .     um_max, tm_min, tm_max
+       parameter ( nm_min=1.0e10_R8, nm_max=1.0e26_R8 )
+       parameter ( um_max=1.0e5_R8 )   !! in absolute sense
+       parameter ( tm_min=0.1_R8*ev, tm_max=1.0e2_R8*ev )
 
       contains
 
@@ -147,12 +152,6 @@ c input variables
       integer, intent(in) :: nCv
 c local variables
       integer :: iCv
-      real (kind=R8) :: nm_min, nm_max,
-     .     um_max, tm_min, tm_max
-      parameter ( nm_min=1.0e10_R8, nm_max=1.0e26_R8 )
-      parameter ( um_max=1.0e5_R8 )   !! in absolute sense
-      parameter ( tm_min=0.05_R8*ev, tm_max=1.0e4_R8*ev )
-
 
       do iCv = 1, nCv
         n_mol(iCv,0) = min(n_mol(iCv,0),nm_max)
