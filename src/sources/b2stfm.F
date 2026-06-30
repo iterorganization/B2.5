@@ -143,6 +143,7 @@ cc molecule sources
       call sfill (nCv*2*ns, 0.0_R8, sna0_dr, 1)
       call sfill (nCv*2*ns, 0.0_R8, sna0_de, 1)
       call sfill (nCv*2*ns, 0.0_R8, sna0_di2, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_tot, 1)
 
       call sfill (nCv*2*ns, 0.0_R8, smo0_d, 1)
       call sfill (nCv*2*ns, 0.0_R8, smo0_nd, 1)
@@ -152,6 +153,7 @@ cc molecule sources
       call sfill (nCv*2*ns, 0.0_R8, smo0_de, 1)
       call sfill (nCv*2*ns, 0.0_R8, smo0_di2, 1)
       call sfill (nCv*2*ns, 0.0_R8, smo0_ec, 1)
+      call sfill (nCv*2*ns, 0.0_R8, smo0_tot, 1)
 
       call sfill (nCv*2*ns, 0.0_R8, shi0_d, 1)
       call sfill (nCv*2*ns, 0.0_R8, shi0_nd, 1)
@@ -161,6 +163,7 @@ cc molecule sources
       call sfill (nCv*2*ns, 0.0_R8, shi0_de, 1)
       call sfill (nCv*2*ns, 0.0_R8, shi0_di2, 1)
       call sfill (nCv*2*ns, 0.0_R8, shi0_ec, 1)
+      call sfill (nCv*2*ns, 0.0_R8, shi0_tot, 1)
 
       call sfill (nCv*2, 0.0_R8, she0_d, 1)
       call sfill (nCv*2, 0.0_R8, she0_nd, 1)
@@ -169,6 +172,7 @@ cc molecule sources
       call sfill (nCv*2, 0.0_R8, she0_dr, 1)
       call sfill (nCv*2, 0.0_R8, she0_de, 1)
       call sfill (nCv*2, 0.0_R8, she0_di2, 1)
+      call sfill (nCv*2, 0.0_R8, she0_tot, 1)
 
       call sfill (nCv, 0.0_R8, sn_mol_d, 1)
       call sfill (nCv, 0.0_R8, sn_mol_nd, 1)
@@ -892,10 +896,16 @@ cc dissociative ionization (2), electron energy source
       write(*,*) total_mol_sink
 
 !! Fill in general source structure
-      sr_mol%sn_mol(:,1) = sr_mol%sn_mol(:,1) + sn_mol_tot/n_mol(:,0)
+      sr_mol%sn_mol(:,0) = sr_mol%sn_mol(:,0) + 0.5_R8*sn_mol_tot
+      sr_mol%sm_mol(:,0) = sr_mol%sm_mol(:,0) + 0.5_R8*sm_mol_tot
+      sr_mol%sh_mol(:,0) = sr_mol%sh_mol(:,0) + 0.5_R8*sh_mol_tot
+
+      sr_mol%sn_mol(:,1) = sr_mol%sn_mol(:,1) +
+     .                     0.5_R8*sn_mol_tot/n_mol(:,0)
       sr_mol%sm_mol(:,1) = sr_mol%sm_mol(:,1) + 
-     .                     sm_mol_tot/(u_mol(:,0)+eps)
-      sr_mol%sh_mol(:,1) = sr_mol%sh_mol(:,1) + sh_mol_tot/t_mol(:,0)
+     .                     0.5_R8*sm_mol_tot/(u_mol(:,0)+eps)
+      sr_mol%sh_mol(:,1) = sr_mol%sh_mol(:,1) + 
+     .                     0.5_R8*sh_mol_tot/t_mol(:,0)
 
 
 !! Calculate time constant tau for use in the transport model
@@ -970,8 +980,23 @@ cc dissociative ionization (2), electron energy source
      .                             sr%sna(:,0,is), 1)
         call b2saxpy (nCv, 1.0_R8, smo0_tot(:,0,is), 1,
      .                             sr%smq(:,0,is), 1)
-        call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
+        if (switch%tn_style.eq.0) then
+          call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
      .                             sr%shi(:,0), 1)
+        elseif (switch%tn_style.eq.1) then 
+          if (.not.is_neutral(is)) then 
+            call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
+     .                             sr%shi(:,0), 1)
+          endif
+        else
+          if (.not.is_neutral(is)) then 
+            call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
+     .                             sr%shi(:,0), 1)
+          else
+            call b2saxpy (nCv, 1.0_R8, shi0_tot(:,0,is), 1,
+     .                             sr%shn(:,0), 1)
+          endif
+        endif
       enddo
       call b2saxpy (nCv, 1.0_R8,she0_tot(:,0) , 1, sr%she(:,0), 1)
 
