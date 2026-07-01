@@ -96,6 +96,7 @@ SUBROUTINE B2NXFX_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, qe, ne&
       IF (switch%b2nxfx_style .NE. 0) THEN
 ! style                                                   !srv 26.10.08 {
 !   ..compute wrkc0 and wrkc1
+        nete = ne*te
         CALL GRADC_P_FWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, nete, &
 &                  wrkv, wrkc0)
         CALL GRADC_P_FWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, po, &
