@@ -248,7 +248,7 @@
       , only : write_b2fstate
       use b2mod_version &
       , only : newversion, cfverw
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_par_opt_diff &
      , only : par_rescale, sigma, mean
       use b2mod_ad_diff &
@@ -494,7 +494,7 @@
       , only : write_b2fstate
       use b2mod_version &
       , only : newversion, cfverw
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_par_opt_diff &
       , only : sigma, mean
       use b2mod_ad_diff &
