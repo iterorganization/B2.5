@@ -27,11 +27,10 @@
 !
 !srv 01.07.08
 SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
-& , tn, tnb, po, pob, ne, neb, ni, nib, nn, nnb, kt, ktb, zt, ztb, sr, &
-& srb)
+& , tn, tnb, po, pob, ne, ni, nn, kt, ktb, zt, ztb, sr, srb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_PLASMA_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -46,8 +45,7 @@ SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
   REAL(kind=r8) :: nab(ncv, 0:ns-1), uab(ncv, 0:ns-1), teb(ncv), tib(ncv&
-& ), tnb(ncv), pob(ncv), neb(ncv), nib(ncv, 0:1), nnb(ncv), ktb(ncv), &
-& ztb(ncv)
+& ), tnb(ncv), pob(ncv), ktb(ncv), ztb(ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE), INTENT(INOUT) :: srb
@@ -127,7 +125,7 @@ SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
     DO icv=1,ncv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       t0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
       IF (sr%sna(icv, 0, is) .LT. (1.0_R8+switch%b2srst_rf0)*t0) THEN
         IF ((1.0_R8+switch%b2srst_rf0)*t0 .LT. -(switch%b2srst_rf0*t0)) &
@@ -1263,7 +1261,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
 & , nn, kt, zt, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_PLASMA_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -1338,7 +1336,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -1362,7 +1360,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
     DO icv=1,ncv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       t0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
       IF (sr%sna(icv, 0, is) .LT. (1.0_R8+switch%b2srst_rf0)*t0) THEN
         IF ((1.0_R8+switch%b2srst_rf0)*t0 .LT. -(switch%b2srst_rf0*t0)) &

@@ -35,7 +35,7 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
 & rtb, rtw, rtwb)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2MOD_SWITCHES_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -130,8 +130,11 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
   REAL(kind=r8) :: tempb
   REAL(kind=r8) :: tempb0
   INTEGER*4 :: branch
+!
 !   ..compute wrk0()=log(te()/ev)
   wrk0 = LOG(te/ev)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -202,7 +205,6 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -376,7 +378,7 @@ END SUBROUTINE B2SQEL_B
 SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2MOD_SWITCHES_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -449,8 +451,11 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
   IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+!
 !   ..compute wrk0()=log(te()/ev)
   wrk0 = LOG(te/ev)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -511,7 +516,6 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -536,6 +540,7 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
 &       1.5_R8+1.0_R8/tnorm**3)
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()

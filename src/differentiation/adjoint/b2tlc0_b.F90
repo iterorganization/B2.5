@@ -23,7 +23,7 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 & cdpa, cdpab, cdpahz, cdpahzb, flc, flcb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -172,6 +172,7 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
       END DO
       CALL PUSHCONTROL2B(0)
     ELSE
+!
 !wdk    flux limit total gradient-driven flow, not individual poloidal
 !wdk    or radial contributions, since neutral transport is isotropic
       DO is=0,ns-1
@@ -466,7 +467,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 & , tn, rza, cdpa0, cdpa, cdpahz, flc)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -524,8 +525,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute partial pressure
-          CALL B2XPPB_NODIFF(ncv, rza(1, is), na(1, is), te, ti, tn, is&
-&                      , pb)
+          CALL B2XPPB(ncv, rza(1, is), na(1, is), te, ti, tn, is, pb)
 !    ..compute differences of partial pressure
           CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pb, pbv, dpbf)
           DO ifc=1,nfc
@@ -578,13 +578,13 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
         END IF
       END DO
     ELSE
+!
 !wdk    flux limit total gradient-driven flow, not individual poloidal
 !wdk    or radial contributions, since neutral transport is isotropic
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute partial pressure
-          CALL B2XPPB_NODIFF(ncv, rza(1, is), na(1, is), te, ti, tn, is&
-&                      , pb)
+          CALL B2XPPB(ncv, rza(1, is), na(1, is), te, ti, tn, is, pb)
 !    ..compute differences of partial pressure
           CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pb, pbv, dpbf)
           DO ifc=1,nfc

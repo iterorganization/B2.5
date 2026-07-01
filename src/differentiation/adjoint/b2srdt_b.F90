@@ -2,21 +2,27 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2srdt in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
+!   gradient     of useful results: ni0 *(dv.ue) *(dv.uadia) *(dv.vedia)
+!                *(dv.veecrb) ua tn0 te0 na0 nn0 kt0 *(sr.sch)
 !                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
-!                *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
-!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
-!                *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
-!   with respect to varying inputs: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
+!                *(sr.smo) *(sr.smq) *(sr.sna) *(sr.shedt) *(sr.sktdt)
+!                *(sr.sztdt) *(sr.shidt) *(sr.shndt) *(sr.schdt)
+!                *(sr.smodt) *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
+!                te
+!   with respect to varying inputs: ni0 *(dv.ue) *(dv.uadia) *(dv.vedia)
+!                *(dv.veecrb) ua tn0 te0 na0 nn0 kt0 *(sr.sch)
 !                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
-!                *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
-!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
-!                *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
-!   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
-!                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
-!                sr.sna:in sr.shedt:in sr.sktdt:in sr.sztdt:in
-!                sr.snedt:in sr.shidt:in sr.shndt:in sr.schdt:in
-!                sr.smodt:in sr.snadt:in
+!                *(sr.smo) *(sr.smq) *(sr.sna) *(sr.shedt) *(sr.sktdt)
+!                *(sr.sztdt) *(sr.shidt) *(sr.shndt) *(sr.schdt)
+!                *(sr.smodt) *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
+!                te
+!   Plus diff mem management of: dv.ue:in dv.uadia:in dv.vedia:in
+!                dv.veecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
+!                geo.cvhz:in geo.cvhx:in geo.cvvol:in sr.sch:in
+!                sr.she:in sr.shi:in sr.sne:in sr.shn:in sr.skt:in
+!                sr.szt:in sr.smo:in sr.smq:in sr.sna:in sr.shedt:in
+!                sr.sktdt:in sr.sztdt:in sr.snedt:in sr.shidt:in
+!                sr.shndt:in sr.schdt:in sr.smodt:in sr.snadt:in
 !
 !
 !
@@ -33,15 +39,15 @@
 !
 !srv 16.07.10
 !srv 11.09.09
-SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
-& ua0b, te0, te0b, ti0, ti0b, tn0, tn0b, ne0, ne0b, ni0, ni0b, nn0, nn0b&
-& , kinrgy0, kinrgy0b, kt0, kt0b, zt0, zt0b, na, nab, ua, te, teb, ti, &
-& tib, tn, tnb, ne, neb, ni, nib, nn, nnb, kinrgy, kinrgyb, kt, ktb, zt&
-& , ztb, sr, srb, lout)
+SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, switchb, geo, geob, mpg, mpgb&
+& , dv, dvb, na0, na0b, ua0, ua0b, te0, te0b, ti0, ti0b, tn0, tn0b, ne0&
+& , ne0b, ni0, ni0b, nn0, nn0b, kinrgy0, kinrgy0b, kt0, kt0b, zt0, zt0b&
+& , na, ua, uab, te, teb, ti, tn, ne, ni, nn, kinrgy, kt, zt, sr, srb, &
+& lout)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -53,11 +59,16 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
 !srv 16.07.10
-  LOGICAL(1) :: lout
+  LOGICAL :: lout
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFF) :: mpgb
+  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES) :: dvb
 !srv 16.07.10
   REAL(kind=r8) :: dtim, na0(ncv, 0:ns-1), ua0(ncv, 0:ns-1), te0(ncv), &
 & ti0(ncv), tn0(ncv), ne0(ncv), ni0(ncv, 0:1), nn0(ncv), kinrgy0(ncv, 0:&
@@ -66,9 +77,7 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
 & , kt(ncv), zt(ncv)
   REAL(kind=r8) :: na0b(ncv, 0:ns-1), ua0b(ncv, 0:ns-1), te0b(ncv), ti0b&
 & (ncv), tn0b(ncv), ne0b(ncv), ni0b(ncv, 0:1), nn0b(ncv), kinrgy0b(ncv, &
-& 0:ns-1), kt0b(ncv), zt0b(ncv), nab(ncv, 0:ns-1), teb(ncv), tib(ncv), &
-& tnb(ncv), neb(ncv), nib(ncv, 0:1), nnb(ncv), kinrgyb(ncv, 0:ns-1), ktb&
-& (ncv), ztb(ncv)
+& 0:ns-1), kt0b(ncv), zt0b(ncv), uab(ncv, 0:ns-1), teb(ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE), INTENT(INOUT) :: srb
@@ -90,23 +99,77 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
 !srv 11.09.09 }
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: t0, ttim
-  REAL(kind=r8) :: wrk0(ncv)
+  REAL(kind=r8) :: t0b, ttimb
+  REAL(kind=r8) :: wrk0(ncv), mult_dt(ncv)
+  REAL(kind=r8) :: mult_dtb(ncv)
+  REAL(kind=r8) :: ttim2, src_tot, content, smt(0:3)
+  REAL(kind=r8) :: ttim2b, src_totb, contentb, smtb(0:3)
+! only for iout = 1 + var_style = 2
+  REAL(kind=r8) :: ttim2_na(ncv, 0:ns-1), ttim2_ua(ncv, 0:ns-1), &
+& ttim2_ti(ncv), ttim2_te(ncv), ttim_na(ncv, 0:ns-1), ttim_ua(ncv, 0:ns-&
+& 1), ttim_ti(ncv), ttim_te(ncv), dt_var4_ns(ncv, 0:ns-1), dt_var4_min(&
+& ncv)
+  REAL(kind=r8) :: dt_var4_nsb(ncv, 0:ns-1), dt_var4_minb(ncv)
   REAL(kind=r8) :: dtee_fts(mpg%nft), dtei_fts(mpg%nft), dtco_fts(mpg%&
 & nft), dtmo_fts(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC MAX
+  INTRINSIC MIN
+  EXTERNAL XERRAB
+  REAL(kind=r8) :: x1
+  REAL(kind=r8) :: x1b
+  REAL(kind=r8) :: x2
+  REAL(kind=r8) :: x2b
+  REAL(kind=r8) :: x3
+  REAL(kind=r8) :: x3b
+  REAL(kind=r8) :: x4
+  REAL(kind=r8) :: x4b
+  REAL(kind=r8) :: x5
+  REAL(kind=r8) :: x5b
+  REAL(kind=r8) :: x6
+  REAL(kind=r8) :: x6b
+  REAL(kind=r8) :: x7
+  REAL(kind=r8) :: x7b
+  REAL(kind=r8) :: x8
+  REAL(kind=r8) :: x8b
+  REAL(kind=r8) :: x9
+  REAL(kind=r8) :: x9b
+  REAL(kind=r8) :: x10
+  REAL(kind=r8) :: x10b
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs1
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs0b
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs1b
+  REAL(kind=r8) :: abs2
+  REAL(kind=r8) :: abs2b
+  REAL(kind=r8) :: abs3
+  REAL(kind=r8) :: abs3b
+  REAL(kind=r8) :: abs4
+  REAL(kind=r8) :: abs4b
+  REAL(kind=r8) :: abs5
+  REAL(kind=r8) :: abs5b
+  REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs6b
+  REAL(kind=r8) :: abs7
+  REAL(kind=r8) :: abs7b
+  REAL(kind=r8) :: abs8
+  REAL(kind=r8) :: abs8b
+  REAL(kind=r8) :: abs9
+  REAL(kind=r8) :: abs9b
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
   integer :: result10
   CHARACTER(len=12) :: arg10
+  CHARACTER(len=22) :: arg11
+  CHARACTER(len=21) :: arg12
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -117,12 +180,24 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
 !   ..test nCv, ns
 !   ..test sign of dtim
 !   ..extensive tests on first few calls
-  REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb
+  REAL(kind=r8) :: tempb0
+  REAL(kind=r8) :: temp
+  REAL(kind=r8) :: tempb1
   INTEGER*4 :: branch
 !
-! ..include the contributions from dtim
-!   ..modify snadt
+! ..Optionally, calculate a local (cell-based) multiplier to the timestep.
+!   mult_dt will be 1.0 if b2mndt_var_style = 0 (default).
+  CALL PUSHREAL8ARRAY(dt_var4_ns, r8*ncv*ns/8)
+  CALL PUSHREAL8ARRAY(mult_dt, r8*ncv/8)
+  CALL GET_MULT_DT_NODIFF(switch%b2mndt_var_style, dtim, dv, geo, mpg, &
+&                   ncv, mpg%nfc, ns, te, ti, na, ua, switch%&
+&                   b2mndt_var_te_min, switch%b2mndt_var_te_max, switch%&
+&                   b2mndt_var_mult, switch%b2mndt_var_style3_cmax, &
+&                   mult_dt, dt_var4_ns, dt_var4_min, switch%&
+&                   b2mndt_var_style_nfilter)
+!
+! ..Flux-tube based mechanism (not compatible with b2mndt_var_style.gt.0)
   k = 1
   dtee_fts = 0.0_R8
   dtei_fts = 0.0_R8
@@ -135,6 +210,10 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
     dtmo_fts(dtfts(k)) = dtmo_ft(k)
     k = k + 1
   END DO
+!
+! ..include the contributions from dtim
+!   ..modify snadt
+!
   DO is=0,ns-1
     DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
@@ -143,30 +222,122 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
 !WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-      ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
-      ift = mpg%cvft(icv)
-      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
-        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-        result10 = MINVAL(mpg%fccv(ifc, :))
-        ift = mpg%cvft(result10)
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHCONTROL1B(1)
-      END IF
-      IF (ift .NE. 0) THEN
-        IF (dtco_fts(ift) .GT. 0.0_R8) THEN
+      IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! standard approaches
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
+!! flux tube approach is only allowed for b2mndt_var_style = 0
+        ift = mpg%cvft(icv)
+        IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          result10 = MINVAL(mpg%fccv(ifc, :))
+          ift = mpg%cvft(result10)
           CALL PUSHCONTROL1B(0)
-          ttim = dtim*dtco_fts(ift)*time_factor(icv)
         ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (ift .NE. 0) THEN
+          IF (dtco_fts(ift) .GT. 0.0_R8) THEN
+            CALL PUSHCONTROL4B(0)
+            ttim = dtim*dtco_fts(ift)*time_factor(icv)
+          ELSE
+            CALL PUSHCONTROL4B(0)
+          END IF
+        ELSE
+          CALL PUSHCONTROL4B(1)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te based local timestep
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*mult_dt(icv)
+        CALL PUSHCONTROL4B(2)
+      ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to particle content
+        src_tot = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na0(icv, is)
+        CALL PUSHREAL8(content, r8/8)
+        content = geo%cvvol(icv)*na0(icv, is)
+        IF (src_tot .GE. 0.) THEN
+          CALL PUSHREAL8(abs0, r8/8)
+          abs0 = src_tot
           CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL8(abs0, r8/8)
+          abs0 = -src_tot
+          CALL PUSHCONTROL1B(1)
+        END IF
+        ttim2 = content/abs0/switch%b2mndt_var_style2_sf
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x1 = ttim
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          x1 = ttim2
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (x1 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+          CALL PUSHCONTROL4B(3)
+        ELSE
+          ttim = x1
+          CALL PUSHCONTROL4B(4)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! CFL-based criterion for drifts (EXPERIMENTAL!)
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*mult_dt(icv)
+        CALL PUSHCONTROL4B(5)
+      ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep based on ratio of source to particle content and drift CFL criterion
+        src_tot = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na0(icv, is)
+        CALL PUSHREAL8(content, r8/8)
+        content = geo%cvvol(icv)*na0(icv, is)
+        IF (src_tot .GE. 0.) THEN
+          CALL PUSHREAL8(abs1, r8/8)
+          abs1 = src_tot
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL8(abs1, r8/8)
+          abs1 = -src_tot
+          CALL PUSHCONTROL1B(1)
+        END IF
+        ttim2 = content/abs1/switch%b2mndt_var_style2_sf
+        IF (ttim2 .GT. dt_var4_ns(icv, is)) THEN
+          ttim2 = dt_var4_ns(icv, is)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          ttim2 = ttim2
+          CALL PUSHCONTROL1B(1)
+        END IF
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x2 = ttim
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          x2 = ttim2
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (x2 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+          CALL PUSHCONTROL4B(6)
+        ELSE
+          ttim = x2
+          CALL PUSHCONTROL4B(7)
         END IF
       ELSE
-        CALL PUSHCONTROL1B(1)
+        CALL PUSHCONTROL4B(8)
       END IF
+!
 !fc 11.03.24
-      CALL PUSHREAL8(t0, r8/8)
       t0 = switch%b2srdt_phm0/ttim*geo%cvvol(icv)*ts_factor
+      CALL PUSHREAL8(sr%snadt(icv, 0, is), r8/8)
+      sr%snadt(icv, 0, is) = t0*na0(icv, is)
+      CALL PUSHREAL8(sr%snadt(icv, 1, is), r8/8)
+      sr%snadt(icv, 1, is) = -t0
       IF (.NOT.lout) THEN
+        CALL PUSHREAL8ARRAY(sr%sna(icv, :, is), r8*SIZE(sr%sna, 2)/8)
+        sr%sna(icv, :, is) = sr%sna(icv, :, is) + sr%snadt(icv, :, is)
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
@@ -179,8 +350,146 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
     DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
+      IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! standard approaches
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+        ift = mpg%cvft(icv)
+        IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          result10 = MINVAL(mpg%fccv(ifc, :))
+          ift = mpg%cvft(result10)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (ift .NE. 0) THEN
+          IF (dtmo_fts(ift) .GT. 0.0_R8) THEN
+            CALL PUSHCONTROL4B(0)
+            ttim = dtim*dtmo_fts(ift)*time_factor(icv)
+          ELSE
+            CALL PUSHCONTROL4B(0)
+          END IF
+        ELSE
+          CALL PUSHCONTROL4B(1)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*mult_dt(icv)
+        CALL PUSHCONTROL4B(2)
+      ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to parallel momentum content
+        smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+        CALL PUSHREAL8(src_tot, r8/8)
+        src_tot = smt(0) + smt(1)*ua0(icv, is) + smt(2)*am(is)*mp*na0(&
+&         icv, is) + smt(3)*am(is)*mp*ua0(icv, is)*na0(icv, is)
+        CALL PUSHREAL8(content, r8/8)
+        content = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*ua0(icv, is)*&
+&         na0(icv, is)
+        IF (content/src_tot .GE. 0.) THEN
+          abs2 = content/src_tot
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          abs2 = -(content/src_tot)
+          CALL PUSHCONTROL1B(1)
+        END IF
+        ttim2 = abs2/switch%b2mndt_var_style2_sf
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x3 = ttim
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          x3 = ttim2
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (x3 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+          CALL PUSHCONTROL4B(3)
+        ELSE
+          ttim = x3
+          CALL PUSHCONTROL4B(4)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! drift CFL criterion
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*mult_dt(icv)
+        CALL PUSHCONTROL4B(5)
+      ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep based on ratio of source to parallel momentum content and drift CFL criterion
+        smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+        CALL PUSHREAL8(src_tot, r8/8)
+        src_tot = smt(0) + smt(1)*ua0(icv, is) + smt(2)*am(is)*mp*na0(&
+&         icv, is) + smt(3)*am(is)*mp*ua0(icv, is)*na0(icv, is)
+        CALL PUSHREAL8(content, r8/8)
+        content = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*ua0(icv, is)*&
+&         na0(icv, is)
+        IF (content/src_tot .GE. 0.) THEN
+          abs3 = content/src_tot
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          abs3 = -(content/src_tot)
+          CALL PUSHCONTROL1B(1)
+        END IF
+        ttim2 = abs3/switch%b2mndt_var_style2_sf
+        IF (ttim2 .GT. dt_var4_ns(icv, is)) THEN
+          ttim2 = dt_var4_ns(icv, is)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+          ttim2 = ttim2
+        END IF
+        CALL PUSHREAL8(ttim, r8/8)
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x4 = ttim
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          x4 = ttim2
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (x4 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+          CALL PUSHCONTROL4B(6)
+        ELSE
+          ttim = x4
+          CALL PUSHCONTROL4B(7)
+        END IF
+      ELSE
+        CALL PUSHCONTROL4B(8)
+      END IF
+!srv 09.01.01
+      t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)*&
+&       ts_factor
+      CALL PUSHREAL8(sr%smodt(icv, 0, is), r8/8)
+      sr%smodt(icv, 0, is) = t0*am(is)*mp*ua0(icv, is)*na0(icv, is)
+      CALL PUSHREAL8(sr%smodt(icv, 1, is), r8/8)
+      sr%smodt(icv, 1, is) = 0.0_R8
+      CALL PUSHREAL8(sr%smodt(icv, 2, is), r8/8)
+      sr%smodt(icv, 2, is) = 0.0_R8
+      CALL PUSHREAL8(sr%smodt(icv, 3, is), r8/8)
+      sr%smodt(icv, 3, is) = -t0
+      IF (.NOT.lout) THEN
+        CALL PUSHREAL8ARRAY(sr%smo(icv, :, is), r8*SIZE(sr%smo, 2)/8)
+        sr%smo(icv, :, is) = sr%smo(icv, :, is) + sr%smodt(icv, :, is)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+  END DO
 !
-      ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+!   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
+!
+  DO icv=1,mpg%nci
+!sw 24feb2014 check for guard cell (SOLPS4)
+!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! Standard approaches
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
       ift = mpg%cvft(icv)
       IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
         ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
@@ -191,121 +500,401 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
         CALL PUSHCONTROL1B(1)
       END IF
       IF (ift .NE. 0) THEN
-        IF (dtmo_fts(ift) .GT. 0.0_R8) THEN
-          CALL PUSHCONTROL1B(0)
-          ttim = dtim*dtmo_fts(ift)*time_factor(icv)
+        IF (dtee_fts(ift) .GT. 0.0_R8) THEN
+          CALL PUSHCONTROL4B(0)
+          ttim = dtim*dtee_fts(ift)*time_factor(icv)
         ELSE
-          CALL PUSHCONTROL1B(0)
+          CALL PUSHCONTROL4B(0)
         END IF
       ELSE
-        CALL PUSHCONTROL1B(1)
+        CALL PUSHCONTROL4B(1)
       END IF
-!srv 09.01.01
-      CALL PUSHREAL8(t0, r8/8)
-      t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)*&
-&       ts_factor
-      IF (.NOT.lout) THEN
-        CALL PUSHCONTROL1B(1)
-      ELSE
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtee(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(2)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to electron heat content
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%she(icv, 0) + sr%she(icv, 1)*te0(icv) + sr%she(icv, 2&
+&       )*ne0(icv) + sr%she(icv, 3)*te0(icv)*ne0(icv)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs4, r8/8)
+        abs4 = src_tot
         CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs4, r8/8)
+        abs4 = -src_tot
+        CALL PUSHCONTROL1B(1)
       END IF
-    END DO
-  END DO
+      ttim2 = content/abs4/switch%b2mndt_var_style2_sf
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtee(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x5 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x5 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x5 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(3)
+      ELSE
+        ttim = x5
+        CALL PUSHCONTROL4B(4)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! CFL drift criterion
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtee(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(5)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%she(icv, 0) + sr%she(icv, 1)*te0(icv) + sr%she(icv, 2&
+&       )*ne0(icv) + sr%she(icv, 3)*te0(icv)*ne0(icv)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs5, r8/8)
+        abs5 = src_tot
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs5, r8/8)
+        abs5 = -src_tot
+        CALL PUSHCONTROL1B(1)
+      END IF
+      ttim2 = content/abs5/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        ttim2 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtee(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x6 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x6 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x6 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(6)
+      ELSE
+        ttim = x6
+        CALL PUSHCONTROL4B(7)
+      END IF
+    ELSE
+      CALL PUSHCONTROL4B(8)
+    END IF
+    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
+    CALL PUSHREAL8(sr%shedt(icv, 0), r8/8)
+    sr%shedt(icv, 0) = 1.5_R8*t0*ne0(icv)*te0(icv)
+    CALL PUSHREAL8(sr%shedt(icv, 1), r8/8)
+    sr%shedt(icv, 1) = 0.0_R8
+    CALL PUSHREAL8(sr%shedt(icv, 2), r8/8)
+    sr%shedt(icv, 2) = 0.0_R8
+    CALL PUSHREAL8(sr%shedt(icv, 3), r8/8)
+    sr%shedt(icv, 3) = -(1.5_R8*t0)
+    IF (.NOT.lout) THEN
+      CALL PUSHREAL8ARRAY(sr%she(icv, :), r8*SIZE(sr%she, 2)/8)
+      sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
 !
-!   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! Standard approaches
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+      IF (ift .NE. 0) THEN
+        IF (dtei_fts(ift) .GT. 0.0_R8) THEN
+          CALL PUSHCONTROL4B(0)
+          ttim = dtim*dtei_fts(ift)*time_factor(icv)
+        ELSE
+          CALL PUSHCONTROL4B(0)
+        END IF
+      ELSE
+        CALL PUSHCONTROL4B(1)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(2)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! For now keep timestep for kt and zt same is for ti
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs6, r8/8)
+        abs6 = src_tot
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs6, r8/8)
+        abs6 = -src_tot
+        CALL PUSHCONTROL1B(1)
+      END IF
+      ttim2 = content/abs6/switch%b2mndt_var_style2_sf
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x7 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x7 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x7 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(3)
+      ELSE
+        ttim = x7
+        CALL PUSHCONTROL4B(4)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! drift CFL-based
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(5)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs7, r8/8)
+        abs7 = src_tot
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs7, r8/8)
+        abs7 = -src_tot
+        CALL PUSHCONTROL1B(1)
+      END IF
+      ttim2 = content/abs7/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        ttim2 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x8 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x8 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x8 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(6)
+      ELSE
+        ttim = x8
+        CALL PUSHCONTROL4B(7)
+      END IF
+    ELSE
+      CALL PUSHCONTROL4B(8)
+    END IF
+    IF (.NOT.lout) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+!
+    IF (.NOT.lout) THEN
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+  END DO
+!! why is this loop separate from the one above? Perhaps worth the effort of merging them now the addtional var_style options cau
+!se additional complexity. 
   DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 !
-    ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
-    ift = mpg%cvft(icv)
-    IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      result10 = MINVAL(mpg%fccv(ifc, :))
-      ift = mpg%cvft(result10)
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    IF (ift .NE. 0) THEN
-      IF (dtee_fts(ift) .GT. 0.0_R8) THEN
-        CALL PUSHCONTROL1B(0)
-        ttim = dtim*dtee_fts(ift)*time_factor(icv)
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+      IF (ift .NE. 0) THEN
+        IF (dtei_fts(ift) .GT. 0.0_R8) THEN
+          CALL PUSHCONTROL4B(0)
+          ttim = dtim*dtei_fts(ift)*time_factor(icv)
+        ELSE
+          CALL PUSHCONTROL4B(0)
+        END IF
       ELSE
+        CALL PUSHCONTROL4B(1)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(2)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to ion heat content
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs8, r8/8)
+        abs8 = src_tot
         CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs8, r8/8)
+        abs8 = -src_tot
+        CALL PUSHCONTROL1B(1)
+      END IF
+      ttim2 = content/abs8/switch%b2mndt_var_style2_sf
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x9 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x9 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x9 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(6)
+      ELSE
+        ttim = x9
+        CALL PUSHCONTROL4B(5)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+      CALL PUSHCONTROL4B(3)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep directly based on ratio of source to ion heat content + drift CFL condition
+      CALL PUSHREAL8(src_tot, r8/8)
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      CALL PUSHREAL8(content, r8/8)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        CALL PUSHREAL8(abs9, r8/8)
+        abs9 = src_tot
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL8(abs9, r8/8)
+        abs9 = -src_tot
+        CALL PUSHCONTROL1B(1)
+      END IF
+      ttim2 = content/abs9/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        ttim2 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x10 = ttim
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        x10 = ttim2
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (x10 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+        CALL PUSHCONTROL4B(8)
+      ELSE
+        ttim = x10
+        CALL PUSHCONTROL4B(7)
       END IF
     ELSE
-      CALL PUSHCONTROL1B(1)
+      CALL PUSHCONTROL4B(4)
     END IF
-    CALL PUSHREAL8(t0, r8/8)
-    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
-    IF (.NOT.lout) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-!
-    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
-    IF (ift .NE. 0) THEN
-      IF (dtei_fts(ift) .GT. 0.0_R8) THEN
-        CALL PUSHCONTROL1B(0)
-        ttim = dtim*dtei_fts(ift)*time_factor(icv)
-      ELSE
-        CALL PUSHCONTROL1B(0)
-      END IF
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    CALL PUSHREAL8(t0, r8/8)
-    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
-    IF (.NOT.lout) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-!
-    IF (.NOT.lout) THEN
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      CALL PUSHCONTROL1B(0)
-    END IF
-  END DO
-!
-  DO icv=1,mpg%nci
-!sw 24feb2014 check for guard cell (SOLPS4)
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-!
-    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
     CALL PUSHREAL8(t0, r8/8)
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
 !
     IF (switch%tn_style .EQ. 0) THEN
 !
+      CALL PUSHREAL8(sr%shidt(icv, 0), r8/8)
+      sr%shidt(icv, 0) = 1.5_R8*t0*ni0(icv, 0)*ti0(icv)
+      CALL PUSHREAL8(sr%shidt(icv, 1), r8/8)
+      sr%shidt(icv, 1) = 0.0_R8
+      CALL PUSHREAL8(sr%shidt(icv, 2), r8/8)
+      sr%shidt(icv, 2) = 0.0_R8
+      CALL PUSHREAL8(sr%shidt(icv, 3), r8/8)
+      sr%shidt(icv, 3) = -(1.5_R8*t0)
       IF (switch%boris .EQ. 1.0_R8) THEN
+        DO is=0,ns-1
+          CALL PUSHREAL8(sr%shidt(icv, 0), r8/8)
+          sr%shidt(icv, 0) = sr%shidt(icv, 0) + t0*kinrgy0(icv, is)*na0(&
+&           icv, is)
+          CALL PUSHREAL8(sr%shidt(icv, 2), r8/8)
+          sr%shidt(icv, 2) = sr%shidt(icv, 2) - t0*kinrgy0(icv, is)*na0(&
+&           icv, is)/ni0(icv, 0)
+        END DO
         CALL PUSHCONTROL3B(0)
       ELSE
         CALL PUSHCONTROL3B(1)
       END IF
     ELSE IF (switch%tn_style .EQ. 1) THEN
 !
-      CALL PUSHCONTROL3B(2)
-    ELSE IF (.NOT.lout) THEN
 !
+      CALL PUSHREAL8(sr%shidt(icv, 0), r8/8)
+      sr%shidt(icv, 0) = 1.5_R8*t0*ni0(icv, 1)*ti0(icv)
+      CALL PUSHREAL8(sr%shidt(icv, 1), r8/8)
+      sr%shidt(icv, 1) = 0.0_R8
+      CALL PUSHREAL8(sr%shidt(icv, 2), r8/8)
+      sr%shidt(icv, 2) = 0.0_R8
+! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+! when using a pure ion energy equation (tn_style=1)
+      CALL PUSHREAL8(sr%shidt(icv, 3), r8/8)
+      sr%shidt(icv, 3) = -(1.5_R8*t0*ni0(icv, 1)/ni0(icv, 0))
+!
+      CALL PUSHCONTROL3B(2)
+    ELSE
+!
+      CALL PUSHREAL8(sr%shidt(icv, 0), r8/8)
+      sr%shidt(icv, 0) = 1.5_R8*t0*ni0(icv, 1)*ti0(icv)
+      CALL PUSHREAL8(sr%shidt(icv, 1), r8/8)
+      sr%shidt(icv, 1) = 0.0_R8
+      CALL PUSHREAL8(sr%shidt(icv, 2), r8/8)
+      sr%shidt(icv, 2) = 0.0_R8
 ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
 ! when using a separate ion-neutral energy equation (tn_style=2)
+      CALL PUSHREAL8(sr%shidt(icv, 3), r8/8)
+      sr%shidt(icv, 3) = -(1.5_R8*t0*ni0(icv, 1)/ni0(icv, 0))
 !
-      CALL PUSHCONTROL3B(3)
-    ELSE
-      CALL PUSHCONTROL3B(4)
+      IF (.NOT.lout) THEN
+        CALL PUSHCONTROL3B(3)
+      ELSE
+        CALL PUSHCONTROL3B(4)
+      END IF
     END IF
 !
     IF (.NOT.lout) THEN
+      CALL PUSHREAL8ARRAY(sr%shi(icv, :), r8*SIZE(sr%shi, 2)/8)
+      sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
   END DO
-!
   DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
@@ -334,136 +923,735 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
     srb%schdt(icv, 0) = 0.D0
     CALL POPREAL8(t0, r8/8)
   END DO
-  DO icv=mpg%nci,1,-1
+  dt_var4_minb = 0.D0
+  mult_dtb = 0.D0
+  ttimb = 0.D0
+  DO 100 icv=mpg%nci,1,-1
     CALL POPCONTROL1B(branch)
-    IF (branch .NE. 0) srb%shidt(icv, :) = srb%shidt(icv, :) + srb%shi(&
-&       icv, :)
+    IF (branch .NE. 0) THEN
+      CALL POPREAL8ARRAY(sr%shi(icv, :), r8*SIZE(sr%shi, 2)/8)
+      srb%shidt(icv, :) = srb%shidt(icv, :) + srb%shi(icv, :)
+    END IF
     CALL POPCONTROL3B(branch)
     IF (branch .LT. 2) THEN
       IF (branch .EQ. 0) THEN
+        t0b = 0.D0
         DO is=ns-1,0,-1
-          temp = kinrgy0(icv, is)/ni0(icv, 0)
-          tempb = -(na0(icv, is)*t0*srb%shidt(icv, 2)/ni0(icv, 0))
-          na0b(icv, is) = na0b(icv, is) + kinrgy0(icv, is)*t0*srb%shidt(&
-&           icv, 0) - temp*t0*srb%shidt(icv, 2)
-          kinrgy0b(icv, is) = kinrgy0b(icv, is) + tempb + na0(icv, is)*&
-&           t0*srb%shidt(icv, 0)
-          ni0b(icv, 0) = ni0b(icv, 0) - temp*tempb
+          CALL POPREAL8(sr%shidt(icv, 2), r8/8)
+          temp = t0/ni0(icv, 0)
+          na0b(icv, is) = na0b(icv, is) + t0*kinrgy0(icv, is)*srb%shidt(&
+&           icv, 0) - kinrgy0(icv, is)*temp*srb%shidt(icv, 2)
+          tempb1 = -(kinrgy0(icv, is)*na0(icv, is)*srb%shidt(icv, 2)/ni0&
+&           (icv, 0))
+          t0b = t0b + tempb1
+          ni0b(icv, 0) = ni0b(icv, 0) - temp*tempb1
+          CALL POPREAL8(sr%shidt(icv, 0), r8/8)
+          tempb1 = na0(icv, is)*srb%shidt(icv, 0)
+          kinrgy0b(icv, is) = kinrgy0b(icv, is) + t0*tempb1 - na0(icv, &
+&           is)*temp*srb%shidt(icv, 2)
+          t0b = t0b + kinrgy0(icv, is)*tempb1
         END DO
+      ELSE
+        t0b = 0.D0
       END IF
+      CALL POPREAL8(sr%shidt(icv, 3), r8/8)
+      t0b = t0b - 1.5_R8*srb%shidt(icv, 3)
       srb%shidt(icv, 3) = 0.D0
+      CALL POPREAL8(sr%shidt(icv, 2), r8/8)
       srb%shidt(icv, 2) = 0.D0
+      CALL POPREAL8(sr%shidt(icv, 1), r8/8)
       srb%shidt(icv, 1) = 0.D0
-      tempb = t0*1.5_R8*srb%shidt(icv, 0)
+      CALL POPREAL8(sr%shidt(icv, 0), r8/8)
+      ni0b(icv, 0) = ni0b(icv, 0) + t0*ti0(icv)*1.5_R8*srb%shidt(icv, 0)
+      tempb1 = ni0(icv, 0)*1.5_R8*srb%shidt(icv, 0)
       srb%shidt(icv, 0) = 0.D0
-      ni0b(icv, 0) = ni0b(icv, 0) + ti0(icv)*tempb
-      ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb
+      t0b = t0b + ti0(icv)*tempb1
+      ti0b(icv) = ti0b(icv) + t0*tempb1
     ELSE IF (branch .EQ. 2) THEN
-      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
       t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
-      tempb = -(t0*1.5_R8*srb%shidt(icv, 3)/ni0(icv, 0))
+      CALL POPREAL8(sr%shidt(icv, 3), r8/8)
+      tempb1 = -(1.5_R8*srb%shidt(icv, 3)/ni0(icv, 0))
       srb%shidt(icv, 3) = 0.D0
-      ni0b(icv, 1) = ni0b(icv, 1) + tempb
-      ni0b(icv, 0) = ni0b(icv, 0) - ni0(icv, 1)*tempb/ni0(icv, 0)
+      t0b = ni0(icv, 1)*tempb1
+      ni0b(icv, 0) = ni0b(icv, 0) - t0*ni0(icv, 1)*tempb1/ni0(icv, 0)
+      CALL POPREAL8(sr%shidt(icv, 2), r8/8)
       srb%shidt(icv, 2) = 0.D0
+      CALL POPREAL8(sr%shidt(icv, 1), r8/8)
       srb%shidt(icv, 1) = 0.D0
-      tempb = t0*1.5_R8*srb%shidt(icv, 0)
+      ni0b(icv, 1) = ni0b(icv, 1) + t0*tempb1 + t0*ti0(icv)*1.5_R8*srb%&
+&       shidt(icv, 0)
+      CALL POPREAL8(sr%shidt(icv, 0), r8/8)
+      tempb1 = ni0(icv, 1)*1.5_R8*srb%shidt(icv, 0)
       srb%shidt(icv, 0) = 0.D0
-      ni0b(icv, 1) = ni0b(icv, 1) + ti0(icv)*tempb
-      ti0b(icv) = ti0b(icv) + ni0(icv, 1)*tempb
+      t0b = t0b + ti0(icv)*tempb1
+      ti0b(icv) = ti0b(icv) + t0*tempb1
     ELSE
       IF (branch .EQ. 3) srb%shndt(icv, :) = srb%shndt(icv, :) + srb%shn&
 &         (icv, :)
+      t0b = -(1.5_R8*srb%shndt(icv, 3))
       srb%shndt(icv, 3) = 0.D0
       srb%shndt(icv, 2) = 0.D0
       srb%shndt(icv, 1) = 0.D0
-      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
       t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
-      tempb = t0*1.5_R8*srb%shndt(icv, 0)
+      tempb1 = tn0(icv)*1.5_R8*srb%shndt(icv, 0)
+      tn0b(icv) = tn0b(icv) + t0*nn0(icv)*1.5_R8*srb%shndt(icv, 0)
       srb%shndt(icv, 0) = 0.D0
-      nn0b(icv) = nn0b(icv) + tn0(icv)*tempb
-      tn0b(icv) = tn0b(icv) + nn0(icv)*tempb
-      tempb = -(t0*1.5_R8*srb%shidt(icv, 3)/ni0(icv, 0))
+      t0b = t0b + nn0(icv)*tempb1
+      nn0b(icv) = nn0b(icv) + t0*tempb1
+      CALL POPREAL8(sr%shidt(icv, 3), r8/8)
+      tempb1 = -(1.5_R8*srb%shidt(icv, 3)/ni0(icv, 0))
       srb%shidt(icv, 3) = 0.D0
-      ni0b(icv, 1) = ni0b(icv, 1) + tempb
-      ni0b(icv, 0) = ni0b(icv, 0) - ni0(icv, 1)*tempb/ni0(icv, 0)
+      t0b = t0b + ni0(icv, 1)*tempb1
+      ni0b(icv, 0) = ni0b(icv, 0) - t0*ni0(icv, 1)*tempb1/ni0(icv, 0)
+      CALL POPREAL8(sr%shidt(icv, 2), r8/8)
       srb%shidt(icv, 2) = 0.D0
+      CALL POPREAL8(sr%shidt(icv, 1), r8/8)
       srb%shidt(icv, 1) = 0.D0
-      tempb = t0*1.5_R8*srb%shidt(icv, 0)
+      ni0b(icv, 1) = ni0b(icv, 1) + t0*tempb1 + t0*ti0(icv)*1.5_R8*srb%&
+&       shidt(icv, 0)
+      CALL POPREAL8(sr%shidt(icv, 0), r8/8)
+      tempb1 = ni0(icv, 1)*1.5_R8*srb%shidt(icv, 0)
       srb%shidt(icv, 0) = 0.D0
-      ni0b(icv, 1) = ni0b(icv, 1) + ti0(icv)*tempb
-      ti0b(icv) = ti0b(icv) + ni0(icv, 1)*tempb
+      t0b = t0b + ti0(icv)*tempb1
+      ti0b(icv) = ti0b(icv) + t0*tempb1
     END IF
     CALL POPREAL8(t0, r8/8)
-  END DO
-  DO icv=mpg%nci,1,-1
+    ttimb = ttimb - geo%cvvol(icv)*switch%b2srdt_phm3*ts_factor*t0b/ttim&
+&     **2
+    CALL POPCONTROL4B(branch)
+    IF (branch .LT. 4) THEN
+      IF (branch .LT. 2) THEN
+        CALL POPREAL8(ttim, r8/8)
+        ttimb = 0.D0
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtei(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+      ELSE
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtei(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+      END IF
+    ELSE
+      IF (branch .LT. 6) THEN
+        IF (branch .EQ. 4) THEN
+          GOTO 100
+        ELSE
+          x9b = ttimb
+        END IF
+      ELSE IF (branch .EQ. 6) THEN
+        x9b = 0.D0
+      ELSE
+        IF (branch .EQ. 7) THEN
+          x10b = ttimb
+        ELSE
+          x10b = 0.D0
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          ttim2b = 0.D0
+        ELSE
+          ttim2b = x10b
+        END IF
+        CALL POPREAL8(ttim, r8/8)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+          dt_var4_minb(icv) = dt_var4_minb(icv) + ttim2b
+          ttim2b = 0.D0
+        ELSE
+          content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+        END IF
+        tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs9)
+        contentb = tempb1
+        abs9b = -(content*tempb1/abs9)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(abs9, r8/8)
+          src_totb = abs9b
+        ELSE
+          CALL POPREAL8(abs9, r8/8)
+          src_totb = -abs9b
+        END IF
+        CALL POPREAL8(content, r8/8)
+        tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+        ni0b(icv, 0) = ni0b(icv, 0) + ti0(icv)*tempb1
+        ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb1
+        CALL POPREAL8(src_tot, r8/8)
+        srb%shi(icv, 0) = srb%shi(icv, 0) + src_totb
+        srb%shi(icv, 1) = srb%shi(icv, 1) + ti0(icv)*src_totb
+        srb%shi(icv, 2) = srb%shi(icv, 2) + ni0(icv, 0)*src_totb
+        srb%shi(icv, 3) = srb%shi(icv, 3) + ti0(icv)*ni0(icv, 0)*&
+&         src_totb
+        tempb1 = sr%shi(icv, 3)*src_totb
+        ti0b(icv) = ti0b(icv) + sr%shi(icv, 1)*src_totb + ni0(icv, 0)*&
+&         tempb1
+        ni0b(icv, 0) = ni0b(icv, 0) + sr%shi(icv, 2)*src_totb + ti0(icv)&
+&         *tempb1
+        ttimb = 0.D0
+        GOTO 100
+      END IF
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        ttim2b = 0.D0
+      ELSE
+        ttim2b = x9b
+      END IF
+      CALL POPREAL8(ttim, r8/8)
+      tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs8)
+      contentb = tempb1
+      abs8b = -(content*tempb1/abs8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(abs8, r8/8)
+        src_totb = abs8b
+      ELSE
+        CALL POPREAL8(abs8, r8/8)
+        src_totb = -abs8b
+      END IF
+      CALL POPREAL8(content, r8/8)
+      tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+      ni0b(icv, 0) = ni0b(icv, 0) + ti0(icv)*tempb1
+      ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb1
+      CALL POPREAL8(src_tot, r8/8)
+      srb%shi(icv, 0) = srb%shi(icv, 0) + src_totb
+      srb%shi(icv, 1) = srb%shi(icv, 1) + ti0(icv)*src_totb
+      srb%shi(icv, 2) = srb%shi(icv, 2) + ni0(icv, 0)*src_totb
+      srb%shi(icv, 3) = srb%shi(icv, 3) + ti0(icv)*ni0(icv, 0)*src_totb
+      tempb1 = sr%shi(icv, 3)*src_totb
+      ti0b(icv) = ti0b(icv) + sr%shi(icv, 1)*src_totb + ni0(icv, 0)*&
+&       tempb1
+      ni0b(icv, 0) = ni0b(icv, 0) + sr%shi(icv, 2)*src_totb + ti0(icv)*&
+&       tempb1
+      ttimb = 0.D0
+    END IF
+ 100 CONTINUE
+  DO 120 icv=mpg%nci,1,-1
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) srb%sztdt(icv, :) = srb%sztdt(icv, :) + srb%szt(&
 &       icv, :)
+    t0b = -srb%sztdt(icv, 3)
     srb%sztdt(icv, 3) = 0.D0
     srb%sztdt(icv, 2) = 0.D0
     srb%sztdt(icv, 1) = 0.D0
-    ni0b(icv, 1) = ni0b(icv, 1) + zt0(icv)*t0*srb%sztdt(icv, 0)
-    zt0b(icv) = zt0b(icv) + ni0(icv, 1)*t0*srb%sztdt(icv, 0)
+    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
+    ni0b(icv, 1) = ni0b(icv, 1) + t0*zt0(icv)*srb%sztdt(icv, 0)
+    tempb1 = ni0(icv, 1)*srb%sztdt(icv, 0)
     srb%sztdt(icv, 0) = 0.D0
+    t0b = t0b + zt0(icv)*tempb1
+    zt0b(icv) = zt0b(icv) + t0*tempb1
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) srb%sktdt(icv, :) = srb%sktdt(icv, :) + srb%skt(&
 &       icv, :)
+    t0b = t0b - srb%sktdt(icv, 3)
     srb%sktdt(icv, 3) = 0.D0
     srb%sktdt(icv, 2) = 0.D0
     srb%sktdt(icv, 1) = 0.D0
-    ni0b(icv, 1) = ni0b(icv, 1) + kt0(icv)*t0*srb%sktdt(icv, 0)
-    kt0b(icv) = kt0b(icv) + ni0(icv, 1)*t0*srb%sktdt(icv, 0)
+    ni0b(icv, 1) = ni0b(icv, 1) + t0*kt0(icv)*srb%sktdt(icv, 0)
+    tempb1 = ni0(icv, 1)*srb%sktdt(icv, 0)
     srb%sktdt(icv, 0) = 0.D0
-    CALL POPREAL8(t0, r8/8)
+    t0b = t0b + kt0(icv)*tempb1
+    kt0b(icv) = kt0b(icv) + t0*tempb1
+    ttimb = ttimb - geo%cvvol(icv)*switch%b2srdt_phm3*ts_factor*t0b/ttim&
+&     **2
+    CALL POPCONTROL4B(branch)
+    IF (branch .LT. 4) THEN
+      IF (branch .LT. 2) THEN
+        CALL POPREAL8(ttim, r8/8)
+        ttimb = 0.D0
+        GOTO 110
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtei(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+        GOTO 110
+      ELSE
+        x7b = 0.D0
+      END IF
+    ELSE IF (branch .LT. 6) THEN
+      IF (branch .EQ. 4) THEN
+        x7b = ttimb
+      ELSE
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtei(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+        GOTO 110
+      END IF
+    ELSE
+      IF (branch .EQ. 6) THEN
+        x8b = 0.D0
+      ELSE IF (branch .EQ. 7) THEN
+        x8b = ttimb
+      ELSE
+        GOTO 110
+      END IF
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        ttim2b = 0.D0
+      ELSE
+        ttim2b = x8b
+      END IF
+      CALL POPREAL8(ttim, r8/8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+        dt_var4_minb(icv) = dt_var4_minb(icv) + ttim2b
+        ttim2b = 0.D0
+      ELSE
+        content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      END IF
+      tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs7)
+      contentb = tempb1
+      abs7b = -(content*tempb1/abs7)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(abs7, r8/8)
+        src_totb = abs7b
+      ELSE
+        CALL POPREAL8(abs7, r8/8)
+        src_totb = -abs7b
+      END IF
+      CALL POPREAL8(content, r8/8)
+      tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+      ni0b(icv, 0) = ni0b(icv, 0) + ti0(icv)*tempb1
+      ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb1
+      CALL POPREAL8(src_tot, r8/8)
+      srb%shi(icv, 0) = srb%shi(icv, 0) + src_totb
+      srb%shi(icv, 1) = srb%shi(icv, 1) + ti0(icv)*src_totb
+      srb%shi(icv, 2) = srb%shi(icv, 2) + ni0(icv, 0)*src_totb
+      srb%shi(icv, 3) = srb%shi(icv, 3) + ti0(icv)*ni0(icv, 0)*src_totb
+      tempb1 = sr%shi(icv, 3)*src_totb
+      ti0b(icv) = ti0b(icv) + sr%shi(icv, 1)*src_totb + ni0(icv, 0)*&
+&       tempb1
+      ni0b(icv, 0) = ni0b(icv, 0) + sr%shi(icv, 2)*src_totb + ti0(icv)*&
+&       tempb1
+      ttimb = 0.D0
+      GOTO 110
+    END IF
     CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      ttim2b = 0.D0
+    ELSE
+      ttim2b = x7b
+    END IF
+    CALL POPREAL8(ttim, r8/8)
+    tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs6)
+    contentb = tempb1
+    abs6b = -(content*tempb1/abs6)
     CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) srb%shedt(icv, :) = srb%shedt(icv, :) + srb%she(&
-&       icv, :)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL8(abs6, r8/8)
+      src_totb = abs6b
+    ELSE
+      CALL POPREAL8(abs6, r8/8)
+      src_totb = -abs6b
+    END IF
+    CALL POPREAL8(content, r8/8)
+    tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+    ni0b(icv, 0) = ni0b(icv, 0) + ti0(icv)*tempb1
+    ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb1
+    CALL POPREAL8(src_tot, r8/8)
+    srb%shi(icv, 0) = srb%shi(icv, 0) + src_totb
+    srb%shi(icv, 1) = srb%shi(icv, 1) + ti0(icv)*src_totb
+    srb%shi(icv, 2) = srb%shi(icv, 2) + ni0(icv, 0)*src_totb
+    srb%shi(icv, 3) = srb%shi(icv, 3) + ti0(icv)*ni0(icv, 0)*src_totb
+    tempb1 = sr%shi(icv, 3)*src_totb
+    ti0b(icv) = ti0b(icv) + sr%shi(icv, 1)*src_totb + ni0(icv, 0)*tempb1
+    ni0b(icv, 0) = ni0b(icv, 0) + sr%shi(icv, 2)*src_totb + ti0(icv)*&
+&     tempb1
+    ttimb = 0.D0
+ 110 CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL8ARRAY(sr%she(icv, :), r8*SIZE(sr%she, 2)/8)
+      srb%shedt(icv, :) = srb%shedt(icv, :) + srb%she(icv, :)
+    END IF
+    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
+    CALL POPREAL8(sr%shedt(icv, 3), r8/8)
+    t0b = -(1.5_R8*srb%shedt(icv, 3))
     srb%shedt(icv, 3) = 0.D0
+    CALL POPREAL8(sr%shedt(icv, 2), r8/8)
     srb%shedt(icv, 2) = 0.D0
+    CALL POPREAL8(sr%shedt(icv, 1), r8/8)
     srb%shedt(icv, 1) = 0.D0
-    tempb = t0*1.5_R8*srb%shedt(icv, 0)
+    CALL POPREAL8(sr%shedt(icv, 0), r8/8)
+    tempb1 = te0(icv)*1.5_R8*srb%shedt(icv, 0)
+    te0b(icv) = te0b(icv) + t0*ne0(icv)*1.5_R8*srb%shedt(icv, 0)
     srb%shedt(icv, 0) = 0.D0
-    ne0b(icv) = ne0b(icv) + te0(icv)*tempb
-    te0b(icv) = te0b(icv) + ne0(icv)*tempb
-    CALL POPREAL8(t0, r8/8)
-    CALL POPCONTROL1B(branch)
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-  END DO
-  DO is=ns-1,0,-1
-    DO icv=mpg%nci,1,-1
+    t0b = t0b + ne0(icv)*tempb1
+    ne0b(icv) = ne0b(icv) + t0*tempb1
+    ttimb = ttimb - geo%cvvol(icv)*switch%b2srdt_phm3*ts_factor*t0b/ttim&
+&     **2
+    CALL POPCONTROL4B(branch)
+    IF (branch .LT. 4) THEN
+      IF (branch .LT. 2) THEN
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        CALL POPREAL8(ttim, r8/8)
+        ttimb = 0.D0
+        GOTO 120
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtee(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+        GOTO 120
+      ELSE
+        x5b = 0.D0
+      END IF
+    ELSE IF (branch .LT. 6) THEN
+      IF (branch .EQ. 4) THEN
+        x5b = ttimb
+      ELSE
+        CALL POPREAL8(ttim, r8/8)
+        mult_dtb(icv) = mult_dtb(icv) + dtim*dtee(mpg%cvreg(icv))*ttimb
+        ttimb = 0.D0
+        GOTO 120
+      END IF
+    ELSE
+      IF (branch .EQ. 6) THEN
+        x6b = 0.D0
+      ELSE IF (branch .EQ. 7) THEN
+        x6b = ttimb
+      ELSE
+        GOTO 120
+      END IF
       CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) srb%smodt(icv, :, is) = srb%smodt(icv, :, is) +&
-&         srb%smo(icv, :, is)
+      IF (branch .EQ. 0) THEN
+        ttim2b = 0.D0
+      ELSE
+        ttim2b = x6b
+      END IF
+      CALL POPREAL8(ttim, r8/8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+        dt_var4_minb(icv) = dt_var4_minb(icv) + ttim2b
+        ttim2b = 0.D0
+      ELSE
+        content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+      END IF
+      tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs5)
+      contentb = tempb1
+      abs5b = -(content*tempb1/abs5)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(abs5, r8/8)
+        src_totb = abs5b
+      ELSE
+        CALL POPREAL8(abs5, r8/8)
+        src_totb = -abs5b
+      END IF
+      CALL POPREAL8(content, r8/8)
+      tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+      ne0b(icv) = ne0b(icv) + te0(icv)*tempb1
+      te0b(icv) = te0b(icv) + ne0(icv)*tempb1
+      CALL POPREAL8(src_tot, r8/8)
+      srb%she(icv, 0) = srb%she(icv, 0) + src_totb
+      srb%she(icv, 1) = srb%she(icv, 1) + te0(icv)*src_totb
+      srb%she(icv, 2) = srb%she(icv, 2) + ne0(icv)*src_totb
+      srb%she(icv, 3) = srb%she(icv, 3) + te0(icv)*ne0(icv)*src_totb
+      tempb1 = sr%she(icv, 3)*src_totb
+      te0b(icv) = te0b(icv) + sr%she(icv, 1)*src_totb + ne0(icv)*tempb1
+      ne0b(icv) = ne0b(icv) + sr%she(icv, 2)*src_totb + te0(icv)*tempb1
+      ttimb = 0.D0
+      GOTO 120
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      ttim2b = 0.D0
+    ELSE
+      ttim2b = x5b
+    END IF
+    CALL POPREAL8(ttim, r8/8)
+    tempb1 = ttim2b/(switch%b2mndt_var_style2_sf*abs4)
+    contentb = tempb1
+    abs4b = -(content*tempb1/abs4)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL8(abs4, r8/8)
+      src_totb = abs4b
+    ELSE
+      CALL POPREAL8(abs4, r8/8)
+      src_totb = -abs4b
+    END IF
+    CALL POPREAL8(content, r8/8)
+    tempb1 = geo%cvvol(icv)*1.5_R8*contentb
+    ne0b(icv) = ne0b(icv) + te0(icv)*tempb1
+    te0b(icv) = te0b(icv) + ne0(icv)*tempb1
+    CALL POPREAL8(src_tot, r8/8)
+    srb%she(icv, 0) = srb%she(icv, 0) + src_totb
+    srb%she(icv, 1) = srb%she(icv, 1) + te0(icv)*src_totb
+    srb%she(icv, 2) = srb%she(icv, 2) + ne0(icv)*src_totb
+    srb%she(icv, 3) = srb%she(icv, 3) + te0(icv)*ne0(icv)*src_totb
+    tempb1 = sr%she(icv, 3)*src_totb
+    te0b(icv) = te0b(icv) + sr%she(icv, 1)*src_totb + ne0(icv)*tempb1
+    ne0b(icv) = ne0b(icv) + sr%she(icv, 2)*src_totb + te0(icv)*tempb1
+    ttimb = 0.D0
+ 120 CONTINUE
+  dt_var4_nsb = 0.D0
+  DO is=ns-1,0,-1
+    DO 130 icv=mpg%nci,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        CALL POPREAL8ARRAY(sr%smo(icv, :, is), r8*SIZE(sr%smo, 2)/8)
+        srb%smodt(icv, :, is) = srb%smodt(icv, :, is) + srb%smo(icv, :, &
+&         is)
+      END IF
+      t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)*&
+&       ts_factor
+      CALL POPREAL8(sr%smodt(icv, 3, is), r8/8)
+      t0b = -srb%smodt(icv, 3, is)
       srb%smodt(icv, 3, is) = 0.D0
+      CALL POPREAL8(sr%smodt(icv, 2, is), r8/8)
       srb%smodt(icv, 2, is) = 0.D0
+      CALL POPREAL8(sr%smodt(icv, 1, is), r8/8)
       srb%smodt(icv, 1, is) = 0.D0
-      tempb = am(is)*t0*mp*srb%smodt(icv, 0, is)
+      CALL POPREAL8(sr%smodt(icv, 0, is), r8/8)
+      tempb1 = am(is)*mp*srb%smodt(icv, 0, is)
       srb%smodt(icv, 0, is) = 0.D0
-      ua0b(icv, is) = ua0b(icv, is) + na0(icv, is)*tempb
-      na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb
-      CALL POPREAL8(t0, r8/8)
+      tempb0 = na0(icv, is)*tempb1
+      na0b(icv, is) = na0b(icv, is) + t0*ua0(icv, is)*tempb1
+      t0b = t0b + ua0(icv, is)*tempb0
+      ua0b(icv, is) = ua0b(icv, is) + t0*tempb0
+      ttimb = ttimb - geo%cvvol(icv)*geo%cvhz(icv)*switch%b2srdt_phm1*&
+&       ts_factor*t0b/ttim**2
+      CALL POPCONTROL4B(branch)
+      IF (branch .LT. 4) THEN
+        IF (branch .LT. 2) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          CALL POPREAL8(ttim, r8/8)
+          ttimb = 0.D0
+          GOTO 130
+        ELSE IF (branch .EQ. 2) THEN
+          CALL POPREAL8(ttim, r8/8)
+          mult_dtb(icv) = mult_dtb(icv) + dtim*dtmo(is, mpg%cvreg(icv))*&
+&           ttimb
+          ttimb = 0.D0
+          GOTO 130
+        ELSE
+          x3b = 0.D0
+        END IF
+      ELSE IF (branch .LT. 6) THEN
+        IF (branch .EQ. 4) THEN
+          x3b = ttimb
+        ELSE
+          CALL POPREAL8(ttim, r8/8)
+          mult_dtb(icv) = mult_dtb(icv) + dtim*dtmo(is, mpg%cvreg(icv))*&
+&           ttimb
+          ttimb = 0.D0
+          GOTO 130
+        END IF
+      ELSE
+        IF (branch .EQ. 6) THEN
+          x4b = 0.D0
+        ELSE IF (branch .EQ. 7) THEN
+          x4b = ttimb
+        ELSE
+          GOTO 130
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          ttim2b = 0.D0
+        ELSE
+          ttim2b = x4b
+        END IF
+        CALL POPREAL8(ttim, r8/8)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          dt_var4_nsb(icv, is) = dt_var4_nsb(icv, is) + ttim2b
+          ttim2b = 0.D0
+        END IF
+        abs3b = ttim2b/switch%b2mndt_var_style2_sf
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          contentb = abs3b/src_tot
+          src_totb = -(content*abs3b/src_tot**2)
+        ELSE
+          contentb = -(abs3b/src_tot)
+          src_totb = content*abs3b/src_tot**2
+        END IF
+        tempb0 = am(is)*mp*src_totb
+        tempb = na0(icv, is)*tempb0
+        smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+        CALL POPREAL8(content, r8/8)
+        tempb1 = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*contentb
+        ua0b(icv, is) = ua0b(icv, is) + na0(icv, is)*tempb1 + smt(1)*&
+&         src_totb + smt(3)*tempb
+        na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb1
+        smtb = 0.D0
+        CALL POPREAL8(src_tot, r8/8)
+        smtb(0) = smtb(0) + src_totb
+        smtb(1) = smtb(1) + ua0(icv, is)*src_totb
+        tempb1 = am(is)*mp*src_totb
+        na0b(icv, is) = na0b(icv, is) + smt(3)*ua0(icv, is)*tempb0 + smt&
+&         (2)*tempb1
+        smtb(3) = smtb(3) + ua0(icv, is)*tempb
+        smtb(2) = smtb(2) + na0(icv, is)*tempb1
+        srb%smq(icv, 0:3, is) = srb%smq(icv, 0:3, is) + smtb
+        srb%smo(icv, 0:3, is) = srb%smo(icv, 0:3, is) + smtb
+        ttimb = 0.D0
+        GOTO 130
+      END IF
       CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        ttim2b = 0.D0
+      ELSE
+        ttim2b = x3b
+      END IF
+      CALL POPREAL8(ttim, r8/8)
+      abs2b = ttim2b/switch%b2mndt_var_style2_sf
       CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-    END DO
+      IF (branch .EQ. 0) THEN
+        contentb = abs2b/src_tot
+        src_totb = -(content*abs2b/src_tot**2)
+      ELSE
+        contentb = -(abs2b/src_tot)
+        src_totb = content*abs2b/src_tot**2
+      END IF
+      tempb0 = am(is)*mp*src_totb
+      tempb = am(is)*mp*src_totb
+      smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+      CALL POPREAL8(content, r8/8)
+      tempb1 = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*contentb
+      ua0b(icv, is) = ua0b(icv, is) + na0(icv, is)*tempb1
+      na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb1 + smt(3)*ua0(&
+&       icv, is)*tempb0 + smt(2)*tempb
+      smtb = 0.D0
+      CALL POPREAL8(src_tot, r8/8)
+      smtb(0) = smtb(0) + src_totb
+      smtb(1) = smtb(1) + ua0(icv, is)*src_totb
+      tempb1 = na0(icv, is)*tempb0
+      ua0b(icv, is) = ua0b(icv, is) + smt(1)*src_totb + smt(3)*tempb1
+      smtb(3) = smtb(3) + ua0(icv, is)*tempb1
+      smtb(2) = smtb(2) + na0(icv, is)*tempb
+      srb%smq(icv, 0:3, is) = srb%smq(icv, 0:3, is) + smtb
+      srb%smo(icv, 0:3, is) = srb%smo(icv, 0:3, is) + smtb
+      ttimb = 0.D0
+ 130 CONTINUE
   END DO
   DO is=ns-1,0,-1
-    DO icv=mpg%nci,1,-1
+    DO 140 icv=mpg%nci,1,-1
       CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) srb%snadt(icv, :, is) = srb%snadt(icv, :, is) +&
-&         srb%sna(icv, :, is)
+      IF (branch .NE. 0) THEN
+        CALL POPREAL8ARRAY(sr%sna(icv, :, is), r8*SIZE(sr%sna, 2)/8)
+        srb%snadt(icv, :, is) = srb%snadt(icv, :, is) + srb%sna(icv, :, &
+&         is)
+      END IF
+      t0 = switch%b2srdt_phm0/ttim*geo%cvvol(icv)*ts_factor
+      CALL POPREAL8(sr%snadt(icv, 1, is), r8/8)
+      t0b = -srb%snadt(icv, 1, is)
       srb%snadt(icv, 1, is) = 0.D0
+      CALL POPREAL8(sr%snadt(icv, 0, is), r8/8)
+      t0b = t0b + na0(icv, is)*srb%snadt(icv, 0, is)
       na0b(icv, is) = na0b(icv, is) + t0*srb%snadt(icv, 0, is)
       srb%snadt(icv, 0, is) = 0.D0
-      CALL POPREAL8(t0, r8/8)
+      ttimb = ttimb - geo%cvvol(icv)*switch%b2srdt_phm0*ts_factor*t0b/&
+&       ttim**2
+      CALL POPCONTROL4B(branch)
+      IF (branch .LT. 4) THEN
+        IF (branch .LT. 2) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          CALL POPREAL8(ttim, r8/8)
+          ttimb = 0.D0
+          GOTO 140
+        ELSE IF (branch .EQ. 2) THEN
+          CALL POPREAL8(ttim, r8/8)
+          mult_dtb(icv) = mult_dtb(icv) + dtim*dtco(is, mpg%cvreg(icv))*&
+&           ttimb
+          ttimb = 0.D0
+          GOTO 140
+        ELSE
+          x1b = 0.D0
+        END IF
+      ELSE IF (branch .LT. 6) THEN
+        IF (branch .EQ. 4) THEN
+          x1b = ttimb
+        ELSE
+          CALL POPREAL8(ttim, r8/8)
+          mult_dtb(icv) = mult_dtb(icv) + dtim*dtco(is, mpg%cvreg(icv))*&
+&           ttimb
+          ttimb = 0.D0
+          GOTO 140
+        END IF
+      ELSE
+        IF (branch .EQ. 6) THEN
+          x2b = 0.D0
+        ELSE IF (branch .EQ. 7) THEN
+          x2b = ttimb
+        ELSE
+          GOTO 140
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          ttim2b = 0.D0
+        ELSE
+          ttim2b = x2b
+        END IF
+        CALL POPREAL8(ttim, r8/8)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          content = geo%cvvol(icv)*na0(icv, is)
+          dt_var4_nsb(icv, is) = dt_var4_nsb(icv, is) + ttim2b
+          ttim2b = 0.D0
+        ELSE
+          content = geo%cvvol(icv)*na0(icv, is)
+        END IF
+        tempb = ttim2b/(switch%b2mndt_var_style2_sf*abs1)
+        contentb = tempb
+        abs1b = -(content*tempb/abs1)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(abs1, r8/8)
+          src_totb = abs1b
+        ELSE
+          CALL POPREAL8(abs1, r8/8)
+          src_totb = -abs1b
+        END IF
+        CALL POPREAL8(content, r8/8)
+        na0b(icv, is) = na0b(icv, is) + geo%cvvol(icv)*contentb + sr%sna&
+&         (icv, 1, is)*src_totb
+        srb%sna(icv, 0, is) = srb%sna(icv, 0, is) + src_totb
+        srb%sna(icv, 1, is) = srb%sna(icv, 1, is) + na0(icv, is)*&
+&         src_totb
+        ttimb = 0.D0
+        GOTO 140
+      END IF
       CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        ttim2b = 0.D0
+      ELSE
+        ttim2b = x1b
+      END IF
+      CALL POPREAL8(ttim, r8/8)
+      tempb = ttim2b/(switch%b2mndt_var_style2_sf*abs0)
+      contentb = tempb
+      abs0b = -(content*tempb/abs0)
       CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-    END DO
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(abs0, r8/8)
+        src_totb = abs0b
+      ELSE
+        CALL POPREAL8(abs0, r8/8)
+        src_totb = -abs0b
+      END IF
+      CALL POPREAL8(content, r8/8)
+      na0b(icv, is) = na0b(icv, is) + geo%cvvol(icv)*contentb + sr%sna(&
+&       icv, 1, is)*src_totb
+      srb%sna(icv, 0, is) = srb%sna(icv, 0, is) + src_totb
+      srb%sna(icv, 1, is) = srb%sna(icv, 1, is) + na0(icv, is)*src_totb
+      ttimb = 0.D0
+ 140 CONTINUE
   END DO
+  CALL POPREAL8ARRAY(mult_dt, r8*ncv/8)
+  CALL POPREAL8ARRAY(dt_var4_ns, r8*ncv*ns/8)
+  CALL GET_MULT_DT_B(switch%b2mndt_var_style, dtim, dv, dvb, geo, mpg, &
+&              mpgb, ncv, mpg%nfc, ns, te, teb, ti, na, ua, uab, switch%&
+&              b2mndt_var_te_min, switch%b2mndt_var_te_max, switch%&
+&              b2mndt_var_mult, switchb%b2mndt_var_mult, switch%&
+&              b2mndt_var_style3_cmax, mult_dt, mult_dtb, dt_var4_ns, &
+&              dt_var4_nsb, dt_var4_min, dt_var4_minb, switch%&
+&              b2mndt_var_style_nfilter)
 END SUBROUTINE B2SRDT_B
 
 !
@@ -482,13 +1670,13 @@ END SUBROUTINE B2SRDT_B
 !
 !srv 16.07.10
 !srv 11.09.09
-SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
-& , ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0, na, ua, te, ti, tn, ne, &
-& ni, nn, kinrgy, kt, zt, sr, lout)
+SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, dv, na0, ua0, &
+& te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0, na, ua, te, ti, tn, &
+& ne, ni, nn, kinrgy, kt, zt, sr, lout)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -500,11 +1688,12 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
 !srv 16.07.10
-  LOGICAL(1) :: lout
+  LOGICAL :: lout
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
 !srv 16.07.10
   REAL(kind=r8) :: dtim, na0(ncv, 0:ns-1), ua0(ncv, 0:ns-1), te0(ncv), &
 & ti0(ncv), tn0(ncv), ne0(ncv), ni0(ncv, 0:1), nn0(ncv), kinrgy0(ncv, 0:&
@@ -531,23 +1720,53 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !srv 11.09.09 }
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: t0, ttim
-  REAL(kind=r8) :: wrk0(ncv)
+  REAL(kind=r8) :: wrk0(ncv), mult_dt(ncv)
+  REAL(kind=r8) :: ttim2, src_tot, content, smt(0:3)
+! only for iout = 1 + var_style = 2
+  REAL(kind=r8) :: ttim2_na(ncv, 0:ns-1), ttim2_ua(ncv, 0:ns-1), &
+& ttim2_ti(ncv), ttim2_te(ncv), ttim_na(ncv, 0:ns-1), ttim_ua(ncv, 0:ns-&
+& 1), ttim_ti(ncv), ttim_te(ncv), dt_var4_ns(ncv, 0:ns-1), dt_var4_min(&
+& ncv)
   REAL(kind=r8) :: dtee_fts(mpg%nft), dtei_fts(mpg%nft), dtco_fts(mpg%&
 & nft), dtmo_fts(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC MAX
+  INTRINSIC MIN
+  EXTERNAL XERRAB
+  REAL(kind=r8) :: x1
+  REAL(kind=r8) :: x2
+  REAL(kind=r8) :: x3
+  REAL(kind=r8) :: x4
+  REAL(kind=r8) :: x5
+  REAL(kind=r8) :: x6
+  REAL(kind=r8) :: x7
+  REAL(kind=r8) :: x8
+  REAL(kind=r8) :: x9
+  REAL(kind=r8) :: x10
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs1
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs2
+  REAL(kind=r8) :: abs3
+  REAL(kind=r8) :: abs4
+  REAL(kind=r8) :: abs5
+  REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs7
+  REAL(kind=r8) :: abs8
+  REAL(kind=r8) :: abs9
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
   integer :: result10
   CHARACTER(len=12) :: arg10
+  CHARACTER(len=22) :: arg11
+  CHARACTER(len=21) :: arg12
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -570,7 +1789,7 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL B2XVSG(ncv, ti0, 1, 'ti0', '.gt.')
     CALL B2XVSG(ncv, tn0, 1, 'tn0', '.gt.')
     CALL B2XVSG(ncv, ne0, 1, 'ne0', '.gt.')
-    CALL B2XVSG(ncv, nn0, 1, 'nn0', '.gt.')
+    CALL B2XVSG(ncv, nn0, 1, 'nn0', '.ge.')
     arg1 = 2*ncv
     CALL B2XVSG(arg1, ni0, 1, 'ni0', '.gt.')
     arg1 = ncv*ns
@@ -592,7 +1811,7 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
     arg1 = 2*ncv
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
     arg1 = ncv*ns
@@ -609,8 +1828,16 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
   END IF
 !
-! ..include the contributions from dtim
-!   ..modify snadt
+! ..Optionally, calculate a local (cell-based) multiplier to the timestep.
+!   mult_dt will be 1.0 if b2mndt_var_style = 0 (default).
+  CALL GET_MULT_DT_NODIFF(switch%b2mndt_var_style, dtim, dv, geo, mpg, &
+&                   ncv, mpg%nfc, ns, te, ti, na, ua, switch%&
+&                   b2mndt_var_te_min, switch%b2mndt_var_te_max, switch%&
+&                   b2mndt_var_mult, switch%b2mndt_var_style3_cmax, &
+&                   mult_dt, dt_var4_ns, dt_var4_min, switch%&
+&                   b2mndt_var_style_nfilter)
+!
+! ..Flux-tube based mechanism (not compatible with b2mndt_var_style.gt.0)
   k = 1
   dtee_fts = 0.0_R8
   dtei_fts = 0.0_R8
@@ -623,6 +1850,10 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     dtmo_fts(dtfts(k)) = dtmo_ft(k)
     k = k + 1
   END DO
+!
+! ..include the contributions from dtim
+!   ..modify snadt
+!
   DO is=0,ns-1
     DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
@@ -631,17 +1862,85 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-      ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
-      ift = mpg%cvft(icv)
-      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
-        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-        result10 = MINVAL(mpg%fccv(ifc, :))
-        ift = mpg%cvft(result10)
+      IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! standard approaches
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
+!! flux tube approach is only allowed for b2mndt_var_style = 0
+        ift = mpg%cvft(icv)
+        IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          result10 = MINVAL(mpg%fccv(ifc, :))
+          ift = mpg%cvft(result10)
+        END IF
+        IF (ift .NE. 0) THEN
+          IF (dtco_fts(ift) .GT. 0.0_R8) ttim = dtim*dtco_fts(ift)*&
+&             time_factor(icv)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te based local timestep
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*mult_dt(icv)
+      ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to particle content
+        src_tot = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na0(icv, is)
+        content = geo%cvvol(icv)*na0(icv, is)
+        IF (src_tot .GE. 0.) THEN
+          abs0 = src_tot
+        ELSE
+          abs0 = -src_tot
+        END IF
+        ttim2 = content/abs0/switch%b2mndt_var_style2_sf
+        ttim = dtim*dtco(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x1 = ttim
+        ELSE
+          x1 = ttim2
+        END IF
+        IF (x1 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+        ELSE
+          ttim = x1
+        END IF
+        IF (switch%b2srdt_iout .EQ. 1) THEN
+          ttim2_na(icv, is) = ttim2
+          ttim_na(icv, is) = ttim
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! CFL-based criterion for drifts (EXPERIMENTAL!)
+        ttim = dtim*dtco(is, mpg%cvreg(icv))*mult_dt(icv)
+      ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep based on ratio of source to particle content and drift CFL criterion
+        src_tot = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na0(icv, is)
+        content = geo%cvvol(icv)*na0(icv, is)
+        IF (src_tot .GE. 0.) THEN
+          abs1 = src_tot
+        ELSE
+          abs1 = -src_tot
+        END IF
+        ttim2 = content/abs1/switch%b2mndt_var_style2_sf
+        IF (ttim2 .GT. dt_var4_ns(icv, is)) THEN
+          ttim2 = dt_var4_ns(icv, is)
+        ELSE
+          ttim2 = ttim2
+        END IF
+        ttim = dtim*dtco(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x2 = ttim
+        ELSE
+          x2 = ttim2
+        END IF
+        IF (x2 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+        ELSE
+          ttim = x2
+        END IF
+        IF (switch%b2srdt_iout .EQ. 1) THEN
+          ttim2_na(icv, is) = ttim2
+          ttim_na(icv, is) = ttim
+        END IF
+      ELSE
+        CALL XERRAB('b2mndt_var_style.gt.4 not yet implemented')
       END IF
-      IF (ift .NE. 0) THEN
-        IF (dtco_fts(ift) .GT. 0.0_R8) ttim = dtim*dtco_fts(ift)*&
-&           time_factor(icv)
-      END IF
+!
 !fc 11.03.24
       t0 = switch%b2srdt_phm0/ttim*geo%cvvol(icv)*ts_factor
       sr%snadt(icv, 0, is) = t0*na0(icv, is)
@@ -656,17 +1955,88 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
-!
-      ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
-      ift = mpg%cvft(icv)
-      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
-        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-        result10 = MINVAL(mpg%fccv(ifc, :))
-        ift = mpg%cvft(result10)
-      END IF
-      IF (ift .NE. 0) THEN
-        IF (dtmo_fts(ift) .GT. 0.0_R8) ttim = dtim*dtmo_fts(ift)*&
-&           time_factor(icv)
+      IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! standard approaches
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+        ift = mpg%cvft(icv)
+        IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          result10 = MINVAL(mpg%fccv(ifc, :))
+          ift = mpg%cvft(result10)
+        END IF
+        IF (ift .NE. 0) THEN
+          IF (dtmo_fts(ift) .GT. 0.0_R8) ttim = dtim*dtmo_fts(ift)*&
+&             time_factor(icv)
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*mult_dt(icv)
+      ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to parallel momentum content
+        smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+        src_tot = smt(0) + smt(1)*ua0(icv, is) + smt(2)*am(is)*mp*na0(&
+&         icv, is) + smt(3)*am(is)*mp*ua0(icv, is)*na0(icv, is)
+        content = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*ua0(icv, is)*&
+&         na0(icv, is)
+        IF (content/src_tot .GE. 0.) THEN
+          abs2 = content/src_tot
+        ELSE
+          abs2 = -(content/src_tot)
+        END IF
+        ttim2 = abs2/switch%b2mndt_var_style2_sf
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x3 = ttim
+        ELSE
+          x3 = ttim2
+        END IF
+        IF (x3 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+        ELSE
+          ttim = x3
+        END IF
+        IF (switch%b2srdt_iout .EQ. 1) THEN
+          ttim2_ua(icv, is) = ttim2
+          ttim_ua(icv, is) = ttim
+        END IF
+      ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! drift CFL criterion
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))*mult_dt(icv)
+      ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep based on ratio of source to parallel momentum content and drift CFL criterion
+        smt = sr%smq(icv, 0:3, is) + sr%smo(icv, 0:3, is)
+        src_tot = smt(0) + smt(1)*ua0(icv, is) + smt(2)*am(is)*mp*na0(&
+&         icv, is) + smt(3)*am(is)*mp*ua0(icv, is)*na0(icv, is)
+        content = geo%cvvol(icv)*geo%cvhz(icv)*am(is)*mp*ua0(icv, is)*&
+&         na0(icv, is)
+        IF (content/src_tot .GE. 0.) THEN
+          abs3 = content/src_tot
+        ELSE
+          abs3 = -(content/src_tot)
+        END IF
+        ttim2 = abs3/switch%b2mndt_var_style2_sf
+        IF (ttim2 .GT. dt_var4_ns(icv, is)) THEN
+          ttim2 = dt_var4_ns(icv, is)
+        ELSE
+          ttim2 = ttim2
+        END IF
+        ttim = dtim*dtmo(is, mpg%cvreg(icv))
+        IF (ttim2 .LT. ttim) THEN
+          x4 = ttim
+        ELSE
+          x4 = ttim2
+        END IF
+        IF (x4 .GT. ttim*switch%b2mndt_var_mult) THEN
+          ttim = ttim*switch%b2mndt_var_mult
+        ELSE
+          ttim = x4
+        END IF
+        IF (switch%b2srdt_iout .EQ. 1) THEN
+          ttim2_ua(icv, is) = ttim2
+          ttim_ua(icv, is) = ttim
+        END IF
+      ELSE
+        CALL XERRAB('b2mndt_var_style.gt.4 not yet implemented')
       END IF
 !srv 09.01.01
       t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)*&
@@ -681,20 +2051,89 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
   END DO
 !
 !   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
+!
   DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 !
-    ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
-    ift = mpg%cvft(icv)
-    IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      result10 = MINVAL(mpg%fccv(ifc, :))
-      ift = mpg%cvft(result10)
-    END IF
-    IF (ift .NE. 0) THEN
-      IF (dtee_fts(ift) .GT. 0.0_R8) ttim = dtim*dtee_fts(ift)*&
-&         time_factor(icv)
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! Standard approaches
+      ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
+      ift = mpg%cvft(icv)
+      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        result10 = MINVAL(mpg%fccv(ifc, :))
+        ift = mpg%cvft(result10)
+      END IF
+      IF (ift .NE. 0) THEN
+        IF (dtee_fts(ift) .GT. 0.0_R8) ttim = dtim*dtee_fts(ift)*&
+&           time_factor(icv)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+      ttim = dtim*dtee(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to electron heat content
+      src_tot = sr%she(icv, 0) + sr%she(icv, 1)*te0(icv) + sr%she(icv, 2&
+&       )*ne0(icv) + sr%she(icv, 3)*te0(icv)*ne0(icv)
+      content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs4 = src_tot
+      ELSE
+        abs4 = -src_tot
+      END IF
+      ttim2 = content/abs4/switch%b2mndt_var_style2_sf
+      ttim = dtim*dtee(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x5 = ttim
+      ELSE
+        x5 = ttim2
+      END IF
+      IF (x5 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x5
+      END IF
+      IF (switch%b2srdt_iout .EQ. 1) THEN
+        ttim2_te(icv) = ttim2
+        ttim_te(icv) = ttim
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! CFL drift criterion
+      ttim = dtim*dtee(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
+      src_tot = sr%she(icv, 0) + sr%she(icv, 1)*te0(icv) + sr%she(icv, 2&
+&       )*ne0(icv) + sr%she(icv, 3)*te0(icv)*ne0(icv)
+      content = 1.5_R8*ne0(icv)*te0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs5 = src_tot
+      ELSE
+        abs5 = -src_tot
+      END IF
+      ttim2 = content/abs5/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+      ELSE
+        ttim2 = ttim2
+      END IF
+      ttim = dtim*dtee(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x6 = ttim
+      ELSE
+        x6 = ttim2
+      END IF
+      IF (x6 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x6
+      END IF
+      IF (switch%b2srdt_iout .EQ. 1) THEN
+        ttim2_te(icv) = ttim2
+        ttim_te(icv) = ttim
+      END IF
+    ELSE
+      CALL XERRAB('b2mndt_var_style.gt.4 not yet implemented')
     END IF
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
     sr%shedt(icv, 0) = 1.5_R8*t0*ne0(icv)*te0(icv)
@@ -703,10 +2142,77 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%shedt(icv, 3) = -(1.5_R8*t0)
     IF (.NOT.lout) sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
 !
-    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
-    IF (ift .NE. 0) THEN
-      IF (dtei_fts(ift) .GT. 0.0_R8) ttim = dtim*dtei_fts(ift)*&
-&         time_factor(icv)
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+!! Standard approaches
+      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+      IF (ift .NE. 0) THEN
+        IF (dtei_fts(ift) .GT. 0.0_R8) ttim = dtim*dtei_fts(ift)*&
+&           time_factor(icv)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+!! Te-based
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! For now keep timestep for kt and zt same is for ti
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs6 = src_tot
+      ELSE
+        abs6 = -src_tot
+      END IF
+      ttim2 = content/abs6/switch%b2mndt_var_style2_sf
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x7 = ttim
+      ELSE
+        x7 = ttim2
+      END IF
+      IF (x7 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x7
+      END IF
+      IF (switch%b2srdt_iout .EQ. 1) THEN
+        ttim2_ti(icv) = ttim2
+        ttim_ti(icv) = ttim
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+!! drift CFL-based
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs7 = src_tot
+      ELSE
+        abs7 = -src_tot
+      END IF
+      ttim2 = content/abs7/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+      ELSE
+        ttim2 = ttim2
+      END IF
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x8 = ttim
+      ELSE
+        x8 = ttim2
+      END IF
+      IF (x8 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x8
+      END IF
+      IF (switch%b2srdt_iout .EQ. 1) THEN
+        ttim2_ti(icv) = ttim2
+        ttim_ti(icv) = ttim
+      END IF
+    ELSE
+      CALL XERRAB('b2mndt_var_style.gt.4 not yet implemented')
     END IF
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
     sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
@@ -721,12 +2227,74 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%sztdt(icv, 3) = -t0
     IF (.NOT.lout) sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
   END DO
-!
+!! why is this loop separate from the one above? Perhaps worth the effort of merging them now the addtional var_style options cau
+!se additional complexity. 
   DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 !
-    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+    IF (switch%b2mndt_var_style .EQ. 0) THEN
+      ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+      IF (ift .NE. 0) THEN
+        IF (dtei_fts(ift) .GT. 0.0_R8) ttim = dtim*dtei_fts(ift)*&
+&           time_factor(icv)
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 1) THEN
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 2) THEN
+!! Timestep directly based on ratio of source to ion heat content
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs8 = src_tot
+      ELSE
+        abs8 = -src_tot
+      END IF
+      ttim2 = content/abs8/switch%b2mndt_var_style2_sf
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x9 = ttim
+      ELSE
+        x9 = ttim2
+      END IF
+      IF (x9 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x9
+      END IF
+    ELSE IF (switch%b2mndt_var_style .EQ. 3) THEN
+      ttim = dtim*dtei(mpg%cvreg(icv))*mult_dt(icv)
+    ELSE IF (switch%b2mndt_var_style .EQ. 4) THEN
+!! Timestep directly based on ratio of source to ion heat content + drift CFL condition
+      src_tot = sr%shi(icv, 0) + sr%shi(icv, 1)*ti0(icv) + sr%shi(icv, 2&
+&       )*ni0(icv, 0) + sr%shi(icv, 3)*ti0(icv)*ni0(icv, 0)
+      content = 1.5_R8*ni0(icv, 0)*ti0(icv)*geo%cvvol(icv)
+      IF (src_tot .GE. 0.) THEN
+        abs9 = src_tot
+      ELSE
+        abs9 = -src_tot
+      END IF
+      ttim2 = content/abs9/switch%b2mndt_var_style2_sf
+      IF (ttim2 .GT. dt_var4_min(icv)) THEN
+        ttim2 = dt_var4_min(icv)
+      ELSE
+        ttim2 = ttim2
+      END IF
+      ttim = dtim*dtei(mpg%cvreg(icv))
+      IF (ttim2 .LT. ttim) THEN
+        x10 = ttim
+      ELSE
+        x10 = ttim2
+      END IF
+      IF (x10 .GT. ttim*switch%b2mndt_var_mult) THEN
+        ttim = ttim*switch%b2mndt_var_mult
+      ELSE
+        ttim = x10
+      END IF
+    ELSE
+      CALL XERRAB('b2mndt_var_style.gt.4 not yet implemented')
+    END IF
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)*ts_factor
 !
     IF (switch%tn_style .EQ. 0) THEN
@@ -771,7 +2339,6 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !
     IF (.NOT.lout) sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
   END DO
-!
   DO icv=1,mpg%nci
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
@@ -862,6 +2429,65 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
       CALL MY_OUT_US(70, ncv, 0, sr%sztdt(1, k), arg10)
     END DO
   END IF
+!
+  IF (switch%b2srdt_iout .EQ. 1 .AND. switch%b2mndt_var_style .EQ. 2) &
+& THEN
+! print out the variable local timesteps for b2mndt_var_style = 2.
+! ttim2 = unlimited value
+! ttim = value limited by minumum timestep (=baseline timestep) and by maximum timestep (=baseline timestep x multiplier)
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      wrk0 = ttim2_na(:, is)
+      arg11 = 'b2srdt_style2_ttim2_na'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg11)
+      wrk0 = ttim_na(:, is)
+      arg12 = 'b2srdt_style2_ttim_na'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg12)
+      wrk0 = ttim2_ua(:, is)
+      arg11 = 'b2srdt_style2_ttim2_ua'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg11)
+      wrk0 = ttim_ua(:, is)
+      arg12 = 'b2srdt_style2_ttim_ua'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg12)
+    END DO
+    CALL MY_OUT_US(70, ncv, 0, ttim2_te, 'b2srdt_style2_ttim2_te'&
+&                  )
+    CALL MY_OUT_US(70, ncv, 0, ttim_te, 'b2srdt_style2_ttim_te')
+    CALL MY_OUT_US(70, ncv, 0, ttim2_ti, 'b2srdt_style2_ttim2_ti'&
+&                  )
+    CALL MY_OUT_US(70, ncv, 0, ttim_ti, 'b2srdt_style2_ttim_ti')
+  END IF
+  IF (switch%b2srdt_iout .EQ. 1 .AND. switch%b2mndt_var_style .EQ. 4) &
+& THEN
+! print out the variable local timesteps for b2mndt_var_style = 4.
+! ttim2 = unlimited value
+! ttim = value limited by minumum timestep (=baseline timestep) and by maximum timestep (=baseline timestep x multiplier)
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      wrk0 = ttim2_na(:, is)
+      arg11 = 'b2srdt_style4_ttim2_na'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg11)
+      wrk0 = ttim_na(:, is)
+      arg12 = 'b2srdt_style4_ttim_na'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg12)
+      wrk0 = ttim2_ua(:, is)
+      arg11 = 'b2srdt_style4_ttim2_ua'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg11)
+      wrk0 = ttim_ua(:, is)
+      arg12 = 'b2srdt_style4_ttim_ua'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk0, arg12)
+    END DO
+    CALL MY_OUT_US(70, ncv, 0, ttim2_te, 'b2srdt_style4_ttim2_te'&
+&                  )
+    CALL MY_OUT_US(70, ncv, 0, ttim_te, 'b2srdt_style4_ttim_te')
+    CALL MY_OUT_US(70, ncv, 0, ttim2_ti, 'b2srdt_style4_ttim2_ti'&
+&                  )
+    CALL MY_OUT_US(70, ncv, 0, ttim_ti, 'b2srdt_style4_ttim_ti')
+  END IF
+  IF (switch%b2srdt_iout .EQ. 1 .AND. switch%b2mndt_var_style .EQ. 1) &
+&   CALL MY_OUT_US(70, ncv, 0, mult_dt, 'b2srdt_mult_dt_style1')
+  IF (switch%b2srdt_iout .EQ. 1 .AND. switch%b2mndt_var_style .EQ. 3) &
+&   CALL MY_OUT_US(70, ncv, 0, mult_dt, 'b2srdt_mult_dt_style3')
 !
 ! ..return
   ncall_b2srdt = ncall_b2srdt + 1

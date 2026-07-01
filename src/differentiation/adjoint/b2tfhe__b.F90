@@ -12,10 +12,10 @@
 !                *(pl.na) *(pl.po) *(pl.te)
 !   Plus diff mem management of: dv.fch_p:in dv.fne_he:in dv.fhe:in
 !                dv.fhe_mdf:in dv.fhepsch:in dv.floe:in dv.cone:in
-!                dv.ne:in dv.vedia:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.za2:in
-!                st_ext.na:in rt.rz2:in co.calf:in co.chce:in pl.na:in
-!                pl.po:in pl.te:in
+!                dv.ne:in dv.vedia:in dv.facdrift:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.za2:in st_ext.na:in rt.rz2:in
+!                co.calf:in co.chce:in pl.na:in pl.po:in pl.te:in
 !
 !
 !
@@ -38,7 +38,7 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -120,8 +120,7 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
 & fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
 & 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
-  REAL(kind=r8) :: tefb(nfc), nefb(nfc), tefhb(nfc), wrkfb(nfc, 0:1), &
-& fhe0_mdfb(nfc, 0:1)
+  REAL(kind=r8) :: tefb(nfc), nefb(nfc), tefhb(nfc), fhe0_mdfb(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -389,7 +388,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

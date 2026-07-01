@@ -28,12 +28,12 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 & po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
 & solvmreg, solvkreg, solvzreg, rxf, cortt, corttb, corte, corteb, corti&
 & , cortib, cortn, cortnb, corkt, corktb, corzt, corztb, pccm0, pccm0b, &
-& na, nab, ua, uab, te, teb, ti, tib, tn, tnb, kt, ktb, zt, ztb, po, pob&
-& , ne, neb, ni, nib)
+& na, ua, uab, te, teb, ti, tib, tn, tnb, kt, ktb, zt, ztb, po, pob, ne&
+& , neb, ni, nib)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 ! IYS 19.12.2017, 21.09.2018
   USE B2MOD_NUMERICS_NAMELIST_DIFF, ONLY : corr_core_dt, &
 & add_te_corr_to_po
@@ -64,8 +64,8 @@ SUBROUTINE B2UPHT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !   ..input/output arguments
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), kt(ncv), zt(ncv)
-  REAL(kind=r8) :: nab(ncv, 0:ns-1), uab(ncv, 0:ns-1), teb(ncv), tib(ncv&
-& ), tnb(ncv), pob(ncv), neb(ncv), nib(ncv, 0:1), ktb(ncv), ztb(ncv)
+  REAL(kind=r8) :: uab(ncv, 0:ns-1), teb(ncv), tib(ncv), tnb(ncv), pob(&
+& ncv), neb(ncv), nib(ncv, 0:1), ktb(ncv), ztb(ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -885,7 +885,7 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 ! IYS 19.12.2017, 21.09.2018
   USE B2MOD_NUMERICS_NAMELIST_DIFF, ONLY : corr_core_dt, &
 & add_te_corr_to_po

@@ -9,9 +9,10 @@ SUBROUTINE INTFACE_FWD(ncv, nfc, fccv, fcvol, centre, face)
   USE B2MOD_TYPES
   IMPLICIT NONE
 !
-  INTEGER :: ncv, nfc
-  INTEGER :: fccv(nfc, 2)
-  REAL(kind=r8) :: fcvol(nfc, 2), centre(ncv), face(nfc)
+  INTEGER, INTENT(IN) :: ncv, nfc
+  INTEGER, INTENT(IN) :: fccv(nfc, 2)
+  REAL(kind=r8), INTENT(IN) :: fcvol(nfc, 2), centre(ncv)
+  REAL(kind=r8) :: face(nfc)
   INTEGER :: ifc
   DO ifc=1,nfc
     CALL PUSHREAL8(face(ifc), r8/8)
@@ -28,10 +29,12 @@ SUBROUTINE INTFACE_BWD(ncv, nfc, fccv, fcvol, centre, centreb, face, &
 & faceb)
   USE B2MOD_TYPES
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
-  INTEGER :: fccv(nfc, 2)
-  REAL(kind=r8) :: fcvol(nfc, 2), centre(ncv), face(nfc)
-  REAL(kind=r8) :: centreb(ncv), faceb(nfc)
+  INTEGER, INTENT(IN) :: ncv, nfc
+  INTEGER, INTENT(IN) :: fccv(nfc, 2)
+  REAL(kind=r8), INTENT(IN) :: fcvol(nfc, 2), centre(ncv)
+  REAL(kind=r8) :: centreb(ncv)
+  REAL(kind=r8) :: face(nfc)
+  REAL(kind=r8) :: faceb(nfc)
   INTEGER :: ifc
   REAL(kind=r8) :: tempb
   DO ifc=nfc,1,-1

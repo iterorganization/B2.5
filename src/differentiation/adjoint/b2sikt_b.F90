@@ -42,7 +42,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !      use b2mod_keps
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
   USE B2US_GEO_DIFF
@@ -667,7 +667,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !      use b2mod_keps
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
   USE B2US_GEO_DIFF

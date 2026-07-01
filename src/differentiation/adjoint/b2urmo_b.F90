@@ -2,10 +2,9 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2urmo in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: ub fkb flubv cvsb cvsb_eff
-!                resmb smb rob flub fmb
-!   with respect to varying inputs: ub fkb flubv cvsb smb rob flub
-!                fmb
+!   gradient     of useful results: ub fkb cvsb cvsb_eff resmb
+!                smb rob flub fmb
+!   with respect to varying inputs: ub fkb cvsb smb rob flub fmb
 !   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fchz:in
 !                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
 !
@@ -24,12 +23,13 @@
 !
 !srv 02.06.11
 SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
-& , ubb, rob, robb, smb, smbb, flub, flubb, flubv, flubvb, cvsb, cvsbb, &
-& resmb, resmbb, fmb, fmbb, fkb, fkbb, cvsb_eff, cvsb_effb)
+& , ubb, rob, robb, smb, smbb, flub, flubb, cvsb, cvsbb, resmb, resmbb, &
+& fmb, fmbb, fkb, fkbb, cvsb_eff, cvsb_effb)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2urmo
@@ -44,9 +44,9 @@ SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
   REAL(kind=r8) :: ub(ncv), rob(ncv), smb(ncv, 0:3), flub(nfc, 0:1), &
-& flubv(nfc, 0:1), cvsb(nfc, 0:1)
+& cvsb(nfc, 0:1)
   REAL(kind=r8) :: ubb(ncv), robb(ncv), smbb(ncv, 0:3), flubb(nfc, 0:1)&
-& , flubvb(nfc, 0:1), cvsbb(nfc, 0:1)
+& , cvsbb(nfc, 0:1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: resmb(ncv), fmb(nfc, 0:1), fkb(nfc, 0:1), cvsb_eff(&
 & nfc, 0:1)
@@ -93,9 +93,9 @@ SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
 !srv 02.06.11
   CHARACTER :: chns*3
   REAL(kind=r8) :: flf(nfc, 0:1), flv(nfc, 0:1), wrk(ncv), wrkf(nfc, 0:1&
-& ), wrkv(nvx)
+& ), wrkv(nvx), zeros(nfc, 0:1)
   REAL(kind=r8) :: flfb(nfc, 0:1), flvb(nfc, 0:1), wrkb(ncv), wrkfb(nfc&
-& , 0:1), wrkvb(nvx)
+& , 0:1), wrkvb(nvx), zerosb(nfc, 0:1)
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
   REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
@@ -106,6 +106,9 @@ SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
   CHARACTER(len=22) :: arg10
   CHARACTER(len=19) :: arg11
   CHARACTER(len=18) :: arg12
+  CHARACTER(len=20) :: arg13
+  CHARACTER(len=16) :: arg14
+  CHARACTER(len=15) :: arg15
   INTEGER*4 :: branch
 !   ..initialisation
 !
@@ -127,66 +130,91 @@ SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
   END IF
 !
 ! ..compute flux
-!wdk note: compared to original code, flv is now based on "effective" 
+!wdk note: compared to original code, flv is now based on "effective"
 !wdk       viscosity, and will be zero if cvsb is zero
   CALL CALCFLOW_FWD(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, geob, &
 &             mpg, mpgb, ub, flub, cvsb, fmb, flf, flv)
 !wdk store effective viscosity, for use in viscous heating
   CALL DIFF_FWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, ub, wrkv, wrkf)
-! Note: flf and flv used as dummy arrays in this call !!
-! To be checked:
-! - consistency in case of drifts (in particular: fna_cor?)
-! - should contribution from flubv be in here?
+! The viscous part needs a factor 2
+! (as a result of the term ~ - visc*grad(ua**2/2) appearing
+!  in the kinetic energy flux)
 !
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
-    WRITE(chns, '(i3.3)') isb
-    arg1 = 'b2urmo_etaPat_gradua_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg1)
-    arg10 = 'b2urmo_etaPat_gradua_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg10)
-    arg11 = 'b2urmo_etaPat_ua_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg11)
-    arg12 = 'b2urmo_etaPat_ua_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg12)
+    IF (IN_PARALLEL()) THEN
+      IF (ncall_b2urmo .EQ. 0) THEN
+        CALL PUSHCONTROL2B(0)
+        WRITE(*, *) 'b2urmo OpenMP warning: no file output ', &
+&       'in parallel mode'
+      ELSE
+        CALL PUSHCONTROL2B(0)
+      END IF
+    ELSE
+      CALL PUSHCONTROL2B(1)
+      WRITE(chns, '(i3.3)') isb
+      arg1 = 'b2urmo_etaPat_gradua_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg1)
+      arg10 = 'b2urmo_etaPat_gradua_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg10)
+      arg11 = 'b2urmo_etaPat_ua_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg11)
+      arg12 = 'b2urmo_etaPat_ua_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg12)
+    END IF
+  ELSE
+    CALL PUSHCONTROL2B(2)
   END IF
 !
 ! ..compute kinetic energy flux
-  wrk = 0.5_R8*ub**2
+  wrk = 0.5_R8*ub
   CALL PUSHREAL8ARRAY(wrkf, r8*nfc*2/8)
-  wrkf = flub + flubv
+  wrkf = flf + 2.0_R8*flv
+  zeros = 0.0_R8
   CALL CALCFLOW_FWD(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, geob, &
-&             mpg, mpgb, wrk, wrkf, cvsb, fkb, flf, flv)
+&             mpg, mpgb, wrk, wrkf, zeros, fkb, flf, flv)
 !
-! ..compute residual
-!   ..contribution from right hand side
+  IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
+    WRITE(chns, '(i3.3)') isb
+    arg13 = 'b2urmo_fhm_gradua_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg13)
+    arg11 = 'b2urmo_fhm_gradua_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg11)
+    arg14 = 'b2urmo_fhm_ua_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg14)
+    arg15 = 'b2urmo_fhm_ua_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg15)
+  END IF
   DO ifc=nfc,1,-1
     fmbb(ifc, 0) = fmbb(ifc, 0) + resmbb(mpg%fccv(ifc, 2)) - resmbb(mpg%&
 &     fccv(ifc, 1))
     fmbb(ifc, 1) = fmbb(ifc, 1) + resmbb(mpg%fccv(ifc, 2)) - resmbb(mpg%&
 &     fccv(ifc, 1))
   END DO
+  smbb(:, 0) = smbb(:, 0) + resmbb
+  smbb(:, 1) = smbb(:, 1) + ub*resmbb
+  ubb = ubb + (smb(:, 1)+rob*smb(:, 3))*resmbb
+  smbb(:, 2) = smbb(:, 2) + rob*resmbb
+  robb = robb + (smb(:, 2)+ub*smb(:, 3))*resmbb
+  smbb(:, 3) = smbb(:, 3) + rob*ub*resmbb
   fkbb(:, 1) = fkbb(:, 1)/geo%fchz
   fkbb(:, 0) = fkbb(:, 0)/geo%fchz
   wrkb = 0.D0
   wrkfb = 0.D0
+  zerosb = 0.D0
   flfb = 0.D0
   flvb = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, geob, &
-&             mpg, mpgb, wrk, wrkb, wrkf, wrkfb, cvsb, cvsbb, fkb, fkbb&
-&             , flf, flfb, flv, flvb)
-  smbb(:, 0) = smbb(:, 0) + resmbb
-  smbb(:, 1) = smbb(:, 1) + ub*resmbb
-  ubb = ubb + (smb(:, 1)+rob*smb(:, 3))*resmbb + 2*ub*0.5_R8*wrkb
-  smbb(:, 2) = smbb(:, 2) + rob*resmbb
-  robb = robb + (smb(:, 2)+ub*smb(:, 3))*resmbb
-  smbb(:, 3) = smbb(:, 3) + rob*ub*resmbb
-  CALL POPREAL8ARRAY(wrkf, r8*nfc*2/8)
-  flubb = flubb + wrkfb
-  flubvb = flubvb + wrkfb
-  wrkfb = 0.D0
+&             mpg, mpgb, wrk, wrkb, wrkf, wrkfb, zeros, zerosb, fkb, &
+&             fkbb, flf, flfb, flv, flvb)
   flvb = 0.D0
-  flvb = -(cvsb_effb/(eps+wrkf))
+  CALL POPREAL8ARRAY(wrkf, r8*nfc*2/8)
+  flfb = flfb + wrkfb
+  flvb = 2.0_R8*wrkfb
+  ubb = ubb + 0.5_R8*wrkb
+  CALL POPCONTROL2B(branch)
+  wrkfb = 0.D0
+  flvb = flvb - cvsb_effb/(eps+wrkf)
   wrkfb = flv*cvsb_effb/(eps+wrkf)**2
   wrkvb = 0.D0
   CALL DIFF_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, ub, ubb, wrkv, &
@@ -218,11 +246,12 @@ END SUBROUTINE B2URMO_B
 !
 !srv 02.06.11
 SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
-& smb, flub, flubv, cvsb, resmb, fmb, fkb, cvsb_eff)
+& smb, flub, cvsb, resmb, fmb, fkb, cvsb_eff)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2urmo
@@ -235,7 +264,7 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: ub(ncv), rob(ncv), smb(ncv, 0:3), flub(nfc, 0:1), &
-& flubv(nfc, 0:1), cvsb(nfc, 0:1)
+& cvsb(nfc, 0:1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: resmb(ncv), fmb(nfc, 0:1), fkb(nfc, 0:1), cvsb_eff(&
 & nfc, 0:1)
@@ -280,7 +309,7 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
 !srv 02.06.11
   CHARACTER :: chns*3
   REAL(kind=r8) :: flf(nfc, 0:1), flv(nfc, 0:1), wrk(ncv), wrkf(nfc, 0:1&
-& ), wrkv(nvx)
+& ), wrkv(nvx), zeros(nfc, 0:1)
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
   REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
@@ -290,6 +319,9 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   CHARACTER(len=22) :: arg10
   CHARACTER(len=19) :: arg11
   CHARACTER(len=18) :: arg12
+  CHARACTER(len=20) :: arg13
+  CHARACTER(len=16) :: arg14
+  CHARACTER(len=15) :: arg15
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -314,38 +346,56 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   END IF
 !
 ! ..compute flux
-!wdk note: compared to original code, flv is now based on "effective" 
+!wdk note: compared to original code, flv is now based on "effective"
 !wdk       viscosity, and will be zero if cvsb is zero
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, mpg&
 &                , ub, flub, cvsb, fmb, flf, flv)
 !wdk store effective viscosity, for use in viscous heating
   CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ub, wrkv, wrkf)
   cvsb_eff = -(flv/(wrkf+eps))
-! Note: flf and flv used as dummy arrays in this call !!
-! To be checked:
-! - consistency in case of drifts (in particular: fna_cor?)
-! - should contribution from flubv be in here?
+! The viscous part needs a factor 2
+! (as a result of the term ~ - visc*grad(ua**2/2) appearing
+!  in the kinetic energy flux)
 !
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
-    WRITE(chns, '(i3.3)') isb
-    arg1 = 'b2urmo_etaPat_gradua_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg1)
-    arg10 = 'b2urmo_etaPat_gradua_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg10)
-    arg11 = 'b2urmo_etaPat_ua_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg11)
-    arg12 = 'b2urmo_etaPat_ua_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg12)
+    IF (IN_PARALLEL()) THEN
+      IF (ncall_b2urmo .EQ. 0) WRITE(*, *) &
+&                              'b2urmo OpenMP warning: no file output '&
+&                              , 'in parallel mode'
+    ELSE
+      WRITE(chns, '(i3.3)') isb
+      arg1 = 'b2urmo_etaPat_gradua_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg1)
+      arg10 = 'b2urmo_etaPat_gradua_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg10)
+      arg11 = 'b2urmo_etaPat_ua_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg11)
+      arg12 = 'b2urmo_etaPat_ua_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg12)
+    END IF
   END IF
 !
 ! ..compute kinetic energy flux
-  wrk = 0.5_R8*ub**2
-  wrkf = flub + flubv
+  wrk = 0.5_R8*ub
+  wrkf = flf + 2.0_R8*flv
+  zeros = 0.0_R8
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2npmo_discr_meth, geo, mpg&
-&                , wrk, wrkf, cvsb, fkb, flf, flv)
+&                , wrk, wrkf, zeros, fkb, flf, flv)
   fkb(:, 0) = fkb(:, 0)/geo%fchz
   fkb(:, 1) = fkb(:, 1)/geo%fchz
+!
+  IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
+    WRITE(chns, '(i3.3)') isb
+    arg13 = 'b2urmo_fhm_gradua_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, flv(1, 0), arg13)
+    arg11 = 'b2urmo_fhm_gradua_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, flv(1, 1), arg11)
+    arg14 = 'b2urmo_fhm_ua_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, flf(1, 0), arg14)
+    arg15 = 'b2urmo_fhm_ua_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, flf(1, 1), arg15)
+  END IF
 !
 ! ..compute residual
 !   ..contribution from right hand side

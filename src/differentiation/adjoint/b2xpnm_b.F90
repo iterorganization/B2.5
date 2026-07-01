@@ -32,7 +32,7 @@ SUBROUTINE B2XPNM_B(ncv, ns, rz2, rz2b, am, na, nab, ne2m, ne2mb)
   REAL(r8) :: dummydiffb
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpnm')
-  CALL SFILL_FWD(ncv, 0.0_R8, ne2m, ne2mb, 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, ne2m, 1)
   DO is=ns-1,0,-1
     rz2b(:, is) = rz2b(:, is) + na(:, is)*ne2mb/am(is)
     nab(:, is) = nab(:, is) + rz2(:, is)*ne2mb/am(is)

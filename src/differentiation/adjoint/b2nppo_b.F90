@@ -28,7 +28,7 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 & rxf, switch, switchb, geo, geob, mpg, mpgb, pl, plb, dv, dvb, sr, srb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -207,9 +207,9 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
     CALL B2UPPO_B(ncv, rxf, dv%corpo, dvb%corpo, pl%po, plb%po)
     CALL POPREAL8ARRAY(dv%respo, r8*SIZE(dv%respo, 1)/8)
     CALL B2USPO_B(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, geo&
-&           , mpg, mpgb, dv%ne, dvb%ne, pl%te, plb%te, dv%conc, dvb%conc&
-&           , sr%sch, srb%sch, dv%respo, dvb%respo, dv%corpo, dvb%corpo&
-&           , aa, aab, 'b2nppo')
+&           , mpg, mpgb, dv%ne, dvb%ne, pl%te, dv%conc, dvb%conc, sr%sch&
+&           , srb%sch, dv%respo, dvb%respo, dv%corpo, dvb%corpo, aa, aab&
+&           , 'b2nppo')
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
@@ -238,7 +238,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 & itcnt, rxf, switch, geo, mpg, pl, dv, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

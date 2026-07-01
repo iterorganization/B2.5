@@ -22,7 +22,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
   USE B2MOD_CONSTANTS
   USE B2MOD_DIAG_DIFF
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -108,7 +108,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
   DO is=0,1
     CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
   END DO
-  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
   CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -466,14 +466,14 @@ END SUBROUTINE B2SRSM_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
-& te, teb, ti, tib, ne, neb, ni, nib, nn, nnb, sr, srb, main_call)
+& te, teb, ti, tib, ne, neb, ni, nib, nn, sr, srb, main_call)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_DIAG_DIFF
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -492,7 +492,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ni(ncv, 0:1), te(&
 & ncv), ti(ncv), ne(ncv), nn(ncv)
   REAL(kind=r8) :: nab(ncv, 0:ns-1), uab(ncv, 0:ns-1), nib(ncv, 0:1), &
-& teb(ncv), tib(ncv), neb(ncv), nnb(ncv)
+& teb(ncv), tib(ncv), neb(ncv)
   LOGICAL :: main_call
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr

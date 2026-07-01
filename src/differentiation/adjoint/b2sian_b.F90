@@ -23,8 +23,9 @@ SUBROUTINE B2SIAN_B(ncv, nfc, isb, switch, geo, mpg, mpgb, fchanml_b, &
 & fchanml_bb, smban, smbanb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
+  USE B2MOD_OPENMP
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -110,8 +111,9 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml_b, &
 & smban)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
+  USE B2MOD_OPENMP
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
 ! csc The following are not necessary for computation but are needed
@@ -170,12 +172,17 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml_b, &
   END IF
 !
   IF (switch%b2sian_iout .NE. 0) THEN
-    WRITE(chns, '(i3.3)') isb
-    DO k=0,3
-      WRITE(chark, '(i1)') k
-      arg1 = 'b2sian_smoan'//chark//chns
-      CALL MY_OUT_US(70, ncv, 0, smban(1, k), arg1)
-    END DO
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIAN OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(chns, '(i3.3)') isb
+      DO k=0,3
+        WRITE(chark, '(i1)') k
+        arg1 = 'b2sian_smoan'//chark//chns
+        CALL MY_OUT_US(70, ncv, 0, smban(1, k), arg1)
+      END DO
+    END IF
   END IF
 !
 ! ..return

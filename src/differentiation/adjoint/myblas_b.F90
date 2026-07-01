@@ -296,7 +296,7 @@ END SUBROUTINE B2SSCAL_NODIFF
 !  Differentiation of b2scopy in reverse (adjoint) mode, forward sweep (with options context noISIZE r8):
 !   gradient     of useful results: sx sy
 !   with respect to varying inputs: sx sy
-SUBROUTINE B2SCOPY_FWD(n, sx, sxb, incx, sy, syb, incy)
+SUBROUTINE B2SCOPY_FWD(n, sx, sxb, incx, sy, incy)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   IMPLICIT NONE
@@ -311,7 +311,6 @@ SUBROUTINE B2SCOPY_FWD(n, sx, sxb, incx, sy, syb, incy)
   INTEGER :: i, ix, iy
   EXTERNAL XERRAB
   REAL(kind=r8) :: sxb(0:*)
-  REAL(kind=r8) :: syb(0:*)
 !     ------------------------------------------------------------------
   IF (incy .EQ. 0) THEN
     CALL PUSHCONTROL2B(0)
@@ -406,9 +405,10 @@ END SUBROUTINE B2SCOPY_NODIFF
 !  Differentiation of b2saxpy in reverse (adjoint) mode, forward sweep (with options context noISIZE r8):
 !   gradient     of useful results: sx sy
 !   with respect to varying inputs: sx sy
-SUBROUTINE B2SAXPY_FWD(n, sa, sx, incx, sy, syb, incy)
+SUBROUTINE B2SAXPY_FWD(n, sa, sx, incx, sy, incy)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
   IMPLICIT NONE
   INTEGER :: n, incx, incy
   REAL(kind=r8) :: sa, sx(0:*), sy(0:*)
@@ -421,7 +421,6 @@ SUBROUTINE B2SAXPY_FWD(n, sa, sx, incx, sy, syb, incy)
 !     ------------------------------------------------------------------
   INTEGER :: i, ix, iy
   EXTERNAL XERRAB
-  REAL(kind=r8) :: syb(0:*)
 !     ------------------------------------------------------------------
   IF (incy .EQ. 0) THEN
     CALL PUSHCONTROL2B(0)
@@ -454,6 +453,7 @@ END SUBROUTINE B2SAXPY_FWD
 SUBROUTINE B2SAXPY_BWD(n, sa, sx, sxb, incx, sy, syb, incy)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
   IMPLICIT NONE
   INTEGER :: n, incx, incy
   REAL(kind=r8) :: sa, sx(0:*), sy(0:*)
@@ -482,6 +482,7 @@ END SUBROUTINE B2SAXPY_BWD
 SUBROUTINE B2SAXPY_NODIFF(n, sa, sx, incx, sy, incy)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
   IMPLICIT NONE
   INTEGER :: n, incx, incy
   REAL(kind=r8) :: sa, sx(0:*), sy(0:*)

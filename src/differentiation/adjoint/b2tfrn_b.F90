@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfrn in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy[save in b2mod_zhfrtf]
+!   gradient     of useful results: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fchvispar_a) *(dv.fchvisper_a) *(dv.fchvisq_a)
@@ -10,7 +10,7 @@
 !                *(dv.fna_eir) *(dv.pcca) *(dv.pa) *(dv.wadia)
 !                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdpa)
 !                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fchvispar_a) *(dv.fchvisper_a) *(dv.fchvisq_a)
@@ -18,20 +18,20 @@
 !                *(dv.fna_eir) *(dv.pcca) *(dv.pa) *(dv.wadia)
 !                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdpa)
 !                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in z_to_m1_ast[save in b2mod_zhfrtf]:in
 !                c_hw_save:in dv.fchvispar_a:in dv.fchvisper_a:in
 !                dv.fchvisq_a:in dv.fchinert_a:in dv.fchanml_a:in
 !                dv.fchviskt_a:in dv.fna_eir:in dv.fne_eir:in dv.fhe_eir:in
 !                dv.fhi_eir:in dv.pcca:in dv.ne:in dv.ue:in dv.pa:in
-!                dv.wadia:in dv.vaecrb:in dv.wedia:in mpg.intcellp:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.vxvol:in st_ext.za2:in st_ext.na:in
-!                rt.rza:in rt.rz2:in co.chce:in co.chci:in co.cvla:in
-!                co.cdna:in co.cdpa:in pl.na:in pl.ua:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                dv.wadia:in dv.vaecrb:in dv.wedia:in dv.facdrift:in
+!                dv.fac_exb:in mpg.intcellp:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                st_ext.za2:in st_ext.na:in rt.rza:in rt.rz2:in
+!                co.chce:in co.chci:in co.cvla:in co.cdna:in co.cdpa:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -51,7 +51,7 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFF
@@ -59,6 +59,7 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2ZHCO_DIFF, ONLY : c_hw_save, c_hw_saveb
@@ -108,7 +109,7 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !srv 14.07.10
   REAL(kind=r8) :: flo_eir(nfc, 0:1), scur(nfc, 0:1), fle_eir(nfc, 0:1)&
 & , floe_eir(nfc, 0:1), floi_eir(nfc, 0:1), floi_vhx(nfc), fnef(nfc, 0:1&
-& ), fnec(nfc, 0:1)
+& ), fnec(nfc, 0:1), fne_eir(nfc, 0:1)
   REAL(kind=r8) :: flo_eirb(nfc, 0:1), scurb(nfc, 0:1), floi_vhxb(nfc)
   REAL(kind=r8) :: nbf(nfc), pbf(nfc), rzf(nfc), dpb(nfc, 0:1), dpbc(ncv&
 & ), dnete(nfc, 0:1), weight(nfc, 2)
@@ -170,6 +171,9 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !
   meth = switch%b2tfnb_discr_meth
 !
+!    ..initialize
+  weight = 1.0_R8
+!
   DO is=0,ns-1
 !
 !    ..compute partial pressure
@@ -177,7 +181,6 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 &             tn, is, dv%pa(:, is))
 !
 !   ..interpolate na and pa to cell faces
-    weight = 1.0_R8
     CALL INTFACE_FWD(ncv, nfc, mpg%fccv, weight, pl%na(:, is), nbf)
     CALL INTFACE_FWD(ncv, nfc, mpg%fccv, weight, rt%rza(:, is), rzf)
 !
@@ -248,8 +251,9 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
     floi_vhxb = 0.D0
     CALL B2TFVH_B(ncv, nfc, ns, geo, mpg, pl%na, plb%na, pl%ua, plb%ua, &
 &           floi_vhx, floi_vhxb)
@@ -377,7 +381,6 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 &              ), dvb%pa(:, is), wrkvx, wrkvxb, dpbc, dpbcb)
     CALL DIFF_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, dv%pa(:, is), &
 &           dvb%pa(:, is), wrkvx, wrkvxb, dpb, dpbb)
-    weight = 1.0_R8
     CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, rt%rza(:, is), rtb%rza(&
 &              :, is), rzf, rzfb)
     CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, pl%na(:, is), plb%na(:&
@@ -408,7 +411,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFF
@@ -416,6 +419,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2ZHCO_DIFF, ONLY : c_hw_save
@@ -456,7 +460,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !srv 14.07.10
   REAL(kind=r8) :: flo_eir(nfc, 0:1), scur(nfc, 0:1), fle_eir(nfc, 0:1)&
 & , floe_eir(nfc, 0:1), floi_eir(nfc, 0:1), floi_vhx(nfc), fnef(nfc, 0:1&
-& ), fnec(nfc, 0:1)
+& ), fnec(nfc, 0:1), fne_eir(nfc, 0:1)
   REAL(kind=r8) :: nbf(nfc), pbf(nfc), rzf(nfc), dpb(nfc, 0:1), dpbc(ncv&
 & ), dnete(nfc, 0:1), weight(nfc, 2)
 !srv 13.01.17
@@ -510,14 +514,18 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !
   meth = switch%b2tfnb_discr_meth
 !
+!    ..initialize
+  fne_eir = 0.0_R8
+  weight = 1.0_R8
+  fnef = 0.0_R8
+!
   DO is=0,ns-1
 !
 !    ..compute partial pressure
-    CALL B2XPPB_NODIFF(ncv, rt%rza(:, is), pl%na(:, is), pl%te, pl%ti, &
-&                pl%tn, is, dv%pa(:, is))
+    CALL B2XPPB(ncv, rt%rza(:, is), pl%na(:, is), pl%te, pl%ti, pl%tn, &
+&         is, dv%pa(:, is))
 !
 !   ..interpolate na and pa to cell faces
-    weight = 1.0_R8
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, pl%na(:, is), nbf)
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, dv%pa(:, is), pbf)
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, rt%rza(:, is), rzf)
@@ -626,8 +634,9 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     CALL B2TFVH_NODIFF(ncv, nfc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
   END IF
@@ -643,19 +652,21 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   fle_eir(:, 1) = (switch%xvecrb*dv%veecrb(:, 1)+switch%xwdia*dv%wedia(:&
 &   , 1))*geo%fcs*geo%fcqalf(:, 1)
 !
-  dv%fne_eir = 0.0_R8
+!      dv%fne_eir = 0.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
 !accumulate conductive piece per species(fnec)
 !       ..apply discretization scheme
       CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, dv%ne, fle_eir&
 &                    , co%cdna(:, :, is), wrk00, fnef, fnec)
-      dv%fne_eir = dv%fne_eir + fnec
+!          dv%fne_eir = dv%fne_eir + fnec
+      fne_eir = fne_eir + fnec
     END IF
 !add convective piece (once)
 
   END DO
-  dv%fne_eir = dv%fne_eir + fnef
+!     dv%fne_eir = dv%fne_eir + fnef
+  dv%fne_eir = fne_eir + fnef
 !
 !   ..compute convective coefficients electron heat flux
   floe_eir(:, 0) = 2.5_R8*dv%fne_eir(:, 0) - c071f*dv%fch_p(:, 0)/qe*&

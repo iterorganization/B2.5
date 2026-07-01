@@ -46,7 +46,8 @@ SUBROUTINE B2XPFE_B(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, rzab, &
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfe')
   arg1 = nfc*2
-  CALL SFILL_FWD(arg1, 0.0_R8, fne, fneb, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, fne, 1)
+!
   DO is=0,ns-1
     CALL INTFACE_FWD(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), wrkf)
   END DO
@@ -55,7 +56,7 @@ SUBROUTINE B2XPFE_B(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, rzab, &
   END DO
   arg1 = nfc*2
   arg2 = -(1.0_R8/qe)
-  CALL B2SAXPY_FWD(arg1, arg2, fch, 1, fne, fneb, 1)
+  CALL B2SAXPY_FWD(arg1, arg2, fch, 1, fne, 1)
 !$$$  call subend ()
 !     ------------------------------------------------------------------
   CALL B2SAXPY_BWD(arg1, arg2, fch, fchb, 1, fne, fneb, 1)
@@ -116,6 +117,7 @@ SUBROUTINE B2XPFE_NODIFF(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, za_ext&
 !$$$  call subini ('b2xpfe')
   arg1 = nfc*2
   CALL SFILL_NODIFF(arg1, 0.0_R8, fne, 1)
+!
   DO is=0,ns-1
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), wrkf)
     fne(:, 0) = fne(:, 0) + fna(:, 0, is)*wrkf

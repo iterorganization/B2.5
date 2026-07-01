@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2trfl_an in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy *nal *gtalc cf_limb
+!   gradient     of useful results: *z2n_cv *nal *gtalc cf_limb
 !                cf_limh cf_limbh zetap c_hta_an cf_lim
-!   with respect to varying inputs: *z2n_xy *nal *gtalc cf_limb
+!   with respect to varying inputs: *z2n_cv *nal *gtalc cf_limb
 !                cf_limh cf_limbh zetap amti c_hta_an cf_lim
-!   Plus diff mem management of: z2n_xy:in nal:in gtalc:in
+!   Plus diff mem management of: z2n_cv:in nal:in gtalc:in
 !
 !
 !
@@ -24,13 +24,13 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
 & amti, amtib, zetap, zetapb, gamma, cf_lim, cf_limb0, cf_limh, cf_limhb&
 & , cf_limb, cf_limbb, cf_limbh, cf_limbhb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF
   USE B2MOD_SWITCHES_DIFF
-  USE B2MOD_ZHFRTF_DIFF, ONLY : gtalc, gtalcb, nal, nalb, z2n_xy, &
-& z2n_xyb
+  USE B2MOD_ZHFRTF_DIFF, ONLY : gtalc, gtalcb, nal, nalb, z2n_cv, &
+& z2n_cvb
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -101,7 +101,7 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
         CALL PUSHCONTROL1B(1)
       END IF
       CALL PUSHREAL8(t0, r8/8)
-      t0 = nal(icv, i)/z2n_xy(icv, i)**2*SQRT(2.0_R8/amnucl(i))*abs0
+      t0 = nal(icv, i)/z2n_cv(icv, i)**2*SQRT(2.0_R8/amnucl(i))*abs0
       CALL PUSHREAL8(t1, r8/8)
       t1 = switch%zhflcorr*cflim(4)/SQRT(amti(i))
       CALL PUSHREAL8(t2, r8/8)
@@ -165,11 +165,11 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
       IF (.NOT.amti(i) .EQ. 0.D0) amtib(i) = amtib(i) - switch%zhflcorr*&
 &         cflim(4)*t1b/(2.0*temp0**3)
       CALL POPREAL8(t0, r8/8)
-      temp = z2n_xy(icv, i)
+      temp = z2n_cv(icv, i)
       tempb = SQRT(2.0_R8/amnucl(i))*t0b/temp**2
       nalb(icv, i) = nalb(icv, i) + abs0*tempb
       abs0b = nal(icv, i)*tempb
-      z2n_xyb(icv, i) = z2n_xyb(icv, i) - 2*nal(icv, i)*abs0*tempb/temp
+      z2n_cvb(icv, i) = z2n_cvb(icv, i) - 2*nal(icv, i)*abs0*tempb/temp
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL8(abs0, r8/8)
@@ -207,12 +207,12 @@ END SUBROUTINE B2TRFL_AN_B
 SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 & zetap, gamma, cf_lim, cf_limh, cf_limb, cf_limbh)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF
   USE B2MOD_SWITCHES_DIFF
-  USE B2MOD_ZHFRTF_DIFF, ONLY : gtalc, nal, z2n_xy
+  USE B2MOD_ZHFRTF_DIFF, ONLY : gtalc, nal, z2n_cv
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -265,7 +265,7 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
       ELSE
         abs0 = -(c_hta_an(i)*gtalc(icv, i))
       END IF
-      t0 = nal(icv, i)/z2n_xy(icv, i)**2*SQRT(2.0_R8/amnucl(i))*abs0
+      t0 = nal(icv, i)/z2n_cv(icv, i)**2*SQRT(2.0_R8/amnucl(i))*abs0
       t1 = switch%zhflcorr*cflim(4)/SQRT(amti(i))
       t2 = switch%zhflcorrh*switch%zhflcorr*cflim(4)/SQRT(amti(i))
 !

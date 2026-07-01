@@ -22,15 +22,16 @@ SUBROUTINE B2TTIA_B(ncv, ns, ti, tib, rz2, rz2b, ne2, ne2b, lnlam, &
 & lnlamb, tauia, tauiab)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2ttia
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0:ns-1)
+  INTEGER, INTENT(IN) :: ncv, ns
+  REAL(kind=r8), INTENT(IN) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0&
+& :ns-1)
   REAL(kind=r8) :: tib(ncv), ne2b(ncv), lnlamb(ncv), rz2b(ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: tauia(ncv, 0:ns-1)
@@ -165,17 +166,18 @@ END SUBROUTINE B2TTIA_B
 SUBROUTINE B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2ttia
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0:ns-1)
+  INTEGER, INTENT(IN) :: ncv, ns
+  REAL(kind=r8), INTENT(IN) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0&
+& :ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauia(ncv, 0:ns-1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation

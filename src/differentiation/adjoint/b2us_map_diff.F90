@@ -118,11 +118,14 @@ MODULE B2US_MAP_DIFF
 !        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
 !        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
 !        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+!
 !        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
+!
 !
 ! (nCv) indicates whether the control volume is connected to a boundary cell
 ! (nCg) ordered list of faces along the boundary
 ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
+! (nFci) indicates type of boundary: 1 - boundary faces inside the separatrix, 2 - other boundary faces.
 !
 !
   TYPE, PUBLIC :: MAPPING
@@ -203,6 +206,7 @@ MODULE B2US_MAP_DIFF
       LOGICAL, ALLOCATABLE :: cvalongboundary(:)
       INTEGER, ALLOCATABLE :: fcs_wall(:)
       INTEGER, ALLOCATABLE :: fcs_wall_ind(:, :)
+      INTEGER, ALLOCATABLE :: fcs_wall_type(:)
   END TYPE MAPPING
   TYPE, PUBLIC :: MAPPING_DIFF
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: cvfcp
@@ -276,6 +280,7 @@ MODULE B2US_MAP_DIFF
       LOGICAL, DIMENSION(:), ALLOCATABLE :: cvalongboundary
       INTEGER, DIMENSION(:), ALLOCATABLE :: fcs_wall
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: fcs_wall_ind
+      INTEGER, DIMENSION(:), ALLOCATABLE :: fcs_wall_type
   END TYPE MAPPING_DIFF
 
 CONTAINS
@@ -426,6 +431,7 @@ CONTAINS
       ALLOCATE(mb%cvlbl(m%ncv))
       mb%cvlbl = 0
       ALLOCATE(m%cvlbl(m%ncv))
+!
 !      allocate (m%cvOMP(m%ncvOMP))
 !      allocate (m%cvIMP(m%ncvIMP))
 !      allocate (m%fcOMP(m%nfcOMP))
@@ -512,6 +518,7 @@ CONTAINS
       ALLOCATE(m%fclbl(m%nfc))
       ALLOCATE(m%ftlbl(m%nft))
       ALLOCATE(m%cvlbl(m%ncv))
+!
 !      allocate (m%cvOMP(m%ncvOMP))
 !      allocate (m%cvIMP(m%ncvIMP))
 !      allocate (m%fcOMP(m%nfcOMP))
@@ -596,7 +603,8 @@ CONTAINS
 !      m%fcOMP = 0
 !      m%fcIMP = 0
 !
-!      m%Xpoint = 0 
+!      m%Xpoint = 0
+!
     m%ompr = 0
     m%ompz = 0
     m%impr = 0
@@ -868,6 +876,7 @@ CONTAINS
 !      deallocate (m%fcIMP)
 !
 !      deallocate (m%Xpoint)
+!
       IF (ALLOCATED(m%cvalongboundary)) THEN
         IF (ALLOCATED(mb%cvalongboundary)) THEN
           DEALLOCATE(mb%cvalongboundary)
@@ -885,6 +894,12 @@ CONTAINS
           DEALLOCATE(mb%fcs_wall_ind)
         END IF
         DEALLOCATE(m%fcs_wall_ind)
+      END IF
+      IF (ALLOCATED(m%fcs_wall_type)) THEN
+        IF (ALLOCATED(mb%fcs_wall_type)) THEN
+          DEALLOCATE(mb%fcs_wall_type)
+        END IF
+        DEALLOCATE(m%fcs_wall_type)
       END IF
 !
       RETURN
@@ -999,6 +1014,7 @@ CONTAINS
 !      deallocate (m%fcIMP)
 !
 !      deallocate (m%Xpoint)
+!
       IF (ALLOCATED(m%cvalongboundary)) THEN
         DEALLOCATE(m%cvalongboundary)
       END IF
@@ -1007,6 +1023,9 @@ CONTAINS
       END IF
       IF (ALLOCATED(m%fcs_wall_ind)) THEN
         DEALLOCATE(m%fcs_wall_ind)
+      END IF
+      IF (ALLOCATED(m%fcs_wall_type)) THEN
+        DEALLOCATE(m%fcs_wall_type)
       END IF
 !
       RETURN
@@ -1635,16 +1654,18 @@ CONTAINS
     INTEGER :: icv, icv1, icv2, ifc, ifcc, ifs, iva, ivb, inv, inv1, &
 &   inv2, ivx, ivx1, ivx2, invmx, inew
     INTEGER :: totalcount, fscount, iactive, icount, fccount
+    INTEGER, SAVE :: artificial_slab=0
+    INTEGER, SAVE :: found=0
     INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
-&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
+&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:), regcount(:)
     INTEGER :: fcsb(MAXVAL(m%fclbl), m%nci), fcsbcounter(MAXVAL(m%fclbl)&
 &   ), cvsb(MAXVAL(m%fclbl), m%nci)
-    LOGICAL :: duplicate, left_match_found, right_match_found, is_found
+    LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
+    INTRINSIC ANY
     INTRINSIC ALLOCATED
     INTRINSIC MIN
     integer :: result1
-    REAL(kind=r8) :: result2
     INTRINSIC MAXVAL
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -1746,6 +1767,7 @@ CONTAINS
     m%fsvx(1:m%nfsvxmx) = indfsvx(1:m%nfsvxmx)
     DEALLOCATE(indfsvx)
 !
+!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
     ALLOCATE(indxpt(m%nvx))
     indxpt = 0
     m%nxpt = 0
@@ -1771,6 +1793,40 @@ CONTAINS
         END IF
       END IF
     END DO
+!
+!! use a different approach for slab cases with cuts,
+!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other i
+!nternal vertices.
+!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+    CALL IPGETI('artificial_slab', artificial_slab)
+    IF (m%nxpt .EQ. 0 .AND. artificial_slab .EQ. 1) THEN
+      DO ivx=1,m%nvx
+        IF (found .NE. 1) THEN
+          IF (m%vxcvp(ivx, 2) .GE. 4) THEN
+            ALLOCATE(regcount(m%vxcvp(ivx, 2)))
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              icv = m%vxcv(i)
+              regcount(i-m%vxcvp(ivx, 1)+1) = m%cvreg(icv)
+            END DO
+            IF (ANY(regcount .EQ. 1) .AND. ANY(regcount .EQ. 2) .AND. (&
+&               ANY(regcount .EQ. 3) .OR. ANY(regcount .EQ. 4))) THEN
+              m%nxpt = m%nxpt + 1
+              indxpt(m%nxpt) = ivx
+              found = 1
+              IF (iactive .EQ. 0) THEN
+                DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+                  IF (iactive .EQ. 0) THEN
+                    icv = m%vxcv(i)
+                    IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+                  END IF
+                END DO
+              END IF
+            END IF
+            DEALLOCATE(regcount)
+          END IF
+        END IF
+      END DO
+    END IF
 !
     m%nstr = 0
     m%ntgc = 0
@@ -2099,6 +2155,7 @@ CONTAINS
         DEALLOCATE(indfc)
       END IF
     END IF
+!
     IF (ALLOCATED(freg)) THEN
       DEALLOCATE(freg)
     ELSE
@@ -2152,9 +2209,7 @@ CONTAINS
       k = k + 1
     END DO
 !
-    m%nfci = 0
-    DO k=1,m%ncg
-      is_found = .false.
+    DO 120 k=1,m%ncg
       DO l=k+1,m%ncg
         IF (((m%fcvx(m%fcs_wall(k), 1) .EQ. m%fcvx(m%fcs_wall(l), 1) &
 &           .OR. m%fcvx(m%fcs_wall(k), 1) .EQ. m%fcvx(m%fcs_wall(l), 2))&
@@ -2163,52 +2218,10 @@ CONTAINS
 &       ) GOTO 110
       END DO
       GOTO 120
- 110  is_found = .true.
-      inew = m%fcs_wall(k+1)
+ 110  inew = m%fcs_wall(k+1)
       m%fcs_wall(k+1) = m%fcs_wall(l)
       m%fcs_wall(l) = inew
-      result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k+1), 1:2)))
-      result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-      IF (result1 .NE. result2) m%nfci = m%nfci + 1
- 120  IF (.NOT.is_found) THEN
-        result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k-1), 1:2)))
-        result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-        IF (k .LT. m%ncg .OR. (k .EQ. m%ncg .AND. result1 .NE. result2)&
-&       ) m%nfci = m%nfci + 1
-      END IF
-    END DO
-    ALLOCATE(mb%fcs_wall_ind(m%nfci, 2))
-    mb%fcs_wall_ind = 0
-    ALLOCATE(m%fcs_wall_ind(m%nfci, 2))
-    j = 1
-    l = 1
-    DO k=1,m%ncg-1
-      result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k+1), 1:2)))
-      result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-      IF (result1 .NE. result2) THEN
-        m%fcs_wall_ind(l, 1) = j
-        m%fcs_wall_ind(l, 2) = k - j + 1
-        j = k + 1
-        l = l + 1
-      END IF
-! Doing the last cell by hand if it is on its own flux tube
-
-    END DO
-    result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(m%ncg-1), 1:2)))
-    result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(m%ncg), 1:2)))
-    IF (result1 .NE. result2) THEN
-      m%fcs_wall_ind(l, 1) = m%ncg
-      m%fcs_wall_ind(l, 2) = 1
-    END IF
-!
-    WRITE(*, *) 'list of boundary faces in one flux tube:'
-    DO j=1,m%nfci
-      IF (m%fcs_wall_ind(j, 1) .NE. m%fcs_wall_ind(j, 2)) THEN
-        WRITE(*, '(3i4)') j, m%fcs_wall_ind(j, 1), m%fcs_wall_ind(j, 2)
-        WRITE(*, *) m%fcs_wall(m%fcs_wall_ind(j, 1):m%fcs_wall_ind(j, 1)&
-&       +m%fcs_wall_ind(j, 2)-1)
-      END IF
-    END DO
+ 120 CONTINUE
 !
     WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
     WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx
@@ -2226,16 +2239,18 @@ CONTAINS
     INTEGER :: icv, icv1, icv2, ifc, ifcc, ifs, iva, ivb, inv, inv1, &
 &   inv2, ivx, ivx1, ivx2, invmx, inew
     INTEGER :: totalcount, fscount, iactive, icount, fccount
+    INTEGER, SAVE :: artificial_slab=0
+    INTEGER, SAVE :: found=0
     INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
-&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
+&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:), regcount(:)
     INTEGER :: fcsb(MAXVAL(m%fclbl), m%nci), fcsbcounter(MAXVAL(m%fclbl)&
 &   ), cvsb(MAXVAL(m%fclbl), m%nci)
-    LOGICAL :: duplicate, left_match_found, right_match_found, is_found
+    LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
+    INTRINSIC ANY
     INTRINSIC ALLOCATED
     INTRINSIC MIN
     integer :: result1
-    REAL(kind=r8) :: result2
     INTRINSIC MAXVAL
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -2331,6 +2346,7 @@ CONTAINS
     m%fsvx(1:m%nfsvxmx) = indfsvx(1:m%nfsvxmx)
     DEALLOCATE(indfsvx)
 !
+!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
     ALLOCATE(indxpt(m%nvx))
     indxpt = 0
     m%nxpt = 0
@@ -2356,6 +2372,40 @@ CONTAINS
         END IF
       END IF
     END DO
+!
+!! use a different approach for slab cases with cuts,
+!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other i
+!nternal vertices.
+!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+    CALL IPGETI('artificial_slab', artificial_slab)
+    IF (m%nxpt .EQ. 0 .AND. artificial_slab .EQ. 1) THEN
+      DO ivx=1,m%nvx
+        IF (found .NE. 1) THEN
+          IF (m%vxcvp(ivx, 2) .GE. 4) THEN
+            ALLOCATE(regcount(m%vxcvp(ivx, 2)))
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              icv = m%vxcv(i)
+              regcount(i-m%vxcvp(ivx, 1)+1) = m%cvreg(icv)
+            END DO
+            IF (ANY(regcount .EQ. 1) .AND. ANY(regcount .EQ. 2) .AND. (&
+&               ANY(regcount .EQ. 3) .OR. ANY(regcount .EQ. 4))) THEN
+              m%nxpt = m%nxpt + 1
+              indxpt(m%nxpt) = ivx
+              found = 1
+              IF (iactive .EQ. 0) THEN
+                DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+                  IF (iactive .EQ. 0) THEN
+                    icv = m%vxcv(i)
+                    IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+                  END IF
+                END DO
+              END IF
+            END IF
+            DEALLOCATE(regcount)
+          END IF
+        END IF
+      END DO
+    END IF
 !
     m%nstr = 0
     m%ntgc = 0
@@ -2654,6 +2704,7 @@ CONTAINS
         DEALLOCATE(indfc)
       END IF
     END IF
+!
     IF (ALLOCATED(freg)) THEN
       DEALLOCATE(freg)
     ELSE
@@ -2703,62 +2754,20 @@ CONTAINS
       k = k + 1
     END DO
 !
-    m%nfci = 0
-    DO k=1,m%ncg
-      is_found = .false.
+    DO 110 k=1,m%ncg
       DO l=k+1,m%ncg
         IF (((m%fcvx(m%fcs_wall(k), 1) .EQ. m%fcvx(m%fcs_wall(l), 1) &
 &           .OR. m%fcvx(m%fcs_wall(k), 1) .EQ. m%fcvx(m%fcs_wall(l), 2))&
 &           .OR. m%fcvx(m%fcs_wall(k), 2) .EQ. m%fcvx(m%fcs_wall(l), 1))&
 &           .OR. m%fcvx(m%fcs_wall(k), 2) .EQ. m%fcvx(m%fcs_wall(l), 2)&
 &       ) THEN
-          is_found = .true.
           inew = m%fcs_wall(k+1)
           m%fcs_wall(k+1) = m%fcs_wall(l)
           m%fcs_wall(l) = inew
-          result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k+1), 1:2)))
-          result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-          IF (result1 .NE. result2) m%nfci = m%nfci + 1
           GOTO 110
         END IF
       END DO
- 110  IF (.NOT.is_found) THEN
-        result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k-1), 1:2)))
-        result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-        IF (k .LT. m%ncg .OR. (k .EQ. m%ncg .AND. result1 .NE. result2)&
-&       ) m%nfci = m%nfci + 1
-      END IF
-    END DO
-    ALLOCATE(m%fcs_wall_ind(m%nfci, 2))
-    j = 1
-    l = 1
-    DO k=1,m%ncg-1
-      result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k+1), 1:2)))
-      result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(k), 1:2)))
-      IF (result1 .NE. result2) THEN
-        m%fcs_wall_ind(l, 1) = j
-        m%fcs_wall_ind(l, 2) = k - j + 1
-        j = k + 1
-        l = l + 1
-      END IF
-! Doing the last cell by hand if it is on its own flux tube
-
-    END DO
-    result1 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(m%ncg-1), 1:2)))
-    result2 = MAXVAL(m%cvft(m%fccv(m%fcs_wall(m%ncg), 1:2)))
-    IF (result1 .NE. result2) THEN
-      m%fcs_wall_ind(l, 1) = m%ncg
-      m%fcs_wall_ind(l, 2) = 1
-    END IF
-!
-    WRITE(*, *) 'list of boundary faces in one flux tube:'
-    DO j=1,m%nfci
-      IF (m%fcs_wall_ind(j, 1) .NE. m%fcs_wall_ind(j, 2)) THEN
-        WRITE(*, '(3i4)') j, m%fcs_wall_ind(j, 1), m%fcs_wall_ind(j, 2)
-        WRITE(*, *) m%fcs_wall(m%fcs_wall_ind(j, 1):m%fcs_wall_ind(j, 1)&
-&       +m%fcs_wall_ind(j, 2)-1)
-      END IF
-    END DO
+ 110 CONTINUE
 !
     WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
     WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx

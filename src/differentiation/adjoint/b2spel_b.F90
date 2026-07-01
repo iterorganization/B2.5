@@ -30,6 +30,7 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
   USE B2MOD_B2CMRC_DIFF
   USE B2US_PLASMA_DIFF
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2spel
@@ -806,6 +807,7 @@ SUBROUTINE B2SPEL_NODIFF(ncv, ns, ev, te, ne, rt)
   USE B2MOD_B2CMRC_DIFF
   USE B2US_PLASMA_DIFF
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2spel

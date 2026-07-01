@@ -22,7 +22,7 @@ SUBROUTINE B2TLV0_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 & cvsahz, cvsahzb, flv, flvb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -474,7 +474,7 @@ SUBROUTINE B2TLV0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, te&
 & , tn, rza, cvsa0, cvsa, cvsahz, flv)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

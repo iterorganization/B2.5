@@ -17,7 +17,7 @@
 !
 SUBROUTINE B2XPRZ_B(ncv, ns, mp, am, na, nab, rz, rzb, st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF, ONLY : is_neutral
+  USE B2MOD_B2CMPA, ONLY : is_neutral
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, ns
@@ -58,7 +58,7 @@ END SUBROUTINE B2XPRZ_B
 !
 SUBROUTINE B2XPRZ_NODIFF(ncv, ns, mp, am, na, rz, st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF, ONLY : is_neutral
+  USE B2MOD_B2CMPA, ONLY : is_neutral
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, ns

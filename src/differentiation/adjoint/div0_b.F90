@@ -25,7 +25,7 @@ SUBROUTINE DIV0_B(ncv, nfc, mpg, flo, flob, dflo, dflob)
 !   ..input arguments
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: flo(nfc)
+  REAL(kind=r8), INTENT(IN) :: flo(nfc)
   REAL(kind=r8) :: flob(nfc)
 !   ..output arguments
   REAL(kind=r8) :: dflo(ncv)
@@ -72,9 +72,9 @@ SUBROUTINE DIV0_NODIFF(ncv, nfc, mpg, flo, dflo)
 !   ..input arguments
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: flo(nfc)
+  REAL(kind=r8), INTENT(IN) :: flo(nfc)
 !   ..output arguments
-  REAL(kind=r8) :: dflo(ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflo(ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !

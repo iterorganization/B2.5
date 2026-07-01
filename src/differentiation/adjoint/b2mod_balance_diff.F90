@@ -31,10 +31,11 @@ MODULE B2MOD_BALANCE_DIFF
 & b2stbr_first_flight_sna_bal(:, :), b2stbc_sna0to1(:, :, :), &
 & b2stbc_sna_bal(:, :), eirene_mc_pael_sne0to1(:, :, :), &
 & eirene_mc_papl_sna0to1(:, :, :, :), eirene_mc_pmel_sne0to1(:, :, :), &
-& eirene_mc_pmpl_sna0to1(:, :, :, :), eirene_mc_pipl_sna0to1(:, :, :, :)&
-& , eirene_mc_pppl_sna0to1(:, :, :, :), eirene_mc_core_sna0to1(:, :, :)&
-& , eirene_mc_pael_sne_bal(:, :), eirene_mc_papl_sna_bal(:, :, :), &
-& eirene_mc_pmel_sne_bal(:, :), eirene_mc_pmpl_sna_bal(:, :, :), &
+& eirene_mc_piel_sne0to1(:, :, :), eirene_mc_pmpl_sna0to1(:, :, :, :), &
+& eirene_mc_pipl_sna0to1(:, :, :, :), eirene_mc_pppl_sna0to1(:, :, :, :)&
+& , eirene_mc_core_sna0to1(:, :, :), eirene_mc_pael_sne_bal(:, :), &
+& eirene_mc_papl_sna_bal(:, :, :), eirene_mc_pmel_sne_bal(:, :), &
+& eirene_mc_piel_sne_bal(:, :), eirene_mc_pmpl_sna_bal(:, :, :), &
 & eirene_mc_pipl_sna_bal(:, :, :), eirene_mc_pppl_sna_bal(:, :, :), &
 & eirene_mc_paat_sna_bal(:, :, :), eirene_mc_pmat_sna_bal(:, :, :), &
 & eirene_mc_piat_sna_bal(:, :, :), eirene_mc_paml_sna_bal(:, :, :), &
@@ -55,15 +56,16 @@ MODULE B2MOD_BALANCE_DIFF
 & , :), b2stbr_phys_sna_bal_av(:, :), b2stbr_first_flight_sna_bal_av(:, &
 & :), b2stbc_sna_bal_av(:, :), eirene_mc_pael_sne_bal_av(:, :), &
 & eirene_mc_papl_sna_bal_av(:, :, :), eirene_mc_pmel_sne_bal_av(:, :), &
-& eirene_mc_pmpl_sna_bal_av(:, :, :), eirene_mc_pipl_sna_bal_av(:, :, :)&
-& , eirene_mc_pppl_sna_bal_av(:, :, :), eirene_mc_paat_sna_bal_av(:, :, &
-& :), eirene_mc_pmat_sna_bal_av(:, :, :), eirene_mc_piat_sna_bal_av(:, :&
-& , :), eirene_mc_paml_sna_bal_av(:, :, :), eirene_mc_pmml_sna_bal_av(:&
-& , :, :), eirene_mc_piml_sna_bal_av(:, :, :), eirene_mc_paio_sna_bal_av&
-& (:, :, :), eirene_mc_pmio_sna_bal_av(:, :, :), &
-& eirene_mc_piio_sna_bal_av(:, :, :), eirene_mc_core_sna_bal_av(:, :), &
-& b2stbm_sna_bal_av(:, :), ext_sna_bal_av(:, :), b2stel_sna_ion_bal_av(:&
-& , :), b2stel_sna_rec_bal_av(:, :), b2stcx_sna_bal_av(:, :), &
+& eirene_mc_piel_sne_bal_av(:, :), eirene_mc_pmpl_sna_bal_av(:, :, :), &
+& eirene_mc_pipl_sna_bal_av(:, :, :), eirene_mc_pppl_sna_bal_av(:, :, :)&
+& , eirene_mc_paat_sna_bal_av(:, :, :), eirene_mc_pmat_sna_bal_av(:, :, &
+& :), eirene_mc_piat_sna_bal_av(:, :, :), eirene_mc_paml_sna_bal_av(:, :&
+& , :), eirene_mc_pmml_sna_bal_av(:, :, :), eirene_mc_piml_sna_bal_av(:&
+& , :, :), eirene_mc_paio_sna_bal_av(:, :, :), eirene_mc_pmio_sna_bal_av&
+& (:, :, :), eirene_mc_piio_sna_bal_av(:, :, :), &
+& eirene_mc_core_sna_bal_av(:, :), b2stbm_sna_bal_av(:, :), &
+& ext_sna_bal_av(:, :), b2stel_sna_ion_bal_av(:, :), &
+& b2stel_sna_rec_bal_av(:, :), b2stcx_sna_bal_av(:, :), &
 & b2srsm_sna_bal_av(:, :), b2srdt_sna_bal_av(:, :), b2srst_sna_bal_av(:&
 & , :), tot_sna_bal_av(:, :), resco_av(:, :)
 !   ..Arrays for momentum balance:
@@ -78,9 +80,9 @@ MODULE B2MOD_BALANCE_DIFF
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_smo0to3(:, :, :), &
 & b2stbr_phys_smo_bal(:, :), b2stbc_smo0to3(:, :, :), b2stbc_smo_bal(:, &
 & :), eirene_mc_mapl_smo0to3(:, :, :, :), eirene_mc_mmpl_smo0to3(:, :, :&
-& , :), eirene_mc_mipl_smo0to3(:, :, :, :), eirene_mc_cppv_smo0to3(:, :&
+& , :), eirene_mc_mipl_smo0to3(:, :, :, :), eirene_mc_mppl_smo0to3(:, :&
 & , :, :), eirene_mc_mapl_smo_bal(:, :, :), eirene_mc_mmpl_smo_bal(:, :&
-& , :), eirene_mc_mipl_smo_bal(:, :, :), eirene_mc_cppv_smo_bal(:, :, :)&
+& , :), eirene_mc_mipl_smo_bal(:, :, :), eirene_mc_mppl_smo_bal(:, :, :)&
 & , b2stbm_smo0to3(:, :, :), b2stbm_smo_bal(:, :), ext_smo0to3(:, :, :)&
 & , ext_smo_bal(:, :), b2stel_smq_ion0to3(:, :, :), b2stel_smq_ion_bal(:&
 & , :), b2stel_smq_rec0to3(:, :, :), b2stel_smq_rec_bal(:, :), &
@@ -112,7 +114,7 @@ MODULE B2MOD_BALANCE_DIFF
 & :, :, :), fmo_hybr_av(:, :, :), fmo_b2nxfv_av(:, :, :), fmo_tot_av(:, &
 & :, :), b2stbr_phys_smo_bal_av(:, :), b2stbc_smo_bal_av(:, :), &
 & eirene_mc_mapl_smo_bal_av(:, :, :), eirene_mc_mmpl_smo_bal_av(:, :, :)&
-& , eirene_mc_mipl_smo_bal_av(:, :, :), eirene_mc_cppv_smo_bal_av(:, :, &
+& , eirene_mc_mipl_smo_bal_av(:, :, :), eirene_mc_mppl_smo_bal_av(:, :, &
 & :), b2stbm_smo_bal_av(:, :), ext_smo_bal_av(:, :), &
 & b2stel_smq_ion_bal_av(:, :), b2stel_smq_rec_bal_av(:, :), &
 & b2stcx_smq_bal_av(:, :), b2srsm_smo_bal_av(:, :), b2srdt_smo_bal_av(:&
@@ -1074,6 +1076,7 @@ CONTAINS
     ALLOCATE(eirene_mc_papl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pmel_sne0to1(ncv, 0:1, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_piel_sne0to1(ncv, 0:1, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna0to1(ncv, 0:1, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_core_sna0to1(ncv, 0:1, 0:nsd-1))
@@ -1081,6 +1084,7 @@ CONTAINS
     ALLOCATE(eirene_mc_papl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pmel_sne_bal(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_piel_sne_bal(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna_bal(ncv, 0:nsd-1, 1:nstrad))
     IF (natmd .GT. 0) THEN
@@ -1115,6 +1119,7 @@ CONTAINS
     eirene_mc_papl_sna0to1 = 0.0_R8
     eirene_mc_pmel_sne0to1 = 0.0_R8
     eirene_mc_pmpl_sna0to1 = 0.0_R8
+    eirene_mc_piel_sne0to1 = 0.0_R8
     eirene_mc_pipl_sna0to1 = 0.0_R8
     eirene_mc_pppl_sna0to1 = 0.0_R8
     eirene_mc_core_sna0to1 = 0.0_R8
@@ -1122,6 +1127,7 @@ CONTAINS
     eirene_mc_papl_sna_bal = 0.0_R8
     eirene_mc_pmel_sne_bal = 0.0_R8
     eirene_mc_pmpl_sna_bal = 0.0_R8
+    eirene_mc_piel_sne_bal = 0.0_R8
     eirene_mc_pipl_sna_bal = 0.0_R8
     eirene_mc_pppl_sna_bal = 0.0_R8
     eirene_mc_paat_sna_bal = 0.0_R8
@@ -1139,6 +1145,7 @@ CONTAINS
     ALLOCATE(eirene_mc_papl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pmel_sne_bal_av(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pmpl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_piel_sne_bal_av(ncv, 1:nstrad))
     ALLOCATE(eirene_mc_pipl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_pppl_sna_bal_av(ncv, 0:nsd-1, 1:nstrad))
     IF (natmd .GT. 0) THEN
@@ -1173,24 +1180,24 @@ CONTAINS
     ALLOCATE(eirene_mc_mapl_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mmpl_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mipl_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
-    ALLOCATE(eirene_mc_cppv_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_mppl_smo0to3(ncv, 0:3, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mapl_smo_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mmpl_smo_bal(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mipl_smo_bal(ncv, 0:nsd-1, 1:nstrad))
-    ALLOCATE(eirene_mc_cppv_smo_bal(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_mppl_smo_bal(ncv, 0:nsd-1, 1:nstrad))
     eirene_mc_mapl_smo0to3 = 0.0_R8
     eirene_mc_mmpl_smo0to3 = 0.0_R8
     eirene_mc_mipl_smo0to3 = 0.0_R8
-    eirene_mc_cppv_smo0to3 = 0.0_R8
+    eirene_mc_mppl_smo0to3 = 0.0_R8
     eirene_mc_mapl_smo_bal = 0.0_R8
     eirene_mc_mmpl_smo_bal = 0.0_R8
     eirene_mc_mipl_smo_bal = 0.0_R8
-    eirene_mc_cppv_smo_bal = 0.0_R8
+    eirene_mc_mppl_smo_bal = 0.0_R8
 !djm Jun2017 Time-averaged arrays for momentum balance:
     ALLOCATE(eirene_mc_mapl_smo_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mmpl_smo_bal_av(ncv, 0:nsd-1, 1:nstrad))
     ALLOCATE(eirene_mc_mipl_smo_bal_av(ncv, 0:nsd-1, 1:nstrad))
-    ALLOCATE(eirene_mc_cppv_smo_bal_av(ncv, 0:nsd-1, 1:nstrad))
+    ALLOCATE(eirene_mc_mppl_smo_bal_av(ncv, 0:nsd-1, 1:nstrad))
 !djm Jan2017 Eirene arrays for electron heat balance:
     ALLOCATE(eirene_mc_eael_she0to3(ncv, 0:3, 1:nstrad))
     ALLOCATE(eirene_mc_emel_she0to3(ncv, 0:3, 1:nstrad))
@@ -1286,6 +1293,7 @@ CONTAINS
       DEALLOCATE(eirene_mc_papl_sna0to1)
       DEALLOCATE(eirene_mc_pmel_sne0to1)
       DEALLOCATE(eirene_mc_pmpl_sna0to1)
+      DEALLOCATE(eirene_mc_piel_sne0to1)
       DEALLOCATE(eirene_mc_pipl_sna0to1)
       DEALLOCATE(eirene_mc_pppl_sna0to1)
       DEALLOCATE(eirene_mc_core_sna0to1)
@@ -1293,6 +1301,7 @@ CONTAINS
       DEALLOCATE(eirene_mc_papl_sna_bal)
       DEALLOCATE(eirene_mc_pmel_sne_bal)
       DEALLOCATE(eirene_mc_pmpl_sna_bal)
+      DEALLOCATE(eirene_mc_piel_sne_bal)
       DEALLOCATE(eirene_mc_pipl_sna_bal)
       DEALLOCATE(eirene_mc_pppl_sna_bal)
       DEALLOCATE(eirene_mc_paat_sna_bal)
@@ -1309,6 +1318,7 @@ CONTAINS
       DEALLOCATE(eirene_mc_papl_sna_bal_av)
       DEALLOCATE(eirene_mc_pmel_sne_bal_av)
       DEALLOCATE(eirene_mc_pmpl_sna_bal_av)
+      DEALLOCATE(eirene_mc_piel_sne_bal_av)
       DEALLOCATE(eirene_mc_pipl_sna_bal_av)
       DEALLOCATE(eirene_mc_pppl_sna_bal_av)
       DEALLOCATE(eirene_mc_paat_sna_bal_av)
@@ -1325,11 +1335,11 @@ CONTAINS
       DEALLOCATE(eirene_mc_mapl_smo0to3)
       DEALLOCATE(eirene_mc_mmpl_smo0to3)
       DEALLOCATE(eirene_mc_mipl_smo0to3)
-      DEALLOCATE(eirene_mc_cppv_smo0to3)
+      DEALLOCATE(eirene_mc_mppl_smo0to3)
       DEALLOCATE(eirene_mc_mapl_smo_bal)
       DEALLOCATE(eirene_mc_mmpl_smo_bal)
       DEALLOCATE(eirene_mc_mipl_smo_bal)
-      DEALLOCATE(eirene_mc_cppv_smo_bal)
+      DEALLOCATE(eirene_mc_mppl_smo_bal)
 !djm Jan2017 Eirene arrays for electron heat balance:
       DEALLOCATE(eirene_mc_eael_she0to3)
       DEALLOCATE(eirene_mc_emel_she0to3)
@@ -1607,11 +1617,11 @@ CONTAINS
 &           eirene_mc_mipl_smo0to3(icv, 1, isb, istrai)*ub(icv) + &
 &           eirene_mc_mipl_smo0to3(icv, 2, isb, istrai)*rob(icv) + &
 &           eirene_mc_mipl_smo0to3(icv, 3, isb, istrai)*rob(icv)*ub(icv)
-          eirene_mc_cppv_smo_bal(icv, isb, istrai) = &
-&           eirene_mc_cppv_smo0to3(icv, 0, isb, istrai) + &
-&           eirene_mc_cppv_smo0to3(icv, 1, isb, istrai)*ub(icv) + &
-&           eirene_mc_cppv_smo0to3(icv, 2, isb, istrai)*rob(icv) + &
-&           eirene_mc_cppv_smo0to3(icv, 3, isb, istrai)*rob(icv)*ub(icv)
+          eirene_mc_mppl_smo_bal(icv, isb, istrai) = &
+&           eirene_mc_mppl_smo0to3(icv, 0, isb, istrai) + &
+&           eirene_mc_mppl_smo0to3(icv, 1, isb, istrai)*ub(icv) + &
+&           eirene_mc_mppl_smo0to3(icv, 2, isb, istrai)*rob(icv) + &
+&           eirene_mc_mppl_smo0to3(icv, 3, isb, istrai)*rob(icv)*ub(icv)
         END DO
       END IF
     END DO
@@ -1759,6 +1769,9 @@ CONTAINS
           eirene_mc_pmel_sne_bal(icv, istrai) = eirene_mc_pmel_sne0to1(&
 &           icv, 0, istrai) + eirene_mc_pmel_sne0to1(icv, 1, istrai)*ne(&
 &           icv)
+          eirene_mc_piel_sne_bal(icv, istrai) = eirene_mc_piel_sne0to1(&
+&           icv, 0, istrai) + eirene_mc_piel_sne0to1(icv, 1, istrai)*ne(&
+&           icv)
           eirene_mc_eael_she_bal(icv, istrai) = eirene_mc_eael_she0to3(&
 &           icv, 0, istrai) + eirene_mc_eael_she0to3(icv, 1, istrai)*te(&
 &           icv) + eirene_mc_eael_she0to3(icv, 2, istrai)*ne(icv) + &
@@ -1845,6 +1858,7 @@ CONTAINS
         eirene_mc_papl_sna_bal_av = 0.0_R8
         eirene_mc_pmel_sne_bal_av = 0.0_R8
         eirene_mc_pmpl_sna_bal_av = 0.0_R8
+        eirene_mc_piel_sne_bal_av = 0.0_R8
         eirene_mc_pipl_sna_bal_av = 0.0_R8
         eirene_mc_pppl_sna_bal_av = 0.0_R8
         eirene_mc_paat_sna_bal_av = 0.0_R8
@@ -1870,7 +1884,7 @@ CONTAINS
         eirene_mc_mapl_smo_bal_av = 0.0_R8
         eirene_mc_mmpl_smo_bal_av = 0.0_R8
         eirene_mc_mipl_smo_bal_av = 0.0_R8
-        eirene_mc_cppv_smo_bal_av = 0.0_R8
+        eirene_mc_mppl_smo_bal_av = 0.0_R8
       END IF
       b2stbm_smo_bal_av = 0.0_R8
       ext_smo_bal_av = 0.0_R8
@@ -2040,6 +2054,8 @@ CONTAINS
 &       curmlt*eirene_mc_pmel_sne_bal
       eirene_mc_pmpl_sna_bal_av = avmlt*eirene_mc_pmpl_sna_bal_av + &
 &       curmlt*eirene_mc_pmpl_sna_bal
+      eirene_mc_piel_sne_bal_av = avmlt*eirene_mc_piel_sne_bal_av + &
+&       curmlt*eirene_mc_piel_sne_bal
       eirene_mc_pipl_sna_bal_av = avmlt*eirene_mc_pipl_sna_bal_av + &
 &       curmlt*eirene_mc_pipl_sna_bal
       eirene_mc_pppl_sna_bal_av = avmlt*eirene_mc_pppl_sna_bal_av + &
@@ -2093,8 +2109,8 @@ CONTAINS
 &       curmlt*eirene_mc_mmpl_smo_bal
       eirene_mc_mipl_smo_bal_av = avmlt*eirene_mc_mipl_smo_bal_av + &
 &       curmlt*eirene_mc_mipl_smo_bal
-      eirene_mc_cppv_smo_bal_av = avmlt*eirene_mc_cppv_smo_bal_av + &
-&       curmlt*eirene_mc_cppv_smo_bal
+      eirene_mc_mppl_smo_bal_av = avmlt*eirene_mc_mppl_smo_bal_av + &
+&       curmlt*eirene_mc_mppl_smo_bal
     END IF
     b2stbm_smo_bal_av = avmlt*b2stbm_smo_bal_av + curmlt*b2stbm_smo_bal
     ext_smo_bal_av = avmlt*ext_smo_bal_av + curmlt*ext_smo_bal
@@ -2280,8 +2296,8 @@ CONTAINS
     USE B2US_GEO_DIFF
     USE B2US_MAP_DIFF
     USE B2MOD_USER_NAMELIST_DIFF, ONLY : nimp, imp, nomp, omp
-    USE B2MOD_B2CMPA_DIFF, ONLY : zamin, zamax
-    USE B2MOD_B2CMPA_DIFF, ONLY : am
+    USE B2MOD_B2CMPA, ONLY : zamin, zamax
+    USE B2MOD_B2CMPA, ONLY : am
     USE B2MOD_CONSTANTS, ONLY : mp, ev
     USE B2MOD_DIMENSIONS
     IMPLICIT NONE
@@ -3529,8 +3545,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -3699,12 +3713,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -4114,8 +4122,7 @@ CONTAINS
     REAL(kind=r8) :: rdum(1)
 !   ..procedures
     INTRINSIC SIZE
-    EXTERNAL IPGETI, GET_JSEP, IPGETR, SPECIES_NODIFF, &
-&       CHECK_CDF_STATUS
+    EXTERNAL IPGETI, GET_JSEP, IPGETR, SPECIES, CHECK_CDF_STATUS
     INTRINSIC ALLOCATED
     INTRINSIC NINT
 !
@@ -4247,7 +4254,7 @@ CONTAINS
     vdims(2) = nsid
     ALLOCATE(species_name(0:nsd-1))
     DO is=0,nsd-1
-      CALL SPECIES_NODIFF(is, species_name(is), .false.)
+      CALL SPECIES(is, species_name(is), .false.)
     END DO
     CALL WRITE_CDF_TEXT(ncid, 'species', species_name(0:nsd-1), vdims, 2&
 &                )
@@ -4512,8 +4519,8 @@ CONTAINS
 &                     eirene_mc_mmpl_smo_bal_av, vdims, 3)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mipl_smo_bal', &
 &                     eirene_mc_mipl_smo_bal_av, vdims, 3)
-      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_cppv_smo_bal', &
-&                     eirene_mc_cppv_smo_bal_av, vdims, 3)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mppl_smo_bal', &
+&                     eirene_mc_mppl_smo_bal_av, vdims, 3)
       vdims(2) = eirnatmid
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_paat_sna_bal', &
 &                     eirene_mc_paat_sna_bal_av, vdims, 3)
@@ -4540,6 +4547,8 @@ CONTAINS
 &                     eirene_mc_pael_sne_bal_av, vdims, 2)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pmel_sne_bal', &
 &                     eirene_mc_pmel_sne_bal_av, vdims, 2)
+      CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_piel_sne_bal', &
+&                     eirene_mc_piel_sne_bal_av, vdims, 2)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_eael_she_bal', &
 &                     eirene_mc_eael_she_bal_av, vdims, 2)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_emel_she_bal', &
@@ -5842,8 +5851,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -6012,12 +6019,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -6488,6 +6489,11 @@ CONTAINS
         CALL CHECK_CDF_STATUS(status)
         eirene_mc_pmel_sne_bal = data2
         DEALLOCATE(data2)
+      CASE ('eirene_mc_piel_sne_bal') 
+        ALLOCATE(data2(vdims(1), vdims(2)))
+        status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
+        CALL CHECK_CDF_STATUS(status)
+        eirene_mc_piel_sne_bal = data2
       CASE ('eirene_mc_eael_she_bal') 
         ALLOCATE(data2(vdims(1), vdims(2)))
         status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
@@ -7842,8 +7848,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -8012,12 +8016,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -9680,8 +9678,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -9850,12 +9846,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -11519,8 +11509,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -11689,12 +11677,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -13357,8 +13339,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -13527,12 +13507,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -15195,8 +15169,6 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
-    INTEGER :: nf_compact
-    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -15365,12 +15337,6 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
-    EXTERNAL NF_DEF_VAR_SZIP
-!
-    INTEGER :: NF_DEF_VAR_SZIP
-    EXTERNAL NF_INQ_VAR_SZIP
-!
-    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32

@@ -1774,6 +1774,7 @@ CONTAINS
 !c BCENE
       IF (bcene(ib) .EQ. 3) THEN
         bcene(ib) = 15
+        enepar(ib, 1) = enepar(ib, 1) - 1.0_R8
         WRITE(*, *) 'Automatically changing BCENE from 3 to 15'
         changed = .true.
       END IF

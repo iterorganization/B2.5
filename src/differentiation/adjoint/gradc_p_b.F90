@@ -29,9 +29,11 @@ SUBROUTINE GRADC_P_FWD(ncv, nfc, nvx, mode, geo, geob, mpg, mpgb, fun, &
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
 !   ..output arguments
   REAL(kind=r8) :: gfunp(ncv)
+!   ..local 
+  REAL(kind=r8) :: funv_loc(nvx)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -54,14 +56,16 @@ SUBROUTINE GRADC_P_FWD(ncv, nfc, nvx, mode, geo, geob, mpg, mpgb, fun, &
 !
 !   ..interpolate fun to cell vertices, using volume weighted averaging
   IF (mode .EQ. 0) THEN
-    CALL INTVERTEX_FWD(ncv, nvx, mpg, geo%vxvol, fun, funv)
+    CALL INTVERTEX_FWD(ncv, nvx, mpg, geo%vxvol, fun, funv_loc)
     CALL PUSHCONTROL1B(0)
   ELSE
+    funv_loc = funv
     CALL PUSHCONTROL1B(1)
   END IF
 !
 !   ..compute gradients on faces
-  CALL GRAD_P_FWD(ncv, nfc, nvx, 1, geo, mpg, mpgb, fun, funv, gfunpf)
+  CALL GRAD_P_FWD(ncv, nfc, nvx, 1, geo, mpg, mpgb, fun, funv_loc, &
+&           gfunpf)
 !
 !   ..interpolate to centers
   CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunp)
@@ -103,10 +107,12 @@ SUBROUTINE GRADC_P_BWD(ncv, nfc, nvx, mode, geo, geob, mpg, mpgb, fun, &
   TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
   REAL(kind=r8) :: funb(ncv), funvb(nvx)
   REAL(kind=r8) :: gfunp(ncv)
   REAL(kind=r8) :: gfunpb(ncv)
+  REAL(kind=r8) :: funv_loc(nvx)
+  REAL(kind=r8) :: funv_locb(nvx)
   REAL(kind=r8) :: gfunpf(nfc)
   REAL(kind=r8) :: gfunpfb(nfc)
   INTEGER*4 :: branch
@@ -114,12 +120,15 @@ SUBROUTINE GRADC_P_BWD(ncv, nfc, nvx, mode, geo, geob, mpg, mpgb, fun, &
   gfunpfb = 0.D0
   CALL INTCELL_BWD(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunpfb, gfunp, &
 &            gfunpb)
-  CALL GRAD_P_BWD(ncv, nfc, nvx, 1, geo, mpg, mpgb, fun, funb, funv, &
-&           funvb, gfunpf, gfunpfb)
+  funv_locb = 0.D0
+  CALL GRAD_P_BWD(ncv, nfc, nvx, 1, geo, mpg, mpgb, fun, funb, funv_loc&
+&           , funv_locb, gfunpf, gfunpfb)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
-    CALL INTVERTEX_BWD(ncv, nvx, mpg, geo%vxvol, fun, funb, funv, funvb)
-    funvb = 0.D0
+    CALL INTVERTEX_BWD(ncv, nvx, mpg, geo%vxvol, fun, funb, funv_loc, &
+&                funv_locb)
+  ELSE
+    funvb = funvb + funv_locb
   END IF
 END SUBROUTINE GRADC_P_BWD
 
@@ -146,9 +155,11 @@ SUBROUTINE GRADC_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, &
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
 !   ..output arguments
-  REAL(kind=r8) :: gfunp(ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunp(ncv)
+!   ..local 
+  REAL(kind=r8) :: funv_loc(nvx)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -170,11 +181,14 @@ SUBROUTINE GRADC_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, &
 &       'gradc_p--faulty argument mode')
 !
 !   ..interpolate fun to cell vertices, using volume weighted averaging
-  IF (mode .EQ. 0) CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, fun, &
-&                                  funv)
+  IF (mode .EQ. 0) THEN
+    CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, fun, funv_loc)
+  ELSE
+    funv_loc = funv
+  END IF
 !
 !   ..compute gradients on faces
-  CALL GRAD_P_NODIFF(ncv, nfc, nvx, 1, geo, mpg, fun, funv, gfunpf)
+  CALL GRAD_P_NODIFF(ncv, nfc, nvx, 1, geo, mpg, fun, funv_loc, gfunpf)
 !
 !   ..interpolate to centers
   CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunp)

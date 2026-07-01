@@ -16,7 +16,7 @@ MODULE B2MOD_PAR_OPT_DIFF
   USE B2MOD_TYPES
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp
   USE B2MOD_AD_DIFF, ONLY : nncf, b2rr, b2voloncf, b2voloncfb, b2data, &
-& b2datab, b2dataoncf, b2dataoncfb, b2psi
+& b2datab, b2dataoncf, b2dataoncfb, b2psi, b2psib
   USE B2US_MAP_DIFF
   USE B2MOD_DIMENSIONS
   USE B2MOD_TRANSPORT_NAMELIST_DIFF, ONLY : flag_dna, flag_dpa, flag_hci&
@@ -617,6 +617,8 @@ CONTAINS
       b2datab = 0.D0
       ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
+      ALLOCATE(b2psib(ncf, numdata))
+      b2psib = 0.D0
       ALLOCATE(b2psi(ncf, numdata))
 !store here psi of SOLPS data for interpolation
       b2rr = 0.0_R8
@@ -1848,6 +1850,9 @@ CONTAINS
       DEALLOCATE(b2dataoncf)
     END IF
     IF (ALLOCATED(b2psi)) THEN
+      IF (ALLOCATED(b2psib)) THEN
+        DEALLOCATE(b2psib)
+      END IF
       DEALLOCATE(b2psi)
     END IF
   END SUBROUTINE DEALLOC_B2MOD_PAR_OPT_B

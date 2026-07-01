@@ -17,7 +17,7 @@
 !
 SUBROUTINE B2XPNR_B(ncv, ns, na, nab, nirm, nirmb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: ncv, ns
   REAL(kind=r8) :: na(ncv, 0:ns-1), nirm(ncv)
@@ -43,38 +43,4 @@ SUBROUTINE B2XPNR_B(ncv, ns, na, nab, nirm, nirmb)
     IF (branch .NE. 0) nab(:, is) = nab(:, is) + nirmb/SQRT(am(is))
   END DO
 END SUBROUTINE B2XPNR_B
-
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-SUBROUTINE B2XPNR_NODIFF(ncv, ns, na, nirm)
-  USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
-  IMPLICIT NONE
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: na(ncv, 0:ns-1), nirm(ncv)
-!     ------------------------------------------------------------------
-!     B2XPNR computes the atom density weighted by 1/sqrt(am), nirm:
-!       nirm() = (sum is :: na(,is)/sqrt(am(is))) .
-!     ------------------------------------------------------------------
-  INTEGER :: is
-  INTRINSIC SQRT
-!     ------------------------------------------------------------------
-!$$$  call subini ('b2xpnr')
-  nirm = 0.0_R8
-  DO is=0,ns-1
-    IF (.NOT.is_neutral(is)) nirm = nirm + na(:, is)/SQRT(am(is))
-  END DO
-!$$$  call subend ()
-  RETURN
-!     ------------------------------------------------------------------
-END SUBROUTINE B2XPNR_NODIFF
 

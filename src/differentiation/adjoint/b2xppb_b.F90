@@ -17,7 +17,7 @@
 !
 SUBROUTINE B2XPPB_FWD(ncv, rzb, nb, te, ti, tn, is, pb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: ncv, is
   REAL(kind=r8) :: rzb(ncv), nb(ncv), te(ncv), ti(ncv), tn(ncv), pb(ncv)
@@ -54,7 +54,7 @@ END SUBROUTINE B2XPPB_FWD
 SUBROUTINE B2XPPB_BWD(ncv, rzb, rzbb, nb, nbb, te, teb, ti, tib, tn, tnb&
 & , is, pb, pbb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: ncv, is
   REAL(kind=r8) :: rzb(ncv), nb(ncv), te(ncv), ti(ncv), tn(ncv), pb(ncv)
@@ -74,36 +74,4 @@ SUBROUTINE B2XPPB_BWD(ncv, rzb, rzbb, nb, nbb, te, teb, ti, tib, tn, tnb&
     tnb = tnb + nb*pbb
   END IF
 END SUBROUTINE B2XPPB_BWD
-
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-SUBROUTINE B2XPPB_NODIFF(ncv, rzb, nb, te, ti, tn, is, pb)
-  USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
-  IMPLICIT NONE
-  INTEGER :: ncv, is
-  REAL(kind=r8) :: rzb(ncv), nb(ncv), te(ncv), ti(ncv), tn(ncv), pb(ncv)
-!     ------------------------------------------------------------------
-!     B2XPPB computes the partial pressure, pb = nb*(rzb*te+ti).
-!     ------------------------------------------------------------------
-!     ------------------------------------------------------------------
-!$$$  call subini ('b2xppb')
-  IF (.NOT.is_neutral(is)) THEN
-    pb = nb*(rzb*te+ti)
-  ELSE
-    pb = nb*tn
-  END IF
-!$$$  call subend ()
-  RETURN
-!     ------------------------------------------------------------------
-END SUBROUTINE B2XPPB_NODIFF
 

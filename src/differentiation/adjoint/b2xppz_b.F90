@@ -19,7 +19,7 @@
 SUBROUTINE B2XPPZ_B(ncv, ns, ne, neb, na, nab, te, teb, ti, tib, pz, pzb&
 & , st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, ns
@@ -68,7 +68,7 @@ END SUBROUTINE B2XPPZ_B
 !sv 18.01.02 {
 SUBROUTINE B2XPPZ_NODIFF(ncv, ns, ne, na, te, ti, pz, st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, ns

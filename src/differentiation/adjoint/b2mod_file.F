@@ -1,6 +1,6 @@
       module b2mod_file
       use b2mod_types
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_diag_diff
       use b2mod_switches_diff
       implicit none
@@ -160,8 +160,8 @@ c*** New file - write the headers
           end if
         end if
       end if
-      if (nstrai.gt.0) write(hlp_frmt,'(a,i3,a)')
-     -      '(1x,i3.3,1p,e16.7,',nstrai*5*(nnatmi+1),'(e12.4,2x))'
+      if (nstrai.gt.0) write(hlp_frmt,'(a,i4,a)')
+     - '(1x,i3.3,1p,e16.7,',nstrai*5*(nnatmi+1),'(e12.4,2x))'
       filedata(ntrc_tst)=.true.
       go to 1000
 c

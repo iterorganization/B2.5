@@ -5,21 +5,22 @@
 !   gradient     of useful results: vsaf_cl *(dv.ne) *(dv.ni) *(dv.ne2)
 !                *(dv.lnlam) chce chci cvsa_cl cvsahz_cl cdkt *(rt.rlcx)
 !                *(rt.rza) *(rt.rz2) csigin switch.b2tfhi_fsigkt
-!                calf *(co.chvemx) *(co.chvimx) *(co.alfx_c) *(co.sigx_c)
-!                *(co.sigx_kt) *(co.hcix_c) *(co.fllim_ki) *(co.fllim_ke)
-!                *(co.fllim_al) *(co.fllim_al_c) *(co.fllim_ki_c)
-!                *(co.f_luc_ke) *(co.f_luc_ki) *(co.f_luc_et) *(co.f_luc_sg)
-!                *(co.f_luc_al) *(co.f_luc_ke_c) *(co.f_luc_ki_c)
-!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn) csig
-!   with respect to varying inputs: vsaf_cl *(dv.ne) *(dv.ni) *(dv.ne2)
-!                *(dv.lnlam) *(rt.rlcx) *(rt.rza) *(rt.rz2) csigin
-!                switch.b2tfhi_fsigkt *(co.chvemx) *(co.chvimx)
+!                calf *(co.chvemx) *(co.chvimx) *(co.nu2) *(co.k2)
 !                *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt) *(co.hcix_c)
 !                *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al) *(co.f_luc_ke_c)
 !                *(co.f_luc_ki_c) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
-!                *(pl.tn)
+!                *(pl.tn) csig
+!   with respect to varying inputs: vsaf_cl *(dv.ne) *(dv.ni) *(dv.ne2)
+!                *(dv.lnlam) *(rt.rlcx) *(rt.rza) *(rt.rz2) csigin
+!                switch.b2tfhi_fsigkt *(co.chvemx) *(co.chvimx)
+!                *(co.nu2) *(co.k2) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
+!                *(co.hcix_c) *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al)
+!                *(co.fllim_al_c) *(co.fllim_ki_c) *(co.f_luc_ke)
+!                *(co.f_luc_ki) *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
+!                *(co.f_luc_ke_c) *(co.f_luc_ki_c) *(pl.na) *(pl.ua)
+!                *(pl.te) *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                mpg.intcellp:in geo.cvbb:in geo.cvhz:in geo.cvqgam:in
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
@@ -28,12 +29,12 @@
 !                geo.ftconn:in geo.fsconn:in geo.fteps:in st_ext.am:in
 !                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rlcx:in
 !                rt.rza:in rt.rz2:in co.chvemx:in co.chvimx:in
-!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
-!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
-!                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
-!                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in co.alpha1f:in
-!                co.f_luc_ke_c:in co.f_luc_ki_c:in pl.na:in pl.ua:in
-!                pl.te:in pl.ti:in pl.tn:in
+!                co.nu2:in co.k2:in co.alfx_c:in co.sigx_c:in co.sigx_kt:in
+!                co.hcix_c:in co.fllim_ki:in co.fllim_ke:in co.fllim_al:in
+!                co.fllim_al_c:in co.fllim_ki_c:in co.f_luc_ke:in
+!                co.f_luc_ki:in co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in
+!                co.alpha1f:in co.f_luc_ke_c:in co.f_luc_ki_c:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -61,7 +62,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 & cvsa_cl, cvsa_clb, cvsahz_cl, cvsahz_clb, fllimvisc, csig_cl, calf_cl)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -157,10 +158,10 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx, connf, epsf
   REAL(kind=r8) :: t0b, dteb(nfc), dtib(nfc), flomxb
 !lk 19.09.07
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1), nu2(ncv), k2(ncv), collisnumf(mpg&
-& %nfc), collisnumef(mpg%nfc)
-  REAL(kind=r8) :: tauiab(ncv, 0:ns-1), nu2b(ncv), k2b(ncv), collisnumfb&
-& (mpg%nfc), collisnumefb(mpg%nfc)
+  REAL(kind=r8) :: tauia(ncv, 0:ns-1), collisnumf(mpg%nfc), collisnumef(&
+& mpg%nfc)
+  REAL(kind=r8) :: tauiab(ncv, 0:ns-1), collisnumfb(mpg%nfc), &
+& collisnumefb(mpg%nfc)
   REAL(kind=r8) :: inctran
 !lk 12.05.11
 !lk 12.05.11
@@ -272,13 +273,14 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: tempb4
   REAL(r8) :: temp10
   REAL(r8) :: tempb5
+  REAL(r8) :: tempb6
   REAL(kind=r8) :: temp11
-  REAL(kind=r8) :: tempb6
   REAL(kind=r8) :: tempb7
-  REAL(r8) :: tempb8
+  REAL(kind=r8) :: tempb8
+  REAL(r8) :: tempb9
   REAL(kind=r8), DIMENSION(nCv) :: temp12
   REAL(kind=r8), DIMENSION(nCv) :: temp13
-  REAL(r8), DIMENSION(ncv) :: tempb9
+  REAL(r8), DIMENSION(ncv) :: tempb10
   INTEGER*4 :: branch
 !
   mode = switch%b2tral_mode
@@ -303,10 +305,10 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg1 = ncv*ns
   CALL SFILL_NODIFF(arg1, switch%cthiv, cthi, 1)
 !srv 13.01.17 {
-  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_ki, cob%fllim_ki, 1)
-  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_ke, cob%fllim_ke, 1)
-  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_al, cob%fllim_al, 1)
-  CALL SFILL_FWD(ncv, 1.0_R8, co%fllim_al_c, cob%fllim_al_c, 1)
+  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_ki, 1)
+  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_ke, 1)
+  CALL SFILL_FWD(nfc, 1.0_R8, co%fllim_al, 1)
+  CALL SFILL_FWD(ncv, 1.0_R8, co%fllim_al_c, 1)
 !/abs((bb(:,:,0))/bb(:,:,3))            !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
   CALL PUSHREAL8ARRAY(co%alfx_c, r8*SIZE(co%alfx_c, 1)/8)
   co%alfx_c(:) = alf(:, 0)
@@ -331,24 +333,25 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   END DO
 !   ..incorporate geometry with hz                                     !srv 09.01.01
+  inctran = switch%b2txcx_increase_transp_coefs
   wrk = geo%fcs*geo%fchz
   DO ifc=1,nfc
     wrk1(ifc, 1) = geo%fcvol(ifc, 1)*geo%cvhz(mpg%fccv(ifc, 1))
     wrk1(ifc, 2) = geo%fcvol(ifc, 2)*geo%cvhz(mpg%fccv(ifc, 2))
   END DO
   DO is=0,ns-1
-    CALL B2TXCX_FWD(ncv, nfc, 0.0_R8, mode, geo, mpg, wrk1, wrk, vsa(:, &
-&             0, is), cvsahz(:, 0, is))
+    CALL B2TXCX_FWD(ncv, nfc, inctran, mode, geo, mpg, wrk1, wrk, vsa(:&
+&             , 0, is), cvsahz(:, 0, is))
     CALL B2TXCY_FWD(ncv, nfc, mode, geo, mpg, wrk1, wrk, vsa(:, 1, is), &
 &             cvsahz(:, 1, is))
 !srv 09.01.01
   END DO
 !   ..incorporate geometry
   arg1 = nfc*2*ns*ns
-  CALL SFILL_FWD(arg1, 0.0_R8, csigin, csiginb, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, csigin, 1)
   DO is=0,ns-1
-    CALL B2TXCX_FWD(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%fcs&
-&             , vsa(:, 0, is), cvsa(:, 0, is))
+    CALL B2TXCX_FWD(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%&
+&             fcs, vsa(:, 0, is), cvsa(:, 0, is))
     CALL B2TXCY_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, vsa(:&
 &             , 1, is), cvsa(:, 1, is))
     DO k=0,nscx-1
@@ -364,7 +367,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       END IF
     END DO
   END DO
-  inctran = switch%b2txcx_increase_transp_coefs
+!
   CALL B2TXCX_FWD(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%fcs&
 &           , hce(:, 0), chce(:, 0))
   CALL B2TXCY_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, hce(:, 1&
@@ -608,8 +611,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
-    nu2 = 0.0_R8
-    k2 = 1.6_R8
+    co%nu2 = 0.0_R8
+    co%k2 = 1.6_R8
     t1 = 4.0_R8*pi*eps0/qe/qe
     t2 = 3.0_R8/(4.0_R8*SQRT(2.0_R8*pi))*t1*t1*ev*SQRT(ev)*SQRT(me)
     tau = t2/dv%lnlam*pl%te/ev*SQRT(pl%te/ev)/dv%ne2
@@ -623,13 +626,13 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           k1(icv) = 1.0_R8/(1.0_R8+2.01_R8*SQRT(nu1(icv))+1.53_R8*nu1(&
 &           icv)) + 0.52_R8*geo%fteps(ift)**3*nu1(icv)/(1.0_R8+0.89_R8*&
 &           SQRT(geo%fteps(ift)**3)*nu1(icv))
-          CALL PUSHREAL8(nu2(icv), r8/8)
-          nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*SQRT(pl%ti(icv)&
-&           /(mp*am(ismain)))*2.0_R8*pi*geo%fteps(ift)**1.5_R8)
-          k2(icv) = (0.66_R8+1.88_R8*SQRT(geo%fteps(ift))-1.54_R8*geo%&
-&           fteps(ift))/(1.0_R8+1.03_R8*SQRT(nu2(icv))+0.31_R8*nu2(icv))&
-&           + 1.17_R8*geo%fteps(ift)**3*nu2(icv)/(1.0_R8+0.74_R8*SQRT(&
-&           geo%fteps(ift)**3)*nu2(icv))
+          CALL PUSHREAL8(co%nu2(icv), r8/8)
+          co%nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*SQRT(pl%ti(&
+&           icv)/(mp*am(ismain)))*2.0_R8*pi*geo%fteps(ift)**1.5_R8)
+          co%k2(icv) = (0.66_R8+1.88_R8*SQRT(geo%fteps(ift))-1.54_R8*geo&
+&           %fteps(ift))/(1.0_R8+1.03_R8*SQRT(co%nu2(icv))+0.31_R8*co%&
+&           nu2(icv)) + 1.17_R8*geo%fteps(ift)**3*co%nu2(icv)/(1.0_R8+&
+&           0.74_R8*SQRT(geo%fteps(ift)**3)*co%nu2(icv))
           CALL PUSHCONTROL2B(0)
         ELSE
           CALL PUSHCONTROL2B(1)
@@ -771,8 +774,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           CALL PUSHREAL8(co%alfx_c(icv), r8/8)
           co%alfx_c(icv) = co%alfx_c(icv)*co%f_luc_ke_c(icv)
           CALL PUSHREAL8(co%f_luc_ki_c(icv), r8/8)
-          co%f_luc_ki_c(icv) = 1.0_R8/k2(icv)*1.60_R8*SQRT(geo%fteps(ift&
-&           )**3)
+          co%f_luc_ki_c(icv) = 1.0_R8/co%k2(icv)*1.60_R8*SQRT(geo%fteps(&
+&           ift)**3)
           CALL PUSHREAL8(co%hcix_c(icv), r8/8)
           co%hcix_c(icv) = co%hcix_c(icv)*co%f_luc_ki_c(icv)
           CALL PUSHCONTROL2B(2)
@@ -838,6 +841,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !
   IF (switch%min_collisions .GT. 0.0_R8) THEN
     CALL PUSHINTEGER4(ncall_b2ttia)
+    CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL B2TXNCI_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, rt%rz2&
 &                 , dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, &
 &                 collisnumf, wrkc)
@@ -1244,9 +1248,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   CALL B2TXCX_BWD(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%fcs, &
 &           wrkc, wrkcb, cdkt(:, 0), cdktb(:, 0))
   CALL POPREAL8ARRAY(wrkc, r8*ncv/8)
-  tempb9 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
-  wrkcb = 2*wrkc*co%sigx_c*tempb9
-  cob%sigx_c = cob%sigx_c + wrkc**2*tempb9
+  tempb10 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
+  wrkcb = 2*wrkc*co%sigx_c*tempb10
+  cob%sigx_c = cob%sigx_c + wrkc**2*tempb10
   dabs0b = 0.D0
   temp12 = 2.0_R8*am(ismain)*pl%ti*mp
   temp13 = SQRT(temp12)
@@ -1303,9 +1307,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           t0b = -(cob%fllim_al(ifc)/(t0+1.0_R8)**2)
           cob%fllim_al(ifc) = 0.D0
           CALL POPREAL8(t0, r8/8)
-          tempb6 = t0b/(b2trcl_cutlo+flomx*max5)
-          abs2b = tempb6
-          tempb4 = -(abs2*tempb6/(b2trcl_cutlo+flomx*max5))
+          tempb7 = t0b/(b2trcl_cutlo+flomx*max5)
+          abs2b = tempb7
+          tempb4 = -(abs2*tempb7/(b2trcl_cutlo+flomx*max5))
           flomxb = max5*tempb4
           max5b = flomx*tempb4
           CALL POPCONTROL1B(branch)
@@ -1414,9 +1418,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
             tempb3 = (dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv(ifc, 2)))*&
 &             tempb5/(2.0_R8**2*me*2.0*temp6)
           END IF
-          tempb8 = temp6*tempb5/2.0_R8
-          dvb%ne(mpg%fccv(ifc, 1)) = dvb%ne(mpg%fccv(ifc, 1)) + tempb8
-          dvb%ne(mpg%fccv(ifc, 2)) = dvb%ne(mpg%fccv(ifc, 2)) + tempb8
+          tempb9 = temp6*tempb5/2.0_R8
+          dvb%ne(mpg%fccv(ifc, 1)) = dvb%ne(mpg%fccv(ifc, 1)) + tempb9
+          dvb%ne(mpg%fccv(ifc, 2)) = dvb%ne(mpg%fccv(ifc, 2)) + tempb9
           plb%te(mpg%fccv(ifc, 1)) = plb%te(mpg%fccv(ifc, 1)) + tempb3
           plb%te(mpg%fccv(ifc, 2)) = plb%te(mpg%fccv(ifc, 2)) + tempb3
           CALL POPCONTROL1B(branch)
@@ -1461,9 +1465,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           CALL POPREAL8(t0, r8/8)
-          tempb6 = t0b/(b2trcl_cutlo+flomx*max4)
-          abs1b = tempb6
-          tempb4 = -(abs1*tempb6/(b2trcl_cutlo+flomx*max4))
+          tempb7 = t0b/(b2trcl_cutlo+flomx*max4)
+          abs1b = tempb7
+          tempb4 = -(abs1*tempb7/(b2trcl_cutlo+flomx*max4))
           flomxb = max4*tempb4
           max4b = flomx*tempb4
           CALL POPCONTROL1B(branch)
@@ -1527,9 +1531,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           CALL POPREAL8(t0, r8/8)
-          tempb6 = t0b/(b2trcl_cutlo+flomx*max3)
-          abs0b = tempb6
-          tempb4 = -(abs0*tempb6/(b2trcl_cutlo+flomx*max3))
+          tempb7 = t0b/(b2trcl_cutlo+flomx*max3)
+          abs0b = tempb7
+          tempb4 = -(abs0*tempb7/(b2trcl_cutlo+flomx*max3))
           flomxb = max3*tempb4
           max3b = flomx*tempb4
           CALL POPCONTROL1B(branch)
@@ -1581,6 +1585,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL B2TXNCE_B(mpg, geo, switch, ncv, pl%te, plb%te, dv%ne2, dvb%ne2&
 &            , dv%lnlam, dvb%lnlam, collisnumef, collisnumefb, wrkc)
+    CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPINTEGER4(ncall_b2ttia)
     CALL B2TXNCI_B(mpg, geo, switch, ncv, ns, pl%ti, plb%ti, pl%te, plb%&
 &            te, rt%rz2, rtb%rz2, dv%ne, dvb%ne, dv%ne2, dvb%ne2, pl%na&
@@ -1822,7 +1827,6 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END IF
   ELSE IF (branch .EQ. 2) THEN
     k1b = 0.D0
-    k2b = 0.D0
     DO icv=ncv,1,-1
       CALL POPCONTROL2B(branch)
       IF (branch .NE. 0) THEN
@@ -1833,8 +1837,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           cob%hcix_c(icv) = co%f_luc_ki_c(icv)*cob%hcix_c(icv)
           ift = mpg%cvft(icv)
           CALL POPREAL8(co%f_luc_ki_c(icv), r8/8)
-          k2b(icv) = k2b(icv) - 1.60_R8*SQRT(geo%fteps(ift)**3)*cob%&
-&           f_luc_ki_c(icv)/k2(icv)**2
+          cob%k2(icv) = cob%k2(icv) - 1.60_R8*SQRT(geo%fteps(ift)**3)*&
+&           cob%f_luc_ki_c(icv)/co%k2(icv)**2
           cob%f_luc_ki_c(icv) = 0.D0
           CALL POPREAL8(co%alfx_c(icv), r8/8)
           CALL POPREAL8(co%sigx_c(icv), r8/8)
@@ -1904,13 +1908,13 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           temp10 = (15.12e16_R8*temp11+1.0_R8)*(temp0*temp8+1.0_R8)
           tempb5 = -(switch%cvsa_mltpl*cob%f_luc_et(ifc)/temp10**2)
           cob%f_luc_et(ifc) = 0.D0
-          tempb6 = 15.12e16_R8*(temp0*temp8+1.0_R8)*tempb5/(temp*ne2f(&
+          tempb7 = 15.12e16_R8*(temp0*temp8+1.0_R8)*tempb5/(temp*ne2f(&
 &           ifc))
-          tempb7 = temp0*(15.12e16_R8*temp11+1.0_R8)*tempb5/(temp9*ne2f(&
+          tempb8 = temp0*(15.12e16_R8*temp11+1.0_R8)*tempb5/(temp9*ne2f(&
 &           ifc))
-          tifb(ifc) = tifb(ifc) + 2*tif(ifc)*tempb7 + 2*tif(ifc)*tempb6
-          ne2fb(ifc) = ne2fb(ifc) - temp9*temp8*tempb7 - temp*temp11*&
-&           tempb6
+          tifb(ifc) = tifb(ifc) + 2*tif(ifc)*tempb8 + 2*tif(ifc)*tempb7
+          ne2fb(ifc) = ne2fb(ifc) - temp9*temp8*tempb8 - temp*temp11*&
+&           tempb7
         ELSE
           CALL POPREAL8(co%f_luc_et(ifc), r8/8)
           cob%f_luc_et(ifc) = 0.D0
@@ -1989,34 +1993,33 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL INTFACE_BWD(ncv, nfc, mpg%fccv, wrk1, pl%te, plb%te, tef, tefb)
     CALL POPREAL8ARRAY(wrk1, r8*nfc*2/8)
     nu1b = 0.D0
-    nu2b = 0.D0
     DO icv=ncv,1,-1
       CALL POPCONTROL2B(branch)
       IF (branch .EQ. 0) THEN
         ift = mpg%cvft(icv)
-        temp9 = SQRT(nu2(icv))
-        temp10 = 1.03_R8*temp9 + 0.31_R8*nu2(icv) + 1.0_R8
-        temp8 = SQRT(geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift))
-        temp0 = 0.74_R8*temp8*nu2(icv) + 1.0_R8
-        tempb5 = -((SQRT(geo%fteps(ift))*1.88_R8-geo%fteps(ift)*1.54_R8+&
-&         0.66_R8)*k2b(icv)/temp10**2)
-        tempb = geo%fteps(ift)**3*1.17_R8*k2b(icv)/temp0
-        k2b(icv) = 0.D0
-        IF (nu2(icv) .EQ. 0.D0) THEN
-          nu2b(icv) = nu2b(icv) + (1.0-0.74_R8*temp8*nu2(icv)/temp0)*&
-&           tempb + 0.31_R8*tempb5
+        temp10 = SQRT(co%nu2(icv))
+        temp7 = 1.03_R8*temp10 + 0.31_R8*co%nu2(icv) + 1.0_R8
+        temp9 = SQRT(geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift))
+        temp8 = 0.74_R8*temp9*co%nu2(icv) + 1.0_R8
+        tempb3 = -((SQRT(geo%fteps(ift))*1.88_R8-geo%fteps(ift)*1.54_R8+&
+&         0.66_R8)*cob%k2(icv)/temp7**2)
+        tempb6 = geo%fteps(ift)**3*1.17_R8*cob%k2(icv)/temp8
+        cob%k2(icv) = 0.D0
+        IF (co%nu2(icv) .EQ. 0.D0) THEN
+          cob%nu2(icv) = cob%nu2(icv) + (1.0-0.74_R8*temp9*co%nu2(icv)/&
+&           temp8)*tempb6 + 0.31_R8*tempb3
         ELSE
-          nu2b(icv) = nu2b(icv) + (1.0-0.74_R8*temp8*nu2(icv)/temp0)*&
-&           tempb + (1.03_R8/(2.0*temp9)+0.31_R8)*tempb5
+          cob%nu2(icv) = cob%nu2(icv) + (1.0-0.74_R8*temp9*co%nu2(icv)/&
+&           temp8)*tempb6 + (1.03_R8/(2.0*temp10)+0.31_R8)*tempb3
         END IF
-        CALL POPREAL8(nu2(icv), r8/8)
+        CALL POPREAL8(co%nu2(icv), r8/8)
         temp7 = pl%ti(icv)/(mp*am(ismain))
         temp6 = SQRT(temp7)
         temp5 = 2.0_R8*pi*geo%fteps(ift)**1.5_R8
         temp1 = temp5*tauia(icv, ismain)
         temp10 = temp1*temp6
-        tempb5 = -(geo%ftconn(ift)*nu2b(icv)/temp10**2)
-        nu2b(icv) = 0.D0
+        tempb5 = -(geo%ftconn(ift)*cob%nu2(icv)/temp10**2)
+        cob%nu2(icv) = 0.D0
         tauiab(icv, ismain) = tauiab(icv, ismain) + temp5*temp6*tempb5
         IF (.NOT.temp7 .EQ. 0.D0) plb%ti(icv) = plb%ti(icv) + temp1*&
 &           tempb5/(mp*am(ismain)*2.0*temp6)
@@ -2057,6 +2060,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END WHERE
     dvb%lnlam = dvb%lnlam - ev*dv%ne2*temp3*tempb2
     dvb%ne2 = dvb%ne2 - ev*dv%lnlam*temp3*tempb2
+    cob%k2 = 0.D0
+    cob%nu2 = 0.D0
     CALL B2TTIA_B(ncv, ns, pl%ti, plb%ti, rt%rz2, rtb%rz2, dv%ne2, dvb%&
 &           ne2, dv%lnlam, dvb%lnlam, tauia, tauiab)
   END IF
@@ -2111,9 +2116,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
     CALL B2TXCY_BWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, vsa(:&
 &             , 1, is), vsab(:, 1, is), cvsa(:, 1, is), cvsab(:, 1, is))
-    CALL B2TXCX_BWD(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%fcs&
-&             , vsa(:, 0, is), vsab(:, 0, is), cvsa(:, 0, is), cvsab(:, &
-&             0, is))
+    CALL B2TXCX_BWD(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%&
+&             fcs, vsa(:, 0, is), vsab(:, 0, is), cvsa(:, 0, is), cvsab(&
+&             :, 0, is))
   END DO
   arg1 = nfc*2*ns*ns
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb3, csigin, csiginb, 1)
@@ -2121,9 +2126,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   DO is=ns-1,0,-1
     CALL B2TXCY_BWD(ncv, nfc, mode, geo, mpg, wrk1, wrk, vsa(:, 1, is), &
 &             vsab(:, 1, is), cvsahz(:, 1, is), cvsahzb(:, 1, is))
-    CALL B2TXCX_BWD(ncv, nfc, 0.0_R8, mode, geo, mpg, wrk1, wrk, vsa(:, &
-&             0, is), vsab(:, 0, is), cvsahz(:, 0, is), cvsahzb(:, 0, is&
-&             ))
+    CALL B2TXCX_BWD(ncv, nfc, inctran, mode, geo, mpg, wrk1, wrk, vsa(:&
+&             , 0, is), vsab(:, 0, is), cvsahz(:, 0, is), cvsahzb(:, 0, &
+&             is))
   END DO
   DO is=ns-1,0,-1
     DO ifc=nfc,1,-1
@@ -2162,16 +2167,16 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt, rtb&
-&         , sigin, siginb)
+  CALL B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, pl, plb, rt, rtb, &
+&         sigin, siginb)
   CALL POPREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
   CALL POPINTEGER4(ncall_b2tlnl)
-  CALL B2TQCE_B(ncv, switch, switchb, geo, geob, mpg, pl, plb, dv, dvb, &
-&         hce, hceb, sig, sigb, alf, alfb)
+  CALL B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, hce, &
+&         hceb, sig, sigb, alf, alfb)
   CALL POPREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
   CALL POPINTEGER4(ncall_b2tlnl)
-  CALL B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, dvb, &
-&         rt, rtb, st_ext, vsa, vsab, hci, hcib)
+  CALL B2TQCA_B(ncv, ns, switch, switchb, geo, pl, plb, dv, dvb, rt, rtb&
+&         , st_ext, vsa, vsab, hci, hcib)
 END SUBROUTINE B2TRCL_B
 
 !
@@ -2199,7 +2204,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 & fllimvisc, csig_cl, calf_cl)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -2278,8 +2283,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 03.06.03
   REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx, connf, epsf
 !lk 19.09.07
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1), nu2(ncv), k2(ncv), collisnumf(mpg&
-& %nfc), collisnumef(mpg%nfc)
+  REAL(kind=r8) :: tauia(ncv, 0:ns-1), collisnumf(mpg%nfc), collisnumef(&
+& mpg%nfc)
   REAL(kind=r8) :: inctran
 !lk 12.05.11
 !lk 12.05.11
@@ -2418,14 +2423,15 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   END DO
 !   ..incorporate geometry with hz                                     !srv 09.01.01
+  inctran = switch%b2txcx_increase_transp_coefs
   wrk = geo%fcs*geo%fchz
   DO ifc=1,nfc
     wrk1(ifc, 1) = geo%fcvol(ifc, 1)*geo%cvhz(mpg%fccv(ifc, 1))
     wrk1(ifc, 2) = geo%fcvol(ifc, 2)*geo%cvhz(mpg%fccv(ifc, 2))
   END DO
   DO is=0,ns-1
-    CALL B2TXCX_NODIFF(ncv, nfc, 0.0_R8, mode, geo, mpg, wrk1, wrk, vsa(&
-&                :, 0, is), cvsahz(:, 0, is))
+    CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, wrk1, wrk, vsa&
+&                (:, 0, is), cvsahz(:, 0, is))
     CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, wrk1, wrk, vsa(:, 1, is&
 &                ), cvsahz(:, 1, is))
 !srv 09.01.01
@@ -2434,8 +2440,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg1 = nfc*2*ns*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, csigin, 1)
   DO is=0,ns-1
-    CALL B2TXCX_NODIFF(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%&
-&                fcs, vsa(:, 0, is), cvsa(:, 0, is))
+    CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo&
+&                %fcs, vsa(:, 0, is), cvsa(:, 0, is))
     CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, vsa&
 &                (:, 1, is), cvsa(:, 1, is))
     DO k=0,nscx-1
@@ -2448,7 +2454,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       END IF
     END DO
   END DO
-  inctran = switch%b2txcx_increase_transp_coefs
+!
   CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%&
 &              fcs, hce(:, 0), chce(:, 0))
   CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, hce(:&
@@ -2615,8 +2621,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
-    nu2 = 0.0_R8
-    k2 = 1.6_R8
+    co%nu2 = 0.0_R8
+    co%k2 = 1.6_R8
     t1 = 4.0_R8*pi*eps0/qe/qe
     t2 = 3.0_R8/(4.0_R8*SQRT(2.0_R8*pi))*t1*t1*ev*SQRT(ev)*SQRT(me)
     tau = t2/dv%lnlam*pl%te/ev*SQRT(pl%te/ev)/dv%ne2
@@ -2629,12 +2635,12 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           k1(icv) = 1.0_R8/(1.0_R8+2.01_R8*SQRT(nu1(icv))+1.53_R8*nu1(&
 &           icv)) + 0.52_R8*geo%fteps(ift)**3*nu1(icv)/(1.0_R8+0.89_R8*&
 &           SQRT(geo%fteps(ift)**3)*nu1(icv))
-          nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*SQRT(pl%ti(icv)&
-&           /(mp*am(ismain)))*2.0_R8*pi*geo%fteps(ift)**1.5_R8)
-          k2(icv) = (0.66_R8+1.88_R8*SQRT(geo%fteps(ift))-1.54_R8*geo%&
-&           fteps(ift))/(1.0_R8+1.03_R8*SQRT(nu2(icv))+0.31_R8*nu2(icv))&
-&           + 1.17_R8*geo%fteps(ift)**3*nu2(icv)/(1.0_R8+0.74_R8*SQRT(&
-&           geo%fteps(ift)**3)*nu2(icv))
+          co%nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*SQRT(pl%ti(&
+&           icv)/(mp*am(ismain)))*2.0_R8*pi*geo%fteps(ift)**1.5_R8)
+          co%k2(icv) = (0.66_R8+1.88_R8*SQRT(geo%fteps(ift))-1.54_R8*geo&
+&           %fteps(ift))/(1.0_R8+1.03_R8*SQRT(co%nu2(icv))+0.31_R8*co%&
+&           nu2(icv)) + 1.17_R8*geo%fteps(ift)**3*co%nu2(icv)/(1.0_R8+&
+&           0.74_R8*SQRT(geo%fteps(ift)**3)*co%nu2(icv))
         END IF
       END IF
 !lk 19.09.07 }
@@ -2719,8 +2725,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &           )**3)
           co%sigx_c(icv) = co%sigx_c(icv)*co%f_luc_ke_c(icv)
           co%alfx_c(icv) = co%alfx_c(icv)*co%f_luc_ke_c(icv)
-          co%f_luc_ki_c(icv) = 1.0_R8/k2(icv)*1.60_R8*SQRT(geo%fteps(ift&
-&           )**3)
+          co%f_luc_ki_c(icv) = 1.0_R8/co%k2(icv)*1.60_R8*SQRT(geo%fteps(&
+&           ift)**3)
           co%hcix_c(icv) = co%hcix_c(icv)*co%f_luc_ki_c(icv)
         END IF
       END IF

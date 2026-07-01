@@ -15,7 +15,7 @@
 !
 !
 !
-SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src, srcb)
+SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src)
   USE B2MOD_SWITCHES_DIFF
   USE B2MOD_TYPES
   USE B2US_MAP_DIFF
@@ -29,7 +29,6 @@ SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src, srcb)
 !      and core boundary cells.
 !     ------------------------------------------------------------------
   INTEGER :: id, icv
-  REAL(kind=r8) :: srcb(ncv, 0:nd)
 !     ------------------------------------------------------------------
   DO icv=1,ncv
     IF (mpg%cvreg(icv) .EQ. 0 .AND. switch%zero_dead_and_core .GE. 1) &

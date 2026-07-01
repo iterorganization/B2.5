@@ -17,8 +17,8 @@ MODULE B2US_FEEDBACK_DIFF
   USE B2MOD_INDIRECT_DIFF
   USE B2MOD_GEOMETRY_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_B2PLOT, ONLY : b2_fnmti
   USE B2MOD_DIAG_DIFF
   USE B2MOD_TIME
@@ -73,9 +73,9 @@ MODULE B2US_FEEDBACK_DIFF
 !contains face label to define list of faces for feedback
 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
   INTEGER, SAVE :: fb_reg_par(def_natm, 2)=0, fb_species(def_natm)=0, &
-& fb_ib(def_natm)=-1, fb_type(def_natm)=0, fb_rescale_option(def_natm)=0&
-& , fb_actuator(def_natm)=0, fb_istra(def_natm)=0, fb_reg(nmxfbreg)=0, &
-& fb_regp(def_natm, 2)=0
+& fb_ib(def_natm)=-1-def_nsts, fb_type(def_natm)=0, fb_rescale_option(&
+& def_natm)=0, fb_actuator(def_natm)=0, fb_istra(def_natm)=0, fb_reg(&
+& nmxfbreg)=0, fb_regp(def_natm, 2)=0
   LOGICAL, SAVE :: fb_type_inverse(def_natm)=.false.
 !
 ! csc old switches
@@ -269,12 +269,14 @@ CONTAINS
     INTEGER :: nfc, ns
     INTEGER :: ifb, ifbb, istrai, icount
     INTEGER :: ifbreg, is, ib, is0, is00, is_start, is_end, iatm
-    LOGICAL :: consistent, done
+    LOGICAL :: consistent, valid, done
     INTRINSIC ANY
     INTRINSIC TRIM
     EXTERNAL XERRAB
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     INTRINSIC MINVAL
+    INTEGER :: abs0
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
 !
@@ -514,11 +516,11 @@ CONTAINS
 ! now add the feedbacks turned on with switches into the new format
 ! the idea should be that any switch overrides what is in b2.feedback_control.parameters
     IF (fnaycore .NE. -1.0e30_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fnaycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fnaycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 10) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -537,11 +539,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (fheycore .NE. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fheycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fheycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 11) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -558,11 +560,11 @@ CONTAINS
       fb_alpha(ifbb) = fheycore_alpha
     END IF
     IF (fhiycore .NE. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 12) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -579,11 +581,11 @@ CONTAINS
       fb_alpha(ifbb) = fhiycore_alpha
     END IF
     IF (fchycore .NE. -1.0e30_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 13) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -600,11 +602,11 @@ CONTAINS
       fb_alpha(ifbb) = fchycore_alpha
     END IF
     IF (ndes .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 14) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -622,11 +624,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nesepm .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -645,11 +647,11 @@ CONTAINS
       fb_overshoot(ifbb) = nesepm_overshoot
     END IF
     IF (nesepm_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -672,11 +674,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (ndes_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 14) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -698,11 +700,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nesepm_pfr .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_pfr not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_pfr not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -730,7 +732,7 @@ CONTAINS
 &     'not fully backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 13) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -756,7 +758,7 @@ CONTAINS
 &     'not fully backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 15) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -779,11 +781,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nepedm_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nepedm_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nepedm_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 16) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -844,8 +846,17 @@ CONTAINS
 &           'faulty parameter fb_rescale_option!')
       CALL XERTST(0 .LE. fb_actuator(ifb), &
 &           'faulty parameter fb_actuator!')
-      CALL XERTST(-1 .LE. fb_ib(ifb) .AND. fb_ib(ifb) .LE. nbc, &
-&           'faulty parameter fb_ib!')
+      IF (fb_ib(ifb) .GE. 0.) THEN
+        abs0 = fb_ib(ifb)
+      ELSE
+        abs0 = -fb_ib(ifb)
+      END IF
+      CALL XERTST((fb_actuator(ifb) .NE. 8 .AND. ((0 .LT. fb_ib(ifb) &
+&           .AND. fb_ib(ifb) .LE. nbc) .OR. fb_ib(ifb) .EQ. -1 - &
+&           def_nsts)) .OR. (fb_actuator(ifb) .EQ. 8 .AND. ((abs0 .LE. &
+&           nsts .AND. switch%use_eirene .NE. 0) .OR. (0 .LE. fb_ib(ifb)&
+&           .AND. fb_ib(ifb) .LE. nbc .AND. switch%use_eirene .EQ. 0)))&
+&           , 'faulty parameter fb_ib!')
       CALL XERTST(0 .LE. fb_istra(ifb) .AND. fb_istra(ifb) .LE. nstrai, &
 &           'faulty parameter fb_istra!')
       CALL XERTST(0.0_R8 .LE. fb_puff_min(ifb) .AND. fb_puff_min(ifb) &
@@ -863,10 +874,13 @@ CONTAINS
 ! not using EIRENE, but no fb_ib
 ! using EIRENE, but no puff stratum
 ! feedback not 2 => either puff stratum or fb_ib needed
-      IF (fb_ib(ifb) .LE. 0 .AND. switch%use_eirene .EQ. 0 .AND. (&
+! feedback = 8 values already tested above
+      IF (((fb_ib(ifb) .LE. 0 .AND. switch%use_eirene .EQ. 0) .OR. (&
 &         fb_istra(ifb) .LE. 0 .AND. switch%use_eirene .NE. 0 .AND. &
-&         fb_actuator(ifb) .EQ. 1) .AND. (.NOT.fb_actuator(ifb) .EQ. 2)&
-&     ) CALL XERRAB('Init_feedback: fb_ib<=0 and actuator=/2')
+&         fb_actuator(ifb) .EQ. 1)) .AND. (.NOT.fb_actuator(ifb) .EQ. 2)&
+&         .AND. (.NOT.fb_actuator(ifb) .EQ. 8)) CALL XERRAB(&
+&                   'Init_feedback: fb_ib <= 0 and actuator != (2 or 8)'&
+&                                                    )
       CALL XERTST(0 .LE. fb_species(ifb) .AND. fb_species(ifb) .LE. ns -&
 &           1, 'Init_feedback: fb_species>ns!')
       iatm = b2espcr(fb_species(ifb))
@@ -875,52 +889,75 @@ CONTAINS
         is00 = eb2spcr(b2espcr(fb_species(ifbb)))
         CALL XERTST(.NOT.is0 .EQ. is00, 'init_feedback: cannot '//&
 &             'define multiple feedbacks on same atom sequence')
-        IF (fb_type(ifb) .EQ. fb_type(ifbb) .AND. (.NOT.((((((fb_type(&
+        IF (fb_type(ifb) .EQ. fb_type(ifbb) .AND. (.NOT.(((((((fb_type(&
 &           ifb) .EQ. 1 .OR. fb_type(ifb) .EQ. 4) .OR. fb_type(ifb) .EQ.&
 &           5) .OR. fb_type(ifb) .EQ. 7) .OR. fb_type(ifb) .EQ. 8) .OR. &
-&           fb_type(ifb) .EQ. 17) .OR. fb_type(ifb) .EQ. 27))) CALL &
-&         XERRAB('init_feedback:'//&
-&          ' set of feedbacks cannot be applied multiple times')
+&           fb_type(ifb) .EQ. 17) .OR. fb_type(ifb) .EQ. 22) .OR. &
+&           fb_type(ifb) .EQ. 27))) CALL XERRAB('init_feedback:'//&
+&                   ' set of feedbacks cannot be applied multiple times'&
+&                                        )
       END DO
       is_start = is0 + 1
       is_end = is0 + nfluids(iatm)
       IF (fb_actuator(ifb) .NE. 2) THEN
-!neutral flux (or gas puff)
-!charged particle flux ONLY for fb_type 6, to be improved?
-!charged particle flux, more general
-!electron heat flux
-!ion heat flux
-!current
-!density
-        result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
-        result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
-        consistent = consistent .AND. ((((((((((fb_target(ifb) .EQ. &
-&         0.0_R8 .OR. fb_type(ifb) .EQ. 0) .OR. fb_rescale_option(ifb) &
-&         .EQ. 0) .OR. fb_actuator(ifb) .EQ. 0) .OR. (fb_actuator(ifb) &
-&         .EQ. 1 .AND. (bccon(is0, fb_ib(ifb)) .EQ. 8 .OR. switch%&
-&         use_eirene .NE. 0))) .OR. (fb_actuator(ifb) .EQ. 3 .AND. &
-&         result1 .EQ. 8 .AND. result2 .EQ. 8 .AND. fb_type(ifb) .EQ. 6)&
-&         ) .OR. (fb_actuator(ifb) .EQ. 3 .AND. (bccon(fb_species(ifb), &
-&         fb_ib(ifb)) .EQ. 8 .OR. bccon(fb_species(ifb), fb_ib(ifb)) &
-&         .EQ. 13) .AND. (.NOT.fb_type(ifb) .EQ. 6))) .OR. (fb_actuator(&
-&         ifb) .EQ. 4 .AND. bcene(fb_ib(ifb)) .EQ. 8)) .OR. (fb_actuator&
-&         (ifb) .EQ. 5 .AND. bceni(fb_ib(ifb)) .EQ. 8)) .OR. (&
-&         fb_actuator(ifb) .EQ. 6 .AND. bcpot(fb_ib(ifb)) .EQ. 8)) .OR. &
-&         (fb_actuator(ifb) .EQ. 7 .AND. (bccon(fb_species(ifb), fb_ib(&
-&         ifb)) .EQ. 1 .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 28))&
-&         )
+        valid = ((fb_target(ifb) .EQ. 0.0_R8 .OR. fb_type(ifb) .EQ. 0) &
+&         .OR. fb_rescale_option(ifb) .EQ. 0) .OR. fb_actuator(ifb) .EQ.&
+&         0
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
+        IF (fb_actuator(ifb) .EQ. 1 .AND. (.NOT.valid)) THEN
+          IF (switch%use_eirene .EQ. 0) THEN
+! neutral flux
+            valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+            IF (valid) valid = bccon(is0, fb_ib(ifb)) .EQ. 8
+          ELSE
+! gas puff
+            valid = fb_istra(ifb) .GE. 1 .AND. fb_istra(ifb) .LE. nstrai
+          END IF
+        END IF
+        IF (fb_actuator(ifb) .EQ. 3 .AND. (.NOT.valid)) THEN
+!charged particle flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) THEN
+            result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
+            result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
+            valid = (result1 .EQ. 8 .AND. result2 .EQ. 8 .AND. fb_type(&
+&             ifb) .EQ. 6) .OR. ((bccon(fb_species(ifb), fb_ib(ifb)) &
+&             .EQ. 8 .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 13) &
+&             .AND. (.NOT.fb_type(ifb) .EQ. 6))
+          END IF
+        END IF
+        IF (fb_actuator(ifb) .EQ. 4 .AND. (.NOT.valid)) THEN
+!electron heat flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bcene(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 5 .AND. (.NOT.valid)) THEN
+!ion heat flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bceni(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 6 .AND. (.NOT.valid)) THEN
+!current
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bcpot(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 7 .AND. (.NOT.valid)) THEN
+!density
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 1 &
+&             .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 28
+        END IF
+        IF (fb_actuator(ifb) .EQ. 8 .AND. (.NOT.valid)) THEN
+!pump albedo
+          valid = fb_ib(ifb) .GE. -nsts .AND. fb_ib(ifb) .LE. nbc
+        END IF
+        consistent = consistent .AND. valid
       END IF
     END DO
     consistent = (consistent .OR. b2sral_style .EQ. 1) .OR. switch%&
 &     b2stbc_boundary_namelist .LT. 1
-    DO ifb=1,nfb
-      IF (fb_ib(ifb) .LT. 0) consistent = consistent .AND. (.NOT.(((&
-&         fb_actuator(ifb) .EQ. 1 .AND. switch%use_eirene .EQ. 0) .OR. &
-&         fb_actuator(ifb) .EQ. 3) .OR. fb_actuator(ifb) .EQ. 7))
-    END DO
     DO ifb=1,nfb
       IF (fb_actuator(ifb) .NE. 1) consistent = consistent .AND. (.NOT.(&
 &         fb_rescale_option(ifb) .EQ. 4 .OR. fb_rescale_option(ifb) .EQ.&
@@ -1030,17 +1067,7 @@ CONTAINS
 
 !  Differentiation of compute_feedback in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: saved_fb_actuator saved_fb_prev
-!                fb_current fb_rescale fb_current_prev userfluxparm
-!                conpar enepar enipar potpar charge_frac *(psnc.na)
-!                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fch)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.fhe)
-!                *(dv.fhi) *(dv.fht) *(dv.kinrgy) *(dv.ne) *(dv.ni)
-!                *(dv.nn) *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
-!                *(rt.rza) *(srw.rqrad) *(srw.rqbrm) *(pl.na) *(pl.te)
-!                *(pl.ti) *(pl.tn)
-!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
-!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                fb_current fb_rescale fb_current_prev recyc b2recyc
 !                userfluxparm conpar enepar enipar potpar charge_frac
 !                *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.kinrgy)
 !                *(dv.fch) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
@@ -1048,24 +1075,37 @@ CONTAINS
 !                *(dv.fhe) *(dv.fhi) *(dv.fht) *(dv.kinrgy) *(dv.ne)
 !                *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.rqrad) *(srw.rqbrm)
-!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                *(sr.sna) *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
+!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                recyc b2recyc userfluxparm conpar enepar enipar
+!                potpar charge_frac *(psnc.na) *(psnc.ne) *(psnc.ni)
+!                *(psnc.kinrgy) *(dv.fch) *(dv.fna) *(dv.fna_mdf)
+!                *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
+!                *(dv.fna_eir) *(dv.fhe) *(dv.fhi) *(dv.fht) *(dv.kinrgy)
+!                *(dv.ne) *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rza) *(srw.rqrad)
+!                *(srw.rqbrm) *(sr.sna) *(pl.na) *(pl.te) *(pl.ti)
+!                *(pl.tn)
 !   Plus diff mem management of: eneutrad:in eionrad:in emolrad:in
 !                psnc.na:in psnc.ne:in psnc.ni:in psnc.fna:in psnc.kinrgy:in
 !                dv.fch:in dv.fna:in dv.fna_mdf:in dv.fna_52:in
 !                dv.fna_32:in dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in
 !                dv.fna_fcor:in dv.fna_eir:in dv.fhe:in dv.fhi:in
 !                dv.fht:in dv.kinrgy:in dv.ne:in dv.ni:in dv.nn:in
-!                psnl.na:in psnl.ne:in psnl.ni:in psnl.fna:in psnl.kinrgy:in
-!                geo.fchc:in rt.rza:in srw.rqrad:in srw.rqbrm:in
-!                pl.na:in pl.te:in pl.ti:in pl.tn:in
+!                mpg.bcfcor:in psnl.na:in psnl.ne:in psnl.ni:in
+!                psnl.fna:in psnl.kinrgy:in geo.fchc:in rt.rza:in
+!                srw.rqrad:in srw.rqbrm:in sr.sna:in pl.na:in pl.te:in
+!                pl.ti:in pl.tn:in
 !
-  SUBROUTINE COMPUTE_FEEDBACK_B(ncv, nfc, ns, ismain, switch, geo, geob&
-&   , mpg, mpgb, pl, plb, dv, dvb, rt, rtb, srw, srwb, psnc, psncb, psnl&
-&   , psnlb, main_call)
+  SUBROUTINE COMPUTE_FEEDBACK_B(ncv, nfc, ns, ismain, switch, switchb, &
+&   geo, geob, mpg, mpgb, pl, plb, dv, dvb, rt, rtb, sr, srb, srw, srwb&
+&   , psnc, psncb, psnl, psnlb, main_call)
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES) :: switchb
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFF) :: geob
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1076,6 +1116,8 @@ CONTAINS
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dvb
     TYPE(B2RATES), INTENT(IN) :: rt
     TYPE(B2RATES_DIFF) :: rtb
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(B2SOURCE) :: srb
     TYPE(B2SOURCEWORK), INTENT(IN) :: srw
     TYPE(B2SOURCEWORK) :: srwb
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
@@ -1083,7 +1125,9 @@ CONTAINS
     LOGICAL :: main_call
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, i, j, k, l, ic, ifs, iatm, imol
+&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    REAL(kind=r8) :: sna_pumpb, sna_puffb, sna_coreb
     INTEGER, SAVE :: ncall=0
     REAL(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, zaf
     REAL(kind=r8) :: sum_eb, total_fluxb, sum_sb, t0b, zafb
@@ -1098,8 +1142,16 @@ CONTAINS
     INTRINSIC LOG
     INTRINSIC TANH
     INTRINSIC EXP
+    REAL(r8) :: y1
+    REAL(r8) :: y1b
     REAL(kind=r8) :: abs0
     REAL(kind=r8) :: abs0b
+    REAL(kind=r8) :: abs1
+    INTEGER :: abs2
+    REAL(kind=r8) :: abs3
+    REAL(kind=r8) :: abs3b
+    REAL(kind=r8) :: abs4
+    REAL(kind=r8) :: abs4b
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
 !
@@ -1151,6 +1203,7 @@ CONTAINS
     INTEGER :: ad_to17
     INTEGER :: ad_from18
     INTEGER :: ad_to18
+    INTEGER :: ad_to19
 !
     result1 = MAXVAL(fb_target(1:nfb))
     result2 = MAXVAL(fb_rescale_option(1:nfb))
@@ -2000,7 +2053,7 @@ CONTAINS
 !
             CALL PUSHCONTROL5B(22)
           CASE (23) 
-!  Total plasma heat flux at outer target
+!  Total particle heat flux at outer target
 !
             IF (ncall .EQ. 0) THEN
               CALL PUSHREAL8(fb_target(ifb), r8/8)
@@ -2043,7 +2096,7 @@ CONTAINS
               t0 = dv%fht(fbreg(ifc), 0) + dv%fht(fbreg(ifc), 1)
               t0 = t1*t0/geo%fcs(fbreg(ifc))
               IF (switch%use_eirene .NE. 0) t0 = t0 + ewldt_res(b2_fnmti&
-&                 (ifc)) - ewldrp_res(b2_fnmti(ifc))
+&                 (fbreg(ifc))) - ewldrp_res(b2_fnmti(fbreg(ifc)))
               IF (fb_current(ifb) .LT. t0) THEN
                 CALL PUSHREAL8(fb_current(ifb), r8/8)
                 fb_current(ifb) = t0
@@ -2232,25 +2285,34 @@ CONTAINS
             ifc1 = fbregp(ifb, 1)
             ifc2 = ifc1 + fbregp(ifb, 2) - 1
             ad_from16 = ifc1
-            CALL PUSHINTEGER4(ifc)
-            DO ifc=ad_from16,ifc2
-              ic = mpg%fcbc(fbreg(ifc), 1)
+            DO k=ad_from16,ifc2
+              CALL PUSHINTEGER4(ifc)
+              ifc = fbreg(k)
+              ic = mpg%fcbc(ifc, 1)
               CALL PUSHREAL8(t1, r8/8)
               t1 = mpg%bcfcor(ic)
               CALL PUSHREAL8(t0, r8/8)
               t0 = 0.0_R8
               DO is=0,ns-1
                 IF (is_neutral(is)) THEN
-                  CALL PUSHCONTROL1B(0)
+                  CALL PUSHCONTROL2B(1)
                 ELSE
-                  CALL PUSHREAL8(zaf, r8/8)
-                  zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, rt&
-&                   %rza(1, is))
-                  t0 = t0 + t1*(dv%fna(fbreg(ifc), 0, is)+dv%fna(fbreg(&
-&                   ifc), 1, is))*zaf*qe/geo%fcs(fbreg(ifc))/(geo%fcqalf&
-&                   (fbreg(ifc), 0)*geo%fcbb(fbreg(ifc), 0)/geo%fcbb(&
-&                   fbreg(ifc), 3))
-                  CALL PUSHCONTROL1B(1)
+                  IF (geo%fcpbs(ifc)/geo%fcs(ifc) .GE. 0.) THEN
+                    abs1 = geo%fcpbs(ifc)/geo%fcs(ifc)
+                  ELSE
+                    abs1 = -(geo%fcpbs(ifc)/geo%fcs(ifc))
+                  END IF
+                  IF (abs1 .LT. geo%qalfmin) THEN
+                    CALL PUSHCONTROL2B(0)
+                  ELSE
+                    CALL PUSHREAL8(zaf, r8/8)
+                    zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, &
+&                     rt%rza(1, is))
+                    t0 = t0 + t1*(dv%fna(ifc, 0, is)+dv%fna(ifc, 1, is))&
+&                     *zaf*qe/geo%fcs(ifc)/(geo%fcqalf(ifc, 0)*geo%fcbb(&
+&                     ifc, 0)/geo%fcbb(ifc, 3))
+                    CALL PUSHCONTROL2B(2)
+                  END IF
                 END IF
               END DO
               IF (fb_current(ifb) .LT. t0) THEN
@@ -2263,7 +2325,7 @@ CONTAINS
                 CALL PUSHCONTROL1B(1)
               END IF
             END DO
-            CALL PUSHINTEGER4(ifc - 1)
+            CALL PUSHINTEGER4(k - 1)
             CALL PUSHINTEGER4(ad_from16)
             IF (fb_type_inverse(ifb)) THEN
               CALL PUSHREAL8(fb_current(ifb), r8/8)
@@ -2345,20 +2407,25 @@ CONTAINS
 !
           SELECT CASE  (fb_rescale_option(ifb)) 
           CASE (0) 
-            CALL PUSHCONTROL4B(11)
+            CALL PUSHCONTROL5B(14)
           CASE (1) 
 !
             CALL PUSHREAL8(fb_rescale(ifb), r8/8)
             fb_rescale(ifb) = (1.0_R8+fb_alpha(ifb)*fb_target(ifb)/&
 &             fb_current(ifb))/(1.0_R8+fb_alpha(ifb))
 !
-            CALL PUSHCONTROL4B(0)
+            CALL PUSHCONTROL5B(0)
           CASE (2) 
 !
-            CALL PUSHREAL8(fb_rescale(ifb), r8/8)
-            fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
-!
-            CALL PUSHCONTROL4B(1)
+            IF (fb_current(ifb) .NE. 0.0_R8) THEN
+              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+              fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
+              CALL PUSHCONTROL5B(1)
+            ELSE
+              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+              fb_rescale(ifb) = 1.0_R8
+              CALL PUSHCONTROL5B(2)
+            END IF
           CASE (3) 
 !
 ! 2**(tanh(log(x)/b)*log(a)/log(2))
@@ -2367,7 +2434,7 @@ CONTAINS
 &             fb_current(ifb))/fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(&
 &             2.0_R8))
 !
-            CALL PUSHCONTROL4B(2)
+            CALL PUSHCONTROL5B(3)
           CASE (4) 
 ! rescale done according to SOLPS4 formula:
 ! N = A + B*(time-T)
@@ -2392,7 +2459,7 @@ CONTAINS
             fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-fb_current(&
 &             ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(ifb))/dt_prev)
 !
-            CALL PUSHCONTROL4B(3)
+            CALL PUSHCONTROL5B(4)
           CASE (5) 
 ! rescale done according to SOLPS4 formula:
 ! Nt = A*exp((time-T)*B)
@@ -2417,14 +2484,14 @@ CONTAINS
             fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-fb_current(&
 &             ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(ifb))/dt_prev)
 !
-            CALL PUSHCONTROL4B(4)
+            CALL PUSHCONTROL5B(5)
           CASE (6) 
 ! rescale slowed by fb_alpha (SOLPS4 style)
 !
             CALL PUSHREAL8(fb_rescale(ifb), r8/8)
             fb_rescale(ifb) = fb_alpha(ifb)*fb_current(ifb)
 !
-            CALL PUSHCONTROL4B(5)
+            CALL PUSHCONTROL5B(6)
           CASE (7) 
 !
 ! 2**(tanh(log(x)/b)*log(a)/log(2))
@@ -2436,16 +2503,16 @@ CONTAINS
               CALL PUSHREAL8(fb_rescale(ifb), r8/8)
               fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t0/fb_current(ifb))/&
 &               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
-              CALL PUSHCONTROL4B(6)
+              CALL PUSHCONTROL5B(7)
             ELSE IF (fb_current(ifb) .GT. t1) THEN
               CALL PUSHREAL8(fb_rescale(ifb), r8/8)
               fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t1/fb_current(ifb))/&
 &               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
-              CALL PUSHCONTROL4B(7)
+              CALL PUSHCONTROL5B(8)
             ELSE
               CALL PUSHREAL8(fb_rescale(ifb), r8/8)
               fb_rescale(ifb) = 1.0_R8
-              CALL PUSHCONTROL4B(8)
+              CALL PUSHCONTROL5B(9)
             END IF
           CASE (8) 
 !
@@ -2516,12 +2583,19 @@ CONTAINS
               ELSE
                 CALL PUSHCONTROL1B(1)
               END IF
-              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
-              fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
-&               fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-t0)&
-&               /dt_prev)
+              IF (fb_current(ifb) .NE. 0.0_R8) THEN
+                CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+                fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
+&                 fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-&
+&                 t0)/dt_prev)
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+                fb_rescale(ifb) = 1.0_R8
+                CALL PUSHCONTROL1B(1)
+              END IF
               fb_current_prev(ifb) = t0
-              CALL PUSHCONTROL4B(9)
+              CALL PUSHCONTROL5B(10)
             ELSE
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
 &             THEN
@@ -2534,10 +2608,66 @@ CONTAINS
               fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-&
 &               fb_current(ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(&
 &               ifb))/dt_prev)
-              CALL PUSHCONTROL4B(10)
+              CALL PUSHCONTROL5B(11)
+            END IF
+          CASE (9) 
+!
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+            CALL PUSHREAL8(t0, r8/8)
+            t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+            CALL PUSHREAL8(t1, r8/8)
+            t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+            IF (fb_current(ifb) .LT. t0) THEN
+              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+              fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t0/fb_current(ifb))/&
+&               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
+              CALL PUSHCONTROL2B(0)
+            ELSE IF (fb_current(ifb) .GT. t1) THEN
+              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+              fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t1/fb_current(ifb))/&
+&               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
+              CALL PUSHCONTROL2B(1)
+            ELSE
+              CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+              fb_rescale(ifb) = 1.0_R8
+              CALL PUSHCONTROL2B(2)
+            END IF
+!
+            IF (switch%use_eirene .EQ. 0) THEN
+              CALL PUSHREAL8(sna_core, r8/8)
+              CALL PUSHREAL8(sna_puff, r8/8)
+              CALL PUSHREAL8(sna_pump, r8/8)
+              CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                               is_start, is_end, sna_pump, sna_puff, &
+&                               sna_core)
+              IF (sna_pump .LT. -0.0_R8) THEN
+                IF (sna_pump .GE. 0.) THEN
+                  CALL PUSHREAL8(abs4, r8/8)
+                  abs4 = sna_pump
+                  CALL PUSHCONTROL1B(0)
+                ELSE
+                  CALL PUSHREAL8(abs4, r8/8)
+                  abs4 = -sna_pump
+                  CALL PUSHCONTROL1B(1)
+                END IF
+                y1 = (abs4-sna_core)*fb_rescale(ifb)
+                IF (0.0_R8 .LT. y1) THEN
+                  CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+                  fb_rescale(ifb) = y1
+                  CALL PUSHCONTROL5B(16)
+                ELSE
+                  CALL PUSHREAL8(fb_rescale(ifb), r8/8)
+                  fb_rescale(ifb) = 0.0_R8
+                  CALL PUSHCONTROL5B(15)
+                END IF
+              ELSE
+                CALL PUSHCONTROL5B(12)
+              END IF
+            ELSE
+              CALL PUSHCONTROL5B(13)
             END IF
           CASE DEFAULT
-            CALL PUSHCONTROL4B(11)
+            CALL PUSHCONTROL5B(14)
           END SELECT
 !
 !
@@ -2545,7 +2675,7 @@ CONTAINS
 !
           SELECT CASE  (fb_actuator(ifb)) 
           CASE (0) 
-            CALL PUSHCONTROL4B(11)
+            CALL PUSHCONTROL5B(15)
           CASE (1) 
 !
             IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
@@ -2581,7 +2711,7 @@ CONTAINS
 &               fb_rescale(ifb)
               CALL PUSHCONTROL2B(0)
             ELSE IF (fb_rescale_option(ifb) .EQ. 6 .OR. &
-&               fb_rescale_option(ifb) .EQ. 7) THEN
+&               fb_rescale_option(ifb) .EQ. 9) THEN
               CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
               saved_fb_actuator(ifb) = fb_rescale(ifb)
               CALL PUSHCONTROL2B(1)
@@ -2624,17 +2754,17 @@ CONTAINS
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
               IF (switch%use_eirene .EQ. 0) THEN
                 conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
-                CALL PUSHCONTROL4B(0)
+                CALL PUSHCONTROL5B(0)
               ELSE
                 userfluxparm(fb_istra(ifb), 1) = 0.0_R8
-                CALL PUSHCONTROL4B(1)
+                CALL PUSHCONTROL5B(1)
               END IF
             ELSE IF (switch%use_eirene .EQ. 0) THEN
               conpar(is_start, fb_ib(ifb), 1) = saved_fb_actuator(ifb)
-              CALL PUSHCONTROL4B(2)
+              CALL PUSHCONTROL5B(2)
             ELSE
               userfluxparm(fb_istra(ifb), 1) = saved_fb_actuator(ifb)
-              CALL PUSHCONTROL4B(3)
+              CALL PUSHCONTROL5B(3)
             END IF
           CASE (2) 
             ad_from17 = is_start
@@ -2678,7 +2808,7 @@ CONTAINS
             END DO
             CALL PUSHINTEGER4(is - 1)
             CALL PUSHINTEGER4(ad_from17)
-            CALL PUSHCONTROL4B(4)
+            CALL PUSHCONTROL5B(4)
           CASE (3) 
 !
             CALL PUSHINTEGER4(is_start)
@@ -2760,10 +2890,10 @@ CONTAINS
               END DO
               CALL PUSHINTEGER4(is - 1)
               CALL PUSHINTEGER4(ad_from18)
-              CALL PUSHCONTROL4B(5)
+              CALL PUSHCONTROL5B(5)
             ELSE
               conpar(fb_species(ifb), fb_ib(ifb), 1) = total_flux
-              CALL PUSHCONTROL4B(6)
+              CALL PUSHCONTROL5B(6)
             END IF
           CASE (4) 
 !
@@ -2789,7 +2919,7 @@ CONTAINS
 !
             enepar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
 !
-            CALL PUSHCONTROL4B(7)
+            CALL PUSHCONTROL5B(7)
           CASE (5) 
 !
             IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
@@ -2814,7 +2944,7 @@ CONTAINS
 !
             enipar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
 !
-            CALL PUSHCONTROL4B(8)
+            CALL PUSHCONTROL5B(8)
           CASE (6) 
 !
             IF (feedback_namelist_used .AND. ncall .EQ. 0 .AND. &
@@ -2839,7 +2969,7 @@ CONTAINS
 !
             potpar(fb_ib(ifb), 1) = saved_fb_actuator(ifb)
 !
-            CALL PUSHCONTROL4B(9)
+            CALL PUSHCONTROL5B(9)
           CASE (7) 
 !
             IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
@@ -2866,17 +2996,126 @@ CONTAINS
             conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
 &             ifb)
 !
-            CALL PUSHCONTROL4B(10)
+            CALL PUSHCONTROL5B(10)
+          CASE (8) 
+!
+            IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
+&           THEN
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+!           if(fb_puff_min(ifb).le.0.0_R8)
+!  &
+!
+            IF (fb_rescale_option(ifb) .LT. 4 .OR. fb_rescale_option(ifb&
+&               ) .EQ. 7) THEN
+              IF (switch%use_eirene .EQ. 0) THEN
+                CALL PUSHREAL8(sna_core, r8/8)
+                CALL PUSHREAL8(sna_puff, r8/8)
+                CALL PUSHREAL8(sna_pump, r8/8)
+                CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                                 is_start, is_end, sna_pump, sna_puff, &
+&                                 sna_core)
+                IF (sna_pump .LT. 0.0_R8) THEN
+                  IF ((sna_puff+sna_core)/sna_pump .GE. 0.) THEN
+                    CALL PUSHREAL8(abs3, r8/8)
+                    abs3 = (sna_puff+sna_core)/sna_pump
+                    CALL PUSHCONTROL1B(0)
+                  ELSE
+                    CALL PUSHREAL8(abs3, r8/8)
+                    abs3 = -((sna_puff+sna_core)/sna_pump)
+                    CALL PUSHCONTROL1B(1)
+                  END IF
+                  CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+                  saved_fb_actuator(ifb) = abs3*saved_fb_actuator(ifb)/&
+&                   fb_rescale(ifb)
+                  CALL PUSHCONTROL2B(3)
+                ELSE
+                  CALL PUSHCONTROL2B(2)
+                END IF
+              ELSE
+                CALL PUSHCONTROL2B(1)
+              END IF
+            ELSE
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = fb_rescale(ifb)
+              CALL PUSHCONTROL2B(0)
+            END IF
+            IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = fb_puff_min(ifb)
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+              CALL PUSHCONTROL1B(1)
+            END IF
+!
+            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) .GT.&
+&               fb_target(ifb)*fb_overshoot(ifb)) THEN
+              CALL PUSHCONTROL5B(11)
+            ELSE IF (switch%use_eirene .EQ. 0) THEN
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+              IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(fb_species(ifb)&
+&                 )) .NE. 1) THEN
+                DO istra=1,nbc
+                  IF (bccon(is_start, istra) .EQ. 10 .AND. (istra .EQ. &
+&                     fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) THEN
+                    DO ibc=1,mpg%bccvp(istra, 2)
+                      conpar(is_start, istra, 1) = -saved_fb_actuator(&
+&                       ifb)
+                    END DO
+                    CALL PUSHINTEGER4(ibc - 1)
+                    CALL PUSHCONTROL1B(1)
+                  ELSE
+                    CALL PUSHCONTROL1B(0)
+                  END IF
+                END DO
+                CALL PUSHCONTROL5B(12)
+              ELSE
+                DO istra=1,nstrai
+                  IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 &
+&                     .AND. species_start(istra) .EQ. is_start .AND. (&
+&                     istra .EQ. fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) &
+&                 THEN
+                    b2recyc(is_start, istra) = 1.0_R8 - &
+&                     saved_fb_actuator(ifb)
+                    CALL PUSHREAL8(recyc(is_start, istra), r8/8)
+                    recyc(is_start, istra) = b2recyc(is_start, istra)
+                    CALL PUSHCONTROL1B(1)
+                  ELSE
+                    CALL PUSHCONTROL1B(0)
+                  END IF
+                END DO
+                CALL PUSHCONTROL5B(13)
+              END IF
+            ELSE
+              CALL PUSHCONTROL5B(14)
+            END IF
           CASE DEFAULT
-            CALL PUSHCONTROL4B(11)
+            CALL PUSHCONTROL5B(15)
           END SELECT
         ELSE
-          CALL PUSHCONTROL4B(12)
+          CALL PUSHCONTROL5B(16)
         END IF
 !
 !
-        feedback_namelist_used = (feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3
+        feedback_namelist_used = ((feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
+&         fb_actuator(ifb) .EQ. 8
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           saved_fb_prev(ifb) = fb_current_prev(ifb)
@@ -2889,7 +3128,7 @@ CONTAINS
       she_rad_totb = 0.D0
       she_eir_totb = 0.D0
       t0b = 0.D0
-      DO 150 ifb=nfb,1,-1
+      DO 160 ifb=nfb,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           fb_current_prevb(ifb) = fb_current_prevb(ifb) + saved_fb_prevb&
@@ -2899,168 +3138,170 @@ CONTAINS
           fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb)
           saved_fb_prevb(ifb) = 0.D0
         END IF
-        CALL POPCONTROL4B(branch)
-        IF (branch .LT. 6) THEN
-          IF (branch .LT. 3) THEN
-            IF (branch .EQ. 0) THEN
-              conparb(is_start, fb_ib(ifb), 1) = 0.D0
-            ELSE IF (branch .EQ. 1) THEN
-              userfluxparmb(fb_istra(ifb), 1) = 0.D0
-            ELSE
+        CALL POPCONTROL5B(branch)
+        IF (branch .LT. 8) THEN
+          IF (branch .LT. 4) THEN
+            IF (branch .LT. 2) THEN
+              IF (branch .EQ. 0) THEN
+                conparb(is_start, fb_ib(ifb), 1) = 0.D0
+              ELSE
+                userfluxparmb(fb_istra(ifb), 1) = 0.D0
+              END IF
+            ELSE IF (branch .EQ. 2) THEN
               saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
 &               conparb(is_start, fb_ib(ifb), 1)
               conparb(is_start, fb_ib(ifb), 1) = 0.D0
-            END IF
-          ELSE IF (branch .EQ. 3) THEN
-            saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
-&             userfluxparmb(fb_istra(ifb), 1)
-            userfluxparmb(fb_istra(ifb), 1) = 0.D0
-          ELSE IF (branch .EQ. 4) THEN
-            dvb%ni = dvb%ni + psncb%ni + psnlb%ni
-            psncb%ni = 0.D0
-            psnlb%ni = 0.D0
-            CALL B2XPNN_B(ncv, ns, pl%na, plb%na, dv%nn, dvb%nn)
-            dvb%nn = 0.D0
-            CALL B2XPNI_B(ncv, ns, pl%na, plb%na, dv%ni, dvb%ni)
-            dvb%kinrgy = dvb%kinrgy + psncb%kinrgy + psnlb%kinrgy
-            psncb%kinrgy = 0.D0
-            psnlb%kinrgy = 0.D0
-            dvb%ne = dvb%ne + psncb%ne + psnlb%ne
-            psncb%ne = 0.D0
-            psnlb%ne = 0.D0
-            plb%na = plb%na + psncb%na + psnlb%na
-            psncb%na = 0.D0
-            psnlb%na = 0.D0
-            CALL POPINTEGER4(ad_from17)
-            CALL POPINTEGER4(ad_to17)
-            DO is=ad_to17,ad_from17,-1
-              CALL POPREAL8ARRAY(dv%fna_32(:, 0:1, is), r8*SIZE(dv%&
-&                          fna_32, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fna_eir(:, 0:1, is), r8*SIZE(dv%&
-&                          fna_eir, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fnapsch(:, 0:1, is), r8*SIZE(dv%&
-&                          fnapsch, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fna_he(:, 0:1, is), r8*SIZE(dv%&
-&                          fna_he, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fna_fcor(:, 0:1, is), r8*SIZE(dv%&
-&                          fna_fcor, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fna_mdf(:, 0:1, is), r8*SIZE(dv%&
-&                          fna_mdf, 1)*2/8)
-              CALL POPREAL8ARRAY(dv%fna(:, 0:1, is), r8*SIZE(dv%fna, 1)*&
-&                          2/8)
-              fb_rescaleb(ifb) = fb_rescaleb(ifb) + SUM(dv%fna_32(:, 0:1&
-&               , is)*dvb%fna_32(:, 0:1, is)) + SUM(dv%fna_eir(:, 0:1, &
-&               is)*dvb%fna_eir(:, 0:1, is)) + SUM(dv%fnapsch(:, 0:1, is&
-&               )*dvb%fnapsch(:, 0:1, is)) + SUM(dv%fna_he(:, 0:1, is)*&
-&               dvb%fna_he(:, 0:1, is)) + SUM(dv%fna_fcor(:, 0:1, is)*&
-&               dvb%fna_fcor(:, 0:1, is)) + SUM(dv%fna_mdf(:, 0:1, is)*&
-&               dvb%fna_mdf(:, 0:1, is)) + SUM(dv%fna(:, 0:1, is)*dvb%&
-&               fna(:, 0:1, is)) + SUM(pl%na(:, is)*rt%rza(:, is)*dvb%ne&
-&               )
-              dvb%fna_32(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_32(:, 0:1&
-&               , is)
-              dvb%fna_eir(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_eir(:, 0&
-&               :1, is)
-              dvb%fnapsch(:, 0:1, is) = fb_rescale(ifb)*dvb%fnapsch(:, 0&
-&               :1, is)
-              dvb%fna_he(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_he(:, 0:1&
-&               , is)
-              dvb%fna_fcor(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_fcor(:&
-&               , 0:1, is)
-              dvb%fna_mdf(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_mdf(:, 0&
-&               :1, is)
-              dvb%fna(:, 0:1, is) = fb_rescale(ifb)*dvb%fna(:, 0:1, is)
-              CALL POPREAL8ARRAY(dv%ne, r8*SIZE(dv%ne, 1)/8)
-              plb%na(:, is) = plb%na(:, is) + (fb_rescale(ifb)-1.0_R8)*&
-&               rt%rza(:, is)*dvb%ne
-              rtb%rza(:, is) = rtb%rza(:, is) + (fb_rescale(ifb)-1.0_R8)&
-&               *pl%na(:, is)*dvb%ne
-              CALL POPREAL8ARRAY(dv%kinrgy(:, is), r8*SIZE(dv%kinrgy, 1)&
-&                          /8)
-              CALL POPREAL8ARRAY(pl%na(:, is), r8*SIZE(pl%na, 1)/8)
-              fb_rescaleb(ifb) = fb_rescaleb(ifb) + SUM(dv%kinrgy(:, is)&
-&               *dvb%kinrgy(:, is)) + SUM(pl%na(:, is)*plb%na(:, is))
-              dvb%kinrgy(:, is) = fb_rescale(ifb)*dvb%kinrgy(:, is)
-              plb%na(:, is) = fb_rescale(ifb)*plb%na(:, is)
-            END DO
-            GOTO 120
-          ELSE
-            total_fluxb = 0.D0
-            CALL POPINTEGER4(ad_from18)
-            CALL POPINTEGER4(ad_to18)
-            DO is=ad_to18,ad_from18,-1
-              iss = is - is_start + 1
-              total_fluxb = total_fluxb + charge_frac(iss)*conparb(is, &
-&               fb_ib(ifb), 1)
-              charge_fracb(iss) = charge_fracb(iss) + total_flux*conparb&
-&               (is, fb_ib(ifb), 1)
-              conparb(is, fb_ib(ifb), 1) = 0.D0
-              CALL POPINTEGER4(iss)
-            END DO
-            GOTO 110
-          END IF
-          CALL POPCONTROL2B(branch)
-          IF (branch .NE. 0) THEN
-            IF (branch .EQ. 1) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              saved_fb_actuatorb(ifb) = 0.D0
             ELSE
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
+&               userfluxparmb(fb_istra(ifb), 1)
+              userfluxparmb(fb_istra(ifb), 1) = 0.D0
             END IF
-          END IF
-          CALL POPCONTROL2B(branch)
-          IF (branch .NE. 0) THEN
-            IF (branch .EQ. 1) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              saved_fb_actuatorb(ifb) = 0.D0
-            ELSE
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+            CALL POPCONTROL2B(branch)
+            IF (branch .NE. 0) THEN
+              IF (branch .EQ. 1) THEN
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                saved_fb_actuatorb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              END IF
             END IF
-          END IF
-          CALL POPCONTROL2B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(ifb&
-&             )
-          ELSE IF (branch .EQ. 1) THEN
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(ifb&
-&             )
-            saved_fb_actuatorb(ifb) = 0.D0
-          ELSE
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(ifb)&
-&             *saved_fb_actuatorb(ifb)
-            saved_fb_actuatorb(ifb) = fb_rescale(ifb)*saved_fb_actuatorb&
-&             (ifb)
-          END IF
-          CALL POPCONTROL3B(branch)
-          IF (branch .LT. 2) THEN
+            CALL POPCONTROL2B(branch)
+            IF (branch .NE. 0) THEN
+              IF (branch .EQ. 1) THEN
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                saved_fb_actuatorb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              END IF
+            END IF
+            CALL POPCONTROL2B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              conparb(is_start, fb_ib(ifb), 1) = conparb(is_start, fb_ib&
-&               (ifb), 1) + saved_fb_actuatorb(ifb)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
+&               ifb)
+            ELSE IF (branch .EQ. 1) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
+&               ifb)
               saved_fb_actuatorb(ifb) = 0.D0
             ELSE
               CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(&
+&               ifb)*saved_fb_actuatorb(ifb)
+              saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
+&               saved_fb_actuatorb(ifb)
+            END IF
+            CALL POPCONTROL3B(branch)
+            IF (branch .LT. 2) THEN
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                conparb(is_start, fb_ib(ifb), 1) = conparb(is_start, &
+&                 fb_ib(ifb), 1) + saved_fb_actuatorb(ifb)
+                saved_fb_actuatorb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                saved_fb_actuatorb(ifb) = 0.D0
+              END IF
+            ELSE IF (branch .EQ. 2) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              userfluxparmb(fb_istra(ifb), 1) = userfluxparmb(fb_istra(&
+&               ifb), 1) + saved_fb_actuatorb(ifb)
+              saved_fb_actuatorb(ifb) = 0.D0
+            ELSE IF (branch .EQ. 3) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
               saved_fb_actuatorb(ifb) = 0.D0
             END IF
-          ELSE IF (branch .EQ. 2) THEN
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            userfluxparmb(fb_istra(ifb), 1) = userfluxparmb(fb_istra(ifb&
-&             ), 1) + saved_fb_actuatorb(ifb)
-            saved_fb_actuatorb(ifb) = 0.D0
-          ELSE IF (branch .EQ. 3) THEN
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            saved_fb_actuatorb(ifb) = 0.D0
-          END IF
-          GOTO 120
-        ELSE IF (branch .LT. 9) THEN
-          IF (branch .EQ. 6) THEN
-            total_fluxb = conparb(fb_species(ifb), fb_ib(ifb), 1)
-            conparb(fb_species(ifb), fb_ib(ifb), 1) = 0.D0
           ELSE
-            IF (branch .EQ. 7) THEN
+            IF (branch .LT. 6) THEN
+              IF (branch .EQ. 4) THEN
+                dvb%ni = dvb%ni + psncb%ni + psnlb%ni
+                psncb%ni = 0.D0
+                psnlb%ni = 0.D0
+                CALL B2XPNN_B(ncv, ns, pl%na, plb%na, dv%nn, dvb%nn)
+                dvb%nn = 0.D0
+                CALL B2XPNI_B(ncv, ns, pl%na, plb%na, dv%ni, dvb%ni)
+                dvb%kinrgy = dvb%kinrgy + psncb%kinrgy + psnlb%kinrgy
+                psncb%kinrgy = 0.D0
+                psnlb%kinrgy = 0.D0
+                dvb%ne = dvb%ne + psncb%ne + psnlb%ne
+                psncb%ne = 0.D0
+                psnlb%ne = 0.D0
+                plb%na = plb%na + psncb%na + psnlb%na
+                psncb%na = 0.D0
+                psnlb%na = 0.D0
+                CALL POPINTEGER4(ad_from17)
+                CALL POPINTEGER4(ad_to17)
+                DO is=ad_to17,ad_from17,-1
+                  CALL POPREAL8ARRAY(dv%fna_32(:, 0:1, is), r8*SIZE(dv%&
+&                              fna_32, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fna_eir(:, 0:1, is), r8*SIZE(dv%&
+&                              fna_eir, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fnapsch(:, 0:1, is), r8*SIZE(dv%&
+&                              fnapsch, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fna_he(:, 0:1, is), r8*SIZE(dv%&
+&                              fna_he, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fna_fcor(:, 0:1, is), r8*SIZE(dv&
+&                              %fna_fcor, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fna_mdf(:, 0:1, is), r8*SIZE(dv%&
+&                              fna_mdf, 1)*2/8)
+                  CALL POPREAL8ARRAY(dv%fna(:, 0:1, is), r8*SIZE(dv%fna&
+&                              , 1)*2/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + SUM(dv%fna_32(:&
+&                   , 0:1, is)*dvb%fna_32(:, 0:1, is)) + SUM(dv%fna_eir(&
+&                   :, 0:1, is)*dvb%fna_eir(:, 0:1, is)) + SUM(dv%&
+&                   fnapsch(:, 0:1, is)*dvb%fnapsch(:, 0:1, is)) + SUM(&
+&                   dv%fna_he(:, 0:1, is)*dvb%fna_he(:, 0:1, is)) + SUM(&
+&                   dv%fna_fcor(:, 0:1, is)*dvb%fna_fcor(:, 0:1, is)) + &
+&                   SUM(dv%fna_mdf(:, 0:1, is)*dvb%fna_mdf(:, 0:1, is)) &
+&                   + SUM(dv%fna(:, 0:1, is)*dvb%fna(:, 0:1, is)) + SUM(&
+&                   pl%na(:, is)*rt%rza(:, is)*dvb%ne)
+                  dvb%fna_32(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_32(:&
+&                   , 0:1, is)
+                  dvb%fna_eir(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_eir(&
+&                   :, 0:1, is)
+                  dvb%fnapsch(:, 0:1, is) = fb_rescale(ifb)*dvb%fnapsch(&
+&                   :, 0:1, is)
+                  dvb%fna_he(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_he(:&
+&                   , 0:1, is)
+                  dvb%fna_fcor(:, 0:1, is) = fb_rescale(ifb)*dvb%&
+&                   fna_fcor(:, 0:1, is)
+                  dvb%fna_mdf(:, 0:1, is) = fb_rescale(ifb)*dvb%fna_mdf(&
+&                   :, 0:1, is)
+                  dvb%fna(:, 0:1, is) = fb_rescale(ifb)*dvb%fna(:, 0:1, &
+&                   is)
+                  CALL POPREAL8ARRAY(dv%ne, r8*SIZE(dv%ne, 1)/8)
+                  plb%na(:, is) = plb%na(:, is) + (fb_rescale(ifb)-&
+&                   1.0_R8)*rt%rza(:, is)*dvb%ne
+                  rtb%rza(:, is) = rtb%rza(:, is) + (fb_rescale(ifb)-&
+&                   1.0_R8)*pl%na(:, is)*dvb%ne
+                  CALL POPREAL8ARRAY(dv%kinrgy(:, is), r8*SIZE(dv%kinrgy&
+&                              , 1)/8)
+                  CALL POPREAL8ARRAY(pl%na(:, is), r8*SIZE(pl%na, 1)/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + SUM(dv%kinrgy(:&
+&                   , is)*dvb%kinrgy(:, is)) + SUM(pl%na(:, is)*plb%na(:&
+&                   , is))
+                  dvb%kinrgy(:, is) = fb_rescale(ifb)*dvb%kinrgy(:, is)
+                  plb%na(:, is) = fb_rescale(ifb)*plb%na(:, is)
+                END DO
+                GOTO 110
+              ELSE
+                total_fluxb = 0.D0
+                CALL POPINTEGER4(ad_from18)
+                CALL POPINTEGER4(ad_to18)
+                DO is=ad_to18,ad_from18,-1
+                  iss = is - is_start + 1
+                  total_fluxb = total_fluxb + charge_frac(iss)*conparb(&
+&                   is, fb_ib(ifb), 1)
+                  charge_fracb(iss) = charge_fracb(iss) + total_flux*&
+&                   conparb(is, fb_ib(ifb), 1)
+                  conparb(is, fb_ib(ifb), 1) = 0.D0
+                  CALL POPINTEGER4(iss)
+                END DO
+              END IF
+            ELSE IF (branch .EQ. 6) THEN
+              total_fluxb = conparb(fb_species(ifb), fb_ib(ifb), 1)
+              conparb(fb_species(ifb), fb_ib(ifb), 1) = 0.D0
+            ELSE
               saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
 &               eneparb(fb_ib(ifb), 1)
               eneparb(fb_ib(ifb), 1) = 0.D0
@@ -3084,10 +3325,120 @@ CONTAINS
 &                 saved_fb_actuatorb(ifb)
                 saved_fb_actuatorb(ifb) = 0.D0
               END IF
+              GOTO 110
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(total_flux, r8/8)
             ELSE
+              CALL POPREAL8(total_flux, r8/8)
               saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
-&               eniparb(fb_ib(ifb), 1)
-              eniparb(fb_ib(ifb), 1) = 0.D0
+&               total_fluxb
+            END IF
+            CALL POPCONTROL2B(branch)
+            IF (branch .NE. 0) THEN
+              IF (branch .EQ. 1) THEN
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                saved_fb_actuatorb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              END IF
+            END IF
+            CALL POPCONTROL2B(branch)
+            IF (branch .NE. 0) THEN
+              IF (branch .EQ. 1) THEN
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                saved_fb_actuatorb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              END IF
+            END IF
+            CALL POPCONTROL2B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
+&               ifb)
+              saved_fb_actuatorb(ifb) = (1.0_R8-fb_alpha(ifb))*&
+&               saved_fb_actuatorb(ifb)
+            ELSE IF (branch .EQ. 1) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(&
+&               ifb)*saved_fb_actuatorb(ifb)
+              saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
+&               saved_fb_actuatorb(ifb)
+            ELSE
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
+&               ifb)
+              saved_fb_actuatorb(ifb) = 0.D0
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+              conparb(is_end, fb_ib(ifb), 1) = conparb(is_end, fb_ib(ifb&
+&               ), 1) + saved_fb_actuatorb(ifb)
+              saved_fb_actuatorb(ifb) = 0.D0
+            END IF
+            CALL POPINTEGER4(is_end)
+            CALL POPINTEGER4(is_start)
+          END IF
+        ELSE
+          IF (branch .LT. 12) THEN
+            IF (branch .LT. 10) THEN
+              IF (branch .EQ. 8) THEN
+                saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
+&                 eniparb(fb_ib(ifb), 1)
+                eniparb(fb_ib(ifb), 1) = 0.D0
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 0) THEN
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + &
+&                   saved_fb_actuator(ifb)*saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatorb(ifb)
+                ELSE
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + &
+&                   saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = 0.D0
+                END IF
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 0) THEN
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  eniparb(fb_ib(ifb), 1) = eniparb(fb_ib(ifb), 1) + &
+&                   saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = 0.D0
+                END IF
+              ELSE
+                saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
+&                 potparb(fb_ib(ifb), 1)
+                potparb(fb_ib(ifb), 1) = 0.D0
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 0) THEN
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + &
+&                   saved_fb_actuator(ifb)*saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
+&                   saved_fb_actuatorb(ifb)
+                ELSE
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  fb_rescaleb(ifb) = fb_rescaleb(ifb) + &
+&                   saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = 0.D0
+                END IF
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 0) THEN
+                  CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+                  potparb(fb_ib(ifb), 1) = potparb(fb_ib(ifb), 1) + &
+&                   saved_fb_actuatorb(ifb)
+                  saved_fb_actuatorb(ifb) = 0.D0
+                END IF
+              END IF
+              GOTO 110
+            ELSE IF (branch .EQ. 10) THEN
+              saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
+&               conparb(fb_species(ifb), fb_ib(ifb), 1)
+              conparb(fb_species(ifb), fb_ib(ifb), 1) = 0.D0
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
                 CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
@@ -3104,135 +3455,128 @@ CONTAINS
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
                 CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-                eniparb(fb_ib(ifb), 1) = eniparb(fb_ib(ifb), 1) + &
-&                 saved_fb_actuatorb(ifb)
+                conparb(fb_species(ifb), fb_ib(ifb), 1) = conparb(&
+&                 fb_species(ifb), fb_ib(ifb), 1) + saved_fb_actuatorb(&
+&                 ifb)
                 saved_fb_actuatorb(ifb) = 0.D0
               END IF
+              GOTO 110
             END IF
-            GOTO 120
-          END IF
-        ELSE IF (branch .LT. 11) THEN
-          IF (branch .EQ. 9) THEN
-            saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + potparb(&
-&             fb_ib(ifb), 1)
-            potparb(fb_ib(ifb), 1) = 0.D0
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(&
-&               ifb)*saved_fb_actuatorb(ifb)
-              saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
-&               saved_fb_actuatorb(ifb)
+          ELSE IF (branch .LT. 14) THEN
+            IF (branch .EQ. 12) THEN
+              DO istra=nbc,1,-1
+                CALL POPCONTROL1B(branch)
+                IF (branch .NE. 0) THEN
+                  CALL POPINTEGER4(ad_to19)
+                  DO ibc=ad_to19,1,-1
+                    saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) - &
+&                     conparb(is_start, istra, 1)
+                    conparb(is_start, istra, 1) = 0.D0
+                  END DO
+                END IF
+              END DO
             ELSE
+              DO istra=nstrai,1,-1
+                CALL POPCONTROL1B(branch)
+                IF (branch .NE. 0) THEN
+                  CALL POPREAL8(recyc(is_start, istra), r8/8)
+                  b2recycb(is_start, istra) = b2recycb(is_start, istra) &
+&                   + recycb(is_start, istra)
+                  recycb(is_start, istra) = 0.D0
+                  saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) - &
+&                   b2recycb(is_start, istra)
+                  b2recycb(is_start, istra) = 0.D0
+                END IF
+              END DO
+            END IF
+          ELSE IF (branch .NE. 14) THEN
+            IF (branch .EQ. 15) THEN
+              GOTO 110
+            ELSE
+              GOTO 160
+            END IF
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+          ELSE
+            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+            saved_fb_actuatorb(ifb) = 0.D0
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+          ELSE
+            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
+            saved_fb_actuatorb(ifb) = 0.D0
+          END IF
+          CALL POPCONTROL2B(branch)
+          IF (branch .LT. 2) THEN
+            IF (branch .EQ. 0) THEN
               CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
               fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
 &               ifb)
               saved_fb_actuatorb(ifb) = 0.D0
             END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              potparb(fb_ib(ifb), 1) = potparb(fb_ib(ifb), 1) + &
-&               saved_fb_actuatorb(ifb)
-              saved_fb_actuatorb(ifb) = 0.D0
-            END IF
           ELSE
-            saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + conparb(&
-&             fb_species(ifb), fb_ib(ifb), 1)
-            conparb(fb_species(ifb), fb_ib(ifb), 1) = 0.D0
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(&
-&               ifb)*saved_fb_actuatorb(ifb)
-              saved_fb_actuatorb(ifb) = fb_rescale(ifb)*&
-&               saved_fb_actuatorb(ifb)
+            IF (branch .EQ. 2) THEN
+              sna_puffb = 0.D0
+              sna_coreb = 0.D0
+              sna_pumpb = 0.D0
             ELSE
               CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(&
-&               ifb)
-              saved_fb_actuatorb(ifb) = 0.D0
+              tempb1 = saved_fb_actuatorb(ifb)/fb_rescale(ifb)
+              saved_fb_actuatorb(ifb) = abs3*tempb1
+              abs3b = saved_fb_actuator(ifb)*tempb1
+              fb_rescaleb(ifb) = fb_rescaleb(ifb) - abs3*&
+&               saved_fb_actuator(ifb)*tempb1/fb_rescale(ifb)
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL8(abs3, r8/8)
+                tempb1 = abs3b/sna_pump
+                sna_puffb = tempb1
+                sna_coreb = tempb1
+                sna_pumpb = -((sna_puff+sna_core)*tempb1/sna_pump)
+              ELSE
+                CALL POPREAL8(abs3, r8/8)
+                tempb1 = -(abs3b/sna_pump)
+                sna_puffb = tempb1
+                sna_coreb = tempb1
+                sna_pumpb = -((sna_puff+sna_core)*tempb1/sna_pump)
+              END IF
             END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-              conparb(fb_species(ifb), fb_ib(ifb), 1) = conparb(&
-&               fb_species(ifb), fb_ib(ifb), 1) + saved_fb_actuatorb(ifb&
-&               )
-              saved_fb_actuatorb(ifb) = 0.D0
-            END IF
+            CALL POPREAL8(sna_pump, r8/8)
+            CALL POPREAL8(sna_puff, r8/8)
+            CALL POPREAL8(sna_core, r8/8)
+            CALL CALC_PUFF_PUMP_B25_B(switch, mpg, ncv, dv, dvb, pl, plb&
+&                               , sr, srb, is_start, is_end, sna_pump, &
+&                               sna_pumpb, sna_puff, sna_puffb, sna_core&
+&                               , sna_coreb)
           END IF
-          GOTO 120
-        ELSE IF (branch .EQ. 11) THEN
-          GOTO 120
-        ELSE
-          GOTO 150
-        END IF
- 110    CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(total_flux, r8/8)
-        ELSE
-          CALL POPREAL8(total_flux, r8/8)
-          saved_fb_actuatorb(ifb) = saved_fb_actuatorb(ifb) + &
-&           total_fluxb
-        END IF
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
             CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
             saved_fb_actuatorb(ifb) = 0.D0
-          ELSE
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
           END IF
         END IF
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-            saved_fb_actuatorb(ifb) = 0.D0
-          ELSE
-            CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-          END IF
-        END IF
-        CALL POPCONTROL2B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-          fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(ifb)
-          saved_fb_actuatorb(ifb) = (1.0_R8-fb_alpha(ifb))*&
-&           saved_fb_actuatorb(ifb)
-        ELSE IF (branch .EQ. 1) THEN
-          CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-          fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuator(ifb)*&
-&           saved_fb_actuatorb(ifb)
-          saved_fb_actuatorb(ifb) = fb_rescale(ifb)*saved_fb_actuatorb(&
-&           ifb)
-        ELSE
-          CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-          fb_rescaleb(ifb) = fb_rescaleb(ifb) + saved_fb_actuatorb(ifb)
-          saved_fb_actuatorb(ifb) = 0.D0
-        END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(saved_fb_actuator(ifb), r8/8)
-          conparb(is_end, fb_ib(ifb), 1) = conparb(is_end, fb_ib(ifb), 1&
-&           ) + saved_fb_actuatorb(ifb)
-          saved_fb_actuatorb(ifb) = 0.D0
-        END IF
-        CALL POPINTEGER4(is_end)
-        CALL POPINTEGER4(is_start)
- 120    CALL POPCONTROL4B(branch)
-        IF (branch .LT. 6) THEN
-          IF (branch .LT. 3) THEN
-            IF (branch .EQ. 0) THEN
+ 110    CALL POPCONTROL5B(branch)
+        IF (branch .LT. 8) THEN
+          IF (branch .LT. 4) THEN
+            IF (branch .LT. 2) THEN
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL8(fb_rescale(ifb), r8/8)
+                fb_currentb(ifb) = fb_currentb(ifb) - fb_alpha(ifb)*&
+&                 fb_target(ifb)*fb_rescaleb(ifb)/(fb_current(ifb)**2*(&
+&                 fb_alpha(ifb)+1.0_R8))
+                fb_rescaleb(ifb) = 0.D0
+              ELSE
+                CALL POPREAL8(fb_rescale(ifb), r8/8)
+                fb_currentb(ifb) = fb_currentb(ifb) - fb_target(ifb)*&
+&                 fb_rescaleb(ifb)/fb_current(ifb)**2
+                fb_rescaleb(ifb) = 0.D0
+              END IF
+            ELSE IF (branch .EQ. 2) THEN
               CALL POPREAL8(fb_rescale(ifb), r8/8)
-              fb_currentb(ifb) = fb_currentb(ifb) - fb_alpha(ifb)*&
-&               fb_target(ifb)*fb_rescaleb(ifb)/(fb_current(ifb)**2*(&
-&               fb_alpha(ifb)+1.0_R8))
-              fb_rescaleb(ifb) = 0.D0
-            ELSE IF (branch .EQ. 1) THEN
-              CALL POPREAL8(fb_rescale(ifb), r8/8)
-              fb_currentb(ifb) = fb_currentb(ifb) - fb_target(ifb)*&
-&               fb_rescaleb(ifb)/fb_current(ifb)**2
               fb_rescaleb(ifb) = 0.D0
             ELSE
               CALL POPREAL8(fb_rescale(ifb), r8/8)
@@ -3245,40 +3589,45 @@ CONTAINS
 &               fb_rescaleb(ifb)/(fb_current(ifb)*fb_beta(ifb)*temp0)
               fb_rescaleb(ifb) = 0.D0
             END IF
-          ELSE IF (branch .EQ. 3) THEN
-            CALL POPREAL8(fb_rescale(ifb), r8/8)
-            tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
-            fb_rescaleb(ifb) = 0.D0
-            fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/dt_prev&
-&             )*tempb1
-            saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
-            CALL POPREAL8(fb_target(ifb), r8/8)
-            CALL POPCONTROL2B(branch)
-            IF (branch .EQ. 0) THEN
-              fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb)
-              saved_fb_prevb(ifb) = 0.D0
+            GOTO 130
+          ELSE IF (branch .LT. 6) THEN
+            IF (branch .EQ. 4) THEN
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
+              fb_rescaleb(ifb) = 0.D0
+              fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/&
+&               dt_prev)*tempb1
+              saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
+              CALL POPREAL8(fb_target(ifb), r8/8)
+              CALL POPCONTROL2B(branch)
+              IF (branch .EQ. 0) THEN
+                fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb&
+&                 )
+                saved_fb_prevb(ifb) = 0.D0
+              END IF
+            ELSE
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
+              fb_rescaleb(ifb) = 0.D0
+              fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/&
+&               dt_prev)*tempb1
+              saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
+              CALL POPREAL8(fb_target(ifb), r8/8)
+              CALL POPCONTROL2B(branch)
+              IF (branch .EQ. 0) THEN
+                fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb&
+&                 )
+                saved_fb_prevb(ifb) = 0.D0
+              END IF
             END IF
-          ELSE IF (branch .EQ. 4) THEN
-            CALL POPREAL8(fb_rescale(ifb), r8/8)
-            tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
-            fb_rescaleb(ifb) = 0.D0
-            fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/dt_prev&
-&             )*tempb1
-            saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
-            CALL POPREAL8(fb_target(ifb), r8/8)
-            CALL POPCONTROL2B(branch)
-            IF (branch .EQ. 0) THEN
-              fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb)
-              saved_fb_prevb(ifb) = 0.D0
-            END IF
-          ELSE
+            GOTO 130
+          ELSE IF (branch .EQ. 6) THEN
             CALL POPREAL8(fb_rescale(ifb), r8/8)
             fb_currentb(ifb) = fb_currentb(ifb) + fb_alpha(ifb)*&
 &             fb_rescaleb(ifb)
             fb_rescaleb(ifb) = 0.D0
-          END IF
-        ELSE IF (branch .LT. 9) THEN
-          IF (branch .EQ. 6) THEN
+            GOTO 130
+          ELSE
             CALL POPREAL8(fb_rescale(ifb), r8/8)
             temp0 = LOG(2.0_R8)
             temp2 = t0/fb_current(ifb)
@@ -3288,7 +3637,151 @@ CONTAINS
 &             temp*2.0_R8**(temp*(TANH(temp1)/temp0))*LOG(2.0_R8)*&
 &             fb_rescaleb(ifb)/(fb_current(ifb)*fb_beta(ifb)*temp0)
             fb_rescaleb(ifb) = 0.D0
-          ELSE IF (branch .EQ. 7) THEN
+          END IF
+        ELSE IF (branch .LT. 12) THEN
+          IF (branch .LT. 10) THEN
+            IF (branch .EQ. 8) THEN
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              temp0 = LOG(2.0_R8)
+              temp2 = t1/fb_current(ifb)
+              temp1 = LOG(temp2)/fb_beta(ifb)
+              temp = LOG(fb_alpha(ifb))
+              fb_currentb(ifb) = fb_currentb(ifb) - (1.0-TANH(temp1)**2)&
+&               *temp*2.0_R8**(temp*(TANH(temp1)/temp0))*LOG(2.0_R8)*&
+&               fb_rescaleb(ifb)/(fb_current(ifb)*fb_beta(ifb)*temp0)
+              fb_rescaleb(ifb) = 0.D0
+            ELSE
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              fb_rescaleb(ifb) = 0.D0
+            END IF
+          ELSE
+            IF (branch .EQ. 10) THEN
+              t0b = t0b + fb_current_prevb(ifb)
+              fb_current_prevb(ifb) = 0.D0
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL8(fb_rescale(ifb), r8/8)
+                temp1 = fb_target(ifb)/fb_current(ifb)
+                tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
+                fb_rescaleb(ifb) = 0.D0
+                fb_currentb(ifb) = fb_currentb(ifb) - temp1*t0*tempb1/(&
+&                 fb_current(ifb)*ddtim)
+                t0b = t0b + ((temp1-1.0_R8)/ddtim-1.0/dt_prev)*tempb1
+                saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/&
+&                 dt_prev
+              ELSE
+                CALL POPREAL8(fb_rescale(ifb), r8/8)
+                fb_rescaleb(ifb) = 0.D0
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                t0b = t0b + saved_fb_prevb(ifb)
+                saved_fb_prevb(ifb) = 0.D0
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                DO iatm=nnatmi,1,-1
+                  CALL POPCONTROL1B(branch)
+                  IF (branch .NE. 0) THEN
+                    DO icv=mpg%nci,1,-1
+                      CALL POPCONTROL2B(branch)
+                      IF (branch .NE. 0) THEN
+                        IF (branch .NE. 1) THEN
+                          DO imol=nnmoli,1,-1
+                            CALL POPCONTROL1B(branch)
+                          END DO
+                        END IF
+                      END IF
+                    END DO
+                    CALL POPINTEGER4(icv)
+                  END IF
+                END DO
+              END IF
+              DO is=ns-1,0,-1
+                CALL POPCONTROL1B(branch)
+                IF (branch .NE. 0) THEN
+                  DO icv=mpg%nci,1,-1
+                    CALL POPCONTROL2B(branch)
+                    IF (branch .NE. 0) THEN
+                      IF (branch .NE. 1) plb%na(icv, is) = plb%na(icv, &
+&                         is) + geo%cvvol(icv)*t0b
+                    END IF
+                  END DO
+                  CALL POPINTEGER4(icv)
+                END IF
+              END DO
+              CALL POPINTEGER4(is_end)
+              CALL POPINTEGER4(is_start)
+              CALL POPREAL8(t0, r8/8)
+              t0b = 0.D0
+            ELSE
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
+              fb_rescaleb(ifb) = 0.D0
+              fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/&
+&               dt_prev)*tempb1
+              saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb&
+&                 )
+                saved_fb_prevb(ifb) = 0.D0
+              END IF
+            END IF
+            GOTO 130
+          END IF
+        ELSE
+          IF (branch .LT. 14) THEN
+            IF (branch .EQ. 12) THEN
+              sna_coreb = 0.D0
+              sna_pumpb = 0.D0
+            ELSE
+              GOTO 120
+            END IF
+          ELSE IF (branch .EQ. 14) THEN
+            GOTO 130
+          ELSE
+            IF (branch .EQ. 15) THEN
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              fb_rescaleb(ifb) = 0.D0
+              y1b = 0.D0
+            ELSE
+              CALL POPREAL8(fb_rescale(ifb), r8/8)
+              y1b = fb_rescaleb(ifb)
+              fb_rescaleb(ifb) = 0.D0
+            END IF
+            abs4b = fb_rescale(ifb)*y1b
+            sna_coreb = -(fb_rescale(ifb)*y1b)
+            fb_rescaleb(ifb) = fb_rescaleb(ifb) + (abs4-sna_core)*y1b
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(abs4, r8/8)
+              sna_pumpb = abs4b
+            ELSE
+              CALL POPREAL8(abs4, r8/8)
+              sna_pumpb = -abs4b
+            END IF
+          END IF
+          CALL POPREAL8(sna_pump, r8/8)
+          CALL POPREAL8(sna_puff, r8/8)
+          CALL POPREAL8(sna_core, r8/8)
+          sna_puffb = 0.D0
+          CALL CALC_PUFF_PUMP_B25_B(switch, mpg, ncv, dv, dvb, pl, plb, &
+&                             sr, srb, is_start, is_end, sna_pump, &
+&                             sna_pumpb, sna_puff, sna_puffb, sna_core, &
+&                             sna_coreb)
+ 120      CALL POPCONTROL2B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(fb_rescale(ifb), r8/8)
+            temp0 = LOG(2.0_R8)
+            temp2 = t0/fb_current(ifb)
+            temp1 = LOG(temp2)/fb_beta(ifb)
+            temp = LOG(fb_alpha(ifb))
+            fb_currentb(ifb) = fb_currentb(ifb) - (1.0-TANH(temp1)**2)*&
+&             temp*2.0_R8**(temp*(TANH(temp1)/temp0))*LOG(2.0_R8)*&
+&             fb_rescaleb(ifb)/(fb_current(ifb)*fb_beta(ifb)*temp0)
+            fb_rescaleb(ifb) = 0.D0
+          ELSE IF (branch .EQ. 1) THEN
             CALL POPREAL8(fb_rescale(ifb), r8/8)
             temp0 = LOG(2.0_R8)
             temp2 = t1/fb_current(ifb)
@@ -3305,72 +3798,12 @@ CONTAINS
           CALL POPREAL8(t1, r8/8)
           CALL POPREAL8(t0, r8/8)
           t0b = 0.D0
-        ELSE IF (branch .EQ. 9) THEN
-          tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
-          temp1 = fb_target(ifb)/fb_current(ifb)
-          t0b = t0b + fb_current_prevb(ifb) + ((temp1-1.0_R8)/ddtim-1.0/&
-&           dt_prev)*tempb1
-          fb_current_prevb(ifb) = 0.D0
-          CALL POPREAL8(fb_rescale(ifb), r8/8)
-          fb_rescaleb(ifb) = 0.D0
-          fb_currentb(ifb) = fb_currentb(ifb) - temp1*t0*tempb1/(&
-&           fb_current(ifb)*ddtim)
-          saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            t0b = t0b + saved_fb_prevb(ifb)
-            saved_fb_prevb(ifb) = 0.D0
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            DO iatm=nnatmi,1,-1
-              CALL POPCONTROL1B(branch)
-              IF (branch .NE. 0) THEN
-                DO icv=mpg%nci,1,-1
-                  CALL POPCONTROL2B(branch)
-                  IF (branch .NE. 0) THEN
-                    IF (branch .NE. 1) THEN
-                      DO imol=nnmoli,1,-1
-                        CALL POPCONTROL1B(branch)
-                      END DO
-                    END IF
-                  END IF
-                END DO
-                CALL POPINTEGER4(icv)
-              END IF
-            END DO
-          END IF
-          DO is=ns-1,0,-1
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              DO icv=mpg%nci,1,-1
-                CALL POPCONTROL2B(branch)
-                IF (branch .NE. 0) THEN
-                  IF (branch .NE. 1) plb%na(icv, is) = plb%na(icv, is) +&
-&                     geo%cvvol(icv)*t0b
-                END IF
-              END DO
-              CALL POPINTEGER4(icv)
-            END IF
-          END DO
-          CALL POPINTEGER4(is_end)
-          CALL POPINTEGER4(is_start)
-          CALL POPREAL8(t0, r8/8)
-          t0b = 0.D0
-        ELSE IF (branch .EQ. 10) THEN
-          CALL POPREAL8(fb_rescale(ifb), r8/8)
-          tempb1 = fb_alpha(ifb)*fb_rescaleb(ifb)
-          fb_rescaleb(ifb) = 0.D0
-          fb_currentb(ifb) = fb_currentb(ifb) - (1.0/ddtim+1.0/dt_prev)*&
-&           tempb1
-          saved_fb_prevb(ifb) = saved_fb_prevb(ifb) + tempb1/dt_prev
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            fb_currentb(ifb) = fb_currentb(ifb) + saved_fb_prevb(ifb)
-            saved_fb_prevb(ifb) = 0.D0
-          END IF
+          GOTO 130
         END IF
-        CALL POPCONTROL5B(branch)
+        CALL POPREAL8(t1, r8/8)
+        CALL POPREAL8(t0, r8/8)
+        t0b = 0.D0
+ 130    CALL POPCONTROL5B(branch)
         IF (branch .LT. 16) THEN
           IF (branch .LT. 8) THEN
             IF (branch .LT. 4) THEN
@@ -3755,7 +4188,7 @@ CONTAINS
                   CALL POPINTEGER4(is_start)
                   CALL POPREAL8(fb_current(ifb), r8/8)
                   fb_currentb(ifb) = 0.D0
-                  GOTO 150
+                  GOTO 160
                 ELSE
                   CALL POPREAL8(fb_current(ifb), r8/8)
                   fb_currentb(ifb) = 0.D0
@@ -3806,7 +4239,7 @@ CONTAINS
                 CALL POPINTEGER4(is_start)
                 CALL POPREAL8(fb_current(ifb), r8/8)
                 fb_currentb(ifb) = 0.D0
-                GOTO 150
+                GOTO 160
               END IF
               CALL POPREAL8(fb_current(ifb), r8/8)
               she_rad_totb = she_rad_totb + fb_currentb(ifb)
@@ -3819,7 +4252,7 @@ CONTAINS
               CALL POPINTEGER4(is_start)
               CALL POPREAL8(fb_current(ifb), r8/8)
               fb_currentb(ifb) = 0.D0
-              GOTO 150
+              GOTO 160
             ELSE IF (branch .LT. 22) THEN
               IF (branch .EQ. 20) CALL POPREAL8ARRAY(fb_current(ifb), r8&
 &                                              /8)
@@ -3834,7 +4267,7 @@ CONTAINS
               CALL POPINTEGER4(is_start)
               CALL POPREAL8(fb_current(ifb), r8/8)
               fb_currentb(ifb) = 0.D0
-              GOTO 150
+              GOTO 160
             ELSE IF (branch .EQ. 22) THEN
               CALL POPREAL8(fb_current(ifb), r8/8)
               fb_currentb(ifb) = fb_currentb(ifb)/sum_e
@@ -3876,7 +4309,7 @@ CONTAINS
               CALL POPREAL8(sum_e, r8/8)
               CALL POPREAL8(fb_current(ifb), r8/8)
               fb_currentb(ifb) = 0.D0
-              GOTO 150
+              GOTO 160
             ELSE
               CALL POPREAL8(fb_current(ifb), r8/8)
               abs0b = -(fb_currentb(ifb)/abs0**2)
@@ -3896,7 +4329,7 @@ CONTAINS
                 IF (branch .EQ. 24) THEN
                   CALL POPREAL8(fb_current(ifb), r8/8)
                   fb_currentb(ifb) = 0.D0
-                  GOTO 140
+                  GOTO 150
                 ELSE
                   CALL POPREAL8(fb_current(ifb), r8/8)
                   fb_currentb(ifb) = -(fb_currentb(ifb)/fb_current(ifb)&
@@ -3932,7 +4365,7 @@ CONTAINS
                   CALL POPCONTROL1B(branch)
                   IF (branch .EQ. 0) CALL POPREAL8ARRAY(fb_target(ifb), &
 &                                                 r8/8)
-                  GOTO 150
+                  GOTO 160
                 END IF
               ELSE IF (branch .EQ. 26) THEN
                 CALL POPINTEGER4(ad_from15)
@@ -3963,7 +4396,7 @@ CONTAINS
                 CALL POPINTEGER4(is_start)
                 CALL POPREAL8(fb_current(ifb), r8/8)
                 fb_currentb(ifb) = 0.D0
-                GOTO 150
+                GOTO 160
               ELSE
                 CALL POPREAL8(fb_current(ifb), r8/8)
                 fb_currentb(ifb) = -(fb_currentb(ifb)/fb_current(ifb)**2&
@@ -3972,7 +4405,7 @@ CONTAINS
             ELSE
               IF (branch .LT. 30) THEN
                 IF (branch .EQ. 28) THEN
-                  GOTO 130
+                  GOTO 140
                 ELSE
                   DO iatm=nnatmi,1,-1
                     CALL POPCONTROL1B(branch)
@@ -3997,7 +4430,7 @@ CONTAINS
                   END DO
                 END IF
               ELSE IF (branch .NE. 30) THEN
-                GOTO 150
+                GOTO 160
               END IF
               DO is=ns-1,0,-1
                 CALL POPCONTROL1B(branch)
@@ -4019,11 +4452,11 @@ CONTAINS
               fb_currentb(ifb) = 0.D0
               CALL POPINTEGER4(is_end)
               CALL POPINTEGER4(is_start)
-              GOTO 150
+              GOTO 160
             END IF
- 130        CALL POPINTEGER4(ad_from16)
+ 140        CALL POPINTEGER4(ad_from16)
             CALL POPINTEGER4(ad_to16)
-            DO ifc=ad_to16,ad_from16,-1
+            DO k=ad_to16,ad_from16,-1
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
                 CALL POPREAL8(fb_current(ifb), r8/8)
@@ -4032,30 +4465,32 @@ CONTAINS
               ELSE
                 CALL POPREAL8(fb_current(ifb), r8/8)
               END IF
-              ic = mpg%fcbc(fbreg(ifc), 1)
+              ifc = fbreg(k)
+              ic = mpg%fcbc(ifc, 1)
               t1 = mpg%bcfcor(ic)
               DO is=ns-1,0,-1
-                CALL POPCONTROL1B(branch)
+                CALL POPCONTROL2B(branch)
                 IF (branch .NE. 0) THEN
-                  tempb0 = t1*qe*geo%fcbb(fbreg(ifc), 3)*t0b/(geo%fcs(&
-&                   fbreg(ifc))*geo%fcqalf(fbreg(ifc), 0)*geo%fcbb(fbreg&
-&                   (ifc), 0))
-                  dvb%fna(fbreg(ifc), 0, is) = dvb%fna(fbreg(ifc), 0, is&
-&                   ) + zaf*tempb0
-                  dvb%fna(fbreg(ifc), 1, is) = dvb%fna(fbreg(ifc), 1, is&
-&                   ) + zaf*tempb0
-                  zafb = (dv%fna(fbreg(ifc), 0, is)+dv%fna(fbreg(ifc), 1&
-&                   , is))*tempb0
-                  CALL POPREAL8(zaf, r8/8)
-                  CALL INTFACE_S_B(ifc, ncv, nfc, mpg%fccv, geo%fcvol, &
-&                            rt%rza(1, is), rtb%rza(1, is), zafb)
+                  IF (branch .NE. 1) THEN
+                    tempb0 = t1*qe*geo%fcbb(ifc, 3)*t0b/(geo%fcs(ifc)*&
+&                     geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0))
+                    dvb%fna(ifc, 0, is) = dvb%fna(ifc, 0, is) + zaf*&
+&                     tempb0
+                    dvb%fna(ifc, 1, is) = dvb%fna(ifc, 1, is) + zaf*&
+&                     tempb0
+                    zafb = (dv%fna(ifc, 0, is)+dv%fna(ifc, 1, is))*&
+&                     tempb0
+                    CALL POPREAL8(zaf, r8/8)
+                    CALL INTFACE_S_B(ifc, ncv, nfc, mpg%fccv, geo%fcvol&
+&                              , rt%rza(1, is), rtb%rza(1, is), zafb)
+                  END IF
                 END IF
               END DO
               CALL POPREAL8(t0, r8/8)
               CALL POPREAL8(t1, r8/8)
+              CALL POPINTEGER4(ifc)
               t0b = 0.D0
             END DO
-            CALL POPINTEGER4(ifc)
             CALL POPREAL8(fb_current(ifb), r8/8)
             fb_currentb(ifb) = 0.D0
             DO is=ns-1,0,-1
@@ -4067,9 +4502,9 @@ CONTAINS
             fb_currentb(ifb) = 0.D0
             CALL POPCONTROL2B(branch)
             IF (branch .EQ. 0) CALL POPREAL8(fb_target(ifb), r8/8)
-            GOTO 150
+            GOTO 160
           END IF
- 140      CALL POPINTEGER4(ad_from13)
+ 150      CALL POPINTEGER4(ad_from13)
           CALL POPINTEGER4(ad_to13)
           DO ifc=ad_to13,ad_from13,-1
             CALL POPCONTROL1B(branch)
@@ -4102,7 +4537,7 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) CALL POPREAL8(fb_target(ifb), r8/8)
         END IF
- 150  CONTINUE
+ 160  CONTINUE
     ELSE
       she_rad_totb = 0.D0
       she_eir_totb = 0.D0
@@ -4111,7 +4546,7 @@ CONTAINS
 
 !
   SUBROUTINE COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl&
-&   , dv, rt, srw, psnc, psnl, main_call)
+&   , dv, rt, sr, srw, psnc, psnl, main_call)
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
@@ -4121,12 +4556,14 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(INOUT) :: pl
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
     TYPE(B2RATES), INTENT(IN) :: rt
+    TYPE(B2SOURCE), INTENT(IN) :: sr
     TYPE(B2SOURCEWORK), INTENT(IN) :: srw
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     LOGICAL :: main_call
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, i, j, k, l, ic, ifs, iatm, imol
+&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     INTEGER, SAVE :: ncall=0
     REAL(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, zaf
     REAL(kind=r8), EXTERNAL :: INTFACE_S
@@ -4140,7 +4577,12 @@ CONTAINS
     INTRINSIC LOG
     INTRINSIC TANH
     INTRINSIC EXP
+    REAL(r8) :: y1
     REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
+    INTEGER :: abs2
+    REAL(kind=r8) :: abs3
+    REAL(kind=r8) :: abs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
 !
@@ -4762,18 +5204,19 @@ CONTAINS
             fb_current(ifb) = fb_current(ifb)/sum_e
 !
           CASE (23) 
-!  Total plasma heat flux at outer target
+!  Total particle heat flux at outer target
 !
             IF (ncall .EQ. 0) THEN
               IF (fb_reg_par(ifb, 1) .EQ. fb_reg_par(ifb, 2)) THEN
                 WRITE(*, '(a,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundary ', fb_reg_par(&
-&               ifb, 1), ' for sequence ', b2espcr(fb_species(ifb))
+&               ' particle heat flux density along boundary ', &
+&               fb_reg_par(ifb, 1), ' for sequence ', b2espcr(fb_species&
+&               (ifb))
               ELSE
                 WRITE(*, '(a,a,i3,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundaries ', &
+&               ' particle heat flux density along boundaries ', &
 &               fb_reg_par(ifb, 1), ' to ', fb_reg_par(ifb, 2), &
 &               ' for sequence ', b2espcr(fb_species(ifb))
               END IF
@@ -4798,7 +5241,7 @@ CONTAINS
               t0 = dv%fht(fbreg(ifc), 0) + dv%fht(fbreg(ifc), 1)
               t0 = t1*t0/geo%fcs(fbreg(ifc))
               IF (switch%use_eirene .NE. 0) t0 = t0 + ewldt_res(b2_fnmti&
-&                 (ifc)) - ewldrp_res(b2_fnmti(ifc))
+&                 (fbreg(ifc))) - ewldrp_res(b2_fnmti(fbreg(ifc)))
               IF (fb_current(ifb) .LT. t0) THEN
                 fb_current(ifb) = t0
               ELSE
@@ -4942,24 +5385,25 @@ CONTAINS
 !
             ifc1 = fbregp(ifb, 1)
             ifc2 = ifc1 + fbregp(ifb, 2) - 1
-            DO ifc=ifc1,ifc2
-              IF (mpg%fccv(fbreg(ifc), 1) .GT. mpg%fccv(fbreg(ifc), 2)) &
-&             THEN
-                icv = mpg%fccv(fbreg(ifc), 2)
-              ELSE
-                icv = mpg%fccv(fbreg(ifc), 1)
-              END IF
-              ic = mpg%fcbc(fbreg(ifc), 1)
+            DO k=ifc1,ifc2
+              ifc = fbreg(k)
+              ic = mpg%fcbc(ifc, 1)
               t1 = mpg%bcfcor(ic)
               t0 = 0.0_R8
               DO is=0,ns-1
                 IF (.NOT.is_neutral(is)) THEN
-                  zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, rt&
-&                   %rza(1, is))
-                  t0 = t0 + t1*(dv%fna(fbreg(ifc), 0, is)+dv%fna(fbreg(&
-&                   ifc), 1, is))*zaf*qe/geo%fcs(fbreg(ifc))/(geo%fcqalf&
-&                   (fbreg(ifc), 0)*geo%fcbb(fbreg(ifc), 0)/geo%fcbb(&
-&                   fbreg(ifc), 3))
+                  IF (geo%fcpbs(ifc)/geo%fcs(ifc) .GE. 0.) THEN
+                    abs1 = geo%fcpbs(ifc)/geo%fcs(ifc)
+                  ELSE
+                    abs1 = -(geo%fcpbs(ifc)/geo%fcs(ifc))
+                  END IF
+                  IF (abs1 .GE. geo%qalfmin) THEN
+                    zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, &
+&                     rt%rza(1, is))
+                    t0 = t0 + t1*(dv%fna(ifc, 0, is)+dv%fna(ifc, 1, is))&
+&                     *zaf*qe/geo%fcs(ifc)/(geo%fcqalf(ifc, 0)*geo%fcbb(&
+&                     ifc, 0)/geo%fcbb(ifc, 3))
+                  END IF
                 END IF
               END DO
               IF (fb_current(ifb) .LT. t0) THEN
@@ -5049,9 +5493,13 @@ CONTAINS
 &                             'rescale for sequence ', b2espcr(&
 &                             fb_species(ifb))
 !
-            fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
-!
+            IF (fb_current(ifb) .NE. 0.0_R8) THEN
+              fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
+            ELSE
+              fb_rescale(ifb) = 1.0_R8
+            END IF
           CASE (3) 
+!
 ! rescale slowed by tanh_log
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
@@ -5204,9 +5652,13 @@ CONTAINS
               END IF
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
 &               saved_fb_prev(ifb) = t0
-              fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
-&               fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-t0)&
-&               /dt_prev)
+              IF (fb_current(ifb) .NE. 0.0_R8) THEN
+                fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
+&                 fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-&
+&                 t0)/dt_prev)
+              ELSE
+                fb_rescale(ifb) = 1.0_R8
+              END IF
               fb_current_prev(ifb) = t0
             ELSE
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
@@ -5214,6 +5666,47 @@ CONTAINS
               fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-&
 &               fb_current(ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(&
 &               ifb))/dt_prev)
+            END IF
+          CASE (9) 
+!
+! puff depending from pump rescaled by tanh_log with plateau
+!
+            IF (ncall .EQ. 0) WRITE(*, '(a,a,a,i3)') &
+&                             'compute_feedback_option: using ', &
+&                             'puff depending from pump ', &
+&                          'tanh_log_rescale with plateau for sequence '&
+&                             , b2espcr(fb_species(ifb))
+!
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+            t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+            t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+            IF (fb_current(ifb) .LT. t0) THEN
+              fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t0/fb_current(ifb))/&
+&               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
+            ELSE IF (fb_current(ifb) .GT. t1) THEN
+              fb_rescale(ifb) = 2.0_R8**(TANH(LOG(t1/fb_current(ifb))/&
+&               fb_beta(ifb))*LOG(fb_alpha(ifb))/LOG(2.0_R8))
+            ELSE
+              fb_rescale(ifb) = 1.0_R8
+            END IF
+!
+            IF (switch%use_eirene .EQ. 0) THEN
+              CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                               is_start, is_end, sna_pump, sna_puff, &
+&                               sna_core)
+              IF (sna_pump .LT. -0.0_R8) THEN
+                IF (sna_pump .GE. 0.) THEN
+                  abs4 = sna_pump
+                ELSE
+                  abs4 = -sna_pump
+                END IF
+                y1 = (abs4-sna_core)*fb_rescale(ifb)
+                IF (0.0_R8 .LT. y1) THEN
+                  fb_rescale(ifb) = y1
+                ELSE
+                  fb_rescale(ifb) = 0.0_R8
+                END IF
+              END IF
             END IF
           CASE DEFAULT
 !
@@ -5273,7 +5766,7 @@ CONTAINS
               saved_fb_actuator(ifb) = saved_fb_actuator(ifb) + &
 &               fb_rescale(ifb)
             ELSE IF (fb_rescale_option(ifb) .EQ. 6 .OR. &
-&               fb_rescale_option(ifb) .EQ. 7) THEN
+&               fb_rescale_option(ifb) .EQ. 9) THEN
               saved_fb_actuator(ifb) = fb_rescale(ifb)
             ELSE
               saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
@@ -5351,7 +5844,7 @@ CONTAINS
             psnc%kinrgy = dv%kinrgy
 !   ..compute initial ni
             CALL B2XPNI_NODIFF(ncv, ns, pl%na, dv%ni)
-            CALL B2XPNN_NODIFF(ncv, ns, pl%na, dv%nn)
+            CALL B2XPNN(ncv, ns, pl%na, dv%nn)
 !   ..compute ni0
             psnl%ni = dv%ni
             psnc%ni = dv%ni
@@ -5496,19 +5989,117 @@ CONTAINS
             conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
 &             ifb)
 !
+          CASE (8) 
+! pump
+!
+            IF (ncall .EQ. 0) THEN
+              IF (fb_ib(ifb) .EQ. 0) THEN
+                WRITE(*, '(a,a)') 'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences'
+              ELSE IF (fb_ib(ifb) .LT. 0) THEN
+                IF (fb_ib(ifb) .GE. 0.) THEN
+                  abs2 = fb_ib(ifb)
+                ELSE
+                  abs2 = -fb_ib(ifb)
+                END IF
+                WRITE(*, '(a,a,i3,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for isonuclear sequence ', b2espcr(fb_species(&
+&               ifb)), ' at non-default standard surface number', abs2
+              ELSE
+                WRITE(*, '(a,a,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences ', &
+&               'at non-default standard surface number', fb_ib(ifb)
+              END IF
+            END IF
+!
+            IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
+&           THEN
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+              WRITE(*, *) 'Warning! The pump was ', &
+&             'started with an initial rate of ', saved_fb_actuator(ifb)
+            END IF
+!           if(fb_puff_min(ifb).le.0.0_R8)
+!  &
+!
+            IF (fb_rescale_option(ifb) .LT. 4 .OR. fb_rescale_option(ifb&
+&               ) .EQ. 7) THEN
+              IF (switch%use_eirene .EQ. 0) THEN
+                CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                                 is_start, is_end, sna_pump, sna_puff, &
+&                                 sna_core)
+                IF (sna_pump .LT. 0.0_R8) THEN
+                  IF ((sna_puff+sna_core)/sna_pump .GE. 0.) THEN
+                    abs3 = (sna_puff+sna_core)/sna_pump
+                  ELSE
+                    abs3 = -((sna_puff+sna_core)/sna_pump)
+                  END IF
+                  saved_fb_actuator(ifb) = abs3*saved_fb_actuator(ifb)/&
+&                   fb_rescale(ifb)
+                END IF
+              END IF
+            ELSE
+              saved_fb_actuator(ifb) = fb_rescale(ifb)
+            END IF
+            IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              saved_fb_actuator(ifb) = fb_puff_min(ifb)
+            END IF
+            IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+            END IF
+!
+            IF (.NOT.(fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb&
+&               ) .GT. fb_target(ifb)*fb_overshoot(ifb))) THEN
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+              IF (switch%use_eirene .EQ. 0) THEN
+                IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(fb_species(&
+&                   ifb))) .NE. 1) THEN
+                  DO istra=1,nbc
+                    IF (bccon(is_start, istra) .EQ. 10 .AND. (istra .EQ.&
+&                       fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) THEN
+                      DO ibc=1,mpg%bccvp(istra, 2)
+                        conpar(is_start, istra, 1) = -saved_fb_actuator(&
+&                         ifb)
+                      END DO
+                    END IF
+                  END DO
+                ELSE
+                  DO istra=1,nstrai
+                    IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 &
+&                       .AND. species_start(istra) .EQ. is_start .AND. (&
+&                       istra .EQ. fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) &
+&                   THEN
+                      b2recyc(is_start, istra) = 1.0_R8 - &
+&                       saved_fb_actuator(ifb)
+                      recyc(is_start, istra) = b2recyc(is_start, istra)
+                    END IF
+                  END DO
+                END IF
+              END IF
+            END IF
           CASE DEFAULT
+!
             WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
 !
           END SELECT
 !
-          IF (fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&           WRITE(*, '(a,1p,i3,g15.6)') 'feedback_actuator ', b2espcr(&
-&           fb_species(ifb)), saved_fb_actuator(ifb)
+          IF ((fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
+&             .OR. fb_actuator(ifb) .EQ. 8) WRITE(*, '(a,1p,i3,g15.6)') &
+&                                           'feedback_actuator ', &
+&                                           b2espcr(fb_species(ifb)), &
+&                                           saved_fb_actuator(ifb)
         END IF
 !
 !
-        feedback_namelist_used = (feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3
+        feedback_namelist_used = ((feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
+&         fb_actuator(ifb) .EQ. 8
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           saved_fb_prev(ifb) = fb_current_prev(ifb)
@@ -5584,7 +6175,7 @@ CONTAINS
     USE B2MOD_FEEDBACK_DIFF
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(INOUT) :: m
-    INTEGER :: is, ix, iy, icv, iss, ifbreg
+    INTEGER :: is, ix, iy, icv, ifb, iss, ifbreg
     LOGICAL :: done
 !
 !number of feedback imposed
@@ -5600,6 +6191,10 @@ CONTAINS
     fb_const(1:nfb) = na_feedback_const(0:nspecies-1)
     fb_time(1:nfb) = na_feedback_time(0:nspecies-1)
     fb_ib(1:nfb) = na_feedback_ib(0:nspecies-1)
+    DO ifb=1,nfb
+      IF (fb_ib(ifb) .EQ. -1 .AND. fb_actuator(ifb) .NE. 8) fb_ib(ifb)&
+&        = -1 - def_nsts
+    END DO
     fb_puff_min(1:nfb) = na_feedback_puff_min(0:nspecies-1)
     fb_puff_max(1:nfb) = na_feedback_puff_max(0:nspecies-1)
     fb_overshoot(1:nfb) = na_feedback_overshoot(0:nspecies-1)
@@ -5728,6 +6323,239 @@ CONTAINS
 !
     RETURN
   END SUBROUTINE WRITE_FBSAVE
+
+!  Differentiation of calc_puff_pump_b25 in reverse (adjoint) mode (with options context noISIZE r8):
+!   gradient     of useful results: conpar *(dv.fna) *(dv.fna_mdf)
+!                sna_puff sna_core sna_pump *(sr.sna) *(pl.na)
+!   with respect to varying inputs: conpar *(dv.fna) *(dv.fna_mdf)
+!                *(sr.sna) *(pl.na)
+!   Plus diff mem management of: dv.fna:in dv.fna_mdf:in sr.sna:in
+!                pl.na:in
+!
+  SUBROUTINE CALC_PUFF_PUMP_B25_B(switch, mpg, ncv, dv, dvb, pl, plb, sr&
+&   , srb, is_start, is_end, sna_pump, sna_pumpb, sna_puff, sna_puffb, &
+&   sna_core, sna_coreb)
+    USE B2MOD_BOUNDARY_NAMELIST_DIFF
+    USE B2MOD_NEUTRALS_NAMELIST_DIFF
+    IMPLICIT NONE
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    REAL(kind=r8) :: sna_pumpb, sna_puffb, sna_coreb
+    INTEGER, INTENT(IN) :: ncv, is_start, is_end
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+    TYPE(B2DERIVATIVES) :: dvb
+    TYPE(B2PLASMA), INTENT(INOUT) :: pl
+    TYPE(B2PLASMA_DIFF), INTENT(INOUT) :: plb
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(B2SOURCE) :: srb
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    EXTERNAL FIND_LOC
+    INTEGER :: i, is, ifc, icv, icv1, ib, istra, FIND_LOC
+    INTRINSIC MIN
+    INTRINSIC NINT
+!
+    INTEGER*4 :: branch
+    INTEGER :: ad_to
+    INTEGER :: ad_to0
+    DO is=is_start,is_end
+      DO icv1=mpg%nci+1,ncv
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icv = mpg%fccv(ifc, 2)
+        ELSE
+          icv = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%cvonclosedsurface(icv)) THEN
+          IF (switch%mdf_fnb .NE. 0) THEN
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            CALL PUSHCONTROL2B(1)
+          END IF
+        ELSE
+          CALL PUSHCONTROL2B(0)
+        END IF
+      END DO
+    END DO
+!
+    is = is_start
+    DO ib=1,nbc
+      IF (bccon(is, ib) .EQ. 8) THEN
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+!
+!
+    IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is_start)) .NE. 1) THEN
+      DO istra=1,nbc
+        IF (bccon(is_start, istra) .EQ. 10) THEN
+          DO ib=1,mpg%bccvp(istra, 2)
+            CALL PUSHINTEGER4(is)
+          END DO
+          CALL PUSHINTEGER4(ib - 1)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      DO istra=nbc,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          CALL POPINTEGER4(ad_to)
+          DO ib=ad_to,1,-1
+            DO is=is_end,is_start,-1
+              icv1 = mpg%bccv(mpg%bccvp(istra, 1)+ib-1, 1)
+              srb%sna(icv1, 0, is) = srb%sna(icv1, 0, is) + sna_pumpb
+              plb%na(icv1, is) = plb%na(icv1, is) + sr%sna(icv1, 1, is)*&
+&               sna_pumpb
+              srb%sna(icv1, 1, is) = srb%sna(icv1, 1, is) + pl%na(icv1, &
+&               is)*sna_pumpb
+            END DO
+            CALL POPINTEGER4(is)
+          END DO
+        END IF
+      END DO
+    ELSE
+!
+      DO istra=1,nstrai
+        IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 .AND. &
+&           species_start(istra) .EQ. is_start) THEN
+          CALL PUSHINTEGER4(is)
+          DO is=is_start,is_end
+            ib = FIND_LOC(bcstart, nbc, rcstart(istra))
+            DO i=1,mpg%bccvp(ib, 2)
+              CALL PUSHINTEGER4(icv1)
+              icv1 = mpg%bccv(mpg%bccvp(ib, 1)+i-1, 1)
+            END DO
+            CALL PUSHINTEGER4(i - 1)
+          END DO
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      DO istra=nstrai,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          DO is=is_end,is_start,-1
+            CALL POPINTEGER4(ad_to0)
+            DO i=ad_to0,1,-1
+              srb%sna(icv1, 0, is) = srb%sna(icv1, 0, is) + sna_pumpb
+              plb%na(icv1, is) = plb%na(icv1, is) + sr%sna(icv1, 1, is)*&
+&               sna_pumpb
+              srb%sna(icv1, 1, is) = srb%sna(icv1, 1, is) + pl%na(icv1, &
+&               is)*sna_pumpb
+              CALL POPINTEGER4(icv1)
+            END DO
+          END DO
+          CALL POPINTEGER4(is)
+        END IF
+      END DO
+    END IF
+    is = is_start
+    DO ib=nbc,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) conparb(is, ib, 1) = conparb(is, ib, 1) + &
+&         sna_puffb
+    END DO
+    DO is=is_end,is_start,-1
+      DO icv1=ncv,mpg%nci+1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+            dvb%fna(ifc, 1, is) = dvb%fna(ifc, 1, is) + sna_coreb
+          ELSE
+            ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+            dvb%fna_mdf(ifc, 1, is) = dvb%fna_mdf(ifc, 1, is) + &
+&             sna_coreb
+          END IF
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE CALC_PUFF_PUMP_B25_B
+
+!
+  SUBROUTINE CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, is_start, &
+&   is_end, sna_pump, sna_puff, sna_core)
+    USE B2MOD_BOUNDARY_NAMELIST_DIFF
+    USE B2MOD_NEUTRALS_NAMELIST_DIFF
+    IMPLICIT NONE
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    INTEGER, INTENT(IN) :: ncv, is_start, is_end
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+    TYPE(B2PLASMA), INTENT(INOUT) :: pl
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    EXTERNAL FIND_LOC
+    INTEGER :: i, is, ifc, icv, icv1, ib, istra, FIND_LOC
+    INTRINSIC MIN
+    INTRINSIC NINT
+!
+    sna_core = 0.0_R8
+    DO is=is_start,is_end
+      DO icv1=mpg%nci+1,ncv
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icv = mpg%fccv(ifc, 2)
+        ELSE
+          icv = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%cvonclosedsurface(icv)) THEN
+          IF (switch%mdf_fnb .NE. 0) THEN
+            sna_core = sna_core + dv%fna_mdf(ifc, 1, is)
+          ELSE
+            sna_core = sna_core + dv%fna(ifc, 1, is)
+          END IF
+        END IF
+      END DO
+    END DO
+!
+    sna_puff = 0.0_R8
+    is = is_start
+    DO ib=1,nbc
+      IF (bccon(is, ib) .EQ. 8) sna_puff = sna_puff + conpar(is, ib, 1)
+    END DO
+!
+    sna_pump = 0.0_R8
+!
+    IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is_start)) .NE. 1) THEN
+      DO istra=1,nbc
+        IF (bccon(is_start, istra) .EQ. 10) THEN
+          DO ib=1,mpg%bccvp(istra, 2)
+            DO is=is_start,is_end
+              icv1 = mpg%bccv(mpg%bccvp(istra, 1)+ib-1, 1)
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    ELSE
+!
+      DO istra=1,nstrai
+        IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 .AND. &
+&           species_start(istra) .EQ. is_start) THEN
+          DO is=is_start,is_end
+            ib = FIND_LOC(bcstart, nbc, rcstart(istra))
+            WRITE(*, *) 'istra, ib index', rcstart(istra), ib
+            DO i=1,mpg%bccvp(ib, 2)
+              icv1 = mpg%bccv(mpg%bccvp(ib, 1)+i-1, 1)
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    END IF
+!
+    WRITE(*, *) 'pump ', sna_pump, ' puff+core ', sna_core + sna_puff
+!
+    RETURN
+  END SUBROUTINE CALC_PUFF_PUMP_B25
+!
 !
 
 END MODULE B2US_FEEDBACK_DIFF

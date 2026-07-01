@@ -30,7 +30,7 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 & , fchvisq, fchvisqb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -160,7 +160,7 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   REAL(kind=r8) :: tmpb19
   REAL(kind=r8) :: tmp20
   REAL(kind=r8) :: tmpb20
-  REAL(kind=r8), DIMENSION(ncv) :: temp8
+  REAL(kind=r8), DIMENSION(nCv) :: temp8
   INTEGER :: ad_from
   INTEGER :: ad_to
   INTEGER*4 :: branch
@@ -1372,7 +1372,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & vsaf_hbdp_al, hcix_c, hci_a, hci_al_ast, fchvisq_a, fchvisq)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

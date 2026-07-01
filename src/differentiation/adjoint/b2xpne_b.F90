@@ -34,7 +34,7 @@ SUBROUTINE B2XPNE_B(ncv, ns, rza, rzab, na, nab, ne_ext, ne, neb)
   REAL(r8) :: dummydiffb
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpne')
-  CALL SFILL_FWD(ncv, 0.0_R8, ne, neb, 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, ne, 1)
   DO is=ns-1,0,-1
     rzab(:, is) = rzab(:, is) + na(:, is)*neb
     nab(:, is) = nab(:, is) + rza(:, is)*neb

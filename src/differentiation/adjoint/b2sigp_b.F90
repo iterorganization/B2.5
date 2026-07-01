@@ -32,21 +32,22 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_OPENMP
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2sigp
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
-  REAL(kind=r8) :: rzb(ncv), nb(ncv), ti(ncv), tn(ncv), ne(ncv), te(ncv)&
-& , po(ncv)
+  REAL(kind=r8), INTENT(IN) :: rzb(ncv), nb(ncv), ti(ncv), tn(ncv), ne(&
+& ncv), te(ncv), po(ncv)
   REAL(kind=r8) :: rzbb(ncv), nbb(ncv), tib(ncv), tnb(ncv), neb(ncv), &
 & teb(ncv), pob(ncv)
 !   ..output arguments (unspecified on entry)
@@ -73,7 +74,7 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
 !   ..local variables
 !, k
   INTEGER :: icv, ifc
-!, chk*1                                       !srv 17.06.02
+!, chk*1                                          !srv 17.06.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: t0, wrkf(nfc), wrkv(nvx), nbf(nfc), tbf(nfc), rzbf(&
 & nfc), tef(nfc)
@@ -249,6 +250,7 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, nete, &
 &                  neteb, wrkv, wrkvb, wrk1, wrk1b)
         wrk3b = 0.D0
+        wrkvb = 0.D0
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, wrk3, &
 &                  wrk3b, wrkv, wrkvb, wrk0, wrk0b)
         neb = neb + te*neteb
@@ -276,6 +278,7 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, po, pob&
 &                  , wrkv, wrkvb, wrk1, wrk1b)
         wrk3b = 0.D0
+        wrkvb = 0.D0
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, wrk3, &
 &                  wrk3b, wrkv, wrkvb, wrk0, wrk0b)
         nbb = nbb + tb*wrk3b
@@ -319,21 +322,22 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_OPENMP
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2sigp
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: rzb(ncv), nb(ncv), ti(ncv), tn(ncv), ne(ncv), te(ncv)&
-& , po(ncv)
+  REAL(kind=r8), INTENT(IN) :: rzb(ncv), nb(ncv), ti(ncv), tn(ncv), ne(&
+& ncv), te(ncv), po(ncv)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: smbgp(ncv, 0:3)
+  REAL(kind=r8), INTENT(OUT) :: smbgp(ncv, 0:3)
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
@@ -353,7 +357,7 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !   ..local variables
 !, k
   INTEGER :: icv, ifc
-!, chk*1                                       !srv 17.06.02
+!, chk*1                                          !srv 17.06.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: t0, wrkf(nfc), wrkv(nvx), nbf(nfc), tbf(nfc), rzbf(&
 & nfc), tef(nfc)
@@ -386,6 +390,15 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, rzb, 1, 'rzb', '.ge.')
+  END IF
+!   .. check output writing
+  IF (switch%b2sigp_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
+!srv 17.06.02 {
+    IF (IN_PARALLEL() .AND. ncall_b2sigp .EQ. 0) THEN
+      IF (ncall_b2sigp .EQ. 0) WRITE(*, *) &
+&                              'b2sigp OpenMP warning: no file output '&
+&                              , 'in parallel mode'
+    END IF
   END IF
 !
 ! ..choose the correct temperature
@@ -477,7 +490,7 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
     END IF
   ELSE
 !
-!!switch%b2sigp_phm0.eq.0.0_R8                                                  !srv 26.06.18 {
+!!switch%b2sigp_phm0.eq.0.0_R8                       !srv 26.06.18 {
     smbgp = 0.0_R8
     wrk5 = 0.0_R8
     wrk6 = 0.0_R8
@@ -486,23 +499,26 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !
   IF (switch%b2sigp_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
 !srv 17.06.02 {
-    WRITE(chns, '(i3.3)') isb
-!      do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
-!      enddo
-    arg1 = 'b2sigp_smogp'//chns
-    CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg1)
-    IF (switch%b2sigp_style .EQ. 0 .OR. switch%b2sigp_style .EQ. 1) THEN
-      arg10 = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10)
-      arg10 = 'b2sigp_smogpe'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10)
-    ELSE IF (switch%b2sigp_style .EQ. 2) THEN
-      arg10 = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10)
-      arg10 = 'b2sigp_smogpo'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10)
+    IF (.NOT.IN_PARALLEL()) THEN
+      WRITE(chns, '(i3.3)') isb
+!         do k=0,3
+!           write (chk,'(i1)') k
+!           call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+!         enddo
+      arg1 = 'b2sigp_smogp'//chns
+      CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg1)
+      IF (switch%b2sigp_style .EQ. 0 .OR. switch%b2sigp_style .EQ. 1) &
+&     THEN
+        arg10 = 'b2sigp_smogpi'//chns
+        CALL MY_OUT_US(70, ncv, 0, wrk5, arg10)
+        arg10 = 'b2sigp_smogpe'//chns
+        CALL MY_OUT_US(70, ncv, 0, wrk6, arg10)
+      ELSE IF (switch%b2sigp_style .EQ. 2) THEN
+        arg10 = 'b2sigp_smogpi'//chns
+        CALL MY_OUT_US(70, ncv, 0, wrk5, arg10)
+        arg10 = 'b2sigp_smogpo'//chns
+        CALL MY_OUT_US(70, ncv, 0, wrk6, arg10)
+      END IF
     END IF
   END IF
 !

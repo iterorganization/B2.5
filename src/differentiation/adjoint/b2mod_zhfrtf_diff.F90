@@ -14,16 +14,16 @@
 !
 MODULE B2MOD_ZHFRTF_DIFF
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2ZHCO_DIFF
   USE B2MOD_B2MREL
   USE B2MOD_SUBSYS
   IMPLICIT NONE
   INTEGER, ALLOCATABLE, SAVE :: is_i(:)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_xy(:, :), nal(:, :), ia(:, :)&
+  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_cv(:, :), nal(:, :), ia(:, :)&
 & , av_ualpha(:, :), gt_ac(:, :), gtalc(:, :), avm_u(:), rho_a_rel(:, :)&
 & , gavm_uc(:), z_to_m1_ast(:, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_xyb(:, :), nalb(:, :), iab(:, &
+  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_cvb(:, :), nalb(:, :), iab(:, &
 & :), av_ualphab(:, :), gt_acb(:, :), gtalcb(:, :), avm_ub(:), &
 & rho_a_relb(:, :), gavm_ucb(:), z_to_m1_astb(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: w_out(:, :), htdp_out(:, :), &
@@ -42,7 +42,7 @@ MODULE B2MOD_ZHFRTF_DIFF
 !  3. description
 !
 !     This module contains:
-!     z2n_xy: squared charge weighted average density of the isonuclear sequence
+!     z2n_cv: squared charge weighted average density of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density of an ion to
 !         the squared charge weighted average density of its isonuclear sequence
@@ -57,7 +57,7 @@ MODULE B2MOD_ZHFRTF_DIFF
 
 CONTAINS
 !  Differentiation of alloc_b2mod_zhfrtf as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:out nal:out ia:out av_ualpha:out
+!   Plus diff mem management of: z2n_cv:out nal:out ia:out av_ualpha:out
 !                gt_ac:out gtalc:out avm_u:out rho_a_rel:out gavm_uc:out
 !                z_to_m1_ast:out
 !...................................................................................
@@ -75,9 +75,9 @@ CONTAINS
       END IF
     END DO
 !
-    ALLOCATE(z2n_xyb(ncv, 0:nspecies-1))
-    z2n_xyb = 0.D0
-    ALLOCATE(z2n_xy(ncv, 0:nspecies-1))
+    ALLOCATE(z2n_cvb(ncv, 0:nspecies-1))
+    z2n_cvb = 0.D0
+    ALLOCATE(z2n_cv(ncv, 0:nspecies-1))
     ALLOCATE(nalb(ncv, 0:nspecies-1))
     nalb = 0.D0
     ALLOCATE(nal(ncv, 0:nspecies-1))
@@ -124,7 +124,7 @@ CONTAINS
       END IF
     END DO
 !
-    ALLOCATE(z2n_xy(ncv, 0:nspecies-1))
+    ALLOCATE(z2n_cv(ncv, 0:nspecies-1))
     ALLOCATE(nal(ncv, 0:nspecies-1))
     ALLOCATE(ia(ncv, 0:ns-1))
     ALLOCATE(av_ualpha(ncv, 0:nspecies-1))
@@ -139,7 +139,7 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_ZHFRTF
 
 !  Differentiation of dealloc_b2mod_zhfrtf as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:out nal:out ia:out av_ualpha:out
+!   Plus diff mem management of: z2n_cv:out nal:out ia:out av_ualpha:out
 !                gt_ac:out gtalc:out avm_u:out rho_a_rel:out gavm_uc:out
 !                z_to_m1_ast:out
 !
@@ -150,10 +150,10 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(is_i)
-      IF (ALLOCATED(z2n_xyb)) THEN
-        DEALLOCATE(z2n_xyb)
+      IF (ALLOCATED(z2n_cvb)) THEN
+        DEALLOCATE(z2n_cvb)
       END IF
-      DEALLOCATE(z2n_xy)
+      DEALLOCATE(z2n_cv)
       IF (ALLOCATED(nalb)) THEN
         DEALLOCATE(nalb)
       END IF
@@ -202,7 +202,7 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(is_i)
-      DEALLOCATE(z2n_xy)
+      DEALLOCATE(z2n_cv)
       DEALLOCATE(nal)
       DEALLOCATE(ia)
       DEALLOCATE(av_ualpha)
@@ -250,11 +250,11 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_ZHFRTF_DF
 
 !  Differentiation of b2mod_zhfrtf_prep in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy *nal *ia *av_ualpha
+!   gradient     of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast na ua
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast na ua
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in
 !
 !...................................................................................
@@ -281,7 +281,7 @@ CONTAINS
 !  3. description
 !
 !     This routine computes:
-!     z2n_xy: squared charge weighted average density
+!     z2n_cv: squared charge weighted average density
 !             of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density to
@@ -293,13 +293,13 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..calculate the average Z**2*n and numerical density of the isonuclear sequence
-    IF (ALLOCATED(z2n_xy)) THEN
-      CALL PUSHREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(z2n_xy, 2)/8)
+    IF (ALLOCATED(z2n_cv)) THEN
+      CALL PUSHREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(z2n_cv, 2)/8)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    z2n_xy = 0.0_R8
+    z2n_cv = 0.0_R8
     IF (ALLOCATED(nal)) THEN
       CALL PUSHREAL8ARRAY(nal, r8*SIZE(nal, 1)*SIZE(nal, 2)/8)
       CALL PUSHCONTROL1B(1)
@@ -309,13 +309,13 @@ CONTAINS
     nal = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        IF (ALLOCATED(z2n_xy)) THEN
-          CALL PUSHREAL8ARRAY(z2n_xy(:, inucl), r8*SIZE(z2n_xy, 1)/8)
+        IF (ALLOCATED(z2n_cv)) THEN
+          CALL PUSHREAL8ARRAY(z2n_cv(:, inucl), r8*SIZE(z2n_cv, 1)/8)
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        z2n_xy(:, inucl) = z2n_xy(:, inucl) + iz**2*na(:, nucl2s(inucl, &
+        z2n_cv(:, inucl) = z2n_cv(:, inucl) + iz**2*na(:, nucl2s(inucl, &
 &         iz))
         IF (ALLOCATED(nal)) THEN
           CALL PUSHREAL8ARRAY(nal(:, inucl), r8*SIZE(nal, 1)/8)
@@ -345,7 +345,7 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_xy&
+        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_cv&
 &         (:, inucl)
       END DO
       CALL PUSHINTEGER4(iz - 1)
@@ -355,7 +355,7 @@ CONTAINS
       DO iz=ad_to0,1,-1
         iab(:, nucl2s(inucl, iz)) = iab(:, nucl2s(inucl, iz)) + ua(:, &
 &         nucl2s(inucl, iz))*av_ualphab(:, inucl)
-        tempb = iz**2*iab(:, nucl2s(inucl, iz))/z2n_xy(:, inucl)
+        tempb = iz**2*iab(:, nucl2s(inucl, iz))/z2n_cv(:, inucl)
         temp = iz*nal(:, inucl)
         nab(:, nucl2s(inucl, iz)) = nab(:, nucl2s(inucl, iz)) + &
 &         z_to_m1_astb(:, inucl)/temp + tempb
@@ -367,8 +367,8 @@ CONTAINS
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(ia(:, nucl2s(inucl, iz)), &
 &                                       r8*SIZE(ia, 1)/8)
         iab(:, nucl2s(inucl, iz)) = 0.D0
-        z2n_xyb(:, inucl) = z2n_xyb(:, inucl) - na(:, nucl2s(inucl, iz))&
-&         *tempb/z2n_xy(:, inucl)
+        z2n_cvb(:, inucl) = z2n_cvb(:, inucl) - na(:, nucl2s(inucl, iz))&
+&         *tempb/z2n_cv(:, inucl)
       END DO
     END DO
     z_to_m1_astb = 0.D0
@@ -384,10 +384,10 @@ CONTAINS
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(nal(:, inucl), r8*SIZE(nal&
 &                                       , 1)/8)
         nab(:, nucl2s(inucl, iz)) = nab(:, nucl2s(inucl, iz)) + nalb(:, &
-&         inucl) + iz**2*z2n_xyb(:, inucl)
+&         inucl) + iz**2*z2n_cvb(:, inucl)
         CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy(:, inucl), r8*SIZE(&
-&                                       z2n_xy, 1)/8)
+        IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv(:, inucl), r8*SIZE(&
+&                                       z2n_cv, 1)/8)
       END DO
     END DO
     CALL POPCONTROL1B(branch)
@@ -395,9 +395,9 @@ CONTAINS
 &                                   , 2)/8)
     nalb = 0.D0
     CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*&
-&                                   SIZE(z2n_xy, 2)/8)
-    z2n_xyb = 0.D0
+    IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*&
+&                                   SIZE(z2n_cv, 2)/8)
+    z2n_cvb = 0.D0
   END SUBROUTINE B2MOD_ZHFRTF_PREP_B
 
 !
@@ -419,7 +419,7 @@ CONTAINS
 !  3. description
 !
 !     This routine computes:
-!     z2n_xy: squared charge weighted average density
+!     z2n_cv: squared charge weighted average density
 !             of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density to
@@ -431,11 +431,11 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..calculate the average Z**2*n and numerical density of the isonuclear sequence
-    z2n_xy = 0.0_R8
+    z2n_cv = 0.0_R8
     nal = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        z2n_xy(:, inucl) = z2n_xy(:, inucl) + iz**2*na(:, nucl2s(inucl, &
+        z2n_cv(:, inucl) = z2n_cv(:, inucl) + iz**2*na(:, nucl2s(inucl, &
 &         iz))
         nal(:, inucl) = nal(:, inucl) + na(:, nucl2s(inucl, iz))
       END DO
@@ -447,7 +447,7 @@ CONTAINS
     z_to_m1_ast = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_xy&
+        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_cv&
 &         (:, inucl)
         av_ualpha(:, inucl) = av_ualpha(:, inucl) + ia(:, nucl2s(inucl, &
 &         iz))*ua(:, nucl2s(inucl, iz))
@@ -767,6 +767,7 @@ CONTAINS
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(gt_ac(:, is), r8*SIZE(&
 &                                       gt_ac, 1)/8)
         gt_acb(:, is) = geo%cvbb(:, 0)*gt_acb(:, is)/geo%cvbb(:, 3)
+        wrkvb = 0.D0
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, t_a(:, &
 &                  is), t_ab(:, is), wrkv, wrkvb, gt_ac(:, is), gt_acb(:&
 &                  , is))
@@ -904,17 +905,19 @@ CONTAINS
   END SUBROUTINE B2MOD_ZHFRTF_TGTA
 
 !  Differentiation of b2mod_zhfrtf_fr in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy *av_ualpha *c_r_w smfr_p
-!   with respect to varying inputs: *z2n_xy *av_ualpha *c_r_w coef
-!                smfr_p
-!   Plus diff mem management of: z2n_xy:in av_ualpha:in c_r_w:in
+!   gradient     of useful results: *z2n_cv *av_ualpha *c_r_w smfr_p
+!                corr_fria
+!   with respect to varying inputs: *z2n_cv *av_ualpha *c_r_w coef
+!                smfr_p corr_fria
+!   Plus diff mem management of: z2n_cv:in av_ualpha:in c_r_w:in
 !
 !...................................................................................
-  SUBROUTINE B2MOD_ZHFRTF_FR_B(icv, is, coef, coefb, smfr_p, smfr_pb)
+  SUBROUTINE B2MOD_ZHFRTF_FR_B(icv, is, coef, coefb, smfr_p, smfr_pb, &
+&   corr_fria, corr_friab)
     IMPLICIT NONE
     INTEGER :: icv, is, inucl
-    REAL(kind=r8) :: coef
-    REAL(kind=r8) :: coefb
+    REAL(kind=r8) :: coef, corr_fria
+    REAL(kind=r8) :: coefb, corr_friab
     REAL(kind=r8), DIMENSION(0:1) :: smfr_p
     REAL(kind=r8), DIMENSION(0:1) :: smfr_pb
 !-----------------------------------------------------------------------
@@ -940,7 +943,7 @@ CONTAINS
 !   ..the first part of the friction force
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)
     END DO
 !
@@ -948,41 +951,43 @@ CONTAINS
     CALL PUSHREAL8(temp, r8/8)
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)*av_ualpha(icv, inucl)
     END DO
-    coefb = temp*smfr_pb(0)
-    tempb = coef*smfr_pb(0)
+    coefb = temp*corr_fria*smfr_pb(0)
+    tempb = coef*corr_fria*smfr_pb(0)
+    corr_friab = corr_friab + coef*temp*smfr_pb(0)
     smfr_pb(0) = 0.D0
     DO inucl=nspecies-1,0,-1
       tempb0 = rmu(inucl, s2nucl(is)-1)*tempb
       c_r_wb0(icv, inucl, s2nucl(is)-1) = c_r_wb0(icv, inucl, s2nucl(is)&
-&       -1) + z2n_xy(icv, inucl)*av_ualpha(icv, inucl)*tempb0
+&       -1) + z2n_cv(icv, inucl)*av_ualpha(icv, inucl)*tempb0
       tempb1 = c_r_w(icv, inucl, s2nucl(is)-1)*tempb0
-      z2n_xyb(icv, inucl) = z2n_xyb(icv, inucl) + av_ualpha(icv, inucl)*&
+      z2n_cvb(icv, inucl) = z2n_cvb(icv, inucl) + av_ualpha(icv, inucl)*&
 &       tempb1
-      av_ualphab(icv, inucl) = av_ualphab(icv, inucl) + z2n_xy(icv, &
+      av_ualphab(icv, inucl) = av_ualphab(icv, inucl) + z2n_cv(icv, &
 &       inucl)*tempb1
     END DO
     CALL POPREAL8(temp, r8/8)
-    coefb = coefb - temp*smfr_pb(1)
-    tempb = -(coef*smfr_pb(1))
+    coefb = coefb - temp*corr_fria*smfr_pb(1)
+    tempb = -(coef*corr_fria*smfr_pb(1))
+    corr_friab = corr_friab - coef*temp*smfr_pb(1)
     smfr_pb(1) = 0.D0
     DO inucl=nspecies-1,0,-1
       tempb0 = rmu(inucl, s2nucl(is)-1)*tempb
-      z2n_xyb(icv, inucl) = z2n_xyb(icv, inucl) + c_r_w(icv, inucl, &
+      z2n_cvb(icv, inucl) = z2n_cvb(icv, inucl) + c_r_w(icv, inucl, &
 &       s2nucl(is)-1)*tempb0
       c_r_wb0(icv, inucl, s2nucl(is)-1) = c_r_wb0(icv, inucl, s2nucl(is)&
-&       -1) + z2n_xy(icv, inucl)*tempb0
+&       -1) + z2n_cv(icv, inucl)*tempb0
     END DO
   END SUBROUTINE B2MOD_ZHFRTF_FR_B
 
 !
 !...................................................................................
-  SUBROUTINE B2MOD_ZHFRTF_FR(icv, is, coef, smfr_p)
+  SUBROUTINE B2MOD_ZHFRTF_FR(icv, is, coef, smfr_p, corr_fria)
     IMPLICIT NONE
     INTEGER :: icv, is, inucl
-    REAL(kind=r8) :: coef
+    REAL(kind=r8) :: coef, corr_fria
     REAL(kind=r8), DIMENSION(0:1) :: smfr_p
 !-----------------------------------------------------------------------
 !.documentation
@@ -1004,37 +1009,37 @@ CONTAINS
 !   ..the first part of the friction force
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)
     END DO
-    smfr_p(1) = -(coef*temp)
+    smfr_p(1) = -(coef*temp*corr_fria)
 !
 !   ..the second part of the friction force
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)*av_ualpha(icv, inucl)
     END DO
-    smfr_p(0) = coef*temp
+    smfr_p(0) = coef*temp*corr_fria
 !
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_FR
 
 !  Differentiation of b2mod_zhfrtf_tf in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: *nal *ia *gt_ac *gtalc *c_r_ta
-!                *c_r_tb smtf nais
+!                *c_r_tb smtf corr_tfia nais
 !   with respect to varying inputs: *nal *ia *gt_ac *gtalc *c_r_ta
-!                *c_r_tb nais
+!                *c_r_tb corr_tfia nais
 !   Plus diff mem management of: nal:in ia:in gt_ac:in gtalc:in
 !                c_r_ta:in c_r_tb:in
 !
 !...................................................................................
   SUBROUTINE B2MOD_ZHFRTF_TF_B(icv, is, zhcscorr, nais, naisb, smtf, &
-&   smtfb, smtf_nofl)
+&   smtfb, smtf_nofl, corr_tfia, corr_tfiab)
     IMPLICIT NONE
     INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, nais
-    REAL(kind=r8) :: smtfb, naisb
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
+    REAL(kind=r8) :: smtfb, corr_tfiab, naisb
     INTRINSIC SUM
     REAL(kind=r8), DIMENSION(nspecies) :: temp
     REAL(kind=r8), DIMENSION(nspecies) :: temp0
@@ -1048,6 +1053,7 @@ CONTAINS
     REAL(kind=r8) :: temp5
     REAL(kind=r8) :: tempb1
     REAL(kind=r8) :: tempb2
+    INTEGER*4 :: branch
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -1064,11 +1070,26 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..the thermal force before charge state correction
+    CALL PUSHREAL8(smtf, r8/8)
+    smtf = -(ia(icv, is)*SUM(nal(icv, 0:nspecies-1)*c_r_ta(icv, s2nucl(&
+&     is)-1, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)))
 !
 !   ..the thermal force before charge state correction without flux limiting
 !
 !   ..apply the charge state correction
     IF (zhcscorr .EQ. 1) THEN
+      smtf = smtf - c_r_tb(icv, s2nucl(is)-1)*nal(icv, s2nucl(is)-1)*(&
+&       nais/nal(icv, s2nucl(is)-1)*gt_ac(icv, is)-ia(icv, is)*gtalc(icv&
+&       , s2nucl(is)-1))
+!
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    corr_tfiab = corr_tfiab + smtf*smtfb
+    smtfb = corr_tfia*smtfb
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
       temp1 = gtalc(icv, s2nucl(is)-1)
       temp2 = nal(icv, s2nucl(is)-1)
       temp3 = nais*gt_ac(icv, is)/temp2
@@ -1087,6 +1108,7 @@ CONTAINS
       c_r_tbb(icv, s2nucl(is)-1) = c_r_tbb(icv, s2nucl(is)-1) + temp4*&
 &       tempb0
     END IF
+    CALL POPREAL8(smtf, r8/8)
     temp = nal(icv, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)
     temp0 = c_r_ta(icv, s2nucl(is)-1, 0:nspecies-1)
     iab(icv, is) = iab(icv, is) - SUM(temp0*temp)*smtfb
@@ -1107,10 +1129,11 @@ CONTAINS
 
 !
 !...................................................................................
-  SUBROUTINE B2MOD_ZHFRTF_TF(icv, is, zhcscorr, nais, smtf, smtf_nofl)
+  SUBROUTINE B2MOD_ZHFRTF_TF(icv, is, zhcscorr, nais, smtf, smtf_nofl, &
+&   corr_tfia)
     IMPLICIT NONE
     INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, nais
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
     INTRINSIC SUM
 !-----------------------------------------------------------------------
 !.documentation
@@ -1146,6 +1169,8 @@ CONTAINS
 &       , is)*gtalc(icv, s2nucl(is)-1))
     END IF
 !
+    smtf = smtf*corr_tfia
+    smtf_nofl = smtf_nofl*corr_tfia
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_TF
 !

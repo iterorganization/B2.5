@@ -10,7 +10,7 @@
 !                geo.cvbb:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
 !                geo.fcqbet:in geo.vxvol:in rt.rza:in pl.na:in
-!                pl.ua:in pl.po:in pl.te:in pl.ti:in
+!                pl.ua:in pl.po:in pl.ti:in
 !
 !
 !
@@ -27,12 +27,12 @@
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, rt&
-& , rtb, facdrift, fac_exb, pl, plb, fna, fnab, csigin, csiginb, fchin, &
-& fchinb)
+& , rtb, facdrift, fac_exb, pl, plb, srw, fna, fnab, csigin, csiginb, &
+& fchin, fchinb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -57,6 +57,7 @@ SUBROUTINE B2TINNT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, rt&
   TYPE(MAPPING_DIFF) :: mpgb
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFF) :: rtb
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: fchin(nfc, 0:1)
   REAL(kind=r8) :: fchinb(nfc, 0:1)
@@ -521,11 +522,11 @@ END SUBROUTINE B2TINNT_B
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
-& facdrift, fac_exb, pl, fna, csigin, fchin)
+& facdrift, fac_exb, pl, srw, fna, csigin, fchin)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -543,6 +544,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: fchin(nfc, 0:1)
 !   ..common blocks

@@ -18,7 +18,7 @@
 SUBROUTINE B2XPFN_B(nfc, ns, fna, fnab, fnn, fnnb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: nfc, ns
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fnn(nfc, 0:1)
@@ -37,11 +37,11 @@ SUBROUTINE B2XPFN_B(nfc, ns, fna, fnab, fnn, fnnb)
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfn')
   arg1 = nfc*2
-  CALL SFILL_FWD(arg1, 0.0_R8, fnn, fnnb, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, fnn, 1)
   DO is=0,ns-1
     IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       arg1 = nfc*2
-      CALL B2SAXPY_FWD(arg1, 1.0_R8, fna(1, 0, is), 1, fnn, fnnb, 1)
+      CALL B2SAXPY_FWD(arg1, 1.0_R8, fna(1, 0, is), 1, fnn, 1)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
@@ -73,7 +73,7 @@ END SUBROUTINE B2XPFN_B
 SUBROUTINE B2XPFN_NODIFF(nfc, ns, fna, fnn)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: nfc, ns
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fnn(nfc, 0:1)

@@ -19,11 +19,11 @@
 !.specification
 !
 !xpb !srv 01.07.09
-SUBROUTINE B2TREQ_B(ncv, switch, switchb, vol, volb, te, teb, ti, tib, &
-& ne, neb, ni, nib, ne2m, ne2mb, lnlam, lnlamb, st_ext, ceqp, ceqpb)
+SUBROUTINE B2TREQ_B(ncv, switch, switchb, vol, te, teb, ti, tib, ne, neb&
+& , ni, nib, ne2m, ne2mb, lnlam, lnlamb, st_ext, ceqp, ceqpb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2MOD_AD_DIFF, ONLY : ncall_b2treq
@@ -40,8 +40,8 @@ SUBROUTINE B2TREQ_B(ncv, switch, switchb, vol, volb, te, teb, ti, tib, &
 !xpb !srv 01.07.09
   REAL(kind=r8) :: vol(ncv), ni(ncv, 0:1), te(ncv), ti(ncv), ne(ncv), &
 & ne2m(ncv), lnlam(ncv)
-  REAL(kind=r8) :: volb(ncv), nib(ncv, 0:1), teb(ncv), tib(ncv), neb(ncv&
-& ), ne2mb(ncv), lnlamb(ncv)
+  REAL(kind=r8) :: nib(ncv, 0:1), teb(ncv), tib(ncv), neb(ncv), ne2mb(&
+& ncv), lnlamb(ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: ceqp(ncv)
   REAL(kind=r8) :: ceqpb(ncv)
@@ -124,7 +124,7 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
 & st_ext, ceqp)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2MOD_AD_DIFF, ONLY : ncall_b2treq

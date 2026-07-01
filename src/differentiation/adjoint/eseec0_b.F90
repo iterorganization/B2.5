@@ -22,7 +22,7 @@ SUBROUTINE ESEEC0_NODIFF(tef, tif, nef, pof, bpf, bbf, material, ix, iy&
   USE B2MOD_CONSTANTS
   USE B2MOD_INDIRECT_DIFF
   USE B2MOD_GEO_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)

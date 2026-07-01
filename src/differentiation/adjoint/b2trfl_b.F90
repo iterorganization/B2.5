@@ -24,7 +24,7 @@ SUBROUTINE B2TRFL_B(icv, switch, mpg, ainv, ainvb, zeffne, zeffneb, amti&
 & , amtib, zetap, zetapb, gamma, cf_lim, cf_limb0, cf_limh, cf_limhb, &
 & cf_limb, cf_limbb, cf_limbh, cf_limbhb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF
@@ -209,7 +209,7 @@ END SUBROUTINE B2TRFL_B
 SUBROUTINE B2TRFL_NODIFF(icv, switch, mpg, ainv, zeffne, amti, zetap, &
 & gamma, cf_lim, cf_limh, cf_limb, cf_limbh)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF

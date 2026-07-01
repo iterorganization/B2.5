@@ -22,7 +22,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
   USE B2MOD_TALLIES
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMRC_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -187,6 +187,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
   srw%rsana = 0.0_R8
   srw%rsahi = 0.0_R8
   srw%rsamo = 0.0_R8
+!
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source
@@ -652,9 +653,9 @@ END SUBROUTINE B2STEL_NODIFF
 !                *(srw.rqrad) *(srw.rqbrm) *(rtw.rsa) *(rtw.rra)
 !                *(rtw.rqa) *(rtw.rrd) *(rtw.rbr) *(rtw.rqr) *(pl.na)
 !                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in geo.cvbb:in
-!                geo.cvvol:in geo.fcvol:in rt.rlqa:in rt.rlra:in
-!                rt.rlsa:in rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in dv.facdrift:in
+!                dv.fac_exb:in rt.rlqa:in rt.rlra:in rt.rlsa:in
+!                rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
 !                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
 !                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
 !                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
@@ -674,14 +675,14 @@ END SUBROUTINE B2STEL_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, geob, mpg, pl, &
-& plb, dv, dvb, rt, rtb, rtw, rtwb, srw, srwb)
+SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, mpg, pl, plb, dv&
+& , dvb, rt, rtb, rtw, rtwb, srw, srwb)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMRC_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -698,7 +699,6 @@ SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, geob, mpg, pl, &
   INTEGER :: ncv, nfc, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFF) :: plb
@@ -792,8 +792,9 @@ SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, geob, mpg, pl, &
 !srv 11.09.09
   CALL PUSHINTEGER4(arg1)
   arg1 = ncv*4
-  CALL SFILL_FWD(arg1, 0.0_R8, srw%she0, srwb%she0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, srw%she0, 1)
 !   ..compute sources due to ionisation
+!
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source

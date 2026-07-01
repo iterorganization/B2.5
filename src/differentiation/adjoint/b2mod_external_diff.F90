@@ -148,7 +148,7 @@ CONTAINS
     USE B2MOD_GEO_DIFF
     USE B2MOD_CONSTANTS
     USE B2MOD_INDIRECT_DIFF
-    USE B2MOD_ELEMENTS_DIFF
+    USE B2MOD_ELEMENTS
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd, ismain
     INTEGER :: is, iss, is1, ix, iy, len
@@ -185,7 +185,6 @@ CONTAINS
 &                                                              )
       initialised_externals = .true.
       RETURN
-!
     ELSE
       OPEN(unit=74, file=filename) 
       IF (.NOT.initialised_externals) THEN

@@ -31,7 +31,7 @@ SUBROUTINE B2TCPA_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 & st_extb, fch_p, fch_pb, fch_pi_c, fch_pi_cb, fch_pi_f, fch_pi_fb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -81,7 +81,7 @@ SUBROUTINE B2TCPA_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !
 !   ..local variables
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
-  REAL(kind=r8) :: tevb(nvx), dtepb(nfc), wrkb(nfc, 0:1)
+  REAL(kind=r8) :: tevb(nvx), dtepb(nfc)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
@@ -164,7 +164,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
 & fch_pi_f)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

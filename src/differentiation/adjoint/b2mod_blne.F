@@ -6,7 +6,7 @@ c-----------------------------------------------------------------------
       use b2mod_types
       use b2mod_diag_diff
       use b2mod_time
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_geometry_diff
       use b2mod_boundary_namelist_diff
       use b2us_geo_diff

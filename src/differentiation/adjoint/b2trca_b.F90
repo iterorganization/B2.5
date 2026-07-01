@@ -49,7 +49,7 @@ SUBROUTINE B2TRCA_B(nnucl, amti, amtib, n5, n6, n9, n10, n11, n12, nz2n&
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i, j, dnnucl
+  INTEGER :: j, dnnucl
   REAL(kind=r8) :: temp, g5(0:nnucl-1, 0:nnucl-1), g6(0:nnucl-1, 0:nnucl&
 & -1), g9(0:nnucl-1, 0:nnucl-1), g10(0:nnucl-1, 0:nnucl-1), g11(0:nnucl-&
 & 1, 0:nnucl-1), g12(0:nnucl-1, 0:nnucl-1), a(0:2*nnucl-1, 0:2*nnucl-1)

@@ -165,8 +165,8 @@ END SUBROUTINE B2TLHE_NODIFF
 !
 !
 !
-SUBROUTINE B2TLHE_B(ncv, nfc, me, cflme, switch, switchb, geo, geob, mpg&
-& , ne, neb, te, teb, chvemx, chvemxb)
+SUBROUTINE B2TLHE_B(ncv, nfc, me, cflme, switch, switchb, geo, mpg, ne, &
+& neb, te, teb, chvemx, chvemxb)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -180,7 +180,6 @@ SUBROUTINE B2TLHE_B(ncv, nfc, me, cflme, switch, switchb, geo, geob, mpg&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: me, cflme, ne(ncv), te(ncv), chvemx(nfc)
   REAL(kind=r8) :: neb(ncv), teb(ncv), chvemxb(nfc)

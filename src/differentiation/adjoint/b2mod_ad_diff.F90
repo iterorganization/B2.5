@@ -22,7 +22,7 @@ MODULE B2MOD_AD_DIFF
   INTEGER :: nsdmax
   PARAMETER (nsdmax=def_nsd)
   INTEGER :: cvregmax
-  PARAMETER (cvregmax=8)
+  PARAMETER (cvregmax=100)
   INTEGER :: nncf
   PARAMETER (nncf=def_ncf)
 !
@@ -71,6 +71,7 @@ MODULE B2MOD_AD_DIFF
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2rr(:, :), b2voloncf(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2voloncfb(:, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2psi(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: b2psib(:, :)
   INTEGER, SAVE :: ompind(nncf, 2)=0
 !
   LOGICAL, SAVE :: test_residual=.false.
@@ -185,6 +186,7 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: ncall_b2usht=0
   INTEGER, SAVE :: ncall_b2usmo=0
   INTEGER, SAVE :: ncall_b2uspo=0
+  INTEGER, SAVE :: ncall_b2uppo=0
   INTEGER, SAVE :: ncall_b2xehx=0
   INTEGER, SAVE :: ncall_b2xehy=0
   INTEGER, SAVE :: ncall_b2mndt=0
@@ -194,6 +196,7 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: primal_iterations=0
   REAL(kind=r8), SAVE :: primal_res=0.0_R8
   REAL(kind=r8), SAVE :: gradient_res=0.0_R8
+!
 !
   LOGICAL, SAVE :: firstgmid=.true.
   DATA fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))', &

@@ -101,9 +101,9 @@ csw 09jan2014 declare fun to be private
         use b2mod_anomalous_transport
         use b2mod_indirect_diff
         use b2mod_geo_diff
-        use b2mod_plasma_diff
+        use b2mod_plasma
         use b2mod_constants
-        use b2mod_b2cmpa_diff
+        use b2mod_b2cmpa
 csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com
 

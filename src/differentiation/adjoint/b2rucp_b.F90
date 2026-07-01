@@ -18,8 +18,8 @@
 SUBROUTINE B2RUCP_NODIFF(nget, version, ns)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
@@ -288,7 +288,7 @@ SUBROUTINE B2RUCP_NODIFF(nget, version, ns)
   INTEGER :: ireg, idum(0:9)
 !   ..procedures
   EXTERNAL XERTST, CFRUIN, CFRURE
-  EXTERNAL B2XVCP_NODIFF, B2RUZD_NODIFF
+  EXTERNAL B2XVCP_NODIFF, B2RUZD
   INTEGER :: arg1
 !
 !-----------------------------------------------------------------------
@@ -306,7 +306,7 @@ SUBROUTINE B2RUCP_NODIFF(nget, version, ns)
 !
 ! ..read common blocks
 !   ..read /b2cmpa/
-  CALL B2RUZD_NODIFF(nget, version, ns, zamin, zamax, zn, am, .true.)
+  CALL B2RUZD(nget, version, ns, zamin, zamax, zn, am, .true.)
 !   ..read /b2cmpb/
   idum = 0
   CALL CFRUIN_OPT(nget, 8, idum, 'cbir,cbnr')

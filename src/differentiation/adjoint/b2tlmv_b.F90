@@ -24,7 +24,7 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
 & geob, mpg, mpgb, nb, nbb, tb, tbb, ub, ubb, collisnumf, collisnumfb, &
 & vsbfx, vsbfxb, cvsbx, cvsbxb, cvsbxhz, cvsbxhzb, fl)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -52,21 +52,26 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
 !srv 12.04.04
   CHARACTER :: charns*3
   REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
-& nbf(nfc)
+& nbf(nfc), wrk
   REAL(kind=r8) :: qclb, qflb, tflb, ubvb(nvx), dubb(nfc), cflmv_locb(&
 & nfc), nbfb(nfc)
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   INTRINSIC MAX
+  REAL(kind=r8) :: y1
+  REAL(kind=r8) :: y1b
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs1b
+  REAL(kind=r8) :: max1
+  REAL(kind=r8) :: max1b
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs3b
-  REAL(kind=r8) :: max1
-  REAL(kind=r8) :: max1b
+  REAL(kind=r8) :: max2
+  REAL(kind=r8) :: max2b
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -162,6 +167,33 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+        IF (switch%min_collisions .GT. 0.0_R8) THEN
+          CALL PUSHREAL8(wrk, r8/8)
+          wrk = switch%cvsa_low_col_mltpl
+          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
+&             *(1.0_R8-wrk) + wrk) THEN
+            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
+&             wrk) + wrk
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+            y1 = 1.0_R8
+          END IF
+          IF (wrk .LT. y1) THEN
+            CALL PUSHREAL8(max1, r8/8)
+            max1 = y1
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHREAL8(max1, r8/8)
+            max1 = wrk
+            CALL PUSHCONTROL1B(1)
+          END IF
+          CALL PUSHREAL8(cflmv_loc(ifc), r8/8)
+          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
         IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
           qcl = -(cvsbx(ifc)*dub(ifc))
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
@@ -195,16 +227,16 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
           END IF
         ELSE
           IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            CALL PUSHREAL8(max1, r8/8)
-            max1 = 1.0e-16_R8
+            CALL PUSHREAL8(max2, r8/8)
+            max2 = 1.0e-16_R8
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8(max1, r8/8)
-            max1 = collisnumf(ifc)
+            CALL PUSHREAL8(max2, r8/8)
+            max2 = collisnumf(ifc)
             CALL PUSHCONTROL1B(1)
           END IF
           CALL PUSHREAL8(tfl, r8/8)
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max1)
+          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
           CALL PUSHCONTROL2B(2)
         END IF
         CALL PUSHREAL8(cvsbx(ifc), r8/8)
@@ -286,7 +318,7 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
   ELSE
     dubb = 0.D0
     cflmv_locb = 0.D0
-    DO 100 ifc=nfc,1,-1
+    DO ifc=nfc,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         CALL POPREAL8(vsbfx(ifc), r8/8)
@@ -316,15 +348,15 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
           qclb = 0.D0
         ELSE
           CALL POPREAL8(tfl, r8/8)
-          tempb = -(tflb/(cflmv_loc(ifc)**2*max1**2))
-          cflmv_locb(ifc) = cflmv_locb(ifc) + max1*tempb
-          max1b = cflmv_loc(ifc)*tempb
+          tempb = -(tflb/(cflmv_loc(ifc)**2*max2**2))
+          cflmv_locb(ifc) = cflmv_locb(ifc) + max2*tempb
+          max2b = cflmv_loc(ifc)*tempb
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8(max1, r8/8)
+            CALL POPREAL8(max2, r8/8)
           ELSE
-            CALL POPREAL8(max1, r8/8)
-            collisnumfb(ifc) = collisnumfb(ifc) + max1b
+            CALL POPREAL8(max2, r8/8)
+            collisnumfb(ifc) = collisnumfb(ifc) + max2b
           END IF
           GOTO 100
         END IF
@@ -349,8 +381,27 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
         END IF
         cvsbxb(ifc) = cvsbxb(ifc) - dub(ifc)*qclb
         dubb(ifc) = dubb(ifc) - cvsbx(ifc)*qclb
+ 100    CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(cflmv_loc(ifc), r8/8)
+          max1b = cflmv_loc(ifc)*cflmv_locb(ifc)
+          cflmv_locb(ifc) = max1*cflmv_locb(ifc)
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(max1, r8/8)
+            y1b = max1b
+            wrk = switch%cvsa_low_col_mltpl
+          ELSE
+            CALL POPREAL8(max1, r8/8)
+            y1b = 0.D0
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) collisnumfb(ifc) = collisnumfb(ifc) + (&
+&             1.0_R8-wrk)*y1b/5.0_R8
+          CALL POPREAL8(wrk, r8/8)
+        END IF
       END IF
- 100 CONTINUE
+    END DO
   END IF
   ubvb = 0.D0
   CALL DIFF_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, ub, ubb, ubv, ubvb, &
@@ -390,7 +441,7 @@ END SUBROUTINE B2TLMV_B
 SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
 & , tb, ub, collisnumf, vsbfx, cvsbx, cvsbxhz, fl)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -413,16 +464,19 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
 !srv 12.04.04
   CHARACTER :: charns*3
   REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
-& nbf(nfc)
+& nbf(nfc), wrk
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   INTRINSIC MAX
+  REAL(kind=r8) :: y1
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: max1
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
-  REAL(kind=r8) :: max1
+  REAL(kind=r8) :: max2
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -502,6 +556,22 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+        IF (switch%min_collisions .GT. 0.0_R8) THEN
+          wrk = switch%cvsa_low_col_mltpl
+          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
+&             *(1.0_R8-wrk) + wrk) THEN
+            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
+&             wrk) + wrk
+          ELSE
+            y1 = 1.0_R8
+          END IF
+          IF (wrk .LT. y1) THEN
+            max1 = y1
+          ELSE
+            max1 = wrk
+          END IF
+          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+        END IF
         IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
           qcl = -(cvsbx(ifc)*dub(ifc))
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
@@ -524,11 +594,11 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
           END IF
         ELSE
           IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max1 = 1.0e-16_R8
+            max2 = 1.0e-16_R8
           ELSE
-            max1 = collisnumf(ifc)
+            max2 = collisnumf(ifc)
           END IF
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max1)
+          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
         END IF
         cvsbx(ifc) = cvsbx(ifc)/tfl
         cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
