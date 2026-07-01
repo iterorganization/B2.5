@@ -10,10 +10,10 @@
 !                *(pl.na) *(pl.po) *(pl.te)
 !   Plus diff mem management of: dv.fch_p:in dv.fne_he:in dv.fhe:in
 !                dv.fhe_mdf:in dv.fhepsch:in dv.floe:in dv.cone:in
-!                dv.ne:in dv.vedia:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.za2:in
-!                st_ext.na:in rt.rz2:in co.calf:in co.chce:in pl.na:in
-!                pl.po:in pl.te:in
+!                dv.ne:in dv.vedia:in dv.facdrift:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.za2:in st_ext.na:in rt.rz2:in
+!                co.calf:in co.chce:in pl.na:in pl.po:in pl.te:in
 !
 !
 !
@@ -37,7 +37,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -123,8 +123,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
 & 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefd(nbdirsmax, nfc), nefd(nbdirsmax, nfc), tefhd(&
-& nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1), fhe0_mdfd(nbdirsmax, nfc&
-& , 0:1)
+& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -169,10 +168,6 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !    ..test sign of ne, te, chce
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkfd(nd, :, 0) = 0.D0
-      wrkfd(nd, :, 1) = 0.D0
-    END DO
     wrkf(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
     CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')
@@ -475,7 +470,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

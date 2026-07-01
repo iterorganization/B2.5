@@ -33,7 +33,7 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
 & rtd, rtw, rtwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
 ! csc The following are not necessary for computation but are needed
@@ -126,11 +126,14 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
   IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   arg1 = te/ev
   DO nd=1,nbdirs
+!
 !   ..compute wrk0()=log(te()/ev)
     arg1d(nd, :) = ted(nd, :)/ev
     wrk0d(nd, :) = arg1d(nd, :)/arg1
   END DO
   wrk0 = LOG(arg1)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -199,9 +202,6 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
         END DO
         y1 = rt%rlza(icv, 0, is) + rt%rlza(icv, 1, is)*wrk0(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.D0
-        END DO
         y1 = zamax(is)
         y1d = 0.D0
       END IF
@@ -254,7 +254,6 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -293,6 +292,7 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
       rtw%rrd(icv, is) = rtw%rrd(icv, is) + temp
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()
@@ -320,7 +320,7 @@ END SUBROUTINE B2SQEL_DV
 SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
 ! csc The following are not necessary for computation but are needed
@@ -395,9 +395,12 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
   IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+!
 !   ..compute wrk0()=log(te()/ev)
   arg1 = te/ev
   wrk0 = LOG(arg1)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -458,7 +461,6 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -483,6 +485,7 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
 &       1.5_R8+1.0_R8/tnorm**3)
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()

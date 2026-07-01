@@ -161,14 +161,6 @@ CONTAINS
       sdata(:, :, :, :) = 0.0_R8
       nxdata(:, :, :) = 0
       xdata(:, :, :, :) = 0.0_R8
-      DO nd=1,nbdirs
-        sna0d(nd, :, :, :) = 0.D0
-        smo0d(nd, :, :, :) = 0.D0
-        she0d(nd, :, :) = 0.D0
-        sne0d(nd, :, :) = 0.D0
-        shi0d(nd, :, :) = 0.D0
-        sch0d(nd, :, :) = 0.D0
-      END DO
       sna0(:, :, :) = 0.0_R8
       sne0(:, :) = 0.0_R8
       smo0(:, :, :) = 0.0_R8
@@ -1077,7 +1069,7 @@ CONTAINS
 !**************************************************************************
     USE B2MOD_TIME
     USE B2MOD_CONSTANTS
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -1268,9 +1260,15 @@ CONTAINS
             CALL E01BFF_DV(ndat, r, rd, f, fd, d, dd, ndim, pr, pf, pfd&
 &                    , ifail, nbdirs)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm&
-&                                  , delmd, ndim, pr, pelm, pelmd, ifail&
-&                                  , nbdirs)
+            IF (elm_data) THEN
+              CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm, delmd, ndim&
+&                      , pr, pelm, pelmd, ifail, nbdirs)
+            ELSE
+              DO nd=1,nbdirs
+                pelmd(nd, :) = pfd(nd, :)
+              END DO
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -1706,7 +1704,7 @@ CONTAINS
 !**************************************************************************
     USE B2MOD_TIME
     USE B2MOD_CONSTANTS
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -1854,8 +1852,11 @@ CONTAINS
             ndim = nomp
             CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF(ndat, r, felm, delm, ndim, pr, &
-&                               pelm, ifail)
+            IF (elm_data) THEN
+              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+            ELSE
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -2209,7 +2210,7 @@ CONTAINS
     INTEGER :: i, ifa
     INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
     REAL(kind=r8) :: r(nrr), pr(nrr), prtmp
-    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:)
+    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:), dsp(:)
     INTEGER :: ncall, nya
     CHARACTER(len=256) :: filenamer
     LOGICAL :: exist
@@ -2224,8 +2225,9 @@ CONTAINS
       IF (nomp .GT. 0) THEN
         ALLOCATE(pra(nomp))
         ALLOCATE(prdsa(nomp))
+        ALLOCATE(dsp(nomp))
         arg1 = icsepomp - 1
-        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp')
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp)
       END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF

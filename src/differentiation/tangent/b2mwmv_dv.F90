@@ -19,7 +19,7 @@ SUBROUTINE B2MWMV_NODIFF(nput, ncv, state, itim, tim, dtim)
   USE B2MOD_TYPES
   USE B2MOD_SUBSYS
   USE B2US_PLASMA_DIFFV
-  USE B2US_WORK_DIFFV
+  USE B2US_WORK
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)

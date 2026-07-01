@@ -10,8 +10,7 @@
 !                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
 !                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
-!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvhx:in
-!                geo.cvqgam:in geo.cvvol:in geo.fcht:in geo.fcvol:in
+!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvqgam:in
 !                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
 !                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
@@ -39,7 +38,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 &)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -777,7 +776,7 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 & mpg, pl, dv, st_ext, srw, main_call)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV

@@ -20,14 +20,15 @@
 !
 !srv 18.03.10
 SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
-& geo, mpg, mpgd, ne, ned, te, ted, conc, concd, sch, schd, respo, &
-& respod, corpo, corpod, aa, aad, name, nbdirs)
+& geo, mpg, mpgd, ne, ned, te, conc, concd, sch, schd, respo, respod, &
+& corpo, corpod, aa, aad, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo
@@ -45,9 +46,8 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ne(ncv), te(ncv), conc(nfc, 0:1), sch(ncv, 0:3), &
 & respo(ncv)
-  REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), concd(&
-& nbdirsmax, nfc, 0:1), schd(nbdirsmax, ncv, 0:3), respod(nbdirsmax, ncv&
-& )
+  REAL(kind=r8) :: ned(nbdirsmax, ncv), concd(nbdirsmax, nfc, 0:1), schd&
+& (nbdirsmax, ncv, 0:3), respod(nbdirsmax, ncv)
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corpo(ncv)
@@ -288,26 +288,30 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
 !
   IF (switch%b2uspo_iout .NE. 0) THEN
 !srv 08.07.08 {
-    DO k=0,3
-      WRITE(chark, '(i1)') k
-      arg1 = 'b2uspo_sch'//chark
-      CALL MY_OUT_US(70, ncv, 0, sch(1, k), arg1)
-    END DO
-    result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
-    DO k=1,result1
-      WRITE(charnv, '(i2.2)') k
-      DO icv=1,ncv
-        IF (k .LE. mpg%cvnvp(icv, 2)) THEN
-          wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
-        ELSE
-          wrk(icv) = 0.0_R8
-        END IF
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'b2uspo OpenMP warning: no file I/O in parallel mode'
+    ELSE
+      DO k=0,3
+        WRITE(chark, '(i1)') k
+        arg1 = 'b2uspo_sch'//chark
+        CALL MY_OUT_US(70, ncv, 0, sch(1, k), arg1)
       END DO
-      arg1 = 'b2uspo_aam'//charnv
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg1)
-    END DO
-    CALL MY_OUT_US(70, ncv, 0, respo, 'b2uspo_respo')
-    CALL MY_OUT_US(70, ncv, 0, corpo, 'b2uspo_corpo')
+      result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
+      DO k=1,result1
+        WRITE(charnv, '(i2.2)') k
+        DO icv=1,ncv
+          IF (k .LE. mpg%cvnvp(icv, 2)) THEN
+            wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
+          ELSE
+            wrk(icv) = 0.0_R8
+          END IF
+        END DO
+        arg1 = 'b2uspo_aam'//charnv
+        CALL MY_OUT_US(70, ncv, 0, wrk, arg1)
+      END DO
+      CALL MY_OUT_US(70, ncv, 0, respo, 'b2uspo_respo')
+      CALL MY_OUT_US(70, ncv, 0, corpo, 'b2uspo_corpo')
+    END IF
   END IF
 !
 ! ..return
@@ -339,10 +343,11 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 & switch, geo, mpg, ne, te, conc, sch, respo, corpo, aa, name)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo
@@ -518,30 +523,35 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 !   ..solve the correction equation
   WRITE(*, '(1x,a,a)') 'Calling b2uxus from '//TRIM(name)
 !srv 18.03.10
-  CALL B2UXUS(ncv, mpg, aa, itcnt, respo, corpo, name, switch%b2uxus_style)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, respo, corpo, name, switch%&
+&              b2uxus_style)
 !
   IF (switch%b2uspo_iout .NE. 0) THEN
 !srv 08.07.08 {
-    DO k=0,3
-      WRITE(chark, '(i1)') k
-      arg1 = 'b2uspo_sch'//chark
-      CALL MY_OUT_US(70, ncv, 0, sch(1, k), arg1)
-    END DO
-    result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
-    DO k=1,result1
-      WRITE(charnv, '(i2.2)') k
-      DO icv=1,ncv
-        IF (k .LE. mpg%cvnvp(icv, 2)) THEN
-          wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
-        ELSE
-          wrk(icv) = 0.0_R8
-        END IF
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'b2uspo OpenMP warning: no file I/O in parallel mode'
+    ELSE
+      DO k=0,3
+        WRITE(chark, '(i1)') k
+        arg1 = 'b2uspo_sch'//chark
+        CALL MY_OUT_US(70, ncv, 0, sch(1, k), arg1)
       END DO
-      arg1 = 'b2uspo_aam'//charnv
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg1)
-    END DO
-    CALL MY_OUT_US(70, ncv, 0, respo, 'b2uspo_respo')
-    CALL MY_OUT_US(70, ncv, 0, corpo, 'b2uspo_corpo')
+      result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
+      DO k=1,result1
+        WRITE(charnv, '(i2.2)') k
+        DO icv=1,ncv
+          IF (k .LE. mpg%cvnvp(icv, 2)) THEN
+            wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
+          ELSE
+            wrk(icv) = 0.0_R8
+          END IF
+        END DO
+        arg1 = 'b2uspo_aam'//charnv
+        CALL MY_OUT_US(70, ncv, 0, wrk, arg1)
+      END DO
+      CALL MY_OUT_US(70, ncv, 0, respo, 'b2uspo_respo')
+      CALL MY_OUT_US(70, ncv, 0, corpo, 'b2uspo_corpo')
+    END IF
   END IF
 !
 ! ..return

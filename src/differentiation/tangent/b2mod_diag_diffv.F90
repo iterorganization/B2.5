@@ -14,7 +14,7 @@
 !
 MODULE B2MOD_DIAG_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_ELEMENTS_DIFFV
+  USE B2MOD_ELEMENTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_NEUTR_SRC_SCALING
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -71,16 +71,19 @@ MODULE B2MOD_DIAG_DIFFV
 !***  ntrc_usr  :  tracing/user.trc       :  user-specific data
 !***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 !***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+!***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., N
+!ucl. Fusion 58 126018)
 !***
 !*** print_first_step : if false, skip the first timestep in the history
 !***                    tracing
 !
   INTEGER :: len_ntrc, ntrc_used
-  PARAMETER (len_ntrc=10)
+  PARAMETER (len_ntrc=11)
   INTEGER :: ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln, ntrc_ble&
-& , ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
+& , ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep, ntrc_bls
   PARAMETER (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4, ntrc_bln=5&
-& , ntrc_ble=6, ntrc_int=7, ntrc_usr=8, ntrc_blm=9, ntrc_sep=10)
+& , ntrc_ble=6, ntrc_int=7, ntrc_usr=8, ntrc_blm=9, ntrc_sep=10, &
+& ntrc_bls=11)
   INTEGER :: ntrc(len_ntrc), lv_trc(len_ntrc)
   LOGICAL :: filedata(len_ntrc), print_first_step
   INTEGER :: lenfnm, mhdr
@@ -99,7 +102,7 @@ CONTAINS
 !
   SUBROUTINE ALLOC_B2MOD_DIAG(ncv, nfc, nsd, nregionv, nstra, natm, &
 &   switch)
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_SWITCHES_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -237,12 +240,16 @@ CONTAINS
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
       ntrc(ntrc_srt) = 59
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
-      ntrc(ntrc_res) = 72
+      ntrc(ntrc_res) = 71
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
-      ntrc(ntrc_src) = 73
+      ntrc(ntrc_src) = 72
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
-      ntrc(ntrc_bln) = 74
+      ntrc(ntrc_bln) = 73
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
+! IYS 07.11.2018
+      ntrc(ntrc_bls) = 74
+! IYS 07.11.2018
+      fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'
       ntrc(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
       ntrc(ntrc_int) = 76

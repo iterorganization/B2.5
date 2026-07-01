@@ -3,9 +3,9 @@
 !
 !  Differentiation of b2trfl_an in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: cf_limb cf_limh cf_limbh cf_lim
-!   with respect to varying inputs: *z2n_xy *nal *gtalc cf_limb
+!   with respect to varying inputs: *z2n_cv *nal *gtalc cf_limb
 !                cf_limh cf_limbh zetap amti c_hta_an cf_lim
-!   Plus diff mem management of: z2n_xy:in nal:in gtalc:in
+!   Plus diff mem management of: z2n_cv:in nal:in gtalc:in
 !
 !
 !
@@ -23,13 +23,13 @@ SUBROUTINE B2TRFL_AN_DV(icv, switch, mpg, c_hta_an, c_hta_and, amnucl, &
 & amti, amtid, zetap, zetapd, gamma, cf_lim, cf_limd, cf_limh, cf_limhd&
 & , cf_limb, cf_limbd, cf_limbh, cf_limbhd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : gtalc, gtalcd, nal, nald, z2n_xy, &
-& z2n_xyd
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : gtalc, gtalcd, nal, nald, z2n_cv, &
+& z2n_cvd
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -121,11 +121,11 @@ SUBROUTINE B2TRFL_AN_DV(icv, switch, mpg, c_hta_an, c_hta_and, amnucl, &
       END IF
       arg1 = 2.0_R8/amnucl(i)
       result1 = SQRT(arg1)
-      temp = z2n_xy(icv, i)
+      temp = z2n_cv(icv, i)
       temp0 = nal(icv, i)*abs0/(temp*temp)
       DO nd=1,nbdirs
         t0d(nd) = result1*(abs0*nald(nd, icv, i)+nal(icv, i)*abs0d(nd)-&
-&         temp0*2*temp*z2n_xyd(nd, icv, i))/temp**2
+&         temp0*2*temp*z2n_cvd(nd, icv, i))/temp**2
       END DO
       t0 = result1*temp0
       temp0 = SQRT(amti(i))
@@ -246,12 +246,12 @@ END SUBROUTINE B2TRFL_AN_DV
 SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 & zetap, gamma, cf_lim, cf_limh, cf_limb, cf_limbh)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : gtalc, nal, z2n_xy
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : gtalc, nal, z2n_cv
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -310,7 +310,7 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
       END IF
       arg1 = 2.0_R8/amnucl(i)
       result1 = SQRT(arg1)
-      t0 = nal(icv, i)/z2n_xy(icv, i)**2*result1*abs0
+      t0 = nal(icv, i)/z2n_cv(icv, i)**2*result1*abs0
       result10 = SQRT(amti(i))
       t1 = switch%zhflcorr*cflim(4)/result10
       result10 = SQRT(amti(i))

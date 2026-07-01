@@ -28,7 +28,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 & , fchvisq, fchvisqd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -1005,7 +1005,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & vsaf_hbdp_al, hcix_c, hci_a, hci_al_ast, fchvisq_a, fchvisq)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

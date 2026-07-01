@@ -5,8 +5,7 @@
 !   variations   of useful results: sigin
 !   with respect to varying inputs: *(rt.rlcx) *(pl.na) *(pl.ti)
 !                *(pl.tn)
-!   Plus diff mem management of: geo.cvbb:in rt.rlcx:in pl.na:in
-!                pl.ti:in pl.tn:in
+!   Plus diff mem management of: rt.rlcx:in pl.na:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -21,12 +20,12 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
-& , rtd, sigin, sigind, nbdirs)
+SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, pl, pld, rt, rtd&
+& , sigin, sigind, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -44,7 +43,6 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
   INTEGER :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2RATES), INTENT(IN) :: rt
@@ -161,6 +159,7 @@ SUBROUTINE B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt&
     END DO
     na0_fluid = pl%na(:, is0)
     na0_tot = na0_kin + na0_fluid
+!
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv
@@ -268,7 +267,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -381,6 +380,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
     na0_fluid = pl%na(:, is0)
 !! sum for hybrid fluid-kinetic simulations
     na0_tot = na0_kin + na0_fluid
+!
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv

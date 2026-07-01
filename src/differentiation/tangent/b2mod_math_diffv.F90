@@ -598,8 +598,10 @@ CONTAINS
     IMPLICIT NONE
     REAL(kind=r8) :: trianglecentroid(0:1)
     REAL(kind=r8) :: x0, y0, x1, y1, x2, y2
+!
     trianglecentroid(0) = (x0+x1+x2)/3.0_R8
     trianglecentroid(1) = (y0+y1+y2)/3.0_R8
+!
     RETURN
   END FUNCTION TRIANGLECENTROID
 
@@ -618,6 +620,7 @@ CONTAINS
     result2 = TRIANGLEAREA(x2, y2, x3, y3, x0, y0)
     quadarea = result1 + result2
 !
+    RETURN
   END FUNCTION QUADAREA
 
 !> Coordinates of centroid of a quadrangle given by vertex coordinates
@@ -629,20 +632,24 @@ CONTAINS
     IMPLICIT NONE
     REAL(kind=r8) :: quadcentroid(0:1)
     REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3
+    REAL(kind=r8) :: denom
     REAL(kind=r8), DIMENSION(0:1) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8), DIMENSION(0:1) :: result3
     REAL(kind=r8) :: result4
-    REAL(kind=r8) :: result5
-    REAL(kind=r8) :: result6
 !
-    result1 = TRIANGLECENTROID(x0, y0, x1, y1, x3, y3)
-    result2 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
-    result3 = TRIANGLECENTROID(x0, y0, x2, y2, x3, y3)
-    result4 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
-    result5 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
-    result6 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
-    quadcentroid = (result1*result2+result3*result4)/(result5+result6)
+    denom = QUADAREA(x0, y0, x2, y2, x3, y3, x1, y1)
+    IF (denom .GT. 0.0_R8) THEN
+      result1 = TRIANGLECENTROID(x0, y0, x1, y1, x3, y3)
+      result2 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
+      result3 = TRIANGLECENTROID(x0, y0, x2, y2, x3, y3)
+      result4 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
+      quadcentroid = (result1*result2+result3*result4)/denom
+    ELSE
+      quadcentroid(0) = (x0+x1+x2+x3)/4.0_R8
+      quadcentroid(1) = (y0+y1+y2+y3)/4.0_R8
+    END IF
+!
     RETURN
   END FUNCTION QUADCENTROID
 
@@ -663,38 +670,40 @@ CONTAINS
     result2 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
     result3 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
     pentarea = result1 + result2 + result3
+!
     RETURN
   END FUNCTION PENTAREA
 
 !> Centroid of convex pentagonal cell
-!> The vertices must be in sequence      
+!> The vertices must be in sequence
 !
   FUNCTION PENTCENTROID(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     REAL(kind=r8) :: pentcentroid(0:1)
     REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+    REAL(kind=r8) :: denom
     REAL(kind=r8), DIMENSION(0:1) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8), DIMENSION(0:1) :: result3
     REAL(kind=r8) :: result4
     REAL(kind=r8), DIMENSION(0:1) :: result5
     REAL(kind=r8) :: result6
-    REAL(kind=r8) :: result7
-    REAL(kind=r8) :: result8
-    REAL(kind=r8) :: result9
 !
-    result1 = TRIANGLECENTROID(x0, y0, x1, y1, x2, y2)
-    result2 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
-    result3 = TRIANGLECENTROID(x2, y2, x3, y3, x4, y4)
-    result4 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
-    result5 = TRIANGLECENTROID(x2, y2, x0, y0, x4, y4)
-    result6 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
-    result7 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
-    result8 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
-    result9 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
-    pentcentroid = (result1*result2+result3*result4+result5*result6)/(&
-&     result7+result8+result9)
+    denom = PENTAREA(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+    IF (denom .GT. 0.0_R8) THEN
+      result1 = TRIANGLECENTROID(x0, y0, x1, y1, x2, y2)
+      result2 = TRIANGLEAREA(x0, y0, x1, y1, x2, y2)
+      result3 = TRIANGLECENTROID(x2, y2, x3, y3, x4, y4)
+      result4 = TRIANGLEAREA(x2, y2, x3, y3, x4, y4)
+      result5 = TRIANGLECENTROID(x2, y2, x0, y0, x4, y4)
+      result6 = TRIANGLEAREA(x2, y2, x0, y0, x4, y4)
+      pentcentroid = (result1*result2+result3*result4+result5*result6)/&
+&       denom
+    ELSE
+      pentcentroid(0) = (x0+x1+x2+x3+x4)/5.0_R8
+      pentcentroid(1) = (y0+y1+y2+y3+y4)/5.0_R8
+    END IF
 !
     RETURN
   END FUNCTION PENTCENTROID
@@ -710,12 +719,20 @@ CONTAINS
     REAL(kind=r8) :: averagevertex
     REAL(kind=r8) :: f0, f1, f2, f3
     REAL(kind=r8) :: x0, y0, x1, y1, x2, y2, x3, y3
-    REAL(kind=r8) :: a0, a1, a2, a3
+    REAL(kind=r8) :: a0, a1, a2, a3, denom
+!
     a0 = TRIANGLEAREA(x2, y2, x0, y0, x1, y1)
     a1 = TRIANGLEAREA(x0, y0, x1, y1, x3, y3)
     a2 = TRIANGLEAREA(x0, y0, x2, y2, x3, y3)
     a3 = TRIANGLEAREA(x2, y2, x3, y3, x1, y1)
-    averagevertex = (f0*a0+f1*a1+f2*a2+f3*a3)/(a0+a1+a2+a3)
+    denom = a0 + a1 + a2 + a3
+!
+    IF (denom .GT. 0.0_R8) THEN
+      averagevertex = (f0*a0+f1*a1+f2*a2+f3*a3)/denom
+    ELSE
+      averagevertex = (f0+f1+f2+f3)/4.0_R8
+    END IF
+!
     RETURN
   END FUNCTION AVERAGEVERTEX
 

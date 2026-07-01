@@ -31,10 +31,11 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
 & smbvhd, smbvv, smbvvd, kt_neo, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, nsmooth_siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -47,7 +48,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, isb, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, isb, ismain
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -55,19 +56,22 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
   TYPE(SWITCHES), INTENT(IN) :: switch
 !srv 01.07.09
 !srv 31.07.02
-  REAL(kind=r8) :: mb, lnlam(ncv), ub(ncv), te(ncv), ti(ncv), nb(ncv), &
-& ni(ncv), ne2(ncv), hcix_c(ncv), cvsbhz_cl(nfc, 0:1), rz2(ncv, 0:ns-1)
-  REAL(kind=r8) :: lnlamd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), ted(&
-& nbdirsmax, ncv), tid(nbdirsmax, ncv), nid(nbdirsmax, ncv), ne2d(&
-& nbdirsmax, ncv), hcix_cd(nbdirsmax, ncv), cvsbhz_cld(nbdirsmax, nfc, 0&
-& :1), rz2d(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: mb, lnlam(ncv), ub(ncv), te(ncv), ti(ncv)&
+& , nb(ncv), ni(ncv), ne2(ncv), hcix_c(ncv), cvsbhz_cl(nfc, 0:1), rz2(&
+& ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: lnlamd(nbdirsmax, ncv), ubd(nbdirsmax, &
+& ncv), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), nid(nbdirsmax, ncv), &
+& ne2d(nbdirsmax, ncv), hcix_cd(nbdirsmax, ncv), cvsbhz_cld(nbdirsmax, &
+& nfc, 0:1), rz2d(nbdirsmax, ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: smbvh(ncv, 0:3), smbvv(ncv, 0:3), kt_neo(ncv)
-  REAL(kind=r8) :: smbvhd(nbdirsmax, ncv, 0:3), smbvvd(nbdirsmax, ncv, 0&
-& :3)
+  REAL(kind=r8), INTENT(OUT) :: smbvh(ncv, 0:3), smbvv(ncv, 0:3), kt_neo&
+& (ncv)
+  REAL(kind=r8), INTENT(OUT) :: smbvhd(nbdirsmax, ncv, 0:3), smbvvd(&
+& nbdirsmax, ncv, 0:3)
 !   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv)
-  REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), wrk1d(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(INOUT) :: wrk0(ncv), wrk1(ncv), wrk2(ncv)
+  REAL(kind=r8), INTENT(INOUT) :: wrk0d(nbdirsmax, ncv), wrk1d(nbdirsmax&
+& , ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -452,7 +456,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
 &         :))/result2+ni*ti*result10d(nd, :)/result2)
 !
 !       ..compute qipgen
-!wdk modified computation compared to structured code to 
+!wdk modified computation compared to structured code to
 !wdk facilitate implementation on unstructured grids
         arg10d(nd, :) = (qip0d(nd, :)-qip0*qip1d(nd, :)/qip1)/qip1
       END DO
@@ -466,7 +470,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
       END DO
       qipgen = result11*(qip1*temp8)
 !
-!       ..gradient qipgen in cell centers   
+!       ..gradient qipgen in cell centers
       CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, qipgen, &
 &               qipgend, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
       temp9 = geo%cvbb(:, 3)*geo%cvbb(:, 3)*geo%cvbb(:, 3)
@@ -475,6 +479,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
 &         tauia1d(nd, :))+wrk0*tauia1*alpha1d(nd, :))/temp9
       END DO
       wrk0 = geo%cvbb(:, 0)*(wrk0*tauia1*alpha1/temp9)
+!
 !       ..finally calculate the r.h.s. contribution to the parallel balance
 !         corresponding to parallel viscosity connected with heat flow
 !zero out spurious contributions outside of separatrix
@@ -576,29 +581,34 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod, &
 !
   IF (switch%b2siav_iout .NE. 0) THEN
 !srv 17.06.02 {
-    WRITE(chns, '(i3.3)') isb
-    CALL MY_OUT_US(70, ncv, 0, alpha1, 'b2siav_alpha1')
-    CALL MY_OUT_US(70, ncv, 0, kt_neo, 'b2siav_kt_neo')
-    CALL MY_OUT_US(70, ncv, 0, tauia1, 'b2siav_tauia1')
-    DO k=0,3
-      WRITE(chk, '(i1)') k
-      arg14 = 'b2siav_smovv'//chk//chns
-      CALL MY_OUT_US(70, ncv, 0, smbvv(1, k), arg14)
-      arg14 = 'b2siav_smovh'//chk//chns
-      CALL MY_OUT_US(70, ncv, 0, smbvh(1, k), arg14)
-    END DO
-    wrks = smbvv(:, 0) + smbvv(:, 1)*ub + smbvv(:, 2)*nb*mb + smbvv(:, 3&
-&     )*ub*nb*mb
-    arg14 = 'b2siav_smovv'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
-    wrks = smbvh(:, 0) + smbvh(:, 1)*ub + smbvh(:, 2)*nb*mb + smbvh(:, 3&
-&     )*ub*nb*mb
-    arg14 = 'b2siav_smovh'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
-    arg15 = 'b2siav_cvsbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 0), arg15)
-    arg16 = 'b2siav_cvsbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16)
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIAV OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(chns, '(i3.3)') isb
+      CALL MY_OUT_US(70, ncv, 0, alpha1, 'b2siav_alpha1')
+      CALL MY_OUT_US(70, ncv, 0, kt_neo, 'b2siav_kt_neo')
+      CALL MY_OUT_US(70, ncv, 0, tauia1, 'b2siav_tauia1')
+      DO k=0,3
+        WRITE(chk, '(i1)') k
+        arg14 = 'b2siav_smovv'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, smbvv(1, k), arg14)
+        arg14 = 'b2siav_smovh'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, smbvh(1, k), arg14)
+      END DO
+      wrks = smbvv(:, 0) + smbvv(:, 1)*ub + smbvv(:, 2)*nb*mb + smbvv(:&
+&       , 3)*ub*nb*mb
+      arg14 = 'b2siav_smovv'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
+      wrks = smbvh(:, 0) + smbvh(:, 1)*ub + smbvh(:, 2)*nb*mb + smbvh(:&
+&       , 3)*ub*nb*mb
+      arg14 = 'b2siav_smovh'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
+      arg15 = 'b2siav_cvsbhz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 0), arg15)
+      arg16 = 'b2siav_cvsbhz_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16)
+    END IF
   END IF
 !
 !
@@ -632,10 +642,11 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 & , smbvv, kt_neo, wrk0, wrk1, wrk2)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2siav, nsmooth_siav
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -647,18 +658,20 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, isb, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, isb, ismain
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(SWITCHES), INTENT(IN) :: switch
 !srv 01.07.09
 !srv 31.07.02
-  REAL(kind=r8) :: mb, lnlam(ncv), ub(ncv), te(ncv), ti(ncv), nb(ncv), &
-& ni(ncv), ne2(ncv), hcix_c(ncv), cvsbhz_cl(nfc, 0:1), rz2(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: mb, lnlam(ncv), ub(ncv), te(ncv), ti(ncv)&
+& , nb(ncv), ni(ncv), ne2(ncv), hcix_c(ncv), cvsbhz_cl(nfc, 0:1), rz2(&
+& ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: smbvh(ncv, 0:3), smbvv(ncv, 0:3), kt_neo(ncv)
+  REAL(kind=r8), INTENT(OUT) :: smbvh(ncv, 0:3), smbvv(ncv, 0:3), kt_neo&
+& (ncv)
 !   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv)
+  REAL(kind=r8), INTENT(INOUT) :: wrk0(ncv), wrk1(ncv), wrk2(ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -882,17 +895,18 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
       qip1 = switch%cqip1*ni*ti*result10/result2
 !
 !       ..compute qipgen
-!wdk modified computation compared to structured code to 
+!wdk modified computation compared to structured code to
 !wdk facilitate implementation on unstructured grids
       arg10 = qip0/qip1
       arg20 = geo%cvbb(:, 3)
       result11 = SQRT(arg20)
       qipgen = qip1*DATAN(arg10)*result11
 !
-!       ..gradient qipgen in cell centers   
+!       ..gradient qipgen in cell centers
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, qipgen, wrkv, wrk0&
 &                  )
       wrk0 = wrk0*geo%cvbb(:, 0)/geo%cvbb(:, 3)**3*tauia1*alpha1
+!
 !       ..finally calculate the r.h.s. contribution to the parallel balance
 !         corresponding to parallel viscosity connected with heat flow
 !zero out spurious contributions outside of separatrix
@@ -956,29 +970,34 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !
   IF (switch%b2siav_iout .NE. 0) THEN
 !srv 17.06.02 {
-    WRITE(chns, '(i3.3)') isb
-    CALL MY_OUT_US(70, ncv, 0, alpha1, 'b2siav_alpha1')
-    CALL MY_OUT_US(70, ncv, 0, kt_neo, 'b2siav_kt_neo')
-    CALL MY_OUT_US(70, ncv, 0, tauia1, 'b2siav_tauia1')
-    DO k=0,3
-      WRITE(chk, '(i1)') k
-      arg14 = 'b2siav_smovv'//chk//chns
-      CALL MY_OUT_US(70, ncv, 0, smbvv(1, k), arg14)
-      arg14 = 'b2siav_smovh'//chk//chns
-      CALL MY_OUT_US(70, ncv, 0, smbvh(1, k), arg14)
-    END DO
-    wrks = smbvv(:, 0) + smbvv(:, 1)*ub + smbvv(:, 2)*nb*mb + smbvv(:, 3&
-&     )*ub*nb*mb
-    arg14 = 'b2siav_smovv'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
-    wrks = smbvh(:, 0) + smbvh(:, 1)*ub + smbvh(:, 2)*nb*mb + smbvh(:, 3&
-&     )*ub*nb*mb
-    arg14 = 'b2siav_smovh'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
-    arg15 = 'b2siav_cvsbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 0), arg15)
-    arg16 = 'b2siav_cvsbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16)
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIAV OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(chns, '(i3.3)') isb
+      CALL MY_OUT_US(70, ncv, 0, alpha1, 'b2siav_alpha1')
+      CALL MY_OUT_US(70, ncv, 0, kt_neo, 'b2siav_kt_neo')
+      CALL MY_OUT_US(70, ncv, 0, tauia1, 'b2siav_tauia1')
+      DO k=0,3
+        WRITE(chk, '(i1)') k
+        arg14 = 'b2siav_smovv'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, smbvv(1, k), arg14)
+        arg14 = 'b2siav_smovh'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, smbvh(1, k), arg14)
+      END DO
+      wrks = smbvv(:, 0) + smbvv(:, 1)*ub + smbvv(:, 2)*nb*mb + smbvv(:&
+&       , 3)*ub*nb*mb
+      arg14 = 'b2siav_smovv'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
+      wrks = smbvh(:, 0) + smbvh(:, 1)*ub + smbvh(:, 2)*nb*mb + smbvh(:&
+&       , 3)*ub*nb*mb
+      arg14 = 'b2siav_smovh'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrks, arg14)
+      arg15 = 'b2siav_cvsbhz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 0), arg15)
+      arg16 = 'b2siav_cvsbhz_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, cvsbhz_cl(1, 1), arg16)
+    END IF
   END IF
 !
 !

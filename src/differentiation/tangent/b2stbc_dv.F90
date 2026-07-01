@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2stbc in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: saved_fb_actuator saved_fb_prev
-!                fb_current fb_rescale fb_current_prev userfluxparm
-!                conpar enepar enipar potpar senepar[save in b2mod_ad]
+!                fb_current fb_rescale fb_current_prev recyc b2recyc
+!                userfluxparm conpar enepar enipar potpar senepar[save in b2mod_ad]
 !                senipar[save in b2mod_ad] sconpar[save in b2mod_ad]
 !                scurpar[save in b2mod_ad] prev_cur_delta[save in b2mod_ad]
 !                po_prev[save in b2mod_ad] po_curr[save in b2mod_ad]
@@ -18,25 +18,26 @@
 !                *(srw.smo0) *(srw.sna0) *(pl.na)
 !   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
 !                saved_fb_prev fb_current fb_rescale fb_current_prev
-!                userfluxparm conpar mompar enepar enipar potpar
-!                enkpar senepar[save in b2mod_ad] senipar[save in b2mod_ad]
-!                sconpar[save in b2mod_ad] scurpar[save in b2mod_ad]
-!                prev_cur_delta[save in b2mod_ad] po_prev[save in b2mod_ad]
-!                po_curr[save in b2mod_ad] coeff_16[save in b2mod_ad]
-!                pos[save in b2mod_ad] charge_frac *(psnc.na) *(psnc.ne)
-!                *(psnc.ni) *(psnc.kinrgy) *(dv.fch) *(dv.fch_p)
-!                *(dv.fchdia) *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper)
-!                *(dv.fchvisq) *(dv.fchinert) *(dv.fchviskt) *(dv.fna)
-!                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
-!                *(dv.fna_fcor) *(dv.fna_eir) *(dv.fne) *(dv.fhe)
-!                *(dv.fhe_mdf) *(dv.fhepsch) *(dv.fhi) *(dv.fhi_mdf)
-!                *(dv.fhipsch) *(dv.fhm) *(dv.fht) *(dv.fkt) *(dv.kinrgy)
-!                *(dv.ne) *(dv.ni) *(dv.nn) *(dv.vadia) *(dv.vaecrb)
-!                *(dv.vedia) *(dv.veecrb) *(psnl.na) *(psnl.ne)
-!                *(psnl.ni) *(psnl.kinrgy) *(rt.rza) *(srw.sch0)
-!                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.skt0)
-!                *(srw.szt0) *(srw.smo0) *(srw.sna0) *(srw.rqrad)
-!                *(srw.rqbrm) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                recyc b2recyc userfluxparm conpar mompar enepar
+!                enipar potpar enkpar senepar[save in b2mod_ad]
+!                senipar[save in b2mod_ad] sconpar[save in b2mod_ad]
+!                scurpar[save in b2mod_ad] prev_cur_delta[save in b2mod_ad]
+!                po_prev[save in b2mod_ad] po_curr[save in b2mod_ad]
+!                coeff_16[save in b2mod_ad] pos[save in b2mod_ad]
+!                charge_frac *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.kinrgy)
+!                *(dv.fch) *(dv.fch_p) *(dv.fchdia) *(dv.fchin)
+!                *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
+!                *(dv.fchinert) *(dv.fchviskt) *(dv.fna) *(dv.fna_mdf)
+!                *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
+!                *(dv.fna_eir) *(dv.fne) *(dv.fhe) *(dv.fhe_mdf)
+!                *(dv.fhepsch) *(dv.fhi) *(dv.fhi_mdf) *(dv.fhipsch)
+!                *(dv.fhm) *(dv.fht) *(dv.fkt) *(dv.kinrgy) *(dv.ne)
+!                *(dv.ni) *(dv.nn) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
+!                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
+!                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) *(srw.rqrad) *(srw.rqbrm)
+!                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(sr.sna)
 !                *(co.chce) *(co.chci) *(co.cdna) *(co.sig0) *(co.hce0)
 !                *(co.hci0) *(co.hcn0) *(co.dpa0) *(co.dna0) *(co.vsa0)
 !                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn)
@@ -64,11 +65,11 @@
 !                srw.smo0:in srw.sna0:in srw.b2stbc_sch:in srw.b2stbc_she:in
 !                srw.b2stbc_shi:in srw.b2stbc_sne:in srw.b2stbc_shn:in
 !                srw.b2stbc_skt:in srw.b2stbc_szt:in srw.b2stbc_smo:in
-!                srw.b2stbc_sna:in srw.rqrad:in srw.rqbrm:in co.chce:in
-!                co.chci:in co.cdna:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.dpa0:in co.dna0:in co.vsa0:in pl.na:in
-!                pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!                srw.b2stbc_sna:in srw.rqrad:in srw.rqbrm:in sr.sna:in
+!                co.chce:in co.chci:in co.cdna:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in co.vsa0:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -85,12 +86,12 @@
 !
 SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 & , geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, &
-& st_extd, srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, main_call, &
-& nbdirs)
+& st_extd, sr, srd, srw, srwd, psnc, psncd, psnl, psnld, wrong_flow, &
+& main_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_FEEDBACK_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_TIME
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -124,6 +125,8 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  TYPE(B2SOURCE), INTENT(IN) :: sr
+  TYPE(B2SOURCE_DIFFV), INTENT(IN) :: srd
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2COEFF_DIFFV), INTENT(INOUT) :: cod
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -154,7 +157,6 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   INTEGER :: i, j, is, icv, ifc, ift
   REAL(kind=r8) :: praverage(2)
   REAL(kind=r8) :: wrk(nfc)
-  REAL(kind=r8) :: wrkd(nbdirsmax, nfc)
   REAL(kind=r8) :: prsum(2), gssum(2), tesum(2), tisum(2), nasum(0:ns-1&
 & , 2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1), nxf, taf, zxf, &
 & volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
@@ -171,7 +173,6 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   REAL(r8) :: result1
   INTEGER :: arg1
   REAL(r8) :: result2
-  INTEGER :: nd
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
@@ -223,13 +224,7 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
     CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
-    DO nd=1,nbdirs
 !    ..test sign of chce, chci
-      wrkd(nd, :) = 0.D0
-      wrkd(nd, :) = 0.D0
-      wrkd(nd, :) = 0.D0
-      wrkd(nd, :) = 0.D0
-    END DO
     wrk(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrk, 1, 'chce0', '.ge.')
     wrk(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
@@ -312,8 +307,12 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 &           , srwd%shi0(:, 1, 0), 1, nbdirs)
 !
 !   ..find the average pressure for inner flux surface           !sv 24.03.99
+  IF (omp(1) .LE. mpg%nci) THEN
 !sv 24.03.99
-  ift = mpg%cvft(omp(1))
+    ift = mpg%cvft(omp(1))
+  ELSE
+    ift = mpg%cvft(omp(2))
+  END IF
   tesum(1) = 0.0_R8
   tisum(1) = 0.0_R8
   nasum(:, 1) = 0.0_R8
@@ -389,9 +388,9 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   END IF
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) CALL &
-&     COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, &
-&                   mpgd, pl, pld, dv, dvd, rt, rtd, srw, srwd, psnc, &
-&                   psncd, psnl, psnld, main_call, nbdirs)
+&     COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, switchd, geo, &
+&                   mpg, mpgd, pl, pld, dv, dvd, rt, rtd, sr, srd, srw, &
+&                   srwd, psnc, psncd, psnl, psnld, main_call, nbdirs)
 !
     IF (ncall_b2stbc .EQ. 0) WRITE(*, *) ' b2stbc_phys called'
     CALL B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
@@ -457,11 +456,12 @@ END SUBROUTINE B2STBC_DV
 !.specification
 !
 SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
-& , mpg, pl, dv, co, rt, st_ext, srw, psnc, psnl, wrong_flow, main_call)
+& , mpg, pl, dv, co, rt, st_ext, sr, srw, psnc, psnl, wrong_flow, &
+& main_call)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_FEEDBACK_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_TIME
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -486,6 +486,7 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2SOURCE), INTENT(IN) :: sr
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
@@ -626,8 +627,12 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 &               1)
 !
 !   ..find the average pressure for inner flux surface           !sv 24.03.99
+  IF (omp(1) .LE. mpg%nci) THEN
 !sv 24.03.99
-  ift = mpg%cvft(omp(1))
+    ift = mpg%cvft(omp(1))
+  ELSE
+    ift = mpg%cvft(omp(2))
+  END IF
   tesum(1) = 0.0_R8
   tisum(1) = 0.0_R8
   nasum(:, 1) = 0.0_R8
@@ -704,7 +709,7 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) CALL &
 &     COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv, &
-&                rt, srw, psnc, psnl, main_call)
+&                rt, sr, srw, psnc, psnl, main_call)
 !
     IF (ncall_b2stbc .EQ. 0) WRITE(*, *) ' b2stbc_phys called'
     CALL B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &

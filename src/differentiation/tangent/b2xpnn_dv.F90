@@ -18,7 +18,7 @@
 SUBROUTINE B2XPNN_DV(ncv, ns, na, nad, nn, nnd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -36,9 +36,6 @@ SUBROUTINE B2XPNN_DV(ncv, ns, na, nad, nn, nnd, nbdirs)
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpnn')
-  DO nd=1,nbdirs
-    nnd(nd, :) = 0.D0
-  END DO
   nn = 0.0_R8
   nnd = 0.D0
   DO is=0,ns-1
@@ -53,41 +50,4 @@ SUBROUTINE B2XPNN_DV(ncv, ns, na, nad, nn, nnd, nbdirs)
   RETURN
 !     ------------------------------------------------------------------
 END SUBROUTINE B2XPNN_DV
-
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-SUBROUTINE B2XPNN_NODIFF(ncv, ns, na, nn)
-  USE B2MOD_TYPES
-  USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: na(ncv, 0:ns-1), nn(ncv)
-!   ..common blocks
-!     ------------------------------------------------------------------
-!     B2XPNN computes the total density of hydrogenic neutrals, nn:
-!       nn = (sum is, is_neutral(is).and.zn(is).eq.1 :: na(,is)) .
-!     ------------------------------------------------------------------
-  INTEGER :: is
-  INTRINSIC NINT
-!     ------------------------------------------------------------------
-!$$$  call subini ('b2xpnn')
-  nn = 0.0_R8
-  DO is=0,ns-1
-    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) nn = nn + na(:, is)
-  END DO
-!$$$  call subend ()
-  RETURN
-!     ------------------------------------------------------------------
-END SUBROUTINE B2XPNN_NODIFF
 

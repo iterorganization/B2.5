@@ -21,7 +21,7 @@ SUBROUTINE B2TXNCI_DV(mpg, geo, switch, ncv, ns, ti, tid, te, ted, rz2, &
 & st_extd, collisnumf, collisnumfd, collisnumc, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_GEO_DIFFV
@@ -152,7 +152,7 @@ SUBROUTINE B2TXNCI_NODIFF(mpg, geo, switch, ncv, ns, ti, te, rz2, ne, &
 & ne2, na, lnlam, ismain, st_ext, collisnumf, collisnumc)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_GEO_DIFFV

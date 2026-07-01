@@ -3,21 +3,21 @@
 !
 !  Differentiation of b2trcl in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: vsaf_cl *(dv.lnlam) chce chci
-!                cvsa_cl cvsahz_cl cdkt csigin calf *(co.alfx_c)
-!                *(co.sigx_c) *(co.sigx_kt) *(co.hcix_c) *(co.fllim_ki)
-!                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
+!                cvsa_cl cvsahz_cl cdkt csigin calf *(co.nu2) *(co.k2)
+!                *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt) *(co.hcix_c)
+!                *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al) *(co.f_luc_ke_c)
 !                *(co.f_luc_ki_c) csig
 !   with respect to varying inputs: vsaf_cl *(dv.ne) *(dv.ni) *(dv.ne2)
 !                *(dv.lnlam) *(rt.rlcx) *(rt.rza) *(rt.rz2) csigin
 !                switch.b2tfhi_fsigkt *(co.chvemx) *(co.chvimx)
-!                *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt) *(co.hcix_c)
-!                *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
-!                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
-!                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al) *(co.f_luc_ke_c)
-!                *(co.f_luc_ki_c) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
-!                *(pl.tn)
+!                *(co.nu2) *(co.k2) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
+!                *(co.hcix_c) *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al)
+!                *(co.fllim_al_c) *(co.fllim_ki_c) *(co.f_luc_ke)
+!                *(co.f_luc_ki) *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
+!                *(co.f_luc_ke_c) *(co.f_luc_ki_c) *(pl.na) *(pl.ua)
+!                *(pl.te) *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                mpg.intcellp:in geo.cvbb:in geo.cvhz:in geo.cvqgam:in
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
@@ -26,12 +26,12 @@
 !                geo.ftconn:in geo.fsconn:in geo.fteps:in st_ext.am:in
 !                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rlcx:in
 !                rt.rza:in rt.rz2:in co.chvemx:in co.chvimx:in
-!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
-!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
-!                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
-!                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in co.alpha1f:in
-!                co.f_luc_ke_c:in co.f_luc_ki_c:in pl.na:in pl.ua:in
-!                pl.te:in pl.ti:in pl.tn:in
+!                co.nu2:in co.k2:in co.alfx_c:in co.sigx_c:in co.sigx_kt:in
+!                co.hcix_c:in co.fllim_ki:in co.fllim_ke:in co.fllim_al:in
+!                co.fllim_al_c:in co.fllim_ki_c:in co.f_luc_ke:in
+!                co.f_luc_ki:in co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in
+!                co.alpha1f:in co.f_luc_ke_c:in co.f_luc_ki_c:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -60,7 +60,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 & , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -164,11 +164,10 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: t0d(nbdirsmax), dted(nbdirsmax, nfc), dtid(nbdirsmax&
 & , nfc), flomxd(nbdirsmax)
 !lk 19.09.07
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1), nu2(ncv), k2(ncv), collisnumf(mpg&
-& %nfc), collisnumef(mpg%nfc)
-  REAL(kind=r8) :: tauiad(nbdirsmax, ncv, 0:ns-1), nu2d(nbdirsmax, ncv)&
-& , k2d(nbdirsmax, ncv), collisnumfd(nbdirsmax, mpg%nfc), collisnumefd(&
-& nbdirsmax, mpg%nfc)
+  REAL(kind=r8) :: tauia(ncv, 0:ns-1), collisnumf(mpg%nfc), collisnumef(&
+& mpg%nfc)
+  REAL(kind=r8) :: tauiad(nbdirsmax, ncv, 0:ns-1), collisnumfd(nbdirsmax&
+& , mpg%nfc), collisnumefd(nbdirsmax, mpg%nfc)
   REAL(kind=r8) :: inctran
 !lk 12.05.11
 !lk 12.05.11
@@ -244,7 +243,11 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(r8), DIMENSION(nbdirsmax) :: result12d
   REAL(kind=r8) :: arg13
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg13d
-  REAL(kind=r8) :: arg2
+  REAL(r8) :: arg2
+  REAL(r8), DIMENSION(nbdirsmax) :: arg2d
+  REAL(r8) :: result20
+  REAL(r8), DIMENSION(nbdirsmax) :: result20d
+  REAL(kind=r8) :: arg3
   CHARACTER(len=22) :: arg14
   REAL(r8), DIMENSION(nCv) :: arg15
   REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg15d
@@ -338,18 +341,18 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 01.07.09 20.09.11
   vsad = 0.D0
   hcid = 0.D0
-  CALL B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, dvd, &
-&          rt, rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
+  CALL B2TQCA_DV(ncv, ns, switch, switchd, geo, pl, pld, dv, dvd, rt, &
+&          rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
 !srv 01.07.09 20.09.11
   sigd = 0.D0
   alfd = 0.D0
   hced = 0.D0
-  CALL B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, dvd&
-&          , hce, hced, sig, sigd, alf, alfd, nbdirs)
+  CALL B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, hce, &
+&          hced, sig, sigd, alf, alfd, nbdirs)
 !xpb
   sigind = 0.D0
-  CALL B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, geod, pl, pld, rt, &
-&          rtd, sigin, sigind, nbdirs)
+  CALL B2TQIN_DV(ncv, ns, nscx, iscx, switch, geo, pl, pld, rt, rtd, &
+&          sigin, sigind, nbdirs)
   arg1 = ncv*ns
   CALL SFILL_NODIFF(arg1, switch%cthev, cthe, 1)
   arg1 = ncv*ns
@@ -401,6 +404,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   END DO
 !   ..incorporate geometry with hz                                     !srv 09.01.01
+  inctran = switch%b2txcx_increase_transp_coefs
   wrk = geo%fcs*geo%fchz
   DO ifc=1,nfc
     wrk1(ifc, 1) = geo%fcvol(ifc, 1)*geo%cvhz(mpg%fccv(ifc, 1))
@@ -408,9 +412,9 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   END DO
   cvsahzd = 0.D0
   DO is=0,ns-1
-    CALL B2TXCX_DV(ncv, nfc, 0.0_R8, mode, geo, mpg, wrk1, wrk, vsa(:, 0&
-&            , is), vsad(:, :, 0, is), cvsahz(:, 0, is), cvsahzd(:, :, 0&
-&            , is), nbdirs)
+    CALL B2TXCX_DV(ncv, nfc, inctran, mode, geo, mpg, wrk1, wrk, vsa(:, &
+&            0, is), vsad(:, :, 0, is), cvsahz(:, 0, is), cvsahzd(:, :, &
+&            0, is), nbdirs)
     CALL B2TXCY_DV(ncv, nfc, mode, geo, mpg, wrk1, wrk, vsa(:, 1, is), &
 &            vsad(:, :, 1, is), cvsahz(:, 1, is), cvsahzd(:, :, 1, is), &
 &            nbdirs)
@@ -423,7 +427,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &         nbdirs)
   cvsad = 0.D0
   DO is=0,ns-1
-    CALL B2TXCX_DV(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%fcs&
+    CALL B2TXCX_DV(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%fcs&
 &            , vsa(:, 0, is), vsad(:, :, 0, is), cvsa(:, 0, is), cvsad(:&
 &            , :, 0, is), nbdirs)
     CALL B2TXCY_DV(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, vsa(:, &
@@ -441,7 +445,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       END IF
     END DO
   END DO
-  inctran = switch%b2txcx_increase_transp_coefs
+!
   chced = 0.D0
   CALL B2TXCX_DV(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%fcs, &
 &          hce(:, 0), hced(:, :, 0), chce(:, 0), chced(:, :, 0), nbdirs)
@@ -749,8 +753,6 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
-    nu2 = 0.0_R8
-    k2 = 1.6_R8
     t1 = 4.0_R8*pi*eps0/qe/qe
     arg11 = 2.0_R8*pi
     result10 = SQRT(arg11)
@@ -763,6 +765,8 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     temp4 = ev*dv%lnlam*dv%ne2
     temp5 = pl%te*result11/temp4
     DO nd=1,nbdirs
+      cod%nu2(nd, :) = 0.D0
+      cod%k2(nd, :) = 0.D0
       arg12d(nd, :) = pld%te(nd, :)/ev
       WHERE (arg12 .EQ. 0.D0) 
         result11d(nd, :) = 0.D0
@@ -773,11 +777,11 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &       temp5*(dv%ne2*ev*dvd%lnlam(nd, :)+ev*dv%lnlam*dvd%ne2(nd, :)))/&
 &       temp4
     END DO
+    co%nu2 = 0.0_R8
+    co%k2 = 1.6_R8
     tau = t2*temp5
     k1d = 0.D0
-    k2d = 0.D0
     nu1d = 0.D0
-    nu2d = 0.D0
     DO icv=1,ncv
       IF (mpg%cvonclosedsurface(icv)) THEN
         ift = mpg%cvft(icv)
@@ -835,35 +839,38 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           temp2 = 2.0_R8*pi*geo%fteps(ift)**1.5_R8
           temp6 = geo%ftconn(ift)/(temp2*tauia(icv, ismain)*result12)
           DO nd=1,nbdirs
-            nu2d(nd, icv) = -(temp6*(result12*tauiad(nd, icv, ismain)+&
-&             tauia(icv, ismain)*result12d(nd))/(tauia(icv, ismain)*&
+            cod%nu2(nd, icv) = -(temp6*(result12*tauiad(nd, icv, ismain)&
+&             +tauia(icv, ismain)*result12d(nd))/(tauia(icv, ismain)*&
 &             result12))
+            arg2d(nd) = cod%nu2(nd, icv)
           END DO
-          nu2(icv) = temp6
+          co%nu2(icv) = temp6
           arg13 = geo%fteps(ift)
           result1 = SQRT(arg13)
-          temp6 = SQRT(nu2(icv))
+          arg2 = co%nu2(icv)
+          temp2 = SQRT(arg2)
           DO nd=1,nbdirs
-            IF (nu2(icv) .EQ. 0.D0) THEN
-              result2d(nd) = 0.D0
+            IF (arg2 .EQ. 0.D0) THEN
+              result20d(nd) = 0.D0
             ELSE
-              result2d(nd) = nu2d(nd, icv)/(2.0*temp6)
+              result20d(nd) = arg2d(nd)/(2.0*temp2)
             END IF
           END DO
-          result2 = temp6
-          arg2 = geo%fteps(ift)**3
-          result3 = SQRT(arg2)
+          result20 = temp2
+          arg3 = geo%fteps(ift)**3
+          result3 = SQRT(arg3)
           temp6 = (1.88_R8*result1-1.54_R8*geo%fteps(ift)+0.66_R8)/(&
-&           1.03_R8*result2+0.31_R8*nu2(icv)+1.0_R8)
+&           1.03_R8*result20+0.31_R8*co%nu2(icv)+1.0_R8)
           temp0 = 1.17_R8*(geo%fteps(ift)*geo%fteps(ift)*geo%fteps(ift))
-          temp = 0.74_R8*result3*nu2(icv) + 1.0_R8
-          temp7 = nu2(icv)/temp
+          temp = 0.74_R8*result3*co%nu2(icv) + 1.0_R8
+          temp2 = co%nu2(icv)/temp
           DO nd=1,nbdirs
-            k2d(nd, icv) = temp0*(1.0-temp7*result3*0.74_R8)*nu2d(nd, &
-&             icv)/temp - temp6*(1.03_R8*result2d(nd)+0.31_R8*nu2d(nd, &
-&             icv))/(1.03_R8*result2+0.31_R8*nu2(icv)+1.0_R8)
+            cod%k2(nd, icv) = temp0*(1.0-temp2*result3*0.74_R8)*cod%nu2(&
+&             nd, icv)/temp - temp6*(1.03_R8*result20d(nd)+0.31_R8*cod%&
+&             nu2(nd, icv))/(1.03_R8*result20+0.31_R8*co%nu2(icv)+1.0_R8&
+&             )
           END DO
-          k2(icv) = temp6 + temp0*temp7
+          co%k2(icv) = temp6 + temp0*temp2
         END IF
       END IF
 !lk 19.09.07 }
@@ -917,112 +924,112 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           END IF
         END IF
         arg13 = tef(ifc)/me
-        temp7 = SQRT(arg13)
+        temp6 = SQRT(arg13)
         DO nd=1,nbdirs
           arg13d(nd) = tefd(nd, ifc)/me
           IF (arg13 .EQ. 0.D0) THEN
             result1d(nd) = 0.D0
           ELSE
-            result1d(nd) = arg13d(nd)/(2.0*temp7)
+            result1d(nd) = arg13d(nd)/(2.0*temp6)
           END IF
           arg13d(nd) = tifd(nd, ifc)/(mp*am(ismain))
         END DO
-        result1 = temp7
+        result1 = temp6
         temp2 = 2.0_R8*pi*epsf**1.5_R8
-        temp7 = connf/(temp2*tauf(ifc)*result1)
+        temp6 = connf/(temp2*tauf(ifc)*result1)
         DO nd=1,nbdirs
-          nu1fd(nd) = -(temp7*(result1*taufd(nd, ifc)+tauf(ifc)*result1d&
+          nu1fd(nd) = -(temp6*(result1*taufd(nd, ifc)+tauf(ifc)*result1d&
 &           (nd))/(tauf(ifc)*result1))
         END DO
-        nu1f = temp7
-        temp7 = SQRT(nu1f)
+        nu1f = temp6
+        temp6 = SQRT(nu1f)
         DO nd=1,nbdirs
           IF (nu1f .EQ. 0.D0) THEN
             result1d(nd) = 0.D0
           ELSE
-            result1d(nd) = nu1fd(nd)/(2.0*temp7)
+            result1d(nd) = nu1fd(nd)/(2.0*temp6)
           END IF
         END DO
-        result1 = temp7
+        result1 = temp6
         arg13 = epsf**3
         result2 = SQRT(arg13)
         temp2 = 1.0/(2.01_R8*result1+1.53_R8*nu1f+1.0_R8)
-        temp7 = 0.52_R8*(epsf*epsf*epsf)
-        temp6 = 0.89_R8*result2*nu1f + 1.0_R8
+        temp6 = 0.52_R8*(epsf*epsf*epsf)
+        temp0 = 0.89_R8*result2*nu1f + 1.0_R8
         DO nd=1,nbdirs
-          k1fd(nd) = temp7*(1.0-nu1f*result2*0.89_R8/temp6)*nu1fd(nd)/&
-&           temp6 - temp2*(2.01_R8*result1d(nd)+1.53_R8*nu1fd(nd))/(&
+          k1fd(nd) = temp6*(1.0-nu1f*result2*0.89_R8/temp0)*nu1fd(nd)/&
+&           temp0 - temp2*(2.01_R8*result1d(nd)+1.53_R8*nu1fd(nd))/(&
 &           2.01_R8*result1+1.53_R8*nu1f+1.0_R8)
         END DO
-        k1f = temp2 + temp7*(nu1f/temp6)
+        k1f = temp2 + temp6*(nu1f/temp0)
         arg13 = tif(ifc)/(mp*am(ismain))
-        temp7 = SQRT(arg13)
+        temp6 = SQRT(arg13)
         DO nd=1,nbdirs
           IF (arg13 .EQ. 0.D0) THEN
             result1d(nd) = 0.D0
           ELSE
-            result1d(nd) = arg13d(nd)/(2.0*temp7)
+            result1d(nd) = arg13d(nd)/(2.0*temp6)
           END IF
         END DO
-        result1 = temp7
+        result1 = temp6
         temp2 = 2.0_R8*pi*epsf**1.5_R8
-        temp7 = connf/(temp2*tauiaf(ifc)*result1)
+        temp6 = connf/(temp2*tauiaf(ifc)*result1)
         DO nd=1,nbdirs
-          nu2fd(nd) = -(temp7*(result1*tauiafd(nd, ifc)+tauiaf(ifc)*&
+          nu2fd(nd) = -(temp6*(result1*tauiafd(nd, ifc)+tauiaf(ifc)*&
 &           result1d(nd))/(tauiaf(ifc)*result1))
         END DO
-        nu2f = temp7
+        nu2f = temp6
 ! compute flux limits
         result1 = SQRT(epsf)
-        temp7 = SQRT(nu2f)
+        temp6 = SQRT(nu2f)
         DO nd=1,nbdirs
           IF (nu2f .EQ. 0.D0) THEN
             result2d(nd) = 0.D0
           ELSE
-            result2d(nd) = nu2fd(nd)/(2.0*temp7)
+            result2d(nd) = nu2fd(nd)/(2.0*temp6)
           END IF
         END DO
-        result2 = temp7
+        result2 = temp6
         arg13 = epsf**3
         result3 = SQRT(arg13)
-        temp7 = (1.88_R8*result1-1.54_R8*epsf+0.66_R8)/(1.03_R8*result2+&
+        temp6 = (1.88_R8*result1-1.54_R8*epsf+0.66_R8)/(1.03_R8*result2+&
 &         0.31_R8*nu2f+1.0_R8)
-        temp6 = 1.17_R8*(epsf*epsf*epsf)
-        temp0 = 0.74_R8*result3*nu2f + 1.0_R8
+        temp0 = 1.17_R8*(epsf*epsf*epsf)
+        temp = 0.74_R8*result3*nu2f + 1.0_R8
         DO nd=1,nbdirs
-          k2fd(nd) = temp6*(1.0-nu2f*result3*0.74_R8/temp0)*nu2fd(nd)/&
-&           temp0 - temp7*(1.03_R8*result2d(nd)+0.31_R8*nu2fd(nd))/(&
+          k2fd(nd) = temp0*(1.0-nu2f*result3*0.74_R8/temp)*nu2fd(nd)/&
+&           temp - temp6*(1.03_R8*result2d(nd)+0.31_R8*nu2fd(nd))/(&
 &           1.03_R8*result2+0.31_R8*nu2f+1.0_R8)
         END DO
-        k2f = temp7 + temp6*(nu2f/temp0)
+        k2f = temp6 + temp0*(nu2f/temp)
         arg13 = epsf**3
         result1 = SQRT(arg13)
-        temp7 = 0.58_R8*result1/k1f
+        temp6 = 0.58_R8*result1/k1f
         DO nd=1,nbdirs
-          cod%f_luc_ke(nd, ifc) = -(temp7*k1fd(nd)/k1f)
+          cod%f_luc_ke(nd, ifc) = -(temp6*k1fd(nd)/k1f)
         END DO
-        co%f_luc_ke(ifc) = temp7
+        co%f_luc_ke(ifc) = temp6
         arg13 = epsf**3
         result1 = SQRT(arg13)
-        temp7 = 1.60_R8*result1/k2f
+        temp6 = 1.60_R8*result1/k2f
         DO nd=1,nbdirs
-          cod%f_luc_ki(nd, ifc) = -(temp7*k2fd(nd)/k2f)
+          cod%f_luc_ki(nd, ifc) = -(temp6*k2fd(nd)/k2f)
         END DO
-        co%f_luc_ki(ifc) = temp7
+        co%f_luc_ki(ifc) = temp6
         IF (connf .GT. 0.0_R8) THEN
-          temp7 = connf*(ev*ev)
-          temp6 = temp7*ne2f(ifc)
-          temp0 = tif(ifc)*tif(ifc)/temp6
-          temp = 15.12e16_R8*epsf**1.5_R8
-          temp8 = temp*temp0 + 1.0_R8
+          temp6 = connf*(ev*ev)
+          temp0 = temp6*ne2f(ifc)
+          temp = tif(ifc)*tif(ifc)/temp0
+          temp7 = 15.12e16_R8*epsf**1.5_R8
+          temp8 = temp7*temp + 1.0_R8
           temp9 = connf*(ev*ev)
           temp10 = tif(ifc)*tif(ifc)/(temp9*ne2f(ifc))
           temp11 = switch%cvsa_mltpl/((15.12e16_R8*temp10+1.0_R8)*temp8)
           DO nd=1,nbdirs
             cod%f_luc_et(nd, ifc) = -(temp11*(temp8*15.12e16_R8*(2*tif(&
 &             ifc)*tifd(nd, ifc)-temp10*temp9*ne2fd(nd, ifc))/(temp9*&
-&             ne2f(ifc))+(15.12e16_R8*temp10+1.0_R8)*temp*(2*tif(ifc)*&
-&             tifd(nd, ifc)-temp0*temp7*ne2fd(nd, ifc))/temp6)/((&
+&             ne2f(ifc))+(15.12e16_R8*temp10+1.0_R8)*temp7*(2*tif(ifc)*&
+&             tifd(nd, ifc)-temp*temp6*ne2fd(nd, ifc))/temp0)/((&
 &             15.12e16_R8*temp10+1.0_R8)*temp8))
           END DO
           co%f_luc_et(ifc) = temp11
@@ -1088,10 +1095,11 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           co%alfx_c(icv) = co%alfx_c(icv)*co%f_luc_ke_c(icv)
           arg13 = geo%fteps(ift)**3
           result1 = SQRT(arg13)
-          temp11 = 1.60_R8*result1/k2(icv)
+          temp11 = 1.60_R8*result1/co%k2(icv)
           co%f_luc_ki_c(icv) = temp11
           DO nd=1,nbdirs
-            cod%f_luc_ki_c(nd, icv) = -(temp11*k2d(nd, icv)/k2(icv))
+            cod%f_luc_ki_c(nd, icv) = -(temp11*cod%k2(nd, icv)/co%k2(icv&
+&             ))
             cod%hcix_c(nd, icv) = co%f_luc_ki_c(icv)*cod%hcix_c(nd, icv)&
 &             + co%hcix_c(icv)*cod%f_luc_ki_c(nd, icv)
           END DO
@@ -1686,7 +1694,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 & fllimvisc, csig_cl, calf_cl)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -1767,8 +1775,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 03.06.03
   REAL(kind=r8) :: t0, dte(nfc), dti(nfc), flomx, connf, epsf
 !lk 19.09.07
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1), nu2(ncv), k2(ncv), collisnumf(mpg&
-& %nfc), collisnumef(mpg%nfc)
+  REAL(kind=r8) :: tauia(ncv, 0:ns-1), collisnumf(mpg%nfc), collisnumef(&
+& mpg%nfc)
   REAL(kind=r8) :: inctran
 !lk 12.05.11
 !lk 12.05.11
@@ -1813,7 +1821,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(r8), DIMENSION(nCv) :: result11
   REAL(r8) :: result12
   REAL(kind=r8) :: arg13
-  REAL(kind=r8) :: arg2
+  REAL(r8) :: arg2
+  REAL(r8) :: result20
+  REAL(kind=r8) :: arg3
   CHARACTER(len=22) :: arg14
   REAL(r8), DIMENSION(nCv) :: arg15
   REAL(kind=r8), DIMENSION(nCv) :: result13
@@ -1915,14 +1925,15 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   END DO
 !   ..incorporate geometry with hz                                     !srv 09.01.01
+  inctran = switch%b2txcx_increase_transp_coefs
   wrk = geo%fcs*geo%fchz
   DO ifc=1,nfc
     wrk1(ifc, 1) = geo%fcvol(ifc, 1)*geo%cvhz(mpg%fccv(ifc, 1))
     wrk1(ifc, 2) = geo%fcvol(ifc, 2)*geo%cvhz(mpg%fccv(ifc, 2))
   END DO
   DO is=0,ns-1
-    CALL B2TXCX_NODIFF(ncv, nfc, 0.0_R8, mode, geo, mpg, wrk1, wrk, vsa(&
-&                :, 0, is), cvsahz(:, 0, is))
+    CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, wrk1, wrk, vsa&
+&                (:, 0, is), cvsahz(:, 0, is))
     CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, wrk1, wrk, vsa(:, 1, is&
 &                ), cvsahz(:, 1, is))
 !srv 09.01.01
@@ -1931,8 +1942,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg1 = nfc*2*ns*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, csigin, 1)
   DO is=0,ns-1
-    CALL B2TXCX_NODIFF(ncv, nfc, 0.0_R8, mode, geo, mpg, geo%fcvol, geo%&
-&                fcs, vsa(:, 0, is), cvsa(:, 0, is))
+    CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo&
+&                %fcs, vsa(:, 0, is), cvsa(:, 0, is))
     CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, vsa&
 &                (:, 1, is), cvsa(:, 1, is))
     DO k=0,nscx-1
@@ -1945,7 +1956,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       END IF
     END DO
   END DO
-  inctran = switch%b2txcx_increase_transp_coefs
+!
   CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%&
 &              fcs, hce(:, 0), chce(:, 0))
   CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, hce(:&
@@ -2112,8 +2123,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
-    nu2 = 0.0_R8
-    k2 = 1.6_R8
+    co%nu2 = 0.0_R8
+    co%k2 = 1.6_R8
     t1 = 4.0_R8*pi*eps0/qe/qe
     arg11 = 2.0_R8*pi
     result10 = SQRT(arg11)
@@ -2139,16 +2150,18 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &           nu1(icv))
           arg11 = pl%ti(icv)/(mp*am(ismain))
           result12 = SQRT(arg11)
-          nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*result12*2.0_R8&
-&           *pi*geo%fteps(ift)**1.5_R8)
+          co%nu2(icv) = geo%ftconn(ift)/(tauia(icv, ismain)*result12*&
+&           2.0_R8*pi*geo%fteps(ift)**1.5_R8)
           arg13 = geo%fteps(ift)
           result1 = SQRT(arg13)
-          result2 = SQRT(nu2(icv))
-          arg2 = geo%fteps(ift)**3
-          result3 = SQRT(arg2)
-          k2(icv) = (0.66_R8+1.88_R8*result1-1.54_R8*geo%fteps(ift))/(&
-&           1.0_R8+1.03_R8*result2+0.31_R8*nu2(icv)) + 1.17_R8*geo%fteps&
-&           (ift)**3*nu2(icv)/(1.0_R8+0.74_R8*result3*nu2(icv))
+          arg2 = co%nu2(icv)
+          result20 = SQRT(arg2)
+          arg3 = geo%fteps(ift)**3
+          result3 = SQRT(arg3)
+          co%k2(icv) = (0.66_R8+1.88_R8*result1-1.54_R8*geo%fteps(ift))/&
+&           (1.0_R8+1.03_R8*result20+0.31_R8*co%nu2(icv)) + 1.17_R8*geo%&
+&           fteps(ift)**3*co%nu2(icv)/(1.0_R8+0.74_R8*result3*co%nu2(icv&
+&           ))
         END IF
       END IF
 !lk 19.09.07 }
@@ -2249,7 +2262,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           co%alfx_c(icv) = co%alfx_c(icv)*co%f_luc_ke_c(icv)
           arg13 = geo%fteps(ift)**3
           result1 = SQRT(arg13)
-          co%f_luc_ki_c(icv) = 1.0_R8/k2(icv)*1.60_R8*result1
+          co%f_luc_ki_c(icv) = 1.0_R8/co%k2(icv)*1.60_R8*result1
           co%hcix_c(icv) = co%hcix_c(icv)*co%f_luc_ki_c(icv)
         END IF
       END IF

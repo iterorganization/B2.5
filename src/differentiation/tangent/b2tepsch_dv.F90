@@ -21,7 +21,7 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 & facdrift, cdde, te, ted, ne, ned, floe, floed, cone, coned, fhepsch, &
 & fhepschd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -189,7 +189,7 @@ END SUBROUTINE B2TEPSCH_DV
 SUBROUTINE B2TEPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & cdde, te, ne, floe, cone, fhepsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

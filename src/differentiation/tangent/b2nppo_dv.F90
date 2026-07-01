@@ -28,7 +28,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 & , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -102,7 +102,6 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
   INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
@@ -151,11 +150,10 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..compute correction
   IF (solving .AND. ANY(solvereg(0:nregionv))) THEN
 !srv 22.05.18
-    dummyzerodiffd = 0.D0
     CALL B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, geo&
-&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, dummyzerodiffd, dv%conc&
-&            , dvd%conc, sr%sch, srd%sch, dv%respo, dvd%respo, dv%corpo&
-&            , dvd%corpo, aa, aad, 'b2nppo', nbdirs)
+&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, dv%conc, dvd%conc, sr%&
+&            sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%corpo, aa&
+&            , aad, 'b2nppo', nbdirs)
 !   ..apply correction
     CALL B2UPPO_DV(ncv, rxf, dv%corpo, dvd%corpo, pl%po, pld%po, nbdirs)
     IF (switch%b2nppo_restr_po .NE. 0.0_R8) THEN
@@ -254,7 +252,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 & itcnt, rxf, switch, geo, mpg, pl, dv, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

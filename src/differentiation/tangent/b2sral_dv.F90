@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2sral as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in mpg.bcfcor:in
 !                mpg.rcfcor:in-out mpg.intcellp:in geo.cvbb:in
 !                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhx:in
@@ -90,7 +90,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -98,7 +98,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -116,18 +117,17 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & she_eir_totd, fb_current_prev, fb_current_prevd
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_xy, z2n_xyd, nal, nald, ia, iad, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_cv, z2n_cvd, nal, nald, ia, iad, &
 & av_ualpha, av_ualphad, avm_u, avm_ud, rho_a_rel, rho_a_reld, &
 & z_to_m1_ast, z_to_m1_astd
   USE B2MOD_EIRDIAG_DIFFV, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, senepard, senipar,&
-& senipard, sconpar, sconpard, scurpar, scurpard, prev_cur_delta, &
-& prev_cur_deltad, po_prev, po_prevd, po_curr, po_currd, coeff_16, &
-& coeff_16d
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, senepard, senipar, senipard, &
+& sconpar, sconpard, scurpar, scurpard, prev_cur_delta, prev_cur_deltad,&
+& po_prev, po_prevd, po_curr, po_currd, coeff_16, coeff_16d
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -208,7 +208,6 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   REAL(r8) :: result20
   CHARACTER(len=11) :: arg11
   CHARACTER(len=10) :: arg12
-  INTEGER :: nd
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
 !.computation
@@ -378,17 +377,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
-&                psnc, st%psnl, wrong_flow, main_call)
-    DO nd=1,nbdirs
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%sr, st%srw&
+&                , st%psnc, st%psnl, wrong_flow, main_call)
 !   .. store contributions from BCs
-      std%sr%sna(nd, :, :, :) = 0.D0
-      std%sr%smo(nd, :, :, :) = 0.D0
-      std%sr%she(nd, :, :) = 0.D0
-      std%sr%shi(nd, :, :) = 0.D0
-      std%sr%shn(nd, :, :) = 0.D0
-      std%sr%sch(nd, :, :) = 0.D0
-    END DO
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0
     st%sr%she = st%srw%she0
@@ -675,11 +666,6 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (no_fluid_neutral_sources .EQ. 1) THEN
     DO is=0,ns-1
       IF (is_neutral(is)) THEN
-        DO nd=1,nbdirs
-          std%sr%sna(nd, :, :, is) = 0.D0
-          std%sr%smo(nd, :, :, is) = 0.D0
-          std%sr%smq(nd, :, :, is) = 0.D0
-        END DO
         st%sr%sna(:, :, is) = 0.d0
         st%sr%smo(:, :, is) = 0.d0
         st%sr%smq(:, :, is) = 0.d0
@@ -702,17 +688,18 @@ END SUBROUTINE B2SRAL_DV
 !   variations   of useful results: she_rad_tot[save in b2us_feedback]
 !                she_eir_tot saved_fb_actuator saved_fb_prev fb_current
 !                fb_rescale fb_current_prev int0l int1l int2l int3l
-!                int4l b2recyc userfluxparm conpar enepar enipar
-!                potpar *z2n_xy *nal *ia *av_ualpha *avm_u *rho_a_rel
-!                *z_to_m1_ast senepar senipar sconpar scurpar prev_cur_delta
-!                po_prev po_curr coeff_16 pos[save in b2mod_ad]
-!                charge_frac *(st_ext.she) *(st_ext.shi) *(st_ext.sch)
-!                *(st_ext.sna) *(st_ext.smo) *(st.pl.na) *(st.dv.fchvispar)
-!                *(st.dv.fchvispar_a) *(st.dv.fchinert) *(st.dv.fchinert_a)
-!                *(st.dv.fchanml) *(st.dv.fchanml_a) *(st.dv.fna)
-!                *(st.dv.fna_mdf) *(st.dv.fna_32) *(st.dv.fna_he)
-!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
-!                *(st.dv.fne) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                int4l recyc b2recyc userfluxparm conpar enepar
+!                enipar potpar *z2n_cv *nal *ia *av_ualpha *avm_u
+!                *rho_a_rel *z_to_m1_ast senepar senipar sconpar
+!                scurpar prev_cur_delta po_prev po_curr coeff_16
+!                pos[save in b2mod_ad] charge_frac *(st_ext.she)
+!                *(st_ext.shi) *(st_ext.sch) *(st_ext.sna) *(st_ext.smo)
+!                *(st.pl.na) *(st.dv.fchvispar) *(st.dv.fchvispar_a)
+!                *(st.dv.fchinert) *(st.dv.fchinert_a) *(st.dv.fchanml)
+!                *(st.dv.fchanml_a) *(st.dv.fna) *(st.dv.fna_mdf)
+!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
+!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fne)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.ni) *(st.dv.nn)
 !                *(st.dv.pa) *(st.sr.sch) *(st.sr.she) *(st.sr.shi)
 !                *(st.sr.shn) *(st.sr.skt) *(st.sr.szt) *(st.sr.smo)
@@ -727,8 +714,8 @@ END SUBROUTINE B2SRAL_DV
 !   with respect to varying inputs: she_rad_tot[save in b2us_feedback]
 !                she_eir_tot saved_fb_actuator saved_fb_prev fb_current
 !                fb_rescale fb_current_prev int0l int1l int2l int3l
-!                int4l b2recyc userfluxparm conpar mompar enepar
-!                enipar potpar enkpar *z2n_xy *nal *ia *av_ualpha
+!                int4l recyc b2recyc userfluxparm conpar mompar
+!                enepar enipar potpar enkpar *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast senepar senipar
 !                sconpar scurpar prev_cur_delta po_prev po_curr
 !                coeff_16 pos[save in b2mod_ad] charge_frac *(st_ext.she)
@@ -768,7 +755,7 @@ END SUBROUTINE B2SRAL_DV
 !                *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni)
 !                *(st.psnl.kinrgy) *(st.psnc.na) *(st.psnc.ne)
 !                *(st.psnc.ni) *(st.psnc.kinrgy)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in c_hw_save[save in b2mod_b2zhco]:in
 !                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
 !                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
@@ -856,7 +843,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -864,7 +851,8 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -882,20 +870,18 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & she_eir_totd, fb_current_prev, fb_current_prevd
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_xy, z2n_xyd, nal, nald, ia, iad, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_cv, z2n_cvd, nal, nald, ia, iad, &
 & av_ualpha, av_ualphad, avm_u, avm_ud, rho_a_rel, rho_a_reld, &
 & z_to_m1_ast, z_to_m1_astd
   USE B2MOD_EIRDIAG_DIFFV, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, senepard, senipar,&
-& senipard, sconpar, sconpard, scurpar, scurpard, prev_cur_delta, &
-& prev_cur_deltad, po_prev, po_prevd, po_curr, po_currd, coeff_16, &
-& coeff_16d
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, senepard, senipar, senipard, &
+& sconpar, sconpard, scurpar, scurpard, prev_cur_delta, prev_cur_deltad,&
+& po_prev, po_prevd, po_curr, po_currd, coeff_16, coeff_16d
   USE B2MOD_SUBSYS
-!  Hint: ISIZE1OFni should be the size of dimension 1 of array ni
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -960,8 +946,8 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, &
 &     B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, B2STBM_NODIFF, &
 &     B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI, B2XZDD_NODIFF
-  EXTERNAL B2XPFE_DV, B2XPFI_DV, B2SQEL_DV, B2SQCX_DV, B2STBC_DV, &
-&     B2STBM_DV, B2STBR_DV0, B2STEL_DV, B2STCX_DV, B2XZDD_DV
+  EXTERNAL B2XPFE_DV, B2SQEL_DV, B2SQCX_DV, B2STBC_DV, B2STBM_DV, &
+&     B2STBR_DV0, B2STEL_DV, B2STCX_DV, B2XZDD_DV
   INTRINSIC INT
   INTRINSIC MOD
   INTRINSIC TRIM
@@ -984,8 +970,6 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   TYPE(B2DERIVATIVES_DIFFV) :: dummyzerodiffd1
   REAL(r8), DIMENSION(nbdirsmax, SIZE(st%srw%sne0, 1), 0:1) :: &
 & dummyzerodiffd2
-  REAL(r8), DIMENSION(nbdirsmax, nCv, 0:1) :: &
-& dummyzerodiffd3
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
 !.computation
@@ -1165,9 +1149,9 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                            , ' b2stbc called'
     CALL B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd, &
 &            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
-&            std%co, st%rt, std%rt, st_ext, st_extd, st%srw, std%srw, st&
-&            %psnc, std%psnc, st%psnl, std%psnl, wrong_flow, main_call, &
-&            nbdirs)
+&            std%co, st%rt, std%rt, st_ext, st_extd, st%sr, std%sr, st%&
+&            srw, std%srw, st%psnc, std%psnc, st%psnl, std%psnl, &
+&            wrong_flow, main_call, nbdirs)
     DO nd=1,nbdirs
 !   .. store contributions from BCs
       std%sr%sna(nd, :, :, :) = std%srw%sna0(nd, :, :, :)
@@ -1330,9 +1314,9 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..compute sources due to electron-atom processes
 !     (parallel momentum source must be pure friction)
 !srv 11.09.09 {
-  CALL B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, st%pl, &
-&          std%pl, st%dv, std%dv, st%rt, std%rt, st%rtw, std%rtw, st%srw&
-&          , std%srw, nbdirs)
+  CALL B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, mpg, st%pl, std%pl, &
+&          st%dv, std%dv, st%rt, std%rt, st%rtw, std%rtw, st%srw, std%&
+&          srw, nbdirs)
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
     CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw%&
@@ -1396,13 +1380,12 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &            rcx, nbdirs)
 !    ..compute sources due to charge exchange
 !      (parallel momentum source must be pure friction)
-    dummyzerodiffd3 = 0.D0
     CALL B2STCX_DV(ncv, nfc, ns, iscx(k), ismain, switch, switchd, geo, &
-&            geod, mpg, st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st%pl%&
-&            ti, std%pl%ti, st%pl%tn, std%pl%tn, st%dv%ni, dummyzerodiffd3, st%rtw&
-&            %rcx, std%rtw%rcx, st%srw%sna0, std%srw%sna0, st%srw%smq0, &
-&            std%srw%smq0, st%srw%shi0, std%srw%shi0, st%srw%shn0, std%&
-&            srw%shn0, st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi, nbdirs)
+&            mpg, st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st%pl%ti, &
+&            std%pl%ti, st%pl%tn, std%pl%tn, st%dv%ni, st%rtw%rcx, std%&
+&            rtw%rcx, st%srw%sna0, std%srw%sna0, st%srw%smq0, std%srw%&
+&            smq0, st%srw%shi0, std%srw%shi0, st%srw%shn0, std%srw%shn0&
+&            , st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi, nbdirs)
 !   ..zero out contributions in dead cells and core boundary
     DO is=0,ns-1
       CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw&
@@ -1562,7 +1545,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -1570,7 +1553,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -1584,15 +1568,15 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & dt_prev, feedback_namelist_used, she_eir_tot, fb_current_prev
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_xy, nal, ia, av_ualpha, avm_u, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_cv, nal, ia, av_ualpha, avm_u, &
 & rho_a_rel, z_to_m1_ast
   USE B2MOD_EIRDIAG_DIFFV, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, senipar, sconpar, &
-& scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, senipar, sconpar, scurpar, &
+& prev_cur_delta, po_prev, po_curr, coeff_16
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -1832,8 +1816,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
-&                psnc, st%psnl, wrong_flow, main_call)
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%sr, st%srw&
+&                , st%psnc, st%psnl, wrong_flow, main_call)
 !   .. store contributions from BCs
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0

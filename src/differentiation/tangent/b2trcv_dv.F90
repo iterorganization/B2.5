@@ -52,7 +52,7 @@ SUBROUTINE B2TRCV_DV(nnucl, amti, amtid, mdm, n3, n4, n13, n14, n15, n16&
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i, j, dnnucl
+  INTEGER :: j, dnnucl
   REAL(kind=r8) :: temp, g3(0:nnucl-1, 0:nnucl-1), g4(0:nnucl-1, 0:nnucl&
 & -1), g13(0:nnucl-1, 0:nnucl-1), g14(0:nnucl-1, 0:nnucl-1), g15(0:nnucl&
 & -1, 0:nnucl-1), g16(0:nnucl-1, 0:nnucl-1), c(0:2*nnucl-1, 0:2*nnucl-1)

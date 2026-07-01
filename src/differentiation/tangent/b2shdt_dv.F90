@@ -26,7 +26,7 @@ SUBROUTINE B2SHDT_DV(ncv, nci, ns, dtim, cvvol, nap, napd, tep, tepd, &
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
@@ -305,7 +305,7 @@ SUBROUTINE B2SHDT_NODIFF(ncv, nci, ns, dtim, cvvol, nap, tep, tip, tnp, &
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     1 , only : b2srdt_she0to3, b2srdt_shi0to3, balance_netcdf
   USE B2MOD_SWITCHES_DIFFV

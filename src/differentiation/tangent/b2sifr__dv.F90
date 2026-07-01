@@ -20,11 +20,12 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 & smbch, smbtf, smprb, smptb, smfrb, vti32, gti, gte)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr, icase_sifr
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -33,22 +34,23 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
-& ni(ncv, 0:1), ne(ncv), ne2(ncv), rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1), &
-& ehxp(ncv), lnlam(ncv), cthe(ncv, 0:ns-1), cthi(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv)&
+& , ti(ncv), ni(ncv, 0:1), ne(ncv), ne2(ncv), rza(ncv, 0:ns-1), rz2(ncv&
+& , 0:ns-1), ehxp(ncv), cthe(ncv, 0:ns-1), cthi(ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
 !srv 11.09.09
-  REAL(kind=r8) :: smbch(ncv, 0:3), smbtf(ncv, 0:3), smprb(ncv), smptb(&
-& ncv), smfrb(ncv)
+  REAL(kind=r8), INTENT(OUT) :: smbch(ncv, 0:3), smbtf(ncv, 0:3), smprb(&
+& ncv), smptb(ncv), smfrb(ncv)
 !   ..workspace arguments (unspecified on entry and on exit)
+  REAL(kind=r8), INTENT(INOUT) :: vti32(ncv), gti(ncv), gte(ncv), lnlam(&
+& ncv)
 !djm Jul2018
-  REAL(kind=r8) :: vti32(ncv), gti(ncv), gte(ncv), smbtf_cthe(ncv), &
-& smbtf_cthi(ncv)
+  REAL(kind=r8) :: smbtf_cthe(ncv), smbtf_cthi(ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -117,8 +119,13 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
     CALL XERTST(0.0_R8 .LE. switch%b2sifr_limthii .AND. 0.0_R8 .LE. &
 &         switch%b2sifr_limthee, &
 &         'faulty internal parameter limthii, limthee')
-!srv 17.06.02
+!srv 17.06.0
     CALL IPGETI('b2sifr_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFR_ OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
     CALL IPGETI('b2tlnl_ii', icase_sifr)
     CALL XERTST(0 .EQ. icase_sifr .OR. 1 .EQ. icase_sifr, &
 &         'faulty input b2tlnl_ii')
@@ -163,6 +170,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 !   ..compute gti,gte
   CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ti, wrkv, gti)
   CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, te, wrkv, gte)
+!
 ! ..compute friction
 !   ..initialise to 0
   smbch = 0.0_R8
@@ -172,6 +180,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
   smfrb = 0.0_R8
   smbtf_cthe = 0.0_R8
   smbtf_cthi = 0.0_R8
+!
 !   ..loop over all other species
   DO is=0,ns-1
 !    ..consider distinct cases
@@ -207,6 +216,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 !       physics routines.)
 
   END DO
+!
 !   ..compute thermal force
   IF (.NOT.is_neutral(isb)) THEN
     DO icv=1,mpg%nci
@@ -310,7 +320,7 @@ END SUBROUTINE B2SIFR__NODIFF
 !srv 01.07.05 }
 
 !  Differentiation of b2sifr_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: smbtf vti32 gte lnlam gti smbch
+!   variations   of useful results: smbtf vti32 lnlam gti smbch
 !   with respect to varying inputs: ti na ne ua rza ehxp lnlam
 !                rz2 ne2 te
 !   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
@@ -331,17 +341,18 @@ END SUBROUTINE B2SIFR__NODIFF
 !.specification
 !
 SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
-& , mpg, mpgd, na, nad, ua, uad, te, ted, ti, tid, ni, nid, ne, ned, ne2&
-& , ne2d, rza, rzad, rz2, rz2d, ehxp, ehxpd, lnlam, lnlamd, cthe, cthi, &
+& , mpg, mpgd, na, nad, ua, uad, te, ted, ti, tid, ni, ne, ned, ne2, &
+& ne2d, rza, rzad, rz2, rz2d, ehxp, ehxpd, lnlam, lnlamd, cthe, cthi, &
 & st_ext, smbch, smbchd, smbtf, smbtfd, smprb, smptb, smfrb, vti32, &
 & vti32d, gti, gtid, gte, gted, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sifr, icase_sifr
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -351,7 +362,7 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -359,26 +370,26 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
-& ni(ncv, 0:1), ne(ncv), ne2(ncv), rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1), &
-& ehxp(ncv), lnlam(ncv), cthe(ncv, 0:ns-1), cthi(ncv, 0:ns-1)
-  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
-& ), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), rzad(nbdirsmax, ncv, 0:&
-& ns-1), rz2d(nbdirsmax, ncv, 0:ns-1), ehxpd(nbdirsmax, ncv), lnlamd(&
-& nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(IN) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv)&
+& , ti(ncv), ni(ncv, 0:1), ne(ncv), ne2(ncv), rza(ncv, 0:ns-1), rz2(ncv&
+& , 0:ns-1), ehxp(ncv), cthe(ncv, 0:ns-1), cthi(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: nad(nbdirsmax, ncv, 0:ns-1), uad(&
+& nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), ned&
+& (nbdirsmax, ncv), ne2d(nbdirsmax, ncv), rzad(nbdirsmax, ncv, 0:ns-1), &
+& rz2d(nbdirsmax, ncv, 0:ns-1), ehxpd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 11.09.09
-  REAL(kind=r8) :: smbch(ncv, 0:3), smbtf(ncv, 0:3), smprb(ncv), smptb(&
-& ncv), smfrb(ncv)
-  REAL(kind=r8) :: smbchd(nbdirsmax, ncv, 0:3), smbtfd(nbdirsmax, ncv, 0&
-& :3)
+  REAL(kind=r8), INTENT(OUT) :: smbch(ncv, 0:3), smbtf(ncv, 0:3), smprb(&
+& ncv), smptb(ncv), smfrb(ncv)
+  REAL(kind=r8), INTENT(OUT) :: smbchd(nbdirsmax, ncv, 0:3), smbtfd(&
+& nbdirsmax, ncv, 0:3)
 !   ..workspace arguments (unspecified on entry and on exit)
+  REAL(kind=r8), INTENT(INOUT) :: vti32(ncv), gti(ncv), gte(ncv), lnlam(&
+& ncv)
+  REAL(kind=r8), INTENT(INOUT) :: vti32d(nbdirsmax, ncv), gtid(nbdirsmax&
+& , ncv), gted(nbdirsmax, ncv), lnlamd(nbdirsmax, ncv)
 !djm Jul2018
-  REAL(kind=r8) :: vti32(ncv), gti(ncv), gte(ncv), smbtf_cthe(ncv), &
-& smbtf_cthi(ncv)
-  REAL(kind=r8) :: vti32d(nbdirsmax, ncv), gtid(nbdirsmax, ncv), gted(&
-& nbdirsmax, ncv)
+  REAL(kind=r8) :: smbtf_cthe(ncv), smbtf_cthi(ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -465,8 +476,13 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
     CALL XERTST(0.0_R8 .LE. switch%b2sifr_limthii .AND. 0.0_R8 .LE. &
 &         switch%b2sifr_limthee, &
 &         'faulty internal parameter limthii, limthee')
-!srv 17.06.02
+!srv 17.06.0
     CALL IPGETI('b2sifr_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFR_ OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
     CALL IPGETI('b2tlnl_ii', icase_sifr)
     CALL XERTST(0 .EQ. icase_sifr .OR. 1 .EQ. icase_sifr, &
 &         'faulty input b2tlnl_ii')
@@ -527,8 +543,10 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   wrkvd = 0.D0
   CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, wrkv&
 &           , wrkvd, gti, gtid, nbdirs)
+  wrkvd = 0.D0
   CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, te, ted, wrkv&
 &           , wrkvd, gte, gted, nbdirs)
+!
 ! ..compute friction
 !   ..initialise to 0
   smbch = 0.0_R8
@@ -539,6 +557,7 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
   smbtf_cthe = 0.0_R8
   smbtf_cthi = 0.0_R8
   smbchd = 0.D0
+!
 !   ..loop over all other species
   DO is=0,ns-1
 !    ..consider distinct cases
@@ -609,6 +628,7 @@ SUBROUTINE B2SIFR__DV(ncv, nfc, nvx, ns, isb, switch, switchd, geo, geod&
 !       physics routines.)
 
   END DO
+!
 !   ..compute thermal force
   IF (.NOT.is_neutral(isb)) THEN
     smbtfd = 0.D0

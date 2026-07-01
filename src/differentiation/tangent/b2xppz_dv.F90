@@ -19,7 +19,7 @@
 SUBROUTINE B2XPPZ_DV(ncv, ns, ne, ned, na, nad, te, ted, ti, tid, pz, &
 & pzd, st_ext, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -75,7 +75,7 @@ END SUBROUTINE B2XPPZ_DV
 !sv 18.01.02 {
 SUBROUTINE B2XPPZ_NODIFF(ncv, ns, ne, na, te, ti, pz, st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

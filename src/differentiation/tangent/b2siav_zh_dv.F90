@@ -37,10 +37,11 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 & wrk1, wrk1d, wrk2, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
 !djm Jan2017
   USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
 & balance_netcdf
@@ -166,6 +167,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
   REAL(kind=r8), DIMENSION(nCv) :: temp7
   REAL(kind=r8), DIMENSION(nfc) :: temp8
   INTEGER :: nbdirs
+!
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -173,8 +175,14 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2siav')
 !
+!   .. check if we can write output
+  IF (switch%b2siav_iout .NE. 0 .AND. ncall_b2siav .EQ. 0) WRITE(*, *) &
+&                         'b2siav_zh OpenMP warning: no file output in '&
+&                                                          , &
+&                                                        'parallel mode'
+!
 !srv 16.10.17
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   ft_h = 8.0_R8/15.0_R8
   smbvh = 0.0_R8
   smbvv = 0.0_R8
@@ -189,9 +197,9 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !srv 19.01.05 28.03.06 {
 ! init
 !
-      qip1 = 0.0e0_R8
-      qipgen = 0.0e0_R8
-      wrk0 = 0.0e0_R8
+      qip1 = 0.0_R8
+      qipgen = 0.0_R8
+      wrk0 = 0.0_R8
 !
 !srv 01.07.09
       CALL B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
@@ -203,7 +211,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 &             wrkv, wrkvd, gti, gtid, nbdirs)
 !
 !       ..calculate the parallel heat flux of species isb in the center of the cell
-      qip0 = 0.0e0_R8
+      qip0 = 0.0_R8
 !
       result1 = MINVAL(rzb)
       IF (switch%b2siav_qstyle .EQ. 0 .AND. result1 .GT. 0.0_R8) THEN
@@ -368,7 +376,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !       ..calculate the parallel charge state averaged heat flux of all species
       DO inucl=0,nspecies-1
 !
-        qip0 = 0.0e0_R8
+        qip0 = 0.0_R8
 !
         result1 = MINVAL(rzb)
         IF (switch%b2siav_qstyle .EQ. 0 .AND. result1 .GT. 0.0_R8) THEN
@@ -764,7 +772,6 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 
       END DO
 !
-!
 !       ..viscosity source with contribution from other ion velocities  !som 13.08.21
 !
 !       ..calculate part of the mass-averaged velocity which depends on the other
@@ -795,6 +802,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
         CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf0, wrkf0d, wrk0&
 &                 , wrk0d, nbdirs)
 !calculate the actual source
+        wrkvd = 0.D0
         CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, &
 &                 wrk0d, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !
@@ -813,7 +821,6 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !
         wrkf = 0.0_R8
         wrkfd = 0.D0
-        wrkvd = 0.D0
         DO inucl=0,nspecies-1
 !
           IF (inucl .NE. s2nucl(isb) - 1) THEN
@@ -829,6 +836,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 &                 nucl2s(inucl, iz))*tid(nd, :)
               END DO
               u_res_b = ua(:, nucl2s(inucl, iz))*wrk2
+              wrkvd = 0.D0
               CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, u_res_b, &
 &                      u_res_bd, wrkv, wrkvd, wrkf1, wrkf1d, nbdirs)
               wrk1 = na(:, nucl2s(inucl, iz))*ti
@@ -872,6 +880,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 &               temp3*tid(nd, :)
             END DO
             u_res_b = ua(:, nucl2s(s2nucl(isb)-1, iz))*wrk2
+            wrkvd = 0.D0
             CALL GRAD_P_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, u_res_b, &
 &                    u_res_bd, wrkv, wrkvd, wrkf1, wrkf1d, nbdirs)
             wrk1 = temp3*ti
@@ -915,6 +924,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
         CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk0, &
 &                 wrk0d, nbdirs)
 !calculate the actual source
+        wrkvd = 0.D0
         CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk0, &
 &                 wrk0d, wrkv, wrkvd, wrk1, wrk1d, nbdirs)
 !
@@ -945,7 +955,7 @@ SUBROUTINE B2SIAV_ZH_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
 !
 !srv 17.06.02 }
 !
-  IF (switch%b2siav_iout .NE. 0) THEN
+  IF (switch%b2siav_iout .NE. 0 .AND. (.NOT.IN_PARALLEL())) THEN
 !srv 17.06.02 {
     WRITE(chns, '(i3.3)') isb
     DO k=0,3
@@ -1006,10 +1016,11 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 & vsaf_ubdp_al, smbvh, smbvv, smbvi, rho_rel, avm_u, wrk0, wrk1, wrk2)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
 !djm Jan2017
   USE B2MOD_BALANCE_DIFFV, ONLY : b2siav_smovh0to3, b2siav_smovv0to3, &
 & balance_netcdf
@@ -1098,6 +1109,7 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
   CHARACTER(len=12) :: arg13
   CHARACTER(len=21) :: arg14
   CHARACTER(len=20) :: arg15
+!
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -1105,8 +1117,14 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 !   ..subprogram start-up calls
   CALL SUBINI('b2siav')
 !
+!   .. check if we can write output
+  IF (switch%b2siav_iout .NE. 0 .AND. ncall_b2siav .EQ. 0) WRITE(*, *) &
+&                         'b2siav_zh OpenMP warning: no file output in '&
+&                                                          , &
+&                                                        'parallel mode'
+!
 !srv 16.10.17
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   ft_h = 8.0_R8/15.0_R8
   smbvh = 0.0_R8
   smbvv = 0.0_R8
@@ -1121,9 +1139,9 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 !srv 19.01.05 28.03.06 {
 ! init
 !
-      qip1 = 0.0e0_R8
-      qipgen = 0.0e0_R8
-      wrk0 = 0.0e0_R8
+      qip1 = 0.0_R8
+      qipgen = 0.0_R8
+      wrk0 = 0.0_R8
 !
 !srv 01.07.09
       CALL B2TTIA_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
@@ -1132,7 +1150,7 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
       CALL GRADC_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ti, wrkv, gti)
 !
 !       ..calculate the parallel heat flux of species isb in the center of the cell
-      qip0 = 0.0e0_R8
+      qip0 = 0.0_R8
 !
       result1 = MINVAL(rzb)
       IF (switch%b2siav_qstyle .EQ. 0 .AND. result1 .GT. 0.0_R8) THEN
@@ -1229,7 +1247,7 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 !       ..calculate the parallel charge state averaged heat flux of all species
       DO inucl=0,nspecies-1
 !
-        qip0 = 0.0e0_R8
+        qip0 = 0.0_R8
 !
         result1 = MINVAL(rzb)
         IF (switch%b2siav_qstyle .EQ. 0 .AND. result1 .GT. 0.0_R8) THEN
@@ -1455,7 +1473,6 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 
       END DO
 !
-!
 !       ..viscosity source with contribution from other ion velocities  !som 13.08.21
 !
 !       ..calculate part of the mass-averaged velocity which depends on the other
@@ -1558,7 +1575,7 @@ SUBROUTINE B2SIAV_ZH_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, mb&
 !
 !srv 17.06.02 }
 !
-  IF (switch%b2siav_iout .NE. 0) THEN
+  IF (switch%b2siav_iout .NE. 0 .AND. (.NOT.IN_PARALLEL())) THEN
 !srv 17.06.02 {
     WRITE(chns, '(i3.3)') isb
     DO k=0,3

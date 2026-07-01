@@ -21,7 +21,7 @@ SUBROUTINE B2TNPSCH_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 & facdrift, cddb, cddbd, ti, tid, nb, nbd, kmprti, kmprtid, flob, flobd&
 & , conb, conbd, fnbpsch, fnbpschd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -89,9 +89,6 @@ SUBROUTINE B2TNPSCH_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 !srv 13.10.06
   fnbpsch = 0.0e0_R8
 !srv 02.01.07
-  DO nd=1,nbdirs
-    conbd(nd, :, :, :) = 0.D0
-  END DO
   conb = 0.0e0_R8
   flob = 0.0e0_R8
   facdriftm = MAXVAL(facdrift)
@@ -214,7 +211,7 @@ END SUBROUTINE B2TNPSCH_DV
 SUBROUTINE B2TNPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & cddb, ti, nb, kmprti, flob, conb, fnbpsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

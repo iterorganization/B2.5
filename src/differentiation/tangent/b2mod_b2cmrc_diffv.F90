@@ -25,9 +25,8 @@ MODULE B2MOD_B2CMRC_DIFFV
 & (:), rtn(:), rtlt(:), rtln(:), rtlsa(:, :, :), rtlra(:, :, :), rtlqa(:&
 & , :, :), rtlqr(:, :, :), rtlrd(:, :, :), rtlbr(:, :, :), rtlcx(:, :, :&
 & ), rtlza(:, :, :), rtlz2(:, :, :), rtlpt(:, :, :), rtlpi(:, :, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: rtzmind(:, :), rtzmaxd(:, :), &
-& rtznd(:, :), rtlsad(:, :, :, :), rtlrad(:, :, :, :), rtlqad(:, :, :, :&
-& ), rtlcxd(:, :, :, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: rtlsad(:, :, :, :), rtlrad(:, :, :&
+& , :), rtlqad(:, :, :, :), rtlcxd(:, :, :, :)
   INTEGER, ALLOCATABLE, SAVE :: rtyr(:)
   INTEGER, SAVE :: fix_recomb, zmax_recomb
   LOGICAL, SAVE :: adpak_used
@@ -35,8 +34,8 @@ MODULE B2MOD_B2CMRC_DIFFV
 
 CONTAINS
 !  Differentiation of alloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE ALLOC_B2MOD_B2CMRC_DV(rtnt_in, rtnn_in, rtns_in, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -49,14 +48,8 @@ CONTAINS
     rtnn = rtnn_in
     rtns = rtns_in
 !
-    ALLOCATE(rtzmind(nbdirsmax, 0:rtns-1))
-    rtzmind = 0.D0
     ALLOCATE(rtzmin(0:rtns-1))
-    ALLOCATE(rtzmaxd(nbdirsmax, 0:rtns-1))
-    rtzmaxd = 0.D0
     ALLOCATE(rtzmax(0:rtns-1))
-    ALLOCATE(rtznd(nbdirsmax, 0:rtns-1))
-    rtznd = 0.D0
     ALLOCATE(rtzn(0:rtns-1))
     ALLOCATE(rtt(0:rtnt))
     ALLOCATE(rtn(0:rtnn))
@@ -118,8 +111,8 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_B2CMRC
 
 !  Differentiation of dealloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV(nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -127,17 +120,8 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: nbdirs
 !
-    IF (ALLOCATED(rtzmind)) THEN
-      DEALLOCATE(rtzmind)
-    END IF
     DEALLOCATE(rtzmin)
-    IF (ALLOCATED(rtzmaxd)) THEN
-      DEALLOCATE(rtzmaxd)
-    END IF
     DEALLOCATE(rtzmax)
-    IF (ALLOCATED(rtznd)) THEN
-      DEALLOCATE(rtznd)
-    END IF
     DEALLOCATE(rtzn)
     DEALLOCATE(rtt)
     DEALLOCATE(rtn)

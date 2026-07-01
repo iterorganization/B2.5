@@ -25,7 +25,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
   USE B2MOD_VERSION
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMRC_DIFFV
   USE B2MOD_IPMAIN
@@ -125,8 +125,9 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
   LOGICAL :: IS_COMMENT
   EXTERNAL XERTST, XERRAB, CFRUCH, CFRUIN, CFWUCH, CFWUIN
   EXTERNAL B2RUCP_NODIFF, B2RURC_NODIFF, B2RUSR, B2RFLB, B2RFCP_NODIFF, &
-&     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD_NODIFF&
-&     , B2WUZD, B2XVCP_NODIFF
+&     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD, &
+&     B2WUZD, B2XVCP_NODIFF
+  EXTERNAL B2RURC_DV
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -201,8 +202,8 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
 !     (zamin, zamax, zn, am from ninp(3) will be checked against the data
 !     already read in)
   CALL CFRUCH(ninp(3), 120, lblps, 'label')
-  CALL B2RUZD_NODIFF(ninp(3), b2fstati_version, ns0, zpdum(0, 1), zpdum(&
-&              0, 2), zpdum(0, 3), zpdum(0, 4), .false.)
+  CALL B2RUZD(ninp(3), b2fstati_version, ns0, zpdum(0, 1), zpdum(0, 2), &
+&       zpdum(0, 3), zpdum(0, 4), .false.)
   DO is=0,ns0-1
     result1 = LTST(zpdum(is, 1), zamin(is))
     CALL XERTST(result1, 'faulty data for zamin')
@@ -327,7 +328,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
 ! overwrite with values provided in b2mn.dat
   CALL READ_SWITCHES(switch)
 ! check the values of the switches
-  CALL CHECK_SWITCHES(switch, ns)
+  CALL CHECK_SWITCHES(switch, ns, nspecies)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
@@ -367,7 +368,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
   USE B2MOD_VERSION
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMRC_DIFFV
   USE B2MOD_IPMAIN
@@ -464,8 +465,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
   LOGICAL :: IS_COMMENT
   EXTERNAL XERTST, XERRAB, CFRUCH, CFRUIN, CFWUCH, CFWUIN
   EXTERNAL B2RUCP_NODIFF, B2RURC_NODIFF, B2RUSR, B2RFLB, B2RFCP_NODIFF, &
-&     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD_NODIFF&
-&     , B2WUZD, B2XVCP_NODIFF
+&     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD, &
+&     B2WUZD, B2XVCP_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -539,8 +540,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !     (zamin, zamax, zn, am from ninp(3) will be checked against the data
 !     already read in)
   CALL CFRUCH(ninp(3), 120, lblps, 'label')
-  CALL B2RUZD_NODIFF(ninp(3), b2fstati_version, ns0, zpdum(0, 1), zpdum(&
-&              0, 2), zpdum(0, 3), zpdum(0, 4), .false.)
+  CALL B2RUZD(ninp(3), b2fstati_version, ns0, zpdum(0, 1), zpdum(0, 2), &
+&       zpdum(0, 3), zpdum(0, 4), .false.)
   DO is=0,ns0-1
     result1 = LTST(zpdum(is, 1), zamin(is))
     CALL XERTST(result1, 'faulty data for zamin')
@@ -655,7 +656,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 ! overwrite with values provided in b2mn.dat
   CALL READ_SWITCHES(switch)
 ! check the values of the switches
-  CALL CHECK_SWITCHES(switch, ns)
+  CALL CHECK_SWITCHES(switch, ns, nspecies)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !

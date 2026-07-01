@@ -19,12 +19,11 @@
 !.specification
 !
 !xpb !srv 01.07.09
-SUBROUTINE B2TREQ_DV(ncv, switch, switchd, vol, vold, te, ted, ti, tid, &
-& ne, ned, ni, nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, ceqpd, &
-& nbdirs)
+SUBROUTINE B2TREQ_DV(ncv, switch, switchd, vol, te, ted, ti, tid, ne, &
+& ned, ni, nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, ceqpd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq
@@ -43,9 +42,9 @@ SUBROUTINE B2TREQ_DV(ncv, switch, switchd, vol, vold, te, ted, ti, tid, &
 !xpb !srv 01.07.09
   REAL(kind=r8) :: vol(ncv), ni(ncv, 0:1), te(ncv), ti(ncv), ne(ncv), &
 & ne2m(ncv), lnlam(ncv)
-  REAL(kind=r8) :: vold(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ted(&
-& nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(&
-& nbdirsmax, ncv), lnlamd(nbdirsmax, ncv)
+  REAL(kind=r8) :: nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(&
+& nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(nbdirsmax, ncv), lnlamd(&
+& nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: ceqp(ncv)
   REAL(kind=r8) :: ceqpd(nbdirsmax, ncv)
@@ -153,7 +152,7 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
 & st_ext, ceqp)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq

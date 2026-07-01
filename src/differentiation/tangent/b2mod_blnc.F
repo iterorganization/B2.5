@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_diag_diffv
       use b2mod_time
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
       implicit none
 
 c----------------------------------------------------------------------
@@ -636,7 +636,7 @@ c<<<
                       hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
                     end do
                     print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp,wldpp= ',
+     ,                 '%%# i,k,hlp_wldpp= ',
      ,                      i,k,hlp_wldpp
                   end if
 c>>>

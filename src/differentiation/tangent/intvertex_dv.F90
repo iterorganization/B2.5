@@ -44,8 +44,10 @@ SUBROUTINE INTVERTEX_DV(ncv, nvx, mpg, vxvol, centre, centred, vertex, &
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv), vertex(nvx)
-  REAL(kind=r8) :: centred(nbdirsmax, ncv), vertexd(nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(OUT) :: vertex(nvx)
+  REAL(kind=r8), INTENT(OUT) :: vertexd(nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(IN) :: vxvol(mpg%nvmxcv), centre(ncv)
+  REAL(kind=r8), INTENT(IN) :: centred(nbdirsmax, ncv)
   INTEGER :: ivx, icv
   REAL(kind=r8) :: volsum
   INTEGER :: nd
@@ -83,7 +85,8 @@ SUBROUTINE INTVERTEX_NODIFF(ncv, nvx, mpg, vxvol, centre, vertex)
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv), vertex(nvx)
+  REAL(kind=r8), INTENT(OUT) :: vertex(nvx)
+  REAL(kind=r8), INTENT(IN) :: vxvol(mpg%nvmxcv), centre(ncv)
   INTEGER :: ivx, icv
   REAL(kind=r8) :: volsum
 !

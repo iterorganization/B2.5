@@ -196,9 +196,9 @@ c=======================================================================
       use b2mod_geo_diffv
       use b2mod_rates
       use b2mod_indirect_diffv
-      use b2mod_plasma_diffv
+      use b2mod_plasma
       use b2mod_sources
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
 
       implicit none
 
@@ -1332,7 +1332,7 @@ c
 c=======================================================================
       subroutine write_pproc_control_form(nwrite)
 
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
 
       implicit none
 
@@ -1411,10 +1411,10 @@ c=======================================================================
       subroutine write_pproc_timestep(nwrite)
 
       use b2mod_types
-      use b2mod_plasma_diffv
+      use b2mod_plasma
       use b2mod_constants
-      use b2mod_elements_diffv
-      use b2mod_b2cmpa_diffv
+      use b2mod_elements
+      use b2mod_b2cmpa
 
       implicit none
 
@@ -1568,7 +1568,7 @@ c=======================================================================
 
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
 
       implicit none
 
@@ -1601,9 +1601,9 @@ c=======================================================================
       subroutine write_pproc_boundary(nwrite)
 
       use b2mod_types
-      use b2mod_plasma_diffv
+      use b2mod_plasma
       use b2mod_constants
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
 
       implicit none
 

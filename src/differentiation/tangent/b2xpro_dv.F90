@@ -34,9 +34,6 @@ SUBROUTINE B2XPRO_DV(ncv, ns, mp, am, na, nad, ro, rod, st_ext, nbdirs)
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpro')
-  DO nd=1,nbdirs
-    rod(nd, :) = 0.D0
-  END DO
   ro = 0.0_R8
   rod = 0.D0
   DO is=0,ns-1

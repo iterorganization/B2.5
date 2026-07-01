@@ -35,14 +35,14 @@ SUBROUTINE B2TLNL_DV(ncv, switch, switchd, icase, te, ted, ti, tid, ne, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
 !srv 20.09.11
-  INTEGER :: ncv, icase
+  INTEGER, INTENT(IN) :: ncv, icase
 !srv 20.09.11
-  REAL(kind=r8) :: te(ncv), ti(ncv), ne(ncv)
-  REAL(kind=r8) :: ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(&
-& nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(IN) :: te(ncv), ti(ncv), ne(ncv)
+  REAL(kind=r8), INTENT(IN) :: ted(nbdirsmax, ncv), tid(nbdirsmax, ncv)&
+& , ned(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: lnlam(ncv)
-  REAL(kind=r8) :: lnlamd(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: lnlam(ncv)
+  REAL(kind=r8), INTENT(OUT) :: lnlamd(nbdirsmax, ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -289,11 +289,11 @@ SUBROUTINE B2TLNL_NODIFF(ncv, switch, icase, te, ti, ne, lnlam)
 !   ..input arguments (unchanged on exit)
   TYPE(SWITCHES), INTENT(IN) :: switch
 !srv 20.09.11
-  INTEGER :: ncv, icase
+  INTEGER, INTENT(IN) :: ncv, icase
 !srv 20.09.11
-  REAL(kind=r8) :: te(ncv), ti(ncv), ne(ncv)
+  REAL(kind=r8), INTENT(IN) :: te(ncv), ti(ncv), ne(ncv)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: lnlam(ncv)
+  REAL(kind=r8), INTENT(OUT) :: lnlam(ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation

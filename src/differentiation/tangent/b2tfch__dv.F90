@@ -2,14 +2,14 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfch_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast *(dv.fch) *(dv.fch_p)
 !                *(dv.fchdia) *(dv.fchin) *(dv.fchvispar) *(dv.fchvispar_a)
 !                *(dv.fchvisper) *(dv.fchvisper_a) *(dv.fchvisq)
 !                *(dv.fchvisq_a) *(dv.fchinert) *(dv.fchinert_a)
 !                *(dv.fchanml) *(dv.fchanml_a) *(dv.fchviskt) *(dv.fchviskt_a)
 !                *(dv.fch_pi_c) *(dv.fch_pi_f) *(dv.conc)
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast *(co_ns.vsaf_uadp_albe)
 !                *(co_ns.vsaf_ubdp_al) *(co_ns.hci_al_ast) *(dv.fch)
 !                *(dv.fch_p) *(dv.fchdia) *(dv.fchin) *(dv.fchvispar)
@@ -23,7 +23,7 @@
 !                *(co.vsaf_cl) *(co.vsaf_drho) *(co.hci_a) *(co.dna_exb)
 !                *(co.vsa0) *(co.hcix_c) *(pl.na) *(pl.ua) *(pl.po)
 !                *(pl.te) *(pl.ti) *(pl.kt)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in co_ns.vsaf_uadp_albe:in
 !                co_ns.vsaf_ubdp_al:in co_ns.hci_al_ast:in dv.fch:in
 !                dv.fch_p:in dv.fchdia:in dv.fchin:in dv.fchvispar:in
@@ -60,12 +60,12 @@
 !srv 29.01.20 {
 SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & geod, mpg, mpgd, pl, pld, dv, dvd, co, cod, co_ns, co_nsd, rt, rtd, &
-& st_ext, st_extd, nbdirs)
+& srw, st_ext, st_extd, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
 !      use b2mod_b2cmfs
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -73,7 +73,7 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfch
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_xy, z2n_xyd, nal, nald, ia, iad, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_cv, z2n_cvd, nal, nald, ia, iad, &
 & av_ualpha, av_ualphad, avm_u, avm_ud, rho_a_rel, rho_a_reld, &
 & z_to_m1_ast, z_to_m1_astd
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2xehx, ncall_b2tcpa, &
@@ -94,6 +94,7 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
 !   ..output arguments (unspecified on entry)
@@ -165,12 +166,6 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !    ..test sign of ne, te, csig, chce
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkd(nd, :, 0) = 0.D0
-      wrkd(nd, :, 1) = 0.D0
-      wrkd(nd, :, 0) = 0.D0
-      wrkd(nd, :, 1) = 0.D0
-    END DO
     wrk(:, 0) = co%csig(:, 0)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrk(:, 0), 1, 'csig0', '.ge.')
     wrk(:, 1) = co%csig(:, 1)*geo%fcqalf(:, 1)
@@ -221,8 +216,8 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
 !srv 11.05.09
     CALL B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, rt&
-&             , rtd, dv%facdrift, dv%fac_exb, pl, pld, dv%fna, dvd%fna, &
-&             co%csigin, cod%csigin, dv%fchin, dvd%fchin, nbdirs)
+&             , rtd, dv%facdrift, dv%fac_exb, pl, pld, srw, dv%fna, dvd%&
+&             fna, co%csigin, cod%csigin, dv%fchin, dvd%fchin, nbdirs)
 !     ..compute poloidal and radial components of divergent part of diamagnetic current
     CALL B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, dv, &
 &            dvd, nbdirs)
@@ -450,12 +445,12 @@ END SUBROUTINE B2TFCH__DV
 !
 !srv 29.01.20 {
 SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-& pl, dv, co, co_ns, rt, st_ext)
+& pl, dv, co, co_ns, rt, srw, st_ext)
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
 !      use b2mod_b2cmfs
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -463,7 +458,7 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfch
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_xy, nal, ia, av_ualpha, avm_u, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : z2n_cv, nal, ia, av_ualpha, avm_u, &
 & rho_a_rel, z_to_m1_ast
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2xehx, ncall_b2tcpa, &
 & ncall_b2ttia, nsmooth_tvsq
@@ -477,6 +472,7 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !   ..output arguments (unspecified on entry)
 !   ..input/output arguments (unspecified on entry)
@@ -575,7 +571,8 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
 !srv 11.05.09
     CALL B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, dv%&
-&                 facdrift, dv%fac_exb, pl, dv%fna, co%csigin, dv%fchin)
+&                 facdrift, dv%fac_exb, pl, srw, dv%fna, co%csigin, dv%&
+&                 fchin)
 !     ..compute poloidal and radial components of divergent part of diamagnetic current
     CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv)
 !     ..calculate poloidal and radial components of viscosity parallel current

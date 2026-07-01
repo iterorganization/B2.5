@@ -14,7 +14,7 @@
 !
 MODULE B2MOD_ZHFRTF_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2ZHCO_DIFFV
   USE B2MOD_B2MREL
   USE B2MOD_SUBSYS
@@ -22,10 +22,10 @@ MODULE B2MOD_ZHFRTF_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   INTEGER, ALLOCATABLE, SAVE :: is_i(:)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_xy(:, :), nal(:, :), ia(:, :)&
+  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_cv(:, :), nal(:, :), ia(:, :)&
 & , av_ualpha(:, :), gt_ac(:, :), gtalc(:, :), avm_u(:), rho_a_rel(:, :)&
 & , gavm_uc(:), z_to_m1_ast(:, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_xyd(:, :, :), nald(:, :, :), &
+  REAL(kind=r8), ALLOCATABLE, SAVE :: z2n_cvd(:, :, :), nald(:, :, :), &
 & iad(:, :, :), av_ualphad(:, :, :), gt_acd(:, :, :), gtalcd(:, :, :), &
 & avm_ud(:, :), rho_a_reld(:, :, :), gavm_ucd(:, :), z_to_m1_astd(:, :, &
 & :)
@@ -45,7 +45,7 @@ MODULE B2MOD_ZHFRTF_DIFFV
 !  3. description
 !
 !     This module contains:
-!     z2n_xy: squared charge weighted average density of the isonuclear sequence
+!     z2n_cv: squared charge weighted average density of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density of an ion to
 !         the squared charge weighted average density of its isonuclear sequence
@@ -60,7 +60,7 @@ MODULE B2MOD_ZHFRTF_DIFFV
 
 CONTAINS
 !  Differentiation of alloc_b2mod_zhfrtf as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:out nal:out ia:out av_ualpha:out
+!   Plus diff mem management of: z2n_cv:out nal:out ia:out av_ualpha:out
 !                gt_ac:out gtalc:out avm_u:out rho_a_rel:out gavm_uc:out
 !                z_to_m1_ast:out
 !...................................................................................
@@ -81,9 +81,9 @@ CONTAINS
       END IF
     END DO
 !
-    ALLOCATE(z2n_xyd(nbdirsmax, ncv, 0:nspecies-1))
-    z2n_xyd = 0.D0
-    ALLOCATE(z2n_xy(ncv, 0:nspecies-1))
+    ALLOCATE(z2n_cvd(nbdirsmax, ncv, 0:nspecies-1))
+    z2n_cvd = 0.D0
+    ALLOCATE(z2n_cv(ncv, 0:nspecies-1))
     ALLOCATE(nald(nbdirsmax, ncv, 0:nspecies-1))
     nald = 0.D0
     ALLOCATE(nal(ncv, 0:nspecies-1))
@@ -131,7 +131,7 @@ CONTAINS
       END IF
     END DO
 !
-    ALLOCATE(z2n_xy(ncv, 0:nspecies-1))
+    ALLOCATE(z2n_cv(ncv, 0:nspecies-1))
     ALLOCATE(nal(ncv, 0:nspecies-1))
     ALLOCATE(ia(ncv, 0:ns-1))
     ALLOCATE(av_ualpha(ncv, 0:nspecies-1))
@@ -146,7 +146,7 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_ZHFRTF
 
 !  Differentiation of dealloc_b2mod_zhfrtf as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:out nal:out ia:out av_ualpha:out
+!   Plus diff mem management of: z2n_cv:out nal:out ia:out av_ualpha:out
 !                gt_ac:out gtalc:out avm_u:out rho_a_rel:out gavm_uc:out
 !                z_to_m1_ast:out
 !
@@ -160,10 +160,10 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(is_i)
-      IF (ALLOCATED(z2n_xyd)) THEN
-        DEALLOCATE(z2n_xyd)
+      IF (ALLOCATED(z2n_cvd)) THEN
+        DEALLOCATE(z2n_cvd)
       END IF
-      DEALLOCATE(z2n_xy)
+      DEALLOCATE(z2n_cv)
       IF (ALLOCATED(nald)) THEN
         DEALLOCATE(nald)
       END IF
@@ -213,7 +213,7 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(is_i)
-      DEALLOCATE(z2n_xy)
+      DEALLOCATE(z2n_cv)
       DEALLOCATE(nal)
       DEALLOCATE(ia)
       DEALLOCATE(av_ualpha)
@@ -263,11 +263,11 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_ZHFRTF_DF
 
 !  Differentiation of b2mod_zhfrtf_prep in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast na ua
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in
 !
 !...................................................................................
@@ -296,7 +296,7 @@ CONTAINS
 !  3. description
 !
 !     This routine computes:
-!     z2n_xy: squared charge weighted average density
+!     z2n_cv: squared charge weighted average density
 !             of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density to
@@ -308,20 +308,20 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..calculate the average Z**2*n and numerical density of the isonuclear sequence
-      z2n_xyd(nd, :, :) = 0.D0
+      z2n_cvd(nd, :, :) = 0.D0
       nald(nd, :, :) = 0.D0
     END DO
-    z2n_xy = 0.0_R8
+    z2n_cv = 0.0_R8
     nal = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
         DO nd=1,nbdirs
-          z2n_xyd(nd, :, inucl) = z2n_xyd(nd, :, inucl) + iz**2*nad(nd, &
+          z2n_cvd(nd, :, inucl) = z2n_cvd(nd, :, inucl) + iz**2*nad(nd, &
 &           :, nucl2s(inucl, iz))
           nald(nd, :, inucl) = nald(nd, :, inucl) + nad(nd, :, nucl2s(&
 &           inucl, iz))
         END DO
-        z2n_xy(:, inucl) = z2n_xy(:, inucl) + iz**2*na(:, nucl2s(inucl, &
+        z2n_cv(:, inucl) = z2n_cv(:, inucl) + iz**2*na(:, nucl2s(inucl, &
 &         iz))
         nal(:, inucl) = nal(:, inucl) + na(:, nucl2s(inucl, iz))
       END DO
@@ -338,11 +338,11 @@ CONTAINS
     z_to_m1_ast = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        temp = na(:, nucl2s(inucl, iz))/z2n_xy(:, inucl)
+        temp = na(:, nucl2s(inucl, iz))/z2n_cv(:, inucl)
         ia(:, nucl2s(inucl, iz)) = iz*iz*temp
         DO nd=1,nbdirs
           iad(nd, :, nucl2s(inucl, iz)) = iz**2*(nad(nd, :, nucl2s(inucl&
-&           , iz))-temp*z2n_xyd(nd, :, inucl))/z2n_xy(:, inucl)
+&           , iz))-temp*z2n_cvd(nd, :, inucl))/z2n_cv(:, inucl)
           av_ualphad(nd, :, inucl) = av_ualphad(nd, :, inucl) + ua(:, &
 &           nucl2s(inucl, iz))*iad(nd, :, nucl2s(inucl, iz)) + ia(:, &
 &           nucl2s(inucl, iz))*uad(nd, :, nucl2s(inucl, iz))
@@ -382,7 +382,7 @@ CONTAINS
 !  3. description
 !
 !     This routine computes:
-!     z2n_xy: squared charge weighted average density
+!     z2n_cv: squared charge weighted average density
 !             of the isonuclear sequence
 !     nal: average density of the isonuclear sequence
 !     Ia: ratio of the squared charge weighted density to
@@ -394,11 +394,11 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..calculate the average Z**2*n and numerical density of the isonuclear sequence
-    z2n_xy = 0.0_R8
+    z2n_cv = 0.0_R8
     nal = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        z2n_xy(:, inucl) = z2n_xy(:, inucl) + iz**2*na(:, nucl2s(inucl, &
+        z2n_cv(:, inucl) = z2n_cv(:, inucl) + iz**2*na(:, nucl2s(inucl, &
 &         iz))
         nal(:, inucl) = nal(:, inucl) + na(:, nucl2s(inucl, iz))
       END DO
@@ -410,7 +410,7 @@ CONTAINS
     z_to_m1_ast = 0.0_R8
     DO inucl=0,nspecies-1
       DO iz=1,znnucl_int(inucl)
-        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_xy&
+        ia(:, nucl2s(inucl, iz)) = iz**2*na(:, nucl2s(inucl, iz))/z2n_cv&
 &         (:, inucl)
         av_ualpha(:, inucl) = av_ualpha(:, inucl) + ia(:, nucl2s(inucl, &
 &         iz))*ua(:, nucl2s(inucl, iz))
@@ -667,9 +667,9 @@ CONTAINS
       gt_acd(nd, :, :) = 0.D0
     END DO
     gt_ac = 0.0_R8
-    wrkvd = 0.D0
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
+        wrkvd = 0.D0
         CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, t_a(:, &
 &                 is), t_ad(:, :, is), wrkv, wrkvd, gt_ac(:, is), gt_acd&
 &                 (:, :, is), nbdirs)
@@ -701,6 +701,7 @@ CONTAINS
     END DO
 !
 !   ..average velocity gradient in the cell center
+    wrkvd = 0.D0
     CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, avm_u, &
 &             avm_ud, wrkv, wrkvd, gavm_uc, gavm_ucd, nbdirs)
     DO nd=1,nbdirs
@@ -805,19 +806,19 @@ CONTAINS
 
 !  Differentiation of b2mod_zhfrtf_fr in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: smfr_p
-!   with respect to varying inputs: *z2n_xy *av_ualpha *c_r_w coef
-!                smfr_p
-!   Plus diff mem management of: z2n_xy:in av_ualpha:in c_r_w:in
+!   with respect to varying inputs: *z2n_cv *av_ualpha *c_r_w coef
+!                smfr_p corr_fria
+!   Plus diff mem management of: z2n_cv:in av_ualpha:in c_r_w:in
 !
 !...................................................................................
   SUBROUTINE B2MOD_ZHFRTF_FR_DV(icv, is, coef, coefd, smfr_p, smfr_pd, &
-&   nbdirs)
+&   corr_fria, corr_friad, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     INTEGER :: icv, is, inucl
-    REAL(kind=r8) :: coef
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd
+    REAL(kind=r8) :: coef, corr_fria
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, corr_friad
     REAL(kind=r8), DIMENSION(0:1) :: smfr_p
     REAL(kind=r8), DIMENSION(nbdirsmax, 0:1) :: smfr_pd
 !-----------------------------------------------------------------------
@@ -852,15 +853,16 @@ CONTAINS
       temp0 = rmu(inucl, s2nucl(is)-1)
       temp1 = c_r_w(icv, inucl, s2nucl(is)-1)
       DO nd=1,nbdirs
-        tempd(nd) = tempd(nd) + temp0*(temp1*z2n_xyd(nd, icv, inucl)+&
-&         z2n_xy(icv, inucl)*c_r_wd(nd, icv, inucl, s2nucl(is)-1))
+        tempd(nd) = tempd(nd) + temp0*(temp1*z2n_cvd(nd, icv, inucl)+&
+&         z2n_cv(icv, inucl)*c_r_wd(nd, icv, inucl, s2nucl(is)-1))
       END DO
-      temp = temp + temp0*(z2n_xy(icv, inucl)*temp1)
+      temp = temp + temp0*(z2n_cv(icv, inucl)*temp1)
     END DO
     DO nd=1,nbdirs
-      smfr_pd(nd, 1) = -(temp*coefd(nd)+coef*tempd(nd))
+      smfr_pd(nd, 1) = -(corr_fria*(temp*coefd(nd)+coef*tempd(nd))+coef*&
+&       temp*corr_friad(nd))
     END DO
-    smfr_p(1) = -(coef*temp)
+    smfr_p(1) = -(coef*temp*corr_fria)
 !
 !   ..the second part of the friction force
     temp = 0
@@ -869,30 +871,31 @@ CONTAINS
     END DO
     DO inucl=0,nspecies-1
       temp1 = rmu(inucl, s2nucl(is)-1)
-      temp0 = z2n_xy(icv, inucl)*av_ualpha(icv, inucl)
+      temp0 = z2n_cv(icv, inucl)*av_ualpha(icv, inucl)
       temp2 = c_r_w(icv, inucl, s2nucl(is)-1)
       DO nd=1,nbdirs
         tempd(nd) = tempd(nd) + temp1*(temp0*c_r_wd(nd, icv, inucl, &
-&         s2nucl(is)-1)+temp2*(av_ualpha(icv, inucl)*z2n_xyd(nd, icv, &
-&         inucl)+z2n_xy(icv, inucl)*av_ualphad(nd, icv, inucl)))
+&         s2nucl(is)-1)+temp2*(av_ualpha(icv, inucl)*z2n_cvd(nd, icv, &
+&         inucl)+z2n_cv(icv, inucl)*av_ualphad(nd, icv, inucl)))
       END DO
       temp = temp + temp1*(temp2*temp0)
     END DO
     DO nd=1,nbdirs
-      smfr_pd(nd, 0) = temp*coefd(nd) + coef*tempd(nd)
+      smfr_pd(nd, 0) = corr_fria*(temp*coefd(nd)+coef*tempd(nd)) + coef*&
+&       temp*corr_friad(nd)
     END DO
-    smfr_p(0) = coef*temp
+    smfr_p(0) = coef*temp*corr_fria
 !
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_FR_DV
 
 !
 !...................................................................................
-  SUBROUTINE B2MOD_ZHFRTF_FR(icv, is, coef, smfr_p)
+  SUBROUTINE B2MOD_ZHFRTF_FR(icv, is, coef, smfr_p, corr_fria)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: icv, is, inucl
-    REAL(kind=r8) :: coef
+    REAL(kind=r8) :: coef, corr_fria
     REAL(kind=r8), DIMENSION(0:1) :: smfr_p
 !-----------------------------------------------------------------------
 !.documentation
@@ -914,18 +917,18 @@ CONTAINS
 !   ..the first part of the friction force
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)
     END DO
-    smfr_p(1) = -(coef*temp)
+    smfr_p(1) = -(coef*temp*corr_fria)
 !
 !   ..the second part of the friction force
     temp = 0
     DO inucl=0,nspecies-1
-      temp = temp + z2n_xy(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
+      temp = temp + z2n_cv(icv, inucl)*rmu(inucl, s2nucl(is)-1)*c_r_w(&
 &       icv, inucl, s2nucl(is)-1)*av_ualpha(icv, inucl)
     END DO
-    smfr_p(0) = coef*temp
+    smfr_p(0) = coef*temp*corr_fria
 !
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_FR
@@ -933,19 +936,19 @@ CONTAINS
 !  Differentiation of b2mod_zhfrtf_tf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: smtf
 !   with respect to varying inputs: *nal *ia *gt_ac *gtalc *c_r_ta
-!                *c_r_tb nais
+!                *c_r_tb corr_tfia nais
 !   Plus diff mem management of: nal:in ia:in gt_ac:in gtalc:in
 !                c_r_ta:in c_r_tb:in
 !
 !...................................................................................
   SUBROUTINE B2MOD_ZHFRTF_TF_DV(icv, is, zhcscorr, nais, naisd, smtf, &
-&   smtfd, smtf_nofl, nbdirs)
+&   smtfd, smtf_nofl, corr_tfia, corr_tfiad, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, nais
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: smtfd, naisd
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: smtfd, corr_tfiad, naisd
     INTRINSIC SUM
     REAL(kind=r8), DIMENSION(nspecies) :: arg1
     REAL(kind=r8), DIMENSION(nbdirsmax, nspecies) :: arg1d
@@ -1017,16 +1020,22 @@ CONTAINS
 &       , is)*gtalc(icv, s2nucl(is)-1))
     END IF
 !
+    DO nd=1,nbdirs
+      smtfd(nd) = corr_tfia*smtfd(nd) + smtf*corr_tfiad(nd)
+    END DO
+    smtf = smtf*corr_tfia
+    smtf_nofl = smtf_nofl*corr_tfia
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_TF_DV
 
 !
 !...................................................................................
-  SUBROUTINE B2MOD_ZHFRTF_TF(icv, is, zhcscorr, nais, smtf, smtf_nofl)
+  SUBROUTINE B2MOD_ZHFRTF_TF(icv, is, zhcscorr, nais, smtf, smtf_nofl, &
+&   corr_tfia)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, nais
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
     INTRINSIC SUM
     REAL(kind=r8), DIMENSION(nspecies) :: arg1
 !-----------------------------------------------------------------------
@@ -1065,6 +1074,8 @@ CONTAINS
 &       , is)*gtalc(icv, s2nucl(is)-1))
     END IF
 !
+    smtf = smtf*corr_tfia
+    smtf_nofl = smtf_nofl*corr_tfia
     RETURN
   END SUBROUTINE B2MOD_ZHFRTF_TF
 !
