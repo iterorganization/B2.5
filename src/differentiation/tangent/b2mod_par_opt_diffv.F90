@@ -249,7 +249,7 @@ CONTAINS
     spatial_points = 0
     parallel_hf = .true.
     hessian_approximation = 'limited-memory'
-    limited_memory_update_type = 'b2fgs'
+    limited_memory_update_type = 'bfgs'
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
@@ -1080,7 +1080,7 @@ CONTAINS
     spatial_points = 0
     parallel_hf = .true.
     hessian_approximation = 'limited-memory'
-    limited_memory_update_type = 'b2fgs'
+    limited_memory_update_type = 'bfgs'
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
