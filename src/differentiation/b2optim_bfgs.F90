@@ -52,17 +52,23 @@ contains
   !---------------------------------------------------------------------
   ! bfgs_bound_solve
   !
-  !  Minimizes f(x) s.t. l <= x <= u via bound-constrained L-BFGS.
+  !  Minimizes f(x) s.t. l <= x <= u via bound-constrained L-BFGS with
+  !  diagonal Broyden scaling of the initial Hessian (mirrors PETSc's
+  !  MATLMVMBFGS default -mat_lmvm_scale_type diagonal, per Gilbert &
+  !  Lemarechal 1989), rather than a single scalar gamma. This matters
+  !  a lot when different parameters have very different curvature.
   !
   !  f_only   – cheap forward-only call  (line search trials)
   !  fg       – expensive forward+grad   (once per accepted step)
-  !  memsize  – L-BFGS history length (TAO default = 1; 5-20)
+  !  memsize  – L-BFGS history length (TAO default = 1)
   !
   !  Three convergence tolerances matching TaoSetTolerances (TAO fires
-  !  when ANY is met; pass 1e30 to disable one):
-  !   gatol  – absolute gradient norm:       ||g||        <= gatol
-  !   grtol  – gradient reduction:           ||g||/||g0|| <= grtol
-  !   gttol  – gradient relative to cost:    ||g||/|f|    <= gttol
+  !  when ANY is met; pass 1e30 to disable one). These match TAO's
+  !  ACTUAL internal semantics (note grtol and gttol use different
+  !  normalizations than their names might suggest):
+  !   gatol  – absolute gradient norm:        ||g||        <= gatol
+  !   grtol  – gradient relative to cost:     ||g||/|f|    <= grtol
+  !   gttol  – gradient reduction from start: ||g||/||g0|| <= gttol
   !
   !  info:  0 = converged, 1 = max iterations, 2 = line search failure
   !---------------------------------------------------------------------
@@ -80,24 +86,28 @@ contains
     ! L-BFGS circular buffer
     double precision, allocatable :: S(:,:), Y(:,:), rho(:)
     double precision, allocatable :: g(:), gold(:), xold(:), d(:), q(:)
+    double precision, allocatable :: Bdiag(:), H0diag(:)
     logical,          allocatable :: active(:), active_old(:)
     double precision, allocatable :: alpha_ls(:)
 
     double precision :: f, fold, alpha, beta_ls, gnorm, gnorm0
-    double precision :: sty_free, yty_free, H0scale, pred
+    double precision :: sty_free, sBs, pred
     double precision, parameter :: BTOL      = 1.0d-10
     double precision, parameter :: C1        = 1.0d-4
     double precision, parameter :: RHOLS     = 0.5d0
     double precision, parameter :: ALPHA_MIN = 1.0d-20
     double precision, parameter :: CURV_TOL  = 1.0d-10
+    double precision, parameter :: BDIAG_MIN = 1.0d-8
+    double precision, parameter :: BDIAG_MAX = 1.0d8
     integer :: i, j, k, m, ncur, newest, col
     logical :: active_set_changed
 
     m = max(1, memsize)
     allocate(S(n,m), Y(n,m), rho(m))
     allocate(g(n), gold(n), xold(n), d(n), q(n), alpha_ls(m))
-    allocate(active(n), active_old(n))
-    S = 0.0d0; Y = 0.0d0; rho = 0.0d0
+    allocate(active(n), active_old(n), Bdiag(n), H0diag(n))
+    S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
+    Bdiag = 1.0d0    ! diagonal Hessian approx, starts at identity
     ncur = 0   ! number of (s,y) pairs stored so far
     newest = 0 ! circular-buffer index of most recently stored pair
     active_old = .false.
@@ -131,10 +141,11 @@ contains
        active_set_changed = any(active .neqv. active_old)
        if (active_set_changed .and. k > 1) then
           if (iprint > 0) write(*,'(A,I5)') &
-               'LBFGS: active set changed at iter ', k, ' -- resetting history'
+               'BFGS: active set changed at iter ', k, ' -- resetting history'
           ncur   = 0
           newest = 0
           S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
+          Bdiag = 1.0d0
        end if
        active_old = active
 
@@ -143,29 +154,33 @@ contains
 
        if (iprint > 0) then
           write(*,'(A,I5,4(A,ES12.4))') &
-               'LBFGS iter =', k,                                        &
+               'BFGS iter =', k,                                        &
                '   f = ',           f,                                   &
                '   ||g|| = ',       gnorm,                               &
                '   ||g||/||g0|| =', gnorm / gnorm0,                      &
                '   ||g||/|f| = ',   gnorm / max(abs(f), 1.0d-300)
        end if
 
-       ! --- three-way convergence test
+       ! --- three-way convergence test:
+       !   gatol : ||g||        <= gatol
+       !   grtol : ||g||/|f|   <= grtol
+       !   gttol : ||g||/||g0|| <= gttol
+       ! Convergence declared when ANY criterion is satisfied.
        if (gnorm <= gatol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
-               'LBFGS: converged gatol ||g|| = ', gnorm, ' <= ', gatol
+               'BFGS: converged gatol ||g|| = ', gnorm, ' <= ', gatol
           info = 0;  exit
        end if
-       if (gnorm / gnorm0 <= grtol) then
+       if (abs(f) > 0.0d0 .and. gnorm / abs(f) <= grtol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
-               'LBFGS: converged grtol ||g||/||g0|| = ', gnorm/gnorm0, &
+               'BFGS: converged grtol ||g||/|f| = ', gnorm/abs(f), &
                ' <= ', grtol
           info = 0;  exit
        end if
-       if (gnorm / max(abs(f), 1.0d-300) <= gttol) then
+       if (gnorm / gnorm0 <= gttol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
-               'LBFGS: converged gttol ||g||/|f| = ', &
-               gnorm/max(abs(f),1.0d-300), ' <= ', gttol
+               'BFGS: converged gttol ||g||/||g0|| = ', gnorm/gnorm0, &
+               ' <= ', gttol
           info = 0;  exit
        end if
 
@@ -193,22 +208,18 @@ contains
           end do
        end do
 
-       ! H0 scaling gamma = (s^T y)_free / (y^T y)_free using newest pair
-       if (ncur > 0) then
-          col = newest
-          sty_free = 0.0d0;  yty_free = 0.0d0
-          do i = 1, n
-             if (.not. active(i)) then
-                sty_free = sty_free + S(i,col) * Y(i,col)
-                yty_free = yty_free + Y(i,col) * Y(i,col)
-             end if
-          end do
-          H0scale = sty_free / max(yty_free, 1.0d-300)
-          H0scale = max(H0scale, 1.0d-10)
-       else
-          H0scale = 1.0d0
-       end if
-       d = H0scale * q
+       ! H0 = diag(1/Bdiag), the diagonal Broyden-scaled inverse Hessian
+       ! initialization (mirrors PETSc's default -mat_lmvm_scale_type
+       ! diagonal for MATLMVMBFGS). Bdiag is maintained incrementally
+       ! below, after each accepted step.
+       do i = 1, n
+          if (active(i)) then
+             H0diag(i) = 1.0d0
+          else
+             H0diag(i) = 1.0d0 / Bdiag(i)
+          end if
+       end do
+       d = H0diag * q
 
        ! forward pass
        do i = ncur, 1, -1
@@ -226,7 +237,7 @@ contains
        if (dot_product(d, g) > -1.0d-12) then
           d = 0.0d0
           do i = 1, n
-             if (.not. active(i)) d(i) = -H0scale * g(i)
+             if (.not. active(i)) d(i) = -H0diag(i) * g(i)
           end do
        end if
 
@@ -271,11 +282,35 @@ contains
           S(:,newest) = x - xold
           Y(:,newest) = g - gold
           rho(newest) = 1.0d0 / sty_free
+
+          ! --- diagonal Broyden update of Bdiag (direct Hessian diagonal
+          ! approximation), restricted to the free subspace:
+          !   Bdiag(i) <- Bdiag(i) - (Bdiag(i)*s(i))^2 / (s^T Bdiag s)
+          !                        + y(i)^2 / (s^T y)
+          ! This mirrors PETSc's -mat_lmvm_scale_type diagonal default
+          ! (Gilbert & Lemarechal 1989), applied elementwise since we
+          ! keep Bdiag purely diagonal (not a dense matrix).
+          sBs = 0.0d0
+          do i = 1, n
+             if (.not. active(i)) &
+                sBs = sBs + Bdiag(i) * (S(i,newest))**2
+          end do
+          if (sBs > 1.0d-300) then
+             do i = 1, n
+                if (.not. active(i)) then
+                   Bdiag(i) = Bdiag(i) &
+                            - (Bdiag(i)*S(i,newest))**2 / sBs &
+                            + (Y(i,newest))**2 / sty_free
+                   Bdiag(i) = min(max(Bdiag(i), BDIAG_MIN), BDIAG_MAX)
+                end if
+             end do
+          end if
        end if
 
     end do
 
-    deallocate(S, Y, rho, g, gold, xold, d, q, alpha_ls, active, active_old)
+    deallocate(S, Y, rho, g, gold, xold, d, q, alpha_ls, active, active_old, &
+               Bdiag, H0diag)
   end subroutine bfgs_bound_solve
 
 
@@ -355,10 +390,10 @@ program b2optim_bfgs
   call xertst(maxiter  > 0,       'faulty internal parameter maxiter')
 
   ! ---- L-BFGS memory size (mirrors TAO's -tao_bqnls_mat_lmvm_hist_size)
-  ! Default = 5. Set to 1 to match TAO's out-of-the-box TAOBQNLS behaviour.
+  ! Default = 1 to match TAO's out-of-the-box TAOBQNLS behaviour.
   ! Increase (e.g. 5, 10) for potentially faster convergence at the
   ! cost of more memory; useful when npar_opt is small.
-  lbfgs_memsize = 5
+  lbfgs_memsize = 1
   call ipgeti('b2optim_lbfgs_memsize', lbfgs_memsize)
   write(*,'(A,I0)') ' b2optim_bfgs: L-BFGS memory size = ', lbfgs_memsize
 
