@@ -111,9 +111,11 @@
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
       character*256, save :: limited_memory_update_type,
      &  hessian_approximation 
-      real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
+      real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8,
+     &                        lbfgs_theta=0.0_R8, lbfgs_stepinit=1.0_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0,
-     &                 nmean_opt = 0, nshift_opt = 0, ncorr_opt = 0
+     &                 nmean_opt = 0, nshift_opt = 0, ncorr_opt = 0,
+     &                 lbfgs_memsize = 1, lbfgs_h0_type = 0
       integer, save :: paris(nvmx), parib(nvmx)
       logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
      &                 shift_opt(nsigmx), shiftopt(nsigmx),
@@ -142,7 +144,8 @@
      & shift_opt, shift_L, shift_U, shift_prior_type, shift_prior_par,
      & shift_prior_range, corr_model, corr_length, corr_prior_type,
      & corr_prior_range, corr_prior_par, corr_opt, corr_L, corr_U,
-     & corr_cutoff, corr_rescale, parallel_hf
+     & corr_cutoff, corr_rescale, parallel_hf, lbfgs_memsize,
+     & lbfgs_theta, lbfgs_stepinit, lbfgs_h0_type
 
       contains
 

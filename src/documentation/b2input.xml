@@ -9823,6 +9823,39 @@
 				</description>
 			</switch>
 			<switch>
+				<name>LBFGS_MEMSIZE</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					L-BFGS history length (TAO default = 1). Increase (e.g. 5, 10) for potentially faster convergence at the cost of more memory; useful when npar_opt is small.
+				</description>
+			</switch>
+			<switch>
+				<name>LBFGS_H0_TYPE</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Select which initial-Hessian (J0) scaling scheme to use: 0 = SCALAR  (Nocedal gamma = (s^T y)/(y^T y) from the most recent pair; classic L-BFGS scaling, simple & robust). 1 = DIAGONAL (per-component Broyden-class diagonal scaling, closer in spirit to PETSc's MATLMVMBFGS default, but a more elaborate recursive scheme -- see LBFGS_THETA).
+					Which onis faster is problem-dependent. For well-rescaled, low-dimensional problems, scalar is a reasonable default. If you ever optimize many more parameters (tens+), or ones that resist clean rescaling (e.g. very different sensitivities even after normalization), diagonal is more likely to be better.
+				</description>
+			</switch>
+			<switch>
+				<name>LBFGS_STEPINIT</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Initial trial step length for the backtracking line search at every iteration, matching TAO's -tao_ls_stepinit
+				</description>
+			</switch>
+			<switch>
+				<name>LBFGS_THETA</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Convex mixing factor for the diagonal J0 scaling (only used when LBFGS_H0_TYPE=1), matching PETSc's -tao_bqnls_mat_lmvm_theta: Bdiag = (1-theta)*BFGS + theta*DFP diagonal updates. theta=0 is pure diagonal BFGS; PETSc's own default is 0.125 (found to be numerically fragile, use with caution)
+				</description>
+			</switch>
+			<switch>
 				<name>HESSIAN_APPROXIMATION</name>
 				<default>'limited-memory'</default>
 				<type>character*256</type>

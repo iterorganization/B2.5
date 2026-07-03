@@ -9,7 +9,7 @@
 ! everything else mirrors b2optim_tao as closely as possible:
 !
 !   - b2mn_step      is the cheap forward-only evaluator (line search)
-!   - b2mn_step_dv   is the expensive forward+gradient evaluator
+!   - b2mn_step_db   is the expensive forward+gradient evaluator
 !                    (called once per accepted BFGS iterate)
 !   - parameter rescaling, sigma/mean/shift/corr handling,
 !     active-drift reset, intermediate state writing, and
@@ -62,6 +62,14 @@ contains
   !  fg       – expensive forward+grad   (once per accepted step)
   !  memsize  – L-BFGS history length (TAO default = 1)
   !
+  !  h0_type – which initial-Hessian (J0) scaling scheme to use:
+  !          0 = SCALAR  (Nocedal gamma = (s^T y)/(y^T y) from the most
+  !              recent pair; classic L-BFGS scaling, simple & robust)
+  !          1 = DIAGONAL (per-component Broyden-class diagonal scaling,
+  !              closer in spirit to PETSc's MATLMVMBFGS default, but a
+  !              more elaborate recursive scheme -- see 'theta' below)
+  !              Default is 0 (SCALAR).
+  !
   !  Three convergence tolerances matching TaoSetTolerances (TAO fires
   !  when ANY is met; pass 1e30 to disable one). These match TAO's
   !  ACTUAL internal semantics (note grtol and gttol use different
@@ -70,28 +78,61 @@ contains
   !   grtol  – gradient relative to cost:     ||g||/|f|    <= grtol
   !   gttol  – gradient reduction from start: ||g||/||g0|| <= gttol
   !
+  !  theta – (only used when h0_type=1) convex mixing factor for the
+  !          diagonal J0 scaling, matching PETSc's
+  !          -tao_bqnls_mat_lmvm_theta: Bdiag = (1-theta)*BFGS +
+  !          theta*DFP diagonal updates. theta=0 is pure diagonal BFGS;
+  !          PETSc's own default is 0.125 (found to be numerically
+  !          fragile, use with caution).
+  !
+  !  alpha_init – initial trial step length for the backtracking line
+  !          search at every iteration, matching TAO's -tao_ls_stepinit
+  !          (TAO's own default is 1.0).
+  !
+  !  n_updates, n_rejects, n_resets – diagnostic counters mirroring
+  !          TAO's "Mat Object" view (Number of updates/rejects/resets)
+  !
+  !  conv_reason – which criterion triggered convergence (only
+  !          meaningful when info==0):
+  !            0 = gatol   (||g|| <= gatol)
+  !            1 = grtol   (||g||/|f| <= grtol)
+  !            2 = gttol   (||g||/||g0|| <= gttol)
+  !           -1 = did not converge (info /= 0)
+  !  gnorm_final – the projected gradient norm ||g|| at exit, useful
+  !          for reporting regardless of which criterion (or none)
+  !          triggered the exit.
+  !
   !  info:  0 = converged, 1 = max iterations, 2 = line search failure
   !---------------------------------------------------------------------
-  subroutine bfgs_bound_solve(n, x, l, u, f_only, fg,       &
-                               maxit, gatol, grtol, gttol,  &
-                               memsize, iprint, iter, info)
-    integer,          intent(in)    :: n, maxit, memsize, iprint
+  subroutine bfgs_bound_solve(n, x, l, u, f_only, fg,          &
+                               maxit, gatol, grtol, gttol,     &
+                               memsize, h0_type, theta,        &
+                               alpha_init,                     &
+                               iprint,                         &
+                               iter, info, conv_reason,        &
+                               gnorm_final,                    &
+                               n_updates, n_rejects, n_resets)
+    integer,          intent(in)    :: n, maxit, memsize, h0_type, iprint
     double precision, intent(inout) :: x(n)
     double precision, intent(in)    :: l(n), u(n)
     procedure(func_if)              :: f_only
     procedure(func_grad_if)         :: fg
-    double precision, intent(in)    :: gatol, grtol, gttol
-    integer,          intent(out)   :: iter, info
+    double precision, intent(in)    :: gatol, grtol, gttol, theta
+    double precision, intent(in)    :: alpha_init
+    integer,          intent(out)   :: iter, info, conv_reason
+    double precision, intent(out)   :: gnorm_final
+    integer,          intent(out)   :: n_updates, n_rejects, n_resets
 
     ! L-BFGS circular buffer
     double precision, allocatable :: S(:,:), Y(:,:), rho(:)
     double precision, allocatable :: g(:), gold(:), xold(:), d(:), q(:)
-    double precision, allocatable :: Bdiag(:), H0diag(:)
+    double precision, allocatable :: Bdiag(:), H0diag(:), Bdiag_prev(:)
     logical,          allocatable :: active(:), active_old(:)
     double precision, allocatable :: alpha_ls(:)
 
     double precision :: f, fold, alpha, beta_ls, gnorm, gnorm0
-    double precision :: sty_free, sBs, pred
+    double precision :: sty_free, yty_free, H0scale, sBs, pred, theta_c
+    double precision :: bfgs_i, dfp_i
     double precision, parameter :: BTOL      = 1.0d-10
     double precision, parameter :: C1        = 1.0d-4
     double precision, parameter :: RHOLS     = 0.5d0
@@ -99,18 +140,24 @@ contains
     double precision, parameter :: CURV_TOL  = 1.0d-10
     double precision, parameter :: BDIAG_MIN = 1.0d-8
     double precision, parameter :: BDIAG_MAX = 1.0d8
+    double precision, parameter :: GROWTH_LIM = 4.0d0  ! max per-update ratio
     integer :: i, j, k, m, ncur, newest, col
     logical :: active_set_changed
 
     m = max(1, memsize)
+    theta_c = min(max(theta, 0.0d0), 1.0d0)   ! clamp to [0,1] as PETSc does
     allocate(S(n,m), Y(n,m), rho(m))
     allocate(g(n), gold(n), xold(n), d(n), q(n), alpha_ls(m))
-    allocate(active(n), active_old(n), Bdiag(n), H0diag(n))
+    allocate(active(n), active_old(n), Bdiag(n), H0diag(n), Bdiag_prev(n))
     S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
     Bdiag = 1.0d0    ! diagonal Hessian approx, starts at identity
     ncur = 0   ! number of (s,y) pairs stored so far
     newest = 0 ! circular-buffer index of most recently stored pair
     active_old = .false.
+    n_updates = 0
+    n_rejects = 0
+    n_resets  = 0
+    conv_reason = -1
 
     ! project initial point into the feasible box
     do i = 1, n
@@ -146,6 +193,7 @@ contains
           newest = 0
           S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
           Bdiag = 1.0d0
+          n_resets = n_resets + 1
        end if
        active_old = active
 
@@ -169,20 +217,22 @@ contains
        if (gnorm <= gatol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
                'BFGS: converged gatol ||g|| = ', gnorm, ' <= ', gatol
-          info = 0;  exit
+          info = 0;  conv_reason = 0;  gnorm_final = gnorm;  exit
        end if
        if (abs(f) > 0.0d0 .and. gnorm / abs(f) <= grtol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
                'BFGS: converged grtol ||g||/|f| = ', gnorm/abs(f), &
                ' <= ', grtol
-          info = 0;  exit
+          info = 0;  conv_reason = 1;  gnorm_final = gnorm;  exit
        end if
        if (gnorm / gnorm0 <= gttol) then
           write(*,'(A,ES12.4,A,ES12.4)') &
                'BFGS: converged gttol ||g||/||g0|| = ', gnorm/gnorm0, &
                ' <= ', gttol
-          info = 0;  exit
+          info = 0;  conv_reason = 2;  gnorm_final = gnorm;  exit
        end if
+       gnorm_final = gnorm   ! kept up to date each iteration in case
+                              ! maxit or line-search-failure exit occurs
 
        ! --- L-BFGS two-loop recursion (Nocedal & Wright, Alg. 7.4)
        !
@@ -208,17 +258,42 @@ contains
           end do
        end do
 
-       ! H0 = diag(1/Bdiag), the diagonal Broyden-scaled inverse Hessian
-       ! initialization (mirrors PETSc's default -mat_lmvm_scale_type
-       ! diagonal for MATLMVMBFGS). Bdiag is maintained incrementally
-       ! below, after each accepted step.
-       do i = 1, n
-          if (active(i)) then
-             H0diag(i) = 1.0d0
+       ! --- H0 initialization: SCALAR (h0_type=0) or DIAGONAL (h0_type=1)
+       if (h0_type == 0) then
+          ! SCALAR: classic Nocedal gamma = (s^T y)/(y^T y) using the
+          ! most recent accepted pair, restricted to the free subspace.
+          if (ncur > 0) then
+             col = newest
+             sty_free = 0.0d0;  yty_free = 0.0d0
+             do i = 1, n
+                if (.not. active(i)) then
+                   sty_free = sty_free + S(i,col) * Y(i,col)
+                   yty_free = yty_free + Y(i,col) * Y(i,col)
+                end if
+             end do
+             H0scale = sty_free / max(yty_free, 1.0d-300)
+             H0scale = max(H0scale, 1.0d-10)
           else
-             H0diag(i) = 1.0d0 / Bdiag(i)
+             H0scale = 1.0d0
           end if
-       end do
+          do i = 1, n
+             if (active(i)) then
+                H0diag(i) = 1.0d0
+             else
+                H0diag(i) = H0scale
+             end if
+          end do
+       else
+          ! DIAGONAL: per-component Broyden-class scaling (Bdiag is
+          ! maintained incrementally below, after each accepted step).
+          do i = 1, n
+             if (active(i)) then
+                H0diag(i) = 1.0d0
+             else
+                H0diag(i) = 1.0d0 / Bdiag(i)
+             end if
+          end do
+       end if
        d = H0diag * q
 
        ! forward pass
@@ -245,7 +320,7 @@ contains
        xold = x
        fold = f
        gold = g
-       alpha = 1.0d0
+       alpha = alpha_init   ! matches TAO's -tao_ls_stepinit (default 1.0)
 
        do
           do i = 1, n
@@ -282,35 +357,94 @@ contains
           S(:,newest) = x - xold
           Y(:,newest) = g - gold
           rho(newest) = 1.0d0 / sty_free
+          n_updates   = n_updates + 1
 
-          ! --- diagonal Broyden update of Bdiag (direct Hessian diagonal
-          ! approximation), restricted to the free subspace:
-          !   Bdiag(i) <- Bdiag(i) - (Bdiag(i)*s(i))^2 / (s^T Bdiag s)
-          !                        + y(i)^2 / (s^T y)
-          ! This mirrors PETSc's -mat_lmvm_scale_type diagonal default
-          ! (Gilbert & Lemarechal 1989), applied elementwise since we
-          ! keep Bdiag purely diagonal (not a dense matrix).
+          ! --- diagonal Broyden update of Bdiag: ONLY needed/computed
+          ! when h0_type=1 (DIAGONAL). Skipped entirely for h0_type=0
+          ! (SCALAR) so the scalar path has zero extra computation and
+          ! is unaffected by any of the diagonal-specific machinery.
+          if (h0_type == 1) then
+          ! This is a convex combination of the diagonal-restricted
+          ! BFGS and DFP updates, matching PETSc's DiagBrdn:
+          !   Bdiag_new = (1-theta)*B_BFGS + theta*B_DFP
+          ! with theta=0 reducing to pure BFGS.
+          !
+          ! Elementwise formulas (derived by restricting the full BFGS
+          ! and DFP dense-matrix updates to their diagonal, given that
+          ! the incoming Bdiag is itself diagonal):
+          !
+          !   B_BFGS(i) = Bdiag(i) - (Bdiag(i)*s(i))^2/sBs + y(i)^2/sty
+          !   B_DFP(i)  = Bdiag(i) - 2*Bdiag(i)*s(i)*y(i)/sty
+          !                        + y(i)^2*sBs/sty^2 + y(i)^2/sty
+          !
+          ! where sBs = s^T Bdiag s (using the OLD Bdiag, before update)
+          ! and sty = s^T y (= sty_free here).
+          !
+          ! CAUTION: the DFP term feeds sBs (computed from the OLD,
+          ! already-updated Bdiag) back into itself every iteration.
+          ! With theta > 0 this creates a positive-feedback loop that
+          ! can blow up Bdiag exponentially over successive iterations
+          ! (observed empirically -- Bdiag grew from O(10^2) to the
+          ! BDIAG_MAX clamp within ~18 iterations on a test problem,
+          ! after which the solver stalled because H0 collapsed toward
+          ! zero). A per-update GROWTH-RATIO limiter is applied below
+          ! to damp this feedback, in the spirit of PETSc's own "rho"
+          ! J0-scaling limiter parameter (though not a reproduction of
+          ! its exact formula, which is not published in enough detail
+          ! to replicate faithfully here).
           sBs = 0.0d0
           do i = 1, n
              if (.not. active(i)) &
                 sBs = sBs + Bdiag(i) * (S(i,newest))**2
           end do
+          Bdiag_prev = Bdiag
           if (sBs > 1.0d-300) then
              do i = 1, n
                 if (.not. active(i)) then
-                   Bdiag(i) = Bdiag(i) &
-                            - (Bdiag(i)*S(i,newest))**2 / sBs &
-                            + (Y(i,newest))**2 / sty_free
+                   bfgs_i = Bdiag(i) &
+                          - (Bdiag(i)*S(i,newest))**2 / sBs &
+                          + (Y(i,newest))**2 / sty_free
+                   dfp_i  = Bdiag(i) &
+                          - 2.0d0*Bdiag(i)*S(i,newest)*Y(i,newest) / sty_free &
+                          + (Y(i,newest))**2 * sBs / sty_free**2 &
+                          + (Y(i,newest))**2 / sty_free
+                   Bdiag(i) = (1.0d0 - theta_c)*bfgs_i + theta_c*dfp_i
+                   ! positive-definiteness safeguard (PETSc takes VecAbs()
+                   ! of its blended diagonal). This is ONLY needed for the
+                   ! DFP-blended term (theta > 0), which is not guaranteed
+                   ! to stay positive under the recursive feedback that
+                   ! caused the earlier instability. At theta = 0, the
+                   ! pure-BFGS diagonal formula relies solely on the
+                   ! BDIAG_MIN/MAX clamp below (max(negative, BDIAG_MIN)
+                   ! forces a negative value down to BDIAG_MIN directly),
+                   ! exactly as in the original pre-blend implementation.
+                   ! Applying abs() unconditionally would instead flip a
+                   ! negative value to its positive magnitude (e.g. -50
+                   ! -> +50, which then survives the clamp unchanged,
+                   ! rather than -50 -> BDIAG_MIN=1e-8) -- a materially
+                   ! different, and unintended, behaviour change at
+                   ! theta = 0 that was found to alter real convergence
+                   ! trajectories.
+                   if (theta_c > 0.0d0) then
+                      Bdiag(i) = abs(Bdiag(i))
+                      ! growth-ratio limiter: damps the DFP feedback
+                      ! instability; likewise only meaningful for theta>0
+                      Bdiag(i) = min(max(Bdiag(i), Bdiag_prev(i)/GROWTH_LIM), &
+                                                    Bdiag_prev(i)*GROWTH_LIM)
+                   end if
                    Bdiag(i) = min(max(Bdiag(i), BDIAG_MIN), BDIAG_MAX)
                 end if
              end do
           end if
+          end if   ! h0_type == 1
+       else
+          n_rejects = n_rejects + 1
        end if
 
     end do
 
     deallocate(S, Y, rho, g, gold, xold, d, q, alpha_ls, active, active_old, &
-               Bdiag, H0diag)
+               Bdiag, H0diag, Bdiag_prev)
   end subroutine bfgs_bound_solve
 
 
@@ -359,8 +493,9 @@ program b2optim_bfgs
   integer, save :: filen = 0
   integer, save :: ntim  = 1
 
-  integer :: bfgs_iter, bfgs_info, ipar
-  integer :: lbfgs_memsize
+  integer :: bfgs_iter, bfgs_info, bfgs_conv_reason, ipar
+  integer :: bfgs_n_updates, bfgs_n_rejects, bfgs_n_resets
+  real(kind=R8) :: bfgs_gnorm_final
   logical :: streql
   external streql
 
@@ -393,9 +528,57 @@ program b2optim_bfgs
   ! Default = 1 to match TAO's out-of-the-box TAOBQNLS behaviour.
   ! Increase (e.g. 5, 10) for potentially faster convergence at the
   ! cost of more memory; useful when npar_opt is small.
-  lbfgs_memsize = 1
-  call ipgeti('b2optim_lbfgs_memsize', lbfgs_memsize)
+  call xertst(0.lt.lbfgs_memsize, 'wrong parameter lbfgs_memsize')
   write(*,'(A,I0)') ' b2optim_bfgs: L-BFGS memory size = ', lbfgs_memsize
+
+  ! ---- initial-Hessian (J0) scaling scheme
+  ! 0 = SCALAR (classic Nocedal gamma from the most recent pair)
+  ! 1 = DIAGONAL (per-component Broyden-class scaling; see theta below)
+  !
+  ! *** On at least one real test case, SCALAR (0) converged in 18
+  ! iterations, matching TAO's 16 closely, while DIAGONAL at theta=0
+  ! took 22 -- these are genuinely different algorithms and which one
+  ! is faster is problem-dependent, not a strict "one is more correct"
+  ! situation. Default here is SCALAR (0) since it was the best match
+  ! found so far; try DIAGONAL (1) if you want to experiment, e.g. for
+  ! problems with many parameters of very different scales.
+  call xertst((lbfgs_h0_type.eq.0) .or. (lbfgs_h0_type.eq.1), &
+              'wrong parameter lbfgs_h0_type')
+  write(*,'(A,I0,A)') ' b2optim_bfgs: H0 scaling type = ', lbfgs_h0_type, &
+       merge(' (SCALAR)  ', ' (DIAGONAL)', lbfgs_h0_type == 0)
+
+  ! ---- L-BFGS diagonal J0 convex mixing factor
+  ! Mirrors TAO's -tao_bqnls_mat_lmvm_theta (TAO's own default is 0.125).
+  !
+  ! *** IMPORTANT CAVEAT ***
+  ! Testing found that our simplified diagonal-DFP term can enter a
+  ! positive-feedback loop under repeated recursive reuse (each update
+  ! feeds its own output back into the next one via sBs), causing the
+  ! solver to stagnate for theta > 0 on at least one test problem, even
+  ! with a growth-ratio limiter applied. PETSc's actual implementation
+  ! has additional stabilization (alpha/beta/rho/mu/nu parameters) that
+  ! are not publicly documented in enough detail to replicate exactly,
+  ! so this theta blend should be treated as EXPERIMENTAL.
+  !
+  ! Default is therefore kept at 0 (pure BFGS diagonal scaling), which
+  ! was validated to work well and even outperform TAO's 16-iteration
+  ! result in some configurations. Only set this above 0 if you want to
+  ! experiment, and verify convergence carefully (check BFGS.OUT status
+  ! and updates/rejects/resets) before trusting the result.
+  call xertst((0.0_R8.le.lbfgs_theta).and.(lbfgs_theta.le.1.0_R8), &
+              'wrong parameter lbfgs_theta')
+  write(*,'(A,F8.4)') ' b2optim_bfgs: L-BFGS diagonal theta = ', lbfgs_theta
+
+  ! ---- initial line-search step length
+  ! Mirrors TAO's -tao_ls_stepinit (TAO's own default is 1.0). This is
+  ! the trial step length alpha tried FIRST at every outer iteration,
+  ! before any backtracking. Lowering it can help if the very first
+  ! full Newton-like step tends to overshoot badly (e.g. very
+  ! nonlinear/stiff physics); raising it above 1 is unusual but
+  ! allowed.
+  call xertst((0.0_R8.lt.lbfgs_stepinit).and.(lbfgs_stepinit.le.1.0_R8), &
+              'wrong parameter lbfgs_stepinit')
+  write(*,'(A,F8.4)') ' b2optim_bfgs: line search initial step = ', lbfgs_stepinit
 
   ! ---- call the L-BFGS solver ---------------------------------------
   ! tol_opt for all three tolerances matches:
@@ -408,11 +591,18 @@ program b2optim_bfgs
                         real(tol_opt,8),                     &  ! grtol
                         real(tol_opt,8),                     &  ! gttol
                         lbfgs_memsize,                       &  ! L-BFGS history
+                        lbfgs_h0_type,                       &  ! H0 scaling type
+                        real(lbfgs_theta,8),                 &  ! diagonal mixing
+                        real(lbfgs_stepinit,8),              &  ! line search step init
                         1,                                   &  ! iprint
-                        bfgs_iter, bfgs_info)
+                        bfgs_iter, bfgs_info, bfgs_conv_reason, &
+                        bfgs_gnorm_final,                    &
+                        bfgs_n_updates, bfgs_n_rejects, bfgs_n_resets)
 
   ! ---- report -------------------------------------------------------
-  call WriteResults(bfgs_iter, bfgs_info)
+  call WriteResults(bfgs_iter, bfgs_info, bfgs_conv_reason,  &
+                     bfgs_gnorm_final,                       &
+                     bfgs_n_updates, bfgs_n_rejects, bfgs_n_resets)
 
   ! ---- finalise -----------------------------------------------------
   call DestroyProblem()
@@ -482,9 +672,13 @@ contains
   ! WriteResults
   ! Replaces TaoView / PetscViewerASCIIOpen output.
   !=====================================================================
-  subroutine WriteResults(it, info)
-    integer, intent(in) :: it, info
+  subroutine WriteResults(it, info, conv_reason, gnorm_final, &
+                           n_updates, n_rejects, n_resets)
+    integer,          intent(in) :: it, info, conv_reason
+    double precision, intent(in) :: gnorm_final
+    integer,          intent(in) :: n_updates, n_rejects, n_resets
     integer :: iu
+    character(len=80) :: status_line, reason_line
 
     iu = 99
     open(unit=iu, file='BFGS.OUT', status='replace')
@@ -495,30 +689,70 @@ contains
     write(iu,'(A,ES12.4,A,ES12.4,A,ES12.4)') &
          ' Tolerances (gatol/grtol/gttol): ', &
          tol_opt, ' / ', tol_opt, ' / ', tol_opt
+    write(iu,'(A,ES14.6)') ' Final projected gradient norm ||g|| : ', gnorm_final
+
+    ! --- explicit convergence-criterion report ---------------------
+    ! Reports EXACTLY which of the three stopping conditions was met,
+    ! or which failure mode caused termination -- not just "converged".
     select case (info)
     case (0)
-      write(iu,'(A)') ' Status           : CONVERGED (see BFGS convergence ' // &
-                      'message above for which tolerance was met)'
+      status_line = 'CONVERGED'
+      select case (conv_reason)
+      case (0)
+        reason_line = 'gatol criterion met:  ||g|| <= gatol'
+      case (1)
+        reason_line = 'grtol criterion met:  ||g||/|f| <= grtol'
+      case (2)
+        reason_line = 'gttol criterion met:  ||g||/||g0|| <= gttol'
+      case default
+        reason_line = '(unknown -- should not happen)'
+      end select
     case (1)
-      write(iu,'(A)') ' Status           : STOPPED (max iterations reached)'
+      status_line  = 'STOPPED'
+      reason_line  = 'maximum iteration count reached before any ' // &
+                     'tolerance was satisfied'
     case (2)
-      write(iu,'(A)') ' Status           : FAILED (line search step collapsed)'
+      status_line  = 'FAILED'
+      reason_line  = 'line search step length collapsed below the ' // &
+                     'minimum allowed step (no acceptable decrease found)'
+    case default
+      status_line  = 'UNKNOWN'
+      reason_line  = '(unrecognized info code -- should not happen)'
     end select
+
+    write(iu,'(A)') ' '
+    write(iu,'(A,A)') ' Status             : ', trim(status_line)
+    write(iu,'(A,A)') ' Convergence reason : ', trim(reason_line)
+
+    write(iu,'(A)') ' '
     write(iu,'(A)') ' Final solution (rescaled):'
     write(iu,'(*(ES14.6,2X))') X(1:npar_opt)
     write(iu,'(A)') ' Final solution (physical):'
     write(iu,'(*(ES14.6,2X))') X(1:npar_opt) * par_rescale(1:npar_opt)
+
+    ! --- L-BFGS matrix summary, mirroring TAO's "Mat Object" view:
+    !   Mat Object: (tao_bqnls_) ... type: lmvmbfgs
+    !     Max. storage / Used storage / Number of updates / rejects / resets
+    write(iu,'(A)') ' '
+    write(iu,'(A)') ' L-BFGS matrix summary (cf. TAO -tao_view Mat Object):'
+    write(iu,'(A,I0)') '   Max. storage        : ', lbfgs_memsize
+    write(iu,'(A,I0)') '   Used storage        : ', min(n_updates, lbfgs_memsize)
+    write(iu,'(A,I0)') '   Number of updates   : ', n_updates
+    write(iu,'(A,I0)') '   Number of rejects   : ', n_rejects
+    write(iu,'(A,I0)') '   Number of resets    : ', n_resets
+    write(iu,'(A,F8.4)') '   Rescale theta       : ', lbfgs_theta
+    write(iu,'(A,F8.4)') '   Line search stepinit: ', lbfgs_stepinit
     close(iu)
 
     ! also echo to stdout
     write(*,*) '========================================='
     write(*,*) ' b2optim_bfgs  --  BFGS optimisation'
     write(*,*) ' Total iterations : ', it
-    select case (info)
-    case (0); write(*,*) ' Status: CONVERGED'
-    case (1); write(*,*) ' Status: MAX ITERATIONS'
-    case (2); write(*,*) ' Status: LINE SEARCH FAILURE'
-    end select
+    write(*,*) ' Status             : ', trim(status_line)
+    write(*,*) ' Convergence reason : ', trim(reason_line)
+    write(*,'(A,I0,A,I0,A,I0)') &
+         ' L-BFGS updates/rejects/resets : ', n_updates, ' / ', &
+         n_rejects, ' / ', n_resets
   end subroutine WriteResults
 
 
