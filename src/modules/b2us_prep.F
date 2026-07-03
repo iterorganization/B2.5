@@ -2473,10 +2473,13 @@
      *   ind, ind1, tmp, iFt, iFt1, l, mod_cell_c, iFc1, istart,
      *   iend
       logical :: cvAlongBoundary(mpg%nCv), is_mod_fc(mpg%nFc),
-     *   is_found
+     *   is_found, center_inside
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
+      integer :: crossings, nVx_cell, iVx_k, iVx_k1, k_next
       real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
      *   cur_len(2), cen_len(2)
+      real (kind=R8) :: v1_x, v1_y, v2_x, v2_y, x_intersect
+      real (kind=R8) :: cv_vx(4), cv_vy(4)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
@@ -3002,10 +3005,65 @@ c$$$      end do
             wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
             write (*,*) "new fcHc:"
             write (*,'(1es17.6)') wrk
-            if (wrk.le.1.0e-08_R8) then
-              write (*,*) "new fcHc too small! Changes will not "//
-     &         "be applied. Set new fcHc as average value "//
-     &         "of original fcHc."
+            
+            ! Check if meanCv is inside any original cell (ray casting)
+            ! Cast ray in +X direction, count edge crossings
+            center_inside = .false.
+            do l=istart,iend
+              iCv = cvBoundary(l,2)
+              if (l.gt.istart .and. iCv.eq.cvBoundary(l-1,2)) cycle
+              
+              nVx_cell = mpg%cvVxP(iCv,2)
+              crossings = 0
+              
+              ! Read vertices into temporary arrays
+              do k=1,nVx_cell
+                iVx_k = mpg%cvVx(mpg%cvVxP(iCv,1) + k - 1)
+                cv_vx(k) = gm%vxX(iVx_k)
+                cv_vy(k) = gm%vxY(iVx_k)
+              enddo
+              
+              ! Swap V3<->V4 for 4-vertex classical grid cells
+              ! (stored as V1,V2,V3,V4 but perimeter is V1,V2,V4,V3)
+              if (nVx_cell .eq. 4) then
+                x_intersect = cv_vx(3)
+                cv_vx(3) = cv_vx(4)
+                cv_vx(4) = x_intersect
+                x_intersect = cv_vy(3)
+                cv_vy(3) = cv_vy(4)
+                cv_vy(4) = x_intersect
+              endif
+              
+              ! Ray-casting: count edge crossings in +X direction
+              do k=1,nVx_cell
+                k_next = mod(k, nVx_cell) + 1
+                v1_y = cv_vy(k)
+                v2_y = cv_vy(k_next)
+                
+                if ((v1_y > meanCv(2)) .neqv.
+     &              (v2_y > meanCv(2))) then
+                  v1_x = cv_vx(k)
+                  v2_x = cv_vx(k_next)
+                  x_intersect = v1_x + (meanCv(2) - v1_y) /
+     &              (v2_y - v1_y) * (v2_x - v1_x)
+                  if (meanCv(1) < x_intersect) then
+                    crossings = crossings + 1
+                  endif
+                endif
+              enddo
+              
+              ! Odd crossings = inside
+              if (mod(crossings, 2) .eq. 1) then
+                center_inside = .true.
+                exit
+              endif
+            enddo
+            
+            
+            ! If center outside all cells OR distance invalid, fallback
+            if (.not. center_inside .or. wrk.le.1.0e-08_R8) then
+              write (*,*) "Center outside or fcHc invalid! ",
+     &          "Using average of original fcHc."
               wrk = sum(gm%fcHc(fcBoundary(istart:iend),1)+
      &         gm%fcHc(fcBoundary(istart:iend),2))/(iend+1-istart)
               write (*,*) "new fcHc:"
