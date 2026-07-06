@@ -3809,7 +3809,8 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd1
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%zt, 1)) :: dummyzerodiffd2
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%kt, 1)) :: dummyzerodiffd3
-  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1) :: dummyzerodiffd4
+  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1&
+& ) :: dummyzerodiffd4
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd5
   REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:1) :: &
 & dummyzerodiffd6
@@ -3828,7 +3829,8 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   DOUBLE PRECISION :: temp7
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%zt, 1)) :: dummyzerodiffd14
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%kt, 1)) :: dummyzerodiffd15
-  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1) :: dummyzerodiffd16
+  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1&
+& ) :: dummyzerodiffd16
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd17
   REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:1) :: &
 & dummyzerodiffd18

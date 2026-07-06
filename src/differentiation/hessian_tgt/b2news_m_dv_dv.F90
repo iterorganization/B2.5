@@ -3686,7 +3686,8 @@ SUBROUTINE B2NEWS_M_DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd2
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%zt, 1)) :: dummyzerodiffd3
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%kt, 1)) :: dummyzerodiffd4
-  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1) :: dummyzerodiffd5
+  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1&
+& ) :: dummyzerodiffd5
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd6
   REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:1) :: &
 & dummyzerodiffd7

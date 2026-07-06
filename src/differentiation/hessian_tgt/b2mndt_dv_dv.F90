@@ -3174,7 +3174,8 @@ SUBROUTINE B2MNDT_DV0_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd14
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%zt, 1)) :: dummyzerodiffd15
   REAL(r8), DIMENSION(nbdirsmax0, SIZE(st%pl%kt, 1)) :: dummyzerodiffd16
-  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1) :: dummyzerodiffd17
+  REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:ns-1&
+& ) :: dummyzerodiffd17
   REAL(r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd18
   REAL(r8), DIMENSION(nbdirsmax0, nCv, 0:1) :: &
 & dummyzerodiffd19
@@ -3647,7 +3648,7 @@ SUBROUTINE B2MNDT_DV0_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                   %zt, std0%psnc%zt, std%psnc%zt, stdd%psnc%zt, st%pl%&
 &                   na, dummyzerodiffd23, st%pl%ua, std%pl%ua, st%pl%te&
 &                   , std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti, &
-&                   dummyzerodiffd22, st%pl%tn, dummyzerodiffd21, st%dv%ne,&
+&                   dummyzerodiffd22, st%pl%tn, dummyzerodiffd21, st%dv%ne, &
 &                   dummyzerodiffd20, st%dv%ni, dummyzerodiffd19, st%dv%nn, dummyzerodiffd18&
 &                   , st%dv%kinrgy, dummyzerodiffd17, st%pl%kt, dummyzerodiffd16, st%&
 &                   pl%zt, dummyzerodiffd15, st%sr, std0%sr, std%sr, &
@@ -3781,8 +3782,11 @@ SUBROUTINE B2MNDT_DV0_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !      ..compute norms of the differentiated residuals
         CALL B2MXAR_DIFFV_NODIFF(ncv, ns, switch, geo, mpg, std%pl, std%&
 &                          dv, std%diag)
+        CALL B2MXAR_DIFFV_DIFFV(ncv, ns, switch, geo, mpg, stdd%pl, &
+&                          stdd%dv, stdd%diag)
 !      ..compute norms of the differentiated corrections
         CALL B2MXAC_DIFFV_NODIFF(ncv, ns, std%dv, std%diag)
+        CALL B2MXAC_DIFFV_DIFFV(ncv, ns, stdd%dv, stdd%diag)
 !      ..decide what output
         domoqt = 0 .LE. switch%b2mndt_moqtlv .AND. (1 .LE. switch%&
 &         b2mndt_moqtlv .OR. istg(0) .EQ. 0) .AND. (2 .LE. switch%&
@@ -3800,6 +3804,10 @@ SUBROUTINE B2MNDT_DV0_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                              b2mndt_itcnt, switch, geo, std%pl, std%dv&
 &                              , std%diag)
             FLUSH(nout(10)) 
+            CALL B2MWQT_DIFFV_DIFFV(nout(11), ncv, ns, itim, &
+&                              b2mndt_itcnt, switch, geo, &
+&                              stdd%pl, stdd%dv, stdd%diag)
+            FLUSH(nout(11)) 
 !srv 31.01.07
             CALL B2MWQT_NODIFF_NODIFF(nout(4), ncv, ns, itim, &
 &                               b2mndt_itcnt, switch, geo, st%pl, st%dv&

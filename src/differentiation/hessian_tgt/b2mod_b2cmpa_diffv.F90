@@ -14,9 +14,9 @@
 !
 MODULE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_DIFFSIZES
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     (/b2cmpa/ contains basic physics parameters)
 ! DPC: constant declaration now in b2mod_constants
@@ -53,7 +53,6 @@ CONTAINS
 !
   SUBROUTINE INITIALISE_POTENTIALS(ns)
     USE B2MOD_CONSTANTS
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     LOGICAL, SAVE :: initialised=.false.
     REAL(kind=r8), ALLOCATABLE :: pdum(:)
@@ -158,7 +157,6 @@ CONTAINS
 
 !
   LOGICAL FUNCTION LNEXT(is, js)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: is, js
     INTRINSIC NINT
