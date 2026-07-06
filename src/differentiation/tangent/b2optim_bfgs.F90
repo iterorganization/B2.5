@@ -107,6 +107,7 @@ contains
   subroutine bfgs_bound_solve(n, x, l, u, f_only, fg,          &
                                maxit, gatol, grtol, gttol,     &
                                memsize, h0_type, theta,        &
+                               rescale_rho,                    &
                                alpha_init,                     &
                                iprint,                         &
                                iter, info, conv_reason,        &
@@ -118,6 +119,7 @@ contains
     procedure(func_if)              :: f_only
     procedure(func_grad_if)         :: fg
     double precision, intent(in)    :: gatol, grtol, gttol, theta
+    double precision, intent(in)    :: rescale_rho
     double precision, intent(in)    :: alpha_init
     integer,          intent(out)   :: iter, info, conv_reason
     double precision, intent(out)   :: gnorm_final
@@ -126,13 +128,14 @@ contains
     ! L-BFGS circular buffer
     double precision, allocatable :: S(:,:), Y(:,:), rho(:)
     double precision, allocatable :: g(:), gold(:), xold(:), d(:), q(:)
-    double precision, allocatable :: Bdiag(:), H0diag(:), Bdiag_prev(:)
+    double precision, allocatable :: Bdiag(:), H0diag(:)
+    double precision, allocatable :: H0new(:), H0diag_stored(:)
     logical,          allocatable :: active(:), active_old(:)
     double precision, allocatable :: alpha_ls(:)
 
     double precision :: f, fold, alpha, beta_ls, gnorm, gnorm0
     double precision :: sty_free, yty_free, H0scale, sBs, pred, theta_c
-    double precision :: bfgs_i, dfp_i
+    double precision :: bfgs_i, dfp_i, yHy, sigma_scale, rescale_rho_c
     double precision, parameter :: BTOL      = 1.0d-10
     double precision, parameter :: C1        = 1.0d-4
     double precision, parameter :: RHOLS     = 0.5d0
@@ -140,17 +143,20 @@ contains
     double precision, parameter :: CURV_TOL  = 1.0d-10
     double precision, parameter :: BDIAG_MIN = 1.0d-8
     double precision, parameter :: BDIAG_MAX = 1.0d8
-    double precision, parameter :: GROWTH_LIM = 4.0d0  ! max per-update ratio
+    double precision, parameter :: RESCALE_TOL = 1.0d-8  ! PETSc's ldb->tol
     integer :: i, j, k, m, ncur, newest, col
     logical :: active_set_changed
 
     m = max(1, memsize)
     theta_c = min(max(theta, 0.0d0), 1.0d0)   ! clamp to [0,1] as PETSc does
+    rescale_rho_c = min(max(rescale_rho, 0.0d0), 1.0d0)
     allocate(S(n,m), Y(n,m), rho(m))
     allocate(g(n), gold(n), xold(n), d(n), q(n), alpha_ls(m))
-    allocate(active(n), active_old(n), Bdiag(n), H0diag(n), Bdiag_prev(n))
+    allocate(active(n), active_old(n), Bdiag(n), H0diag(n))
+    allocate(H0new(n), H0diag_stored(n))
     S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
-    Bdiag = 1.0d0    ! diagonal Hessian approx, starts at identity
+    Bdiag = 1.0d0           ! diagonal Hessian approx, starts at identity
+    H0diag_stored = 1.0d0   ! corresponding inverse scaling, starts at identity
     ncur = 0   ! number of (s,y) pairs stored so far
     newest = 0 ! circular-buffer index of most recently stored pair
     active_old = .false.
@@ -193,6 +199,7 @@ contains
           newest = 0
           S = 0.0d0;  Y = 0.0d0;  rho = 0.0d0
           Bdiag = 1.0d0
+          H0diag_stored = 1.0d0
           n_resets = n_resets + 1
        end if
        active_old = active
@@ -284,13 +291,15 @@ contains
              end if
           end do
        else
-          ! DIAGONAL: per-component Broyden-class scaling (Bdiag is
-          ! maintained incrementally below, after each accepted step).
+          ! DIAGONAL: per-component Broyden-class scaling. H0diag_stored
+          ! is the fully-computed (theta-blend + sigma-rescale) inverse
+          ! diagonal, updated once per accepted step below -- just use
+          ! it directly here.
           do i = 1, n
              if (active(i)) then
                 H0diag(i) = 1.0d0
              else
-                H0diag(i) = 1.0d0 / Bdiag(i)
+                H0diag(i) = H0diag_stored(i)
              end if
           end do
        end if
@@ -320,7 +329,25 @@ contains
        xold = x
        fold = f
        gold = g
-       alpha = alpha_init   ! matches TAO's -tao_ls_stepinit (default 1.0)
+
+       ! Initial trial step length. On the VERY FIRST outer iteration
+       ! (no curvature pairs exist yet, so d = -g exactly regardless of
+       ! h0_type), use a special heuristic rather than the plain 
+       ! configured stepinit: the classic Nocedal & Wright initial-step formula
+       !     alpha_0 = 2*|f_0| / ||g_0||^2
+       ! (implicitly assuming an unknown-but-optimistic target f_low=0
+       ! for the expected decrease). Without this, a badly-scaled problem's 
+       ! first step is a full, unscaled H0=I Newton-like step that can be 
+       ! enormous and immediately drive every variable to its bound.
+       ! For k>1 (once curvature/H0 scaling is available), the usual
+       ! configured alpha_init is used as before.
+       if (k == 1 .and. ncur == 0) then
+          alpha = min(alpha_init, 2.0d0*abs(f) / max(gnorm**2, 1.0d-300))
+          if (iprint > 0) write(*,'(A,ES12.4)') &
+               'BFGS: first-iteration initial step length = ', alpha
+       else
+          alpha = alpha_init   ! matches TAO's -tao_ls_stepinit (default 1.0)
+       end if
 
        do
           do i = 1, n
@@ -359,92 +386,110 @@ contains
           rho(newest) = 1.0d0 / sty_free
           n_updates   = n_updates + 1
 
-          ! --- diagonal Broyden update of Bdiag: ONLY needed/computed
-          ! when h0_type=1 (DIAGONAL). Skipped entirely for h0_type=0
+          ! --- diagonal Broyden update: ONLY needed/computed when
+          ! h0_type=1 (DIAGONAL). Skipped entirely for h0_type=0
           ! (SCALAR) so the scalar path has zero extra computation and
           ! is unaffected by any of the diagonal-specific machinery.
-          if (h0_type == 1) then
+          ! DIAGONAL
           ! This is a convex combination of the diagonal-restricted
-          ! BFGS and DFP updates, matching PETSc's DiagBrdn:
+          ! BFGS and DFP updates:
           !   Bdiag_new = (1-theta)*B_BFGS + theta*B_DFP
-          ! with theta=0 reducing to pure BFGS.
+          ! with theta=0 reducing to pure BFGS, which has TWO stages:
           !
-          ! Elementwise formulas (derived by restricting the full BFGS
-          ! and DFP dense-matrix updates to their diagonal, given that
-          ! the incoming Bdiag is itself diagonal):
+          ! STAGE 1 -- per-component theta-blended Broyden update of
+          ! the DIRECT Hessian diagonal Bdiag:
+          !   sBs   = s^T Bdiag_old s          (restricted to free set)
+          !   stDs  = max(sBs, RESCALE_TOL)    (PETSc's ldb->tol, 1e-8)
+          !   bfgs_i = -(Bdiag_old(i)*s(i))^2 / stDs
+          !   dfp_i  = stDs/sty * y(i)^2 - 2*y(i)*Bdiag_old(i)*s(i)
+          !   Bdiag_new(i) = Bdiag_old(i) + y(i)^2/sty
+          !                  + (1-theta)*bfgs_i + theta*dfp_i/sty
+          ! (the "+y^2/sty" term is added in FULL regardless of theta)
           !
-          !   B_BFGS(i) = Bdiag(i) - (Bdiag(i)*s(i))^2/sBs + y(i)^2/sty
-          !   B_DFP(i)  = Bdiag(i) - 2*Bdiag(i)*s(i)*y(i)/sty
-          !                        + y(i)^2*sBs/sty^2 + y(i)^2/sty
+          ! STAGE 2 -- reciprocal + abs() + a GLOBAL scalar rescale
+          ! "sigma" applied on top:
+          !   H0(i) = abs(1/Bdiag_new(i))
+          !   sigma = sty / sum_i(H0(i)*y(i)^2)     [PETSc defaults:
+          !           alpha=1, beta=0.5, sigma_hist=1 -- i.e. only the
+          !           MOST RECENT pair is used; general sigma_hist>1
+          !           history windowing is not implemented here]
+          !   H0(i) = H0(i) * sigma   (only if sigma is finite & > 0)
           !
-          ! where sBs = s^T Bdiag s (using the OLD Bdiag, before update)
-          ! and sty = s^T y (= sty_free here).
+          ! STAGE 3 -- convex blend with the previous H0 via rescale_rho
+          ! (PETSc default rescale_rho=1, i.e. full replacement, a
+          ! no-op blend):
+          !   H0_final(i) = (1-rescale_rho)*H0_old(i) + rescale_rho*H0(i)
           !
-          ! CAUTION: the DFP term feeds sBs (computed from the OLD,
-          ! already-updated Bdiag) back into itself every iteration.
-          ! With theta > 0 this creates a positive-feedback loop that
-          ! can blow up Bdiag exponentially over successive iterations
-          ! (observed empirically -- Bdiag grew from O(10^2) to the
-          ! BDIAG_MAX clamp within ~18 iterations on a test problem,
-          ! after which the solver stalled because H0 collapsed toward
-          ! zero). A per-update GROWTH-RATIO limiter is applied below
-          ! to damp this feedback, in the spirit of PETSc's own "rho"
-          ! J0-scaling limiter parameter (though not a reproduction of
-          ! its exact formula, which is not published in enough detail
-          ! to replicate faithfully here).
-          sBs = 0.0d0
-          do i = 1, n
-             if (.not. active(i)) &
-                sBs = sBs + Bdiag(i) * (S(i,newest))**2
-          end do
-          Bdiag_prev = Bdiag
-          if (sBs > 1.0d-300) then
+          ! BDIAG_MIN/MAX below are OUR OWN defensive clamps, not part
+          ! of PETSc's algorithm (which relies only on the tol floor on
+          ! stDs and the final abs()) -- kept as a generous safety net
+          ! since we lack PETSc's NaN/Inf-checking infrastructure.
+          if (h0_type == 1) then
+             sBs = 0.0d0
+             do i = 1, n
+                if (.not. active(i)) &
+                   sBs = sBs + Bdiag(i) * (S(i,newest))**2
+             end do
+             sBs = max(sBs, RESCALE_TOL)   ! PETSc's stDs = max(stDs, tol)
+
              do i = 1, n
                 if (.not. active(i)) then
-                   bfgs_i = Bdiag(i) &
-                          - (Bdiag(i)*S(i,newest))**2 / sBs &
-                          + (Y(i,newest))**2 / sty_free
-                   dfp_i  = Bdiag(i) &
-                          - 2.0d0*Bdiag(i)*S(i,newest)*Y(i,newest) / sty_free &
-                          + (Y(i,newest))**2 * sBs / sty_free**2 &
-                          + (Y(i,newest))**2 / sty_free
-                   Bdiag(i) = (1.0d0 - theta_c)*bfgs_i + theta_c*dfp_i
-                   ! positive-definiteness safeguard (PETSc takes VecAbs()
-                   ! of its blended diagonal). This is ONLY needed for the
-                   ! DFP-blended term (theta > 0), which is not guaranteed
-                   ! to stay positive under the recursive feedback that
-                   ! caused the earlier instability. At theta = 0, the
-                   ! pure-BFGS diagonal formula relies solely on the
-                   ! BDIAG_MIN/MAX clamp below (max(negative, BDIAG_MIN)
-                   ! forces a negative value down to BDIAG_MIN directly),
-                   ! exactly as in the original pre-blend implementation.
-                   ! Applying abs() unconditionally would instead flip a
-                   ! negative value to its positive magnitude (e.g. -50
-                   ! -> +50, which then survives the clamp unchanged,
-                   ! rather than -50 -> BDIAG_MIN=1e-8) -- a materially
-                   ! different, and unintended, behaviour change at
-                   ! theta = 0 that was found to alter real convergence
-                   ! trajectories.
-                   if (theta_c > 0.0d0) then
-                      Bdiag(i) = abs(Bdiag(i))
-                      ! growth-ratio limiter: damps the DFP feedback
-                      ! instability; likewise only meaningful for theta>0
-                      Bdiag(i) = min(max(Bdiag(i), Bdiag_prev(i)/GROWTH_LIM), &
-                                                    Bdiag_prev(i)*GROWTH_LIM)
-                   end if
+                   bfgs_i = -(Bdiag(i)*S(i,newest))**2 / sBs
+                   dfp_i  = sBs/sty_free * (Y(i,newest))**2 &
+                          - 2.0d0*Y(i,newest)*Bdiag(i)*S(i,newest)
+                   Bdiag(i) = Bdiag(i) + (Y(i,newest))**2/sty_free &
+                            + (1.0d0 - theta_c)*bfgs_i &
+                            + theta_c*dfp_i/sty_free
                    Bdiag(i) = min(max(Bdiag(i), BDIAG_MIN), BDIAG_MAX)
                 end if
              end do
-          end if
+
+             ! --- stage 2: reciprocal, abs (unconditional, matching
+             ! PETSc exactly -- no theta-gating here)
+             do i = 1, n
+                if (.not. active(i)) then
+                   H0new(i) = abs(1.0d0 / Bdiag(i))
+                end if
+             end do
+
+             ! --- stage 2b: global sigma rescale (sigma_hist=1 default:
+             ! uses only the pair just stored)
+             yHy = 0.0d0
+             do i = 1, n
+                if (.not. active(i)) yHy = yHy + H0new(i) * (Y(i,newest))**2
+             end do
+             if (yHy > 1.0d-300) then
+                sigma_scale = sty_free / yHy
+                if (sigma_scale == sigma_scale .and. &   ! reject NaN
+                    abs(sigma_scale) < huge(1.0d0) .and. &  ! reject Inf
+                    sigma_scale > 0.0d0) then
+                   do i = 1, n
+                      if (.not. active(i)) H0new(i) = H0new(i) * sigma_scale
+                   end do
+                end if
+             end if
+
+             ! --- stage 3: rescale_rho blend (default 1 = full replace)
+             do i = 1, n
+                if (.not. active(i)) then
+                   if (rescale_rho_c >= 1.0d0) then
+                      H0diag_stored(i) = H0new(i)
+                   else
+                      H0diag_stored(i) = (1.0d0 - rescale_rho_c)*H0diag_stored(i) &
+                                       + rescale_rho_c*H0new(i)
+                   end if
+                end if
+             end do
           end if   ! h0_type == 1
        else
           n_rejects = n_rejects + 1
        end if
 
+
     end do
 
     deallocate(S, Y, rho, g, gold, xold, d, q, alpha_ls, active, active_old, &
-               Bdiag, H0diag, Bdiag_prev)
+               Bdiag, H0diag, H0new, H0diag_stored)
   end subroutine bfgs_bound_solve
 
 
@@ -495,6 +540,7 @@ program b2optim_bfgs
 
   integer :: bfgs_iter, bfgs_info, bfgs_conv_reason, ipar
   integer :: bfgs_n_updates, bfgs_n_rejects, bfgs_n_resets
+  real(kind=R8) :: lbfgs_rescale_rho
   real(kind=R8) :: bfgs_gnorm_final
   logical :: streql
   external streql
@@ -525,7 +571,7 @@ program b2optim_bfgs
   call xertst(maxiter  > 0,       'faulty internal parameter maxiter')
 
   ! ---- L-BFGS memory size (mirrors TAO's -tao_bqnls_mat_lmvm_hist_size)
-  ! Default = 1 to match TAO's out-of-the-box TAOBQNLS behaviour.
+  ! Default = 5 to match TAO's out-of-the-box TAOBQNLS behaviour.
   ! Increase (e.g. 5, 10) for potentially faster convergence at the
   ! cost of more memory; useful when npar_opt is small.
   call xertst(0.lt.lbfgs_memsize, 'wrong parameter lbfgs_memsize')
@@ -569,6 +615,13 @@ program b2optim_bfgs
               'wrong parameter lbfgs_theta')
   write(*,'(A,F8.4)') ' b2optim_bfgs: L-BFGS diagonal theta = ', lbfgs_theta
 
+  ! ---- rescale_rho: convex blend factor between the old and newly
+  ! rescaled H0 diagonal (PETSc's -mat_lmvm_rho, default 1.0 = fully
+  ! replace with the new value each update, i.e. a no-op blend). Only
+  ! meaningful when h0_type=1 (DIAGONAL).
+  lbfgs_rescale_rho = 1.0_R8
+  write(*,'(A,F8.4)') ' b2optim_bfgs: rescale rho = ', lbfgs_rescale_rho
+
   ! ---- initial line-search step length
   ! Mirrors TAO's -tao_ls_stepinit (TAO's own default is 1.0). This is
   ! the trial step length alpha tried FIRST at every outer iteration,
@@ -593,6 +646,7 @@ program b2optim_bfgs
                         lbfgs_memsize,                       &  ! L-BFGS history
                         lbfgs_h0_type,                       &  ! H0 scaling type
                         real(lbfgs_theta,8),                 &  ! diagonal mixing
+                        real(lbfgs_rescale_rho,8),           &  ! rescale rho blend
                         real(lbfgs_stepinit,8),              &  ! line search step init
                         1,                                   &  ! iprint
                         bfgs_iter, bfgs_info, bfgs_conv_reason, &
