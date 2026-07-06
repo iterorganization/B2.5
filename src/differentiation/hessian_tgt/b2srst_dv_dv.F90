@@ -68,12 +68,12 @@ SUBROUTINE B2SRST_DV_DV(ncv, ns, switch, na, nad0, nad, nadd, ua, uad0, &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
   REAL(kind=r8) :: nad0(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, &
 & 0:ns-1), ted0(nbdirsmax0, ncv), tid0(nbdirsmax0, ncv), tnd0(nbdirsmax0&
-& , ncv), pod0(nbdirsmax0, ncv), ktd0(nbdirsmax0, ncv), ztd0(nbdirsmax0&
-& , ncv)
+& , ncv), pod0(nbdirsmax0, ncv), ned(nbdirsmax0, ncv), nid(nbdirsmax0, &
+& ncv, 0:1), nnd(nbdirsmax0, ncv), ktd0(nbdirsmax0, ncv), ztd0(&
+& nbdirsmax0, ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& nnd(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+& pod(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
   REAL(kind=r8) :: nadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), uadd(&
 & nbdirsmax0, nbdirsmax, ncv, 0:ns-1), tedd(nbdirsmax0, nbdirsmax, ncv)&
 & , tidd(nbdirsmax0, nbdirsmax, ncv), tndd(nbdirsmax0, nbdirsmax, ncv), &
@@ -198,7 +198,7 @@ SUBROUTINE B2SRST_DV_DV(ncv, ns, switch, na, nad0, nad, nadd, ua, uad0, &
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -224,7 +224,7 @@ SUBROUTINE B2SRST_DV_DV(ncv, ns, switch, na, nad0, nad, nadd, ua, uad0, &
     DO icv=1,ncv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       DO nd=1,nbdirs
         temp0 = srd%sna(nd, icv, 1, is)
         DO nd0=1,nbdirs0
@@ -1933,8 +1933,8 @@ END SUBROUTINE B2SRST_DV_DV
 !
 !srv 01.07.08
 SUBROUTINE B2SRST_DV_NODIFF(ncv, ns, switch, na, nad, ua, uad, te, ted, &
-& ti, tid, tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, kt, ktd, zt, ztd&
-& , sr, srd, nbdirs)
+& ti, tid, tn, tnd, po, pod, ne, ni, nn, kt, ktd, zt, ztd, sr, srd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -1956,8 +1956,7 @@ SUBROUTINE B2SRST_DV_NODIFF(ncv, ns, switch, na, nad, ua, uad, te, ted, &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& nnd(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+& pod(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
@@ -2039,7 +2038,7 @@ SUBROUTINE B2SRST_DV_NODIFF(ncv, ns, switch, na, nad, ua, uad, te, ted, &
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -2063,7 +2062,7 @@ SUBROUTINE B2SRST_DV_NODIFF(ncv, ns, switch, na, nad, ua, uad, te, ted, &
     DO icv=1,ncv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       DO nd=1,nbdirs
         t0d(nd) = srd%sna(nd, icv, 0, is) + na(icv, is)*srd%sna(nd, icv&
 &         , 1, is) + sr%sna(icv, 1, is)*nad(nd, icv, is)
@@ -3012,7 +3011,7 @@ SUBROUTINE B2SRST_NODIFF_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po&
     CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -3036,7 +3035,7 @@ SUBROUTINE B2SRST_NODIFF_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po&
     DO icv=1,ncv
 !WG_TODO           if(guard_flows.eq.2 .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       t0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
       IF (sr%sna(icv, 0, is) .LT. (1.0_R8+switch%b2srst_rf0)*t0) THEN
         IF ((1.0_R8+switch%b2srst_rf0)*t0 .LT. -(switch%b2srst_rf0*t0)) &

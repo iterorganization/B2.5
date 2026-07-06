@@ -10,22 +10,23 @@
 !
 !.end b2stbr
 !
-SUBROUTINE B2STBR_NEUTR_SCL_NODIFF_NODIFF(ncv, nfc, ns, mpg, geo, pl, dv&
-& , use_eirene, ank_mods)
+SUBROUTINE B2STBR_NEUTR_SCL_NODIFF_NODIFF(ncv, nfc, ns, mpg, geo, st, &
+& switch)
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2stbr_neutr_scl
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: ncv, nfc, ns, use_eirene, ank_mods
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2STATE), INTENT(IN) :: st
+  TYPE(SWITCHES), INTENT(IN) :: switch
   EXTERNAL XERRAB
 !
   CALL SUBINI('b2stbr_neutr_scl')
@@ -33,9 +34,10 @@ SUBROUTINE B2STBR_NEUTR_SCL_NODIFF_NODIFF(ncv, nfc, ns, mpg, geo, pl, dv&
     CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
   END IF
-  IF (use_eirene .NE. 0 .AND. ank_mods .NE. 0) CALL XERRAB(&
+  IF (switch%use_eirene .NE. 0 .AND. switch%ank_mods .NE. 0) CALL XERRAB&
+&                                                                 (&
 &                       'b2stbr not compiled with the B25_EIRENE option'&
-&                                                   )
+&                                                                 )
   ncall_b2stbr_neutr_scl = ncall_b2stbr_neutr_scl + 1
   CALL SUBEND()
   RETURN
@@ -574,7 +576,8 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -1821,8 +1824,6 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -1991,12 +1992,6 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -2570,6 +2565,10 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, sna0_eir, 1)
   arg10 = ncv*4*ns
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smo0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smr0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smd0_eir, 1)
   arg10 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, she0_eir, 1)
   arg10 = ncv*4
@@ -2734,7 +2733,9 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -2767,7 +2768,8 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1
@@ -2859,19 +2861,19 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 END SUBROUTINE B2STBR_DV_NODIFF
 
 !  Differentiation of b2stbr_dv0 in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: int0l int1l int2l int3l int4l
-!                int0ld int1ld int2ld int3ld int4ld she_eir_tot
-!                she_eir_totd b2recyc *(std.dv.kin_frac_hyb) *(std.dv.fluid_frac_hyb)
+!   variations   of useful results: she_eir_tot she_eir_totd int0l
+!                int1l int2l int3l int4l int0ld int1ld int2ld int3ld
+!                int4ld b2recyc *(std.dv.kin_frac_hyb) *(std.dv.fluid_frac_hyb)
 !                *(std.srw.sch0) *(std.srw.she0) *(std.srw.shi0)
 !                *(std.srw.shn0) *(std.srw.smo0) *(std.srw.sna0)
 !                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
 !                *(st.srw.smo0) *(st.srw.sna0)
-!   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                int0ld int1ld int2ld int3ld int4ld she_eir_totd
-!                b2recyc potpar potpard *(std.pl.na) *(std.pl.ua)
-!                *(std.pl.po) *(std.pl.te) *(std.pl.ti) *(std.pl.tn)
-!                *(std.dv.fna) *(std.dv.fhm) *(std.dv.kin_frac_hyb)
+!   with respect to varying inputs: she_eir_totd int0l int1l int2l
+!                int3l int4l int0ld int1ld int2ld int3ld int4ld
+!                recyc b2recyc b2recycd potpar potpard *(std.pl.na)
+!                *(std.pl.ua) *(std.pl.po) *(std.pl.te) *(std.pl.ti)
+!                *(std.pl.tn) *(std.dv.fna) *(std.dv.fhm) *(std.dv.kin_frac_hyb)
 !                *(std.dv.fluid_frac_hyb) *(std.dv.ne) *(std.srw.sch0)
 !                *(std.srw.she0) *(std.srw.shi0) *(std.srw.shn0)
 !                *(std.srw.smo0) *(std.srw.sna0) *(std.rt.rlcx)
@@ -2911,7 +2913,7 @@ END SUBROUTINE B2STBR_DV_NODIFF
 !                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
 !                *(st.srw.smo0) *(st.srw.sna0)
 !   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
+!                recyc b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
 !                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.dv.fna)
 !                *(st.dv.fhm) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.ne) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
@@ -2951,8 +2953,9 @@ END SUBROUTINE B2STBR_DV_NODIFF
 !.specification
 !
 SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
-& , dtim, switch, switchd, geo, geod0, geod, mpg, mpgd, st, std0, std, &
-& stdd, st_ext, st_extd0, st_extd, st_avg, main_call, nbdirs, nbdirs0)
+& , dtim, switch, switchd0, switchd, geo, geod0, geod, mpg, mpgd, st, &
+& std0, std, stdd, st_ext, st_extd0, st_extd, st_avg, main_call, nbdirs&
+& , nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_OPENMP
 !WG_TODO      use b2mod_wall
@@ -3000,6 +3003,7 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   INTEGER :: nscx, nscxmax, iscx(0:nscxmax-1), ismain
   REAL(kind=r8) :: dtim
   TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -3046,7 +3050,8 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -4295,8 +4300,6 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -4465,12 +4468,6 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -4901,6 +4898,12 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd4
   INTEGER :: nbdirs
   INTEGER :: nd0
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd5
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd6
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd7
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd8
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd9
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd10
   INTEGER :: nbdirs0
   DATA sput_src /1/
   DATA sput_chem_model /0/
@@ -4956,11 +4959,17 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       DO nd=1,nbdirs
         switchd%neutral_rescale(nd) = 0.d0
       END DO
+      DO nd0=1,nbdirs0
+        switchd0%neutral_rescale(nd0) = 0.D0
+      END DO
       switch%neutral_rescale = 1.0_R8
     END IF
     IF (switch%use_eirene .EQ. 0) THEN
       DO nd=1,nbdirs
         switchd%neutral_sources_rescale(nd) = 0.d0
+      END DO
+      DO nd0=1,nbdirs0
+        switchd0%neutral_sources_rescale(nd0) = 0.D0
       END DO
       switch%neutral_sources_rescale = 1.0_R8
     END IF
@@ -5035,30 +5044,42 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..initialize sources to 0
   arg10 = ncv*2*ns
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd, st%srw%sna0, std0%srw%&
-&            sna0, std%srw%sna0, stdd%srw%sna0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd5 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd5, dummyzerodiffd, st%&
+&            srw%sna0, std0%srw%sna0, std%srw%sna0, stdd%srw%sna0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*4*ns
   dummyzerodiffd0 = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd0, st%srw%smo0, std0%srw&
-&            %smo0, std%srw%smo0, stdd%srw%smo0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd6 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd6, dummyzerodiffd0, st%&
+&            srw%smo0, std0%srw%smo0, std%srw%smo0, stdd%srw%smo0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*2
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, st%srw%sne0, 1)
   arg10 = ncv*4
   dummyzerodiffd1 = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd1, st%srw%she0, std0%srw&
-&            %she0, std%srw%she0, stdd%srw%she0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd7 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd7, dummyzerodiffd1, st%&
+&            srw%she0, std0%srw%she0, std%srw%she0, stdd%srw%she0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*4
   dummyzerodiffd2 = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd2, st%srw%shi0, std0%srw&
-&            %shi0, std%srw%shi0, stdd%srw%shi0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd8 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd8, dummyzerodiffd2, st%&
+&            srw%shi0, std0%srw%shi0, std%srw%shi0, stdd%srw%shi0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*4
   dummyzerodiffd3 = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd3, st%srw%shn0, std0%srw&
-&            %shn0, std%srw%shn0, stdd%srw%shn0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd9 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd9, dummyzerodiffd3, st%&
+&            srw%shn0, std0%srw%shn0, std%srw%shn0, stdd%srw%shn0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*4
   dummyzerodiffd4 = 0.d0
-  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd4, st%srw%sch0, std0%srw&
-&            %sch0, std%srw%sch0, stdd%srw%sch0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd10 = 0.D0
+  CALL SFILL_DV_DV(arg10, 0.0_R8, dummyzerodiffd10, dummyzerodiffd4, st%&
+&            srw%sch0, std0%srw%sch0, std%srw%sch0, stdd%srw%sch0, 1, &
+&            nbdirs, nbdirs0)
   arg10 = ncv*nscx
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, shi0_ff, 1)
 !srv 29.04.10 {
@@ -5066,6 +5087,10 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, sna0_eir, 1)
   arg10 = ncv*4*ns
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smo0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smr0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smd0_eir, 1)
   arg10 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, she0_eir, 1)
   arg10 = ncv*4
@@ -5098,15 +5123,15 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     END IF
     IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
     CALL B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim&
-&                    , switch, switchd, geo, geod0, geod, mpg, mpgd, st%&
-&                    pl, std0%pl, std%pl, stdd%pl, st%dv, std0%dv, std%&
-&                    dv, stdd%dv, st%co, st%rt, std0%rt, std%rt, stdd%rt&
-&                    , st_ext, st%srw, std0%srw, std%srw, stdd%srw, &
-&                    tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
-&                    tresn, trfln, trfle, sput_src, sput_chem_model, &
-&                    reflection_on, sputter_energy_on, main_call, &
-&                    new_sputter_namelist, shi0_ff, f_redep, nbdirs, &
-&                    nbdirs0)
+&                    , switch, switchd0, switchd, geo, geod0, geod, mpg&
+&                    , mpgd, st%pl, std0%pl, std%pl, stdd%pl, st%dv, &
+&                    std0%dv, std%dv, stdd%dv, st%co, st%rt, std0%rt, &
+&                    std%rt, stdd%rt, st_ext, st%srw, std0%srw, std%srw&
+&                    , stdd%srw, tchem, tchee, tphys, tphye, thevp, &
+&                    thvpe, trese, tresn, trfln, trfle, sput_src, &
+&                    sput_chem_model, reflection_on, sputter_energy_on, &
+&                    main_call, new_sputter_namelist, shi0_ff, f_redep, &
+&                    nbdirs, nbdirs0)
   END IF
 ! xpb
 !
@@ -5232,7 +5257,9 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -5265,7 +5292,8 @@ SUBROUTINE B2STBR_DV0_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1
@@ -5385,7 +5413,7 @@ END SUBROUTINE B2STBR_DV0_DV
 !                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
 !                *(st.srw.smo0) *(st.srw.sna0)
 !   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
+!                recyc b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
 !                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.dv.fna)
 !                *(st.dv.fhm) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.ne) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
@@ -5512,7 +5540,8 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -6759,8 +6788,6 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -6929,12 +6956,6 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -7527,6 +7548,10 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, sna0_eir, 1)
   arg10 = ncv*4*ns
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smo0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smr0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smd0_eir, 1)
   arg10 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, she0_eir, 1)
   arg10 = ncv*4
@@ -7691,7 +7716,9 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -7724,7 +7751,8 @@ SUBROUTINE B2STBR_DV0_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1
@@ -7916,7 +7944,8 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -9162,8 +9191,6 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -9332,12 +9359,6 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -9899,6 +9920,10 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, sna0_eir, 1)
   arg10 = ncv*4*ns
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smo0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smr0_eir, 1)
+  arg10 = ncv*4*ns
+  CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, smd0_eir, 1)
   arg10 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg10, 0.0_R8, she0_eir, 1)
   arg10 = ncv*4
@@ -10063,7 +10088,9 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -10096,7 +10123,8 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1

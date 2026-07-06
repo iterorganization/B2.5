@@ -111,7 +111,7 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
   DO is=0,1
     CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
   END DO
-  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
   CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -470,8 +470,8 @@ END SUBROUTINE B2SRSM_NODIFF_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
-& , uad, te, ted, ti, tid, ne, ned, ni, nid, nn, nnd, sr, srd, main_call&
-& , nbdirs)
+& , uad, te, ted, ti, tid, ne, ned, ni, nid, nn, sr, srd, main_call, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
@@ -500,7 +500,7 @@ SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
 & ncv), ti(ncv), ne(ncv), nn(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv&
-& ), ned(nbdirsmax, ncv), nnd(nbdirsmax, ncv)
+& ), ned(nbdirsmax, ncv)
   LOGICAL :: main_call
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
@@ -585,7 +585,7 @@ SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
   DO is=0,1
     CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
   END DO
-  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
   CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
@@ -1157,10 +1157,10 @@ SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
 & ncv), ti(ncv), ne(ncv), nn(ncv)
   REAL(kind=r8) :: nad0(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, &
 & 0:ns-1), nid0(nbdirsmax0, ncv, 0:1), ted0(nbdirsmax0, ncv), tid0(&
-& nbdirsmax0, ncv), ned0(nbdirsmax0, ncv)
+& nbdirsmax0, ncv), ned0(nbdirsmax0, ncv), nnd(nbdirsmax0, ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv&
-& ), ned(nbdirsmax, ncv), nnd(nbdirsmax, ncv)
+& ), ned(nbdirsmax, ncv)
   REAL(kind=r8) :: nadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), uadd(&
 & nbdirsmax0, nbdirsmax, ncv, 0:ns-1), nidd(nbdirsmax0, nbdirsmax, ncv, &
 & 0:1), tedd(nbdirsmax0, nbdirsmax, ncv), tidd(nbdirsmax0, nbdirsmax, &
@@ -1283,7 +1283,7 @@ SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
   DO is=0,1
     CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
   END DO
-  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.ge.')
   CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')

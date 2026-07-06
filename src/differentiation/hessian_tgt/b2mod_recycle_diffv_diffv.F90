@@ -1052,7 +1052,7 @@ CONTAINS
     IF (fnni .LT. 0.0_R8 .AND. safeguard .EQ. 1) CALL &
 &     CALCINCIDENTFLUXESMAXWELLIAN_DV_DV(icv, ifc, isn, isign, istra, &
 &                                  area, pl, pld0, pld, pldd, tnf, tnfd0&
-&                                  , tnfd, tnfdd, geo, geod, cosa, sina&
+&                                  , tnfd, tnfdd, geo, geod0, cosa, sina&
 &                                  , fnni, fnnid0, fnnid, fnnidd, fmomni&
 &                                  , fmomnid0, fmomnid, fmomnidd, nni, &
 &                                  nnid0, nnid, nnidd, nnwwni, nnwwnid0&
@@ -1362,10 +1362,10 @@ CONTAINS
 !ellian anyway
     IF (fnni .LT. 0.0_R8 .AND. safeguard .EQ. 1) CALL &
 &     CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, area&
-&                               , pl, pld, tnf, tnfd, geo, geod, cosa, &
-&                               sina, fnni, fnnid, fmomni, fmomnid, nni&
-&                               , nnid, nnwwni, nnwwnid, feneni, fenenid&
-&                               , nbdirs)
+&                               , pl, pld, tnf, tnfd, geo, cosa, sina, &
+&                               fnni, fnnid, fmomni, fmomnid, nni, nnid&
+&                               , nnwwni, nnwwnid, feneni, fenenid, &
+&                               nbdirs)
 !
     CALL SUBEND()
     RETURN
@@ -1829,8 +1829,8 @@ CONTAINS
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV_DV(icv, ifc, isn, isign, &
 &                                       istra, area, pl, pld0, pld, pldd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, geo, &
-&                                       geod, cosa, sina, fnni, fnnid1, &
-&                                       fnnid0, fnnid0d, fmomni, &
+&                                       geod0, cosa, sina, fnni, fnnid1&
+&                                       , fnnid0, fnnid0d, fmomni, &
 &                                       fmomnid1, fmomnid0, fmomnid0d, &
 &                                       nni, nnid1, nnid0, nnid0d, &
 &                                       nnwwni, nnwwnid1, nnwwnid0, &
@@ -1847,14 +1847,14 @@ CONTAINS
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV_DV(icv, ifc, isn, isign, &
 &                                       istra, area, pl, pld0, pld, pldd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, geo, &
-&                                       geod, cosa, sina, fnnim, fnnimd0&
-&                                       , fnnimd, fnnimdd, fmomnim, &
-&                                       fmomnimd0, fmomnimd, fmomnimdd, &
-&                                       nnim, nnimd0, nnimd, nnimdd, &
-&                                       nnwwnim, nnwwnimd0, nnwwnimd, &
-&                                       nnwwnimdd, fenenim, fenenimd0, &
-&                                       fenenimd, fenenimdd, nbdirs, &
-&                                       nbdirs0)
+&                                       geod0, cosa, sina, fnnim, &
+&                                       fnnimd0, fnnimd, fnnimdd, &
+&                                       fmomnim, fmomnimd0, fmomnimd, &
+&                                       fmomnimdd, nnim, nnimd0, nnimd, &
+&                                       nnimdd, nnwwnim, nnwwnimd0, &
+&                                       nnwwnimd, nnwwnimdd, fenenim, &
+&                                       fenenimd0, fenenimd, fenenimdd, &
+&                                       nbdirs, nbdirs0)
 !! <- '1': = safeguard for diffusion BCs
       feneniddd = 0.D0
       fnniddd = 0.D0
@@ -2045,18 +2045,18 @@ CONTAINS
     ELSE IF (kn .GT. kn_b2) THEN
 !
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnni, fnnid0, fmomni&
-&                                    , fmomnid0, nni, nnid0, nnwwni, &
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnni, fnnid0, fmomni, &
+&                                    fmomnid0, nni, nnid0, nnwwni, &
 &                                    nnwwnid0, feneni, fenenid0, nbdirs)
 !
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnnim, fnnimd, &
-&                                    fmomnim, fmomnimd, nnim, nnimd, &
-&                                    nnwwnim, nnwwnimd, fenenim, &
-&                                    fenenimd, nbdirs)
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnnim, fnnimd, fmomnim, &
+&                                    fmomnimd, nnim, nnimd, nnwwnim, &
+&                                    nnwwnimd, fenenim, fenenimd, nbdirs&
+&                                   )
 !! <- '1': = safeguard for diffusion BCs
       CALL CALCINCIDENTFLUXESDIFFUSION_DV(icv, icn, ifc, isign, isn, &
 &                                   iscx0, isi, istra, phi_app, area, pl&
@@ -2288,13 +2288,13 @@ CONTAINS
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV_DV(icv, ifc, isn, isign, &
 &                                       istra, area, pl, pld0, pld, pldd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, geo, &
-&                                       geod, cosa, sina, fnni, fnnid0, &
-&                                       fnnid, fnnidd, fmomni, fmomnid0&
-&                                       , fmomnid, fmomnidd, nni, nnid0&
-&                                       , nnid, nnidd, nnwwni, nnwwnid0&
-&                                       , nnwwnid, nnwwnidd, feneni, &
-&                                       fenenid0, fenenid, fenenidd, &
-&                                       nbdirs, nbdirs0)
+&                                       geod0, cosa, sina, fnni, fnnid0&
+&                                       , fnnid, fnnidd, fmomni, &
+&                                       fmomnid0, fmomnid, fmomnidd, nni&
+&                                       , nnid0, nnid, nnidd, nnwwni, &
+&                                       nnwwnid0, nnwwnid, nnwwnidd, &
+&                                       feneni, fenenid0, fenenid, &
+&                                       fenenidd, nbdirs, nbdirs0)
     END IF
 !
     CALL SUBEND()
@@ -2363,8 +2363,8 @@ CONTAINS
 &                                   nnwwnid, feneni, fenenid, nbdirs)
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnni, fnnid, fmomni, &
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnni, fnnid, fmomni, &
 &                                    fmomnid, nni, nnid, nnwwni, nnwwnid&
 &                                    , feneni, fenenid, nbdirs)
     END IF
@@ -2466,7 +2466,7 @@ CONTAINS
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+    TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
     INTEGER, INTENT(IN) :: icv, ifc, isn, istra
     REAL(kind=r8), INTENT(IN) :: area, tf, isign, cosa, sina
     REAL(kind=r8), DIMENSION(nbdirsmax0), INTENT(IN) :: tfd0
@@ -2719,8 +2719,8 @@ CONTAINS
 !   Plus diff mem management of: pl.na:in pl.ua:in
 !
   SUBROUTINE CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra&
-&   , area, pl, pld, tf, tfd, geo, geod, cosa, sina, fnni, fnnid, fmomni&
-&   , fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
+&   , area, pl, pld, tf, tfd, geo, cosa, sina, fnni, fnnid, fmomni, &
+&   fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
 !nh   08.05.2018
 !     This routine calculates the incident neutral particle fluxes based on
 !     a truncated Maxwellian for the incident neutrals. These particle fluxes
@@ -2739,7 +2739,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     INTEGER, INTENT(IN) :: icv, ifc, isn, istra
     REAL(kind=r8), INTENT(IN) :: area, tf, isign, cosa, sina
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: tfd
@@ -2960,7 +2959,7 @@ CONTAINS
 !                int0ld int1ld int2ld int3ld int4ld fmomrecd tifd
 !                phi_app pofd nnrecd tif fenerecd nnwwnrecd t0
 !                recyc0 fluid_frac_hyb fluid_frac_hybd t0d fnnrecd
-!                pof *(pld.ua) *(pl.ua) phi_appd
+!                pof *(pld.ua) *(pl.ua) phi_appd recyc0d
 !   Plus diff mem management of: pld.ua:in pl.ua:in
 !  Differentiation of calcrecycledfluxes in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: int0l int1l int2l int3l int4l
@@ -2971,14 +2970,14 @@ CONTAINS
 !
   SUBROUTINE CALCRECYCLEDFLUXES_DV_DV(icv, nci, ifc, isign, isn, iscx0, &
 &   isi, istra, iwall, phi_app, phi_appd0, phi_appd, phi_appdd, area, &
-&   recyc0, recyc0d0, recyc0d, recycm, fluid_frac_hyb, fluid_frac_hybd0&
-&   , fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, pldd, tif, tifd0&
-&   , tifd, tifdd, tef, pof, pofd0, pofd, pofdd, nif, nef, geo, geod, &
-&   mpg, t0, t0d0, t0d, t0dd, cosa, sina, use_uy_uz_0, fnnrec, fnnrecd0&
-&   , fnnrecd, fnnrecdd, fmomrec, fmomrecd0, fmomrecd, fmomrecdd, nnrec&
-&   , nnrecd0, nnrecd, nnrecdd, nnwwnrec, nnwwnrecd0, nnwwnrecd, &
-&   nnwwnrecdd, fenerec, fenerecd0, fenerecd, fenerecdd, nbdirs, nbdirs0&
-& )
+&   recyc0, recyc0d0, recyc0d, recyc0dd, recycm, fluid_frac_hyb, &
+&   fluid_frac_hybd0, fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, &
+&   pldd, tif, tifd0, tifd, tifdd, tef, pof, pofd0, pofd, pofdd, nif, &
+&   nef, geo, geod, mpg, t0, t0d0, t0d, t0dd, cosa, sina, use_uy_uz_0, &
+&   fnnrec, fnnrecd0, fnnrecd, fnnrecdd, fmomrec, fmomrecd0, fmomrecd, &
+&   fmomrecdd, nnrec, nnrecd0, nnrecd, nnrecdd, nnwwnrec, nnwwnrecd0, &
+&   nnwwnrecd, nnwwnrecdd, fenerec, fenerecd0, fenerecd, fenerecdd, &
+&   nbdirs, nbdirs0)
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
@@ -2998,7 +2997,7 @@ CONTAINS
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+    TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
 !!      type (B2Rates), intent (in) :: rt
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iscx0, isi, iwall, istra&
@@ -3010,7 +3009,7 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: phi_appd, recyc0d&
 &   , pofd, t0d, tifd, fluid_frac_hybd
     REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: &
-&   phi_appdd, pofdd, t0dd, tifdd, fluid_frac_hybdd
+&   phi_appdd, recyc0dd, pofdd, t0dd, tifdd, fluid_frac_hybdd
 !! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
 !! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
 !! on a single target stratum, this value can deviate from 1.
@@ -3394,7 +3393,11 @@ CONTAINS
       pf = -temp
     END IF
     IF (pf .GT. recyc0) THEN
+      min1dd = 0.D0
       DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          min1dd(nd0, nd) = recyc0dd(nd0, nd)
+        END DO
         min1d(nd) = recyc0d(nd)
       END DO
       DO nd0=1,nbdirs0
@@ -3402,7 +3405,6 @@ CONTAINS
       END DO
       min1 = recyc0
       pcorfdd = 0.D0
-      min1dd = 0.D0
     ELSE
       min1dd = 0.D0
       DO nd=1,nbdirs
@@ -3439,7 +3441,7 @@ CONTAINS
       ptdd = 0.D0
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          ptdd(nd0, nd) = -pfdd(nd0, nd)
+          ptdd(nd0, nd) = recyc0dd(nd0, nd) - pfdd(nd0, nd)
         END DO
         ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
@@ -3479,14 +3481,14 @@ CONTAINS
       END DO
       temp = recyc0*t0 - 2.0_R8*fna_mol_rec
       DO nd=1,nbdirs
-        temp5 = recyc0d(nd)*t0 + recyc0*t0d(nd) - 2.0_R8*fna_mol_recd(nd&
+        temp5 = t0*recyc0d(nd) + recyc0*t0d(nd) - 2.0_R8*fna_mol_recd(nd&
 &         )
         DO nd0=1,nbdirs0
           fnnrecdd(nd0, nd) = temp5*fluid_frac_hybd0(nd0) + &
-&           fluid_frac_hyb*(recyc0d(nd)*t0d0(nd0)+t0d(nd)*recyc0d0(nd0)+&
-&           recyc0*t0dd(nd0, nd)-2.0_R8*fna_mol_recdd(nd0, nd)) + &
-&           fluid_frac_hybd(nd)*tempd(nd0) + temp*fluid_frac_hybdd(nd0, &
-&           nd)
+&           fluid_frac_hyb*(recyc0d(nd)*t0d0(nd0)+t0*recyc0dd(nd0, nd)+&
+&           t0d(nd)*recyc0d0(nd0)+recyc0*t0dd(nd0, nd)-2.0_R8*&
+&           fna_mol_recdd(nd0, nd)) + fluid_frac_hybd(nd)*tempd(nd0) + &
+&           temp*fluid_frac_hybdd(nd0, nd)
         END DO
         fnnrecd(nd) = fluid_frac_hyb*temp5 + temp*fluid_frac_hybd(nd)
       END DO
@@ -3815,8 +3817,8 @@ CONTAINS
   SUBROUTINE CALCRECYCLEDFLUXES_DV(icv, nci, ifc, isign, isn, iscx0, isi&
 &   , istra, iwall, phi_app, phi_appd, area, recyc0, recyc0d, recycm, &
 &   fluid_frac_hyb, fluid_frac_hybd, pl, pld, tif, tifd, tef, pof, pofd&
-&   , nif, nef, geo, geod, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec&
-&   , fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
+&   , nif, nef, geo, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec, &
+&   fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &   fenerec, fenerecd, nbdirs)
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
@@ -3834,7 +3836,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
 !!      type (B2Rates), intent (in) :: rt
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iscx0, isi, iwall, istra&
@@ -4443,7 +4444,7 @@ CONTAINS
 !                recyc0 fluid_frac_hyb *(rtd.rlcx) *(rtd.rlsa)
 !                *(rt.rlcx) *(rt.rlsa) fluid_frac_hybd nnrefld
 !                dnndyd nnwwnrefld tefd *(pld.na) *(pld.ua) *(pl.na)
-!                *(pl.ua) fene_eld tnf fmomrefld
+!                *(pl.ua) fene_eld tnf fmomrefld recyc0d
 !   Plus diff mem management of: geo.cvbb:in rtd.rlcx:in rtd.rlsa:in
 !                rt.rlcx:in rt.rlsa:in pld.na:in pld.ua:in pl.na:in
 !                pl.ua:in
@@ -4458,16 +4459,17 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESDIFFUSION_DV_DV(icv, icn, nci, ifc, &
 &   isign, isn, iscx0, isi, istra, iwall, phi_app, area, recyc0, &
-&   recyc0d0, recyc0d, recycm, fluid_frac_hyb, fluid_frac_hybd0, &
-&   fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, pldd, tif, tifd0, &
-&   tifd, tifdd, tnf, tnfd0, tnfd, tnfdd, tef, tefd0, tefd, tefdd, pof, &
-&   nef, nefd0, nefd, nefdd, geo, geod0, geod, mpg, rt, rtd0, rtd, rtdd&
-&   , dnndy, dnndyd0, dnndyd, dnndydd, dnndz, dnndzd0, dnndzd, dnndzdd, &
-&   cosa, sina, use_uy_uz_0, use_uy_uz_1, safeguard, fnnrefl, fnnrefld0&
-&   , fnnrefld, fnnrefldd, fmomrefl, fmomrefld0, fmomrefld, fmomrefldd, &
-&   nnrefl, nnrefld0, nnrefld, nnrefldd, nnwwnrefl, nnwwnrefld0, &
-&   nnwwnrefld, nnwwnrefldd, fenerefl, fenerefld0, fenerefld, fenerefldd&
-&   , fene_el, fene_eld0, fene_eld, fene_eldd, nbdirs, nbdirs0)
+&   recyc0d0, recyc0d, recyc0dd, recycm, fluid_frac_hyb, &
+&   fluid_frac_hybd0, fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, &
+&   pldd, tif, tifd0, tifd, tifdd, tnf, tnfd0, tnfd, tnfdd, tef, tefd0, &
+&   tefd, tefdd, pof, nef, nefd0, nefd, nefdd, geo, geod0, geod, mpg, rt&
+&   , rtd0, rtd, rtdd, dnndy, dnndyd0, dnndyd, dnndydd, dnndz, dnndzd0, &
+&   dnndzd, dnndzdd, cosa, sina, use_uy_uz_0, use_uy_uz_1, safeguard, &
+&   fnnrefl, fnnrefld0, fnnrefld, fnnrefldd, fmomrefl, fmomrefld0, &
+&   fmomrefld, fmomrefldd, nnrefl, nnrefld0, nnrefld, nnrefldd, &
+&   nnwwnrefl, nnwwnrefld0, nnwwnrefld, nnwwnrefldd, fenerefl, &
+&   fenerefld0, fenerefld, fenerefldd, fene_el, fene_eld0, fene_eld, &
+&   fene_eldd, nbdirs, nbdirs0)
 !mb   17.07.17
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
@@ -4501,8 +4503,9 @@ CONTAINS
 &   , tifd0, tnfd0, tefd0, dnndyd0, dnndzd0, fluid_frac_hybd0
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: recyc0d, nefd, &
 &   tifd, tnfd, tefd, dnndyd, dnndzd, fluid_frac_hybd
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: nefdd&
-&   , tifdd, tnfdd, tefdd, dnndydd, dnndzdd, fluid_frac_hybdd
+    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: &
+&   recyc0dd, nefdd, tifdd, tnfdd, tefdd, dnndydd, dnndzdd, &
+&   fluid_frac_hybdd
 !! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
 !! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
 !! on a single target stratum, this value can deviate from 1.
@@ -5242,7 +5245,11 @@ CONTAINS
       pf = x1
     END IF
     IF (pf .GT. recyc0) THEN
+      min1dd = 0.D0
       DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          min1dd(nd0, nd) = recyc0dd(nd0, nd)
+        END DO
         min1d(nd) = recyc0d(nd)
       END DO
       DO nd0=1,nbdirs0
@@ -5250,7 +5257,6 @@ CONTAINS
       END DO
       min1 = recyc0
       pcorfdd = 0.D0
-      min1dd = 0.D0
     ELSE
       min1dd = 0.D0
       DO nd=1,nbdirs
@@ -5287,7 +5293,7 @@ CONTAINS
       ptdd = 0.D0
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          ptdd(nd0, nd) = -pfdd(nd0, nd)
+          ptdd(nd0, nd) = recyc0dd(nd0, nd) - pfdd(nd0, nd)
         END DO
         ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
@@ -5332,14 +5338,15 @@ CONTAINS
         END DO
         temp2 = area*recyc0*fnni - 2.0_R8*fna_mol_refl
         DO nd=1,nbdirs
-          temp15 = area*(recyc0d(nd)*fnni+recyc0*fnnid(nd)) - 2.0_R8*&
+          temp15 = area*(fnni*recyc0d(nd)+recyc0*fnnid(nd)) - 2.0_R8*&
 &           fna_mol_refld(nd)
           DO nd0=1,nbdirs0
             fnnrefldd(nd0, nd) = temp15*fluid_frac_hybd0(nd0) + &
-&             fluid_frac_hyb*(area*(recyc0d(nd)*fnnid0(nd0)+fnnid(nd)*&
-&             recyc0d0(nd0)+recyc0*fnnidd(nd0, nd))-2.0_R8*&
-&             fna_mol_refldd(nd0, nd)) + fluid_frac_hybd(nd)*temp2d(nd0)&
-&             + temp2*fluid_frac_hybdd(nd0, nd)
+&             fluid_frac_hyb*(area*(recyc0d(nd)*fnnid0(nd0)+fnni*&
+&             recyc0dd(nd0, nd)+fnnid(nd)*recyc0d0(nd0)+recyc0*fnnidd(&
+&             nd0, nd))-2.0_R8*fna_mol_refldd(nd0, nd)) + &
+&             fluid_frac_hybd(nd)*temp2d(nd0) + temp2*fluid_frac_hybdd(&
+&             nd0, nd)
           END DO
           fnnrefld(nd) = fluid_frac_hyb*temp15 + temp2*fluid_frac_hybd(&
 &           nd)
@@ -5841,20 +5848,20 @@ CONTAINS
     IF (fnni .LT. 0.0_R8 .AND. safeguard .EQ. 1) CALL &
 &     CALCREFLECTEDFLUXESMAXWELLIAN_DV_DV(icv, nci, ifc, isign, isn, &
 &                                   istra, iwall, area, recyc0, recyc0d0&
-&                                   , recyc0d, recycm, fluid_frac_hyb, &
-&                                   fluid_frac_hybd0, fluid_frac_hybd, &
-&                                   fluid_frac_hybdd, pl, pld0, pld, &
-&                                   pldd, tnf, tnfd0, tnfd, tnfdd, geo, &
-&                                   geod, mpg, cosa, sina, fnnrefl, &
-&                                   fnnrefld0, fnnrefld, fnnrefldd, &
-&                                   fmomrefl, fmomrefld0, fmomrefld, &
-&                                   fmomrefldd, nnrefl, nnrefld0, &
-&                                   nnrefld, nnrefldd, nnwwnrefl, &
-&                                   nnwwnrefld0, nnwwnrefld, nnwwnrefldd&
-&                                   , fenerefl, fenerefld0, fenerefld, &
-&                                   fenerefldd, fene_el, fene_eld0, &
-&                                   fene_eld, fene_eldd, nbdirs, nbdirs0&
-&                                  )
+&                                   , recyc0d, recyc0dd, recycm, &
+&                                   fluid_frac_hyb, fluid_frac_hybd0, &
+&                                   fluid_frac_hybd, fluid_frac_hybdd, &
+&                                   pl, pld0, pld, pldd, tnf, tnfd0, &
+&                                   tnfd, tnfdd, geo, geod0, mpg, cosa, &
+&                                   sina, fnnrefl, fnnrefld0, fnnrefld, &
+&                                   fnnrefldd, fmomrefl, fmomrefld0, &
+&                                   fmomrefld, fmomrefldd, nnrefl, &
+&                                   nnrefld0, nnrefld, nnrefldd, &
+&                                   nnwwnrefl, nnwwnrefld0, nnwwnrefld, &
+&                                   nnwwnrefldd, fenerefl, fenerefld0, &
+&                                   fenerefld, fenerefldd, fene_el, &
+&                                   fene_eld0, fene_eld, fene_eldd, &
+&                                   nbdirs, nbdirs0)
 !
     CALL SUBEND()
     RETURN
@@ -6477,9 +6484,9 @@ CONTAINS
 &     CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn, istra&
 &                                , iwall, area, recyc0, recyc0d, recycm&
 &                                , fluid_frac_hyb, fluid_frac_hybd, pl, &
-&                                pld, tnf, tnfd, geo, geod, mpg, cosa, &
-&                                sina, fnnrefl, fnnrefld, fmomrefl, &
-&                                fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
+&                                pld, tnf, tnfd, geo, mpg, cosa, sina, &
+&                                fnnrefl, fnnrefld, fmomrefl, fmomrefld&
+&                                , nnrefl, nnrefld, nnwwnrefl, &
 &                                nnwwnrefld, fenerefl, fenerefld, &
 &                                fene_el, fene_eld, nbdirs)
 !
@@ -6847,7 +6854,7 @@ CONTAINS
 !                *(rtd.rlcx) *(rtd.rlsa) *(rt.rlcx) *(rt.rlsa)
 !                fluid_frac_hybd fmomrefld0 nnwwnrefld0 dnndyd
 !                fene_eld0 tefd *(pld.na) *(pld.ua) *(pl.na) *(pl.ua)
-!                nnrefld0 fenerefld0 fnnrefld0 tnf
+!                nnrefld0 fenerefld0 fnnrefld0 tnf recyc0d
 !   Plus diff mem management of: geo.cvbb:in rtd.rlcx:in rtd.rlsa:in
 !                rt.rlcx:in rt.rlsa:in pld.na:in pld.ua:in pl.na:in
 !                pl.ua:in
@@ -6862,17 +6869,17 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESKN_DV_DV(kn_b1, kn_b2, icv, icn, nci, &
 &   ifc, isign, isn, iscx0, isi, istra, iwall, phi_app, area, recyc0, &
-&   recyc0d0, recyc0d, recycm, fluid_frac_hyb, fluid_frac_hybd0, &
-&   fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, pldd, tif, tifd0, &
-&   tifd, tifdd, tnf, tnfd0, tnfd, tnfdd, tef, tefd0, tefd, tefdd, pof, &
-&   nef, nefd0, nefd, nefdd, geo, geod0, geod, mpg, rt, rtd0, rtd, rtdd&
-&   , dnndy, dnndyd0, dnndyd, dnndydd, dnndz, dnndzd0, dnndzd, dnndzdd, &
-&   cosa, sina, use_uy_uz_0, use_uy_uz_1, l, fnnrefl, fnnrefld1, &
-&   fnnrefld0, fnnrefld0d, fmomrefl, fmomrefld1, fmomrefld0, fmomrefld0d&
-&   , nnrefl, nnrefld1, nnrefld0, nnrefld0d, nnwwnrefl, nnwwnrefld1, &
-&   nnwwnrefld0, nnwwnrefld0d, fenerefl, fenerefld1, fenerefld0, &
-&   fenerefld0d, fene_el, fene_eld1, fene_eld0, fene_eld0d, nbdirs, &
-&   nbdirs0)
+&   recyc0d0, recyc0d, recyc0dd, recycm, fluid_frac_hyb, &
+&   fluid_frac_hybd0, fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, &
+&   pldd, tif, tifd0, tifd, tifdd, tnf, tnfd0, tnfd, tnfdd, tef, tefd0, &
+&   tefd, tefdd, pof, nef, nefd0, nefd, nefdd, geo, geod0, geod, mpg, rt&
+&   , rtd0, rtd, rtdd, dnndy, dnndyd0, dnndyd, dnndydd, dnndz, dnndzd0, &
+&   dnndzd, dnndzdd, cosa, sina, use_uy_uz_0, use_uy_uz_1, l, fnnrefl, &
+&   fnnrefld1, fnnrefld0, fnnrefld0d, fmomrefl, fmomrefld1, fmomrefld0, &
+&   fmomrefld0d, nnrefl, nnrefld1, nnrefld0, nnrefld0d, nnwwnrefl, &
+&   nnwwnrefld1, nnwwnrefld0, nnwwnrefld0d, fenerefl, fenerefld1, &
+&   fenerefld0, fenerefld0d, fene_el, fene_eld1, fene_eld0, fene_eld0d, &
+&   nbdirs, nbdirs0)
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
     USE B2MOD_B2CMPA_DIFFV
@@ -6905,8 +6912,9 @@ CONTAINS
 &   , tifd0, tnfd0, tefd0, dnndyd0, dnndzd0, fluid_frac_hybd0
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: recyc0d, nefd, &
 &   tifd, tnfd, tefd, dnndyd, dnndzd, fluid_frac_hybd
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: nefdd&
-&   , tifdd, tnfdd, tefdd, dnndydd, dnndzdd, fluid_frac_hybdd
+    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: &
+&   recyc0dd, nefdd, tifdd, tnfdd, tefdd, dnndydd, dnndzdd, &
+&   fluid_frac_hybdd
 !     Output variables:
     REAL(kind=r8), INTENT(OUT) :: fnnrefl, fmomrefl, nnrefl, nnwwnrefl, &
 &   fenerefl, fene_el
@@ -7127,9 +7135,10 @@ CONTAINS
       CALL CALCREFLECTEDFLUXESDIFFUSION_DV_DV(icv, icn, nci, ifc, isign&
 &                                       , isn, iscx0, isi, istra, iwall&
 &                                       , phi_app, area, recyc0, &
-&                                       recyc0d0, recyc0d, recycm, &
-&                                       fluid_frac_hyb, fluid_frac_hybd0&
-&                                       , fluid_frac_hybd, &
+&                                       recyc0d0, recyc0d, recyc0dd, &
+&                                       recycm, fluid_frac_hyb, &
+&                                       fluid_frac_hybd0, &
+&                                       fluid_frac_hybd, &
 &                                       fluid_frac_hybdd, pl, pld0, pld&
 &                                       , pldd, tif, tifd0, tifd, tifdd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, tef, &
@@ -7153,13 +7162,13 @@ CONTAINS
     ELSE IF (kn .GT. kn_b2) THEN
       CALL CALCREFLECTEDFLUXESMAXWELLIAN_DV_DV(icv, nci, ifc, isign, isn&
 &                                        , istra, iwall, area, recyc0, &
-&                                        recyc0d0, recyc0d, recycm, &
-&                                        fluid_frac_hyb, &
+&                                        recyc0d0, recyc0d, recyc0dd, &
+&                                        recycm, fluid_frac_hyb, &
 &                                        fluid_frac_hybd0, &
 &                                        fluid_frac_hybd, &
 &                                        fluid_frac_hybdd, pl, pld0, pld&
 &                                        , pldd, tnf, tnfd0, tnfd, tnfdd&
-&                                        , geo, geod, mpg, cosa, sina, &
+&                                        , geo, geod0, mpg, cosa, sina, &
 &                                        fnnrefl, fnnrefld1, fnnrefld0, &
 &                                        fnnrefld0d, fmomrefl, &
 &                                        fmomrefld1, fmomrefld0, &
@@ -7180,13 +7189,13 @@ CONTAINS
       nnwwnreflmdd = 0.D0
       CALL CALCREFLECTEDFLUXESMAXWELLIAN_DV_DV(icv, nci, ifc, isign, isn&
 &                                        , istra, iwall, area, recyc0, &
-&                                        recyc0d0, recyc0d, recycm, &
-&                                        fluid_frac_hyb, &
+&                                        recyc0d0, recyc0d, recyc0dd, &
+&                                        recycm, fluid_frac_hyb, &
 &                                        fluid_frac_hybd0, &
 &                                        fluid_frac_hybd, &
 &                                        fluid_frac_hybdd, pl, pld0, pld&
 &                                        , pldd, tnf, tnfd0, tnfd, tnfdd&
-&                                        , geo, geod, mpg, cosa, sina, &
+&                                        , geo, geod0, mpg, cosa, sina, &
 &                                        fnnreflm, fnnreflmd0, fnnreflmd&
 &                                        , fnnreflmdd, fmomreflm, &
 &                                        fmomreflmd0, fmomreflmd, &
@@ -7209,9 +7218,10 @@ CONTAINS
       CALL CALCREFLECTEDFLUXESDIFFUSION_DV_DV(icv, icn, nci, ifc, isign&
 &                                       , isn, iscx0, isi, istra, iwall&
 &                                       , phi_app, area, recyc0, &
-&                                       recyc0d0, recyc0d, recycm, &
-&                                       fluid_frac_hyb, fluid_frac_hybd0&
-&                                       , fluid_frac_hybd, &
+&                                       recyc0d0, recyc0d, recyc0dd, &
+&                                       recycm, fluid_frac_hyb, &
+&                                       fluid_frac_hybd0, &
+&                                       fluid_frac_hybd, &
 &                                       fluid_frac_hybdd, pl, pld0, pld&
 &                                       , pldd, tif, tifd0, tifd, tifdd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, tef, &
@@ -7417,7 +7427,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld0, fmomrefl, &
 &                                     fmomrefld0, nnrefl, nnrefld0, &
 &                                     nnwwnrefl, nnwwnrefld0, fenerefl, &
@@ -7428,7 +7438,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnreflm, fnnreflmd, fmomreflm, &
 &                                     fmomreflmd, nnreflm, nnreflmd, &
 &                                     nnwwnreflm, nnwwnreflmd, fenereflm&
@@ -7591,7 +7601,7 @@ CONTAINS
 !                recyc0 fluid_frac_hyb *(rtd.rlcx) *(rtd.rlsa)
 !                *(rt.rlcx) *(rt.rlsa) fluid_frac_hybd nnrefld
 !                dnndyd nnwwnrefld tefd *(pld.na) *(pld.ua) *(pl.na)
-!                *(pl.ua) fene_eld tnf fmomrefld
+!                *(pl.ua) fene_eld tnf fmomrefld recyc0d
 !   Plus diff mem management of: geo.cvbb:in rtd.rlcx:in rtd.rlsa:in
 !                rt.rlcx:in rt.rlsa:in pld.na:in pld.ua:in pl.na:in
 !                pl.ua:in
@@ -7606,16 +7616,16 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESMINKN_DV_DV(icv, icn, nci, ifc, isign, &
 &   isn, iscx0, isi, istra, iwall, phi_app, area, recyc0, recyc0d0, &
-&   recyc0d, recycm, fluid_frac_hyb, fluid_frac_hybd0, fluid_frac_hybd, &
-&   fluid_frac_hybdd, pl, pld0, pld, pldd, tif, tifd0, tifd, tifdd, tnf&
-&   , tnfd0, tnfd, tnfdd, tef, tefd0, tefd, tefdd, pof, nef, nefd0, nefd&
-&   , nefdd, geo, geod0, geod, mpg, rt, rtd0, rtd, rtdd, dnndy, dnndyd0&
-&   , dnndyd, dnndydd, dnndz, dnndzd0, dnndzd, dnndzdd, cosa, sina, &
-&   use_uy_uz_0, use_uy_uz_1, fnnrefl, fnnrefld0, fnnrefld, fnnrefldd, &
-&   fmomrefl, fmomrefld0, fmomrefld, fmomrefldd, nnrefl, nnrefld0, &
-&   nnrefld, nnrefldd, nnwwnrefl, nnwwnrefld0, nnwwnrefld, nnwwnrefldd, &
-&   fenerefl, fenerefld0, fenerefld, fenerefldd, fene_el, fene_eld0, &
-&   fene_eld, fene_eldd, nbdirs, nbdirs0)
+&   recyc0d, recyc0dd, recycm, fluid_frac_hyb, fluid_frac_hybd0, &
+&   fluid_frac_hybd, fluid_frac_hybdd, pl, pld0, pld, pldd, tif, tifd0, &
+&   tifd, tifdd, tnf, tnfd0, tnfd, tnfdd, tef, tefd0, tefd, tefdd, pof, &
+&   nef, nefd0, nefd, nefdd, geo, geod0, geod, mpg, rt, rtd0, rtd, rtdd&
+&   , dnndy, dnndyd0, dnndyd, dnndydd, dnndz, dnndzd0, dnndzd, dnndzdd, &
+&   cosa, sina, use_uy_uz_0, use_uy_uz_1, fnnrefl, fnnrefld0, fnnrefld, &
+&   fnnrefldd, fmomrefl, fmomrefld0, fmomrefld, fmomrefldd, nnrefl, &
+&   nnrefld0, nnrefld, nnrefldd, nnwwnrefl, nnwwnrefld0, nnwwnrefld, &
+&   nnwwnrefldd, fenerefl, fenerefld0, fenerefld, fenerefldd, fene_el, &
+&   fene_eld0, fene_eld, fene_eldd, nbdirs, nbdirs0)
 !     This routine is an interface to either CalcReflectedFluxesMaxwellian or CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the minimum Kn of the neutral atoms.
 !     If the choice is based on the Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problem
@@ -7653,8 +7663,9 @@ CONTAINS
 &   , tifd0, tnfd0, tefd0, dnndyd0, dnndzd0, fluid_frac_hybd0
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: recyc0d, nefd, &
 &   tifd, tnfd, tefd, dnndyd, dnndzd, fluid_frac_hybd
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: nefdd&
-&   , tifdd, tnfdd, tefdd, dnndydd, dnndzdd, fluid_frac_hybdd
+    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: &
+&   recyc0dd, nefdd, tifdd, tnfdd, tefdd, dnndydd, dnndzdd, &
+&   fluid_frac_hybdd
 !     Output variables:
     REAL(kind=r8), INTENT(OUT) :: fnnrefl, fmomrefl, nnrefl, nnwwnrefl, &
 &   fenerefl, fene_el
@@ -7675,9 +7686,10 @@ CONTAINS
       CALL CALCREFLECTEDFLUXESDIFFUSION_DV_DV(icv, icn, nci, ifc, isign&
 &                                       , isn, iscx0, isi, istra, iwall&
 &                                       , phi_app, area, recyc0, &
-&                                       recyc0d0, recyc0d, recycm, &
-&                                       fluid_frac_hyb, fluid_frac_hybd0&
-&                                       , fluid_frac_hybd, &
+&                                       recyc0d0, recyc0d, recyc0dd, &
+&                                       recycm, fluid_frac_hyb, &
+&                                       fluid_frac_hybd0, &
+&                                       fluid_frac_hybd, &
 &                                       fluid_frac_hybdd, pl, pld0, pld&
 &                                       , pldd, tif, tifd0, tifd, tifdd&
 &                                       , tnf, tnfd0, tnfd, tnfdd, tef, &
@@ -7701,13 +7713,13 @@ CONTAINS
     ELSE
       CALL CALCREFLECTEDFLUXESMAXWELLIAN_DV_DV(icv, nci, ifc, isign, isn&
 &                                        , istra, iwall, area, recyc0, &
-&                                        recyc0d0, recyc0d, recycm, &
-&                                        fluid_frac_hyb, &
+&                                        recyc0d0, recyc0d, recyc0dd, &
+&                                        recycm, fluid_frac_hyb, &
 &                                        fluid_frac_hybd0, &
 &                                        fluid_frac_hybd, &
 &                                        fluid_frac_hybdd, pl, pld0, pld&
 &                                        , pldd, tnf, tnfd0, tnfd, tnfdd&
-&                                        , geo, geod, mpg, cosa, sina, &
+&                                        , geo, geod0, mpg, cosa, sina, &
 &                                        fnnrefl, fnnrefld0, fnnrefld, &
 &                                        fnnrefldd, fmomrefl, fmomrefld0&
 &                                        , fmomrefld, fmomrefldd, nnrefl&
@@ -7800,7 +7812,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld, fmomrefl, &
 &                                     fmomrefld, nnrefl, nnrefld, &
 &                                     nnwwnrefl, nnwwnrefld, fenerefl, &
@@ -7880,7 +7892,7 @@ CONTAINS
 !                int0ld int1ld int2ld int3ld int4ld fnnrefld fenerefld
 !                tfd recyc0 fluid_frac_hyb fluid_frac_hybd nnrefld
 !                nnwwnrefld *(pld.na) *(pld.ua) *(pl.na) *(pl.ua)
-!                fene_eld fmomrefld tf
+!                fene_eld fmomrefld tf recyc0d
 !   Plus diff mem management of: pld.na:in pld.ua:in pl.na:in pl.ua:in
 !  Differentiation of calcreflectedfluxesmaxwellian in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: int0l int1l int2l int3l int4l
@@ -7891,14 +7903,14 @@ CONTAINS
 !
 !
   SUBROUTINE CALCREFLECTEDFLUXESMAXWELLIAN_DV_DV(icv, nci, ifc, isign, &
-&   isn, istra, iwall, area, recyc0, recyc0d0, recyc0d, recycm, &
-&   fluid_frac_hyb, fluid_frac_hybd0, fluid_frac_hybd, fluid_frac_hybdd&
-&   , pl, pld0, pld, pldd, tf, tfd0, tfd, tfdd, geo, geod, mpg, cosa, &
-&   sina, fnnrefl, fnnrefld0, fnnrefld, fnnrefldd, fmomrefl, fmomrefld0&
-&   , fmomrefld, fmomrefldd, nnrefl, nnrefld0, nnrefld, nnrefldd, &
-&   nnwwnrefl, nnwwnrefld0, nnwwnrefld, nnwwnrefldd, fenerefl, &
-&   fenerefld0, fenerefld, fenerefldd, fene_el, fene_eld0, fene_eld, &
-&   fene_eldd, nbdirs, nbdirs0)
+&   isn, istra, iwall, area, recyc0, recyc0d0, recyc0d, recyc0dd, recycm&
+&   , fluid_frac_hyb, fluid_frac_hybd0, fluid_frac_hybd, &
+&   fluid_frac_hybdd, pl, pld0, pld, pldd, tf, tfd0, tfd, tfdd, geo, &
+&   geod, mpg, cosa, sina, fnnrefl, fnnrefld0, fnnrefld, fnnrefldd, &
+&   fmomrefl, fmomrefld0, fmomrefld, fmomrefldd, nnrefl, nnrefld0, &
+&   nnrefld, nnrefldd, nnwwnrefl, nnwwnrefld0, nnwwnrefld, nnwwnrefldd, &
+&   fenerefl, fenerefld0, fenerefld, fenerefldd, fene_el, fene_eld0, &
+&   fene_eld, fene_eldd, nbdirs, nbdirs0)
 !nh   11.06.18
 !     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a tr
 !uncated Maxwellian
@@ -7918,7 +7930,7 @@ CONTAINS
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+    TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iwall, istra
     REAL(kind=r8), INTENT(IN) :: area, recyc0, recycm, isign, tf, sina, &
@@ -7927,8 +7939,8 @@ CONTAINS
 &   fluid_frac_hybd0
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: recyc0d, tfd, &
 &   fluid_frac_hybd
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: tfdd&
-&   , fluid_frac_hybdd
+    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), INTENT(IN) :: &
+&   recyc0dd, tfdd, fluid_frac_hybdd
 !     Output variables
     REAL(kind=r8), INTENT(OUT) :: fnnrefl, fmomrefl, nnrefl, nnwwnrefl, &
 &   fenerefl, fene_el
@@ -8350,7 +8362,11 @@ CONTAINS
       pf = x1
     END IF
     IF (pf .GT. recyc0) THEN
+      min1dd = 0.D0
       DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          min1dd(nd0, nd) = recyc0dd(nd0, nd)
+        END DO
         min1d(nd) = recyc0d(nd)
       END DO
       DO nd0=1,nbdirs0
@@ -8358,7 +8374,6 @@ CONTAINS
       END DO
       min1 = recyc0
       pcorfdd = 0.D0
-      min1dd = 0.D0
     ELSE
       min1dd = 0.D0
       DO nd=1,nbdirs
@@ -8395,7 +8410,7 @@ CONTAINS
       ptdd = 0.D0
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          ptdd(nd0, nd) = -pfdd(nd0, nd)
+          ptdd(nd0, nd) = recyc0dd(nd0, nd) - pfdd(nd0, nd)
         END DO
         ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
@@ -8435,14 +8450,14 @@ CONTAINS
       END DO
       temp = area*recyc0*fnni - 2.0_R8*fna_mol_refl
       DO nd=1,nbdirs
-        temp5 = area*(recyc0d(nd)*fnni+recyc0*fnnid(nd)) - 2.0_R8*&
+        temp5 = area*(fnni*recyc0d(nd)+recyc0*fnnid(nd)) - 2.0_R8*&
 &         fna_mol_refld(nd)
         DO nd0=1,nbdirs0
           fnnrefldd(nd0, nd) = temp5*fluid_frac_hybd0(nd0) + &
-&           fluid_frac_hyb*(area*(recyc0d(nd)*fnnid0(nd0)+fnnid(nd)*&
-&           recyc0d0(nd0)+recyc0*fnnidd(nd0, nd))-2.0_R8*fna_mol_refldd(&
-&           nd0, nd)) + fluid_frac_hybd(nd)*tempd(nd0) + temp*&
-&           fluid_frac_hybdd(nd0, nd)
+&           fluid_frac_hyb*(area*(recyc0d(nd)*fnnid0(nd0)+fnni*recyc0dd(&
+&           nd0, nd)+fnnid(nd)*recyc0d0(nd0)+recyc0*fnnidd(nd0, nd))-&
+&           2.0_R8*fna_mol_refldd(nd0, nd)) + fluid_frac_hybd(nd)*tempd(&
+&           nd0) + temp*fluid_frac_hybdd(nd0, nd)
         END DO
         fnnrefld(nd) = fluid_frac_hyb*temp5 + temp*fluid_frac_hybd(nd)
       END DO
@@ -8753,8 +8768,8 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn&
 &   , istra, iwall, area, recyc0, recyc0d, recycm, fluid_frac_hyb, &
-&   fluid_frac_hybd, pl, pld, tf, tfd, geo, geod, mpg, cosa, sina, &
-&   fnnrefl, fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
+&   fluid_frac_hybd, pl, pld, tf, tfd, geo, mpg, cosa, sina, fnnrefl, &
+&   fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
 &   nnwwnrefld, fenerefl, fenerefld, fene_el, fene_eld, nbdirs)
 !nh   11.06.18
 !     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a tr
@@ -8772,7 +8787,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iwall, istra
     REAL(kind=r8), INTENT(IN) :: area, recyc0, recycm, isign, tf, sina, &

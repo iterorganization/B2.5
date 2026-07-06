@@ -15,7 +15,6 @@
 MODULE B2MOD_ELEMENTS_DIFFV
   USE B2MOD_TYPES
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
   CHARACTER(len=2), SAVE :: elements(92)
@@ -44,7 +43,6 @@ CONTAINS
 !
   SUBROUTINE ALLOC_B2MOD_ELEMENTS(nsd, zn, am)
     USE B2MOD_B2CMPA_DIFFV, ONLY : amtol
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nsd
     REAL(kind=r8) :: zn(0:nsd-1)
@@ -53,7 +51,7 @@ CONTAINS
     INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC TRIM
-    REAL(kind=r8) :: abs0
+    REAL :: abs0
 !
     ALLOCATE(is_codes(0:nsd-1))
     DO is=0,nsd-1
@@ -79,7 +77,6 @@ CONTAINS
 
 !
   SUBROUTINE DEALLOC_B2MOD_ELEMENTS()
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
     DEALLOCATE(is_codes)
@@ -88,7 +85,6 @@ CONTAINS
 
 !
   INTEGER FUNCTION GET_ATOMIC_NUMBER(name)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     CHARACTER(len=*) :: name
     CHARACTER(len=8) :: species_name

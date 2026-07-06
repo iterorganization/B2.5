@@ -15,10 +15,10 @@
 !  Differentiation of b2tdia in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.fchdia)
 !   with respect to varying inputs: *(dv.fchdia) *(dv.pz)
-!   Plus diff mem management of: dv.fchdia:in dv.pz:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                geo.vxonedbsq:in
+!   Plus diff mem management of: dv.fchdia:in dv.pz:in dv.facdrift:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in geo.vxonedbsq:in
 !
 !
 !
@@ -172,10 +172,10 @@ END SUBROUTINE B2TDIA_DV_DV
 !  Differentiation of b2tdia in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.fchdia)
 !   with respect to varying inputs: *(dv.fchdia) *(dv.pz)
-!   Plus diff mem management of: dv.fchdia:in dv.pz:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                geo.vxonedbsq:in
+!   Plus diff mem management of: dv.fchdia:in dv.pz:in dv.facdrift:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in geo.vxonedbsq:in
 !
 !
 !

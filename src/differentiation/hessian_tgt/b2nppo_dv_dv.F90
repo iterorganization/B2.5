@@ -38,8 +38,9 @@
 !
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
-& itcnt, rxf, switch, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, &
-& pld, pldd, dv, dvd0, dvd, dvdd, sr, srd0, srd, srdd, nbdirs, nbdirs0)
+& itcnt, rxf, switch, switchd0, switchd, geo, geod0, geod, mpg, mpgd, pl&
+& , pld0, pld, pldd, dv, dvd0, dvd, dvdd, sr, srd0, srd, srdd, nbdirs, &
+& nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -61,6 +62,7 @@ SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, nregionv, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -130,11 +132,10 @@ SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg1d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg1dd
-  INTRINSIC SIZE
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
   INTEGER :: nd
   INTEGER :: nbdirs
   DOUBLE PRECISION :: arg10
+  REAL(r8), DIMENSION(nbdirsmax0, SIZE(pl%te, 1)) :: dummyzerodiffd
   INTEGER :: nd0
   DOUBLE PRECISION :: temp
   INTEGER :: nbdirs0
@@ -187,7 +188,7 @@ SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..compute correction
   IF (solving .AND. ANY(solvereg(0:nregionv))) THEN
 !srv 22.05.18
-    dummyzerodiffd = 0.d0
+    dummyzerodiffd = 0.D0
     CALL B2USPO_DV_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
 &               geo, mpg, mpgd, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, pl%te, &
 &               dummyzerodiffd, dv%conc, dvd0%conc, dvd%conc, dvdd%conc&
@@ -411,8 +412,6 @@ SUBROUTINE B2NPPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
-  INTRINSIC SIZE
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
   INTEGER :: nd
   INTEGER :: nbdirs
   DOUBLE PRECISION :: arg10
@@ -463,12 +462,10 @@ SUBROUTINE B2NPPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..compute correction
   IF (solving .AND. ANY(solvereg(0:nregionv))) THEN
 !srv 22.05.18
-    dummyzerodiffd = 0.d0
     CALL B2USPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
-&                   switch, geo, mpg, mpgd, dv%ne, dvd%ne, pl%te, &
-&                   dummyzerodiffd, dv%conc, dvd%conc, sr%sch, srd%sch, &
-&                   dv%respo, dvd%respo, dv%corpo, dvd%corpo, aa, aad, &
-&                   'b2nppo', nbdirs)
+&                   switch, geo, mpg, mpgd, dv%ne, dvd%ne, pl%te, dv%&
+&                   conc, dvd%conc, sr%sch, srd%sch, dv%respo, dvd%respo&
+&                   , dv%corpo, dvd%corpo, aa, aad, 'b2nppo', nbdirs)
 !   ..apply correction
     CALL B2UPPO_DV(ncv, rxf, dv%corpo, dvd%corpo, pl%po, pld%po, nbdirs)
     IF (switch%b2nppo_restr_po .NE. 0.0_R8) THEN

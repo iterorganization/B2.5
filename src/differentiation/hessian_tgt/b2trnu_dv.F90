@@ -19,7 +19,6 @@ SUBROUTINE B2TRNU_NODIFF(ns, nnucl, znmax)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
   INTEGER :: ns

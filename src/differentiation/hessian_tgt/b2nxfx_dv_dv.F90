@@ -151,19 +151,22 @@ SUBROUTINE B2NXFX_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
         neted0(nd0, :) = te*ned0(nd0, :) + ne*ted0(nd0, :)
       END DO
       nete = ne*te
-      wrkvd = 0.d0
       wrkc0d = 0.d0
-      wrkvdd = 0.D0
+      wrkvd = 0.d0
       wrkc0dd = 0.D0
-      wrkvd0 = 0.D0
       wrkc0d0 = 0.D0
+      wrkvdd = 0.D0
+      wrkvd0 = 0.D0
       CALL GRADC_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, geod, mpg, mpgd, &
 &                  nete, neted0, neted, netedd, wrkv, wrkvd0, wrkvd, &
 &                  wrkvdd, wrkc0, wrkc0d0, wrkc0d, wrkc0dd, nbdirs, &
 &                  nbdirs0)
       wrkc1d = 0.d0
+      wrkvd = 0.d0
       wrkc1dd = 0.D0
       wrkc1d0 = 0.D0
+      wrkvdd = 0.D0
+      wrkvd0 = 0.D0
       CALL GRADC_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, geod, mpg, mpgd, &
 &                  po, pod0, pod, podd, wrkv, wrkvd0, wrkvd, wrkvdd, &
 &                  wrkc1, wrkc1d0, wrkc1d, wrkc1dd, nbdirs, nbdirs0)
@@ -328,11 +331,12 @@ SUBROUTINE B2NXFX_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd&
         neted(nd, :) = te*ned(nd, :) + ne*ted(nd, :)
       END DO
       nete = ne*te
-      wrkvd = 0.d0
       wrkc0d = 0.d0
+      wrkvd = 0.d0
       CALL GRADC_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, &
 &                      nete, neted, wrkv, wrkvd, wrkc0, wrkc0d, nbdirs)
       wrkc1d = 0.d0
+      wrkvd = 0.d0
       CALL GRADC_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po&
 &                      , pod, wrkv, wrkvd, wrkc1, wrkc1d, nbdirs)
       DO nd=1,nbdirs

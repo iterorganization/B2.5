@@ -29,11 +29,11 @@ MODULE B2MOD_B2CMRC_DIFFV_DIFFV
 & (:), rtn(:), rtlt(:), rtln(:), rtlsa(:, :, :), rtlra(:, :, :), rtlqa(:&
 & , :, :), rtlqr(:, :, :), rtlrd(:, :, :), rtlbr(:, :, :), rtlcx(:, :, :&
 & ), rtlza(:, :, :), rtlz2(:, :, :), rtlpt(:, :, :), rtlpi(:, :, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: rtlsad0(:, :, :, :), rtlrad0(:, :&
-& , :, :), rtlqad0(:, :, :, :), rtlcxd0(:, :, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: rtzmind(:, :), rtzmaxd(:, :), &
-& rtznd(:, :), rtlsad(:, :, :, :), rtlrad(:, :, :, :), rtlqad(:, :, :, :&
-& ), rtlcxd(:, :, :, :)
+& rtznd(:, :), rtlsad0(:, :, :, :), rtlrad0(:, :, :, :), rtlqad0(:, :, :&
+& , :), rtlcxd0(:, :, :, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: rtlsad(:, :, :, :), rtlrad(:, :, :&
+& , :), rtlqad(:, :, :, :), rtlcxd(:, :, :, :)
   INTEGER, ALLOCATABLE, SAVE :: rtyr(:)
   INTEGER, SAVE :: fix_recomb, zmax_recomb
   LOGICAL, SAVE :: adpak_used
@@ -41,11 +41,11 @@ MODULE B2MOD_B2CMRC_DIFFV_DIFFV
 
 CONTAINS
 !  Differentiation of alloc_b2mod_b2cmrc_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
-!                rtlcx:out
-!  Differentiation of alloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
 !                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!  Differentiation of alloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE ALLOC_B2MOD_B2CMRC_DV_DV(rtnt_in, rtnn_in, rtns_in, nbdirs&
 &   , nbdirs0)
@@ -61,14 +61,14 @@ CONTAINS
     rtnn = rtnn_in
     rtns = rtns_in
 !
-    ALLOCATE(rtzmind(nbdirsmax, 0:rtns-1))
-    rtzmind = 0.d0
+    ALLOCATE(rtzmind(nbdirsmax0, 0:rtns-1))
+    rtzmind = 0.D0
     ALLOCATE(rtzmin(0:rtns-1))
-    ALLOCATE(rtzmaxd(nbdirsmax, 0:rtns-1))
-    rtzmaxd = 0.d0
+    ALLOCATE(rtzmaxd(nbdirsmax0, 0:rtns-1))
+    rtzmaxd = 0.D0
     ALLOCATE(rtzmax(0:rtns-1))
-    ALLOCATE(rtznd(nbdirsmax, 0:rtns-1))
-    rtznd = 0.d0
+    ALLOCATE(rtznd(nbdirsmax0, 0:rtns-1))
+    rtznd = 0.D0
     ALLOCATE(rtzn(0:rtns-1))
     ALLOCATE(rtt(0:rtnt))
     ALLOCATE(rtn(0:rtnn))
@@ -106,8 +106,8 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_B2CMRC_DV_DV
 
 !  Differentiation of alloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE ALLOC_B2MOD_B2CMRC_DV(rtnt_in, rtnn_in, rtns_in, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -120,14 +120,8 @@ CONTAINS
     rtnn = rtnn_in
     rtns = rtns_in
 !
-    ALLOCATE(rtzmind(nbdirsmax, 0:rtns-1))
-    rtzmind = 0.d0
     ALLOCATE(rtzmin(0:rtns-1))
-    ALLOCATE(rtzmaxd(nbdirsmax, 0:rtns-1))
-    rtzmaxd = 0.d0
     ALLOCATE(rtzmax(0:rtns-1))
-    ALLOCATE(rtznd(nbdirsmax, 0:rtns-1))
-    rtznd = 0.d0
     ALLOCATE(rtzn(0:rtns-1))
     ALLOCATE(rtt(0:rtnt))
     ALLOCATE(rtn(0:rtnn))
@@ -155,6 +149,57 @@ CONTAINS
     ALLOCATE(rtyr(0:rtns-1))
     RETURN
   END SUBROUTINE ALLOC_B2MOD_B2CMRC_DV
+
+!  Differentiation of alloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
+!                rtlsa:out rtlra:out rtlcx:out
+!
+  SUBROUTINE ALLOC_B2MOD_B2CMRC_DV0(rtnt_in, rtnn_in, rtns_in, nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    INTEGER :: rtnt_in, rtnn_in, rtns_in
+    INTEGER :: nbdirs
+!
+    rtnt = rtnt_in
+    rtnn = rtnn_in
+    rtns = rtns_in
+!
+    ALLOCATE(rtzmind(nbdirsmax0, 0:rtns-1))
+    rtzmind = 0.D0
+    ALLOCATE(rtzmin(0:rtns-1))
+    ALLOCATE(rtzmaxd(nbdirsmax0, 0:rtns-1))
+    rtzmaxd = 0.D0
+    ALLOCATE(rtzmax(0:rtns-1))
+    ALLOCATE(rtznd(nbdirsmax0, 0:rtns-1))
+    rtznd = 0.D0
+    ALLOCATE(rtzn(0:rtns-1))
+    ALLOCATE(rtt(0:rtnt))
+    ALLOCATE(rtn(0:rtnn))
+    ALLOCATE(rtlt(0:rtnt))
+    ALLOCATE(rtln(0:rtnn))
+    ALLOCATE(rtlsad0(nbdirsmax0, 0:rtnt, 0:rtnn, 0:rtns-1))
+    rtlsad0 = 0.D0
+    ALLOCATE(rtlsa(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlrad0(nbdirsmax0, 0:rtnt, 0:rtnn, 0:rtns-1))
+    rtlrad0 = 0.D0
+    ALLOCATE(rtlra(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlqad0(nbdirsmax0, 0:rtnt, 0:rtnn, 0:rtns-1))
+    rtlqad0 = 0.D0
+    ALLOCATE(rtlqa(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlqr(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlrd(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlbr(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlcxd0(nbdirsmax0, 0:rtnt, 0:rtnn, 0:rtns-1))
+    rtlcxd0 = 0.D0
+    ALLOCATE(rtlcx(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlza(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlz2(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlpt(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtlpi(0:rtnt, 0:rtnn, 0:rtns-1))
+    ALLOCATE(rtyr(0:rtns-1))
+    RETURN
+  END SUBROUTINE ALLOC_B2MOD_B2CMRC_DV0
 
 !
   SUBROUTINE ALLOC_B2MOD_B2CMRC(rtnt_in, rtnn_in, rtns_in)
@@ -190,11 +235,11 @@ CONTAINS
 
 !  Differentiation of dealloc_b2mod_b2cmrc_dv as a context to call tangent code (with options multiDirectional context noISIZE r8
 !):
-!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
-!                rtlcx:out
-!  Differentiation of dealloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
 !                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!  Differentiation of dealloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV_DV(nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -261,8 +306,8 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV_DV
 
 !  Differentiation of dealloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV(nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -271,17 +316,8 @@ CONTAINS
     INTEGER :: nbdirs
     INTRINSIC ALLOCATED
 !
-    IF (ALLOCATED(rtzmind)) THEN
-      DEALLOCATE(rtzmind)
-    END IF
     DEALLOCATE(rtzmin)
-    IF (ALLOCATED(rtzmaxd)) THEN
-      DEALLOCATE(rtzmaxd)
-    END IF
     DEALLOCATE(rtzmax)
-    IF (ALLOCATED(rtznd)) THEN
-      DEALLOCATE(rtznd)
-    END IF
     DEALLOCATE(rtzn)
     DEALLOCATE(rtt)
     DEALLOCATE(rtn)
@@ -313,6 +349,59 @@ CONTAINS
     DEALLOCATE(rtyr)
     RETURN
   END SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV
+
+!  Differentiation of dealloc_b2mod_b2cmrc as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
+!                rtlsa:out rtlra:out rtlcx:out
+!
+  SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV0(nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    INTEGER :: nbdirs
+!
+    IF (ALLOCATED(rtzmind)) THEN
+      DEALLOCATE(rtzmind)
+    END IF
+    DEALLOCATE(rtzmin)
+    IF (ALLOCATED(rtzmaxd)) THEN
+      DEALLOCATE(rtzmaxd)
+    END IF
+    DEALLOCATE(rtzmax)
+    IF (ALLOCATED(rtznd)) THEN
+      DEALLOCATE(rtznd)
+    END IF
+    DEALLOCATE(rtzn)
+    DEALLOCATE(rtt)
+    DEALLOCATE(rtn)
+    DEALLOCATE(rtlt)
+    DEALLOCATE(rtln)
+    IF (ALLOCATED(rtlsad0)) THEN
+      DEALLOCATE(rtlsad0)
+    END IF
+    DEALLOCATE(rtlsa)
+    IF (ALLOCATED(rtlrad0)) THEN
+      DEALLOCATE(rtlrad0)
+    END IF
+    DEALLOCATE(rtlra)
+    IF (ALLOCATED(rtlqad0)) THEN
+      DEALLOCATE(rtlqad0)
+    END IF
+    DEALLOCATE(rtlqa)
+    DEALLOCATE(rtlqr)
+    DEALLOCATE(rtlrd)
+    DEALLOCATE(rtlbr)
+    IF (ALLOCATED(rtlcxd0)) THEN
+      DEALLOCATE(rtlcxd0)
+    END IF
+    DEALLOCATE(rtlcx)
+    DEALLOCATE(rtlza)
+    DEALLOCATE(rtlz2)
+    DEALLOCATE(rtlpt)
+    DEALLOCATE(rtlpi)
+    DEALLOCATE(rtyr)
+    RETURN
+  END SUBROUTINE DEALLOC_B2MOD_B2CMRC_DV0
 
 !
   SUBROUTINE DEALLOC_B2MOD_B2CMRC()

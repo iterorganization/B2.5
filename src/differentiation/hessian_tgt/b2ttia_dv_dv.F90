@@ -40,20 +40,22 @@ SUBROUTINE B2TTIA_DV_DV(ncv, ns, ti, tid0, tid, tidd, rz2, rz2d0, rz2d, &
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0:ns-1)
-  REAL(kind=r8) :: tid0(nbdirsmax0, ncv), ne2d0(nbdirsmax0, ncv), &
-& lnlamd0(nbdirsmax0, ncv), rz2d0(nbdirsmax0, ncv, 0:ns-1)
-  REAL(kind=r8) :: tid(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), lnlamd(&
-& nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:ns-1)
-  REAL(kind=r8) :: tidd(nbdirsmax0, nbdirsmax, ncv), ne2dd(nbdirsmax0, &
-& nbdirsmax, ncv), lnlamdd(nbdirsmax0, nbdirsmax, ncv), rz2dd(nbdirsmax0&
-& , nbdirsmax, ncv, 0:ns-1)
+  INTEGER, INTENT(IN) :: ncv, ns
+  REAL(kind=r8), INTENT(IN) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0&
+& :ns-1)
+  REAL(kind=r8), INTENT(IN) :: tid0(nbdirsmax0, ncv), ne2d0(nbdirsmax0, &
+& ncv), lnlamd0(nbdirsmax0, ncv), rz2d0(nbdirsmax0, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: tid(nbdirsmax, ncv), ne2d(nbdirsmax, ncv)&
+& , lnlamd(nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(IN) :: tidd(nbdirsmax0, nbdirsmax, ncv), ne2dd(&
+& nbdirsmax0, nbdirsmax, ncv), lnlamdd(nbdirsmax0, nbdirsmax, ncv), &
+& rz2dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1)
-  REAL(kind=r8) :: tauiad0(nbdirsmax0, ncv, 0:ns-1)
-  REAL(kind=r8) :: tauiad(nbdirsmax, ncv, 0:ns-1)
-  REAL(kind=r8) :: tauiadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauia(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauiad0(nbdirsmax0, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauiad(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauiadd(nbdirsmax0, nbdirsmax, ncv, 0:ns&
+& -1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -280,13 +282,14 @@ SUBROUTINE B2TTIA_DV_NODIFF(ncv, ns, ti, tid, rz2, rz2d, ne2, ne2d, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0:ns-1)
-  REAL(kind=r8) :: tid(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), lnlamd(&
-& nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:ns-1)
+  INTEGER, INTENT(IN) :: ncv, ns
+  REAL(kind=r8), INTENT(IN) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0&
+& :ns-1)
+  REAL(kind=r8), INTENT(IN) :: tid(nbdirsmax, ncv), ne2d(nbdirsmax, ncv)&
+& , lnlamd(nbdirsmax, ncv), rz2d(nbdirsmax, ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1)
-  REAL(kind=r8) :: tauiad(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauia(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauiad(nbdirsmax, ncv, 0:ns-1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -442,10 +445,11 @@ SUBROUTINE B2TTIA_NODIFF_NODIFF(ncv, ns, ti, rz2, ne2, lnlam, tauia)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0:ns-1)
+  INTEGER, INTENT(IN) :: ncv, ns
+  REAL(kind=r8), INTENT(IN) :: ti(ncv), ne2(ncv), lnlam(ncv), rz2(ncv, 0&
+& :ns-1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: tauia(ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(OUT) :: tauia(ncv, 0:ns-1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation

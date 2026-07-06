@@ -42,10 +42,9 @@
           endif
         enddo
       enddo
-      
+      return
       end subroutine to_struct_cell
-      
-      
+
 
       subroutine to_struct_face(nFc,fun_us,funf_st)
       implicit none
@@ -57,21 +56,21 @@
           if(imapFcx(ix,iy) /= 0) then ! poloidal faces
             funf_st(ix,iy,0) = fun_us(imapFcx(ix,iy))
           else
-            ! perhaps here should be the interpolated values 
-            funf_st(ix,iy,0) = 0.0_R8  
+            ! perhaps here should be the interpolated values
+            funf_st(ix,iy,0) = 0.0_R8
           endif
           if(imapFcy(ix,iy) /= 0) then ! radial faces
             funf_st(ix,iy,1) = fun_us(imapFcy(ix,iy))
           else
-            ! perhaps here should be the interpolated values 
-            funf_st(ix,iy,1) = 0.0_R8  
+            ! perhaps here should be the interpolated values
+            funf_st(ix,iy,1) = 0.0_R8
           endif
         enddo
       enddo
-
+      return
       end subroutine to_struct_face
-      
-      
+
+
       subroutine to_struct_vertex(nVx, fun_us, fun_st)
       implicit none
       integer :: nVx, ix, iy
@@ -98,9 +97,7 @@
 !          endif
 !        enddo
 !      enddo
-      
+      return
       end subroutine to_struct_vertex
-      
-      
 
       end module b2us_debug

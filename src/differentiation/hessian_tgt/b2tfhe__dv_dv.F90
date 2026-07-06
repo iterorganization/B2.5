@@ -35,10 +35,10 @@
 !                *(pl.na) *(pl.po) *(pl.te)
 !   Plus diff mem management of: dv.fch_p:in dv.fne_he:in dv.fhe:in
 !                dv.fhe_mdf:in dv.fhepsch:in dv.floe:in dv.cone:in
-!                dv.ne:in dv.vedia:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.za2:in
-!                st_ext.na:in rt.rz2:in co.calf:in co.chce:in pl.na:in
-!                pl.po:in pl.te:in
+!                dv.ne:in dv.vedia:in dv.facdrift:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.za2:in st_ext.na:in rt.rz2:in
+!                co.calf:in co.chce:in pl.na:in pl.po:in pl.te:in
 !
 !
 !
@@ -54,10 +54,10 @@
 !.specification
 !
 !djm Jan2017 !srv 29.01.20
-SUBROUTINE B2TFHE__DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0&
-& , geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, co, cod0&
-& , cod, codd, rt, rtd0, rtd, rtdd, st_ext, st_extd0, st_extd, balance, &
-& nbdirs, nbdirs0)
+SUBROUTINE B2TFHE__DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd&
+& , co, cod0, cod, codd, rt, rtd0, rtd, rtdd, st_ext, st_extd0, st_extd&
+& , balance, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
@@ -83,6 +83,7 @@ SUBROUTINE B2TFHE__DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -176,10 +177,10 @@ SUBROUTINE B2TFHE__DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0&
 & fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
 & 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefd0(nbdirsmax0, nfc), nefd0(nbdirsmax0, nfc), &
-& tefhd0(nbdirsmax0, nfc), fhe0_mdfd0(nbdirsmax0, nfc, 0:1)
+& tefhd0(nbdirsmax0, nfc), wrkfd(nbdirsmax0, nfc, 0:1), fhe0_mdfd0(&
+& nbdirsmax0, nfc, 0:1)
   REAL(kind=r8) :: tefd(nbdirsmax, nfc), nefd(nbdirsmax, nfc), tefhd(&
-& nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1), fhe0_mdfd(nbdirsmax, nfc&
-& , 0:1)
+& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1)
   REAL(kind=r8) :: tefdd(nbdirsmax0, nbdirsmax, nfc), nefdd(nbdirsmax0, &
 & nbdirsmax, nfc), tefhdd(nbdirsmax0, nbdirsmax, nfc), fhe0_mdfdd(&
 & nbdirsmax0, nbdirsmax, nfc, 0:1)
@@ -233,9 +234,9 @@ SUBROUTINE B2TFHE__DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0&
 !    ..test sign of ne, te, chce
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
+    DO nd0=1,nbdirs0
+      wrkfd(nd0, :, 0) = 0.D0
+      wrkfd(nd0, :, 1) = 0.D0
     END DO
     wrkf(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
@@ -711,10 +712,10 @@ END SUBROUTINE B2TFHE__DV_DV
 !                *(pl.na) *(pl.po) *(pl.te)
 !   Plus diff mem management of: dv.fch_p:in dv.fne_he:in dv.fhe:in
 !                dv.fhe_mdf:in dv.fhepsch:in dv.floe:in dv.cone:in
-!                dv.ne:in dv.vedia:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.za2:in
-!                st_ext.na:in rt.rz2:in co.calf:in co.chce:in pl.na:in
-!                pl.po:in pl.te:in
+!                dv.ne:in dv.vedia:in dv.facdrift:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.za2:in st_ext.na:in rt.rz2:in
+!                co.calf:in co.chce:in pl.na:in pl.po:in pl.te:in
 !
 !
 !
@@ -825,8 +826,7 @@ SUBROUTINE B2TFHE__DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 & fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
 & 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefd(nbdirsmax, nfc), nefd(nbdirsmax, nfc), tefhd(&
-& nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1), fhe0_mdfd(nbdirsmax, nfc&
-& , 0:1)
+& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -871,10 +871,6 @@ SUBROUTINE B2TFHE__DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !    ..test sign of ne, te, chce
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-    END DO
     wrkf(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
     CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')

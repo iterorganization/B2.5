@@ -106,3 +106,27 @@ extern "C" void adddata_(double* values, char* name, int* numCells, int *dimensi
       } 
     }
 }
+
+// ParaView 6 dropped the Fortran-underscore variants of the Catalyst v1 C API
+// symbols (coprocess_, requestdatadescription_, etc.).  Provide them here so
+// that the Fortran source files can call them without modification.
+#if PARAVIEW_MAJOR_VERSION >= 6
+extern "C" {
+  void coprocessorinitializewithpython(char* filename, int* len);
+  void coprocessorfinalize(void);
+  void requestdatadescription(int* step, double* time, int* flag);
+  void needtocreategrid(int* flag);
+  void coprocess(void);
+
+  void coprocessorinitializewithpython_(char* filename, int* len)
+    { coprocessorinitializewithpython(filename, len); }
+  void coprocessorfinalize_()
+    { coprocessorfinalize(); }
+  void requestdatadescription_(int* step, double* time, int* flag)
+    { requestdatadescription(step, time, flag); }
+  void needtocreategrid_(int* flag)
+    { needtocreategrid(flag); }
+  void coprocess_()
+    { coprocess(); }
+}
+#endif

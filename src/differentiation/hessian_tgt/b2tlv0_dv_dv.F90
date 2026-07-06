@@ -26,11 +26,11 @@
 !
 !
 !
-SUBROUTINE B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-& geod, mpg, mpgd, na, nad0, nad, nadd, ua, uad0, uad, uadd, te, tn, &
-& tnd0, tnd, tndd, rza, cvsa0, cvsa0d0, cvsa0d, cvsa0dd, cvsa, cvsad0, &
-& cvsad, cvsadd, cvsahz, cvsahzd0, cvsahzd, cvsahzdd, flv, flvd, nbdirs&
-& , nbdirs0)
+SUBROUTINE B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, na, nad0, nad, nadd, ua, uad0, uad, uadd&
+& , te, tn, tnd0, tnd, tndd, rza, cvsa0, cvsa0d0, cvsa0d, cvsa0dd, cvsa&
+& , cvsad0, cvsad, cvsadd, cvsahz, cvsahzd0, cvsahzd, cvsahzdd, flv, &
+& flvd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -49,6 +49,7 @@ SUBROUTINE B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0

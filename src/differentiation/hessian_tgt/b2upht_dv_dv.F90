@@ -92,14 +92,14 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
 !   ..input/output arguments
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), kt(ncv), zt(ncv)
-  REAL(kind=r8) :: uad0(nbdirsmax0, ncv, 0:ns-1), ted0(nbdirsmax0, ncv)&
-& , tid0(nbdirsmax0, ncv), tnd0(nbdirsmax0, ncv), pod0(nbdirsmax0, ncv)&
-& , ned0(nbdirsmax0, ncv), nid0(nbdirsmax0, ncv, 0:1), ktd0(nbdirsmax0, &
-& ncv), ztd0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+  REAL(kind=r8) :: nad(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, 0&
+& :ns-1), ted0(nbdirsmax0, ncv), tid0(nbdirsmax0, ncv), tnd0(nbdirsmax0&
+& , ncv), pod0(nbdirsmax0, ncv), ned0(nbdirsmax0, ncv), nid0(nbdirsmax0&
+& , ncv, 0:1), ktd0(nbdirsmax0, ncv), ztd0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: uad(nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid&
+& (nbdirsmax, ncv), tnd(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
+& nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ktd(nbdirsmax, ncv), ztd(&
+& nbdirsmax, ncv)
   REAL(kind=r8) :: uadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), tedd(&
 & nbdirsmax0, nbdirsmax, ncv), tidd(nbdirsmax0, nbdirsmax, ncv), tndd(&
 & nbdirsmax0, nbdirsmax, ncv), podd(nbdirsmax0, nbdirsmax, ncv), nedd(&
@@ -1083,8 +1083,8 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
         END DO
         y1 = ti(icv) + dti(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y1d0(nd0) = 0.D0
         END DO
         y1 = switch%b2upht_ti_max*ev
         y1d = 0.d0
@@ -1143,8 +1143,8 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
         END DO
         y2 = te(icv) + dte(icv)
       ELSE
-        DO nd=1,nbdirs
-          y2d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y2d0(nd0) = 0.D0
         END DO
         y2 = switch%b2upht_te_max*ev
         y2d = 0.d0
@@ -1213,8 +1213,8 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
         END DO
         y3 = tn(icv) + dtn(icv)
       ELSE
-        DO nd=1,nbdirs
-          y3d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y3d0(nd0) = 0.D0
         END DO
         y3 = switch%b2upht_tn_max*ev
         y3d = 0.d0
@@ -1258,8 +1258,8 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
         END DO
         y4 = kt(icv) + dkt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y4d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y4d0(nd0) = 0.D0
         END DO
         y4 = switch%b2upht_kt_max*ev
         y4d = 0.d0
@@ -1303,8 +1303,8 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
         END DO
         y5 = zt(icv) + dzt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y5d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y5d0(nd0) = 0.D0
         END DO
         y5 = switch%b2upht_zt_max*ev
         y5d = 0.d0
@@ -1450,8 +1450,8 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 & mpgd, po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg, &
 & solvpreg, solvmreg, solvkreg, solvzreg, rxf, cortt, corttd, corte, &
 & corted, corti, cortid, cortn, cortnd, corkt, corktd, corzt, corztd, &
-& pccm0, pccm0d, na, nad, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, &
-& zt, ztd, po, pod, ne, ned, ni, nid, nbdirs)
+& pccm0, pccm0d, na, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, &
+& ztd, po, pod, ne, ned, ni, nid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
@@ -1489,10 +1489,10 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !   ..input/output arguments
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), kt(ncv), zt(ncv)
-  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+  REAL(kind=r8) :: uad(nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid&
+& (nbdirsmax, ncv), tnd(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
+& nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ktd(nbdirsmax, ncv), ztd(&
+& nbdirsmax, ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -1968,9 +1968,6 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         END DO
         y1 = ti(icv) + dti(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.d0
-        END DO
         y1 = switch%b2upht_ti_max*ev
         y1d = 0.d0
       END IF
@@ -2001,9 +1998,6 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         END DO
         y2 = te(icv) + dte(icv)
       ELSE
-        DO nd=1,nbdirs
-          y2d(nd) = 0.d0
-        END DO
         y2 = switch%b2upht_te_max*ev
         y2d = 0.d0
       END IF
@@ -2038,9 +2032,6 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         END DO
         y3 = tn(icv) + dtn(icv)
       ELSE
-        DO nd=1,nbdirs
-          y3d(nd) = 0.d0
-        END DO
         y3 = switch%b2upht_tn_max*ev
         y3d = 0.d0
       END IF
@@ -2063,9 +2054,6 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         END DO
         y4 = kt(icv) + dkt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y4d(nd) = 0.d0
-        END DO
         y4 = switch%b2upht_kt_max*ev
         y4d = 0.d0
       END IF
@@ -2088,9 +2076,6 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         END DO
         y5 = zt(icv) + dzt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y5d(nd) = 0.d0
-        END DO
         y5 = switch%b2upht_zt_max*ev
         y5d = 0.d0
       END IF

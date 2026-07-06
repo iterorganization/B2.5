@@ -72,7 +72,6 @@ SUBROUTINE B2USP7_NODIFF_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, &
 !srv 11.01.00
   EXTERNAL B2XVSG, B2XVFF_NODIFF0, B2UX7P, B2UX9P
   CHARACTER(len=10) :: arg1
-  EXTERNAL MY_OUT
 !   ..initialisation
 !srv 27.01.00
   DATA ncall /0/

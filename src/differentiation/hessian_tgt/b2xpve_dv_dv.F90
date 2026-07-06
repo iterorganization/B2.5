@@ -155,21 +155,27 @@ SUBROUTINE B2XPVE_DV_DV(ncv, nfc, ns, switch, geo, geod0, geod, mpg, &
   gpopd = 0.d0
   dummd = 0.d0
   gpopdd = 0.D0
-  dummdd = 0.D0
   gpopd0 = 0.D0
+  dummdd = 0.D0
   dummd0 = 0.D0
   CALL GRAD_P_DV_DV(ncv, nfc, mpg%nvx, 0, geo, geod0, mpg, mpgd, po, &
 &             pod0, pod, podd, dumm, dummd0, dummd, dummdd, gpop, gpopd0&
 &             , gpopd, gpopdd, nbdirs, nbdirs0)
   gpepd = 0.d0
+  dummd = 0.d0
   gpepdd = 0.D0
   gpepd0 = 0.D0
+  dummdd = 0.D0
+  dummd0 = 0.D0
   CALL GRAD_P_DV_DV(ncv, nfc, mpg%nvx, 0, geo, geod0, mpg, mpgd, pe, &
 &             ped0, ped, pedd, dumm, dummd0, dummd, dummdd, gpep, gpepd0&
 &             , gpepd, gpepdd, nbdirs, nbdirs0)
   gtepd = 0.d0
+  dummd = 0.d0
   gtepd0 = 0.D0
   gtepdd = 0.D0
+  dummdd = 0.D0
+  dummd0 = 0.D0
   CALL GRAD_P_DV_DV(ncv, nfc, mpg%nvx, 0, geo, geod0, mpg, mpgd, te, &
 &             ted0, ted, tedd, dumm, dummd0, dummd, dummdd, gtep, gtepd0&
 &             , gtepd, gtepdd, nbdirs, nbdirs0)
@@ -381,9 +387,11 @@ SUBROUTINE B2XPVE_DV_NODIFF(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   CALL GRAD_P_DV_NODIFF(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, po, pod, &
 &                 dumm, dummd, gpop, gpopd, nbdirs)
   gpepd = 0.d0
+  dummd = 0.d0
   CALL GRAD_P_DV_NODIFF(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, pe, ped, &
 &                 dumm, dummd, gpep, gpepd, nbdirs)
   gtepd = 0.d0
+  dummd = 0.d0
   CALL GRAD_P_DV_NODIFF(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, te, ted, &
 &                 dumm, dummd, gtep, gtepd, nbdirs)
   nefd = 0.d0

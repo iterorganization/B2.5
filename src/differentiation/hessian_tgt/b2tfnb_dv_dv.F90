@@ -5,47 +5,50 @@
 !   variations   of useful results: *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.vadia) *(dv.wadia) *(dv.vaecrb) *(dvd.fna)
-!                *(dvd.fna_mdf) *(dvd.fna_32) *(dvd.fna_53) *(dvd.fna_he)
-!                *(dvd.fnapsch) *(dvd.fna_fcor) *(dvd.fna_exb)
-!                *(dvd.kinrgy) *(dvd.flob) *(dvd.conb) *(dvd.vadia)
-!                *(dvd.wadia) *(dvd.vaecrb)
-!   with respect to varying inputs: *(dv.fchvispar_a) *(dv.fchvisper_a)
-!                *(dv.fchvisq_a) *(dv.fchinert_a) *(dv.fchanml_a)
-!                *(dv.fchviskt_a) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
-!                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
-!                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.pcca) *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(dv.uadia) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(dvd.fna) *(dvd.fna_mdf) *(dvd.fna_32) *(dvd.fna_53)
+!                *(dvd.fna_he) *(dvd.fnapsch) *(dvd.fna_fcor) *(dvd.fna_exb)
+!                *(dvd.kinrgy) *(dvd.flob) *(dvd.conb) *(dvd.uadia)
+!                *(dvd.vadia) *(dvd.wadia) *(dvd.vaecrb)
+!   with respect to varying inputs: *alpha_hs_styled[from module b2mod_frtf_nccorr_diffv]
+!                *g_hs_styled[from module b2mod_frtf_nccorr_diffv]
+!                *(dv.fchvispar_a) *(dv.fchvisper_a) *(dv.fchvisq_a)
+!                *(dv.fchinert_a) *(dv.fchanml_a) *(dv.fchviskt_a)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_53)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
+!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.pcca)
+!                *(dv.pa) *(dv.uadia) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
 !                *(rtd.rza) *(rt.rza) *(dvd.fchvispar_a) *(dvd.fchvisper_a)
 !                *(dvd.fchvisq_a) *(dvd.fchinert_a) *(dvd.fchanml_a)
 !                *(dvd.fchviskt_a) *(dvd.fna) *(dvd.fna_mdf) *(dvd.fna_32)
 !                *(dvd.fna_53) *(dvd.fna_he) *(dvd.fnapsch) *(dvd.fna_fcor)
 !                *(dvd.fna_exb) *(dvd.kinrgy) *(dvd.flob) *(dvd.conb)
-!                *(dvd.pcca) *(dvd.pa) *(dvd.vadia) *(dvd.wadia)
-!                *(dvd.vaecrb) *(cod.cvla) *(cod.cdna) *(cod.cdna_exb)
-!                *(cod.cdpa) *(cod.cvlahz) *(cod.cdpahz) *(cod.cddi)
-!                *(cod.cssb) *(co.cvla) *(co.cdna) *(co.cdna_exb)
-!                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
-!                *(co.cssb) *(pld.na) *(pld.ua) *(pld.po) *(pld.ti)
-!                *(pld.tn) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
-!                *(pl.tn)
+!                *(dvd.pcca) *(dvd.pa) *(dvd.uadia) *(dvd.vadia)
+!                *(dvd.wadia) *(dvd.vaecrb) *(cod.cvla) *(cod.cdna)
+!                *(cod.cdna_exb) *(cod.cdpa) *(cod.cvlahz) *(cod.cdpahz)
+!                *(cod.cddi) *(cod.cssb) *(co.cvla) *(co.cdna)
+!                *(co.cdna_exb) *(co.cdpa) *(co.cvlahz) *(co.cdpahz)
+!                *(co.cddi) *(co.cssb) *(pld.na) *(pld.ua) *(pld.po)
+!                *(pld.ti) *(pld.tn) *(pl.na) *(pl.ua) *(pl.po)
+!                *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: dv.fchvispar_a:in dv.fchvisper_a:in
 !                dv.fchvisq_a:in dv.fchinert_a:in dv.fchanml_a:in
 !                dv.fchviskt_a:in dv.fna:in dv.fna_mdf:in dv.fna_52:in
 !                dv.fna_32:in dv.fna_53:in dv.fna_52nd:in dv.fna_32nd:in
 !                dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in
 !                dv.fna_exb:in dv.kinrgy:in dv.flob:in dv.conb:in
-!                dv.pcca:in dv.pa:in dv.uadia:in dv.vadia:in dv.wadia:in
-!                dv.vaecrb:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in rtd.rza:in
-!                rt.rza:in dvd.fchvispar_a:in dvd.fchvisper_a:in
-!                dvd.fchvisq_a:in dvd.fchinert_a:in dvd.fchanml_a:in
-!                dvd.fchviskt_a:in dvd.fna:in dvd.fna_mdf:in dvd.fna_32:in
-!                dvd.fna_53:in dvd.fna_he:in dvd.fnapsch:in dvd.fna_fcor:in
-!                dvd.fna_exb:in dvd.kinrgy:in dvd.flob:in dvd.conb:in
-!                dvd.pcca:in dvd.pa:in dvd.vadia:in dvd.wadia:in
+!                dv.pcca:in dv.ne:in dv.pa:in dv.uadia:in dv.vadia:in
+!                dv.wadia:in dv.vaecrb:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.fcpbshz:in geo.vxx:in geo.vxy:in
+!                geo.vxvol:in geo.vxonedbsq:in rtd.rza:in rt.rza:in
+!                dvd.fchvispar_a:in dvd.fchvisper_a:in dvd.fchvisq_a:in
+!                dvd.fchinert_a:in dvd.fchanml_a:in dvd.fchviskt_a:in
+!                dvd.fna:in dvd.fna_mdf:in dvd.fna_32:in dvd.fna_53:in
+!                dvd.fna_he:in dvd.fnapsch:in dvd.fna_fcor:in dvd.fna_exb:in
+!                dvd.kinrgy:in dvd.flob:in dvd.conb:in dvd.pcca:in
+!                dvd.pa:in dvd.uadia:in dvd.vadia:in dvd.wadia:in
 !                dvd.vaecrb:in cod.cvla:in cod.cdna:in cod.cdna_exb:in
 !                cod.cdpa:in cod.cvlahz:in cod.cdpahz:in cod.cddi:in
 !                cod.cssb:in co.cvla:in co.cdna:in co.cdna_exb:in
@@ -60,14 +63,14 @@
 !   variations   of useful results: *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(dv.uadia) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
 !   with respect to varying inputs: *(dv.fchvispar_a) *(dv.fchvisper_a)
 !                *(dv.fchvisq_a) *(dv.fchinert_a) *(dv.fchanml_a)
 !                *(dv.fchviskt_a) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.pcca) *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
-!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(dv.pcca) *(dv.pa) *(dv.uadia) *(dv.vadia) *(dv.wadia)
+!                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
 !                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
 !                *(pl.tn)
@@ -77,15 +80,16 @@
 !                dv.fna_32:in dv.fna_53:in dv.fna_52nd:in dv.fna_32nd:in
 !                dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in
 !                dv.fna_exb:in dv.kinrgy:in dv.flob:in dv.conb:in
-!                dv.pcca:in dv.ne:in dv.pa:in dv.uadia:in dv.vadia:in
-!                dv.wadia:in dv.vaecrb:in mpg.bcfcor:in mpg.intcellp:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
-!                geo.vxvol:in geo.vxonedbsq:in rt.rza:in co.cvla:in
-!                co.cdna:in co.cdna_exb:in co.cdpa:in co.cvlahz:in
-!                co.cdpahz:in co.cddi:in co.fllim0fna:in co.cssb:in
-!                pl.na:in pl.ua:in pl.po:in pl.ti:in pl.tn:in
+!                dv.pcca:in dv.pa:in dv.uadia:in dv.vadia:in dv.wadia:in
+!                dv.vaecrb:in dv.facdrift:in dv.fac_exb:in mpg.bcfcor:in
+!                mpg.intcellp:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.vxx:in geo.vxy:in geo.vxvol:in
+!                geo.vxonedbsq:in rt.rza:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvlahz:in co.cdpahz:in
+!                co.cddi:in co.fllim0fna:in co.cssb:in pl.na:in
+!                pl.ua:in pl.po:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -100,9 +104,10 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
-& , geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, co&
-& , cod0, cod, codd, rt, rtd0, rtd, rtdd, balance, nbdirs, nbdirs0)
+SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd0, &
+& switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, &
+& dvd, dvdd, co, cod0, cod, codd, rt, rtd0, rtd, rtdd, balance, nbdirs, &
+& nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
@@ -133,6 +138,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, isb, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -179,6 +185,11 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !   ..local variables
 !srv 13.10.06
   INTEGER :: icv1, icv2, ifc, meth
+  INTEGER :: ivx1, ivx2, ifc1, ifc2, k, j
+  REAL(kind=r8) :: dpo_p, dpo_r, fcht_tot, a(2), b(2), vx_dir
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: dpo_pd0, dpo_rd0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dpo_pd, dpo_rd
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: dpo_pdd, dpo_rdd
 !srv 16.09.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: drift_hyb
@@ -186,19 +197,22 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   REAL(kind=r8) :: flo(nfc, 0:1), flo_mdf(nfc, 0:1), flo_nodrift(nfc, 0:&
 & 1), flo2dia(nfc, 0:1), flo_he(nfc, 0:1), flo_53(nfc, 0:1), alpha, &
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
-& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
+& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1), flobtmp(nfc, 0:1), conbtmp(nfc&
+& , 0:1, 0:4)
   REAL(kind=r8) :: flod0(nbdirsmax0, nfc, 0:1), flo_mdfd0(nbdirsmax0, &
 & nfc, 0:1), flo2diad0(nbdirsmax0, nfc, 0:1), flo_hed0(nbdirsmax0, nfc, &
 & 0:1), flo_53d0(nbdirsmax0, nfc, 0:1), vbard0(nbdirsmax0), t0d0(&
 & nbdirsmax0), t1d0(nbdirsmax0), t2d0(nbdirsmax0), t3d0(nbdirsmax0), &
 & termd0(nbdirsmax0, nfc), flob0d0(nbdirsmax0, nfc, 0:1), conb0d0(&
-& nbdirsmax0, nfc, 0:1), scurd0(nbdirsmax0, nfc, 0:1)
+& nbdirsmax0, nfc, 0:1), scurd0(nbdirsmax0, nfc, 0:1), flobtmpd0(&
+& nbdirsmax0, nfc, 0:1), conbtmpd0(nbdirsmax0, nfc, 0:1, 0:4)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), flo_mdfd(nbdirsmax, nfc, 0&
 & :1), flo2diad(nbdirsmax, nfc, 0:1), flo_hed(nbdirsmax, nfc, 0:1), &
 & flo_53d(nbdirsmax, nfc, 0:1), vbard(nbdirsmax), t0d(nbdirsmax), t1d(&
 & nbdirsmax), t2d(nbdirsmax), t3d(nbdirsmax), termd(nbdirsmax, nfc), &
 & flob0d(nbdirsmax, nfc, 0:1), conb0d(nbdirsmax, nfc, 0:1), scurd(&
-& nbdirsmax, nfc, 0:1)
+& nbdirsmax, nfc, 0:1), flobtmpd(nbdirsmax, nfc, 0:1), conbtmpd(&
+& nbdirsmax, nfc, 0:1, 0:4)
   REAL(kind=r8) :: flodd(nbdirsmax0, nbdirsmax, nfc, 0:1), flo_mdfdd(&
 & nbdirsmax0, nbdirsmax, nfc, 0:1), flo2diadd(nbdirsmax0, nbdirsmax, nfc&
 & , 0:1), flo_hedd(nbdirsmax0, nbdirsmax, nfc, 0:1), flo_53dd(nbdirsmax0&
@@ -206,7 +220,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 & , nbdirsmax), t1dd(nbdirsmax0, nbdirsmax), t2dd(nbdirsmax0, nbdirsmax)&
 & , t3dd(nbdirsmax0, nbdirsmax), termdd(nbdirsmax0, nbdirsmax, nfc), &
 & flob0dd(nbdirsmax0, nbdirsmax, nfc, 0:1), conb0dd(nbdirsmax0, &
-& nbdirsmax, nfc, 0:1), scurdd(nbdirsmax0, nbdirsmax, nfc, 0:1)
+& nbdirsmax, nfc, 0:1), scurdd(nbdirsmax0, nbdirsmax, nfc, 0:1), &
+& flobtmpdd(nbdirsmax0, nbdirsmax, nfc, 0:1), conbtmpdd(nbdirsmax0, &
+& nbdirsmax, nfc, 0:1, 0:4)
 !srv 05.03.16
 !srv 05.03.16
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmpr(ncv), kmprv(nvx), &
@@ -280,6 +296,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC SUM
   INTRINSIC NINT
   EXTERNAL XERRAB
   REAL(r8) :: x1
@@ -301,18 +318,18 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   REAL(r8) :: result1
   REAL(r8) :: result2
   REAL(r8) :: result3
-  REAL(r8) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax0) :: arg1d0
-  REAL(r8), DIMENSION(nbdirsmax) :: arg1d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg1dd
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg1dd
+  REAL(r8) :: arg10
+  REAL(r8), DIMENSION(nbdirsmax0) :: arg10d0
+  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
   REAL(kind=r8) :: result10
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: result10d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result10dd
-  REAL(kind=r8) :: arg10
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg10d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
   CHARACTER(len=18) :: arg11
   CHARACTER(len=17) :: arg12
   CHARACTER(len=16) :: arg13
@@ -332,15 +349,15 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   REAL(r8), DIMENSION(nbdirsmax0, ncv) :: tempd2
   REAL(kind=r8) :: temp0
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp0d
-  REAL(r8) :: temp1
-  REAL(r8), DIMENSION(nbdirsmax0) :: temp1d
-  REAL(r8), DIMENSION(ncv) :: temp2
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp2d
-  REAL(kind=r8), DIMENSION(nfc) :: temp3
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nfc) :: temp3d
-  REAL(kind=r8) :: temp4
-  REAL(kind=r8) :: temp5
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp5d
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: temp2
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp2d
+  REAL(r8) :: temp3
+  REAL(r8), DIMENSION(nbdirsmax0) :: temp3d
+  REAL(r8), DIMENSION(ncv) :: temp4
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp4d
+  REAL(kind=r8), DIMENSION(nfc) :: temp5
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nfc) :: temp5d
   REAL(kind=r8) :: temp6
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp6d
   REAL(kind=r8) :: temp7
@@ -370,8 +387,8 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   REAL(r8), DIMENSION(nfc) :: temp16
   REAL(r8), DIMENSION(nbdirsmax) :: tempd1
   REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: tempd1d
-  REAL(r8), DIMENSION(5) :: temp17
-  REAL(r8), DIMENSION(nbdirsmax0, 5) :: temp17d
+  REAL(kind=r8), DIMENSION(5) :: temp17
+  REAL(kind=r8), DIMENSION(nbdirsmax0, 5) :: temp17d
   INTEGER :: nbdirs
   INTRINSIC INT
   INTEGER :: nd0
@@ -396,7 +413,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: tempd4
   REAL(r8) :: temp33
   REAL(r8), DIMENSION(nbdirsmax0) :: tempd5
-  REAL(r8), DIMENSION(5) :: temp34
+  REAL(kind=r8), DIMENSION(5) :: temp34
   INTEGER :: nbdirs0
 !   ..initialisation
 !
@@ -416,26 +433,26 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     CALL B2XVSG(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
-    wrk1dd = 0.D0
-    wrk0dd = 0.D0
-    DO nd=1,nbdirs
-      DO nd0=nd,nbdirs0
-        wrk0dd(nd0, nd, :) = 0.D0
-        wrk1dd(nd0, nd, :) = 0.D0
-        wrk0dd(nd0, nd, :) = geo%fcqalf(:, 0)*codd%cdpa(nd0, nd, :, 0, &
-&         isb)
-        wrk1dd(nd0, nd, :) = geo%fcqalf(:, 1)*codd%cdpa(nd0, nd, :, 1, &
-&         isb)
-      END DO
-      wrk0d(nd, :) = 0.d0
-      wrk1d(nd, :) = 0.d0
-      wrk0d(nd, :) = geo%fcqalf(:, 0)*cod%cdpa(nd, :, 0, isb)
-      wrk1d(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, isb)
+    DO nd0=1,nbdirs0
+      wrk0d0(nd0, :) = 0.D0
+      wrk1d0(nd0, :) = 0.D0
     END DO
     wrk0(:) = co%cdna(:, 0, isb)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrk0, 1, 'cdna0', '.ge.')
     wrk1(:) = co%cdna(:, 1, isb)*geo%fcqalf(:, 1)
     CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
+    wrk1dd = 0.D0
+    wrk0dd = 0.D0
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+        wrk0dd(nd0, nd, :) = geo%fcqalf(:, 0)*codd%cdpa(nd0, nd, :, 0, &
+&         isb)
+        wrk1dd(nd0, nd, :) = geo%fcqalf(:, 1)*codd%cdpa(nd0, nd, :, 1, &
+&         isb)
+      END DO
+      wrk0d(nd, :) = geo%fcqalf(:, 0)*cod%cdpa(nd, :, 0, isb)
+      wrk1d(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, isb)
+    END DO
     DO nd0=1,nbdirs0
       wrk0d0(nd0, :) = geo%fcqalf(:, 0)*cod0%cdpa(nd0, :, 0, isb)
       wrk1d0(nd0, :) = geo%fcqalf(:, 1)*cod0%cdpa(nd0, :, 1, isb)
@@ -552,9 +569,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !
 ! Drift terms
   maxfluxlimit = 0.0_R8
-  dv%uadia(:, :, isb) = 0.0_R8
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
+      dvdd%uadia(nd0, nd, :, :, isb) = 0.D0
       dvdd%vadia(nd0, nd, :, :, isb) = 0.D0
       dvdd%wadia(nd0, nd, :, :, isb) = 0.D0
       dvdd%vaecrb(nd0, nd, :, :, isb) = 0.D0
@@ -562,34 +579,40 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fnapsch(nd0, nd, :, :, isb) = 0.D0
 !srv 19.11.09
       dvdd%fna_mdf(nd0, nd, :, :, isb) = 0.D0
-      dvdd%flob(nd0, nd, :, :) = 0.D0
+      dvdd%flob(nd0, nd, :, :, isb) = 0.D0
 !srv 13.10.06
-      dvdd%conb(nd0, nd, :, :, :) = 0.D0
+      dvdd%conb(nd0, nd, :, :, :, isb) = 0.D0
     END DO
+    dvd%uadia(nd, :, :, isb) = 0.d0
     dvd%vadia(nd, :, :, isb) = 0.d0
     dvd%wadia(nd, :, :, isb) = 0.d0
     dvd%vaecrb(nd, :, :, isb) = 0.d0
     dvd%fnapsch(nd, :, :, isb) = 0.d0
     dvd%fna_mdf(nd, :, :, isb) = 0.d0
-    dvd%flob(nd, :, :) = 0.d0
-    dvd%conb(nd, :, :, :) = 0.d0
+    dvd%flob(nd, :, :, isb) = 0.d0
+    dvd%conb(nd, :, :, :, isb) = 0.d0
   END DO
   DO nd0=1,nbdirs0
+    dvd0%uadia(nd0, :, :, isb) = 0.D0
     dvd0%vadia(nd0, :, :, isb) = 0.D0
     dvd0%wadia(nd0, :, :, isb) = 0.D0
     dvd0%vaecrb(nd0, :, :, isb) = 0.D0
     dvd0%fnapsch(nd0, :, :, isb) = 0.D0
     dvd0%fna_mdf(nd0, :, :, isb) = 0.D0
-    dvd0%flob(nd0, :, :) = 0.D0
-    dvd0%conb(nd0, :, :, :) = 0.D0
+    dvd0%flob(nd0, :, :, isb) = 0.D0
+    dvd0%conb(nd0, :, :, :, isb) = 0.D0
+    conbtmpd0(nd0, :, :, :) = 0.D0
   END DO
+  dv%uadia(:, :, isb) = 0.0_R8
   dv%vadia(:, :, isb) = 0.0_R8
   dv%wadia(:, :, isb) = 0.0_R8
   dv%vaecrb(:, :, isb) = 0.0_R8
   dv%fnapsch(:, :, isb) = 0.0_R8
   dv%fna_mdf(:, :, isb) = 0.0_R8
-  dv%flob = 0.0_R8
-  dv%conb = 0.0_R8
+  dv%flob(:, :, isb) = 0.0_R8
+  dv%conb(:, :, :, isb) = 0.0_R8
+  flobtmp = 0.0_R8
+  conbtmp = 0.0_R8
 !srv 01.10.99
   ub2dia = 0.0_R8
   result1 = MAXVAL(dv%facdrift)
@@ -673,66 +696,194 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     END DO
     dv%vaecrb(:, 0, isb) = -(switch%poleldr*dv%fac_exb*wrk0*dpo(:, 1))
     dv%vaecrb(:, 1, isb) = switch%radeldr*dv%fac_exb*wrk0*dpo(:, 0)
+!
+    IF (switch%b2tfnb_avg_vexb .GE. 1) THEN
+      wrkvxd = 0.d0
+      wrkvxd0 = 0.D0
+      wrkvxdd = 0.D0
+      CALL INTVERTEX_DV_DV(ncv, nvx, mpg, geo%vxvol, pl%po, pld0%po, pld&
+&                    %po, pldd%po, wrkvx, wrkvxd0, wrkvxd, wrkvxdd, &
+&                    nbdirs, nbdirs0)
+      dpo_pdd = 0.D0
+      dpo_rdd = 0.D0
+      DO j=1,mpg%nfci
+        IF (.NOT.(mpg%fcs_wall_ind(j, 2) .EQ. 1 .OR. mpg%fcs_wall_type(j&
+&           ) .NE. 2)) THEN
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1))
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+1)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx1 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx1 = mpg%fcvx(ifc1, 2)
+          END IF
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-1)
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-2)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx2 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx2 = mpg%fcvx(ifc1, 2)
+          END IF
+          fcht_tot = SUM(geo%fcht(mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):&
+&           mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j, 2)-1)))
+          IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                            '(a,2i6,1p,2e15.8)') &
+&                                            'iVx1,iVx2,po_iVx1,po_iVx2'&
+&                                            , ivx1, ivx2, wrkvx(ivx1), &
+&                                            wrkvx(ivx2)
+          DO k=1,mpg%fcs_wall_ind(j, 2)
+            ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+            icv1 = mpg%fccv(ifc, 1)
+            icv2 = mpg%fccv(ifc, 2)
+            a(1) = geo%vxx(mpg%fcvx(ifc, 2)) - geo%vxx(mpg%fcvx(ifc, 1))
+            a(2) = geo%vxy(mpg%fcvx(ifc, 2)) - geo%vxy(mpg%fcvx(ifc, 1))
+            b(1) = geo%vxx(ivx2) - geo%vxx(ivx1)
+            b(2) = geo%vxy(ivx2) - geo%vxy(ivx1)
+            arg1 = a(1)*b(1) + a(2)*b(2)
+            vx_dir = SIGN(1.0_R8, arg1)
+            temp0 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
+&             ))
+            temp1 = vx_dir*geo%fcqbet(ifc, 1)
+            temp2 = geo%fcqgam(ifc, 0)*fcht_tot
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dpo_pdd(nd0, nd) = geo%fcqalf(ifc, 0)*(pldd%po(nd0, nd, &
+&                 icv2)-pldd%po(nd0, nd, icv1))/temp0 + temp1*(wrkvxdd(&
+&                 nd0, nd, ivx2)-wrkvxdd(nd0, nd, ivx1))/temp2
+              END DO
+              dpo_pd(nd) = geo%fcqalf(ifc, 0)*(pld%po(nd, icv2)-pld%po(&
+&               nd, icv1))/temp0 + temp1*(wrkvxd(nd, ivx2)-wrkvxd(nd, &
+&               ivx1))/temp2
+            END DO
+            DO nd0=1,nbdirs0
+              dpo_pd0(nd0) = geo%fcqalf(ifc, 0)*(pld0%po(nd0, icv2)-pld0&
+&               %po(nd0, icv1))/temp0 + temp1*(wrkvxd0(nd0, ivx2)-&
+&               wrkvxd0(nd0, ivx1))/temp2
+            END DO
+            dpo_p = geo%fcqalf(ifc, 0)*((pl%po(icv2)-pl%po(icv1))/temp0)&
+&             + temp1*((wrkvx(ivx2)-wrkvx(ivx1))/temp2)
+!
+            temp2 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
+&             ))
+            temp1 = vx_dir*geo%fcqbet(ifc, 0)
+            temp0 = geo%fcqgam(ifc, 0)*fcht_tot
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dpo_rdd(nd0, nd) = geo%fcqalf(ifc, 1)*(pldd%po(nd0, nd, &
+&                 icv2)-pldd%po(nd0, nd, icv1))/temp2 + temp1*(wrkvxdd(&
+&                 nd0, nd, ivx2)-wrkvxdd(nd0, nd, ivx1))/temp0
+              END DO
+              dpo_rd(nd) = geo%fcqalf(ifc, 1)*(pld%po(nd, icv2)-pld%po(&
+&               nd, icv1))/temp2 + temp1*(wrkvxd(nd, ivx2)-wrkvxd(nd, &
+&               ivx1))/temp0
+            END DO
+            DO nd0=1,nbdirs0
+              dpo_rd0(nd0) = geo%fcqalf(ifc, 1)*(pld0%po(nd0, icv2)-pld0&
+&               %po(nd0, icv1))/temp2 + temp1*(wrkvxd0(nd0, ivx2)-&
+&               wrkvxd0(nd0, ivx1))/temp0
+            END DO
+            dpo_r = geo%fcqalf(ifc, 1)*((pl%po(icv2)-pl%po(icv1))/temp2)&
+&             + temp1*((wrkvx(ivx2)-wrkvx(ivx1))/temp0)
+            IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                              '(a,i6,1p,2e15.8)') &
+&                                              'iFc,dpo_th,dpo_r', ifc, &
+&                                              dpo_p, dpo_r
+            temp3 = dv%fac_exb(ifc)*wrk0(ifc)
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dvdd%vaecrb(nd0, nd, ifc, 0, isb) = -(temp3*switch%&
+&                 poleldr*dpo_rdd(nd0, nd))
+              END DO
+              dvd%vaecrb(nd, ifc, 0, isb) = -(temp3*switch%poleldr*&
+&               dpo_rd(nd))
+            END DO
+            DO nd0=1,nbdirs0
+              dvd0%vaecrb(nd0, ifc, 0, isb) = -(temp3*switch%poleldr*&
+&               dpo_rd0(nd0))
+            END DO
+            dv%vaecrb(ifc, 0, isb) = -(temp3*(switch%poleldr*dpo_r))
+            temp3 = dv%fac_exb(ifc)*wrk0(ifc)
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dvdd%vaecrb(nd0, nd, ifc, 1, isb) = temp3*switch%radeldr&
+&                 *dpo_pdd(nd0, nd)
+              END DO
+              dvd%vaecrb(nd, ifc, 1, isb) = temp3*switch%radeldr*dpo_pd(&
+&               nd)
+            END DO
+            DO nd0=1,nbdirs0
+              dvd0%vaecrb(nd0, ifc, 1, isb) = temp3*switch%radeldr*&
+&               dpo_pd0(nd0)
+            END DO
+            dv%vaecrb(ifc, 1, isb) = temp3*(switch%radeldr*dpo_p)
+          END DO
+        END IF
+      END DO
+    END IF
+!
 !     ..restriction ExB drift
     xcount = 0
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
       t0d = 0.d0
-      arg1dd = 0.D0
       t0d0 = 0.D0
       t0dd = 0.D0
+      arg10dd = 0.D0
       t1dd = 0.D0
 !iyv 06.02.14 {
 !wdk for unstructured grids: apply ExB velocity restriction
 !    to total ExB velocity (instead of individual poloidal and radial
 !    components). Otherwise: not perpendicular to gradient of potential
       DO ifc=1,nfc
-        temp0 = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp0*temp0 + dv%vaecrb(ifc, 1, isb)*dv%vaecrb(ifc, 1, &
+        temp2 = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp2*temp2 + dv%vaecrb(ifc, 1, isb)*dv%vaecrb(ifc, 1, &
 &         isb)
-        temp20 = SQRT(arg1)
+        temp20 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          temp0d(nd0) = geo%fcbb(ifc, 3)*dvd0%vaecrb(nd0, ifc, 0, isb)/&
+          temp2d(nd0) = geo%fcbb(ifc, 3)*dvd0%vaecrb(nd0, ifc, 0, isb)/&
 &           geo%fcbb(ifc, 2)
-          arg1d0(nd0) = 2*temp0*temp0d(nd0) + 2*dv%vaecrb(ifc, 1, isb)*&
+          arg10d0(nd0) = 2*temp2*temp2d(nd0) + 2*dv%vaecrb(ifc, 1, isb)*&
 &           dvd0%vaecrb(nd0, ifc, 1, isb)
-          IF (arg1 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
           ELSE
-            temp1d(nd0) = arg1d0(nd0)/(2.0*temp20)
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp20)
           END IF
         END DO
-        temp1 = temp20
+        temp3 = temp20
         DO nd=1,nbdirs
           temp21 = 2*geo%fcbb(ifc, 3)
-          temp22 = temp0/geo%fcbb(ifc, 2)
+          temp22 = temp2/geo%fcbb(ifc, 2)
           temp20 = dvd%vaecrb(nd, ifc, 0, isb)
           temp23 = dvd%vaecrb(nd, ifc, 1, isb)
           temp24 = 2*dv%vaecrb(ifc, 1, isb)
           DO nd0=1,nbdirs0
-            arg1dd(nd0, nd) = temp21*(temp22*dvdd%vaecrb(nd0, nd, ifc, 0&
-&             , isb)+temp20*temp0d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
+            arg10dd(nd0, nd) = temp21*(temp22*dvdd%vaecrb(nd0, nd, ifc, &
+&             0, isb)+temp20*temp2d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
 &             dvd0%vaecrb(nd0, ifc, 1, isb) + temp24*dvdd%vaecrb(nd0, nd&
 &             , ifc, 1, isb)
           END DO
-          arg1d(nd) = temp21*(temp20*temp22) + temp24*temp23
-          IF (arg1 .EQ. 0.d0) THEN
+          arg10d(nd) = temp21*(temp20*temp22) + temp24*temp23
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               t0dd(nd0, nd) = 0.D0
             END DO
             t0d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp1)
+            temp24 = arg10d(nd)/(2.0*temp3)
             DO nd0=1,nbdirs0
-              t0dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp1d(nd0))/(&
-&               2.0*temp1)
+              t0dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
             END DO
             t0d(nd) = temp24
           END IF
         END DO
         DO nd0=1,nbdirs0
-          t0d0(nd0) = temp1d(nd0)
+          t0d0(nd0) = temp3d(nd0)
         END DO
-        t0 = temp1
+        t0 = temp3
         IF (t0 .GT. 2.0_R8*co%cssb(ifc)) THEN
           xcount = xcount + 1
           IF (switch%vlct_diagno .GE. 2) THEN
@@ -745,16 +896,16 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           END IF
           temp24 = co%cssb(ifc)/t0
           DO nd0=1,nbdirs0
-            temp1d(nd0) = (cod0%cssb(nd0, ifc)-temp24*t0d0(nd0))/t0
-            t1d0(nd0) = 2.0_R8*temp1d(nd0)
+            temp3d(nd0) = (cod0%cssb(nd0, ifc)-temp24*t0d0(nd0))/t0
+            t1d0(nd0) = 2.0_R8*temp3d(nd0)
           END DO
-          temp1 = temp24
-          t1 = 2.0_R8*temp1
+          temp3 = temp24
+          t1 = 2.0_R8*temp3
           DO nd=1,nbdirs
-            temp24 = (cod%cssb(nd, ifc)-temp1*t0d(nd))/t0
+            temp24 = (cod%cssb(nd, ifc)-temp3*t0d(nd))/t0
             DO nd0=1,nbdirs0
               t1dd(nd0, nd) = 2.0_R8*(codd%cssb(nd0, nd, ifc)-t0d(nd)*&
-&               temp1d(nd0)-temp1*t0dd(nd0, nd)-temp24*t0d0(nd0))/t0
+&               temp3d(nd0)-temp3*t0dd(nd0, nd)-temp24*t0d0(nd0))/t0
             END DO
             t1d(nd) = 2.0_R8*temp24
             temp24 = dvd%vaecrb(nd, ifc, 0, isb)
@@ -790,9 +941,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       END DO
     ELSE
       t0d = 0.d0
-      arg1dd = 0.D0
       t0d0 = 0.D0
       t0dd = 0.D0
+      arg10dd = 0.D0
       t1dd = 0.D0
     END IF
     IF (switch%vlct_diagno .GE. 1) THEN
@@ -811,27 +962,27 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !wdk    check treatment of rza for consistency with other drifts
     temp25 = pl%na(:, isb)*pl%ti/(qe*rt%rza(:, isb))
     DO nd0=1,nbdirs0
-      temp2d(nd0, :) = (pl%ti*pld0%na(nd0, :, isb)+pl%na(:, isb)*pld0%ti&
+      temp4d(nd0, :) = (pl%ti*pld0%na(nd0, :, isb)+pl%na(:, isb)*pld0%ti&
 &       (nd0, :)-temp25*qe*rtd0%rza(nd0, :, isb))/(qe*rt%rza(:, isb))
     END DO
-    temp2 = temp25
+    temp4 = temp25
     wrkdd = 0.D0
     DO nd=1,nbdirs
       temp19 = (pl%ti*pld%na(nd, :, isb)+pl%na(:, isb)*pld%ti(nd, :)-qe*&
-&       temp2*rtd%rza(nd, :, isb))/(qe*rt%rza(:, isb))
+&       temp4*rtd%rza(nd, :, isb))/(qe*rt%rza(:, isb))
       DO nd0=1,nbdirs0
         wrkdd(nd0, nd, :) = (pld%na(nd, :, isb)*pld0%ti(nd0, :)+pl%ti*&
 &         pldd%na(nd0, nd, :, isb)+pld%ti(nd, :)*pld0%na(nd0, :, isb)+pl&
-&         %na(:, isb)*pldd%ti(nd0, nd, :)-qe*(rtd%rza(nd, :, isb)*temp2d&
-&         (nd0, :)+temp2*rtdd%rza(nd0, nd, :, isb))-temp19*qe*rtd0%rza(&
+&         %na(:, isb)*pldd%ti(nd0, nd, :)-qe*(rtd%rza(nd, :, isb)*temp4d&
+&         (nd0, :)+temp4*rtdd%rza(nd0, nd, :, isb))-temp19*qe*rtd0%rza(&
 &         nd0, :, isb))/(qe*rt%rza(:, isb))
       END DO
       wrkd(nd, :) = temp19
     END DO
     DO nd0=1,nbdirs0
-      wrkd0(nd0, :) = temp2d(nd0, :)
+      wrkd0(nd0, :) = temp4d(nd0, :)
     END DO
-    wrk = temp2
+    wrk = temp4
     CALL INTFACE_DV_DV(ncv, nfc, mpg%fccv, weight, wrk, wrkd0, wrkd, &
 &                wrkdd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, nbdirs0)
     DO nd=1,nbdirs
@@ -855,8 +1006,13 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         dvdd%vadia(nd0, nd, :, 1, isb) = -(temp28*(wrk1dd(nd0, nd, :)-&
 &         temp27*nbfdd(nd0, nd, :)-nbfd(nd, :)*(wrk1d0(nd0, :)-temp27*&
 &         nbfd0(nd0, :))/nbf-temp26*nbfd0(nd0, :))/nbf)
+!     ..additional drift variables
+        dvdd%uadia(nd0, nd, :, :, isb) = dvdd%vaecrb(nd0, nd, :, :, isb)&
+&         + dvdd%vadia(nd0, nd, :, :, isb)
       END DO
       dvd%vadia(nd, :, 1, isb) = -(temp28*temp26)
+      dvd%uadia(nd, :, :, isb) = dvd%vaecrb(nd, :, :, isb) + dvd%vadia(&
+&       nd, :, :, isb)
     END DO
     DO nd0=1,nbdirs0
       dvd0%vadia(nd0, :, 0, isb) = donedbsq(:, 1)*geo%fcbb(:, 2)*switch%&
@@ -877,55 +1033,63 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &                nbdirs0)
     temp28 = dnbti(:, 1)/(qe*wrk1)
     DO nd0=1,nbdirs0
-      temp3d(nd0, :) = (dnbtid0(nd0, :, 1)-temp28*qe*wrk1d0(nd0, :))/(qe&
+      temp5d(nd0, :) = (dnbtid0(nd0, :, 1)-temp28*qe*wrk1d0(nd0, :))/(qe&
 &       *wrk1)
     END DO
-    temp3 = temp28
+    temp5 = temp28
     DO nd=1,nbdirs
-      temp28 = (dnbtid(nd, :, 1)-qe*temp3*wrk1d(nd, :))/(qe*wrk1)
+      temp28 = (dnbtid(nd, :, 1)-qe*temp5*wrk1d(nd, :))/(qe*wrk1)
       DO nd0=1,nbdirs0
         dvdd%wadia(nd0, nd, :, 0, isb) = -(dv%facdrift*wrk0*(dnbtidd(nd0&
-&         , nd, :, 1)-qe*(wrk1d(nd, :)*temp3d(nd0, :)+temp3*wrk1dd(nd0, &
+&         , nd, :, 1)-qe*(wrk1d(nd, :)*temp5d(nd0, :)+temp5*wrk1dd(nd0, &
 &         nd, :))-temp28*qe*wrk1d0(nd0, :))/(qe*wrk1))
       END DO
       dvd%wadia(nd, :, 0, isb) = -(dv%facdrift*wrk0*temp28)
     END DO
     temp28 = dnbti(:, 0)/(qe*wrk1)
     DO nd0=1,nbdirs0
-      dvd0%wadia(nd0, :, 0, isb) = -(dv%facdrift*wrk0*temp3d(nd0, :))
-      temp3d(nd0, :) = (dnbtid0(nd0, :, 0)-temp28*qe*wrk1d0(nd0, :))/(qe&
+      dvd0%wadia(nd0, :, 0, isb) = -(dv%facdrift*wrk0*temp5d(nd0, :))
+      temp5d(nd0, :) = (dnbtid0(nd0, :, 0)-temp28*qe*wrk1d0(nd0, :))/(qe&
 &       *wrk1)
     END DO
-    dv%wadia(:, 0, isb) = -(dv%facdrift*wrk0*temp3)
-    temp3 = temp28
+    dv%wadia(:, 0, isb) = -(dv%facdrift*wrk0*temp5)
+    temp5 = temp28
     DO nd=1,nbdirs
-      temp28 = (dnbtid(nd, :, 0)-qe*temp3*wrk1d(nd, :))/(qe*wrk1)
+      temp28 = (dnbtid(nd, :, 0)-qe*temp5*wrk1d(nd, :))/(qe*wrk1)
       DO nd0=1,nbdirs0
         dvdd%wadia(nd0, nd, :, 1, isb) = dv%facdrift*wrk0*(dnbtidd(nd0, &
-&         nd, :, 0)-qe*(wrk1d(nd, :)*temp3d(nd0, :)+temp3*wrk1dd(nd0, nd&
+&         nd, :, 0)-qe*(wrk1d(nd, :)*temp5d(nd0, :)+temp5*wrk1dd(nd0, nd&
 &         , :))-temp28*qe*wrk1d0(nd0, :))/(qe*wrk1)
       END DO
       dvd%wadia(nd, :, 1, isb) = dv%facdrift*wrk0*temp28
     END DO
     DO nd0=1,nbdirs0
-      dvd0%wadia(nd0, :, 1, isb) = dv%facdrift*wrk0*temp3d(nd0, :)
+      dvd0%wadia(nd0, :, 1, isb) = dv%facdrift*wrk0*temp5d(nd0, :)
+      dvd0%uadia(nd0, :, :, isb) = dvd0%vaecrb(nd0, :, :, isb) + dvd0%&
+&       vadia(nd0, :, :, isb)
     END DO
-    dv%wadia(:, 1, isb) = dv%facdrift*wrk0*temp3
-!     ..additional drift variables
+    dv%wadia(:, 1, isb) = dv%facdrift*wrk0*temp5
     dv%uadia(:, :, isb) = dv%vaecrb(:, :, isb) + dv%vadia(:, :, isb)
     ub2dia = dv%vaecrb(:, :, isb) + 2.0_R8*dv%vadia(:, :, isb)
 !
 !     ..computation of P.Sch flows
+    flobtmpd = 0.d0
+    conbtmpd = 0.d0
+    flobtmpd0 = 0.D0
+    flobtmpdd = 0.D0
+    conbtmpd0 = 0.D0
+    conbtmpdd = 0.D0
     CALL B2TNPSCH_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
 &                 mpgd, dv%facdrift, co%cddi(:, :, isb), cod0%cddi(:, :&
 &                 , :, isb), cod%cddi(:, :, :, isb), codd%cddi(:, :, :, &
 &                 :, isb), pl%ti, pld0%ti, pld%ti, pldd%ti, pl%na(:, isb&
 &                 ), pld0%na(:, :, isb), pld%na(:, :, isb), pldd%na(:, :&
-&                 , :, isb), kmprti, kmprtid0, kmprtid, kmprtidd, dv%&
-&                 flob, dvd0%flob, dvd%flob, dvdd%flob, dv%conb, dvd0%&
-&                 conb, dvd%conb, dvdd%conb, dv%fnapsch(:, :, isb), dvd0&
-&                 %fnapsch(:, :, :, isb), dvd%fnapsch(:, :, :, isb), &
-&                 dvdd%fnapsch(:, :, :, :, isb), nbdirs, nbdirs0)
+&                 , :, isb), kmprti, kmprtid0, kmprtid, kmprtidd, &
+&                 flobtmp, flobtmpd0, flobtmpd, flobtmpdd, conbtmp(:, :&
+&                 , 0:2), conbtmpd0(:, :, :, 0:2), conbtmpd(:, :, :, 0:2&
+&                 ), conbtmpdd(:, :, :, :, 0:2), dv%fnapsch(:, :, isb), &
+&                 dvd0%fnapsch(:, :, :, isb), dvd%fnapsch(:, :, :, isb)&
+&                 , dvdd%fnapsch(:, :, :, :, isb), nbdirs, nbdirs0)
 !lk 02.06.11 }
 !
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
@@ -933,10 +1097,10 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     IF (isb .NE. ismain .AND. (.NOT.is_neutral(isb)) .AND. switch%&
 &       dia_lim_all_ions .EQ. 0) THEN
       result10dd = 0.D0
+      arg1dd = 0.D0
       t2dd = 0.D0
       vbardd = 0.D0
       t3dd = 0.D0
-      arg10dd = 0.D0
 !lk 02.06.11 {
 !wdk for unstructured grids: apply flux limits
 !    to total drift velocities (instead of individual poloidal and radial
@@ -967,41 +1131,41 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           END DO
           t0 = pl%ti(icv1)
         END IF
-        temp0 = am(isb)*pi*mp
+        temp2 = am(isb)*pi*mp
         DO nd=1,nbdirs
           DO nd0=nd,nbdirs0
             t1dd(nd0, nd) = 0.5_R8*(pldd%na(nd0, nd, icv1, isb)+pldd%na(&
 &             nd0, nd, icv2, isb))
-            arg1dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp0
+            arg10dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp2
           END DO
           t1d(nd) = 0.5_R8*(pld%na(nd, icv1, isb)+pld%na(nd, icv2, isb))
-          arg1d(nd) = 8.0_R8*t0d(nd)/temp0
+          arg10d(nd) = 8.0_R8*t0d(nd)/temp2
         END DO
-        arg1 = 8.0_R8*(t0/temp0)
-        temp24 = SQRT(arg1)
+        arg10 = 8.0_R8*(t0/temp2)
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
           t1d0(nd0) = 0.5_R8*(pld0%na(nd0, icv1, isb)+pld0%na(nd0, icv2&
 &           , isb))
-          arg1d0(nd0) = 8.0_R8*t0d0(nd0)/temp0
-          IF (arg1 .EQ. 0.D0) THEN
-            temp0d(nd0) = 0.D0
+          arg10d0(nd0) = 8.0_R8*t0d0(nd0)/temp2
+          IF (arg10 .EQ. 0.D0) THEN
+            temp2d(nd0) = 0.D0
           ELSE
-            temp0d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp2d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
-        temp0 = temp24
+        temp2 = temp24
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               result10dd(nd0, nd) = 0.D0
             END DO
             result10d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp0)
+            temp24 = arg10d(nd)/(2.0*temp2)
             DO nd0=1,nbdirs0
-              result10dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp0d(&
-&               nd0))/(2.0*temp0)
+              result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp2d(&
+&               nd0))/(2.0*temp2)
             END DO
             result10d(nd) = temp24
           END IF
@@ -1011,26 +1175,26 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           END DO
           vbard(nd) = geo%fcbb(ifc, 0)*result10d(nd)/geo%fcbb(ifc, 3)
         END DO
-        result10 = temp0
-        temp0 = geo%fcs(ifc)*geo%fcbb(ifc, 2)
-        temp4 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
+        result10 = temp2
+        temp2 = geo%fcs(ifc)*geo%fcbb(ifc, 2)
+        temp1 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
-        temp22 = dnbti(ifc, 1)/temp0
+        temp22 = dnbti(ifc, 1)/temp2
         temp6 = dnbti(ifc, 0)/geo%fcs(ifc)
         temp7 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
 &         fchc(ifc, 1)+geo%fchc(ifc, 2))
         DO nd0=1,nbdirs0
-          result10d0(nd0) = temp0d(nd0)
+          result10d0(nd0) = temp2d(nd0)
           vbard0(nd0) = geo%fcbb(ifc, 0)*result10d0(nd0)/geo%fcbb(ifc, 3&
 &           )
-          temp5d(nd0) = temp4*(temp22*cod0%cddi(nd0, ifc, 0, isb)+co%&
-&           cddi(ifc, 0, isb)*dnbtid0(nd0, ifc, 1)/temp0)
+          temp0d(nd0) = temp1*(temp22*cod0%cddi(nd0, ifc, 0, isb)+co%&
+&           cddi(ifc, 0, isb)*dnbtid0(nd0, ifc, 1)/temp2)
           temp6d(nd0) = dnbtid0(nd0, ifc, 0)/geo%fcs(ifc)
           temp8d(nd0) = temp7*(temp6*cod0%cddi(nd0, ifc, 1, isb)+co%cddi&
 &           (ifc, 1, isb)*temp6d(nd0))
         END DO
         vbar = geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*result10
-        temp5 = temp4*(co%cddi(ifc, 0, isb)*temp22)
+        temp0 = temp1*(co%cddi(ifc, 0, isb)*temp22)
         temp8 = temp7*co%cddi(ifc, 1, isb)*temp6
         DO nd=1,nbdirs
           temp24 = cod%cddi(nd, ifc, 0, isb)
@@ -1040,39 +1204,39 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp23 = cod%cddi(nd, ifc, 1, isb)
           temp29 = temp6*temp23 + co%cddi(ifc, 1, isb)*temp21
           DO nd0=1,nbdirs0
-            arg10dd(nd0, nd) = temp4*2*(temp5*(temp24*dnbtid0(nd0, ifc, &
-&             1)+dnbti(ifc, 1)*codd%cddi(nd0, nd, ifc, 0, isb)+dnbtid(nd&
+            arg1dd(nd0, nd) = temp1*2*(temp0*(temp24*dnbtid0(nd0, ifc, 1&
+&             )+dnbti(ifc, 1)*codd%cddi(nd0, nd, ifc, 0, isb)+dnbtid(nd&
 &             , ifc, 1)*cod0%cddi(nd0, ifc, 0, isb)+co%cddi(ifc, 0, isb)&
-&             *dnbtidd(nd0, nd, ifc, 1))/temp0+temp22*temp5d(nd0)/temp0)&
+&             *dnbtidd(nd0, nd, ifc, 1))/temp2+temp22*temp0d(nd0)/temp2)&
 &             + temp7*2*(temp29*temp8d(nd0)+temp8*(temp23*temp6d(nd0)+&
 &             temp6*codd%cddi(nd0, nd, ifc, 1, isb)+temp21*cod0%cddi(nd0&
 &             , ifc, 1, isb)+co%cddi(ifc, 1, isb)*dnbtidd(nd0, nd, ifc, &
 &             0)/geo%fcs(ifc)))
           END DO
-          arg10d(nd) = temp4*2*(temp22*(temp5/temp0)) + temp7*2*(temp8*&
+          arg1d(nd) = temp1*2*(temp22*(temp0/temp2)) + temp7*2*(temp8*&
 &           temp29)
         END DO
-        arg10 = temp5*temp5 + temp8*temp8
-        temp29 = SQRT(arg10)
+        arg1 = temp0*temp0 + temp8*temp8
+        temp29 = SQRT(arg1)
         DO nd0=1,nbdirs0
-          arg10d0(nd0) = 2*temp5*temp5d(nd0) + 2*temp8*temp8d(nd0)
-          IF (arg10 .EQ. 0.D0) THEN
+          arg1d0(nd0) = 2*temp0*temp0d(nd0) + 2*temp8*temp8d(nd0)
+          IF (arg1 .EQ. 0.D0) THEN
             temp8d(nd0) = 0.D0
           ELSE
-            temp8d(nd0) = arg10d0(nd0)/(2.0*temp29)
+            temp8d(nd0) = arg1d0(nd0)/(2.0*temp29)
           END IF
         END DO
         temp8 = temp29
         DO nd=1,nbdirs
-          IF (arg10 .EQ. 0.d0) THEN
+          IF (arg1 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               result10dd(nd0, nd) = 0.D0
             END DO
             result10d(nd) = 0.d0
           ELSE
-            temp29 = arg10d(nd)/(2.0*temp8)
+            temp29 = arg1d(nd)/(2.0*temp8)
             DO nd0=1,nbdirs0
-              result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp29*2.0*temp8d(&
+              result10dd(nd0, nd) = (arg1dd(nd0, nd)-temp29*2.0*temp8d(&
 &               nd0))/(2.0*temp8)
             END DO
             result10d(nd) = temp29
@@ -1088,42 +1252,42 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp8d(nd0) = (result10d0(nd0)-temp29*(t1*vbard0(nd0)+vbar*&
 &           t1d0(nd0)))/(vbar*t1)
           t2d0(nd0) = temp8d(nd0)
-          temp1d(nd0) = (dvd0%fnapsch(nd0, ifc, 0, isb)-temp24*t2d0(nd0)&
+          temp3d(nd0) = (dvd0%fnapsch(nd0, ifc, 0, isb)-temp24*t2d0(nd0)&
 &           )/t2
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
           temp29 = t1*vbard(nd) + vbar*t1d(nd)
           temp22 = (result10d(nd)-temp8*temp29)/(vbar*t1)
           t2d(nd) = temp22
-          temp24 = (dvd%fnapsch(nd, ifc, 0, isb)-temp1*t2d(nd))/t2
+          temp24 = (dvd%fnapsch(nd, ifc, 0, isb)-temp3*t2d(nd))/t2
           DO nd0=1,nbdirs0
             t2dd(nd0, nd) = (result10dd(nd0, nd)-temp29*temp8d(nd0)-&
 &             temp8*(vbard(nd)*t1d0(nd0)+t1*vbardd(nd0, nd)+t1d(nd)*&
 &             vbard0(nd0)+vbar*t1dd(nd0, nd))-temp22*(t1*vbard0(nd0)+&
 &             vbar*t1d0(nd0)))/(vbar*t1)
             dvdd%fnapsch(nd0, nd, ifc, 0, isb) = (dvdd%fnapsch(nd0, nd, &
-&             ifc, 0, isb)-t2d(nd)*temp1d(nd0)-temp1*t2dd(nd0, nd)-&
+&             ifc, 0, isb)-t2d(nd)*temp3d(nd0)-temp3*t2dd(nd0, nd)-&
 &             temp24*t2d0(nd0))/t2
           END DO
           dvd%fnapsch(nd, ifc, 0, isb) = temp24
         END DO
-        dv%fnapsch(ifc, 0, isb) = temp1
+        dv%fnapsch(ifc, 0, isb) = temp3
         temp24 = dv%fnapsch(ifc, 1, isb)/t2
         DO nd0=1,nbdirs0
-          dvd0%fnapsch(nd0, ifc, 0, isb) = temp1d(nd0)
-          temp1d(nd0) = (dvd0%fnapsch(nd0, ifc, 1, isb)-temp24*t2d0(nd0)&
+          dvd0%fnapsch(nd0, ifc, 0, isb) = temp3d(nd0)
+          temp3d(nd0) = (dvd0%fnapsch(nd0, ifc, 1, isb)-temp24*t2d0(nd0)&
 &           )/t2
           temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%vadia(nd0, ifc, 0, isb)/&
 &           geo%fcbb(ifc, 2)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         temp8 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
         DO nd=1,nbdirs
-          temp24 = (dvd%fnapsch(nd, ifc, 1, isb)-temp1*t2d(nd))/t2
+          temp24 = (dvd%fnapsch(nd, ifc, 1, isb)-temp3*t2d(nd))/t2
           DO nd0=1,nbdirs0
             dvdd%fnapsch(nd0, nd, ifc, 1, isb) = (dvdd%fnapsch(nd0, nd, &
-&             ifc, 1, isb)-t2d(nd)*temp1d(nd0)-temp1*t2dd(nd0, nd)-&
+&             ifc, 1, isb)-t2d(nd)*temp3d(nd0)-temp3*t2dd(nd0, nd)-&
 &             temp24*t2d0(nd0))/t2
           END DO
           dvd%fnapsch(nd, ifc, 1, isb) = temp24
@@ -1133,105 +1297,107 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp23 = dvd%vadia(nd, ifc, 1, isb)
           temp20 = 2*dv%vadia(ifc, 1, isb)
           DO nd0=1,nbdirs0
-            arg1dd(nd0, nd) = temp29*(temp22*dvdd%vadia(nd0, nd, ifc, 0&
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%vadia(nd0, nd, ifc, 0&
 &             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
 &             dvd0%vadia(nd0, ifc, 1, isb) + temp20*dvdd%vadia(nd0, nd, &
 &             ifc, 1, isb)
           END DO
-          arg1d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
         END DO
-        arg1 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb)
-        temp24 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%fnapsch(nd0, ifc, 1, isb) = temp1d(nd0)
-          arg1d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%vadia(ifc, 1, isb)*&
+          dvd0%fnapsch(nd0, ifc, 1, isb) = temp3d(nd0)
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%vadia(ifc, 1, isb)*&
 &           dvd0%vadia(nd0, ifc, 1, isb)
-          IF (arg1 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
           ELSE
-            temp1d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
-        dv%fnapsch(ifc, 1, isb) = temp1
-        temp1 = temp24
+        dv%fnapsch(ifc, 1, isb) = temp3
+        temp3 = temp24
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               t3dd(nd0, nd) = 0.D0
             END DO
             t3d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp1)
+            temp24 = arg10d(nd)/(2.0*temp3)
             DO nd0=1,nbdirs0
-              t3dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp1d(nd0))/(&
-&               2.0*temp1)
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
             END DO
             t3d(nd) = temp24
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
         temp24 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          t3d0(nd0) = temp1d(nd0)
+          t3d0(nd0) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%vadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%vadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%vadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%vadia(nd0, nd, ifc, 0, isb) = (dvdd%vadia(nd0, nd, ifc&
 &             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%vadia(nd, ifc, 0, isb) = temp23
         END DO
-        dv%vadia(ifc, 0, isb) = temp1
+        dv%vadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
         temp24 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          dvd0%vadia(nd0, ifc, 0, isb) = temp1d(nd0)
+          dvd0%vadia(nd0, ifc, 0, isb) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%vadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%vadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%vadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%vadia(nd0, nd, ifc, 1, isb) = (dvdd%vadia(nd0, nd, ifc&
 &             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%vadia(nd, ifc, 1, isb) = temp23
         END DO
         temp8 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb)
-        temp24 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%vadia(nd0, ifc, 1, isb) = temp1d(nd0)
+          dvd0%vadia(nd0, ifc, 1, isb) = temp3d(nd0)
           temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%wadia(nd0, ifc, 0, isb)/&
 &           geo%fcbb(ifc, 2)
-          arg1d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%wadia(ifc, 1, isb)*&
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%wadia(ifc, 1, isb)*&
 &           dvd0%wadia(nd0, ifc, 1, isb)
-          IF (arg1 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
           ELSE
-            temp1d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
-        dv%vadia(ifc, 1, isb) = temp1
-        temp1 = temp24
+        dv%vadia(ifc, 1, isb) = temp3
+        temp3 = temp24
         DO nd=1,nbdirs
           temp29 = 2*geo%fcbb(ifc, 3)
           temp22 = temp8/geo%fcbb(ifc, 2)
@@ -1239,93 +1405,179 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp23 = dvd%wadia(nd, ifc, 1, isb)
           temp20 = 2*dv%wadia(ifc, 1, isb)
           DO nd0=1,nbdirs0
-            arg1dd(nd0, nd) = temp29*(temp22*dvdd%wadia(nd0, nd, ifc, 0&
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%wadia(nd0, nd, ifc, 0&
 &             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
 &             dvd0%wadia(nd0, ifc, 1, isb) + temp20*dvdd%wadia(nd0, nd, &
 &             ifc, 1, isb)
           END DO
-          arg1d(nd) = temp29*(temp24*temp22) + temp20*temp23
-          IF (arg1 .EQ. 0.d0) THEN
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               t3dd(nd0, nd) = 0.D0
             END DO
             t3d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp1)
+            temp24 = arg10d(nd)/(2.0*temp3)
             DO nd0=1,nbdirs0
-              t3dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp1d(nd0))/(&
-&               2.0*temp1)
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
             END DO
             t3d(nd) = temp24
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
         temp24 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          t3d0(nd0) = temp1d(nd0)
+          t3d0(nd0) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%wadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%wadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%wadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%wadia(nd0, nd, ifc, 0, isb) = (dvdd%wadia(nd0, nd, ifc&
 &             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%wadia(nd, ifc, 0, isb) = temp23
         END DO
-        dv%wadia(ifc, 0, isb) = temp1
+        dv%wadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
         temp24 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          dvd0%wadia(nd0, ifc, 0, isb) = temp1d(nd0)
+          dvd0%wadia(nd0, ifc, 0, isb) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%wadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%wadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%wadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%wadia(nd0, nd, ifc, 1, isb) = (dvdd%wadia(nd0, nd, ifc&
 &             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%wadia(nd, ifc, 1, isb) = temp23
         END DO
+        temp8 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp8*temp8 + dv%uadia(ifc, 1, isb)*dv%uadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%wadia(nd0, ifc, 1, isb) = temp1d(nd0)
+          dvd0%wadia(nd0, ifc, 1, isb) = temp3d(nd0)
+          temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%uadia(nd0, ifc, 0, isb)/&
+&           geo%fcbb(ifc, 2)
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%uadia(ifc, 1, isb)*&
+&           dvd0%uadia(nd0, ifc, 1, isb)
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
+          ELSE
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
+          END IF
         END DO
-        dv%wadia(ifc, 1, isb) = temp1
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
-        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
-        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        dv%wadia(ifc, 1, isb) = temp3
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp29 = 2*geo%fcbb(ifc, 3)
+          temp22 = temp8/geo%fcbb(ifc, 2)
+          temp24 = dvd%uadia(nd, ifc, 0, isb)
+          temp23 = dvd%uadia(nd, ifc, 1, isb)
+          temp20 = 2*dv%uadia(ifc, 1, isb)
+          DO nd0=1,nbdirs0
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%uadia(nd0, nd, ifc, 0&
+&             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
+&             dvd0%uadia(nd0, ifc, 1, isb) + temp20*dvdd%uadia(nd0, nd, &
+&             ifc, 1, isb)
+          END DO
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          IF (arg10 .EQ. 0.d0) THEN
+            DO nd0=1,nbdirs0
+              t3dd(nd0, nd) = 0.D0
+            END DO
+            t3d(nd) = 0.d0
+          ELSE
+            temp24 = arg10d(nd)/(2.0*temp3)
+            DO nd0=1,nbdirs0
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
+            END DO
+            t3d(nd) = temp24
+          END IF
+        END DO
+        t3 = temp3
+        temp8 = t3/vbar
+        temp24 = dv%uadia(ifc, 0, isb)/(temp8+1.0_R8)
+        DO nd0=1,nbdirs0
+          t3d0(nd0) = temp3d(nd0)
+          temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
+          temp3d(nd0) = (dvd0%uadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+&           )/(temp8+1.0_R8)
+        END DO
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp24 = temp3/vbar
+          temp29 = t3d(nd) - temp8*vbard(nd)
+          temp23 = (dvd%uadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
+&           1.0_R8)
+          DO nd0=1,nbdirs0
+            dvdd%uadia(nd0, nd, ifc, 0, isb) = (dvdd%uadia(nd0, nd, ifc&
+&             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
+&             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
+          END DO
+          dvd%uadia(nd, ifc, 0, isb) = temp23
+        END DO
+        dv%uadia(ifc, 0, isb) = temp3
+        temp8 = t3/vbar
+        temp24 = dv%uadia(ifc, 1, isb)/(temp8+1.0_R8)
+        DO nd0=1,nbdirs0
+          dvd0%uadia(nd0, ifc, 0, isb) = temp3d(nd0)
+          temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
+          temp3d(nd0) = (dvd0%uadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+&           )/(temp8+1.0_R8)
+        END DO
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp24 = temp3/vbar
+          temp29 = t3d(nd) - temp8*vbard(nd)
+          temp23 = (dvd%uadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
+&           1.0_R8)
+          DO nd0=1,nbdirs0
+            dvdd%uadia(nd0, nd, ifc, 1, isb) = (dvdd%uadia(nd0, nd, ifc&
+&             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
+&             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
+          END DO
+          dvd%uadia(nd, ifc, 1, isb) = temp23
+        END DO
+        DO nd0=1,nbdirs0
+          dvd0%uadia(nd0, ifc, 1, isb) = temp3d(nd0)
+        END DO
+        dv%uadia(ifc, 1, isb) = temp3
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
     ELSE
       result10dd = 0.D0
+      arg1dd = 0.D0
       t2dd = 0.D0
       vbardd = 0.D0
       t3dd = 0.D0
-      arg10dd = 0.D0
     END IF
 !lkw 25.10.2022}
     IF (isb .EQ. ismain .OR. switch%dia_lim_all_ions .EQ. 1) THEN
@@ -1361,36 +1613,36 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           DO nd0=nd,nbdirs0
             t1dd(nd0, nd) = 0.5_R8*(pldd%na(nd0, nd, icv1, isb)+pldd%na(&
 &             nd0, nd, icv2, isb))
-            arg1dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp8
+            arg10dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp8
           END DO
           t1d(nd) = 0.5_R8*(pld%na(nd, icv1, isb)+pld%na(nd, icv2, isb))
-          arg1d(nd) = 8.0_R8*t0d(nd)/temp8
+          arg10d(nd) = 8.0_R8*t0d(nd)/temp8
         END DO
-        arg1 = 8.0_R8*(t0/temp8)
-        temp24 = SQRT(arg1)
+        arg10 = 8.0_R8*(t0/temp8)
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
           t1d0(nd0) = 0.5_R8*(pld0%na(nd0, icv1, isb)+pld0%na(nd0, icv2&
 &           , isb))
-          arg1d0(nd0) = 8.0_R8*t0d0(nd0)/temp8
-          IF (arg1 .EQ. 0.D0) THEN
+          arg10d0(nd0) = 8.0_R8*t0d0(nd0)/temp8
+          IF (arg10 .EQ. 0.D0) THEN
             temp8d(nd0) = 0.D0
           ELSE
-            temp8d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp8d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
         temp8 = temp24
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               vbardd(nd0, nd) = 0.D0
             END DO
             vbard(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp8)
+            temp24 = arg10d(nd)/(2.0*temp8)
             DO nd0=1,nbdirs0
-              vbardd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp8d(nd0))&
-&               /(2.0*temp8)
+              vbardd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp8d(nd0)&
+&               )/(2.0*temp8)
             END DO
             vbard(nd) = temp24
           END IF
@@ -1400,60 +1652,60 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         temp7 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
         temp29 = dnbti(ifc, 1)/temp8
-        temp5 = dnbti(ifc, 0)/geo%fcs(ifc)
-        temp4 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
+        temp2 = dnbti(ifc, 0)/geo%fcs(ifc)
+        temp1 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
 &         fchc(ifc, 1)+geo%fchc(ifc, 2))
         DO nd0=1,nbdirs0
           vbard0(nd0) = temp8d(nd0)
           temp6d(nd0) = temp7*(temp29*cod0%cddi(nd0, ifc, 0, isb)+co%&
 &           cddi(ifc, 0, isb)*dnbtid0(nd0, ifc, 1)/temp8)
-          temp5d(nd0) = dnbtid0(nd0, ifc, 0)/geo%fcs(ifc)
-          temp0d(nd0) = temp4*(temp5*cod0%cddi(nd0, ifc, 1, isb)+co%cddi&
-&           (ifc, 1, isb)*temp5d(nd0))
+          temp2d(nd0) = dnbtid0(nd0, ifc, 0)/geo%fcs(ifc)
+          temp0d(nd0) = temp1*(temp2*cod0%cddi(nd0, ifc, 1, isb)+co%cddi&
+&           (ifc, 1, isb)*temp2d(nd0))
         END DO
         temp6 = temp7*(co%cddi(ifc, 0, isb)*temp29)
-        temp0 = temp4*co%cddi(ifc, 1, isb)*temp5
+        temp0 = temp1*co%cddi(ifc, 1, isb)*temp2
         DO nd=1,nbdirs
           temp24 = cod%cddi(nd, ifc, 0, isb)
           temp29 = dnbti(ifc, 1)*temp24 + co%cddi(ifc, 0, isb)*dnbtid(nd&
 &           , ifc, 1)
           temp22 = dnbtid(nd, ifc, 0)/geo%fcs(ifc)
           temp23 = cod%cddi(nd, ifc, 1, isb)
-          temp21 = temp5*temp23 + co%cddi(ifc, 1, isb)*temp22
+          temp21 = temp2*temp23 + co%cddi(ifc, 1, isb)*temp22
           DO nd0=1,nbdirs0
-            arg10dd(nd0, nd) = temp7*2*(temp6*(temp24*dnbtid0(nd0, ifc, &
-&             1)+dnbti(ifc, 1)*codd%cddi(nd0, nd, ifc, 0, isb)+dnbtid(nd&
+            arg1dd(nd0, nd) = temp7*2*(temp6*(temp24*dnbtid0(nd0, ifc, 1&
+&             )+dnbti(ifc, 1)*codd%cddi(nd0, nd, ifc, 0, isb)+dnbtid(nd&
 &             , ifc, 1)*cod0%cddi(nd0, ifc, 0, isb)+co%cddi(ifc, 0, isb)&
 &             *dnbtidd(nd0, nd, ifc, 1))/temp8+temp29*temp6d(nd0)/temp8)&
-&             + temp4*2*(temp21*temp0d(nd0)+temp0*(temp23*temp5d(nd0)+&
-&             temp5*codd%cddi(nd0, nd, ifc, 1, isb)+temp22*cod0%cddi(nd0&
+&             + temp1*2*(temp21*temp0d(nd0)+temp0*(temp23*temp2d(nd0)+&
+&             temp2*codd%cddi(nd0, nd, ifc, 1, isb)+temp22*cod0%cddi(nd0&
 &             , ifc, 1, isb)+co%cddi(ifc, 1, isb)*dnbtidd(nd0, nd, ifc, &
 &             0)/geo%fcs(ifc)))
           END DO
-          arg10d(nd) = temp7*2*(temp29*(temp6/temp8)) + temp4*2*(temp0*&
+          arg1d(nd) = temp7*2*(temp29*(temp6/temp8)) + temp1*2*(temp0*&
 &           temp21)
         END DO
-        arg10 = temp6*temp6 + temp0*temp0
-        temp29 = SQRT(arg10)
+        arg1 = temp6*temp6 + temp0*temp0
+        temp29 = SQRT(arg1)
         DO nd0=1,nbdirs0
-          arg10d0(nd0) = 2*temp6*temp6d(nd0) + 2*temp0*temp0d(nd0)
-          IF (arg10 .EQ. 0.D0) THEN
+          arg1d0(nd0) = 2*temp6*temp6d(nd0) + 2*temp0*temp0d(nd0)
+          IF (arg1 .EQ. 0.D0) THEN
             temp8d(nd0) = 0.D0
           ELSE
-            temp8d(nd0) = arg10d0(nd0)/(2.0*temp29)
+            temp8d(nd0) = arg1d0(nd0)/(2.0*temp29)
           END IF
         END DO
         temp8 = temp29
         DO nd=1,nbdirs
-          IF (arg10 .EQ. 0.d0) THEN
+          IF (arg1 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               result10dd(nd0, nd) = 0.D0
             END DO
             result10d(nd) = 0.d0
           ELSE
-            temp29 = arg10d(nd)/(2.0*temp8)
+            temp29 = arg1d(nd)/(2.0*temp8)
             DO nd0=1,nbdirs0
-              result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp29*2.0*temp8d(&
+              result10dd(nd0, nd) = (arg1dd(nd0, nd)-temp29*2.0*temp8d(&
 &               nd0))/(2.0*temp8)
             END DO
             result10d(nd) = temp29
@@ -1469,42 +1721,42 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp8d(nd0) = (result10d0(nd0)-temp29*(t1*vbard0(nd0)+vbar*&
 &           t1d0(nd0)))/(vbar*t1)
           t2d0(nd0) = temp8d(nd0)
-          temp1d(nd0) = (dvd0%fnapsch(nd0, ifc, 0, isb)-temp24*t2d0(nd0)&
+          temp3d(nd0) = (dvd0%fnapsch(nd0, ifc, 0, isb)-temp24*t2d0(nd0)&
 &           )/t2
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
           temp29 = t1*vbard(nd) + vbar*t1d(nd)
           temp22 = (result10d(nd)-temp8*temp29)/(vbar*t1)
           t2d(nd) = temp22
-          temp24 = (dvd%fnapsch(nd, ifc, 0, isb)-temp1*t2d(nd))/t2
+          temp24 = (dvd%fnapsch(nd, ifc, 0, isb)-temp3*t2d(nd))/t2
           DO nd0=1,nbdirs0
             t2dd(nd0, nd) = (result10dd(nd0, nd)-temp29*temp8d(nd0)-&
 &             temp8*(vbard(nd)*t1d0(nd0)+t1*vbardd(nd0, nd)+t1d(nd)*&
 &             vbard0(nd0)+vbar*t1dd(nd0, nd))-temp22*(t1*vbard0(nd0)+&
 &             vbar*t1d0(nd0)))/(vbar*t1)
             dvdd%fnapsch(nd0, nd, ifc, 0, isb) = (dvdd%fnapsch(nd0, nd, &
-&             ifc, 0, isb)-t2d(nd)*temp1d(nd0)-temp1*t2dd(nd0, nd)-&
+&             ifc, 0, isb)-t2d(nd)*temp3d(nd0)-temp3*t2dd(nd0, nd)-&
 &             temp24*t2d0(nd0))/t2
           END DO
           dvd%fnapsch(nd, ifc, 0, isb) = temp24
         END DO
-        dv%fnapsch(ifc, 0, isb) = temp1
+        dv%fnapsch(ifc, 0, isb) = temp3
         temp24 = dv%fnapsch(ifc, 1, isb)/t2
         DO nd0=1,nbdirs0
-          dvd0%fnapsch(nd0, ifc, 0, isb) = temp1d(nd0)
-          temp1d(nd0) = (dvd0%fnapsch(nd0, ifc, 1, isb)-temp24*t2d0(nd0)&
+          dvd0%fnapsch(nd0, ifc, 0, isb) = temp3d(nd0)
+          temp3d(nd0) = (dvd0%fnapsch(nd0, ifc, 1, isb)-temp24*t2d0(nd0)&
 &           )/t2
           temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%vadia(nd0, ifc, 0, isb)/&
 &           geo%fcbb(ifc, 2)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         temp8 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
         DO nd=1,nbdirs
-          temp24 = (dvd%fnapsch(nd, ifc, 1, isb)-temp1*t2d(nd))/t2
+          temp24 = (dvd%fnapsch(nd, ifc, 1, isb)-temp3*t2d(nd))/t2
           DO nd0=1,nbdirs0
             dvdd%fnapsch(nd0, nd, ifc, 1, isb) = (dvdd%fnapsch(nd0, nd, &
-&             ifc, 1, isb)-t2d(nd)*temp1d(nd0)-temp1*t2dd(nd0, nd)-&
+&             ifc, 1, isb)-t2d(nd)*temp3d(nd0)-temp3*t2dd(nd0, nd)-&
 &             temp24*t2d0(nd0))/t2
           END DO
           dvd%fnapsch(nd, ifc, 1, isb) = temp24
@@ -1514,105 +1766,107 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp23 = dvd%vadia(nd, ifc, 1, isb)
           temp20 = 2*dv%vadia(ifc, 1, isb)
           DO nd0=1,nbdirs0
-            arg1dd(nd0, nd) = temp29*(temp22*dvdd%vadia(nd0, nd, ifc, 0&
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%vadia(nd0, nd, ifc, 0&
 &             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
 &             dvd0%vadia(nd0, ifc, 1, isb) + temp20*dvdd%vadia(nd0, nd, &
 &             ifc, 1, isb)
           END DO
-          arg1d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
         END DO
-        arg1 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb)
-        temp24 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%fnapsch(nd0, ifc, 1, isb) = temp1d(nd0)
-          arg1d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%vadia(ifc, 1, isb)*&
+          dvd0%fnapsch(nd0, ifc, 1, isb) = temp3d(nd0)
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%vadia(ifc, 1, isb)*&
 &           dvd0%vadia(nd0, ifc, 1, isb)
-          IF (arg1 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
           ELSE
-            temp1d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
-        dv%fnapsch(ifc, 1, isb) = temp1
-        temp1 = temp24
+        dv%fnapsch(ifc, 1, isb) = temp3
+        temp3 = temp24
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               t3dd(nd0, nd) = 0.D0
             END DO
             t3d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp1)
+            temp24 = arg10d(nd)/(2.0*temp3)
             DO nd0=1,nbdirs0
-              t3dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp1d(nd0))/(&
-&               2.0*temp1)
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
             END DO
             t3d(nd) = temp24
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
         temp24 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          t3d0(nd0) = temp1d(nd0)
+          t3d0(nd0) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%vadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%vadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%vadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%vadia(nd0, nd, ifc, 0, isb) = (dvdd%vadia(nd0, nd, ifc&
 &             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%vadia(nd, ifc, 0, isb) = temp23
         END DO
-        dv%vadia(ifc, 0, isb) = temp1
+        dv%vadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
         temp24 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          dvd0%vadia(nd0, ifc, 0, isb) = temp1d(nd0)
+          dvd0%vadia(nd0, ifc, 0, isb) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%vadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%vadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%vadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%vadia(nd0, nd, ifc, 1, isb) = (dvdd%vadia(nd0, nd, ifc&
 &             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%vadia(nd, ifc, 1, isb) = temp23
         END DO
         temp8 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb)
-        temp24 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%vadia(nd0, ifc, 1, isb) = temp1d(nd0)
+          dvd0%vadia(nd0, ifc, 1, isb) = temp3d(nd0)
           temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%wadia(nd0, ifc, 0, isb)/&
 &           geo%fcbb(ifc, 2)
-          arg1d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%wadia(ifc, 1, isb)*&
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%wadia(ifc, 1, isb)*&
 &           dvd0%wadia(nd0, ifc, 1, isb)
-          IF (arg1 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
           ELSE
-            temp1d(nd0) = arg1d0(nd0)/(2.0*temp24)
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
           END IF
         END DO
-        dv%vadia(ifc, 1, isb) = temp1
-        temp1 = temp24
+        dv%vadia(ifc, 1, isb) = temp3
+        temp3 = temp24
         DO nd=1,nbdirs
           temp29 = 2*geo%fcbb(ifc, 3)
           temp22 = temp8/geo%fcbb(ifc, 2)
@@ -1620,84 +1874,170 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           temp23 = dvd%wadia(nd, ifc, 1, isb)
           temp20 = 2*dv%wadia(ifc, 1, isb)
           DO nd0=1,nbdirs0
-            arg1dd(nd0, nd) = temp29*(temp22*dvdd%wadia(nd0, nd, ifc, 0&
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%wadia(nd0, nd, ifc, 0&
 &             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
 &             dvd0%wadia(nd0, ifc, 1, isb) + temp20*dvdd%wadia(nd0, nd, &
 &             ifc, 1, isb)
           END DO
-          arg1d(nd) = temp29*(temp24*temp22) + temp20*temp23
-          IF (arg1 .EQ. 0.d0) THEN
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          IF (arg10 .EQ. 0.d0) THEN
             DO nd0=1,nbdirs0
               t3dd(nd0, nd) = 0.D0
             END DO
             t3d(nd) = 0.d0
           ELSE
-            temp24 = arg1d(nd)/(2.0*temp1)
+            temp24 = arg10d(nd)/(2.0*temp3)
             DO nd0=1,nbdirs0
-              t3dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp1d(nd0))/(&
-&               2.0*temp1)
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
             END DO
             t3d(nd) = temp24
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
         temp24 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          t3d0(nd0) = temp1d(nd0)
+          t3d0(nd0) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%wadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%wadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%wadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%wadia(nd0, nd, ifc, 0, isb) = (dvdd%wadia(nd0, nd, ifc&
 &             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%wadia(nd, ifc, 0, isb) = temp23
         END DO
-        dv%wadia(ifc, 0, isb) = temp1
+        dv%wadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
         temp24 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd0=1,nbdirs0
-          dvd0%wadia(nd0, ifc, 0, isb) = temp1d(nd0)
+          dvd0%wadia(nd0, ifc, 0, isb) = temp3d(nd0)
           temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
-          temp1d(nd0) = (dvd0%wadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+          temp3d(nd0) = (dvd0%wadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
 &           )/(temp8+1.0_R8)
         END DO
-        temp1 = temp24
+        temp3 = temp24
         DO nd=1,nbdirs
-          temp24 = temp1/vbar
+          temp24 = temp3/vbar
           temp29 = t3d(nd) - temp8*vbard(nd)
           temp23 = (dvd%wadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
 &           1.0_R8)
           DO nd0=1,nbdirs0
             dvdd%wadia(nd0, nd, ifc, 1, isb) = (dvdd%wadia(nd0, nd, ifc&
 &             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
-&             temp8*vbardd(nd0, nd))-temp29*(temp1d(nd0)-temp24*vbard0(&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
 &             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
           END DO
           dvd%wadia(nd, ifc, 1, isb) = temp23
         END DO
+        temp8 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp8*temp8 + dv%uadia(ifc, 1, isb)*dv%uadia(ifc, 1, isb&
+&         )
+        temp24 = SQRT(arg10)
         DO nd0=1,nbdirs0
-          dvd0%wadia(nd0, ifc, 1, isb) = temp1d(nd0)
+          dvd0%wadia(nd0, ifc, 1, isb) = temp3d(nd0)
+          temp8d(nd0) = geo%fcbb(ifc, 3)*dvd0%uadia(nd0, ifc, 0, isb)/&
+&           geo%fcbb(ifc, 2)
+          arg10d0(nd0) = 2*temp8*temp8d(nd0) + 2*dv%uadia(ifc, 1, isb)*&
+&           dvd0%uadia(nd0, ifc, 1, isb)
+          IF (arg10 .EQ. 0.D0) THEN
+            temp3d(nd0) = 0.D0
+          ELSE
+            temp3d(nd0) = arg10d0(nd0)/(2.0*temp24)
+          END IF
         END DO
-        dv%wadia(ifc, 1, isb) = temp1
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
-        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
-        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        dv%wadia(ifc, 1, isb) = temp3
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp29 = 2*geo%fcbb(ifc, 3)
+          temp22 = temp8/geo%fcbb(ifc, 2)
+          temp24 = dvd%uadia(nd, ifc, 0, isb)
+          temp23 = dvd%uadia(nd, ifc, 1, isb)
+          temp20 = 2*dv%uadia(ifc, 1, isb)
+          DO nd0=1,nbdirs0
+            arg10dd(nd0, nd) = temp29*(temp22*dvdd%uadia(nd0, nd, ifc, 0&
+&             , isb)+temp24*temp8d(nd0)/geo%fcbb(ifc, 2)) + temp23*2*&
+&             dvd0%uadia(nd0, ifc, 1, isb) + temp20*dvdd%uadia(nd0, nd, &
+&             ifc, 1, isb)
+          END DO
+          arg10d(nd) = temp29*(temp24*temp22) + temp20*temp23
+          IF (arg10 .EQ. 0.d0) THEN
+            DO nd0=1,nbdirs0
+              t3dd(nd0, nd) = 0.D0
+            END DO
+            t3d(nd) = 0.d0
+          ELSE
+            temp24 = arg10d(nd)/(2.0*temp3)
+            DO nd0=1,nbdirs0
+              t3dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp3d(nd0))/&
+&               (2.0*temp3)
+            END DO
+            t3d(nd) = temp24
+          END IF
+        END DO
+        t3 = temp3
+        temp8 = t3/vbar
+        temp24 = dv%uadia(ifc, 0, isb)/(temp8+1.0_R8)
+        DO nd0=1,nbdirs0
+          t3d0(nd0) = temp3d(nd0)
+          temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
+          temp3d(nd0) = (dvd0%uadia(nd0, ifc, 0, isb)-temp24*temp8d(nd0)&
+&           )/(temp8+1.0_R8)
+        END DO
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp24 = temp3/vbar
+          temp29 = t3d(nd) - temp8*vbard(nd)
+          temp23 = (dvd%uadia(nd, ifc, 0, isb)-temp29*temp24)/(temp8+&
+&           1.0_R8)
+          DO nd0=1,nbdirs0
+            dvdd%uadia(nd0, nd, ifc, 0, isb) = (dvdd%uadia(nd0, nd, ifc&
+&             , 0, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
+&             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
+          END DO
+          dvd%uadia(nd, ifc, 0, isb) = temp23
+        END DO
+        dv%uadia(ifc, 0, isb) = temp3
+        temp8 = t3/vbar
+        temp24 = dv%uadia(ifc, 1, isb)/(temp8+1.0_R8)
+        DO nd0=1,nbdirs0
+          dvd0%uadia(nd0, ifc, 0, isb) = temp3d(nd0)
+          temp8d(nd0) = (t3d0(nd0)-t3*vbard0(nd0)/vbar)/vbar
+          temp3d(nd0) = (dvd0%uadia(nd0, ifc, 1, isb)-temp24*temp8d(nd0)&
+&           )/(temp8+1.0_R8)
+        END DO
+        temp3 = temp24
+        DO nd=1,nbdirs
+          temp24 = temp3/vbar
+          temp29 = t3d(nd) - temp8*vbard(nd)
+          temp23 = (dvd%uadia(nd, ifc, 1, isb)-temp29*temp24)/(temp8+&
+&           1.0_R8)
+          DO nd0=1,nbdirs0
+            dvdd%uadia(nd0, nd, ifc, 1, isb) = (dvdd%uadia(nd0, nd, ifc&
+&             , 1, isb)-temp24*(t3dd(nd0, nd)-vbard(nd)*temp8d(nd0)-&
+&             temp8*vbardd(nd0, nd))-temp29*(temp3d(nd0)-temp24*vbard0(&
+&             nd0))/vbar-temp23*temp8d(nd0))/(temp8+1.0_R8)
+          END DO
+          dvd%uadia(nd, ifc, 1, isb) = temp23
+        END DO
+        DO nd0=1,nbdirs0
+          dvd0%uadia(nd0, ifc, 1, isb) = temp3d(nd0)
+        END DO
+        dv%uadia(ifc, 1, isb) = temp3
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
@@ -1711,16 +2051,22 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     END IF
   ELSE
     t0d = 0.d0
+    conbtmpd = 0.d0
+    flobtmpd = 0.d0
     wrkvxd = 0.d0
     result10dd = 0.D0
-    arg1dd = 0.D0
     wrkvxdd = 0.D0
     t2dd = 0.D0
     t0d0 = 0.D0
     vbardd = 0.D0
+    conbtmpdd = 0.D0
     t3dd = 0.D0
+    conbtmpd0 = 0.D0
     t0dd = 0.D0
+    flobtmpdd = 0.D0
+    flobtmpd0 = 0.D0
     wrkvxd0 = 0.D0
+    arg10dd = 0.D0
     t1dd = 0.D0
   END IF
 !
@@ -1893,14 +2239,15 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !   ..add contribution from currents
   IF (.NOT.is_neutral(isb)) THEN
     scurd = 0.d0
-    temp31 = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))/(qe*rzf*nbf)
+    temp31 = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+switch%&
+&     fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+&
+&     switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))/(qe*rzf*nbf)
     DO nd0=1,nbdirs0
       temp10d(nd0, :) = (dvd0%fchinert_a(nd0, :, 0, isb)+dvd0%&
-&       fchvispar_a(nd0, :, 0, isb)+dvd0%fchvisper_a(nd0, :, 0, isb)+&
-&       dvd0%fchanml_a(nd0, :, 0, isb)+dvd0%fchvisq_a(nd0, :, 0, isb)-&
-&       temp31*(nbf*qe*rzfd0(nd0, :)+qe*rzf*nbfd0(nd0, :)))/(qe*rzf*nbf)
+&       fchvispar_a(nd0, :, 0, isb)+switch%fnb_vis_per*dvd0%fchvisper_a(&
+&       nd0, :, 0, isb)+dvd0%fchanml_a(nd0, :, 0, isb)+switch%fnb_vis_q*&
+&       dvd0%fchvisq_a(nd0, :, 0, isb)-temp31*(nbf*qe*rzfd0(nd0, :)+qe*&
+&       rzf*nbfd0(nd0, :)))/(qe*rzf*nbf)
     END DO
     temp10 = temp31
     temp31 = dv%fchviskt_a(:, 0, isb)/(qe*rzf*nbf)
@@ -1913,23 +2260,25 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     DO nd=1,nbdirs
       temp28 = qe*nbf*rzfd(nd, :) + qe*rzf*nbfd(nd, :)
       temp31 = (dvd%fchinert_a(nd, :, 0, isb)+dvd%fchvispar_a(nd, :, 0, &
-&       isb)+dvd%fchvisper_a(nd, :, 0, isb)+dvd%fchanml_a(nd, :, 0, isb)&
-&       +dvd%fchvisq_a(nd, :, 0, isb)-temp10*temp28)/(qe*rzf*nbf)
+&       isb)+switch%fnb_vis_per*dvd%fchvisper_a(nd, :, 0, isb)+dvd%&
+&       fchanml_a(nd, :, 0, isb)+switch%fnb_vis_q*dvd%fchvisq_a(nd, :, 0&
+&       , isb)-temp10*temp28)/(qe*rzf*nbf)
       temp27 = qe*nbf*rzfd(nd, :) + qe*rzf*nbfd(nd, :)
       temp32 = (dvd%fchviskt_a(nd, :, 0, isb)-temp11*temp27)/(qe*rzf*nbf&
 &       )
       DO nd0=1,nbdirs0
         scurdd(nd0, nd, :, 0) = switch%b2tfnb_xcur*(dvdd%fchinert_a(nd0&
-&         , nd, :, 0, isb)+dvdd%fchvispar_a(nd0, nd, :, 0, isb)+dvdd%&
-&         fchvisper_a(nd0, nd, :, 0, isb)+dvdd%fchanml_a(nd0, nd, :, 0, &
-&         isb)+dvdd%fchvisq_a(nd0, nd, :, 0, isb)-temp28*temp10d(nd0, :)&
-&         -temp10*(qe*(rzfd(nd, :)*nbfd0(nd0, :)+nbf*rzfdd(nd0, nd, :))+&
-&         qe*(nbfd(nd, :)*rzfd0(nd0, :)+rzf*nbfdd(nd0, nd, :)))-temp31*(&
-&         nbf*qe*rzfd0(nd0, :)+qe*rzf*nbfd0(nd0, :)))/(qe*rzf*nbf) + (&
-&         dvdd%fchviskt_a(nd0, nd, :, 0, isb)-temp27*temp11d(nd0, :)-&
-&         temp11*(qe*(rzfd(nd, :)*nbfd0(nd0, :)+nbf*rzfdd(nd0, nd, :))+&
-&         qe*(nbfd(nd, :)*rzfd0(nd0, :)+rzf*nbfdd(nd0, nd, :)))-temp32*(&
-&         nbf*qe*rzfd0(nd0, :)+qe*rzf*nbfd0(nd0, :)))/(qe*rzf*nbf)
+&         , nd, :, 0, isb)+dvdd%fchvispar_a(nd0, nd, :, 0, isb)+switch%&
+&         fnb_vis_per*dvdd%fchvisper_a(nd0, nd, :, 0, isb)+dvdd%&
+&         fchanml_a(nd0, nd, :, 0, isb)+switch%fnb_vis_q*dvdd%fchvisq_a(&
+&         nd0, nd, :, 0, isb)-temp28*temp10d(nd0, :)-temp10*(qe*(rzfd(nd&
+&         , :)*nbfd0(nd0, :)+nbf*rzfdd(nd0, nd, :))+qe*(nbfd(nd, :)*&
+&         rzfd0(nd0, :)+rzf*nbfdd(nd0, nd, :)))-temp31*(nbf*qe*rzfd0(nd0&
+&         , :)+qe*rzf*nbfd0(nd0, :)))/(qe*rzf*nbf) + (dvdd%fchviskt_a(&
+&         nd0, nd, :, 0, isb)-temp27*temp11d(nd0, :)-temp11*(qe*(rzfd(nd&
+&         , :)*nbfd0(nd0, :)+nbf*rzfdd(nd0, nd, :))+qe*(nbfd(nd, :)*&
+&         rzfd0(nd0, :)+rzf*nbfdd(nd0, nd, :)))-temp32*(nbf*qe*rzfd0(nd0&
+&         , :)+qe*rzf*nbfd0(nd0, :)))/(qe*rzf*nbf)
         flo2diadd(nd0, nd, :, 0) = flo2diadd(nd0, nd, :, 0) + drift_hyb*&
 &         geo%fchz*scurdd(nd0, nd, :, 0)
       END DO
@@ -2158,18 +2507,18 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     temp8 = am(isb)*pi*mp
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0
-        arg1dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp8
+        arg10dd(nd0, nd) = 8.0_R8*t0dd(nd0, nd)/temp8
       END DO
-      arg1d(nd) = 8.0_R8*t0d(nd)/temp8
+      arg10d(nd) = 8.0_R8*t0d(nd)/temp8
     END DO
-    arg1 = 8.0_R8*(t0/temp8)
-    temp24 = SQRT(arg1)
+    arg10 = 8.0_R8*(t0/temp8)
+    temp24 = SQRT(arg10)
     DO nd0=1,nbdirs0
-      arg1d0(nd0) = 8.0_R8*t0d0(nd0)/temp8
-      IF (arg1 .EQ. 0.D0) THEN
+      arg10d0(nd0) = 8.0_R8*t0d0(nd0)/temp8
+      IF (arg10 .EQ. 0.D0) THEN
         temp8d(nd0) = 0.D0
       ELSE
-        temp8d(nd0) = arg1d0(nd0)/(2.0*temp24)
+        temp8d(nd0) = arg10d0(nd0)/(2.0*temp24)
       END IF
       result10d0(nd0) = temp8d(nd0)
       vbard0(nd0) = geo%fcs(ifc)*result10d0(nd0)
@@ -2177,23 +2526,23 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     temp8 = temp24
     result10 = temp8
     vbar = result10*geo%fcs(ifc)
-    temp1 = 0.5_R8*vbar*t1
+    temp3 = 0.5_R8*vbar*t1
     DO nd0=1,nbdirs0
-      temp1d(nd0) = 0.5_R8*(t1*vbard0(nd0)+vbar*t1d0(nd0))
-      temp7d(nd0) = (t3d0(nd0)-t3*temp1d(nd0)/temp1)/temp1
+      temp3d(nd0) = 0.5_R8*(t1*vbard0(nd0)+vbar*t1d0(nd0))
+      temp7d(nd0) = (t3d0(nd0)-t3*temp3d(nd0)/temp3)/temp3
     END DO
-    temp7 = t3/temp1
+    temp7 = t3/temp3
     DO nd=1,nbdirs
-      IF (arg1 .EQ. 0.d0) THEN
+      IF (arg10 .EQ. 0.d0) THEN
         DO nd0=1,nbdirs0
           result10dd(nd0, nd) = 0.D0
         END DO
         result10d(nd) = 0.d0
       ELSE
-        temp24 = arg1d(nd)/(2.0*temp8)
+        temp24 = arg10d(nd)/(2.0*temp8)
         DO nd0=1,nbdirs0
-          result10dd(nd0, nd) = (arg1dd(nd0, nd)-temp24*2.0*temp8d(nd0))&
-&           /(2.0*temp8)
+          result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp24*2.0*temp8d(nd0)&
+&           )/(2.0*temp8)
         END DO
         result10d(nd) = temp24
       END IF
@@ -2210,7 +2559,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       ELSE
         temp24 = 0.5_R8*t1*vbard(nd) + 0.5_R8*vbar*t1d(nd)
         temp29 = t3d(nd) - temp7*temp24
-        temp21 = temp7**(gamma-1)/temp1
+        temp21 = temp7**(gamma-1)/temp3
         DO nd0=1,nbdirs0
           IF (temp7 .LE. 0.D0 .AND. (gamma - 1 .EQ. 0.D0 .OR. gamma - &
 &             1 .NE. INT(gamma - 1))) THEN
@@ -2218,8 +2567,8 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
           ELSE
             tempd3(nd0) = (gamma-1)*temp7**(gamma-2)*temp7d(nd0)
           END IF
-          tempd0d(nd0, nd) = gamma*(temp29*(tempd3(nd0)-temp21*temp1d(&
-&           nd0))/temp1+temp21*(t3dd(nd0, nd)-temp24*temp7d(nd0)-temp7*(&
+          tempd0d(nd0, nd) = gamma*(temp29*(tempd3(nd0)-temp21*temp3d(&
+&           nd0))/temp3+temp21*(t3dd(nd0, nd)-temp24*temp7d(nd0)-temp7*(&
 &           0.5_R8*(vbard(nd)*t1d0(nd0)+t1*vbardd(nd0, nd))+0.5_R8*(t1d(&
 &           nd)*vbard0(nd0)+vbar*t1dd(nd0, nd)))))
         END DO
@@ -2242,11 +2591,11 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       ELSE
         tempd3(nd0) = temp8*temp6**(temp8-1)*temp6d(nd0)
       END IF
-      temp5d(nd0) = -(temp29*tempd3(nd0)/temp6**temp8)
-      wrk4d0(nd0, ifc) = temp5d(nd0)
+      temp2d(nd0) = -(temp29*tempd3(nd0)/temp6**temp8)
+      wrk4d0(nd0, ifc) = temp2d(nd0)
     END DO
-    temp5 = temp29
-    wrk4(ifc) = temp5
+    temp2 = temp29
+    wrk4(ifc) = temp2
     DO nd=1,nbdirs
       IF (temp6 .LE. 0.d0 .AND. (temp8 .EQ. 0.d0 .OR. temp8 .NE. INT(&
 &         temp8))) THEN
@@ -2269,7 +2618,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         tempd(nd) = temp8*(temp29*tempd0(nd))
       END IF
       temp29 = temp6**temp8
-      temp22 = temp5*tempd(nd)/temp29
+      temp22 = temp2*tempd(nd)/temp29
       wrk4d(nd, ifc) = -temp22
       DO nd0=1,nbdirs0
         IF (temp6 .LE. 0.D0 .AND. (temp8 .EQ. 0.D0 .OR. temp8 .NE. INT&
@@ -2278,7 +2627,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         ELSE
           tempd4(nd0) = temp8*temp6**(temp8-1)*temp6d(nd0)
         END IF
-        wrk4dd(nd0, nd, ifc) = -((tempd(nd)*temp5d(nd0)+temp5*tempdd(nd0&
+        wrk4dd(nd0, nd, ifc) = -((tempd(nd)*temp2d(nd0)+temp2*tempdd(nd0&
 &         , nd)-temp22*tempd4(nd0))/temp29)
         fna_mdf0dd(nd0, nd, ifc, 0) = fna_mdf0d(nd, ifc, 0)*wrk4d0(nd0, &
 &         ifc) + wrk4(ifc)*fna_mdf0dd(nd0, nd, ifc, 0) + wrk4d(nd, ifc)*&
@@ -2338,12 +2687,12 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     temp8 = 0.5_R8*switch%b2npco_pcm1*geo%fcpbs(ifc)
     temp7 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
     DO nd0=1,nbdirs0
-      temp1d(nd0) = pld0%na(nd0, mpg%fccv(ifc, 1), isb)
+      temp3d(nd0) = pld0%na(nd0, mpg%fccv(ifc, 1), isb)
       temp12d(nd0) = dvd0%pcca(nd0, mpg%fccv(ifc, 1), 1, isb)
       temp13d(nd0) = pld0%na(nd0, mpg%fccv(ifc, 2), isb)
       temp14d(nd0) = dvd0%pcca(nd0, mpg%fccv(ifc, 2), 1, isb)
     END DO
-    temp1 = pl%na(mpg%fccv(ifc, 1), isb)
+    temp3 = pl%na(mpg%fccv(ifc, 1), isb)
     temp12 = dv%pcca(mpg%fccv(ifc, 1), 1, isb)
     temp13 = pl%na(mpg%fccv(ifc, 2), isb)
     temp14 = dv%pcca(mpg%fccv(ifc, 2), 1, isb)
@@ -2353,21 +2702,21 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp20 = dvd%pcca(nd, mpg%fccv(ifc, 2), 1, isb)
       temp33 = pld%na(nd, mpg%fccv(ifc, 2), isb)
       DO nd0=1,nbdirs0
-        cdpbdd(nd0, nd, ifc, 0) = temp8*(temp24*temp1d(nd0)+temp1*dvdd%&
+        cdpbdd(nd0, nd, ifc, 0) = temp8*(temp24*temp3d(nd0)+temp3*dvdd%&
 &         pcca(nd0, nd, mpg%fccv(ifc, 1), 1, isb)+temp23*temp12d(nd0)+&
 &         temp12*pldd%na(nd0, nd, mpg%fccv(ifc, 1), isb)+temp20*temp13d(&
 &         nd0)+temp13*dvdd%pcca(nd0, nd, mpg%fccv(ifc, 2), 1, isb)+&
 &         temp33*temp14d(nd0)+temp14*pldd%na(nd0, nd, mpg%fccv(ifc, 2), &
 &         isb))/temp7
       END DO
-      cdpbd(nd, ifc, 0) = temp8*((temp1*temp24+temp12*temp23+temp13*&
+      cdpbd(nd, ifc, 0) = temp8*((temp3*temp24+temp12*temp23+temp13*&
 &       temp20+temp14*temp33)/temp7)
     END DO
     DO nd0=1,nbdirs0
-      cdpbd0(nd0, ifc, 0) = temp8*(temp1*temp12d(nd0)+temp12*temp1d(nd0)&
+      cdpbd0(nd0, ifc, 0) = temp8*(temp3*temp12d(nd0)+temp12*temp3d(nd0)&
 &       +temp13*temp14d(nd0)+temp14*temp13d(nd0))/temp7
     END DO
-    cdpb(ifc, 0) = temp8*((temp12*temp1+temp14*temp13)/temp7)
+    cdpb(ifc, 0) = temp8*((temp12*temp3+temp14*temp13)/temp7)
     temp8 = 0.5_R8*geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)&
 &     )
     DO nd=1,nbdirs
@@ -2387,10 +2736,10 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 !
 !   ..compute other fluxes
   DO nd0=1,nbdirs0
-    temp3d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
+    temp5d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
 &     ) + scurd0(nd0, :, 0)
   END DO
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   termdd = 0.D0
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb) + scurd(&
@@ -2408,7 +2757,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna(nd0, nd, :, 0, isb) = fna_mdf0dd(nd0, nd, :, 0) + (1.0_R8&
 &       -drift_hyb)*(temp28*nbfd0(nd0, :)+nbf*(geo%fcs*geo%fcqalf(:, 0)*&
 &       dvdd%vaecrb(nd0, nd, :, 0, isb)+scurdd(nd0, nd, :, 0))+nbfd(nd, &
-&       :)*temp3d(nd0, :)+temp3*nbfdd(nd0, nd, :)) + (flod(nd, :, 0)-&
+&       :)*temp5d(nd0, :)+temp5*nbfdd(nd0, nd, :)) + (flod(nd, :, 0)-&
 &       flo_mdfd(nd, :, 0))*nbfd0(nd0, :) + nbf*(flodd(nd0, nd, :, 0)-&
 &       flo_mdfdd(nd0, nd, :, 0)) + nbfd(nd, :)*(flod0(nd0, :, 0)-&
 &       flo_mdfd0(nd0, :, 0)) + (flo(:, 0)-flo_mdf(:, 0))*nbfdd(nd0, nd&
@@ -2422,9 +2771,6 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna_53(nd0, nd, :, 1, isb) = flo_53d(nd, :, 1)*nbfd0(nd0, :) &
 &       + nbf*flo_53dd(nd0, nd, :, 1) + nbfd(nd, :)*flo_53d0(nd0, :, 1) &
 &       + flo_53(:, 1)*nbfdd(nd0, nd, :)
-!
-!   ..compute ExB fluxes for k-model
-      dvdd%fna_exb(nd0, nd, :, :) = 0.D0
     END DO
     cdpbd(nd, :, 1) = 0.d0
     termd(nd, :) = -((dpb(:, 0)-dpbm)*cdpbd(nd, :, 0)+cdpb(:, 0)*(dpbd(&
@@ -2432,14 +2778,13 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     fna_mdf0d(nd, :, 0) = fna_mdf0d(nd, :, 0) + termd(nd, :)
     dvd%fna_32(nd, :, 0, isb) = dvd%fna_32(nd, :, 0, isb) + termd(nd, :)
     dvd%fna(nd, :, 0, isb) = fna_mdf0d(nd, :, 0) + (1.0_R8-drift_hyb)*(&
-&     nbf*temp28+temp3*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-flo_mdfd(nd, :&
+&     nbf*temp28+temp5*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-flo_mdfd(nd, :&
 &     , 0)) + (flo(:, 0)-flo_mdf(:, 0))*nbfd(nd, :) - dpb(:, 0)*cod%cdpa&
 &     (nd, :, 0, isb) - co%cdpa(:, 0, isb)*dpbd(nd, :, 0)
     dvd%fna_53(nd, :, 0, isb) = nbf*flo_53d(nd, :, 0) + flo_53(:, 0)*&
 &     nbfd(nd, :)
     dvd%fna_53(nd, :, 1, isb) = nbf*flo_53d(nd, :, 1) + flo_53(:, 1)*&
 &     nbfd(nd, :)
-    dvd%fna_exb(nd, :, :) = 0.d0
   END DO
   DO nd0=1,nbdirs0
     cdpbd0(nd0, :, 1) = 0.D0
@@ -2449,21 +2794,20 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     dvd0%fna_32(nd0, :, 0, isb) = dvd0%fna_32(nd0, :, 0, isb) + termd0(&
 &     nd0, :)
     dvd0%fna(nd0, :, 0, isb) = fna_mdf0d0(nd0, :, 0) + (1.0_R8-drift_hyb&
-&     )*(nbf*temp3d(nd0, :)+temp3*nbfd0(nd0, :)) + nbf*(flod0(nd0, :, 0)&
+&     )*(nbf*temp5d(nd0, :)+temp5*nbfd0(nd0, :)) + nbf*(flod0(nd0, :, 0)&
 &     -flo_mdfd0(nd0, :, 0)) + (flo(:, 0)-flo_mdf(:, 0))*nbfd0(nd0, :) -&
 &     dpb(:, 0)*cod0%cdpa(nd0, :, 0, isb) - co%cdpa(:, 0, isb)*dpbd0(nd0&
 &     , :, 0)
-!
-    temp3d(nd0, :) = geo%fcs*geo%fcqalf(:, 1)*dvd0%vaecrb(nd0, :, 1, isb&
+    temp5d(nd0, :) = geo%fcs*geo%fcqalf(:, 1)*dvd0%vaecrb(nd0, :, 1, isb&
 &     ) + scurd0(nd0, :, 1)
   END DO
   cdpb(:, 1) = 0.0_R8
   term = -(cdpb(:, 0)*(dpb(:, 0)-dpbm))
   fna_mdf0(:, 0) = fna_mdf0(:, 0) + term
   dv%fna_32(:, 0, isb) = dv%fna_32(:, 0, isb) + term
-  dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp3*nbf) + &
+  dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp5*nbf) + &
 &   (flo(:, 0)-flo_mdf(:, 0))*nbf - co%cdpa(:, 0, isb)*dpb(:, 0)
-  temp3 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+  temp5 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb) + scurd(&
 &     nd, :, 1)
@@ -2471,7 +2815,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna(nd0, nd, :, 1, isb) = fna_mdf0dd(nd0, nd, :, 1) + (1.0_R8&
 &       -drift_hyb)*(temp28*nbfd0(nd0, :)+nbf*(geo%fcs*geo%fcqalf(:, 1)*&
 &       dvdd%vaecrb(nd0, nd, :, 1, isb)+scurdd(nd0, nd, :, 1))+nbfd(nd, &
-&       :)*temp3d(nd0, :)+temp3*nbfdd(nd0, nd, :)) + (flod(nd, :, 1)-&
+&       :)*temp5d(nd0, :)+temp5*nbfdd(nd0, nd, :)) + (flod(nd, :, 1)-&
 &       flo_mdfd(nd, :, 1))*nbfd0(nd0, :) + nbf*(flodd(nd0, nd, :, 1)-&
 &       flo_mdfdd(nd0, nd, :, 1)) + nbfd(nd, :)*(flod0(nd0, :, 1)-&
 &       flo_mdfd0(nd0, :, 1)) + (flo(:, 1)-flo_mdf(:, 1))*nbfdd(nd0, nd&
@@ -2480,23 +2824,23 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &       isb) - co%cdpa(:, 1, isb)*dpbdd(nd0, nd, :, 1)
     END DO
     dvd%fna(nd, :, 1, isb) = fna_mdf0d(nd, :, 1) + (1.0_R8-drift_hyb)*(&
-&     nbf*temp28+temp3*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-flo_mdfd(nd, :&
+&     nbf*temp28+temp5*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-flo_mdfd(nd, :&
 &     , 1)) + (flo(:, 1)-flo_mdf(:, 1))*nbfd(nd, :) - dpb(:, 1)*cod%cdpa&
 &     (nd, :, 1, isb) - co%cdpa(:, 1, isb)*dpbd(nd, :, 1)
   END DO
   DO nd0=1,nbdirs0
     dvd0%fna(nd0, :, 1, isb) = fna_mdf0d0(nd0, :, 1) + (1.0_R8-drift_hyb&
-&     )*(nbf*temp3d(nd0, :)+temp3*nbfd0(nd0, :)) + nbf*(flod0(nd0, :, 1)&
+&     )*(nbf*temp5d(nd0, :)+temp5*nbfd0(nd0, :)) + nbf*(flod0(nd0, :, 1)&
 &     -flo_mdfd0(nd0, :, 1)) + (flo(:, 1)-flo_mdf(:, 1))*nbfd0(nd0, :) -&
 &     dpb(:, 1)*cod0%cdpa(nd0, :, 1, isb) - co%cdpa(:, 1, isb)*dpbd0(nd0&
 &     , :, 1)
 !
-    temp3d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
+    temp5d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
 &     ) + scurd0(nd0, :, 0)
   END DO
-  dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp3*nbf) + &
+  dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp5*nbf) + &
 &   (flo(:, 1)-flo_mdf(:, 1))*nbf - co%cdpa(:, 1, isb)*dpb(:, 1)
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb) + scurd(&
 &     nd, :, 0)
@@ -2504,28 +2848,28 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna_mdf(nd0, nd, :, 0, isb) = fna_mdf0dd(nd0, nd, :, 0) + (&
 &       1.0_R8-drift_hyb)*(temp28*nbfd0(nd0, :)+nbf*(geo%fcs*geo%fcqalf(&
 &       :, 0)*dvdd%vaecrb(nd0, nd, :, 0, isb)+scurdd(nd0, nd, :, 0))+&
-&       nbfd(nd, :)*temp3d(nd0, :)+temp3*nbfdd(nd0, nd, :)) - cod%cdpa(&
+&       nbfd(nd, :)*temp5d(nd0, :)+temp5*nbfdd(nd0, nd, :)) - cod%cdpa(&
 &       nd, :, 0, isb)*dpbd0(nd0, :, 0) - dpb(:, 0)*codd%cdpa(nd0, nd, :&
 &       , 0, isb) - dpbd(nd, :, 0)*cod0%cdpa(nd0, :, 0, isb) - co%cdpa(:&
 &       , 0, isb)*dpbdd(nd0, nd, :, 0) - dvdd%fnapsch(nd0, nd, :, 0, isb&
 &       )
     END DO
     dvd%fna_mdf(nd, :, 0, isb) = fna_mdf0d(nd, :, 0) + (1.0_R8-drift_hyb&
-&     )*(nbf*temp28+temp3*nbfd(nd, :)) - dpb(:, 0)*cod%cdpa(nd, :, 0, &
+&     )*(nbf*temp28+temp5*nbfd(nd, :)) - dpb(:, 0)*cod%cdpa(nd, :, 0, &
 &     isb) - co%cdpa(:, 0, isb)*dpbd(nd, :, 0) - dvd%fnapsch(nd, :, 0, &
 &     isb)
   END DO
   DO nd0=1,nbdirs0
     dvd0%fna_mdf(nd0, :, 0, isb) = fna_mdf0d0(nd0, :, 0) + (1.0_R8-&
-&     drift_hyb)*(nbf*temp3d(nd0, :)+temp3*nbfd0(nd0, :)) - dpb(:, 0)*&
+&     drift_hyb)*(nbf*temp5d(nd0, :)+temp5*nbfd0(nd0, :)) - dpb(:, 0)*&
 &     cod0%cdpa(nd0, :, 0, isb) - co%cdpa(:, 0, isb)*dpbd0(nd0, :, 0) - &
 &     dvd0%fnapsch(nd0, :, 0, isb)
-    temp3d(nd0, :) = geo%fcs*geo%fcqalf(:, 1)*dvd0%vaecrb(nd0, :, 1, isb&
+    temp5d(nd0, :) = geo%fcs*geo%fcqalf(:, 1)*dvd0%vaecrb(nd0, :, 1, isb&
 &     ) + scurd0(nd0, :, 1)
   END DO
-  dv%fna_mdf(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp3*nbf&
+  dv%fna_mdf(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp5*nbf&
 &   ) - co%cdpa(:, 0, isb)*dpb(:, 0) - dv%fnapsch(:, 0, isb)
-  temp3 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+  temp5 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb) + scurd(&
 &     nd, :, 1)
@@ -2533,31 +2877,31 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna_mdf(nd0, nd, :, 1, isb) = fna_mdf0dd(nd0, nd, :, 1) + (&
 &       1.0_R8-drift_hyb)*(temp28*nbfd0(nd0, :)+nbf*(geo%fcs*geo%fcqalf(&
 &       :, 1)*dvdd%vaecrb(nd0, nd, :, 1, isb)+scurdd(nd0, nd, :, 1))+&
-&       nbfd(nd, :)*temp3d(nd0, :)+temp3*nbfdd(nd0, nd, :)) - cod%cdpa(&
+&       nbfd(nd, :)*temp5d(nd0, :)+temp5*nbfdd(nd0, nd, :)) - cod%cdpa(&
 &       nd, :, 1, isb)*dpbd0(nd0, :, 1) - dpb(:, 1)*codd%cdpa(nd0, nd, :&
 &       , 1, isb) - dpbd(nd, :, 1)*cod0%cdpa(nd0, :, 1, isb) - co%cdpa(:&
 &       , 1, isb)*dpbdd(nd0, nd, :, 1) - dvdd%fnapsch(nd0, nd, :, 1, isb&
 &       )
     END DO
     dvd%fna_mdf(nd, :, 1, isb) = fna_mdf0d(nd, :, 1) + (1.0_R8-drift_hyb&
-&     )*(nbf*temp28+temp3*nbfd(nd, :)) - dpb(:, 1)*cod%cdpa(nd, :, 1, &
+&     )*(nbf*temp28+temp5*nbfd(nd, :)) - dpb(:, 1)*cod%cdpa(nd, :, 1, &
 &     isb) - co%cdpa(:, 1, isb)*dpbd(nd, :, 1) - dvd%fnapsch(nd, :, 1, &
 &     isb)
   END DO
   DO nd0=1,nbdirs0
     dvd0%fna_mdf(nd0, :, 1, isb) = fna_mdf0d0(nd0, :, 1) + (1.0_R8-&
-&     drift_hyb)*(nbf*temp3d(nd0, :)+temp3*nbfd0(nd0, :)) - dpb(:, 1)*&
+&     drift_hyb)*(nbf*temp5d(nd0, :)+temp5*nbfd0(nd0, :)) - dpb(:, 1)*&
 &     cod0%cdpa(nd0, :, 1, isb) - co%cdpa(:, 1, isb)*dpbd0(nd0, :, 1) - &
 &     dvd0%fnapsch(nd0, :, 1, isb)
 !
-    temp3d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
+    temp5d(nd0, :) = geo%fcs*geo%fcqalf(:, 0)*dvd0%vaecrb(nd0, :, 0, isb&
 &     ) + scurd0(nd0, :, 0)
     temp15d(nd0, :) = flo2diad0(nd0, :, 0) - geo%fchz*flo_mdfd0(nd0, :, &
 &     0)
   END DO
-  dv%fna_mdf(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp3*nbf&
+  dv%fna_mdf(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp5*nbf&
 &   ) - co%cdpa(:, 1, isb)*dpb(:, 1) - dv%fnapsch(:, 1, isb)
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   temp15 = flo2dia(:, 0) - geo%fchz*flo_mdf(:, 0)
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb) + scurd(&
@@ -2567,7 +2911,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       dvdd%fna_fcor(nd0, nd, :, 0, isb) = geo%fchz*fna_mdf0dd(nd0, nd, :&
 &       , 0) + (1.0_R8-drift_hyb)*geo%fchz*(temp28*nbfd0(nd0, :)+nbf*(&
 &       geo%fcs*geo%fcqalf(:, 0)*dvdd%vaecrb(nd0, nd, :, 0, isb)+scurdd(&
-&       nd0, nd, :, 0))+nbfd(nd, :)*temp3d(nd0, :)+temp3*nbfdd(nd0, nd, &
+&       nd0, nd, :, 0))+nbfd(nd, :)*temp5d(nd0, :)+temp5*nbfdd(nd0, nd, &
 &       :)) + temp27*nbfd0(nd0, :) + nbf*(flo2diadd(nd0, nd, :, 0)-geo%&
 &       fchz*flo_mdfdd(nd0, nd, :, 0)) + nbfd(nd, :)*temp15d(nd0, :) + &
 &       temp15*nbfdd(nd0, nd, :) - cod%cdpahz(nd, :, 0, isb)*dpbd0(nd0, &
@@ -2576,24 +2920,24 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &       , nd, :, 0)
     END DO
     dvd%fna_fcor(nd, :, 0, isb) = geo%fchz*fna_mdf0d(nd, :, 0) + (1.0_R8&
-&     -drift_hyb)*geo%fchz*(nbf*temp28+temp3*nbfd(nd, :)) + nbf*temp27 +&
+&     -drift_hyb)*geo%fchz*(nbf*temp28+temp5*nbfd(nd, :)) + nbf*temp27 +&
 &     temp15*nbfd(nd, :) - dpb(:, 0)*cod%cdpahz(nd, :, 0, isb) - co%&
 &     cdpahz(:, 0, isb)*dpbd(nd, :, 0)
   END DO
   DO nd0=1,nbdirs0
     dvd0%fna_fcor(nd0, :, 0, isb) = geo%fchz*fna_mdf0d0(nd0, :, 0) + (&
-&     1.0_R8-drift_hyb)*geo%fchz*(nbf*temp3d(nd0, :)+temp3*nbfd0(nd0, :)&
+&     1.0_R8-drift_hyb)*geo%fchz*(nbf*temp5d(nd0, :)+temp5*nbfd0(nd0, :)&
 &     ) + nbf*temp15d(nd0, :) + temp15*nbfd0(nd0, :) - dpb(:, 0)*cod0%&
 &     cdpahz(nd0, :, 0, isb) - co%cdpahz(:, 0, isb)*dpbd0(nd0, :, 0)
     temp15d(nd0, :) = geo%fcs*geo%fcqalf(:, 1)*dvd0%vaecrb(nd0, :, 1, &
 &     isb) + scurd0(nd0, :, 1)
-    temp3d(nd0, :) = flo2diad0(nd0, :, 1) - geo%fchz*flo_mdfd0(nd0, :, 1&
+    temp5d(nd0, :) = flo2diad0(nd0, :, 1) - geo%fchz*flo_mdfd0(nd0, :, 1&
 &     )
   END DO
   dv%fna_fcor(:, 0, isb) = geo%fchz*fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp3*nbf) + temp15*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
+&   geo%fchz*(temp5*nbf) + temp15*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
   temp15 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
-  temp3 = flo2dia(:, 1) - geo%fchz*flo_mdf(:, 1)
+  temp5 = flo2dia(:, 1) - geo%fchz*flo_mdf(:, 1)
   DO nd=1,nbdirs
     temp28 = geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb) + scurd(&
 &     nd, :, 1)
@@ -2604,27 +2948,27 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &       geo%fcs*geo%fcqalf(:, 1)*dvdd%vaecrb(nd0, nd, :, 1, isb)+scurdd(&
 &       nd0, nd, :, 1))+nbfd(nd, :)*temp15d(nd0, :)+temp15*nbfdd(nd0, nd&
 &       , :)) + temp27*nbfd0(nd0, :) + nbf*(flo2diadd(nd0, nd, :, 1)-geo&
-&       %fchz*flo_mdfdd(nd0, nd, :, 1)) + nbfd(nd, :)*temp3d(nd0, :) + &
-&       temp3*nbfdd(nd0, nd, :) - cod%cdpahz(nd, :, 1, isb)*dpbd0(nd0, :&
+&       %fchz*flo_mdfdd(nd0, nd, :, 1)) + nbfd(nd, :)*temp5d(nd0, :) + &
+&       temp5*nbfdd(nd0, nd, :) - cod%cdpahz(nd, :, 1, isb)*dpbd0(nd0, :&
 &       , 1) - dpb(:, 1)*codd%cdpahz(nd0, nd, :, 1, isb) - dpbd(nd, :, 1&
 &       )*cod0%cdpahz(nd0, :, 1, isb) - co%cdpahz(:, 1, isb)*dpbdd(nd0, &
 &       nd, :, 1)
     END DO
     dvd%fna_fcor(nd, :, 1, isb) = geo%fchz*fna_mdf0d(nd, :, 1) + (1.0_R8&
 &     -drift_hyb)*geo%fchz*(nbf*temp28+temp15*nbfd(nd, :)) + nbf*temp27 &
-&     + temp3*nbfd(nd, :) - dpb(:, 1)*cod%cdpahz(nd, :, 1, isb) - co%&
+&     + temp5*nbfd(nd, :) - dpb(:, 1)*cod%cdpahz(nd, :, 1, isb) - co%&
 &     cdpahz(:, 1, isb)*dpbd(nd, :, 1)
   END DO
   DO nd0=1,nbdirs0
     dvd0%fna_fcor(nd0, :, 1, isb) = geo%fchz*fna_mdf0d0(nd0, :, 1) + (&
 &     1.0_R8-drift_hyb)*geo%fchz*(nbf*temp15d(nd0, :)+temp15*nbfd0(nd0, &
-&     :)) + nbf*temp3d(nd0, :) + temp3*nbfd0(nd0, :) - dpb(:, 1)*cod0%&
+&     :)) + nbf*temp5d(nd0, :) + temp5*nbfd0(nd0, :) - dpb(:, 1)*cod0%&
 &     cdpahz(nd0, :, 1, isb) - co%cdpahz(:, 1, isb)*dpbd0(nd0, :, 1)
     temp15d(nd0, :) = flo_hed0(nd0, :, 0) - fac_he_anom*flo_mdfd0(nd0, :&
 &     , 0)
   END DO
   dv%fna_fcor(:, 1, isb) = geo%fchz*fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp15*nbf) + temp3*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
+&   geo%fchz*(temp15*nbf) + temp5*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
 !
   temp16 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 0)
   temp15 = flo_he(:, 0) - fac_he_anom*flo_mdf(:, 0)
@@ -2750,7 +3094,6 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &     drift_hyb)*(nbf*temp15d(nd0, :)+temp15*nbfd0(nd0, :)) + nbf*(flod0&
 &     (nd0, :, 1)-flo_mdfd0(nd0, :, 1)) + (flo(:, 1)-flo_mdf(:, 1))*&
 &     nbfd0(nd0, :)
-    dvd0%fna_exb(nd0, :, :) = 0.D0
   END DO
   dv%fna_32(:, 1, isb) = dv%fna_32(:, 1, isb) + (1.0_R8-drift_hyb)*(&
 &   temp15*nbf) + (flo(:, 1)-flo_mdf(:, 1))*nbf
@@ -2778,8 +3121,20 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &   dpb(:, 0)
   dv%fna_52nd(:, 1, isb) = dv%fna_52nd(:, 1, isb) - co%cdpa(:, 1, isb)*&
 &   dpb(:, 1)
-  dv%fna_exb = 0.0_R8
+!
+!   ..compute ExB fluxes for k-model
   IF (isb .EQ. ismain .AND. switch%solve_keps .GT. 0) THEN
+! initialization within the if-statement to avoid race conditions with openMP
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+        dvdd%fna_exb(nd0, nd, :, :) = 0.D0
+      END DO
+      dvd%fna_exb(nd, :, :) = 0.d0
+    END DO
+    DO nd0=1,nbdirs0
+      dvd0%fna_exb(nd0, :, :) = 0.D0
+    END DO
+    dv%fna_exb = 0.0_R8
     zeros = 0.0_R8
     zeros1 = 0.0_R8
     zeros1d = 0.d0
@@ -2863,7 +3218,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp29 = kmprd(nd, mpg%fccv(ifc, 1)) + kmprd(nd, mpg%fccv(ifc, 2))
       temp22 = kmprd(nd, mpg%fccv(ifc, 2)) - kmprd(nd, mpg%fccv(ifc, 1))
       DO nd0=1,nbdirs0
-        dvdd%flob(nd0, nd, ifc, 0) = dvdd%flob(nd0, nd, ifc, 0) + 0.5_R8&
+        flobtmpdd(nd0, nd, ifc, 0) = flobtmpdd(nd0, nd, ifc, 0) + 0.5_R8&
 &         *(flob0d(nd, ifc, 0)*temp8d(nd0)+temp8*flob0dd(nd0, nd, ifc, 0&
 &         )+temp29*flob0d0(nd0, ifc, 0)+flob0(ifc, 0)*(kmprdd(nd0, nd, &
 &         mpg%fccv(ifc, 1))+kmprdd(nd0, nd, mpg%fccv(ifc, 2)))) - conb0d&
@@ -2871,12 +3226,12 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &         temp22*conb0d0(nd0, ifc, 0) - conb0(ifc, 0)*(kmprdd(nd0, nd, &
 &         mpg%fccv(ifc, 2))-kmprdd(nd0, nd, mpg%fccv(ifc, 1)))
       END DO
-      dvd%flob(nd, ifc, 0) = dvd%flob(nd, ifc, 0) + 0.5_R8*(temp8*flob0d&
+      flobtmpd(nd, ifc, 0) = flobtmpd(nd, ifc, 0) + 0.5_R8*(temp8*flob0d&
 &       (nd, ifc, 0)+flob0(ifc, 0)*temp29) - temp7*conb0d(nd, ifc, 0) - &
 &       conb0(ifc, 0)*temp22
     END DO
     DO nd0=1,nbdirs0
-      dvd0%flob(nd0, ifc, 0) = dvd0%flob(nd0, ifc, 0) + 0.5_R8*(temp8*&
+      flobtmpd0(nd0, ifc, 0) = flobtmpd0(nd0, ifc, 0) + 0.5_R8*(temp8*&
 &       flob0d0(nd0, ifc, 0)+flob0(ifc, 0)*temp8d(nd0)) - temp7*conb0d0(&
 &       nd0, ifc, 0) - conb0(ifc, 0)*temp7d(nd0)
       temp8d(nd0) = kmprvd0(nd0, mpg%fcvx(ifc, 1)) + kmprvd0(nd0, mpg%&
@@ -2884,7 +3239,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp7d(nd0) = kmprvd0(nd0, mpg%fcvx(ifc, 2)) - kmprvd0(nd0, mpg%&
 &       fcvx(ifc, 1))
     END DO
-    dv%flob(ifc, 0) = dv%flob(ifc, 0) + 0.5_R8*(flob0(ifc, 0)*temp8) - &
+    flobtmp(ifc, 0) = flobtmp(ifc, 0) + 0.5_R8*(flob0(ifc, 0)*temp8) - &
 &     conb0(ifc, 0)*temp7
     temp8 = kmprv(mpg%fcvx(ifc, 1)) + kmprv(mpg%fcvx(ifc, 2))
     temp7 = kmprv(mpg%fcvx(ifc, 2)) - kmprv(mpg%fcvx(ifc, 1))
@@ -2894,7 +3249,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp22 = kmprvd(nd, mpg%fcvx(ifc, 2)) - kmprvd(nd, mpg%fcvx(ifc, 1&
 &       ))
       DO nd0=1,nbdirs0
-        dvdd%flob(nd0, nd, ifc, 1) = dvdd%flob(nd0, nd, ifc, 1) + 0.5_R8&
+        flobtmpdd(nd0, nd, ifc, 1) = flobtmpdd(nd0, nd, ifc, 1) + 0.5_R8&
 &         *(flob0d(nd, ifc, 1)*temp8d(nd0)+temp8*flob0dd(nd0, nd, ifc, 1&
 &         )+temp29*flob0d0(nd0, ifc, 1)+flob0(ifc, 1)*(kmprvdd(nd0, nd, &
 &         mpg%fcvx(ifc, 1))+kmprvdd(nd0, nd, mpg%fcvx(ifc, 2)))) - &
@@ -2902,12 +3257,12 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &         ) - temp22*conb0d0(nd0, ifc, 1) - conb0(ifc, 1)*(kmprvdd(nd0, &
 &         nd, mpg%fcvx(ifc, 2))-kmprvdd(nd0, nd, mpg%fcvx(ifc, 1)))
       END DO
-      dvd%flob(nd, ifc, 1) = dvd%flob(nd, ifc, 1) + 0.5_R8*(temp8*flob0d&
+      flobtmpd(nd, ifc, 1) = flobtmpd(nd, ifc, 1) + 0.5_R8*(temp8*flob0d&
 &       (nd, ifc, 1)+flob0(ifc, 1)*temp29) - temp7*conb0d(nd, ifc, 1) - &
 &       conb0(ifc, 1)*temp22
     END DO
     DO nd0=1,nbdirs0
-      dvd0%flob(nd0, ifc, 1) = dvd0%flob(nd0, ifc, 1) + 0.5_R8*(temp8*&
+      flobtmpd0(nd0, ifc, 1) = flobtmpd0(nd0, ifc, 1) + 0.5_R8*(temp8*&
 &       flob0d0(nd0, ifc, 1)+flob0(ifc, 1)*temp8d(nd0)) - temp7*conb0d0(&
 &       nd0, ifc, 1) - conb0(ifc, 1)*temp7d(nd0)
       temp8d(nd0) = kmprd0(nd0, mpg%fccv(ifc, 1)) + kmprd0(nd0, mpg%fccv&
@@ -2915,7 +3270,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp7d(nd0) = kmprd0(nd0, mpg%fccv(ifc, 2)) - kmprd0(nd0, mpg%fccv&
 &       (ifc, 1))
     END DO
-    dv%flob(ifc, 1) = dv%flob(ifc, 1) + 0.5_R8*(flob0(ifc, 1)*temp8) - &
+    flobtmp(ifc, 1) = flobtmp(ifc, 1) + 0.5_R8*(flob0(ifc, 1)*temp8) - &
 &     conb0(ifc, 1)*temp7
     temp8 = kmpr(mpg%fccv(ifc, 1)) + kmpr(mpg%fccv(ifc, 2))
     temp7 = kmpr(mpg%fccv(ifc, 2)) - kmpr(mpg%fccv(ifc, 1))
@@ -2923,7 +3278,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp29 = kmprd(nd, mpg%fccv(ifc, 1)) + kmprd(nd, mpg%fccv(ifc, 2))
       temp22 = kmprd(nd, mpg%fccv(ifc, 2)) - kmprd(nd, mpg%fccv(ifc, 1))
       DO nd0=1,nbdirs0
-        dvdd%conb(nd0, nd, ifc, 0, 0) = dvdd%conb(nd0, nd, ifc, 0, 0) + &
+        conbtmpdd(nd0, nd, ifc, 0, 0) = conbtmpdd(nd0, nd, ifc, 0, 0) + &
 &         0.5_R8*(conb0d(nd, ifc, 0)*temp8d(nd0)+temp8*conb0dd(nd0, nd, &
 &         ifc, 0)+temp29*conb0d0(nd0, ifc, 0)+conb0(ifc, 0)*(kmprdd(nd0&
 &         , nd, mpg%fccv(ifc, 1))+kmprdd(nd0, nd, mpg%fccv(ifc, 2)))) - &
@@ -2931,12 +3286,12 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &         , ifc, 0)+temp22*flob0d0(nd0, ifc, 0)+flob0(ifc, 0)*(kmprdd(&
 &         nd0, nd, mpg%fccv(ifc, 2))-kmprdd(nd0, nd, mpg%fccv(ifc, 1))))
       END DO
-      dvd%conb(nd, ifc, 0, 0) = dvd%conb(nd, ifc, 0, 0) + 0.5_R8*(temp8*&
+      conbtmpd(nd, ifc, 0, 0) = conbtmpd(nd, ifc, 0, 0) + 0.5_R8*(temp8*&
 &       conb0d(nd, ifc, 0)+conb0(ifc, 0)*temp29) - 0.25_R8*(temp7*flob0d&
 &       (nd, ifc, 0)+flob0(ifc, 0)*temp22)
     END DO
     DO nd0=1,nbdirs0
-      dvd0%conb(nd0, ifc, 0, 0) = dvd0%conb(nd0, ifc, 0, 0) + 0.5_R8*(&
+      conbtmpd0(nd0, ifc, 0, 0) = conbtmpd0(nd0, ifc, 0, 0) + 0.5_R8*(&
 &       temp8*conb0d0(nd0, ifc, 0)+conb0(ifc, 0)*temp8d(nd0)) - 0.25_R8*&
 &       (temp7*flob0d0(nd0, ifc, 0)+flob0(ifc, 0)*temp7d(nd0))
       temp8d(nd0) = kmprvd0(nd0, mpg%fcvx(ifc, 1)) + kmprvd0(nd0, mpg%&
@@ -2944,7 +3299,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp7d(nd0) = kmprvd0(nd0, mpg%fcvx(ifc, 2)) - kmprvd0(nd0, mpg%&
 &       fcvx(ifc, 1))
     END DO
-    dv%conb(ifc, 0, 0) = dv%conb(ifc, 0, 0) + 0.5_R8*(conb0(ifc, 0)*&
+    conbtmp(ifc, 0, 0) = conbtmp(ifc, 0, 0) + 0.5_R8*(conb0(ifc, 0)*&
 &     temp8) - 0.25_R8*(flob0(ifc, 0)*temp7)
     temp8 = kmprv(mpg%fcvx(ifc, 1)) + kmprv(mpg%fcvx(ifc, 2))
     temp7 = kmprv(mpg%fcvx(ifc, 2)) - kmprv(mpg%fcvx(ifc, 1))
@@ -2954,7 +3309,7 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp22 = kmprvd(nd, mpg%fcvx(ifc, 2)) - kmprvd(nd, mpg%fcvx(ifc, 1&
 &       ))
       DO nd0=1,nbdirs0
-        dvdd%conb(nd0, nd, ifc, 1, 0) = dvdd%conb(nd0, nd, ifc, 1, 0) + &
+        conbtmpdd(nd0, nd, ifc, 1, 0) = conbtmpdd(nd0, nd, ifc, 1, 0) + &
 &         0.5_R8*(conb0d(nd, ifc, 1)*temp8d(nd0)+temp8*conb0dd(nd0, nd, &
 &         ifc, 1)+temp29*conb0d0(nd0, ifc, 1)+conb0(ifc, 1)*(kmprvdd(nd0&
 &         , nd, mpg%fcvx(ifc, 1))+kmprvdd(nd0, nd, mpg%fcvx(ifc, 2)))) -&
@@ -2963,16 +3318,16 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 &         nd0, nd, mpg%fcvx(ifc, 2))-kmprvdd(nd0, nd, mpg%fcvx(ifc, 1)))&
 &         )
       END DO
-      dvd%conb(nd, ifc, 1, 0) = dvd%conb(nd, ifc, 1, 0) + 0.5_R8*(temp8*&
+      conbtmpd(nd, ifc, 1, 0) = conbtmpd(nd, ifc, 1, 0) + 0.5_R8*(temp8*&
 &       conb0d(nd, ifc, 1)+conb0(ifc, 1)*temp29) - 0.25_R8*(temp7*flob0d&
 &       (nd, ifc, 1)+flob0(ifc, 1)*temp22)
     END DO
     DO nd0=1,nbdirs0
-      dvd0%conb(nd0, ifc, 1, 0) = dvd0%conb(nd0, ifc, 1, 0) + 0.5_R8*(&
+      conbtmpd0(nd0, ifc, 1, 0) = conbtmpd0(nd0, ifc, 1, 0) + 0.5_R8*(&
 &       temp8*conb0d0(nd0, ifc, 1)+conb0(ifc, 1)*temp8d(nd0)) - 0.25_R8*&
 &       (temp7*flob0d0(nd0, ifc, 1)+flob0(ifc, 1)*temp7d(nd0))
     END DO
-    dv%conb(ifc, 1, 0) = dv%conb(ifc, 1, 0) + 0.5_R8*(conb0(ifc, 1)*&
+    conbtmp(ifc, 1, 0) = conbtmp(ifc, 1, 0) + 0.5_R8*(conb0(ifc, 1)*&
 &     temp8) - 0.25_R8*(flob0(ifc, 1)*temp7)
   END DO
 !
@@ -2999,43 +3354,44 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
 !wdk flob0 should be zero here
-      dvdd%flob(nd0, nd, :, :) = dvdd%flob(nd0, nd, :, :) + flob0dd(nd0&
+      flobtmpdd(nd0, nd, :, :) = flobtmpdd(nd0, nd, :, :) + flob0dd(nd0&
 &       , nd, :, :)
-      dvdd%conb(nd0, nd, :, :, 0) = dvdd%conb(nd0, nd, :, :, 0) + &
+      conbtmpdd(nd0, nd, :, :, 0) = conbtmpdd(nd0, nd, :, :, 0) + &
 &       conb0dd(nd0, nd, :, :)
 !wdk is this needed? correct? probably always zero?
-      dvdd%conb(nd0, nd, :, 0, 1) = conb0d(nd, :, 0)*kmprtifd0(nd0, :) +&
+      conbtmpdd(nd0, nd, :, 0, 1) = conb0d(nd, :, 0)*kmprtifd0(nd0, :) +&
 &       kmprtif*conb0dd(nd0, nd, :, 0) + kmprtifd(nd, :)*conb0d0(nd0, :&
 &       , 0) + conb0(:, 0)*kmprtifdd(nd0, nd, :)
 !wdk is this needed? correct? probably always zero?
-      dvdd%conb(nd0, nd, :, 1, 1) = conb0d(nd, :, 1)*kmprtifd0(nd0, :) +&
+      conbtmpdd(nd0, nd, :, 1, 1) = conb0d(nd, :, 1)*kmprtifd0(nd0, :) +&
 &       kmprtif*conb0dd(nd0, nd, :, 1) + kmprtifd(nd, :)*conb0d0(nd0, :&
 &       , 1) + conb0(:, 1)*kmprtifdd(nd0, nd, :)
-      dvdd%conb(nd0, nd, :, :, 2) = dvdd%conb(nd0, nd, :, :, 1)
+      conbtmpdd(nd0, nd, :, :, 2) = conbtmpdd(nd0, nd, :, :, 1)
     END DO
-    dvd%flob(nd, :, :) = dvd%flob(nd, :, :) + flob0d(nd, :, :)
-    dvd%conb(nd, :, :, 0) = dvd%conb(nd, :, :, 0) + conb0d(nd, :, :)
-    dvd%conb(nd, :, 0, 1) = kmprtif*conb0d(nd, :, 0) + conb0(:, 0)*&
+    flobtmpd(nd, :, :) = flobtmpd(nd, :, :) + flob0d(nd, :, :)
+    conbtmpd(nd, :, :, 0) = conbtmpd(nd, :, :, 0) + conb0d(nd, :, :)
+    conbtmpd(nd, :, 0, 1) = kmprtif*conb0d(nd, :, 0) + conb0(:, 0)*&
 &     kmprtifd(nd, :)
-    dvd%conb(nd, :, 1, 1) = kmprtif*conb0d(nd, :, 1) + conb0(:, 1)*&
+    conbtmpd(nd, :, 1, 1) = kmprtif*conb0d(nd, :, 1) + conb0(:, 1)*&
 &     kmprtifd(nd, :)
-    dvd%conb(nd, :, :, 2) = dvd%conb(nd, :, :, 1)
+    conbtmpd(nd, :, :, 2) = conbtmpd(nd, :, :, 1)
   END DO
   DO nd0=1,nbdirs0
-    dvd0%flob(nd0, :, :) = dvd0%flob(nd0, :, :) + flob0d0(nd0, :, :)
-    dvd0%conb(nd0, :, :, 0) = dvd0%conb(nd0, :, :, 0) + conb0d0(nd0, :, &
+    flobtmpd0(nd0, :, :) = flobtmpd0(nd0, :, :) + flob0d0(nd0, :, :)
+    conbtmpd0(nd0, :, :, 0) = conbtmpd0(nd0, :, :, 0) + conb0d0(nd0, :, &
 &     :)
-    dvd0%conb(nd0, :, 0, 1) = kmprtif*conb0d0(nd0, :, 0) + conb0(:, 0)*&
+    conbtmpd0(nd0, :, 0, 1) = kmprtif*conb0d0(nd0, :, 0) + conb0(:, 0)*&
 &     kmprtifd0(nd0, :)
-    dvd0%conb(nd0, :, 1, 1) = kmprtif*conb0d0(nd0, :, 1) + conb0(:, 1)*&
+    conbtmpd0(nd0, :, 1, 1) = kmprtif*conb0d0(nd0, :, 1) + conb0(:, 1)*&
 &     kmprtifd0(nd0, :)
-    dvd0%conb(nd0, :, :, 2) = dvd0%conb(nd0, :, :, 1)
+    conbtmpd0(nd0, :, :, 2) = conbtmpd0(nd0, :, :, 1)
   END DO
-  dv%flob = dv%flob + flob0
-  dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
-  dv%conb(:, 0, 1) = conb0(:, 0)*kmprtif
-  dv%conb(:, 1, 1) = conb0(:, 1)*kmprtif
-  dv%conb(:, :, 2) = dv%conb(:, :, 1)
+  flobtmp = flobtmp + flob0
+  conbtmp(:, :, 0) = conbtmp(:, :, 0) + conb0
+  conbtmp(:, 0, 1) = conb0(:, 0)*kmprtif
+  conbtmp(:, 1, 1) = conb0(:, 1)*kmprtif
+  conbtmp(:, :, 2) = conbtmp(:, :, 1)
+! Add conb, flob to dv
 !
 !   ..flux limit
 !srv 20.11.08
@@ -3097,18 +3453,18 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp8 = am(isb)*pi*mp
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          arg1dd(nd0, nd) = 8.0_R8*t2dd(nd0, nd)/temp8
+          arg10dd(nd0, nd) = 8.0_R8*t2dd(nd0, nd)/temp8
         END DO
-        arg1d(nd) = 8.0_R8*t2d(nd)/temp8
+        arg10d(nd) = 8.0_R8*t2d(nd)/temp8
       END DO
-      arg1 = 8.0_R8*(t2/temp8)
-      temp33 = SQRT(arg1)
+      arg10 = 8.0_R8*(t2/temp8)
+      temp33 = SQRT(arg10)
       DO nd0=1,nbdirs0
-        arg1d0(nd0) = 8.0_R8*t2d0(nd0)/temp8
-        IF (arg1 .EQ. 0.D0) THEN
+        arg10d0(nd0) = 8.0_R8*t2d0(nd0)/temp8
+        IF (arg10 .EQ. 0.D0) THEN
           temp8d(nd0) = 0.D0
         ELSE
-          temp8d(nd0) = arg1d0(nd0)/(2.0*temp33)
+          temp8d(nd0) = arg10d0(nd0)/(2.0*temp33)
         END IF
         vbard0(nd0) = temp8d(nd0)
         temp14d(nd0) = pld0%na(nd0, mpg%fccv(ifc, 1), isb) + pld0%na(nd0&
@@ -3123,31 +3479,31 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp33 = dv%fna(ifc, 0, isb)/temp12
       DO nd0=1,nbdirs0
         temp12d(nd0) = temp13*(vbar*temp14d(nd0)+temp14*vbard0(nd0))
-        temp1d(nd0) = (dvd0%fna(nd0, ifc, 0, isb)-temp33*temp12d(nd0))/&
+        temp3d(nd0) = (dvd0%fna(nd0, ifc, 0, isb)-temp33*temp12d(nd0))/&
 &         temp12
       END DO
-      temp1 = temp33
+      temp3 = temp33
       DO nd=1,nbdirs
-        IF (arg1 .EQ. 0.d0) THEN
+        IF (arg10 .EQ. 0.d0) THEN
           DO nd0=1,nbdirs0
             vbardd(nd0, nd) = 0.D0
           END DO
           vbard(nd) = 0.d0
         ELSE
-          temp33 = arg1d(nd)/(2.0*temp8)
+          temp33 = arg10d(nd)/(2.0*temp8)
           DO nd0=1,nbdirs0
-            vbardd(nd0, nd) = (arg1dd(nd0, nd)-temp33*2.0*temp8d(nd0))/(&
-&             2.0*temp8)
+            vbardd(nd0, nd) = (arg10dd(nd0, nd)-temp33*2.0*temp8d(nd0))/&
+&             (2.0*temp8)
           END DO
           vbard(nd) = temp33
         END IF
         temp33 = pld%na(nd, mpg%fccv(ifc, 1), isb) + pld%na(nd, mpg%fccv&
 &         (ifc, 2), isb)
         temp29 = vbar*temp33 + temp14*vbard(nd)
-        temp24 = (dvd%fna(nd, ifc, 0, isb)-temp13*temp1*temp29)/temp12
+        temp24 = (dvd%fna(nd, ifc, 0, isb)-temp13*temp3*temp29)/temp12
         DO nd0=1,nbdirs0
           x1dd(nd0, nd) = 4.0_R8*(dvdd%fna(nd0, nd, ifc, 0, isb)-temp13*&
-&           (temp29*temp1d(nd0)+temp1*(temp33*vbard0(nd0)+vbar*(pldd%na(&
+&           (temp29*temp3d(nd0)+temp3*(temp33*vbard0(nd0)+vbar*(pldd%na(&
 &           nd0, nd, mpg%fccv(ifc, 1), isb)+pldd%na(nd0, nd, mpg%fccv(&
 &           ifc, 2), isb))+vbard(nd)*temp14d(nd0)+temp14*vbardd(nd0, nd)&
 &           ))-temp24*temp12d(nd0))/temp12
@@ -3155,9 +3511,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         x1d(nd) = 4.0_R8*temp24
       END DO
       DO nd0=1,nbdirs0
-        x1d0(nd0) = 4.0_R8*temp1d(nd0)
+        x1d0(nd0) = 4.0_R8*temp3d(nd0)
       END DO
-      x1 = 4.0_R8*temp1
+      x1 = 4.0_R8*temp3
       IF (x1 .GE. 0.) THEN
         DO nd=1,nbdirs
           DO nd0=nd,nbdirs0
@@ -3251,18 +3607,18 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       temp33 = dv%fna(ifc, 1, isb)/temp12
       DO nd0=1,nbdirs0
         temp12d(nd0) = temp13*(vbar*temp14d(nd0)+temp14*vbard0(nd0))
-        temp1d(nd0) = (dvd0%fna(nd0, ifc, 1, isb)-temp33*temp12d(nd0))/&
+        temp3d(nd0) = (dvd0%fna(nd0, ifc, 1, isb)-temp33*temp12d(nd0))/&
 &         temp12
       END DO
-      temp1 = temp33
+      temp3 = temp33
       DO nd=1,nbdirs
         temp33 = pld%na(nd, mpg%fccv(ifc, 1), isb) + pld%na(nd, mpg%fccv&
 &         (ifc, 2), isb)
         temp29 = vbar*temp33 + temp14*vbard(nd)
-        temp24 = (dvd%fna(nd, ifc, 1, isb)-temp13*temp1*temp29)/temp12
+        temp24 = (dvd%fna(nd, ifc, 1, isb)-temp13*temp3*temp29)/temp12
         DO nd0=1,nbdirs0
           x2dd(nd0, nd) = 4.0_R8*(dvdd%fna(nd0, nd, ifc, 1, isb)-temp13*&
-&           (temp29*temp1d(nd0)+temp1*(temp33*vbard0(nd0)+vbar*(pldd%na(&
+&           (temp29*temp3d(nd0)+temp3*(temp33*vbard0(nd0)+vbar*(pldd%na(&
 &           nd0, nd, mpg%fccv(ifc, 1), isb)+pldd%na(nd0, nd, mpg%fccv(&
 &           ifc, 2), isb))+vbard(nd)*temp14d(nd0)+temp14*vbardd(nd0, nd)&
 &           ))-temp24*temp12d(nd0))/temp12
@@ -3270,9 +3626,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         x2d(nd) = 4.0_R8*temp24
       END DO
       DO nd0=1,nbdirs0
-        x2d0(nd0) = 4.0_R8*temp1d(nd0)
+        x2d0(nd0) = 4.0_R8*temp3d(nd0)
       END DO
-      x2 = 4.0_R8*temp1
+      x2 = 4.0_R8*temp3
       IF (x2 .GE. 0.) THEN
         DO nd=1,nbdirs
           DO nd0=nd,nbdirs0
@@ -3363,28 +3719,36 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         maxfluxlimit(0) = maxfluxlimit(0)
       END IF
       temp33 = dv%fna(ifc, 0, isb)/t0
+! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
+      temp29 = flobtmp(ifc, 0)/t0
 !srv 13.10.06 {
-      temp34 = dv%conb(ifc, 0, 0:4)/t0
+      temp34 = conbtmp(ifc, 0, 0:4)/t0
       DO nd0=1,nbdirs0
         temp14d(nd0) = (dvd0%fna(nd0, ifc, 0, isb)-temp33*t0d0(nd0))/t0
-        temp17d(nd0, :) = (dvd0%conb(nd0, ifc, 0, 0:4)-temp34*t0d0(nd0))&
+        temp8d(nd0) = (flobtmpd0(nd0, ifc, 0)-temp29*t0d0(nd0))/t0
+        temp17d(nd0, :) = (conbtmpd0(nd0, ifc, 0, 0:4)-temp34*t0d0(nd0))&
 &         /t0
       END DO
       temp14 = temp33
+      temp8 = temp29
       temp17 = temp34
       DO nd=1,nbdirs
         temp33 = (dvd%fna(nd, ifc, 0, isb)-temp14*t0d(nd))/t0
-        temp34 = (dvd%conb(nd, ifc, 0, 0:4)-temp17*t0d(nd))/t0
+        temp29 = (flobtmpd(nd, ifc, 0)-temp8*t0d(nd))/t0
+        temp34 = (conbtmpd(nd, ifc, 0, 0:4)-temp17*t0d(nd))/t0
         DO nd0=1,nbdirs0
           dvdd%fna(nd0, nd, ifc, 0, isb) = (dvdd%fna(nd0, nd, ifc, 0, &
 &           isb)-t0d(nd)*temp14d(nd0)-temp14*t0dd(nd0, nd)-temp33*t0d0(&
 &           nd0))/t0
-          dvdd%conb(nd0, nd, ifc, 0, 0:4) = (dvdd%conb(nd0, nd, ifc, 0, &
+          flobtmpdd(nd0, nd, ifc, 0) = (flobtmpdd(nd0, nd, ifc, 0)-t0d(&
+&           nd)*temp8d(nd0)-temp8*t0dd(nd0, nd)-temp29*t0d0(nd0))/t0
+          conbtmpdd(nd0, nd, ifc, 0, 0:4) = (conbtmpdd(nd0, nd, ifc, 0, &
 &           0:4)-t0d(nd)*temp17d(nd0, :)-temp17*t0dd(nd0, nd)-temp34*&
 &           t0d0(nd0))/t0
         END DO
         dvd%fna(nd, ifc, 0, isb) = temp33
-        dvd%conb(nd, ifc, 0, 0:4) = temp34
+        flobtmpd(nd, ifc, 0) = temp29
+        conbtmpd(nd, ifc, 0, 0:4) = temp34
       END DO
       temp33 = dv%fna_32(ifc, 0, isb)/t0
       DO nd0=1,nbdirs0
@@ -3403,35 +3767,21 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         END DO
         dvd%fna_32(nd, ifc, 0, isb) = temp33
       END DO
-! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      temp33 = dv%flob(ifc, 0)/t0
+      temp33 = dv%fna_he(ifc, 0, isb)/t0
       DO nd0=1,nbdirs0
         dvd0%fna_32(nd0, ifc, 0, isb) = temp14d(nd0)
-        temp14d(nd0) = (dvd0%flob(nd0, ifc, 0)-temp33*t0d0(nd0))/t0
+        flobtmpd0(nd0, ifc, 0) = temp8d(nd0)
+        conbtmpd0(nd0, ifc, 0, 0:4) = temp17d(nd0, :)
+        temp14d(nd0) = (dvd0%fna_he(nd0, ifc, 0, isb)-temp33*t0d0(nd0))/&
+&         t0
       END DO
       dv%fna_32(ifc, 0, isb) = temp14
       dv%fna_52(ifc, 0, isb) = dv%fna_52(ifc, 0, isb)/t0
       dv%fna_nodrift(ifc, 0, isb) = dv%fna_nodrift(ifc, 0, isb)/t0
       dv%fna_32nd(ifc, 0, isb) = dv%fna_32nd(ifc, 0, isb)/t0
       dv%fna_52nd(ifc, 0, isb) = dv%fna_52nd(ifc, 0, isb)/t0
-      temp14 = temp33
-      DO nd=1,nbdirs
-        temp33 = (dvd%flob(nd, ifc, 0)-temp14*t0d(nd))/t0
-        DO nd0=1,nbdirs0
-          dvdd%flob(nd0, nd, ifc, 0) = (dvdd%flob(nd0, nd, ifc, 0)-t0d(&
-&           nd)*temp14d(nd0)-temp14*t0dd(nd0, nd)-temp33*t0d0(nd0))/t0
-        END DO
-        dvd%flob(nd, ifc, 0) = temp33
-      END DO
-      temp33 = dv%fna_he(ifc, 0, isb)/t0
-      DO nd0=1,nbdirs0
-        dvd0%flob(nd0, ifc, 0) = temp14d(nd0)
-        dvd0%conb(nd0, ifc, 0, 0:4) = temp17d(nd0, :)
-        temp14d(nd0) = (dvd0%fna_he(nd0, ifc, 0, isb)-temp33*t0d0(nd0))/&
-&         t0
-      END DO
-      dv%flob(ifc, 0) = temp14
-      dv%conb(ifc, 0, 0:4) = temp17
+      flobtmp(ifc, 0) = temp8
+      conbtmp(ifc, 0, 0:4) = temp17
       temp14 = temp33
       DO nd=1,nbdirs
         temp33 = (dvd%fna_he(nd, ifc, 0, isb)-temp14*t0d(nd))/t0
@@ -3505,28 +3855,36 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         maxfluxlimit(1) = maxfluxlimit(1)
       END IF
       temp33 = dv%fna(ifc, 1, isb)/t1
+! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
+      temp29 = flobtmp(ifc, 1)/t1
 !srv 13.10.06 {
-      temp34 = dv%conb(ifc, 1, 0:4)/t1
+      temp34 = conbtmp(ifc, 1, 0:4)/t1
       DO nd0=1,nbdirs0
         temp14d(nd0) = (dvd0%fna(nd0, ifc, 1, isb)-temp33*t1d0(nd0))/t1
-        temp17d(nd0, :) = (dvd0%conb(nd0, ifc, 1, 0:4)-temp34*t1d0(nd0))&
+        temp8d(nd0) = (flobtmpd0(nd0, ifc, 1)-temp29*t1d0(nd0))/t1
+        temp17d(nd0, :) = (conbtmpd0(nd0, ifc, 1, 0:4)-temp34*t1d0(nd0))&
 &         /t1
       END DO
       temp14 = temp33
+      temp8 = temp29
       temp17 = temp34
       DO nd=1,nbdirs
         temp33 = (dvd%fna(nd, ifc, 1, isb)-temp14*t1d(nd))/t1
-        temp34 = (dvd%conb(nd, ifc, 1, 0:4)-temp17*t1d(nd))/t1
+        temp29 = (flobtmpd(nd, ifc, 1)-temp8*t1d(nd))/t1
+        temp34 = (conbtmpd(nd, ifc, 1, 0:4)-temp17*t1d(nd))/t1
         DO nd0=1,nbdirs0
           dvdd%fna(nd0, nd, ifc, 1, isb) = (dvdd%fna(nd0, nd, ifc, 1, &
 &           isb)-t1d(nd)*temp14d(nd0)-temp14*t1dd(nd0, nd)-temp33*t1d0(&
 &           nd0))/t1
-          dvdd%conb(nd0, nd, ifc, 1, 0:4) = (dvdd%conb(nd0, nd, ifc, 1, &
+          flobtmpdd(nd0, nd, ifc, 1) = (flobtmpdd(nd0, nd, ifc, 1)-t1d(&
+&           nd)*temp8d(nd0)-temp8*t1dd(nd0, nd)-temp29*t1d0(nd0))/t1
+          conbtmpdd(nd0, nd, ifc, 1, 0:4) = (conbtmpdd(nd0, nd, ifc, 1, &
 &           0:4)-t1d(nd)*temp17d(nd0, :)-temp17*t1dd(nd0, nd)-temp34*&
 &           t1d0(nd0))/t1
         END DO
         dvd%fna(nd, ifc, 1, isb) = temp33
-        dvd%conb(nd, ifc, 1, 0:4) = temp34
+        flobtmpd(nd, ifc, 1) = temp29
+        conbtmpd(nd, ifc, 1, 0:4) = temp34
       END DO
       temp33 = dv%fna_32(ifc, 1, isb)/t1
       DO nd0=1,nbdirs0
@@ -3545,35 +3903,21 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
         END DO
         dvd%fna_32(nd, ifc, 1, isb) = temp33
       END DO
-! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      temp33 = dv%flob(ifc, 1)/t1
+      temp33 = dv%fna_he(ifc, 1, isb)/t1
       DO nd0=1,nbdirs0
         dvd0%fna_32(nd0, ifc, 1, isb) = temp14d(nd0)
-        temp14d(nd0) = (dvd0%flob(nd0, ifc, 1)-temp33*t1d0(nd0))/t1
+        flobtmpd0(nd0, ifc, 1) = temp8d(nd0)
+        conbtmpd0(nd0, ifc, 1, 0:4) = temp17d(nd0, :)
+        temp14d(nd0) = (dvd0%fna_he(nd0, ifc, 1, isb)-temp33*t1d0(nd0))/&
+&         t1
       END DO
       dv%fna_32(ifc, 1, isb) = temp14
       dv%fna_52(ifc, 1, isb) = dv%fna_52(ifc, 1, isb)/t1
       dv%fna_nodrift(ifc, 1, isb) = dv%fna_nodrift(ifc, 1, isb)/t1
       dv%fna_32nd(ifc, 1, isb) = dv%fna_32nd(ifc, 1, isb)/t1
       dv%fna_52nd(ifc, 1, isb) = dv%fna_52nd(ifc, 1, isb)/t1
-      temp14 = temp33
-      DO nd=1,nbdirs
-        temp33 = (dvd%flob(nd, ifc, 1)-temp14*t1d(nd))/t1
-        DO nd0=1,nbdirs0
-          dvdd%flob(nd0, nd, ifc, 1) = (dvdd%flob(nd0, nd, ifc, 1)-t1d(&
-&           nd)*temp14d(nd0)-temp14*t1dd(nd0, nd)-temp33*t1d0(nd0))/t1
-        END DO
-        dvd%flob(nd, ifc, 1) = temp33
-      END DO
-      temp33 = dv%fna_he(ifc, 1, isb)/t1
-      DO nd0=1,nbdirs0
-        dvd0%flob(nd0, ifc, 1) = temp14d(nd0)
-        dvd0%conb(nd0, ifc, 1, 0:4) = temp17d(nd0, :)
-        temp14d(nd0) = (dvd0%fna_he(nd0, ifc, 1, isb)-temp33*t1d0(nd0))/&
-&         t1
-      END DO
-      dv%flob(ifc, 1) = temp14
-      dv%conb(ifc, 1, 0:4) = temp17
+      flobtmp(ifc, 1) = temp8
+      conbtmp(ifc, 1, 0:4) = temp17
       temp14 = temp33
       DO nd=1,nbdirs
         temp33 = (dvd%fna_he(nd, ifc, 1, isb)-temp14*t1d(nd))/t1
@@ -3643,6 +3987,21 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
       co%fllim0fna(ifc, 1, isb) = t1
     END DO
   END IF
+  DO nd=1,nbdirs
+    DO nd0=nd,nbdirs0
+!
+      dvdd%flob(nd0, nd, :, :, isb) = flobtmpdd(nd0, nd, :, :)
+      dvdd%conb(nd0, nd, :, :, :, isb) = conbtmpdd(nd0, nd, :, :, :)
+    END DO
+    dvd%flob(nd, :, :, isb) = flobtmpd(nd, :, :)
+    dvd%conb(nd, :, :, :, isb) = conbtmpd(nd, :, :, :)
+  END DO
+  DO nd0=1,nbdirs0
+    dvd0%flob(nd0, :, :, isb) = flobtmpd0(nd0, :, :)
+    dvd0%conb(nd0, :, :, :, isb) = conbtmpd0(nd0, :, :, :)
+  END DO
+  dv%flob(:, :, isb) = flobtmp
+  dv%conb(:, :, :, isb) = conbtmp
 !
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
@@ -4010,29 +4369,29 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
     arg18 = 'b2tfnb_ub2dia_r'//chns
     CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg18)
     arg18 = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0, isb), arg18)
     arg18 = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1, isb), arg18)
     arg18 = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2, isb), arg18)
     arg18 = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3, isb), arg18)
     arg18 = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4, isb), arg18)
     arg110 = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0, isb), arg110)
     arg110 = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1, isb), arg110)
     arg110 = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2, isb), arg110)
     arg110 = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3, isb), arg110)
     arg110 = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4, isb), arg110)
     arg110 = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0, isb), arg110)
     arg14 = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg14)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1, isb), arg14)
     arg110 = 'b2tfnb_kmprtix'//chns
     CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg110)
     arg113 = 'b2tfnb_ua'//chns
@@ -4081,14 +4440,14 @@ END SUBROUTINE B2TFNB_DV_DV
 !   variations   of useful results: *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(dv.uadia) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
 !   with respect to varying inputs: *(dv.fchvispar_a) *(dv.fchvisper_a)
 !                *(dv.fchvisq_a) *(dv.fchinert_a) *(dv.fchanml_a)
 !                *(dv.fchviskt_a) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.pcca) *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
-!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(dv.pcca) *(dv.pa) *(dv.uadia) *(dv.vadia) *(dv.wadia)
+!                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
 !                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
 !                *(pl.tn)
@@ -4098,15 +4457,16 @@ END SUBROUTINE B2TFNB_DV_DV
 !                dv.fna_32:in dv.fna_53:in dv.fna_52nd:in dv.fna_32nd:in
 !                dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in
 !                dv.fna_exb:in dv.kinrgy:in dv.flob:in dv.conb:in
-!                dv.pcca:in dv.ne:in dv.pa:in dv.uadia:in dv.vadia:in
-!                dv.wadia:in dv.vaecrb:in mpg.bcfcor:in mpg.intcellp:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
-!                geo.vxvol:in geo.vxonedbsq:in rt.rza:in co.cvla:in
-!                co.cdna:in co.cdna_exb:in co.cdpa:in co.cvlahz:in
-!                co.cdpahz:in co.cddi:in co.fllim0fna:in co.cssb:in
-!                pl.na:in pl.ua:in pl.po:in pl.ti:in pl.tn:in
+!                dv.pcca:in dv.pa:in dv.uadia:in dv.vadia:in dv.wadia:in
+!                dv.vaecrb:in dv.facdrift:in dv.fac_exb:in mpg.bcfcor:in
+!                mpg.intcellp:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.vxx:in geo.vxy:in geo.vxvol:in
+!                geo.vxonedbsq:in rt.rza:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvlahz:in co.cdpahz:in
+!                co.cddi:in co.fllim0fna:in co.cssb:in pl.na:in
+!                pl.ua:in pl.po:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -4186,6 +4546,9 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !   ..local variables
 !srv 13.10.06
   INTEGER :: icv1, icv2, ifc, meth
+  INTEGER :: ivx1, ivx2, ifc1, ifc2, k, j
+  REAL(kind=r8) :: dpo_p, dpo_r, fcht_tot, a(2), b(2), vx_dir
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dpo_pd, dpo_rd
 !srv 16.09.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: drift_hyb
@@ -4193,13 +4556,15 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   REAL(kind=r8) :: flo(nfc, 0:1), flo_mdf(nfc, 0:1), flo_nodrift(nfc, 0:&
 & 1), flo2dia(nfc, 0:1), flo_he(nfc, 0:1), flo_53(nfc, 0:1), alpha, &
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
-& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
+& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1), flobtmp(nfc, 0:1), conbtmp(nfc&
+& , 0:1, 0:4)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), flo_mdfd(nbdirsmax, nfc, 0&
 & :1), flo2diad(nbdirsmax, nfc, 0:1), flo_hed(nbdirsmax, nfc, 0:1), &
 & flo_53d(nbdirsmax, nfc, 0:1), vbard(nbdirsmax), t0d(nbdirsmax), t1d(&
 & nbdirsmax), t2d(nbdirsmax), t3d(nbdirsmax), termd(nbdirsmax, nfc), &
 & flob0d(nbdirsmax, nfc, 0:1), conb0d(nbdirsmax, nfc, 0:1), scurd(&
-& nbdirsmax, nfc, 0:1)
+& nbdirsmax, nfc, 0:1), flobtmpd(nbdirsmax, nfc, 0:1), conbtmpd(&
+& nbdirsmax, nfc, 0:1, 0:4)
 !srv 05.03.16
 !srv 05.03.16
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmpr(ncv), kmprv(nvx), &
@@ -4239,6 +4604,7 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC SUM
   INTRINSIC NINT
   EXTERNAL XERRAB
   REAL(r8) :: x1
@@ -4252,12 +4618,12 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   REAL(r8) :: result1
   REAL(r8) :: result2
   REAL(r8) :: result3
-  REAL(r8) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax) :: arg1d
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
+  REAL(r8) :: arg10
+  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
   REAL(kind=r8) :: result10
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
-  REAL(kind=r8) :: arg10
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
   CHARACTER(len=18) :: arg11
   CHARACTER(len=17) :: arg12
   CHARACTER(len=16) :: arg13
@@ -4275,11 +4641,11 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   INTEGER :: nd
   REAL(r8), DIMENSION(ncv) :: temp
   REAL(kind=r8) :: temp0
-  REAL(r8) :: temp1
-  REAL(r8), DIMENSION(ncv) :: temp2
-  REAL(kind=r8), DIMENSION(nfc) :: temp3
-  REAL(kind=r8) :: temp4
-  REAL(kind=r8) :: temp5
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: temp2
+  REAL(r8) :: temp3
+  REAL(r8), DIMENSION(ncv) :: temp4
+  REAL(kind=r8), DIMENSION(nfc) :: temp5
   REAL(kind=r8) :: temp6
   REAL(kind=r8) :: temp7
   REAL(kind=r8) :: temp8
@@ -4295,7 +4661,7 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   REAL(kind=r8), DIMENSION(nfc) :: temp15
   REAL(r8), DIMENSION(nfc) :: temp16
   REAL(r8), DIMENSION(nbdirsmax) :: tempd1
-  REAL(r8), DIMENSION(5) :: temp17
+  REAL(kind=r8), DIMENSION(5) :: temp17
   INTEGER :: nbdirs
   INTRINSIC INT
 !   ..initialisation
@@ -4316,16 +4682,14 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     CALL B2XVSG(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
     CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
-    DO nd=1,nbdirs
-      wrk0d(nd, :) = 0.d0
-      wrk1d(nd, :) = 0.d0
-      wrk0d(nd, :) = geo%fcqalf(:, 0)*cod%cdpa(nd, :, 0, isb)
-      wrk1d(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, isb)
-    END DO
     wrk0(:) = co%cdna(:, 0, isb)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrk0, 1, 'cdna0', '.ge.')
     wrk1(:) = co%cdna(:, 1, isb)*geo%fcqalf(:, 1)
     CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
+    DO nd=1,nbdirs
+      wrk0d(nd, :) = geo%fcqalf(:, 0)*cod%cdpa(nd, :, 0, isb)
+      wrk1d(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, isb)
+    END DO
     wrk0(:) = co%cdpa(:, 0, isb)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrk0, 1, 'cdpa0', '.ge.')
     wrk1(:) = co%cdpa(:, 1, isb)*geo%fcqalf(:, 1)
@@ -4395,8 +4759,8 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !
 ! Drift terms
   maxfluxlimit = 0.0_R8
-  dv%uadia(:, :, isb) = 0.0_R8
   DO nd=1,nbdirs
+    dvd%uadia(nd, :, :, isb) = 0.d0
     dvd%vadia(nd, :, :, isb) = 0.d0
     dvd%wadia(nd, :, :, isb) = 0.d0
     dvd%vaecrb(nd, :, :, isb) = 0.d0
@@ -4404,17 +4768,20 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     dvd%fnapsch(nd, :, :, isb) = 0.d0
 !srv 19.11.09
     dvd%fna_mdf(nd, :, :, isb) = 0.d0
-    dvd%flob(nd, :, :) = 0.d0
+    dvd%flob(nd, :, :, isb) = 0.d0
 !srv 13.10.06
-    dvd%conb(nd, :, :, :) = 0.d0
+    dvd%conb(nd, :, :, :, isb) = 0.d0
   END DO
+  dv%uadia(:, :, isb) = 0.0_R8
   dv%vadia(:, :, isb) = 0.0_R8
   dv%wadia(:, :, isb) = 0.0_R8
   dv%vaecrb(:, :, isb) = 0.0_R8
   dv%fnapsch(:, :, isb) = 0.0_R8
   dv%fna_mdf(:, :, isb) = 0.0_R8
-  dv%flob = 0.0_R8
-  dv%conb = 0.0_R8
+  dv%flob(:, :, isb) = 0.0_R8
+  dv%conb(:, :, :, isb) = 0.0_R8
+  flobtmp = 0.0_R8
+  conbtmp = 0.0_R8
 !srv 01.10.99
   ub2dia = 0.0_R8
   result1 = MAXVAL(dv%facdrift)
@@ -4459,6 +4826,93 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     END DO
     dv%vaecrb(:, 0, isb) = -(switch%poleldr*dv%fac_exb*wrk0*dpo(:, 1))
     dv%vaecrb(:, 1, isb) = switch%radeldr*dv%fac_exb*wrk0*dpo(:, 0)
+!
+    IF (switch%b2tfnb_avg_vexb .GE. 1) THEN
+      wrkvxd = 0.d0
+      CALL INTVERTEX_DV_NODIFF(ncv, nvx, mpg, geo%vxvol, pl%po, pld%po, &
+&                        wrkvx, wrkvxd, nbdirs)
+      DO j=1,mpg%nfci
+        IF (.NOT.(mpg%fcs_wall_ind(j, 2) .EQ. 1 .OR. mpg%fcs_wall_type(j&
+&           ) .NE. 2)) THEN
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1))
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+1)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx1 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx1 = mpg%fcvx(ifc1, 2)
+          END IF
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-1)
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-2)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx2 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx2 = mpg%fcvx(ifc1, 2)
+          END IF
+          fcht_tot = SUM(geo%fcht(mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):&
+&           mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j, 2)-1)))
+          IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                            '(a,2i6,1p,2e15.8)') &
+&                                            'iVx1,iVx2,po_iVx1,po_iVx2'&
+&                                            , ivx1, ivx2, wrkvx(ivx1), &
+&                                            wrkvx(ivx2)
+          DO k=1,mpg%fcs_wall_ind(j, 2)
+            ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+            icv1 = mpg%fccv(ifc, 1)
+            icv2 = mpg%fccv(ifc, 2)
+            a(1) = geo%vxx(mpg%fcvx(ifc, 2)) - geo%vxx(mpg%fcvx(ifc, 1))
+            a(2) = geo%vxy(mpg%fcvx(ifc, 2)) - geo%vxy(mpg%fcvx(ifc, 1))
+            b(1) = geo%vxx(ivx2) - geo%vxx(ivx1)
+            b(2) = geo%vxy(ivx2) - geo%vxy(ivx1)
+            arg1 = a(1)*b(1) + a(2)*b(2)
+            vx_dir = SIGN(1.0_R8, arg1)
+            temp0 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
+&             ))
+            temp1 = vx_dir*geo%fcqbet(ifc, 1)
+            temp2 = geo%fcqgam(ifc, 0)*fcht_tot
+            DO nd=1,nbdirs
+              dpo_pd(nd) = geo%fcqalf(ifc, 0)*(pld%po(nd, icv2)-pld%po(&
+&               nd, icv1))/temp0 + temp1*(wrkvxd(nd, ivx2)-wrkvxd(nd, &
+&               ivx1))/temp2
+            END DO
+            dpo_p = geo%fcqalf(ifc, 0)*((pl%po(icv2)-pl%po(icv1))/temp0)&
+&             + temp1*((wrkvx(ivx2)-wrkvx(ivx1))/temp2)
+!
+            temp2 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
+&             ))
+            temp1 = vx_dir*geo%fcqbet(ifc, 0)
+            temp0 = geo%fcqgam(ifc, 0)*fcht_tot
+            DO nd=1,nbdirs
+              dpo_rd(nd) = geo%fcqalf(ifc, 1)*(pld%po(nd, icv2)-pld%po(&
+&               nd, icv1))/temp2 + temp1*(wrkvxd(nd, ivx2)-wrkvxd(nd, &
+&               ivx1))/temp0
+            END DO
+            dpo_r = geo%fcqalf(ifc, 1)*((pl%po(icv2)-pl%po(icv1))/temp2)&
+&             + temp1*((wrkvx(ivx2)-wrkvx(ivx1))/temp0)
+            IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                              '(a,i6,1p,2e15.8)') &
+&                                              'iFc,dpo_th,dpo_r', ifc, &
+&                                              dpo_p, dpo_r
+            temp3 = dv%fac_exb(ifc)*wrk0(ifc)
+            DO nd=1,nbdirs
+              dvd%vaecrb(nd, ifc, 0, isb) = -(temp3*switch%poleldr*&
+&               dpo_rd(nd))
+            END DO
+            dv%vaecrb(ifc, 0, isb) = -(temp3*(switch%poleldr*dpo_r))
+            temp3 = dv%fac_exb(ifc)*wrk0(ifc)
+            DO nd=1,nbdirs
+              dvd%vaecrb(nd, ifc, 1, isb) = temp3*switch%radeldr*dpo_pd(&
+&               nd)
+            END DO
+            dv%vaecrb(ifc, 1, isb) = temp3*(switch%radeldr*dpo_p)
+          END DO
+        END IF
+      END DO
+    END IF
+!
 !     ..restriction ExB drift
     xcount = 0
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
@@ -4468,21 +4922,21 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !    to total ExB velocity (instead of individual poloidal and radial
 !    components). Otherwise: not perpendicular to gradient of potential
       DO ifc=1,nfc
-        temp0 = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp0*temp0 + dv%vaecrb(ifc, 1, isb)*dv%vaecrb(ifc, 1, &
+        temp2 = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp2*temp2 + dv%vaecrb(ifc, 1, isb)*dv%vaecrb(ifc, 1, &
 &         isb)
-        temp1 = SQRT(arg1)
+        temp3 = SQRT(arg10)
         DO nd=1,nbdirs
-          arg1d(nd) = 2*temp0*geo%fcbb(ifc, 3)*dvd%vaecrb(nd, ifc, 0, &
+          arg10d(nd) = 2*temp2*geo%fcbb(ifc, 3)*dvd%vaecrb(nd, ifc, 0, &
 &           isb)/geo%fcbb(ifc, 2) + 2*dv%vaecrb(ifc, 1, isb)*dvd%vaecrb(&
 &           nd, ifc, 1, isb)
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             t0d(nd) = 0.d0
           ELSE
-            t0d(nd) = arg1d(nd)/(2.0*temp1)
+            t0d(nd) = arg10d(nd)/(2.0*temp3)
           END IF
         END DO
-        t0 = temp1
+        t0 = temp3
         IF (t0 .GT. 2.0_R8*co%cssb(ifc)) THEN
           xcount = xcount + 1
           IF (switch%vlct_diagno .GE. 2) THEN
@@ -4493,10 +4947,10 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &           'Mach 2: ', 2.0_R8*co%cssb(ifc), ' Vx_ExB:', dv%vaecrb(ifc, &
 &           0, isb), ' Vy_ExB:', dv%vaecrb(ifc, 1, isb), ' |V_ExB|:', t0
           END IF
-          temp1 = co%cssb(ifc)/t0
-          t1 = 2.0_R8*temp1
+          temp3 = co%cssb(ifc)/t0
+          t1 = 2.0_R8*temp3
           DO nd=1,nbdirs
-            t1d(nd) = 2.0_R8*(cod%cssb(nd, ifc)-temp1*t0d(nd))/t0
+            t1d(nd) = 2.0_R8*(cod%cssb(nd, ifc)-temp3*t0d(nd))/t0
             dvd%vaecrb(nd, ifc, 0, isb) = t1*dvd%vaecrb(nd, ifc, 0, isb)&
 &             + dv%vaecrb(ifc, 0, isb)*t1d(nd)
           END DO
@@ -4525,12 +4979,12 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !     ..computation of grad-B drift
 !wdk    use (na*Ti)_f/na_f for consistency with fchdia
 !wdk    check treatment of rza for consistency with other drifts
-    temp2 = pl%na(:, isb)*pl%ti/(qe*rt%rza(:, isb))
+    temp4 = pl%na(:, isb)*pl%ti/(qe*rt%rza(:, isb))
     DO nd=1,nbdirs
       wrkd(nd, :) = (pl%ti*pld%na(nd, :, isb)+pl%na(:, isb)*pld%ti(nd, :&
-&       )-temp2*qe*rtd%rza(nd, :, isb))/(qe*rt%rza(:, isb))
+&       )-temp4*qe*rtd%rza(nd, :, isb))/(qe*rt%rza(:, isb))
     END DO
-    wrk = temp2
+    wrk = temp4
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, wrk, wrkd, wrk1, wrk1d, &
 &             nbdirs)
     DO nd=1,nbdirs
@@ -4542,6 +4996,9 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &       poldidr*dv%facdrift*(wrk1d(nd, :)-wrk1*nbfd(nd, :)/nbf)/nbf
       dvd%vadia(nd, :, 1, isb) = -(donedbsq(:, 0)*geo%fcbb(:, 2)*switch%&
 &       raddidr*dv%facdrift*(wrk1d(nd, :)-wrk1*nbfd(nd, :)/nbf)/nbf)
+!     ..additional drift variables
+      dvd%uadia(nd, :, :, isb) = dvd%vaecrb(nd, :, :, isb) + dvd%vadia(&
+&       nd, :, :, isb)
     END DO
     dv%vadia(:, 0, isb) = switch%poldidr*dv%facdrift*wrk1*donedbsq(:, 1)&
 &     *geo%fcbb(:, 2)/nbf
@@ -4552,29 +5009,31 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !wdk                   (original code: simple averaging)
     CALL INTFACE_DV(nvx, nfc, mpg%fcvx, weight, nbzbc, nbzbcd, wrk1, &
 &             wrk1d, nbdirs)
-    temp3 = dnbti(:, 1)/(qe*wrk1)
+    temp5 = dnbti(:, 1)/(qe*wrk1)
     DO nd=1,nbdirs
       dvd%wadia(nd, :, 0, isb) = -(dv%facdrift*wrk0*(dnbtid(nd, :, 1)-&
-&       temp3*qe*wrk1d(nd, :))/(qe*wrk1))
+&       temp5*qe*wrk1d(nd, :))/(qe*wrk1))
     END DO
-    dv%wadia(:, 0, isb) = -(dv%facdrift*wrk0*temp3)
-    temp3 = dnbti(:, 0)/(qe*wrk1)
+    dv%wadia(:, 0, isb) = -(dv%facdrift*wrk0*temp5)
+    temp5 = dnbti(:, 0)/(qe*wrk1)
     DO nd=1,nbdirs
       dvd%wadia(nd, :, 1, isb) = dv%facdrift*wrk0*(dnbtid(nd, :, 0)-&
-&       temp3*qe*wrk1d(nd, :))/(qe*wrk1)
+&       temp5*qe*wrk1d(nd, :))/(qe*wrk1)
     END DO
-    dv%wadia(:, 1, isb) = dv%facdrift*wrk0*temp3
-!     ..additional drift variables
+    dv%wadia(:, 1, isb) = dv%facdrift*wrk0*temp5
     dv%uadia(:, :, isb) = dv%vaecrb(:, :, isb) + dv%vadia(:, :, isb)
     ub2dia = dv%vaecrb(:, :, isb) + 2.0_R8*dv%vadia(:, :, isb)
 !
 !     ..computation of P.Sch flows
+    flobtmpd = 0.d0
+    conbtmpd = 0.d0
     CALL B2TNPSCH_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd&
 &                     , dv%facdrift, co%cddi(:, :, isb), cod%cddi(:, :, &
 &                     :, isb), pl%ti, pld%ti, pl%na(:, isb), pld%na(:, :&
-&                     , isb), kmprti, kmprtid, dv%flob, dvd%flob, dv%&
-&                     conb, dvd%conb, dv%fnapsch(:, :, isb), dvd%fnapsch&
-&                     (:, :, :, isb), nbdirs)
+&                     , isb), kmprti, kmprtid, flobtmp, flobtmpd, &
+&                     conbtmp(:, :, 0:2), conbtmpd(:, :, :, 0:2), dv%&
+&                     fnapsch(:, :, isb), dvd%fnapsch(:, :, :, isb), &
+&                     nbdirs)
 !lk 02.06.11 }
 !
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
@@ -4599,128 +5058,154 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
           END DO
           t0 = pl%ti(icv1)
         END IF
-        temp0 = am(isb)*pi*mp
+        temp2 = am(isb)*pi*mp
         DO nd=1,nbdirs
           t1d(nd) = 0.5_R8*(pld%na(nd, icv1, isb)+pld%na(nd, icv2, isb))
-          arg1d(nd) = 8.0_R8*t0d(nd)/temp0
+          arg10d(nd) = 8.0_R8*t0d(nd)/temp2
         END DO
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
-        arg1 = 8.0_R8*(t0/temp0)
-        temp0 = SQRT(arg1)
+        arg10 = 8.0_R8*(t0/temp2)
+        temp2 = SQRT(arg10)
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             result10d(nd) = 0.d0
           ELSE
-            result10d(nd) = arg1d(nd)/(2.0*temp0)
+            result10d(nd) = arg10d(nd)/(2.0*temp2)
           END IF
           vbard(nd) = geo%fcbb(ifc, 0)*result10d(nd)/geo%fcbb(ifc, 3)
         END DO
-        result10 = temp0
+        result10 = temp2
         vbar = geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*result10
-        temp0 = geo%fcs(ifc)*geo%fcbb(ifc, 2)
-        temp4 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
+        temp2 = geo%fcs(ifc)*geo%fcbb(ifc, 2)
+        temp1 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
-        temp5 = temp4*co%cddi(ifc, 0, isb)*dnbti(ifc, 1)/temp0
+        temp0 = temp1*co%cddi(ifc, 0, isb)*dnbti(ifc, 1)/temp2
         temp6 = dnbti(ifc, 0)/geo%fcs(ifc)
         temp7 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
 &         fchc(ifc, 1)+geo%fchc(ifc, 2))
         temp8 = temp7*co%cddi(ifc, 1, isb)*temp6
         DO nd=1,nbdirs
-          arg10d(nd) = 2*temp5*temp4*(dnbti(ifc, 1)*cod%cddi(nd, ifc, 0&
-&           , isb)+co%cddi(ifc, 0, isb)*dnbtid(nd, ifc, 1))/temp0 + 2*&
+          arg1d(nd) = 2*temp0*temp1*(dnbti(ifc, 1)*cod%cddi(nd, ifc, 0, &
+&           isb)+co%cddi(ifc, 0, isb)*dnbtid(nd, ifc, 1))/temp2 + 2*&
 &           temp8*temp7*(temp6*cod%cddi(nd, ifc, 1, isb)+co%cddi(ifc, 1&
 &           , isb)*dnbtid(nd, ifc, 0)/geo%fcs(ifc))
         END DO
-        arg10 = temp5*temp5 + temp8*temp8
-        temp8 = SQRT(arg10)
+        arg1 = temp0*temp0 + temp8*temp8
+        temp8 = SQRT(arg1)
         DO nd=1,nbdirs
-          IF (arg10 .EQ. 0.d0) THEN
+          IF (arg1 .EQ. 0.d0) THEN
             result10d(nd) = 0.d0
           ELSE
-            result10d(nd) = arg10d(nd)/(2.0*temp8)
+            result10d(nd) = arg1d(nd)/(2.0*temp8)
           END IF
         END DO
         result10 = temp8
         temp8 = result10/(vbar*t1)
         t2 = temp8 + 1.0_R8
-        temp1 = dv%fnapsch(ifc, 0, isb)/t2
+        temp3 = dv%fnapsch(ifc, 0, isb)/t2
         DO nd=1,nbdirs
           t2d(nd) = (result10d(nd)-temp8*(t1*vbard(nd)+vbar*t1d(nd)))/(&
 &           vbar*t1)
           dvd%fnapsch(nd, ifc, 0, isb) = (dvd%fnapsch(nd, ifc, 0, isb)-&
-&           temp1*t2d(nd))/t2
+&           temp3*t2d(nd))/t2
         END DO
-        dv%fnapsch(ifc, 0, isb) = temp1
-        temp1 = dv%fnapsch(ifc, 1, isb)/t2
+        dv%fnapsch(ifc, 0, isb) = temp3
+        temp3 = dv%fnapsch(ifc, 1, isb)/t2
         temp8 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
         DO nd=1,nbdirs
           dvd%fnapsch(nd, ifc, 1, isb) = (dvd%fnapsch(nd, ifc, 1, isb)-&
-&           temp1*t2d(nd))/t2
-          arg1d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%vadia(nd, ifc, 0, isb&
-&           )/geo%fcbb(ifc, 2) + 2*dv%vadia(ifc, 1, isb)*dvd%vadia(nd, &
-&           ifc, 1, isb)
+&           temp3*t2d(nd))/t2
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%vadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%vadia(ifc, 1, isb)*dvd%vadia(nd&
+&           , ifc, 1, isb)
         END DO
-        dv%fnapsch(ifc, 1, isb) = temp1
-        arg1 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb)
-        temp1 = SQRT(arg1)
+        dv%fnapsch(ifc, 1, isb) = temp3
+        arg10 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             t3d(nd) = 0.d0
           ELSE
-            t3d(nd) = arg1d(nd)/(2.0*temp1)
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
-        temp1 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
+        temp3 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%vadia(nd, ifc, 0, isb) = (dvd%vadia(nd, ifc, 0, isb)-temp1&
+          dvd%vadia(nd, ifc, 0, isb) = (dvd%vadia(nd, ifc, 0, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%vadia(ifc, 0, isb) = temp1
+        dv%vadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
-        temp1 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
+        temp3 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%vadia(nd, ifc, 1, isb) = (dvd%vadia(nd, ifc, 1, isb)-temp1&
+          dvd%vadia(nd, ifc, 1, isb) = (dvd%vadia(nd, ifc, 1, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%vadia(ifc, 1, isb) = temp1
+        dv%vadia(ifc, 1, isb) = temp3
         temp8 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb)
-        temp1 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
         DO nd=1,nbdirs
-          arg1d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%wadia(nd, ifc, 0, isb&
-&           )/geo%fcbb(ifc, 2) + 2*dv%wadia(ifc, 1, isb)*dvd%wadia(nd, &
-&           ifc, 1, isb)
-          IF (arg1 .EQ. 0.d0) THEN
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%wadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%wadia(ifc, 1, isb)*dvd%wadia(nd&
+&           , ifc, 1, isb)
+          IF (arg10 .EQ. 0.d0) THEN
             t3d(nd) = 0.d0
           ELSE
-            t3d(nd) = arg1d(nd)/(2.0*temp1)
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
-        temp1 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
+        temp3 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%wadia(nd, ifc, 0, isb) = (dvd%wadia(nd, ifc, 0, isb)-temp1&
+          dvd%wadia(nd, ifc, 0, isb) = (dvd%wadia(nd, ifc, 0, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%wadia(ifc, 0, isb) = temp1
+        dv%wadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
-        temp1 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
+        temp3 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%wadia(nd, ifc, 1, isb) = (dvd%wadia(nd, ifc, 1, isb)-temp1&
+          dvd%wadia(nd, ifc, 1, isb) = (dvd%wadia(nd, ifc, 1, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%wadia(ifc, 1, isb) = temp1
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
-        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
-        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        dv%wadia(ifc, 1, isb) = temp3
+        temp8 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp8*temp8 + dv%uadia(ifc, 1, isb)*dv%uadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
+        DO nd=1,nbdirs
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%uadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%uadia(ifc, 1, isb)*dvd%uadia(nd&
+&           , ifc, 1, isb)
+          IF (arg10 .EQ. 0.d0) THEN
+            t3d(nd) = 0.d0
+          ELSE
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
+          END IF
+        END DO
+        t3 = temp3
+        temp8 = t3/vbar
+        temp3 = dv%uadia(ifc, 0, isb)/(temp8+1.0_R8)
+        DO nd=1,nbdirs
+          dvd%uadia(nd, ifc, 0, isb) = (dvd%uadia(nd, ifc, 0, isb)-temp3&
+&           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
+        END DO
+        dv%uadia(ifc, 0, isb) = temp3
+        temp8 = t3/vbar
+        temp3 = dv%uadia(ifc, 1, isb)/(temp8+1.0_R8)
+        DO nd=1,nbdirs
+          dvd%uadia(nd, ifc, 1, isb) = (dvd%uadia(nd, ifc, 1, isb)-temp3&
+&           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
+        END DO
+        dv%uadia(ifc, 1, isb) = temp3
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
@@ -4745,16 +5230,16 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
         temp8 = am(isb)*pi*mp
         DO nd=1,nbdirs
           t1d(nd) = 0.5_R8*(pld%na(nd, icv1, isb)+pld%na(nd, icv2, isb))
-          arg1d(nd) = 8.0_R8*t0d(nd)/temp8
+          arg10d(nd) = 8.0_R8*t0d(nd)/temp8
         END DO
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
-        arg1 = 8.0_R8*(t0/temp8)
-        temp8 = SQRT(arg1)
+        arg10 = 8.0_R8*(t0/temp8)
+        temp8 = SQRT(arg10)
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             vbard(nd) = 0.d0
           ELSE
-            vbard(nd) = arg1d(nd)/(2.0*temp8)
+            vbard(nd) = arg10d(nd)/(2.0*temp8)
           END IF
         END DO
         vbar = temp8
@@ -4762,106 +5247,132 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
         temp7 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
         temp6 = temp7*co%cddi(ifc, 0, isb)*dnbti(ifc, 1)/temp8
-        temp5 = dnbti(ifc, 0)/geo%fcs(ifc)
-        temp4 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
+        temp2 = dnbti(ifc, 0)/geo%fcs(ifc)
+        temp1 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
 &         fchc(ifc, 1)+geo%fchc(ifc, 2))
-        temp0 = temp4*co%cddi(ifc, 1, isb)*temp5
+        temp0 = temp1*co%cddi(ifc, 1, isb)*temp2
         DO nd=1,nbdirs
-          arg10d(nd) = 2*temp6*temp7*(dnbti(ifc, 1)*cod%cddi(nd, ifc, 0&
-&           , isb)+co%cddi(ifc, 0, isb)*dnbtid(nd, ifc, 1))/temp8 + 2*&
-&           temp0*temp4*(temp5*cod%cddi(nd, ifc, 1, isb)+co%cddi(ifc, 1&
+          arg1d(nd) = 2*temp6*temp7*(dnbti(ifc, 1)*cod%cddi(nd, ifc, 0, &
+&           isb)+co%cddi(ifc, 0, isb)*dnbtid(nd, ifc, 1))/temp8 + 2*&
+&           temp0*temp1*(temp2*cod%cddi(nd, ifc, 1, isb)+co%cddi(ifc, 1&
 &           , isb)*dnbtid(nd, ifc, 0)/geo%fcs(ifc))
         END DO
-        arg10 = temp6*temp6 + temp0*temp0
-        temp8 = SQRT(arg10)
+        arg1 = temp6*temp6 + temp0*temp0
+        temp8 = SQRT(arg1)
         DO nd=1,nbdirs
-          IF (arg10 .EQ. 0.d0) THEN
+          IF (arg1 .EQ. 0.d0) THEN
             result10d(nd) = 0.d0
           ELSE
-            result10d(nd) = arg10d(nd)/(2.0*temp8)
+            result10d(nd) = arg1d(nd)/(2.0*temp8)
           END IF
         END DO
         result10 = temp8
         temp8 = result10/(vbar*t1)
         t2 = temp8 + 1.0_R8
-        temp1 = dv%fnapsch(ifc, 0, isb)/t2
+        temp3 = dv%fnapsch(ifc, 0, isb)/t2
         DO nd=1,nbdirs
           t2d(nd) = (result10d(nd)-temp8*(t1*vbard(nd)+vbar*t1d(nd)))/(&
 &           vbar*t1)
           dvd%fnapsch(nd, ifc, 0, isb) = (dvd%fnapsch(nd, ifc, 0, isb)-&
-&           temp1*t2d(nd))/t2
+&           temp3*t2d(nd))/t2
         END DO
-        dv%fnapsch(ifc, 0, isb) = temp1
-        temp1 = dv%fnapsch(ifc, 1, isb)/t2
+        dv%fnapsch(ifc, 0, isb) = temp3
+        temp3 = dv%fnapsch(ifc, 1, isb)/t2
         temp8 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
         DO nd=1,nbdirs
           dvd%fnapsch(nd, ifc, 1, isb) = (dvd%fnapsch(nd, ifc, 1, isb)-&
-&           temp1*t2d(nd))/t2
-          arg1d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%vadia(nd, ifc, 0, isb&
-&           )/geo%fcbb(ifc, 2) + 2*dv%vadia(ifc, 1, isb)*dvd%vadia(nd, &
-&           ifc, 1, isb)
+&           temp3*t2d(nd))/t2
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%vadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%vadia(ifc, 1, isb)*dvd%vadia(nd&
+&           , ifc, 1, isb)
         END DO
-        dv%fnapsch(ifc, 1, isb) = temp1
-        arg1 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb)
-        temp1 = SQRT(arg1)
+        dv%fnapsch(ifc, 1, isb) = temp3
+        arg10 = temp8*temp8 + dv%vadia(ifc, 1, isb)*dv%vadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
         DO nd=1,nbdirs
-          IF (arg1 .EQ. 0.d0) THEN
+          IF (arg10 .EQ. 0.d0) THEN
             t3d(nd) = 0.d0
           ELSE
-            t3d(nd) = arg1d(nd)/(2.0*temp1)
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
-        temp1 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
+        temp3 = dv%vadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%vadia(nd, ifc, 0, isb) = (dvd%vadia(nd, ifc, 0, isb)-temp1&
+          dvd%vadia(nd, ifc, 0, isb) = (dvd%vadia(nd, ifc, 0, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%vadia(ifc, 0, isb) = temp1
+        dv%vadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
-        temp1 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
+        temp3 = dv%vadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%vadia(nd, ifc, 1, isb) = (dvd%vadia(nd, ifc, 1, isb)-temp1&
+          dvd%vadia(nd, ifc, 1, isb) = (dvd%vadia(nd, ifc, 1, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%vadia(ifc, 1, isb) = temp1
+        dv%vadia(ifc, 1, isb) = temp3
         temp8 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
-        arg1 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb)
-        temp1 = SQRT(arg1)
+        arg10 = temp8*temp8 + dv%wadia(ifc, 1, isb)*dv%wadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
         DO nd=1,nbdirs
-          arg1d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%wadia(nd, ifc, 0, isb&
-&           )/geo%fcbb(ifc, 2) + 2*dv%wadia(ifc, 1, isb)*dvd%wadia(nd, &
-&           ifc, 1, isb)
-          IF (arg1 .EQ. 0.d0) THEN
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%wadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%wadia(ifc, 1, isb)*dvd%wadia(nd&
+&           , ifc, 1, isb)
+          IF (arg10 .EQ. 0.d0) THEN
             t3d(nd) = 0.d0
           ELSE
-            t3d(nd) = arg1d(nd)/(2.0*temp1)
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
           END IF
         END DO
-        t3 = temp1
+        t3 = temp3
         temp8 = t3/vbar
-        temp1 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
+        temp3 = dv%wadia(ifc, 0, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%wadia(nd, ifc, 0, isb) = (dvd%wadia(nd, ifc, 0, isb)-temp1&
+          dvd%wadia(nd, ifc, 0, isb) = (dvd%wadia(nd, ifc, 0, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%wadia(ifc, 0, isb) = temp1
+        dv%wadia(ifc, 0, isb) = temp3
         temp8 = t3/vbar
-        temp1 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
+        temp3 = dv%wadia(ifc, 1, isb)/(temp8+1.0_R8)
         DO nd=1,nbdirs
-          dvd%wadia(nd, ifc, 1, isb) = (dvd%wadia(nd, ifc, 1, isb)-temp1&
+          dvd%wadia(nd, ifc, 1, isb) = (dvd%wadia(nd, ifc, 1, isb)-temp3&
 &           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
         END DO
-        dv%wadia(ifc, 1, isb) = temp1
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
-        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
-        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        dv%wadia(ifc, 1, isb) = temp3
+        temp8 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+        arg10 = temp8*temp8 + dv%uadia(ifc, 1, isb)*dv%uadia(ifc, 1, isb&
+&         )
+        temp3 = SQRT(arg10)
+        DO nd=1,nbdirs
+          arg10d(nd) = 2*temp8*geo%fcbb(ifc, 3)*dvd%uadia(nd, ifc, 0, &
+&           isb)/geo%fcbb(ifc, 2) + 2*dv%uadia(ifc, 1, isb)*dvd%uadia(nd&
+&           , ifc, 1, isb)
+          IF (arg10 .EQ. 0.d0) THEN
+            t3d(nd) = 0.d0
+          ELSE
+            t3d(nd) = arg10d(nd)/(2.0*temp3)
+          END IF
+        END DO
+        t3 = temp3
+        temp8 = t3/vbar
+        temp3 = dv%uadia(ifc, 0, isb)/(temp8+1.0_R8)
+        DO nd=1,nbdirs
+          dvd%uadia(nd, ifc, 0, isb) = (dvd%uadia(nd, ifc, 0, isb)-temp3&
+&           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
+        END DO
+        dv%uadia(ifc, 0, isb) = temp3
+        temp8 = t3/vbar
+        temp3 = dv%uadia(ifc, 1, isb)/(temp8+1.0_R8)
+        DO nd=1,nbdirs
+          dvd%uadia(nd, ifc, 1, isb) = (dvd%uadia(nd, ifc, 1, isb)-temp3&
+&           *(t3d(nd)-temp8*vbard(nd))/vbar)/(temp8+1.0_R8)
+        END DO
+        dv%uadia(ifc, 1, isb) = temp3
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
@@ -4871,6 +5382,8 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     END IF
   ELSE
     t0d = 0.d0
+    conbtmpd = 0.d0
+    flobtmpd = 0.d0
     wrkvxd = 0.d0
   END IF
 !
@@ -4956,17 +5469,18 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 !   ..add contribution from currents
   IF (.NOT.is_neutral(isb)) THEN
     scurd = 0.d0
-    temp10 = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))/(qe*rzf*nbf)
+    temp10 = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+switch%&
+&     fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+&
+&     switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))/(qe*rzf*nbf)
     temp11 = dv%fchviskt_a(:, 0, isb)/(qe*rzf*nbf)
     DO nd=1,nbdirs
       scurd(nd, :, 0) = switch%b2tfnb_xcur*(dvd%fchinert_a(nd, :, 0, isb&
-&       )+dvd%fchvispar_a(nd, :, 0, isb)+dvd%fchvisper_a(nd, :, 0, isb)+&
-&       dvd%fchanml_a(nd, :, 0, isb)+dvd%fchvisq_a(nd, :, 0, isb)-temp10&
-&       *(nbf*qe*rzfd(nd, :)+qe*rzf*nbfd(nd, :)))/(qe*rzf*nbf) + (dvd%&
-&       fchviskt_a(nd, :, 0, isb)-temp11*(nbf*qe*rzfd(nd, :)+qe*rzf*nbfd&
-&       (nd, :)))/(qe*rzf*nbf)
+&       )+dvd%fchvispar_a(nd, :, 0, isb)+switch%fnb_vis_per*dvd%&
+&       fchvisper_a(nd, :, 0, isb)+dvd%fchanml_a(nd, :, 0, isb)+switch%&
+&       fnb_vis_q*dvd%fchvisq_a(nd, :, 0, isb)-temp10*(nbf*qe*rzfd(nd, :&
+&       )+qe*rzf*nbfd(nd, :)))/(qe*rzf*nbf) + (dvd%fchviskt_a(nd, :, 0, &
+&       isb)-temp11*(nbf*qe*rzfd(nd, :)+qe*rzf*nbfd(nd, :)))/(qe*rzf*nbf&
+&       )
       flo2diad(nd, :, 0) = flo2diad(nd, :, 0) + drift_hyb*geo%fchz*scurd&
 &       (nd, :, 0)
     END DO
@@ -5071,19 +5585,19 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     END IF
     temp8 = am(isb)*pi*mp
     DO nd=1,nbdirs
-      arg1d(nd) = 8.0_R8*t0d(nd)/temp8
+      arg10d(nd) = 8.0_R8*t0d(nd)/temp8
     END DO
-    arg1 = 8.0_R8*(t0/temp8)
-    temp8 = SQRT(arg1)
+    arg10 = 8.0_R8*(t0/temp8)
+    temp8 = SQRT(arg10)
     result10 = temp8
     vbar = result10*geo%fcs(ifc)
-    temp1 = 0.5_R8*vbar*t1
-    temp7 = t3/temp1
+    temp3 = 0.5_R8*vbar*t1
+    temp7 = t3/temp3
     DO nd=1,nbdirs
-      IF (arg1 .EQ. 0.d0) THEN
+      IF (arg10 .EQ. 0.d0) THEN
         result10d(nd) = 0.d0
       ELSE
-        result10d(nd) = arg1d(nd)/(2.0*temp8)
+        result10d(nd) = arg10d(nd)/(2.0*temp8)
       END IF
       vbard(nd) = geo%fcs(ifc)*result10d(nd)
       IF (temp7 .LE. 0.d0 .AND. (gamma .EQ. 0.d0 .OR. gamma .NE. INT(&
@@ -5091,13 +5605,13 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
         tempd0(nd) = 0.d0
       ELSE
         tempd0(nd) = gamma*temp7**(gamma-1)*(t3d(nd)-temp7*(t1*0.5_R8*&
-&         vbard(nd)+0.5_R8*vbar*t1d(nd)))/temp1
+&         vbard(nd)+0.5_R8*vbar*t1d(nd)))/temp3
       END IF
     END DO
     temp8 = 1.0/gamma
     temp6 = temp7**gamma + 1.0_R8
-    temp5 = 1.0/temp6**temp8
-    wrk4(ifc) = temp5
+    temp2 = 1.0/temp6**temp8
+    wrk4(ifc) = temp2
     DO nd=1,nbdirs
       IF (temp6 .LE. 0.d0 .AND. (temp8 .EQ. 0.d0 .OR. temp8 .NE. INT(&
 &         temp8))) THEN
@@ -5105,7 +5619,7 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
       ELSE
         tempd(nd) = temp8*temp6**(temp8-1)*tempd0(nd)
       END IF
-      wrk4d(nd, ifc) = -(temp5*tempd(nd)/temp6**temp8)
+      wrk4d(nd, ifc) = -(temp2*tempd(nd)/temp6**temp8)
       fna_mdf0d(nd, ifc, 0) = wrk4(ifc)*fna_mdf0d(nd, ifc, 0) + fna_mdf0&
 &       (ifc, 0)*wrk4d(nd, ifc)
       fna_mdf0d(nd, ifc, 1) = wrk4(ifc)*fna_mdf0d(nd, ifc, 1) + fna_mdf0&
@@ -5144,17 +5658,17 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   DO ifc=1,nfc
     temp8 = 0.5_R8*switch%b2npco_pcm1*geo%fcpbs(ifc)
     temp7 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
-    temp1 = pl%na(mpg%fccv(ifc, 1), isb)
+    temp3 = pl%na(mpg%fccv(ifc, 1), isb)
     temp12 = dv%pcca(mpg%fccv(ifc, 1), 1, isb)
     temp13 = pl%na(mpg%fccv(ifc, 2), isb)
     temp14 = dv%pcca(mpg%fccv(ifc, 2), 1, isb)
     DO nd=1,nbdirs
-      cdpbd(nd, ifc, 0) = temp8*(temp1*dvd%pcca(nd, mpg%fccv(ifc, 1), 1&
+      cdpbd(nd, ifc, 0) = temp8*(temp3*dvd%pcca(nd, mpg%fccv(ifc, 1), 1&
 &       , isb)+temp12*pld%na(nd, mpg%fccv(ifc, 1), isb)+temp13*dvd%pcca(&
 &       nd, mpg%fccv(ifc, 2), 1, isb)+temp14*pld%na(nd, mpg%fccv(ifc, 2)&
 &       , isb))/temp7
     END DO
-    cdpb(ifc, 0) = temp8*((temp12*temp1+temp14*temp13)/temp7)
+    cdpb(ifc, 0) = temp8*((temp12*temp3+temp14*temp13)/temp7)
     temp8 = 0.5_R8*geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)&
 &     )
     DO nd=1,nbdirs
@@ -5165,7 +5679,7 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
   END DO
 !
 !   ..compute other fluxes
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   DO nd=1,nbdirs
     cdpbd(nd, :, 1) = 0.d0
     termd(nd, :) = -((dpb(:, 0)-dpbm)*cdpbd(nd, :, 0)+cdpb(:, 0)*(dpbd(&
@@ -5174,7 +5688,7 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     dvd%fna_32(nd, :, 0, isb) = dvd%fna_32(nd, :, 0, isb) + termd(nd, :)
     dvd%fna(nd, :, 0, isb) = fna_mdf0d(nd, :, 0) + (1.0_R8-drift_hyb)*(&
 &     nbf*(geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb)+scurd(nd, &
-&     :, 0))+temp3*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-flo_mdfd(nd, :, 0)&
+&     :, 0))+temp5*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-flo_mdfd(nd, :, 0)&
 &     ) + (flo(:, 0)-flo_mdf(:, 0))*nbfd(nd, :) - dpb(:, 0)*cod%cdpa(nd&
 &     , :, 0, isb) - co%cdpa(:, 0, isb)*dpbd(nd, :, 0)
 !
@@ -5182,71 +5696,67 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &     nbfd(nd, :)
     dvd%fna_53(nd, :, 1, isb) = nbf*flo_53d(nd, :, 1) + flo_53(:, 1)*&
 &     nbfd(nd, :)
-!
-!   ..compute ExB fluxes for k-model
-    dvd%fna_exb(nd, :, :) = 0.d0
   END DO
   cdpb(:, 1) = 0.0_R8
   term = -(cdpb(:, 0)*(dpb(:, 0)-dpbm))
   fna_mdf0(:, 0) = fna_mdf0(:, 0) + term
   dv%fna_32(:, 0, isb) = dv%fna_32(:, 0, isb) + term
-  dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp3*nbf) + &
+  dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp5*nbf) + &
 &   (flo(:, 0)-flo_mdf(:, 0))*nbf - co%cdpa(:, 0, isb)*dpb(:, 0)
-!
-  temp3 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+  temp5 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   DO nd=1,nbdirs
     dvd%fna(nd, :, 1, isb) = fna_mdf0d(nd, :, 1) + (1.0_R8-drift_hyb)*(&
 &     nbf*(geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb)+scurd(nd, &
-&     :, 1))+temp3*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-flo_mdfd(nd, :, 1)&
+&     :, 1))+temp5*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-flo_mdfd(nd, :, 1)&
 &     ) + (flo(:, 1)-flo_mdf(:, 1))*nbfd(nd, :) - dpb(:, 1)*cod%cdpa(nd&
 &     , :, 1, isb) - co%cdpa(:, 1, isb)*dpbd(nd, :, 1)
   END DO
-  dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp3*nbf) + &
+  dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp5*nbf) + &
 &   (flo(:, 1)-flo_mdf(:, 1))*nbf - co%cdpa(:, 1, isb)*dpb(:, 1)
 !
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   DO nd=1,nbdirs
     dvd%fna_mdf(nd, :, 0, isb) = fna_mdf0d(nd, :, 0) + (1.0_R8-drift_hyb&
 &     )*(nbf*(geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb)+scurd(&
-&     nd, :, 0))+temp3*nbfd(nd, :)) - dpb(:, 0)*cod%cdpa(nd, :, 0, isb) &
+&     nd, :, 0))+temp5*nbfd(nd, :)) - dpb(:, 0)*cod%cdpa(nd, :, 0, isb) &
 &     - co%cdpa(:, 0, isb)*dpbd(nd, :, 0) - dvd%fnapsch(nd, :, 0, isb)
   END DO
-  dv%fna_mdf(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp3*nbf&
+  dv%fna_mdf(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(temp5*nbf&
 &   ) - co%cdpa(:, 0, isb)*dpb(:, 0) - dv%fnapsch(:, 0, isb)
-  temp3 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+  temp5 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   DO nd=1,nbdirs
     dvd%fna_mdf(nd, :, 1, isb) = fna_mdf0d(nd, :, 1) + (1.0_R8-drift_hyb&
 &     )*(nbf*(geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb)+scurd(&
-&     nd, :, 1))+temp3*nbfd(nd, :)) - dpb(:, 1)*cod%cdpa(nd, :, 1, isb) &
+&     nd, :, 1))+temp5*nbfd(nd, :)) - dpb(:, 1)*cod%cdpa(nd, :, 1, isb) &
 &     - co%cdpa(:, 1, isb)*dpbd(nd, :, 1) - dvd%fnapsch(nd, :, 1, isb)
   END DO
-  dv%fna_mdf(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp3*nbf&
+  dv%fna_mdf(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(temp5*nbf&
 &   ) - co%cdpa(:, 1, isb)*dpb(:, 1) - dv%fnapsch(:, 1, isb)
 !
-  temp3 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp5 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   temp15 = flo2dia(:, 0) - geo%fchz*flo_mdf(:, 0)
   DO nd=1,nbdirs
     dvd%fna_fcor(nd, :, 0, isb) = geo%fchz*fna_mdf0d(nd, :, 0) + (1.0_R8&
 &     -drift_hyb)*geo%fchz*(nbf*(geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd&
-&     , :, 0, isb)+scurd(nd, :, 0))+temp3*nbfd(nd, :)) + nbf*(flo2diad(&
+&     , :, 0, isb)+scurd(nd, :, 0))+temp5*nbfd(nd, :)) + nbf*(flo2diad(&
 &     nd, :, 0)-geo%fchz*flo_mdfd(nd, :, 0)) + temp15*nbfd(nd, :) - dpb(&
 &     :, 0)*cod%cdpahz(nd, :, 0, isb) - co%cdpahz(:, 0, isb)*dpbd(nd, :&
 &     , 0)
   END DO
   dv%fna_fcor(:, 0, isb) = geo%fchz*fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp3*nbf) + temp15*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
+&   geo%fchz*(temp5*nbf) + temp15*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
   temp15 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
-  temp3 = flo2dia(:, 1) - geo%fchz*flo_mdf(:, 1)
+  temp5 = flo2dia(:, 1) - geo%fchz*flo_mdf(:, 1)
   DO nd=1,nbdirs
     dvd%fna_fcor(nd, :, 1, isb) = geo%fchz*fna_mdf0d(nd, :, 1) + (1.0_R8&
 &     -drift_hyb)*geo%fchz*(nbf*(geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd&
 &     , :, 1, isb)+scurd(nd, :, 1))+temp15*nbfd(nd, :)) + nbf*(flo2diad(&
-&     nd, :, 1)-geo%fchz*flo_mdfd(nd, :, 1)) + temp3*nbfd(nd, :) - dpb(:&
+&     nd, :, 1)-geo%fchz*flo_mdfd(nd, :, 1)) + temp5*nbfd(nd, :) - dpb(:&
 &     , 1)*cod%cdpahz(nd, :, 1, isb) - co%cdpahz(:, 1, isb)*dpbd(nd, :, &
 &     1)
   END DO
   dv%fna_fcor(:, 1, isb) = geo%fchz*fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp15*nbf) + temp3*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
+&   geo%fchz*(temp15*nbf) + temp5*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
 !
   temp16 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 0)
   temp15 = flo_he(:, 0) - fac_he_anom*flo_mdf(:, 0)
@@ -5317,8 +5827,14 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &   dpb(:, 0)
   dv%fna_52nd(:, 1, isb) = dv%fna_52nd(:, 1, isb) - co%cdpa(:, 1, isb)*&
 &   dpb(:, 1)
-  dv%fna_exb = 0.0_R8
+!
+!   ..compute ExB fluxes for k-model
   IF (isb .EQ. ismain .AND. switch%solve_keps .GT. 0) THEN
+! initialization within the if-statement to avoid race conditions with openMP
+    DO nd=1,nbdirs
+      dvd%fna_exb(nd, :, :) = 0.d0
+    END DO
+    dv%fna_exb = 0.0_R8
     zeros = 0.0_R8
     zeros1 = 0.0_R8
     zeros1d = 0.d0
@@ -5356,44 +5872,44 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     temp8 = kmpr(mpg%fccv(ifc, 1)) + kmpr(mpg%fccv(ifc, 2))
     temp7 = kmpr(mpg%fccv(ifc, 2)) - kmpr(mpg%fccv(ifc, 1))
     DO nd=1,nbdirs
-      dvd%flob(nd, ifc, 0) = dvd%flob(nd, ifc, 0) + 0.5_R8*(temp8*flob0d&
+      flobtmpd(nd, ifc, 0) = flobtmpd(nd, ifc, 0) + 0.5_R8*(temp8*flob0d&
 &       (nd, ifc, 0)+flob0(ifc, 0)*(kmprd(nd, mpg%fccv(ifc, 1))+kmprd(nd&
 &       , mpg%fccv(ifc, 2)))) - temp7*conb0d(nd, ifc, 0) - conb0(ifc, 0)&
 &       *(kmprd(nd, mpg%fccv(ifc, 2))-kmprd(nd, mpg%fccv(ifc, 1)))
     END DO
-    dv%flob(ifc, 0) = dv%flob(ifc, 0) + 0.5_R8*(flob0(ifc, 0)*temp8) - &
+    flobtmp(ifc, 0) = flobtmp(ifc, 0) + 0.5_R8*(flob0(ifc, 0)*temp8) - &
 &     conb0(ifc, 0)*temp7
     temp8 = kmprv(mpg%fcvx(ifc, 1)) + kmprv(mpg%fcvx(ifc, 2))
     temp7 = kmprv(mpg%fcvx(ifc, 2)) - kmprv(mpg%fcvx(ifc, 1))
     DO nd=1,nbdirs
-      dvd%flob(nd, ifc, 1) = dvd%flob(nd, ifc, 1) + 0.5_R8*(temp8*flob0d&
+      flobtmpd(nd, ifc, 1) = flobtmpd(nd, ifc, 1) + 0.5_R8*(temp8*flob0d&
 &       (nd, ifc, 1)+flob0(ifc, 1)*(kmprvd(nd, mpg%fcvx(ifc, 1))+kmprvd(&
 &       nd, mpg%fcvx(ifc, 2)))) - temp7*conb0d(nd, ifc, 1) - conb0(ifc, &
 &       1)*(kmprvd(nd, mpg%fcvx(ifc, 2))-kmprvd(nd, mpg%fcvx(ifc, 1)))
     END DO
-    dv%flob(ifc, 1) = dv%flob(ifc, 1) + 0.5_R8*(flob0(ifc, 1)*temp8) - &
+    flobtmp(ifc, 1) = flobtmp(ifc, 1) + 0.5_R8*(flob0(ifc, 1)*temp8) - &
 &     conb0(ifc, 1)*temp7
     temp8 = kmpr(mpg%fccv(ifc, 1)) + kmpr(mpg%fccv(ifc, 2))
     temp7 = kmpr(mpg%fccv(ifc, 2)) - kmpr(mpg%fccv(ifc, 1))
     DO nd=1,nbdirs
-      dvd%conb(nd, ifc, 0, 0) = dvd%conb(nd, ifc, 0, 0) + 0.5_R8*(temp8*&
+      conbtmpd(nd, ifc, 0, 0) = conbtmpd(nd, ifc, 0, 0) + 0.5_R8*(temp8*&
 &       conb0d(nd, ifc, 0)+conb0(ifc, 0)*(kmprd(nd, mpg%fccv(ifc, 1))+&
 &       kmprd(nd, mpg%fccv(ifc, 2)))) - 0.25_R8*(temp7*flob0d(nd, ifc, 0&
 &       )+flob0(ifc, 0)*(kmprd(nd, mpg%fccv(ifc, 2))-kmprd(nd, mpg%fccv(&
 &       ifc, 1))))
     END DO
-    dv%conb(ifc, 0, 0) = dv%conb(ifc, 0, 0) + 0.5_R8*(conb0(ifc, 0)*&
+    conbtmp(ifc, 0, 0) = conbtmp(ifc, 0, 0) + 0.5_R8*(conb0(ifc, 0)*&
 &     temp8) - 0.25_R8*(flob0(ifc, 0)*temp7)
     temp8 = kmprv(mpg%fcvx(ifc, 1)) + kmprv(mpg%fcvx(ifc, 2))
     temp7 = kmprv(mpg%fcvx(ifc, 2)) - kmprv(mpg%fcvx(ifc, 1))
     DO nd=1,nbdirs
-      dvd%conb(nd, ifc, 1, 0) = dvd%conb(nd, ifc, 1, 0) + 0.5_R8*(temp8*&
+      conbtmpd(nd, ifc, 1, 0) = conbtmpd(nd, ifc, 1, 0) + 0.5_R8*(temp8*&
 &       conb0d(nd, ifc, 1)+conb0(ifc, 1)*(kmprvd(nd, mpg%fcvx(ifc, 1))+&
 &       kmprvd(nd, mpg%fcvx(ifc, 2)))) - 0.25_R8*(temp7*flob0d(nd, ifc, &
 &       1)+flob0(ifc, 1)*(kmprvd(nd, mpg%fcvx(ifc, 2))-kmprvd(nd, mpg%&
 &       fcvx(ifc, 1))))
     END DO
-    dv%conb(ifc, 1, 0) = dv%conb(ifc, 1, 0) + 0.5_R8*(conb0(ifc, 1)*&
+    conbtmp(ifc, 1, 0) = conbtmp(ifc, 1, 0) + 0.5_R8*(conb0(ifc, 1)*&
 &     temp8) - 0.25_R8*(flob0(ifc, 1)*temp7)
   END DO
 !
@@ -5408,21 +5924,22 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &                   cdpbd, flob0, flob0d, conb0, conb0d, nbdirs)
   DO nd=1,nbdirs
 !wdk flob0 should be zero here
-    dvd%flob(nd, :, :) = dvd%flob(nd, :, :) + flob0d(nd, :, :)
-    dvd%conb(nd, :, :, 0) = dvd%conb(nd, :, :, 0) + conb0d(nd, :, :)
+    flobtmpd(nd, :, :) = flobtmpd(nd, :, :) + flob0d(nd, :, :)
+    conbtmpd(nd, :, :, 0) = conbtmpd(nd, :, :, 0) + conb0d(nd, :, :)
 !wdk is this needed? correct? probably always zero?
-    dvd%conb(nd, :, 0, 1) = kmprtif*conb0d(nd, :, 0) + conb0(:, 0)*&
+    conbtmpd(nd, :, 0, 1) = kmprtif*conb0d(nd, :, 0) + conb0(:, 0)*&
 &     kmprtifd(nd, :)
 !wdk is this needed? correct? probably always zero?
-    dvd%conb(nd, :, 1, 1) = kmprtif*conb0d(nd, :, 1) + conb0(:, 1)*&
+    conbtmpd(nd, :, 1, 1) = kmprtif*conb0d(nd, :, 1) + conb0(:, 1)*&
 &     kmprtifd(nd, :)
-    dvd%conb(nd, :, :, 2) = dvd%conb(nd, :, :, 1)
+    conbtmpd(nd, :, :, 2) = conbtmpd(nd, :, :, 1)
   END DO
-  dv%flob = dv%flob + flob0
-  dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
-  dv%conb(:, 0, 1) = conb0(:, 0)*kmprtif
-  dv%conb(:, 1, 1) = conb0(:, 1)*kmprtif
-  dv%conb(:, :, 2) = dv%conb(:, :, 1)
+  flobtmp = flobtmp + flob0
+  conbtmp(:, :, 0) = conbtmp(:, :, 0) + conb0
+  conbtmp(:, 0, 1) = conb0(:, 0)*kmprtif
+  conbtmp(:, 1, 1) = conb0(:, 1)*kmprtif
+  conbtmp(:, :, 2) = conbtmp(:, :, 1)
+! Add conb, flob to dv
 !
 !   ..flux limit
 !srv 20.11.08
@@ -5458,27 +5975,27 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
       END IF
       temp8 = am(isb)*pi*mp
       DO nd=1,nbdirs
-        arg1d(nd) = 8.0_R8*t2d(nd)/temp8
+        arg10d(nd) = 8.0_R8*t2d(nd)/temp8
       END DO
-      arg1 = 8.0_R8*(t2/temp8)
-      temp8 = SQRT(arg1)
+      arg10 = 8.0_R8*(t2/temp8)
+      temp8 = SQRT(arg10)
       vbar = temp8
       temp14 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
 &       isb)
       temp13 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 0)
       temp12 = temp13*temp14*vbar
-      temp1 = dv%fna(ifc, 0, isb)/temp12
+      temp3 = dv%fna(ifc, 0, isb)/temp12
       DO nd=1,nbdirs
-        IF (arg1 .EQ. 0.d0) THEN
+        IF (arg10 .EQ. 0.d0) THEN
           vbard(nd) = 0.d0
         ELSE
-          vbard(nd) = arg1d(nd)/(2.0*temp8)
+          vbard(nd) = arg10d(nd)/(2.0*temp8)
         END IF
-        x1d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 0, isb)-temp1*temp13*(vbar*(&
+        x1d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 0, isb)-temp3*temp13*(vbar*(&
 &         pld%na(nd, mpg%fccv(ifc, 1), isb)+pld%na(nd, mpg%fccv(ifc, 2)&
 &         , isb))+temp14*vbard(nd)))/temp12
       END DO
-      x1 = 4.0_R8*temp1
+      x1 = 4.0_R8*temp3
       IF (x1 .GE. 0.) THEN
         DO nd=1,nbdirs
           abs0d(nd) = x1d(nd)
@@ -5511,13 +6028,13 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 &       isb)
       temp13 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 1)
       temp12 = temp13*temp14*vbar
-      temp1 = dv%fna(ifc, 1, isb)/temp12
+      temp3 = dv%fna(ifc, 1, isb)/temp12
       DO nd=1,nbdirs
-        x2d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 1, isb)-temp1*temp13*(vbar*(&
+        x2d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 1, isb)-temp3*temp13*(vbar*(&
 &         pld%na(nd, mpg%fccv(ifc, 1), isb)+pld%na(nd, mpg%fccv(ifc, 2)&
 &         , isb))+temp14*vbard(nd)))/temp12
       END DO
-      x2 = 4.0_R8*temp1
+      x2 = 4.0_R8*temp3
       IF (x2 .GE. 0.) THEN
         DO nd=1,nbdirs
           abs1d(nd) = x2d(nd)
@@ -5552,12 +6069,15 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
         maxfluxlimit(0) = maxfluxlimit(0)
       END IF
       temp14 = dv%fna(ifc, 0, isb)/t0
+! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
+      temp8 = flobtmp(ifc, 0)/t0
 !srv 13.10.06 {
-      temp17 = dv%conb(ifc, 0, 0:4)/t0
+      temp17 = conbtmp(ifc, 0, 0:4)/t0
       DO nd=1,nbdirs
         dvd%fna(nd, ifc, 0, isb) = (dvd%fna(nd, ifc, 0, isb)-temp14*t0d(&
 &         nd))/t0
-        dvd%conb(nd, ifc, 0, 0:4) = (dvd%conb(nd, ifc, 0, 0:4)-temp17*&
+        flobtmpd(nd, ifc, 0) = (flobtmpd(nd, ifc, 0)-temp8*t0d(nd))/t0
+        conbtmpd(nd, ifc, 0, 0:4) = (conbtmpd(nd, ifc, 0, 0:4)-temp17*&
 &         t0d(nd))/t0
       END DO
       dv%fna(ifc, 0, isb) = temp14
@@ -5571,13 +6091,8 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
       dv%fna_nodrift(ifc, 0, isb) = dv%fna_nodrift(ifc, 0, isb)/t0
       dv%fna_32nd(ifc, 0, isb) = dv%fna_32nd(ifc, 0, isb)/t0
       dv%fna_52nd(ifc, 0, isb) = dv%fna_52nd(ifc, 0, isb)/t0
-! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      temp14 = dv%flob(ifc, 0)/t0
-      DO nd=1,nbdirs
-        dvd%flob(nd, ifc, 0) = (dvd%flob(nd, ifc, 0)-temp14*t0d(nd))/t0
-      END DO
-      dv%flob(ifc, 0) = temp14
-      dv%conb(ifc, 0, 0:4) = temp17
+      flobtmp(ifc, 0) = temp8
+      conbtmp(ifc, 0, 0:4) = temp17
       temp14 = dv%fna_he(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fna_he(nd, ifc, 0, isb) = (dvd%fna_he(nd, ifc, 0, isb)-&
@@ -5610,12 +6125,15 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
         maxfluxlimit(1) = maxfluxlimit(1)
       END IF
       temp14 = dv%fna(ifc, 1, isb)/t1
+! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
+      temp8 = flobtmp(ifc, 1)/t1
 !srv 13.10.06 {
-      temp17 = dv%conb(ifc, 1, 0:4)/t1
+      temp17 = conbtmp(ifc, 1, 0:4)/t1
       DO nd=1,nbdirs
         dvd%fna(nd, ifc, 1, isb) = (dvd%fna(nd, ifc, 1, isb)-temp14*t1d(&
 &         nd))/t1
-        dvd%conb(nd, ifc, 1, 0:4) = (dvd%conb(nd, ifc, 1, 0:4)-temp17*&
+        flobtmpd(nd, ifc, 1) = (flobtmpd(nd, ifc, 1)-temp8*t1d(nd))/t1
+        conbtmpd(nd, ifc, 1, 0:4) = (conbtmpd(nd, ifc, 1, 0:4)-temp17*&
 &         t1d(nd))/t1
       END DO
       dv%fna(ifc, 1, isb) = temp14
@@ -5629,13 +6147,8 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
       dv%fna_nodrift(ifc, 1, isb) = dv%fna_nodrift(ifc, 1, isb)/t1
       dv%fna_32nd(ifc, 1, isb) = dv%fna_32nd(ifc, 1, isb)/t1
       dv%fna_52nd(ifc, 1, isb) = dv%fna_52nd(ifc, 1, isb)/t1
-! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      temp14 = dv%flob(ifc, 1)/t1
-      DO nd=1,nbdirs
-        dvd%flob(nd, ifc, 1) = (dvd%flob(nd, ifc, 1)-temp14*t1d(nd))/t1
-      END DO
-      dv%flob(ifc, 1) = temp14
-      dv%conb(ifc, 1, 0:4) = temp17
+      flobtmp(ifc, 1) = temp8
+      conbtmp(ifc, 1, 0:4) = temp17
       temp14 = dv%fna_he(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fna_he(nd, ifc, 1, isb) = (dvd%fna_he(nd, ifc, 1, isb)-&
@@ -5664,6 +6177,13 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
       co%fllim0fna(ifc, 1, isb) = t1
     END DO
   END IF
+  DO nd=1,nbdirs
+!
+    dvd%flob(nd, :, :, isb) = flobtmpd(nd, :, :)
+    dvd%conb(nd, :, :, :, isb) = conbtmpd(nd, :, :, :)
+  END DO
+  dv%flob(:, :, isb) = flobtmp
+  dv%conb(:, :, :, isb) = conbtmp
 !
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
@@ -5998,29 +6518,29 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
     arg18 = 'b2tfnb_ub2dia_r'//chns
     CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg18)
     arg18 = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0, isb), arg18)
     arg18 = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1, isb), arg18)
     arg18 = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2, isb), arg18)
     arg18 = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3, isb), arg18)
     arg18 = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4, isb), arg18)
     arg110 = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0, isb), arg110)
     arg110 = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1, isb), arg110)
     arg110 = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2, isb), arg110)
     arg110 = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3, isb), arg110)
     arg110 = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4, isb), arg110)
     arg110 = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0, isb), arg110)
     arg14 = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg14)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1, isb), arg14)
     arg110 = 'b2tfnb_kmprtix'//chns
     CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg110)
     arg113 = 'b2tfnb_ua'//chns
@@ -6127,6 +6647,8 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 !   ..local variables
 !srv 13.10.06
   INTEGER :: icv1, icv2, ifc, meth
+  INTEGER :: ivx1, ivx2, ifc1, ifc2, k, j
+  REAL(kind=r8) :: dpo_p, dpo_r, fcht_tot, a(2), b(2), vx_dir
 !srv 16.09.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: drift_hyb
@@ -6134,7 +6656,8 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   REAL(kind=r8) :: flo(nfc, 0:1), flo_mdf(nfc, 0:1), flo_nodrift(nfc, 0:&
 & 1), flo2dia(nfc, 0:1), flo_he(nfc, 0:1), flo_53(nfc, 0:1), alpha, &
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
-& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
+& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1), flobtmp(nfc, 0:1), conbtmp(nfc&
+& , 0:1, 0:4)
 !srv 05.03.16
 !srv 05.03.16
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmpr(ncv), kmprv(nvx), &
@@ -6160,6 +6683,7 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC SUM
   INTRINSIC NINT
   EXTERNAL XERRAB
   REAL(r8) :: x1
@@ -6169,9 +6693,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   REAL(r8) :: result1
   REAL(r8) :: result2
   REAL(r8) :: result3
-  REAL(r8) :: arg1
+  REAL(kind=r8) :: arg1
+  REAL(r8) :: arg10
   REAL(kind=r8) :: result10
-  REAL(kind=r8) :: arg10
   CHARACTER(len=18) :: arg11
   CHARACTER(len=17) :: arg12
   CHARACTER(len=16) :: arg13
@@ -6264,9 +6788,11 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   dv%fnapsch(:, :, isb) = 0.0_R8
 !srv 19.11.09
   dv%fna_mdf(:, :, isb) = 0.0_R8
-  dv%flob = 0.0_R8
+  dv%flob(:, :, isb) = 0.0_R8
 !srv 13.10.06
-  dv%conb = 0.0_R8
+  dv%conb(:, :, :, isb) = 0.0_R8
+  flobtmp = 0.0_R8
+  conbtmp = 0.0_R8
 !srv 01.10.99
   ub2dia = 0.0_R8
   result1 = MAXVAL(dv%facdrift)
@@ -6294,6 +6820,70 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
     wrk0 = geo%fcbb(:, 2)/geo%fcbb(:, 3)**2
     dv%vaecrb(:, 0, isb) = -(switch%poleldr*dv%fac_exb*wrk0*dpo(:, 1))
     dv%vaecrb(:, 1, isb) = switch%radeldr*dv%fac_exb*wrk0*dpo(:, 0)
+!
+    IF (switch%b2tfnb_avg_vexb .GE. 1) THEN
+      CALL INTVERTEX_NODIFF_NODIFF(ncv, nvx, mpg, geo%vxvol, pl%po, &
+&                            wrkvx)
+      DO j=1,mpg%nfci
+        IF (.NOT.(mpg%fcs_wall_ind(j, 2) .EQ. 1 .OR. mpg%fcs_wall_type(j&
+&           ) .NE. 2)) THEN
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1))
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+1)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx1 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx1 = mpg%fcvx(ifc1, 2)
+          END IF
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-1)
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-2)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx2 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx2 = mpg%fcvx(ifc1, 2)
+          END IF
+          fcht_tot = SUM(geo%fcht(mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):&
+&           mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j, 2)-1)))
+          IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                            '(a,2i6,1p,2e15.8)') &
+&                                            'iVx1,iVx2,po_iVx1,po_iVx2'&
+&                                            , ivx1, ivx2, wrkvx(ivx1), &
+&                                            wrkvx(ivx2)
+          DO k=1,mpg%fcs_wall_ind(j, 2)
+            ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+            icv1 = mpg%fccv(ifc, 1)
+            icv2 = mpg%fccv(ifc, 2)
+            a(1) = geo%vxx(mpg%fcvx(ifc, 2)) - geo%vxx(mpg%fcvx(ifc, 1))
+            a(2) = geo%vxy(mpg%fcvx(ifc, 2)) - geo%vxy(mpg%fcvx(ifc, 1))
+            b(1) = geo%vxx(ivx2) - geo%vxx(ivx1)
+            b(2) = geo%vxy(ivx2) - geo%vxy(ivx1)
+            arg1 = a(1)*b(1) + a(2)*b(2)
+            vx_dir = SIGN(1.0_R8, arg1)
+            dpo_p = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+!
+            dpo_r = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+            IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                              '(a,i6,1p,2e15.8)') &
+&                                              'iFc,dpo_th,dpo_r', ifc, &
+&                                              dpo_p, dpo_r
+            dv%vaecrb(ifc, 0, isb) = -(switch%poleldr*dv%fac_exb(ifc)*&
+&             wrk0(ifc)*dpo_r)
+            dv%vaecrb(ifc, 1, isb) = switch%radeldr*dv%fac_exb(ifc)*wrk0&
+&             (ifc)*dpo_p
+          END DO
+        END IF
+      END DO
+    END IF
+!
 !     ..restriction ExB drift
     xcount = 0
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
@@ -6302,9 +6892,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 !    to total ExB velocity (instead of individual poloidal and radial
 !    components). Otherwise: not perpendicular to gradient of potential
       DO ifc=1,nfc
-        arg1 = (dv%vaecrb(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
-&         )**2 + dv%vaecrb(ifc, 1, isb)**2
-        t0 = SQRT(arg1)
+        arg10 = (dv%vaecrb(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2&
+&         ))**2 + dv%vaecrb(ifc, 1, isb)**2
+        t0 = SQRT(arg10)
         IF (t0 .GT. 2.0_R8*co%cssb(ifc)) THEN
           xcount = xcount + 1
           IF (switch%vlct_diagno .GE. 2) THEN
@@ -6358,8 +6948,8 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 !     ..computation of P.Sch flows
     CALL B2TNPSCH_NODIFF_NODIFF(ncv, nfc, nvx, switch, geo, mpg, dv%&
 &                         facdrift, co%cddi(:, :, isb), pl%ti, pl%na(:, &
-&                         isb), kmprti, dv%flob, dv%conb, dv%fnapsch(:, &
-&                         :, isb))
+&                         isb), kmprti, flobtmp, conbtmp(:, :, 0:2), dv%&
+&                         fnapsch(:, :, isb))
 !lk 02.06.11 }
 !
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
@@ -6379,37 +6969,37 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
           t0 = pl%ti(icv1)
         END IF
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
-        arg1 = 8.0_R8*t0/(pi*am(isb)*mp)
-        result10 = SQRT(arg1)
+        arg10 = 8.0_R8*t0/(pi*am(isb)*mp)
+        result10 = SQRT(arg10)
         vbar = geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*result10
-        arg10 = (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 0, isb)*(&
+        arg1 = (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 0, isb)*(&
 &         geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))/geo%&
 &         fcs(ifc)*dnbti(ifc, 1)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 +&
 &         (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 1, isb)*(geo%&
 &         fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))/geo%fcs(&
 &         ifc)*dnbti(ifc, 0))**2
-        result10 = SQRT(arg10)
+        result10 = SQRT(arg1)
         t2 = 1.0_R8 + result10/(vbar*t1)
         dv%fnapsch(ifc, 0, isb) = dv%fnapsch(ifc, 0, isb)/t2
         dv%fnapsch(ifc, 1, isb) = dv%fnapsch(ifc, 1, isb)/t2
-        arg1 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%vadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%vadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%vadia(ifc, 0, isb) = dv%vadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%vadia(ifc, 1, isb) = dv%vadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg1 = (dv%wadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%wadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%wadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%wadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%wadia(ifc, 0, isb) = dv%wadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%wadia(ifc, 1, isb) = dv%wadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%uadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
@@ -6426,36 +7016,36 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
           t0 = pl%ti(icv1)
         END IF
         t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
-        arg1 = 8.0_R8*t0/(pi*am(isb)*mp)
-        vbar = SQRT(arg1)
-        arg10 = (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 0, isb)*(&
+        arg10 = 8.0_R8*t0/(pi*am(isb)*mp)
+        vbar = SQRT(arg10)
+        arg1 = (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 0, isb)*(&
 &         geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))/geo%&
 &         fcs(ifc)*dnbti(ifc, 1)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 +&
 &         (switch%fnbpsch*dv%facdrift(ifc)*co%cddi(ifc, 1, isb)*(geo%&
 &         fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))/geo%fcs(&
 &         ifc)*dnbti(ifc, 0))**2
-        result10 = SQRT(arg10)
+        result10 = SQRT(arg1)
         t2 = 1.0_R8 + result10/(vbar*t1)
         dv%fnapsch(ifc, 0, isb) = dv%fnapsch(ifc, 0, isb)/t2
         dv%fnapsch(ifc, 1, isb) = dv%fnapsch(ifc, 1, isb)/t2
-        arg1 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%vadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%vadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%vadia(ifc, 0, isb) = dv%vadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%vadia(ifc, 1, isb) = dv%vadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg1 = (dv%wadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%wadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%wadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%wadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%wadia(ifc, 0, isb) = dv%wadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%wadia(ifc, 1, isb) = dv%wadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg1 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%uadia(ifc, 1, isb)**2
-        t3 = SQRT(arg1)
+        arg10 = (dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2)&
+&         )**2 + dv%uadia(ifc, 1, isb)**2
+        t3 = SQRT(arg10)
         dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
-        arg10 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
+        arg1 = (ub2dia(ifc, 0)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + &
 &         ub2dia(ifc, 1)**2
-        t3 = SQRT(arg10)
+        t3 = SQRT(arg1)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
@@ -6504,10 +7094,10 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 !
 !   ..add contribution from currents
   IF (.NOT.is_neutral(isb)) THEN
-    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))*switch%b2tfnb_xcur/(rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(&
-&     rzf*qe*nbf)
+    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+&
+&     switch%fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, &
+&     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))*switch%b2tfnb_xcur/&
+&     (rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(rzf*qe*nbf)
     scur(:, 1) = (dv%fchinert_a(:, 1, isb)+dv%fchvispar_a(:, 1, isb)+&
 &     switch%fnb_vis_per*dv%fchvisper_a(:, 1, isb)+dv%fchanml_a(:, 1, &
 &     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 1, isb))*switch%b2tfnb_ycur/&
@@ -6554,8 +7144,8 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
     ELSE
       t3 = -t3
     END IF
-    arg1 = 8.0_R8*t0/(pi*am(isb)*mp)
-    result10 = SQRT(arg1)
+    arg10 = 8.0_R8*t0/(pi*am(isb)*mp)
+    result10 = SQRT(arg10)
     vbar = result10*geo%fcs(ifc)
     wrk4(ifc) = 1.0_R8/(1.0_R8+(t3/(0.5_R8*vbar*t1))**gamma)**(1.0_R8/&
 &     gamma)
@@ -6604,7 +7194,6 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   0, isb)*geo%fcs*geo%fcqalf(:, 0)+scur(:, 0))*nbf + (flo(:, 0)-&
 &   flo_mdf(:, 0))*nbf - co%cdpa(:, 0, isb)*dpb(:, 0)
-!
   dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   1, isb)*geo%fcs*geo%fcqalf(:, 1)+scur(:, 1))*nbf + (flo(:, 1)-&
 &   flo_mdf(:, 1))*nbf - co%cdpa(:, 1, isb)*dpb(:, 1)
@@ -6669,8 +7258,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 &   dpb(:, 1)
 !
 !   ..compute ExB fluxes for k-model
-  dv%fna_exb = 0.0_R8
   IF (isb .EQ. ismain .AND. switch%solve_keps .GT. 0) THEN
+! initialization within the if-statement to avoid race conditions with openMP
+    dv%fna_exb = 0.0_R8
     zeros = 0.0_R8
     zeros1 = 0.0_R8
     CALL CALCFLOW_NODIFF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%na(:, &
@@ -6687,16 +7277,16 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 &   geo%fcs*geo%fcqalf(:, 1)+scur(:, 1))
   IF (switch%mdf_fnb .EQ. 0) flob0 = flob0 + flo - flo_mdf
   DO ifc=1,nfc
-    dv%flob(ifc, 0) = dv%flob(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
+    flobtmp(ifc, 0) = flobtmp(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - conb0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    dv%flob(ifc, 1) = dv%flob(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
+    flobtmp(ifc, 1) = flobtmp(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - conb0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
-    dv%conb(ifc, 0, 0) = dv%conb(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
+    conbtmp(ifc, 0, 0) = conbtmp(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
 &     (mpg%fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - 0.25_R8*flob0(ifc, 0)&
 &     *(kmpr(mpg%fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    dv%conb(ifc, 1, 0) = dv%conb(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
+    conbtmp(ifc, 1, 0) = conbtmp(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
 &     kmprv(mpg%fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - 0.25_R8*flob0(&
 &     ifc, 1)*(kmprv(mpg%fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
   END DO
@@ -6707,13 +7297,14 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
   CALL CALCCOEF_NODIFF_NODIFF(ncv, nfc, nvx, 0, geo, zeros, cdpb, flob0&
 &                       , conb0)
 !wdk flob0 should be zero here
-  dv%flob = dv%flob + flob0
-  dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
+  flobtmp = flobtmp + flob0
+  conbtmp(:, :, 0) = conbtmp(:, :, 0) + conb0
 !wdk is this needed? correct? probably always zero?
-  dv%conb(:, 0, 1) = conb0(:, 0)*kmprtif
+  conbtmp(:, 0, 1) = conb0(:, 0)*kmprtif
 !wdk is this needed? correct? probably always zero?
-  dv%conb(:, 1, 1) = conb0(:, 1)*kmprtif
-  dv%conb(:, :, 2) = dv%conb(:, :, 1)
+  conbtmp(:, 1, 1) = conb0(:, 1)*kmprtif
+  conbtmp(:, :, 2) = conbtmp(:, :, 1)
+! Add conb, flob to dv
 !
 !   ..flux limit
 !srv 20.11.08
@@ -6737,8 +7328,8 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
       ELSE
         t2 = switch%b2tfnb_flux_limit_min_ti
       END IF
-      arg1 = 8.0_R8*t2/(pi*am(isb)*mp)
-      vbar = SQRT(arg1)
+      arg10 = 8.0_R8*t2/(pi*am(isb)*mp)
+      vbar = SQRT(arg10)
       x1 = dv%fna(ifc, 0, isb)/(0.5_R8*(pl%na(mpg%fccv(ifc, 1), isb)+pl%&
 &       na(mpg%fccv(ifc, 2), isb))*alpha*vbar/4.0_R8*geo%fcs(ifc)*geo%&
 &       fcqalf(ifc, 0))
@@ -6769,9 +7360,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
       dv%fna_32nd(ifc, 0, isb) = dv%fna_32nd(ifc, 0, isb)/t0
       dv%fna_52nd(ifc, 0, isb) = dv%fna_52nd(ifc, 0, isb)/t0
 ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      dv%flob(ifc, 0) = dv%flob(ifc, 0)/t0
+      flobtmp(ifc, 0) = flobtmp(ifc, 0)/t0
 !srv 13.10.06 {
-      dv%conb(ifc, 0, 0:4) = dv%conb(ifc, 0, 0:4)/t0
+      conbtmp(ifc, 0, 0:4) = conbtmp(ifc, 0, 0:4)/t0
       dv%fna_he(ifc, 0, isb) = dv%fna_he(ifc, 0, isb)/t0
       dv%fna_fcor(ifc, 0, isb) = dv%fna_fcor(ifc, 0, isb)/t0
       dv%fna_mdf(ifc, 0, isb) = dv%fna_mdf(ifc, 0, isb)/t0
@@ -6790,9 +7381,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
       dv%fna_32nd(ifc, 1, isb) = dv%fna_32nd(ifc, 1, isb)/t1
       dv%fna_52nd(ifc, 1, isb) = dv%fna_52nd(ifc, 1, isb)/t1
 ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      dv%flob(ifc, 1) = dv%flob(ifc, 1)/t1
+      flobtmp(ifc, 1) = flobtmp(ifc, 1)/t1
 !srv 13.10.06 {
-      dv%conb(ifc, 1, 0:4) = dv%conb(ifc, 1, 0:4)/t1
+      conbtmp(ifc, 1, 0:4) = conbtmp(ifc, 1, 0:4)/t1
       dv%fna_he(ifc, 1, isb) = dv%fna_he(ifc, 1, isb)/t1
       dv%fna_fcor(ifc, 1, isb) = dv%fna_fcor(ifc, 1, isb)/t1
       dv%fna_mdf(ifc, 1, isb) = dv%fna_mdf(ifc, 1, isb)/t1
@@ -6801,6 +7392,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
       co%fllim0fna(ifc, 1, isb) = t1
     END DO
   END IF
+!
+  dv%flob(:, :, isb) = flobtmp
+  dv%conb(:, :, :, isb) = conbtmp
 !
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
@@ -7123,29 +7717,29 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
     arg18 = 'b2tfnb_ub2dia_r'//chns
     CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg18)
     arg18 = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0, isb), arg18)
     arg18 = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1, isb), arg18)
     arg18 = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2, isb), arg18)
     arg18 = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3, isb), arg18)
     arg18 = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4, isb), arg18)
     arg110 = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0, isb), arg110)
     arg110 = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1, isb), arg110)
     arg110 = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2, isb), arg110)
     arg110 = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3, isb), arg110)
     arg110 = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4, isb), arg110)
     arg110 = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg110)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0, isb), arg110)
     arg14 = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg14)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1, isb), arg14)
     arg110 = 'b2tfnb_kmprtix'//chns
     CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg110)
     arg113 = 'b2tfnb_ua'//chns

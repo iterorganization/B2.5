@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfhi__dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
-!                *z_to_m1_ast *z2n_xyd *nald *iad *av_ualphad *z_to_m1_astd
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
+!                *z_to_m1_ast *z2n_cvd *nald *iad *av_ualphad *z_to_m1_astd
 !                *(dv.fhe_exb) *(dv.fhi) *(dv.fhi_mdf) *(dv.fhipsch)
 !                *(dv.fhi_exb) *(dv.fhn) *(dv.fkt) *(dv.fzt) *(dv.floi)
 !                *(dv.flon) *(dv.flokt) *(dv.flozt) *(dv.conn)
@@ -12,8 +12,8 @@
 !                *(dvd.fhn) *(dvd.fkt) *(dvd.fzt) *(dvd.floi) *(dvd.flon)
 !                *(dvd.flokt) *(dvd.flozt) *(dvd.conn) *(dvd.conkt)
 !                *(dvd.conzt) *(dvd.coni)
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
-!                *z_to_m1_ast *z2n_xyd *nald *iad *av_ualphad *z_to_m1_astd
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
+!                *z_to_m1_ast *z2n_cvd *nald *iad *av_ualphad *z_to_m1_astd
 !                *c_hw_save[save in b2mod_b2zhco_diffv] *c_hw_saved[save in b2mod_b2zhco_diffv]
 !                *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt) *(dv.fni_he)
@@ -37,8 +37,8 @@
 !                *(pld.ua) *(pld.te) *(pld.ti) *(pld.tn) *(pld.kt)
 !                *(pld.zt) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
-!                z_to_m1_ast:in z2n_xyd:in nald:in iad:in av_ualphad:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
+!                z_to_m1_ast:in z2n_cvd:in nald:in iad:in av_ualphad:in
 !                z_to_m1_astd:in c_hw_save[save in b2mod_b2zhco_diffv]:in
 !                c_hw_saved[save in b2mod_b2zhco_diffv]:in dv.fchvispar:in
 !                dv.fchvisper:in dv.fchvisq:in dv.fchinert:in dv.fchanml:in
@@ -67,12 +67,12 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfhi_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *(dv.fhe_exb) *(dv.fhi) *(dv.fhi_mdf)
 !                *(dv.fhipsch) *(dv.fhi_exb) *(dv.fhn) *(dv.fkt)
 !                *(dv.fzt) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
 !                *(dv.conn) *(dv.conkt) *(dv.conzt) *(dv.coni)
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *c_hw_save[save in b2mod_b2zhco]
 !                *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt) *(dv.fni_he)
@@ -85,7 +85,7 @@
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cddi) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in c_hw_save[save in b2mod_b2zhco]:in
 !                dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchanml:in dv.fchviskt:in dv.fni_he:in
@@ -94,11 +94,11 @@
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floi:in dv.flon:in
 !                dv.flokt:in dv.flozt:in dv.conn:in dv.conkt:in
 !                dv.conzt:in dv.coni:in dv.ni:in dv.nn:in dv.vadia:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
-!                co.chce_exb:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.cddi:in pl.na:in pl.ua:in
-!                pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                dv.facdrift:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fcvol:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.vxvol:in co.chce_exb:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cddi:in pl.na:in
+!                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -130,8 +130,8 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tfhi_cutlo, my_out_folder
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, z2n_xyd0, z2n_xyd, &
-& z2n_xydd, nal, nald0, nald, naldd, ia, iad0, iad, iadd, av_ualpha, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, z2n_cvd0, z2n_cvd, &
+& z2n_cvdd, nal, nald0, nald, naldd, ia, iad0, iad, iadd, av_ualpha, &
 & av_ualphad0, av_ualphad, av_ualphadd, z_to_m1_ast, z_to_m1_astd0, &
 & z_to_m1_astd, z_to_m1_astdd
   USE B2MOD_SUBSYS
@@ -221,11 +221,12 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
 & nfc), tnf(nfc), wrkf(nfc, 0:1), cdkt0(nfc, 0:1), cdzt0(nfc, 0:1)
   REAL(kind=r8) :: flidiad0(nbdirsmax0, nfc, 0:1), nifd0(nbdirsmax0, nfc&
-& ), nnfd0(nbdirsmax0, nfc), tifd0(nbdirsmax0, nfc), cdkt0d0(nbdirsmax0&
-& , nfc, 0:1), cdzt0d0(nbdirsmax0, nfc, 0:1)
+& ), nnfd0(nbdirsmax0, nfc), tifd0(nbdirsmax0, nfc), wrkfd(nbdirsmax0, &
+& nfc, 0:1), cdkt0d0(nbdirsmax0, nfc, 0:1), cdzt0d0(nbdirsmax0, nfc, 0:1&
+& )
   REAL(kind=r8) :: flidiad(nbdirsmax, nfc, 0:1), nifd(nbdirsmax, nfc), &
-& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1)&
-& , cdkt0d(nbdirsmax, nfc, 0:1), cdzt0d(nbdirsmax, nfc, 0:1)
+& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), cdkt0d(nbdirsmax, nfc, 0:1&
+& ), cdzt0d(nbdirsmax, nfc, 0:1)
   REAL(kind=r8) :: flidiadd(nbdirsmax0, nbdirsmax, nfc, 0:1), nifdd(&
 & nbdirsmax0, nbdirsmax, nfc), nnfdd(nbdirsmax0, nbdirsmax, nfc), tifdd(&
 & nbdirsmax0, nbdirsmax, nfc), cdkt0dd(nbdirsmax0, nbdirsmax, nfc, 0:1)&
@@ -283,13 +284,13 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
     CALL B2XVSG(ncv, dv%ni, 1, 'ni', '.gt.')
     CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
-    DO nd=1,nbdirs
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
+    DO nd0=1,nbdirs0
+      wrkfd(nd0, :, 0) = 0.D0
+      wrkfd(nd0, :, 1) = 0.D0
+      wrkfd(nd0, :, 0) = 0.D0
+      wrkfd(nd0, :, 1) = 0.D0
+      wrkfd(nd0, :, 0) = 0.D0
+      wrkfd(nd0, :, 1) = 0.D0
     END DO
     wrkf(:, 0) = co%chci(:, 0)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
@@ -438,8 +439,9 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     floi_vhxd = 0.d0
     floi_vhxdd = 0.D0
@@ -460,8 +462,9 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
     DO nd0=nd,nbdirs0
       scurdd(nd0, nd, :, 0) = switch%b2tfnb_xcur*1.5_R8*(dvdd%fchinert(&
 &       nd0, nd, :, 0)+dvdd%fchvispar(nd0, nd, :, 0)+dvdd%fchanml(nd0, &
-&       nd, :, 0)+dvdd%fchvisper(nd0, nd, :, 0)+dvdd%fchvisq(nd0, nd, :&
-&       , 0))/qe + 1.5_R8*dvdd%fchviskt(nd0, nd, :, 0)/qe
+&       nd, :, 0)+switch%fnb_vis_per*dvdd%fchvisper(nd0, nd, :, 0)+&
+&       switch%fnb_vis_q*dvdd%fchvisq(nd0, nd, :, 0))/qe + 1.5_R8*dvdd%&
+&       fchviskt(nd0, nd, :, 0)/qe
       scurdd(nd0, nd, :, 1) = switch%b2tfnb_ycur*1.5_R8*(dvdd%fchinert(&
 &       nd0, nd, :, 1)+dvdd%fchvispar(nd0, nd, :, 1)+dvdd%fchanml(nd0, &
 &       nd, :, 1)+switch%fnb_vis_per*dvdd%fchvisper(nd0, nd, :, 1)+&
@@ -469,8 +472,9 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
 &       fchviskt(nd0, nd, :, 1)/qe
     END DO
     scurd(nd, :, 0) = switch%b2tfnb_xcur*1.5_R8*(dvd%fchinert(nd, :, 0)+&
-&     dvd%fchvispar(nd, :, 0)+dvd%fchanml(nd, :, 0)+dvd%fchvisper(nd, :&
-&     , 0)+dvd%fchvisq(nd, :, 0))/qe + 1.5_R8*dvd%fchviskt(nd, :, 0)/qe
+&     dvd%fchvispar(nd, :, 0)+dvd%fchanml(nd, :, 0)+switch%fnb_vis_per*&
+&     dvd%fchvisper(nd, :, 0)+switch%fnb_vis_q*dvd%fchvisq(nd, :, 0))/qe&
+&     + 1.5_R8*dvd%fchviskt(nd, :, 0)/qe
     scurd(nd, :, 1) = switch%b2tfnb_ycur*1.5_R8*(dvd%fchinert(nd, :, 1)+&
 &     dvd%fchvispar(nd, :, 1)+dvd%fchanml(nd, :, 1)+switch%fnb_vis_per*&
 &     dvd%fchvisper(nd, :, 1)+switch%fnb_vis_q*dvd%fchvisq(nd, :, 1))/qe&
@@ -479,17 +483,17 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
   scurd0 = 0.D0
   DO nd0=1,nbdirs0
     scurd0(nd0, :, 0) = switch%b2tfnb_xcur*1.5_R8*(dvd0%fchinert(nd0, :&
-&     , 0)+dvd0%fchvispar(nd0, :, 0)+dvd0%fchanml(nd0, :, 0)+dvd0%&
-&     fchvisper(nd0, :, 0)+dvd0%fchvisq(nd0, :, 0))/qe + 1.5_R8*dvd0%&
-&     fchviskt(nd0, :, 0)/qe
+&     , 0)+dvd0%fchvispar(nd0, :, 0)+dvd0%fchanml(nd0, :, 0)+switch%&
+&     fnb_vis_per*dvd0%fchvisper(nd0, :, 0)+switch%fnb_vis_q*dvd0%&
+&     fchvisq(nd0, :, 0))/qe + 1.5_R8*dvd0%fchviskt(nd0, :, 0)/qe
     scurd0(nd0, :, 1) = switch%b2tfnb_ycur*1.5_R8*(dvd0%fchinert(nd0, :&
 &     , 1)+dvd0%fchvispar(nd0, :, 1)+dvd0%fchanml(nd0, :, 1)+switch%&
 &     fnb_vis_per*dvd0%fchvisper(nd0, :, 1)+switch%fnb_vis_q*dvd0%&
 &     fchvisq(nd0, :, 1))/qe + 1.5_R8*dvd0%fchviskt(nd0, :, 1)/qe
   END DO
   scur(:, 0) = 1.5_R8/qe*(dv%fchinert(:, 0)+dv%fchvispar(:, 0)+dv%&
-&   fchanml(:, 0)+dv%fchvisper(:, 0)+dv%fchvisq(:, 0))*switch%&
-&   b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
+&   fchanml(:, 0)+switch%fnb_vis_per*dv%fchvisper(:, 0)+switch%fnb_vis_q&
+&   *dv%fchvisq(:, 0))*switch%b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
   scur(:, 1) = 1.5_R8/qe*(dv%fchinert(:, 1)+dv%fchvispar(:, 1)+dv%&
 &   fchanml(:, 1)+switch%fnb_vis_per*dv%fchvisper(:, 1)+switch%fnb_vis_q&
 &   *dv%fchvisq(:, 1))*switch%b2tfnb_ycur + 1.5_R8/qe*dv%fchviskt(:, 1)
@@ -980,12 +984,12 @@ END SUBROUTINE B2TFHI__DV_DV
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfhi_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *(dv.fhe_exb) *(dv.fhi) *(dv.fhi_mdf)
 !                *(dv.fhipsch) *(dv.fhi_exb) *(dv.fhn) *(dv.fkt)
 !                *(dv.fzt) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
 !                *(dv.conn) *(dv.conkt) *(dv.conzt) *(dv.coni)
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *c_hw_save[save in b2mod_b2zhco]
 !                *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt) *(dv.fni_he)
@@ -998,7 +1002,7 @@ END SUBROUTINE B2TFHI__DV_DV
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cddi) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in c_hw_save[save in b2mod_b2zhco]:in
 !                dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchanml:in dv.fchviskt:in dv.fni_he:in
@@ -1007,11 +1011,11 @@ END SUBROUTINE B2TFHI__DV_DV
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floi:in dv.flon:in
 !                dv.flokt:in dv.flozt:in dv.conn:in dv.conkt:in
 !                dv.conzt:in dv.coni:in dv.ni:in dv.nn:in dv.vadia:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
-!                co.chce_exb:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.cddi:in pl.na:in pl.ua:in
-!                pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                dv.facdrift:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fcvol:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.vxvol:in co.chce_exb:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cddi:in pl.na:in
+!                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -1042,7 +1046,7 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tfhi_cutlo, my_out_folder
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, z2n_xyd, nal, nald, ia, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, z2n_cvd, nal, nald, ia, &
 & iad, av_ualpha, av_ualphad, z_to_m1_ast, z_to_m1_astd
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array ni
@@ -1106,8 +1110,8 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
 & nfc), tnf(nfc), wrkf(nfc, 0:1), cdkt0(nfc, 0:1), cdzt0(nfc, 0:1)
   REAL(kind=r8) :: flidiad(nbdirsmax, nfc, 0:1), nifd(nbdirsmax, nfc), &
-& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1)&
-& , cdkt0d(nbdirsmax, nfc, 0:1), cdzt0d(nbdirsmax, nfc, 0:1)
+& nnfd(nbdirsmax, nfc), tifd(nbdirsmax, nfc), cdkt0d(nbdirsmax, nfc, 0:1&
+& ), cdzt0d(nbdirsmax, nfc, 0:1)
 !djm Jan2017
   REAL(kind=r8) :: scur(nfc, 0:1)
   REAL(kind=r8) :: scurd(nbdirsmax, nfc, 0:1)
@@ -1155,14 +1159,6 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
     CALL B2XVSG(ncv, dv%ni, 1, 'ni', '.gt.')
     CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
-    DO nd=1,nbdirs
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-      wrkfd(nd, :, 0) = 0.d0
-      wrkfd(nd, :, 1) = 0.d0
-    END DO
     wrkf(:, 0) = co%chci(:, 0)*geo%fcqalf(:, 0)
     CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chci0', '.ge.')
     wrkf(:, 1) = co%chci(:, 1)*geo%fcqalf(:, 1)
@@ -1260,8 +1256,9 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     floi_vhxd = 0.d0
     CALL B2TFVH_DV_NODIFF(ncv, nfc, ns, geo, mpg, pl%na, pld%na, pl%ua, &
@@ -1274,16 +1271,17 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
   scurd = 0.d0
   DO nd=1,nbdirs
     scurd(nd, :, 0) = switch%b2tfnb_xcur*1.5_R8*(dvd%fchinert(nd, :, 0)+&
-&     dvd%fchvispar(nd, :, 0)+dvd%fchanml(nd, :, 0)+dvd%fchvisper(nd, :&
-&     , 0)+dvd%fchvisq(nd, :, 0))/qe + 1.5_R8*dvd%fchviskt(nd, :, 0)/qe
+&     dvd%fchvispar(nd, :, 0)+dvd%fchanml(nd, :, 0)+switch%fnb_vis_per*&
+&     dvd%fchvisper(nd, :, 0)+switch%fnb_vis_q*dvd%fchvisq(nd, :, 0))/qe&
+&     + 1.5_R8*dvd%fchviskt(nd, :, 0)/qe
     scurd(nd, :, 1) = switch%b2tfnb_ycur*1.5_R8*(dvd%fchinert(nd, :, 1)+&
 &     dvd%fchvispar(nd, :, 1)+dvd%fchanml(nd, :, 1)+switch%fnb_vis_per*&
 &     dvd%fchvisper(nd, :, 1)+switch%fnb_vis_q*dvd%fchvisq(nd, :, 1))/qe&
 &     + 1.5_R8*dvd%fchviskt(nd, :, 1)/qe
   END DO
   scur(:, 0) = 1.5_R8/qe*(dv%fchinert(:, 0)+dv%fchvispar(:, 0)+dv%&
-&   fchanml(:, 0)+dv%fchvisper(:, 0)+dv%fchvisq(:, 0))*switch%&
-&   b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
+&   fchanml(:, 0)+switch%fnb_vis_per*dv%fchvisper(:, 0)+switch%fnb_vis_q&
+&   *dv%fchvisq(:, 0))*switch%b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
   scur(:, 1) = 1.5_R8/qe*(dv%fchinert(:, 1)+dv%fchvispar(:, 1)+dv%&
 &   fchanml(:, 1)+switch%fnb_vis_per*dv%fchvisper(:, 1)+switch%fnb_vis_q&
 &   *dv%fchvisq(:, 1))*switch%b2tfnb_ycur + 1.5_R8/qe*dv%fchviskt(:, 1)
@@ -1619,7 +1617,7 @@ SUBROUTINE B2TFHI__NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tfhi_cutlo, my_out_folder
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, nal, ia, av_ualpha, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, nal, ia, av_ualpha, &
 & z_to_m1_ast
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array ni
@@ -1780,8 +1778,9 @@ SUBROUTINE B2TFHI__NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     CALL B2TFVH_NODIFF_NODIFF(ncv, nfc, ns, geo, mpg, pl%na, pl%ua, &
 &                       floi_vhx)
@@ -1789,8 +1788,8 @@ SUBROUTINE B2TFHI__NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
 !
 !   ..contributions from currents
   scur(:, 0) = 1.5_R8/qe*(dv%fchinert(:, 0)+dv%fchvispar(:, 0)+dv%&
-&   fchanml(:, 0)+dv%fchvisper(:, 0)+dv%fchvisq(:, 0))*switch%&
-&   b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
+&   fchanml(:, 0)+switch%fnb_vis_per*dv%fchvisper(:, 0)+switch%fnb_vis_q&
+&   *dv%fchvisq(:, 0))*switch%b2tfnb_xcur + 1.5_R8/qe*dv%fchviskt(:, 0)
   scur(:, 1) = 1.5_R8/qe*(dv%fchinert(:, 1)+dv%fchvispar(:, 1)+dv%&
 &   fchanml(:, 1)+switch%fnb_vis_per*dv%fchvisper(:, 1)+switch%fnb_vis_q&
 &   *dv%fchvisq(:, 1))*switch%b2tfnb_ycur + 1.5_R8/qe*dv%fchviskt(:, 1)

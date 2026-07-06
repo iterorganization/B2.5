@@ -166,7 +166,8 @@ c
          localarea=copyarea
       else
          localarea=copyarea(1:iend-1)
-         copyarea(1:256)=copyarea(iend+1:256)
+         copyarea(1:256-iend)=copyarea(iend+1:256)
+         copyarea(256-iend+1:256)=repeat(' ',iend)
       endif
       close(lu)
       if (.not.streql(localarea,' ')) then
@@ -207,23 +208,96 @@ c
       filenamecat='../'//trim(filename)
       inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename=trim(filenamecat)
-         return
+        filename=trim(filenamecat)
+        return
       endif
 
       filenamecat='../baserun/'//trim(filename)
       inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename=trim(filenamecat)
-         return
+        filename=trim(filenamecat)
+        return
       endif
 
       filenamecat='../../baserun/'//trim(filename)
       inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename=trim(filenamecat)
-         return
+        filename=trim(filenamecat)
+        return
       endif
 
       return
       end subroutine find_file
+
+      subroutine find_file_with_path(filename,exist,file_path)
+      implicit none
+
+! this routine checks whether the file exists in the present directory,
+! one level up, or in baserun (assumed parallel to the directory one
+! level up) and returns a new filename if found, and exist set to true
+! if the file is found
+
+      character(len=*) :: filename
+      character(len=256) :: filenamecat
+      character(len=256) :: file_path
+      character(len=256), save :: pwd = 'not_set'
+      integer k, l
+      logical exist, streql
+      external streql
+#ifndef NO_GETENV
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
+#endif
+
+      if (streql(pwd,'not_set')) then
+        pwd= ' '
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+        CALL PXFGETENV ('PWD', 0, pwd, lenval, ierror)
+#else
+        call get_environment_variable('PWD', status=ierror,
+     ,                                       length=lenval)
+        if (ierror.eq.0) call get_environment_variable('PWD', value=pwd)
+#endif
+#endif
+      end if
+
+      file_path = ' '
+      inquire(file=filename, exist=exist)
+      if (exist) then
+        file_path = pwd
+        return
+      endif
+
+      filenamecat='../'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
+      if (exist) then
+        l = scan(pwd,'/',.true.)
+        file_path = pwd(1:l-1)
+        filename=trim(filenamecat)
+        return
+      endif
+
+      filenamecat='../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
+      if (exist) then
+        l = scan(pwd,'/',.true.)
+        file_path = pwd(1:l-1)//'/baserun'
+        filename=trim(filenamecat)
+        return
+      endif
+
+      filenamecat='../../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
+      if (exist) then
+        l = scan(pwd,'/',.true.)
+        k = scan(pwd(1:l-1),'/',.true.)
+        file_path = pwd(1:k-1)
+        filename=trim(filenamecat)
+        return
+      endif
+
+      return
+      end subroutine find_file_with_path

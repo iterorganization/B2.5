@@ -35,15 +35,15 @@ SUBROUTINE DIV0_DV_DV(ncv, nfc, mpg, flo, flod0, flod, flodd, dflo, &
 !   ..input arguments
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: flo(nfc)
-  REAL(kind=r8) :: flod0(nbdirsmax0, nfc)
-  REAL(kind=r8) :: flod(nbdirsmax, nfc)
-  REAL(kind=r8) :: flodd(nbdirsmax0, nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(IN) :: flo(nfc)
+  REAL(kind=r8), INTENT(IN) :: flod0(nbdirsmax0, nfc)
+  REAL(kind=r8), INTENT(IN) :: flod(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(IN) :: flodd(nbdirsmax0, nbdirsmax, nfc)
 !   ..output arguments
-  REAL(kind=r8) :: dflo(ncv)
-  REAL(kind=r8) :: dflod0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: dflod(nbdirsmax, ncv)
-  REAL(kind=r8) :: dflodd(nbdirsmax0, nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflo(ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflod0(nbdirsmax0, ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflod(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflodd(nbdirsmax0, nbdirsmax, ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -129,11 +129,11 @@ SUBROUTINE DIV0_DV_NODIFF(ncv, nfc, mpg, flo, flod, dflo, dflod, nbdirs)
 !   ..input arguments
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: flo(nfc)
-  REAL(kind=r8) :: flod(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(IN) :: flo(nfc)
+  REAL(kind=r8), INTENT(IN) :: flod(nbdirsmax, nfc)
 !   ..output arguments
-  REAL(kind=r8) :: dflo(ncv)
-  REAL(kind=r8) :: dflod(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflo(ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflod(nbdirsmax, ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -196,9 +196,9 @@ SUBROUTINE DIV0_NODIFF_NODIFF(ncv, nfc, mpg, flo, dflo)
 !   ..input arguments
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: flo(nfc)
+  REAL(kind=r8), INTENT(IN) :: flo(nfc)
 !   ..output arguments
-  REAL(kind=r8) :: dflo(ncv)
+  REAL(kind=r8), INTENT(OUT) :: dflo(ncv)
 !-----------------------------------------------------------------------
 !.documentation
 !

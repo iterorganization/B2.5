@@ -24,16 +24,18 @@ MODULE B2MOD_B2ZHCO_DIFFV_DIFFV
   CHARACTER(len=1), ALLOCATABLE, SAVE :: zh_tf_toff(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_save(:, :, :), c_r_ta(:, :, :&
 & ), c_r_ta_nofl(:, :, :), c_r_wa(:, :, :), c_r_tb(:, :), c_r_tb_nofl(:&
-& , :), c_r_wb(:, :, :), c_r_w(:, :, :), tf_ton_mat(:, :)
+& , :), c_r_wb(:, :, :), c_r_w(:, :, :), tf_ton_mat(:, :), &
+& c_hta_an_fl_save(:, :), c_r_ta_an_save(:, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_saved0(:, :, :, :), c_r_tad0(&
 & :, :, :, :), c_r_tbd0(:, :, :), c_r_tb_nofld0(:, :, :), c_r_wd0(:, :, &
-& :, :)
+& :, :), c_hta_an_fl_saved0(:, :, :), c_r_ta_an_saved0(:, :, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_saved(:, :, :, :), c_r_tad(:&
 & , :, :, :), c_r_tbd(:, :, :), c_r_tb_nofld(:, :, :), c_r_wd(:, :, :, :&
-& )
+& ), c_hta_an_fl_saved(:, :, :), c_r_ta_an_saved(:, :, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_savedd(:, :, :, :, :), &
 & c_r_tadd(:, :, :, :, :), c_r_tbdd(:, :, :, :), c_r_tb_nofldd(:, :, :, &
-& :), c_r_wdd(:, :, :, :, :)
+& :), c_r_wdd(:, :, :, :, :), c_hta_an_fl_savedd(:, :, :, :), &
+& c_r_ta_an_savedd(:, :, :, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: amfact(:)
 !
 !-----------------------------------------------------------------------
@@ -68,11 +70,14 @@ MODULE B2MOD_B2ZHCO_DIFFV_DIFFV
 CONTAINS
 !  Differentiation of alloc_b2mod_zhco_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out c_hw_saved:out c_r_tad:out
-!                c_r_tbd:out c_r_tb_nofld:out c_r_wd:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out c_hw_saved:out c_r_tad:out
+!                c_r_tbd:out c_r_tb_nofld:out c_r_wd:out c_hta_an_fl_saved:out
+!                c_r_ta_an_saved:out
 !  Differentiation of alloc_b2mod_zhco as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE ALLOC_B2MOD_ZHCO_DV_DV(nnucl, ncv, nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -124,6 +129,21 @@ CONTAINS
     c_r_wd0 = 0.D0
     ALLOCATE(c_r_w(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(tf_ton_mat(0:nnucl-1, 0:nnucl-1))
+    ALLOCATE(c_hta_an_fl_savedd(nbdirsmax0, nbdirsmax, ncv, 0:nnucl-1))
+    c_hta_an_fl_savedd = 0.D0
+    ALLOCATE(c_hta_an_fl_saved(nbdirsmax, ncv, 0:nnucl-1))
+    c_hta_an_fl_saved = 0.d0
+    ALLOCATE(c_hta_an_fl_saved0(nbdirsmax0, ncv, 0:nnucl-1))
+    c_hta_an_fl_saved0 = 0.D0
+    ALLOCATE(c_hta_an_fl_save(ncv, 0:nnucl-1))
+    ALLOCATE(c_r_ta_an_savedd(nbdirsmax0, nbdirsmax, ncv, 0:nnucl-1, 0:&
+&   nnucl-1))
+    c_r_ta_an_savedd = 0.D0
+    ALLOCATE(c_r_ta_an_saved(nbdirsmax, ncv, 0:nnucl-1, 0:nnucl-1))
+    c_r_ta_an_saved = 0.d0
+    ALLOCATE(c_r_ta_an_saved0(nbdirsmax0, ncv, 0:nnucl-1, 0:nnucl-1))
+    c_r_ta_an_saved0 = 0.D0
+    ALLOCATE(c_r_ta_an_save(ncv, 0:nnucl-1, 0:nnucl-1))
     IF (1 .LT. nnucl*(nnucl+1)/2 - nnucl) THEN
       max1 = nnucl*(nnucl+1)/2 - nnucl
     ELSE
@@ -137,7 +157,8 @@ CONTAINS
 
 !  Differentiation of alloc_b2mod_zhco as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE ALLOC_B2MOD_ZHCO_DV(nnucl, ncv, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -166,6 +187,12 @@ CONTAINS
     c_r_wd = 0.d0
     ALLOCATE(c_r_w(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(tf_ton_mat(0:nnucl-1, 0:nnucl-1))
+    ALLOCATE(c_hta_an_fl_saved(nbdirsmax, ncv, 0:nnucl-1))
+    c_hta_an_fl_saved = 0.d0
+    ALLOCATE(c_hta_an_fl_save(ncv, 0:nnucl-1))
+    ALLOCATE(c_r_ta_an_saved(nbdirsmax, ncv, 0:nnucl-1, 0:nnucl-1))
+    c_r_ta_an_saved = 0.d0
+    ALLOCATE(c_r_ta_an_save(ncv, 0:nnucl-1, 0:nnucl-1))
     IF (1 .LT. nnucl*(nnucl+1)/2 - nnucl) THEN
       max1 = nnucl*(nnucl+1)/2 - nnucl
     ELSE
@@ -193,6 +220,8 @@ CONTAINS
     ALLOCATE(c_r_wb(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(c_r_w(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(tf_ton_mat(0:nnucl-1, 0:nnucl-1))
+    ALLOCATE(c_hta_an_fl_save(ncv, 0:nnucl-1))
+    ALLOCATE(c_r_ta_an_save(ncv, 0:nnucl-1, 0:nnucl-1))
     IF (1 .LT. nnucl*(nnucl+1)/2 - nnucl) THEN
       max1 = nnucl*(nnucl+1)/2 - nnucl
     ELSE
@@ -215,11 +244,14 @@ CONTAINS
 
 !  Differentiation of dealloc_b2mod_zhco_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out c_hw_saved:out c_r_tad:out
-!                c_r_tbd:out c_r_tb_nofld:out c_r_wd:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out c_hw_saved:out c_r_tad:out
+!                c_r_tbd:out c_r_tb_nofld:out c_r_wd:out c_hta_an_fl_saved:out
+!                c_r_ta_an_saved:out
 !  Differentiation of dealloc_b2mod_zhco as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE DEALLOC_B2MOD_ZHCO_DV_DV(nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -285,6 +317,26 @@ CONTAINS
       DEALLOCATE(c_r_w)
       DEALLOCATE(tf_ton_mat)
       DEALLOCATE(zh_tf_toff)
+      IF (ALLOCATED(c_hta_an_fl_saved)) THEN
+        IF (ALLOCATED(c_hta_an_fl_savedd)) THEN
+          DEALLOCATE(c_hta_an_fl_savedd)
+        END IF
+        DEALLOCATE(c_hta_an_fl_saved)
+      END IF
+      IF (ALLOCATED(c_hta_an_fl_saved0)) THEN
+        DEALLOCATE(c_hta_an_fl_saved0)
+      END IF
+      DEALLOCATE(c_hta_an_fl_save)
+      IF (ALLOCATED(c_r_ta_an_saved)) THEN
+        IF (ALLOCATED(c_r_ta_an_savedd)) THEN
+          DEALLOCATE(c_r_ta_an_savedd)
+        END IF
+        DEALLOCATE(c_r_ta_an_saved)
+      END IF
+      IF (ALLOCATED(c_r_ta_an_saved0)) THEN
+        DEALLOCATE(c_r_ta_an_saved0)
+      END IF
+      DEALLOCATE(c_r_ta_an_save)
     END IF
 !
     IF (ALLOCATED(amfact)) THEN
@@ -296,7 +348,8 @@ CONTAINS
 
 !  Differentiation of dealloc_b2mod_zhco as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE DEALLOC_B2MOD_ZHCO_DV(nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -330,6 +383,14 @@ CONTAINS
       DEALLOCATE(c_r_w)
       DEALLOCATE(tf_ton_mat)
       DEALLOCATE(zh_tf_toff)
+      IF (ALLOCATED(c_hta_an_fl_saved)) THEN
+        DEALLOCATE(c_hta_an_fl_saved)
+      END IF
+      DEALLOCATE(c_hta_an_fl_save)
+      IF (ALLOCATED(c_r_ta_an_saved)) THEN
+        DEALLOCATE(c_r_ta_an_saved)
+      END IF
+      DEALLOCATE(c_r_ta_an_save)
     END IF
 !
     IF (ALLOCATED(amfact)) THEN
@@ -355,6 +416,8 @@ CONTAINS
       DEALLOCATE(c_r_w)
       DEALLOCATE(tf_ton_mat)
       DEALLOCATE(zh_tf_toff)
+      DEALLOCATE(c_hta_an_fl_save)
+      DEALLOCATE(c_r_ta_an_save)
     END IF
 !
     IF (ALLOCATED(amfact)) THEN

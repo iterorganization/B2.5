@@ -27,10 +27,10 @@
 !
 !
 !
-SUBROUTINE B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-& geod, mpg, mpgd, na, nad0, nad, nadd, te, ted0, ted, tedd, ti, tid0, &
-& tid, tidd, tn, tnd0, tnd, tndd, rza, rzad0, rzad, rzadd, cdpa0, &
-& cdpa0d0, cdpa0d, cdpa0dd, cdpa, cdpad0, cdpad, cdpadd, cdpahz, &
+SUBROUTINE B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, na, nad0, nad, nadd, te, ted0, ted, tedd&
+& , ti, tid0, tid, tidd, tn, tnd0, tnd, tndd, rza, rzad0, rzad, rzadd, &
+& cdpa0, cdpa0d0, cdpa0d, cdpa0dd, cdpa, cdpad0, cdpad, cdpadd, cdpahz, &
 & cdpahzd0, cdpahzd, cdpahzdd, flc, flcd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
@@ -50,6 +50,7 @@ SUBROUTINE B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -631,6 +632,7 @@ SUBROUTINE B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
       pbvd0 = 0.D0
       arg10dd = 0.D0
       t1dd = 0.D0
+!
 !wdk    flux limit total gradient-driven flow, not individual poloidal
 !wdk    or radial contributions, since neutral transport is isotropic
       DO is=0,ns-1
@@ -1066,9 +1068,9 @@ SUBROUTINE B2TLC0_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
         IF (is_neutral(is)) THEN
 !    ..compute partial pressure
           pbd = 0.d0
-          CALL B2XPPB_DV(ncv, rza(1, is), rzad(:, 1, is), na(1, is), nad&
-&                  (:, 1, is), te, ted, ti, tid, tn, tnd, is, pb, pbd, &
-&                  nbdirs)
+          CALL B2XPPB_DV_NODIFF(ncv, rza(1, is), rzad(:, 1, is), na(1, &
+&                         is), nad(:, 1, is), te, ted, ti, tid, tn, tnd&
+&                         , is, pb, pbd, nbdirs)
 !    ..compute differences of partial pressure
           CALL DIFF_DV_NODIFF(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb&
 &                       , pbd, pbv, pbvd, dpbf, dpbfd, nbdirs)
@@ -1224,15 +1226,16 @@ SUBROUTINE B2TLC0_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
     ELSE
       dpbfd = 0.d0
       pbvd = 0.d0
+!
 !wdk    flux limit total gradient-driven flow, not individual poloidal
 !wdk    or radial contributions, since neutral transport is isotropic
       DO is=0,ns-1
         IF (is_neutral(is)) THEN
 !    ..compute partial pressure
           pbd = 0.d0
-          CALL B2XPPB_DV(ncv, rza(1, is), rzad(:, 1, is), na(1, is), nad&
-&                  (:, 1, is), te, ted, ti, tid, tn, tnd, is, pb, pbd, &
-&                  nbdirs)
+          CALL B2XPPB_DV_NODIFF(ncv, rza(1, is), rzad(:, 1, is), na(1, &
+&                         is), nad(:, 1, is), te, ted, ti, tid, tn, tnd&
+&                         , is, pb, pbd, nbdirs)
 !    ..compute differences of partial pressure
           CALL DIFF_DV_NODIFF(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb&
 &                       , pbd, pbv, pbvd, dpbf, dpbfd, nbdirs)
@@ -1498,6 +1501,7 @@ SUBROUTINE B2TLC0_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na&
         END IF
       END DO
     ELSE
+!
 !wdk    flux limit total gradient-driven flow, not individual poloidal
 !wdk    or radial contributions, since neutral transport is isotropic
       DO is=0,ns-1

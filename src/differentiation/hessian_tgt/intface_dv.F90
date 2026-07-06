@@ -12,10 +12,12 @@ SUBROUTINE INTFACE_DV(ncv, nfc, fccv, fcvol, centre, centred, face, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-  INTEGER :: ncv, nfc
-  INTEGER :: fccv(nfc, 2)
-  REAL(kind=r8) :: fcvol(nfc, 2), centre(ncv), face(nfc)
-  REAL(kind=r8) :: centred(nbdirsmax, ncv), faced(nbdirsmax, nfc)
+  INTEGER, INTENT(IN) :: ncv, nfc
+  INTEGER, INTENT(IN) :: fccv(nfc, 2)
+  REAL(kind=r8), INTENT(IN) :: fcvol(nfc, 2), centre(ncv)
+  REAL(kind=r8), INTENT(IN) :: centred(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: face(nfc)
+  REAL(kind=r8), INTENT(OUT) :: faced(nbdirsmax, nfc)
   INTEGER :: ifc
   INTEGER :: nd
   REAL(kind=r8) :: temp

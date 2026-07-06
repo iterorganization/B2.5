@@ -199,7 +199,6 @@ CONTAINS
 &                                                              )
       initialised_externals = .true.
       RETURN
-!
     ELSE
       OPEN(unit=74, file=filename) 
       IF (.NOT.initialised_externals) THEN

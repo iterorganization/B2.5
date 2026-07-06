@@ -171,8 +171,7 @@ END SUBROUTINE B2TLHI_NODIFF_NODIFF
 !
 !
 SUBROUTINE B2TLHI_DV_NODIFF(ncv, nfc, mp, cflmi, switch, switchd, geo, &
-& geod, mpg, ni, nid, nirm, nirmd, ni_ext, ti, tid, chvimx, chvimxd, &
-& nbdirs)
+& mpg, ni, nid, nirm, nirmd, ni_ext, ti, tid, chvimx, chvimxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
@@ -185,7 +184,6 @@ SUBROUTINE B2TLHI_DV_NODIFF(ncv, nfc, mp, cflmi, switch, switchd, geo, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: mp, cflmi, ni(ncv, 0:1), nirm(ncv), ni_ext(ncv, 0:1)&
 & , ti(ncv), chvimx(nfc)
@@ -423,9 +421,10 @@ END SUBROUTINE B2TLHI_DV_NODIFF
 !
 !
 !
-SUBROUTINE B2TLHI_DV_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod&
-& , mpg, ni, nid0, nid, nidd, nirm, nirmd0, nirmd, nirmdd, ni_ext, ti, &
-& tid0, tid, tidd, chvimx, chvimxd0, chvimxd, chvimxdd, nbdirs, nbdirs0)
+SUBROUTINE B2TLHI_DV_DV(ncv, nfc, mp, cflmi, switch, switchd0, switchd, &
+& geo, geod, mpg, ni, nid0, nid, nidd, nirm, nirmd0, nirmd, nirmdd, &
+& ni_ext, ti, tid0, tid, tidd, chvimx, chvimxd0, chvimxd, chvimxdd, &
+& nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
@@ -437,9 +436,10 @@ SUBROUTINE B2TLHI_DV_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod&
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: mp, cflmi, ni(ncv, 0:1), nirm(ncv), ni_ext(ncv, 0:1)&
 & , ti(ncv), chvimx(nfc)

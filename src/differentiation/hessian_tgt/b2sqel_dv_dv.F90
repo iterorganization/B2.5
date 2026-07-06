@@ -57,9 +57,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
-& ted, tedd, rt, rtd0, rtd, rtdd, rtw, rtwd0, rtwd, rtwdd, nbdirs, &
-& nbdirs0)
+SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd0, switchd, ev, &
+& te, ted0, ted, tedd, rt, rtd0, rtd, rtdd, rtw, rtwd0, rtwd, rtwdd, &
+& nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_B2CMPA_DIFFV
@@ -76,6 +76,7 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   REAL(kind=r8) :: ev, te(ncv)
   REAL(kind=r8) :: ted0(nbdirsmax0, ncv)
@@ -191,6 +192,7 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
   DO nd=1,nbdirs
     arg1d(nd, :) = ted(nd, :)/ev
     DO nd0=1,nbdirs0
+!
 !   ..compute wrk0()=log(te()/ev)
       arg1dd(nd0, nd, :) = tedd(nd0, nd, :)/ev
       wrk0dd(nd0, nd, :) = (arg1dd(nd0, nd, :)-arg1d(nd, :)*arg1d0(nd0, &
@@ -202,10 +204,12 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
     wrk0d0(nd0, :) = arg1d0(nd0, :)/arg1
   END DO
   wrk0 = LOG(arg1)
+  art_rad = switch%art_rad
   y1dd = 0.D0
   y2dd = 0.D0
   result1dd = 0.D0
   arg10dd = 0.D0
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -379,8 +383,8 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
         END DO
         y1 = rt%rlza(icv, 0, is) + rt%rlza(icv, 1, is)*wrk0(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.d0
+        DO nd0=1,nbdirs0
+          y1d0(nd0) = 0.D0
         END DO
         y1 = zamax(is)
         y1d = 0.d0
@@ -495,7 +499,6 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -585,6 +588,7 @@ SUBROUTINE B2SQEL_DV_DV(ncv, ns, ismain, switch, switchd, ev, te, ted0, &
       rtw%rrd(icv, is) = rtw%rrd(icv, is) + temp
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()
@@ -723,11 +727,14 @@ SUBROUTINE B2SQEL_DV_NODIFF(ncv, ns, ismain, switch, switchd, ev, te, &
   IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   arg1 = te/ev
   DO nd=1,nbdirs
+!
 !   ..compute wrk0()=log(te()/ev)
     arg1d(nd, :) = ted(nd, :)/ev
     wrk0d(nd, :) = arg1d(nd, :)/arg1
   END DO
   wrk0 = LOG(arg1)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -796,9 +803,6 @@ SUBROUTINE B2SQEL_DV_NODIFF(ncv, ns, ismain, switch, switchd, ev, te, &
         END DO
         y1 = rt%rlza(icv, 0, is) + rt%rlza(icv, 1, is)*wrk0(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.d0
-        END DO
         y1 = zamax(is)
         y1d = 0.d0
       END IF
@@ -851,7 +855,6 @@ SUBROUTINE B2SQEL_DV_NODIFF(ncv, ns, ismain, switch, switchd, ev, te, &
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -890,6 +893,7 @@ SUBROUTINE B2SQEL_DV_NODIFF(ncv, ns, ismain, switch, switchd, ev, te, &
       rtw%rrd(icv, is) = rtw%rrd(icv, is) + temp
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()
@@ -993,9 +997,12 @@ SUBROUTINE B2SQEL_NODIFF_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw&
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
   IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+!
 !   ..compute wrk0()=log(te()/ev)
   arg1 = te/ev
   wrk0 = LOG(arg1)
+  art_rad = switch%art_rad
+!
 !
 ! ..main computation
 !   ..compute rate coefficients
@@ -1056,7 +1063,6 @@ SUBROUTINE B2SQEL_NODIFF_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw&
   END DO
 !
 ! ..artificial radiation                DPC 2000.08.25
-  art_rad = switch%art_rad
   IF (art_rad .NE. 0.0_R8) THEN
     IF (ncall_b2sqel .EQ. 0) THEN
       IF (art_rad .GE. 0.) THEN
@@ -1081,6 +1087,7 @@ SUBROUTINE B2SQEL_NODIFF_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw&
 &       1.5_R8+1.0_R8/tnorm**3)
     END DO
   END IF
+!
 ! ..return
   ncall_b2sqel = ncall_b2sqel + 1
   CALL SUBEND()

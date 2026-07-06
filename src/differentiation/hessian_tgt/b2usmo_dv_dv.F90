@@ -48,6 +48,7 @@ SUBROUTINE B2USMO_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2usmo
@@ -69,14 +70,14 @@ SUBROUTINE B2USMO_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
 !srv 06.04.07
   REAL(kind=r8) :: rxg, rob(ncv), rzb(ncv), pb(ncv), pz(ncv), ub(ncv), &
 & smb(ncv, 0:3), flcb(nfc, 0:1), cvsb(nfc, 0:1), resmb(ncv), ctcfb(ncv)
-  REAL(kind=r8) :: robd0(nbdirsmax0, ncv), rzbd0(nbdirsmax0, ncv), pzd0(&
-& nbdirsmax0, ncv), ubd0(nbdirsmax0, ncv), smbd0(nbdirsmax0, ncv, 0:3), &
-& flcbd0(nbdirsmax0, nfc, 0:1), cvsbd0(nbdirsmax0, nfc, 0:1), resmbd0(&
-& nbdirsmax0, ncv), ctcfbd0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pbd(&
-& nbdirsmax, ncv), pzd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(&
-& nbdirsmax, ncv, 0:3), flcbd(nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc&
-& , 0:1), resmbd(nbdirsmax, ncv), ctcfbd(nbdirsmax, ncv)
+  REAL(kind=r8) :: robd0(nbdirsmax0, ncv), rzbd0(nbdirsmax0, ncv), pbd(&
+& nbdirsmax0, ncv), pzd0(nbdirsmax0, ncv), ubd0(nbdirsmax0, ncv), smbd0(&
+& nbdirsmax0, ncv, 0:3), flcbd0(nbdirsmax0, nfc, 0:1), cvsbd0(nbdirsmax0&
+& , nfc, 0:1), resmbd0(nbdirsmax0, ncv), ctcfbd0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pzd(&
+& nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(nbdirsmax, ncv, 0:3), flcbd&
+& (nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1), resmbd(nbdirsmax, &
+& ncv), ctcfbd(nbdirsmax, ncv)
   REAL(kind=r8) :: robdd(nbdirsmax0, nbdirsmax, ncv), rzbdd(nbdirsmax0, &
 & nbdirsmax, ncv), pzdd(nbdirsmax0, nbdirsmax, ncv), ubdd(nbdirsmax0, &
 & nbdirsmax, ncv), smbdd(nbdirsmax0, nbdirsmax, ncv, 0:3), flcbdd(&
@@ -769,43 +770,47 @@ SUBROUTINE B2USMO_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
 !
   IF (switch%b2usmo_iout .NE. 0) THEN
 !srv 17.06.02 {
-    result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
-    DO k=1,result1
-      WRITE(charnv, '(i2.2)') k
-      DO icv=1,ncv
-        IF (k .LE. mpg%cvnvp(icv, 2)) THEN
-          wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
-        ELSE
-          wrk(icv) = 0.0_R8
-        END IF
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'b2usmo OpenMP warning: no file IO in parallel mode'
+    ELSE
+      result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
+      DO k=1,result1
+        WRITE(charnv, '(i2.2)') k
+        DO icv=1,ncv
+          IF (k .LE. mpg%cvnvp(icv, 2)) THEN
+            wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
+          ELSE
+            wrk(icv) = 0.0_R8
+          END IF
+        END DO
+        arg10 = name//'_aam'//charnv
+        CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
       END DO
-      arg10 = name//'_aam'//charnv
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
-    END DO
-    arg10 = name//'_resmb'
-    CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
-    arg10 = name//'_corub'
-    CALL MY_OUT_US(70, ncv, 0, corub, arg10)
-    arg10 = name//'_pccbx'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
-    arg10 = name//'_pccby'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
-    arg10 = name//'_rob'
-    CALL MY_OUT_US(70, ncv, 0, rob, arg10)
-    arg10 = name//'_pb'
-    CALL MY_OUT_US(70, ncv, 0, pb, arg10)
-    arg10 = name//'_smb0'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
-    arg10 = name//'_smb1'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
-    arg10 = name//'_smb2'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
-    arg10 = name//'_smb3'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
-    arg10 = name//'_flcb'
-    CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
-    arg10 = name//'_cvsb'
-    CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+      arg10 = name//'_resmb'
+      CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
+      arg10 = name//'_corub'
+      CALL MY_OUT_US(70, ncv, 0, corub, arg10)
+      arg10 = name//'_pccbx'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
+      arg10 = name//'_pccby'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
+      arg10 = name//'_rob'
+      CALL MY_OUT_US(70, ncv, 0, rob, arg10)
+      arg10 = name//'_pb'
+      CALL MY_OUT_US(70, ncv, 0, pb, arg10)
+      arg10 = name//'_smb0'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
+      arg10 = name//'_smb1'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
+      arg10 = name//'_smb2'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
+      arg10 = name//'_smb3'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
+      arg10 = name//'_flcb'
+      CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
+      arg10 = name//'_cvsb'
+      CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+    END IF
   END IF
 !
 ! ..return
@@ -845,14 +850,15 @@ END SUBROUTINE B2USMO_DV_DV
 !srv 09.01.01
 !srv 06.04.07
 SUBROUTINE B2USMO_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd&
-& , nregionv, solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pbd, pz, &
-& pzd, ub, ubd, smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, &
-& ctcfb, ctcfbd, corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name&
-& , nbdirs)
+& , nregionv, solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pz, pzd, &
+& ub, ubd, smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, &
+& ctcfbd, corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs&
+&)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2usmo
@@ -872,10 +878,10 @@ SUBROUTINE B2USMO_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd&
 !srv 06.04.07
   REAL(kind=r8) :: rxg, rob(ncv), rzb(ncv), pb(ncv), pz(ncv), ub(ncv), &
 & smb(ncv, 0:3), flcb(nfc, 0:1), cvsb(nfc, 0:1), resmb(ncv), ctcfb(ncv)
-  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pbd(&
-& nbdirsmax, ncv), pzd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(&
-& nbdirsmax, ncv, 0:3), flcbd(nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc&
-& , 0:1), resmbd(nbdirsmax, ncv), ctcfbd(nbdirsmax, ncv)
+  REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pzd(&
+& nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(nbdirsmax, ncv, 0:3), flcbd&
+& (nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1), resmbd(nbdirsmax, &
+& ncv), ctcfbd(nbdirsmax, ncv)
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corub(ncv), pccb(ncv, 0:1)
@@ -1243,43 +1249,47 @@ SUBROUTINE B2USMO_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd&
 !
   IF (switch%b2usmo_iout .NE. 0) THEN
 !srv 17.06.02 {
-    result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
-    DO k=1,result1
-      WRITE(charnv, '(i2.2)') k
-      DO icv=1,ncv
-        IF (k .LE. mpg%cvnvp(icv, 2)) THEN
-          wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
-        ELSE
-          wrk(icv) = 0.0_R8
-        END IF
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'b2usmo OpenMP warning: no file IO in parallel mode'
+    ELSE
+      result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
+      DO k=1,result1
+        WRITE(charnv, '(i2.2)') k
+        DO icv=1,ncv
+          IF (k .LE. mpg%cvnvp(icv, 2)) THEN
+            wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
+          ELSE
+            wrk(icv) = 0.0_R8
+          END IF
+        END DO
+        arg10 = name//'_aam'//charnv
+        CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
       END DO
-      arg10 = name//'_aam'//charnv
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
-    END DO
-    arg10 = name//'_resmb'
-    CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
-    arg10 = name//'_corub'
-    CALL MY_OUT_US(70, ncv, 0, corub, arg10)
-    arg10 = name//'_pccbx'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
-    arg10 = name//'_pccby'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
-    arg10 = name//'_rob'
-    CALL MY_OUT_US(70, ncv, 0, rob, arg10)
-    arg10 = name//'_pb'
-    CALL MY_OUT_US(70, ncv, 0, pb, arg10)
-    arg10 = name//'_smb0'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
-    arg10 = name//'_smb1'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
-    arg10 = name//'_smb2'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
-    arg10 = name//'_smb3'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
-    arg10 = name//'_flcb'
-    CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
-    arg10 = name//'_cvsb'
-    CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+      arg10 = name//'_resmb'
+      CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
+      arg10 = name//'_corub'
+      CALL MY_OUT_US(70, ncv, 0, corub, arg10)
+      arg10 = name//'_pccbx'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
+      arg10 = name//'_pccby'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
+      arg10 = name//'_rob'
+      CALL MY_OUT_US(70, ncv, 0, rob, arg10)
+      arg10 = name//'_pb'
+      CALL MY_OUT_US(70, ncv, 0, pb, arg10)
+      arg10 = name//'_smb0'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
+      arg10 = name//'_smb1'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
+      arg10 = name//'_smb2'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
+      arg10 = name//'_smb3'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
+      arg10 = name//'_flcb'
+      CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
+      arg10 = name//'_cvsb'
+      CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+    END IF
   END IF
 !
 ! ..return
@@ -1315,6 +1325,7 @@ SUBROUTINE B2USMO_NODIFF_NODIFF(ncv, nfc, nvx, switch, geo, mpg, &
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2usmo
@@ -1555,48 +1566,53 @@ SUBROUTINE B2USMO_NODIFF_NODIFF(ncv, nfc, nvx, switch, geo, mpg, &
 !   ..solve the correction equation
   WRITE(*, '(a,a)') 'Calling b2uxus from ', name
 !srv 18.03.10
-  CALL b2uxus(ncv, mpg, aa, itcnt, resmb, corub, name, switch%b2uxus_style)
+  CALL b2uxus(ncv, mpg, aa, itcnt, resmb, corub, name, switch%&
+&              b2uxus_style)
 !srv 17.06.02 }
 !
   IF (switch%b2usmo_iout .NE. 0) THEN
 !srv 17.06.02 {
-    result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
-    DO k=1,result1
-      WRITE(charnv, '(i2.2)') k
-      DO icv=1,ncv
-        IF (k .LE. mpg%cvnvp(icv, 2)) THEN
-          wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
-        ELSE
-          wrk(icv) = 0.0_R8
-        END IF
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'b2usmo OpenMP warning: no file IO in parallel mode'
+    ELSE
+      result1 = MAXVAL(mpg%cvnvp(1:ncv, 2))
+      DO k=1,result1
+        WRITE(charnv, '(i2.2)') k
+        DO icv=1,ncv
+          IF (k .LE. mpg%cvnvp(icv, 2)) THEN
+            wrk(icv) = aa(mpg%cvnvp(icv, 1)+k-1)
+          ELSE
+            wrk(icv) = 0.0_R8
+          END IF
+        END DO
+        arg10 = name//'_aam'//charnv
+        CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
       END DO
-      arg10 = name//'_aam'//charnv
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
-    END DO
-    arg10 = name//'_resmb'
-    CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
-    arg10 = name//'_corub'
-    CALL MY_OUT_US(70, ncv, 0, corub, arg10)
-    arg10 = name//'_pccbx'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
-    arg10 = name//'_pccby'
-    CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
-    arg10 = name//'_rob'
-    CALL MY_OUT_US(70, ncv, 0, rob, arg10)
-    arg10 = name//'_pb'
-    CALL MY_OUT_US(70, ncv, 0, pb, arg10)
-    arg10 = name//'_smb0'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
-    arg10 = name//'_smb1'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
-    arg10 = name//'_smb2'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
-    arg10 = name//'_smb3'
-    CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
-    arg10 = name//'_flcb'
-    CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
-    arg10 = name//'_cvsb'
-    CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+      arg10 = name//'_resmb'
+      CALL MY_OUT_US(70, ncv, 0, resmb, arg10)
+      arg10 = name//'_corub'
+      CALL MY_OUT_US(70, ncv, 0, corub, arg10)
+      arg10 = name//'_pccbx'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 0), arg10)
+      arg10 = name//'_pccby'
+      CALL MY_OUT_US(70, ncv, 0, pccb(1, 1), arg10)
+      arg10 = name//'_rob'
+      CALL MY_OUT_US(70, ncv, 0, rob, arg10)
+      arg10 = name//'_pb'
+      CALL MY_OUT_US(70, ncv, 0, pb, arg10)
+      arg10 = name//'_smb0'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 0), arg10)
+      arg10 = name//'_smb1'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 1), arg10)
+      arg10 = name//'_smb2'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 2), arg10)
+      arg10 = name//'_smb3'
+      CALL MY_OUT_US(70, ncv, 0, smb(:, 3), arg10)
+      arg10 = name//'_flcb'
+      CALL MY_OUT_US(70, nfc, 1, flcb, arg10)
+      arg10 = name//'_cvsb'
+      CALL MY_OUT_US(70, nfc, 1, cvsb, arg10)
+    END IF
   END IF
 !
 ! ..return

@@ -6,7 +6,7 @@
 !   with respect to varying inputs: chvimxd *(dv.ne) *(dv.ni) chvemx
 !                chvemxd *(dvd.ne) *(dvd.ni) chvimx *(pld.na) *(pld.te)
 !                *(pld.ti) *(pl.na) *(pl.te) *(pl.ti)
-!   Plus diff mem management of: dv.ne:in dv.ni:in geo.cvbb:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in geo.cvbb:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcpbs:in dvd.ne:in
 !                dvd.ni:in pld.na:in pld.te:in pld.ti:in pl.na:in
@@ -18,7 +18,7 @@
 !   variations   of useful results: chvemx chvimx
 !   with respect to varying inputs: *(dv.ne) *(dv.ni) chvemx chvimx
 !                *(pl.na) *(pl.te) *(pl.ti)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in geo.cvbb:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in geo.cvbb:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcpbs:in pl.na:in
 !                pl.te:in pl.ti:in
@@ -36,10 +36,10 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TRQL_DV_DV(ncv, nfc, ns, switch, switchd, geo, geod0, geod&
-& , mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, st_ext, chvemx&
-& , chvemxd0, chvemxd, chvemxdd, chvimx, chvimxd0, chvimxd, chvimxdd, &
-& nbdirs, nbdirs0)
+SUBROUTINE B2TRQL_DV_DV(ncv, nfc, ns, switch, switchd0, switchd, geo, &
+& geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, &
+& st_ext, chvemx, chvemxd0, chvemxd, chvemxdd, chvimx, chvimxd0, chvimxd&
+& , chvimxdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -60,6 +60,7 @@ SUBROUTINE B2TRQL_DV_DV(ncv, nfc, ns, switch, switchd, geo, geod0, geod&
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -110,7 +111,7 @@ SUBROUTINE B2TRQL_DV_DV(ncv, nfc, ns, switch, switchd, geo, geod0, geod&
   REAL(kind=r8) :: smin, smax
   EXTERNAL B2TLHE_NODIFF_NODIFF, B2TLHI_NODIFF_NODIFF, &
 &     B2TLMV_NODIFF_NODIFF, B2XPNR_NODIFF, B2XVSG
-  EXTERNAL B2TLHE_DV_NODIFF, B2TLHI_DV_NODIFF, B2XPNR_DV
+  EXTERNAL B2TLHE_DV_NODIFF, B2TLHI_DV_NODIFF, B2XPNR_DV_NODIFF
   EXTERNAL B2TLHE_DV_DV, B2TLHI_DV_DV, B2XPNR_DV_DV
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -184,16 +185,17 @@ SUBROUTINE B2TRQL_DV_DV(ncv, nfc, ns, switch, switchd, geo, geod0, geod&
 ! ..compute flux limit velocities
 !   ..compute electron heat flux limit velocity
   cflme = cflim(0)
-  CALL B2TLHE_DV_DV(ncv, nfc, me, cflme, switch, switchd, geo, geod, mpg&
-&             , dv%ne, dvd0%ne, dvd%ne, dvdd%ne, pl%te, pld0%te, pld%te&
-&             , pldd%te, chvemx, chvemxd0, chvemxd, chvemxdd, nbdirs, &
-&             nbdirs0)
+  CALL B2TLHE_DV_DV(ncv, nfc, me, cflme, switch, switchd0, switchd, geo&
+&             , geod0, mpg, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, pl%te, pld0&
+&             %te, pld%te, pldd%te, chvemx, chvemxd0, chvemxd, chvemxdd&
+&             , nbdirs, nbdirs0)
 !   ..compute all atom heat flux limit velocity
   cflmi = cflim(1)
-  CALL B2TLHI_DV_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod, mpg&
-&             , dv%ni, dvd0%ni, dvd%ni, dvdd%ni, nirm, nirmd0, nirmd, &
-&             nirmdd, st_ext%ni, pl%ti, pld0%ti, pld%ti, pldd%ti, chvimx&
-&             , chvimxd0, chvimxd, chvimxdd, nbdirs, nbdirs0)
+  CALL B2TLHI_DV_DV(ncv, nfc, mp, cflmi, switch, switchd0, switchd, geo&
+&             , geod0, mpg, dv%ni, dvd0%ni, dvd%ni, dvdd%ni, nirm, &
+&             nirmd0, nirmd, nirmdd, st_ext%ni, pl%ti, pld0%ti, pld%ti, &
+&             pldd%ti, chvimx, chvimxd0, chvimxd, chvimxdd, nbdirs, &
+&             nbdirs0)
 !
 ! ..return
   ncall_b2trql = ncall_b2trql + 1
@@ -212,7 +214,7 @@ END SUBROUTINE B2TRQL_DV_DV
 !   variations   of useful results: chvemx chvimx
 !   with respect to varying inputs: *(dv.ne) *(dv.ni) chvemx chvimx
 !                *(pl.na) *(pl.te) *(pl.ti)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in geo.cvbb:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in geo.cvbb:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcpbs:in pl.na:in
 !                pl.te:in pl.ti:in
@@ -292,7 +294,7 @@ SUBROUTINE B2TRQL_DV_NODIFF(ncv, nfc, ns, switch, switchd, geo, geod, &
   REAL(kind=r8) :: smin, smax
   EXTERNAL B2TLHE_NODIFF_NODIFF, B2TLHI_NODIFF_NODIFF, &
 &     B2TLMV_NODIFF_NODIFF, B2XPNR_NODIFF, B2XVSG
-  EXTERNAL B2TLHE_DV_NODIFF, B2TLHI_DV_NODIFF, B2XPNR_DV
+  EXTERNAL B2TLHE_DV_NODIFF, B2TLHI_DV_NODIFF, B2XPNR_DV_NODIFF
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
@@ -356,19 +358,18 @@ SUBROUTINE B2TRQL_DV_NODIFF(ncv, nfc, ns, switch, switchd, geo, geod, &
   END IF
 !   ..compute nirm (atom density weighted by 1/sqrt(am)
   nirmd = 0.d0
-  CALL B2XPNR_DV(ncv, ns, pl%na, pld%na, nirm, nirmd, nbdirs)
+  CALL B2XPNR_DV_NODIFF(ncv, ns, pl%na, pld%na, nirm, nirmd, nbdirs)
 !
 ! ..compute flux limit velocities
 !   ..compute electron heat flux limit velocity
   cflme = cflim(0)
-  CALL B2TLHE_DV_NODIFF(ncv, nfc, me, cflme, switch, switchd, geo, geod&
-&                 , mpg, dv%ne, dvd%ne, pl%te, pld%te, chvemx, chvemxd, &
-&                 nbdirs)
+  CALL B2TLHE_DV_NODIFF(ncv, nfc, me, cflme, switch, switchd, geo, mpg, &
+&                 dv%ne, dvd%ne, pl%te, pld%te, chvemx, chvemxd, nbdirs)
 !   ..compute all atom heat flux limit velocity
   cflmi = cflim(1)
-  CALL B2TLHI_DV_NODIFF(ncv, nfc, mp, cflmi, switch, switchd, geo, geod&
-&                 , mpg, dv%ni, dvd%ni, nirm, nirmd, st_ext%ni, pl%ti, &
-&                 pld%ti, chvimx, chvimxd, nbdirs)
+  CALL B2TLHI_DV_NODIFF(ncv, nfc, mp, cflmi, switch, switchd, geo, mpg, &
+&                 dv%ni, dvd%ni, nirm, nirmd, st_ext%ni, pl%ti, pld%ti, &
+&                 chvimx, chvimxd, nbdirs)
 !
 ! ..return
   ncall_b2trql = ncall_b2trql + 1

@@ -49,13 +49,15 @@ SUBROUTINE B2XPFZ_DV_DV(nfc, ns, fna, fnad0, fnad, fnadd, fni, fnid0, &
   INTEGER :: arg1
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd0
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfz')
   arg1 = nfc*2
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd, fni, fnid0, fnid, fnidd&
-&            , 1, nbdirs, nbdirs0)
+  dummyzerodiffd0 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd0, dummyzerodiffd, fni, &
+&            fnid0, fnid, fnidd, 1, nbdirs, nbdirs0)
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       arg1 = nfc*2

@@ -37,14 +37,14 @@
 !.specification
 !
 !srv 13.01.17
-SUBROUTINE B2TCPA_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-& geod, mpg, mpgd, te, ted0, ted, tedd, po, pod0, pod, podd, ne, ned0, &
-& ned, nedd, na, nad0, nad, nadd, ua, uad0, uad, uadd, rza, rzad0, rzad&
-& , rzadd, rz2, rz2d0, rz2d, rz2dd, zeff, zeffd0, zeffd, zeffdd, csig, &
-& csigd0, csigd, csigdd, calf, calfd0, calfd, calfdd, ehx, ehxd0, ehxd, &
-& ehxdd, st_ext, st_extd0, st_extd, fch_p, fch_pd0, fch_pd, fch_pdd, &
-& fch_pi_c, fch_pi_cd0, fch_pi_cd, fch_pi_cdd, fch_pi_f, fch_pi_fd0, &
-& fch_pi_fd, fch_pi_fdd, nbdirs, nbdirs0)
+SUBROUTINE B2TCPA_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, te, ted0, ted, tedd, po, pod0, pod, podd&
+& , ne, ned0, ned, nedd, na, nad0, nad, nadd, ua, uad0, uad, uadd, rza, &
+& rzad0, rzad, rzadd, rz2, rz2d0, rz2d, rz2dd, zeff, zeffd0, zeffd, &
+& zeffdd, csig, csigd0, csigd, csigdd, calf, calfd0, calfd, calfdd, ehx&
+& , ehxd0, ehxd, ehxdd, st_ext, st_extd0, st_extd, fch_p, fch_pd0, &
+& fch_pd, fch_pdd, fch_pi_c, fch_pi_cd0, fch_pi_cd, fch_pi_cdd, fch_pi_f&
+& , fch_pi_fd0, fch_pi_fd, fch_pi_fdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -64,6 +64,7 @@ SUBROUTINE B2TCPA_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -120,9 +121,9 @@ SUBROUTINE B2TCPA_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !
 !   ..local variables
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
-  REAL(kind=r8) :: tevd0(nbdirsmax0, nvx), dtepd0(nbdirsmax0, nfc)
-  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc), wrkd(&
-& nbdirsmax, nfc, 0:1)
+  REAL(kind=r8) :: tevd0(nbdirsmax0, nvx), dtepd0(nbdirsmax0, nfc), wrkd&
+& (nbdirsmax0, nfc, 0:1)
+  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc)
   REAL(kind=r8) :: tevdd(nbdirsmax0, nbdirsmax, nvx), dtepdd(nbdirsmax0&
 & , nbdirsmax, nfc)
 !   ..procedures
@@ -147,8 +148,8 @@ SUBROUTINE B2TCPA_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !    ..test sign of ne, te, csig, calf
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkd(nd, :, :) = 0.d0
+    DO nd0=1,nbdirs0
+      wrkd(nd0, :, :) = 0.D0
     END DO
     wrk = csig*geo%fcqalf
     arg1 = nfc*2
@@ -333,8 +334,7 @@ SUBROUTINE B2TCPA_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !
 !   ..local variables
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
-  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc), wrkd(&
-& nbdirsmax, nfc, 0:1)
+  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
@@ -355,9 +355,6 @@ SUBROUTINE B2TCPA_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !    ..test sign of ne, te, csig, calf
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkd(nd, :, :) = 0.d0
-    END DO
     wrk = csig*geo%fcqalf
     arg1 = nfc*2
     CALL B2XVSG(arg1, wrk, 1, 'csig', '.ge.')

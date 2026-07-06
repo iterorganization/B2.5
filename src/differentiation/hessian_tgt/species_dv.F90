@@ -19,7 +19,6 @@ SUBROUTINE SPECIES_NODIFF(is, string, decorate)
   USE B2MOD_ELEMENTS_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   CHARACTER(len=*) :: string
   INTEGER :: is, izn, izmax, izmin, imi, len
