@@ -531,6 +531,8 @@ c b2news_
       integer :: ramp_slow
       real (kind=R8) :: b2news_ExB
       real (kind=R8) :: b2news_vis
+      integer :: max_iter_po                                             !srv 15.02.26
+      integer :: iout_iter_po                                            !srv 15.02.26
 
 c b2srst
       real (kind=R8) :: b2srst_rf0
@@ -607,6 +609,8 @@ c b2stbc
       real (kind=R8) :: b2stbc_cor9
       real (kind=R8) :: stab_coeff_sheath_te
       real (kind=R8) :: stab_coeff_sheath_ti
+      real (kind=R8) :: bcpot11_epsr                                     !srv 15.02.26
+      real (kind=R8) :: bcpot11_epsa                                     !srv 15.02.26
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
@@ -1195,6 +1199,8 @@ c b2news_
       s % ramp_slow = 0
       s % b2news_ExB = 0.0_R8
       s % b2news_vis = 0.0_R8
+      s % max_iter_po = 0                                                !srv 15.02.26
+      s % iout_iter_po = 0                                               !srv 15.02.26
 
 c b2sihs_
       s % b2srst_rf0 = 1.0_R8
@@ -1278,6 +1284,8 @@ c b2stbc_phys
       s % b2stbc_cor9 = 0.0_R8
       s % stab_coeff_sheath_te = 0.0_R8
       s % stab_coeff_sheath_ti = 0.0_R8
+      s % bcpot11_epsr = 1.0e-4_R8           !srv 15.02.26
+      s % bcpot11_epsa = 1.0e-4_R8           !srv 15.02.26
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
@@ -1327,11 +1335,16 @@ c Matrix solver
       call ipgeti ('b2tfnb_mdf', s % mdf_fnb)
       call ipgeti ('b2tfnb_pflux_cor', s % pflux_cor)
       call ipgeti ('b2news_poteq', s % pot_eq)
+      call ipgeti ('b2news_max_iter_po', s % max_iter_po)                !srv 15.02.26
+      call ipgeti ('b2news_iout_iter_po', s % iout_iter_po)              !srv 15.02.26
       call ipgeti ('b2tfhe_no_current', s % no_current)
       call ipgeti ('b2stbc_sheath_drift_fix', s % sheath_drift_fix)
       call ipgeti ('b2stbc_secmodel', s % secmodel)
       call ipgeti ('b2stbc_fchy_dia_coreonly',
      .               s % b2stbc_fchy_dia_coreonly)
+c relative (bcpot11_epsr) and/or absolute (bcpot11_epsa) criteria 
+      call ipgetr ('b2stbc_bcpot11_epsr', s % bcpot11_epsr)              !srv 15.02.26
+      call ipgetr ('b2stbc_bcpot11_epsa', s % bcpot11_epsa)              !srv 15.02.26
       call ipgeti ('b2news_nsmin', s % nsmin)
       call ipgeti ('b2news_nsmax', s % nsmax)
       call ipgeti ('b2tlnl_ii', s % icase_ii)
@@ -2252,6 +2265,14 @@ c b2stbc
      &              'faulty parameter b2stbc_stab_coeff_sheath_te')
        call xertst (0.0_R8.le.s%stab_coeff_sheath_ti,
      &              'faulty parameter b2stbc_stab_coeff_sheath_ti')
+       call xertst (0.0_R8.le.s%bcpot11_epsa,
+     .              'faulty parameter b2stbc_phys: bcpot11_epsa')        !srv 15.02.26 {
+       call xertst (0.0_R8.le.s%bcpot11_epsr,
+     .              'faulty parameter b2stbc_phys: bcpot11_epsr')        !srv 15.02.26 }
+       call xertst (0.0_R8.ne.s%bcpot11_epsa.or.
+     &              0.0_R8.ne.s%bcpot11_epsr,
+     .              'faulty parameter bstbc_phys: '//
+     &              'bcpot11_epsa/r cannot both be zero simultaneously')
 
 c b2sral
        call xertst (1.ne.s%b2sral_style,
@@ -2298,14 +2319,15 @@ c nsmin and nxmax
        endif
 
 c b2news
+        call xertst (0.le.s%max_iter_po, 
+     &   'faulty parameter max_iter_po')                                 !srv 15.02.26
+        
         call xertst (0.eq.s%icase_ii.or.1.eq.s%icase_ii,
-     &                      'b2tlnl_ii should be 0 or 1')
-
+     &   'b2tlnl_ii should be 0 or 1')
         call xertst (0.eq.s%icase_ee .or. 2.eq.s%icase_ee,
-     &               'faulty input b2tlnl_ee')
-
+     &   'faulty input b2tlnl_ee')
         call xertst (0.eq.s%icase_ei .or. 3.eq.s%icase_ei,
-     &              'faulty input b2tlnl_ei')
+     &   'faulty input b2tlnl_ei')
 
        call xertst (s%b2mndr_na_min.gt.0.0_R8,
      &  'faulty parameter b2mndr_na_min')

@@ -256,7 +256,8 @@
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
-     &    st%sr, st%srw, st%psnc, st%psnl, wrong_flow, main_call)
+     &    st%sr, st%srw, st%psnc, st%psnl,
+     &    wrong_flow, main_call, 'all')                                 !srv 15.02.26
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0

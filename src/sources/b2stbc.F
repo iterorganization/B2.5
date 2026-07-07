@@ -3,7 +3,7 @@
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, co, rt, st_ext, sr, srw,
-     &  psnc, psnl, wrong_flow, main_call)
+     &  psnc, psnl, wrong_flow, main_call, bc_for_equations)             !srv 15.02.26
       use b2mod_types
       use b2mod_constants
 #ifndef FIXED_POINT
@@ -30,7 +30,7 @@
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef DBG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2stbc_phys, nsdmax
       use b2mod_math
@@ -51,6 +51,7 @@
       type (B2StateExt), intent (in) :: st_ext
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call                                                  !xpb
+      character*3 :: bc_for_equations                                    !srv 15.02.26
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
       logical wrong_flow                                                 !xpb
@@ -133,7 +134,7 @@
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      & 1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
-!      if (ncall_b2stbc.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
+!      if (ncall_b2stbc.eq.1 .and. main_call) then                        !xpb !srv 18.05.09
 !        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
 !          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
 !        else                                                             !xpb
@@ -150,38 +151,82 @@
      .   'WARNING! Kinetic secondary emission expects HYDROGEN plasmas!'
       endif
 *   ..initialise sources to 0
-      call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
-      call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
-      call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%she0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%skt0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%szt0, 1)
+      select case (bc_for_equations)                                      !srv 15.02.26 {
+        case ('all')
+          call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
+          call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
+          call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%skt0, 1)
+          call sfill (nCv*4, 0.0_R8, srw%szt0, 1)
+        case ('spc')
+          call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
+          call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
+          call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
+        case ('ene')
+          call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+        case ('eni')
+          call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+        case ('enn')
+          call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
+        case ('pot')
+          call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
+        case ('enk')
+          call sfill (nCv*4, 0.0_R8, srw%skt0, 1)
+        case ('enz')
+          call sfill (nCv*4, 0.0_R8, srw%szt0, 1)
+        case default
+          CALL XERRAB
+     &     ('B2STBC -- incorrect value of bc_for_equations')
+      end select                                                          !srv 15.02.26 }
 
 * ..compute standard form volume sources
 *   (This code placed here for want of a better location)
 *   ..low-level particle source
-      do is = 0, ns-1
-       call b2saxpy (nCv,switch%sna0ep,geo%cvVol,1,srw%sna0(1,0,is),1)
-      enddo
-      call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
-      call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
+      select case (bc_for_equations)                                      !srv 15.02.26 {
+       case ('all')
+        do is = 0, ns-1
+         call b2saxpy (nCv, switch%sna0ep, geo%cvVol, 1,
+     .    srw%sna0(1,0,is), 1)
+        enddo
+        call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1,
+     .     srw%she0(1,0), 1)
+        call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1,
+     .     srw%shi0(1,0), 1)
+       case ('spc')
+        do is = 0, ns-1
+         call b2saxpy (nCv, switch%sna0ep, geo%cvVol, 1,
+     .    srw%sna0(1,0,is),1)
+        enddo
+       case ('ene')
+        call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1,
+     .     srw%she0(1,0), 1)
+       case ('eni')
+        call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1,
+     .     srw%shi0(1,0), 1)
+       case ('enn','pot', 'enk', 'enz')
+        continue
+       case default
+          CALL XERRAB
+     &     ('B2STBC -- incorrect value of bc_for_equations')
+      end select                                                          !srv 15.02.26 }
 
-*   ..find the average pressure for inner flux surface           !sv 24.03.99
+*   ..find the average pressure for inner flux surface                    !sv 24.03.99
       if (omp(1).le.mpg%nCi) then
-        iFt = mpg%cvFt(omp(1))                                   !sv 24.03.99
+        iFt = mpg%cvFt(omp(1))                                            !sv 24.03.99
       else
         iFt = mpg%cvFt(omp(2))
       endif
       tesum(1)=0.0_R8
       tisum(1)=0.0_R8
       nasum(:,1)=0.0_R8
-      prsum(1)=0.0_R8                                                    !xpb
+      prsum(1)=0.0_R8                                                     !xpb
       qesum(1)=0.0_R8
       qisum(1)=0.0_R8
-      gssum(1)=0.0_R8                                                    !xpb
+      gssum(1)=0.0_R8                                                     !xpb
       volsum(1)=0.0_R8
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
 !svdk parallellize over tubes
@@ -193,9 +238,9 @@
 !$omp& reduction(+: tesum, tisum, nasum, prsum, qesum, qisum, gssum)
 !$omp& reduction(+: volsum)
 #endif
-      do i = 1, mpg%ftCvP(iFt,2)                                         !xpb
+      do i = 1, mpg%ftCvP(iFt,2)                                          !xpb
         iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-        if(mpg%cvOnClosedSurface(iCv)) then                              !xpb
+        if(mpg%cvOnClosedSurface(iCv)) then                               !xpb
           do j = 1, mpg%cvFcP(iCv,2)
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
             if ((mpg%fcCv(iFc,1).eq.iCv.and.mpg%fcCv(iFc,2).gt.mpg%nCi)
@@ -241,36 +286,36 @@
      3             nxf*taf**2*geo%fcBb(iFc,2)/(qe*zxf)*geo%fcS(iFc)
                 endif
               enddo
-              gssum(1)=gssum(1) + geo%fcS(iFc)                           !xpb
+              gssum(1)=gssum(1) + geo%fcS(iFc)                            !xpb
               volsum(1)=volsum(1) + geo%cvVol(iCv)
-            endif                                                        !xpb
+            endif                                                         !xpb
           enddo
         endif
-      enddo                                                      !sv 24.03.99
+      enddo                                                               !sv 24.03.99
 #if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
 !$omp end parallel do
 #endif
-      if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
+      if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)            !xpb
       if (gssum(1).gt.0.0_R8) then
         qeaverage(1)=qesum(1)/gssum(1)
         qiaverage(1)=qisum(1)/gssum(1)
       end if
 #ifdef WG_TODO
-*   ..find the average pressure for island center flux surface           !xpb
-      iy = ny                                                            !xpb
+*   ..find the average pressure for island center flux surface            !xpb
+      iy = ny                                                             !xpb
       tesum(2)=0.0_R8
       tisum(2)=0.0_R8
       nasum(:,2)=0.0_R8
-      prsum(2)=0.0_R8                                                    !xpb
+      prsum(2)=0.0_R8                                                     !xpb
       qesum(2)=0.0_R8
       qisum(2)=0.0_R8
-      gssum(2)=0.0_R8                                                    !xpb
+      gssum(2)=0.0_R8                                                     !xpb
       volsum(2)=0.0_R8
-      praverage(2)=0.0_R8                                                !xpb
-      qeaverage(2)=0.0_R8                                                !xpb
-      qiaverage(2)=0.0_R8                                                !xpb
-      do ix = -1, nx                                                     !xpb
-        if(on_closed_surface(ix,iy)) then                                !xpb
+      praverage(2)=0.0_R8                                                 !xpb
+      qeaverage(2)=0.0_R8                                                 !xpb
+      qiaverage(2)=0.0_R8                                                 !xpb
+      do ix = -1, nx                                                      !xpb
+        if(on_closed_surface(ix,iy)) then                                 !xpb
           tef = (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &           te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -342,15 +387,17 @@
       endif
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
+       if(.not. (bc_for_equations.eq.'pot'))  then                       !srv 15.02.26
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &    call compute_feedback(nCv, nFc, ns, ismain,
      &     switch, geo, mpg, pl, dv, rt, sr, srw, psnc, psnl,
      &     main_call)
+       endif                                                             !srv 15.02.26
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
      &   switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
-     &   wrong_flow, main_call, praverage)
+     &   wrong_flow, main_call, praverage, bc_for_equations)             !srv 15.02.26
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
       endif
