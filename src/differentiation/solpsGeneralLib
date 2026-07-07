@@ -1407,3 +1407,28 @@ subroutine deallocateB2GridMap:
  shape:(param 1)
  deps: (id)
 
+function maxval:
+  intrinsic:
+  shape: (param 1, result)
+  type: (arrayType(metavar real, dimColons()),
+         metavar real)
+
+function maxval:
+  intrinsic:
+  shape: (param 1, param 2, result)
+  type: (arrayType(metavar real, dimColons()),
+         none(),
+         metavar real)
+
+function minval:
+  intrinsic:
+  shape: (param 1, result)
+  type: (arrayType(metavar real, dimColons()),
+         metavar real)
+
+function minval:
+  intrinsic:
+  shape: (param 1, param 2, result)
+  type: (arrayType(metavar real, dimColons()),
+         none(),
+         metavar real)
