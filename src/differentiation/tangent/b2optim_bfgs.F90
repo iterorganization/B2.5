@@ -415,22 +415,18 @@ contains
           !           history windowing is not implemented here]
           !   H0(i) = H0(i) * sigma   (only if sigma is finite & > 0)
           !
-          ! STAGE 3 -- convex blend with the previous H0 via rescale_rho
-          ! (PETSc default rescale_rho=1, i.e. full replacement, a
-          ! no-op blend):
+          ! STAGE 3 -- convex blend with the previous H0 via rescale_rho:
           !   H0_final(i) = (1-rescale_rho)*H0_old(i) + rescale_rho*H0(i)
           !
-          ! BDIAG_MIN/MAX below are OUR OWN defensive clamps, not part
-          ! of PETSc's algorithm (which relies only on the tol floor on
-          ! stDs and the final abs()) -- kept as a generous safety net
-          ! since we lack PETSc's NaN/Inf-checking infrastructure.
+          ! BDIAG_MIN/MAX below are defensive clamps, kept as a generous
+          ! safety net.
           if (h0_type == 1) then
              sBs = 0.0d0
              do i = 1, n
                 if (.not. active(i)) &
                    sBs = sBs + Bdiag(i) * (S(i,newest))**2
              end do
-             sBs = max(sBs, RESCALE_TOL)   ! PETSc's stDs = max(stDs, tol)
+             sBs = max(sBs, RESCALE_TOL)
 
              do i = 1, n
                 if (.not. active(i)) then
@@ -444,8 +440,7 @@ contains
                 end if
              end do
 
-             ! --- stage 2: reciprocal, abs (unconditional, matching
-             ! PETSc exactly -- no theta-gating here)
+             ! --- stage 2: reciprocal, abs
              do i = 1, n
                 if (.not. active(i)) then
                    H0new(i) = abs(1.0d0 / Bdiag(i))
@@ -540,7 +535,6 @@ program b2optim_bfgs
 
   integer :: bfgs_iter, bfgs_info, bfgs_conv_reason, ipar
   integer :: bfgs_n_updates, bfgs_n_rejects, bfgs_n_resets
-  real(kind=R8) :: lbfgs_rescale_rho
   real(kind=R8) :: bfgs_gnorm_final
   logical :: streql
   external streql
@@ -571,7 +565,7 @@ program b2optim_bfgs
   call xertst(maxiter  > 0,       'faulty internal parameter maxiter')
 
   ! ---- L-BFGS memory size (mirrors TAO's -tao_bqnls_mat_lmvm_hist_size)
-  ! Default = 5 to match TAO's out-of-the-box TAOBQNLS behaviour.
+  ! Default = 1 to match TAO's out-of-the-box TAOBQNLS behaviour.
   ! Increase (e.g. 5, 10) for potentially faster convergence at the
   ! cost of more memory; useful when npar_opt is small.
   call xertst(0.lt.lbfgs_memsize, 'wrong parameter lbfgs_memsize')
@@ -619,7 +613,8 @@ program b2optim_bfgs
   ! rescaled H0 diagonal (PETSc's -mat_lmvm_rho, default 1.0 = fully
   ! replace with the new value each update, i.e. a no-op blend). Only
   ! meaningful when h0_type=1 (DIAGONAL).
-  lbfgs_rescale_rho = 1.0_R8
+  call xertst((0.0_R8.le.lbfgs_rescale_rho).and.(lbfgs_rescale_rho.le.1.0_R8), &
+              'wrong parameter lbfgs_rescale_rho')
   write(*,'(A,F8.4)') ' b2optim_bfgs: rescale rho = ', lbfgs_rescale_rho
 
   ! ---- initial line-search step length
@@ -788,7 +783,7 @@ contains
     !   Mat Object: (tao_bqnls_) ... type: lmvmbfgs
     !     Max. storage / Used storage / Number of updates / rejects / resets
     write(iu,'(A)') ' '
-    write(iu,'(A)') ' L-BFGS matrix summary (cf. TAO -tao_view Mat Object):'
+    write(iu,'(A)') ' L-BFGS matrix summary:'
     write(iu,'(A,I0)') '   Max. storage        : ', lbfgs_memsize
     write(iu,'(A,I0)') '   Used storage        : ', min(n_updates, lbfgs_memsize)
     write(iu,'(A,I0)') '   Number of updates   : ', n_updates
