@@ -593,7 +593,7 @@ ${DOCDIR}/b2cdcn.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdcn.py
 	-cd ${DOCDIR}; ${PYTHON} b2cdcn.py || echo "! Error building b2cdcn.F from b2input.xml" > ${DOCDIR}/b2cdcn.F
 
 ${DIFFDIR}/b2mod_dimensions.F: ${DIMSDIR}/b2mod_dimensions.F
-	ln -sf  $< ${DIFFDIR}
+	ln -sf $< ${DIFFDIR}
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
@@ -776,6 +776,9 @@ ${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_j
 ${OBJDIR}/eirmod_json.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_json.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_mcarlo.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_mcarlo.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_module_avltree.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_module_avltree.${MOD} ${OBJDIR}
 
@@ -794,15 +797,29 @@ ${OBJDIR}/eirmod_openmp.${MOD}:
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_parmmod.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_pressureloop.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_pressureloop.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_precision.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_reflec.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_reflec.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_refusr.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_sheath.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_sheath.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_solps.${MOD}:
 	@ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_sputer.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_sputer.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_statis.${MOD}:
+	@ln -sf ${EIRDIR}/eirmod_statis.${MOD} ${OBJDIR}
 else
 ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 	touch ${OBJDIR}/eirmod_balanced_strategy.${MOD}
@@ -900,6 +917,9 @@ ${OBJDIR}/eirmod_infcop.${MOD}:
 ${OBJDIR}/eirmod_json.${MOD}:
 	touch ${OBJDIR}/eirmod_json.${MOD}
 
+${OBJDIR}/eirmod_mcarlo.${MOD}:
+	touch ${OBJDIR}/eirmod_mcarlo.${MOD}
+
 ${OBJDIR}/eirmod_module_avltree.${MOD}:
 	touch ${OBJDIR}/eirmod_module_avltree.${MOD}
 
@@ -915,11 +935,23 @@ ${OBJDIR}/eirmod_parmmod.${MOD}:
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 
+${OBJDIR}/eirmod_reflec.${MOD}:
+	touch ${OBJDIR}/eirmod_reflec.${MOD}
+
 ${OBJDIR}/eirmod_refusr.${MOD}:
 	touch ${OBJDIR}/eirmod_refusr.${MOD}
 
+${OBJDIR}/eirmod_sheath.${MOD}:
+	touch ${OBJDIR}/eirmod_sheath.${MOD}
+
 ${OBJDIR}/eirmod_solps.${MOD}:
 	touch ${OBJDIR}/eirmod_solps.${MOD}
+
+${OBJDIR}/eirmod_sputer.${MOD}:
+	touch ${OBJDIR}/eirmod_sputer.${MOD}
+
+${OBJDIR}/eirmod_statis.${MOD}:
+	touch ${OBJDIR}/eirmod_statis.${MOD}
 
 ${OBJDIR}/eirmod_wneutrals.${MOD}:
 	touch ${OBJDIR}/eirmod_wneutrals.${MOD}
@@ -1413,9 +1445,6 @@ endif
 	printf '# Dummy dependencies file for B2.5\n' > ${OBJDIR}/dependencies
 	${MAKE} tags
 	${MAKE} VERSION
-	${MAKE} local
-	${MAKE} AM_FILES
-	${MAKE} listobj
 	${MAKE} depend
 
 AM_FILES: ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn

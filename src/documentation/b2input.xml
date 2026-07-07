@@ -3899,6 +3899,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2news_iout_iter_po</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If iout_iter_po.eq.1 then output file output/norms_of_bcpot11_during_iterations.dat will be produced containing information about potential equation convergence.
+				</description>
+			</switch>
+			<switch>
 				<name>get_residuals</name>
 				<default>0</default>
 				<type>integer</type>
@@ -4267,6 +4275,30 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2news_max_iter_po</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Sets the maximum number of internal iterations for the nonlinear electric potential equation.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bcpot11_epsr</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Relative criterion for convergence of electric potential at the targets.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bcpot11_epsa</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Absolute criterion for convergence of electric potential at the targets.
+				</description>
+			</switch>
 			<switch>
 				<name>b2news_potok</name>
 				<default>1.0e-2</default>

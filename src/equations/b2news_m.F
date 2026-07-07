@@ -17,6 +17,7 @@
       use b2mod_ma28_for_us
      & , only : restart_ma28_for_us
       use b2mod_facdrift_ExB
+      use b2mod_convergence                                             !srv 15.02.26
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -122,7 +123,8 @@
 *.declarations
 
 *   ..local variables
-      integer is, i, ib, iCv, iFc, ireg
+      integer :: is, i, ib, iCv, iFc, ireg
+      integer :: ipot                                                    !srv 15.02.26
       character charns*3                                                 !srv 30.06.03
       real (kind=R8) ::
      &  rxf0, rxf1, rxf2, rxf3, t0                                       !srv 09.07.99 06.07.00
@@ -150,12 +152,12 @@ c The following switches are only used in 'WG-TODO' blocks, i.e. not yet convert
 c     ingeger, save :: nstg2 = 0
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
-!     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
-!     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
-!     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
-!     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
-!     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
+!     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                   !xpb
+!     1  sne0(-1:nx,-1:ny,0:1),                                          !xpb
+!     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                   !xpb
+!     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                   !xpb
+!     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                   !xpb
+!     5  sch0(-1:nx,-1:ny,0:3),                                          !xpb
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 *
 *-----------------------------------------------------------------------
@@ -238,6 +240,11 @@ c     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+       if(switch%iout_iter_po.ne.0.and.switch%max_iter_po.gt.0) then     !srv 15.02.26 {
+         open(700,file='output/norms_of_bcpot11_during_iterations.dat')
+         write(700,'(2a,2x,a,5x,4x,a,3x,a)') '  ncall',
+     &    '  ipot ', ' time ','max|res|', 'conv '
+       endif                                                             !srv 15.02.26 }
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFv')
@@ -586,6 +593,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &     st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
+*   ..apply the internal iterations if switch%max_iter_po > 0
+         do ipot = 0, switch%max_iter_po                                 !srv 15.02.26
           if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
@@ -611,13 +620,34 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
      &     st_ext)
+*   ..recompute source   (only sch is needed)
+          if(switch%max_iter_po.eq.0) exit                               !srv 15.02.26 {
+          call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
+     &     switch, geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
+     &     st%sr, st%srw, st%psnc, st%psnl, wrong_flow, .true., 'pot')
+*   .. store contributions from BC
+          st%sr%sch = st%srw%sch0
+          if(switch%iout_iter_po.ge.1.and.
+     &       mod(ncall_b2news_,switch%ntim_step_out).eq.0)
+     >     write(700,'(2i6,es14.6,es14.6,2x,l1)') ncall_b2news_,
+     &       ipot, tim, mrs, conv_bcpot11
+          if(conv_bcpot11) then
+            write(*,'(a,i5,a)') ' Convergence achieved within ',
+     &                ipot,' iterations'
+            exit
+          endif
+         enddo                         !  ipot
+         if(.not.conv_bcpot11)
+     >    write(*,'(a,i5,a)') ' Convergence not achieved within ',
+     &                switch%max_iter_po,' iterations'                    !srv 15.02.26 }
+
 *   ..compute new residual following the tradition
-          call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
+         call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)
-          t0 = b2sasum(nCv,wrk0,1)
-          write(*,*) 'respo after solving',t0
+         t0 = b2sasum(nCv,wrk0,1)
+         write(*,*) 'respo after solving',t0
         else
-          if(switch%get_residuals.eq.1)
+         if(switch%get_residuals.eq.1)
      &     call b2ursd (nCv, nFc, mpg,
      &                  st%dv%ne, st%pl%po, st%sr%sch, st%dv%fch,
      &                  st%dv%respo)

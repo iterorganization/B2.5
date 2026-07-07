@@ -3843,8 +3843,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         t1 = (1.0_R8-enepar(ib, 1))*pl%te(icv2)
-        srw%she0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%she0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%she0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%she0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -4885,8 +4885,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         t1 = (1.0_R8-enipar(ib, 1))*pl%ti(icv2)
-        srw%shi0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -5203,7 +5203,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
                   totflux = totflux - mpg%bcfcor(mpg%bccvp(ibw, 1)+ibc-1&
 &                   )*(dv%fhi_mdf(ifc, 0)+dv%fhi_mdf(ifc, 1))
                   DO is=0,ns-1
-                    totflux = totflux - pl%ti(icv)*pl%na(icv, is)*geo%&
+                    totflux = totflux - pl%ti(icv1)*pl%na(icv1, is)*geo%&
 &                     fcs(ifc)*mpg%bcfcor(mpg%bccvp(ibw, 1)+ibc-1)*(dv%&
 &                     vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(&
 &                     ifc, 1, is)*geo%fcqalf(ifc, 1))
@@ -5236,7 +5236,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -5279,9 +5279,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-        srw%shi0(icv, 0) = vbig*ne00*enipar(ib, 1)*ev*geo%fcs(ifc)*(&
+        srw%shi0(icv1, 0) = vbig*ne00*enipar(ib, 1)*ev*geo%fcs(ifc)*(&
 &         1.0_R8-t3+t3*pl%ti(icv2)/tiave)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (26) 
 !
@@ -5434,7 +5434,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
                   totflux = totflux - mpg%bcfcor(mpg%bccvp(ibw, 1)+ibc-1&
 &                   )*(dv%fhi_mdf(ifc, 0)+dv%fhi_mdf(ifc, 1))
                   DO is=0,ns-1
-                    totflux = totflux - pl%ti(icv)*pl%na(icv, is)*geo%&
+                    totflux = totflux - pl%ti(icv1)*pl%na(icv1, is)*geo%&
 &                     fcs(ifc)*mpg%bcfcor(mpg%bccvp(ibw, 1)+ibc-1)*(dv%&
 &                     vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(&
 &                     ifc, 1, is)*geo%fcqalf(ifc, 1))
@@ -5465,7 +5465,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -7242,7 +7242,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv), &
+          CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENZ=16 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
@@ -13361,12 +13361,12 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
         DO nd=1,nbdirs
           t1d(nd) = (1.0_R8-enepar(ib, 1))*pld%te(nd, icv2) - pl%te(icv2&
 &           )*enepard(nd, ib, 1)
-          srwd%she0(nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
-          srwd%she0(nd, icv, 1) = 0.d0
+          srwd%she0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
+          srwd%she0(nd, icv1, 1) = 0.d0
         END DO
         t1 = (1.0_R8-enepar(ib, 1))*pl%te(icv2)
-        srw%she0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%she0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%she0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%she0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -15069,12 +15069,12 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
         DO nd=1,nbdirs
           t1d(nd) = (1.0_R8-enipar(ib, 1))*pld%ti(nd, icv2) - pl%ti(icv2&
 &           )*enipard(nd, ib, 1)
-          srwd%shi0(nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
-          srwd%shi0(nd, icv, 1) = 0.d0
+          srwd%shi0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
+          srwd%shi0(nd, icv1, 1) = 0.d0
         END DO
         t1 = (1.0_R8-enipar(ib, 1))*pl%ti(icv2)
-        srw%shi0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -15513,8 +15513,8 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
                     temp6 = pl%ti(icv)*pl%na(icv, is)
                     DO nd=1,nbdirs
                       totfluxd(nd) = totfluxd(nd) - temp7*(temp5*(pl%na(&
-&                       icv, is)*pld%ti(nd, icv)+pl%ti(icv)*pld%na(nd, &
-&                       icv, is))+temp6*(geo%fcqalf(ifc, 0)*dvd%vaecrb(&
+&                       icv1, is)*pld%ti(nd, icv1)+pl%ti(icv1)*pld%na(nd, &
+&                       icv1, is))+temp6*(geo%fcqalf(ifc, 0)*dvd%vaecrb(&
 &                       nd, ifc, 0, is)+geo%fcqalf(ifc, 1)*dvd%vaecrb(nd&
 &                       , ifc, 1, is)))
                     END DO
@@ -15586,7 +15586,7 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -15659,13 +15659,13 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
         temp5 = t3/tiave
         temp6 = pl%ti(icv2)*temp5 - t3 + 1.0_R8
         DO nd=1,nbdirs
-          srwd%shi0(nd, icv, 0) = temp7*(temp6*enipard(nd, ib, 1)+enipar&
+          srwd%shi0(nd, icv1, 0) = temp7*(temp6*enipard(nd, ib, 1)+enipar&
 &           (ib, 1)*(temp5*pld%ti(nd, icv2)+pl%ti(icv2)*(t3d(nd)-temp5*&
 &           tiaved(nd))/tiave-t3d(nd)))
-          srwd%shi0(nd, icv, 1) = 0.d0
+          srwd%shi0(nd, icv1, 1) = 0.d0
         END DO
-        srw%shi0(icv, 0) = temp7*(enipar(ib, 1)*temp6)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 0) = temp7*(enipar(ib, 1)*temp6)
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (26) 
 !
@@ -15856,11 +15856,11 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
 &                     ibc-1)
                     temp5 = geo%fcqalf(ifc, 0)*dv%vaecrb(ifc, 0, is) + &
 &                     geo%fcqalf(ifc, 1)*dv%vaecrb(ifc, 1, is)
-                    temp6 = pl%ti(icv)*pl%na(icv, is)
+                    temp6 = pl%ti(icv1)*pl%na(icv1, is)
                     DO nd=1,nbdirs
                       totfluxd(nd) = totfluxd(nd) - temp7*(temp5*(pl%na(&
-&                       icv, is)*pld%ti(nd, icv)+pl%ti(icv)*pld%na(nd, &
-&                       icv, is))+temp6*(geo%fcqalf(ifc, 0)*dvd%vaecrb(&
+&                       icv1, is)*pld%ti(nd, icv1)+pl%ti(icv1)*pld%na(nd, &
+&                       icv1, is))+temp6*(geo%fcqalf(ifc, 0)*dvd%vaecrb(&
 &                       nd, ifc, 0, is)+geo%fcqalf(ifc, 1)*dvd%vaecrb(nd&
 &                       , ifc, 1, is)))
                     END DO
@@ -15928,7 +15928,7 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -18497,7 +18497,7 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv), &
+          CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENZ=16 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
@@ -29204,24 +29204,24 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             ) - pld%te(nd, icv2)*enepard0(nd0, ib, 1) - enepard(nd, ib&
 &             , 1)*pld0%te(nd0, icv2) - pl%te(icv2)*enepardd(nd0, nd, ib&
 &             , 1)
-            srwdd%she0(nd0, nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1dd(&
+            srwdd%she0(nd0, nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1dd(&
 &             nd0, nd)
-            srwdd%she0(nd0, nd, icv, 1) = 0.D0
+            srwdd%she0(nd0, nd, icv1, 1) = 0.D0
           END DO
           t1d(nd) = (1.0_R8-enepar(ib, 1))*pld%te(nd, icv2) - pl%te(icv2&
 &           )*enepard(nd, ib, 1)
-          srwd%she0(nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
-          srwd%she0(nd, icv, 1) = 0.d0
+          srwd%she0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
+          srwd%she0(nd, icv1, 1) = 0.d0
         END DO
         DO nd0=1,nbdirs0
           t1d0(nd0) = (1.0_R8-enepar(ib, 1))*pld0%te(nd0, icv2) - pl%te(&
 &           icv2)*enepard0(nd0, ib, 1)
-          srwd0%she0(nd0, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d0(nd0)
-          srwd0%she0(nd0, icv, 1) = 0.D0
+          srwd0%she0(nd0, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d0(nd0)
+          srwd0%she0(nd0, icv1, 1) = 0.D0
         END DO
         t1 = (1.0_R8-enepar(ib, 1))*pl%te(icv2)
-        srw%she0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%she0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%she0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%she0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -32420,24 +32420,24 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &             ) - pld%ti(nd, icv2)*enipard0(nd0, ib, 1) - enipard(nd, ib&
 &             , 1)*pld0%ti(nd0, icv2) - pl%ti(icv2)*enipardd(nd0, nd, ib&
 &             , 1)
-            srwdd%shi0(nd0, nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1dd(&
+            srwdd%shi0(nd0, nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1dd(&
 &             nd0, nd)
-            srwdd%shi0(nd0, nd, icv, 1) = 0.D0
+            srwdd%shi0(nd0, nd, icv1, 1) = 0.D0
           END DO
           t1d(nd) = (1.0_R8-enipar(ib, 1))*pld%ti(nd, icv2) - pl%ti(icv2&
 &           )*enipard(nd, ib, 1)
-          srwd%shi0(nd, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
-          srwd%shi0(nd, icv, 1) = 0.d0
+          srwd%shi0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d(nd)
+          srwd%shi0(nd, icv1, 1) = 0.d0
         END DO
         DO nd0=1,nbdirs0
           t1d0(nd0) = (1.0_R8-enipar(ib, 1))*pld0%ti(nd0, icv2) - pl%ti(&
 &           icv2)*enipard0(nd0, ib, 1)
-          srwd0%shi0(nd0, icv, 0) = vbig*ne00*geo%fcs(ifc)*t1d0(nd0)
-          srwd0%shi0(nd0, icv, 1) = 0.D0
+          srwd0%shi0(nd0, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t1d0(nd0)
+          srwd0%shi0(nd0, icv1, 1) = 0.D0
         END DO
         t1 = (1.0_R8-enipar(ib, 1))*pl%ti(icv2)
-        srw%shi0(icv, 0) = vbig*ne00*t1*geo%fcs(ifc)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 0) = vbig*ne00*t1*geo%fcs(ifc)
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (19) 
 !
@@ -33162,24 +33162,24 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
                       temp5d(nd0) = geo%fcqalf(ifc, 0)*dvd0%vaecrb(nd0, &
 &                       ifc, 0, is) + geo%fcqalf(ifc, 1)*dvd0%vaecrb(nd0&
 &                       , ifc, 1, is)
-                      temp6d(nd0) = pl%na(icv, is)*pld0%ti(nd0, icv) + &
-&                       pl%ti(icv)*pld0%na(nd0, icv, is)
+                      temp6d(nd0) = pl%na(icv1, is)*pld0%ti(nd0, icv1) + &
+&                       pl%ti(icv1)*pld0%na(nd0, icv1, is)
                     END DO
                     temp5 = geo%fcqalf(ifc, 0)*dv%vaecrb(ifc, 0, is) + &
 &                     geo%fcqalf(ifc, 1)*dv%vaecrb(ifc, 1, is)
-                    temp6 = pl%ti(icv)*pl%na(icv, is)
+                    temp6 = pl%ti(icv1)*pl%na(icv1, is)
                     DO nd=1,nbdirs
-                      temp16 = pl%na(icv, is)*pld%ti(nd, icv) + pl%ti(&
-&                       icv)*pld%na(nd, icv, is)
+                      temp16 = pl%na(icv1, is)*pld%ti(nd, icv1) + pl%ti(&
+&                       icv1)*pld%na(nd, icv1, is)
                       temp20 = geo%fcqalf(ifc, 0)*dvd%vaecrb(nd, ifc, 0&
 &                       , is) + geo%fcqalf(ifc, 1)*dvd%vaecrb(nd, ifc, 1&
 &                       , is)
                       DO nd0=1,nbdirs0
                         totfluxdd(nd0, nd) = totfluxdd(nd0, nd) - temp7*&
-&                         (temp16*temp5d(nd0)+temp5*(pld%ti(nd, icv)*&
-&                         pld0%na(nd0, icv, is)+pl%na(icv, is)*pldd%ti(&
-&                         nd0, nd, icv)+pld%na(nd, icv, is)*pld0%ti(nd0&
-&                         , icv)+pl%ti(icv)*pldd%na(nd0, nd, icv, is))+&
+&                         (temp16*temp5d(nd0)+temp5*(pld%ti(nd, icv1)*&
+&                         pld0%na(nd0, icv1, is)+pl%na(icv1, is)*pldd%ti(&
+&                         nd0, nd, icv1)+pld%na(nd, icv1, is)*pld0%ti(nd0&
+&                         , icv1)+pl%ti(icv1)*pldd%na(nd0, nd, icv1, is))+&
 &                         temp20*temp6d(nd0)+temp6*(geo%fcqalf(ifc, 0)*&
 &                         dvdd%vaecrb(nd0, nd, ifc, 0, is)+geo%fcqalf(&
 &                         ifc, 1)*dvdd%vaecrb(nd0, nd, ifc, 1, is)))
@@ -33333,7 +33333,7 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -33476,25 +33476,25 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           temp16 = pl%ti(icv2)/tiave
           temp19 = temp5*pld%ti(nd, icv2) + temp16*temp20 - t3d(nd)
           DO nd0=1,nbdirs0
-            srwdd%shi0(nd0, nd, icv, 0) = temp7*(enipard(nd, ib, 1)*&
+            srwdd%shi0(nd0, nd, icv1, 0) = temp7*(enipard(nd, ib, 1)*&
 &             temp6d(nd0)+temp6*enipardd(nd0, nd, ib, 1)+temp19*enipard0&
 &             (nd0, ib, 1)+enipar(ib, 1)*(pld%ti(nd, icv2)*temp5d(nd0)+&
 &             temp5*pldd%ti(nd0, nd, icv2)+temp20*(pld0%ti(nd0, icv2)-&
 &             temp16*tiaved0(nd0))/tiave+temp16*(t3dd(nd0, nd)-tiaved(nd&
 &             )*temp5d(nd0)-temp5*tiavedd(nd0, nd))-t3dd(nd0, nd)))
-            srwdd%shi0(nd0, nd, icv, 1) = 0.D0
+            srwdd%shi0(nd0, nd, icv1, 1) = 0.D0
           END DO
-          srwd%shi0(nd, icv, 0) = temp7*(temp6*enipard(nd, ib, 1)+enipar&
+          srwd%shi0(nd, icv1, 0) = temp7*(temp6*enipard(nd, ib, 1)+enipar&
 &           (ib, 1)*temp19)
-          srwd%shi0(nd, icv, 1) = 0.d0
+          srwd%shi0(nd, icv1, 1) = 0.d0
         END DO
         DO nd0=1,nbdirs0
-          srwd0%shi0(nd0, icv, 0) = temp7*(temp6*enipard0(nd0, ib, 1)+&
+          srwd0%shi0(nd0, icv1, 0) = temp7*(temp6*enipard0(nd0, ib, 1)+&
 &           enipar(ib, 1)*temp6d(nd0))
-          srwd0%shi0(nd0, icv, 1) = 0.D0
+          srwd0%shi0(nd0, icv1, 1) = 0.D0
         END DO
-        srw%shi0(icv, 0) = temp7*(enipar(ib, 1)*temp6)
-        srw%shi0(icv, 1) = -(vbig*ne00*geo%fcs(ifc))
+        srw%shi0(icv1, 0) = temp7*(enipar(ib, 1)*temp6)
+        srw%shi0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (26) 
 !
@@ -33761,24 +33761,24 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
                       temp5d(nd0) = geo%fcqalf(ifc, 0)*dvd0%vaecrb(nd0, &
 &                       ifc, 0, is) + geo%fcqalf(ifc, 1)*dvd0%vaecrb(nd0&
 &                       , ifc, 1, is)
-                      temp6d(nd0) = pl%na(icv, is)*pld0%ti(nd0, icv) + &
-&                       pl%ti(icv)*pld0%na(nd0, icv, is)
+                      temp6d(nd0) = pl%na(icv1, is)*pld0%ti(nd0, icv1) + &
+&                       pl%ti(icv1)*pld0%na(nd0, icv1, is)
                     END DO
                     temp5 = geo%fcqalf(ifc, 0)*dv%vaecrb(ifc, 0, is) + &
 &                     geo%fcqalf(ifc, 1)*dv%vaecrb(ifc, 1, is)
-                    temp6 = pl%ti(icv)*pl%na(icv, is)
+                    temp6 = pl%ti(icv1)*pl%na(icv1, is)
                     DO nd=1,nbdirs
-                      temp16 = pl%na(icv, is)*pld%ti(nd, icv) + pl%ti(&
-&                       icv)*pld%na(nd, icv, is)
+                      temp16 = pl%na(icv1, is)*pld%ti(nd, icv1) + pl%ti(&
+&                       icv1)*pld%na(nd, icv1, is)
                       temp20 = geo%fcqalf(ifc, 0)*dvd%vaecrb(nd, ifc, 0&
 &                       , is) + geo%fcqalf(ifc, 1)*dvd%vaecrb(nd, ifc, 1&
 &                       , is)
                       DO nd0=1,nbdirs0
                         totfluxdd(nd0, nd) = totfluxdd(nd0, nd) - temp7*&
-&                         (temp16*temp5d(nd0)+temp5*(pld%ti(nd, icv)*&
-&                         pld0%na(nd0, icv, is)+pl%na(icv, is)*pldd%ti(&
-&                         nd0, nd, icv)+pld%na(nd, icv, is)*pld0%ti(nd0&
-&                         , icv)+pl%ti(icv)*pldd%na(nd0, nd, icv, is))+&
+&                         (temp16*temp5d(nd0)+temp5*(pld%ti(nd, icv1)*&
+&                         pld0%na(nd0, icv1, is)+pl%na(icv1, is)*pldd%ti(&
+&                         nd0, nd, icv1)+pld%na(nd, icv1, is)*pld0%ti(nd0&
+&                         , icv1)+pl%ti(icv1)*pldd%na(nd0, nd, icv1, is))+&
 &                         temp20*temp6d(nd0)+temp6*(geo%fcqalf(ifc, 0)*&
 &                         dvdd%vaecrb(nd0, nd, ifc, 0, is)+geo%fcqalf(&
 &                         ifc, 1)*dvdd%vaecrb(nd0, nd, ifc, 1, is)))
@@ -33924,7 +33924,7 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &         totflux, ' SENIPAR=', senipar
           DO ibw=ib,nbc
             IF ((bcchar(ibw) .EQ. 'S' .OR. bcchar(ibw) .EQ. 'A') .AND. &
-&               bcene(ibw) .EQ. bcene(ib)) THEN
+&               bceni(ibw) .EQ. bceni(ib)) THEN
               DO ibc=1,mpg%bccvp(ibw, 2)
                 icv1 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 1)
                 icv2 = mpg%bccv(mpg%bccvp(ibw, 1)+ibc-1, 2)
@@ -38177,7 +38177,7 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv), &
+          CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENZ=16 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') &

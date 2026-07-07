@@ -667,7 +667,7 @@ contains
         real(IDS_real) :: pe( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: frac, u, v, w, psi_average,                  &
-            &             vtor, nisep, nasum
+            &             vtor, nisep, nasum, nesum, nepeak
         real(IDS_real), allocatable :: power_convected(:),             &
             &             power_conducted(:), power_radiated(:),       &
             &             power_recombination_plasma(:),               &
@@ -680,9 +680,6 @@ contains
         integer :: iFs, iactive, inactive
         real(IDS_real) :: xi, yi, xo, yo
         logical :: found
-# endif
-# if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        real(IDS_real) :: nesum
 # endif
 # ifdef B25_EIRENE
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
@@ -1715,6 +1712,7 @@ contains
             current_incident(i) = 0.0_IDS_real
             do j = mpg%divFcP(i,1), mpg%divFcP(i,1) + mpg%divFcP(i,2) - 1
               iFc = mpg%divFc(j)
+              iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
               ias = b2_fnmti(iFc)
               v = 0.0_IDS_real
               if (ias.gt.0) then
@@ -1737,7 +1735,7 @@ contains
               do is = 0, ns-1
                 if (is_neutral(is).and.nint(zn(is)).eq.1) then
                   power_neutrals(i) = power_neutrals(i) + &
-                    &  mpg%divFcOr(j)*state%pl%tn(iCv)* &
+                    &  mpg%divFcOr(j)*state%pl%tn(iCv) * &
                     & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
                     &                state%dv%fna_32(iFc,1,is) ) + &
                     &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
@@ -1746,7 +1744,7 @@ contains
                     & (state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
                 else if (is_neutral(is)) then
                   power_neutrals(i) = power_neutrals(i) + &
-                    &  mpg%divFcOr(j)*state%pl%ti(iCv)* &
+                    &  mpg%divFcOr(j)*state%pl%ti(iCv) * &
                     & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
                     &                state%dv%fna_32(iFc,1,is) ) + &
                     &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
@@ -1756,7 +1754,7 @@ contains
                 else
                   u = u + mpg%divFcOr(j)* &
                     & (state%pl%ti(iCv) + &
-                    &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
+                    &  state%pl%te(iCv)*state%rt%rza(iCv,is) ) * &
                     & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
                     &                state%dv%fna_32(iFc,1,is) ) + &
                     &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
@@ -8910,11 +8908,32 @@ contains
           allocate ( summary%local%divertor_plate( maxval(mpg%strDiv) ) )
 #  endif
           do i = 1, maxval(mpg%strDiv)
+            u = 0.0_R8
+            v = 0.0_R8
+            nesum = 0.0_R8
+            nepeak = 0.0_R8
+            do j = mpg%divFcP(i,1), mpg%divFcP(i,1) + mpg%divFcP(i,2) - 1
+              iFc = mpg%divFc(j)
+              iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+              u = max ( u, state%pl%te(iCv)/ev )
+              nepeak = max( nepeak, state%dv%ne(iCv) )
+              nesum = nesum + geo%fcS(iFc)*state%dv%ne(iCv)
+              v = v + state%pl%te(iCv)/ev*geo%fcS(iFc)*state%dv%ne(iCv)
+            end do
+            if (nesum.gt.0.0_R8) v = v / nesum
 #  if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
             u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
             call write_sourced_value( summary%local%divertor_target(i)%t_e, u )
             u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%t_e_peak, u )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%t_e_n_e_weighted_average, v )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%n_e_peak, nepeak )
+#   endif
             call write_sourced_value( summary%local%divertor_target(i)%t_i_average, &
               &  u )
             u = intvertex_s( mpg%ivdiv(i), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne )
