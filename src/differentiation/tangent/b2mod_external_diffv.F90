@@ -154,7 +154,7 @@ CONTAINS
     USE B2MOD_GEO_DIFFV
     USE B2MOD_CONSTANTS
     USE B2MOD_INDIRECT_DIFFV
-    USE B2MOD_ELEMENTS_DIFFV
+    USE B2MOD_ELEMENTS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd, ismain
@@ -194,7 +194,6 @@ CONTAINS
 &                                                              )
       initialised_externals = .true.
       RETURN
-!
     ELSE
       OPEN(unit=74, file=filename) 
       IF (.NOT.initialised_externals) THEN

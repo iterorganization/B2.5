@@ -125,9 +125,6 @@ c
       character*40 :: get_Eir_hash
       logical streql
       external streql, get_Eir_hash
-#endif
-      EXTERNAL GFSUB2
-      external ipgeti
 
       interface
         subroutine rdneutrs(kard,dummy,ldmf,extra_time)
@@ -138,6 +135,10 @@ c
         logical, intent(in), optional :: extra_time
         end subroutine rdneutrs
       end interface
+#endif
+
+      EXTERNAL GFSUB2
+      external ipgeti
 #endif
 
 *=======================================================================

@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfvh in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy *nal *ia *av_ualpha
+!   gradient     of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *c_hw_save na ua floi_vhx
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *c_hw_save na ua
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in c_hw_save:in
 !
 !
@@ -81,8 +81,8 @@ SUBROUTINE B2TFVH_B(ncv, nfc, ns, geo, mpg, na, nab, ua, uab, floi_vhx, &
   ELSE
     CALL PUSHCONTROL1B(0)
   END IF
-  IF (ALLOCATED(z2n_xy)) THEN
-    CALL PUSHREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(z2n_xy, 2)/8)
+  IF (ALLOCATED(z2n_cv)) THEN
+    CALL PUSHREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(z2n_cv, 2)/8)
     CALL PUSHCONTROL1B(1)
   ELSE
     CALL PUSHCONTROL1B(0)
@@ -121,8 +121,8 @@ SUBROUTINE B2TFVH_B(ncv, nfc, ns, geo, mpg, na, nab, ua, uab, floi_vhx, &
     END IF
   END DO
   CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(&
-&                                 z2n_xy, 2)/8)
+  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(&
+&                                 z2n_cv, 2)/8)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 1) CALL POPREAL8ARRAY(nal, r8*SIZE(nal, 1)*SIZE(nal, 2&
 &                                 )/8)

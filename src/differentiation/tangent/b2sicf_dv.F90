@@ -31,6 +31,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -190,6 +191,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2sicf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES

@@ -1,7 +1,7 @@
       subroutine b2xpnn (nCv, ns, na, nn)
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       implicit none
       integer nCv, ns
       real (kind=R8) ::

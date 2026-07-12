@@ -92,9 +92,11 @@ SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
   CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, po, pod, dumm, &
 &          dummd, gpop, gpopd, nbdirs)
   gpepd = 0.D0
+  dummd = 0.D0
   CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, pe, ped, dumm, &
 &          dummd, gpep, gpepd, nbdirs)
   gtepd = 0.D0
+  dummd = 0.D0
   CALL GRAD_P_DV(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgd, te, ted, dumm, &
 &          dummd, gtep, gtepd, nbdirs)
   nefd = 0.D0

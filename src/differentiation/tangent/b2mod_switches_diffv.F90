@@ -36,6 +36,7 @@ MODULE B2MOD_SWITCHES_DIFFV
 !srv 13.10.06
 !srv 13.07.05
 !srv 29.01.20
+! IYS 27.03.2019
 !
 ! Advanced fluid neutral models
 !! use advanced fluid neutral (afn) transport coefficients
@@ -99,6 +100,8 @@ MODULE B2MOD_SWITCHES_DIFFV
 ! b2sihs_
 !
 ! b2news_
+!srv 15.02.26
+!srv 15.02.26
 !
 ! b2srst
 !
@@ -118,6 +121,8 @@ MODULE B2MOD_SWITCHES_DIFFV
 !
 ! b2stbc
 !
+!srv 15.02.26
+!srv 15.02.26
 !
 ! b2trno
 !
@@ -128,6 +133,8 @@ MODULE B2MOD_SWITCHES_DIFFV
 ! Feedback
 !
 ! Optimization
+!
+! Matrix solver
 !
 !
   TYPE, PUBLIC :: SWITCHES
@@ -163,7 +170,9 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: flux_limit_to_vsa
       INTEGER :: csig_an_style
       INTEGER :: user_transport
+      INTEGER :: use_min_na_numerics
       INTEGER :: set_transport_iyref
+      INTEGER :: nrings
       INTEGER :: tn_style
       INTEGER :: afn
       INTEGER :: recycle_afn
@@ -184,6 +193,9 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: zhdanov_visu
       INTEGER :: zhdanov_vish
       INTEGER :: zhdanov_vel_heat
+      INTEGER :: zhdanov_nc
+      INTEGER :: zhdanov_nc_min
+      INTEGER :: zhdanov_nc_spec
       INTEGER :: zh_vis_type
       INTEGER :: impr_form_tf
       INTEGER :: impr_form_fr
@@ -285,6 +297,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2tlmv_ni_max
       REAL(kind=r8) :: b2tlmv_cflmv_min
       REAL(kind=r8) :: min_collisions
+      REAL(kind=r8) :: cvsa_low_col_mltpl
       INTEGER :: iout_b2wdat
       INTEGER :: b2sian_iout
       INTEGER :: b2sicf_iout
@@ -444,7 +457,11 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: vlct_diagno
       INTEGER :: b2tqna_diagno
       INTEGER :: ion_vlct_restrict
+      INTEGER :: ion_vlct_restrict_core
+      INTEGER :: ion_vlct_restrict_abs
       REAL(kind=r8) :: ion_vlct_restrict_m
+      REAL(kind=r8) :: ion_vlct_restrict_core_m
+      REAL(kind=r8) :: ion_vlct_restrict_ua
       INTEGER :: set_na_numerical
       INTEGER :: set_ua_numerical
       INTEGER :: set_ti_numerical
@@ -525,6 +542,12 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2tqna_min_df0
       REAL(kind=r8) :: b2tqna_max_df0
       REAL(kind=r8) :: b2tqna_cfvma
+      REAL(kind=r8) :: bar_width, sig_bar_width, sig_sol_width
+      REAL(kind=r8) :: sol_width, lfs_sol_width, hfs_sol_width, na_alfa1&
+&     , na_alfa2, na_alfa3, na_alfa4, te_alfa1, te_alfa2, te_alfa3, &
+&     te_alfa4, ti_alfa1, ti_alfa2, ti_alfa3, ti_alfa4, vsa_alfa1, &
+&     vsa_alfa2, vsa_alfa3, vsa_alfa4, vla_alfa1, vla_alfa2, vla_alfa3, &
+&     vla_alfa4, sig_alfa1, sig_alfa2
       INTEGER :: b2tqna_new_df0
       INTEGER :: b2tqna_ixref
       INTEGER :: b2tqna_transport_inputfile
@@ -577,11 +600,14 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: ramp_slow
       REAL(kind=r8) :: b2news_exb
       REAL(kind=r8) :: b2news_vis
+      INTEGER :: max_iter_po
+      INTEGER :: iout_iter_po
       REAL(kind=r8) :: b2srst_rf0
       REAL(kind=r8) :: b2srst_rf1
       REAL(kind=r8) :: b2srst_rf2
       REAL(kind=r8) :: b2srst_rf3
       INTEGER :: b2tfnb_no_hybr
+      INTEGER :: b2tfnb_avg_vexb
       REAL(kind=r8) :: b2tfnb_flux_limit_min_ti
       INTEGER :: b2srsm_enable
       INTEGER :: density_control
@@ -595,6 +621,13 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: boris
       REAL(kind=r8) :: b2mndt_rxf
       INTEGER :: b2mndt_style
+      INTEGER :: b2mndt_var_style
+      REAL(kind=r8) :: b2mndt_var_te_min
+      REAL(kind=r8) :: b2mndt_var_te_max
+      REAL(kind=r8) :: b2mndt_var_mult
+      REAL(kind=r8) :: b2mndt_var_style2_sf
+      REAL(kind=r8) :: b2mndt_var_style3_cmax
+      INTEGER :: b2mndt_var_style_nfilter
       INTEGER :: b2mndt_ckn
       INTEGER :: b2mndt_bdf
       INTEGER :: b2mndt_dummy
@@ -626,6 +659,8 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2stbc_cor9
       REAL(kind=r8) :: stab_coeff_sheath_te
       REAL(kind=r8) :: stab_coeff_sheath_ti
+      REAL(kind=r8) :: bcpot11_epsr
+      REAL(kind=r8) :: bcpot11_epsa
       REAL(kind=r8) :: b2trno_alpha_stoch
       REAL(kind=r8) :: b2nppo_restr_po
       REAL(kind=r8) :: b2txcx_increase_transp_coefs
@@ -721,6 +756,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlmv_ni_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tlmv_cflmv_min
       REAL(kind=r8), DIMENSION(nbdirsmax) :: min_collisions
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: cvsa_low_col_mltpl
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sian_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sicf_phm0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2sicf_phm1
@@ -776,6 +812,8 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rg0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stel_rg1
       REAL(kind=r8), DIMENSION(nbdirsmax) :: ion_vlct_restrict_m
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ion_vlct_restrict_core_m
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ion_vlct_restrict_ua
       REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_te_min
       REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_te_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: eir_ti_min
@@ -824,6 +862,34 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_min_df0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_max_df0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2tqna_cfvma
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: bar_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sig_bar_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sig_sol_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sol_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: lfs_sol_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: hfs_sol_width
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: na_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: na_alfa2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: na_alfa3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: na_alfa4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: te_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: te_alfa2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: te_alfa3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: te_alfa4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ti_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ti_alfa2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ti_alfa3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: ti_alfa4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vsa_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vsa_alfa2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vsa_alfa3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vsa_alfa4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vla_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vla_alfa2
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vla_alfa3
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: vla_alfa4
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sig_alfa1
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: sig_alfa2
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_anomalous
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbm_linearisation
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbr_core_sources_rescale
@@ -873,6 +939,11 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: nstg_areshi
       REAL(kind=r8), DIMENSION(nbdirsmax) :: boris
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_rxf
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_var_te_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_var_te_max
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_var_mult
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_var_style2_sf
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndt_var_style3_cmax
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_hz
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_stim
       REAL(kind=r8), DIMENSION(nbdirsmax) :: neutral_rescale
@@ -892,6 +963,8 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2stbc_cor9
       REAL(kind=r8), DIMENSION(nbdirsmax) :: stab_coeff_sheath_te
       REAL(kind=r8), DIMENSION(nbdirsmax) :: stab_coeff_sheath_ti
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: bcpot11_epsr
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: bcpot11_epsa
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2trno_alpha_stoch
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2nppo_restr_po
       REAL(kind=r8), DIMENSION(nbdirsmax) :: &
@@ -956,7 +1029,9 @@ CONTAINS
     s%flux_limit_to_vsa = 1
     s%csig_an_style = 1
     s%user_transport = 0
+    s%use_min_na_numerics = 0
     s%set_transport_iyref = 0
+    s%nrings = 0
 !
 ! Advanced fluid neutral models
     s%tn_style = 0
@@ -985,6 +1060,9 @@ CONTAINS
     s%zhdanov_visu = 1
     s%zhdanov_vish = 1
     s%zhdanov_vel_heat = 1
+    s%zhdanov_nc = 0
+    s%zhdanov_nc_min = 6
+    s%zhdanov_nc_spec = 2
     s%zh_vis_type = 0
     s%impr_form_tf = 0
     s%impr_form_fr = 0
@@ -1257,6 +1335,10 @@ CONTAINS
     s%b2npmo_diagno = 0
     s%vlct_diagno = 0
     s%b2tqna_diagno = 0
+    s%ion_vlct_restrict_core = 0
+    s%ion_vlct_restrict_core_m = 3.0_R8
+    s%ion_vlct_restrict_abs = 0
+    s%ion_vlct_restrict_ua = c
 !
     s%ion_vlct_restrict = 0
     s%ion_vlct_restrict_m = 3.0_R8
@@ -1283,6 +1365,7 @@ CONTAINS
     s%b2tlmv_ni_max = 1.0e18_R8
     s%b2tlmv_cflmv_min = 0.5e0_R8
     s%min_collisions = 0.0_R8
+    s%cvsa_low_col_mltpl = 0.1_R8
 !
 ! geometry
     s%fchz_style = 1
@@ -1376,6 +1459,32 @@ CONTAINS
     s%b2tqna_transport_inputfile = 0
     s%b2tqna_ballooning_sig = 1
     s%b2tqna_limit_coeff = 0
+    s%bar_width = 0.0_R8
+    s%sol_width = 0.0_R8
+    s%sig_bar_width = 0.0_R8
+    s%sig_sol_width = 0.0_R8
+    s%na_alfa1 = 1.0_R8
+    s%na_alfa2 = 1.0_R8
+    s%na_alfa3 = 1.0_R8
+    s%na_alfa4 = 0.0_R8
+    s%te_alfa1 = 1.0_R8
+    s%te_alfa2 = 1.0_R8
+    s%te_alfa3 = 1.0_R8
+    s%te_alfa4 = 0.0_R8
+    s%ti_alfa1 = 1.0_R8
+    s%ti_alfa2 = 1.0_R8
+    s%ti_alfa3 = 1.0_R8
+    s%ti_alfa4 = 0.0_R8
+    s%vsa_alfa1 = 1.0_R8
+    s%vsa_alfa2 = 1.0_R8
+    s%vsa_alfa3 = 1.0_R8
+    s%vsa_alfa4 = 0.0_R8
+    s%vla_alfa1 = 1.0_R8
+    s%vla_alfa2 = 1.0_R8
+    s%vla_alfa3 = 1.0_R8
+    s%vla_alfa4 = 0.0_R8
+    s%sig_alfa1 = 1.0_R8
+    s%sig_alfa2 = 1.0_R8
 !
 ! fch_anomalous
     s%anml_all_ions = 1
@@ -1433,6 +1542,10 @@ CONTAINS
     s%ramp_slow = 0
     s%b2news_exb = 0.0_R8
     s%b2news_vis = 0.0_R8
+!srv 15.02.26
+    s%max_iter_po = 0
+!srv 15.02.26
+    s%iout_iter_po = 0
 !
 ! b2sihs_
     s%b2srst_rf0 = 1.0_R8
@@ -1442,6 +1555,7 @@ CONTAINS
 !
 ! b2tfnb
     s%b2tfnb_no_hybr = 0
+    s%b2tfnb_avg_vexb = 0
     s%b2tfnb_flux_limit_min_ti = 0.0_R8
 !
 ! b2srsm
@@ -1464,6 +1578,13 @@ CONTAINS
     ELSE
       s%b2mndt_rxf = 0.5_R8
     END IF
+    s%b2mndt_var_style = 0
+    s%b2mndt_var_te_min = 0.0_R8
+    s%b2mndt_var_te_max = 1e30_R8
+    s%b2mndt_var_mult = 1.0_R8
+    s%b2mndt_var_style2_sf = 10.0_R8
+    s%b2mndt_var_style3_cmax = 1.0_R8
+    s%b2mndt_var_style_nfilter = 1
     s%b2mndt_style = 1
     s%b2mndt_ckn = 1
     s%b2mndt_bdf = 1
@@ -1512,6 +1633,10 @@ CONTAINS
     s%b2stbc_cor9 = 0.0_R8
     s%stab_coeff_sheath_te = 0.0_R8
     s%stab_coeff_sheath_ti = 0.0_R8
+!srv 15.02.26
+    s%bcpot11_epsr = 1.0e-4_R8
+!srv 15.02.26
+    s%bcpot11_epsa = 1.0e-4_R8
 !
 ! b2trno
 !srv 17.12.13
@@ -1554,7 +1679,8 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: s
-    EXTERNAL IPGETI, IPGETR
+    EXTERNAL IPGETI, IPGETR, XERTST
+    INTRINSIC MAX
 !
     CALL ALLOC_SWITCHES(s)
 !
@@ -1564,10 +1690,19 @@ CONTAINS
     CALL IPGETI('b2tfnb_mdf', s%mdf_fnb)
     CALL IPGETI('b2tfnb_pflux_cor', s%pflux_cor)
     CALL IPGETI('b2news_poteq', s%pot_eq)
+!srv 15.02.26
+    CALL IPGETI('b2news_max_iter_po', s%max_iter_po)
+!srv 15.02.26
+    CALL IPGETI('b2news_iout_iter_po', s%iout_iter_po)
     CALL IPGETI('b2tfhe_no_current', s%no_current)
     CALL IPGETI('b2stbc_sheath_drift_fix', s%sheath_drift_fix)
     CALL IPGETI('b2stbc_secmodel', s%secmodel)
     CALL IPGETI('b2stbc_fchy_dia_coreonly', s%b2stbc_fchy_dia_coreonly)
+! relative (bcpot11_epsr) and/or absolute (bcpot11_epsa) criteria 
+!srv 15.02.26
+    CALL IPGETR('b2stbc_bcpot11_epsr', s%bcpot11_epsr)
+!srv 15.02.26
+    CALL IPGETR('b2stbc_bcpot11_epsa', s%bcpot11_epsa)
     CALL IPGETI('b2news_nsmin', s%nsmin)
     CALL IPGETI('b2news_nsmax', s%nsmax)
     CALL IPGETI('b2tlnl_ii', s%icase_ii)
@@ -1592,7 +1727,10 @@ CONTAINS
     CALL IPGETI('b2trno_flux_limit_to_vsa', s%flux_limit_to_vsa)
     CALL IPGETI('b2trno_csig_an_style', s%csig_an_style)
     CALL IPGETI('b2tqna_user_transport', s%user_transport)
+    CALL IPGETI('b2mndr_use_min_na_numerics', s%use_min_na_numerics)
     CALL IPGETI('set_transport_iyref', s%set_transport_iyref)
+! IYS 27.03.2019
+    CALL IPGETI('nrings_for_no_speedup_averaging', s%nrings)
 !
 ! Advanced fluid neutral models
     CALL IPGETI('b2mn_tn_style', s%tn_style)
@@ -1616,6 +1754,9 @@ CONTAINS
     CALL IPGETI('b2tral_Zhdanov_visu', s%zhdanov_visu)
     CALL IPGETI('b2tral_Zhdanov_vish', s%zhdanov_vish)
     CALL IPGETI('b2tral_Zhdanov_vel_heat', s%zhdanov_vel_heat)
+    CALL IPGETI('b2tral_Zhdanov_nc', s%zhdanov_nc)
+    CALL IPGETI('b2tral_Zhdanov_nc_min', s%zhdanov_nc_min)
+    CALL IPGETI('b2tral_Zhdanov_nc_spec', s%zhdanov_nc_spec)
     CALL IPGETI('b2tral_zh_vis_type', s%zh_vis_type)
     CALL IPGETI('b2npmo_impr_form_tf', s%impr_form_tf)
     CALL IPGETI('b2npmo_impr_form_fr', s%impr_form_fr)
@@ -1721,6 +1862,7 @@ CONTAINS
     CALL IPGETR('b2tlmv_ni_max', s%b2tlmv_ni_max)
     CALL IPGETR('b2tlmv_cflmv_min', s%b2tlmv_cflmv_min)
     CALL IPGETR('b2trcl_min_collisions', s%min_collisions)
+    CALL IPGETR('b2tlmv_cvsa_low_col_mltpl', s%cvsa_low_col_mltpl)
 !
 ! iout switches
     CALL IPGETI('b2wdat_iout', s%iout_b2wdat)
@@ -1909,6 +2051,12 @@ CONTAINS
     CALL IPGETI('b2npmo_diagno', s%b2npmo_diagno)
     CALL IPGETI('b2npmo_vlct_diagno', s%vlct_diagno)
     CALL IPGETI('b2tqna_diagno', s%b2tqna_diagno)
+    CALL IPGETI('b2npmo_ion_vlct_restrict_core', s%&
+&         ion_vlct_restrict_core)
+    CALL IPGETR('b2npmo_ion_vlct_restrict_core_M', s%&
+&         ion_vlct_restrict_core_m)
+    CALL IPGETI('b2npmo_ion_vlct_restrict_abs', s%ion_vlct_restrict_abs)
+    CALL IPGETR('b2npmo_ion_vlct_restrict_ua', s%ion_vlct_restrict_ua)
 !
 ! hard limit velocities
     CALL IPGETI('b2npmo_ion_vlct_restrict', s%ion_vlct_restrict)
@@ -2022,6 +2170,100 @@ CONTAINS
     CALL IPGETR('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
     CALL IPGETR('b2tqna_cfvma', s%b2tqna_cfvma)
 !
+    CALL IPGETR('b2tqna_te_alfa1', s%te_alfa1)
+    CALL XERTST(0.0_R8 .LE. s%te_alfa1, &
+&         'faulty argument b2tqna_te_alfa1')
+    CALL IPGETR('b2tqna_te_alfa2', s%te_alfa2)
+    CALL XERTST(0.0_R8 .LE. s%te_alfa2, &
+&         'faulty argument b2tqna_te_alfa2')
+    CALL IPGETR('b2tqna_te_alfa3', s%te_alfa3)
+    CALL XERTST(0.0_R8 .LE. s%te_alfa3, &
+&         'faulty argument b2tqna_te_alfa3')
+    CALL IPGETR('b2tqna_te_alfa4', s%te_alfa4)
+    CALL XERTST(0.0_R8 .LE. s%te_alfa4, &
+&         'faulty argument b2tqna_te_alfa4')
+!
+    s%ti_alfa1 = s%te_alfa1
+    s%ti_alfa2 = s%te_alfa2
+    s%ti_alfa3 = s%te_alfa3
+    s%ti_alfa4 = s%te_alfa4
+    CALL IPGETR('b2tqna_ti_alfa1', s%ti_alfa1)
+    CALL XERTST(0.0_R8 .LE. s%ti_alfa1, &
+&         'faulty argument b2tqna_ti_alfa1')
+    CALL IPGETR('b2tqna_ti_alfa2', s%ti_alfa2)
+    CALL XERTST(0.0_R8 .LE. s%ti_alfa2, &
+&         'faulty argument b2tqna_ti_alfa2')
+    CALL IPGETR('b2tqna_ti_alfa3', s%ti_alfa3)
+    CALL XERTST(0.0_R8 .LE. s%ti_alfa3, &
+&         'faulty argument b2tqna_ti_alfa3')
+    CALL IPGETR('b2tqna_ti_alfa4', s%ti_alfa4)
+    CALL XERTST(0.0_R8 .LE. s%ti_alfa4, &
+&         'faulty argument b2tqna_ti_alfa4')
+!
+    CALL IPGETR('b2tqna_na_alfa1', s%na_alfa1)
+    CALL XERTST(0.0_R8 .LE. s%na_alfa1, &
+&         'faulty argument b2tqna_na_alfa1')
+    CALL IPGETR('b2tqna_na_alfa2', s%na_alfa2)
+    CALL XERTST(0.0_R8 .LE. s%na_alfa2, &
+&         'faulty argument b2tqna_na_alfa2')
+    CALL IPGETR('b2tqna_na_alfa3', s%na_alfa3)
+    CALL XERTST(0.0_R8 .LE. s%na_alfa3, &
+&         'faulty argument b2tqna_na_alfa3')
+    CALL IPGETR('b2tqna_na_alfa4', s%na_alfa4)
+    CALL XERTST(0.0_R8 .LE. s%na_alfa4, &
+&         'faulty argument b2tqna_na_alfa4')
+!
+    s%vsa_alfa1 = s%na_alfa1
+    s%vsa_alfa2 = s%na_alfa2
+    s%vsa_alfa3 = s%na_alfa3
+    s%vsa_alfa4 = s%na_alfa4
+    CALL IPGETR('b2tqna_vsa_alfa1', s%vsa_alfa1)
+    CALL XERTST(0.0_R8 .LE. s%vsa_alfa1, &
+&         'faulty argument b2tqna_vsa_alfa1')
+    CALL IPGETR('b2tqna_vsa_alfa2', s%vsa_alfa2)
+    CALL XERTST(0.0_R8 .LE. s%vsa_alfa2, &
+&         'faulty argument b2tqna_vsa_alfa2')
+    CALL IPGETR('b2tqna_vsa_alfa3', s%vsa_alfa3)
+    CALL XERTST(0.0_R8 .LE. s%vsa_alfa3, &
+&         'faulty argument b2tqna_vsa_alfa3')
+    CALL IPGETR('b2tqna_vsa_alfa4', s%vsa_alfa4)
+    CALL XERTST(0.0_R8 .LE. s%vsa_alfa4, &
+&         'faulty argument b2tqna_vsa_alfa4')
+!
+    CALL IPGETR('b2tqna_vla_alfa1', s%vla_alfa1)
+    CALL IPGETR('b2tqna_vla_alfa2', s%vla_alfa2)
+    CALL IPGETR('b2tqna_vla_alfa3', s%vla_alfa3)
+    CALL IPGETR('b2tqna_vla_alfa4', s%vla_alfa4)
+!
+    CALL IPGETR('b2tqna_sig_alfa1', s%sig_alfa1)
+    CALL XERTST(0.0_R8 .LE. s%sig_alfa1, &
+&         'faulty argument b2tqna_sig_alfa1')
+    CALL IPGETR('b2tqna_sig_alfa2', s%sig_alfa2)
+    CALL XERTST(0.0_R8 .LE. s%sig_alfa2, &
+&         'faulty argument b2tqna_sig_alfa2')
+!
+    CALL IPGETR('b2tqna_bar_width', s%bar_width)
+    CALL XERTST(0.0_R8 .LE. s%bar_width, &
+&         'faulty argument b2tqna_bar_width')
+    CALL IPGETR('b2tqna_sig_bar_width', s%sig_bar_width)
+    CALL XERTST(0.0_R8 .LE. s%sig_bar_width, &
+&         'faulty argument b2tqna_sig_bar_width')
+    CALL IPGETR('b2tqna_sol_width', s%sol_width)
+    CALL XERTST(0.0_R8 .LE. s%sol_width, &
+&         'faulty argument b2tqna_sol_width')
+    s%lfs_sol_width = s%sol_width
+    s%hfs_sol_width = s%sol_width
+    s%sig_sol_width = s%sol_width
+    CALL IPGETR('b2tqna_hfs_sol_width', s%hfs_sol_width)
+    CALL XERTST(0.0_R8 .LE. s%hfs_sol_width, &
+&         'faulty argument b2tqna_hfs_sol_width')
+    CALL IPGETR('b2tqna_lfs_sol_width', s%lfs_sol_width)
+    CALL XERTST(0.0_R8 .LE. s%lfs_sol_width, &
+&         'faulty argument b2tqna_lfs_sol_width')
+    CALL IPGETR('b2tqna_sig_sol_width', s%sig_sol_width)
+    CALL XERTST(0.0_R8 .LE. s%sig_sol_width, &
+&         'faulty argument b2tqna_sig_sol_width')
+!
 ! fch anomalous
     CALL IPGETI('b2tanml_anml_all_ions', s%anml_all_ions)
     CALL IPGETR('b2tfhe_anomalous', s%fch_anomalous)
@@ -2125,6 +2367,13 @@ CONTAINS
     CALL IPGETR('b2mndt_nstg_aresmo', s%nstg_aresmo)
     CALL IPGETR('b2news_BoRiS', s%boris)
     CALL IPGETR('b2mndt_rxf', s%b2mndt_rxf)
+    CALL IPGETI('b2mndt_var_style', s%b2mndt_var_style)
+    CALL IPGETR('b2mndt_var_te_min', s%b2mndt_var_te_min)
+    CALL IPGETR('b2mndt_var_te_max', s%b2mndt_var_te_max)
+    CALL IPGETR('b2mndt_var_mult', s%b2mndt_var_mult)
+    CALL IPGETR('b2mndt_var_style2_SF', s%b2mndt_var_style2_sf)
+    CALL IPGETR('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_cmax)
+    CALL IPGETI('b2mndt_var_style_nfilter', s%b2mndt_var_style_nfilter)
     CALL IPGETI('b2mndt_style', s%b2mndt_style)
     CALL IPGETI('b2mndt_ckn', s%b2mndt_ckn)
     CALL IPGETI('b2mndt_bdf', s%b2mndt_bdf)
@@ -2156,10 +2405,6 @@ CONTAINS
 !srv 28.03.06
     CALL IPGETI('b2siav_style_qip', s%b2siav_qstyle)
 !
-! b2trcl
-!iyv 06.12.13
-    CALL IPGETR('b2trcl_cvsa_mltpl', s%cvsa_mltpl)
-!
 ! b2stbc
     CALL IPGETI('b2stbc_bcene_16_style', s%bcene_16_style)
     CALL IPGETI('b2stbc_bceni_16_style', s%bceni_16_style)
@@ -2178,17 +2423,27 @@ CONTAINS
     CALL IPGETR('b2stbc_stab_coeff_sheath_te', s%stab_coeff_sheath_te)
     CALL IPGETR('b2stbc_stab_coeff_sheath_ti', s%stab_coeff_sheath_ti)
 !
-! b2trno
-!lk 31.01.08
-    CALL IPGETR('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)
-!
 ! Feedback
     CALL IPGETI('b2stbc_feedback', s%b2stbc_feedback)
 !
 ! b2nppo
     CALL IPGETR('b2nppo_restr_po', s%b2nppo_restr_po)
+!
+! Transport
+!iyv 06.12.13
+    CALL IPGETR('b2trcl_cvsa_mltpl', s%cvsa_mltpl)
+!lk 31.01.08
+    CALL IPGETR('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)
     CALL IPGETR('b2txcx_increase_transp_coefs', s%&
 &         b2txcx_increase_transp_coefs)
+    CALL IPGETI('b2tfnb_avg_vExB', s%b2tfnb_avg_vexb)
+    IF (s%b2txcx_increase_transp_coefs .GT. 1.0_R8) THEN
+      IF (1 .LT. s%b2tfnb_avg_vexb) THEN
+        s%b2tfnb_avg_vexb = s%b2tfnb_avg_vexb
+      ELSE
+        s%b2tfnb_avg_vexb = 1
+      END IF
+    END IF
 !
 ! Optimization
     CALL IPGETI('b2optim_save_states', s%b2optim_save_states)
@@ -2231,14 +2486,14 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE CHECK_SWITCHES(s, ns)
+  SUBROUTINE CHECK_SWITCHES(s, ns, nspecies)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ns
+    INTEGER, INTENT(IN) :: ns, nspecies
     TYPE(SWITCHES), INTENT(INOUT) :: s
 !
 ! check the bounds of the switches themselves
-    CALL CHECK_VALUES_SWITCHES(s, ns)
+    CALL CHECK_VALUES_SWITCHES(s, ns, nspecies)
 ! check the inter-consistency of different switches (e.g. certain combinations of swithces may not (yet) be allowed or developed)
     CALL CHECK_CONSISTENCY_SWITCHES(s)
 !
@@ -2248,10 +2503,10 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE CHECK_VALUES_SWITCHES(s, ns)
+  SUBROUTINE CHECK_VALUES_SWITCHES(s, ns, nspecies)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ns
+    INTEGER, INTENT(IN) :: ns, nspecies
     TYPE(SWITCHES), INTENT(INOUT) :: s
     EXTERNAL XERRAB, XERTST
     INTRINSIC MIN
@@ -2394,6 +2649,15 @@ CONTAINS
 &         'faulty parameter b2stbc_stab_coeff_sheath_te')
     CALL XERTST(0.0_R8 .LE. s%stab_coeff_sheath_ti, &
 &         'faulty parameter b2stbc_stab_coeff_sheath_ti')
+!srv 15.02.26 {
+    CALL XERTST(0.0_R8 .LE. s%bcpot11_epsa, &
+&         'faulty parameter b2stbc_phys: bcpot11_epsa')
+!srv 15.02.26 }
+    CALL XERTST(0.0_R8 .LE. s%bcpot11_epsr, &
+&         'faulty parameter b2stbc_phys: bcpot11_epsr')
+    CALL XERTST(0.0_R8 .NE. s%bcpot11_epsa .OR. 0.0_R8 .NE. s%&
+&         bcpot11_epsr, 'faulty parameter bstbc_phys: '//&
+&         'bcpot11_epsa/r cannot both be zero simultaneously')
 !
 ! b2sral
     CALL XERTST(1 .NE. s%b2sral_style, &
@@ -2437,12 +2701,12 @@ CONTAINS
     END IF
 !
 ! b2news
+!srv 15.02.26
+    CALL XERTST(0 .LE. s%max_iter_po, 'faulty parameter max_iter_po')
     CALL XERTST(0 .EQ. s%icase_ii .OR. 1 .EQ. s%icase_ii, &
 &         'b2tlnl_ii should be 0 or 1')
-!
     CALL XERTST(0 .EQ. s%icase_ee .OR. 2 .EQ. s%icase_ee, &
 &         'faulty input b2tlnl_ee')
-!
     CALL XERTST(0 .EQ. s%icase_ei .OR. 3 .EQ. s%icase_ei, &
 &         'faulty input b2tlnl_ei')
 !
@@ -2753,9 +3017,15 @@ CONTAINS
     CALL XERTST(s%geom_match_dist .GT. 0.0_R8, &
 &         'faulty argument geom_match_dist')
 !
-! zhdanov
+! Zhdanov closure
     CALL XERTST(s%zh_vis_type .GE. 0 .AND. s%zh_vis_type .LE. 2, &
 &         'faulty parameter b2tral_zh_vis_type')
+    CALL XERTST(s%zhdanov_closure .GE. 0 .AND. s%zhdanov_closure .LE. 1&
+&         , 'faulty parameter b2tral_Zhdanov_closure')
+    IF (s%zhdanov_nc .EQ. 1) CALL XERTST(s%zhdanov_nc_spec .GT. 0 .AND. &
+&                                  s%zhdanov_nc_spec .LE. nspecies, &
+&                              'faulty parameter b2tral_Zhdanov_nc_spec'&
+&                                 )
 !
 ! Optimization
     CALL XERTST(s%b2optim_save_states .GE. 0, &
@@ -2852,11 +3122,39 @@ CONTAINS
 &                                  //'keps-model.'
 !
 ! Zhdanov closure
-    IF (s%zhdanov_closure .LT. 0 .OR. s%zhdanov_closure .GT. 1) CALL &
-&     XERRAB('wrong value of b2tral_Zhdanov_closure')
+    IF (s%zhdanov_nc .NE. 0 .AND. s%zh_imp_analyt .NE. 1) THEN
+      s%zh_imp_analyt = 1
+      WRITE(*, *) 'Zhdanov closure has been switched to '//&
+&     'analytical expression.'
+    END IF
+    IF (s%zhdanov_nc_min .LT. 6) WRITE(*, *) &
+&          'WARNING! Zhdanov_nc_min values below 6 are not recommended!'
 !
 ! b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
     IF (s%b2tfnb_no_hybr .EQ. 1) s%b2tfnb_discr_meth = 0
+!
+! controlling minimum density via b2.numerics
+    IF (s%b2srdt_numerics_namelist .EQ. 0 .AND. s%use_min_na_numerics &
+&       .NE. 0) CALL XERRAB('use_min_na_numerics requires '//&
+&                     'reading numerics namelist')
+!
+! Variable local timestepping
+    IF (s%b2mndt_style .EQ. 2 .AND. s%b2mndt_var_style .NE. 0) CALL &
+&     XERRAB('Variable local timestepping '//&
+&      'not yet allowed for transient simulations')
+!
+    IF (s%b2mndt_bdf .GT. 2 .AND. s%b2mndt_var_style .NE. 0) CALL XERRAB&
+&                                                                 (&
+&                                         'Variable local timestepping '&
+&                                                                  //&
+&                                       'not compatible with BDF scheme'&
+&                                                                 )
+!
+    IF (s%tn_style .NE. 0 .AND. s%b2mndt_var_style .NE. 0) CALL XERRAB(&
+&                                         'Variable local timestepping '&
+&                                                                //&
+&                                'not yet compatible with tn_style.ne.0'&
+&                                                               )
 !
     RETURN
   END SUBROUTINE CHECK_CONSISTENCY_SWITCHES

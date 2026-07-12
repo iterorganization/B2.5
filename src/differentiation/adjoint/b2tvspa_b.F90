@@ -2,14 +2,14 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tvspa in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy *nal *ia *av_ualpha
+!   gradient     of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast ti vsaf_drho na
 !                vsaf_cl ua fchvispar_a vsaf_ubdp_al vsaf_uadp_albe
 !                fchvispar
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast ti vsaf_drho na
 !                vsaf_cl ua fchvispar_a vsaf_ubdp_al vsaf_uadp_albe
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in geo.cvbb:in
 !                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
@@ -39,7 +39,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !som 17.08.21 30.04.24
 !som 18.08.21 30.04.24
   USE B2MOD_ZHFRTF_DIFF, ONLY : avm_u, avm_ub, nal, nalb, &
@@ -52,7 +52,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_xy, z2n_xyb, ia, iab, av_ualpha, &
+  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_cv, z2n_cvb, ia, iab, av_ualpha, &
 & av_ualphab, z_to_m1_ast, z_to_m1_astb, rho_a_rel, rho_a_relb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -105,7 +105,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER*4 :: branch
-  REAL(kind=r8), DIMENSION(ncv) :: temp
+  REAL(kind=r8), DIMENSION(nCv) :: temp
   REAL(kind=r8), DIMENSION(nfc) :: tempb
   REAL(kind=r8), DIMENSION(nfc) :: tempb0
   INTEGER :: ad_to
@@ -165,8 +165,8 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    IF (ALLOCATED(z2n_xy)) THEN
-      CALL PUSHREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(z2n_xy, 2)/8)
+    IF (ALLOCATED(z2n_cv)) THEN
+      CALL PUSHREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(z2n_cv, 2)/8)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
@@ -318,7 +318,6 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
     wrk1b = 0.D0
     wrk3b = 0.D0
     wrk4b = 0.D0
-    wrkvxb = 0.D0
     dvparb = 0.D0
     DO 100 is=ns-1,0,-1
       fchvispar_ab(:, :, is) = fchvispar_ab(:, :, is) + fchvisparb
@@ -334,6 +333,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           vsaf_clb(:, 0, is) = vsaf_clb(:, 0, is) + wrk1*wrk0*dvparb
           wrk1b = wrk1b + vsaf_cl(:, 0, is)*wrk0*dvparb
           wrkb = 0.D0
+          wrkvxb = 0.D0
           CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, wrkb, &
 &                   wrkvx, wrkvxb, wrk1, wrk1b)
           uab(:, is) = uab(:, is) + SQRT(geo%cvbb(:, 3))*wrkb
@@ -341,6 +341,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           vsaf_drhob(:, 0, is) = vsaf_drhob(:, 0, is) + wrk1*wrk0*dvparb
           wrk1b = wrk1b + vsaf_drho(:, 0, is)*wrk0*dvparb
           wrkb = 0.D0
+          wrkvxb = 0.D0
           CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, wrkb, &
 &                   wrkvx, wrkvxb, wrk1, wrk1b)
           uab(:, is) = uab(:, is) + SQRT(geo%cvbb(:, 3))*wrkb
@@ -353,6 +354,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           vsaf_drhob(:, 0, is) = vsaf_drhob(:, 0, is) + wrk1*wrk0*dvparb
           wrk1b = wrk1b + vsaf_drho(:, 0, is)*wrk0*dvparb
           wrkb = 0.D0
+          wrkvxb = 0.D0
           CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, wrkb, &
 &                   wrkvx, wrkvxb, wrk1, wrk1b)
           avm_ub = avm_ub + SQRT(geo%cvbb(:, 3))*wrkb
@@ -382,6 +384,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &               )-1, iz)) + ti*wrkb
               tib = tib + na(:, nucl2s(s2nucl(is)-1, iz))*wrkb
               wrkb = 0.D0
+              wrkvxb = 0.D0
               CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, &
 &                       wrkb, wrkvx, wrkvxb, wrk3, wrk3b)
               uab(:, nucl2s(s2nucl(is)-1, iz)) = uab(:, nucl2s(s2nucl(is&
@@ -411,6 +414,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &                 ti*wrkb
                 tib = tib + na(:, nucl2s(inucl, iz))*wrkb
                 wrkb = 0.D0
+                wrkvxb = 0.D0
                 CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, &
 &                         wrkb, wrkvx, wrkvxb, wrk3, wrk3b)
                 uab(:, nucl2s(inucl, iz)) = uab(:, nucl2s(inucl, iz)) + &
@@ -429,6 +433,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           vsaf_clb(:, 0, is) = vsaf_clb(:, 0, is) + wrk1*wrk0*dvparb
           wrk1b = wrk1b + vsaf_cl(:, 0, is)*wrk0*dvparb
           wrkb = 0.D0
+          wrkvxb = 0.D0
           CALL GRAD_P_BWD(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrk, wrkb, &
 &                   wrkvx, wrkvxb, wrk1, wrk1b)
           uab(:, is) = uab(:, is) + SQRT(geo%cvbb(:, 3))*wrkb
@@ -444,8 +449,8 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*&
-&                                   SIZE(z2n_xy, 2)/8)
+    IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*&
+&                                   SIZE(z2n_cv, 2)/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(nal, r8*SIZE(nal, 1)*SIZE(nal&
 &                                   , 2)/8)
@@ -493,7 +498,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !som 17.08.21 30.04.24
 !som 18.08.21 30.04.24
   USE B2MOD_ZHFRTF_DIFF, ONLY : avm_u, nal, b2mod_zhfrtf_avm_u, &
@@ -505,7 +510,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_xy, ia, av_ualpha, z_to_m1_ast, &
+  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_cv, ia, av_ualpha, z_to_m1_ast, &
 & rho_a_rel
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)

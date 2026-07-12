@@ -2,10 +2,12 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2mndt as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                gt_ac:in gtalc:in avm_u:in rho_a_rel:in gavm_uc:in
 !                z_to_m1_ast:in c_hw_save:in c_r_ta:in c_r_tb:in
-!                c_r_tb_nofl:in c_r_w:in mpg.bcfcor:in mpg.rcfcor:in-out
+!                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save:in c_r_ta_an_save:in
+!                corr_tfia:in-out g_hs_style:in-out corr_fria:in-out
+!                alpha_hs_style:in-out mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
 !                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvhy:in
 !                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
@@ -18,19 +20,20 @@
 !                st_avg.na_mean:out st_avg.ua_mean:out st_avg.te_mean:out
 !                st_avg.ti_mean:out st_avg.po_mean:out st_avg.kt_mean:out
 !                st_avg.zt_mean:out st_avg.sna_mean:out st_avg.smo_mean:out
-!                st_avg.she_mean:out st_avg.shi_mean:out st_avg.shn_mean:out
-!                st_avg.e_na:out st_avg.e_ua:out st_avg.e_te:out
-!                st_avg.e_ti:out st_avg.e_po:out st_avg.e_kt:out
-!                st_avg.e_zt:out st_avg.e_sna:out st_avg.e_smo:out
-!                st_avg.e_she:out st_avg.e_shi:out st_avg.e_shn:out
-!                st_ext.am:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
-!                st_ext.za:in st_ext.za2:in st_ext.pt:in st_ext.na:in
-!                st_ext.ni:in st_ext.ua:in st_ext.ta:in st_ext.fhi:in
-!                st_ext.fa:in st_ext.sne:in st_ext.she:in st_ext.shi:in
-!                st_ext.sch:in st_ext.sna:in st_ext.smo:in st.pl.na:in
-!                st.pl.ua:in st.pl.po:in st.pl.te:in st.pl.ti:in
-!                st.pl.tn:in st.pl.kt:in st.pl.zt:in st.co.csig:in
-!                st.co.calf:in st.co.csig_an:in st.co.calf_an:in
+!                st_avg.smr_mean:out st_avg.smd_mean:out st_avg.she_mean:out
+!                st_avg.shi_mean:out st_avg.shn_mean:out st_avg.e_na:out
+!                st_avg.e_ua:out st_avg.e_te:out st_avg.e_ti:out
+!                st_avg.e_po:out st_avg.e_kt:out st_avg.e_zt:out
+!                st_avg.e_sna:out st_avg.e_smo:out st_avg.e_smr:out
+!                st_avg.e_smd:out st_avg.e_she:out st_avg.e_shi:out
+!                st_avg.e_shn:out st_ext.am:in st_ext.ne:in st_ext.ne2:in
+!                st_ext.ue:in st_ext.za:in st_ext.za2:in st_ext.pt:in
+!                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
+!                st_ext.fhi:in st_ext.fa:in st_ext.sne:in st_ext.she:in
+!                st_ext.shi:in st_ext.sch:in st_ext.sna:in st_ext.smo:in
+!                st.pl.na:in st.pl.ua:in st.pl.po:in st.pl.te:in
+!                st.pl.ti:in st.pl.tn:in st.pl.kt:in st.pl.zt:in
+!                st.co.csig:in st.co.calf:in st.co.csig_an:in st.co.calf_an:in
 !                st.co.csig_cl:in st.co.calf_cl:in st.co.csigin:in
 !                st.co.chve:in st.co.chce:in st.co.chce_exb:in
 !                st.co.chvi:in st.co.chci:in st.co.chci_exb:in
@@ -48,13 +51,13 @@
 !                st.co.dkt0:in st.co.dzt0:in st.co.dna_exb:in st.co.hce_exb:in
 !                st.co.hci_exb:in st.co.dpa0:in st.co.dna0:in st.co.vsa0:in
 !                st.co.hcib:in st.co.vla0:in st.co.vma0:in st.co.kt_neo:in
-!                st.co.alfx_c:in st.co.sigx_c:in st.co.sigx_kt:in
-!                st.co.hcix_c:in st.co.fllim_ki:in st.co.fllim_ke:in
-!                st.co.fllim_al:in st.co.fllim_al_c:in st.co.fllim_ki_c:in
-!                st.co.f_luc_ke:in st.co.f_luc_ki:in st.co.f_luc_et:in
-!                st.co.f_luc_sg:in st.co.f_luc_al:in st.co.alpha1f:in
-!                st.co.f_luc_ke_c:in st.co.f_luc_ki_c:in st.co.cssb:in
-!                st.co_ns.vsaf_hadp_albe:in st.co_ns.vsaf_hbdp_al:in
+!                st.co.nu2:in st.co.k2:in st.co.alfx_c:in st.co.sigx_c:in
+!                st.co.sigx_kt:in st.co.hcix_c:in st.co.fllim_ki:in
+!                st.co.fllim_ke:in st.co.fllim_al:in st.co.fllim_al_c:in
+!                st.co.fllim_ki_c:in st.co.f_luc_ke:in st.co.f_luc_ki:in
+!                st.co.f_luc_et:in st.co.f_luc_sg:in st.co.f_luc_al:in
+!                st.co.alpha1f:in st.co.f_luc_ke_c:in st.co.f_luc_ki_c:in
+!                st.co.cssb:in st.co_ns.vsaf_hadp_albe:in st.co_ns.vsaf_hbdp_al:in
 !                st.co_ns.vsaf_uadp_albe:in st.co_ns.vsaf_ubdp_al:in
 !                st.co_ns.hci_al_ast:in st.co_ns.chci_al_ast:in
 !                st.co_ns.cvsa_hadp_albe:in st.co_ns.cvsa_hbdp_al:in
@@ -82,72 +85,73 @@
 !                st.dv.fnn_inc:in st.dv.fhm:in st.dv.fhp:in st.dv.fhj:in
 !                st.dv.fht:in st.dv.fkt:in st.dv.fzt:in st.dv.kin_frac_hyb:in
 !                st.dv.fluid_frac_hyb:in st.dv.kinrgy:in st.dv.conc:in
-!                st.dv.flob:in st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
+!                st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
 !                st.dv.floi_noc:in st.dv.flon:in st.dv.flokt:in
 !                st.dv.flozt:in st.dv.conn:in st.dv.conkt:in st.dv.conzt:in
-!                st.dv.conb:in st.dv.cone:in st.dv.coni:in st.dv.resmo:in
-!                st.dv.resmo0:in st.dv.resco:in st.dv.resco0:in
-!                st.dv.respo:in st.dv.reshe:in st.dv.reshi:in st.dv.resht:in
-!                st.dv.resmt:in st.dv.reshn:in st.dv.reskt:in st.dv.reszt:in
-!                st.dv.reshe0:in st.dv.reshi0:in st.dv.reshn0:in
-!                st.dv.reskt0:in st.dv.reszt0:in st.dv.corua:in
-!                st.dv.corpa:in st.dv.corut:in st.dv.corpo:in st.dv.cortt:in
-!                st.dv.corte:in st.dv.corti:in st.dv.cortn:in st.dv.corkt:in
-!                st.dv.corzt:in st.dv.pcca:in st.dv.pccm:in st.dv.ne:in
-!                st.dv.ni:in st.dv.nn:in st.dv.ue:in st.dv.ne2:in
-!                st.dv.pa:in st.dv.pz:in st.dv.lnlam:in st.dv.uadia:in
-!                st.dv.vadia:in st.dv.wadia:in st.dv.vaecrb:in
-!                st.dv.vedia:in st.dv.wedia:in st.dv.veecrb:in
-!                st.dv.facdrift:in st.dv.fac_exb:in st.dv.fac_vis:in
-!                st.dv.dnadt:in st.dv.dmodt:in st.dv.dhedt:in st.dv.dhidt:in
-!                st.dv.dhndt:in st.dv.dktdt:in st.dv.dztdt:in st.sr.sch:in
-!                st.sr.she:in st.sr.shi:in st.sr.sne:in st.sr.shn:in
-!                st.sr.skt:in st.sr.szt:in st.sr.smo:in st.sr.smq:in
-!                st.sr.sna:in st.sr.shedt:in st.sr.sktdt:in st.sr.sztdt:in
-!                st.sr.snedt:in st.sr.shidt:in st.sr.shndt:in st.sr.schdt:in
-!                st.sr.smodt:in st.sr.snadt:in st.sr.skt_diss:in
-!                st.sr.skt_prod:in st.srw.sch0:in st.srw.she0:in
-!                st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in st.srw.skt0:in
-!                st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in st.srw.sna0:in
-!                st.srw.smcf:in st.srw.smpr:in st.srw.smpt:in st.srw.smfr:in
-!                st.srw.b2stbc_sch:in st.srw.b2stbc_she:in st.srw.b2stbc_shi:in
-!                st.srw.b2stbc_sne:in st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in
-!                st.srw.b2stbc_szt:in st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in
-!                st.srw.b2stbm_sch:in st.srw.b2stbm_she:in st.srw.b2stbm_shi:in
-!                st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in
-!                st.srw.b2stbr_sch:in st.srw.b2stbr_she:in st.srw.b2stbr_shi:in
-!                st.srw.b2stbr_sne:in st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in
-!                st.srw.b2stbr_szt:in st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in
-!                st.srw.b2npmo_smaf:in st.srw.b2npmo_smag:in st.srw.b2npmo_smav:in
-!                st.srw.rsana:in st.srw.rsahi:in st.srw.rsamo:in
-!                st.srw.rrana:in st.srw.rrahi:in st.srw.rramo:in
-!                st.srw.rcxna:in st.srw.rcxhi:in st.srw.rcxmo:in
-!                st.srw.rqahe:in st.srw.rqrad:in st.srw.rqbrm:in
-!                st.srw.b2sihs_joule:in st.srw.b2sihs_divue:in
-!                st.srw.b2sihs_divua:in st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in
-!                st.srw.b2sihs_visa:in st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in
-!                st.srw.sna0_eir_tot:in st.srw.smo0_eir_tot:in
-!                st.srw.she0_eir_tot:in st.srw.shi0_eir_tot:in
-!                st.srw.shn0_eir_tot:in st.rt.rlcx:in st.rt.rlqa:in
-!                st.rt.rlrd:in st.rt.rlbr:in st.rt.rlra:in st.rt.rlsa:in
-!                st.rt.rlza:in st.rt.rlz2:in st.rt.rlpt:in st.rt.rlpi:in
-!                st.rt.rlqr:in st.rt.rza:in st.rt.rz2:in st.rt.rpt:in
-!                st.rt.rpi:in st.rtw.rsa:in st.rtw.rra:in st.rtw.rqa:in
-!                st.rtw.rrd:in st.rtw.rbr:in st.rtw.rcx:in st.rtw.rqr:in
-!                st.psnl.na:in st.psnl.ua:in st.psnl.te:in st.psnl.ti:in
-!                st.psnl.tn:in st.psnl.kt:in st.psnl.zt:in st.psnl.ne:in
-!                st.psnl.ni:in st.psnl.nn:in st.psnl.fna:in st.psnl.kinrgy:in
-!                st.psnl.resco0:in st.psnl.resmo0:in st.psnl.reshi0:in
-!                st.psnl.reshe0:in st.psnl.reshn0:in st.psnl.reskt0:in
-!                st.psnl.reszt0:in st.psnl.dnadt:in st.psnl.dmodt:in
-!                st.psnl.dhedt:in st.psnl.dhidt:in st.psnl.dhndt:in
-!                st.psnl.dktdt:in st.psnl.dztdt:in st.psnc.na:in
-!                st.psnc.ua:in st.psnc.te:in st.psnc.ti:in st.psnc.tn:in
-!                st.psnc.kt:in st.psnc.zt:in st.psnc.ne:in st.psnc.ni:in
-!                st.psnc.nn:in st.psnc.fna:in st.psnc.kinrgy:in
-!                st.diag.aresco:in st.diag.aresmo:in st.diag.acorpa:in
-!                st.diag.acorua:in st.diag.rescoreg:in st.diag.resmoreg:in
-!                st.diag.reshereg:in st.diag.reshireg:in
+!                st.dv.cone:in st.dv.coni:in st.dv.flob:in st.dv.conb:in
+!                st.dv.resmo:in st.dv.resmo0:in st.dv.resco:in
+!                st.dv.resco0:in st.dv.respo:in st.dv.reshe:in
+!                st.dv.reshi:in st.dv.resht:in st.dv.resmt:in st.dv.reshn:in
+!                st.dv.reskt:in st.dv.reszt:in st.dv.reshe0:in
+!                st.dv.reshi0:in st.dv.reshn0:in st.dv.reskt0:in
+!                st.dv.reszt0:in st.dv.corua:in st.dv.corpa:in
+!                st.dv.corut:in st.dv.corpo:in st.dv.cortt:in st.dv.corte:in
+!                st.dv.corti:in st.dv.cortn:in st.dv.corkt:in st.dv.corzt:in
+!                st.dv.pcca:in st.dv.pccm:in st.dv.ne:in st.dv.ni:in
+!                st.dv.nn:in st.dv.ue:in st.dv.ne2:in st.dv.pa:in
+!                st.dv.pz:in st.dv.lnlam:in st.dv.uadia:in st.dv.vadia:in
+!                st.dv.wadia:in st.dv.vaecrb:in st.dv.vedia:in
+!                st.dv.wedia:in st.dv.veecrb:in st.dv.facdrift:in
+!                st.dv.fac_exb:in st.dv.fac_vis:in st.dv.dnadt:in
+!                st.dv.dmodt:in st.dv.dhedt:in st.dv.dhidt:in st.dv.dhndt:in
+!                st.dv.dktdt:in st.dv.dztdt:in st.sr.sch:in st.sr.she:in
+!                st.sr.shi:in st.sr.sne:in st.sr.shn:in st.sr.skt:in
+!                st.sr.szt:in st.sr.smo:in st.sr.smq:in st.sr.sna:in
+!                st.sr.shedt:in st.sr.sktdt:in st.sr.sztdt:in st.sr.snedt:in
+!                st.sr.shidt:in st.sr.shndt:in st.sr.schdt:in st.sr.smodt:in
+!                st.sr.snadt:in st.sr.skt_diss:in st.sr.skt_prod:in
+!                st.srw.sch0:in st.srw.she0:in st.srw.shi0:in st.srw.sne0:in
+!                st.srw.shn0:in st.srw.skt0:in st.srw.szt0:in st.srw.smo0:in
+!                st.srw.smq0:in st.srw.sna0:in st.srw.smcf:in st.srw.smpr:in
+!                st.srw.smpt:in st.srw.smfr:in st.srw.b2stbc_sch:in
+!                st.srw.b2stbc_she:in st.srw.b2stbc_shi:in st.srw.b2stbc_sne:in
+!                st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in st.srw.b2stbc_szt:in
+!                st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in st.srw.b2stbm_sch:in
+!                st.srw.b2stbm_she:in st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in
+!                st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in st.srw.b2stbr_sch:in
+!                st.srw.b2stbr_she:in st.srw.b2stbr_shi:in st.srw.b2stbr_sne:in
+!                st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in st.srw.b2stbr_szt:in
+!                st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in st.srw.b2npmo_smaf:in
+!                st.srw.b2npmo_smag:in st.srw.b2npmo_smav:in st.srw.rsana:in
+!                st.srw.rsahi:in st.srw.rsamo:in st.srw.rrana:in
+!                st.srw.rrahi:in st.srw.rramo:in st.srw.rcxna:in
+!                st.srw.rcxhi:in st.srw.rcxmo:in st.srw.rqahe:in
+!                st.srw.rqrad:in st.srw.rqbrm:in st.srw.b2sihs_joule:in
+!                st.srw.b2sihs_divue:in st.srw.b2sihs_divua:in
+!                st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in st.srw.b2sihs_visa:in
+!                st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in st.srw.sna0_eir_tot:in
+!                st.srw.smo0_eir_tot:in st.srw.smr0_eir_tot:in
+!                st.srw.smd0_eir_tot:in st.srw.she0_eir_tot:in
+!                st.srw.shi0_eir_tot:in st.srw.shn0_eir_tot:in
+!                st.rt.rlcx:in st.rt.rlqa:in st.rt.rlrd:in st.rt.rlbr:in
+!                st.rt.rlra:in st.rt.rlsa:in st.rt.rlza:in st.rt.rlz2:in
+!                st.rt.rlpt:in st.rt.rlpi:in st.rt.rlqr:in st.rt.rza:in
+!                st.rt.rz2:in st.rt.rpt:in st.rt.rpi:in st.rtw.rsa:in
+!                st.rtw.rra:in st.rtw.rqa:in st.rtw.rrd:in st.rtw.rbr:in
+!                st.rtw.rcx:in st.rtw.rqr:in st.psnl.na:in st.psnl.ua:in
+!                st.psnl.te:in st.psnl.ti:in st.psnl.tn:in st.psnl.kt:in
+!                st.psnl.zt:in st.psnl.ne:in st.psnl.ni:in st.psnl.nn:in
+!                st.psnl.fna:in st.psnl.kinrgy:in st.psnl.resco0:in
+!                st.psnl.resmo0:in st.psnl.reshi0:in st.psnl.reshe0:in
+!                st.psnl.reshn0:in st.psnl.reskt0:in st.psnl.reszt0:in
+!                st.psnl.dnadt:in st.psnl.dmodt:in st.psnl.dhedt:in
+!                st.psnl.dhidt:in st.psnl.dhndt:in st.psnl.dktdt:in
+!                st.psnl.dztdt:in st.psnc.na:in st.psnc.ua:in st.psnc.te:in
+!                st.psnc.ti:in st.psnc.tn:in st.psnc.kt:in st.psnc.zt:in
+!                st.psnc.ne:in st.psnc.ni:in st.psnc.nn:in st.psnc.fna:in
+!                st.psnc.kinrgy:in st.diag.aresco:in st.diag.aresmo:in
+!                st.diag.acorpa:in st.diag.acorua:in st.diag.rescoreg:in
+!                st.diag.resmoreg:in st.diag.reshereg:in st.diag.reshireg:in
 !
 !
 !
@@ -170,7 +174,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_DIAG_DIFFV, ONLY : nnatmi, nnmoli, alloc_b2mod_diag
   USE B2MOD_TIME
   USE B2MOD_FILE
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_USER_NAMELIST_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -194,9 +198,9 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int0ld, int3r, int3l, &
 & int3ld, int6r, int6l, int2r, int2l, int2ld, int5r, int5l, int1r, int1l&
 & , int1ld, int4r, int4l, int4ld, fna_mol
-  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cflimd, cfvsa, &
-& cfvsad, cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, &
-& cfhce, cfhced, cfhci, cfhcid
+  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cfvsa, cfvsad, &
+& cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, cfhce, &
+& cfhced, cfhci, cfhcid
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
 & , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, nss, &
 & nrr, nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename,&
@@ -216,19 +220,23 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 & fb_current_prevd
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_xy, z2n_xyd, nal, nald, ia, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_cv, z2n_cvd, nal, nald, ia, &
 & iad, av_ualpha, av_ualphad, gt_ac, gt_acd, gtalc, gtalcd, avm_u, &
 & avm_ud, rho_a_rel, rho_a_reld, gavm_uc, gavm_ucd, z_to_m1_ast, &
 & z_to_m1_astd, w_out, htdp_out, hwdp_out, rtdpgamma_out, rwdpgamma_out,&
 & piu_out
   USE B2MOD_B2ZHCO_DIFFV, ONLY : c_hw_save, c_hw_saved, c_r_ta, c_r_tad,&
 & c_r_ta_nofl, c_r_wa, c_r_tb, c_r_tbd, c_r_tb_nofl, c_r_tb_nofld, &
-& c_r_wb, c_r_w, c_r_wd, tf_ton_mat, amfact, zh_tf_toff
+& c_r_wb, c_r_w, c_r_wd, tf_ton_mat, amfact, zh_tf_toff, &
+& c_hta_an_fl_save, c_hta_an_fl_saved, c_r_ta_an_save, c_r_ta_an_saved
   USE B2MOD_B2MREL, ONLY : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, &
 & n4, n5, n6, n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu, rmd2,&
 & mdm, amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf, n6_mdf, n8_mdf, &
 & n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf, n14_mdf, n15_mdf, n16_mdf,&
 & mum_mdf, rmu_mdf, mdm_mdf, mu, mu_mdf, rmd2_mdf, znnucl
+  USE B2MOD_FRTF_NCCORR_DIFFV, ONLY : corr_tfia, corr_tfiad, g_hs_style,&
+& g_hs_styled, corr_fria, corr_friad, alpha_hs_style, alpha_hs_styled
+  USE B2MOD_CONVERGENCE, ONLY : conv_bcpot11, mrs
   USE B2MOD_AD_DIFFV
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -314,12 +322,11 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, damax
-  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
-&     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
-&     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
-&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, &
-&     B2SRSM_NODIFF
-  EXTERNAL B2SRAL_DV
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, B2XPNN, &
+&     B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, B2SRDT_NODIFF, &
+&     B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, B2MXAC_NODIFF, &
+&     B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, B2SRSM_NODIFF
+  EXTERNAL B2SRAL_DV, B2TRAL_DV
   EXTERNAL XERRAB
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -463,7 +470,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !
 !   ..compute ni0
   CALL B2XPNI_NODIFF(ncv, ns, st%psnc%na, st%psnc%ni)
-  CALL B2XPNN_NODIFF(ncv, ns, st%psnc%na, st%psnc%nn)
+  CALL B2XPNN(ncv, ns, st%psnc%na, st%psnc%nn)
 !   ..compute nasum, na0sum
   arg1 = ncv*ns
   nasum = B2SASUM_NODIFF(arg1, st%pl%na, 1)
@@ -471,12 +478,10 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   na0sum = B2SASUM_NODIFF(arg1, st%psnc%na, 1)
 !   ..rescale densities
   IF (switch%density_control .NE. 0) THEN
-    DO nd=1,nbdirs
-      std%dv%ne(nd, :) = 0.D0
-      std%pl%na(nd, :, :) = 0.D0
-      std%dv%kinrgy(nd, :, :) = 0.D0
-    END DO
     st%dv%ne = st%dv%ne*na0sum/nasum
+    DO nd=1,nbdirs
+      std%pl%na(nd, :, :) = 0.D0
+    END DO
     st%pl%na = st%pl%na*na0sum/nasum
     st%dv%fna = st%dv%fna*na0sum/nasum
     st%dv%kinrgy = st%dv%kinrgy*na0sum/nasum
@@ -484,7 +489,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   END IF
 !   ..compute initial ni
   CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-  CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+  CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
 ! ..main loop
 !   ..outer iteration
   istg(0) = 0
@@ -519,16 +524,17 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !
 !   ..one-off calculation of transport coefficients
       CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-      CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+      CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
       CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%&
 &                  ne)
       CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv&
 &                  %ne2)
 !   ..compute transport coefficients                                     !srv 11.10.02 03.06.03 {
 !srv 23.11.10
-      CALL B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
-&                  , switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%&
-&                  co, st%co_ns)
+      CALL B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&              switch, switchd, geo, geod, mpg, mpgd, st%pl, std%pl, st%&
+&              dv, std%dv, st%rt, std%rt, st_ext, st_extd, st%co, std%co&
+&              , st%co_ns, std%co_ns, nbdirs)
 !WG_TODO         newneo=.true.
       CALL B2TANML_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &                   st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%&
@@ -578,26 +584,19 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !     ..include contributions due to timestep
       IF (switch%b2mndt_style .NE. 2) THEN
 !     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
-        CALL B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%psnc%na, &
-&                    st%psnc%ua, st%psnc%te, st%psnc%ti, st%psnc%tn, st%&
-&                    psnc%ne, st%psnc%ni, st%psnc%nn, st%psnc%kinrgy, st&
-&                    %psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te&
-&                    , st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn&
-&                    , st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
+        CALL B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%dv, st%&
+&                    psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, st%&
+&                    psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn, st%&
+&                    psnc%kinrgy, st%psnc%kt, st%psnc%zt, st%pl%na, st%&
+&                    pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%dv%ne, st%&
+&                    dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt, st%pl%zt, &
+&                    st%sr, .false.)
       END IF
 !srv 26.02.18 }
 !
       IF (switch%equation_sources .NE. 0) THEN
 !srv 26.02.18 {
         DO icv=1,mpg%nci
-          DO nd=1,nbdirs
-            std%sr%sna(nd, icv, 0:1, 0:ns-1) = 0.D0
-            std%sr%smo(nd, icv, 0:3, 0:ns-1) = 0.D0
-            std%sr%she(nd, icv, 0:3) = 0.D0
-            std%sr%shi(nd, icv, 0:3) = 0.D0
-            std%sr%shn(nd, icv, 0:3) = 0.D0
-            std%sr%sch(nd, icv, 0:3) = 0.D0
-          END DO
           st%sr%sna(icv, 0:1, 0:ns-1) = st%sr%sna(icv, 0:1, 0:ns-1) + &
 &           geo%cvvol(icv)*art_sna(icv, 0:1, 0:ns-1)
           st%sr%smo(icv, 0:3, 0:ns-1) = st%sr%smo(icv, 0:3, 0:ns-1) + &
@@ -669,7 +668,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%&
 &                    dv%ne2)
         CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-        CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+        CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
 !      ..zero out residuals on special regions
 !        (this in order to avoid their contribution to the norms)
         CALL B2MXZR_NODIFF(ncv, ns, mpg, st%dv%resco, st%dv%resmo, st%dv&
@@ -747,9 +746,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                      pl%ti, st%dv%pz, st_ext)
           arg10 = st%dv%pz/rz
           result11 = SQRT(arg10)
-          DO nd=1,nbdirs
-            wrk0d(nd, :) = 0.D0
-          END DO
           wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
           CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, st%co%cssb)
         ELSE
@@ -758,8 +754,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         DO is=0,ns-1
 !    ..compute partial pressure
 !srv 01.10.99
-          CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%&
-&                      pl%te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
+          CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, &
+&               st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
           CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg&
 &                      , st%pl, st%dv, st%co, st%rt, .true.)
@@ -846,19 +842,24 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 END SUBROUTINE B2MNDT_DV
 
 !  Differentiation of b2mndt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: she_rad_tot she_eir_tot saved_fb_actuator
-!                saved_fb_prev fb_current fb_rescale fb_current_prev
-!                int0l int1l int2l int3l int4l tdata b2recyc userfluxparm
-!                conpar enepar enipar potpar *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: [alloc*corr_fria in alloc_b2mod_frtf_nccorr]
+!                [alloc*corr_tfia in alloc_b2mod_frtf_nccorr] [alloc*g_hs_style in alloc_b2mod_frtf_nccorr]
+!                [alloc*alpha_hs_style in alloc_b2mod_frtf_nccorr]
+!                she_rad_tot she_eir_tot saved_fb_actuator saved_fb_prev
+!                fb_current fb_rescale fb_current_prev int0l int1l
+!                int2l int3l int4l tdata recyc b2recyc userfluxparm
+!                conpar enepar enipar potpar *z2n_cv *nal *ia *av_ualpha
 !                *gt_ac *gtalc *avm_u *rho_a_rel *gavm_uc *z_to_m1_ast
 !                cfdna cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf
-!                *c_hw_save *c_r_ta *c_r_tb *c_r_tb_nofl *c_r_w
 !                senepar senipar sconpar scurpar prev_cur_delta
-!                po_prev po_curr coeff_16 pos charge_frac *(st_ext.she)
-!                *(st_ext.shi) *(st_ext.sch) *(st_ext.sna) *(st_ext.smo)
-!                *(st.pl.na) *(st.pl.ua) *(st.pl.po) *(st.pl.te)
-!                *(st.pl.ti) *(st.pl.tn) *(st.pl.kt) *(st.pl.zt)
-!                *(st.co.csig) *(st.co.calf) *(st.co.csig_an) *(st.co.csigin)
+!                po_prev po_curr coeff_16 pos *c_hw_save *c_r_ta
+!                *c_r_tb *c_r_tb_nofl *c_r_w *c_hta_an_fl_save
+!                *c_r_ta_an_save *corr_tfia *g_hs_style *corr_fria
+!                *alpha_hs_style charge_frac *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(st.pl.na)
+!                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
+!                *(st.pl.tn) *(st.pl.kt) *(st.pl.zt) *(st.co.csig)
+!                *(st.co.calf) *(st.co.csig_an) *(st.co.csigin)
 !                *(st.co.chce) *(st.co.chce_exb) *(st.co.chci)
 !                *(st.co.chci_exb) *(st.co.chcn) *(st.co.cdkt)
 !                *(st.co.cdzt) *(st.co.chvemx) *(st.co.chvimx)
@@ -872,78 +873,84 @@ END SUBROUTINE B2MNDT_DV
 !                *(st.co.alf0) *(st.co.dkt0) *(st.co.dzt0) *(st.co.dna_exb)
 !                *(st.co.hce_exb) *(st.co.hci_exb) *(st.co.dpa0)
 !                *(st.co.dna0) *(st.co.vsa0) *(st.co.hcib) *(st.co.vla0)
-!                *(st.co.alfx_c) *(st.co.sigx_c) *(st.co.sigx_kt)
-!                *(st.co.hcix_c) *(st.co.fllim_ki) *(st.co.fllim_ke)
-!                *(st.co.fllim_al) *(st.co.fllim_al_c) *(st.co.fllim_ki_c)
-!                *(st.co.f_luc_ke) *(st.co.f_luc_ki) *(st.co.f_luc_et)
-!                *(st.co.f_luc_sg) *(st.co.f_luc_al) *(st.co.f_luc_ke_c)
-!                *(st.co.f_luc_ki_c) *(st.co.cssb) *(st.co_ns.vsaf_uadp_albe)
-!                *(st.co_ns.vsaf_ubdp_al) *(st.co_ns.hci_al_ast)
-!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
-!                *(st.dv.fchvispar) *(st.dv.fchvispar_a) *(st.dv.fchvisper)
-!                *(st.dv.fchvisper_a) *(st.dv.fchvisq) *(st.dv.fchvisq_a)
-!                *(st.dv.fchinert) *(st.dv.fchinert_a) *(st.dv.fchanml)
-!                *(st.dv.fchanml_a) *(st.dv.fchviskt) *(st.dv.fchviskt_a)
-!                *(st.dv.fch_pi_c) *(st.dv.fch_pi_f) *(st.dv.fni_he)
-!                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
-!                *(st.dv.fna_53) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fne_53)
-!                *(st.dv.fhe) *(st.dv.fhe_mdf) *(st.dv.fhepsch)
-!                *(st.dv.fhe_exb) *(st.dv.fhi) *(st.dv.fhi_mdf)
-!                *(st.dv.fhipsch) *(st.dv.fhi_exb) *(st.dv.fnn)
-!                *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp) *(st.dv.fhj)
-!                *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kin_frac_hyb)
-!                *(st.dv.fluid_frac_hyb) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resmo0) *(st.dv.resco)
-!                *(st.dv.resco0) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.reshe0)
+!                *(st.co.nu2) *(st.co.k2) *(st.co.alfx_c) *(st.co.sigx_c)
+!                *(st.co.sigx_kt) *(st.co.hcix_c) *(st.co.fllim_ki)
+!                *(st.co.fllim_ke) *(st.co.fllim_al) *(st.co.fllim_al_c)
+!                *(st.co.fllim_ki_c) *(st.co.f_luc_ke) *(st.co.f_luc_ki)
+!                *(st.co.f_luc_et) *(st.co.f_luc_sg) *(st.co.f_luc_al)
+!                *(st.co.f_luc_ke_c) *(st.co.f_luc_ki_c) *(st.co.cssb)
+!                *(st.co_ns.vsaf_uadp_albe) *(st.co_ns.vsaf_ubdp_al)
+!                *(st.co_ns.hci_al_ast) *(st.dv.fch) *(st.dv.fch_p)
+!                *(st.dv.fchdia) *(st.dv.fchin) *(st.dv.fchvispar)
+!                *(st.dv.fchvispar_a) *(st.dv.fchvisper) *(st.dv.fchvisper_a)
+!                *(st.dv.fchvisq) *(st.dv.fchvisq_a) *(st.dv.fchinert)
+!                *(st.dv.fchinert_a) *(st.dv.fchanml) *(st.dv.fchanml_a)
+!                *(st.dv.fchviskt) *(st.dv.fchviskt_a) *(st.dv.fch_pi_c)
+!                *(st.dv.fch_pi_f) *(st.dv.fni_he) *(st.dv.fna)
+!                *(st.dv.fna_mdf) *(st.dv.fna_32) *(st.dv.fna_53)
+!                *(st.dv.fna_he) *(st.dv.fnapsch) *(st.dv.fna_fcor)
+!                *(st.dv.fna_eir) *(st.dv.fna_exb) *(st.dv.fmo)
+!                *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fne_53) *(st.dv.fhe)
+!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
+!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
+!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
+!                *(st.dv.fhp) *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt)
+!                *(st.dv.fzt) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.floe) *(st.dv.floi)
+!                *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn)
+!                *(st.dv.conkt) *(st.dv.conzt) *(st.dv.cone) *(st.dv.coni)
+!                *(st.dv.flob) *(st.dv.conb) *(st.dv.resmo) *(st.dv.resmo0)
+!                *(st.dv.resco) *(st.dv.resco0) *(st.dv.respo)
+!                *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt)
+!                *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt) *(st.dv.reshe0)
 !                *(st.dv.reshi0) *(st.dv.reshn0) *(st.dv.reskt0)
 !                *(st.dv.reszt0) *(st.dv.corua) *(st.dv.corpa)
 !                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
 !                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
 !                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
 !                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.dv.dnadt) *(st.dv.dmodt) *(st.dv.dhedt) *(st.dv.dhidt)
-!                *(st.dv.dhndt) *(st.dv.dktdt) *(st.dv.dztdt) *(st.sr.sch)
-!                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.szt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.sr.shedt) *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt)
-!                *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.srw.rqrad) *(st.srw.rqbrm)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlrd) *(st.rt.rlbr)
-!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
-!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
-!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
-!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rrd) *(st.rtw.rbr)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
-!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
-!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
-!                saved_fb_prev fb_current fb_rescale fb_current_prev
-!                int0l int1l int2l int3l int4l tdata b2recyc userfluxparm
-!                conpar mompar enepar enipar potpar enkpar *z2n_xy
+!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.uadia) *(st.dv.vadia)
+!                *(st.dv.wadia) *(st.dv.vaecrb) *(st.dv.vedia)
+!                *(st.dv.veecrb) *(st.dv.dnadt) *(st.dv.dmodt)
+!                *(st.dv.dhedt) *(st.dv.dhidt) *(st.dv.dhndt) *(st.dv.dktdt)
+!                *(st.dv.dztdt) *(st.sr.sch) *(st.sr.she) *(st.sr.shi)
+!                *(st.sr.shn) *(st.sr.skt) *(st.sr.szt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
+!                *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt)
+!                *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0)
+!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.srw.rqrad)
+!                *(st.srw.rqbrm) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlrd)
+!                *(st.rt.rlbr) *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza)
+!                *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr)
+!                *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi)
+!                *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rrd)
+!                *(st.rtw.rbr) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
+!                *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn)
+!                *(st.psnc.kinrgy)
+!   with respect to varying inputs: [alloc*corr_fria in alloc_b2mod_frtf_nccorr]
+!                [alloc*corr_tfia in alloc_b2mod_frtf_nccorr] [alloc*g_hs_style in alloc_b2mod_frtf_nccorr]
+!                [alloc*alpha_hs_style in alloc_b2mod_frtf_nccorr]
+!                she_rad_tot she_eir_tot saved_fb_actuator saved_fb_prev
+!                fb_current fb_rescale fb_current_prev int0l int1l
+!                int2l int3l int4l tdata recyc b2recyc userfluxparm
+!                conpar mompar enepar enipar potpar enkpar *z2n_cv
 !                *nal *ia *av_ualpha *gt_ac *gtalc *avm_u *rho_a_rel
 !                *gavm_uc *z_to_m1_ast parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *c_hw_save
-!                *c_r_ta *c_r_tb *c_r_tb_nofl *c_r_w *rtlsa[save in b2mod_b2cmrc]
+!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *rtlsa[save in b2mod_b2cmrc]
 !                *rtlra[save in b2mod_b2cmrc] *rtlqa[save in b2mod_b2cmrc]
 !                *rtlcx[save in b2mod_b2cmrc] senepar senipar sconpar
 !                scurpar prev_cur_delta po_prev po_curr coeff_16
-!                pos charge_frac *(st_ext.she) *(st_ext.shi) *(st_ext.sch)
-!                *(st_ext.sna) *(st_ext.smo) switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                pos *c_hw_save *c_r_ta *c_r_tb *c_r_tb_nofl *c_r_w
+!                *c_hta_an_fl_save *c_r_ta_an_save *corr_tfia *g_hs_style
+!                *corr_fria *alpha_hs_style charge_frac *(st_ext.she)
+!                *(st_ext.shi) *(st_ext.sch) *(st_ext.sna) *(st_ext.smo)
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -965,91 +972,95 @@ END SUBROUTINE B2MNDT_DV
 !                *(st.co.alf0) *(st.co.dkt0) *(st.co.dzt0) *(st.co.dna_exb)
 !                *(st.co.hce_exb) *(st.co.hci_exb) *(st.co.dpa0)
 !                *(st.co.dna0) *(st.co.vsa0) *(st.co.hcib) *(st.co.vla0)
-!                *(st.co.alfx_c) *(st.co.sigx_c) *(st.co.sigx_kt)
-!                *(st.co.hcix_c) *(st.co.fllim_ki) *(st.co.fllim_ke)
-!                *(st.co.fllim_al) *(st.co.fllim_al_c) *(st.co.fllim_ki_c)
-!                *(st.co.f_luc_ke) *(st.co.f_luc_ki) *(st.co.f_luc_et)
-!                *(st.co.f_luc_sg) *(st.co.f_luc_al) *(st.co.f_luc_ke_c)
-!                *(st.co.f_luc_ki_c) *(st.co.cssb) *(st.co_ns.vsaf_uadp_albe)
-!                *(st.co_ns.vsaf_ubdp_al) *(st.co_ns.hci_al_ast)
-!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
-!                *(st.dv.fchvispar) *(st.dv.fchvispar_a) *(st.dv.fchvisper)
-!                *(st.dv.fchvisper_a) *(st.dv.fchvisq) *(st.dv.fchvisq_a)
-!                *(st.dv.fchinert) *(st.dv.fchinert_a) *(st.dv.fchanml)
-!                *(st.dv.fchanml_a) *(st.dv.fchviskt) *(st.dv.fchviskt_a)
-!                *(st.dv.fch_pi_c) *(st.dv.fch_pi_f) *(st.dv.fni_he)
-!                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
-!                *(st.dv.fna_53) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fne_53)
-!                *(st.dv.fhe) *(st.dv.fhe_mdf) *(st.dv.fhepsch)
-!                *(st.dv.fhe_exb) *(st.dv.fhi) *(st.dv.fhi_mdf)
-!                *(st.dv.fhipsch) *(st.dv.fhi_exb) *(st.dv.fnn)
-!                *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp) *(st.dv.fhj)
-!                *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kin_frac_hyb)
-!                *(st.dv.fluid_frac_hyb) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resmo0) *(st.dv.resco)
-!                *(st.dv.resco0) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.reshe0)
+!                *(st.co.nu2) *(st.co.k2) *(st.co.alfx_c) *(st.co.sigx_c)
+!                *(st.co.sigx_kt) *(st.co.hcix_c) *(st.co.fllim_ki)
+!                *(st.co.fllim_ke) *(st.co.fllim_al) *(st.co.fllim_al_c)
+!                *(st.co.fllim_ki_c) *(st.co.f_luc_ke) *(st.co.f_luc_ki)
+!                *(st.co.f_luc_et) *(st.co.f_luc_sg) *(st.co.f_luc_al)
+!                *(st.co.f_luc_ke_c) *(st.co.f_luc_ki_c) *(st.co.cssb)
+!                *(st.co_ns.vsaf_uadp_albe) *(st.co_ns.vsaf_ubdp_al)
+!                *(st.co_ns.hci_al_ast) *(st.dv.fch) *(st.dv.fch_p)
+!                *(st.dv.fchdia) *(st.dv.fchin) *(st.dv.fchvispar)
+!                *(st.dv.fchvispar_a) *(st.dv.fchvisper) *(st.dv.fchvisper_a)
+!                *(st.dv.fchvisq) *(st.dv.fchvisq_a) *(st.dv.fchinert)
+!                *(st.dv.fchinert_a) *(st.dv.fchanml) *(st.dv.fchanml_a)
+!                *(st.dv.fchviskt) *(st.dv.fchviskt_a) *(st.dv.fch_pi_c)
+!                *(st.dv.fch_pi_f) *(st.dv.fni_he) *(st.dv.fna)
+!                *(st.dv.fna_mdf) *(st.dv.fna_32) *(st.dv.fna_53)
+!                *(st.dv.fna_he) *(st.dv.fnapsch) *(st.dv.fna_fcor)
+!                *(st.dv.fna_eir) *(st.dv.fna_exb) *(st.dv.fmo)
+!                *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fne_53) *(st.dv.fhe)
+!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
+!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
+!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
+!                *(st.dv.fhp) *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt)
+!                *(st.dv.fzt) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.floe) *(st.dv.floi)
+!                *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn)
+!                *(st.dv.conkt) *(st.dv.conzt) *(st.dv.cone) *(st.dv.coni)
+!                *(st.dv.flob) *(st.dv.conb) *(st.dv.resmo) *(st.dv.resmo0)
+!                *(st.dv.resco) *(st.dv.resco0) *(st.dv.respo)
+!                *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt)
+!                *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt) *(st.dv.reshe0)
 !                *(st.dv.reshi0) *(st.dv.reshn0) *(st.dv.reskt0)
 !                *(st.dv.reszt0) *(st.dv.corua) *(st.dv.corpa)
 !                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
 !                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
 !                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
 !                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.dv.dnadt) *(st.dv.dmodt) *(st.dv.dhedt) *(st.dv.dhidt)
-!                *(st.dv.dhndt) *(st.dv.dktdt) *(st.dv.dztdt) *(st.sr.sch)
-!                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.szt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.sr.shedt) *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt)
-!                *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.srw.rqrad) *(st.srw.rqbrm)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlrd) *(st.rt.rlbr)
-!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
-!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
-!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
-!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rrd) *(st.rtw.rbr)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ua)
-!                *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn) *(st.psnl.kt)
-!                *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.nn)
-!                *(st.psnl.kinrgy) *(st.psnl.resco0) *(st.psnl.resmo0)
-!                *(st.psnl.reshi0) *(st.psnl.reshe0) *(st.psnl.reshn0)
-!                *(st.psnl.reskt0) *(st.psnl.reszt0) *(st.psnl.dnadt)
-!                *(st.psnl.dmodt) *(st.psnl.dhedt) *(st.psnl.dhidt)
-!                *(st.psnl.dhndt) *(st.psnl.dktdt) *(st.psnl.dztdt)
-!                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
-!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt) *(st.psnc.ne)
-!                *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.uadia) *(st.dv.vadia)
+!                *(st.dv.wadia) *(st.dv.vaecrb) *(st.dv.vedia)
+!                *(st.dv.veecrb) *(st.dv.dnadt) *(st.dv.dmodt)
+!                *(st.dv.dhedt) *(st.dv.dhidt) *(st.dv.dhndt) *(st.dv.dktdt)
+!                *(st.dv.dztdt) *(st.sr.sch) *(st.sr.she) *(st.sr.shi)
+!                *(st.sr.shn) *(st.sr.skt) *(st.sr.szt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
+!                *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt)
+!                *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0)
+!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.srw.rqrad)
+!                *(st.srw.rqbrm) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlrd)
+!                *(st.rt.rlbr) *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza)
+!                *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr)
+!                *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi)
+!                *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rrd)
+!                *(st.rtw.rbr) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
+!                *(st.psnl.ua) *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn)
+!                *(st.psnl.kt) *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni)
+!                *(st.psnl.nn) *(st.psnl.kinrgy) *(st.psnl.resco0)
+!                *(st.psnl.resmo0) *(st.psnl.reshi0) *(st.psnl.reshe0)
+!                *(st.psnl.reshn0) *(st.psnl.reskt0) *(st.psnl.reszt0)
+!                *(st.psnl.dnadt) *(st.psnl.dmodt) *(st.psnl.dhedt)
+!                *(st.psnl.dhidt) *(st.psnl.dhndt) *(st.psnl.dktdt)
+!                *(st.psnl.dztdt) *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te)
+!                *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                gt_ac:in gtalc:in avm_u:in rho_a_rel:in gavm_uc:in
-!                z_to_m1_ast:in c_hw_save:in c_r_ta:in c_r_tb:in
-!                c_r_tb_nofl:in c_r_w:in rtlsa[save in b2mod_b2cmrc]:in
+!                z_to_m1_ast:in rtlsa[save in b2mod_b2cmrc]:in
 !                rtlra[save in b2mod_b2cmrc]:in rtlqa[save in b2mod_b2cmrc]:in
-!                rtlcx[save in b2mod_b2cmrc]:in mpg.bcfcor:in mpg.rcfcor:in-out
-!                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
-!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvhy:in
-!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
-!                geo.vxbb:in geo.vxx:in geo.vxy:in geo.vxhz:in
-!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in
-!                geo.fsconn:in geo.fteps:in geo.ftbbav2:in geo.fspsi:in
-!                st_avg.na_mean:out st_avg.ua_mean:out st_avg.te_mean:out
-!                st_avg.ti_mean:out st_avg.po_mean:out st_avg.kt_mean:out
-!                st_avg.zt_mean:out st_avg.sna_mean:out st_avg.smo_mean:out
-!                st_avg.she_mean:out st_avg.shi_mean:out st_avg.shn_mean:out
-!                st_avg.e_na:out st_avg.e_ua:out st_avg.e_te:out
-!                st_avg.e_ti:out st_avg.e_po:out st_avg.e_kt:out
-!                st_avg.e_zt:out st_avg.e_sna:out st_avg.e_smo:out
+!                rtlcx[save in b2mod_b2cmrc]:in c_hw_save:in c_r_ta:in
+!                c_r_tb:in c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save:in
+!                c_r_ta_an_save:in corr_tfia:in-out g_hs_style:in-out
+!                corr_fria:in-out alpha_hs_style:in-out mpg.bcfcor:in
+!                mpg.rcfcor:in-out mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
+!                geo.cvhx:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
+!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
+!                geo.ftbbav2:in geo.fspsi:in st_avg.na_mean:out
+!                st_avg.ua_mean:out st_avg.te_mean:out st_avg.ti_mean:out
+!                st_avg.po_mean:out st_avg.kt_mean:out st_avg.zt_mean:out
+!                st_avg.sna_mean:out st_avg.smo_mean:out st_avg.smr_mean:out
+!                st_avg.smd_mean:out st_avg.she_mean:out st_avg.shi_mean:out
+!                st_avg.shn_mean:out st_avg.e_na:out st_avg.e_ua:out
+!                st_avg.e_te:out st_avg.e_ti:out st_avg.e_po:out
+!                st_avg.e_kt:out st_avg.e_zt:out st_avg.e_sna:out
+!                st_avg.e_smo:out st_avg.e_smr:out st_avg.e_smd:out
 !                st_avg.e_she:out st_avg.e_shi:out st_avg.e_shn:out
 !                st_ext.am:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
 !                st_ext.za:in st_ext.za2:in st_ext.pt:in st_ext.na:in
@@ -1076,13 +1087,13 @@ END SUBROUTINE B2MNDT_DV
 !                st.co.dkt0:in st.co.dzt0:in st.co.dna_exb:in st.co.hce_exb:in
 !                st.co.hci_exb:in st.co.dpa0:in st.co.dna0:in st.co.vsa0:in
 !                st.co.hcib:in st.co.vla0:in st.co.vma0:in st.co.kt_neo:in
-!                st.co.alfx_c:in st.co.sigx_c:in st.co.sigx_kt:in
-!                st.co.hcix_c:in st.co.fllim_ki:in st.co.fllim_ke:in
-!                st.co.fllim_al:in st.co.fllim_al_c:in st.co.fllim_ki_c:in
-!                st.co.f_luc_ke:in st.co.f_luc_ki:in st.co.f_luc_et:in
-!                st.co.f_luc_sg:in st.co.f_luc_al:in st.co.alpha1f:in
-!                st.co.f_luc_ke_c:in st.co.f_luc_ki_c:in st.co.cssb:in
-!                st.co_ns.vsaf_hadp_albe:in st.co_ns.vsaf_hbdp_al:in
+!                st.co.nu2:in st.co.k2:in st.co.alfx_c:in st.co.sigx_c:in
+!                st.co.sigx_kt:in st.co.hcix_c:in st.co.fllim_ki:in
+!                st.co.fllim_ke:in st.co.fllim_al:in st.co.fllim_al_c:in
+!                st.co.fllim_ki_c:in st.co.f_luc_ke:in st.co.f_luc_ki:in
+!                st.co.f_luc_et:in st.co.f_luc_sg:in st.co.f_luc_al:in
+!                st.co.alpha1f:in st.co.f_luc_ke_c:in st.co.f_luc_ki_c:in
+!                st.co.cssb:in st.co_ns.vsaf_hadp_albe:in st.co_ns.vsaf_hbdp_al:in
 !                st.co_ns.vsaf_uadp_albe:in st.co_ns.vsaf_ubdp_al:in
 !                st.co_ns.hci_al_ast:in st.co_ns.chci_al_ast:in
 !                st.co_ns.cvsa_hadp_albe:in st.co_ns.cvsa_hbdp_al:in
@@ -1110,72 +1121,73 @@ END SUBROUTINE B2MNDT_DV
 !                st.dv.fnn_inc:in st.dv.fhm:in st.dv.fhp:in st.dv.fhj:in
 !                st.dv.fht:in st.dv.fkt:in st.dv.fzt:in st.dv.kin_frac_hyb:in
 !                st.dv.fluid_frac_hyb:in st.dv.kinrgy:in st.dv.conc:in
-!                st.dv.flob:in st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
+!                st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
 !                st.dv.floi_noc:in st.dv.flon:in st.dv.flokt:in
 !                st.dv.flozt:in st.dv.conn:in st.dv.conkt:in st.dv.conzt:in
-!                st.dv.conb:in st.dv.cone:in st.dv.coni:in st.dv.resmo:in
-!                st.dv.resmo0:in st.dv.resco:in st.dv.resco0:in
-!                st.dv.respo:in st.dv.reshe:in st.dv.reshi:in st.dv.resht:in
-!                st.dv.resmt:in st.dv.reshn:in st.dv.reskt:in st.dv.reszt:in
-!                st.dv.reshe0:in st.dv.reshi0:in st.dv.reshn0:in
-!                st.dv.reskt0:in st.dv.reszt0:in st.dv.corua:in
-!                st.dv.corpa:in st.dv.corut:in st.dv.corpo:in st.dv.cortt:in
-!                st.dv.corte:in st.dv.corti:in st.dv.cortn:in st.dv.corkt:in
-!                st.dv.corzt:in st.dv.pcca:in st.dv.pccm:in st.dv.ne:in
-!                st.dv.ni:in st.dv.nn:in st.dv.ue:in st.dv.ne2:in
-!                st.dv.pa:in st.dv.pz:in st.dv.lnlam:in st.dv.uadia:in
-!                st.dv.vadia:in st.dv.wadia:in st.dv.vaecrb:in
-!                st.dv.vedia:in st.dv.wedia:in st.dv.veecrb:in
-!                st.dv.facdrift:in st.dv.fac_exb:in st.dv.fac_vis:in
-!                st.dv.dnadt:in st.dv.dmodt:in st.dv.dhedt:in st.dv.dhidt:in
-!                st.dv.dhndt:in st.dv.dktdt:in st.dv.dztdt:in st.sr.sch:in
-!                st.sr.she:in st.sr.shi:in st.sr.sne:in st.sr.shn:in
-!                st.sr.skt:in st.sr.szt:in st.sr.smo:in st.sr.smq:in
-!                st.sr.sna:in st.sr.shedt:in st.sr.sktdt:in st.sr.sztdt:in
-!                st.sr.snedt:in st.sr.shidt:in st.sr.shndt:in st.sr.schdt:in
-!                st.sr.smodt:in st.sr.snadt:in st.sr.skt_diss:in
-!                st.sr.skt_prod:in st.srw.sch0:in st.srw.she0:in
-!                st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in st.srw.skt0:in
-!                st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in st.srw.sna0:in
-!                st.srw.smcf:in st.srw.smpr:in st.srw.smpt:in st.srw.smfr:in
-!                st.srw.b2stbc_sch:in st.srw.b2stbc_she:in st.srw.b2stbc_shi:in
-!                st.srw.b2stbc_sne:in st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in
-!                st.srw.b2stbc_szt:in st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in
-!                st.srw.b2stbm_sch:in st.srw.b2stbm_she:in st.srw.b2stbm_shi:in
-!                st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in
-!                st.srw.b2stbr_sch:in st.srw.b2stbr_she:in st.srw.b2stbr_shi:in
-!                st.srw.b2stbr_sne:in st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in
-!                st.srw.b2stbr_szt:in st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in
-!                st.srw.b2npmo_smaf:in st.srw.b2npmo_smag:in st.srw.b2npmo_smav:in
-!                st.srw.rsana:in st.srw.rsahi:in st.srw.rsamo:in
-!                st.srw.rrana:in st.srw.rrahi:in st.srw.rramo:in
-!                st.srw.rcxna:in st.srw.rcxhi:in st.srw.rcxmo:in
-!                st.srw.rqahe:in st.srw.rqrad:in st.srw.rqbrm:in
-!                st.srw.b2sihs_joule:in st.srw.b2sihs_divue:in
-!                st.srw.b2sihs_divua:in st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in
-!                st.srw.b2sihs_visa:in st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in
-!                st.srw.sna0_eir_tot:in st.srw.smo0_eir_tot:in
-!                st.srw.she0_eir_tot:in st.srw.shi0_eir_tot:in
-!                st.srw.shn0_eir_tot:in st.rt.rlcx:in st.rt.rlqa:in
-!                st.rt.rlrd:in st.rt.rlbr:in st.rt.rlra:in st.rt.rlsa:in
-!                st.rt.rlza:in st.rt.rlz2:in st.rt.rlpt:in st.rt.rlpi:in
-!                st.rt.rlqr:in st.rt.rza:in st.rt.rz2:in st.rt.rpt:in
-!                st.rt.rpi:in st.rtw.rsa:in st.rtw.rra:in st.rtw.rqa:in
-!                st.rtw.rrd:in st.rtw.rbr:in st.rtw.rcx:in st.rtw.rqr:in
-!                st.psnl.na:in st.psnl.ua:in st.psnl.te:in st.psnl.ti:in
-!                st.psnl.tn:in st.psnl.kt:in st.psnl.zt:in st.psnl.ne:in
-!                st.psnl.ni:in st.psnl.nn:in st.psnl.fna:in st.psnl.kinrgy:in
-!                st.psnl.resco0:in st.psnl.resmo0:in st.psnl.reshi0:in
-!                st.psnl.reshe0:in st.psnl.reshn0:in st.psnl.reskt0:in
-!                st.psnl.reszt0:in st.psnl.dnadt:in st.psnl.dmodt:in
-!                st.psnl.dhedt:in st.psnl.dhidt:in st.psnl.dhndt:in
-!                st.psnl.dktdt:in st.psnl.dztdt:in st.psnc.na:in
-!                st.psnc.ua:in st.psnc.te:in st.psnc.ti:in st.psnc.tn:in
-!                st.psnc.kt:in st.psnc.zt:in st.psnc.ne:in st.psnc.ni:in
-!                st.psnc.nn:in st.psnc.fna:in st.psnc.kinrgy:in
-!                st.diag.aresco:in st.diag.aresmo:in st.diag.acorpa:in
-!                st.diag.acorua:in st.diag.rescoreg:in st.diag.resmoreg:in
-!                st.diag.reshereg:in st.diag.reshireg:in
+!                st.dv.cone:in st.dv.coni:in st.dv.flob:in st.dv.conb:in
+!                st.dv.resmo:in st.dv.resmo0:in st.dv.resco:in
+!                st.dv.resco0:in st.dv.respo:in st.dv.reshe:in
+!                st.dv.reshi:in st.dv.resht:in st.dv.resmt:in st.dv.reshn:in
+!                st.dv.reskt:in st.dv.reszt:in st.dv.reshe0:in
+!                st.dv.reshi0:in st.dv.reshn0:in st.dv.reskt0:in
+!                st.dv.reszt0:in st.dv.corua:in st.dv.corpa:in
+!                st.dv.corut:in st.dv.corpo:in st.dv.cortt:in st.dv.corte:in
+!                st.dv.corti:in st.dv.cortn:in st.dv.corkt:in st.dv.corzt:in
+!                st.dv.pcca:in st.dv.pccm:in st.dv.ne:in st.dv.ni:in
+!                st.dv.nn:in st.dv.ue:in st.dv.ne2:in st.dv.pa:in
+!                st.dv.pz:in st.dv.lnlam:in st.dv.uadia:in st.dv.vadia:in
+!                st.dv.wadia:in st.dv.vaecrb:in st.dv.vedia:in
+!                st.dv.wedia:in st.dv.veecrb:in st.dv.facdrift:in
+!                st.dv.fac_exb:in st.dv.fac_vis:in st.dv.dnadt:in
+!                st.dv.dmodt:in st.dv.dhedt:in st.dv.dhidt:in st.dv.dhndt:in
+!                st.dv.dktdt:in st.dv.dztdt:in st.sr.sch:in st.sr.she:in
+!                st.sr.shi:in st.sr.sne:in st.sr.shn:in st.sr.skt:in
+!                st.sr.szt:in st.sr.smo:in st.sr.smq:in st.sr.sna:in
+!                st.sr.shedt:in st.sr.sktdt:in st.sr.sztdt:in st.sr.snedt:in
+!                st.sr.shidt:in st.sr.shndt:in st.sr.schdt:in st.sr.smodt:in
+!                st.sr.snadt:in st.sr.skt_diss:in st.sr.skt_prod:in
+!                st.srw.sch0:in st.srw.she0:in st.srw.shi0:in st.srw.sne0:in
+!                st.srw.shn0:in st.srw.skt0:in st.srw.szt0:in st.srw.smo0:in
+!                st.srw.smq0:in st.srw.sna0:in st.srw.smcf:in st.srw.smpr:in
+!                st.srw.smpt:in st.srw.smfr:in st.srw.b2stbc_sch:in
+!                st.srw.b2stbc_she:in st.srw.b2stbc_shi:in st.srw.b2stbc_sne:in
+!                st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in st.srw.b2stbc_szt:in
+!                st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in st.srw.b2stbm_sch:in
+!                st.srw.b2stbm_she:in st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in
+!                st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in st.srw.b2stbr_sch:in
+!                st.srw.b2stbr_she:in st.srw.b2stbr_shi:in st.srw.b2stbr_sne:in
+!                st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in st.srw.b2stbr_szt:in
+!                st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in st.srw.b2npmo_smaf:in
+!                st.srw.b2npmo_smag:in st.srw.b2npmo_smav:in st.srw.rsana:in
+!                st.srw.rsahi:in st.srw.rsamo:in st.srw.rrana:in
+!                st.srw.rrahi:in st.srw.rramo:in st.srw.rcxna:in
+!                st.srw.rcxhi:in st.srw.rcxmo:in st.srw.rqahe:in
+!                st.srw.rqrad:in st.srw.rqbrm:in st.srw.b2sihs_joule:in
+!                st.srw.b2sihs_divue:in st.srw.b2sihs_divua:in
+!                st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in st.srw.b2sihs_visa:in
+!                st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in st.srw.sna0_eir_tot:in
+!                st.srw.smo0_eir_tot:in st.srw.smr0_eir_tot:in
+!                st.srw.smd0_eir_tot:in st.srw.she0_eir_tot:in
+!                st.srw.shi0_eir_tot:in st.srw.shn0_eir_tot:in
+!                st.rt.rlcx:in st.rt.rlqa:in st.rt.rlrd:in st.rt.rlbr:in
+!                st.rt.rlra:in st.rt.rlsa:in st.rt.rlza:in st.rt.rlz2:in
+!                st.rt.rlpt:in st.rt.rlpi:in st.rt.rlqr:in st.rt.rza:in
+!                st.rt.rz2:in st.rt.rpt:in st.rt.rpi:in st.rtw.rsa:in
+!                st.rtw.rra:in st.rtw.rqa:in st.rtw.rrd:in st.rtw.rbr:in
+!                st.rtw.rcx:in st.rtw.rqr:in st.psnl.na:in st.psnl.ua:in
+!                st.psnl.te:in st.psnl.ti:in st.psnl.tn:in st.psnl.kt:in
+!                st.psnl.zt:in st.psnl.ne:in st.psnl.ni:in st.psnl.nn:in
+!                st.psnl.fna:in st.psnl.kinrgy:in st.psnl.resco0:in
+!                st.psnl.resmo0:in st.psnl.reshi0:in st.psnl.reshe0:in
+!                st.psnl.reshn0:in st.psnl.reskt0:in st.psnl.reszt0:in
+!                st.psnl.dnadt:in st.psnl.dmodt:in st.psnl.dhedt:in
+!                st.psnl.dhidt:in st.psnl.dhndt:in st.psnl.dktdt:in
+!                st.psnl.dztdt:in st.psnc.na:in st.psnc.ua:in st.psnc.te:in
+!                st.psnc.ti:in st.psnc.tn:in st.psnc.kt:in st.psnc.zt:in
+!                st.psnc.ne:in st.psnc.ni:in st.psnc.nn:in st.psnc.fna:in
+!                st.psnc.kinrgy:in st.diag.aresco:in st.diag.aresmo:in
+!                st.diag.acorpa:in st.diag.acorua:in st.diag.rescoreg:in
+!                st.diag.resmoreg:in st.diag.reshereg:in st.diag.reshireg:in
 !
 !
 !
@@ -1198,7 +1210,7 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_DIAG_DIFFV, ONLY : nnatmi, nnmoli, alloc_b2mod_diag
   USE B2MOD_TIME
   USE B2MOD_FILE
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_USER_NAMELIST_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -1222,9 +1234,9 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int0ld, int3r, int3l, &
 & int3ld, int6r, int6l, int2r, int2l, int2ld, int5r, int5l, int1r, int1l&
 & , int1ld, int4r, int4l, int4ld, fna_mol
-  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cflimd, cfvsa, &
-& cfvsad, cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, &
-& cfhce, cfhced, cfhci, cfhcid
+  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cfvsa, cfvsad, &
+& cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, cfhce, &
+& cfhced, cfhci, cfhcid
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
 & , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, nss, &
 & nrr, nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename,&
@@ -1244,28 +1256,26 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 & fb_current_prevd
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_xy, z2n_xyd, nal, nald, ia, &
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_cv, z2n_cvd, nal, nald, ia, &
 & iad, av_ualpha, av_ualphad, gt_ac, gt_acd, gtalc, gtalcd, avm_u, &
 & avm_ud, rho_a_rel, rho_a_reld, gavm_uc, gavm_ucd, z_to_m1_ast, &
 & z_to_m1_astd, w_out, htdp_out, hwdp_out, rtdpgamma_out, rwdpgamma_out,&
 & piu_out
   USE B2MOD_B2ZHCO_DIFFV, ONLY : c_hw_save, c_hw_saved, c_r_ta, c_r_tad,&
 & c_r_ta_nofl, c_r_wa, c_r_tb, c_r_tbd, c_r_tb_nofl, c_r_tb_nofld, &
-& c_r_wb, c_r_w, c_r_wd, tf_ton_mat, amfact, zh_tf_toff
+& c_r_wb, c_r_w, c_r_wd, tf_ton_mat, amfact, zh_tf_toff, &
+& c_hta_an_fl_save, c_hta_an_fl_saved, c_r_ta_an_save, c_r_ta_an_saved
   USE B2MOD_B2MREL, ONLY : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, &
 & n4, n5, n6, n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu, rmd2,&
 & mdm, amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf, n6_mdf, n8_mdf, &
 & n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf, n14_mdf, n15_mdf, n16_mdf,&
 & mum_mdf, rmu_mdf, mdm_mdf, mu, mu_mdf, rmd2_mdf, znnucl
+  USE B2MOD_FRTF_NCCORR_DIFFV, ONLY : corr_tfia, corr_tfiad, g_hs_style,&
+& g_hs_styled, corr_fria, corr_friad, alpha_hs_style, alpha_hs_styled
+  USE B2MOD_CONVERGENCE, ONLY : conv_bcpot11, mrs
   USE B2MOD_AD_DIFFV
   USE B2MOD_SUBSYS
-!  Hint: ISIZE1OFnn should be the size of dimension 1 of array nn
-!  Hint: ISIZE1OFni should be the size of dimension 1 of array ni
-!  Hint: ISIZE1OFne should be the size of dimension 1 of array ne
-!  Hint: ISIZE1OFkinrgy should be the size of dimension 1 of array kinrgy
-!  Hint: ISIZE2OFkinrgy should be the size of dimension 2 of array kinrgy
 !  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: ISIZE1OFcvvol should be the size of dimension 1 of array cvvol
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -1350,13 +1360,12 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   EXTERNAL B2SASUM_DV
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, damax
-  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
-&     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
-&     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
-&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, &
-&     B2SRSM_NODIFF
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, B2XPNN, &
+&     B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, B2SRDT_NODIFF, &
+&     B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, B2MXAC_NODIFF, &
+&     B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, B2SRSM_NODIFF
   EXTERNAL B2XPNE_DV, B2XPNI_DV, B2XPNN_DV, B2SPEL_DV, B2SPCX_DV, &
-&     B2SRAL_DV0, B2SRDT_DV, B2SRST_DV, B2MXZR_DV, B2TRAL_DV, B2SRSM_DV
+&     B2SRAL_DV0, B2SRDT_DV, B2SRST_DV, B2MXZR_DV, B2TRAL_DV0, B2SRSM_DV
   EXTERNAL XERRAB
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -1379,34 +1388,10 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd3
   INTEGER :: nd
   REAL(kind=r8) :: temp
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd4
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd5
-  REAL(r8), DIMENSION(nbdirsmax, nCv, 0:1) :: &
-& dummyzerodiffd6
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd7
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%zt, 1)) :: dummyzerodiffd8
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%kt, 1)) :: dummyzerodiffd9
-  REAL(r8), DIMENSION(nbdirsmax, nCv, 0:ns-1&
-& ) :: dummyzerodiffd10
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd11
-  REAL(r8), DIMENSION(nbdirsmax, nCv, 0:1) :: &
-& dummyzerodiffd12
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd13
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%tn, 1)) :: dummyzerodiffd14
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%ti, 1)) :: dummyzerodiffd15
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%te, 1)) :: dummyzerodiffd16
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%pl%na, 1), SIZE(st%pl%na, 2)) &
-& :: dummyzerodiffd17
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd18
-  REAL(r8), DIMENSION(nbdirsmax, nCv, 0:1) :: &
-& dummyzerodiffd19
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd20
   REAL(r8), DIMENSION(ncv) :: temp0
   REAL(r8), DIMENSION(nCv) :: temp1
-  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: &
-& dummyzerodiffd21
-  TYPE(B2SOURCEWORK_DIFFV) :: dummyzerodiffd22
-  TYPE(B2PLASMA_DIFFV) :: dummyzerodiffd23
+  TYPE(B2SOURCEWORK_DIFFV) :: dummyzerodiffd4
+  TYPE(B2PLASMA_DIFFV) :: dummyzerodiffd5
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -1632,10 +1617,10 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &              , st_ext%ne2, st%dv%ne2, std%dv%ne2, nbdirs)
 !   ..compute transport coefficients                                     !srv 11.10.02 03.06.03 {
 !srv 23.11.10
-      CALL B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
-&              switch, switchd, geo, geod, mpg, mpgd, st%pl, std%pl, st%&
-&              dv, std%dv, st%rt, std%rt, st_ext, st_extd, st%co, std%co&
-&              , st%co_ns, std%co_ns, nbdirs)
+      CALL B2TRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&               switch, switchd, geo, geod, mpg, mpgd, st%pl, std%pl, st&
+&               %dv, std%dv, st%rt, std%rt, st_ext, st_extd, st%co, std%&
+&               co, st%co_ns, std%co_ns, nbdirs)
 !WG_TODO         newneo=.true.
       CALL B2TANML_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg&
 &               , mpgd, st%co%csig_an, std%co%csig_an, st%pl%po, std%pl%&
@@ -1685,49 +1670,32 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                     'b2mndt: wrong_flow returned from b2sral'
 !     ..smooth out sources
 !srv 11.09.09 {
-      dummyzerodiffd4 = 0.D0
       CALL B2SRSM_DV(ncv, ns, dtim, switch, geo, mpg, st%pl%na, std%pl%&
 &              na, st%pl%ua, std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, &
-&              std%pl%ti, st%dv%ne, std%dv%ne, st%dv%ni, std%dv%ni, &
-&              st%dv%nn, dummyzerodiffd4, st%sr, std%sr, .true., nbdirs)
+&              std%pl%ti, st%dv%ne, std%dv%ne, st%dv%ni, std%dv%ni, st%&
+&              dv%nn, st%sr, std%sr, .true., nbdirs)
 !     ..stabilise the source coefficients                                !srv 07.07.21 {
 !srv 01.07.08
-      IF (switch%b2mndt_style .EQ. 2 .AND. use_b2srst .EQ. 1) THEN
-        dummyzerodiffd7 = 0.D0
-        dummyzerodiffd6 = 0.D0
-        dummyzerodiffd5 = 0.D0
-        CALL B2SRST_DV(ncv, ns, switch, st%pl%na, std%pl%na, st%pl%ua, &
-&                std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st&
-&                %pl%tn, std%pl%tn, st%pl%po, std%pl%po, st%dv%ne, dummyzerodiffd7&
-&                , st%dv%ni, dummyzerodiffd6, st%dv%nn, dummyzerodiffd5, st%pl%kt, std%pl%kt&
-&                , st%pl%zt, std%pl%zt, st%sr, std%sr, nbdirs)
-      END IF
+      IF (switch%b2mndt_style .EQ. 2 .AND. use_b2srst .EQ. 1) CALL &
+&       B2SRST_DV(ncv, ns, switch, st%pl%na, std%pl%na, st%pl%ua, std%pl&
+&           %ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn, std&
+&           %pl%tn, st%pl%po, std%pl%po, st%dv%ne, st%dv%ni, st%dv%nn, &
+&           st%pl%kt, std%pl%kt, st%pl%zt, std%pl%zt, st%sr, std%sr, &
+&           nbdirs)
 !       (smq is inherently stable.)                                      !srv 07.07.21 }
 !     ..include contributions due to timestep
       IF (switch%b2mndt_style .NE. 2) THEN
 !     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
-        dummyzerodiffd17 = 0.D0
-        dummyzerodiffd16 = 0.D0
-        dummyzerodiffd15 = 0.D0
-        dummyzerodiffd14 = 0.D0
-        dummyzerodiffd13 = 0.D0
-        dummyzerodiffd12 = 0.D0
-        dummyzerodiffd11 = 0.D0
-        dummyzerodiffd10 = 0.D0
-        dummyzerodiffd9 = 0.D0
-        dummyzerodiffd8 = 0.D0
-        CALL B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, st%psnc%na, std%&
-&                psnc%na, st%psnc%ua, std%psnc%ua, st%psnc%te, std%psnc%&
-&                te, st%psnc%ti, std%psnc%ti, st%psnc%tn, std%psnc%tn, &
-&                st%psnc%ne, std%psnc%ne, st%psnc%ni, std%psnc%ni, st%&
-&                psnc%nn, std%psnc%nn, st%psnc%kinrgy, std%psnc%kinrgy, &
-&                st%psnc%kt, std%psnc%kt, st%psnc%zt, std%psnc%zt, st%pl&
-&                %na, dummyzerodiffd17, st%pl%ua, st%pl%te, &
-&                dummyzerodiffd16, st%pl%ti, dummyzerodiffd15, st%pl%tn&
-               , dummyzerodiffd14, st%dv%ne, dummyzerodiffd13, st%dv%ni, dummyzerodiffd12&
-&                , st%dv%nn, dummyzerodiffd11, st%dv%kinrgy, dummyzerodiffd10, st%pl%kt, &
-&                dummyzerodiffd9, st%pl%zt, dummyzerodiffd8, st%sr, std%&
-&                sr, .false., nbdirs)
+        CALL B2SRDT_DV(ncv, ns, dtim, switch, switchd, geo, geod, mpg, &
+&                mpgd, st%dv, std%dv, st%psnc%na, std%psnc%na, st%psnc%&
+&                ua, std%psnc%ua, st%psnc%te, std%psnc%te, st%psnc%ti, &
+&                std%psnc%ti, st%psnc%tn, std%psnc%tn, st%psnc%ne, std%&
+&                psnc%ne, st%psnc%ni, std%psnc%ni, st%psnc%nn, std%psnc%&
+&                nn, st%psnc%kinrgy, std%psnc%kinrgy, st%psnc%kt, std%&
+&                psnc%kt, st%psnc%zt, std%psnc%zt, st%pl%na, st%pl%ua, &
+&                std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, st%pl%tn, st%&
+&                dv%ne, st%dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt, st%&
+&                pl%zt, st%sr, std%sr, .false., nbdirs)
       END IF
 !srv 26.02.18 }
 !
@@ -1750,17 +1718,12 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       END IF
 !     ..stabilise the source coefficients
 !srv 01.07.08
-      IF (switch%b2mndt_style .NE. 2 .AND. use_b2srst .EQ. 1) THEN
-        dummyzerodiffd20 = 0.D0
-        dummyzerodiffd19 = 0.D0
-        dummyzerodiffd18 = 0.D0
-        CALL B2SRST_DV(ncv, ns, switch, st%pl%na, std%pl%na, st%pl%ua, &
-&                std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st&
-&                %pl%tn, std%pl%tn, st%pl%po, std%pl%po, &
-&                st%dv%ne, dummyzerodiffd20, st%dv%ni, dummyzerodiffd19, st%dv%nn, dummyzerodiffd18, &
-&                st%pl%kt, std%pl%kt, st%pl%zt, std%pl%zt, st%sr, std%sr&
-&                , nbdirs)
-      END IF
+      IF (switch%b2mndt_style .NE. 2 .AND. use_b2srst .EQ. 1) CALL &
+&       B2SRST_DV(ncv, ns, switch, st%pl%na, std%pl%na, st%pl%ua, std%pl&
+&           %ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn, std&
+&           %pl%tn, st%pl%po, std%pl%po, st%dv%ne, st%dv%ni, st%dv%nn, &
+&           st%pl%kt, std%pl%kt, st%pl%zt, std%pl%zt, st%sr, std%sr, &
+&           nbdirs)
 !       (smq is inherently stable.)
 !     ..inner iteration
       istg(2) = 0
@@ -1982,11 +1945,10 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         CALL B2XPNM_DV(ncv, ns, st%rt%rz2, std%rt%rz2, am, st%pl%na, std&
 &                %pl%na, wrk0, wrk0d, nbdirs)
 !srv 03.07.03 }
-        dummyzerodiffd21 = 0.D0
-        CALL B2TREQ_DV(ncv, switch, switchd, geo%cvvol, dummyzerodiffd21, st%pl%te&
-&                , std%pl%te, st%pl%ti, std%pl%ti, st%dv%ne, std%dv%ne, &
-&                st%dv%ni, std%dv%ni, wrk0, wrk0d, st%dv%lnlam, std%dv%&
-&                lnlam, st_ext, st%co%ceqp, std%co%ceqp, nbdirs)
+        CALL B2TREQ_DV(ncv, switch, switchd, geo%cvvol, st%pl%te, std%pl&
+&                %te, st%pl%ti, std%pl%ti, st%dv%ne, std%dv%ne, st%dv%ni&
+&                , std%dv%ni, wrk0, wrk0d, st%dv%lnlam, std%dv%lnlam, &
+&                st_ext, st%co%ceqp, std%co%ceqp, nbdirs)
 !
 !      ..compute energy sources
         solving = .false.
@@ -2014,8 +1976,8 @@ SUBROUTINE B2MNDT_DV0(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &   CALC_ERR(ncv, ns, st%pl, switch, itim, mpg)
 !
   IF (switch%iav_run .GT. 0) CALL RUNNING_AVERAGE_DV0(ncv, ns, st%pl, &
-&                                               dummyzerodiffd23, st%srw&
-&                                               , dummyzerodiffd22, &
+&                                               dummyzerodiffd5, st%srw&
+&                                               , dummyzerodiffd4, &
 &                                               st_avg, st_avgd, nbdirs)
   IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL(itim, ntim_batch, ncv, st%&
 &                                       pl, ns)
@@ -2058,7 +2020,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   USE B2MOD_DIAG_DIFFV, ONLY : nnatmi, nnmoli, alloc_b2mod_diag
   USE B2MOD_TIME
   USE B2MOD_FILE
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_USER_NAMELIST_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -2098,16 +2060,20 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 & fb_current_prev
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac&
+  USE B2MOD_ZHFRTF_DIFFV, ONLY : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac&
 & , gtalc, avm_u, rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out, &
 & hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
   USE B2MOD_B2ZHCO_DIFFV, ONLY : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa,&
-& c_r_tb, c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact, zh_tf_toff
+& c_r_tb, c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact, zh_tf_toff, &
+& c_hta_an_fl_save, c_r_ta_an_save
   USE B2MOD_B2MREL, ONLY : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, &
 & n4, n5, n6, n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu, rmd2,&
 & mdm, amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf, n6_mdf, n8_mdf, &
 & n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf, n14_mdf, n15_mdf, n16_mdf,&
 & mum_mdf, rmu_mdf, mdm_mdf, mu, mu_mdf, rmd2_mdf, znnucl
+  USE B2MOD_FRTF_NCCORR_DIFFV, ONLY : corr_tfia, g_hs_style, corr_fria, &
+& alpha_hs_style
+  USE B2MOD_CONVERGENCE, ONLY : conv_bcpot11, mrs
   USE B2MOD_AD_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
@@ -2183,11 +2149,10 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, damax
-  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
-&     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
-&     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
-&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, &
-&     B2SRSM_NODIFF
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, B2XPNN, &
+&     B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, B2SRDT_NODIFF, &
+&     B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, B2MXAC_NODIFF, &
+&     B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, B2SRSM_NODIFF
   EXTERNAL XERRAB
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -2327,7 +2292,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !
 !   ..compute ni0
   CALL B2XPNI_NODIFF(ncv, ns, st%psnc%na, st%psnc%ni)
-  CALL B2XPNN_NODIFF(ncv, ns, st%psnc%na, st%psnc%nn)
+  CALL B2XPNN(ncv, ns, st%psnc%na, st%psnc%nn)
 !   ..compute nasum, na0sum
   arg1 = ncv*ns
   nasum = B2SASUM_NODIFF(arg1, st%pl%na, 1)
@@ -2343,7 +2308,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   END IF
 !   ..compute initial ni
   CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-  CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+  CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
 ! ..main loop
 !   ..outer iteration
   istg(0) = 0
@@ -2378,7 +2343,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !
 !   ..one-off calculation of transport coefficients
       CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-      CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+      CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
       CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%&
 &                  ne)
       CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv&
@@ -2436,12 +2401,13 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !     ..include contributions due to timestep
       IF (switch%b2mndt_style .NE. 2) THEN
 !     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
-        CALL B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%psnc%na, &
-&                    st%psnc%ua, st%psnc%te, st%psnc%ti, st%psnc%tn, st%&
-&                    psnc%ne, st%psnc%ni, st%psnc%nn, st%psnc%kinrgy, st&
-&                    %psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te&
-&                    , st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn&
-&                    , st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
+        CALL B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%dv, st%&
+&                    psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, st%&
+&                    psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn, st%&
+&                    psnc%kinrgy, st%psnc%kt, st%psnc%zt, st%pl%na, st%&
+&                    pl%ua, st%pl%te, st%pl%ti, st%pl%tn, st%dv%ne, st%&
+&                    dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt, st%pl%zt, &
+&                    st%sr, .false.)
       END IF
 !srv 26.02.18 }
 !
@@ -2517,7 +2483,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
         CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%&
 &                    dv%ne2)
         CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
-        CALL B2XPNN_NODIFF(ncv, ns, st%pl%na, st%dv%nn)
+        CALL B2XPNN(ncv, ns, st%pl%na, st%dv%nn)
 !      ..zero out residuals on special regions
 !        (this in order to avoid their contribution to the norms)
         CALL B2MXZR_NODIFF(ncv, ns, mpg, st%dv%resco, st%dv%resmo, st%dv&
@@ -2595,9 +2561,8 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
           DO is=0,ns-1
 !    ..compute partial pressure
 !srv 01.10.99
-            CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), &
-&                        st%pl%te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, &
-&                        is))
+            CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te&
+&                 , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
             CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, &
 &                        mpg, st%pl, st%dv, st%co, st%rt, .true.)

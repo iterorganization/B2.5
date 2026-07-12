@@ -155,8 +155,8 @@ END SUBROUTINE B2TLHI_NODIFF
 !
 !
 !
-SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, switchb, geo, geob, mpg&
-& , ni, nib, nirm, nirmb, ni_ext, ti, tib, chvimx, chvimxb)
+SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, switchb, geo, mpg, ni, &
+& nib, nirm, nirmb, ni_ext, ti, tib, chvimx, chvimxb)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -167,7 +167,6 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, switchb, geo, geob, mpg&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: mp, cflmi, ni(ncv, 0:1), nirm(ncv), ni_ext(ncv, 0:1)&
 & , ti(ncv), chvimx(nfc)

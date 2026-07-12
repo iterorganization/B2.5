@@ -22,7 +22,7 @@ SUBROUTINE B2TXNCI_B(mpg, geo, switch, ncv, ns, ti, tib, te, teb, rz2, &
 & st_extb, collisnumf, collisnumfb, collisnumc)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2US_MAP_DIFF
   USE B2US_GEO_DIFF
@@ -59,6 +59,7 @@ SUBROUTINE B2TXNCI_B(mpg, geo, switch, ncv, ns, ti, tib, te, teb, rz2, &
   REAL(kind=r8) :: tempb0
   INTEGER :: ad_from
   INTEGER :: ad_to
+  INTEGER*4 :: branch
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -71,17 +72,49 @@ SUBROUTINE B2TXNCI_B(mpg, geo, switch, ncv, ns, ti, tib, te, teb, rz2, &
 &            tauiaf)
   wrkc = SQRT(pz/rz)
   CALL INTFACE_FWD(ncv, mpg%nfc, mpg%fccv, wrk1, wrkc, csf)
+  collisnum = 0.0_R8
   DO ift=1,mpg%nft
     ad_from = mpg%ftfcp(ift, 1)
-    k = mpg%ftfcp(ift, 1) + mpg%ftfcp(ift, 2)
+    DO k=ad_from,mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
+      ifc = mpg%ftfc(k)
+      collisnum(ift) = collisnum(ift) + 1/(tauiaf(ifc)*csf(ifc))*(geo%&
+&       fchc(ifc, 1)+geo%fchc(ifc, 2))*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 0)
+    END DO
     CALL PUSHINTEGER4(k - 1)
     CALL PUSHINTEGER4(ad_from)
   END DO
+!
+  collisnumf = 0.0_R8
   CALL PUSHINTEGER4(ifc)
   DO ifc=1,mpg%nfc
     CALL PUSHINTEGER4(ift)
     ift = mpg%cvft(mpg%fccv(ifc, 1))
     IF (ift .EQ. 0) ift = mpg%cvft(mpg%fccv(ifc, 2))
+    collisnumf(ifc) = collisnum(ift)
+  END DO
+!
+  collisnumc = 0.0_R8
+  DO icv=1,mpg%ncv
+    CALL PUSHINTEGER4(ift)
+    ift = mpg%cvft(icv)
+    IF (ift .EQ. 0) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+      collisnumc(icv) = collisnum(ift)
+    END IF
+  END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, mpg%nft, 1, collisnum, 'b2txnci_numcoli')
+    CALL MY_OUT_US(70, mpg%nfc, 1, collisnumf, 'b2txnci_numcolif'&
+&                  )
+    CALL MY_OUT_US(70, mpg%ncv, 1, collisnumc, 'b2txnci_numcolic'&
+&                  )
+  END IF
+  DO icv=mpg%ncv,1,-1
+    CALL POPCONTROL1B(branch)
+    CALL POPINTEGER4(ift)
   END DO
   collisnumb = 0.D0
   DO ifc=mpg%nfc,1,-1
@@ -140,7 +173,7 @@ SUBROUTINE B2TXNCI_NODIFF(mpg, geo, switch, ncv, ns, ti, te, rz2, ne, &
 & ne2, na, lnlam, ismain, st_ext, collisnumf, collisnumc)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2US_PLASMA_DIFF
   USE B2US_MAP_DIFF
   USE B2US_GEO_DIFF

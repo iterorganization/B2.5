@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_diag_diffv
       use b2mod_time
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
       use b2mod_user_namelist_diffv
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
@@ -292,7 +292,7 @@ c***  surface area
       integer i, j, k, l, m, n, i0, is, iCv, iFc, iFt, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
-      integer ia, ias, ic, im, iyp, js, ks, ls
+      integer ia, ias, ic, im, js, ks, ls
       real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_s, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
       logical is_target
@@ -1065,10 +1065,12 @@ c*** we must remove targets and transparent surfaces from that list
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
         if(hlp_hepr.gt.0.0_R8) hlp_sphe=hlp_hetp/hlp_hepr
-        if(scale_he) then !{
-          hlp_sshe=spmp_he_to_d*hlp_spdt
-        else !}{
-          hlp_sshe=hlp_spdt
+        if (j_he_at.gt.0) then !{
+          if(scale_he) then !{
+            hlp_sshe=spmp_he_to_d*hlp_spdt
+          else !}{
+            hlp_sshe=hlp_spdt
+          end if !}
         end if !}
 
 c*** Calculate the helium-related data

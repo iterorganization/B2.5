@@ -25,6 +25,7 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
   USE B2MOD_B2CMRC_DIFF
   USE B2MOD_SUBSYS
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2spcx
@@ -351,6 +352,7 @@ SUBROUTINE B2SPCX_NODIFF(ncv, ns, ev, amh0, th0, ne, rlcx0)
   USE B2MOD_B2CMRC_DIFF
   USE B2MOD_SUBSYS
   USE B2MOD_MATH_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2spcx

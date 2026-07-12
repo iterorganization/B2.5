@@ -14,7 +14,7 @@
 !
 MODULE B2MOD_NEOCLASSICAL_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_RANGES
   USE B2MOD_VERSION
 !  Hint: nbdirsmax should be the maximum number of differentiation directions

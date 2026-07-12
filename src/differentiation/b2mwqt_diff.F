@@ -5,7 +5,7 @@
      &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_switches_diff
       use b2us_geo_diff
       use b2us_plasma_diff

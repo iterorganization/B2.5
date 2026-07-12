@@ -35,7 +35,8 @@
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used, she_eir_tot, fb_current_prev
+     &          feedback_namelist_used, she_eir_tot, fb_current_prev,
+     &          she_rad_tot
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_zhfrtf
@@ -54,7 +55,10 @@
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
      &          ncall_b2tfrn, senepar, senipar, sconpar,
-     &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
+     &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16,
+     &          in_no_of_angles, in_size_of_table, covered, cvcov, icov,
+     &          icvsv, rmin, rmax, zmin, zmax, first, pos, lngcov,
+     &          lngind
 #endif
       use b2mod_subsys
       implicit none

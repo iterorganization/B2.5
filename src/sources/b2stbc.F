@@ -26,13 +26,15 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_boundary_namelist
      & , only : conpar, enepar, enipar, nbcd, lfeedback, enkpar, potpar,
-     &          mompar
+     &          mompar, nbcd
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef DBG
      &          my_out_sf,                                               !srv 27.06.21
 #endif
-     &          ncall_b2stbc_phys, nsdmax
+     &          ncall_b2stbc_phys, nsdmax, senepar, senipar, sconpar,
+     &          scurpar, prev_cur_delta, po_prev, po_curr, coeff_16,
+     &          pos
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #endif

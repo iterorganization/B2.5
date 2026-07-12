@@ -17,7 +17,7 @@
 !
 SUBROUTINE B2XPNR_DV(ncv, ns, na, nad, nirm, nirmd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -50,43 +50,4 @@ SUBROUTINE B2XPNR_DV(ncv, ns, na, nad, nirm, nirmd, nbdirs)
   RETURN
 !     ------------------------------------------------------------------
 END SUBROUTINE B2XPNR_DV
-
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-SUBROUTINE B2XPNR_NODIFF(ncv, ns, na, nirm)
-  USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-  INTEGER :: ncv, ns
-  REAL(kind=r8) :: na(ncv, 0:ns-1), nirm(ncv)
-!     ------------------------------------------------------------------
-!     B2XPNR computes the atom density weighted by 1/sqrt(am), nirm:
-!       nirm() = (sum is :: na(,is)/sqrt(am(is))) .
-!     ------------------------------------------------------------------
-  INTEGER :: is
-  INTRINSIC SQRT
-  REAL(kind=r8) :: result1
-!     ------------------------------------------------------------------
-!$$$  call subini ('b2xpnr')
-  nirm = 0.0_R8
-  DO is=0,ns-1
-    IF (.NOT.is_neutral(is)) THEN
-      result1 = SQRT(am(is))
-      nirm = nirm + na(:, is)/result1
-    END IF
-  END DO
-!$$$  call subend ()
-  RETURN
-!     ------------------------------------------------------------------
-END SUBROUTINE B2XPNR_NODIFF
 

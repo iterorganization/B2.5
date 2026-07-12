@@ -18,7 +18,7 @@
 SUBROUTINE B2XPNI_B(ncv, ns, na, nab, ni, nib)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: ncv, ns
   REAL(kind=r8) :: na(ncv, 0:ns-1), ni(ncv, 0:1)
@@ -39,12 +39,11 @@ SUBROUTINE B2XPNI_B(ncv, ns, na, nab, ni, nib)
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpni')
   arg1 = ncv*2
-  CALL SFILL_FWD(arg1, 0.0_R8, ni, nib, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, ni, 1)
   DO is=0,ns-1
-    CALL B2SAXPY_FWD(ncv, 1.0_R8, na(1, is), 1, ni, nib, 1)
+    CALL B2SAXPY_FWD(ncv, 1.0_R8, na(1, is), 1, ni, 1)
     IF (.NOT.is_neutral(is)) THEN
-      CALL B2SAXPY_FWD(ncv, 1.0_R8, na(1, is), 1, ni(1, 1), nib(1, 1), 1&
-&               )
+      CALL B2SAXPY_FWD(ncv, 1.0_R8, na(1, is), 1, ni(1, 1), 1)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
@@ -73,7 +72,7 @@ END SUBROUTINE B2XPNI_B
 SUBROUTINE B2XPNI_NODIFF(ncv, ns, na, ni)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   IMPLICIT NONE
   INTEGER :: ncv, ns
   REAL(kind=r8) :: na(ncv, 0:ns-1), ni(ncv, 0:1)

@@ -353,14 +353,12 @@ CONTAINS
 !
 !   ..zero out contributions in dead cells and core boundary
  110 DO is=0,ns-1
-      CALL B2XZDD_FWD(mpg%ncv, 1, switch, mpg, sna0(1, 0, is), sna0b(1, &
-&               0, is))
-      CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, smo0(1, 0, is), smo0b(1, &
-&               0, is))
+      CALL B2XZDD_FWD(mpg%ncv, 1, switch, mpg, sna0(1, 0, is))
+      CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, smo0(1, 0, is))
     END DO
-    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, she0, she0b)
-    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, shi0, shi0b)
-    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, sch0, sch0b)
+    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, she0)
+    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, shi0)
+    CALL B2XZDD_FWD(mpg%ncv, 3, switch, mpg, sch0)
 !
 !
 !djm Jan2017 Keep linearised sources for balance
@@ -970,7 +968,7 @@ CONTAINS
 !**************************************************************************
     USE B2MOD_TIME
     USE B2MOD_CONSTANTS
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
@@ -1085,7 +1083,6 @@ CONTAINS
       DO spec=0,ns-1
         DO kind_data=1,nkind_data
 !           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
-          CALL PUSHINTEGER4(ndat)
           ndat = ndata(kind_data, kind_coeff, spec)
           IF (ndat .EQ. 0) THEN
             CALL PUSHCONTROL1B(0)
@@ -1143,6 +1140,7 @@ CONTAINS
               CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
               CALL PUSHCONTROL1B(0)
             ELSE
+              pelm = pf
               CALL PUSHCONTROL1B(1)
             END IF
 !
@@ -1564,6 +1562,10 @@ CONTAINS
               ndat = ndata(kind_data, kind_coeff, spec)
               CALL E01BFF_B(ndat, r, rb, felm, felmb, delm, delmb, ndim&
 &                     , pr, pelm, pelmb, ifail)
+            ELSE
+              pfb = pfb + pelmb
+              ndat = ndata(kind_data, kind_coeff, spec)
+              pelmb = 0.D0
             END IF
             CALL E01BFF_B(ndat, r, rb, f, fb, d, db, ndim, pr, pf, pfb, &
 &                   ifail)
@@ -1603,7 +1605,6 @@ CONTAINS
             END DO
             CALL POPINTEGER4(nsp(1))
           END IF
-          CALL POPINTEGER4(ndat)
         END DO
       END DO
     END DO
@@ -1635,7 +1636,7 @@ CONTAINS
 !**************************************************************************
     USE B2MOD_TIME
     USE B2MOD_CONSTANTS
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
@@ -1776,8 +1777,11 @@ CONTAINS
             ndim = nomp
             CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF(ndat, r, felm, delm, ndim, pr, &
-&                               pelm, ifail)
+            IF (elm_data) THEN
+              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+            ELSE
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -2125,7 +2129,7 @@ CONTAINS
     INTEGER :: i, ifa
     INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
     REAL(kind=r8) :: r(nrr), pr(nrr), prtmp
-    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:)
+    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:), dsp(:)
     INTEGER :: ncall, nya
     CHARACTER(len=256) :: filenamer
     LOGICAL :: exist
@@ -2140,8 +2144,9 @@ CONTAINS
       IF (nomp .GT. 0) THEN
         ALLOCATE(pra(nomp))
         ALLOCATE(prdsa(nomp))
+        ALLOCATE(dsp(nomp))
         arg1 = icsepomp - 1
-        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp')
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp)
       END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF

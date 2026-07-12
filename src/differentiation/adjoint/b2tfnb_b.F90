@@ -7,8 +7,8 @@
 !                *(dv.fchviskt_a) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.pcca) *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
-!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(dv.pcca) *(dv.pa) *(dv.uadia) *(dv.vadia) *(dv.wadia)
+!                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
 !                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
 !                *(pl.tn)
@@ -17,8 +17,8 @@
 !                *(dv.fchviskt_a) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
 !                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
 !                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
-!                *(dv.pcca) *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
-!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(dv.pcca) *(dv.pa) *(dv.uadia) *(dv.vadia) *(dv.wadia)
+!                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
 !                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
 !                *(pl.tn)
@@ -28,16 +28,16 @@
 !                dv.fna_32:in dv.fna_53:in dv.fna_52nd:in dv.fna_32nd:in
 !                dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in
 !                dv.fna_exb:in dv.kinrgy:in dv.flob:in dv.conb:in
-!                dv.pcca:in dv.ne:in dv.pa:in dv.uadia:in dv.vadia:in
-!                dv.wadia:in dv.vaecrb:in dv.facdrift:in mpg.bcfcor:in
+!                dv.pcca:in dv.pa:in dv.uadia:in dv.vadia:in dv.wadia:in
+!                dv.vaecrb:in dv.facdrift:in dv.fac_exb:in mpg.bcfcor:in
 !                mpg.intcellp:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
 !                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in rt.rza:in
-!                co.cvla:in co.cdna:in co.cdna_exb:in co.cdpa:in
-!                co.cvlahz:in co.cdpahz:in co.cddi:in co.fllim0fna:in
-!                co.cssb:in pl.na:in pl.ua:in pl.po:in pl.ti:in
-!                pl.tn:in
+!                geo.fcpbshz:in geo.vxx:in geo.vxy:in geo.vxvol:in
+!                geo.vxonedbsq:in rt.rza:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvlahz:in co.cdpahz:in
+!                co.cddi:in co.fllim0fna:in co.cssb:in pl.na:in
+!                pl.ua:in pl.po:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -57,7 +57,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   USE B2MOD_TYPES
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -113,6 +113,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 !   ..local variables
 !srv 13.10.06
   INTEGER :: icv1, icv2, ifc, meth
+  INTEGER :: ivx1, ivx2, ifc1, ifc2, k, j
+  REAL(kind=r8) :: dpo_p, dpo_r, fcht_tot, a(2), b(2), vx_dir
+  REAL(kind=r8) :: dpo_pb, dpo_rb
 !srv 16.09.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: drift_hyb
@@ -120,10 +123,12 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: flo(nfc, 0:1), flo_mdf(nfc, 0:1), flo_nodrift(nfc, 0:&
 & 1), flo2dia(nfc, 0:1), flo_he(nfc, 0:1), flo_53(nfc, 0:1), alpha, &
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
-& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
+& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1), flobtmp(nfc, 0:1), conbtmp(nfc&
+& , 0:1, 0:4)
   REAL(kind=r8) :: flob(nfc, 0:1), flo_mdfb(nfc, 0:1), flo2diab(nfc, 0:1&
 & ), flo_heb(nfc, 0:1), flo_53b(nfc, 0:1), vbarb, t0b, t1b, t2b, t3b, &
-& termb(nfc), flob0b(nfc, 0:1), conb0b(nfc, 0:1), scurb(nfc, 0:1)
+& termb(nfc), flob0b(nfc, 0:1), conb0b(nfc, 0:1), scurb(nfc, 0:1), &
+& flobtmpb(nfc, 0:1), conbtmpb(nfc, 0:1, 0:4)
 !srv 05.03.16
 !srv 05.03.16
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmpr(ncv), kmprv(nvx), &
@@ -157,6 +162,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC SUM
   INTRINSIC NINT
   EXTERNAL XERRAB
   REAL(r8) :: x1
@@ -185,14 +191,15 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   CHARACTER(len=13) :: arg2
   CHARACTER(len=9) :: arg111
   REAL(r8), DIMENSION(nCv) :: tempb
-  REAL(kind=r8) :: temp
+  REAL(r8) :: temp
+  REAL(r8) :: tempb0
   REAL(kind=r8) :: temp0
-  REAL(kind=r8) :: tempb0
-  REAL(r8) :: temp1
-  REAL(r8) :: tempb1
-  REAL(r8), DIMENSION(nCv) :: tempb2
+  REAL(kind=r8) :: tempb1
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: tempb2
+  REAL(r8), DIMENSION(nCv) :: tempb3
   REAL(kind=r8), DIMENSION(nfc) :: temp2
-  REAL(kind=r8), DIMENSION(nfc) :: tempb3
+  REAL(kind=r8), DIMENSION(nfc) :: tempb4
   REAL(kind=r8) :: temp3
   REAL(kind=r8) :: temp4
   REAL(kind=r8) :: temp5
@@ -201,9 +208,8 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: temp8
   REAL(kind=r8) :: temp9
   REAL(r8) :: temp10
-  REAL(r8) :: tempb4
+  REAL(r8) :: tempb5
   REAL(kind=r8) :: temp11
-  REAL(kind=r8) :: tempb5
   REAL(kind=r8) :: tempb6
   REAL(kind=r8) :: tempb7
   REAL(kind=r8), DIMENSION(nFc) :: tempb8
@@ -217,6 +223,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   REAL(r8) :: tempb11
   REAL(r8) :: temp15
   REAL(r8) :: tempb12
+  INTEGER :: ad_to
   INTEGER*4 :: branch
 !   ..initialisation
 !
@@ -278,6 +285,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   END IF
 !
 ! Drift terms
+  CALL PUSHREAL8ARRAY(dv%uadia(:, :, isb), r8*SIZE(dv%uadia, 1)*SIZE(dv%&
+&               uadia, 2)/8)
+  dv%uadia(:, :, isb) = 0.0_R8
   CALL PUSHREAL8ARRAY(dv%vadia(:, :, isb), r8*SIZE(dv%vadia, 1)*SIZE(dv%&
 &               vadia, 2)/8)
   dv%vadia(:, :, isb) = 0.0_R8
@@ -293,12 +303,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   CALL PUSHREAL8ARRAY(dv%fna_mdf(:, :, isb), r8*SIZE(dv%fna_mdf, 1)*SIZE&
 &               (dv%fna_mdf, 2)/8)
   dv%fna_mdf(:, :, isb) = 0.0_R8
-  CALL PUSHREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
-  dv%flob = 0.0_R8
 !srv 13.10.06
-  CALL PUSHREAL8ARRAY(dv%conb, r8*SIZE(dv%conb, 1)*SIZE(dv%conb, 2)*SIZE&
-&               (dv%conb, 3)/8)
-  dv%conb = 0.0_R8
+  flobtmp = 0.0_R8
+  conbtmp = 0.0_R8
 !srv 01.10.99
   result1 = MAXVAL(dv%facdrift)
   result2 = MAXVAL(dv%fac_exb)
@@ -323,8 +330,81 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     dv%vaecrb(:, 0, isb) = -(switch%poleldr*dv%fac_exb*wrk0*dpo(:, 1))
     CALL PUSHREAL8ARRAY(dv%vaecrb(:, 1, isb), r8*SIZE(dv%vaecrb, 1)/8)
     dv%vaecrb(:, 1, isb) = switch%radeldr*dv%fac_exb*wrk0*dpo(:, 0)
+!
+    IF (switch%b2tfnb_avg_vexb .GE. 1) THEN
+      CALL INTVERTEX_FWD(ncv, nvx, mpg, geo%vxvol, pl%po, wrkvx)
+      DO j=1,mpg%nfci
+        IF (mpg%fcs_wall_ind(j, 2) .EQ. 1 .OR. mpg%fcs_wall_type(j) .NE.&
+&           2) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1))
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+1)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            CALL PUSHINTEGER4(ivx1)
+            ivx1 = mpg%fcvx(ifc1, 1)
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(ivx1)
+            ivx1 = mpg%fcvx(ifc1, 2)
+            CALL PUSHCONTROL1B(1)
+          END IF
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-1)
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-2)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            CALL PUSHINTEGER4(ivx2)
+            ivx2 = mpg%fcvx(ifc1, 1)
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(ivx2)
+            ivx2 = mpg%fcvx(ifc1, 2)
+            CALL PUSHCONTROL1B(1)
+          END IF
+          CALL PUSHREAL8(fcht_tot, r8/8)
+          fcht_tot = SUM(geo%fcht(mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):&
+&           mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j, 2)-1)))
+          DO k=1,mpg%fcs_wall_ind(j, 2)
+            ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+            icv1 = mpg%fccv(ifc, 1)
+            icv2 = mpg%fccv(ifc, 2)
+            a(1) = geo%vxx(mpg%fcvx(ifc, 2)) - geo%vxx(mpg%fcvx(ifc, 1))
+            a(2) = geo%vxy(mpg%fcvx(ifc, 2)) - geo%vxy(mpg%fcvx(ifc, 1))
+            b(1) = geo%vxx(ivx2) - geo%vxx(ivx1)
+            b(2) = geo%vxy(ivx2) - geo%vxy(ivx1)
+            CALL PUSHREAL8(vx_dir, r8/8)
+            vx_dir = SIGN(1.0_R8, a(1)*b(1) + a(2)*b(2))
+            dpo_p = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+!
+            dpo_r = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+            CALL PUSHREAL8(dv%vaecrb(ifc, 0, isb), r8/8)
+            dv%vaecrb(ifc, 0, isb) = -(switch%poleldr*dv%fac_exb(ifc)*&
+&             wrk0(ifc)*dpo_r)
+            CALL PUSHREAL8(dv%vaecrb(ifc, 1, isb), r8/8)
+            dv%vaecrb(ifc, 1, isb) = switch%radeldr*dv%fac_exb(ifc)*wrk0&
+&             (ifc)*dpo_p
+          END DO
+          CALL PUSHINTEGER4(k - 1)
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+!
 !     ..restriction ExB drift
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
+      CALL PUSHINTEGER4(ifc)
 !iyv 06.02.14 {
 !wdk for unstructured grids: apply ExB velocity restriction
 !    to total ExB velocity (instead of individual poloidal and radial
@@ -372,20 +452,21 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     CALL PUSHREAL8ARRAY(dv%wadia(:, 1, isb), r8*SIZE(dv%wadia, 1)/8)
     dv%wadia(:, 1, isb) = dv%facdrift*wrk0*dnbti(:, 0)/(wrk1*qe)
 !     ..additional drift variables
+    CALL PUSHREAL8ARRAY(dv%uadia(:, :, isb), r8*SIZE(dv%uadia, 1)*SIZE(&
+&                 dv%uadia, 2)/8)
+    dv%uadia(:, :, isb) = dv%vaecrb(:, :, isb) + dv%vadia(:, :, isb)
 !
 !     ..computation of P.Sch flows
-    CALL PUSHREAL8ARRAY(dv%conb, r8*SIZE(dv%conb, 1)*SIZE(dv%conb, 2)*&
-&                 SIZE(dv%conb, 3)/8)
-    CALL PUSHREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
     CALL B2TNPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, dv%facdrift, &
-&                  co%cddi(:, :, isb), pl%ti, pl%na(:, isb), kmprti, dv%&
-&                  flob, dv%conb, dv%fnapsch(:, :, isb))
+&                  co%cddi(:, :, isb), pl%ti, pl%na(:, isb), kmprti, &
+&                  flobtmp, conbtmp(:, :, 0:2), dv%fnapsch(:, :, isb))
 !lk 02.06.11 }
 !
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
 !
     IF (isb .NE. ismain .AND. (.NOT.is_neutral(isb)) .AND. switch%&
 &       dia_lim_all_ions .EQ. 0) THEN
+      CALL PUSHINTEGER4(ifc)
 !lk 02.06.11 {
 !wdk for unstructured grids: apply flux limits
 !    to total drift velocities (instead of individual poloidal and radial
@@ -431,6 +512,13 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
         dv%wadia(ifc, 0, isb) = dv%wadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         CALL PUSHREAL8(dv%wadia(ifc, 1, isb), r8/8)
         dv%wadia(ifc, 1, isb) = dv%wadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
+        CALL PUSHREAL8(t3, r8/8)
+        t3 = SQRT((dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, &
+&         2))**2 + dv%uadia(ifc, 1, isb)**2)
+        CALL PUSHREAL8(dv%uadia(ifc, 0, isb), r8/8)
+        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
+        CALL PUSHREAL8(dv%uadia(ifc, 1, isb), r8/8)
+        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
       END DO
       CALL PUSHCONTROL1B(0)
     ELSE
@@ -438,6 +526,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     END IF
 !lkw 25.10.2022}
     IF (isb .EQ. ismain .OR. switch%dia_lim_all_ions .EQ. 1) THEN
+      CALL PUSHINTEGER4(ifc)
 !lkw 25.10.2022 {
       DO ifc=1,nfc
         icv1 = mpg%fccv(ifc, 1)
@@ -479,6 +568,13 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
         dv%wadia(ifc, 0, isb) = dv%wadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
         CALL PUSHREAL8(dv%wadia(ifc, 1, isb), r8/8)
         dv%wadia(ifc, 1, isb) = dv%wadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
+        CALL PUSHREAL8(t3, r8/8)
+        t3 = SQRT((dv%uadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, &
+&         2))**2 + dv%uadia(ifc, 1, isb)**2)
+        CALL PUSHREAL8(dv%uadia(ifc, 0, isb), r8/8)
+        dv%uadia(ifc, 0, isb) = dv%uadia(ifc, 0, isb)/(1.0_R8+t3/vbar)
+        CALL PUSHREAL8(dv%uadia(ifc, 1, isb), r8/8)
+        dv%uadia(ifc, 1, isb) = dv%uadia(ifc, 1, isb)/(1.0_R8+t3/vbar)
       END DO
       CALL PUSHCONTROL2B(0)
     ELSE
@@ -530,10 +626,10 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 !
 !   ..add contribution from currents
   IF (.NOT.is_neutral(isb)) THEN
-    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))*switch%b2tfnb_xcur/(rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(&
-&     rzf*qe*nbf)
+    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+&
+&     switch%fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, &
+&     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))*switch%b2tfnb_xcur/&
+&     (rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(rzf*qe*nbf)
     scur(:, 1) = (dv%fchinert_a(:, 1, isb)+dv%fchvispar_a(:, 1, isb)+&
 &     switch%fnb_vis_per*dv%fchvisper_a(:, 1, isb)+dv%fchanml_a(:, 1, &
 &     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 1, isb))*switch%b2tfnb_ycur/&
@@ -552,6 +648,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   CALL CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%na(:, &
 &             isb), flo_mdf, co%cdna(:, :, isb), fna_mdf0(:, :), dv%&
 &             fna_32(:, :, isb), dv%fna_52(:, :, isb))
+  CALL PUSHINTEGER4(ifc)
 !   ..limit flow by sound speed                                           ! lkw 26.10.2022{
   DO ifc=1,nfc
     IF (((.NOT.is_neutral(isb)) .OR. switch%tn_style .EQ. 0) .OR. (&
@@ -638,7 +735,6 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   0, isb)*geo%fcs*geo%fcqalf(:, 0)+scur(:, 0))*nbf + (flo(:, 0)-&
 &   flo_mdf(:, 0))*nbf - co%cdpa(:, 0, isb)*dpb(:, 0)
-!
   CALL PUSHREAL8ARRAY(dv%fna(:, 1, isb), r8*SIZE(dv%fna, 1)/8)
   dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   1, isb)*geo%fcs*geo%fcqalf(:, 1)+scur(:, 1))*nbf + (flo(:, 1)-&
@@ -694,6 +790,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 !
 !   ..compute ExB fluxes for k-model
   IF (isb .EQ. ismain .AND. switch%solve_keps .GT. 0) THEN
+! initialization within the if-statement to avoid race conditions with openMP
     zeros = 0.0_R8
     CALL CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%na(:&
 &               , isb), zeros, co%cdna_exb, dv%fna_exb, zeros1, dumm1)
@@ -719,20 +816,16 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     CALL PUSHCONTROL1B(0)
   END IF
   DO ifc=1,nfc
-    CALL PUSHREAL8(dv%flob(ifc, 0), r8/8)
-    dv%flob(ifc, 0) = dv%flob(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
+    flobtmp(ifc, 0) = flobtmp(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - conb0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    CALL PUSHREAL8(dv%flob(ifc, 1), r8/8)
-    dv%flob(ifc, 1) = dv%flob(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
+    flobtmp(ifc, 1) = flobtmp(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - conb0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
-    CALL PUSHREAL8(dv%conb(ifc, 0, 0), r8/8)
-    dv%conb(ifc, 0, 0) = dv%conb(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
+    conbtmp(ifc, 0, 0) = conbtmp(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
 &     (mpg%fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - 0.25_R8*flob0(ifc, 0)&
 &     *(kmpr(mpg%fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    CALL PUSHREAL8(dv%conb(ifc, 1, 0), r8/8)
-    dv%conb(ifc, 1, 0) = dv%conb(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
+    conbtmp(ifc, 1, 0) = conbtmp(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
 &     kmprv(mpg%fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - 0.25_R8*flob0(&
 &     ifc, 1)*(kmprv(mpg%fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
   END DO
@@ -743,20 +836,14 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   zeros = 0.0_R8
   CALL CALCCOEF_FWD(ncv, nfc, nvx, 0, geo, zeros, cdpb, flob0, conb0)
 !wdk flob0 should be zero here
-  CALL PUSHREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
-  dv%flob = dv%flob + flob0
-  CALL PUSHREAL8ARRAY(dv%conb(:, :, 0), r8*SIZE(dv%conb, 1)*SIZE(dv%conb&
-&               , 2)/8)
-  dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
+  flobtmp = flobtmp + flob0
+  conbtmp(:, :, 0) = conbtmp(:, :, 0) + conb0
 !wdk is this needed? correct? probably always zero?
-  CALL PUSHREAL8ARRAY(dv%conb(:, 0, 1), r8*SIZE(dv%conb, 1)/8)
-  dv%conb(:, 0, 1) = conb0(:, 0)*kmprtif
+  conbtmp(:, 0, 1) = conb0(:, 0)*kmprtif
 !wdk is this needed? correct? probably always zero?
-  CALL PUSHREAL8ARRAY(dv%conb(:, 1, 1), r8*SIZE(dv%conb, 1)/8)
-  dv%conb(:, 1, 1) = conb0(:, 1)*kmprtif
-  CALL PUSHREAL8ARRAY(dv%conb(:, :, 2), r8*SIZE(dv%conb, 1)*SIZE(dv%conb&
-&               , 2)/8)
-  dv%conb(:, :, 2) = dv%conb(:, :, 1)
+  conbtmp(:, 1, 1) = conb0(:, 1)*kmprtif
+  conbtmp(:, :, 2) = conbtmp(:, :, 1)
+! Add conb, flob to dv
 !
 !   ..flux limit
 !srv 20.11.08
@@ -821,11 +908,11 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       CALL PUSHREAL8(dv%fna_32(ifc, 0, isb), r8/8)
       dv%fna_32(ifc, 0, isb) = dv%fna_32(ifc, 0, isb)/t0
 ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      CALL PUSHREAL8(dv%flob(ifc, 0), r8/8)
-      dv%flob(ifc, 0) = dv%flob(ifc, 0)/t0
+      CALL PUSHREAL8(flobtmp(ifc, 0), r8/8)
+      flobtmp(ifc, 0) = flobtmp(ifc, 0)/t0
 !srv 13.10.06 {
-      CALL PUSHREAL8ARRAY(dv%conb(ifc, 0, 0:4), r8*5/8)
-      dv%conb(ifc, 0, 0:4) = dv%conb(ifc, 0, 0:4)/t0
+      CALL PUSHREAL8ARRAY(conbtmp(ifc, 0, :), r8*5/8)
+      conbtmp(ifc, 0, 0:4) = conbtmp(ifc, 0, 0:4)/t0
       CALL PUSHREAL8(dv%fna_he(ifc, 0, isb), r8/8)
       dv%fna_he(ifc, 0, isb) = dv%fna_he(ifc, 0, isb)/t0
       CALL PUSHREAL8(dv%fna_fcor(ifc, 0, isb), r8/8)
@@ -840,11 +927,11 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       CALL PUSHREAL8(dv%fna_32(ifc, 1, isb), r8/8)
       dv%fna_32(ifc, 1, isb) = dv%fna_32(ifc, 1, isb)/t1
 ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      CALL PUSHREAL8(dv%flob(ifc, 1), r8/8)
-      dv%flob(ifc, 1) = dv%flob(ifc, 1)/t1
+      CALL PUSHREAL8(flobtmp(ifc, 1), r8/8)
+      flobtmp(ifc, 1) = flobtmp(ifc, 1)/t1
 !srv 13.10.06 {
-      CALL PUSHREAL8ARRAY(dv%conb(ifc, 1, 0:4), r8*5/8)
-      dv%conb(ifc, 1, 0:4) = dv%conb(ifc, 1, 0:4)/t1
+      CALL PUSHREAL8ARRAY(conbtmp(ifc, 1, :), r8*5/8)
+      conbtmp(ifc, 1, 0:4) = conbtmp(ifc, 1, 0:4)/t1
       CALL PUSHREAL8(dv%fna_he(ifc, 1, isb), r8/8)
       dv%fna_he(ifc, 1, isb) = dv%fna_he(ifc, 1, isb)/t1
       CALL PUSHREAL8(dv%fna_fcor(ifc, 1, isb), r8/8)
@@ -893,6 +980,12 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   plb%ua(:, isb) = plb%ua(:, isb) + 2*pl%ua(:, isb)*am(isb)*mp*0.5_R8*&
 &   dvb%kinrgy(:, isb)
   dvb%kinrgy(:, isb) = 0.D0
+  conbtmpb = 0.D0
+  conbtmpb = dvb%conb(:, :, :, isb)
+  dvb%conb(:, :, :, isb) = 0.D0
+  flobtmpb = 0.D0
+  flobtmpb = dvb%flob(:, :, isb)
+  dvb%flob(:, :, isb) = 0.D0
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     DO ifc=nfc,1,-1
@@ -901,23 +994,23 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       CALL POPREAL8(dv%fna_mdf(ifc, 1, isb), r8/8)
       CALL POPREAL8(dv%fna_fcor(ifc, 1, isb), r8/8)
       CALL POPREAL8(dv%fna_he(ifc, 1, isb), r8/8)
-      CALL POPREAL8ARRAY(dv%conb(ifc, 1, 0:4), r8*5/8)
-      CALL POPREAL8(dv%flob(ifc, 1), r8/8)
+      CALL POPREAL8ARRAY(conbtmp(ifc, 1, :), r8*5/8)
+      CALL POPREAL8(flobtmp(ifc, 1), r8/8)
       CALL POPREAL8(dv%fna_32(ifc, 1, isb), r8/8)
       CALL POPREAL8(dv%fna(ifc, 1, isb), r8/8)
       t1b = -(dv%fnapsch(ifc, 1, isb)*dvb%fnapsch(ifc, 1, isb)/t1**2) - &
 &       dv%fna_mdf(ifc, 1, isb)*dvb%fna_mdf(ifc, 1, isb)/t1**2 - dv%&
 &       fna_fcor(ifc, 1, isb)*dvb%fna_fcor(ifc, 1, isb)/t1**2 - dv%&
-&       fna_he(ifc, 1, isb)*dvb%fna_he(ifc, 1, isb)/t1**2 - SUM(dv%conb(&
-&       ifc, 1, 0:4)*dvb%conb(ifc, 1, 0:4))/t1**2 - dv%flob(ifc, 1)*dvb%&
-&       flob(ifc, 1)/t1**2 - dv%fna_32(ifc, 1, isb)*dvb%fna_32(ifc, 1, &
-&       isb)/t1**2 - dv%fna(ifc, 1, isb)*dvb%fna(ifc, 1, isb)/t1**2
+&       fna_he(ifc, 1, isb)*dvb%fna_he(ifc, 1, isb)/t1**2 - SUM(conbtmp(&
+&       ifc, 1, 0:4)*conbtmpb(ifc, 1, 0:4))/t1**2 - flobtmp(ifc, 1)*&
+&       flobtmpb(ifc, 1)/t1**2 - dv%fna_32(ifc, 1, isb)*dvb%fna_32(ifc, &
+&       1, isb)/t1**2 - dv%fna(ifc, 1, isb)*dvb%fna(ifc, 1, isb)/t1**2
       dvb%fnapsch(ifc, 1, isb) = dvb%fnapsch(ifc, 1, isb)/t1
       dvb%fna_mdf(ifc, 1, isb) = dvb%fna_mdf(ifc, 1, isb)/t1
       dvb%fna_fcor(ifc, 1, isb) = dvb%fna_fcor(ifc, 1, isb)/t1
       dvb%fna_he(ifc, 1, isb) = dvb%fna_he(ifc, 1, isb)/t1
-      dvb%conb(ifc, 1, 0:4) = dvb%conb(ifc, 1, 0:4)/t1
-      dvb%flob(ifc, 1) = dvb%flob(ifc, 1)/t1
+      conbtmpb(ifc, 1, :) = conbtmpb(ifc, 1, :)/t1
+      flobtmpb(ifc, 1) = flobtmpb(ifc, 1)/t1
       dvb%fna_32(ifc, 1, isb) = dvb%fna_32(ifc, 1, isb)/t1
       dvb%fna(ifc, 1, isb) = dvb%fna(ifc, 1, isb)/t1
       t0 = (1.0_R8+abs0**gamma)**(1.0_R8/gamma)
@@ -925,23 +1018,23 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       CALL POPREAL8(dv%fna_mdf(ifc, 0, isb), r8/8)
       CALL POPREAL8(dv%fna_fcor(ifc, 0, isb), r8/8)
       CALL POPREAL8(dv%fna_he(ifc, 0, isb), r8/8)
-      CALL POPREAL8ARRAY(dv%conb(ifc, 0, 0:4), r8*5/8)
-      CALL POPREAL8(dv%flob(ifc, 0), r8/8)
+      CALL POPREAL8ARRAY(conbtmp(ifc, 0, :), r8*5/8)
+      CALL POPREAL8(flobtmp(ifc, 0), r8/8)
       CALL POPREAL8(dv%fna_32(ifc, 0, isb), r8/8)
       CALL POPREAL8(dv%fna(ifc, 0, isb), r8/8)
       t0b = -(dv%fnapsch(ifc, 0, isb)*dvb%fnapsch(ifc, 0, isb)/t0**2) - &
 &       dv%fna_mdf(ifc, 0, isb)*dvb%fna_mdf(ifc, 0, isb)/t0**2 - dv%&
 &       fna_fcor(ifc, 0, isb)*dvb%fna_fcor(ifc, 0, isb)/t0**2 - dv%&
-&       fna_he(ifc, 0, isb)*dvb%fna_he(ifc, 0, isb)/t0**2 - SUM(dv%conb(&
-&       ifc, 0, 0:4)*dvb%conb(ifc, 0, 0:4))/t0**2 - dv%flob(ifc, 0)*dvb%&
-&       flob(ifc, 0)/t0**2 - dv%fna_32(ifc, 0, isb)*dvb%fna_32(ifc, 0, &
-&       isb)/t0**2 - dv%fna(ifc, 0, isb)*dvb%fna(ifc, 0, isb)/t0**2
+&       fna_he(ifc, 0, isb)*dvb%fna_he(ifc, 0, isb)/t0**2 - SUM(conbtmp(&
+&       ifc, 0, 0:4)*conbtmpb(ifc, 0, 0:4))/t0**2 - flobtmp(ifc, 0)*&
+&       flobtmpb(ifc, 0)/t0**2 - dv%fna_32(ifc, 0, isb)*dvb%fna_32(ifc, &
+&       0, isb)/t0**2 - dv%fna(ifc, 0, isb)*dvb%fna(ifc, 0, isb)/t0**2
       dvb%fnapsch(ifc, 0, isb) = dvb%fnapsch(ifc, 0, isb)/t0
       dvb%fna_mdf(ifc, 0, isb) = dvb%fna_mdf(ifc, 0, isb)/t0
       dvb%fna_fcor(ifc, 0, isb) = dvb%fna_fcor(ifc, 0, isb)/t0
       dvb%fna_he(ifc, 0, isb) = dvb%fna_he(ifc, 0, isb)/t0
-      dvb%conb(ifc, 0, 0:4) = dvb%conb(ifc, 0, 0:4)/t0
-      dvb%flob(ifc, 0) = dvb%flob(ifc, 0)/t0
+      conbtmpb(ifc, 0, :) = conbtmpb(ifc, 0, :)/t0
+      flobtmpb(ifc, 0) = flobtmpb(ifc, 0)/t0
       dvb%fna_32(ifc, 0, isb) = dvb%fna_32(ifc, 0, isb)/t0
       dvb%fna(ifc, 0, isb) = dvb%fna(ifc, 0, isb)/t0
       CALL POPREAL8(t1, r8/8)
@@ -966,14 +1059,14 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 &       isb)
       temp14 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 1)
       temp13 = temp14*temp15*vbar
-      tempb4 = 4.0_R8*x2b/temp13
-      dvb%fna(ifc, 1, isb) = dvb%fna(ifc, 1, isb) + tempb4
-      tempb1 = -(temp14*dv%fna(ifc, 1, isb)*tempb4/temp13)
+      tempb5 = 4.0_R8*x2b/temp13
+      dvb%fna(ifc, 1, isb) = dvb%fna(ifc, 1, isb) + tempb5
+      tempb0 = -(temp14*dv%fna(ifc, 1, isb)*tempb5/temp13)
       plb%na(mpg%fccv(ifc, 1), isb) = plb%na(mpg%fccv(ifc, 1), isb) + &
-&       vbar*tempb1
+&       vbar*tempb0
       plb%na(mpg%fccv(ifc, 2), isb) = plb%na(mpg%fccv(ifc, 2), isb) + &
-&       vbar*tempb1
-      vbarb = temp15*tempb1
+&       vbar*tempb0
+      vbarb = temp15*tempb0
       CALL POPREAL8(t0, r8/8)
       temp15 = abs0**gamma + 1.0_R8
       temp11 = 1.0/gamma
@@ -994,11 +1087,11 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       END IF
       temp10 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
 &       isb)
-      temp1 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 0)
-      temp13 = temp1*temp10*vbar
+      temp = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 0)
+      temp13 = temp*temp10*vbar
       tempb11 = 4.0_R8*x1b/temp13
       dvb%fna(ifc, 0, isb) = dvb%fna(ifc, 0, isb) + tempb11
-      tempb12 = -(temp1*dv%fna(ifc, 0, isb)*tempb11/temp13)
+      tempb12 = -(temp*dv%fna(ifc, 0, isb)*tempb11/temp13)
       plb%na(mpg%fccv(ifc, 1), isb) = plb%na(mpg%fccv(ifc, 1), isb) + &
 &       vbar*tempb12
       plb%na(mpg%fccv(ifc, 2), isb) = plb%na(mpg%fccv(ifc, 2), isb) + &
@@ -1028,26 +1121,19 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       END IF
     END DO
   END IF
-  CALL POPREAL8ARRAY(dv%conb(:, :, 2), r8*SIZE(dv%conb, 1)*SIZE(dv%conb&
-&              , 2)/8)
-  dvb%conb(:, :, 1) = dvb%conb(:, :, 1) + dvb%conb(:, :, 2)
-  dvb%conb(:, :, 2) = 0.D0
+  conbtmpb(:, :, 1) = conbtmpb(:, :, 1) + conbtmpb(:, :, 2)
+  conbtmpb(:, :, 2) = 0.D0
   conb0b = 0.D0
   kmprtifb = 0.D0
-  CALL POPREAL8ARRAY(dv%conb(:, 1, 1), r8*SIZE(dv%conb, 1)/8)
-  conb0b(:, 1) = conb0b(:, 1) + kmprtif*dvb%conb(:, 1, 1)
-  kmprtifb = conb0(:, 1)*dvb%conb(:, 1, 1)
-  dvb%conb(:, 1, 1) = 0.D0
-  CALL POPREAL8ARRAY(dv%conb(:, 0, 1), r8*SIZE(dv%conb, 1)/8)
-  conb0b(:, 0) = conb0b(:, 0) + kmprtif*dvb%conb(:, 0, 1)
-  kmprtifb = kmprtifb + conb0(:, 0)*dvb%conb(:, 0, 1)
-  dvb%conb(:, 0, 1) = 0.D0
-  CALL POPREAL8ARRAY(dv%conb(:, :, 0), r8*SIZE(dv%conb, 1)*SIZE(dv%conb&
-&              , 2)/8)
-  conb0b = conb0b + dvb%conb(:, :, 0)
+  conb0b(:, 1) = conb0b(:, 1) + kmprtif*conbtmpb(:, 1, 1)
+  kmprtifb = conb0(:, 1)*conbtmpb(:, 1, 1) + conb0(:, 0)*conbtmpb(:, 0, &
+&   1)
+  conbtmpb(:, 1, 1) = 0.D0
+  conb0b(:, 0) = conb0b(:, 0) + kmprtif*conbtmpb(:, 0, 1)
+  conbtmpb(:, 0, 1) = 0.D0
+  conb0b = conb0b + conbtmpb(:, :, 0)
   flob0b = 0.D0
-  CALL POPREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
-  flob0b = dvb%flob
+  flob0b = flobtmpb
   zerosb = 0.D0
   cdpbb = 0.D0
   CALL CALCCOEF_BWD(ncv, nfc, nvx, 0, geo, zeros, zerosb, cdpb, cdpbb, &
@@ -1057,44 +1143,40 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   kmprvb = 0.D0
   kmprb = 0.D0
   DO ifc=nfc,1,-1
-    CALL POPREAL8(dv%conb(ifc, 1, 0), r8/8)
     conb0b(ifc, 1) = conb0b(ifc, 1) + (kmprv(mpg%fcvx(ifc, 1))+kmprv(mpg&
-&     %fcvx(ifc, 2)))*0.5_R8*dvb%conb(ifc, 1, 0) - (kmprv(mpg%fcvx(ifc, &
-&     2))-kmprv(mpg%fcvx(ifc, 1)))*dvb%flob(ifc, 1)
-    tempb5 = conb0(ifc, 1)*0.5_R8*dvb%conb(ifc, 1, 0)
+&     %fcvx(ifc, 2)))*0.5_R8*conbtmpb(ifc, 1, 0) - (kmprv(mpg%fcvx(ifc, &
+&     2))-kmprv(mpg%fcvx(ifc, 1)))*flobtmpb(ifc, 1)
+    tempb6 = conb0(ifc, 1)*0.5_R8*conbtmpb(ifc, 1, 0)
     flob0b(ifc, 1) = flob0b(ifc, 1) + (kmprv(mpg%fcvx(ifc, 1))+kmprv(mpg&
-&     %fcvx(ifc, 2)))*0.5_R8*dvb%flob(ifc, 1) - (kmprv(mpg%fcvx(ifc, 2))&
-&     -kmprv(mpg%fcvx(ifc, 1)))*0.25_R8*dvb%conb(ifc, 1, 0)
-    tempb6 = -(flob0(ifc, 1)*0.25_R8*dvb%conb(ifc, 1, 0))
+&     %fcvx(ifc, 2)))*0.5_R8*flobtmpb(ifc, 1) - (kmprv(mpg%fcvx(ifc, 2))&
+&     -kmprv(mpg%fcvx(ifc, 1)))*0.25_R8*conbtmpb(ifc, 1, 0)
+    tempb7 = -(flob0(ifc, 1)*0.25_R8*conbtmpb(ifc, 1, 0))
+    kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb7
+    kmprvb(mpg%fcvx(ifc, 1)) = kmprvb(mpg%fcvx(ifc, 1)) + tempb6 - &
+&     tempb7
     kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb6
-    kmprvb(mpg%fcvx(ifc, 1)) = kmprvb(mpg%fcvx(ifc, 1)) + tempb5 - &
-&     tempb6
-    kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb5
-    CALL POPREAL8(dv%conb(ifc, 0, 0), r8/8)
     conb0b(ifc, 0) = conb0b(ifc, 0) + (kmpr(mpg%fccv(ifc, 1))+kmpr(mpg%&
-&     fccv(ifc, 2)))*0.5_R8*dvb%conb(ifc, 0, 0) - (kmpr(mpg%fccv(ifc, 2)&
-&     )-kmpr(mpg%fccv(ifc, 1)))*dvb%flob(ifc, 0)
-    tempb5 = conb0(ifc, 0)*0.5_R8*dvb%conb(ifc, 0, 0)
+&     fccv(ifc, 2)))*0.5_R8*conbtmpb(ifc, 0, 0) - (kmpr(mpg%fccv(ifc, 2)&
+&     )-kmpr(mpg%fccv(ifc, 1)))*flobtmpb(ifc, 0)
+    tempb6 = conb0(ifc, 0)*0.5_R8*conbtmpb(ifc, 0, 0)
     flob0b(ifc, 0) = flob0b(ifc, 0) + (kmpr(mpg%fccv(ifc, 1))+kmpr(mpg%&
-&     fccv(ifc, 2)))*0.5_R8*dvb%flob(ifc, 0) - (kmpr(mpg%fccv(ifc, 2))-&
-&     kmpr(mpg%fccv(ifc, 1)))*0.25_R8*dvb%conb(ifc, 0, 0)
-    tempb6 = -(flob0(ifc, 0)*0.25_R8*dvb%conb(ifc, 0, 0))
+&     fccv(ifc, 2)))*0.5_R8*flobtmpb(ifc, 0) - (kmpr(mpg%fccv(ifc, 2))-&
+&     kmpr(mpg%fccv(ifc, 1)))*0.25_R8*conbtmpb(ifc, 0, 0)
+    tempb7 = -(flob0(ifc, 0)*0.25_R8*conbtmpb(ifc, 0, 0))
+    kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb7
+    kmprb(mpg%fccv(ifc, 1)) = kmprb(mpg%fccv(ifc, 1)) + tempb6 - tempb7
     kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb6
-    kmprb(mpg%fccv(ifc, 1)) = kmprb(mpg%fccv(ifc, 1)) + tempb5 - tempb6
-    kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb5
-    CALL POPREAL8(dv%flob(ifc, 1), r8/8)
-    tempb5 = flob0(ifc, 1)*0.5_R8*dvb%flob(ifc, 1)
-    tempb6 = -(conb0(ifc, 1)*dvb%flob(ifc, 1))
+    tempb6 = flob0(ifc, 1)*0.5_R8*flobtmpb(ifc, 1)
+    tempb7 = -(conb0(ifc, 1)*flobtmpb(ifc, 1))
+    kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb7
+    kmprvb(mpg%fcvx(ifc, 1)) = kmprvb(mpg%fcvx(ifc, 1)) + tempb6 - &
+&     tempb7
     kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb6
-    kmprvb(mpg%fcvx(ifc, 1)) = kmprvb(mpg%fcvx(ifc, 1)) + tempb5 - &
-&     tempb6
-    kmprvb(mpg%fcvx(ifc, 2)) = kmprvb(mpg%fcvx(ifc, 2)) + tempb5
-    CALL POPREAL8(dv%flob(ifc, 0), r8/8)
-    tempb5 = flob0(ifc, 0)*0.5_R8*dvb%flob(ifc, 0)
-    tempb6 = -(conb0(ifc, 0)*dvb%flob(ifc, 0))
+    tempb6 = flob0(ifc, 0)*0.5_R8*flobtmpb(ifc, 0)
+    tempb7 = -(conb0(ifc, 0)*flobtmpb(ifc, 0))
+    kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb7
+    kmprb(mpg%fccv(ifc, 1)) = kmprb(mpg%fccv(ifc, 1)) + tempb6 - tempb7
     kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb6
-    kmprb(mpg%fccv(ifc, 1)) = kmprb(mpg%fccv(ifc, 1)) + tempb5 - tempb6
-    kmprb(mpg%fccv(ifc, 2)) = kmprb(mpg%fccv(ifc, 2)) + tempb5
   END DO
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
@@ -1129,10 +1211,10 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 &               , isb), plb%na(:, isb), zeros, zerosb, co%cdna_exb, cob%&
 &               cdna_exb, dv%fna_exb, dvb%fna_exb, zeros1, zeros1b, &
 &               dumm1, dumm1b)
+    dvb%fna_exb = 0.D0
   END IF
   tempb9 = (1.0_R8-drift_hyb)*geo%fcs*geo%fcqalf(:, 1)*dvb%fna_he(:, 1, &
 &   isb)
-  dvb%fna_exb = 0.D0
   nbfb = 0.D0
   CALL POPREAL8ARRAY(dv%fna_32(:, 1, isb), r8*SIZE(dv%fna_32, 1)/8)
   tempb10 = (1.0_R8-drift_hyb)*dvb%fna_32(:, 1, isb)
@@ -1278,22 +1360,22 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   cdpbb(:, 1) = 0.D0
   dpbcb = 0.D0
   DO ifc=nfc,1,-1
-    tempb5 = geo%fcqgam(ifc, 0)*0.5_R8*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
+    tempb6 = geo%fcqgam(ifc, 0)*0.5_R8*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2&
 &     ))*dpbmb(ifc)
     dpbmb(ifc) = 0.D0
-    dpbcb(mpg%fccv(ifc, 1)) = dpbcb(mpg%fccv(ifc, 1)) + tempb5
-    dpbcb(mpg%fccv(ifc, 2)) = dpbcb(mpg%fccv(ifc, 2)) + tempb5
-    tempb4 = switch%b2npco_pcm1*0.5_R8*geo%fcpbs(ifc)*cdpbb(ifc, 0)/(geo&
+    dpbcb(mpg%fccv(ifc, 1)) = dpbcb(mpg%fccv(ifc, 1)) + tempb6
+    dpbcb(mpg%fccv(ifc, 2)) = dpbcb(mpg%fccv(ifc, 2)) + tempb6
+    tempb5 = switch%b2npco_pcm1*0.5_R8*geo%fcpbs(ifc)*cdpbb(ifc, 0)/(geo&
 &     %fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
     cdpbb(ifc, 0) = 0.D0
     dvb%pcca(mpg%fccv(ifc, 1), 1, isb) = dvb%pcca(mpg%fccv(ifc, 1), 1, &
-&     isb) + pl%na(mpg%fccv(ifc, 1), isb)*tempb4
+&     isb) + pl%na(mpg%fccv(ifc, 1), isb)*tempb5
     plb%na(mpg%fccv(ifc, 1), isb) = plb%na(mpg%fccv(ifc, 1), isb) + dv%&
-&     pcca(mpg%fccv(ifc, 1), 1, isb)*tempb4
+&     pcca(mpg%fccv(ifc, 1), 1, isb)*tempb5
     dvb%pcca(mpg%fccv(ifc, 2), 1, isb) = dvb%pcca(mpg%fccv(ifc, 2), 1, &
-&     isb) + pl%na(mpg%fccv(ifc, 2), isb)*tempb4
+&     isb) + pl%na(mpg%fccv(ifc, 2), isb)*tempb5
     plb%na(mpg%fccv(ifc, 2), isb) = plb%na(mpg%fccv(ifc, 2), isb) + dv%&
-&     pcca(mpg%fccv(ifc, 2), 1, isb)*tempb4
+&     pcca(mpg%fccv(ifc, 2), 1, isb)*tempb5
   END DO
   t0b = 0.D0
   wrk4b = 0.D0
@@ -1313,16 +1395,16 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     IF ((temp9 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. INT(&
 &       gamma))) .OR. (temp8 .LE. 0.D0 .AND. (temp11 .EQ. 0.D0 .OR. &
 &       temp11 .NE. INT(temp11)))) THEN
-      tempb6 = 0.D0
+      tempb7 = 0.D0
     ELSE
-      tempb6 = -(gamma*temp9**(gamma-1)*temp11*temp8**(temp11-1)*wrk4b(&
+      tempb7 = -(gamma*temp9**(gamma-1)*temp11*temp8**(temp11-1)*wrk4b(&
 &       ifc)/(temp10*temp7**2))
     END IF
     wrk4b(ifc) = 0.D0
-    t3b = tempb6
-    tempb4 = -(temp9*tempb6)
-    vbarb = 0.5_R8*t1*tempb4
-    t1b = 0.5_R8*vbar*tempb4
+    t3b = tempb7
+    tempb5 = -(temp9*tempb7)
+    vbarb = 0.5_R8*t1*tempb5
+    t1b = 0.5_R8*vbar*tempb5
     CALL POPREAL8(vbar, r8/8)
     temp11 = am(isb)*pi*mp
     IF (.NOT.8.0_R8*(t0/temp11) .EQ. 0.D0) t0b = t0b + 8.0_R8*geo%fcs(&
@@ -1372,6 +1454,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       t0b = 0.D0
     END IF
   END DO
+  CALL POPINTEGER4(ifc)
   dummyzerodiffb = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%na(:, &
 &             isb), plb%na(:, isb), flo_mdf, flo_mdfb, co%cdna(:, :, isb&
@@ -1389,7 +1472,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     tempb9 = switch%b2tfnb_ycur*scurb(:, 1)/(qe*rzf*nbf)
     dvb%fchviskt_a(:, 1, isb) = dvb%fchviskt_a(:, 1, isb) + scurb(:, 1)/&
 &     temp2
-    tempb3 = -(dv%fchviskt_a(:, 1, isb)*scurb(:, 1)/temp2**2)
+    tempb4 = -(dv%fchviskt_a(:, 1, isb)*scurb(:, 1)/temp2**2)
     scurb(:, 1) = 0.D0
     dvb%fchinert_a(:, 1, isb) = dvb%fchinert_a(:, 1, isb) + tempb9
     dvb%fchvispar_a(:, 1, isb) = dvb%fchvispar_a(:, 1, isb) + tempb9
@@ -1402,8 +1485,8 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 &     switch%fnb_vis_per*dv%fchvisper_a(:, 1, isb)+dv%fchanml_a(:, 1, &
 &     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 1, isb))*tempb9/(qe*rzf*nbf)&
 &     )
-    rzfb = qe*nbf*tempb3 + qe*nbf*tempb10
-    nbfb = nbfb + qe*rzf*tempb3 + qe*rzf*tempb10
+    rzfb = qe*nbf*tempb4 + qe*nbf*tempb10
+    nbfb = nbfb + qe*rzf*tempb4 + qe*rzf*tempb10
     temp12 = qe*rzf*nbf
     tempb9 = switch%b2tfnb_xcur*scurb(:, 0)/(qe*rzf*nbf)
     dvb%fchviskt_a(:, 0, isb) = dvb%fchviskt_a(:, 0, isb) + scurb(:, 0)/&
@@ -1411,14 +1494,17 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     tempb10 = -(dv%fchviskt_a(:, 0, isb)*scurb(:, 0)/temp12**2)
     dvb%fchinert_a(:, 0, isb) = dvb%fchinert_a(:, 0, isb) + tempb9
     dvb%fchvispar_a(:, 0, isb) = dvb%fchvispar_a(:, 0, isb) + tempb9
-    dvb%fchvisper_a(:, 0, isb) = dvb%fchvisper_a(:, 0, isb) + tempb9
+    dvb%fchvisper_a(:, 0, isb) = dvb%fchvisper_a(:, 0, isb) + switch%&
+&     fnb_vis_per*tempb9
     dvb%fchanml_a(:, 0, isb) = dvb%fchanml_a(:, 0, isb) + tempb9
-    dvb%fchvisq_a(:, 0, isb) = dvb%fchvisq_a(:, 0, isb) + tempb9
-    tempb3 = -((dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))*tempb9/(qe*rzf*nbf))
-    rzfb = rzfb + qe*nbf*tempb10 + qe*nbf*tempb3
-    nbfb = nbfb + qe*rzf*tempb10 + qe*rzf*tempb3
+    dvb%fchvisq_a(:, 0, isb) = dvb%fchvisq_a(:, 0, isb) + switch%&
+&     fnb_vis_q*tempb9
+    tempb4 = -((dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+&
+&     switch%fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, &
+&     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))*tempb9/(qe*rzf*nbf)&
+&     )
+    rzfb = rzfb + qe*nbf*tempb10 + qe*nbf*tempb4
+    nbfb = nbfb + qe*rzf*tempb10 + qe*rzf*tempb4
   ELSE
     rzfb = 0.D0
   END IF
@@ -1480,54 +1566,78 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   IF (branch .EQ. 0) THEN
     dnbtib = 0.D0
     DO ifc=nfc,1,-1
+      CALL POPREAL8(dv%uadia(ifc, 1, isb), r8/8)
+      temp11 = t3/vbar
+      tempb5 = dvb%uadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%uadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%uadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = -(temp11*tempb6)
+      CALL POPREAL8(dv%uadia(ifc, 0, isb), r8/8)
+      temp11 = t3/vbar
+      tempb5 = dvb%uadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%uadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
+      CALL POPREAL8(t3, r8/8)
+      temp11 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+      IF (temp11**2 + dv%uadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
+        tempb7 = 0.D0
+      ELSE
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%uadia(ifc, 1, isb)**2))
+      END IF
+      dvb%uadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
+&       /geo%fcbb(ifc, 2)
+      dvb%uadia(ifc, 1, isb) = dvb%uadia(ifc, 1, isb) + 2*dv%uadia(ifc, &
+&       1, isb)*tempb7
       CALL POPREAL8(dv%wadia(ifc, 1, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%wadia(ifc, 1, isb)/(temp11+1.0_R8)
-      dvb%wadia(ifc, 1, isb) = tempb4
-      tempb5 = -(dv%wadia(ifc, 1, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = tempb5
-      vbarb = -(temp11*tempb5)
+      tempb5 = dvb%wadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%wadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%wadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(dv%wadia(ifc, 0, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%wadia(ifc, 0, isb)/(temp11+1.0_R8)
-      tempb5 = -(dv%wadia(ifc, 0, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = t3b + tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%wadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%wadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(t3, r8/8)
       temp11 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
       IF (temp11**2 + dv%wadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
-        tempb6 = 0.D0
+        tempb7 = 0.D0
       ELSE
-        tempb6 = t3b/(2.0*SQRT(temp11**2+dv%wadia(ifc, 1, isb)**2))
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%wadia(ifc, 1, isb)**2))
       END IF
-      dvb%wadia(ifc, 0, isb) = tempb4 + geo%fcbb(ifc, 3)*2*temp11*tempb6&
+      dvb%wadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
 &       /geo%fcbb(ifc, 2)
       dvb%wadia(ifc, 1, isb) = dvb%wadia(ifc, 1, isb) + 2*dv%wadia(ifc, &
-&       1, isb)*tempb6
+&       1, isb)*tempb7
       CALL POPREAL8(dv%vadia(ifc, 1, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%vadia(ifc, 1, isb)/(temp11+1.0_R8)
-      dvb%vadia(ifc, 1, isb) = tempb4
-      tempb5 = -(dv%vadia(ifc, 1, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%vadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%vadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%vadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(dv%vadia(ifc, 0, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%vadia(ifc, 0, isb)/(temp11+1.0_R8)
-      tempb5 = -(dv%vadia(ifc, 0, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = t3b + tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%vadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%vadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(t3, r8/8)
       temp11 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
       IF (temp11**2 + dv%vadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
-        tempb6 = 0.D0
+        tempb7 = 0.D0
       ELSE
-        tempb6 = t3b/(2.0*SQRT(temp11**2+dv%vadia(ifc, 1, isb)**2))
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%vadia(ifc, 1, isb)**2))
       END IF
-      dvb%vadia(ifc, 0, isb) = tempb4 + geo%fcbb(ifc, 3)*2*temp11*tempb6&
+      dvb%vadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
 &       /geo%fcbb(ifc, 2)
       dvb%vadia(ifc, 1, isb) = dvb%vadia(ifc, 1, isb) + 2*dv%vadia(ifc, &
-&       1, isb)*tempb6
+&       1, isb)*tempb7
       CALL POPREAL8(dv%fnapsch(ifc, 1, isb), r8/8)
       t2b = -(dv%fnapsch(ifc, 1, isb)*dvb%fnapsch(ifc, 1, isb)/t2**2)
       dvb%fnapsch(ifc, 1, isb) = dvb%fnapsch(ifc, 1, isb)/t2
@@ -1547,27 +1657,27 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 &       (ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
       temp4 = temp5*co%cddi(ifc, 0, isb)*dnbti(ifc, 1)/temp6
       temp3 = temp4*temp4 + temp7*temp7
-      temp0 = SQRT(temp3)
-      tempb5 = t2b/(vbar*t1)
+      temp1 = SQRT(temp3)
+      tempb6 = t2b/(vbar*t1)
       IF (temp3 .EQ. 0.D0) THEN
-        tempb4 = 0.D0
+        tempb5 = 0.D0
       ELSE
-        tempb4 = temp5*2*temp4*tempb5/(temp6*2.0*temp0)
+        tempb5 = temp5*2*temp4*tempb6/(temp6*2.0*temp1)
       END IF
       IF (temp3 .EQ. 0.D0) THEN
-        tempb1 = 0.D0
+        tempb0 = 0.D0
       ELSE
-        tempb1 = temp8*2*temp7*tempb5/(2.0*temp0)
+        tempb0 = temp8*2*temp7*tempb6/(2.0*temp1)
       END IF
-      tempb7 = -(temp0*tempb5/(vbar*t1))
-      vbarb = vbarb + t1*tempb7
-      t1b = vbar*tempb7
-      cob%cddi(ifc, 1, isb) = cob%cddi(ifc, 1, isb) + temp9*tempb1
-      dnbtib(ifc, 0) = dnbtib(ifc, 0) + co%cddi(ifc, 1, isb)*tempb1/geo%&
+      tempb1 = -(temp1*tempb6/(vbar*t1))
+      vbarb = vbarb + t1*tempb1
+      t1b = vbar*tempb1
+      cob%cddi(ifc, 1, isb) = cob%cddi(ifc, 1, isb) + temp9*tempb0
+      dnbtib(ifc, 0) = dnbtib(ifc, 0) + co%cddi(ifc, 1, isb)*tempb0/geo%&
 &       fcs(ifc)
       cob%cddi(ifc, 0, isb) = cob%cddi(ifc, 0, isb) + dnbti(ifc, 1)*&
-&       tempb4
-      dnbtib(ifc, 1) = dnbtib(ifc, 1) + co%cddi(ifc, 0, isb)*tempb4
+&       tempb5
+      dnbtib(ifc, 1) = dnbtib(ifc, 1) + co%cddi(ifc, 0, isb)*tempb5
       CALL POPREAL8(vbar, r8/8)
       temp11 = am(isb)*pi*mp
       IF (.NOT.8.0_R8*(t0/temp11) .EQ. 0.D0) t0b = t0b + 8.0_R8*vbarb/(&
@@ -1584,6 +1694,7 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       END IF
       t0b = 0.D0
     END DO
+    CALL POPINTEGER4(ifc)
   ELSE IF (branch .EQ. 1) THEN
     dnbtib = 0.D0
   ELSE
@@ -1594,54 +1705,78 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     DO ifc=nfc,1,-1
+      CALL POPREAL8(dv%uadia(ifc, 1, isb), r8/8)
+      temp11 = t3/vbar
+      tempb5 = dvb%uadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%uadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%uadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = -(temp11*tempb6)
+      CALL POPREAL8(dv%uadia(ifc, 0, isb), r8/8)
+      temp11 = t3/vbar
+      tempb5 = dvb%uadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%uadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
+      CALL POPREAL8(t3, r8/8)
+      temp11 = geo%fcbb(ifc, 3)*dv%uadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
+      IF (temp11**2 + dv%uadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
+        tempb7 = 0.D0
+      ELSE
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%uadia(ifc, 1, isb)**2))
+      END IF
+      dvb%uadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
+&       /geo%fcbb(ifc, 2)
+      dvb%uadia(ifc, 1, isb) = dvb%uadia(ifc, 1, isb) + 2*dv%uadia(ifc, &
+&       1, isb)*tempb7
       CALL POPREAL8(dv%wadia(ifc, 1, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%wadia(ifc, 1, isb)/(temp11+1.0_R8)
-      dvb%wadia(ifc, 1, isb) = tempb4
-      tempb5 = -(dv%wadia(ifc, 1, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = tempb5
-      vbarb = -(temp11*tempb5)
+      tempb5 = dvb%wadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%wadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%wadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(dv%wadia(ifc, 0, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%wadia(ifc, 0, isb)/(temp11+1.0_R8)
-      tempb5 = -(dv%wadia(ifc, 0, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = t3b + tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%wadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%wadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(t3, r8/8)
       temp11 = geo%fcbb(ifc, 3)*dv%wadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
       IF (temp11**2 + dv%wadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
-        tempb6 = 0.D0
+        tempb7 = 0.D0
       ELSE
-        tempb6 = t3b/(2.0*SQRT(temp11**2+dv%wadia(ifc, 1, isb)**2))
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%wadia(ifc, 1, isb)**2))
       END IF
-      dvb%wadia(ifc, 0, isb) = tempb4 + geo%fcbb(ifc, 3)*2*temp11*tempb6&
+      dvb%wadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
 &       /geo%fcbb(ifc, 2)
       dvb%wadia(ifc, 1, isb) = dvb%wadia(ifc, 1, isb) + 2*dv%wadia(ifc, &
-&       1, isb)*tempb6
+&       1, isb)*tempb7
       CALL POPREAL8(dv%vadia(ifc, 1, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%vadia(ifc, 1, isb)/(temp11+1.0_R8)
-      dvb%vadia(ifc, 1, isb) = tempb4
-      tempb5 = -(dv%vadia(ifc, 1, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%vadia(ifc, 1, isb)/(temp11+1.0_R8)
+      dvb%vadia(ifc, 1, isb) = tempb5
+      tempb6 = -(dv%vadia(ifc, 1, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(dv%vadia(ifc, 0, isb), r8/8)
       temp11 = t3/vbar
-      tempb4 = dvb%vadia(ifc, 0, isb)/(temp11+1.0_R8)
-      tempb5 = -(dv%vadia(ifc, 0, isb)*tempb4/(vbar*(temp11+1.0_R8)))
-      t3b = t3b + tempb5
-      vbarb = vbarb - temp11*tempb5
+      tempb5 = dvb%vadia(ifc, 0, isb)/(temp11+1.0_R8)
+      tempb6 = -(dv%vadia(ifc, 0, isb)*tempb5/(vbar*(temp11+1.0_R8)))
+      t3b = t3b + tempb6
+      vbarb = vbarb - temp11*tempb6
       CALL POPREAL8(t3, r8/8)
       temp11 = geo%fcbb(ifc, 3)*dv%vadia(ifc, 0, isb)/geo%fcbb(ifc, 2)
       IF (temp11**2 + dv%vadia(ifc, 1, isb)**2 .EQ. 0.D0) THEN
-        tempb6 = 0.D0
+        tempb7 = 0.D0
       ELSE
-        tempb6 = t3b/(2.0*SQRT(temp11**2+dv%vadia(ifc, 1, isb)**2))
+        tempb7 = t3b/(2.0*SQRT(temp11**2+dv%vadia(ifc, 1, isb)**2))
       END IF
-      dvb%vadia(ifc, 0, isb) = tempb4 + geo%fcbb(ifc, 3)*2*temp11*tempb6&
+      dvb%vadia(ifc, 0, isb) = tempb5 + geo%fcbb(ifc, 3)*2*temp11*tempb7&
 &       /geo%fcbb(ifc, 2)
       dvb%vadia(ifc, 1, isb) = dvb%vadia(ifc, 1, isb) + 2*dv%vadia(ifc, &
-&       1, isb)*tempb6
+&       1, isb)*tempb7
       CALL POPREAL8(dv%fnapsch(ifc, 1, isb), r8/8)
       t2b = -(dv%fnapsch(ifc, 1, isb)*dvb%fnapsch(ifc, 1, isb)/t2**2)
       dvb%fnapsch(ifc, 1, isb) = dvb%fnapsch(ifc, 1, isb)/t2
@@ -1652,40 +1787,40 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       icv2 = mpg%fccv(ifc, 2)
       t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
       CALL POPREAL8(t2, r8/8)
-      temp = dnbti(ifc, 0)/geo%fcs(ifc)
+      temp0 = dnbti(ifc, 0)/geo%fcs(ifc)
       temp3 = switch%fnbpsch*dv%facdrift(ifc)*geo%fcqgam(ifc, 0)*(geo%&
 &       fchc(ifc, 1)+geo%fchc(ifc, 2))
-      temp4 = temp3*co%cddi(ifc, 1, isb)*temp
+      temp4 = temp3*co%cddi(ifc, 1, isb)*temp0
       temp5 = geo%fcs(ifc)*geo%fcbb(ifc, 2)
       temp6 = switch%fnbpsch*dv%facdrift(ifc)*(geo%fchc(ifc, 1)+geo%fchc&
 &       (ifc, 2))*geo%fcqgam(ifc, 0)*geo%fcbb(ifc, 3)
       temp7 = temp6*co%cddi(ifc, 0, isb)*dnbti(ifc, 1)/temp5
       temp8 = temp7*temp7 + temp4*temp4
       temp9 = SQRT(temp8)
-      tempb0 = t2b/(vbar*t1)
+      tempb2 = t2b/(vbar*t1)
       IF (temp8 .EQ. 0.D0) THEN
-        tempb1 = 0.D0
+        tempb0 = 0.D0
       ELSE
-        tempb1 = temp6*2*temp7*tempb0/(temp5*2.0*temp9)
+        tempb0 = temp6*2*temp7*tempb2/(temp5*2.0*temp9)
       END IF
       IF (temp8 .EQ. 0.D0) THEN
-        tempb4 = 0.D0
+        tempb5 = 0.D0
       ELSE
-        tempb4 = temp3*2*temp4*tempb0/(2.0*temp9)
+        tempb5 = temp3*2*temp4*tempb2/(2.0*temp9)
       END IF
-      tempb5 = -(temp9*tempb0/(vbar*t1))
-      vbarb = vbarb + t1*tempb5
-      t1b = vbar*tempb5
-      cob%cddi(ifc, 1, isb) = cob%cddi(ifc, 1, isb) + temp*tempb4
-      dnbtib(ifc, 0) = dnbtib(ifc, 0) + co%cddi(ifc, 1, isb)*tempb4/geo%&
+      tempb6 = -(temp9*tempb2/(vbar*t1))
+      vbarb = vbarb + t1*tempb6
+      t1b = vbar*tempb6
+      cob%cddi(ifc, 1, isb) = cob%cddi(ifc, 1, isb) + temp0*tempb5
+      dnbtib(ifc, 0) = dnbtib(ifc, 0) + co%cddi(ifc, 1, isb)*tempb5/geo%&
 &       fcs(ifc)
       cob%cddi(ifc, 0, isb) = cob%cddi(ifc, 0, isb) + dnbti(ifc, 1)*&
-&       tempb1
-      dnbtib(ifc, 1) = dnbtib(ifc, 1) + co%cddi(ifc, 0, isb)*tempb1
+&       tempb0
+      dnbtib(ifc, 1) = dnbtib(ifc, 1) + co%cddi(ifc, 0, isb)*tempb0
       CALL POPREAL8(vbar, r8/8)
-      temp0 = am(isb)*pi*mp
-      IF (.NOT.8.0_R8*(t0/temp0) .EQ. 0.D0) t0b = t0b + 8.0_R8*geo%fcbb(&
-&         ifc, 0)*vbarb/(temp0*2.0*SQRT(8.0_R8*(t0/temp0))*geo%fcbb(ifc&
+      temp1 = am(isb)*pi*mp
+      IF (.NOT.8.0_R8*(t0/temp1) .EQ. 0.D0) t0b = t0b + 8.0_R8*geo%fcbb(&
+&         ifc, 0)*vbarb/(temp1*2.0*SQRT(8.0_R8*(t0/temp1))*geo%fcbb(ifc&
 &         , 3))
       plb%na(icv1, isb) = plb%na(icv1, isb) + 0.5_R8*t1b
       plb%na(icv2, isb) = plb%na(icv2, isb) + 0.5_R8*t1b
@@ -1699,50 +1834,52 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
       END IF
       t0b = 0.D0
     END DO
+    CALL POPINTEGER4(ifc)
   END IF
-  CALL POPREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
-  CALL POPREAL8ARRAY(dv%conb, r8*SIZE(dv%conb, 1)*SIZE(dv%conb, 2)*SIZE(&
-&              dv%conb, 3)/8)
   CALL B2TNPSCH_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, dv%&
 &           facdrift, co%cddi(:, :, isb), cob%cddi(:, :, isb), pl%ti, &
-&           plb%ti, pl%na(:, isb), plb%na(:, isb), kmprti, kmprtib, dv%&
-&           flob, dvb%flob, dv%conb, dvb%conb, dv%fnapsch(:, :, isb), &
-&           dvb%fnapsch(:, :, isb))
-  dvb%flob = 0.D0
-  dvb%conb = 0.D0
+&           plb%ti, pl%na(:, isb), plb%na(:, isb), kmprti, kmprtib, &
+&           flobtmp, flobtmpb, conbtmp(:, :, 0:2), conbtmpb(:, :, 0:2), &
+&           dv%fnapsch(:, :, isb), dvb%fnapsch(:, :, isb))
+  conbtmpb(:, :, 0:2) = 0.D0
   dvb%fnapsch(:, :, isb) = 0.D0
+  CALL POPREAL8ARRAY(dv%uadia(:, :, isb), r8*SIZE(dv%uadia, 1)*SIZE(dv%&
+&              uadia, 2)/8)
+  dvb%vaecrb(:, :, isb) = dvb%vaecrb(:, :, isb) + dvb%uadia(:, :, isb)
+  dvb%vadia(:, :, isb) = dvb%vadia(:, :, isb) + dvb%uadia(:, :, isb)
+  dvb%uadia(:, :, isb) = 0.D0
   wrk1b = 0.D0
   CALL POPREAL8ARRAY(dv%wadia(:, 1, isb), r8*SIZE(dv%wadia, 1)/8)
-  tempb3 = dv%facdrift*wrk0*dvb%wadia(:, 1, isb)/(qe*wrk1)
+  tempb4 = dv%facdrift*wrk0*dvb%wadia(:, 1, isb)/(qe*wrk1)
   dvb%wadia(:, 1, isb) = 0.D0
-  dnbtib(:, 0) = dnbtib(:, 0) + tempb3
-  wrk1b = -(dnbti(:, 0)*tempb3/wrk1)
+  dnbtib(:, 0) = dnbtib(:, 0) + tempb4
+  wrk1b = -(dnbti(:, 0)*tempb4/wrk1)
   CALL POPREAL8ARRAY(dv%wadia(:, 0, isb), r8*SIZE(dv%wadia, 1)/8)
-  tempb3 = -(dv%facdrift*wrk0*dvb%wadia(:, 0, isb)/(qe*wrk1))
+  tempb4 = -(dv%facdrift*wrk0*dvb%wadia(:, 0, isb)/(qe*wrk1))
   dvb%wadia(:, 0, isb) = 0.D0
-  dnbtib(:, 1) = dnbtib(:, 1) + tempb3
-  wrk1b = wrk1b - dnbti(:, 1)*tempb3/wrk1
+  dnbtib(:, 1) = dnbtib(:, 1) + tempb4
+  wrk1b = wrk1b - dnbti(:, 1)*tempb4/wrk1
   nbzbcb = 0.D0
   CALL INTFACE_BWD(nvx, nfc, mpg%fcvx, weight, nbzbc, nbzbcb, wrk1, &
 &            wrk1b)
   CALL POPREAL8ARRAY(dv%vadia(:, 1, isb), r8*SIZE(dv%vadia, 1)/8)
-  tempb3 = -(switch%raddidr*dv%facdrift*donedbsq(:, 0)*geo%fcbb(:, 2)*&
+  tempb4 = -(switch%raddidr*dv%facdrift*donedbsq(:, 0)*geo%fcbb(:, 2)*&
 &   dvb%vadia(:, 1, isb)/nbf)
   dvb%vadia(:, 1, isb) = 0.D0
-  wrk1b = wrk1b + tempb3
-  nbfb = nbfb - wrk1*tempb3/nbf
+  wrk1b = wrk1b + tempb4
+  nbfb = nbfb - wrk1*tempb4/nbf
   CALL POPREAL8ARRAY(dv%vadia(:, 0, isb), r8*SIZE(dv%vadia, 1)/8)
-  tempb3 = switch%poldidr*dv%facdrift*donedbsq(:, 1)*geo%fcbb(:, 2)*dvb%&
+  tempb4 = switch%poldidr*dv%facdrift*donedbsq(:, 1)*geo%fcbb(:, 2)*dvb%&
 &   vadia(:, 0, isb)/nbf
   dvb%vadia(:, 0, isb) = 0.D0
-  wrk1b = wrk1b + tempb3
-  nbfb = nbfb - wrk1*tempb3/nbf
+  wrk1b = wrk1b + tempb4
+  nbfb = nbfb - wrk1*tempb4/nbf
   wrkb = 0.D0
   CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, wrk, wrkb, wrk1, wrk1b)
-  tempb2 = wrkb/(qe*rt%rza(:, isb))
-  plb%na(:, isb) = plb%na(:, isb) + pl%ti*tempb2
-  plb%ti = plb%ti + pl%na(:, isb)*tempb2
-  rtb%rza(:, isb) = rtb%rza(:, isb) - pl%na(:, isb)*pl%ti*tempb2/rt%rza(&
+  tempb3 = wrkb/(qe*rt%rza(:, isb))
+  plb%na(:, isb) = plb%na(:, isb) + pl%ti*tempb3
+  plb%ti = plb%ti + pl%na(:, isb)*tempb3
+  rtb%rza(:, isb) = rtb%rza(:, isb) - pl%na(:, isb)*pl%ti*tempb3/rt%rza(&
 &   :, isb)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
@@ -1756,23 +1893,79 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
         CALL POPREAL8(dv%vaecrb(ifc, 0, isb), r8/8)
         t1b = t1b + dv%vaecrb(ifc, 0, isb)*dvb%vaecrb(ifc, 0, isb)
         dvb%vaecrb(ifc, 0, isb) = t1*dvb%vaecrb(ifc, 0, isb)
-        tempb1 = 2.0_R8*t1b/t0
-        cob%cssb(ifc) = cob%cssb(ifc) + tempb1
-        t0b = t0b - co%cssb(ifc)*tempb1/t0
+        tempb0 = 2.0_R8*t1b/t0
+        cob%cssb(ifc) = cob%cssb(ifc) + tempb0
+        t0b = t0b - co%cssb(ifc)*tempb0/t0
       END IF
       CALL POPREAL8(t0, r8/8)
-      temp = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
-      IF (temp**2 + dv%vaecrb(ifc, 1, isb)**2 .EQ. 0.D0) THEN
-        tempb0 = 0.D0
+      temp0 = geo%fcbb(ifc, 3)*dv%vaecrb(ifc, 0, isb)/geo%fcbb(ifc, 2)
+      IF (temp0**2 + dv%vaecrb(ifc, 1, isb)**2 .EQ. 0.D0) THEN
+        tempb2 = 0.D0
       ELSE
-        tempb0 = t0b/(2.0*SQRT(temp**2+dv%vaecrb(ifc, 1, isb)**2))
+        tempb2 = t0b/(2.0*SQRT(temp0**2+dv%vaecrb(ifc, 1, isb)**2))
       END IF
       dvb%vaecrb(ifc, 0, isb) = dvb%vaecrb(ifc, 0, isb) + geo%fcbb(ifc, &
-&       3)*2*temp*tempb0/geo%fcbb(ifc, 2)
+&       3)*2*temp0*tempb2/geo%fcbb(ifc, 2)
       dvb%vaecrb(ifc, 1, isb) = dvb%vaecrb(ifc, 1, isb) + 2*dv%vaecrb(&
-&       ifc, 1, isb)*tempb0
+&       ifc, 1, isb)*tempb2
       t0b = 0.D0
     END DO
+    CALL POPINTEGER4(ifc)
+  END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    DO j=mpg%nfci,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        CALL POPINTEGER4(ad_to)
+        DO k=ad_to,1,-1
+          ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+          CALL POPREAL8(dv%vaecrb(ifc, 1, isb), r8/8)
+          dpo_pb = switch%radeldr*dv%fac_exb(ifc)*wrk0(ifc)*dvb%vaecrb(&
+&           ifc, 1, isb)
+          dvb%vaecrb(ifc, 1, isb) = 0.D0
+          CALL POPREAL8(dv%vaecrb(ifc, 0, isb), r8/8)
+          dpo_rb = -(switch%poleldr*dv%fac_exb(ifc)*wrk0(ifc)*dvb%vaecrb&
+&           (ifc, 0, isb))
+          dvb%vaecrb(ifc, 0, isb) = 0.D0
+          icv1 = mpg%fccv(ifc, 1)
+          icv2 = mpg%fccv(ifc, 2)
+          tempb0 = geo%fcqalf(ifc, 1)*dpo_rb/(geo%fcqgam(ifc, 0)*(geo%&
+&           fchc(ifc, 1)+geo%fchc(ifc, 2)))
+          tempb1 = vx_dir*geo%fcqbet(ifc, 0)*dpo_rb/(geo%fcqgam(ifc, 0)*&
+&           fcht_tot)
+          wrkvxb(ivx2) = wrkvxb(ivx2) + tempb1
+          wrkvxb(ivx1) = wrkvxb(ivx1) - tempb1
+          plb%po(icv2) = plb%po(icv2) + tempb0
+          plb%po(icv1) = plb%po(icv1) - tempb0
+          tempb0 = geo%fcqalf(ifc, 0)*dpo_pb/(geo%fcqgam(ifc, 0)*(geo%&
+&           fchc(ifc, 1)+geo%fchc(ifc, 2)))
+          tempb1 = vx_dir*geo%fcqbet(ifc, 1)*dpo_pb/(geo%fcqgam(ifc, 0)*&
+&           fcht_tot)
+          wrkvxb(ivx2) = wrkvxb(ivx2) + tempb1
+          wrkvxb(ivx1) = wrkvxb(ivx1) - tempb1
+          plb%po(icv2) = plb%po(icv2) + tempb0
+          plb%po(icv1) = plb%po(icv1) - tempb0
+          CALL POPREAL8(vx_dir, r8/8)
+        END DO
+        CALL POPREAL8(fcht_tot, r8/8)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPINTEGER4(ivx2)
+        ELSE
+          CALL POPINTEGER4(ivx2)
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPINTEGER4(ivx1)
+        ELSE
+          CALL POPINTEGER4(ivx1)
+        END IF
+      END IF
+    END DO
+    CALL INTVERTEX_BWD(ncv, nvx, mpg, geo%vxvol, pl%po, plb%po, wrkvx, &
+&                wrkvxb)
+    wrkvxb = 0.D0
   END IF
   dpob = 0.D0
   CALL POPREAL8ARRAY(dv%vaecrb(:, 1, isb), r8*SIZE(dv%vaecrb, 1)/8)
@@ -1795,11 +1988,8 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   rtb%rza(:, isb) = rtb%rza(:, isb) + pl%na(:, isb)*nbzbb
   plb%ti = plb%ti + pl%na(:, isb)*nbtib
   wrk0b = 0.D0
- 100 CALL POPREAL8ARRAY(dv%conb, r8*SIZE(dv%conb, 1)*SIZE(dv%conb, 2)*&
-&                 SIZE(dv%conb, 3)/8)
-  dvb%conb = 0.D0
-  CALL POPREAL8ARRAY(dv%flob, r8*SIZE(dv%flob, 1)*SIZE(dv%flob, 2)/8)
-  dvb%flob = 0.D0
+ 100 dvb%conb(:, :, :, isb) = 0.D0
+  dvb%flob(:, :, isb) = 0.D0
   CALL POPREAL8ARRAY(dv%fna_mdf(:, :, isb), r8*SIZE(dv%fna_mdf, 1)*SIZE(&
 &              dv%fna_mdf, 2)/8)
   dvb%fna_mdf(:, :, isb) = 0.D0
@@ -1813,6 +2003,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
   CALL POPREAL8ARRAY(dv%vadia(:, :, isb), r8*SIZE(dv%vadia, 1)*SIZE(dv%&
 &              vadia, 2)/8)
   dvb%vadia(:, :, isb) = 0.D0
+  CALL POPREAL8ARRAY(dv%uadia(:, :, isb), r8*SIZE(dv%uadia, 1)*SIZE(dv%&
+&              uadia, 2)/8)
+  dvb%uadia(:, :, isb) = 0.D0
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     CALL INTFACE_BWD(ncv, nfc, mpg%fccv, geo%fcvol, kmprti, kmprtib, &
@@ -1855,7 +2048,7 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   USE B2MOD_TYPES
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -1900,6 +2093,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !   ..local variables
 !srv 13.10.06
   INTEGER :: icv1, icv2, ifc, meth
+  INTEGER :: ivx1, ivx2, ifc1, ifc2, k, j
+  REAL(kind=r8) :: dpo_p, dpo_r, fcht_tot, a(2), b(2), vx_dir
 !srv 16.09.02
   CHARACTER :: chns*3
   REAL(kind=r8) :: drift_hyb
@@ -1907,7 +2102,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: flo(nfc, 0:1), flo_mdf(nfc, 0:1), flo_nodrift(nfc, 0:&
 & 1), flo2dia(nfc, 0:1), flo_he(nfc, 0:1), flo_53(nfc, 0:1), alpha, &
 & gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1), term(nfc), flob0(nfc, &
-& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
+& 0:1), conb0(nfc, 0:1), scur(nfc, 0:1), flobtmp(nfc, 0:1), conbtmp(nfc&
+& , 0:1, 0:4)
 !srv 05.03.16
 !srv 05.03.16
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmpr(ncv), kmprv(nvx), &
@@ -1933,6 +2129,7 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
+  INTRINSIC SUM
   INTRINSIC NINT
   EXTERNAL XERRAB
   REAL(r8) :: x1
@@ -2034,9 +2231,11 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   dv%fnapsch(:, :, isb) = 0.0_R8
 !srv 19.11.09
   dv%fna_mdf(:, :, isb) = 0.0_R8
-  dv%flob = 0.0_R8
+  dv%flob(:, :, isb) = 0.0_R8
 !srv 13.10.06
-  dv%conb = 0.0_R8
+  dv%conb(:, :, :, isb) = 0.0_R8
+  flobtmp = 0.0_R8
+  conbtmp = 0.0_R8
 !srv 01.10.99
   ub2dia = 0.0_R8
   result1 = MAXVAL(dv%facdrift)
@@ -2062,6 +2261,68 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     wrk0 = geo%fcbb(:, 2)/geo%fcbb(:, 3)**2
     dv%vaecrb(:, 0, isb) = -(switch%poleldr*dv%fac_exb*wrk0*dpo(:, 1))
     dv%vaecrb(:, 1, isb) = switch%radeldr*dv%fac_exb*wrk0*dpo(:, 0)
+!
+    IF (switch%b2tfnb_avg_vexb .GE. 1) THEN
+      CALL INTVERTEX_NODIFF(ncv, nvx, mpg, geo%vxvol, pl%po, wrkvx)
+      DO j=1,mpg%nfci
+        IF (.NOT.(mpg%fcs_wall_ind(j, 2) .EQ. 1 .OR. mpg%fcs_wall_type(j&
+&           ) .NE. 2)) THEN
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1))
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+1)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx1 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx1 = mpg%fcvx(ifc1, 2)
+          END IF
+          ifc1 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-1)
+          ifc2 = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j&
+&           , 2)-2)
+          IF (mpg%fcvx(ifc1, 2) .EQ. mpg%fcvx(ifc2, 1) .OR. mpg%fcvx(&
+&             ifc1, 2) .EQ. mpg%fcvx(ifc2, 2)) THEN
+            ivx2 = mpg%fcvx(ifc1, 1)
+          ELSE
+            ivx2 = mpg%fcvx(ifc1, 2)
+          END IF
+          fcht_tot = SUM(geo%fcht(mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):&
+&           mpg%fcs_wall_ind(j, 1)+mpg%fcs_wall_ind(j, 2)-1)))
+          IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                            '(a,2i6,1p,2e15.8)') &
+&                                            'iVx1,iVx2,po_iVx1,po_iVx2'&
+&                                            , ivx1, ivx2, wrkvx(ivx1), &
+&                                            wrkvx(ivx2)
+          DO k=1,mpg%fcs_wall_ind(j, 2)
+            ifc = mpg%fcs_wall(mpg%fcs_wall_ind(j, 1)+k-1)
+            icv1 = mpg%fccv(ifc, 1)
+            icv2 = mpg%fccv(ifc, 2)
+            a(1) = geo%vxx(mpg%fcvx(ifc, 2)) - geo%vxx(mpg%fcvx(ifc, 1))
+            a(2) = geo%vxy(mpg%fcvx(ifc, 2)) - geo%vxy(mpg%fcvx(ifc, 1))
+            b(1) = geo%vxx(ivx2) - geo%vxx(ivx1)
+            b(2) = geo%vxy(ivx2) - geo%vxy(ivx1)
+            vx_dir = SIGN(1.0_R8, a(1)*b(1) + a(2)*b(2))
+            dpo_p = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+!
+            dpo_r = (pl%po(icv2)-pl%po(icv1))*geo%fcqalf(ifc, 1)/(geo%&
+&             fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))) + &
+&             vx_dir*(wrkvx(ivx2)-wrkvx(ivx1))*geo%fcqbet(ifc, 0)/(geo%&
+&             fcqgam(ifc, 0)*fcht_tot)
+            IF (switch%b2tfnb_avg_vexb .GE. 2) WRITE(*, &
+&                                              '(a,i6,1p,2e15.8)') &
+&                                              'iFc,dpo_th,dpo_r', ifc, &
+&                                              dpo_p, dpo_r
+            dv%vaecrb(ifc, 0, isb) = -(switch%poleldr*dv%fac_exb(ifc)*&
+&             wrk0(ifc)*dpo_r)
+            dv%vaecrb(ifc, 1, isb) = switch%radeldr*dv%fac_exb(ifc)*wrk0&
+&             (ifc)*dpo_p
+          END DO
+        END IF
+      END DO
+    END IF
+!
 !     ..restriction ExB drift
     xcount = 0
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
@@ -2124,8 +2385,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !
 !     ..computation of P.Sch flows
     CALL B2TNPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, dv%facdrift, &
-&                  co%cddi(:, :, isb), pl%ti, pl%na(:, isb), kmprti, dv%&
-&                  flob, dv%conb, dv%fnapsch(:, :, isb))
+&                  co%cddi(:, :, isb), pl%ti, pl%na(:, isb), kmprti, &
+&                  flobtmp, conbtmp(:, :, 0:2), dv%fnapsch(:, :, isb))
 !lk 02.06.11 }
 !
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
@@ -2256,10 +2517,10 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !
 !   ..add contribution from currents
   IF (.NOT.is_neutral(isb)) THEN
-    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+dv%&
-&     fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, isb)+dv%fchvisq_a(:, 0, &
-&     isb))*switch%b2tfnb_xcur/(rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(&
-&     rzf*qe*nbf)
+    scur(:, 0) = (dv%fchinert_a(:, 0, isb)+dv%fchvispar_a(:, 0, isb)+&
+&     switch%fnb_vis_per*dv%fchvisper_a(:, 0, isb)+dv%fchanml_a(:, 0, &
+&     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 0, isb))*switch%b2tfnb_xcur/&
+&     (rzf*qe*nbf) + dv%fchviskt_a(:, 0, isb)/(rzf*qe*nbf)
     scur(:, 1) = (dv%fchinert_a(:, 1, isb)+dv%fchvispar_a(:, 1, isb)+&
 &     switch%fnb_vis_per*dv%fchvisper_a(:, 1, isb)+dv%fchanml_a(:, 1, &
 &     isb)+switch%fnb_vis_q*dv%fchvisq_a(:, 1, isb))*switch%b2tfnb_ycur/&
@@ -2354,7 +2615,6 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   dv%fna(:, 0, isb) = fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   0, isb)*geo%fcs*geo%fcqalf(:, 0)+scur(:, 0))*nbf + (flo(:, 0)-&
 &   flo_mdf(:, 0))*nbf - co%cdpa(:, 0, isb)*dpb(:, 0)
-!
   dv%fna(:, 1, isb) = fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, &
 &   1, isb)*geo%fcs*geo%fcqalf(:, 1)+scur(:, 1))*nbf + (flo(:, 1)-&
 &   flo_mdf(:, 1))*nbf - co%cdpa(:, 1, isb)*dpb(:, 1)
@@ -2418,8 +2678,9 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 &   dpb(:, 1)
 !
 !   ..compute ExB fluxes for k-model
-  dv%fna_exb = 0.0_R8
   IF (isb .EQ. ismain .AND. switch%solve_keps .GT. 0) THEN
+! initialization within the if-statement to avoid race conditions with openMP
+    dv%fna_exb = 0.0_R8
     zeros = 0.0_R8
     zeros1 = 0.0_R8
     CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%na(:, isb), &
@@ -2435,16 +2696,16 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 &   geo%fcs*geo%fcqalf(:, 1)+scur(:, 1))
   IF (switch%mdf_fnb .EQ. 0) flob0 = flob0 + flo - flo_mdf
   DO ifc=1,nfc
-    dv%flob(ifc, 0) = dv%flob(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
+    flobtmp(ifc, 0) = flobtmp(ifc, 0) + 0.5_R8*flob0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - conb0(ifc, 0)*(kmpr(mpg%&
 &     fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    dv%flob(ifc, 1) = dv%flob(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
+    flobtmp(ifc, 1) = flobtmp(ifc, 1) + 0.5_R8*flob0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - conb0(ifc, 1)*(kmprv(mpg%&
 &     fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
-    dv%conb(ifc, 0, 0) = dv%conb(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
+    conbtmp(ifc, 0, 0) = conbtmp(ifc, 0, 0) + 0.5_R8*conb0(ifc, 0)*(kmpr&
 &     (mpg%fccv(ifc, 1))+kmpr(mpg%fccv(ifc, 2))) - 0.25_R8*flob0(ifc, 0)&
 &     *(kmpr(mpg%fccv(ifc, 2))-kmpr(mpg%fccv(ifc, 1)))
-    dv%conb(ifc, 1, 0) = dv%conb(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
+    conbtmp(ifc, 1, 0) = conbtmp(ifc, 1, 0) + 0.5_R8*conb0(ifc, 1)*(&
 &     kmprv(mpg%fcvx(ifc, 1))+kmprv(mpg%fcvx(ifc, 2))) - 0.25_R8*flob0(&
 &     ifc, 1)*(kmprv(mpg%fcvx(ifc, 2))-kmprv(mpg%fcvx(ifc, 1)))
   END DO
@@ -2454,13 +2715,14 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   zeros = 0.0_R8
   CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, zeros, cdpb, flob0, conb0)
 !wdk flob0 should be zero here
-  dv%flob = dv%flob + flob0
-  dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
+  flobtmp = flobtmp + flob0
+  conbtmp(:, :, 0) = conbtmp(:, :, 0) + conb0
 !wdk is this needed? correct? probably always zero?
-  dv%conb(:, 0, 1) = conb0(:, 0)*kmprtif
+  conbtmp(:, 0, 1) = conb0(:, 0)*kmprtif
 !wdk is this needed? correct? probably always zero?
-  dv%conb(:, 1, 1) = conb0(:, 1)*kmprtif
-  dv%conb(:, :, 2) = dv%conb(:, :, 1)
+  conbtmp(:, 1, 1) = conb0(:, 1)*kmprtif
+  conbtmp(:, :, 2) = conbtmp(:, :, 1)
+! Add conb, flob to dv
 !
 !   ..flux limit
 !srv 20.11.08
@@ -2515,9 +2777,9 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       dv%fna_32nd(ifc, 0, isb) = dv%fna_32nd(ifc, 0, isb)/t0
       dv%fna_52nd(ifc, 0, isb) = dv%fna_52nd(ifc, 0, isb)/t0
 ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      dv%flob(ifc, 0) = dv%flob(ifc, 0)/t0
+      flobtmp(ifc, 0) = flobtmp(ifc, 0)/t0
 !srv 13.10.06 {
-      dv%conb(ifc, 0, 0:4) = dv%conb(ifc, 0, 0:4)/t0
+      conbtmp(ifc, 0, 0:4) = conbtmp(ifc, 0, 0:4)/t0
       dv%fna_he(ifc, 0, isb) = dv%fna_he(ifc, 0, isb)/t0
       dv%fna_fcor(ifc, 0, isb) = dv%fna_fcor(ifc, 0, isb)/t0
       dv%fna_mdf(ifc, 0, isb) = dv%fna_mdf(ifc, 0, isb)/t0
@@ -2536,9 +2798,9 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       dv%fna_32nd(ifc, 1, isb) = dv%fna_32nd(ifc, 1, isb)/t1
       dv%fna_52nd(ifc, 1, isb) = dv%fna_52nd(ifc, 1, isb)/t1
 ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      dv%flob(ifc, 1) = dv%flob(ifc, 1)/t1
+      flobtmp(ifc, 1) = flobtmp(ifc, 1)/t1
 !srv 13.10.06 {
-      dv%conb(ifc, 1, 0:4) = dv%conb(ifc, 1, 0:4)/t1
+      conbtmp(ifc, 1, 0:4) = conbtmp(ifc, 1, 0:4)/t1
       dv%fna_he(ifc, 1, isb) = dv%fna_he(ifc, 1, isb)/t1
       dv%fna_fcor(ifc, 1, isb) = dv%fna_fcor(ifc, 1, isb)/t1
       dv%fna_mdf(ifc, 1, isb) = dv%fna_mdf(ifc, 1, isb)/t1
@@ -2547,6 +2809,9 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       co%fllim0fna(ifc, 1, isb) = t1
     END DO
   END IF
+!
+  dv%flob(:, :, isb) = flobtmp
+  dv%conb(:, :, :, isb) = conbtmp
 !
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
@@ -2869,29 +3134,29 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     arg16 = 'b2tfnb_ub2dia_r'//chns
     CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg16)
     arg16 = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg16)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0, isb), arg16)
     arg16 = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg16)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1, isb), arg16)
     arg16 = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg16)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2, isb), arg16)
     arg16 = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg16)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3, isb), arg16)
     arg16 = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg16)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4, isb), arg16)
     arg18 = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0, isb), arg18)
     arg18 = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1, isb), arg18)
     arg18 = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2, isb), arg18)
     arg18 = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3, isb), arg18)
     arg18 = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4, isb), arg18)
     arg18 = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg18)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0, isb), arg18)
     arg12 = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg12)
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1, isb), arg12)
     arg18 = 'b2tfnb_kmprtix'//chns
     CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg18)
     arg111 = 'b2tfnb_ua'//chns

@@ -19,7 +19,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 & hci)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -35,7 +35,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !   ..output arguments (unspecified on entry)
@@ -244,6 +244,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
@@ -317,7 +318,7 @@ END SUBROUTINE B2TQCA_NODIFF
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(rt.rz2) *(pl.na) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in rt.rz2:in pl.na:in pl.te:in pl.ti:in
+!                rt.rz2:in pl.na:in pl.te:in pl.ti:in
 !
 !
 !
@@ -332,11 +333,11 @@ END SUBROUTINE B2TQCA_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
-& dvd, rt, rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
+SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, pl, pld, dv, dvd, rt&
+& , rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -353,11 +354,10 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -667,6 +667,7 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1

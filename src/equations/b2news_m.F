@@ -25,7 +25,7 @@
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
      &          rsamoreg, b2divue, b2divua, b2exbe, b2exba, b2visa,
-     &          b2joule, b2fraa
+     &          b2joule, b2fraa, rcxnareg, rcxhireg, rcxmoreg
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
@@ -72,6 +72,8 @@
      &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
      &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
      &          mdm_mdf, znnucl, mu, mu_mdf
+      use b2mod_frtf_nccorr
+     & , only : corr_tfia, g_hs_style, corr_fria, alpha_hs_style
 #endif
       use b2mod_ad
       use b2mod_subsys

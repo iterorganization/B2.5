@@ -19,7 +19,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 & hci)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_PLASMA_DIFF
@@ -34,7 +34,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !   ..output arguments (unspecified on entry)
@@ -218,6 +218,7 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
@@ -291,7 +292,7 @@ END SUBROUTINE B2TQCA_NODIFF
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(rt.rz2) *(pl.na) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in rt.rz2:in pl.na:in pl.te:in pl.ti:in
+!                rt.rz2:in pl.na:in pl.te:in pl.ti:in
 !
 !
 !
@@ -306,11 +307,11 @@ END SUBROUTINE B2TQCA_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
-& dvb, rt, rtb, st_ext, vsa, vsab, hci, hcib)
+SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, pl, plb, dv, dvb, rt&
+& , rtb, st_ext, vsa, vsab, hci, hcib)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_PLASMA_DIFF
@@ -325,11 +326,10 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFF) :: plb
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES) :: dvb
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dvb
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFF) :: rtb
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -455,7 +455,6 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
 !
 !   ..compute the Coulomb logarithm
 !srv 01.07.09  20.09.11
-  CALL PUSHREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
   CALL B2TLNL_NODIFF(ncv, switch, switch%icase_ii, pl%te, pl%ti, dv%ne, &
 &              dv%lnlam)
 ! ..compute vsa, hci
@@ -464,7 +463,7 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
   DO is=0,ns-1
     IF (is_neutral(is)) THEN
 !       (neutral vsax and hcix are strictly anomalous)
-      CALL SFILL_FWD(ncv, 0.0_R8, vsa(1, 0, is), vsab(1, 0, is), 1)
+      CALL SFILL_FWD(ncv, 0.0_R8, vsa(1, 0, is), 1)
       CALL PUSHCONTROL1B(1)
     ELSE
       DO icv=1,ncv
@@ -514,12 +513,13 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
       CALL PUSHCONTROL1B(0)
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
-    CALL SFILL_FWD(ncv, 0.0_R8, vsa(1, 1, is), vsab(1, 1, is), 1)
+    CALL SFILL_FWD(ncv, 0.0_R8, vsa(1, 1, is), 1)
   END DO
-  CALL SFILL_FWD(ncv, 0.0_R8, hci(1, 1), hcib(1, 1), 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, hci(1, 1), 1)
 !srv 16.06.08 }
 !
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb1, hci(1, 1), hcib(1, 1), 1)
@@ -630,7 +630,6 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
 &              is), 1)
     END IF
   END DO
-  CALL POPREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
   CALL B2TLNL_B(ncv, switch, switchb, switch%icase_ii, pl%te, plb%te, pl&
 &         %ti, plb%ti, dv%ne, dvb%ne, dv%lnlam, dvb%lnlam)
 

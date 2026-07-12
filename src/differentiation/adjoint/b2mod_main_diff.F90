@@ -30,7 +30,7 @@ MODULE B2MOD_MAIN_DIFF
   USE B2US_PLASMA_DIFF
   USE B2US_IO_DIFF
   USE B2US_DATA_DIFF
-  USE B2US_WORK_DIFF
+  USE B2US_WORK
   USE B2MOD_SWITCHES_DIFF
   USE B2MOD_RECYCLE_DIFF
   USE B2MOD_XERSET
@@ -155,7 +155,7 @@ MODULE B2MOD_MAIN_DIFF
 
 CONTAINS
 !  Differentiation of b2mn_init as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: par_opt_phys:in-out z2n_xy[save in b2mod_zhfrtf]:in-out
+!   Plus diff mem management of: par_opt_phys:in-out z2n_cv[save in b2mod_zhfrtf]:in-out
 !                nal[save in b2mod_zhfrtf]:in-out ia[save in b2mod_zhfrtf]:in-out
 !                av_ualpha[save in b2mod_zhfrtf]:in-out gt_ac[save in b2mod_zhfrtf]:in-out
 !                gtalc[save in b2mod_zhfrtf]:in-out avm_u[save in b2mod_zhfrtf]:in-out
@@ -206,24 +206,24 @@ CONTAINS
 !                state.co.hce_exb:in-out state.co.hci_exb:in-out
 !                state.co.dpa0:in-out state.co.dna0:in-out state.co.vsa0:in-out
 !                state.co.hcib:in-out state.co.vla0:in-out state.co.vma0:in-out
-!                state.co.kt_neo:in-out state.co.alfx_c:in-out
-!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
-!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
-!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
-!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
-!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
-!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
-!                state.co.f_luc_al:in-out state.co.alpha1f:in-out
-!                state.co.f_luc_ke_c:in-out state.co.f_luc_ki_c:in-out
-!                state.co.cssb:in-out state.co_ns.vsaf_hadp_albe:in-out
-!                state.co_ns.vsaf_hbdp_al:in-out state.co_ns.vsaf_uadp_albe:in-out
-!                state.co_ns.vsaf_ubdp_al:in-out state.co_ns.hci_al_ast:in-out
-!                state.co_ns.chci_al_ast:in-out state.co_ns.cvsa_hadp_albe:in-out
-!                state.co_ns.cvsa_hbdp_al:in-out state.co_ns.cvsa_uadp_albe:in-out
-!                state.co_ns.cvsa_ubdp_al:in-out state.co_ns.cvsahz_hadp_albe:in-out
-!                state.co_ns.cvsahz_hbdp_al:in-out state.co_ns.cvsahz_uadp_albe:in-out
-!                state.co_ns.cvsahz_ubdp_al:in-out state.dv.fch:in-out
-!                state.dv.fch_32:in-out state.dv.fch_52:in-out
+!                state.co.kt_neo:in-out state.co.nu2:in-out state.co.k2:in-out
+!                state.co.alfx_c:in-out state.co.sigx_c:in-out
+!                state.co.sigx_kt:in-out state.co.hcix_c:in-out
+!                state.co.fllim_ki:in-out state.co.fllim_ke:in-out
+!                state.co.fllim_al:in-out state.co.fllim_al_c:in-out
+!                state.co.fllim_ki_c:in-out state.co.f_luc_ke:in-out
+!                state.co.f_luc_ki:in-out state.co.f_luc_et:in-out
+!                state.co.f_luc_sg:in-out state.co.f_luc_al:in-out
+!                state.co.alpha1f:in-out state.co.f_luc_ke_c:in-out
+!                state.co.f_luc_ki_c:in-out state.co.cssb:in-out
+!                state.co_ns.vsaf_hadp_albe:in-out state.co_ns.vsaf_hbdp_al:in-out
+!                state.co_ns.vsaf_uadp_albe:in-out state.co_ns.vsaf_ubdp_al:in-out
+!                state.co_ns.hci_al_ast:in-out state.co_ns.chci_al_ast:in-out
+!                state.co_ns.cvsa_hadp_albe:in-out state.co_ns.cvsa_hbdp_al:in-out
+!                state.co_ns.cvsa_uadp_albe:in-out state.co_ns.cvsa_ubdp_al:in-out
+!                state.co_ns.cvsahz_hadp_albe:in-out state.co_ns.cvsahz_hbdp_al:in-out
+!                state.co_ns.cvsahz_uadp_albe:in-out state.co_ns.cvsahz_ubdp_al:in-out
+!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
 !                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
 !                state.dv.fchvispar:in-out state.dv.fchvispar_a:in-out
 !                state.dv.fchvisper:in-out state.dv.fchvisper_a:in-out
@@ -252,38 +252,39 @@ CONTAINS
 !                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
 !                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
 !                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
-!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
-!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.floe:in-out
+!                state.dv.floi:in-out state.dv.floe_noc:in-out
 !                state.dv.floi_noc:in-out state.dv.flon:in-out
 !                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
-!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
-!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
-!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resmo0:in-out
-!                state.dv.resco:in-out state.dv.resco0:in-out state.dv.respo:in-out
-!                state.dv.reshe:in-out state.dv.reshi:in-out state.dv.resht:in-out
-!                state.dv.resmt:in-out state.dv.reshn:in-out state.dv.reskt:in-out
-!                state.dv.reszt:in-out state.dv.reshe0:in-out state.dv.reshi0:in-out
-!                state.dv.reshn0:in-out state.dv.reskt0:in-out
-!                state.dv.reszt0:in-out state.dv.corua:in-out state.dv.corpa:in-out
-!                state.dv.corut:in-out state.dv.corpo:in-out state.dv.cortt:in-out
-!                state.dv.corte:in-out state.dv.corti:in-out state.dv.cortn:in-out
-!                state.dv.corkt:in-out state.dv.corzt:in-out state.dv.pcca:in-out
-!                state.dv.pccm:in-out state.dv.ne:in-out state.dv.ni:in-out
-!                state.dv.nn:in-out state.dv.ue:in-out state.dv.ne2:in-out
-!                state.dv.pa:in-out state.dv.pz:in-out state.dv.lnlam:in-out
-!                state.dv.uadia:in-out state.dv.vadia:in-out state.dv.wadia:in-out
-!                state.dv.vaecrb:in-out state.dv.vedia:in-out state.dv.wedia:in-out
-!                state.dv.veecrb:in-out state.dv.facdrift:in-out
-!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
-!                state.dv.dnadt:in-out state.dv.dmodt:in-out state.dv.dhedt:in-out
-!                state.dv.dhidt:in-out state.dv.dhndt:in-out state.dv.dktdt:in-out
-!                state.dv.dztdt:in-out state.sr.sch:in-out state.sr.she:in-out
-!                state.sr.shi:in-out state.sr.sne:in-out state.sr.shn:in-out
-!                state.sr.skt:in-out state.sr.szt:in-out state.sr.smo:in-out
-!                state.sr.smq:in-out state.sr.sna:in-out state.sr.shedt:in-out
-!                state.sr.sktdt:in-out state.sr.sztdt:in-out state.sr.snedt:in-out
-!                state.sr.shidt:in-out state.sr.shndt:in-out state.sr.schdt:in-out
-!                state.sr.smodt:in-out state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.cone:in-out
+!                state.dv.coni:in-out state.dv.fllime:in-out state.dv.fllimi:in-out
+!                state.dv.flob:in-out state.dv.conb:in-out state.dv.resmo:in-out
+!                state.dv.resmo0:in-out state.dv.resco:in-out state.dv.resco0:in-out
+!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
+!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
+!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.reshe0:in-out
+!                state.dv.reshi0:in-out state.dv.reshn0:in-out
+!                state.dv.reskt0:in-out state.dv.reszt0:in-out
+!                state.dv.corua:in-out state.dv.corpa:in-out state.dv.corut:in-out
+!                state.dv.corpo:in-out state.dv.cortt:in-out state.dv.corte:in-out
+!                state.dv.corti:in-out state.dv.cortn:in-out state.dv.corkt:in-out
+!                state.dv.corzt:in-out state.dv.pcca:in-out state.dv.pccm:in-out
+!                state.dv.ne:in-out state.dv.ni:in-out state.dv.nn:in-out
+!                state.dv.ue:in-out state.dv.ne2:in-out state.dv.pa:in-out
+!                state.dv.pz:in-out state.dv.lnlam:in-out state.dv.uadia:in-out
+!                state.dv.vadia:in-out state.dv.wadia:in-out state.dv.vaecrb:in-out
+!                state.dv.vedia:in-out state.dv.wedia:in-out state.dv.veecrb:in-out
+!                state.dv.facdrift:in-out state.dv.fac_exb:in-out
+!                state.dv.fac_vis:in-out state.dv.dnadt:in-out
+!                state.dv.dmodt:in-out state.dv.dhedt:in-out state.dv.dhidt:in-out
+!                state.dv.dhndt:in-out state.dv.dktdt:in-out state.dv.dztdt:in-out
+!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
+!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
+!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
 !                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
 !                state.sr_eir.she:in-out state.sr_eir.shi:in-out
 !                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
@@ -317,7 +318,8 @@ CONTAINS
 !                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
 !                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
 !                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
-!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.smr0_eir_tot:in-out
+!                state.srw.smd0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
 !                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
 !                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
 !                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
@@ -377,17 +379,22 @@ CONTAINS
 !                state_avg.ti_mean:in-out state_avg.po_mean:in-out
 !                state_avg.kt_mean:in-out state_avg.zt_mean:in-out
 !                state_avg.sna_mean:in-out state_avg.smo_mean:in-out
+!                state_avg.smr_mean:in-out state_avg.smd_mean:in-out
 !                state_avg.she_mean:in-out state_avg.shi_mean:in-out
 !                state_avg.shn_mean:in-out state_avg.e_na:in-out
 !                state_avg.e_ua:in-out state_avg.e_te:in-out state_avg.e_ti:in-out
 !                state_avg.e_po:in-out state_avg.e_kt:in-out state_avg.e_zt:in-out
 !                state_avg.e_sna:in-out state_avg.e_smo:in-out
+!                state_avg.e_smr:in-out state_avg.e_smd:in-out
 !                state_avg.e_she:in-out state_avg.e_shi:in-out
-!                state_avg.e_shn:in-out c_hw_save:in-out c_r_ta:in-out
-!                c_r_tb:in-out c_r_tb_nofl:in-out c_r_w:in-out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out b2data:in-out
-!                b2dataoncf:in-out b2voloncf:in-out rpi0:in-out
-!                rz20:in-out rpt0:in-out rza0:in-out
+!                state_avg.e_shn:in-out rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out b2data:in-out b2dataoncf:in-out b2voloncf:in-out
+!                c_hw_save:in-out c_r_ta:in-out c_r_tb:in-out c_r_tb_nofl:in-out
+!                c_r_w:in-out c_hta_an_fl_save:in-out c_r_ta_an_save:in-out
+!                corr_tfia[from module b2mod_frtf_nccorr]:in-out
+!                g_hs_style[from module b2mod_frtf_nccorr]:in-out
+!                corr_fria[from module b2mod_frtf_nccorr]:in-out
+!                alpha_hs_style[from module b2mod_frtf_nccorr]:in-out
 !
   SUBROUTINE B2MN_INIT_B()
     IMPLICIT NONE
@@ -578,7 +585,7 @@ CONTAINS
   END SUBROUTINE B2MN_INIT
 
 !  Differentiation of b2mn_step as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: par_opt_phys:in z2n_xy[save in b2mod_zhfrtf]:in
+!   Plus diff mem management of: par_opt_phys:in z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in gt_ac[save in b2mod_zhfrtf]:in
 !                gtalc[save in b2mod_zhfrtf]:in avm_u[save in b2mod_zhfrtf]:in
@@ -617,9 +624,10 @@ CONTAINS
 !                state.co.hce_exb:in state.co.hci_exb:in state.co.dpa0:in
 !                state.co.dna0:in state.co.vsa0:in state.co.hcib:in
 !                state.co.vla0:in state.co.vma0:in state.co.kt_neo:in
-!                state.co.alfx_c:in state.co.sigx_c:in state.co.sigx_kt:in
-!                state.co.hcix_c:in state.co.fllim_ki:in state.co.fllim_ke:in
-!                state.co.fllim_al:in state.co.fllim_al_c:in state.co.fllim_ki_c:in
+!                state.co.nu2:in state.co.k2:in state.co.alfx_c:in
+!                state.co.sigx_c:in state.co.sigx_kt:in state.co.hcix_c:in
+!                state.co.fllim_ki:in state.co.fllim_ke:in state.co.fllim_al:in
+!                state.co.fllim_al_c:in state.co.fllim_ki_c:in
 !                state.co.f_luc_ke:in state.co.f_luc_ki:in state.co.f_luc_et:in
 !                state.co.f_luc_sg:in state.co.f_luc_al:in state.co.alpha1f:in
 !                state.co.f_luc_ke_c:in state.co.f_luc_ki_c:in
@@ -654,11 +662,11 @@ CONTAINS
 !                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
 !                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
 !                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
-!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
-!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
-!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
-!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
-!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
+!                state.dv.conc:in state.dv.floe:in state.dv.floi:in
+!                state.dv.floe_noc:in state.dv.floi_noc:in state.dv.flon:in
+!                state.dv.flokt:in state.dv.flozt:in state.dv.conn:in
+!                state.dv.conkt:in state.dv.conzt:in state.dv.cone:in
+!                state.dv.coni:in state.dv.flob:in state.dv.conb:in
 !                state.dv.resmo:in state.dv.resmo0:in state.dv.resco:in
 !                state.dv.resco0:in state.dv.respo:in state.dv.reshe:in
 !                state.dv.reshi:in state.dv.resht:in state.dv.resmt:in
@@ -710,6 +718,7 @@ CONTAINS
 !                state.srw.b2sihs_exba:in state.srw.b2sihs_visa:in
 !                state.srw.b2sihs_fraa:in state.srw.b2sihs_str:in
 !                state.srw.sna0_eir_tot:in state.srw.smo0_eir_tot:in
+!                state.srw.smr0_eir_tot:in state.srw.smd0_eir_tot:in
 !                state.srw.she0_eir_tot:in state.srw.shi0_eir_tot:in
 !                state.srw.shn0_eir_tot:in state.rt.rlcx:in state.rt.rlqa:in
 !                state.rt.rlrd:in state.rt.rlbr:in state.rt.rlra:in
@@ -719,30 +728,25 @@ CONTAINS
 !                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
 !                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
 !                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
-!                state.psnl.ua:in state.psnl.po:in state.psnl.te:in
-!                state.psnl.ti:in state.psnl.tn:in state.psnl.kt:in
-!                state.psnl.zt:in state.psnl.ne:in state.psnl.ni:in
-!                state.psnl.nn:in state.psnl.fch:in state.psnl.fna:in
-!                state.psnl.fmo:in state.psnl.fhi:in state.psnl.fhe:in
-!                state.psnl.fkt:in state.psnl.fzt:in state.psnl.kinrgy:in
-!                state.psnl.resco0:in state.psnl.resmo0:in state.psnl.reshi0:in
-!                state.psnl.reshe0:in state.psnl.reshn0:in state.psnl.reskt0:in
-!                state.psnl.reszt0:in state.psnl.dnadt:in state.psnl.dmodt:in
-!                state.psnl.dhedt:in state.psnl.dhidt:in state.psnl.dhndt:in
-!                state.psnl.dktdt:in state.psnl.dztdt:in state.psnc.na:in
-!                state.psnc.ua:in state.psnc.po:in state.psnc.te:in
-!                state.psnc.ti:in state.psnc.tn:in state.psnc.kt:in
-!                state.psnc.zt:in state.psnc.ne:in state.psnc.ni:in
-!                state.psnc.nn:in state.psnc.fch:in state.psnc.fna:in
-!                state.psnc.fmo:in state.psnc.fhi:in state.psnc.fhe:in
-!                state.psnc.fkt:in state.psnc.fzt:in state.psnc.kinrgy:in
-!                state.psnc.resco0:in state.psnc.resmo0:in state.psnc.reshi0:in
-!                state.psnc.reshe0:in state.psnc.reshn0:in state.psnc.reskt0:in
-!                state.psnc.reszt0:in state.psnc.dnadt:in state.psnc.dmodt:in
-!                state.psnc.dhedt:in state.psnc.dhidt:in state.psnc.dhndt:in
-!                state.psnc.dktdt:in state.psnc.dztdt:in state.diag.aresco:in
-!                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
-!                state.diag.rescoreg:in state.diag.resmoreg:in
+!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
+!                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
+!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
+!                state.psnl.fna:in state.psnl.kinrgy:in state.psnl.resco0:in
+!                state.psnl.resmo0:in state.psnl.reshi0:in state.psnl.reshe0:in
+!                state.psnl.reshn0:in state.psnl.reskt0:in state.psnl.reszt0:in
+!                state.psnl.dnadt:in state.psnl.dmodt:in state.psnl.dhedt:in
+!                state.psnl.dhidt:in state.psnl.dhndt:in state.psnl.dktdt:in
+!                state.psnl.dztdt:in state.psnc.na:in state.psnc.ua:in
+!                state.psnc.te:in state.psnc.ti:in state.psnc.tn:in
+!                state.psnc.kt:in state.psnc.zt:in state.psnc.ne:in
+!                state.psnc.ni:in state.psnc.nn:in state.psnc.fna:in
+!                state.psnc.kinrgy:in state.psnc.resco0:in state.psnc.resmo0:in
+!                state.psnc.reshi0:in state.psnc.reshe0:in state.psnc.reshn0:in
+!                state.psnc.reskt0:in state.psnc.reszt0:in state.psnc.dnadt:in
+!                state.psnc.dmodt:in state.psnc.dhedt:in state.psnc.dhidt:in
+!                state.psnc.dhndt:in state.psnc.dktdt:in state.psnc.dztdt:in
+!                state.diag.aresco:in state.diag.aresmo:in state.diag.acorpa:in
+!                state.diag.acorua:in state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
 !                state_ext.am:in state_ext.ne:in state_ext.ne2:in
 !                state_ext.ue:in state_ext.za:in state_ext.za2:in
@@ -753,15 +757,21 @@ CONTAINS
 !                state_ext.smo:in state_avg.na_mean:out state_avg.ua_mean:out
 !                state_avg.te_mean:out state_avg.ti_mean:out state_avg.po_mean:out
 !                state_avg.kt_mean:out state_avg.zt_mean:out state_avg.sna_mean:out
-!                state_avg.smo_mean:out state_avg.she_mean:out
+!                state_avg.smo_mean:out state_avg.smr_mean:out
+!                state_avg.smd_mean:out state_avg.she_mean:out
 !                state_avg.shi_mean:out state_avg.shn_mean:out
 !                state_avg.e_na:out state_avg.e_ua:out state_avg.e_te:out
 !                state_avg.e_ti:out state_avg.e_po:out state_avg.e_kt:out
 !                state_avg.e_zt:out state_avg.e_sna:out state_avg.e_smo:out
-!                state_avg.e_she:out state_avg.e_shi:out state_avg.e_shn:out
-!                c_hw_save:in c_r_ta:in c_r_tb:in c_r_tb_nofl:in
-!                c_r_w:in rtlsa:in rtlra:in rtlqa:in rtlcx:in b2data:in
-!                b2dataoncf:in b2voloncf:in
+!                state_avg.e_smr:out state_avg.e_smd:out state_avg.e_she:out
+!                state_avg.e_shi:out state_avg.e_shn:out rtlsa:in
+!                rtlra:in rtlqa:in rtlcx:in b2data:in b2dataoncf:in
+!                b2voloncf:in c_hw_save:in c_r_ta:in c_r_tb:in
+!                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save:in c_r_ta_an_save:in
+!                corr_tfia[from module b2mod_frtf_nccorr]:in-out
+!                g_hs_style[from module b2mod_frtf_nccorr]:in-out
+!                corr_fria[from module b2mod_frtf_nccorr]:in-out
+!                alpha_hs_style[from module b2mod_frtf_nccorr]:in-out
 !
   SUBROUTINE B2MN_STEP_B(j, jb)
     USE B2MOD_TYPES
@@ -776,16 +786,16 @@ CONTAINS
     USE B2MOD_AD_DIFF, ONLY : nncf
     IMPLICIT NONE
     REAL(kind=r8) :: j(nncf)
-    integer :: ii, is
+    integer :: ii
+    REAL(kind=r8) :: jb(nncf)
+    integer :: is
     integer, save :: ncall = 0
     character *64 filename, ss, s1
     character(len=7), save :: my_out_folder
-    REAL(kind=r8) :: jb(nncf)
 !
     jb = 0.0_R8
     jb(1) = 1.0_R8
     CALL B2MNDR_1_B(nout, ns, j, jb)
-
     if (ncall.eq.0) then
 !  ..try to create a file in optional output folder
       open(70,file='output/__1__adj.dat',err=10)
@@ -1007,7 +1017,7 @@ CONTAINS
   END SUBROUTINE B2MN_STEP
 
 !  Differentiation of b2mn_fin as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: par_opt_phys:out z2n_xy[save in b2mod_zhfrtf]:out
+!   Plus diff mem management of: par_opt_phys:out z2n_cv[save in b2mod_zhfrtf]:out
 !                nal[save in b2mod_zhfrtf]:out ia[save in b2mod_zhfrtf]:out
 !                av_ualpha[save in b2mod_zhfrtf]:out gt_ac[save in b2mod_zhfrtf]:out
 !                gtalc[save in b2mod_zhfrtf]:out avm_u[save in b2mod_zhfrtf]:out
@@ -1026,9 +1036,9 @@ CONTAINS
 !                geo.vxfpsi:out geo.vxonedbsq:out geo.vxbzb:out
 !                geo.vxeb:out geo.cvconn:out geo.vxconn:out geo.ftconn:out
 !                geo.fsconn:out geo.fteps:out geo.ftbbav2:out geo.ftfpsi:out
-!                geo.fspsi:out geo.ftds:out geo.fsds:out state.pl.na:in-out
-!                state.pl.ua:out state.pl.po:out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:out
+!                geo.fspsi:out geo.ftds:out geo.fsds:out state.pl.na:out
+!                state.pl.ua:out state.pl.po:out state.pl.te:out
+!                state.pl.ti:out state.pl.tn:out state.pl.kt:out
 !                state.pl.zt:out state.co.csig:out state.co.calf:out
 !                state.co.csig_an:out state.co.calf_an:out state.co.csig_cl:out
 !                state.co.csigin:out state.co.chve:out state.co.chce:out
@@ -1050,14 +1060,14 @@ CONTAINS
 !                state.co.dzt0:out state.co.dna_exb:out state.co.hce_exb:out
 !                state.co.hci_exb:out state.co.dpa0:out state.co.dna0:out
 !                state.co.vsa0:out state.co.hcib:out state.co.vla0:out
-!                state.co.vma0:out state.co.kt_neo:out state.co.alfx_c:out
-!                state.co.sigx_c:out state.co.sigx_kt:out state.co.hcix_c:out
-!                state.co.fllim_ki:out state.co.fllim_ke:out state.co.fllim_al:out
-!                state.co.fllim_al_c:out state.co.fllim_ki_c:out
-!                state.co.f_luc_ke:out state.co.f_luc_ki:out state.co.f_luc_et:out
-!                state.co.f_luc_sg:out state.co.f_luc_al:out state.co.alpha1f:out
-!                state.co.f_luc_ke_c:out state.co.f_luc_ki_c:out
-!                state.co.cssb:out state.co_ns.vsaf_hadp_albe:out
+!                state.co.vma0:out state.co.kt_neo:out state.co.nu2:out
+!                state.co.k2:out state.co.alfx_c:out state.co.sigx_c:out
+!                state.co.sigx_kt:out state.co.hcix_c:out state.co.fllim_ki:out
+!                state.co.fllim_ke:out state.co.fllim_al:out state.co.fllim_al_c:out
+!                state.co.fllim_ki_c:out state.co.f_luc_ke:out
+!                state.co.f_luc_ki:out state.co.f_luc_et:out state.co.f_luc_sg:out
+!                state.co.f_luc_al:out state.co.alpha1f:out state.co.f_luc_ke_c:out
+!                state.co.f_luc_ki_c:out state.co.cssb:out state.co_ns.vsaf_hadp_albe:out
 !                state.co_ns.vsaf_hbdp_al:out state.co_ns.vsaf_uadp_albe:out
 !                state.co_ns.vsaf_ubdp_al:out state.co_ns.hci_al_ast:out
 !                state.co_ns.chci_al_ast:out state.co_ns.cvsa_hadp_albe:out
@@ -1089,12 +1099,12 @@ CONTAINS
 !                state.dv.fhm:out state.dv.fhp:out state.dv.fhj:out
 !                state.dv.fht:out state.dv.fkt:out state.dv.fzt:out
 !                state.dv.kin_frac_hyb:out state.dv.fluid_frac_hyb:out
-!                state.dv.kinrgy:in-out state.dv.conc:out state.dv.flob:out
-!                state.dv.floe:out state.dv.floi:out state.dv.floe_noc:out
-!                state.dv.floi_noc:out state.dv.flon:out state.dv.flokt:out
-!                state.dv.flozt:out state.dv.conn:out state.dv.conkt:out
-!                state.dv.conzt:out state.dv.conb:out state.dv.cone:out
-!                state.dv.coni:out state.dv.fllime:out state.dv.fllimi:out
+!                state.dv.kinrgy:out state.dv.conc:out state.dv.floe:out
+!                state.dv.floi:out state.dv.floe_noc:out state.dv.floi_noc:out
+!                state.dv.flon:out state.dv.flokt:out state.dv.flozt:out
+!                state.dv.conn:out state.dv.conkt:out state.dv.conzt:out
+!                state.dv.cone:out state.dv.coni:out state.dv.fllime:out
+!                state.dv.fllimi:out state.dv.flob:out state.dv.conb:out
 !                state.dv.resmo:out state.dv.resmo0:out state.dv.resco:out
 !                state.dv.resco0:out state.dv.respo:out state.dv.reshe:out
 !                state.dv.reshi:out state.dv.resht:out state.dv.resmt:out
@@ -1104,7 +1114,7 @@ CONTAINS
 !                state.dv.corpa:out state.dv.corut:out state.dv.corpo:out
 !                state.dv.cortt:out state.dv.corte:out state.dv.corti:out
 !                state.dv.cortn:out state.dv.corkt:out state.dv.corzt:out
-!                state.dv.pcca:out state.dv.pccm:out state.dv.ne:in-out
+!                state.dv.pcca:out state.dv.pccm:out state.dv.ne:out
 !                state.dv.ni:out state.dv.nn:out state.dv.ue:out
 !                state.dv.ne2:out state.dv.pa:out state.dv.pz:out
 !                state.dv.lnlam:out state.dv.uadia:out state.dv.vadia:out
@@ -1150,6 +1160,7 @@ CONTAINS
 !                state.srw.b2sihs_exba:out state.srw.b2sihs_visa:out
 !                state.srw.b2sihs_fraa:out state.srw.b2sihs_str:out
 !                state.srw.sna0_eir_tot:out state.srw.smo0_eir_tot:out
+!                state.srw.smr0_eir_tot:out state.srw.smd0_eir_tot:out
 !                state.srw.sne0_eir_tot:out state.srw.she0_eir_tot:out
 !                state.srw.shi0_eir_tot:out state.srw.shn0_eir_tot:out
 !                state.srw.sch0_eir_tot:out state.rt.rlcx:out state.rt.rlqa:out
@@ -1159,9 +1170,9 @@ CONTAINS
 !                state.rt.rza:out state.rt.rz2:out state.rt.rpt:out
 !                state.rt.rpi:out state.rtw.rsa:out state.rtw.rra:out
 !                state.rtw.rqa:out state.rtw.rrd:out state.rtw.rbr:out
-!                state.rtw.rcx:out state.rtw.rqr:out state.psnl.na:in-out
-!                state.psnl.ua:out state.psnl.po:out state.psnl.te:in-out
-!                state.psnl.ti:in-out state.psnl.tn:out state.psnl.kt:out
+!                state.rtw.rcx:out state.rtw.rqr:out state.psnl.na:out
+!                state.psnl.ua:out state.psnl.po:out state.psnl.te:out
+!                state.psnl.ti:out state.psnl.tn:out state.psnl.kt:out
 !                state.psnl.zt:out state.psnl.ne:out state.psnl.ni:out
 !                state.psnl.nn:out state.psnl.fch:out state.psnl.fna:out
 !                state.psnl.fmo:out state.psnl.fhi:out state.psnl.fhe:out
@@ -1199,16 +1210,20 @@ CONTAINS
 !                state_ext.smo:out state_avg.na_mean:out state_avg.ua_mean:out
 !                state_avg.te_mean:out state_avg.ti_mean:out state_avg.po_mean:out
 !                state_avg.kt_mean:out state_avg.zt_mean:out state_avg.sna_mean:out
-!                state_avg.smo_mean:out state_avg.she_mean:out
+!                state_avg.smo_mean:out state_avg.smr_mean:out
+!                state_avg.smd_mean:out state_avg.she_mean:out
 !                state_avg.shi_mean:out state_avg.shn_mean:out
 !                state_avg.e_na:out state_avg.e_ua:out state_avg.e_te:out
 !                state_avg.e_ti:out state_avg.e_po:out state_avg.e_kt:out
 !                state_avg.e_zt:out state_avg.e_sna:out state_avg.e_smo:out
-!                state_avg.e_she:out state_avg.e_shi:out state_avg.e_shn:out
-!                c_hw_save:out c_r_ta:out c_r_tb:out c_r_tb_nofl:out
-!                c_r_w:out rtzmin:out rtzmax:out rtzn:out rtlsa:out
+!                state_avg.e_smr:out state_avg.e_smd:out state_avg.e_she:out
+!                state_avg.e_shi:out state_avg.e_shn:out rtlsa:out
 !                rtlra:out rtlqa:out rtlcx:out b2data:out b2dataoncf:out
-!                b2voloncf:out rpi0:out rz20:out rpt0:out rza0:out
+!                b2voloncf:out c_hw_save:out c_r_ta:out c_r_tb:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out corr_tfia[from module b2mod_frtf_nccorr]:out
+!                g_hs_style[from module b2mod_frtf_nccorr]:out
+!                corr_fria[from module b2mod_frtf_nccorr]:out alpha_hs_style[from module b2mod_frtf_nccorr]:out
 !
   SUBROUTINE B2MN_FIN_B()
     IMPLICIT NONE

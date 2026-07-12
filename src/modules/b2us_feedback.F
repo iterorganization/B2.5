@@ -2827,7 +2827,8 @@ cxpb size is changed in b2mod_dimensions
       type (B2Plasma), intent (inout) :: pl
       type (B2Source), intent (in) :: sr
       type (switches), intent (in) :: switch
-      integer :: i, is, iFc, iCv, iCv1, ib, istra, find_loc
+      integer :: i, is, iFc, iCv, iCv1, ib, istra
+      integer, external :: find_loc
 
       sna_core = 0.0_R8
       do is = is_start, is_end

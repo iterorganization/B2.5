@@ -50,6 +50,9 @@
      &          n8_mdf, n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf,
      &          n14_mdf, n15_mdf, n16_mdf, mu_mdf, mum_mdf, rmu_mdf,
      &          rmd2_mdf, mdm_mdf, znnucl
+      use b2mod_frtf_nccorr
+     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia,
+     &          g_hs_style, alpha_hs_style
       use b2mod_ad
      & , only : my_out_folder, nnucl_tral,
 #ifdef DBG

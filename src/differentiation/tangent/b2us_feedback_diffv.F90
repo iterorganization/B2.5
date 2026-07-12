@@ -17,8 +17,8 @@ MODULE B2US_FEEDBACK_DIFFV
   USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_GEOMETRY_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPB_DIFFV
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_B2PLOT, ONLY : b2_fnmti
   USE B2MOD_DIAG_DIFFV
   USE B2MOD_TIME
@@ -77,9 +77,9 @@ MODULE B2US_FEEDBACK_DIFFV
 !contains face label to define list of faces for feedback
 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
   INTEGER, SAVE :: fb_reg_par(def_natm, 2)=0, fb_species(def_natm)=0, &
-& fb_ib(def_natm)=-1, fb_type(def_natm)=0, fb_rescale_option(def_natm)=0&
-& , fb_actuator(def_natm)=0, fb_istra(def_natm)=0, fb_reg(nmxfbreg)=0, &
-& fb_regp(def_natm, 2)=0
+& fb_ib(def_natm)=-1-def_nsts, fb_type(def_natm)=0, fb_rescale_option(&
+& def_natm)=0, fb_actuator(def_natm)=0, fb_istra(def_natm)=0, fb_reg(&
+& nmxfbreg)=0, fb_regp(def_natm, 2)=0
   LOGICAL, SAVE :: fb_type_inverse(def_natm)=.false.
 !
 ! csc old switches
@@ -278,12 +278,14 @@ CONTAINS
     INTEGER :: nfc, ns
     INTEGER :: ifb, ifbb, istrai, icount
     INTEGER :: ifbreg, is, ib, is0, is00, is_start, is_end, iatm
-    LOGICAL :: consistent, done
+    LOGICAL :: consistent, valid, done
     INTRINSIC ANY
     INTRINSIC TRIM
     EXTERNAL XERRAB
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     INTRINSIC MINVAL
+    INTEGER :: abs0
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
 !
@@ -523,11 +525,11 @@ CONTAINS
 ! now add the feedbacks turned on with switches into the new format
 ! the idea should be that any switch overrides what is in b2.feedback_control.parameters
     IF (fnaycore .NE. -1.0e30_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fnaycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fnaycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 10) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -546,11 +548,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (fheycore .NE. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fheycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fheycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 11) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -567,11 +569,11 @@ CONTAINS
       fb_alpha(ifbb) = fheycore_alpha
     END IF
     IF (fhiycore .NE. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 12) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -588,11 +590,11 @@ CONTAINS
       fb_alpha(ifbb) = fhiycore_alpha
     END IF
     IF (fchycore .NE. -1.0e30_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_fchycore not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 13) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -609,11 +611,11 @@ CONTAINS
       fb_alpha(ifbb) = fchycore_alpha
     END IF
     IF (ndes .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 14) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -631,11 +633,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nesepm .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -654,11 +656,11 @@ CONTAINS
       fb_overshoot(ifbb) = nesepm_overshoot
     END IF
     IF (nesepm_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -681,11 +683,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (ndes_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_ndes_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 14) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -707,11 +709,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nesepm_pfr .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_pfr not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nesepm_pfr not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 3) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -739,7 +741,7 @@ CONTAINS
 &     'not fully backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 13) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -765,7 +767,7 @@ CONTAINS
 &     'not fully backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 15) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -788,11 +790,11 @@ CONTAINS
       fb_istra(ifbb) = nesepm_istra
     END IF
     IF (nepedm_sol .GT. 0.0_R8) THEN
-      WRITE(*, *) 'WARNING! Feedback b2stbc_nepedm_sol not fully'//&
+      WRITE(*, *) 'WARNING! Feedback b2stbc_nepedm_sol not fully '//&
 &     'backward compatible in WG'
       ifbb = 0
       DO ifb=1,nfb
-!to override what is present..
+!to override what is present
         IF (fb_type(ifb) .EQ. 16) ifbb = ifb
       END DO
       IF (ifbb .EQ. 0) THEN
@@ -853,8 +855,17 @@ CONTAINS
 &           'faulty parameter fb_rescale_option!')
       CALL XERTST(0 .LE. fb_actuator(ifb), &
 &           'faulty parameter fb_actuator!')
-      CALL XERTST(-1 .LE. fb_ib(ifb) .AND. fb_ib(ifb) .LE. nbc, &
-&           'faulty parameter fb_ib!')
+      IF (fb_ib(ifb) .GE. 0.) THEN
+        abs0 = fb_ib(ifb)
+      ELSE
+        abs0 = -fb_ib(ifb)
+      END IF
+      CALL XERTST((fb_actuator(ifb) .NE. 8 .AND. ((0 .LT. fb_ib(ifb) &
+&           .AND. fb_ib(ifb) .LE. nbc) .OR. fb_ib(ifb) .EQ. -1 - &
+&           def_nsts)) .OR. (fb_actuator(ifb) .EQ. 8 .AND. ((abs0 .LE. &
+&           nsts .AND. switch%use_eirene .NE. 0) .OR. (0 .LE. fb_ib(ifb)&
+&           .AND. fb_ib(ifb) .LE. nbc .AND. switch%use_eirene .EQ. 0)))&
+&           , 'faulty parameter fb_ib!')
       CALL XERTST(0 .LE. fb_istra(ifb) .AND. fb_istra(ifb) .LE. nstrai, &
 &           'faulty parameter fb_istra!')
       CALL XERTST(0.0_R8 .LE. fb_puff_min(ifb) .AND. fb_puff_min(ifb) &
@@ -872,10 +883,13 @@ CONTAINS
 ! not using EIRENE, but no fb_ib
 ! using EIRENE, but no puff stratum
 ! feedback not 2 => either puff stratum or fb_ib needed
-      IF (fb_ib(ifb) .LE. 0 .AND. switch%use_eirene .EQ. 0 .AND. (&
+! feedback = 8 values already tested above
+      IF (((fb_ib(ifb) .LE. 0 .AND. switch%use_eirene .EQ. 0) .OR. (&
 &         fb_istra(ifb) .LE. 0 .AND. switch%use_eirene .NE. 0 .AND. &
-&         fb_actuator(ifb) .EQ. 1) .AND. (.NOT.fb_actuator(ifb) .EQ. 2)&
-&     ) CALL XERRAB('Init_feedback: fb_ib<=0 and actuator=/2')
+&         fb_actuator(ifb) .EQ. 1)) .AND. (.NOT.fb_actuator(ifb) .EQ. 2)&
+&         .AND. (.NOT.fb_actuator(ifb) .EQ. 8)) CALL XERRAB(&
+&                   'Init_feedback: fb_ib <= 0 and actuator != (2 or 8)'&
+&                                                    )
       CALL XERTST(0 .LE. fb_species(ifb) .AND. fb_species(ifb) .LE. ns -&
 &           1, 'Init_feedback: fb_species>ns!')
       iatm = b2espcr(fb_species(ifb))
@@ -884,52 +898,75 @@ CONTAINS
         is00 = eb2spcr(b2espcr(fb_species(ifbb)))
         CALL XERTST(.NOT.is0 .EQ. is00, 'init_feedback: cannot '//&
 &             'define multiple feedbacks on same atom sequence')
-        IF (fb_type(ifb) .EQ. fb_type(ifbb) .AND. (.NOT.((((((fb_type(&
+        IF (fb_type(ifb) .EQ. fb_type(ifbb) .AND. (.NOT.(((((((fb_type(&
 &           ifb) .EQ. 1 .OR. fb_type(ifb) .EQ. 4) .OR. fb_type(ifb) .EQ.&
 &           5) .OR. fb_type(ifb) .EQ. 7) .OR. fb_type(ifb) .EQ. 8) .OR. &
-&           fb_type(ifb) .EQ. 17) .OR. fb_type(ifb) .EQ. 27))) CALL &
-&         XERRAB('init_feedback:'//&
-&          ' set of feedbacks cannot be applied multiple times')
+&           fb_type(ifb) .EQ. 17) .OR. fb_type(ifb) .EQ. 22) .OR. &
+&           fb_type(ifb) .EQ. 27))) CALL XERRAB('init_feedback:'//&
+&                   ' set of feedbacks cannot be applied multiple times'&
+&                                        )
       END DO
       is_start = is0 + 1
       is_end = is0 + nfluids(iatm)
       IF (fb_actuator(ifb) .NE. 2) THEN
-!neutral flux (or gas puff)
-!charged particle flux ONLY for fb_type 6, to be improved?
-!charged particle flux, more general
-!electron heat flux
-!ion heat flux
-!current
-!density
-        result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
-        result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
-        consistent = consistent .AND. ((((((((((fb_target(ifb) .EQ. &
-&         0.0_R8 .OR. fb_type(ifb) .EQ. 0) .OR. fb_rescale_option(ifb) &
-&         .EQ. 0) .OR. fb_actuator(ifb) .EQ. 0) .OR. (fb_actuator(ifb) &
-&         .EQ. 1 .AND. (bccon(is0, fb_ib(ifb)) .EQ. 8 .OR. switch%&
-&         use_eirene .NE. 0))) .OR. (fb_actuator(ifb) .EQ. 3 .AND. &
-&         result1 .EQ. 8 .AND. result2 .EQ. 8 .AND. fb_type(ifb) .EQ. 6)&
-&         ) .OR. (fb_actuator(ifb) .EQ. 3 .AND. (bccon(fb_species(ifb), &
-&         fb_ib(ifb)) .EQ. 8 .OR. bccon(fb_species(ifb), fb_ib(ifb)) &
-&         .EQ. 13) .AND. (.NOT.fb_type(ifb) .EQ. 6))) .OR. (fb_actuator(&
-&         ifb) .EQ. 4 .AND. bcene(fb_ib(ifb)) .EQ. 8)) .OR. (fb_actuator&
-&         (ifb) .EQ. 5 .AND. bceni(fb_ib(ifb)) .EQ. 8)) .OR. (&
-&         fb_actuator(ifb) .EQ. 6 .AND. bcpot(fb_ib(ifb)) .EQ. 8)) .OR. &
-&         (fb_actuator(ifb) .EQ. 7 .AND. (bccon(fb_species(ifb), fb_ib(&
-&         ifb)) .EQ. 1 .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 28))&
-&         )
+        valid = ((fb_target(ifb) .EQ. 0.0_R8 .OR. fb_type(ifb) .EQ. 0) &
+&         .OR. fb_rescale_option(ifb) .EQ. 0) .OR. fb_actuator(ifb) .EQ.&
+&         0
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
+        IF (fb_actuator(ifb) .EQ. 1 .AND. (.NOT.valid)) THEN
+          IF (switch%use_eirene .EQ. 0) THEN
+! neutral flux
+            valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+            IF (valid) valid = bccon(is0, fb_ib(ifb)) .EQ. 8
+          ELSE
+! gas puff
+            valid = fb_istra(ifb) .GE. 1 .AND. fb_istra(ifb) .LE. nstrai
+          END IF
+        END IF
+        IF (fb_actuator(ifb) .EQ. 3 .AND. (.NOT.valid)) THEN
+!charged particle flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) THEN
+            result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
+            result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
+            valid = (result1 .EQ. 8 .AND. result2 .EQ. 8 .AND. fb_type(&
+&             ifb) .EQ. 6) .OR. ((bccon(fb_species(ifb), fb_ib(ifb)) &
+&             .EQ. 8 .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 13) &
+&             .AND. (.NOT.fb_type(ifb) .EQ. 6))
+          END IF
+        END IF
+        IF (fb_actuator(ifb) .EQ. 4 .AND. (.NOT.valid)) THEN
+!electron heat flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bcene(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 5 .AND. (.NOT.valid)) THEN
+!ion heat flux
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bceni(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 6 .AND. (.NOT.valid)) THEN
+!current
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bcpot(fb_ib(ifb)) .EQ. 8
+        END IF
+        IF (fb_actuator(ifb) .EQ. 7 .AND. (.NOT.valid)) THEN
+!density
+          valid = fb_ib(ifb) .GE. 1 .AND. fb_ib(ifb) .LE. nbc
+          IF (valid) valid = bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 1 &
+&             .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 28
+        END IF
+        IF (fb_actuator(ifb) .EQ. 8 .AND. (.NOT.valid)) THEN
+!pump albedo
+          valid = fb_ib(ifb) .GE. -nsts .AND. fb_ib(ifb) .LE. nbc
+        END IF
+        consistent = consistent .AND. valid
       END IF
     END DO
     consistent = (consistent .OR. b2sral_style .EQ. 1) .OR. switch%&
 &     b2stbc_boundary_namelist .LT. 1
-    DO ifb=1,nfb
-      IF (fb_ib(ifb) .LT. 0) consistent = consistent .AND. (.NOT.(((&
-&         fb_actuator(ifb) .EQ. 1 .AND. switch%use_eirene .EQ. 0) .OR. &
-&         fb_actuator(ifb) .EQ. 3) .OR. fb_actuator(ifb) .EQ. 7))
-    END DO
     DO ifb=1,nfb
       IF (fb_actuator(ifb) .NE. 1) consistent = consistent .AND. (.NOT.(&
 &         fb_rescale_option(ifb) .EQ. 4 .OR. fb_rescale_option(ifb) .EQ.&
@@ -1039,36 +1076,38 @@ CONTAINS
 
 !  Differentiation of compute_feedback in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: saved_fb_actuator saved_fb_prev
-!                fb_current fb_rescale fb_current_prev userfluxparm
-!                conpar enepar enipar potpar charge_frac *(psnc.na)
-!                *(psnc.ne) *(psnc.ni) *(psnc.kinrgy) *(dv.fna)
-!                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
-!                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
-!                *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(pl.na)
-!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
-!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                fb_current fb_rescale fb_current_prev recyc b2recyc
 !                userfluxparm conpar enepar enipar potpar charge_frac
 !                *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.kinrgy)
-!                *(dv.fch) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
-!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir)
-!                *(dv.fhe) *(dv.fhi) *(dv.fht) *(dv.kinrgy) *(dv.ne)
-!                *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rza) *(srw.rqrad) *(srw.rqbrm)
-!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
+!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy)
+!                *(dv.ne) *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(pl.na)
+!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
+!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                recyc b2recyc userfluxparm conpar enepar enipar
+!                potpar charge_frac *(psnc.na) *(psnc.ne) *(psnc.ni)
+!                *(psnc.kinrgy) *(dv.fch) *(dv.fna) *(dv.fna_mdf)
+!                *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
+!                *(dv.fna_eir) *(dv.fhe) *(dv.fhi) *(dv.fht) *(dv.kinrgy)
+!                *(dv.ne) *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rza) *(srw.rqrad)
+!                *(srw.rqbrm) *(sr.sna) *(pl.na) *(pl.te) *(pl.ti)
+!                *(pl.tn)
 !   Plus diff mem management of: eneutrad:in eionrad:in emolrad:in
 !                psnc.na:in psnc.ne:in psnc.ni:in psnc.fna:in psnc.kinrgy:in
 !                dv.fch:in dv.fna:in dv.fna_mdf:in dv.fna_52:in
 !                dv.fna_32:in dv.fna_nodrift:in dv.fna_he:in dv.fnapsch:in
 !                dv.fna_fcor:in dv.fna_eir:in dv.fhe:in dv.fhi:in
 !                dv.fht:in dv.kinrgy:in dv.ne:in dv.ni:in dv.nn:in
-!                psnl.na:in psnl.ne:in psnl.ni:in psnl.fna:in psnl.kinrgy:in
-!                rt.rza:in srw.rqrad:in srw.rqbrm:in pl.na:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                mpg.bcfcor:in psnl.na:in psnl.ne:in psnl.ni:in
+!                psnl.fna:in psnl.kinrgy:in rt.rza:in srw.rqrad:in
+!                srw.rqbrm:in sr.sna:in pl.na:in pl.te:in pl.ti:in
+!                pl.tn:in
 !
-  SUBROUTINE COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, geo, geod&
-&   , mpg, mpgd, pl, pld, dv, dvd, rt, rtd, srw, srwd, psnc, psncd, psnl&
-&   , psnld, main_call, nbdirs)
+  SUBROUTINE COMPUTE_FEEDBACK_DV(ncv, nfc, ns, ismain, switch, switchd, &
+&   geo, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, sr, srd, srw, srwd, psnc&
+&   , psncd, psnl, psnld, main_call, nbdirs)
 !  Hint: 1:2 should be the size of dimension 2 of array fchc
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -1077,8 +1116,8 @@ CONTAINS
 !   ..input arguments (unchanged on exit)
     INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(B2PLASMA), INTENT(INOUT) :: pl
@@ -1087,6 +1126,8 @@ CONTAINS
     TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
     TYPE(B2RATES), INTENT(IN) :: rt
     TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(B2SOURCE_DIFFV), INTENT(IN) :: srd
     TYPE(B2SOURCEWORK), INTENT(IN) :: srw
     TYPE(B2SOURCEWORK_DIFFV), INTENT(IN) :: srwd
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
@@ -1094,7 +1135,10 @@ CONTAINS
     LOGICAL :: main_call
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, i, j, k, l, ic, ifs, iatm, imol
+&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: sna_pumpd, sna_puffd, &
+&   sna_cored
     INTEGER, SAVE :: ncall=0
     REAL(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, zaf
     REAL(kind=r8), DIMENSION(nbdirsmax) :: sum_ed, total_fluxd, sum_sd, &
@@ -1110,8 +1154,16 @@ CONTAINS
     INTRINSIC LOG
     INTRINSIC TANH
     INTRINSIC EXP
+    REAL(r8) :: y1
+    REAL(r8), DIMENSION(nbdirsmax) :: y1d
     REAL(kind=r8) :: abs0
     REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+    REAL(kind=r8) :: abs1
+    INTEGER :: abs2
+    REAL(kind=r8) :: abs3
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs3d
+    REAL(kind=r8) :: abs4
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: abs4d
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8), DIMENSION(npfr_cvs) :: arg1
@@ -1962,18 +2014,19 @@ CONTAINS
             fb_current(ifb) = fb_current(ifb)/sum_e
 !
           CASE (23) 
-!  Total plasma heat flux at outer target
+!  Total particle heat flux at outer target
 !
             IF (ncall .EQ. 0) THEN
               IF (fb_reg_par(ifb, 1) .EQ. fb_reg_par(ifb, 2)) THEN
                 WRITE(*, '(a,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundary ', fb_reg_par(&
-&               ifb, 1), ' for sequence ', b2espcr(fb_species(ifb))
+&               ' particle heat flux density along boundary ', &
+&               fb_reg_par(ifb, 1), ' for sequence ', b2espcr(fb_species&
+&               (ifb))
               ELSE
                 WRITE(*, '(a,a,i3,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundaries ', &
+&               ' particle heat flux density along boundaries ', &
 &               fb_reg_par(ifb, 1), ' to ', fb_reg_par(ifb, 2), &
 &               ' for sequence ', b2espcr(fb_species(ifb))
               END IF
@@ -2009,7 +2062,7 @@ CONTAINS
               t0 = dv%fht(fbreg(ifc), 0) + dv%fht(fbreg(ifc), 1)
               t0 = t1*t0/geo%fcs(fbreg(ifc))
               IF (switch%use_eirene .NE. 0) t0 = t0 + ewldt_res(b2_fnmti&
-&                 (ifc)) - ewldrp_res(b2_fnmti(ifc))
+&                 (fbreg(ifc))) - ewldrp_res(b2_fnmti(fbreg(ifc)))
               IF (fb_current(ifb) .LT. t0) THEN
                 DO nd=1,nbdirs
                   fb_currentd(nd, ifb) = t0d(nd)
@@ -2197,33 +2250,34 @@ CONTAINS
 !
             ifc1 = fbregp(ifb, 1)
             ifc2 = ifc1 + fbregp(ifb, 2) - 1
-            DO ifc=ifc1,ifc2
-              IF (mpg%fccv(fbreg(ifc), 1) .GT. mpg%fccv(fbreg(ifc), 2)) &
-&             THEN
-                icv = mpg%fccv(fbreg(ifc), 2)
-              ELSE
-                icv = mpg%fccv(fbreg(ifc), 1)
-              END IF
-              ic = mpg%fcbc(fbreg(ifc), 1)
+            DO k=ifc1,ifc2
+              ifc = fbreg(k)
+              ic = mpg%fcbc(ifc, 1)
               t1 = mpg%bcfcor(ic)
               t0 = 0.0_R8
               t0d = 0.D0
               DO is=0,ns-1
                 IF (.NOT.is_neutral(is)) THEN
-                  CALL INTFACE_S_DV(ifc, ncv, nfc, mpg%fccv, geo%fcvol, &
-&                             rt%rza(1, is), rtd%rza(:, 1, is), zaf, &
-&                             zafd, nbdirs)
-                  temp = t1*qe*geo%fcbb(fbreg(ifc), 3)
-                  temp0 = geo%fcs(fbreg(ifc))*geo%fcqalf(fbreg(ifc), 0)*&
-&                   geo%fcbb(fbreg(ifc), 0)
-                  temp1 = dv%fna(fbreg(ifc), 0, is) + dv%fna(fbreg(ifc)&
-&                   , 1, is)
-                  DO nd=1,nbdirs
-                    t0d(nd) = t0d(nd) + temp*(zaf*(dvd%fna(nd, fbreg(ifc&
-&                     ), 0, is)+dvd%fna(nd, fbreg(ifc), 1, is))+temp1*&
-&                     zafd(nd))/temp0
-                  END DO
-                  t0 = t0 + temp*(temp1*zaf/temp0)
+                  IF (geo%fcpbs(ifc)/geo%fcs(ifc) .GE. 0.) THEN
+                    abs1 = geo%fcpbs(ifc)/geo%fcs(ifc)
+                  ELSE
+                    abs1 = -(geo%fcpbs(ifc)/geo%fcs(ifc))
+                  END IF
+                  IF (abs1 .GE. geo%qalfmin) THEN
+                    CALL INTFACE_S_DV(ifc, ncv, nfc, mpg%fccv, geo%fcvol&
+&                               , rt%rza(1, is), rtd%rza(:, 1, is), zaf&
+&                               , zafd, nbdirs)
+                    temp = t1*qe*geo%fcbb(ifc, 3)
+                    temp0 = geo%fcs(ifc)*geo%fcqalf(ifc, 0)*geo%fcbb(ifc&
+&                     , 0)
+                    temp1 = dv%fna(ifc, 0, is) + dv%fna(ifc, 1, is)
+                    DO nd=1,nbdirs
+                      t0d(nd) = t0d(nd) + temp*(zaf*(dvd%fna(nd, ifc, 0&
+&                       , is)+dvd%fna(nd, ifc, 1, is))+temp1*zafd(nd))/&
+&                       temp0
+                    END DO
+                    t0 = t0 + temp*(temp1*zaf/temp0)
+                  END IF
                 END IF
               END DO
               IF (fb_current(ifb) .LT. t0) THEN
@@ -2335,14 +2389,21 @@ CONTAINS
 &                             'rescale for sequence ', b2espcr(&
 &                             fb_species(ifb))
 !
-            temp0 = fb_target(ifb)/fb_current(ifb)
-            DO nd=1,nbdirs
-              fb_rescaled(nd, ifb) = -(temp0*fb_currentd(nd, ifb)/&
-&               fb_current(ifb))
-            END DO
-            fb_rescale(ifb) = temp0
-!
+            IF (fb_current(ifb) .NE. 0.0_R8) THEN
+              temp0 = fb_target(ifb)/fb_current(ifb)
+              DO nd=1,nbdirs
+                fb_rescaled(nd, ifb) = -(temp0*fb_currentd(nd, ifb)/&
+&                 fb_current(ifb))
+              END DO
+              fb_rescale(ifb) = temp0
+            ELSE
+              DO nd=1,nbdirs
+                fb_rescaled(nd, ifb) = 0.D0
+              END DO
+              fb_rescale(ifb) = 1.0_R8
+            END IF
           CASE (3) 
+!
 ! rescale slowed by tanh_log
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
@@ -2573,16 +2634,25 @@ CONTAINS
                 END DO
                 saved_fb_prev(ifb) = t0
               END IF
-              temp0 = fb_target(ifb)/fb_current(ifb)
+              IF (fb_current(ifb) .NE. 0.0_R8) THEN
+                temp0 = fb_target(ifb)/fb_current(ifb)
+                DO nd=1,nbdirs
+                  fb_rescaled(nd, ifb) = fb_alpha(ifb)*((temp0-1.0_R8)*&
+&                   t0d(nd)/ddtim-t0*temp0*fb_currentd(nd, ifb)/(ddtim*&
+&                   fb_current(ifb))+(saved_fb_prevd(nd, ifb)-t0d(nd))/&
+&                   dt_prev)
+                END DO
+                fb_rescale(ifb) = fb_alpha(ifb)*((temp0-1.0_R8)*(t0/&
+&                 ddtim)+(saved_fb_prev(ifb)-t0)/dt_prev)
+              ELSE
+                DO nd=1,nbdirs
+                  fb_rescaled(nd, ifb) = 0.D0
+                END DO
+                fb_rescale(ifb) = 1.0_R8
+              END IF
               DO nd=1,nbdirs
-                fb_rescaled(nd, ifb) = fb_alpha(ifb)*((temp0-1.0_R8)*t0d&
-&                 (nd)/ddtim-t0*temp0*fb_currentd(nd, ifb)/(ddtim*&
-&                 fb_current(ifb))+(saved_fb_prevd(nd, ifb)-t0d(nd))/&
-&                 dt_prev)
                 fb_current_prevd(nd, ifb) = t0d(nd)
               END DO
-              fb_rescale(ifb) = fb_alpha(ifb)*((temp0-1.0_R8)*(t0/ddtim)&
-&               +(saved_fb_prev(ifb)-t0)/dt_prev)
               fb_current_prev(ifb) = t0
             ELSE
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
@@ -2600,6 +2670,102 @@ CONTAINS
               fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-&
 &               fb_current(ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(&
 &               ifb))/dt_prev)
+            END IF
+          CASE (9) 
+!
+! puff depending from pump rescaled by tanh_log with plateau
+!
+            IF (ncall .EQ. 0) WRITE(*, '(a,a,a,i3)') &
+&                             'compute_feedback_option: using ', &
+&                             'puff depending from pump ', &
+&                          'tanh_log_rescale with plateau for sequence '&
+&                             , b2espcr(fb_species(ifb))
+!
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+            t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+            t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+            IF (fb_current(ifb) .LT. t0) THEN
+              temp0 = t0/fb_current(ifb)
+              arg11 = temp0
+              DO nd=1,nbdirs
+                arg11d(nd) = -(temp0*fb_currentd(nd, ifb)/fb_current(ifb&
+&                 ))
+                arg2d(nd) = arg11d(nd)/(fb_beta(ifb)*arg11)
+              END DO
+              arg2 = LOG(arg11)/fb_beta(ifb)
+              temp2 = LOG(2.0_R8)
+              temp0 = LOG(fb_alpha(ifb))
+              temp1 = 2.0_R8**(temp0*TANH(arg2)/temp2)
+              DO nd=1,nbdirs
+                fb_rescaled(nd, ifb) = temp1*LOG(2.0_R8)*temp0*(1.0-TANH&
+&                 (arg2)**2)*arg2d(nd)/temp2
+              END DO
+              fb_rescale(ifb) = temp1
+            ELSE IF (fb_current(ifb) .GT. t1) THEN
+              temp0 = t1/fb_current(ifb)
+              arg11 = temp0
+              DO nd=1,nbdirs
+                arg11d(nd) = -(temp0*fb_currentd(nd, ifb)/fb_current(ifb&
+&                 ))
+                arg2d(nd) = arg11d(nd)/(fb_beta(ifb)*arg11)
+              END DO
+              arg2 = LOG(arg11)/fb_beta(ifb)
+              temp2 = LOG(2.0_R8)
+              temp0 = LOG(fb_alpha(ifb))
+              temp1 = 2.0_R8**(temp0*TANH(arg2)/temp2)
+              DO nd=1,nbdirs
+                fb_rescaled(nd, ifb) = temp1*LOG(2.0_R8)*temp0*(1.0-TANH&
+&                 (arg2)**2)*arg2d(nd)/temp2
+              END DO
+              fb_rescale(ifb) = temp1
+            ELSE
+              DO nd=1,nbdirs
+                fb_rescaled(nd, ifb) = 0.D0
+              END DO
+              fb_rescale(ifb) = 1.0_R8
+            END IF
+!
+            IF (switch%use_eirene .EQ. 0) THEN
+              CALL CALC_PUFF_PUMP_B25_DV(switch, mpg, ncv, dv, dvd, pl, &
+&                                  pld, sr, srd, is_start, is_end, &
+&                                  sna_pump, sna_pumpd, sna_puff, &
+&                                  sna_puffd, sna_core, sna_cored, &
+&                                  nbdirs)
+              IF (sna_pump .LT. -0.0_R8) THEN
+                IF (sna_pump .GE. 0.) THEN
+                  DO nd=1,nbdirs
+                    abs4d(nd) = sna_pumpd(nd)
+                  END DO
+                  abs4 = sna_pump
+                ELSE
+                  DO nd=1,nbdirs
+                    abs4d(nd) = -sna_pumpd(nd)
+                  END DO
+                  abs4 = -sna_pump
+                END IF
+                DO nd=1,nbdirs
+                  y1d(nd) = fb_rescale(ifb)*(abs4d(nd)-sna_cored(nd)) + &
+&                   (abs4-sna_core)*fb_rescaled(nd, ifb)
+                END DO
+                y1 = (abs4-sna_core)*fb_rescale(ifb)
+                IF (0.0_R8 .LT. y1) THEN
+                  DO nd=1,nbdirs
+                    fb_rescaled(nd, ifb) = y1d(nd)
+                  END DO
+                  fb_rescale(ifb) = y1
+                  t0d = 0.D0
+                ELSE
+                  DO nd=1,nbdirs
+                    fb_rescaled(nd, ifb) = 0.D0
+                  END DO
+                  fb_rescale(ifb) = 0.0_R8
+                  t0d = 0.D0
+                END IF
+              ELSE
+                t0d = 0.D0
+              END IF
+            ELSE
+              t0d = 0.D0
             END IF
           CASE DEFAULT
 !
@@ -2677,7 +2843,7 @@ CONTAINS
               saved_fb_actuator(ifb) = saved_fb_actuator(ifb) + &
 &               fb_rescale(ifb)
             ELSE IF (fb_rescale_option(ifb) .EQ. 6 .OR. &
-&               fb_rescale_option(ifb) .EQ. 7) THEN
+&               fb_rescale_option(ifb) .EQ. 9) THEN
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
               END DO
@@ -3069,19 +3235,156 @@ CONTAINS
             conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
 &             ifb)
 !
+          CASE (8) 
+! pump
+!
+            IF (ncall .EQ. 0) THEN
+              IF (fb_ib(ifb) .EQ. 0) THEN
+                WRITE(*, '(a,a)') 'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences'
+              ELSE IF (fb_ib(ifb) .LT. 0) THEN
+                IF (fb_ib(ifb) .GE. 0.) THEN
+                  abs2 = fb_ib(ifb)
+                ELSE
+                  abs2 = -fb_ib(ifb)
+                END IF
+                WRITE(*, '(a,a,i3,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for isonuclear sequence ', b2espcr(fb_species(&
+&               ifb)), ' at non-default standard surface number', abs2
+              ELSE
+                WRITE(*, '(a,a,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences ', &
+&               'at non-default standard surface number', fb_ib(ifb)
+              END IF
+            END IF
+!
+            IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
+&           THEN
+              DO nd=1,nbdirs
+                saved_fb_actuatord(nd, ifb) = 0.D0
+              END DO
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+              WRITE(*, *) 'Warning! The pump was ', &
+&             'started with an initial rate of ', saved_fb_actuator(ifb)
+            END IF
+!           if(fb_puff_min(ifb).le.0.0_R8)
+!  &
+!
+            IF (fb_rescale_option(ifb) .LT. 4 .OR. fb_rescale_option(ifb&
+&               ) .EQ. 7) THEN
+              IF (switch%use_eirene .EQ. 0) THEN
+                CALL CALC_PUFF_PUMP_B25_DV(switch, mpg, ncv, dv, dvd, pl&
+&                                    , pld, sr, srd, is_start, is_end, &
+&                                    sna_pump, sna_pumpd, sna_puff, &
+&                                    sna_puffd, sna_core, sna_cored, &
+&                                    nbdirs)
+                IF (sna_pump .LT. 0.0_R8) THEN
+                  IF ((sna_puff+sna_core)/sna_pump .GE. 0.) THEN
+                    temp0 = (sna_puff+sna_core)/sna_pump
+                    DO nd=1,nbdirs
+                      abs3d(nd) = (sna_puffd(nd)+sna_cored(nd)-temp0*&
+&                       sna_pumpd(nd))/sna_pump
+                    END DO
+                    abs3 = temp0
+                  ELSE
+                    temp0 = (sna_puff+sna_core)/sna_pump
+                    DO nd=1,nbdirs
+                      abs3d(nd) = -((sna_puffd(nd)+sna_cored(nd)-temp0*&
+&                       sna_pumpd(nd))/sna_pump)
+                    END DO
+                    abs3 = -temp0
+                  END IF
+                  temp0 = abs3*saved_fb_actuator(ifb)/fb_rescale(ifb)
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = (saved_fb_actuator(ifb&
+&                     )*abs3d(nd)+abs3*saved_fb_actuatord(nd, ifb)-temp0&
+&                     *fb_rescaled(nd, ifb))/fb_rescale(ifb)
+                  END DO
+                  saved_fb_actuator(ifb) = temp0
+                END IF
+              END IF
+            ELSE
+              DO nd=1,nbdirs
+                saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
+              END DO
+              saved_fb_actuator(ifb) = fb_rescale(ifb)
+            END IF
+            IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              DO nd=1,nbdirs
+                saved_fb_actuatord(nd, ifb) = 0.D0
+              END DO
+              saved_fb_actuator(ifb) = fb_puff_min(ifb)
+            END IF
+            IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              DO nd=1,nbdirs
+                saved_fb_actuatord(nd, ifb) = 0.D0
+              END DO
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+            END IF
+!
+            IF (.NOT.(fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb&
+&               ) .GT. fb_target(ifb)*fb_overshoot(ifb))) THEN
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+              IF (switch%use_eirene .EQ. 0) THEN
+                IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(fb_species(&
+&                   ifb))) .NE. 1) THEN
+                  DO istra=1,nbc
+                    IF (bccon(is_start, istra) .EQ. 10 .AND. (istra .EQ.&
+&                       fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) THEN
+                      DO ibc=1,mpg%bccvp(istra, 2)
+                        DO nd=1,nbdirs
+                          conpard(nd, is_start, istra, 1) = -&
+&                           saved_fb_actuatord(nd, ifb)
+                        END DO
+                        conpar(is_start, istra, 1) = -saved_fb_actuator(&
+&                         ifb)
+                      END DO
+                    END IF
+                  END DO
+                ELSE
+                  DO istra=1,nstrai
+                    IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 &
+&                       .AND. species_start(istra) .EQ. is_start .AND. (&
+&                       istra .EQ. fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) &
+&                   THEN
+                      DO nd=1,nbdirs
+                        b2recycd(nd, is_start, istra) = -&
+&                         saved_fb_actuatord(nd, ifb)
+                        recycd(nd, is_start, istra) = b2recycd(nd, &
+&                         is_start, istra)
+                      END DO
+                      b2recyc(is_start, istra) = 1.0_R8 - &
+&                       saved_fb_actuator(ifb)
+                      recyc(is_start, istra) = b2recyc(is_start, istra)
+                    END IF
+                  END DO
+                END IF
+              END IF
+            END IF
           CASE DEFAULT
+!
             WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
 !
           END SELECT
 !
-          IF (fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&           WRITE(*, '(a,1p,i3,g15.6)') 'feedback_actuator ', b2espcr(&
-&           fb_species(ifb)), saved_fb_actuator(ifb)
+          IF ((fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
+&             .OR. fb_actuator(ifb) .EQ. 8) WRITE(*, '(a,1p,i3,g15.6)') &
+&                                           'feedback_actuator ', &
+&                                           b2espcr(fb_species(ifb)), &
+&                                           saved_fb_actuator(ifb)
         END IF
 !
 !
-        feedback_namelist_used = (feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3
+        feedback_namelist_used = ((feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
+&         fb_actuator(ifb) .EQ. 8
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           DO nd=1,nbdirs
@@ -3110,7 +3413,7 @@ CONTAINS
 
 !
   SUBROUTINE COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl&
-&   , dv, rt, srw, psnc, psnl, main_call)
+&   , dv, rt, sr, srw, psnc, psnl, main_call)
 !  Hint: 1:2 should be the size of dimension 2 of array fchc
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -3122,12 +3425,14 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(INOUT) :: pl
     TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
     TYPE(B2RATES), INTENT(IN) :: rt
+    TYPE(B2SOURCE), INTENT(IN) :: sr
     TYPE(B2SOURCEWORK), INTENT(IN) :: srw
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     LOGICAL :: main_call
 !   ..local variables
     INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, i, j, k, l, ic, ifs, iatm, imol
+&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     INTEGER, SAVE :: ncall=0
     REAL(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, zaf
     REAL(kind=r8), EXTERNAL :: INTFACE_S
@@ -3141,7 +3446,12 @@ CONTAINS
     INTRINSIC LOG
     INTRINSIC TANH
     INTRINSIC EXP
+    REAL(r8) :: y1
     REAL(kind=r8) :: abs0
+    REAL(kind=r8) :: abs1
+    INTEGER :: abs2
+    REAL(kind=r8) :: abs3
+    REAL(kind=r8) :: abs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8), DIMENSION(npfr_cvs) :: arg1
@@ -3768,18 +4078,19 @@ CONTAINS
             fb_current(ifb) = fb_current(ifb)/sum_e
 !
           CASE (23) 
-!  Total plasma heat flux at outer target
+!  Total particle heat flux at outer target
 !
             IF (ncall .EQ. 0) THEN
               IF (fb_reg_par(ifb, 1) .EQ. fb_reg_par(ifb, 2)) THEN
                 WRITE(*, '(a,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundary ', fb_reg_par(&
-&               ifb, 1), ' for sequence ', b2espcr(fb_species(ifb))
+&               ' particle heat flux density along boundary ', &
+&               fb_reg_par(ifb, 1), ' for sequence ', b2espcr(fb_species&
+&               (ifb))
               ELSE
                 WRITE(*, '(a,a,i3,a,i3,a,i3)') &
 &               'compute_feedback_type: using ', &
-&               ' plasma heat flux density along boundaries ', &
+&               ' particle heat flux density along boundaries ', &
 &               fb_reg_par(ifb, 1), ' to ', fb_reg_par(ifb, 2), &
 &               ' for sequence ', b2espcr(fb_species(ifb))
               END IF
@@ -3804,7 +4115,7 @@ CONTAINS
               t0 = dv%fht(fbreg(ifc), 0) + dv%fht(fbreg(ifc), 1)
               t0 = t1*t0/geo%fcs(fbreg(ifc))
               IF (switch%use_eirene .NE. 0) t0 = t0 + ewldt_res(b2_fnmti&
-&                 (ifc)) - ewldrp_res(b2_fnmti(ifc))
+&                 (fbreg(ifc))) - ewldrp_res(b2_fnmti(fbreg(ifc)))
               IF (fb_current(ifb) .LT. t0) THEN
                 fb_current(ifb) = t0
               ELSE
@@ -3948,24 +4259,25 @@ CONTAINS
 !
             ifc1 = fbregp(ifb, 1)
             ifc2 = ifc1 + fbregp(ifb, 2) - 1
-            DO ifc=ifc1,ifc2
-              IF (mpg%fccv(fbreg(ifc), 1) .GT. mpg%fccv(fbreg(ifc), 2)) &
-&             THEN
-                icv = mpg%fccv(fbreg(ifc), 2)
-              ELSE
-                icv = mpg%fccv(fbreg(ifc), 1)
-              END IF
-              ic = mpg%fcbc(fbreg(ifc), 1)
+            DO k=ifc1,ifc2
+              ifc = fbreg(k)
+              ic = mpg%fcbc(ifc, 1)
               t1 = mpg%bcfcor(ic)
               t0 = 0.0_R8
               DO is=0,ns-1
                 IF (.NOT.is_neutral(is)) THEN
-                  zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, rt&
-&                   %rza(1, is))
-                  t0 = t0 + t1*(dv%fna(fbreg(ifc), 0, is)+dv%fna(fbreg(&
-&                   ifc), 1, is))*zaf*qe/geo%fcs(fbreg(ifc))/(geo%fcqalf&
-&                   (fbreg(ifc), 0)*geo%fcbb(fbreg(ifc), 0)/geo%fcbb(&
-&                   fbreg(ifc), 3))
+                  IF (geo%fcpbs(ifc)/geo%fcs(ifc) .GE. 0.) THEN
+                    abs1 = geo%fcpbs(ifc)/geo%fcs(ifc)
+                  ELSE
+                    abs1 = -(geo%fcpbs(ifc)/geo%fcs(ifc))
+                  END IF
+                  IF (abs1 .GE. geo%qalfmin) THEN
+                    zaf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, &
+&                     rt%rza(1, is))
+                    t0 = t0 + t1*(dv%fna(ifc, 0, is)+dv%fna(ifc, 1, is))&
+&                     *zaf*qe/geo%fcs(ifc)/(geo%fcqalf(ifc, 0)*geo%fcbb(&
+&                     ifc, 0)/geo%fcbb(ifc, 3))
+                  END IF
                 END IF
               END DO
               IF (fb_current(ifb) .LT. t0) THEN
@@ -4055,9 +4367,13 @@ CONTAINS
 &                             'rescale for sequence ', b2espcr(&
 &                             fb_species(ifb))
 !
-            fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
-!
+            IF (fb_current(ifb) .NE. 0.0_R8) THEN
+              fb_rescale(ifb) = fb_target(ifb)/fb_current(ifb)
+            ELSE
+              fb_rescale(ifb) = 1.0_R8
+            END IF
           CASE (3) 
+!
 ! rescale slowed by tanh_log
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
@@ -4215,9 +4531,13 @@ CONTAINS
               END IF
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
 &               saved_fb_prev(ifb) = t0
-              fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
-&               fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-t0)&
-&               /dt_prev)
+              IF (fb_current(ifb) .NE. 0.0_R8) THEN
+                fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)/&
+&                 fb_current(ifb)-1.0_R8)*t0/ddtim+(saved_fb_prev(ifb)-&
+&                 t0)/dt_prev)
+              ELSE
+                fb_rescale(ifb) = 1.0_R8
+              END IF
               fb_current_prev(ifb) = t0
             ELSE
               IF (ncall .EQ. 0 .AND. saved_fb_prev(ifb) .LE. 0.0_R8) &
@@ -4225,6 +4545,51 @@ CONTAINS
               fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-&
 &               fb_current(ifb))/ddtim+(saved_fb_prev(ifb)-fb_current(&
 &               ifb))/dt_prev)
+            END IF
+          CASE (9) 
+!
+! puff depending from pump rescaled by tanh_log with plateau
+!
+            IF (ncall .EQ. 0) WRITE(*, '(a,a,a,i3)') &
+&                             'compute_feedback_option: using ', &
+&                             'puff depending from pump ', &
+&                          'tanh_log_rescale with plateau for sequence '&
+&                             , b2espcr(fb_species(ifb))
+!
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+            t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+            t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+            IF (fb_current(ifb) .LT. t0) THEN
+              arg11 = t0/fb_current(ifb)
+              arg2 = LOG(arg11)/fb_beta(ifb)
+              fb_rescale(ifb) = 2.0_R8**(TANH(arg2)*LOG(fb_alpha(ifb))/&
+&               LOG(2.0_R8))
+            ELSE IF (fb_current(ifb) .GT. t1) THEN
+              arg11 = t1/fb_current(ifb)
+              arg2 = LOG(arg11)/fb_beta(ifb)
+              fb_rescale(ifb) = 2.0_R8**(TANH(arg2)*LOG(fb_alpha(ifb))/&
+&               LOG(2.0_R8))
+            ELSE
+              fb_rescale(ifb) = 1.0_R8
+            END IF
+!
+            IF (switch%use_eirene .EQ. 0) THEN
+              CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                               is_start, is_end, sna_pump, sna_puff, &
+&                               sna_core)
+              IF (sna_pump .LT. -0.0_R8) THEN
+                IF (sna_pump .GE. 0.) THEN
+                  abs4 = sna_pump
+                ELSE
+                  abs4 = -sna_pump
+                END IF
+                y1 = (abs4-sna_core)*fb_rescale(ifb)
+                IF (0.0_R8 .LT. y1) THEN
+                  fb_rescale(ifb) = y1
+                ELSE
+                  fb_rescale(ifb) = 0.0_R8
+                END IF
+              END IF
             END IF
           CASE DEFAULT
 !
@@ -4284,7 +4649,7 @@ CONTAINS
               saved_fb_actuator(ifb) = saved_fb_actuator(ifb) + &
 &               fb_rescale(ifb)
             ELSE IF (fb_rescale_option(ifb) .EQ. 6 .OR. &
-&               fb_rescale_option(ifb) .EQ. 7) THEN
+&               fb_rescale_option(ifb) .EQ. 9) THEN
               saved_fb_actuator(ifb) = fb_rescale(ifb)
             ELSE
               saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
@@ -4362,7 +4727,7 @@ CONTAINS
             psnc%kinrgy = dv%kinrgy
 !   ..compute initial ni
             CALL B2XPNI_NODIFF(ncv, ns, pl%na, dv%ni)
-            CALL B2XPNN_NODIFF(ncv, ns, pl%na, dv%nn)
+            CALL B2XPNN(ncv, ns, pl%na, dv%nn)
 !   ..compute ni0
             psnl%ni = dv%ni
             psnc%ni = dv%ni
@@ -4507,19 +4872,117 @@ CONTAINS
             conpar(fb_species(ifb), fb_ib(ifb), 1) = saved_fb_actuator(&
 &             ifb)
 !
+          CASE (8) 
+! pump
+!
+            IF (ncall .EQ. 0) THEN
+              IF (fb_ib(ifb) .EQ. 0) THEN
+                WRITE(*, '(a,a)') 'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences'
+              ELSE IF (fb_ib(ifb) .LT. 0) THEN
+                IF (fb_ib(ifb) .GE. 0.) THEN
+                  abs2 = fb_ib(ifb)
+                ELSE
+                  abs2 = -fb_ib(ifb)
+                END IF
+                WRITE(*, '(a,a,i3,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for isonuclear sequence ', b2espcr(fb_species(&
+&               ifb)), ' at non-default standard surface number', abs2
+              ELSE
+                WRITE(*, '(a,a,a,i3)') &
+&               'compute_feedback_actuator: using ', &
+&               'gas pump for all isonuclear sequences ', &
+&               'at non-default standard surface number', fb_ib(ifb)
+              END IF
+            END IF
+!
+            IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
+&           THEN
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+              WRITE(*, *) 'Warning! The pump was ', &
+&             'started with an initial rate of ', saved_fb_actuator(ifb)
+            END IF
+!           if(fb_puff_min(ifb).le.0.0_R8)
+!  &
+!
+            IF (fb_rescale_option(ifb) .LT. 4 .OR. fb_rescale_option(ifb&
+&               ) .EQ. 7) THEN
+              IF (switch%use_eirene .EQ. 0) THEN
+                CALL CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, &
+&                                 is_start, is_end, sna_pump, sna_puff, &
+&                                 sna_core)
+                IF (sna_pump .LT. 0.0_R8) THEN
+                  IF ((sna_puff+sna_core)/sna_pump .GE. 0.) THEN
+                    abs3 = (sna_puff+sna_core)/sna_pump
+                  ELSE
+                    abs3 = -((sna_puff+sna_core)/sna_pump)
+                  END IF
+                  saved_fb_actuator(ifb) = abs3*saved_fb_actuator(ifb)/&
+&                   fb_rescale(ifb)
+                END IF
+              END IF
+            ELSE
+              saved_fb_actuator(ifb) = fb_rescale(ifb)
+            END IF
+            IF (fb_puff_min(ifb) .LT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              saved_fb_actuator(ifb) = fb_puff_min(ifb)
+            END IF
+            IF (fb_puff_max(ifb) .GT. saved_fb_actuator(ifb)) THEN
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+            ELSE
+              saved_fb_actuator(ifb) = fb_puff_max(ifb)
+            END IF
+!
+            IF (.NOT.(fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb&
+&               ) .GT. fb_target(ifb)*fb_overshoot(ifb))) THEN
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+              IF (switch%use_eirene .EQ. 0) THEN
+                IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(fb_species(&
+&                   ifb))) .NE. 1) THEN
+                  DO istra=1,nbc
+                    IF (bccon(is_start, istra) .EQ. 10 .AND. (istra .EQ.&
+&                       fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) THEN
+                      DO ibc=1,mpg%bccvp(istra, 2)
+                        conpar(is_start, istra, 1) = -saved_fb_actuator(&
+&                         ifb)
+                      END DO
+                    END IF
+                  END DO
+                ELSE
+                  DO istra=1,nstrai
+                    IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 &
+&                       .AND. species_start(istra) .EQ. is_start .AND. (&
+&                       istra .EQ. fb_ib(ifb) .OR. fb_ib(ifb) .EQ. 0)) &
+&                   THEN
+                      b2recyc(is_start, istra) = 1.0_R8 - &
+&                       saved_fb_actuator(ifb)
+                      recyc(is_start, istra) = b2recyc(is_start, istra)
+                    END IF
+                  END DO
+                END IF
+              END IF
+            END IF
           CASE DEFAULT
+!
             WRITE(*, *) 'fb_actuator not coded ', fb_type(ifb)
 !
           END SELECT
 !
-          IF (fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&           WRITE(*, '(a,1p,i3,g15.6)') 'feedback_actuator ', b2espcr(&
-&           fb_species(ifb)), saved_fb_actuator(ifb)
+          IF ((fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
+&             .OR. fb_actuator(ifb) .EQ. 8) WRITE(*, '(a,1p,i3,g15.6)') &
+&                                           'feedback_actuator ', &
+&                                           b2espcr(fb_species(ifb)), &
+&                                           saved_fb_actuator(ifb)
         END IF
 !
 !
-        feedback_namelist_used = (feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3
+        feedback_namelist_used = ((feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
+&         fb_actuator(ifb) .EQ. 8
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           saved_fb_prev(ifb) = fb_current_prev(ifb)
@@ -4599,7 +5062,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(INOUT) :: m
-    INTEGER :: is, ix, iy, icv, iss, ifbreg
+    INTEGER :: is, ix, iy, icv, ifb, iss, ifbreg
     LOGICAL :: done
 !
 !number of feedback imposed
@@ -4615,6 +5078,10 @@ CONTAINS
     fb_const(1:nfb) = na_feedback_const(0:nspecies-1)
     fb_time(1:nfb) = na_feedback_time(0:nspecies-1)
     fb_ib(1:nfb) = na_feedback_ib(0:nspecies-1)
+    DO ifb=1,nfb
+      IF (fb_ib(ifb) .EQ. -1 .AND. fb_actuator(ifb) .NE. 8) fb_ib(ifb)&
+&        = -1 - def_nsts
+    END DO
     fb_puff_min(1:nfb) = na_feedback_puff_min(0:nspecies-1)
     fb_puff_max(1:nfb) = na_feedback_puff_max(0:nspecies-1)
     fb_overshoot(1:nfb) = na_feedback_overshoot(0:nspecies-1)
@@ -4745,6 +5212,210 @@ CONTAINS
 !
     RETURN
   END SUBROUTINE WRITE_FBSAVE
+
+!  Differentiation of calc_puff_pump_b25 in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: sna_puff sna_core sna_pump
+!   with respect to varying inputs: conpar *(dv.fna) *(dv.fna_mdf)
+!                *(sr.sna) *(pl.na)
+!   Plus diff mem management of: dv.fna:in dv.fna_mdf:in sr.sna:in
+!                pl.na:in
+!
+  SUBROUTINE CALC_PUFF_PUMP_B25_DV(switch, mpg, ncv, dv, dvd, pl, pld, &
+&   sr, srd, is_start, is_end, sna_pump, sna_pumpd, sna_puff, sna_puffd&
+&   , sna_core, sna_cored, nbdirs)
+    USE B2MOD_BOUNDARY_NAMELIST_DIFFV
+    USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: sna_pumpd, sna_puffd, &
+&   sna_cored
+    INTEGER, INTENT(IN) :: ncv, is_start, is_end
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+    TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+    TYPE(B2PLASMA), INTENT(INOUT) :: pl
+    TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: pld
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(B2SOURCE_DIFFV), INTENT(IN) :: srd
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    INTEGER :: i, is, ifc, icv, icv1, ib, istra
+    INTEGER, EXTERNAL :: FIND_LOC
+    INTRINSIC MIN
+    INTRINSIC NINT
+    INTEGER :: nd
+    INTEGER :: nbdirs
+!
+    sna_core = 0.0_R8
+    sna_cored = 0.D0
+    DO is=is_start,is_end
+      DO icv1=mpg%nci+1,ncv
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icv = mpg%fccv(ifc, 2)
+        ELSE
+          icv = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%cvonclosedsurface(icv)) THEN
+          IF (switch%mdf_fnb .NE. 0) THEN
+            DO nd=1,nbdirs
+              sna_cored(nd) = sna_cored(nd) + dvd%fna_mdf(nd, ifc, 1, is&
+&               )
+            END DO
+            sna_core = sna_core + dv%fna_mdf(ifc, 1, is)
+          ELSE
+            DO nd=1,nbdirs
+              sna_cored(nd) = sna_cored(nd) + dvd%fna(nd, ifc, 1, is)
+            END DO
+            sna_core = sna_core + dv%fna(ifc, 1, is)
+          END IF
+        END IF
+      END DO
+    END DO
+!
+    sna_puff = 0.0_R8
+    is = is_start
+    sna_puffd = 0.D0
+    DO ib=1,nbc
+      IF (bccon(is, ib) .EQ. 8) THEN
+        DO nd=1,nbdirs
+          sna_puffd(nd) = sna_puffd(nd) + conpard(nd, is, ib, 1)
+        END DO
+        sna_puff = sna_puff + conpar(is, ib, 1)
+      END IF
+    END DO
+!
+    sna_pump = 0.0_R8
+!
+    IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is_start)) .NE. 1) THEN
+      sna_pumpd = 0.D0
+      DO istra=1,nbc
+        IF (bccon(is_start, istra) .EQ. 10) THEN
+          DO ib=1,mpg%bccvp(istra, 2)
+            DO is=is_start,is_end
+              icv1 = mpg%bccv(mpg%bccvp(istra, 1)+ib-1, 1)
+              DO nd=1,nbdirs
+                sna_pumpd(nd) = sna_pumpd(nd) + srd%sna(nd, icv1, 0, is)&
+&                 + sr%sna(icv1, 1, is)*pld%na(nd, icv1, is) + pl%na(&
+&                 icv1, is)*srd%sna(nd, icv1, 1, is)
+              END DO
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    ELSE
+      sna_pumpd = 0.D0
+!
+      DO istra=1,nstrai
+        IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 .AND. &
+&           species_start(istra) .EQ. is_start) THEN
+          DO is=is_start,is_end
+            ib = FIND_LOC(bcstart, nbc, rcstart(istra))
+            WRITE(*, *) 'istra, ib index', rcstart(istra), ib
+            DO i=1,mpg%bccvp(ib, 2)
+              icv1 = mpg%bccv(mpg%bccvp(ib, 1)+i-1, 1)
+              DO nd=1,nbdirs
+                sna_pumpd(nd) = sna_pumpd(nd) + srd%sna(nd, icv1, 0, is)&
+&                 + sr%sna(icv1, 1, is)*pld%na(nd, icv1, is) + pl%na(&
+&                 icv1, is)*srd%sna(nd, icv1, 1, is)
+              END DO
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    END IF
+!
+    WRITE(*, *) 'pump ', sna_pump, ' puff+core ', sna_core + sna_puff
+!
+    RETURN
+  END SUBROUTINE CALC_PUFF_PUMP_B25_DV
+
+!
+  SUBROUTINE CALC_PUFF_PUMP_B25(switch, mpg, ncv, dv, pl, sr, is_start, &
+&   is_end, sna_pump, sna_puff, sna_core)
+    USE B2MOD_BOUNDARY_NAMELIST_DIFFV
+    USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    REAL(kind=r8) :: sna_pump, sna_puff, sna_core
+    INTEGER, INTENT(IN) :: ncv, is_start, is_end
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+    TYPE(B2PLASMA), INTENT(INOUT) :: pl
+    TYPE(B2SOURCE), INTENT(IN) :: sr
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    INTEGER :: i, is, ifc, icv, icv1, ib, istra
+    INTEGER, EXTERNAL :: FIND_LOC
+    INTRINSIC MIN
+    INTRINSIC NINT
+!
+    sna_core = 0.0_R8
+    DO is=is_start,is_end
+      DO icv1=mpg%nci+1,ncv
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icv = mpg%fccv(ifc, 2)
+        ELSE
+          icv = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%cvonclosedsurface(icv)) THEN
+          IF (switch%mdf_fnb .NE. 0) THEN
+            sna_core = sna_core + dv%fna_mdf(ifc, 1, is)
+          ELSE
+            sna_core = sna_core + dv%fna(ifc, 1, is)
+          END IF
+        END IF
+      END DO
+    END DO
+!
+    sna_puff = 0.0_R8
+    is = is_start
+    DO ib=1,nbc
+      IF (bccon(is, ib) .EQ. 8) sna_puff = sna_puff + conpar(is, ib, 1)
+    END DO
+!
+    sna_pump = 0.0_R8
+!
+    IF (switch%recycle_afn .EQ. 0 .OR. NINT(zn(is_start)) .NE. 1) THEN
+      DO istra=1,nbc
+        IF (bccon(is_start, istra) .EQ. 10) THEN
+          DO ib=1,mpg%bccvp(istra, 2)
+            DO is=is_start,is_end
+              icv1 = mpg%bccv(mpg%bccvp(istra, 1)+ib-1, 1)
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    ELSE
+!
+      DO istra=1,nstrai
+        IF (1.0_R8 - recyc(is_start, istra) .GE. 1.0e-7_R8 .AND. &
+&           species_start(istra) .EQ. is_start) THEN
+          DO is=is_start,is_end
+            ib = FIND_LOC(bcstart, nbc, rcstart(istra))
+            WRITE(*, *) 'istra, ib index', rcstart(istra), ib
+            DO i=1,mpg%bccvp(ib, 2)
+              icv1 = mpg%bccv(mpg%bccvp(ib, 1)+i-1, 1)
+              sna_pump = sna_pump + sr%sna(icv1, 0, is) + pl%na(icv1, is&
+&               )*sr%sna(icv1, 1, is)
+            END DO
+          END DO
+        END IF
+      END DO
+    END IF
+!
+    WRITE(*, *) 'pump ', sna_pump, ' puff+core ', sna_core + sna_puff
+!
+    RETURN
+  END SUBROUTINE CALC_PUFF_PUMP_B25
+!
 !
 
 END MODULE B2US_FEEDBACK_DIFFV

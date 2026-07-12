@@ -1,7 +1,7 @@
       subroutine tallies(ns,tim,mpg,geo,state,state_ext,switch)
       use b2mod_types
       use b2mod_diag_diff
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_tallies
       use b2mod_switches_diff
       use b2mod_constants
@@ -58,7 +58,7 @@
         allocate(species_name(0:ns-1))
         do is = 0, ns-1
           potave(is) = (potmin(is)+potmax(is))/2.0_R8
-          call species_nodiff(is,species_name(is),.false.)
+          call species(is,species_name(is),.false.)
         enddo
         call ipgeti('tallies_netcdf',tallies_netcdf)
       endif

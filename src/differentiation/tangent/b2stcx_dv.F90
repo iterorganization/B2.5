@@ -22,7 +22,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES
 !      use b2mod_sources
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -137,6 +137,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shn0, 1)
+  rg0 = switch%b2stcx_rg0
 !   ..compute sources due to charge exchange
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
@@ -230,7 +231,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
         END IF
       END DO
 !     ..parallel momentum source
-      rg0 = switch%b2stcx_rg0
+!
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
         IF (mpg%cvreg(icv) .NE. 0) THEN
@@ -415,7 +416,6 @@ END SUBROUTINE B2STCX_NODIFF
 !   variations   of useful results: shi0 sna0 smq0 shn0
 !   with respect to varying inputs: ti tn na shi0 ua sna0 rcx smq0
 !                shn0
-!   Plus diff mem management of: geo.cvvol:in
 !
 !
 !
@@ -432,14 +432,13 @@ END SUBROUTINE B2STCX_NODIFF
 !
 !srv 09.01.01
 SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
-& geod, mpg, na, nad, ua, uad, ti, tid, tn, tnd, ni, nid, rcx, rcxd, &
-& sna0, sna0d, smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, &
-& rcxhi, nbdirs)
+& mpg, na, nad, ua, uad, ti, tid, tn, tnd, ni, rcx, rcxd, sna0, sna0d, &
+& smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, rcxhi, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES
 !      use b2mod_sources
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -455,13 +454,12 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ti(ncv), tn(ncv), &
 & ni(ncv, 0:1), rcx(ncv, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
-& ), rcxd(nbdirsmax, ncv, 0:ns-1)
+& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), rcxd(nbdirsmax, ncv, 0:&
+& ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(ncv, 0:1, 0:ns-1), smq0(ncv, 0:3, 0:ns-1), shi0(&
 & ncv, 0:3), shn0(ncv, 0:3), rcxna(ncv, 0:ns-1), rcxmo(ncv, 0:ns-1), &
@@ -581,6 +579,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
   arg1 = ncv*4
   dummyzerodiffd2 = 0.D0
   CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd2, shn0, shn0d, 1, nbdirs)
+  rg0 = switch%b2stcx_rg0
 !   ..compute sources due to charge exchange
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
@@ -803,7 +802,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
         END IF
       END DO
 !     ..parallel momentum source
-      rg0 = switch%b2stcx_rg0
+!
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
         IF (mpg%cvreg(icv) .NE. 0) THEN
@@ -1130,3 +1129,4 @@ CONTAINS
   END FUNCTION ROXA
 
 END SUBROUTINE B2STCX_DV
+

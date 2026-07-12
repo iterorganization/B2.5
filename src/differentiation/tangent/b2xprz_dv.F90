@@ -17,7 +17,7 @@
 !
 SUBROUTINE B2XPRZ_DV(ncv, ns, mp, am, na, nad, rz, rzd, st_ext, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral
+  USE B2MOD_B2CMPA, ONLY : is_neutral
   USE B2US_PLASMA_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -35,9 +35,6 @@ SUBROUTINE B2XPRZ_DV(ncv, ns, mp, am, na, nad, rz, rzd, st_ext, nbdirs)
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xprz')
-  DO nd=1,nbdirs
-    rzd(nd, :) = 0.D0
-  END DO
   rz = 0.0_R8
   rzd = 0.D0
   DO is=0,ns-1
@@ -70,7 +67,7 @@ END SUBROUTINE B2XPRZ_DV
 !
 SUBROUTINE B2XPRZ_NODIFF(ncv, ns, mp, am, na, rz, st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral
+  USE B2MOD_B2CMPA, ONLY : is_neutral
   USE B2US_PLASMA_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

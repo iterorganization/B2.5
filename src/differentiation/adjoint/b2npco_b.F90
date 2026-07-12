@@ -36,10 +36,11 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
 & , solvmreg, itcnt, isb, rxf, dtim, switch, switchb, geo, geob, mpg, &
 & mpgb, pl, plb, dv, dvb, sr, srb, psnl, psnlb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
+  USE B2MOD_OPENMP
   USE B2US_PLASMA_DIFF
 !srv 07.07.21 {
 !srv 07.07.21 }
@@ -54,7 +55,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
 !srv 05.07.08
-  INTEGER :: ncv, nfc, nvx, nregionv, itcnt, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, nregionv, itcnt, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -174,6 +175,16 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
   ELSE
     CALL PUSHCONTROL2B(2)
   END IF
+  IF (switch%b2npco_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
+    IF (IN_PARALLEL()) THEN
+      CALL PUSHCONTROL1B(0)
+      WRITE(*, *) 'B2NPCO will not write to file in parallel mode'
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
 !
   IF (switch%b2mndt_ckn .EQ. 2) THEN
     IF ((solving .AND. ANY(solvcreg(0:mpg%nnreg(0)))) .OR. switch%&
@@ -260,8 +271,8 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
     CALL PUSHREAL8ARRAY(dv%resco(:, isb), r8*SIZE(dv%resco, 1)/8)
     CALL B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
 &                solvcreg, itcnt, rxg_npco, pl%na(:, isb), dv%pa(:, isb)&
-&                , sr%sna(:, 1, isb), dv%flob, dv%conb, dv%resco(:, isb)&
-&                , dv%corpa(:, isb), aa, arg1)
+&                , sr%sna(:, 1, isb), dv%flob(:, :, isb), dv%conb(:, :, &
+&                :, isb), dv%resco(:, isb), dv%corpa(:, isb), aa, arg1)
 !   ..apply correction
     CALL PUSHREAL8ARRAY(pl%ua(:, isb), r8*SIZE(pl%ua, 1)/8)
     CALL PUSHREAL8ARRAY(pl%na(:, isb), r8*SIZE(pl%na, 1)/8)
@@ -281,7 +292,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
 &   , isb))/ts_factor
 !
 !    ..output quantities for continuity equation
-  IF (switch%b2npco_iout .NE. 0) THEN
+  IF (switch%b2npco_iout .NE. 0 .AND. (.NOT.IN_PARALLEL())) THEN
 !srv 12.07.02 {
     WRITE(chns, '(i3.3)') isb
     arg10 = 'b2npco_pa'//chns
@@ -310,7 +321,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg15)
     arg16 = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16)
-  ELSE IF (switch%iout_b2wdat .EQ. 4) THEN
+  ELSE IF (switch%iout_b2wdat .EQ. 4 .AND. (.NOT.IN_PARALLEL())) THEN
 !iys 17.04.17
     WRITE(chns, '(i3.3)') isb
     arg10 = 'b2npco_na'//chns
@@ -328,6 +339,8 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg15)
     arg16 = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16)
+    arg11 = 'b2npco_dnadt'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%dnadt(1, isb), arg11)
   END IF
   tempb = dvb%dnadt(:, isb)/ts_factor
   dvb%dnadt(:, isb) = 0.D0
@@ -339,19 +352,20 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
     CALL POPREAL8ARRAY(dv%pa(:, isb), r8*SIZE(dv%pa, 1)/8)
     CALL POPREAL8ARRAY(pl%na(:, isb), r8*SIZE(pl%na, 1)/8)
     CALL POPREAL8ARRAY(pl%ua(:, isb), r8*SIZE(pl%ua, 1)/8)
-    CALL B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, nregionv&
-&           , ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:, &
-&           isb), dvb%corpa(:, isb), dv%pcca(:, 0, isb), dvb%pcca(:, 0, &
-&           isb), dv%pa(:, isb), dvb%pa(:, isb), pl%na(:, isb), plb%na(:&
-&           , isb), pl%ua(:, isb), plb%ua(:, isb), isb, psnl)
+    CALL B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, switchb, &
+&           nregionv, ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%&
+&           corpa(:, isb), dvb%corpa(:, isb), dv%pcca(:, 0, isb), dvb%&
+&           pcca(:, 0, isb), dv%pa(:, isb), dvb%pa(:, isb), pl%na(:, isb&
+&           ), plb%na(:, isb), pl%ua(:, isb), plb%ua(:, isb), isb, psnl)
     CALL POPREAL8ARRAY(dv%resco(:, isb), r8*SIZE(dv%resco, 1)/8)
     CALL POPREAL8ARRAY(dv%corpa(:, isb), r8*SIZE(dv%corpa, 1)/8)
     CALL B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv, &
 &           solvcreg, itcnt, rxg_npco, pl%na(:, isb), plb%na(:, isb), dv&
 &           %pa(:, isb), dvb%pa(:, isb), sr%sna(:, 1, isb), srb%sna(:, 1&
-&           , isb), dv%flob, dvb%flob, dv%conb, dvb%conb, dv%resco(:, &
-&           isb), dvb%resco(:, isb), dv%corpa(:, isb), dvb%corpa(:, isb)&
-&           , aa, aab, arg1)
+&           , isb), dv%flob(:, :, isb), dvb%flob(:, :, isb), dv%conb(:, &
+&           :, :, isb), dvb%conb(:, :, :, isb), dv%resco(:, isb), dvb%&
+&           resco(:, isb), dv%corpa(:, isb), dvb%corpa(:, isb), aa, aab&
+&           , arg1)
   END IF
   CALL POPCONTROL3B(branch)
   IF (branch .LT. 2) THEN
@@ -390,6 +404,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
 &           , :, isb), dv%resco0(:, isb), dvb%resco0(:, isb))
     dvb%resco0(:, isb) = 0.D0
   END IF
+  CALL POPCONTROL1B(branch)
   CALL POPCONTROL2B(branch)
 END SUBROUTINE B2NPCO_B
 
@@ -412,10 +427,11 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 & ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, geo, mpg, pl, dv, &
 & sr, psnl)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
+  USE B2MOD_OPENMP
   USE B2US_PLASMA_DIFF
 !srv 07.07.21 {
 !srv 07.07.21 }
@@ -429,7 +445,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
 !srv 05.07.08
-  INTEGER :: ncv, nfc, nvx, nregionv, itcnt, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, nregionv, itcnt, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -542,13 +558,17 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
       rxg_npco = switch%b2npco_rxg
     END IF
   END IF
+  IF (switch%b2npco_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
+    IF (IN_PARALLEL()) WRITE(*, *) &
+&                      'B2NPCO will not write to file in parallel mode'
+  END IF
 !Compute residual without time-stepping sources (needed at next time-step for ckn scheme)
 !   ..extensive tests on first few calls
   IF (ncall_b2npco .LT. 3) THEN
 !    ..test sign of conb
-    CALL B2XVSG(nfc, dv%conb(1, 0, 0), 1, 'conb00', '.ge.')
-    CALL B2XVSG(nfc, dv%conb(1, 0, 1), 1, 'conb01', '.ge.')
-    CALL B2XVSG(nfc, dv%conb(1, 0, 2), 1, 'conb02', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 0, isb), 1, 'conb00', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 1, isb), 1, 'conb01', '.ge.')
+    CALL B2XVSG(nfc, dv%conb(1, 0, 2, isb), 1, 'conb02', '.ge.')
 !    ..test sign of snbc, snbv
     CALL B2XVSG(ncv, sr%sna(1, 0, isb), 1, 'snbc', '.ge.')
     CALL B2XVSG(ncv, sr%sna(1, 1, isb), 1, 'snbv', '.le.')
@@ -615,8 +635,8 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     arg1 = 'b2usco_'//chns
     CALL B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv, &
 &                solvcreg, itcnt, rxg_npco, pl%na(:, isb), dv%pa(:, isb)&
-&                , sr%sna(:, 1, isb), dv%flob, dv%conb, dv%resco(:, isb)&
-&                , dv%corpa(:, isb), aa, arg1)
+&                , sr%sna(:, 1, isb), dv%flob(:, :, isb), dv%conb(:, :, &
+&                :, isb), dv%resco(:, isb), dv%corpa(:, isb), aa, arg1)
 !   ..apply correction
     CALL B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 &                ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:&
@@ -630,7 +650,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &   , isb))/ts_factor
 !
 !    ..output quantities for continuity equation
-  IF (switch%b2npco_iout .NE. 0) THEN
+  IF (switch%b2npco_iout .NE. 0 .AND. (.NOT.IN_PARALLEL())) THEN
 !srv 12.07.02 {
     WRITE(chns, '(i3.3)') isb
     arg10 = 'b2npco_pa'//chns
@@ -659,7 +679,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg15)
     arg16 = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16)
-  ELSE IF (switch%iout_b2wdat .EQ. 4) THEN
+  ELSE IF (switch%iout_b2wdat .EQ. 4 .AND. (.NOT.IN_PARALLEL())) THEN
 !iys 17.04.17
     WRITE(chns, '(i3.3)') isb
     arg10 = 'b2npco_na'//chns
@@ -677,6 +697,8 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg15)
     arg16 = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16)
+    arg11 = 'b2npco_dnadt'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%dnadt(1, isb), arg11)
   END IF
 !
 ! ..return

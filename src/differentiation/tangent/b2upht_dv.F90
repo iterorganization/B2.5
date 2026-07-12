@@ -27,12 +27,12 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
 & solvmreg, solvkreg, solvzreg, rxf, cortt, corttd, corte, corted, corti&
 & , cortid, cortn, cortnd, corkt, corktd, corzt, corztd, pccm0, pccm0d, &
-& na, nad, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod&
-& , ne, ned, ni, nid, nbdirs)
+& na, ua, uad, te, ted, ti, tid, tn, tnd, kt, ktd, zt, ztd, po, pod, ne&
+& , ned, ni, nid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 ! IYS 19.12.2017, 21.09.2018
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dt, &
 & add_te_corr_to_po
@@ -66,10 +66,10 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..input/output arguments
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), kt(ncv), zt(ncv)
-  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
-& ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
+  REAL(kind=r8) :: uad(nbdirsmax, ncv, 0:ns-1), ted(nbdirsmax, ncv), tid&
+& (nbdirsmax, ncv), tnd(nbdirsmax, ncv), pod(nbdirsmax, ncv), ned(&
+& nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ktd(nbdirsmax, ncv), ztd(&
+& nbdirsmax, ncv)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -545,9 +545,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         END DO
         y1 = ti(icv) + dti(icv)
       ELSE
-        DO nd=1,nbdirs
-          y1d(nd) = 0.D0
-        END DO
         y1 = switch%b2upht_ti_max*ev
         y1d = 0.D0
       END IF
@@ -578,9 +575,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         END DO
         y2 = te(icv) + dte(icv)
       ELSE
-        DO nd=1,nbdirs
-          y2d(nd) = 0.D0
-        END DO
         y2 = switch%b2upht_te_max*ev
         y2d = 0.D0
       END IF
@@ -615,9 +609,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         END DO
         y3 = tn(icv) + dtn(icv)
       ELSE
-        DO nd=1,nbdirs
-          y3d(nd) = 0.D0
-        END DO
         y3 = switch%b2upht_tn_max*ev
         y3d = 0.D0
       END IF
@@ -640,9 +631,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         END DO
         y4 = kt(icv) + dkt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y4d(nd) = 0.D0
-        END DO
         y4 = switch%b2upht_kt_max*ev
         y4d = 0.D0
       END IF
@@ -665,9 +653,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         END DO
         y5 = zt(icv) + dzt(icv)
       ELSE
-        DO nd=1,nbdirs
-          y5d(nd) = 0.D0
-        END DO
         y5 = switch%b2upht_zt_max*ev
         y5d = 0.D0
       END IF
@@ -752,7 +737,7 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 ! IYS 19.12.2017, 21.09.2018
   USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dt, &
 & add_te_corr_to_po

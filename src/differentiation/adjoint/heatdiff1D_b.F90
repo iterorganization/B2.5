@@ -385,6 +385,7 @@ FUNCTION QRAD_NODIFF(ibnd, ts, top_layer) RESULT (qrad)
 !     09/12/07 xpb : source CODATA 2006 (http://www.nist.gov/)
 !     19/03/18 xpb : source CODATA 2014 (http://www.nist.gov/)
 !     03/06/19 xpb : source CODATA 2018 (http://www.nist.gov/)
+!     26/03/26 xpb : source CODATA 2022 (http://www.nist.gov/)
 !     -------------------------------------------------------------------------
 !
 # ifndef CONSTANTS_PROVIDED
@@ -437,7 +438,7 @@ END FUNCTION QRAD_NODIFF
 FUNCTION QEVAP_NODIFF(ibnd, ns, ts) RESULT (qevap)
   USE B2MOD_TYPES
   USE B2MOD_WALL
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE

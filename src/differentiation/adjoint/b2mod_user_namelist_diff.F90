@@ -208,7 +208,7 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_USER_NAMELIST(ns, geo, m, sw)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     USE B2MOD_SUBSYS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ns
@@ -219,7 +219,7 @@ CONTAINS
     REAL(kind=r8) :: distint, dsep, xv1, xv2, yv1, yv2, xm1, xm2, ym1, &
 &   ym2, xint, yint
 !
-    LOGICAL :: file_ok
+    LOGICAL :: file_ok, on_wall, wall_face(2)
     CHARACTER(len=260) :: filename
     INTEGER :: i
     LOGICAL :: done, ifail, found
@@ -332,24 +332,42 @@ CONTAINS
       END IF
     END DO
     DO ic=1,nomp
-      ifs1 = 0
-      ifs2 = 0
-      ift = m%cvft(omp(ic))
-      IF (ift .NE. 0) THEN
-        ft_omp(ift) = ic
-        DO i=m%cvvxp(omp(ic), 1),m%cvvxp(omp(ic), 1)+m%cvvxp(omp(ic), 2)&
-&           -1
-          ifs = m%vxfs(m%cvvx(i))
-          IF (ifs .NE. 0) THEN
-            IF (ifs1 .EQ. 0) THEN
-              ifs1 = ifs
-            ELSE IF (ifs2 .EQ. 0) THEN
+! do not do guard cells
+      IF (omp(ic) .LE. m%nci) THEN
+        ifs1 = 0
+        ifs2 = 0
+        ift = m%cvft(omp(ic))
+        IF (ift .NE. 0) THEN
+          ft_omp(ift) = ic
+          wall_face = .false.
+          DO i=m%cvfcp(omp(ic), 1),m%cvfcp(omp(ic), 1)+m%cvfcp(omp(ic), &
+&             2)-1
+            ifc = m%cvfc(i)
+            ifs = m%fcfs(ifc)
+            on_wall = m%fclbl(ifc) .NE. 0
+            IF (on_wall) THEN
+              IF (ifs1 .EQ. 0) wall_face(1) = .true.
+              IF (ifs1 .NE. 0 .AND. ifs2 .EQ. 0) wall_face(2) = .true.
+            END IF
+            IF (ifs1 .EQ. 0 .AND. ifs .NE. 0) THEN
+              IF (wall_face(1)) THEN
+                ifs2 = ifs
+              ELSE
+                ifs1 = ifs
+              END IF
+            ELSE IF (ifs2 .EQ. 0 .AND. ifs .NE. ifs1 .AND. ifs .NE. 0) &
+&           THEN
               ifs2 = ifs
             END IF
+          END DO
+          IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) THEN
+            ft_ds_omp(ift) = 0.5_R8*(fs_ds_omp(ifs1)+fs_ds_omp(ifs2))
+          ELSE IF (wall_face(1)) THEN
+            ft_ds_omp(ift) = fs_ds_omp(ifs2) + 0.5_R8*geo%cvhy(omp(ic))
+          ELSE
+            ft_ds_omp(ift) = fs_ds_omp(ifs1) + 0.5_R8*geo%cvhy(omp(ic))
           END IF
-        END DO
-        IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) ft_ds_omp(ift) = 0.5_R8*(&
-&           fs_ds_omp(ifs1)+fs_ds_omp(ifs2))
+        END IF
       END IF
     END DO
 !xpb set default switches depending on midplane location
@@ -567,24 +585,42 @@ CONTAINS
       END IF
     END DO
     DO ic=1,nimp
-      ifs1 = 0
-      ifs2 = 0
-      ift = m%cvft(imp(ic))
-      IF (ift .NE. 0) THEN
-        ft_imp(ift) = ic
-        DO i=m%cvvxp(imp(ic), 1),m%cvvxp(imp(ic), 1)+m%cvvxp(imp(ic), 2)&
-&           -1
-          ifs = m%vxfs(m%cvvx(i))
-          IF (ifs .NE. 0) THEN
-            IF (ifs1 .EQ. 0) THEN
-              ifs1 = ifs
-            ELSE IF (ifs2 .EQ. 0) THEN
+! do not do guard cells
+      IF (imp(ic) .LE. m%nci) THEN
+        ifs1 = 0
+        ifs2 = 0
+        ift = m%cvft(imp(ic))
+        IF (ift .NE. 0) THEN
+          ft_imp(ift) = ic
+          wall_face = .false.
+          DO i=m%cvfcp(imp(ic), 1),m%cvfcp(imp(ic), 1)+m%cvfcp(imp(ic), &
+&             2)-1
+            ifc = m%cvfc(i)
+            ifs = m%fcfs(ifc)
+            on_wall = m%fclbl(ifc) .NE. 0
+            IF (on_wall) THEN
+              IF (ifs1 .EQ. 0) wall_face(1) = .true.
+              IF (ifs1 .NE. 0 .AND. ifs2 .EQ. 0) wall_face(2) = .true.
+            END IF
+            IF (ifs1 .EQ. 0 .AND. ifs .NE. 0) THEN
+              IF (wall_face(1)) THEN
+                ifs2 = ifs
+              ELSE
+                ifs1 = ifs
+              END IF
+            ELSE IF (ifs2 .EQ. 0 .AND. ifs .NE. ifs1 .AND. ifs .NE. 0) &
+&           THEN
               ifs2 = ifs
             END IF
+          END DO
+          IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) THEN
+            ft_ds_imp(ift) = 0.5_R8*(fs_ds_imp(ifs1)+fs_ds_imp(ifs2))
+          ELSE IF (wall_face(1)) THEN
+            ft_ds_imp(ift) = fs_ds_imp(ifs2) + 0.5_R8*geo%cvhy(imp(ic))
+          ELSE
+            ft_ds_imp(ift) = fs_ds_imp(ifs1) + 0.5_R8*geo%cvhy(imp(ic))
           END IF
-        END DO
-        IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) ft_ds_imp(ift) = 0.5_R8*(&
-&           fs_ds_imp(ifs1)+fs_ds_imp(ifs2))
+        END IF
       END IF
     END DO
     IF (.NOT.found) WRITE(*, '(a/a/a)') &

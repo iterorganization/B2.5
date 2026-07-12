@@ -7,21 +7,21 @@
 !
 !.end b2stbr
 !
-SUBROUTINE B2STBR_NEUTR_SCL_NODIFF(ncv, nfc, ns, mpg, geo, pl, dv, &
-& use_eirene, ank_mods)
+SUBROUTINE B2STBR_NEUTR_SCL_NODIFF(ncv, nfc, ns, mpg, geo, st, switch)
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
+  USE B2MOD_SWITCHES_DIFF
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2stbr_neutr_scl
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: ncv, nfc, ns, use_eirene, ank_mods
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2STATE), INTENT(IN) :: st
+  TYPE(SWITCHES), INTENT(IN) :: switch
   EXTERNAL XERRAB
 !
   CALL SUBINI('b2stbr_neutr_scl')
@@ -29,9 +29,10 @@ SUBROUTINE B2STBR_NEUTR_SCL_NODIFF(ncv, nfc, ns, mpg, geo, pl, dv, &
     CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
   END IF
-  IF (use_eirene .NE. 0 .AND. ank_mods .NE. 0) CALL XERRAB(&
+  IF (switch%use_eirene .NE. 0 .AND. switch%ank_mods .NE. 0) CALL XERRAB&
+&                                                                 (&
 &                       'b2stbr not compiled with the B25_EIRENE option'&
-&                                                   )
+&                                                                 )
   ncall_b2stbr_neutr_scl = ncall_b2stbr_neutr_scl + 1
   CALL SUBEND()
   RETURN
@@ -48,7 +49,7 @@ SUBROUTINE B2STBR_INIT_B(ns, switch, switchb, mpg, mpgb)
   USE B2MOD_TYPES
   USE B2MOD_TIME
   USE B2MOD_WALL
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFF, ONLY : sput_dst, sput_dst2, sput_dst3
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_NEUTR_SRC_SCALING
@@ -249,7 +250,7 @@ SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
   USE B2MOD_TYPES
   USE B2MOD_TIME
   USE B2MOD_WALL
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFF, ONLY : sput_dst, sput_dst2, sput_dst3
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_NEUTR_SRC_SCALING
@@ -489,8 +490,8 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_SUBSYS
   USE B2US_FEEDBACK_DIFF, ONLY : she_eir_tot, she_eir_totb
-  USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_DIMENSIONS
@@ -559,7 +560,8 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -1806,8 +1808,6 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -1976,12 +1976,6 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -2548,6 +2542,12 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   arg1 = ncv*4*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, smo0_eir, 1)
   CALL PUSHINTEGER4(arg1)
+  arg1 = ncv*4*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smr0_eir, 1)
+  CALL PUSHINTEGER4(arg1)
+  arg1 = ncv*4*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smd0_eir, 1)
+  CALL PUSHINTEGER4(arg1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, she0_eir, 1)
   CALL PUSHINTEGER4(arg1)
@@ -2713,7 +2713,9 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -2746,7 +2748,8 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1
@@ -2839,14 +2842,14 @@ END SUBROUTINE B2STBR_B
 
 !  Differentiation of b2stbr in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: she_eir_tot int0l int1l int2l
-!                int3l int4l b2recyc potpar *(st.pl.na) *(st.pl.ua)
+!                int3l int4l recyc b2recyc potpar *(st.pl.na) *(st.pl.ua)
 !                *(st.pl.po) *(st.pl.te) *(st.pl.ti) *(st.pl.tn)
 !                *(st.dv.fna) *(st.dv.fhm) *(st.dv.kin_frac_hyb)
 !                *(st.dv.fluid_frac_hyb) *(st.dv.ne) *(st.srw.sch0)
 !                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.smo0)
 !                *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlsa) *(st.rt.rza)
 !   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
+!                recyc b2recyc potpar *(st.pl.na) *(st.pl.ua) *(st.pl.po)
 !                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.dv.fna)
 !                *(st.dv.fhm) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.ne) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
@@ -2901,8 +2904,8 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_SUBSYS
   USE B2US_FEEDBACK_DIFF, ONLY : she_eir_tot, she_eir_totb
-  USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_DIMENSIONS
@@ -2971,7 +2974,8 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -4218,8 +4222,6 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -4388,12 +4390,6 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -4813,7 +4809,6 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   INTEGER :: result10
   CHARACTER(len=14) :: arg10
   CHARACTER(len=10) :: arg11
-  INTEGER :: ii1
   REAL(r8) :: dummydiffb
   REAL(r8) :: dummydiffb0
   REAL(r8) :: dummydiffb1
@@ -4838,6 +4833,33 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   IF (ncall_b2stbr .EQ. 0) THEN
+    IF (switch%use_eirene .NE. 0) out_tfiles = 0
+!srv 07.04.09
+    CALL IPGETI('b2stbr_out_tfiles', out_tfiles)
+!srv 23.03.12
+    CALL IPGETI('b2stbr_ncall_iout', ncall_iout)
+    IF (switch%b2stbr_first_flight .NE. 0) THEN
+      CALL IPGETI('b2stbr_first_flight_no_of_flights', in_no_of_angles)
+      CALL IPGETI('b2stbr_first_flight_table_size', in_size_of_table)
+      in_no_of_start_points = ncv - mpg%nci
+      CALL IPGETI('b2stbr_first_flight_no_of_start_points', &
+&           in_no_of_start_points)
+      CALL ALLOC_B2MOD_FIRST_FLIGHT(in_no_of_angles, in_size_of_table, &
+&                             in_no_of_start_points, switch%b2stbr_in_dl&
+&                            )
+      DO icv=mpg%nci+1,ncv
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        CALL SETUP_B2MOD_FIRST_FLIGHT(mpg, geo, icv, ifc, switch%&
+&                               b2stbr_output)
+      END DO
+      WRITE(*, '(a,i8,a,i8,a,g10.3,a,g12.5,a)') 'Used ', ptr_table, &
+&     ' out of ', size_of_table, ' (', REAL(ptr_table)/REAL(&
+&     size_of_table)*100, '%)', end_time - start_time, ' cpu-seconds'
+    END IF
+    CALL IPGETI('b2stbr_sput_src', sput_src)
+    CALL IPGETI('b2stbr_sput_chem_model', sput_chem_model)
+    CALL IPGETI('b2stbr_reflection_on', reflection_on)
+    CALL IPGETI('b2stbr_sputter_energy_on', sputter_energy_on)
     IF (switch%use_eirene .EQ. 0) THEN
       CALL PUSHREAL8(switch%neutral_sources_rescale, r8/8)
       switch%neutral_sources_rescale = 1.0_R8
@@ -4849,12 +4871,20 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     IF (neutrals_time_mod .GT. 0.0_R8) THEN
       CALL PUSHCONTROL2B(0)
+      WRITE(*, *) 'NEUTRALS: ', tim, MOD(tim, neutrals_time_mod), &
+&     neutrals_time_switch, INT(tim/neutrals_time_mod), neutrals_count
       catch_up = (MOD(tim, neutrals_time_mod) .GE. neutrals_time_switch &
 &       .AND. neutrals_time_switch .GT. 0.0_R8) .OR. INT(tim/&
 &       neutrals_time_mod) .GT. neutrals_count
     ELSE IF (neutrals_time_switch .GT. 0.0_R8) THEN
       catch_up = tim .GE. neutrals_time_switch
-      CALL PUSHCONTROL2B(1)
+      IF (catch_up) THEN
+        CALL PUSHCONTROL2B(1)
+        WRITE(*, '(a,a)') 'Switching to next neutrals namelist file ', &
+&       TRIM(neutrals_filename)
+      ELSE
+        CALL PUSHCONTROL2B(1)
+      END IF
     ELSE
       CALL PUSHCONTROL2B(2)
       catch_up = .false.
@@ -4863,11 +4893,9 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL PUSHINTEGER4(ncns)
       CALL PUSHINTEGER4(nstrat)
       CALL PUSHINTEGER4(nstrai)
-      DO ii1=1,nstraid
-        CALL PUSHCHARACTERARRAY(crcstra(ii1), 1)
-      END DO
       CALL PUSHREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
       CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
+      CALL WRITE_B2MOD_NEUTRALS_NAMELIST()
       CALL PUSHCONTROL2B(2)
     ELSE
       CALL PUSHCONTROL2B(3)
@@ -4875,52 +4903,393 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   END IF
 !   ..initialize sources to 0
   arg1 = ncv*2*ns
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%sna0, stb%srw%sna0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%sna0, 1)
   arg1 = ncv*4*ns
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%smo0, stb%srw%smo0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%smo0, 1)
   CALL PUSHINTEGER4(arg1)
   arg1 = ncv*4
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%she0, stb%srw%she0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%she0, 1)
   arg1 = ncv*4
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%shi0, stb%srw%shi0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%shn0, stb%srw%shn0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%shn0, 1)
   arg1 = ncv*4
-  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%sch0, stb%srw%sch0, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%srw%sch0, 1)
   arg1 = ncv*nscx
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_ff, 1)
 !srv 29.04.10 {
+  arg1 = ncv*2*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, sna0_eir, 1)
+  arg1 = ncv*4*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smo0_eir, 1)
   CALL PUSHINTEGER4(arg1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, she0_eir, 1)
+  arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_eir, 1)
+  arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shn0_eir, 1)
 !
+  tchem = 0.0_R8
+  tchee = 0.0_R8
+  tphys = 0.0_R8
+  tphye = 0.0_R8
+  thevp = 0.0_R8
+  thvpe = 0.0_R8
+  trese = 0.0_R8
+  tresn = 0.0_R8
+  trfle = 0.0_R8
+  trfln = 0.0_R8
 !
 !sw 09oct2012 SOLPS4: explicitly avoid b2stbr call here
 !   --> better solution wanted here..
   IF (no_b2stbr_phys_call .EQ. 0) THEN
+    IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
+    CALL PUSHINTEGER4(ncall_b2stbr_phys)
+    CALL PUSHCHARACTERARRAY(my_out_folder, 7)
+    CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
+    CALL PUSHREAL8(int6r, r8/8)
+    CALL PUSHREAL8(int6l, r8/8)
+    CALL PUSHREAL8(int5r, r8/8)
+    CALL PUSHREAL8(int5l, r8/8)
+    CALL PUSHREAL8(int4r, r8/8)
+    CALL PUSHREAL8(int4l, r8/8)
+    CALL PUSHREAL8(int3r, r8/8)
+    CALL PUSHREAL8(int3l, r8/8)
+    CALL PUSHREAL8(int2r, r8/8)
+    CALL PUSHREAL8(int2l, r8/8)
+    CALL PUSHREAL8(int1r, r8/8)
+    CALL PUSHREAL8(int1l, r8/8)
+    CALL PUSHREAL8(int0r, r8/8)
+    CALL PUSHREAL8(int0l, r8/8)
+    IF (ALLOCATED(fna_mol)) THEN
+      CALL PUSHREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*SIZE(fna_mol, 2)/&
+&                   8)
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+    CALL PUSHREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
+    CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw&
+&                 %she0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw&
+&                 %shi0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%shn0, r8*SIZE(st%srw%shn0, 1)*SIZE(st%srw&
+&                 %shn0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw&
+&                 %smo0, 2)*SIZE(st%srw%smo0, 3)/8)
+    CALL PUSHREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw&
+&                 %sna0, 2)*SIZE(st%srw%sna0, 3)/8)
+    CALL PUSHREAL8ARRAY(st%dv%kin_frac_hyb, r8*SIZE(st%dv%kin_frac_hyb, &
+&                 1)/8)
+    CALL PUSHREAL8ARRAY(st%dv%fluid_frac_hyb, r8*SIZE(st%dv%&
+&                 fluid_frac_hyb, 1)/8)
+    CALL B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim&
+&                     , switch, geo, mpg, st%pl, st%dv, st%co, st%rt, &
+&                     st_ext, st%srw, tchem, tchee, tphys, tphye, thevp&
+&                     , thvpe, trese, tresn, trfln, trfle, sput_src, &
+&                     sput_chem_model, reflection_on, sputter_energy_on&
+&                     , main_call, new_sputter_namelist, shi0_ff, &
+&                     f_redep)
+    CALL PUSHCONTROL1B(0)
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
+! xpb
+!
+  IF (main_call .AND. out_tfiles .NE. 0) THEN
+! xpb  !srv 07.04.09
+    WRITE(*, '(a,1p,(10000e12.4))') 'tphys', SUM(tphys), tphys
+    WRITE(*, '(a,1p,(10000e12.4))') 'tphye', SUM(tphye), tphye
+    WRITE(*, '(a,1p,(10000e12.4))') 'tchem', SUM(tchem), tchem
+    WRITE(*, '(a,1p,(10000e12.4))') 'tchee', SUM(tchee), tchee
+    WRITE(*, '(a,1p,(10000e12.4))') 'thevp', SUM(thevp), thevp
+    WRITE(*, '(a,1p,(10000e12.4))') 'thvpe', SUM(thvpe), thvpe
+    WRITE(*, '(a,1p,(10000e12.4))') 'trese', SUM(trese), trese
+    WRITE(*, '(a,1p,(10000e12.4))') 'tresn', SUM(tresn), tresn
+    WRITE(*, '(a,1p,(10000e12.4))') 'trfln', SUM(trfln), trfln
+    WRITE(*, '(a,1p,(10000e12.4))') 'trfle', SUM(trfle), trfle
+  END IF
+!
+! ..sources
+  st%srw%b2stbr_sna(:, 0:ns-1) = st%srw%sna0(:, 0, 0:ns-1) + st%srw%sna0&
+&   (:, 1, 0:ns-1)*st%pl%na(:, 0:ns-1)
+  DO is=0,ns-1
+    st%srw%b2stbr_smo(:, is) = st%srw%smo0(:, 0, is) + st%srw%smo0(:, 1&
+&     , is)*st%pl%ua(:, is) + st%srw%smo0(:, 2, is)*am(is)*mp*st%pl%na(:&
+&     , is) + st%srw%smo0(:, 3, is)*am(is)*mp*st%pl%na(:, is)*st%pl%ua(:&
+&     , is)
+  END DO
+  st%srw%b2stbr_she(:) = st%srw%she0(:, 0) + st%srw%she0(:, 1)*st%pl%te(&
+&   :) + st%srw%she0(:, 2)*st%dv%ne(:) + st%srw%she0(:, 3)*st%dv%ne(:)*&
+&   st%pl%te(:)
+  st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
+&   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
+&   , 0)*st%pl%ti(:)
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+&   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
+&   st%pl%tn(:)
+  st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&
+&   :) + st%srw%sch0(:, 2)*st%dv%ne(:) + st%srw%sch0(:, 3)*st%dv%ne(:)*&
+&   st%pl%po(:)
+  st%srw%b2stbr_skt(:) = st%srw%skt0(:, 0) + st%srw%skt0(:, 1)*st%pl%kt(&
+&   :) + st%srw%skt0(:, 2)*st%dv%ni(:, 1) + st%srw%skt0(:, 3)*st%dv%ni(:&
+&   , 1)*st%pl%kt(:)
+  st%srw%b2stbr_szt(:) = st%srw%szt0(:, 0) + st%srw%szt0(:, 1)*st%pl%zt(&
+&   :) + st%srw%szt0(:, 2)*st%dv%ni(:, 1) + st%srw%szt0(:, 3)*st%dv%ni(:&
+&   , 1)*st%pl%zt(:)
+!
+  IF (switch%b2stbr_b2wall_netcdf .NE. 0 .AND. ntargsp .GT. 0) THEN
+    IF (ncall_b2stbr .EQ. 0) THEN
+      filename_b2w = 'b2wall.nc'
+      IF ((.NOT.ex) .OR. switch%b2mndr_stim .GE. 0.0_R8) THEN
+        CALL PUSHCONTROL1B(0)
+        ntstep_b2wall = 0
+        WRITE(6, '(a)') TRIM(filename_b2w)//' will be created'
+        CALL DEFINE_CDF_B2MOD_WALL(filename_b2w, ncid, nbnd, ntargsp)
+      ELSE IF (ex .AND. switch%b2mndr_stim .LT. 0.0_R8) THEN
+        CALL PUSHCONTROL1B(1)
+        ntstep_b2wall = dimsize(1)
+        WRITE(6, '(a)') TRIM(filename_b2w)//' will be appended'
+      ELSE
+        CALL PUSHCONTROL1B(1)
+        ntstep_b2wall = 0
+        WRITE(6, '(a)') TRIM(filename_b2w)//' will be replaced'
+        CALL DEFINE_CDF_B2MOD_WALL(filename_b2w, ncid, nbnd, ntargsp)
+      END IF
+      WRITE(6, '(a,i8)') TRIM(filename_b2w)//' : ntstep_b2wall = ', &
+&     ntstep_b2wall
+      IF (ntstep_b2wall .EQ. 0) THEN
+        CALL PUSHCONTROL2B(0)
+        WRITE(*, *) 'Writing track_species'
+        WRITE(*, *) 'Writing plate_area'
+        WRITE(6, '(a)') 'Closed '//TRIM(filename_b2w)
+      ELSE
+        CALL PUSHCONTROL2B(0)
+      END IF
+    ELSE
+      CALL PUSHCONTROL2B(1)
+    END IF
+  ELSE
+    CALL PUSHCONTROL2B(2)
+  END IF
+!
+  IF ((switch%b2stbr_iout .EQ. 1 .OR. switch%b2npmo_iout .EQ. 1) .OR. &
+&     switch%iout_b2wdat .EQ. 4) THEN
+!srv 11.09.09 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      IF (switch%use_eirene .NE. 0) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
+          CALL PUSHCONTROL2B(0)
+!          do k=0,1 ! 3                                                  !srv 29.04.10 {
+!           write (chk,'(i1)') k
+!           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
+!     *              'b2stbr_smo_eir'//chk//chns)
+!          enddo
+          wrk0 = smo0_eir(:, 0, is) + smo0_eir(:, 1, is)*st%pl%ua(:, is)&
+&           + smo0_eir(:, 2, is)*st%pl%na(:, is)*mp*am(is) + smo0_eir(:&
+&           , 3, is)*st%pl%ua(:, is)*st%pl%na(:, is)*mp*am(is)
+          arg10 = 'b2stbr_smo_eir'//chns
+          CALL MY_OUT_US(70, ncv, 0, wrk0, arg10)
+        ELSE
+          CALL PUSHCONTROL2B(1)
+        END IF
+      ELSE
+        CALL PUSHCONTROL2B(2)
+!        do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
+!        enddo
+        arg11 = 'b2stbr_smo'//chns
+        CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_smo(1, is), &
+&                       arg11)
+      END IF
+    END DO
+    CALL PUSHCONTROL1B(0)
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
+  IF ((switch%b2stbr_iout .EQ. 1 .OR. switch%b2npco_iout .EQ. 1) .OR. &
+&     switch%iout_b2wdat .EQ. 4) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
+      IF (switch%use_eirene .NE. 0) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
+          IF (switch%iout_b2wdat .NE. 4) THEN
+            CALL PUSHCONTROL2B(0)
+!srv 29.04.10
+            DO k=0,1
+              WRITE(chk, '(i1)') k
+              arg10 = 'b2stbr_sna_eir'//chk//chns
+              CALL MY_OUT_US(70, ncv, 0, sna0_eir(1, k, is), &
+&                             arg10)
+            END DO
+          ELSE
+            CALL PUSHCONTROL2B(0)
+          END IF
+          wrk0 = sna0_eir(:, 0, is) + sna0_eir(:, 1, is)*st%pl%na(:, is)
+          arg10 = 'b2stbr_sna_eir'//chns
+          CALL MY_OUT_US(70, ncv, 0, wrk0, arg10)
+        ELSE
+          CALL PUSHCONTROL2B(1)
+        END IF
+      ELSE
+        CALL PUSHCONTROL2B(2)
+!        do k=0,1
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
+!        enddo
+        arg11 = 'b2stbr_sna'//chns
+        CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_sna(1, is), &
+&                       arg11)
+      END IF
+    END DO
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
   wrk0 = she0_eir(:, 0) + she0_eir(:, 1)*st%pl%te + she0_eir(:, 2)*st%dv&
 &   %ne + she0_eir(:, 3)*st%pl%te*st%dv%ne
+  IF ((switch%b2stbr_iout .EQ. 1 .OR. switch%b2npht_iout .EQ. 1) .OR. &
+&     switch%iout_b2wdat .EQ. 4) THEN
+    IF (switch%use_eirene .NE. 0) THEN
+      IF (switch%iout_b2wdat .NE. 4) THEN
+        CALL PUSHCONTROL2B(0)
+! 3
+        DO k=0,1
+          WRITE(chk, '(i1)') k
+          arg10 = 'b2stbr_she_eir'//chk
+          CALL MY_OUT_US(70, ncv, 0, she0_eir(1, k), arg10)
+          arg10 = 'b2stbr_shi_eir'//chk
+          CALL MY_OUT_US(70, ncv, 0, shi0_eir(1, k), arg10)
+          arg10 = 'b2stbr_shn_eir'//chk
+          CALL MY_OUT_US(70, ncv, 0, shn0_eir(1, k), arg10)
+        END DO
+      ELSE
+        CALL PUSHCONTROL2B(0)
+      END IF
+      wrk0 = she0_eir(:, 0) + she0_eir(:, 1)*st%pl%te + she0_eir(:, 2)*&
+&       st%dv%ne + she0_eir(:, 3)*st%pl%te*st%dv%ne
+      CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2stbr_she_eir')
+      wrk0 = shi0_eir(:, 0) + shi0_eir(:, 1)*st%pl%ti + shi0_eir(:, 2)*&
+&       st%dv%ni(:, 0) + shi0_eir(:, 3)*st%pl%ti*st%dv%ni(:, 0)
+      CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2stbr_shi_eir')
+      wrk0 = shn0_eir(:, 0) + shn0_eir(:, 1)*st%pl%tn + shn0_eir(:, 2)*(&
+&       st%dv%ni(:, 0)-st%dv%ni(:, 1)) + shn0_eir(:, 3)*st%pl%tn*(st%dv%&
+&       ni(:, 0)-st%dv%ni(:, 1))
+      CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2stbr_shn_eir')
+!
+    ELSE
+      CALL PUSHCONTROL2B(1)
+    END IF
+!      do k=0,3
+!       write (chk,'(i1)') k
+!       call my_out_us(70,nCv,0,she0(-1,-1,k),'b2stbr_she'//chk)
+!       call my_out_us(70,nCv,0,shi0(-1,-1,k),'b2stbr_shi'//chk)
+!      enddo
+    CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_she, 'b2stbr_she')
+!srv 29.04.10
+    CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_shi, 'b2stbr_shi')
+!srv 29.04.10
+    CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_shn, 'b2stbr_shn')
+!srv 29.04.10
+    CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_skt, 'b2stbr_skt')
+!srv 29.04.10
+    CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_szt, 'b2stbr_szt')
+  ELSE
+    CALL PUSHCONTROL2B(2)
+  END IF
+!srv 11.09.09 }
+  IF ((switch%b2stbr_iout .EQ. 1 .OR. (switch%b2npp7_iout .EQ. 1 .OR. &
+&     switch%b2nppo_iout .EQ. 1)) .OR. switch%iout_b2wdat .EQ. 4) THEN
+    IF (switch%use_eirene .EQ. 0) THEN
+!        do k=0,3
+!          write (chk,'(i1)') k
+!          call my_out_us(70,nCv,0,sch0(-1,-1,k),'b2stbr_sch'//chk)
+!       enddo
+      CALL MY_OUT_US(70, ncv, 0, st%srw%b2stbr_sch, 'b2stbr_sch')
+    END IF
+  END IF
+  CALL POPCONTROL2B(branch)
   wrk0b = 0.D0
   wrk0b = -she_eir_totb
   stb%pl%te = stb%pl%te + (she0_eir(:, 1)+st%dv%ne*she0_eir(:, 3))*wrk0b
   stb%dv%ne = stb%dv%ne + (she0_eir(:, 2)+st%pl%te*she0_eir(:, 3))*wrk0b
   CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 0) CALL B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax&
-&                                 , iscx, dtim, switch, switchb, geo, &
-&                                 geob, mpg, mpgb, st%pl, stb%pl, st%dv&
-&                                 , stb%dv, st%co, st%rt, stb%rt, st_ext&
-&                                 , st%srw, stb%srw, tchem, tchee, tphys&
-&                                 , tphye, thevp, thvpe, trese, tresn, &
-&                                 trfln, trfle, sput_src, &
-&                                 sput_chem_model, reflection_on, &
-&                                 sputter_energy_on, main_call, &
-&                                 new_sputter_namelist, shi0_ff, f_redep&
-&                                )
+  IF (branch .EQ. 0) THEN
+    DO is=ns-1,0,-1
+      CALL POPCONTROL2B(branch)
+    END DO
+  END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    DO is=ns-1,0,-1
+      CALL POPCONTROL2B(branch)
+    END DO
+  END IF
+  CALL POPCONTROL2B(branch)
+  IF (branch .EQ. 0) CALL POPCONTROL1B(branch)
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    CALL POPREAL8ARRAY(st%dv%fluid_frac_hyb, r8*SIZE(st%dv%&
+&                fluid_frac_hyb, 1)/8)
+    CALL POPREAL8ARRAY(st%dv%kin_frac_hyb, r8*SIZE(st%dv%kin_frac_hyb, 1&
+&                )/8)
+    CALL POPREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
+&                sna0, 2)*SIZE(st%srw%sna0, 3)/8)
+    CALL POPREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
+&                smo0, 2)*SIZE(st%srw%smo0, 3)/8)
+    CALL POPREAL8ARRAY(st%srw%shn0, r8*SIZE(st%srw%shn0, 1)*SIZE(st%srw%&
+&                shn0, 2)/8)
+    CALL POPREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
+&                shi0, 2)/8)
+    CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
+&                she0, 2)/8)
+    CALL POPREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*&
+&                                   SIZE(fna_mol, 2)/8)
+    CALL POPREAL8(int0l, r8/8)
+    CALL POPREAL8(int0r, r8/8)
+    CALL POPREAL8(int1l, r8/8)
+    CALL POPREAL8(int1r, r8/8)
+    CALL POPREAL8(int2l, r8/8)
+    CALL POPREAL8(int2r, r8/8)
+    CALL POPREAL8(int3l, r8/8)
+    CALL POPREAL8(int3r, r8/8)
+    CALL POPREAL8(int4l, r8/8)
+    CALL POPREAL8(int4r, r8/8)
+    CALL POPREAL8(int5l, r8/8)
+    CALL POPREAL8(int5r, r8/8)
+    CALL POPREAL8(int6l, r8/8)
+    CALL POPREAL8(int6r, r8/8)
+    CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
+    CALL POPCHARACTERARRAY(my_out_folder, 7)
+    CALL POPINTEGER4(ncall_b2stbr_phys)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
+    CALL B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
+&                switch, switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, &
+&                st%dv, stb%dv, st%co, st%rt, stb%rt, st_ext, st%srw, &
+&                stb%srw, tchem, tchee, tphys, tphye, thevp, thvpe, &
+&                trese, tresn, trfln, trfle, sput_src, sput_chem_model, &
+&                reflection_on, sputter_energy_on, main_call, &
+&                new_sputter_namelist, shi0_ff, f_redep)
+  END IF
+  arg1 = ncv*4
+  arg1 = ncv*4
   CALL POPINTEGER4(arg1)
+  arg1 = ncv*4*ns
+  arg1 = ncv*2*ns
   arg1 = ncv*nscx
   arg1 = ncv*4
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb4, st%srw%sch0, stb%srw%sch0, 1&
@@ -4947,9 +5316,6 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     IF (branch .EQ. 2) THEN
       CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
-      DO ii1=nstraid,1,-1
-        CALL POPCHARACTERARRAY(crcstra(ii1), 1)
-      END DO
       CALL POPINTEGER4(nstrai)
       CALL POPINTEGER4(nstrat)
       CALL POPINTEGER4(ncns)
@@ -4988,8 +5354,8 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_SUBSYS
   USE B2US_FEEDBACK_DIFF, ONLY : she_eir_tot
-  USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_B2CMPA
+  USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_DIMENSIONS
@@ -5052,7 +5418,8 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & trfln(0:ns-1), trfle(0:ns-1)
 !srv 29.04.10 {
   REAL(kind=r8) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(ncv, 0:3, 0:ns-1&
-& ), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
+& ), smr0_eir(ncv, 0:3, 0:ns-1), smd0_eir(ncv, 0:3, 0:ns-1), she0_eir(&
+& ncv, 0:3), shi0_eir(ncv, 0:3), shn0_eir(ncv, 0:3)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
   REAL(kind=r8) :: shi0_ff(ncv, 0:nscx-1), wrk0(ncv), f_redep(ncv, 0:ns-&
 & 1)
@@ -6298,8 +6665,6 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
-  INTEGER :: nf_compact
-  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -6468,12 +6833,6 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
-  EXTERNAL NF_DEF_VAR_SZIP
-!
-  INTEGER :: NF_DEF_VAR_SZIP
-  EXTERNAL NF_INQ_VAR_SZIP
-!
-  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -7030,6 +7389,10 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CALL SFILL_NODIFF(arg1, 0.0_R8, sna0_eir, 1)
   arg1 = ncv*4*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, smo0_eir, 1)
+  arg1 = ncv*4*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smr0_eir, 1)
+  arg1 = ncv*4*ns
+  CALL SFILL_NODIFF(arg1, 0.0_R8, smd0_eir, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, she0_eir, 1)
   arg1 = ncv*4
@@ -7193,7 +7556,9 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is) .AND. switch%iout_b2wdat .EQ. 4) THEN
+        IF ((((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&           .AND. switch%iout_b2wdat .EQ. 4) .OR. switch%b2stbr_iout &
+&           .EQ. 1) THEN
 !          do k=0,1 ! 3                                                  !srv 29.04.10 {
 !           write (chk,'(i1)') k
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -7226,7 +7591,8 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       WRITE(chns, '(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
       IF (switch%use_eirene .NE. 0) THEN
-        IF (.NOT.is_neutral(is)) THEN
+        IF ((.NOT.is_neutral(is)) .OR. switch%spatial_hybrid .EQ. 1) &
+&       THEN
           IF (switch%iout_b2wdat .NE. 4) THEN
 !srv 29.04.10
             DO k=0,1

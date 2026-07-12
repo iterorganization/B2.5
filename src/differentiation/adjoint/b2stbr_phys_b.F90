@@ -28,7 +28,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
 !WG_TODO      use b2mod_wall
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -987,7 +987,7 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
 !WG_TODO      use b2mod_wall
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -2147,7 +2147,7 @@ CONTAINS
 &                                              , dv%fluid_frac_hyb(ifc)&
 &                                              , dvb%fluid_frac_hyb(ifc)&
 &                                              , pl, plb, tnf, tnfb, geo&
-&                                              , geob, mpg, cosa, sina, &
+&                                              , mpg, cosa, sina, &
 &                                              fnnrefl, fnnreflb, &
 &                                              fmomrefl, fmomreflb, &
 &                                              nnrefl, nnreflb, &
@@ -2287,11 +2287,11 @@ CONTAINS
                 CALL POPREAL8(int6r, r8/8)
                 CALL CALCINCIDENTFLUXESMAXWELLIAN_B(icv, ifc, is0, isign&
 &                                             , istra, farea, pl, plb, &
-&                                             tnf, tnfb, geo, geob, cosa&
-&                                             , sina, fnni, fnnib, &
-&                                             fmomni, fmomnib, nni, nnib&
-&                                             , nnwwni, nnwwnib, feneni&
-&                                             , fenenib)
+&                                             tnf, tnfb, geo, cosa, sina&
+&                                             , fnni, fnnib, fmomni, &
+&                                             fmomnib, nni, nnib, nnwwni&
+&                                             , nnwwnib, feneni, fenenib&
+&                                            )
               END IF
             ELSE IF (branch .EQ. 2) THEN
               CALL POPREAL8(int0l, r8/8)
@@ -2403,11 +2403,11 @@ CONTAINS
 &                               istra), recycm(is, istra), dv%&
 &                               fluid_frac_hyb(ifc), dvb%fluid_frac_hyb(&
 &                               ifc), pl, plb, tif, tifb, tef, pof, pofb&
-&                               , pl%na(icv, is), dv%ne(icv), geo, geob&
-&                               , mpg, t0, t0b, cosa, sina, switch%&
-&                               use_uy_uz_0, fnnrec, fnnrecb, fmomrec, &
-&                               fmomrecb, nnrec, nnrecb, nnwwnrec, &
-&                               nnwwnrecb, fenerec, fenerecb)
+&                               , pl%na(icv, is), dv%ne(icv), geo, mpg, &
+&                               t0, t0b, cosa, sina, switch%use_uy_uz_0&
+&                               , fnnrec, fnnrecb, fmomrec, fmomrecb, &
+&                               nnrec, nnrecb, nnwwnrec, nnwwnrecb, &
+&                               fenerec, fenerecb)
           END IF
  100      CALL POPREAL8(cosa, r8/8)
           CALL POPREAL8(farea, r8/8)

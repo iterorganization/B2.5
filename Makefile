@@ -251,9 +251,6 @@ TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
 ifdef TAO
-ifdef TAO_NEW
-DEFINES += -DTAO_NEW
-endif
 SOLPSINCLUDE += -I${PETSC_DIR}/include
 MODINCLUDE += -I${PETSC_DIR}/include
 ifdef PETSC_ARCH
@@ -1047,14 +1044,14 @@ ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -ge 10; echo $$?),0)
 ${OBJDIR}/b2mod_mdsplus.o: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 	@if [ -f b2mod_mdsplus.${MOD} ] ; then /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ ; fi
@@ -1063,14 +1060,14 @@ ifneq (${MOD},o)
 ${OBJDIR}/b2mod_mdsplus.${MOD}: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 ifeq ($(strip $(LINK_MOD)),)
@@ -1265,31 +1262,41 @@ endif
 
 ${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}
 ${OBJDIR}/init.o: ${OBJDIR}/eirdiag.${MOD}
-${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD}
+${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD} ${OBJDIR}/eirdiag.${MOD}
 ${OBJDIR}/user_default.o: ${OBJDIR}/eirdiag.${MOD}
 
 ifneq (${MOD},o)
 ${OBJDIR}/adsp.${MOD}: ${OBJDIR}/cadgeo.${MOD} ${OBJDIR}/clogau.${MOD} ${OBJDIR}/comusr.${MOD} ${OBJDIR}/cpes.${MOD} ${OBJDIR}/ctrcei.${MOD} ${OBJDIR}/comprt.${MOD}
 ${OBJDIR}/avltree.${MOD}: ${OBJDIR}/ccona.${MOD}
+${OBJDIR}/braeir.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD} ${OBJDIR}/b2mod_dimensions.${MOD}
 ${OBJDIR}/caprmc.${MOD}: ${OBJDIR}/cgrid.${MOD} ${OBJDIR}/comxs.${MOD} ${OBJDIR}/comsou.${MOD}
 ${OBJDIR}/ccflux.${MOD}: ${OBJDIR}/ctrig.${MOD} ${OBJDIR}/cgeom.${MOD}
+${OBJDIR}/ccoupl.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD}
 ${OBJDIR}/ccrm.${MOD}: ${OBJDIR}/cestim.${MOD} ${OBJDIR}/csdvi.${MOD} ${OBJDIR}/czt1.${MOD} ${OBJDIR}/photon.${MOD}
+${OBJDIR}/ceirsrt.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/b2mod_dimensions.${MOD}
+${OBJDIR}/clgin.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD}
 ${OBJDIR}/comxs.${MOD}: ${OBJDIR}/cupd.${MOD}
 ${OBJDIR}/cpes.${MOD}: ${OBJDIR}/comprt.${MOD} ${OBJDIR}/ctrcei.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 ${OBJDIR}/cupd.${MOD}: ${OBJDIR}/comsig.${MOD}
 ${OBJDIR}/eirdiag.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD} ${OBJDIR}/braeir.${MOD} ${OBJDIR}/ccoupl.${MOD} ${OBJDIR}/clgin.${MOD}
 ${OBJDIR}/eirgrid_lib.${MOD}: ${OBJDIR}/eirmap.${MOD}
+${OBJDIR}/parmmod.${MOD}: ${OBJDIR}/precision.${MOD}
 endif
 ${OBJDIR}/adsp.o: ${OBJDIR}/cadgeo.o ${OBJDIR}/clogau.o ${OBJDIR}/comusr.o ${OBJDIR}/cpes.o ${OBJDIR}/ctrcei.o ${OBJDIR}/comprt.o
 ${OBJDIR}/avltree.o: ${OBJDIR}/ccona.o
+${OBJDIR}/braeir.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o ${OBJDIR}/b2mod_dimensions.o
 ${OBJDIR}/caprmc.o: ${OBJDIR}/cgrid.o ${OBJDIR}/comxs.o ${OBJDIR}/comsou.o
 ${OBJDIR}/ccflux.o: ${OBJDIR}/ctrig.o ${OBJDIR}/cgeom.o
+${OBJDIR}/ccoupl.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o
 ${OBJDIR}/ccrm.o: ${OBJDIR}/cestim.o ${OBJDIR}/csdvi.o ${OBJDIR}/czt1.o ${OBJDIR}/photon.o
+${OBJDIR}/ceirsrt.o: ${OBJDIR}/precision.o ${OBJDIR}/b2mod_dimensions.o
+${OBJDIR}/clgin.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o
 ${OBJDIR}/comxs.o: ${OBJDIR}/cupd.o
 ${OBJDIR}/cpes.o: ${OBJDIR}/comprt.o ${OBJDIR}/ctrcei.o ${OBJDIR}/eirmod_precision.o
 ${OBJDIR}/cupd.o: ${OBJDIR}/comsig.o
 ${OBJDIR}/eirdiag.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o ${OBJDIR}/braeir.o ${OBJDIR}/ccoupl.o ${OBJDIR}/clgin.o
 ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
+${OBJDIR}/parmmod.o: ${OBJDIR}/precision.o
 
 # target 'clean' cleans up the directory.
 clean :

@@ -32,7 +32,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 & , pld, dv, dvd, co, cod, rt, rtd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -106,12 +106,11 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     wrkfd = 0.D0
 !    ..test sign of cdpa
     DO is=0,ns-1
-      DO nd=1,nbdirs
-        wrkfd(nd, :) = 0.D0
-        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
-      END DO
       wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
       CALL B2XVSG(nfc, wrkf, 1, 'cdpa0', '.ge.')
+      DO nd=1,nbdirs
+        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
+      END DO
       wrkf(:) = co%cdpa(:, 1, is)*geo%fcqalf(:, 1)
       CALL B2XVSG(nfc, wrkf, 1, 'cdpa1', '.ge.')
     END DO
@@ -498,7 +497,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 & , rt)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

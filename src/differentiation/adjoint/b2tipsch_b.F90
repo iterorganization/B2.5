@@ -21,7 +21,7 @@ SUBROUTINE B2TIPSCH_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 & facdrift, cddi, cddib, ti, tib, na, nab, floi, floib, coni, conib, &
 & fhipsch, fhipschb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -196,7 +196,7 @@ END SUBROUTINE B2TIPSCH_B
 SUBROUTINE B2TIPSCH_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, facdrift&
 & , cddi, ti, na, floi, coni, fhipsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

@@ -21,7 +21,7 @@ SUBROUTINE B2TIPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & facdrift, cddi, cddid, ti, tid, na, nad, floi, floid, coni, conid, &
 & fhipsch, fhipschd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -223,7 +223,7 @@ END SUBROUTINE B2TIPSCH_DV
 SUBROUTINE B2TIPSCH_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, facdrift&
 & , cddi, ti, na, floi, coni, fhipsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

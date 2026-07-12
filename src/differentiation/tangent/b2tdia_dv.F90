@@ -4,10 +4,10 @@
 !  Differentiation of b2tdia in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.fchdia)
 !   with respect to varying inputs: *(dv.fchdia) *(dv.pz)
-!   Plus diff mem management of: dv.fchdia:in dv.pz:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                geo.vxonedbsq:in
+!   Plus diff mem management of: dv.fchdia:in dv.pz:in dv.facdrift:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in geo.vxonedbsq:in
 !
 !
 !
@@ -22,7 +22,7 @@
 SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, dv&
 & , dvd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -137,7 +137,7 @@ END SUBROUTINE B2TDIA_DV
 !
 SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV

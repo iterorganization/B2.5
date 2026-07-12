@@ -136,8 +136,10 @@ SUBROUTINE B2XPVE_B(ncv, nfc, ns, switch, geo, geob, mpg, mpgb, qe, rza&
   CALL GRAD_P_BWD(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgb, te, teb, dumm, &
 &           dummb, gtep, gtepb)
   peb = 0.D0
+  dummb = 0.D0
   CALL GRAD_P_BWD(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgb, pe, peb, dumm, &
 &           dummb, gpep, gpepb)
+  dummb = 0.D0
   CALL GRAD_P_BWD(ncv, nfc, mpg%nvx, 0, geo, mpg, mpgb, po, pob, dumm, &
 &           dummb, gpop, gpopb)
   neb = neb + te*peb

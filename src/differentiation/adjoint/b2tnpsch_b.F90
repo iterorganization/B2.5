@@ -21,7 +21,7 @@ SUBROUTINE B2TNPSCH_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 & facdrift, cddb, cddbb, ti, tib, nb, nbb, kmprti, kmprtib, flob, flobb&
 & , conb, conbb, fnbpsch, fnbpschb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -183,7 +183,7 @@ END SUBROUTINE B2TNPSCH_B
 SUBROUTINE B2TNPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & cddb, ti, nb, kmprti, flob, conb, fnbpsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

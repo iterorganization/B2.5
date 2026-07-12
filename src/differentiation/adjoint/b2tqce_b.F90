@@ -19,7 +19,7 @@
 SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -38,7 +38,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1)
 !   ..common blocks
@@ -305,7 +305,7 @@ END SUBROUTINE B2TQCE_NODIFF
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in pl.te:in pl.ti:in
+!                pl.te:in pl.ti:in
 !
 !
 !
@@ -321,11 +321,11 @@ END SUBROUTINE B2TQCE_NODIFF
 !.specification
 !
 !srv 01.07.09
-SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, geob, mpg, pl, plb, dv, &
-& dvb, hce, hceb, sig, sigb, alf, alfb)
+SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
+& hce, hceb, sig, sigb, alf, alfb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -343,12 +343,11 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, geob, mpg, pl, plb, dv, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFF) :: plb
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES) :: dvb
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dvb
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1)
   REAL(kind=r8) :: hceb(ncv, 0:1), sigb(ncv, 0:1), alfb(ncv, 0:1)
@@ -569,9 +568,9 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, geob, mpg, pl, plb, dv, &
 !
 !   ..compute hcey, sigy, alfy
 !!!   (classical perpendicular transport is set to 0)
-  CALL SFILL_FWD(ncv, 0.0_R8, hce(1, 1), hceb(1, 1), 1)
-  CALL SFILL_FWD(ncv, 0.0_R8, sig(1, 1), sigb(1, 1), 1)
-  CALL SFILL_FWD(ncv, 0.0_R8, alf(1, 1), alfb(1, 1), 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, hce(1, 1), 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, sig(1, 1), 1)
+  CALL SFILL_FWD(ncv, 0.0_R8, alf(1, 1), 1)
 !
 !srv 15.06.18
 !srv 15.06.18

@@ -21,9 +21,10 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
   USE B2MOD_CONSTANTS
   USE B2MOD_ANOMALOUS_TRANSPORT
   USE B2MOD_RATES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_GEO_CORNER
   USE B2MOD_SUBSYS
+  USE B2MOD_OPENMP
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -66,14 +67,20 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
     CALL IPGETR('b2tfhe_vis_per', vis_per)
 !srv 06.12.17
     CALL IPGETI('b2txvspr_iout', iout)
+    IF (IN_PARALLEL() .AND. iout .NE. 0) THEN
+      WRITE(*, *) &
+&     'b2txvspr OpenMP warning: no file I/O in parallel mode'
+      iout = 0
+    END IF
   END IF
 !   ..test nx, ny
   CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty argument nx, ny')
-!   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
+!   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
   avisper = 0.0_R8
   bvisper = 0.0_R8
 !srv 27.01.00 22.03.02
   cvisper = 0.0_R8
+!
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
   IF (fac_vism .NE. 0.0_R8 .AND. vis_per .NE. 0.0_R8) THEN
@@ -100,6 +107,7 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
             END IF
           END DO
         END DO
+!
         DO iy=-1,ny
           DO ix=-1,nx
             IF (leftix(ix, iy) .NE. -2 .AND. rightix(ix, iy) .NE. nx + 1&
@@ -111,6 +119,7 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
             END IF
           END DO
         END DO
+!
         avisper(:, :, 1) = cvisper(:, :, 1)
 !
       END IF
@@ -118,6 +127,7 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
 
     END DO
   END IF
+!
   IF (iout .EQ. 1) THEN
     CALL MY_OUT(70, nx, ny, avisper(-1, -1, 1), 'b2txvspr_avispery')
     CALL MY_OUT(70, nx, ny, bvisper(-1, -1, 1), 'b2txvspr_bvispery')

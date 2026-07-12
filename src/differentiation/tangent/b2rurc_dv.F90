@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2rurc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
 !
 !
@@ -22,7 +22,7 @@ SUBROUTINE B2RURC_DV(nget, version, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -372,7 +372,7 @@ SUBROUTINE B2RURC_NODIFF(nget, version)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

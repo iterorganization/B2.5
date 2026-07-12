@@ -5,7 +5,9 @@ c###### calls   ma30    mc20    mc22    mc23    mc24
      * iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy, bd3copy
+#endif
 c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
@@ -130,6 +132,12 @@ c
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      *  newpos, knum, length, move
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28gdc/,/ma28hdc/)
+!$OMP THREADPRIVATE(/ma30idc/,/ma30edc/,/ma30fdc/)
+!$OMP THREADPRIVATE(/mc23bdc/,/lpivotc/)
+#endif
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -319,7 +327,9 @@ c set flag if the only error is due to duplicate elements.
      * iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy
+#endif 
 c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
@@ -393,6 +403,10 @@ c
       common /ma30idc/ tol1, big1, ndrop1, nsrch1, lbig1
 c
       integer i1, idup, iend
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28gdc/,/ma28hdc/)
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
 c
 c check to see if elements were dropped in previous ma28a/ad call.
       if (ndrop.eq.0) go to 10
@@ -461,7 +475,9 @@ c set flag if the only error is due to duplicate elements.
       subroutine ma28cdcopy(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy
+#endif
 c
 c this subroutine uses the factors from ma28a/ad or ma28b/bd to
 c     solve a system of equations without iterative refinement.
@@ -505,7 +521,11 @@ c     data or ma28a/ad.
      * irank, abort1, abort2
       common /ma28gdc/ idisp
       common /ma30hdc/ mresid
-c
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28fdc/,/ma28gdc/,/ma30hdc/)
+#endif
+
 c this call performs the solution of the set of equations.
       call ma30cdcopy(n, icn, a, licn, ikeep, ikeep(1,4), ikeep(1,5),
      * idisp, ikeep(1,2), ikeep(1,3), rhs, w, mtype)
@@ -533,11 +553,15 @@ c     it also calculates the largest element in the input matrix.
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28gdc/ idisp
 c
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28gdc/)
+#endif
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
 c
       data zero /0.0_R8/
       blockl = lenoff(1).ge.0
+
 c iw1(i,3)  is set to the block in which row i lies and the
 c     inverse permutations to ip and iq are set in iw1(.,1) and
 c     iw1(.,2) resp.
@@ -653,7 +677,9 @@ c also calculate maximum element of a.
      * ikeep, rhs, x, r, w, mtype, prec, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy
+#endif
 c this subroutine uses the factors from an earlier call to ma28a/ad
 c     or ma28b/bd to solve the system of equations with iterative
 c     refinement.
@@ -724,6 +750,9 @@ c
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28hdc/)
+#endif
 c
       integer i, iterat, nrow, ncol
 c
@@ -1040,6 +1069,9 @@ c for comments of common block variables see block data subprogram.
       common /ma30fdc/ irncp, icncp, irank, minirn, minicn
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
       common /lpivotc/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30fdc/,/ma30idc/,/lpivotc/)
+#endif
 c
       integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
      * lc, lr, nc, nr, nz, nz2, nzpc,
@@ -2106,6 +2138,9 @@ c see block data for comments on variables in common.
       common /ma30edc/ lp, abort1, abort2, abort3
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
       common /ma30gdc/ eps, rmin
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30idc/,/ma30gdc/)
+#endif
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
@@ -2324,6 +2359,10 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hdc/ resid
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30hdc/)
+#endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
@@ -2602,6 +2641,9 @@ c
 c see block data for comments on variables in common.
       integer irncp, icncp, irank, minirn, minicn
       common /ma30fdc/ irncp, icncp, irank, minirn, minicn
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30fdc/)
+#endif
 c
       integer j, jpos, k, kn, kl
 c
@@ -3115,6 +3157,9 @@ c###### calls   mc13    mc21
 c input ... n,icn .. a,icn,lenr ....
       integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
 c
 c set up pointers iw(.,1) to the beginning of the rows and set lenoff
 c     equal to lenr.
@@ -3351,6 +3396,10 @@ c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
       end subroutine mc24adcopy
+
+! svdk apparently for gfortran we need to declare bd1copy and others 
+! svdk as subroutines instead of block data 
+#ifndef GFORTRAN
       block data bd1copy
       use b2mod_types
       implicit none
@@ -3484,6 +3533,9 @@ c
 c     common /ma28gdc/ idisp(2)
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/)
+#endif
       data eps /1.0e-4_R8/, tol /0.0_R8/, cgce /0.5_R8/
       data maxit /16/
       data lp /6/, mp /6/, nsrch /32768/, istart /0/
@@ -3493,6 +3545,7 @@ c     common /ma28gdc/ idisp(2)
       block data bd2copy
       use b2mod_types
       implicit none
+
 c although all common block variables do not have default values,
 c     we comment on all the common block variables here.
 c
@@ -3636,6 +3689,9 @@ c
       common /ma30edc/ lp, abort1, abort2, abort3
       common /ma30gdc/ eps, rmin
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
       data eps /1.0e-4_R8/, tol /0.0_R8/, big /0.0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
@@ -3647,5 +3703,83 @@ c
       integer lp,numnz,num,large
       logical abort
       common /mc23bdc/ lp,numnz,num,large,abort
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
       data lp/6/,abort/.false./
       end block data bd3copy
+#else
+      subroutine set_data_bd1copy
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
+      integer lp, mp
+      integer irncp, icncp, minirn, minicn, irank
+      integer ndrop, maxit, noiter, nsrch, istart
+      logical lblock, grow
+      logical abort1, abort2
+      logical lbig
+      common /ma28edc/ lp, mp, lblock, grow
+      common /ma28fdc/ eps, rmin, resid, irncp, icncp, minirn, minicn,
+     * irank, abort1, abort2
+      common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
+     * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/)
+#endif
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      cgce = 0.5e0_R8
+      lp = 6
+      mp = 6
+      maxit = 16
+      nsrch = 32768
+      istart = 0
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      lblock = .true.
+      grow = .true.
+      end subroutine set_data_bd1copy
+      subroutine set_data_bd2copy
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin
+      real (kind=R8) :: tol, big
+      integer lp
+      integer ndrop, nsrch
+      logical abort1, abort2, abort3
+      logical lbig
+      common /ma30edc/ lp, abort1, abort2, abort3
+      common /ma30gdc/ eps, rmin
+      common /ma30idc/ tol, big, ndrop, nsrch, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
+      lp = 6
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      nsrch = 32768
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      abort3 = .false.
+      end subroutine set_data_bd2copy
+      subroutine set_data_bd3copy
+      use b2mod_types
+      implicit none
+      integer lp, numnz, num, large
+      logical abort
+      common /mc23bdc/ lp, numnz, num, large, abort
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
+      lp = 6
+      abort = .false.
+      end subroutine set_data_bd3copy
+#endif

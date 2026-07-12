@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2rurc as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
 !
 !
@@ -22,7 +22,7 @@ SUBROUTINE B2RURC_B(nget, version)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_B2CMRC_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -369,7 +369,7 @@ SUBROUTINE B2RURC_NODIFF(nget, version)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_B2CMRC_DIFF
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)

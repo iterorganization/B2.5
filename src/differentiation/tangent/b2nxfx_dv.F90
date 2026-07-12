@@ -114,11 +114,12 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, ne&
         neted(nd, :) = te*ned(nd, :) + ne*ted(nd, :)
       END DO
       nete = ne*te
-      wrkvd = 0.D0
       wrkc0d = 0.D0
+      wrkvd = 0.D0
       CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, nete, &
 &               neted, wrkv, wrkvd, wrkc0, wrkc0d, nbdirs)
       wrkc1d = 0.D0
+      wrkvd = 0.D0
       CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
 &               wrkv, wrkvd, wrkc1, wrkc1d, nbdirs)
       DO nd=1,nbdirs

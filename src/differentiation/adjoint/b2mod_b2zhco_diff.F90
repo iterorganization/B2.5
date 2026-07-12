@@ -18,9 +18,11 @@ MODULE B2MOD_B2ZHCO_DIFF
   CHARACTER(len=1), ALLOCATABLE, SAVE :: zh_tf_toff(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_save(:, :, :), c_r_ta(:, :, :&
 & ), c_r_ta_nofl(:, :, :), c_r_wa(:, :, :), c_r_tb(:, :), c_r_tb_nofl(:&
-& , :), c_r_wb(:, :, :), c_r_w(:, :, :), tf_ton_mat(:, :)
+& , :), c_r_wb(:, :, :), c_r_w(:, :, :), tf_ton_mat(:, :), &
+& c_hta_an_fl_save(:, :), c_r_ta_an_save(:, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: c_hw_saveb(:, :, :), c_r_tab(:, :&
-& , :), c_r_tbb(:, :), c_r_tb_noflb(:, :), c_r_wb0(:, :, :)
+& , :), c_r_tbb(:, :), c_r_tb_noflb(:, :), c_r_wb0(:, :, :), &
+& c_hta_an_fl_saveb(:, :), c_r_ta_an_saveb(:, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: amfact(:)
 !
 !-----------------------------------------------------------------------
@@ -55,7 +57,8 @@ MODULE B2MOD_B2ZHCO_DIFF
 CONTAINS
 !  Differentiation of alloc_b2mod_zhco as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE ALLOC_B2MOD_ZHCO_B(nnucl, ncv)
     IMPLICIT NONE
@@ -81,6 +84,12 @@ CONTAINS
     c_r_wb0 = 0.D0
     ALLOCATE(c_r_w(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(tf_ton_mat(0:nnucl-1, 0:nnucl-1))
+    ALLOCATE(c_hta_an_fl_saveb(ncv, 0:nnucl-1))
+    c_hta_an_fl_saveb = 0.D0
+    ALLOCATE(c_hta_an_fl_save(ncv, 0:nnucl-1))
+    ALLOCATE(c_r_ta_an_saveb(ncv, 0:nnucl-1, 0:nnucl-1))
+    c_r_ta_an_saveb = 0.D0
+    ALLOCATE(c_r_ta_an_save(ncv, 0:nnucl-1, 0:nnucl-1))
     IF (1 .LT. nnucl*(nnucl+1)/2 - nnucl) THEN
       max1 = nnucl*(nnucl+1)/2 - nnucl
     ELSE
@@ -107,6 +116,8 @@ CONTAINS
     ALLOCATE(c_r_wb(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(c_r_w(ncv, 0:nnucl-1, 0:nnucl-1))
     ALLOCATE(tf_ton_mat(0:nnucl-1, 0:nnucl-1))
+    ALLOCATE(c_hta_an_fl_save(ncv, 0:nnucl-1))
+    ALLOCATE(c_r_ta_an_save(ncv, 0:nnucl-1, 0:nnucl-1))
     IF (1 .LT. nnucl*(nnucl+1)/2 - nnucl) THEN
       max1 = nnucl*(nnucl+1)/2 - nnucl
     ELSE
@@ -128,7 +139,8 @@ CONTAINS
 
 !  Differentiation of dealloc_b2mod_zhco as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: c_hw_save:out c_r_ta:out c_r_tb:out
-!                c_r_tb_nofl:out c_r_w:out
+!                c_r_tb_nofl:out c_r_w:out c_hta_an_fl_save:out
+!                c_r_ta_an_save:out
 !
   SUBROUTINE DEALLOC_B2MOD_ZHCO_B()
     IMPLICIT NONE
@@ -159,6 +171,14 @@ CONTAINS
       DEALLOCATE(c_r_w)
       DEALLOCATE(tf_ton_mat)
       DEALLOCATE(zh_tf_toff)
+      IF (ALLOCATED(c_hta_an_fl_saveb)) THEN
+        DEALLOCATE(c_hta_an_fl_saveb)
+      END IF
+      DEALLOCATE(c_hta_an_fl_save)
+      IF (ALLOCATED(c_r_ta_an_saveb)) THEN
+        DEALLOCATE(c_r_ta_an_saveb)
+      END IF
+      DEALLOCATE(c_r_ta_an_save)
     END IF
 !
     IF (ALLOCATED(amfact)) THEN
@@ -183,6 +203,8 @@ CONTAINS
       DEALLOCATE(c_r_w)
       DEALLOCATE(tf_ton_mat)
       DEALLOCATE(zh_tf_toff)
+      DEALLOCATE(c_hta_an_fl_save)
+      DEALLOCATE(c_r_ta_an_save)
     END IF
 !
     IF (ALLOCATED(amfact)) THEN

@@ -22,7 +22,7 @@ SUBROUTINE B2NPP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, ne, te&
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)

@@ -28,7 +28,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
 !WG_TODO      use b2mod_wall
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -989,7 +989,7 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
 !WG_TODO      use b2mod_wall
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -1768,8 +1768,8 @@ CONTAINS
 &                                  istra), dv%fluid_frac_hyb(ifc), dvd%&
 &                                  fluid_frac_hyb(:, ifc), pl, pld, tif&
 &                                  , tifd, tef, pof, pofd, pl%na(icv, is&
-&                                  ), dv%ne(icv), geo, geod, mpg, t0, &
-&                                  t0d, cosa, sina, switch%use_uy_uz_0, &
+&                                  ), dv%ne(icv), geo, mpg, t0, t0d, &
+&                                  cosa, sina, switch%use_uy_uz_0, &
 &                                  fnnrec, fnnrecd, fmomrec, fmomrecd, &
 &                                  nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &                                  fenerec, fenerecd, nbdirs)
@@ -1892,11 +1892,11 @@ CONTAINS
             ELSE IF (maxw(istra) .EQ. 1) THEN
               CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, is0, isign&
 &                                            , istra, farea, pl, pld, &
-&                                            tnf, tnfd, geo, geod, cosa&
-&                                            , sina, fnni, fnnid, fmomni&
-&                                            , fmomnid, nni, nnid, &
-&                                            nnwwni, nnwwnid, feneni, &
-&                                            fenenid, nbdirs)
+&                                            tnf, tnfd, geo, cosa, sina&
+&                                            , fnni, fnnid, fmomni, &
+&                                            fmomnid, nni, nnid, nnwwni&
+&                                            , nnwwnid, feneni, fenenid&
+&                                            , nbdirs)
             ELSE IF (maxw(istra) .EQ. 2) THEN
               CALL CALCINCIDENTFLUXESKN_DV(switch%kn_b1, switch%kn_b2, &
 &                                    icv, icn, ifc, isign, is0, is2, isi&
@@ -1973,9 +1973,9 @@ CONTAINS
 &                                               fluid_frac_hyb(ifc), dvd&
 &                                               %fluid_frac_hyb(:, ifc)&
 &                                               , pl, pld, tnf, tnfd, &
-&                                               geo, geod, mpg, cosa, &
-&                                               sina, fnnrefl, fnnrefld&
-&                                               , fmomrefl, fmomrefld, &
+&                                               geo, mpg, cosa, sina, &
+&                                               fnnrefl, fnnrefld, &
+&                                               fmomrefl, fmomrefld, &
 &                                               nnrefl, nnrefld, &
 &                                               nnwwnrefl, nnwwnrefld, &
 &                                               fenerefl, fenerefld, &

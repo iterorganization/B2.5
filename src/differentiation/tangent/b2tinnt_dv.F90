@@ -9,7 +9,7 @@
 !                geo.cvbb:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
 !                geo.fcqbet:in geo.vxvol:in rt.rza:in pl.na:in
-!                pl.ua:in pl.po:in pl.te:in pl.ti:in
+!                pl.ua:in pl.po:in pl.ti:in
 !
 !
 !
@@ -26,12 +26,12 @@
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& rt, rtd, facdrift, fac_exb, pl, pld, fna, fnad, csigin, csigind, fchin&
-& , fchind, nbdirs)
+& rt, rtd, facdrift, fac_exb, pl, pld, srw, fna, fnad, csigin, csigind, &
+& fchin, fchind, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -58,6 +58,7 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: fchin(nfc, 0:1)
   REAL(kind=r8) :: fchind(nbdirsmax, nfc, 0:1)
@@ -143,12 +144,11 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !    ..test sign of csigin
       DO is=0,ns-1
         DO is0=0,ns-1
-          DO nd=1,nbdirs
-            wrk2d(nd, :) = 0.D0
-            wrk2d(nd, :) = geo%fcqalf(:, 1)*csigind(nd, :, 1, is, is0)
-          END DO
           wrk2 = csigin(:, 0, is, is0)*geo%fcqalf(:, 0)
           CALL B2XVSG(nfc, wrk2, 1, 'csigin0', '.ge.')
+          DO nd=1,nbdirs
+            wrk2d(nd, :) = geo%fcqalf(:, 1)*csigind(nd, :, 1, is, is0)
+          END DO
           wrk2 = csigin(:, 1, is, is0)*geo%fcqalf(:, 1)
           CALL B2XVSG(nfc, wrk2, 1, 'csigin1', '.ge.')
         END DO
@@ -459,11 +459,11 @@ END SUBROUTINE B2TINNT_DV
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
-& facdrift, fac_exb, pl, fna, csigin, fchin)
+& facdrift, fac_exb, pl, srw, fna, csigin, fchin)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -481,6 +481,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2SOURCEWORK), INTENT(IN) :: srw
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: fchin(nfc, 0:1)
 !   ..common blocks

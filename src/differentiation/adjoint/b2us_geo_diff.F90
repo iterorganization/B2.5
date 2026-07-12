@@ -845,12 +845,12 @@ CONTAINS
 !                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
 !                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
 !                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
-!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.vxeb:out gm.cvconn:in-out gm.vxconn:in-out
 !                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
-!                gm.ftds:in-out gm.fsds:in-out
+!                gm.ftds:out gm.fsds:out
 !
 !**********************************************************************
 !
@@ -1108,17 +1108,19 @@ CONTAINS
 &   , ifc1, ifc2, ivx1, ivx2, ift, inv_dist(mpg%nvx)
     INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
+    INTEGER, SAVE :: temp_ignore_geo=0
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
 &   , dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
     LOGICAL :: active, match_found
     INTRINSIC MAXVAL, ABS, SQRT
-    EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, XERRAB, XERTST
+    EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, IPGETI, XERRAB, &
+&       XERTST
     INTRINSIC MOD
     INTRINSIC MINVAL
     INTRINSIC REAL
     INTRINSIC SIGN
-    INTRINSIC ANY
     INTRINSIC ALLOCATED
+    INTRINSIC ANY
     REAL(kind=r8) :: x1
     REAL(kind=r8) :: abs0
     REAL(kind=r8), DIMENSION(mpg%nFs) :: dabs0
@@ -1129,6 +1131,9 @@ CONTAINS
     REAL(kind=r8) :: result10
     LOGICAL, DIMENSION(mpg%nFs) :: mask0
     integer :: result11
+    REAL(kind=r8) :: result20
+!
+    CALL IPGETI('b2mndr_temp_ignore_geo', temp_ignore_geo)
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
@@ -1645,7 +1650,7 @@ CONTAINS
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
     ixpt = 0
-    IF (mpg%nnreg(0) .NE. 1) THEN
+    IF (.NOT.(mpg%nnreg(0) .EQ. 1 .OR. (.NOT.ALLOCATED(mpg%xpt)))) THEN
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       IF (mpg%nnreg(0) .EQ. 2) THEN
@@ -1743,7 +1748,7 @@ CONTAINS
     ift = 0
     gm%signmf = 0.0_R8
     IF (ANY(mpg%cvonclosedsurface(1:mpg%nci))) THEN
-      DO WHILE (t0 .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+      DO WHILE (t0 .EQ. 0.0_R8 .AND. ift .LT. mpg%nft)
         ift = ift + 1
         icv = mpg%ftcv(mpg%ftcvp(ift, 1))
         IF (mpg%cvonclosedsurface(icv)) THEN
@@ -1761,7 +1766,7 @@ CONTAINS
       r0 = r0/t0
       z0 = z0/t0
       ift = 0
-      DO WHILE (gm%signmf .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+      DO WHILE (gm%signmf .EQ. 0.0_R8 .AND. ift .LT. mpg%nft)
         ift = ift + 1
         icv = mpg%ftcv(mpg%ftcvp(ift, 1))
         IF (mpg%cvonclosedsurface(icv)) THEN
@@ -1779,131 +1784,194 @@ CONTAINS
       gm%signmf = SIGN(1.0_R8, gm%cveb(1, 0))
     END IF
 !
+    IF (temp_ignore_geo .EQ. 0) THEN
+!! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-    IF (ALLOCATED(mpg%strdiv)) THEN
-      result11 = MAXVAL(mpg%strdiv)
-      DO i=1,result11
-        match_found = .false.
-        k = 1
-        DO WHILE (.NOT.match_found)
-          ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
+      IF (ALLOCATED(mpg%strdiv)) THEN
+        result11 = MAXVAL(mpg%strdiv)
+        DO i=1,result11
+          match_found = .false.
+          k = 1
+          DO WHILE (.NOT.match_found)
+            ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
 !nh check if the vertices belong to a flux surface
-          IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0 .AND. mpg%vxfs(mpg%fcvx&
-&             (ifc1, 2)) .NE. 0) THEN
+            IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0 .AND. mpg%vxfs(mpg%&
+&               fcvx(ifc1, 2)) .NE. 0) THEN
 ! linear interpolation
-            psi1 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))+gm%&
-&             fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2))))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0) THEN
+              psi1 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))+gm%&
+&               fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2))))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0) THEN
 ! take value from vertex 1
-            psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 2)) .NE. 0) THEN
+              psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 2)) .NE. 0) THEN
 ! take value from vertex 2
-            psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2)))
-            match_found = .true.
-          ELSE IF (k .EQ. mpg%divfcp(i, 2)) THEN
+              psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2)))
+              match_found = .true.
+            ELSE IF (k .EQ. mpg%divfcp(i, 2)) THEN
 ! last face
-            psi1 = 0.0_R8
-            WRITE(*, *) 'Warning: no flux surface assigned to any '//&
-&           'of the grid vertices coinciding with '
-            WRITE(*, *) 'target ', i
-            WRITE(*, *) 'Assume Psi = 0'
-            match_found = .true.
-          ELSE
+              psi1 = 0.0_R8
+              WRITE(*, *) 'Warning: no flux surface assigned to any '//&
+&             'of the grid vertices coinciding with '
+              WRITE(*, *) 'target ', i
+              WRITE(*, *) 'Assume Psi = 0'
+              match_found = .true.
+            ELSE
 ! check next face
-            k = k + 1
-          END IF
-        END DO
-        match_found = .false.
-        k = mpg%divfcp(i, 2)
-        DO WHILE (.NOT.match_found)
-          ifc2 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
-!nh check if the vertices belong to a flux surface
-          IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0 .AND. mpg%vxfs(mpg%fcvx&
-&             (ifc2, 2)) .NE. 0) THEN
-! linear interpolation
-            psi2 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))+gm%&
-&             fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2))))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0) THEN
-! take value from vertex 1
-            psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 2)) .NE. 0) THEN
-! take value from vertex 2
-            psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2)))
-            match_found = .true.
-          ELSE IF (k .EQ. 1) THEN
-! last face
-            psi2 = 0.0_R8
-            match_found = .true.
-          ELSE
-! check next face
-            k = k - 1
-          END IF
-        END DO
-        IF ((gm%psi_increasing .AND. psi1 .GT. psi2) .OR. (.NOT.gm%&
-&           psi_increasing .AND. psi2 .GT. psi1)) THEN
-          ALLOCATE(old_face_list(1:mpg%divfcp(i, 2)))
-          old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, 1)&
-&           :mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
-          DO j=1,mpg%divfcp(i, 2)
-            mpg%divfc(mpg%divfcp(i, 1)+j-1) = old_face_list(mpg%divfcp(i&
-&             , 2)-j+1)
+              k = k + 1
+            END IF
           END DO
-          DEALLOCATE(old_face_list)
-        END IF
-        match_found = .false.
-        DO j=mpg%divfcp(i, 1),mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1
-          ivx1 = mpg%fcvx(mpg%divfc(j), 1)
-          ivx2 = mpg%fcvx(mpg%divfc(j), 2)
-          DO k=1,mpg%nxpt
-            DO l=mpg%strvxp(k, 1),mpg%strvxp(k, 1)+mpg%strvxp(k, 2)-1
-              IF (ivx1 .EQ. mpg%strvx(l)) THEN
-                IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx1) .LE. gm%&
-&                   vxfpsi(ivx2)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
-&                   vxfpsi(ivx1) .GT. gm%vxfpsi(ivx2))) THEN
-                  IF (mpg%ifdiv(i) .EQ. 0) THEN
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx1
-                  ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep .OR. (mpg%vxfs&
-&                     (ivx1) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)&
-&                 ) THEN
+          match_found = .false.
+          k = mpg%divfcp(i, 2)
+          DO WHILE (.NOT.match_found)
+            ifc2 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
+!nh check if the vertices belong to a flux surface
+            IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0 .AND. mpg%vxfs(mpg%&
+&               fcvx(ifc2, 2)) .NE. 0) THEN
+! linear interpolation
+              psi2 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))+gm%&
+&               fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2))))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0) THEN
+! take value from vertex 1
+              psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 2)) .NE. 0) THEN
+! take value from vertex 2
+              psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2)))
+              match_found = .true.
+            ELSE IF (k .EQ. 1) THEN
+! last face
+              psi2 = 0.0_R8
+              match_found = .true.
+            ELSE
+! check next face
+              k = k - 1
+            END IF
+          END DO
+          IF ((gm%psi_increasing .AND. psi1 .GT. psi2) .OR. (.NOT.gm%&
+&             psi_increasing .AND. psi2 .GT. psi1)) THEN
+            ALLOCATE(old_face_list(1:mpg%divfcp(i, 2)))
+            old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, &
+&             1):mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
+            DO j=1,mpg%divfcp(i, 2)
+              mpg%divfc(mpg%divfcp(i, 1)+j-1) = old_face_list(mpg%divfcp&
+&               (i, 2)-j+1)
+            END DO
+            DEALLOCATE(old_face_list)
+          END IF
+          match_found = .false.
+          DO j=mpg%divfcp(i, 1),mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1
+            ivx1 = mpg%fcvx(mpg%divfc(j), 1)
+            ivx2 = mpg%fcvx(mpg%divfc(j), 2)
+            DO k=1,mpg%nxpt
+              DO l=mpg%strvxp(k, 1),mpg%strvxp(k, 1)+mpg%strvxp(k, 2)-1
+                IF (ivx1 .EQ. mpg%strvx(l)) THEN
+                  IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx1) .LE. gm%&
+&                     vxfpsi(ivx2)) .OR. (.NOT.gm%psi_increasing .AND. &
+&                     gm%vxfpsi(ivx1) .GT. gm%vxfpsi(ivx2))) THEN
+                    IF (mpg%ifdiv(i) .EQ. 0) THEN
+                      match_found = .true.
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx1
+                    ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep .OR. (mpg%&
+&                       vxfs(ivx1) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 &
+&                       .GT. 0)) THEN
 ! Two strike points on the same target
 ! We label the active one only
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx1
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx1
+                    END IF
                   END IF
-                END IF
-              ELSE IF (ivx2 .EQ. mpg%strvx(l)) THEN
-                IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx2) .LE. gm%&
-&                   vxfpsi(ivx1)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
-&                   vxfpsi(ivx2) .GT. gm%vxfpsi(ivx1))) THEN
-                  IF (mpg%ifdiv(i) .EQ. 0) THEN
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx2
-                  ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep .OR. (mpg%vxfs&
-&                     (ivx2) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)&
-&                 ) THEN
+                ELSE IF (ivx2 .EQ. mpg%strvx(l)) THEN
+                  IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx2) .LE. gm%&
+&                     vxfpsi(ivx1)) .OR. (.NOT.gm%psi_increasing .AND. &
+&                     gm%vxfpsi(ivx2) .GT. gm%vxfpsi(ivx1))) THEN
+                    IF (mpg%ifdiv(i) .EQ. 0) THEN
+                      match_found = .true.
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx2
+                    ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep .OR. (mpg%&
+&                       vxfs(ivx2) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 &
+&                       .GT. 0)) THEN
 ! Two strike points on the same target
 ! We label the active one only
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx2
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx2
+                    END IF
                   END IF
                 END IF
-              END IF
+              END DO
             END DO
           END DO
+          CALL XERTST(match_found .OR. mpg%nxpt .EQ. 0, &
+&               'No matching face found for strike point !')
         END DO
-        CALL XERTST(match_found .OR. mpg%nxpt .EQ. 0, &
-&             'No matching face found for strike point !')
-      END DO
+      END IF
+    ELSE
+!
+      WRITE(*, *) 'Warning: temp_ignore_geo switch used'
+      WRITE(*, *) 'This is a temporary solution to run unstructured', &
+&     ' geometries that do not fit in existing case categorizations.'
+      WRITE(*, *) 'This option limits post-processing options.'
     END IF
 !
+    IF (ALLOCATED(mpg%fcs_wall)) THEN
+! Count nFci
+      mpg%nfci = 0
+      DO j=2,mpg%ncg
+        result11 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j), 1:2)))
+        result20 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j-1), 1:2)))
+        IF (result11 .NE. result20) mpg%nfci = mpg%nfci + 1
+      END DO
+      mpg%nfci = mpg%nfci + 1
+!
+      ALLOCATE(mpg%fcs_wall_ind(mpg%nfci, 2))
+      ALLOCATE(mpg%fcs_wall_type(mpg%nfci))
+! Populate mapping array
+!
+      k = 1
+      i = 1
+      DO j=2,mpg%ncg
+        result11 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j), 1:2)))
+        result20 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j-1), 1:2)))
+        IF (result11 .NE. result20) THEN
+          mpg%fcs_wall_ind(k, 1) = i
+          mpg%fcs_wall_ind(k, 2) = j - i
+          result11 = MINVAL(mpg%fccv(mpg%fcs_wall(i), 1:2))
+          IF (mpg%cvonclosedsurface(result11)) THEN
+            mpg%fcs_wall_type(k) = 1
+          ELSE
+            mpg%fcs_wall_type(k) = 2
+          END IF
+          k = k + 1
+          i = j
+        END IF
+! Handle last entry
+
+      END DO
+!
+      mpg%fcs_wall_ind(mpg%nfci, 1) = mpg%fcs_wall_ind(mpg%nfci-1, 1) + &
+&       mpg%fcs_wall_ind(mpg%nfci-1, 2)
+      mpg%fcs_wall_ind(mpg%nfci, 2) = mpg%ncg - mpg%fcs_wall_ind(mpg%&
+&       nfci, 1) + 1
+      result11 = MINVAL(mpg%fccv(mpg%fcs_wall(i), 1:2))
+      IF (mpg%cvonclosedsurface(result11)) THEN
+        mpg%fcs_wall_type(k) = 1
+      ELSE
+        mpg%fcs_wall_type(k) = 2
+      END IF
+    END IF
+!
+    WRITE(*, *) 'list of boundary faces in one flux tube and type:'
+    DO j=1,mpg%nfci
+      WRITE(*, '(4i4)') j, mpg%fcs_wall_ind(j, 1), mpg%fcs_wall_ind(j, 2&
+&     ), mpg%fcs_wall_type(j)
+      WRITE(*, *) mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):mpg%fcs_wall_ind(j&
+&     , 1)+mpg%fcs_wall_ind(j, 2)-1)
+    END DO
     RETURN
   END SUBROUTINE INIT_GEOMETRY
 

@@ -75,8 +75,8 @@ CONTAINS
 
 !
   SUBROUTINE READ_RECYCLE_FNN(nsd, nbnd_local, use_coarse)
-    USE B2MOD_B2CMPA_DIFFV
-    USE B2MOD_ELEMENTS_DIFFV
+    USE B2MOD_B2CMPA
+    USE B2MOD_ELEMENTS
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
@@ -319,7 +319,7 @@ CONTAINS
 !   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 !  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 !   Nuclear Fusion 57.11 (2017): 116043.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_SUBSYS
@@ -596,10 +596,10 @@ CONTAINS
 !ellian anyway
     IF (fnni .LT. 0.0_R8 .AND. safeguard .EQ. 1) CALL &
 &     CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, area&
-&                               , pl, pld, tnf, tnfd, geo, geod, cosa, &
-&                               sina, fnni, fnnid, fmomni, fmomnid, nni&
-&                               , nnid, nnwwni, nnwwnid, feneni, fenenid&
-&                               , nbdirs)
+&                               , pl, pld, tnf, tnfd, geo, cosa, sina, &
+&                               fnni, fnnid, fmomni, fmomnid, nni, nnid&
+&                               , nnwwni, nnwwnid, feneni, fenenid, &
+&                               nbdirs)
 !
     CALL SUBEND()
     RETURN
@@ -617,7 +617,7 @@ CONTAINS
 !   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 !  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 !   Nuclear Fusion 57.11 (2017): 116043.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_SUBSYS
@@ -774,7 +774,7 @@ CONTAINS
 &   nbdirs)
 !     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_SUBSYS
@@ -897,18 +897,18 @@ CONTAINS
     ELSE IF (kn .GT. kn_b2) THEN
 !
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnni, fnnid0, fmomni&
-&                                    , fmomnid0, nni, nnid0, nnwwni, &
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnni, fnnid0, fmomni, &
+&                                    fmomnid0, nni, nnid0, nnwwni, &
 &                                    nnwwnid0, feneni, fenenid0, nbdirs)
 !
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnnim, fnnimd, &
-&                                    fmomnim, fmomnimd, nnim, nnimd, &
-&                                    nnwwnim, nnwwnimd, fenenim, &
-&                                    fenenimd, nbdirs)
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnnim, fnnimd, fmomnim, &
+&                                    fmomnimd, nnim, nnimd, nnwwnim, &
+&                                    nnwwnimd, fenenim, fenenimd, nbdirs&
+&                                   )
 !! <- '1': = safeguard for diffusion BCs
       CALL CALCINCIDENTFLUXESDIFFUSION_DV(icv, icn, ifc, isign, isn, &
 &                                   iscx0, isi, istra, phi_app, area, pl&
@@ -943,7 +943,7 @@ CONTAINS
 &   , fmomni, nni, nnwwni, feneni)
 !     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_SUBSYS
@@ -1056,7 +1056,7 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff
@@ -1097,8 +1097,8 @@ CONTAINS
 &                                   nnwwnid, feneni, fenenid, nbdirs)
     ELSE
       CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra, &
-&                                    area, pl, pld, tnf, tnfd, geo, geod&
-&                                    , cosa, sina, fnni, fnnid, fmomni, &
+&                                    area, pl, pld, tnf, tnfd, geo, cosa&
+&                                    , sina, fnni, fnnid, fmomni, &
 &                                    fmomnid, nni, nnid, nnwwni, nnwwnid&
 &                                    , feneni, fenenid, nbdirs)
     END IF
@@ -1119,7 +1119,7 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff
@@ -1164,15 +1164,15 @@ CONTAINS
 !   Plus diff mem management of: pl.na:in pl.ua:in
 !
   SUBROUTINE CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, isn, isign, istra&
-&   , area, pl, pld, tf, tfd, geo, geod, cosa, sina, fnni, fnnid, fmomni&
-&   , fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
+&   , area, pl, pld, tf, tfd, geo, cosa, sina, fnni, fnnid, fmomni, &
+&   fmomnid, nni, nnid, nnwwni, nnwwnid, feneni, fenenid, nbdirs)
 !nh   08.05.2018
 !     This routine calculates the incident neutral particle fluxes based on
 !     a truncated Maxwellian for the incident neutrals. These particle fluxes
 !     are necessary for the hybrid delta f model. It is assumed that only the
 !     neutral parallel drift velocity is non-negligible (unf). This has to be
 !     adapted.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_PLASMA_DIFFV
     USE B2US_GEO_DIFFV
     USE B2MOD_SUBSYS
@@ -1184,7 +1184,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     INTEGER, INTENT(IN) :: icv, ifc, isn, istra
     REAL(kind=r8), INTENT(IN) :: area, tf, isign, cosa, sina
     REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(IN) :: tfd
@@ -1312,7 +1311,7 @@ CONTAINS
 !     are necessary for the hybrid delta f model. It is assumed that only the
 !     neutral parallel drift velocity is non-negligible (unf). This has to be
 !     adapted.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_PLASMA_DIFFV
     USE B2US_GEO_DIFFV
     USE B2MOD_SUBSYS
@@ -1406,13 +1405,13 @@ CONTAINS
   SUBROUTINE CALCRECYCLEDFLUXES_DV(icv, nci, ifc, isign, isn, iscx0, isi&
 &   , istra, iwall, phi_app, phi_appd, area, recyc0, recyc0d, recycm, &
 &   fluid_frac_hyb, fluid_frac_hybd, pl, pld, tif, tifd, tef, pof, pofd&
-&   , nif, nef, geo, geod, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec&
-&   , fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
+&   , nif, nef, geo, mpg, t0, t0d, cosa, sina, use_uy_uz_0, fnnrec, &
+&   fnnrecd, fmomrec, fmomrecd, nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &   fenerec, fenerecd, nbdirs)
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc, accel_ion
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
@@ -1425,7 +1424,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
 !!      type (B2Rates), intent (in) :: rt
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iscx0, isi, iwall, istra&
@@ -1802,7 +1800,7 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc, accel_ion
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
@@ -2042,7 +2040,7 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
@@ -2639,9 +2637,9 @@ CONTAINS
 &     CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn, istra&
 &                                , iwall, area, recyc0, recyc0d, recycm&
 &                                , fluid_frac_hyb, fluid_frac_hybd, pl, &
-&                                pld, tnf, tnfd, geo, geod, mpg, cosa, &
-&                                sina, fnnrefl, fnnrefld, fmomrefl, &
-&                                fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
+&                                pld, tnf, tnfd, geo, mpg, cosa, sina, &
+&                                fnnrefl, fnnrefld, fmomrefl, fmomrefld&
+&                                , nnrefl, nnrefld, nnwwnrefl, &
 &                                nnwwnrefld, fenerefl, fenerefld, &
 &                                fene_el, fene_eld, nbdirs)
 !
@@ -2658,7 +2656,7 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
@@ -3017,7 +3015,7 @@ CONTAINS
 &   nbdirs)
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2US_MAP_DIFFV
@@ -3147,7 +3145,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld0, fmomrefl, &
 &                                     fmomrefld0, nnrefl, nnrefld0, &
 &                                     nnwwnrefl, nnwwnrefld0, fenerefl, &
@@ -3158,7 +3156,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnreflm, fnnreflmd, fmomreflm, &
 &                                     fmomreflmd, nnreflm, nnreflmd, &
 &                                     nnwwnreflm, nnwwnreflmd, fenereflm&
@@ -3207,7 +3205,7 @@ CONTAINS
 &   nnrefl, nnwwnrefl, fenerefl, fene_el)
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2US_MAP_DIFFV
@@ -3333,7 +3331,7 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2US_MAP_DIFFV
@@ -3386,7 +3384,7 @@ CONTAINS
 &                                     istra, iwall, area, recyc0, &
 &                                     recyc0d, recycm, fluid_frac_hyb, &
 &                                     fluid_frac_hybd, pl, pld, tnf, &
-&                                     tnfd, geo, geod, mpg, cosa, sina, &
+&                                     tnfd, geo, mpg, cosa, sina, &
 &                                     fnnrefl, fnnrefld, fmomrefl, &
 &                                     fmomrefld, nnrefl, nnrefld, &
 &                                     nnwwnrefl, nnwwnrefld, fenerefl, &
@@ -3411,7 +3409,7 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_GEO_DIFFV
     USE B2US_PLASMA_DIFFV
     USE B2US_MAP_DIFFV
@@ -3466,14 +3464,14 @@ CONTAINS
 !
   SUBROUTINE CALCREFLECTEDFLUXESMAXWELLIAN_DV(icv, nci, ifc, isign, isn&
 &   , istra, iwall, area, recyc0, recyc0d, recycm, fluid_frac_hyb, &
-&   fluid_frac_hybd, pl, pld, tf, tfd, geo, geod, mpg, cosa, sina, &
-&   fnnrefl, fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
+&   fluid_frac_hybd, pl, pld, tf, tfd, geo, mpg, cosa, sina, fnnrefl, &
+&   fnnrefld, fmomrefl, fmomrefld, nnrefl, nnrefld, nnwwnrefl, &
 &   nnwwnrefld, fenerefl, fenerefld, fene_el, fene_eld, nbdirs)
 !nh   11.06.18
 !     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a tr
 !uncated Maxwellian
 !     for the incident neutrals.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc
     USE B2US_PLASMA_DIFFV
     USE B2US_GEO_DIFFV
@@ -3485,7 +3483,6 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     INTEGER, INTENT(IN) :: icv, nci, ifc, isn, iwall, istra
     REAL(kind=r8), INTENT(IN) :: area, recyc0, recycm, isign, tf, sina, &
@@ -3900,7 +3897,7 @@ CONTAINS
 !     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a tr
 !uncated Maxwellian
 !     for the incident neutrals.
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : e_fc
     USE B2US_PLASMA_DIFFV
     USE B2US_GEO_DIFFV
@@ -4638,7 +4635,7 @@ CONTAINS
   SUBROUTINE CALCMINKN_DV(icv, isn, istra, pl, pld, dv, dvd, rt, rtd, l&
 &   , min_kn, kn, mfp, mfpd, nbdirs)
 !     This routine calculates the minimum mean free path for a certain stratum
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_PLASMA_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_SUBSYS
@@ -4751,7 +4748,7 @@ CONTAINS
 !
   SUBROUTINE CALCMINKN(icv, isn, istra, pl, dv, rt, l, min_kn, kn, mfp)
 !     This routine calculates the minimum mean free path for a certain stratum
-    USE B2MOD_B2CMPA_DIFFV
+    USE B2MOD_B2CMPA
     USE B2US_PLASMA_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_SUBSYS

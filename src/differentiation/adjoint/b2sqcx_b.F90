@@ -93,6 +93,7 @@ SUBROUTINE B2SQCX_B(ncv, ns, ev, switch, amh0, th0, th0b, thn0, thn0b, &
   REAL(kind=r8) :: res
   REAL(kind=r8) :: resb
   INTEGER*4 :: branch
+!
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv
     t_av = 0.5_R8*(th0(icv)+thn0(icv))
@@ -236,6 +237,7 @@ SUBROUTINE B2SQCX_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, rlcx0, &
 !    ..test th0
     CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
   END IF
+!
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv
     t_av = 0.5_R8*(th0(icv)+thn0(icv))

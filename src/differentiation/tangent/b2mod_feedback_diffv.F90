@@ -14,7 +14,7 @@
 !
 MODULE B2MOD_FEEDBACK_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions

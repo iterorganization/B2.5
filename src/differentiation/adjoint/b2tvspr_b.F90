@@ -24,7 +24,7 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 & fchvisper_a, fchvisper_ab, fchvisper, fchvisperb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -216,7 +216,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & po, ti, na, rza, vsa0, fac_vis, fchvisper_a, fchvisper)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

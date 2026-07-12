@@ -10,7 +10,7 @@ c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
       use b2us_data_diff
       use b2mod_types
-      use b2mod_b2cmpa_diff
+      use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_neutrals_namelist_diff
       use b2mod_b2plot_wall_loading
@@ -177,6 +177,7 @@ c*** Arrange the output data
           end do !}
         end do !}
       end if !}
+
 c======================================================================
       return
       end subroutine b2ptrdl

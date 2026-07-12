@@ -154,8 +154,8 @@ MODULE B2MOD_SPUTTER_DIFF
 CONTAINS
 !
   SUBROUTINE ALLOC_B2MOD_SPUTTER(nxd, nyd, nsd)
-    USE B2MOD_B2CMPA_DIFF
-    USE B2MOD_ELEMENTS_DIFF
+    USE B2MOD_B2CMPA
+    USE B2MOD_ELEMENTS
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd
     LOGICAL :: errdim
@@ -335,8 +335,8 @@ CONTAINS
 
 !
   SUBROUTINE READ_SPUTTER_DATA(nsd, column, sput_model, refl_model)
-    USE B2MOD_B2CMPA_DIFF
-    USE B2MOD_ELEMENTS_DIFF
+    USE B2MOD_B2CMPA
+    USE B2MOD_ELEMENTS
     USE B2MOD_SUBSYS
     IMPLICIT NONE
     INTEGER :: nsd, column, sput_model, refl_model
@@ -674,7 +674,7 @@ CONTAINS
 
 !
   FUNCTION SPUTTER(is, zb, issput, te)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     IMPLICIT NONE
     INTEGER :: is, issput
     REAL(kind=r8) :: sputter, zb, te, yldphy_lowlim, yldphy_hilim, &
@@ -771,7 +771,7 @@ CONTAINS
 !
 !  Function to evaluate the sputtered energy from TRIM data.
   FUNCTION SPUTTER2(is, issput, te)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     IMPLICIT NONE
     REAL(kind=r8) :: sputter2, te, f
     INTEGER :: is, issput, iss, ib, it, ih, lng, itargsp
@@ -839,7 +839,7 @@ CONTAINS
 
 !
   FUNCTION REFLECT(is, te, ibnd)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     IMPLICIT NONE
     INTEGER :: is, ibnd
     REAL(kind=r8) :: te, reflect
@@ -935,7 +935,7 @@ CONTAINS
 !
 !  Function to evaluate the reflected energy from TRIM data.
   FUNCTION REFLECT2(is, te, ibnd)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     IMPLICIT NONE
     INTEGER :: is, ibnd
     REAL(kind=r8) :: te, reflect2
@@ -1454,7 +1454,7 @@ CONTAINS
 !     Steel   | -14321.9 | 9.44    |
 !
   SUBROUTINE THERMEV(ibnd, is, tp, flxthev, qthev)
-    USE B2MOD_B2CMPA_DIFF
+    USE B2MOD_B2CMPA
     IMPLICIT NONE
     INTEGER :: ibnd, is, i, itrack, nz
     REAL(kind=r8) :: tp, a, b, am2, vappres, alpha

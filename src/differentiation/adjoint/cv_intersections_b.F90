@@ -26,7 +26,8 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(geo, m, segm, list, nncv, nmax, mode&
   INTEGER :: ic, ifc, ii, kk
   REAL(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
   EXTERNAL INTERSECTS, XERTST
-  LOGICAL :: found, INTERSECTS, ifail
+  LOGICAL :: found, INTERSECTS, ifail, slab_test
+  INTRINSIC SQRT
   LOGICAL :: result1
 !
 !**
@@ -48,8 +49,14 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(geo, m, segm, list, nncv, nmax, mode&
     p2(2) = geo%vxy(m%fcvx(ifc, 1))
     q2(1) = geo%vxx(m%fcvx(ifc, 2))
     q2(2) = geo%vxy(m%fcvx(ifc, 2))
+!! for artificial slab cases it sometimes happens that vxY and vxX are wrong at the cuts, leading to incorrect intersections.
+!! fcHt will be correct though. Therefore we check here if the distance between the vertex points corresponds to the face length.
+! If not, no intersection is counted.
+    slab_test = .true.
+    IF (SQRT((p2(1)-q2(1))**2 + (p2(2)-q2(2))**2) .GT. geo%fcht(ifc)*&
+&       1.1_R8) slab_test = .false.
     result1 = INTERSECTS(p1, q1, p2, q2)
-    IF (result1) THEN
+    IF (result1 .AND. slab_test) THEN
       DO ii=1,2
         ic = m%fccv(ifc, ii)
         found = .false.

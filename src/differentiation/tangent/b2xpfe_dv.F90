@@ -54,6 +54,7 @@ SUBROUTINE B2XPFE_DV(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, rzad, &
   dummyzerodiffd = 0.D0
   CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd, fne, fned, 1, nbdirs)
   wrkfd = 0.D0
+!
   DO is=0,ns-1
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), rzad(:, :&
 &             , is), wrkf, wrkfd, nbdirs)
@@ -124,6 +125,7 @@ SUBROUTINE B2XPFE_NODIFF(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, za_ext&
 !$$$  call subini ('b2xpfe')
   arg1 = nfc*2
   CALL SFILL_NODIFF(arg1, 0.0_R8, fne, 1)
+!
   DO is=0,ns-1
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), wrkf)
     fne(:, 0) = fne(:, 0) + fna(:, 0, is)*wrkf

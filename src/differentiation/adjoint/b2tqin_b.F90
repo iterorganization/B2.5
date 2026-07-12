@@ -6,8 +6,7 @@
 !                *(pl.tn)
 !   with respect to varying inputs: *(rt.rlcx) *(pl.na) *(pl.ti)
 !                *(pl.tn)
-!   Plus diff mem management of: geo.cvbb:in rt.rlcx:in pl.na:in
-!                pl.ti:in pl.tn:in
+!   Plus diff mem management of: rt.rlcx:in pl.na:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -22,12 +21,12 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt&
-& , rtb, sigin, siginb)
+SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, pl, plb, rt, rtb, &
+& sigin, siginb)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_PLASMA_DIFF
@@ -43,7 +42,6 @@ SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt&
   INTEGER :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFF) :: plb
   TYPE(B2RATES), INTENT(IN) :: rt
@@ -139,6 +137,7 @@ SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt&
 !! sum for hybrid fluid-kinetic simulations
     CALL PUSHREAL8ARRAY(na0_tot, r8*ncv/8)
     na0_tot = na0_kin + na0_fluid
+!
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv
@@ -253,7 +252,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_PLASMA_DIFF
@@ -363,6 +362,7 @@ SUBROUTINE B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin&
     na0_fluid = pl%na(:, is0)
 !! sum for hybrid fluid-kinetic simulations
     na0_tot = na0_kin + na0_fluid
+!
     DO is=0,ns-1
       IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO icv=1,ncv

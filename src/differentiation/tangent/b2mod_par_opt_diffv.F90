@@ -16,7 +16,7 @@ MODULE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp
   USE B2MOD_AD_DIFFV, ONLY : nncf, b2rr, b2voloncf, b2voloncfd, b2data, &
-& b2datad, b2dataoncf, b2dataoncfd, b2psi
+& b2datad, b2dataoncf, b2dataoncfd, b2psi, b2psid
   USE B2US_MAP_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : flag_dna, flag_dpa, &
@@ -249,7 +249,7 @@ CONTAINS
     spatial_points = 0
     parallel_hf = .true.
     hessian_approximation = 'limited-memory'
-    limited_memory_update_type = 'b2fgs'
+    limited_memory_update_type = 'bfgs'
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
@@ -622,6 +622,8 @@ CONTAINS
       b2datad = 0.D0
       ALLOCATE(b2data(numdata))
 !temporary variable to store SOLPS data for interpolation
+      ALLOCATE(b2psid(nbdirsmax, ncf, numdata))
+      b2psid = 0.D0
       ALLOCATE(b2psi(ncf, numdata))
 !store here psi of SOLPS data for interpolation
       b2rr = 0.0_R8
@@ -1078,7 +1080,7 @@ CONTAINS
     spatial_points = 0
     parallel_hf = .true.
     hessian_approximation = 'limited-memory'
-    limited_memory_update_type = 'b2fgs'
+    limited_memory_update_type = 'bfgs'
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
@@ -1857,6 +1859,9 @@ CONTAINS
       DEALLOCATE(b2dataoncf)
     END IF
     IF (ALLOCATED(b2psi)) THEN
+      IF (ALLOCATED(b2psid)) THEN
+        DEALLOCATE(b2psid)
+      END IF
       DEALLOCATE(b2psi)
     END IF
   END SUBROUTINE DEALLOC_B2MOD_PAR_OPT_DV

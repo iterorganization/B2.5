@@ -5,8 +5,8 @@
 !   gradient     of useful results: tdata parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
 !                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
+!                *(rt.rza) switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
@@ -23,8 +23,8 @@
 !   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
 !                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
+!                *(rt.rza) switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
@@ -38,24 +38,25 @@
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
 !                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in st_ext.ni:in rt.rlcx:in
-!                rt.rlsa:in rt.rza:in co.csig:in co.calf:in co.csig_an:in
-!                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
-!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
-!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
-!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
-!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
-!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
+!                dv.vaecrb:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhy:in geo.cvqgam:in
+!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.am:in
+!                st_ext.na:in st_ext.ni:in st_ext.ta:in rt.rlcx:in
+!                rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
+!                co.csig_an:in co.calf_an:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.chcb:in
+!                co.cvsa_an:in co.cvmahz:in co.fllim0fhi:in co.sig0:in
+!                co.hce0:in co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in
+!                co.dzt0:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.dpa0:in co.dna0:in co.vsa0:in co.hcib:in co.vla0:in
+!                co.vma0:in pl.na:in pl.ua:in pl.te:in pl.ti:in
+!                pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -75,7 +76,7 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & st_ext, st_extb, co, cob)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -159,7 +160,7 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ifc, is, mode, k, cvs(2)
+  INTEGER :: icv, ifc, is, mode, k, cvs(2)
 !srv 17.06.08
   CHARACTER(len=3) :: chns
 !srv 07.12.15
@@ -167,12 +168,13 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   INTEGER, SAVE :: set_chcb_0=0
 !srv 20.09.17
   REAL(kind=r8) :: csig_stoch(nfc), chce_stoch(nfc)
-  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkc(ncv), wrk0, hvi0(ncv, 0:&
-& 1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv(nfc, 0:1, 0:ns-1), &
-& cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc, 0:ns-1), inctran
-  REAL(kind=r8) :: wrkb(nfc), wrkcb(ncv), hvi0b(ncv, 0:1), hve0b(ncv, 0:&
-& 1), flcb(nfc, 0:1, 0:ns-1), flvb(nfc, 0:1, 0:ns-1), cdpa0b(nfc, 0:ns-1&
-& ), cvsa0b(nfc, 0:ns-1), chcibb(nfc, 0:ns-1)
+  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkfc(nfc), wrkc(ncv), wrkcc(&
+& ncv), wrk0, hvi0(ncv, 0:1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv&
+& (nfc, 0:1, 0:ns-1), cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc&
+& , 0:ns-1), inctran
+  REAL(kind=r8) :: wrkcb(ncv), hvi0b(ncv, 0:1), hve0b(ncv, 0:1), flcb(&
+& nfc, 0:1, 0:ns-1), flvb(nfc, 0:1, 0:ns-1), cdpa0b(nfc, 0:ns-1), cvsa0b&
+& (nfc, 0:ns-1), chcibb(nfc, 0:ns-1)
   EXTERNAL XERTST, SFILL_NODIFF, smin, smax
   EXTERNAL SFILL_FWD, SFILL_BWD
 !   ..procedures
@@ -184,6 +186,7 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &     B2TXSX_B, B2TXSY_B
   EXTERNAL B2XVSG
   INTRINSIC NINT
+  INTRINSIC MIN
   INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: result1
@@ -278,6 +281,7 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              hce0, co%sig0, co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%&
 &              dna_exb, co%hce_exb, co%hci_exb)
 !   ..incorporate geometry
+!
   inctran = switch%b2txcx_increase_transp_coefs
   DO is=0,ns-1
     CALL B2TXCX_FWD(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo%&
@@ -345,7 +349,6 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &             is), co%cvsahz(1:nfc, 1, is))
 !srv 09.01.01
   END DO
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -365,7 +368,6 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
-!
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
   CALL B2TXSX_NODIFF(ncv, nfc, geo, mpg, geo%fcvol, geo%fcs, hvi0(1:ncv&
@@ -408,9 +410,39 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL B2TXCY_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, co%&
 &           hci_exb, co%chci_exb(1:nfc, 1))
 !
+  IF (switch%min_collisions .GT. 0.0_R8) THEN
+    CALL PUSHREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
+    CALL B2TLNL_NODIFF(mpg%ncv, switch, switch%icase_ii, pl%te, pl%ti, &
+&                dv%ne, dv%lnlam)
+    CALL B2TXNCI_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, rt%rz2&
+&                 , dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, &
+&                 wrkfc, wrkcc)
+    CALL PUSHCONTROL1B(0)
+  ELSE
+    CALL PUSHCONTROL1B(1)
+    wrkfc = 1.0_R8
+  END IF
   IF (set_chcb_0 .EQ. 1) THEN
     DO k=1,mpg%ncg
+      CALL PUSHINTEGER4(ifc)
       ifc = mpg%fcs_wall(k)
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv = mpg%fccv(ifc, 2)
+      ELSE
+        icv = mpg%fccv(ifc, 1)
+      END IF
+      IF (wrkfc(ifc) .LE. switch%min_collisions .AND. (.NOT.mpg%&
+&         cvonclosedsurface(icv))) THEN
+        CALL PUSHREAL8ARRAY(co%cvsa(ifc, 0:1, :), r8*2*SIZE(co%cvsa, 3)/&
+&                     8)
+        co%cvsa(ifc, 0:1, :) = 0.0_R8
+        CALL PUSHREAL8ARRAY(co%cvsahz(ifc, 0:1, :), r8*2*SIZE(co%cvsahz&
+&                     , 3)/8)
+        co%cvsahz(ifc, 0:1, :) = 0.0_R8
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
       IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. 0.) &
 &     THEN
         wrk0 = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -428,6 +460,14 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         co%chce(ifc, 1) = 0.0_R8
         CALL PUSHREAL8ARRAY(co%cdna(ifc, 1, :), r8*SIZE(co%cdna, 3)/8)
         co%cdna(ifc, 1, :) = 0.0_R8
+        CALL PUSHREAL8ARRAY(co%cvsa(ifc, 1, :), r8*SIZE(co%cvsa, 3)/8)
+        co%cvsa(ifc, 1, :) = 0.0_R8
+        CALL PUSHREAL8ARRAY(co%cdnahz(ifc, 1, :), r8*SIZE(co%cdnahz, 3)/&
+&                     8)
+        co%cdnahz(ifc, 1, :) = 0.0_R8
+        CALL PUSHREAL8ARRAY(co%cvsahz(ifc, 1, :), r8*SIZE(co%cvsahz, 3)/&
+&                     8)
+        co%cvsahz(ifc, 1, :) = 0.0_R8
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
@@ -448,10 +488,22 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &             ifc, 1) .GT. 0.0_R8) THEN
             CALL PUSHREAL8(co%cdna(ifc, 1, is), r8/8)
             co%cdna(ifc, 1, is) = 0.0_R8
+            CALL PUSHREAL8(co%cvsa(ifc, 1, is), r8/8)
+            co%cvsa(ifc, 1, is) = 0.0_R8
+            CALL PUSHREAL8(co%cdnahz(ifc, 1, is), r8/8)
+            co%cdnahz(ifc, 1, is) = 0.0_R8
+            CALL PUSHREAL8(co%cvsahz(ifc, 1, is), r8/8)
+            co%cvsahz(ifc, 1, is) = 0.0_R8
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHREAL8(co%cdna(ifc, 1, is), r8/8)
             co%cdna(ifc, 1, is) = co%cdna(ifc, 1, is)/inctran
+            CALL PUSHREAL8(co%cvsa(ifc, 1, is), r8/8)
+            co%cvsa(ifc, 1, is) = co%cvsa(ifc, 1, is)/inctran
+            CALL PUSHREAL8(co%cdnahz(ifc, 1, is), r8/8)
+            co%cdnahz(ifc, 1, is) = co%cdnahz(ifc, 1, is)/inctran
+            CALL PUSHREAL8(co%cvsahz(ifc, 1, is), r8/8)
+            co%cvsahz(ifc, 1, is) = co%cvsahz(ifc, 1, is)/inctran
             CALL PUSHCONTROL1B(0)
           END IF
         END DO
@@ -479,8 +531,8 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
 !   ..set csigx = 0 and calfx = 0
   IF (switch%csig_an_style .EQ. 1) THEN
-    CALL SFILL_FWD(nfc, 0.0_R8, co%csig(1, 0), cob%csig(1, 0), 1)
-    CALL SFILL_FWD(nfc, 0.0_R8, co%calf(1, 0), cob%calf(1, 0), 1)
+    CALL SFILL_FWD(nfc, 0.0_R8, co%csig(1, 0), 1)
+    CALL SFILL_FWD(nfc, 0.0_R8, co%calf(1, 0), 1)
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
@@ -889,9 +941,19 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         DO is=ns-1,0,-1
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
+            CALL POPREAL8(co%cvsahz(ifc, 1, is), r8/8)
+            cob%cvsahz(ifc, 1, is) = cob%cvsahz(ifc, 1, is)/inctran
+            CALL POPREAL8(co%cdnahz(ifc, 1, is), r8/8)
+            CALL POPREAL8(co%cvsa(ifc, 1, is), r8/8)
+            cob%cvsa(ifc, 1, is) = cob%cvsa(ifc, 1, is)/inctran
             CALL POPREAL8(co%cdna(ifc, 1, is), r8/8)
             cob%cdna(ifc, 1, is) = cob%cdna(ifc, 1, is)/inctran
           ELSE
+            CALL POPREAL8(co%cvsahz(ifc, 1, is), r8/8)
+            cob%cvsahz(ifc, 1, is) = 0.D0
+            CALL POPREAL8(co%cdnahz(ifc, 1, is), r8/8)
+            CALL POPREAL8(co%cvsa(ifc, 1, is), r8/8)
+            cob%cvsa(ifc, 1, is) = 0.D0
             CALL POPREAL8(co%cdna(ifc, 1, is), r8/8)
             cob%cdna(ifc, 1, is) = 0.D0
           END IF
@@ -907,6 +969,13 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         ifc = mpg%fcs_wall(k)
+        CALL POPREAL8ARRAY(co%cvsahz(ifc, 1, :), r8*SIZE(co%cvsahz, 3)/8&
+&                   )
+        cob%cvsahz(ifc, 1, :) = 0.D0
+        CALL POPREAL8ARRAY(co%cdnahz(ifc, 1, :), r8*SIZE(co%cdnahz, 3)/8&
+&                   )
+        CALL POPREAL8ARRAY(co%cvsa(ifc, 1, :), r8*SIZE(co%cvsa, 3)/8)
+        cob%cvsa(ifc, 1, :) = 0.D0
         CALL POPREAL8ARRAY(co%cdna(ifc, 1, :), r8*SIZE(co%cdna, 3)/8)
         cob%cdna(ifc, 1, :) = 0.D0
         CALL POPREAL8(co%chce(ifc, 1), r8/8)
@@ -918,7 +987,23 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         CALL POPREAL8ARRAY(co%chcb(ifc, 1, :), r8*SIZE(co%chcb, 3)/8)
         cob%chcb(ifc, 1, :) = 0.D0
       END IF
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        CALL POPREAL8ARRAY(co%cvsahz(ifc, 0:1, :), r8*2*SIZE(co%cvsahz, &
+&                    3)/8)
+        cob%cvsahz(ifc, 0:1, :) = 0.D0
+        CALL POPREAL8ARRAY(co%cvsa(ifc, 0:1, :), r8*2*SIZE(co%cvsa, 3)/8&
+&                   )
+        cob%cvsa(ifc, 0:1, :) = 0.D0
+      END IF
+      CALL POPINTEGER4(ifc)
     END DO
+  END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    CALL POPREAL8ARRAY(dv%lnlam, r8*SIZE(dv%lnlam, 1)/8)
+    CALL B2TLNL_B(mpg%ncv, switch, switchb, switch%icase_ii, pl%te, plb%&
+&           te, pl%ti, plb%ti, dv%ne, dvb%ne, dv%lnlam, dvb%lnlam)
   END IF
   CALL B2TXCY_BWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, co%&
 &           hci_exb, cob%hci_exb, co%chci_exb(1:nfc, 1), cob%chci_exb(1:&
@@ -1124,7 +1209,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & , switch, geo, mpg, pl, dv, rt, st_ext, co)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -1196,7 +1281,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ifc, is, mode, k, cvs(2)
+  INTEGER :: icv, ifc, is, mode, k, cvs(2)
 !srv 17.06.08
   CHARACTER(len=3) :: chns
 !srv 07.12.15
@@ -1204,9 +1289,10 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   INTEGER, SAVE :: set_chcb_0=0
 !srv 20.09.17
   REAL(kind=r8) :: csig_stoch(nfc), chce_stoch(nfc)
-  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkc(ncv), wrk0, hvi0(ncv, 0:&
-& 1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv(nfc, 0:1, 0:ns-1), &
-& cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc, 0:ns-1), inctran
+  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkfc(nfc), wrkc(ncv), wrkcc(&
+& ncv), wrk0, hvi0(ncv, 0:1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv&
+& (nfc, 0:1, 0:ns-1), cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc&
+& , 0:ns-1), inctran
   EXTERNAL XERTST, SFILL_NODIFF, smin, smax
 !   ..procedures
   REAL(kind=r8) :: smin, smax
@@ -1215,6 +1301,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &     B2TXSY_NODIFF
   EXTERNAL B2XVSG
   INTRINSIC NINT
+  INTRINSIC MIN
   INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: result1
@@ -1285,6 +1372,7 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &              hce0, co%sig0, co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%&
 &              dna_exb, co%hce_exb, co%hci_exb)
 !   ..incorporate geometry
+!
   inctran = switch%b2txcx_increase_transp_coefs
   DO is=0,ns-1
     CALL B2TXCX_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%fcvol, geo&
@@ -1348,7 +1436,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &                ncv, is), co%cvsahz(1:nfc, 1, is))
 !srv 09.01.01
   END DO
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -1362,7 +1449,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       END IF
     END DO
   END IF
-!
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
   co%cvsa_an = co%cvsa
@@ -1406,9 +1492,28 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CALL B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, co%&
 &              hci_exb, co%chci_exb(1:nfc, 1))
 !
+  IF (switch%min_collisions .GT. 0.0_R8) THEN
+    CALL B2TLNL_NODIFF(mpg%ncv, switch, switch%icase_ii, pl%te, pl%ti, &
+&                dv%ne, dv%lnlam)
+    CALL B2TXNCI_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, rt%rz2&
+&                 , dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, &
+&                 wrkfc, wrkcc)
+  ELSE
+    wrkfc = 1.0_R8
+  END IF
   IF (set_chcb_0 .EQ. 1) THEN
     DO k=1,mpg%ncg
       ifc = mpg%fcs_wall(k)
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv = mpg%fccv(ifc, 2)
+      ELSE
+        icv = mpg%fccv(ifc, 1)
+      END IF
+      IF (wrkfc(ifc) .LE. switch%min_collisions .AND. (.NOT.mpg%&
+&         cvonclosedsurface(icv))) THEN
+        co%cvsa(ifc, 0:1, :) = 0.0_R8
+        co%cvsahz(ifc, 0:1, :) = 0.0_R8
+      END IF
       IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. 0.) &
 &     THEN
         wrk0 = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -1421,6 +1526,9 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
         co%csig(ifc, 1) = 0.0_R8
         co%chce(ifc, 1) = 0.0_R8
         co%cdna(ifc, 1, :) = 0.0_R8
+        co%cvsa(ifc, 1, :) = 0.0_R8
+        co%cdnahz(ifc, 1, :) = 0.0_R8
+        co%cvsahz(ifc, 1, :) = 0.0_R8
       END IF
     END DO
     DO ifc=1,mpg%nfc
@@ -1434,8 +1542,14 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &             is)*geo%fcqalf(ifc, 0) + co%cdpa(ifc, 1, is)*geo%fcqalf(&
 &             ifc, 1) .GT. 0.0_R8) THEN
             co%cdna(ifc, 1, is) = 0.0_R8
+            co%cvsa(ifc, 1, is) = 0.0_R8
+            co%cdnahz(ifc, 1, is) = 0.0_R8
+            co%cvsahz(ifc, 1, is) = 0.0_R8
           ELSE
             co%cdna(ifc, 1, is) = co%cdna(ifc, 1, is)/inctran
+            co%cvsa(ifc, 1, is) = co%cvsa(ifc, 1, is)/inctran
+            co%cdnahz(ifc, 1, is) = co%cdnahz(ifc, 1, is)/inctran
+            co%cvsahz(ifc, 1, is) = co%cvsahz(ifc, 1, is)/inctran
           END IF
         END DO
         IF (co%csig(ifc, 0)*geo%fcqalf(ifc, 0) .GT. 0.0_R8) THEN

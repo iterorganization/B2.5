@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfvh in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast floi_vhx
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *z_to_m1_ast *c_hw_save na ua
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                z_to_m1_ast:in c_hw_save:in
 !
 !

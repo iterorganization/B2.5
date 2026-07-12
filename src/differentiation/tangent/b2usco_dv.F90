@@ -251,7 +251,8 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !
 !   ..solve the correction equation
 !srv 18.05.02
-  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name, switch%b2uxus_style)
+  CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name, switch%&
+&              b2uxus_style)
 !$AD II-LOOP
 !   ..redo the scaling
   DO icv=1,ncv

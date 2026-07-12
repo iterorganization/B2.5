@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_diag_diffv
       use b2mod_time
-      use b2mod_b2cmpa_diffv
+      use b2mod_b2cmpa
       implicit none
 
 c========================================================================

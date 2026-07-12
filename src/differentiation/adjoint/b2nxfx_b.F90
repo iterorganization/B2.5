@@ -114,6 +114,7 @@ SUBROUTINE B2NXFX_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, qe, ne&
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, po, pob&
 &                  , wrkv, wrkvb, wrkc1, wrkc1b)
         neteb = 0.D0
+        wrkvb = 0.D0
         CALL GRADC_P_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, nete, &
 &                  neteb, wrkv, wrkvb, wrkc0, wrkc0b)
         neb = neb + te*neteb

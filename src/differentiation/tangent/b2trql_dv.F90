@@ -5,7 +5,7 @@
 !   variations   of useful results: chvemx chvimx
 !   with respect to varying inputs: *(dv.ne) *(dv.ni) chvemx chvimx
 !                *(pl.na) *(pl.te) *(pl.ti)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in geo.cvbb:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in geo.cvbb:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcs:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcpbs:in pl.na:in
 !                pl.te:in pl.ti:in
@@ -27,7 +27,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 & , pl, pld, dv, dvd, st_ext, chvemx, chvemxd, chvimx, chvimxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -82,8 +82,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
   EXTERNAL XERTST, smin, smax
 !   ..procedures
   REAL(kind=r8) :: smin, smax
-  EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR_NODIFF, &
-&     B2XVSG
+  EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR, B2XVSG
   EXTERNAL B2TLHE_DV, B2TLHI_DV, B2XPNR_DV
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -153,13 +152,13 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 ! ..compute flux limit velocities
 !   ..compute electron heat flux limit velocity
   cflme = cflim(0)
-  CALL B2TLHE_DV(ncv, nfc, me, cflme, switch, switchd, geo, geod, mpg, &
-&          dv%ne, dvd%ne, pl%te, pld%te, chvemx, chvemxd, nbdirs)
+  CALL B2TLHE_DV(ncv, nfc, me, cflme, switch, switchd, geo, mpg, dv%ne, &
+&          dvd%ne, pl%te, pld%te, chvemx, chvemxd, nbdirs)
 !   ..compute all atom heat flux limit velocity
   cflmi = cflim(1)
-  CALL B2TLHI_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod, mpg, &
-&          dv%ni, dvd%ni, nirm, nirmd, st_ext%ni, pl%ti, pld%ti, chvimx&
-&          , chvimxd, nbdirs)
+  CALL B2TLHI_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, mpg, dv%ni, &
+&          dvd%ni, nirm, nirmd, st_ext%ni, pl%ti, pld%ti, chvimx, &
+&          chvimxd, nbdirs)
 !
 ! ..return
   ncall_b2trql = ncall_b2trql + 1
@@ -189,7 +188,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 & , chvemx, chvimx)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -236,8 +235,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
   EXTERNAL XERTST, smin, smax
 !   ..procedures
   REAL(kind=r8) :: smin, smax
-  EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR_NODIFF, &
-&     B2XVSG
+  EXTERNAL B2TLHE_NODIFF, B2TLHI_NODIFF, B2TLMV_NODIFF, B2XPNR, B2XVSG
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
@@ -299,7 +297,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
     CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute nirm (atom density weighted by 1/sqrt(am)
-  CALL B2XPNR_NODIFF(ncv, ns, pl%na, nirm)
+  CALL B2XPNR(ncv, ns, pl%na, nirm)
 !
 ! ..compute flux limit velocities
 !   ..compute electron heat flux limit velocity

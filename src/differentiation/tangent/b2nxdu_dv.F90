@@ -22,7 +22,7 @@ SUBROUTINE B2NXDU_DV(ncv, ns, na, nad, ua, uad, smq, smqd, smqdu, smqdud&
 & , wrk0, wrk0d, wrk1, wrk1d, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2nxdu
@@ -149,7 +149,7 @@ END SUBROUTINE B2NXDU_DV
 SUBROUTINE B2NXDU_NODIFF(ncv, ns, na, ua, smq, smqdu, wrk0, wrk1)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2nxdu

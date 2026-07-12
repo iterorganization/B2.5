@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2sral as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in mpg.bcfcor:in
 !                mpg.rcfcor:in-out mpg.intcellp:in geo.cvbb:in
 !                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhx:in
@@ -90,7 +90,7 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_NUMERICS_NAMELIST_DIFF
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -98,7 +98,8 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
-  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
@@ -113,21 +114,23 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & fb_current, fb_currentb, cum_volrec, fb_const, charge_frac, &
 & charge_fracb, saved_fb_actuator, saved_fb_actuatorb, saved_fb_prev, &
 & saved_fb_prevb, dt_prev, feedback_namelist_used, she_eir_tot, &
-& she_eir_totb, fb_current_prev, fb_current_prevb
+& she_eir_totb, fb_current_prev, fb_current_prevb, she_rad_tot, &
+& she_rad_totb
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutlob, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_xy, z2n_xyb, nal, nalb, ia, iab, &
+  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_cv, z2n_cvb, nal, nalb, ia, iab, &
 & av_ualpha, av_ualphab, avm_u, avm_ub, rho_a_rel, rho_a_relb, &
 & z_to_m1_ast, z_to_m1_astb
   USE B2MOD_EIRDIAG_DIFF, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFF, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, seneparb, senipar,&
-& seniparb, sconpar, sconparb, scurpar, scurparb, prev_cur_delta, &
-& prev_cur_deltab, po_prev, po_prevb, po_curr, po_currb, coeff_16, &
-& coeff_16b
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, seneparb, senipar, seniparb, &
+& sconpar, sconparb, scurpar, scurparb, prev_cur_delta, prev_cur_deltab,&
+& po_prev, po_prevb, po_curr, po_currb, coeff_16, coeff_16b, &
+& in_no_of_angles, in_size_of_table, covered, cvcov, icov, icvsv, rmin, &
+& rmax, zmin, zmax, first, pos, posb, lngcov, lngind
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -367,9 +370,10 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
+!srv 15.02.26
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
-&                psnc, st%psnl, wrong_flow, main_call)
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%sr, st%srw&
+&                , st%psnc, st%psnl, wrong_flow, main_call, 'all')
 !   .. store contributions from BCs
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0
@@ -711,14 +715,13 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 END SUBROUTINE B2SRAL_B
 
 !  Differentiation of b2sral in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: she_rad_tot[save in b2us_feedback]
-!                she_eir_tot saved_fb_actuator saved_fb_prev fb_current
-!                fb_rescale fb_current_prev int0l int1l int2l int3l
-!                int4l b2recyc userfluxparm conpar mompar enepar
-!                enipar potpar enkpar *z2n_xy *nal *ia *av_ualpha
-!                *avm_u *rho_a_rel *z_to_m1_ast senepar senipar
-!                sconpar scurpar prev_cur_delta po_prev po_curr
-!                coeff_16 pos[save in b2mod_ad] charge_frac *(st_ext.she)
+!   gradient     of useful results: she_rad_tot she_eir_tot saved_fb_actuator
+!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                int0l int1l int2l int3l int4l recyc b2recyc userfluxparm
+!                conpar mompar enepar enipar potpar enkpar *z2n_cv
+!                *nal *ia *av_ualpha *avm_u *rho_a_rel *z_to_m1_ast
+!                senepar senipar sconpar scurpar prev_cur_delta
+!                po_prev po_curr coeff_16 pos charge_frac *(st_ext.she)
 !                *(st_ext.shi) *(st_ext.sch) *(st_ext.sna) *(st_ext.smo)
 !                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(st.pl.na)
 !                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
@@ -755,14 +758,13 @@ END SUBROUTINE B2SRAL_B
 !                *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni)
 !                *(st.psnl.kinrgy) *(st.psnc.na) *(st.psnc.ne)
 !                *(st.psnc.ni) *(st.psnc.kinrgy)
-!   with respect to varying inputs: she_rad_tot[save in b2us_feedback]
-!                she_eir_tot saved_fb_actuator saved_fb_prev fb_current
-!                fb_rescale fb_current_prev int0l int1l int2l int3l
-!                int4l b2recyc userfluxparm conpar mompar enepar
-!                enipar potpar enkpar *z2n_xy *nal *ia *av_ualpha
-!                *avm_u *rho_a_rel *z_to_m1_ast senepar senipar
-!                sconpar scurpar prev_cur_delta po_prev po_curr
-!                coeff_16 pos[save in b2mod_ad] charge_frac *(st_ext.she)
+!   with respect to varying inputs: she_rad_tot she_eir_tot saved_fb_actuator
+!                saved_fb_prev fb_current fb_rescale fb_current_prev
+!                int0l int1l int2l int3l int4l recyc b2recyc userfluxparm
+!                conpar mompar enepar enipar potpar enkpar *z2n_cv
+!                *nal *ia *av_ualpha *avm_u *rho_a_rel *z_to_m1_ast
+!                senepar senipar sconpar scurpar prev_cur_delta
+!                po_prev po_curr coeff_16 pos charge_frac *(st_ext.she)
 !                *(st_ext.shi) *(st_ext.sch) *(st_ext.sna) *(st_ext.smo)
 !                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(st.pl.na)
 !                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
@@ -799,7 +801,7 @@ END SUBROUTINE B2SRAL_B
 !                *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni)
 !                *(st.psnl.kinrgy) *(st.psnc.na) *(st.psnc.ne)
 !                *(st.psnc.ni) *(st.psnc.kinrgy)
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in c_hw_save[save in b2mod_b2zhco]:in
 !                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
 !                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
@@ -887,7 +889,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_NUMERICS_NAMELIST_DIFF
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -895,7 +897,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
-  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
@@ -910,21 +913,23 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & fb_current, fb_currentb, cum_volrec, fb_const, charge_frac, &
 & charge_fracb, saved_fb_actuator, saved_fb_actuatorb, saved_fb_prev, &
 & saved_fb_prevb, dt_prev, feedback_namelist_used, she_eir_tot, &
-& she_eir_totb, fb_current_prev, fb_current_prevb
+& she_eir_totb, fb_current_prev, fb_current_prevb, she_rad_tot, &
+& she_rad_totb
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutlob, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_xy, z2n_xyb, nal, nalb, ia, iab, &
+  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_cv, z2n_cvb, nal, nalb, ia, iab, &
 & av_ualpha, av_ualphab, avm_u, avm_ub, rho_a_rel, rho_a_relb, &
 & z_to_m1_ast, z_to_m1_astb
   USE B2MOD_EIRDIAG_DIFF, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFF, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, seneparb, senipar,&
-& seniparb, sconpar, sconparb, scurpar, scurparb, prev_cur_delta, &
-& prev_cur_deltab, po_prev, po_prevb, po_curr, po_currb, coeff_16, &
-& coeff_16b
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, seneparb, senipar, seniparb, &
+& sconpar, sconparb, scurpar, scurparb, prev_cur_delta, prev_cur_deltab,&
+& po_prev, po_prevb, po_curr, po_currb, coeff_16, coeff_16b, &
+& in_no_of_angles, in_size_of_table, covered, cvcov, icov, icvsv, rmin, &
+& rmax, zmin, zmax, first, pos, posb, lngcov, lngind
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -988,8 +993,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, &
 &     B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, B2STBM_NODIFF, &
 &     B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI, B2XZDD_NODIFF
-  EXTERNAL B2XPFE_B, B2XPFI_B, B2SQEL_B, B2SQCX_B, B2STBC_B, B2STBM_B, &
-&     B2STBR_B0, B2STEL_B, B2STCX_B, B2XZDD_FWD, B2XZDD_BWD
+  EXTERNAL B2XPFE_B, B2SQEL_B, B2SQCX_B, B2STBC_B, B2STBM_B, B2STBR_B0, &
+&     B2STEL_B, B2STCX_B, B2XZDD_FWD, B2XZDD_BWD
   INTRINSIC INT
   INTRINSIC MOD
   INTRINSIC TRIM
@@ -1008,7 +1013,6 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & dummyzerodiffb
   INTEGER*4 :: branch
   REAL(r8) :: dummydiffb
-  INTEGER :: ii0
   REAL(r8), DIMENSION(SIZE(st%srw%sne0, 1), 0:1) :: dummyzerodiffb0
   INTEGER :: ad_count
   INTEGER :: i
@@ -1045,6 +1049,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
 &                                 , .false.)
+      CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       CALL PUSHCONTROL1B(0)
     ELSE
       CALL PUSHCONTROL1B(1)
@@ -1062,6 +1067,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     END IF
     ad_count = 0
     DO WHILE (catch_up)
+      WRITE(*, *) 'b2sral: catching up ...'
       IF (ALLOCATED(time_factor)) THEN
         CALL PUSHREAL8ARRAY(time_factor, r8*SIZE(time_factor, 1)/8)
         CALL PUSHCONTROL1B(1)
@@ -1074,6 +1080,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
 &                                 , .false.)
+      CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         CALL PUSHCONTROL2B(2)
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1092,12 +1099,21 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     IF (numerics_time_mod .GT. 0.0_R8) THEN
       CALL PUSHCONTROL2B(0)
+      WRITE(*, '(a,1p,3e12.4,2i6)') 'ELM: ', tim, MOD(tim, &
+&     numerics_time_mod), numerics_time_switch, INT(tim/&
+&     numerics_time_mod), b2sral_elm_count
       catch_up = (MOD(tim, numerics_time_mod) .GE. numerics_time_switch &
 &       .AND. numerics_time_switch .GT. 0.0_R8) .OR. INT(tim/&
 &       numerics_time_mod) .GT. b2sral_elm_count
     ELSE IF (numerics_time_switch .GT. 0.0_R8) THEN
       catch_up = tim .GE. numerics_time_switch
-      CALL PUSHCONTROL2B(1)
+      IF (catch_up) THEN
+        CALL PUSHCONTROL2B(1)
+        WRITE(*, '(a,a)') 'Switching to next numerics namelist file ', &
+&       TRIM(numerics_filename)
+      ELSE
+        CALL PUSHCONTROL2B(1)
+      END IF
     ELSE
       CALL PUSHCONTROL2B(2)
       catch_up = .false.
@@ -1115,6 +1131,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
 &                                 , .false.)
+      CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       CALL PUSHCONTROL2B(1)
     ELSE
       CALL PUSHCONTROL2B(2)
@@ -1168,8 +1185,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     CALL PUSHCONTROL1B(0)
   END IF
-  IF (ALLOCATED(z2n_xy)) THEN
-    CALL PUSHREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(z2n_xy, 2)/8)
+  IF (ALLOCATED(z2n_cv)) THEN
+    CALL PUSHREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(z2n_cv, 2)/8)
     CALL PUSHCONTROL1B(1)
   ELSE
     CALL PUSHCONTROL1B(0)
@@ -1215,8 +1232,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     CALL PUSHCONTROL1B(0)
   END IF
-  IF (ALLOCATED(z2n_xy)) THEN
-    CALL PUSHREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(z2n_xy, 2)/8)
+  IF (ALLOCATED(z2n_cv)) THEN
+    CALL PUSHREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(z2n_cv, 2)/8)
     CALL PUSHCONTROL1B(1)
   ELSE
     CALL PUSHCONTROL1B(0)
@@ -1246,12 +1263,17 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   wrong_flow = .false.
 !srv 28.07.08 }
   IF (switch%b2sral_style .EQ. 0 .OR. switch%b2sral_style .EQ. 2) THEN
+!srv 28.07.08 03.11.17
+    IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
+&                            , ' b2stbc called'
+!srv 15.02.26
     CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHINTEGER4(ncall_b2stbc_phys)
     CALL PUSHINTEGER4(ncall_b2stbc)
+    CALL PUSHREAL8(pos, r8/8)
     CALL PUSHREAL8(coeff_16, r8/8)
     CALL PUSHREAL8(po_curr, r8/8)
     CALL PUSHREAL8(po_prev, r8/8)
@@ -1268,6 +1290,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL PUSHREAL8ARRAY(enepar, r8*nbcd*2/8)
     CALL PUSHREAL8ARRAY(conpar, r8*nsdmax*nbcd*3/8)
     CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
+    CALL PUSHREAL8ARRAY(recyc, r8*nsdmax*nstraid/8)
     CALL PUSHBOOLEAN(feedback_namelist_used)
     CALL PUSHREAL8ARRAY(fb_current_prev, r8*def_natm/8)
     CALL PUSHREAL8ARRAY(fb_rescale, r8*def_natm/8)
@@ -1278,6 +1301,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL PUSHREAL8ARRAY(fb_target, r8*def_natm/8)
     CALL PUSHREAL8(dt_prev, r8/8)
     CALL PUSHREAL8(cum_volrec, r8/8)
+    CALL PUSHBOOLEAN(wrong_flow)
     CALL PUSHREAL8ARRAY(st%psnl%na, r8*SIZE(st%psnl%na, 1)*SIZE(st%psnl%&
 &                 na, 2)/8)
     CALL PUSHREAL8ARRAY(st%psnl%ne, r8*SIZE(st%psnl%ne, 1)/8)
@@ -1292,8 +1316,18 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                 ni, 2)/8)
     CALL PUSHREAL8ARRAY(st%psnc%kinrgy, r8*SIZE(st%psnc%kinrgy, 1)*SIZE(&
 &                 st%psnc%kinrgy, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw&
+&                 %sch0, 2)/8)
     CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw&
 &                 %she0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw&
+&                 %shi0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%skt0, r8*SIZE(st%srw%skt0, 1)*SIZE(st%srw&
+&                 %skt0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%szt0, r8*SIZE(st%srw%szt0, 1)*SIZE(st%srw&
+&                 %szt0, 2)/8)
+    CALL PUSHREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw&
+&                 %smo0, 2)*SIZE(st%srw%smo0, 3)/8)
     CALL PUSHREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw&
 &                 %sna0, 2)*SIZE(st%srw%sna0, 3)/8)
     CALL PUSHREAL8ARRAY(st%dv%fna, r8*SIZE(st%dv%fna, 1)*SIZE(st%dv%fna&
@@ -1325,22 +1359,55 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                 /8)
     CALL PUSHREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
-&                psnc, st%psnl, wrong_flow, main_call)
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%sr, st%srw&
+&                , st%psnc, st%psnl, wrong_flow, main_call, 'all')
 !   .. store contributions from BCs
-    CALL PUSHCONTROL1B(0)
+    CALL PUSHREAL8ARRAY(st%sr%sna, r8*SIZE(st%sr%sna, 1)*SIZE(st%sr%sna&
+&                 , 2)*SIZE(st%sr%sna, 3)/8)
+    st%sr%sna = st%srw%sna0
+    CALL PUSHREAL8ARRAY(st%sr%smo, r8*SIZE(st%sr%smo, 1)*SIZE(st%sr%smo&
+&                 , 2)*SIZE(st%sr%smo, 3)/8)
+    st%sr%smo = st%srw%smo0
+    CALL PUSHREAL8ARRAY(st%sr%she, r8*SIZE(st%sr%she, 1)*SIZE(st%sr%she&
+&                 , 2)/8)
+    st%sr%she = st%srw%she0
+    CALL PUSHREAL8ARRAY(st%sr%shi, r8*SIZE(st%sr%shi, 1)*SIZE(st%sr%shi&
+&                 , 2)/8)
+    st%sr%shi = st%srw%shi0
+    CALL PUSHREAL8ARRAY(st%sr%shn, r8*SIZE(st%sr%shn, 1)*SIZE(st%sr%shn&
+&                 , 2)/8)
+    st%sr%shn = st%srw%shn0
+    st%sr%sch = st%srw%sch0
+    st%sr%sne = st%srw%sne0
+    IF (wrong_flow) THEN
+      CALL PUSHCONTROL1B(0)
+      WRITE(*, *) 'b2sral [1]: wrong_flow returned from b2stbc'
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
 !   ..initialise smq to 0
   arg1 = ncv*4*ns
-  CALL SFILL_FWD(arg1, 0.0_R8, st%sr%smq, stb%sr%smq, 1)
+  CALL SFILL_FWD(arg1, 0.0_R8, st%sr%smq, 1)
 !   ..compute special contributions (boundaries and recycling)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_b2stbr_phys)
   CALL PUSHINTEGER4(ncall_b2stbr)
+  CALL PUSHBOOLEAN(first)
+  CALL PUSHREAL8(zmax, r8/8)
+  CALL PUSHREAL8(zmin, r8/8)
+  CALL PUSHREAL8(rmax, r8/8)
+  CALL PUSHREAL8(rmin, r8/8)
+  CALL PUSHINTEGER4(icvsv)
+  CALL PUSHINTEGER4ARRAY(icov, lngind)
+  CALL PUSHINTEGER4ARRAY(cvcov, lngind)
+  CALL PUSHINTEGER4ARRAY(covered, lngcov**2)
+  CALL PUSHINTEGER4(in_size_of_table)
+  CALL PUSHINTEGER4(in_no_of_angles)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
   CALL PUSHREAL8(neut_scl_lim, r8/8)
   CALL PUSHREAL8(neutrals_time_switch, r8/8)
@@ -1353,19 +1420,12 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHREAL8ARRAY(gpfc, r8*natmid*nstraid/8)
   CALL PUSHINTEGER4ARRAY(msns, 2*nstraid)
   CALL PUSHINTEGER4ARRAY(lsns, nstraid*def_nsrfs)
-  DO ii0=1,nstraid
-    CALL PUSHCHARACTERARRAY(crcstra(ii0), 1)
-  END DO
   CALL PUSHINTEGER4ARRAY(lstrascl, nstraid*(natmid+1))
   CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
   CALL PUSHINTEGER4ARRAY(b2species_end, nstraid)
   CALL PUSHINTEGER4ARRAY(b2species_start, nstraid)
   CALL PUSHINTEGER4ARRAY(targsp, nstraid*ntrack)
   CALL PUSHINTEGER4ARRAY(arcend, nstraid)
-  CALL PUSHINTEGER4ARRAY(rcend, 2)
-  CALL PUSHINTEGER4ARRAY(rcstart, 2)
-  CALL PUSHREAL8ARRAY(mrecyc, r8*nsdmax*nstraid/8)
-  CALL PUSHREAL8ARRAY(erecyc, r8*nsdmax*nstraid/8)
   CALL PUSHREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
   CALL PUSHREAL8(int6r, r8/8)
   CALL PUSHREAL8(int6l, r8/8)
@@ -1392,6 +1452,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &               /8)
   CALL PUSHREAL8ARRAY(st%dv%fluid_frac_hyb, r8*SIZE(st%dv%fluid_frac_hyb&
 &               , 1)/8)
+  CALL PUSHREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
+&               sch0, 2)/8)
   CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
 &               she0, 2)/8)
   CALL PUSHREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
@@ -1402,6 +1464,22 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &               smo0, 2)*SIZE(st%srw%smo0, 3)/8)
   CALL PUSHREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
 &               sna0, 2)*SIZE(st%srw%sna0, 3)/8)
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_sch, r8*SIZE(st%srw%b2stbr_sch, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_she, r8*SIZE(st%srw%b2stbr_she, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_shi, r8*SIZE(st%srw%b2stbr_shi, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_shn, r8*SIZE(st%srw%b2stbr_shn, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_skt, r8*SIZE(st%srw%b2stbr_skt, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_szt, r8*SIZE(st%srw%b2stbr_szt, 1)/8&
+&              )
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_smo, r8*SIZE(st%srw%b2stbr_smo, 1)*&
+&               SIZE(st%srw%b2stbr_smo, 2)/8)
+  CALL PUSHREAL8ARRAY(st%srw%b2stbr_sna, r8*SIZE(st%srw%b2stbr_sna, 1)*&
+&               SIZE(st%srw%b2stbr_sna, 2)/8)
   CALL PUSHINTEGER4ARRAY(mpg%rccvp, SIZE(mpg%rccvp, 1)*SIZE(mpg%rccvp, 2&
 &                  ))
   CALL PUSHINTEGER4ARRAY(mpg%rccv, SIZE(mpg%rccv, 1)*SIZE(mpg%rccv, 2))
@@ -1412,49 +1490,42 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              dtim, switch, geo, mpg, st, st_ext, st_avg, main_call)
 !   ..zero out contributions in dead cells
   DO is=0,ns-1
-    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%srw%&
-&             sna0(1, 0, is))
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is), stb%srw%&
-&             smo0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is))
   END DO
   CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sne0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0, stb%srw%she0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0, stb%srw%shn0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0, stb%srw%sch0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0)
 !   ..add to previous contributions
   arg1 = ncv*2*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, stb%sr%sna, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
   arg1 = ncv*4*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, stb%sr%smo, &
-&            1)
-  CALL PUSHINTEGER4(arg1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, 1)
+  arg1 = ncv*2
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%sne0, 1, st%sr%sne, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, stb%sr%she, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, stb%sr%shi, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, stb%sr%shn, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, stb%sr%sch, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
+!srv 18.05.09 {
+  DO is=0,ns-1
+    snatot(is) = 0.0_R8
+    DO icv=1,ncv
+      snatot(is) = snatot(is) + st%sr%sna(icv, 0, is) + st%sr%sna(icv, 1&
+&       , is)*st%pl%na(icv, is)
+    END DO
+  END DO
+  WRITE(hlp_frm, '(a,i3,a)') '(a,1p,', ns, '(1x,1e14.7))'
+!xpb !srv 18.05.09 }
+  IF (main_call .OR. wrong_flow) WRITE(*, hlp_frm) 'snatot', (snatot(is)&
+&                                , is=0,ns-1)
 !   ..compute more special contributions
-  CALL PUSHREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
-&               sch0, 2)/8)
-  CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
-&               she0, 2)/8)
-  CALL PUSHREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
-&               shi0, 2)/8)
-  CALL PUSHREAL8ARRAY(st%srw%sne0, r8*SIZE(st%srw%sne0, 1)*SIZE(st%srw%&
-&               sne0, 2)/8)
-  CALL PUSHREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
-&               smo0, 2)*SIZE(st%srw%smo0, 3)/8)
-  CALL PUSHREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
-&               sna0, 2)*SIZE(st%srw%sna0, 3)/8)
   CALL PUSHREAL8ARRAY(st_ext%ne, r8*SIZE(st_ext%ne, 1)/8)
   CALL PUSHREAL8ARRAY(st_ext%ne2, r8*SIZE(st_ext%ne2, 1)/8)
   CALL PUSHREAL8ARRAY(st_ext%ue, r8*SIZE(st_ext%ue, 1)/8)
@@ -1477,36 +1548,29 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              st%pl, st%dv, st_ext, st%srw, main_call)
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
-    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%srw%&
-&             sna0(1, 0, is))
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is), stb%srw%&
-&             smo0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is))
   END DO
   CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sne0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0, stb%srw%she0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0, stb%srw%shn0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0, stb%srw%sch0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0)
 !   ..add to previous contributions
   arg1 = ncv*2*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, stb%sr%sna, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
   arg1 = ncv*4*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, stb%sr%smo, &
-&            1)
-  CALL PUSHINTEGER4(arg1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, 1)
+  arg1 = ncv*2
+  CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%sne0, 1, st%sr%sne, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, stb%sr%she, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, stb%sr%shi, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, stb%sr%shn, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, stb%sr%sch, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
 !   ..compute sources by inputfiles (heating,...)
   IF (sources_inputfile .EQ. 1) THEN
     CALL PUSHBOOLEAN(new_files)
@@ -1516,85 +1580,82 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL PUSHREAL8(sources_time_mod, r8/8)
     CALL PUSHINTEGER4ARRAY(nxdata, 2)
     CALL PUSHINTEGER4ARRAY(nsdata, 2)
-    CALL PUSHREAL8ARRAY(st%srw%sne0, r8*SIZE(st%srw%sne0, 1)*SIZE(st%srw&
-&                 %sne0, 2)/8)
-    CALL PUSHREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw&
-&                 %sch0, 2)/8)
-    CALL PUSHREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw&
-&                 %shi0, 2)/8)
-    CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw&
-&                 %she0, 2)/8)
-    CALL PUSHREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw&
-&                 %smo0, 2)*SIZE(st%srw%smo0, 3)/8)
-    CALL PUSHREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw&
-&                 %sna0, 2)*SIZE(st%srw%sna0, 3)/8)
     CALL SOURCE_INPUT(mpg, geo, switch, st_ext, ns, st%srw%sna0, st%srw%&
 &               smo0, st%srw%she0, st%srw%shi0, st%srw%sch0, st%srw%sne0&
 &               , ncall_b2sral)
 !   ..zero out contributions in dead cells and core boundary
     DO is=0,ns-1
-      CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%&
-&               srw%sna0(1, 0, is))
-      CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is), stb%&
-&               srw%smo0(1, 0, is))
+      CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
+      CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smo0(1, 0, is))
     END DO
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0, stb%srw%she0)
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0, stb%srw%sch0)
+    CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sne0)
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0)
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0)
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%sch0)
 !   ..add to previous contributions
     arg1 = ncv*2*ns
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, stb%sr%sna&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
     arg1 = ncv*4*ns
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, stb%sr%smo&
-&              , 1)
-    CALL PUSHINTEGER4(arg1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smo0, 1, st%sr%smo, 1)
+    arg1 = ncv*2
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%sne0, 1, st%sr%sne, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, stb%sr%she&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, stb%sr%shi&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, stb%sr%sch&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
+!
+!   ..compute sources due to electron-atom processes
+!     (parallel momentum source must be pure friction)
+!srv 11.09.09 {
+  CALL PUSHCHARACTERARRAY(my_out_folder, 7)
+  CALL PUSHREAL8(she_rad_tot, r8/8)
+  CALL PUSHREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
+&               she0, 2)/8)
+  CALL PUSHREAL8ARRAY(st%srw%rqrad, r8*SIZE(st%srw%rqrad, 1)*SIZE(st%srw&
+&               %rqrad, 2)/8)
+  CALL PUSHREAL8ARRAY(st%srw%rqbrm, r8*SIZE(st%srw%rqbrm, 1)*SIZE(st%srw&
+&               %rqbrm, 2)/8)
+  CALL B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, st%pl, st%&
+&              dv, st%rt, st%rtw, st%srw)
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
-    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%srw%&
-&             sna0(1, 0, is))
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smq0(1, 0, is), stb%srw%&
-&             smq0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smq0(1, 0, is))
   END DO
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0, stb%srw%she0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
-  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0, stb%srw%shn0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%she0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0)
+  CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0)
 !   ..add to previous contributions
   arg1 = ncv*2*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, stb%sr%sna, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
   arg1 = ncv*4*ns
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smq0, 1, st%sr%smq, stb%sr%smq, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smq0, 1, st%sr%smq, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, stb%sr%she, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, stb%sr%shi, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
   arg1 = ncv*4
-  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, stb%sr%shn, &
-&            1)
+  CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
 !     (no contribution to sch or sne)
 !   ..compute sources due to charge exchange
+  rcxnareg = 0.0_R8
+  rcxhireg = 0.0_R8
+  rcxmoreg = 0.0_R8
+  st%srw%rcxna = 0.0_R8
+  st%srw%rcxhi = 0.0_R8
+  st%srw%rcxmo = 0.0_R8
 ! IYS 06.11.2017
 !
   IF (switch%iout_b2wdat .EQ. 4) THEN
 ! IYS 06.11.2017
     IF (.NOT.ALLOCATED(shi0_cx)) THEN
+      WRITE(*, *) 'Allocating arrays for CX'
       ALLOCATE(shi0_cxb(ncv, 0:3))
       shi0_cxb = 0.D0
       ALLOCATE(shi0_cx(ncv, 0:3))
@@ -1604,6 +1665,12 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       ALLOCATE(smo0_cxb(ncv, 0:3, 0:ns-1))
       smo0_cxb = 0.D0
       ALLOCATE(smo0_cx(ncv, 0:3, 0:ns-1))
+      arg1 = ncv*2*ns
+      CALL SFILL_NODIFF(arg1, 0.0_R8, sna0_cx, 1)
+      arg1 = ncv*4*ns
+      CALL SFILL_NODIFF(arg1, 0.0_R8, smo0_cx, 1)
+      arg1 = ncv*4
+      CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_cx, 1)
       CALL PUSHCONTROL2B(2)
     ELSE
       CALL PUSHCONTROL2B(1)
@@ -1623,32 +1690,105 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                %tn, st%rt%rlcx(1:ncv, 0:1, 0:ns-1, k), st%rtw%rcx)
 !    ..compute sources due to charge exchange
 !      (parallel momentum source must be pure friction)
+    CALL B2STCX_NODIFF(ncv, nfc, ns, iscx(k), ismain, switch, geo, mpg, &
+&                st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni, st%&
+&                rtw%rcx, st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%&
+&                shn0, st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
 !   ..zero out contributions in dead cells and core boundary
     DO is=0,ns-1
-      CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%&
-&               srw%sna0(1, 0, is))
-      CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smq0(1, 0, is), stb%&
-&               srw%smq0(1, 0, is))
+      CALL B2XZDD_FWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
+      CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%smq0(1, 0, is))
     END DO
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
-    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0, stb%srw%shn0)
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shi0)
+    CALL B2XZDD_FWD(ncv, 3, switch, mpg, st%srw%shn0)
 !    ..add to previous contributions
-    CALL PUSHINTEGER4(arg1)
     arg1 = ncv*2*ns
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, stb%sr%sna&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%sna0, 1, st%sr%sna, 1)
     arg1 = ncv*4*ns
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smq0, 1, st%sr%smq, stb%sr%smq&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%smq0, 1, st%sr%smq, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, stb%sr%shi&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
     arg1 = ncv*4
-    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, stb%sr%shn&
-&              , 1)
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
 ! IYS 06.11.2017
 !      (no contribution to she, sne or sch)
+    IF (switch%iout_b2wdat .EQ. 4) THEN
+! IYS 06.11.2017
+      WRITE(*, *) 'Summing cx sources over hydrogenic neutrals'
+      arg1 = ncv*2*ns
+      CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%sna0, 1, sna0_cx, 1)
+      arg1 = ncv*4*ns
+      CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%smq0, 1, smo0_cx, 1)
+      arg1 = ncv*4
+      CALL B2SAXPY_NODIFF(arg1, 1.0_R8, st%srw%shi0, 1, shi0_cx, 1)
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
   END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+! IYS 06.11.2017
+    WRITE(*, *) 'Writing CX sources'
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      wrk(:) = sna0_cx(:, 0, is) + sna0_cx(:, 1, is)*st%pl%na(:, is)
+      arg10 = 'b2stcx_sna_'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
+      wrk(:) = shi0_cx(:, 0) + shi0_cx(:, 1)*st%pl%ti + shi0_cx(:, 2)*st&
+&       %dv%ni(:, 0) + shi0_cx(:, 3)*st%pl%ti*st%dv%ni(:, 0)
+      CALL MY_OUT_US(70, ncv, 0, wrk, 'b2stcx_shi')
+      wrk(:) = smo0_cx(:, 0, is) + smo0_cx(:, 1, is)*st%pl%ua(:, is) + &
+&       smo0_cx(:, 2, is)*st%pl%na(:, is)*mp*am(is) + smo0_cx(:, 3, is)*&
+&       st%pl%ua(:, is)*st%pl%na(:, is)*mp*am(is)
+      arg11 = 'b2stcx_smq'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
+    END DO
+    IF (ALLOCATED(shi0_cx)) THEN
+      CALL PUSHCONTROL1B(0)
+      WRITE(*, *) 'Deallocating arrays for cx'
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
+!srv 30.06.08 }
+!
+  IF (switch%b2sral_iout .NE. 0) THEN
+!srv 30.06.08 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      DO k=0,1
+        WRITE(chk, '(i1)') k
+        arg11 = 'b2sral_sna'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, st%sr%sna(1, k, is), arg11)
+      END DO
+      DO k=0,3
+        WRITE(chk, '(i1)') k
+        arg11 = 'b2sral_smo'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, st%sr%smo(1, k, is), arg11)
+        arg11 = 'b2sral_smq'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, st%sr%smq(1, k, is), arg11)
+      END DO
+    END DO
+    DO k=0,3
+      WRITE(chk, '(i1)') k
+      arg11 = 'b2sral_she'//chk
+      CALL MY_OUT_US(70, ncv, 0, st%sr%she(1, k), arg11)
+      arg11 = 'b2sral_shi'//chk
+      CALL MY_OUT_US(70, ncv, 0, st%sr%shi(1, k), arg11)
+      arg11 = 'b2sral_shn'//chk
+      CALL MY_OUT_US(70, ncv, 0, st%sr%shn(1, k), arg11)
+      arg11 = 'b2sral_sch'//chk
+      CALL MY_OUT_US(70, ncv, 0, st%sr%sch(1, k), arg11)
+    END DO
+    DO k=0,1
+      WRITE(chk, '(i1)') k
+      arg11 = 'b2sral_sne'//chk
+      CALL MY_OUT_US(70, ncv, 0, st%sr%sne(1, k), arg11)
+    END DO
+  END IF
 !
 !sw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
   IF (no_fluid_neutral_sources .EQ. 1) THEN
@@ -1668,7 +1808,14 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       END IF
     END DO
   END IF
+  CALL POPCONTROL1B(branch)
   DO k=nscx-1,0,-1
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) THEN
+      arg1 = ncv*4
+      arg1 = ncv*4*ns
+      arg1 = ncv*2*ns
+    END IF
     arg1 = ncv*4
     CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%shn0, stb%srw%shn0, 1, st%sr%&
 &              shn, stb%sr%shn, 1)
@@ -1681,7 +1828,6 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     arg1 = ncv*2*ns
     CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%sna0, stb%srw%sna0, 1, st%sr%&
 &              sna, stb%sr%sna, 1)
-    CALL POPINTEGER4(arg1)
     CALL B2XZDD_BWD(ncv, 3, switch, mpg, st%srw%shn0, stb%srw%shn0)
     CALL B2XZDD_BWD(ncv, 3, switch, mpg, st%srw%shi0, stb%srw%shi0)
     DO is=ns-1,0,-1
@@ -1691,11 +1837,11 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &               srw%sna0(1, 0, is))
     END DO
     CALL B2STCX_B(ncv, nfc, ns, iscx(k), ismain, switch, switchb, geo, &
-&           geob, mpg, st%pl%na, stb%pl%na, st%pl%ua, stb%pl%ua, st%pl%&
-&           ti, stb%pl%ti, st%pl%tn, stb%pl%tn, st%dv%ni, stb%dv%ni, st%&
-&           rtw%rcx, stb%rtw%rcx, st%srw%sna0, stb%srw%sna0, st%srw%smq0&
-&           , stb%srw%smq0, st%srw%shi0, stb%srw%shi0, st%srw%shn0, stb%&
-&           srw%shn0, st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
+&           mpg, st%pl%na, stb%pl%na, st%pl%ua, stb%pl%ua, st%pl%ti, stb&
+&           %pl%ti, st%pl%tn, stb%pl%tn, st%dv%ni, st%rtw%rcx, stb%rtw%&
+&           rcx, st%srw%sna0, stb%srw%sna0, st%srw%smq0, stb%srw%smq0, &
+&           st%srw%shi0, stb%srw%shi0, st%srw%shn0, stb%srw%shn0, st%srw&
+&           %rcxna, st%srw%rcxmo, st%srw%rcxhi)
     CALL POPREAL8ARRAY(st%rtw%rcx, r8*SIZE(st%rtw%rcx, 1)*SIZE(st%rtw%&
 &                rcx, 2)/8)
     CALL POPREAL8(cutll, r8/8)
@@ -1708,6 +1854,9 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPCONTROL2B(branch)
   IF (branch .NE. 0) THEN
     IF (branch .NE. 1) THEN
+      arg1 = ncv*4
+      arg1 = ncv*4*ns
+      arg1 = ncv*2*ns
       DEALLOCATE(smo0_cx)
       DEALLOCATE(smo0_cxb)
       DEALLOCATE(sna0_cx)
@@ -1740,9 +1889,17 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL B2XZDD_BWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%srw%&
 &             sna0(1, 0, is))
   END DO
-  CALL B2STEL_B(ncv, nfc, ns, ismain, switch, geo, geob, mpg, st%pl, stb&
-&         %pl, st%dv, stb%dv, st%rt, stb%rt, st%rtw, stb%rtw, st%srw, &
-&         stb%srw)
+  CALL POPREAL8ARRAY(st%srw%rqbrm, r8*SIZE(st%srw%rqbrm, 1)*SIZE(st%srw%&
+&              rqbrm, 2)/8)
+  CALL POPREAL8ARRAY(st%srw%rqrad, r8*SIZE(st%srw%rqrad, 1)*SIZE(st%srw%&
+&              rqrad, 2)/8)
+  CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
+&              she0, 2)/8)
+  CALL POPREAL8(she_rad_tot, r8/8)
+  CALL POPCHARACTERARRAY(my_out_folder, 7)
+  CALL B2STEL_B(ncv, nfc, ns, ismain, switch, geo, mpg, st%pl, stb%pl, &
+&         st%dv, stb%dv, st%rt, stb%rt, st%rtw, stb%rtw, st%srw, stb%srw&
+&        )
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     arg1 = ncv*4
@@ -1754,7 +1911,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     arg1 = ncv*4
     CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%she0, stb%srw%she0, 1, st%sr%&
 &              she, stb%sr%she, 1)
-    CALL POPINTEGER4(arg1)
+    arg1 = ncv*2
     arg1 = ncv*4*ns
     CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%smo0, stb%srw%smo0, 1, st%sr%&
 &              smo, stb%sr%smo, 1)
@@ -1770,18 +1927,6 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL B2XZDD_BWD(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), stb%&
 &               srw%sna0(1, 0, is))
     END DO
-    CALL POPREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
-&                sna0, 2)*SIZE(st%srw%sna0, 3)/8)
-    CALL POPREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
-&                smo0, 2)*SIZE(st%srw%smo0, 3)/8)
-    CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
-&                she0, 2)/8)
-    CALL POPREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
-&                shi0, 2)/8)
-    CALL POPREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
-&                sch0, 2)/8)
-    CALL POPREAL8ARRAY(st%srw%sne0, r8*SIZE(st%srw%sne0, 1)*SIZE(st%srw%&
-&                sne0, 2)/8)
     CALL POPINTEGER4ARRAY(nsdata, 2)
     CALL POPINTEGER4ARRAY(nxdata, 2)
     CALL POPREAL8(sources_time_mod, r8/8)
@@ -1808,7 +1953,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   arg1 = ncv*4
   CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%she0, stb%srw%she0, 1, st%sr%she&
 &            , stb%sr%she, 1)
-  CALL POPINTEGER4(arg1)
+  arg1 = ncv*2
   arg1 = ncv*4*ns
   CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%smo0, stb%srw%smo0, 1, st%sr%smo&
 &            , stb%sr%smo, 1)
@@ -1843,18 +1988,6 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(st_ext%ue, r8*SIZE(st_ext%ue, 1)/8)
   CALL POPREAL8ARRAY(st_ext%ne2, r8*SIZE(st_ext%ne2, 1)/8)
   CALL POPREAL8ARRAY(st_ext%ne, r8*SIZE(st_ext%ne, 1)/8)
-  CALL POPREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
-&              sna0, 2)*SIZE(st%srw%sna0, 3)/8)
-  CALL POPREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
-&              smo0, 2)*SIZE(st%srw%smo0, 3)/8)
-  CALL POPREAL8ARRAY(st%srw%sne0, r8*SIZE(st%srw%sne0, 1)*SIZE(st%srw%&
-&              sne0, 2)/8)
-  CALL POPREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
-&              shi0, 2)/8)
-  CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
-&              she0, 2)/8)
-  CALL POPREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
-&              sch0, 2)/8)
   CALL B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, mpg&
 &         , st%pl, stb%pl, st%dv, stb%dv, st_ext, st_extb, st%srw, stb%&
 &         srw, main_call)
@@ -1870,7 +2003,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   arg1 = ncv*4
   CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%she0, stb%srw%she0, 1, st%sr%she&
 &            , stb%sr%she, 1)
-  CALL POPINTEGER4(arg1)
+  arg1 = ncv*2
   arg1 = ncv*4*ns
   CALL B2SAXPY_BWD(arg1, 1.0_R8, st%srw%smo0, stb%srw%smo0, 1, st%sr%smo&
 &            , stb%sr%smo, 1)
@@ -1893,6 +2026,16 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPINTEGER4ARRAY(mpg%rccv, SIZE(mpg%rccv, 1)*SIZE(mpg%rccv, 2))
   CALL POPINTEGER4ARRAY(mpg%rccvp, SIZE(mpg%rccvp, 1)*SIZE(mpg%rccvp, 2)&
 &                )
+  CALL POPREAL8ARRAY(st%srw%b2stbr_sna, r8*SIZE(st%srw%b2stbr_sna, 1)*&
+&              SIZE(st%srw%b2stbr_sna, 2)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_smo, r8*SIZE(st%srw%b2stbr_smo, 1)*&
+&              SIZE(st%srw%b2stbr_smo, 2)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_szt, r8*SIZE(st%srw%b2stbr_szt, 1)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_skt, r8*SIZE(st%srw%b2stbr_skt, 1)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_shn, r8*SIZE(st%srw%b2stbr_shn, 1)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_shi, r8*SIZE(st%srw%b2stbr_shi, 1)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_she, r8*SIZE(st%srw%b2stbr_she, 1)/8)
+  CALL POPREAL8ARRAY(st%srw%b2stbr_sch, r8*SIZE(st%srw%b2stbr_sch, 1)/8)
   CALL POPREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
 &              sna0, 2)*SIZE(st%srw%sna0, 3)/8)
   CALL POPREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
@@ -1903,6 +2046,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              shi0, 2)/8)
   CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
 &              she0, 2)/8)
+  CALL POPREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
+&              sch0, 2)/8)
   CALL POPREAL8ARRAY(st%dv%fluid_frac_hyb, r8*SIZE(st%dv%fluid_frac_hyb&
 &              , 1)/8)
   CALL POPREAL8ARRAY(st%dv%kin_frac_hyb, r8*SIZE(st%dv%kin_frac_hyb, 1)/&
@@ -1926,19 +2071,12 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8(int6l, r8/8)
   CALL POPREAL8(int6r, r8/8)
   CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
-  CALL POPREAL8ARRAY(erecyc, r8*nsdmax*nstraid/8)
-  CALL POPREAL8ARRAY(mrecyc, r8*nsdmax*nstraid/8)
-  CALL POPINTEGER4ARRAY(rcstart, 2)
-  CALL POPINTEGER4ARRAY(rcend, 2)
   CALL POPINTEGER4ARRAY(arcend, nstraid)
   CALL POPINTEGER4ARRAY(targsp, nstraid*ntrack)
   CALL POPINTEGER4ARRAY(b2species_start, nstraid)
   CALL POPINTEGER4ARRAY(b2species_end, nstraid)
   CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
   CALL POPINTEGER4ARRAY(lstrascl, nstraid*(natmid+1))
-  DO ii0=nstraid,1,-1
-    CALL POPCHARACTERARRAY(crcstra(ii0), 1)
-  END DO
   CALL POPINTEGER4ARRAY(lsns, nstraid*def_nsrfs)
   CALL POPINTEGER4ARRAY(msns, 2*nstraid)
   CALL POPREAL8ARRAY(gpfc, r8*natmid*nstraid/8)
@@ -1951,6 +2089,17 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8(neutrals_time_switch, r8/8)
   CALL POPREAL8(neut_scl_lim, r8/8)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
+  CALL POPINTEGER4(in_no_of_angles)
+  CALL POPINTEGER4(in_size_of_table)
+  CALL POPINTEGER4ARRAY(covered, lngcov**2)
+  CALL POPINTEGER4ARRAY(cvcov, lngind)
+  CALL POPINTEGER4ARRAY(icov, lngind)
+  CALL POPINTEGER4(icvsv)
+  CALL POPREAL8(rmin, r8/8)
+  CALL POPREAL8(rmax, r8/8)
+  CALL POPREAL8(zmin, r8/8)
+  CALL POPREAL8(zmax, r8/8)
+  CALL POPBOOLEAN(first)
   CALL POPINTEGER4(ncall_b2stbr)
   CALL POPINTEGER4(ncall_b2stbr_phys)
   CALL POPREAL8(cutll, r8/8)
@@ -1969,14 +2118,24 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     stb%sr%skt = 0.D0
     stb%srw%sch0 = stb%srw%sch0 + stb%sr%sch
     stb%sr%sch = 0.D0
+    CALL POPREAL8ARRAY(st%sr%shn, r8*SIZE(st%sr%shn, 1)*SIZE(st%sr%shn, &
+&                2)/8)
     stb%srw%shn0 = stb%srw%shn0 + stb%sr%shn
     stb%sr%shn = 0.D0
+    CALL POPREAL8ARRAY(st%sr%shi, r8*SIZE(st%sr%shi, 1)*SIZE(st%sr%shi, &
+&                2)/8)
     stb%srw%shi0 = stb%srw%shi0 + stb%sr%shi
     stb%sr%shi = 0.D0
+    CALL POPREAL8ARRAY(st%sr%she, r8*SIZE(st%sr%she, 1)*SIZE(st%sr%she, &
+&                2)/8)
     stb%srw%she0 = stb%srw%she0 + stb%sr%she
     stb%sr%she = 0.D0
+    CALL POPREAL8ARRAY(st%sr%smo, r8*SIZE(st%sr%smo, 1)*SIZE(st%sr%smo, &
+&                2)*SIZE(st%sr%smo, 3)/8)
     stb%srw%smo0 = stb%srw%smo0 + stb%sr%smo
     stb%sr%smo = 0.D0
+    CALL POPREAL8ARRAY(st%sr%sna, r8*SIZE(st%sr%sna, 1)*SIZE(st%sr%sna, &
+&                2)*SIZE(st%sr%sna, 3)/8)
     stb%srw%sna0 = stb%srw%sna0 + stb%sr%sna
     stb%sr%sna = 0.D0
     CALL POPREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
@@ -2009,8 +2168,18 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                2)*SIZE(st%dv%fna, 3)/8)
     CALL POPREAL8ARRAY(st%srw%sna0, r8*SIZE(st%srw%sna0, 1)*SIZE(st%srw%&
 &                sna0, 2)*SIZE(st%srw%sna0, 3)/8)
+    CALL POPREAL8ARRAY(st%srw%smo0, r8*SIZE(st%srw%smo0, 1)*SIZE(st%srw%&
+&                smo0, 2)*SIZE(st%srw%smo0, 3)/8)
+    CALL POPREAL8ARRAY(st%srw%szt0, r8*SIZE(st%srw%szt0, 1)*SIZE(st%srw%&
+&                szt0, 2)/8)
+    CALL POPREAL8ARRAY(st%srw%skt0, r8*SIZE(st%srw%skt0, 1)*SIZE(st%srw%&
+&                skt0, 2)/8)
+    CALL POPREAL8ARRAY(st%srw%shi0, r8*SIZE(st%srw%shi0, 1)*SIZE(st%srw%&
+&                shi0, 2)/8)
     CALL POPREAL8ARRAY(st%srw%she0, r8*SIZE(st%srw%she0, 1)*SIZE(st%srw%&
 &                she0, 2)/8)
+    CALL POPREAL8ARRAY(st%srw%sch0, r8*SIZE(st%srw%sch0, 1)*SIZE(st%srw%&
+&                sch0, 2)/8)
     CALL POPREAL8ARRAY(st%psnc%kinrgy, r8*SIZE(st%psnc%kinrgy, 1)*SIZE(&
 &                st%psnc%kinrgy, 2)/8)
     CALL POPREAL8ARRAY(st%psnc%ni, r8*SIZE(st%psnc%ni, 1)*SIZE(st%psnc%&
@@ -2025,6 +2194,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8ARRAY(st%psnl%ne, r8*SIZE(st%psnl%ne, 1)/8)
     CALL POPREAL8ARRAY(st%psnl%na, r8*SIZE(st%psnl%na, 1)*SIZE(st%psnl%&
 &                na, 2)/8)
+    CALL POPBOOLEAN(wrong_flow)
     CALL POPREAL8(cum_volrec, r8/8)
     CALL POPREAL8(dt_prev, r8/8)
     CALL POPREAL8ARRAY(fb_target, r8*def_natm/8)
@@ -2035,6 +2205,7 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL POPREAL8ARRAY(fb_current_prev, r8*def_natm/8)
     CALL POPBOOLEAN(feedback_namelist_used)
+    CALL POPREAL8ARRAY(recyc, r8*nsdmax*nstraid/8)
     CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL POPREAL8ARRAY(conpar, r8*nsdmax*nbcd*3/8)
     CALL POPREAL8ARRAY(enepar, r8*nbcd*2/8)
@@ -2051,17 +2222,22 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8(po_prev, r8/8)
     CALL POPREAL8(po_curr, r8/8)
     CALL POPREAL8(coeff_16, r8/8)
+    CALL POPREAL8(pos, r8/8)
     CALL POPINTEGER4(ncall_b2stbc)
     CALL POPINTEGER4(ncall_b2stbc_phys)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    she_eir_totb = 0.D0
+    she_rad_totb = 0.D0
     CALL B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb, &
 &           geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv, st%co, &
-&           stb%co, st%rt, stb%rt, st_ext, st_extb, st%srw, stb%srw, st%&
-&           psnc, stb%psnc, st%psnl, stb%psnl, wrong_flow, main_call)
+&           stb%co, st%rt, stb%rt, st_ext, st_extb, st%sr, stb%sr, st%&
+&           srw, stb%srw, st%psnc, stb%psnc, st%psnl, stb%psnl, &
+&           wrong_flow, main_call, 'all')
   ELSE
+    she_rad_totb = 0.D0
     she_eir_totb = 0.D0
   END IF
   CALL POPREAL8ARRAY(st%rt%rpt, r8*SIZE(st%rt%rpt, 1)*SIZE(st%rt%rpt, 2)&
@@ -2078,8 +2254,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &         te, st%rt, stb%rt, st%rtw, stb%rtw)
   CALL POPREAL8ARRAY(st%dv%pa, r8*SIZE(st%dv%pa, 1)*SIZE(st%dv%pa, 2)/8)
   CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(&
-&                                 z2n_xy, 2)/8)
+  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(&
+&                                 z2n_cv, 2)/8)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 1) CALL POPREAL8ARRAY(nal, r8*SIZE(nal, 1)*SIZE(nal, 2&
 &                                 )/8)
@@ -2108,8 +2284,8 @@ SUBROUTINE B2SRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(st%dv%fchvispar_a, r8*SIZE(st%dv%fchvispar_a, 1)*&
 &              SIZE(st%dv%fchvispar_a, 2)*SIZE(st%dv%fchvispar_a, 3)/8)
   CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_xy, r8*SIZE(z2n_xy, 1)*SIZE(&
-&                                 z2n_xy, 2)/8)
+  IF (branch .EQ. 1) CALL POPREAL8ARRAY(z2n_cv, r8*SIZE(z2n_cv, 1)*SIZE(&
+&                                 z2n_cv, 2)/8)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 1) CALL POPREAL8ARRAY(nal, r8*SIZE(nal, 1)*SIZE(nal, 2&
 &                                 )/8)
@@ -2203,7 +2379,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_NUMERICS_NAMELIST_DIFF
 !      use b2mod_boundary_namelist
   USE B2MOD_TIME
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMFS
 !      use b2mod_external
   USE B2MOD_B2_TO_ASTRA
@@ -2211,7 +2387,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
-  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral
+  USE B2MOD_AD_DIFF, ONLY : b2sral_elm_count, ncall_b2sral, &
+& sources_inputfile
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
@@ -2222,18 +2399,21 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & enkpar, potpar, mompar, lfeedback, bccon14_is
   USE B2US_FEEDBACK_DIFF, ONLY : fb_target, fb_rescale, fb_current, &
 & cum_volrec, fb_const, charge_frac, saved_fb_actuator, saved_fb_prev, &
-& dt_prev, feedback_namelist_used, she_eir_tot, fb_current_prev
+& dt_prev, feedback_namelist_used, she_eir_tot, fb_current_prev, &
+& she_rad_tot
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_xy, nal, ia, av_ualpha, avm_u, &
+  USE B2MOD_ZHFRTF_DIFF, ONLY : z2n_cv, nal, ia, av_ualpha, avm_u, &
 & rho_a_rel, z_to_m1_ast
   USE B2MOD_EIRDIAG_DIFF, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, &
 & rfluxa, tfluxa
   USE B2MOD_AD_DIFF, ONLY : my_out_folder, in_no_of_start_points, &
-& sources_inputfile, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys,&
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, senepar, senipar, sconpar, &
-& scurpar, prev_cur_delta, po_prev, po_curr, coeff_16
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn, senepar, senipar, sconpar, scurpar, &
+& prev_cur_delta, po_prev, po_curr, coeff_16, in_no_of_angles, &
+& in_size_of_table, covered, cvcov, icov, icvsv, rmin, rmax, zmin, zmax,&
+& first, pos, lngcov, lngind
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -2465,9 +2645,10 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
+!srv 15.02.26
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
-&                psnc, st%psnl, wrong_flow, main_call)
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%sr, st%srw&
+&                , st%psnc, st%psnl, wrong_flow, main_call, 'all')
 !   .. store contributions from BCs
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0

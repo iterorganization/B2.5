@@ -21,13 +21,16 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 & , smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_ZHFRTF_DIFF, ONLY : b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
+  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : corr_fria, corr_tfia, &
+& alpha_hs_style, g_hs_style
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2sifrtf
@@ -99,14 +102,16 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   EXTERNAL NANCHECK
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   CHARACTER(len=16) :: arg10
-  CHARACTER(len=21) :: arg11
-  CHARACTER(len=26) :: arg12
-  CHARACTER(len=15) :: arg13
-  CHARACTER(len=12) :: arg14
-  CHARACTER(len=11) :: arg15
+  CHARACTER(len=11) :: arg11
+  CHARACTER(len=14) :: arg12
+  CHARACTER(len=21) :: arg13
+  CHARACTER(len=26) :: arg14
+  CHARACTER(len=15) :: arg15
+  CHARACTER(len=12) :: arg16
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -123,8 +128,18 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 &         .LE. switch%b2sifr_phm3, &
 &         'faulty internal parameter phm0, phm1, phm2, phm3')
     CALL IPGETI('b2sifrtf_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
 !iys 17.04.17
     CALL IPGETI('b2wdat_iout', iout_b2wdat)
+    IF (iout_b2wdat .EQ. 4 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode (b2wdat)'
+      iout_b2wdat = 0
+    END IF
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc, nVx
@@ -187,7 +202,15 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !     ..actual use of the Zhdanov closure
     DO icv=1,mpg%nci
       t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1))
+      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1), corr_fria(&
+&                    icv, isb))
+    END DO
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. &
+&     1 .AND. switch%zhdanov_nc .EQ. 1) THEN
+    DO icv=1,mpg%nci
+      t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
+      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1), corr_fria(&
+&                    icv, isb))
     END DO
   ELSE
     smbfrial_test = 0.0_R8
@@ -197,7 +220,8 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !       ..test run of the Zhdanov closure
       DO icv=1,mpg%nci
         t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1))
+        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1), &
+&                      corr_fria(icv, isb))
       END DO
     END IF
 !     ..standard friction force calculation
@@ -266,25 +290,75 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !     ..actual use of the Zhdanov closure
     DO icv=1,mpg%nci
       CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                    smbtfial(icv, 0), smbtfial_nofl(icv, 0))
+&                    smbtfial(icv, 0), smbtfial_nofl(icv, 0), corr_tfia(&
+&                    icv, isb))
     END DO
-  ELSE
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ.&
+&     1 .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
+!     ..test run of the Zhdanov closure
     smbtfial_test = 0.0_R8
     smbtfial_test_nofl = 0.0_R8
-    IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 1 &
-&       .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
-!som 01.07.2021
-!       ..test run of the Zhdanov closure
-      DO icv=1,mpg%nci
-        CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                      smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0)&
-&                     )
+    DO icv=1,mpg%nci
+      CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
+&                    smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0), &
+&                    corr_tfia(icv, isb))
+    END DO
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      CALL B2SCOPY_NODIFF(ncv, smbtfial_test(:, 0), 1, smbtfial(:, 0), 1&
+&                  )
+      CALL B2SCOPY_NODIFF(ncv, smbtfial_test_nofl(:, 0), 1, &
+&                   smbtfial_nofl(:, 0), 1)
+    ELSE
+!     ..standard thermal force calculation
+      DO icv=1,ncv
+        ka(icv) = FKA(icv, isb)
+      END DO
+!
+      DO is=0,ns-1
+        IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
+&           is_neutral(is))) THEN
+          DO icv=1,mpg%nci
+            kabtf(icv) = FKABTF(icv, isb, is)
+            kbatf(icv) = FKABTF(icv, is, isb)
+!             kb(iCv)    = fka(iCv,is)
+            kb(icv) = FKA_NEW(icv, is, rz2_temp, na_temp, am_sqrt)
+            kabvp(icv) = FKABVP(icv, isb, is)
+!        .. calculations could be simplified
+!        .. but we did not do it in order to have the same formulae as manual
+            calfab = zetap(icv)/SQRT(mp)*qe*(na(icv, isb)+na(icv, is))*&
+&             SQRT(am(isb)*am(is)/(am(isb)+am(is)))*(kabtf(icv)/kb(icv)-&
+&             kbatf(icv)/ka(icv))*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+            coef = switch%b2sifr_phm3*rz2(icv, isb)*rz2(icv, is)*calfab*&
+&             mp/(zetap(icv)*qe)
+!        .. apply flux limit
+            IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(&
+&               icv))) THEN
+              jabmax = qe*kabvp(icv)*SQRT(ti(icv)/mp)*(na(icv, isb)+na(&
+&               icv, is))
+              IF (calfab*gti(icv) .GE. 0.) THEN
+                abs0 = calfab*gti(icv)
+              ELSE
+                abs0 = -(calfab*gti(icv))
+              END IF
+              t0 = abs0/(cflim(4)*jabmax)
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+            ELSE
+              fllim_al_ab = 1.0_R8
+            END IF
+            t0 = na(icv, isb)*na(icv, is)/(na(icv, isb)+na(icv, is))*gti&
+&             (icv)
+            smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
+            smbtfial_nofl(icv, 0) = smbtfial_nofl(icv, 0) + coef*t0
+          END DO
+        END IF
       END DO
     END IF
+  ELSE
 !     ..standard thermal force calculation
     DO icv=1,ncv
       ka(icv) = FKA(icv, isb)
     END DO
+!
     DO is=0,ns-1
       IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
 &         is_neutral(is))) THEN
@@ -307,11 +381,11 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
             jabmax = qe*kabvp(icv)*SQRT(ti(icv)/mp)*(na(icv, isb)+na(icv&
 &             , is))
             IF (calfab*gti(icv) .GE. 0.) THEN
-              abs0 = calfab*gti(icv)
+              abs1 = calfab*gti(icv)
             ELSE
-              abs0 = -(calfab*gti(icv))
+              abs1 = -(calfab*gti(icv))
             END IF
-            t0 = abs0/(cflim(4)*jabmax)
+            t0 = abs1/(cflim(4)*jabmax)
             fllim_al_ab = 1.0_R8/(1.0_R8+t0)
           ELSE
             fllim_al_ab = 1.0_R8
@@ -355,21 +429,30 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     arg10 = 'b2sifrtf_smotfea'//chns
     CALL MY_OUT_US(70, ncv, 0, wrk, arg10)
     CALL MY_OUT_US(70, ncv, 0, ue, 'b2sifrtf_ue')
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      arg11 = 'b2sifrtf_cf'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_fria(:, isb), arg11)
+      arg11 = 'b2sifrtf_ct'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_tfia(:, isb), arg11)
+      arg12 = 'b2sifrtf_alpha'//chns
+      CALL MY_OUT_US(70, ncv, 0, alpha_hs_style(:, isb), arg12)
+      CALL MY_OUT_US(70, ncv, 0, g_hs_style, 'b2sifrtf_g')
+    END IF
 !
     wrk = geo%cvvol*geo%cvhz*(smbfrial_test(:, 0)+smbfrial_test(:, 1)*ua&
 &     (:, isb)+smbfrial_test(:, 2)*na(:, isb)*mp*am(isb)+smbfrial_test(:&
 &     , 3)*ua(:, isb)*na(:, isb)*mp*am(isb))
-    arg11 = 'b2sifrtf_smofria_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
+    arg13 = 'b2sifrtf_smofria_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test(:, 0)
-    arg11 = 'b2sifrtf_smotfia_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
+    arg13 = 'b2sifrtf_smotfia_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
     wrk = geo%cvvol*geo%cvhz*smbtfial_nofl(:, 0)
-    arg11 = 'b2sifrtf_smotfia_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
+    arg13 = 'b2sifrtf_smotfia_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test_nofl(:, 0)
-    arg12 = 'b2sifrtf_smotfia_test_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_test_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
   END IF
 !
   IF (iout .GT. 1) THEN
@@ -379,28 +462,28 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
       DO icv=1,ncv
         wrk(icv) = FKABVP(icv, isb, is)
       END DO
-      arg13 = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+      arg15 = 'b2sifrtf_kabvp_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, isb, is)
       END DO
-      arg13 = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+      arg15 = 'b2sifrtf_kabtf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, is, isb)
       END DO
-      arg13 = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+      arg15 = 'b2sifrtf_kbatf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, isb)
       END DO
-      arg14 = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_ka_'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, is)
       END DO
-      arg14 = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kb_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
     END DO
 !
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
@@ -413,8 +496,8 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL MY_OUT_US(70, ncv, 0, sigx_c, 'b2sifrtf_sigx_c')
     CALL MY_OUT_US(70, ncv, 0, zetae, 'b2sifrtf_zetae')
 !
-    arg15 = 'b2sifrtf_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg15)
+    arg11 = 'b2sifrtf_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg11)
   END IF
 !
 ! ..return
@@ -516,27 +599,29 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !srv 01.07.05 }
 
 !  Differentiation of b2sifrtf in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *z2n_xy[save in b2mod_zhfrtf]
+!   gradient     of useful results: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *gt_ac[save in b2mod_zhfrtf]
 !                *gtalc[save in b2mod_zhfrtf] *c_r_ta[save in b2mod_b2zhco]
 !                *c_r_tb[save in b2mod_b2zhco] *c_r_w[save in b2mod_b2zhco]
-!                ti cimp1 cimp2 na smbtf sigx_c ne ce1 smbfria
-!                ua zeff ue zetae smbtfea zetap f_luc_sg smbtfia
-!                alfx_c gte gti smbch rz2 smbfrea
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!                *corr_tfia *corr_fria ti cimp1 cimp2 na smbtf
+!                sigx_c ne ce1 smbfria ua zeff ue zetae smbtfea
+!                zetap f_luc_sg smbtfia alfx_c gte gti smbch rz2
+!                smbfrea
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *gt_ac[save in b2mod_zhfrtf]
 !                *gtalc[save in b2mod_zhfrtf] *c_r_ta[save in b2mod_b2zhco]
 !                *c_r_tb[save in b2mod_b2zhco] *c_r_w[save in b2mod_b2zhco]
-!                ti cimp1 cimp2 na sigx_c ne ce1 ua zeff ue zetae
-!                zetap f_luc_sg alfx_c gte gti rz2
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!                *corr_tfia *corr_fria ti cimp1 cimp2 na sigx_c
+!                ne ce1 ua zeff ue zetae zetap f_luc_sg alfx_c
+!                gte gti rz2
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in gt_ac[save in b2mod_zhfrtf]:in
 !                gtalc[save in b2mod_zhfrtf]:in c_r_ta[save in b2mod_b2zhco]:in
 !                c_r_tb[save in b2mod_b2zhco]:in c_r_w[save in b2mod_b2zhco]:in
-!                mpg.intcellp:in geo.cvvol:in
+!                corr_tfia:in corr_fria:in mpg.intcellp:in
 !
 !
 !
@@ -551,23 +636,26 @@ END SUBROUTINE B2SIFRTF_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
-& , mpg, mpgb, na, nab, ua, uab, ue, ueb, te, teb, ti, tib, ni, nib, ne&
-& , neb, ne2, ne2b, rza, rz2, rz2b, po, zetap, zetapb, zetae, zetaeb, &
-& gti, gtib, gte, gteb, ce1, ce1b, ce2, cimp1, cimp1b, cimp2, cimp2b, &
-& zeff, zeffb, f_luc_sg, f_luc_sgb, alfx_c, alfx_cb, sigx_c, sigx_cb, &
-& st_ext, smbfrea, smbfreab, smbfria, smbfriab, smbtfea, smbtfeab, &
-& smbtfia, smbtfiab, smbch, smbchb, smbtf, smbtfb)
+SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, mpg, &
+& mpgb, na, nab, ua, uab, ue, ueb, te, ti, tib, ni, ne, neb, ne2, rza, &
+& rz2, rz2b, po, zetap, zetapb, zetae, zetaeb, gti, gtib, gte, gteb, ce1&
+& , ce1b, ce2, cimp1, cimp1b, cimp2, cimp2b, zeff, zeffb, f_luc_sg, &
+& f_luc_sgb, alfx_c, alfx_cb, sigx_c, sigx_cb, st_ext, smbfrea, smbfreab&
+& , smbfria, smbfriab, smbtfea, smbtfeab, smbtfia, smbtfiab, smbch, &
+& smbchb, smbtf, smbtfb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_ZHFRTF_DIFF, ONLY : b2mod_zhfrtf_tf, b2mod_zhfrtf_tf_b, &
 & b2mod_zhfrtf_fr, b2mod_zhfrtf_fr_b
+  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : corr_fria, corr_friab, corr_tfia, &
+& corr_tfiab, alpha_hs_style, alpha_hs_styleb, g_hs_style, g_hs_styleb
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : ncall_b2sifrtf
@@ -577,7 +665,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   INTEGER :: ncv, nfc, nvx, ns, isb, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -586,11 +673,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 & :ns-1), po(ncv), zetap(ncv), zetae(ncv), gti(ncv), gte(ncv), ce1(ncv)&
 & , ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1), zeff(ncv), &
 & f_luc_sg(nfc), alfx_c(ncv), sigx_c(ncv)
-  REAL(kind=r8) :: nab(ncv, 0:ns-1), uab(ncv, 0:ns-1), ueb(ncv), teb(ncv&
-& ), tib(ncv), nib(ncv, 0:1), neb(ncv), ne2b(ncv), rz2b(ncv, 0:ns-1), &
-& zetapb(ncv), zetaeb(ncv), gtib(ncv), gteb(ncv), ce1b(ncv), cimp1b(ncv&
-& , 0:ns-1), cimp2b(ncv, 0:ns-1), zeffb(ncv), f_luc_sgb(nfc), alfx_cb(&
-& ncv), sigx_cb(ncv)
+  REAL(kind=r8) :: nab(ncv, 0:ns-1), uab(ncv, 0:ns-1), ueb(ncv), tib(ncv&
+& ), neb(ncv), rz2b(ncv, 0:ns-1), zetapb(ncv), zetaeb(ncv), gtib(ncv), &
+& gteb(ncv), ce1b(ncv), cimp1b(ncv, 0:ns-1), cimp2b(ncv, 0:ns-1), zeffb(&
+& ncv), f_luc_sgb(nfc), alfx_cb(ncv), sigx_cb(ncv)
 !   ..output arguments (unspecified on entry)
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
@@ -643,7 +729,7 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 & , 0:3), smbtfeal(ncv, 0:3), smbfrial_test(ncv, 0:3), smbtfial_test(ncv&
 & , 0:3), smbtfial_nofl(ncv, 0:3), smbtfial_test_nofl(ncv, 0:3)
   REAL(kind=r8) :: smbfrialb(ncv, 0:3), smbfrealb(ncv, 0:3), smbtfialb(&
-& ncv, 0:3), smbtfealb(ncv, 0:3)
+& ncv, 0:3), smbtfealb(ncv, 0:3), smbtfial_testb(ncv, 0:3)
   REAL(kind=r8) :: rz2_temp(ns*ncv), na_temp(ns*ncv), am_sqrt(0:ns-1, 0:&
 & ns-1)
   REAL(kind=r8) :: rz2_tempb(ns*ncv), na_tempb(ns*ncv)
@@ -657,15 +743,18 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs0b
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs1b
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result1b
   CHARACTER(len=16) :: arg10
-  CHARACTER(len=21) :: arg11
-  CHARACTER(len=26) :: arg12
-  CHARACTER(len=15) :: arg13
-  CHARACTER(len=12) :: arg14
-  CHARACTER(len=11) :: arg15
+  CHARACTER(len=11) :: arg11
+  CHARACTER(len=14) :: arg12
+  CHARACTER(len=21) :: arg13
+  CHARACTER(len=26) :: arg14
+  CHARACTER(len=15) :: arg15
+  CHARACTER(len=12) :: arg16
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -712,7 +801,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 ! ..compute friction
   IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
 &     .AND. switch%zhdanov_tf_fr .EQ. 1) THEN
-    CALL PUSHCONTROL1B(0)
+    CALL PUSHCONTROL2B(0)
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. &
+&     1 .AND. switch%zhdanov_nc .EQ. 1) THEN
+    CALL PUSHCONTROL2B(1)
   ELSE
 !     ..standard friction force calculation
     DO is=0,ns-1
@@ -747,7 +839,7 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    CALL PUSHCONTROL1B(1)
+    CALL PUSHCONTROL2B(2)
   END IF
 !
 !*   ..compute ue, electron parallel velocity
@@ -784,12 +876,83 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 !   ..contribution from ions thermal force
   IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
 &     .AND. switch%zhdanov_tf_fr .EQ. 1) THEN
-    CALL PUSHCONTROL1B(0)
+    CALL PUSHCONTROL2B(0)
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ.&
+&     1 .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      CALL B2SCOPY_FWD(ncv, smbtfial_test(:, 0), smbtfial_testb(:, 0), 1&
+&                , smbtfial(:, 0), 1)
+      CALL PUSHCONTROL2B(1)
+    ELSE
+!     ..standard thermal force calculation
+      DO icv=1,ncv
+        ka(icv) = FKA(icv, isb)
+      END DO
+!
+      DO is=0,ns-1
+        IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
+&           is_neutral(is))) THEN
+          DO icv=1,mpg%nci
+            CALL PUSHREAL8(kabtf(icv), r8/8)
+            kabtf(icv) = FKABTF(icv, isb, is)
+            CALL PUSHREAL8(kbatf(icv), r8/8)
+            kbatf(icv) = FKABTF(icv, is, isb)
+!             kb(iCv)    = fka(iCv,is)
+            CALL PUSHREAL8(kb(icv), r8/8)
+            kb(icv) = FKA_NEW(icv, is, rz2_temp, na_temp, am_sqrt)
+            CALL PUSHREAL8(kabvp(icv), r8/8)
+            kabvp(icv) = FKABVP(icv, isb, is)
+!        .. calculations could be simplified
+!        .. but we did not do it in order to have the same formulae as manual
+            CALL PUSHREAL8(calfab, r8/8)
+            calfab = zetap(icv)/SQRT(mp)*qe*(na(icv, isb)+na(icv, is))*&
+&             SQRT(am(isb)*am(is)/(am(isb)+am(is)))*(kabtf(icv)/kb(icv)-&
+&             kbatf(icv)/ka(icv))*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
+            CALL PUSHREAL8(coef, r8/8)
+            coef = switch%b2sifr_phm3*rz2(icv, isb)*rz2(icv, is)*calfab*&
+&             mp/(zetap(icv)*qe)
+!        .. apply flux limit
+            IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(&
+&               icv))) THEN
+              CALL PUSHREAL8(jabmax, r8/8)
+              jabmax = qe*kabvp(icv)*SQRT(ti(icv)/mp)*(na(icv, isb)+na(&
+&               icv, is))
+              IF (calfab*gti(icv) .GE. 0.) THEN
+                CALL PUSHREAL8(abs0, r8/8)
+                abs0 = calfab*gti(icv)
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHREAL8(abs0, r8/8)
+                abs0 = -(calfab*gti(icv))
+                CALL PUSHCONTROL1B(1)
+              END IF
+              CALL PUSHREAL8(t0, r8/8)
+              t0 = abs0/(cflim(4)*jabmax)
+              CALL PUSHREAL8(fllim_al_ab, r8/8)
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(fllim_al_ab, r8/8)
+              fllim_al_ab = 1.0_R8
+              CALL PUSHCONTROL1B(1)
+            END IF
+            CALL PUSHREAL8(t0, r8/8)
+            t0 = na(icv, isb)*na(icv, is)/(na(icv, isb)+na(icv, is))*gti&
+&             (icv)
+          END DO
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      CALL PUSHCONTROL2B(2)
+    END IF
   ELSE
 !     ..standard thermal force calculation
     DO icv=1,ncv
       ka(icv) = FKA(icv, isb)
     END DO
+!
     DO is=0,ns-1
       IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
 &         is_neutral(is))) THEN
@@ -819,16 +982,16 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
             jabmax = qe*kabvp(icv)*SQRT(ti(icv)/mp)*(na(icv, isb)+na(icv&
 &             , is))
             IF (calfab*gti(icv) .GE. 0.) THEN
-              CALL PUSHREAL8(abs0, r8/8)
-              abs0 = calfab*gti(icv)
+              CALL PUSHREAL8(abs1, r8/8)
+              abs1 = calfab*gti(icv)
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8(abs0, r8/8)
-              abs0 = -(calfab*gti(icv))
+              CALL PUSHREAL8(abs1, r8/8)
+              abs1 = -(calfab*gti(icv))
               CALL PUSHCONTROL1B(1)
             END IF
             CALL PUSHREAL8(t0, r8/8)
-            t0 = abs0/(cflim(4)*jabmax)
+            t0 = abs1/(cflim(4)*jabmax)
             CALL PUSHREAL8(fllim_al_ab, r8/8)
             fllim_al_ab = 1.0_R8/(1.0_R8+t0)
             CALL PUSHCONTROL1B(0)
@@ -846,7 +1009,7 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    CALL PUSHCONTROL1B(1)
+    CALL PUSHCONTROL2B(3)
   END IF
   smbtfealb = 0.D0
   smbtfealb = smbtfeab + smbtfb
@@ -856,18 +1019,29 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   smbfrealb = smbfreab
   smbfrialb = 0.D0
   smbfrialb = smbfriab
-  CALL POPCONTROL1B(branch)
-  IF (branch .EQ. 0) THEN
-    DO icv=mpg%nci,1,-1
-      CALL B2MOD_ZHFRTF_TF_B(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                      nab(icv, isb), smbtfial(icv, 0), smbtfialb(icv, 0&
-&                      ), smbtfial_nofl(icv, 0))
-      smbtfialb(icv, 0) = 0.D0
-    END DO
-    rz2_tempb = 0.D0
-    kabvpb = 0.D0
-    na_tempb = 0.D0
-  ELSE
+  CALL POPCONTROL2B(branch)
+  IF (branch .LT. 2) THEN
+    IF (branch .EQ. 0) THEN
+      DO icv=mpg%nci,1,-1
+        CALL B2MOD_ZHFRTF_TF_B(icv, isb, switch%zhcscorr, na(icv, isb), &
+&                        nab(icv, isb), smbtfial(icv, 0), smbtfialb(icv&
+&                        , 0), smbtfial_nofl(icv, 0), corr_tfia(icv, isb&
+&                        ), corr_tfiab(icv, isb))
+        smbtfialb(icv, 0) = 0.D0
+      END DO
+      rz2_tempb = 0.D0
+      kabvpb = 0.D0
+      na_tempb = 0.D0
+      GOTO 100
+    ELSE
+      smbtfial_testb = 0.D0
+      CALL B2SCOPY_BWD(ncv, smbtfial_test(:, 0), smbtfial_testb(:, 0), 1&
+&                , smbtfial(:, 0), smbtfialb(:, 0), 1)
+      rz2_tempb = 0.D0
+      kabvpb = 0.D0
+      na_tempb = 0.D0
+    END IF
+  ELSE IF (branch .EQ. 2) THEN
     rz2_tempb = 0.D0
     kab = 0.D0
     kbb = 0.D0
@@ -969,8 +1143,119 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       CALL FKA_B(icv, isb, kab(icv))
       kab(icv) = 0.D0
     END DO
+    smbtfial_testb = 0.D0
+  ELSE
+    rz2_tempb = 0.D0
+    kab = 0.D0
+    kbb = 0.D0
+    kabvpb = 0.D0
+    kabtfb = 0.D0
+    na_tempb = 0.D0
+    kbatfb = 0.D0
+    DO is=ns-1,0,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO icv=mpg%nci,1,-1
+          fllim_al_abb = coef*t0*smbtfialb(icv, 0)
+          coefb = fllim_al_ab*t0*smbtfialb(icv, 0)
+          t0b = fllim_al_ab*coef*smbtfialb(icv, 0)
+          CALL POPREAL8(t0, r8/8)
+          temp4 = na(icv, isb) + na(icv, is)
+          temp3 = na(icv, is)/temp4
+          nab(icv, isb) = nab(icv, isb) + gti(icv)*temp3*t0b
+          gtib(icv) = gtib(icv) + na(icv, isb)*temp3*t0b
+          tempb3 = na(icv, isb)*gti(icv)*t0b/temp4
+          nab(icv, is) = nab(icv, is) + tempb3
+          tempb4 = -(temp3*tempb3)
+          nab(icv, isb) = nab(icv, isb) + tempb4
+          nab(icv, is) = nab(icv, is) + tempb4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(fllim_al_ab, r8/8)
+            t0b = -(fllim_al_abb/(t0+1.0_R8)**2)
+            CALL POPREAL8(t0, r8/8)
+            tempb4 = t0b/(cflim(4)*jabmax)
+            abs1b = tempb4
+            jabmaxb = -(abs1*tempb4/jabmax)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(abs1, r8/8)
+              calfabb = gti(icv)*abs1b
+              gtib(icv) = gtib(icv) + calfab*abs1b
+            ELSE
+              CALL POPREAL8(abs1, r8/8)
+              calfabb = -(gti(icv)*abs1b)
+              gtib(icv) = gtib(icv) - calfab*abs1b
+            END IF
+            CALL POPREAL8(jabmax, r8/8)
+            temp4 = na(icv, isb) + na(icv, is)
+            temp3 = ti(icv)/mp
+            temp2 = SQRT(temp3)
+            IF (.NOT.temp3 .EQ. 0.D0) tib(icv) = tib(icv) + kabvp(icv)*&
+&               temp4*qe*jabmaxb/(mp*2.0*temp2)
+            tempb1 = temp2*qe*jabmaxb
+            kabvpb(icv) = kabvpb(icv) + temp4*tempb1
+            nab(icv, isb) = nab(icv, isb) + kabvp(icv)*tempb1
+            nab(icv, is) = nab(icv, is) + kabvp(icv)*tempb1
+          ELSE
+            CALL POPREAL8(fllim_al_ab, r8/8)
+            calfabb = 0.D0
+          END IF
+          CALL POPREAL8(coef, r8/8)
+          temp3 = rz2(icv, is)/(qe*zetap(icv))
+          tempb4 = switch%b2sifr_phm3*mp*coefb
+          rz2b(icv, isb) = rz2b(icv, isb) + calfab*temp3*tempb4
+          calfabb = calfabb + rz2(icv, isb)*temp3*tempb4
+          tempb3 = rz2(icv, isb)*calfab*tempb4/(qe*zetap(icv))
+          rz2b(icv, is) = rz2b(icv, is) + tempb3
+          zetapb(icv) = zetapb(icv) - qe*temp3*tempb3
+          CALL POPREAL8(calfab, r8/8)
+          temp3 = kbatf(icv)/ka(icv)
+          temp2 = kabtf(icv)/kb(icv)
+          temp0 = na(icv, isb) + na(icv, is)
+          tempb4 = SQRT(am(isb)*am(is)/(am(isb)+am(is)))*qe*geo%cvbb(icv&
+&           , 0)*calfabb/(SQRT(mp)*geo%cvbb(icv, 3))
+          tempb1 = (temp2-temp3)*tempb4
+          tempb = zetap(icv)*temp0*tempb4
+          tempb2 = tempb/kb(icv)
+          tempb3 = -(tempb/ka(icv))
+          kbatfb(icv) = kbatfb(icv) + tempb3
+          kab(icv) = kab(icv) - temp3*tempb3
+          kabtfb(icv) = kabtfb(icv) + tempb2
+          kbb(icv) = kbb(icv) - temp2*tempb2
+          zetapb(icv) = zetapb(icv) + temp0*tempb1
+          nab(icv, isb) = nab(icv, isb) + zetap(icv)*tempb1
+          nab(icv, is) = nab(icv, is) + zetap(icv)*tempb1
+          CALL POPREAL8(kabvp(icv), r8/8)
+          CALL FKABVP_B(icv, isb, is, kabvpb(icv))
+          kabvpb(icv) = 0.D0
+          CALL POPREAL8(kb(icv), r8/8)
+          CALL FKA_NEW_B(icv, is, rz2_temp, rz2_tempb, na_temp, na_tempb&
+&                  , am_sqrt, kbb(icv))
+          kbb(icv) = 0.D0
+          CALL POPREAL8(kbatf(icv), r8/8)
+          CALL FKABTF_B(icv, is, isb, kbatfb(icv))
+          kbatfb(icv) = 0.D0
+          CALL POPREAL8(kabtf(icv), r8/8)
+          CALL FKABTF_B(icv, isb, is, kabtfb(icv))
+          kabtfb(icv) = 0.D0
+        END DO
+      END IF
+    END DO
+    DO icv=ncv,1,-1
+      CALL FKA_B(icv, isb, kab(icv))
+      kab(icv) = 0.D0
+    END DO
+    GOTO 100
   END IF
-  CALL POPCONTROL1B(branch)
+  DO icv=mpg%nci,1,-1
+    CALL B2MOD_ZHFRTF_TF_B(icv, isb, switch%zhcscorr, na(icv, isb), nab(&
+&                    icv, isb), smbtfial_test(icv, 0), smbtfial_testb(&
+&                    icv, 0), smbtfial_test_nofl(icv, 0), corr_tfia(icv&
+&                    , isb), corr_tfiab(icv, isb))
+    smbtfial_testb(icv, 0) = 0.D0
+  END DO
+ 100 CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     wrkb = 0.D0
     DO icv=mpg%nci,1,-1
@@ -1016,12 +1301,25 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       zeffb(icv) = zeffb(icv) + sigx_c(icv)*tempb2
     END DO
   END IF
-  CALL POPCONTROL1B(branch)
+  CALL POPCONTROL2B(branch)
   IF (branch .EQ. 0) THEN
     DO icv=mpg%nci,1,-1
       t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
       CALL B2MOD_ZHFRTF_FR_B(icv, isb, t0, t0b, smbfrial(icv, 0:1), &
-&                      smbfrialb(icv, 0:1))
+&                      smbfrialb(icv, 0:1), corr_fria(icv, isb), &
+&                      corr_friab(icv, isb))
+      temp = rz2(icv, isb)/zetap(icv)
+      tempb = na(icv, isb)*mp*t0b/zetap(icv)
+      nab(icv, isb) = nab(icv, isb) + temp*mp*t0b
+      rz2b(icv, isb) = rz2b(icv, isb) + tempb
+      zetapb(icv) = zetapb(icv) - temp*tempb
+    END DO
+  ELSE IF (branch .EQ. 1) THEN
+    DO icv=mpg%nci,1,-1
+      t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
+      CALL B2MOD_ZHFRTF_FR_B(icv, isb, t0, t0b, smbfrial(icv, 0:1), &
+&                      smbfrialb(icv, 0:1), corr_fria(icv, isb), &
+&                      corr_friab(icv, isb))
       temp = rz2(icv, isb)/zetap(icv)
       tempb = na(icv, isb)*mp*t0b/zetap(icv)
       nab(icv, isb) = nab(icv, isb) + temp*mp*t0b

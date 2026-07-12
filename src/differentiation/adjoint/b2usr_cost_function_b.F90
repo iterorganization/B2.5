@@ -7,8 +7,8 @@
 !                *par_opt_phys *(st.pl.na) *(st.pl.te) *(st.pl.ti)
 !                *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: par_opt_phys:in b2data:in b2dataoncf:in
-!                b2voloncf:in st.pl.na:in st.pl.te:in st.pl.ti:in
-!                st.dv.fht:in st.dv.ne:in
+!                b2voloncf:in b2psi:in st.pl.na:in st.pl.te:in
+!                st.pl.ti:in st.dv.fht:in st.dv.ne:in
 !
 !
 !
@@ -29,12 +29,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
   USE B2MOD_PAR_OPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp
-  USE B2MOD_B2CMPA_DIFF, ONLY : am, amb0
+  USE B2MOD_B2CMPA, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : vold, voldb, cfnorm, cfnormb, nncf, b2rr, &
 & b2voloncf, b2voloncfb, b2data, b2datab, b2dataoncf, b2dataoncfb, b2psi&
-& , ompind
+& , b2psib, ompind
   USE B2MOD_SUBSYS
   IMPLICIT NONE
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -799,7 +799,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   USE B2MOD_PAR_OPT_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp
-  USE B2MOD_B2CMPA_DIFF, ONLY : am
+  USE B2MOD_B2CMPA, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, b2data,&

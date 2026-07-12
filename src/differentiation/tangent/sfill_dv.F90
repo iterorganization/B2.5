@@ -17,6 +17,7 @@
 !
 SUBROUTINE SFILL_DV(n, sa, sad, sx, sxd, incx, nbdirs)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -71,6 +72,7 @@ END SUBROUTINE SFILL_DV
 !
 SUBROUTINE SFILL_NODIFF(n, sa, sx, incx)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

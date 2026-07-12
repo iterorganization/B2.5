@@ -24,7 +24,7 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & , fchviskt_a, fchviskt_ad, fchviskt, fchvisktd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -226,7 +226,7 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & po, na, kt, vaecrb, dna_exb, fchviskt_a, fchviskt)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

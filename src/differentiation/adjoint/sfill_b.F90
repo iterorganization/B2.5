@@ -15,8 +15,9 @@
 !
 !
 !
-SUBROUTINE SFILL_FWD(n, sa, sx, sxb, incx)
+SUBROUTINE SFILL_FWD(n, sa, sx, incx)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFF
   IMPLICIT NONE
   INTEGER :: n, incx
@@ -30,7 +31,6 @@ SUBROUTINE SFILL_FWD(n, sa, sx, sxb, incx)
 !     ------------------------------------------------------------------
   INTEGER :: i, ix
   EXTERNAL XERRAB
-  REAL(kind=r8) :: sxb(0:n*incx-1)
 !     ------------------------------------------------------------------
   IF (incx .EQ. 0) THEN
     CALL PUSHCONTROL2B(0)
@@ -67,6 +67,7 @@ END SUBROUTINE SFILL_FWD
 !
 SUBROUTINE SFILL_BWD(n, sa, sab, sx, sxb, incx)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFF
   IMPLICIT NONE
   INTEGER :: n, incx
@@ -105,6 +106,7 @@ END SUBROUTINE SFILL_BWD
 !
 SUBROUTINE SFILL_NODIFF(n, sa, sx, incx)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFF
   IMPLICIT NONE
   INTEGER :: n, incx

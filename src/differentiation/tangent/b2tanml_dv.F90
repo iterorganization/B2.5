@@ -26,7 +26,7 @@ SUBROUTINE B2TANML_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg&
 & fchanml_a, fchanml_ad, fchanml, fchanmld, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -195,7 +195,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & csig_an, po, ne, na, rza, fchanml_a, fchanml)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

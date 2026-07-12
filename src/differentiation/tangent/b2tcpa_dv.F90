@@ -31,7 +31,7 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -85,8 +85,7 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !
 !   ..local variables
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
-  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc), wrkd(&
-& nbdirsmax, nfc, 0:1)
+  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
@@ -107,9 +106,6 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !    ..test sign of ne, te, csig, calf
     CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
-    DO nd=1,nbdirs
-      wrkd(nd, :, :) = 0.D0
-    END DO
     wrk = csig*geo%fcqalf
     arg1 = nfc*2
     CALL B2XVSG(arg1, wrk, 1, 'csig', '.ge.')
@@ -191,7 +187,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
 & fch_pi_f)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

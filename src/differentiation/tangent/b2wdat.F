@@ -3,13 +3,13 @@
       use b2mod_constants
       use b2mod_neutrals_namelist_diffv
       use b2mod_boundary_namelist_diffv
-      use b2mod_elements_diffv
-      use b2mod_b2cmpa_diffv
+      use b2mod_elements
+      use b2mod_b2cmpa
       use b2mod_b2cmpt_diffv
       use b2mod_b2cmrc_diffv
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : natm, nmol, nstra,  npls
+     * , only : natm, nmol, nstra, npls
       use eirmod_wneutrals
 #endif
       use b2us_geo_diffv
@@ -51,7 +51,7 @@
 
       integer iRFc, nRFc, icell
 #ifdef DBG
-      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy, nx, ny,
+      integer nmdpl, nmdpl_i, n_closed_surface, nx, ny, ix, iy,
      ,        ilast_closed_surface, ifirst_open_surface
       logical first
       logical found
@@ -145,10 +145,9 @@
 *      ..find the number of the last closed surface in CORE
          ilast_closed_surface = -2
          n_closed_surface = 0
-         ix = nx/2    !  nmdpl; may not work for DN?
-         do iy = -1, ny
-          if(mpg%imapCv(ix,iy) /= 0) then
-           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = 1, nomp
+          if(omp(iy).le.mpg%nCi) then
+           if(mpg%cvOnClosedSurface(omp(iy))) then
             n_closed_surface = n_closed_surface + 1
             ilast_closed_surface = iy
            endif
@@ -159,9 +158,9 @@
 *      ..find the number of the first open surface in SOL
          ifirst_open_surface = ilast_closed_surface
          found = .false.
-         do iy = ilast_closed_surface + 1, ny
-          if(mpg%imapCv(ix,iy) /= 0 .and. .not.found) then
-           if(.not.mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+         do iy = ilast_closed_surface + 1, nomp
+          if(omp(iy).le.mpg%nCi .and. .not.found) then
+           if(.not.mpg%cvOnClosedSurface(omp(iy))) then
             ifirst_open_surface = iy
             found = .true.
            endif
@@ -178,9 +177,9 @@
           if(mpg%imapCv(ix,iy) /= 0) then
            if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
             if(first) then
-                nmdpl = ix
-                nmdpl_i = ix
-                first = .false.
+               nmdpl = ix
+               nmdpl_i = ix
+               first = .false.
             endif
             if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
      &         geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix

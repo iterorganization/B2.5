@@ -187,7 +187,6 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !.end calcflow
 !
   CALL PUSHREAL8ARRAY(dfun, r8*nfc*2/8)
-  CALL PUSHREAL8ARRAY(funv, r8*nvx/8)
   CALL PUSHREAL8(t0, r8/8)
 END SUBROUTINE CALCFLOW_FWD
 
@@ -245,7 +244,6 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
   REAL(kind=r8) :: tempb
   INTEGER*4 :: branch
   CALL POPREAL8(t0, r8/8)
-  CALL POPREAL8ARRAY(funv, r8*nvx/8)
   CALL POPREAL8ARRAY(dfun, r8*nfc*2/8)
   CALL POPREAL8ARRAY(flowc, r8*nfc*2/8)
   flowb = flowb + flowcb

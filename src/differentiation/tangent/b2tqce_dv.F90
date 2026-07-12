@@ -19,7 +19,7 @@
 SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -39,7 +39,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1)
 !   ..common blocks
@@ -318,7 +318,7 @@ END SUBROUTINE B2TQCE_NODIFF
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in pl.te:in pl.ti:in
+!                pl.te:in pl.ti:in
 !
 !
 !
@@ -334,11 +334,11 @@ END SUBROUTINE B2TQCE_NODIFF
 !.specification
 !
 !srv 01.07.09
-SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
-& dvd, hce, hced, sig, sigd, alf, alfd, nbdirs)
+SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
+& hce, hced, sig, sigd, alf, alfd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
   USE B2MOD_SWITCHES_DIFFV
@@ -358,12 +358,11 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: hce(ncv, 0:1), sig(ncv, 0:1), alf(ncv, 0:1)
   REAL(kind=r8) :: hced(nbdirsmax, ncv, 0:1), sigd(nbdirsmax, ncv, 0:1)&

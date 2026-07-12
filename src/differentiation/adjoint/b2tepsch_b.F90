@@ -21,7 +21,7 @@ SUBROUTINE B2TEPSCH_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 & facdrift, cdde, te, teb, ne, neb, floe, floeb, cone, coneb, fhepsch, &
 & fhepschb)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -78,9 +78,6 @@ SUBROUTINE B2TEPSCH_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 !
 !srv 13.10.06
 !srv 02.01.07
-  fhepsch = 0.0_R8
-  cone = 0.0_R8
-  floe = 0.0_R8
   facdriftm = MAXVAL(facdrift)
   IF (facdriftm .NE. 0.0_R8) THEN
 !
@@ -163,7 +160,7 @@ END SUBROUTINE B2TEPSCH_B
 SUBROUTINE B2TEPSCH_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & cdde, te, ne, floe, cone, fhepsch)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF

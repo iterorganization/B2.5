@@ -25,7 +25,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, ismain, switch, geo, geod, mpg&
 & , mpgd, rho_rel, rho_reld, cvsbhz_cl, cvsbhz_cld, cvsbhz, cvsbhzd, &
 & flubv, flubvd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -185,7 +185,7 @@ END SUBROUTINE B2NXFV_DV
 SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 & rho_rel, cvsbhz_cl, cvsbhz, flubv)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV

@@ -22,15 +22,17 @@
 !.specification
 !
 SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
-& nregionv, ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0, pccb0d&
-& , pb, pbd, nb, nbd, ub, ubd, isb, psnl, nbdirs)
+& switchd, nregionv, ua_solve, solvereg, rxf, pcm0, corpb, corpbd, pccb0&
+& , pccb0d, pb, pbd, nb, nbd, ub, ubd, isb, psnl, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn, min_na, &
+& min_nad
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : ft_omp, icsepomp
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -45,6 +47,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, pcm0, corpb(ncv), pccb0(ncv)
   REAL(kind=r8) :: corpbd(nbdirsmax, ncv), pccb0d(nbdirsmax, ncv)
@@ -73,7 +76,7 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
 !lk 30.06.17
 !lk 30.06.17
   REAL(kind=r8) :: t0, pb_(ncv), nb_(ncv), tt0(mpg%nft), tt1(mpg%nft), &
-& tt2(mpg%nft)
+& tt2(mpg%nft), na_min
   REAL(kind=r8) :: t0d(nbdirsmax), pb_d(nbdirsmax, ncv), nb_d(nbdirsmax&
 & , ncv), tt1d(nbdirsmax, mpg%nft), tt2d(nbdirsmax, mpg%nft)
 ! IYS 27.11.2017
@@ -142,8 +145,9 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
     tt1d = 0.D0
     tt2d = 0.D0
     DO icv=1,mpg%nci
-      IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
+      IF (mpg%cvonclosedsurface(icv) .AND. ft_omp(mpg%cvft(icv)) .LT. &
+&         icsepomp - switch%nrings) THEN
         ift = mpg%cvft(icv)
         IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           tt0(ift) = tt0(ift) + geo%cvvol(icv)
@@ -163,39 +167,55 @@ SUBROUTINE B2UPCO_DV(ncv, nfc, nvx, geo, geod, mpg, mpgd, switch, &
 ! flux surface where such event happens.
     too_low_density = .false.
     DO icv=1,ncv
+      IF (switch%use_min_na_numerics .EQ. 0) THEN
+! default
+        na_min = switch%b2mndr_na_min
+      ELSE
+        na_min = min_na(isb, mpg%cvreg(icv))
+      END IF
       IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
         IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          IF (tt0(ift) .GT. 0.0_R8) THEN
 ! IYS 19.12.2017
-          DO nd=1,nbdirs
-            t0d(nd) = pbd(nd, icv) + tt2d(nd, ift)/tt0(ift) + &
-&             corr_core_dn(isb)*(pb_d(nd, icv)-pbd(nd, icv)-tt2d(nd, ift&
-&             )/tt0(ift))
-          END DO
-          t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
-&           -pb(icv)-tt2(ift)/tt0(ift))
-          IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            too_low_density(ift) = .true.
-          ELSE
             DO nd=1,nbdirs
-              pbd(nd, icv) = t0d(nd)
-! IYS 19.12.2017
-              t0d(nd) = nbd(nd, icv) + tt1d(nd, ift)/tt0(ift) + &
-&               corr_core_dn(isb)*(nb_d(nd, icv)-nbd(nd, icv)-tt1d(nd, &
+              t0d(nd) = pbd(nd, icv) + tt2d(nd, ift)/tt0(ift) + &
+&               corr_core_dn(isb)*(pb_d(nd, icv)-pbd(nd, icv)-tt2d(nd, &
 &               ift)/tt0(ift))
             END DO
-            pb(icv) = t0
-            t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
-&             icv)-nb(icv)-tt1(ift)/tt0(ift))
-            IF (t0 .LT. switch%b2mndr_na_min) THEN
+            t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(&
+&             icv)-pb(icv)-tt2(ift)/tt0(ift))
+            IF (t0 .LT. pb(icv)*na_min/nb(icv)) THEN
               too_low_density(ift) = .true.
             ELSE
               DO nd=1,nbdirs
-                nbd(nd, icv) = t0d(nd)
+                pbd(nd, icv) = t0d(nd)
+! IYS 19.12.2017
+                t0d(nd) = nbd(nd, icv) + tt1d(nd, ift)/tt0(ift) + &
+&                 corr_core_dn(isb)*(nb_d(nd, icv)-nbd(nd, icv)-tt1d(nd&
+&                 , ift)/tt0(ift))
               END DO
-              nb(icv) = t0
+              pb(icv) = t0
+              t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
+&               icv)-nb(icv)-tt1(ift)/tt0(ift))
+              IF (t0 .LT. na_min) THEN
+                too_low_density(ift) = .true.
+              ELSE
+                DO nd=1,nbdirs
+                  nbd(nd, icv) = t0d(nd)
+                END DO
+                nb(icv) = t0
+              END IF
             END IF
+          ELSE
+            DO nd=1,nbdirs
+! in core, but not deeper than nrings => normal correction
+              nbd(nd, icv) = nb_d(nd, icv)
+              pbd(nd, icv) = pb_d(nd, icv)
+            END DO
+            nb(icv) = nb_(icv)
+            pb(icv) = pb_(icv)
           END IF
         ELSE
           DO nd=1,nbdirs
@@ -283,12 +303,13 @@ END SUBROUTINE B2UPCO_DV
 SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 & ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb, psnl)
   USE B2MOD_TYPES
-  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPA
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV, ONLY : corr_core_dn, min_na
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : ft_omp, icsepomp
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -324,7 +345,7 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 !lk 30.06.17
 !lk 30.06.17
   REAL(kind=r8) :: t0, pb_(ncv), nb_(ncv), tt0(mpg%nft), tt1(mpg%nft), &
-& tt2(mpg%nft)
+& tt2(mpg%nft), na_min
 ! IYS 27.11.2017
   LOGICAL :: too_low_density(mpg%nft)
 !   ..procedures
@@ -366,8 +387,9 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
     tt1 = 0.0_R8
     tt2 = 0.0_R8
     DO icv=1,mpg%nci
-      IF (mpg%cvonclosedsurface(icv)) THEN
 ! IYS 27.03.2019
+      IF (mpg%cvonclosedsurface(icv) .AND. ft_omp(mpg%cvft(icv)) .LT. &
+&         icsepomp - switch%nrings) THEN
         ift = mpg%cvft(icv)
         IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
           tt0(ift) = tt0(ift) + geo%cvvol(icv)
@@ -381,25 +403,37 @@ SUBROUTINE B2UPCO_NODIFF(ncv, nfc, nvx, geo, mpg, switch, nregionv, &
 ! flux surface where such event happens.
     too_low_density = .false.
     DO icv=1,ncv
+      IF (switch%use_min_na_numerics .EQ. 0) THEN
+! default
+        na_min = switch%b2mndr_na_min
+      ELSE
+        na_min = min_na(isb, mpg%cvreg(icv))
+      END IF
       IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
         ift = mpg%cvft(icv)
         IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+          IF (tt0(ift) .GT. 0.0_R8) THEN
 ! IYS 19.12.2017
-          t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
-&           -pb(icv)-tt2(ift)/tt0(ift))
-          IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
-            too_low_density(ift) = .true.
-          ELSE
-            pb(icv) = t0
-! IYS 19.12.2017
-            t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
-&             icv)-nb(icv)-tt1(ift)/tt0(ift))
-            IF (t0 .LT. switch%b2mndr_na_min) THEN
+            t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(&
+&             icv)-pb(icv)-tt2(ift)/tt0(ift))
+            IF (t0 .LT. pb(icv)*na_min/nb(icv)) THEN
               too_low_density(ift) = .true.
             ELSE
-              nb(icv) = t0
+              pb(icv) = t0
+! IYS 19.12.2017
+              t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
+&               icv)-nb(icv)-tt1(ift)/tt0(ift))
+              IF (t0 .LT. na_min) THEN
+                too_low_density(ift) = .true.
+              ELSE
+                nb(icv) = t0
+              END IF
             END IF
+          ELSE
+! in core, but not deeper than nrings => normal correction
+            nb(icv) = nb_(icv)
+            pb(icv) = pb_(icv)
           END IF
         ELSE
 ! in core, but not part of a flux tube in the mesh => normal correction

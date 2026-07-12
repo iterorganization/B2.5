@@ -23,8 +23,8 @@ MODULE B2MOD_B2CMRC_DIFF
 & (:), rtn(:), rtlt(:), rtln(:), rtlsa(:, :, :), rtlra(:, :, :), rtlqa(:&
 & , :, :), rtlqr(:, :, :), rtlrd(:, :, :), rtlbr(:, :, :), rtlcx(:, :, :&
 & ), rtlza(:, :, :), rtlz2(:, :, :), rtlpt(:, :, :), rtlpi(:, :, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: rtzminb(:), rtzmaxb(:), rtznb(:), &
-& rtlsab(:, :, :), rtlrab(:, :, :), rtlqab(:, :, :), rtlcxb(:, :, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: rtlsab(:, :, :), rtlrab(:, :, :), &
+& rtlqab(:, :, :), rtlcxb(:, :, :)
   REAL(kind=r8), ALLOCATABLE, SAVE :: rtlrab0(:, :, :), rtlsab0(:, :, :),&
 & rtlqab0(:, :, :), rtlcxb0(:, :, :)
   INTEGER, ALLOCATABLE, SAVE :: rtyr(:)
@@ -34,8 +34,8 @@ MODULE B2MOD_B2CMRC_DIFF
 
 CONTAINS
 !  Differentiation of alloc_b2mod_b2cmrc as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE ALLOC_B2MOD_B2CMRC_B(rtnt_in, rtnn_in, rtns_in)
     IMPLICIT NONE
@@ -45,14 +45,8 @@ CONTAINS
     rtnn = rtnn_in
     rtns = rtns_in
 !
-    ALLOCATE(rtzminb(0:rtns-1))
-    rtzminb = 0.D0
     ALLOCATE(rtzmin(0:rtns-1))
-    ALLOCATE(rtzmaxb(0:rtns-1))
-    rtzmaxb = 0.D0
     ALLOCATE(rtzmax(0:rtns-1))
-    ALLOCATE(rtznb(0:rtns-1))
-    rtznb = 0.D0
     ALLOCATE(rtzn(0:rtns-1))
     ALLOCATE(rtt(0:rtnt))
     ALLOCATE(rtn(0:rtnn))
@@ -121,23 +115,14 @@ CONTAINS
   END SUBROUTINE ALLOC_B2MOD_B2CMRC
 
 !  Differentiation of dealloc_b2mod_b2cmrc as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: rtzmin:out rtzmax:out rtzn:out
-!                rtlsa:out rtlra:out rtlqa:out rtlcx:out
+!   Plus diff mem management of: rtlsa:out rtlra:out rtlqa:out
+!                rtlcx:out
 !
   SUBROUTINE DEALLOC_B2MOD_B2CMRC_B()
     IMPLICIT NONE
 !
-    IF (ALLOCATED(rtzminb)) THEN
-      DEALLOCATE(rtzminb)
-    END IF
     DEALLOCATE(rtzmin)
-    IF (ALLOCATED(rtzmaxb)) THEN
-      DEALLOCATE(rtzmaxb)
-    END IF
     DEALLOCATE(rtzmax)
-    IF (ALLOCATED(rtznb)) THEN
-      DEALLOCATE(rtznb)
-    END IF
     DEALLOCATE(rtzn)
     DEALLOCATE(rtt)
     DEALLOCATE(rtn)

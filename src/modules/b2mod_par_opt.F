@@ -211,7 +211,7 @@
       spatial_points = 0
       parallel_hf = .true.
       hessian_approximation = 'limited-memory'
-      limited_memory_update_type = 'b2fgs'
+      limited_memory_update_type = 'bfgs'
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
