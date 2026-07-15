@@ -28,12 +28,15 @@ MODULE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV
   REAL(kind=r8) :: facdrift_scalar, fac_exb_scalar, fac_vis_scalar, &
 & facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
 & facvis_tanh_a, facvis_tanh_b
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: fac_exb_scalard0, &
+& fac_vis_scalard0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: fac_exb_scalard, &
 & fac_vis_scalard
   INTEGER :: ncall_drift, iy_nocoreexb
   SAVE facdrift_scalar, fac_exb_scalar, ncall_drift, iy_nocoreexb, &
 &     facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
 &     fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
+  SAVE fac_exb_scalard0, fac_vis_scalard0
   SAVE fac_exb_scalard, fac_vis_scalard
   DATA facdrift_scalar /0.0_R8/
   DATA fac_exb_scalar /0.0_R8/

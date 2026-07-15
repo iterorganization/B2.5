@@ -174,17 +174,18 @@ SUBROUTINE B2TFCC_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
     wrkfdd = 0.D0
 !    ..test sign of cdpa
     DO is=0,ns-1
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          wrkfdd(nd0, nd, :) = 0.D0
-          wrkfdd(nd0, nd, :) = geo%fcqalf(:, 1)*codd%cdpa(nd0, nd, :, 1&
-&           , is)
-        END DO
-        wrkfd(nd, :) = 0.d0
-        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
+      DO nd0=1,nbdirs0
+        wrkfd0(nd0, :) = 0.D0
       END DO
       wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
       CALL B2XVSG(nfc, wrkf, 1, 'cdpa0', '.ge.')
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          wrkfdd(nd0, nd, :) = geo%fcqalf(:, 1)*codd%cdpa(nd0, nd, :, 1&
+&           , is)
+        END DO
+        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
+      END DO
       DO nd0=1,nbdirs0
         wrkfd0(nd0, :) = geo%fcqalf(:, 1)*cod0%cdpa(nd0, :, 1, is)
       END DO
@@ -1100,12 +1101,11 @@ SUBROUTINE B2TFCC_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
     wrkfd = 0.d0
 !    ..test sign of cdpa
     DO is=0,ns-1
-      DO nd=1,nbdirs
-        wrkfd(nd, :) = 0.d0
-        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
-      END DO
       wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
       CALL B2XVSG(nfc, wrkf, 1, 'cdpa0', '.ge.')
+      DO nd=1,nbdirs
+        wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
+      END DO
       wrkf(:) = co%cdpa(:, 1, is)*geo%fcqalf(:, 1)
       CALL B2XVSG(nfc, wrkf, 1, 'cdpa1', '.ge.')
     END DO

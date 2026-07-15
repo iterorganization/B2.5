@@ -38,7 +38,7 @@ SUBROUTINE B2TQCA_NODIFF_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !   ..output arguments (unspecified on entry)
@@ -247,6 +247,7 @@ SUBROUTINE B2TQCA_NODIFF_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext&
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
@@ -320,7 +321,7 @@ END SUBROUTINE B2TQCA_NODIFF_NODIFF
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(rt.rz2) *(pl.na) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in rt.rz2:in pl.na:in pl.te:in pl.ti:in
+!                rt.rz2:in pl.na:in pl.te:in pl.ti:in
 !
 !
 !
@@ -335,8 +336,8 @@ END SUBROUTINE B2TQCA_NODIFF_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQCA_DV_NODIFF(ncv, ns, switch, switchd, geo, geod, pl, pld&
-& , dv, dvd, rt, rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
+SUBROUTINE B2TQCA_DV_NODIFF(ncv, ns, switch, switchd, geo, pl, pld, dv, &
+& dvd, rt, rtd, st_ext, vsa, vsad, hci, hcid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -356,11 +357,10 @@ SUBROUTINE B2TQCA_DV_NODIFF(ncv, ns, switch, switchd, geo, geod, pl, pld&
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -671,6 +671,7 @@ SUBROUTINE B2TQCA_DV_NODIFF(ncv, ns, switch, switchd, geo, geod, pl, pld&
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
@@ -751,15 +752,15 @@ END SUBROUTINE B2TQCA_DV_NODIFF
 !                *(pld.na) *(pld.te) *(pld.ti) *(pl.na) *(pl.te)
 !                *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                rtd.rz2:in rt.rz2:in dvd.ne:in dvd.ne2:in dvd.lnlam:in
-!                pld.na:in pld.te:in pld.ti:in pl.na:in pl.te:in
-!                pl.ti:in
+!                geo.cvbb:in rtd.rz2:in rt.rz2:in dvd.ne:in dvd.ne2:in
+!                dvd.lnlam:in pld.na:in pld.te:in pld.ti:in pl.na:in
+!                pl.te:in pl.ti:in
 !  Differentiation of b2tqca in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: hci *(dv.lnlam) vsa
 !   with respect to varying inputs: *(dv.ne) *(dv.ne2) *(dv.lnlam)
 !                *(rt.rz2) *(pl.na) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.ne:in dv.ne2:in dv.lnlam:in
-!                geo.cvbb:in rt.rz2:in pl.na:in pl.te:in pl.ti:in
+!                rt.rz2:in pl.na:in pl.te:in pl.ti:in
 !
 !
 !
@@ -774,9 +775,9 @@ END SUBROUTINE B2TQCA_DV_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
-& pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, st_ext, vsa, &
-& vsad0, vsad, vsadd, hci, hcid0, hcid, hcidd, nbdirs, nbdirs0)
+SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd0, switchd, geo, geod, &
+& pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, st_ext&
+& , vsa, vsad0, vsad, vsadd, hci, hcid0, hcid, hcidd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -795,17 +796,18 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV0), INTENT(IN) :: dvd0
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
-  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(IN) :: dvdd
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV0), INTENT(INOUT) :: dvd0
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
+  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(INOUT) :: dvdd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
@@ -922,6 +924,7 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd0
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd2
   INTEGER :: nd0
   REAL(kind=r8) :: temp3
   REAL(r8) :: temp4
@@ -929,6 +932,8 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
   REAL(r8) :: temp6
   REAL(kind=r8) :: temp7
   REAL(kind=r8) :: temp8
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd3
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd4
   INTEGER :: nbdirs0
 !   ..initialisation
 !
@@ -986,10 +991,10 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
 !
 !   ..compute the Coulomb logarithm
 !srv 01.07.09  20.09.11
-  CALL B2TLNL_DV_DV(ncv, switch, switchd, switch%icase_ii, pl%te, pld0%&
-&             te, pld%te, pldd%te, pl%ti, pld0%ti, pld%ti, pldd%ti, dv%&
-&             ne, dvd0%ne, dvd%ne, dvdd%ne, dv%lnlam, dvd0%lnlam, dvd%&
-&             lnlam, dvdd%lnlam, nbdirs, nbdirs0)
+  CALL B2TLNL_DV_DV(ncv, switch, switchd0, switchd, switch%icase_ii, pl%&
+&             te, pld0%te, pld%te, pldd%te, pl%ti, pld0%ti, pld%ti, pldd&
+&             %ti, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, dv%lnlam, dvd0%lnlam&
+&             , dvd%lnlam, dvdd%lnlam, nbdirs, nbdirs0)
 ! ..compute vsa, hci
 !   ..compute vsax, hcix
 !     (initialise hcix to 0)
@@ -1015,9 +1020,10 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
     IF (is_neutral(is)) THEN
 !       (neutral vsax and hcix are strictly anomalous)
       dummyzerodiffd = 0.d0
-      CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd, vsa(1, 0, is), vsad0&
-&                (:, 1, 0, is), vsad(:, 1, 0, is), vsadd(:, :, 1, 0, is)&
-&                , 1, nbdirs, nbdirs0)
+      dummyzerodiffd2 = 0.D0
+      CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd2, dummyzerodiffd, vsa&
+&                (1, 0, is), vsad0(:, 1, 0, is), vsad(:, 1, 0, is), &
+&                vsadd(:, :, 1, 0, is), 1, nbdirs, nbdirs0)
     ELSE
       DO icv=1,ncv
         t0 = pl%ti(icv)/ev
@@ -1366,17 +1372,21 @@ SUBROUTINE B2TQCA_DV_DV(ncv, ns, switch, switchd, geo, geod, pl, pld0, &
       END IF
     END IF
   END DO
+!
 !   ..compute vsay, hciy
 !!!   (classical perpendicular transport is set to 0)
   DO is=0,ns-1
     dummyzerodiffd0 = 0.d0
-    CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd0, vsa(1, 1, is), vsad0(&
-&              :, 1, 1, is), vsad(:, 1, 1, is), vsadd(:, :, 1, 1, is), 1&
-&              , nbdirs, nbdirs0)
+    dummyzerodiffd3 = 0.D0
+    CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd3, dummyzerodiffd0, vsa(&
+&              1, 1, is), vsad0(:, 1, 1, is), vsad(:, 1, 1, is), vsadd(:&
+&              , :, 1, 1, is), 1, nbdirs, nbdirs0)
   END DO
   dummyzerodiffd1 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd1, hci(1, 1), hcid0(:, 1, &
-&            1), hcid(:, 1, 1), hcidd(:, :, 1, 1), 1, nbdirs, nbdirs0)
+  dummyzerodiffd4 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd4, dummyzerodiffd1, hci(1&
+&            , 1), hcid0(:, 1, 1), hcid(:, 1, 1), hcidd(:, :, 1, 1), 1, &
+&            nbdirs, nbdirs0)
 !srv 16.06.08 }
 !
   IF (switch%b2tqca_iout .NE. 0 .OR. switch%b2npmo_iout .NE. 0) THEN

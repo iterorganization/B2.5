@@ -27,7 +27,7 @@ MODULE B2US_GEO_DIFFV_DIFFV
   PUBLIC :: alloc_geometry, dealloc_geometry, read_geometry, &
 & write_geometry, init_geometry, calc_conn, check_geometry, &
 & divide_by_area, split_face_flux, pitch
-  PUBLIC :: dealloc_geometry_dv0
+  PUBLIC :: alloc_geometry_dv0, dealloc_geometry_dv0, read_geometry_dv0
   PUBLIC :: alloc_geometry_dv, dealloc_geometry_dv, read_geometry_dv
   PUBLIC :: alloc_geometry_dv_dv, dealloc_geometry_dv_dv, &
 & read_geometry_dv_dv
@@ -750,6 +750,196 @@ CONTAINS
       RETURN
     END IF
   END SUBROUTINE ALLOC_GEOMETRY_DV
+
+!  Differentiation of alloc_geometry as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: g.cvbb:in-out g.cvx:in-out g.cvy:in-out
+!                g.cvsz:in-out g.cvhz:in-out g.cvhx:in-out g.cvhy:in-out
+!                g.cvqgam:in-out g.cvvol:in-out g.cvonedbsq:in-out
+!                g.cvbzb:in-out g.cveb:in-out g.cvfpsi:in-out g.fcbb:in-out
+!                g.fcs:in-out g.fchc:in-out g.fcht:in-out g.fchz:in-out
+!                g.fcvol:in-out g.fcqgam:in-out g.fcqalf:in-out
+!                g.fcqbet:in-out g.fcpbs:in-out g.fcpbshz:in-out
+!                g.fcbzb:in-out g.fceb:in-out g.fcfpsi:in-out g.vxbb:in-out
+!                g.vxx:in-out g.vxy:in-out g.vxhz:in-out g.vxvol:in-out
+!                g.vxffbz:in-out g.vxfpsi:in-out g.vxonedbsq:in-out
+!                g.vxbzb:in-out g.vxeb:in-out g.cvconn:in-out g.vxconn:in-out
+!                g.ftconn:in-out g.fsconn:in-out g.fteps:in-out
+!                g.ftbbav2:in-out g.ftfpsi:in-out g.fspsi:in-out
+!                g.ftds:in-out g.fsds:in-out
+!
+!**********************************************************************
+!
+  SUBROUTINE ALLOC_GEOMETRY_DV0(g, gd, ncv, nfc, nvx, nfs, nft, nvmxcv, &
+&   nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ncv, nfc, nvx, nfs, nft, nvmxcv
+    TYPE(GEOMETRY), INTENT(INOUT) :: g
+    TYPE(GEOMETRY_DIFFV0), INTENT(INOUT) :: gd
+    INTRINSIC ALLOCATED
+    INTEGER :: nbdirs
+!
+    IF (ALLOCATED(g%cvbb)) THEN
+      RETURN
+    ELSE
+!
+!  cell quantites
+      ALLOCATE(gd%cvbb(nbdirsmax0, ncv, 0:3))
+      gd%cvbb = 0.D0
+      ALLOCATE(g%cvbb(ncv, 0:3))
+      ALLOCATE(gd%cvx(nbdirsmax0, ncv))
+      gd%cvx = 0.D0
+      ALLOCATE(g%cvx(ncv))
+      ALLOCATE(gd%cvy(nbdirsmax0, ncv))
+      gd%cvy = 0.D0
+      ALLOCATE(g%cvy(ncv))
+      ALLOCATE(gd%cvsz(nbdirsmax0, ncv))
+      gd%cvsz = 0.D0
+      ALLOCATE(g%cvsz(ncv))
+      ALLOCATE(gd%cvhz(nbdirsmax0, ncv))
+      gd%cvhz = 0.D0
+      ALLOCATE(g%cvhz(ncv))
+      ALLOCATE(gd%cvhx(nbdirsmax0, ncv))
+      gd%cvhx = 0.D0
+      ALLOCATE(g%cvhx(ncv))
+      ALLOCATE(gd%cvhy(nbdirsmax0, ncv))
+      gd%cvhy = 0.D0
+      ALLOCATE(g%cvhy(ncv))
+      ALLOCATE(gd%cvqgam(nbdirsmax0, ncv, 0:1))
+      gd%cvqgam = 0.D0
+      ALLOCATE(g%cvqgam(ncv, 0:1))
+      ALLOCATE(gd%cvvol(nbdirsmax0, ncv))
+      gd%cvvol = 0.D0
+      ALLOCATE(g%cvvol(ncv))
+      ALLOCATE(gd%cvonedbsq(nbdirsmax0, ncv))
+      gd%cvonedbsq = 0.D0
+      ALLOCATE(g%cvonedbsq(ncv))
+      ALLOCATE(gd%cvbzb(nbdirsmax0, ncv))
+      gd%cvbzb = 0.D0
+      ALLOCATE(g%cvbzb(ncv))
+      ALLOCATE(gd%cveb(nbdirsmax0, ncv, 0:2))
+      gd%cveb = 0.D0
+      ALLOCATE(g%cveb(ncv, 0:2))
+      ALLOCATE(gd%cvfpsi(nbdirsmax0, ncv))
+      gd%cvfpsi = 0.D0
+      ALLOCATE(g%cvfpsi(ncv))
+!
+!  face quantites
+      ALLOCATE(gd%fcbb(nbdirsmax0, nfc, 0:3))
+      gd%fcbb = 0.D0
+      ALLOCATE(g%fcbb(nfc, 0:3))
+      ALLOCATE(gd%fcs(nbdirsmax0, nfc))
+      gd%fcs = 0.D0
+      ALLOCATE(g%fcs(nfc))
+      ALLOCATE(gd%fchc(nbdirsmax0, nfc, 1:2))
+      gd%fchc = 0.D0
+      ALLOCATE(g%fchc(nfc, 1:2))
+      ALLOCATE(gd%fcht(nbdirsmax0, nfc))
+      gd%fcht = 0.D0
+      ALLOCATE(g%fcht(nfc))
+      ALLOCATE(gd%fchz(nbdirsmax0, nfc))
+      gd%fchz = 0.D0
+      ALLOCATE(g%fchz(nfc))
+      ALLOCATE(gd%fcvol(nbdirsmax0, nfc, 1:2))
+      gd%fcvol = 0.D0
+      ALLOCATE(g%fcvol(nfc, 1:2))
+      ALLOCATE(gd%fcqgam(nbdirsmax0, nfc, 0:1))
+      gd%fcqgam = 0.D0
+      ALLOCATE(g%fcqgam(nfc, 0:1))
+      ALLOCATE(gd%fcqalf(nbdirsmax0, nfc, 0:1))
+      gd%fcqalf = 0.D0
+      ALLOCATE(g%fcqalf(nfc, 0:1))
+      ALLOCATE(gd%fcqbet(nbdirsmax0, nfc, 0:1))
+      gd%fcqbet = 0.D0
+      ALLOCATE(g%fcqbet(nfc, 0:1))
+      ALLOCATE(gd%fcpbs(nbdirsmax0, nfc))
+      gd%fcpbs = 0.D0
+      ALLOCATE(g%fcpbs(nfc))
+      ALLOCATE(gd%fcpbshz(nbdirsmax0, nfc))
+      gd%fcpbshz = 0.D0
+      ALLOCATE(g%fcpbshz(nfc))
+      ALLOCATE(gd%fcbzb(nbdirsmax0, nfc))
+      gd%fcbzb = 0.D0
+      ALLOCATE(g%fcbzb(nfc))
+      ALLOCATE(gd%fceb(nbdirsmax0, nfc, 0:2))
+      gd%fceb = 0.D0
+      ALLOCATE(g%fceb(nfc, 0:2))
+      ALLOCATE(gd%fcfpsi(nbdirsmax0, nfc))
+      gd%fcfpsi = 0.D0
+      ALLOCATE(g%fcfpsi(nfc))
+!
+!  vertex quantites
+      ALLOCATE(gd%vxbb(nbdirsmax0, nvx, 0:3))
+      gd%vxbb = 0.D0
+      ALLOCATE(g%vxbb(nvx, 0:3))
+      ALLOCATE(gd%vxx(nbdirsmax0, nvx))
+      gd%vxx = 0.D0
+      ALLOCATE(g%vxx(nvx))
+      ALLOCATE(gd%vxy(nbdirsmax0, nvx))
+      gd%vxy = 0.D0
+      ALLOCATE(g%vxy(nvx))
+      ALLOCATE(gd%vxhz(nbdirsmax0, nvx))
+      gd%vxhz = 0.D0
+      ALLOCATE(g%vxhz(nvx))
+      ALLOCATE(gd%vxvol(nbdirsmax0, nvmxcv))
+      gd%vxvol = 0.D0
+      ALLOCATE(g%vxvol(nvmxcv))
+      ALLOCATE(gd%vxffbz(nbdirsmax0, nvx))
+      gd%vxffbz = 0.D0
+      ALLOCATE(g%vxffbz(nvx))
+      ALLOCATE(gd%vxfpsi(nbdirsmax0, nvx))
+      gd%vxfpsi = 0.D0
+      ALLOCATE(g%vxfpsi(nvx))
+      ALLOCATE(gd%vxonedbsq(nbdirsmax0, nvx))
+      gd%vxonedbsq = 0.D0
+      ALLOCATE(g%vxonedbsq(nvx))
+      ALLOCATE(gd%vxbzb(nbdirsmax0, nvx))
+      gd%vxbzb = 0.D0
+      ALLOCATE(g%vxbzb(nvx))
+      ALLOCATE(gd%vxeb(nbdirsmax0, nvx, 0:2))
+      gd%vxeb = 0.D0
+      ALLOCATE(g%vxeb(nvx, 0:2))
+!
+!  flux tube quantites
+      ALLOCATE(gd%cvconn(nbdirsmax0, ncv))
+      gd%cvconn = 0.D0
+      ALLOCATE(g%cvconn(ncv))
+      ALLOCATE(gd%ftconn(nbdirsmax0, nft))
+      gd%ftconn = 0.D0
+      ALLOCATE(g%ftconn(nft))
+      ALLOCATE(gd%fteps(nbdirsmax0, nft))
+      gd%fteps = 0.D0
+      ALLOCATE(g%fteps(nft))
+      ALLOCATE(gd%ftbbav2(nbdirsmax0, nft))
+      gd%ftbbav2 = 0.D0
+      ALLOCATE(g%ftbbav2(nft))
+!
+!  flux surface quantities
+      ALLOCATE(gd%vxconn(nbdirsmax0, nvx))
+      gd%vxconn = 0.D0
+      ALLOCATE(g%vxconn(nvx))
+      ALLOCATE(gd%fsconn(nbdirsmax0, nfs))
+      gd%fsconn = 0.D0
+      ALLOCATE(g%fsconn(nfs))
+      ALLOCATE(gd%fspsi(nbdirsmax0, nfs))
+      gd%fspsi = 0.D0
+      ALLOCATE(g%fspsi(nfs))
+      ALLOCATE(gd%ftfpsi(nbdirsmax0, nft))
+      gd%ftfpsi = 0.D0
+      ALLOCATE(g%ftfpsi(nft))
+      ALLOCATE(gd%fsds(nbdirsmax0, nfs))
+      gd%fsds = 0.D0
+      ALLOCATE(g%fsds(nfs))
+      ALLOCATE(gd%ftds(nbdirsmax0, nft))
+      gd%ftds = 0.D0
+      ALLOCATE(g%ftds(nft))
+!
+      CALL INITIALIZE_GEOMETRY(g)
+!
+      RETURN
+    END IF
+  END SUBROUTINE ALLOC_GEOMETRY_DV0
 
 !
 !**********************************************************************
@@ -1837,12 +2027,12 @@ CONTAINS
 !                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
 !                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
 !                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
-!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
 !                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
-!                gm.ftds:out gm.fsds:out
+!                gm.ftds:in-out gm.fsds:in-out
 !  Differentiation of read_geometry as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
 !                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvhy:in-out
@@ -1853,12 +2043,12 @@ CONTAINS
 !                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
 !                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
 !                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
-!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.vxeb:out gm.cvconn:in-out gm.vxconn:in-out
 !                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
-!                gm.ftds:in-out gm.fsds:in-out
+!                gm.ftds:out gm.fsds:out
 !
 !**********************************************************************
 !
@@ -1965,12 +2155,12 @@ CONTAINS
 !                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
 !                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
 !                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
-!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.vxeb:out gm.cvconn:in-out gm.vxconn:in-out
 !                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
-!                gm.ftds:in-out gm.fsds:in-out
+!                gm.ftds:out gm.fsds:out
 !
 !**********************************************************************
 !
@@ -2055,6 +2245,107 @@ CONTAINS
 !
     RETURN
   END SUBROUTINE READ_GEOMETRY_DV
+
+!  Differentiation of read_geometry as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
+!                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvhy:in-out
+!                gm.cvqgam:in-out gm.cvvol:in-out gm.cvonedbsq:in-out
+!                gm.cvbzb:in-out gm.cveb:in-out gm.cvfpsi:in-out
+!                gm.fcbb:in-out gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out
+!                gm.fchz:in-out gm.fcvol:in-out gm.fcqgam:in-out
+!                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
+!                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
+!                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
+!                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
+!                gm.ftds:in-out gm.fsds:in-out
+!
+!**********************************************************************
+!
+!
+  SUBROUTINE READ_GEOMETRY_DV0(iun, ncv, nfc, nvx, nfs, nft, nvmxcv, gm&
+&   , gmd, nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: iun, ncv, nfc, nvx, nfs, nft, nvmxcv
+    TYPE(GEOMETRY), INTENT(INOUT) :: gm
+    TYPE(GEOMETRY_DIFFV0), INTENT(INOUT) :: gmd
+    REAL(kind=r8) :: rdum(1)
+    REAL(kind=r8) :: rdumd(nbdirsmax0, 1)
+    EXTERNAL CFRURE, CFRURE_OPT, IPGETR
+    INTEGER :: arg1
+    INTEGER :: nd
+    INTEGER :: nbdirs
+!
+    CALL ALLOC_GEOMETRY_DV0(gm, gmd, ncv, nfc, nvx, nfs, nft, nvmxcv, &
+&                     nbdirs)
+!
+! cell volumes
+    arg1 = ncv*4
+    CALL CFRURE(iun, arg1, gm%cvbb, 'cvBb')
+    arg1 = ncv*3
+    CALL CFRURE(iun, arg1, gm%cveb, 'cvEb')
+    CALL CFRURE(iun, ncv, gm%cvx, 'cvX')
+    CALL CFRURE(iun, ncv, gm%cvy, 'cvY')
+    CALL CFRURE(iun, ncv, gm%cvsz, 'cvSz')
+    CALL CFRURE(iun, ncv, gm%cvhz, 'cvHz')
+!WG temp!
+    CALL CFRURE(iun, ncv, gm%cvhx, 'cvHx')
+    arg1 = ncv*2
+    CALL CFRURE(iun, arg1, gm%cvqgam, 'cvQgam')
+    CALL CFRURE(iun, ncv, gm%cvvol, 'cvVol')
+!
+! face quantities
+    arg1 = nfc*4
+    CALL CFRURE(iun, arg1, gm%fcbb, 'fcBb')
+    CALL CFRURE(iun, nfc, gm%fcs, 'fcS')
+    arg1 = nfc*2
+    CALL CFRURE(iun, arg1, gm%fchc, 'fcHc')
+    CALL CFRURE(iun, nfc, gm%fcht, 'fcHt')
+    arg1 = nfc*2
+    CALL CFRURE(iun, arg1, gm%fcqgam, 'fcQgam')
+    arg1 = nfc*2
+    CALL CFRURE(iun, arg1, gm%fcqalf, 'fcQalf')
+    arg1 = nfc*2
+    CALL CFRURE(iun, arg1, gm%fcqbet, 'fcQbet')
+    CALL CFRURE(iun, nfc, gm%fcpbs, 'fcPbs')
+!
+! vertex quantities
+    arg1 = nvx*4
+    CALL CFRURE(iun, arg1, gm%vxbb, 'vxBb')
+    CALL CFRURE(iun, nvx, gm%vxx, 'vxX')
+    CALL CFRURE(iun, nvx, gm%vxy, 'vxY')
+    CALL CFRURE(iun, nvx, gm%vxffbz, 'vxFfbz')
+    CALL CFRURE(iun, nvx, gm%vxfpsi, 'vxFpsi')
+!
+! flux surface quantities
+    CALL CFRURE(iun, ncv, gm%cvconn, 'cvConn')
+    CALL CFRURE(iun, nfs, gm%fspsi, 'fsPsi')
+    DO nd=1,nbdirs
+!
+      rdumd(nd, 1) = 0.D0
+      gmd%qalfmin(nd) = 0.D0
+      rdumd(nd, 1) = 0.D0
+      gmd%qalfmax(nd) = 0.D0
+    END DO
+    rdum(1) = 1.0e-3_R8
+    CALL IPGETR('b2us_prep_Qalfmin', rdum(1))
+    CALL CFRURE_OPT(iun, 1, rdum, 'Qalfmin')
+    gm%qalfmin = rdum(1)
+    rdum(1) = 1.0e-3_R8
+    CALL IPGETR('b2us_prep_Qalfmax', rdum(1))
+    CALL CFRURE_OPT(iun, 1, rdum, 'Qalfmax')
+    gm%qalfmax = rdum(1)
+!
+! check consistency of input
+    CALL CHECK_GEOMETRY(ncv, nfc, nvx, nfs, nft, gm)
+!
+    RETURN
+  END SUBROUTINE READ_GEOMETRY_DV0
 
 !
 !**********************************************************************
@@ -2243,18 +2534,19 @@ CONTAINS
 &   , ifc1, ifc2, ivx1, ivx2, ift, inv_dist(mpg%nvx)
     INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
+    INTEGER, SAVE :: temp_ignore_geo=0
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
 &   , dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
     LOGICAL :: active, match_found
     INTRINSIC MAXVAL, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF_NODIFF, INTFACE, INTVERTEX_NODIFF_NODIFF, &
-&       XERRAB, XERTST
+&       IPGETI, XERRAB, XERTST
     INTRINSIC MOD
     INTRINSIC MINVAL
     INTRINSIC REAL
     INTRINSIC SIGN
-    INTRINSIC ANY
     INTRINSIC ALLOCATED
+    INTRINSIC ANY
     REAL(kind=r8) :: x1
     REAL(kind=r8) :: abs0
     REAL(kind=r8), DIMENSION(mpg%nfs) :: dabs0
@@ -2265,6 +2557,9 @@ CONTAINS
     REAL(r8) :: result10
     REAL(kind=r8) :: result11
     INTEGER :: result12
+    REAL(kind=r8) :: result20
+!
+    CALL IPGETI('b2mndr_temp_ignore_geo', temp_ignore_geo)
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
@@ -2799,7 +3094,7 @@ CONTAINS
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
     ixpt = 0
-    IF (mpg%nnreg(0) .NE. 1) THEN
+    IF (.NOT.(mpg%nnreg(0) .EQ. 1 .OR. (.NOT.ALLOCATED(mpg%xpt)))) THEN
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       IF (mpg%nnreg(0) .EQ. 2) THEN
@@ -2895,7 +3190,7 @@ CONTAINS
     ift = 0
     gm%signmf = 0.0_R8
     IF (ANY(mpg%cvonclosedsurface(1:mpg%nci))) THEN
-      DO WHILE (t0 .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+      DO WHILE (t0 .EQ. 0.0_R8 .AND. ift .LT. mpg%nft)
         ift = ift + 1
         icv = mpg%ftcv(mpg%ftcvp(ift, 1))
         IF (mpg%cvonclosedsurface(icv)) THEN
@@ -2913,7 +3208,7 @@ CONTAINS
       r0 = r0/t0
       z0 = z0/t0
       ift = 0
-      DO WHILE (gm%signmf .EQ. 0.0_R8 .OR. ift .LT. mpg%nft)
+      DO WHILE (gm%signmf .EQ. 0.0_R8 .AND. ift .LT. mpg%nft)
         ift = ift + 1
         icv = mpg%ftcv(mpg%ftcvp(ift, 1))
         IF (mpg%cvonclosedsurface(icv)) THEN
@@ -2931,131 +3226,194 @@ CONTAINS
       gm%signmf = SIGN(1.0_R8, gm%cveb(1, 0))
     END IF
 !
+    IF (temp_ignore_geo .EQ. 0) THEN
+!! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-    IF (ALLOCATED(mpg%strdiv)) THEN
-      result12 = MAXVAL(mpg%strdiv)
-      DO i=1,result12
-        match_found = .false.
-        k = 1
-        DO WHILE (.NOT.match_found)
-          ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
+      IF (ALLOCATED(mpg%strdiv)) THEN
+        result12 = MAXVAL(mpg%strdiv)
+        DO i=1,result12
+          match_found = .false.
+          k = 1
+          DO WHILE (.NOT.match_found)
+            ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
 !nh check if the vertices belong to a flux surface
-          IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0 .AND. mpg%vxfs(mpg%fcvx&
-&             (ifc1, 2)) .NE. 0) THEN
+            IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0 .AND. mpg%vxfs(mpg%&
+&               fcvx(ifc1, 2)) .NE. 0) THEN
 ! linear interpolation
-            psi1 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))+gm%&
-&             fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2))))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0) THEN
+              psi1 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))+gm%&
+&               fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2))))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 1)) .NE. 0) THEN
 ! take value from vertex 1
-            psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 2)) .NE. 0) THEN
+              psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 1)))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc1, 2)) .NE. 0) THEN
 ! take value from vertex 2
-            psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2)))
-            match_found = .true.
-          ELSE IF (k .EQ. mpg%divfcp(i, 2)) THEN
+              psi1 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc1, 2)))
+              match_found = .true.
+            ELSE IF (k .EQ. mpg%divfcp(i, 2)) THEN
 ! last face
-            psi1 = 0.0_R8
-            WRITE(*, *) 'Warning: no flux surface assigned to any '//&
-&           'of the grid vertices coinciding with '
-            WRITE(*, *) 'target ', i
-            WRITE(*, *) 'Assume Psi = 0'
-            match_found = .true.
-          ELSE
+              psi1 = 0.0_R8
+              WRITE(*, *) 'Warning: no flux surface assigned to any '//&
+&             'of the grid vertices coinciding with '
+              WRITE(*, *) 'target ', i
+              WRITE(*, *) 'Assume Psi = 0'
+              match_found = .true.
+            ELSE
 ! check next face
-            k = k + 1
-          END IF
-        END DO
-        match_found = .false.
-        k = mpg%divfcp(i, 2)
-        DO WHILE (.NOT.match_found)
-          ifc2 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
-!nh check if the vertices belong to a flux surface
-          IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0 .AND. mpg%vxfs(mpg%fcvx&
-&             (ifc2, 2)) .NE. 0) THEN
-! linear interpolation
-            psi2 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))+gm%&
-&             fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2))))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0) THEN
-! take value from vertex 1
-            psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))
-            match_found = .true.
-          ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 2)) .NE. 0) THEN
-! take value from vertex 2
-            psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2)))
-            match_found = .true.
-          ELSE IF (k .EQ. 1) THEN
-! last face
-            psi2 = 0.0_R8
-            match_found = .true.
-          ELSE
-! check next face
-            k = k - 1
-          END IF
-        END DO
-        IF ((gm%psi_increasing .AND. psi1 .GT. psi2) .OR. (.NOT.gm%&
-&           psi_increasing .AND. psi2 .GT. psi1)) THEN
-          ALLOCATE(old_face_list(1:mpg%divfcp(i, 2)))
-          old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, 1)&
-&           :mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
-          DO j=1,mpg%divfcp(i, 2)
-            mpg%divfc(mpg%divfcp(i, 1)+j-1) = old_face_list(mpg%divfcp(i&
-&             , 2)-j+1)
+              k = k + 1
+            END IF
           END DO
-          DEALLOCATE(old_face_list)
-        END IF
-        match_found = .false.
-        DO j=mpg%divfcp(i, 1),mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1
-          ivx1 = mpg%fcvx(mpg%divfc(j), 1)
-          ivx2 = mpg%fcvx(mpg%divfc(j), 2)
-          DO k=1,mpg%nxpt
-            DO l=mpg%strvxp(k, 1),mpg%strvxp(k, 1)+mpg%strvxp(k, 2)-1
-              IF (ivx1 .EQ. mpg%strvx(l)) THEN
-                IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx1) .LE. gm%&
-&                   vxfpsi(ivx2)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
-&                   vxfpsi(ivx1) .GT. gm%vxfpsi(ivx2))) THEN
-                  IF (mpg%ifdiv(i) .EQ. 0) THEN
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx1
-                  ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep .OR. (mpg%vxfs&
-&                     (ivx1) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)&
-&                 ) THEN
+          match_found = .false.
+          k = mpg%divfcp(i, 2)
+          DO WHILE (.NOT.match_found)
+            ifc2 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
+!nh check if the vertices belong to a flux surface
+            IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0 .AND. mpg%vxfs(mpg%&
+&               fcvx(ifc2, 2)) .NE. 0) THEN
+! linear interpolation
+              psi2 = 0.5_R8*(gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))+gm%&
+&               fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2))))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 1)) .NE. 0) THEN
+! take value from vertex 1
+              psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 1)))
+              match_found = .true.
+            ELSE IF (mpg%vxfs(mpg%fcvx(ifc2, 2)) .NE. 0) THEN
+! take value from vertex 2
+              psi2 = gm%fspsi(mpg%vxfs(mpg%fcvx(ifc2, 2)))
+              match_found = .true.
+            ELSE IF (k .EQ. 1) THEN
+! last face
+              psi2 = 0.0_R8
+              match_found = .true.
+            ELSE
+! check next face
+              k = k - 1
+            END IF
+          END DO
+          IF ((gm%psi_increasing .AND. psi1 .GT. psi2) .OR. (.NOT.gm%&
+&             psi_increasing .AND. psi2 .GT. psi1)) THEN
+            ALLOCATE(old_face_list(1:mpg%divfcp(i, 2)))
+            old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, &
+&             1):mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
+            DO j=1,mpg%divfcp(i, 2)
+              mpg%divfc(mpg%divfcp(i, 1)+j-1) = old_face_list(mpg%divfcp&
+&               (i, 2)-j+1)
+            END DO
+            DEALLOCATE(old_face_list)
+          END IF
+          match_found = .false.
+          DO j=mpg%divfcp(i, 1),mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1
+            ivx1 = mpg%fcvx(mpg%divfc(j), 1)
+            ivx2 = mpg%fcvx(mpg%divfc(j), 2)
+            DO k=1,mpg%nxpt
+              DO l=mpg%strvxp(k, 1),mpg%strvxp(k, 1)+mpg%strvxp(k, 2)-1
+                IF (ivx1 .EQ. mpg%strvx(l)) THEN
+                  IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx1) .LE. gm%&
+&                     vxfpsi(ivx2)) .OR. (.NOT.gm%psi_increasing .AND. &
+&                     gm%vxfpsi(ivx1) .GT. gm%vxfpsi(ivx2))) THEN
+                    IF (mpg%ifdiv(i) .EQ. 0) THEN
+                      match_found = .true.
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx1
+                    ELSE IF (mpg%vxfs(ivx1) .EQ. mpg%ifssep .OR. (mpg%&
+&                       vxfs(ivx1) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 &
+&                       .GT. 0)) THEN
 ! Two strike points on the same target
 ! We label the active one only
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx1
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx1
+                    END IF
                   END IF
-                END IF
-              ELSE IF (ivx2 .EQ. mpg%strvx(l)) THEN
-                IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx2) .LE. gm%&
-&                   vxfpsi(ivx1)) .OR. (.NOT.gm%psi_increasing .AND. gm%&
-&                   vxfpsi(ivx2) .GT. gm%vxfpsi(ivx1))) THEN
-                  IF (mpg%ifdiv(i) .EQ. 0) THEN
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx2
-                  ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep .OR. (mpg%vxfs&
-&                     (ivx2) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 .GT. 0)&
-&                 ) THEN
+                ELSE IF (ivx2 .EQ. mpg%strvx(l)) THEN
+                  IF ((gm%psi_increasing .AND. gm%vxfpsi(ivx2) .LE. gm%&
+&                     vxfpsi(ivx1)) .OR. (.NOT.gm%psi_increasing .AND. &
+&                     gm%vxfpsi(ivx2) .GT. gm%vxfpsi(ivx1))) THEN
+                    IF (mpg%ifdiv(i) .EQ. 0) THEN
+                      match_found = .true.
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx2
+                    ELSE IF (mpg%vxfs(ivx2) .EQ. mpg%ifssep .OR. (mpg%&
+&                       vxfs(ivx2) .EQ. mpg%ifssep2 .AND. mpg%ifssep2 &
+&                       .GT. 0)) THEN
 ! Two strike points on the same target
 ! We label the active one only
-                    mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
-                    mpg%ivdiv(i) = ivx2
+                      mpg%ifdiv(i) = j - mpg%divfcp(i, 1) + 1
+                      mpg%ivdiv(i) = ivx2
+                    END IF
                   END IF
                 END IF
-              END IF
+              END DO
             END DO
           END DO
+          CALL XERTST(match_found .OR. mpg%nxpt .EQ. 0, &
+&               'No matching face found for strike point !')
         END DO
-        CALL XERTST(match_found .OR. mpg%nxpt .EQ. 0, &
-&             'No matching face found for strike point !')
-      END DO
+      END IF
+    ELSE
+!
+      WRITE(*, *) 'Warning: temp_ignore_geo switch used'
+      WRITE(*, *) 'This is a temporary solution to run unstructured', &
+&     ' geometries that do not fit in existing case categorizations.'
+      WRITE(*, *) 'This option limits post-processing options.'
     END IF
 !
+    IF (ALLOCATED(mpg%fcs_wall)) THEN
+! Count nFci
+      mpg%nfci = 0
+      DO j=2,mpg%ncg
+        result12 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j), 1:2)))
+        result20 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j-1), 1:2)))
+        IF (result12 .NE. result20) mpg%nfci = mpg%nfci + 1
+      END DO
+      mpg%nfci = mpg%nfci + 1
+!
+      ALLOCATE(mpg%fcs_wall_ind(mpg%nfci, 2))
+      ALLOCATE(mpg%fcs_wall_type(mpg%nfci))
+! Populate mapping array
+!
+      k = 1
+      i = 1
+      DO j=2,mpg%ncg
+        result12 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j), 1:2)))
+        result20 = MAXVAL(mpg%cvft(mpg%fccv(mpg%fcs_wall(j-1), 1:2)))
+        IF (result12 .NE. result20) THEN
+          mpg%fcs_wall_ind(k, 1) = i
+          mpg%fcs_wall_ind(k, 2) = j - i
+          result12 = MINVAL(mpg%fccv(mpg%fcs_wall(i), 1:2))
+          IF (mpg%cvonclosedsurface(result12)) THEN
+            mpg%fcs_wall_type(k) = 1
+          ELSE
+            mpg%fcs_wall_type(k) = 2
+          END IF
+          k = k + 1
+          i = j
+        END IF
+! Handle last entry
+
+      END DO
+!
+      mpg%fcs_wall_ind(mpg%nfci, 1) = mpg%fcs_wall_ind(mpg%nfci-1, 1) + &
+&       mpg%fcs_wall_ind(mpg%nfci-1, 2)
+      mpg%fcs_wall_ind(mpg%nfci, 2) = mpg%ncg - mpg%fcs_wall_ind(mpg%&
+&       nfci, 1) + 1
+      result12 = MINVAL(mpg%fccv(mpg%fcs_wall(i), 1:2))
+      IF (mpg%cvonclosedsurface(result12)) THEN
+        mpg%fcs_wall_type(k) = 1
+      ELSE
+        mpg%fcs_wall_type(k) = 2
+      END IF
+    END IF
+!
+    WRITE(*, *) 'list of boundary faces in one flux tube and type:'
+    DO j=1,mpg%nfci
+      WRITE(*, '(4i4)') j, mpg%fcs_wall_ind(j, 1), mpg%fcs_wall_ind(j, 2&
+&     ), mpg%fcs_wall_type(j)
+      WRITE(*, *) mpg%fcs_wall(mpg%fcs_wall_ind(j, 1):mpg%fcs_wall_ind(j&
+&     , 1)+mpg%fcs_wall_ind(j, 2)-1)
+    END DO
     RETURN
   END SUBROUTINE INIT_GEOMETRY
 

@@ -101,9 +101,13 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
   PARAMETER (nstsid=def_nsts)
   PARAMETER (nlimpsd=def_nlim+def_nsts)
   REAL(kind=r8), SAVE :: recyc(0:nsdmax-1, nstraid)
+  REAL(kind=r8), SAVE :: recycd0(nbdirsmax0, 0:nsdmax-1, nstraid)
+  REAL(kind=r8), SAVE :: recycd(nbdirsmax, 0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: b2recyc(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: b2recycd0(nbdirsmax0, 0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: b2recycd(nbdirsmax, 0:nsdmax-1, nstraid)
+  REAL(kind=r8), SAVE :: b2recycdd(nbdirsmax0, nbdirsmax, 0:nsdmax-1, &
+& nstraid)
   REAL(kind=r8), SAVE :: recycm(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: erecyc(0:nsdmax-1, nstraid)
   REAL(kind=r8), SAVE :: mrecyc(0:nsdmax-1, nstraid)
@@ -123,6 +127,10 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
   REAL(kind=r8), SAVE :: time_dep_puff_param(10, nstraid)
   REAL(kind=r8), SAVE :: rc_face_ori(2*(def_nxd+def_nyd), nstraid)
   REAL(kind=r8), SAVE :: strasclfl(nstraid)
+  REAL(kind=r8), SAVE :: nrelax_sni(nstraid)
+  REAL(kind=r8), SAVE :: nrelax_smo(nstraid)
+  REAL(kind=r8), SAVE :: nrelax_see(nstraid)
+  REAL(kind=r8), SAVE :: nrelax_sei(nstraid)
   CHARACTER(len=16), SAVE :: textan(0:def_natm-1), textmn(0:def_nmol-1)&
 & , textin(0:def_nion-1)
   REAL(kind=r8), SAVE :: chemical_sputter_yield(0:def_nlim+def_nsts)
@@ -166,7 +174,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
   REAL(kind=r8), SAVE :: rcfe(nstraid), rcfi(nstraid)
 !
   INTEGER, SAVE :: nstrai, nstrat, eirene_mod, ncns, ntns, nsns, &
-& dbg_eir_mc, debug_flags(100), neutrals_count
+& dbg_eir_mc, debug_flags(100), neutrals_count, maxpoin
   INTEGER, SAVE :: nstraid0(nbdirsmax), nstratd(nbdirsmax)
   REAL(kind=r8), SAVE :: rf_neut(4)
   REAL(kind=r8), SAVE :: eirene_step_cpu, eirene_step_dt, volrecinc, &
@@ -178,7 +186,6 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
 !
   REAL(kind=r8), SAVE :: fchar_chemical
   INTEGER, SAVE :: igass_chemical, itsput_chemical, issput_chemical
-  INTEGER, SAVE :: maxpoin
 !
 !sw 21feb2012
   INTEGER, SAVE :: l_neutrad=0, l_neutflux
@@ -212,7 +219,8 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
 &     , sps_mtri, sps_tmpr, sps_spph, sps_spch, sps_sgrp, sps_mtrl, msns&
 &     , write_nml_neut, time_dep_puff, ngpdata, gpdata, maxpoin, &
 &     time_dep_puff_param, time_dep_puff_func, time_dep_puff_case, e_fc&
-&     , accel_ion, strasclfl
+&     , accel_ion, strasclfl, nrelax_sni, nrelax_smo, nrelax_see, &
+&     nrelax_sei
   INTERFACE READ_NEUTRALS_NAMELIST
       MODULE PROCEDURE READ_NEUTRALS_NAMELIST_ST
       MODULE PROCEDURE READ_NEUTRALS_NAMELIST_US
@@ -376,7 +384,6 @@ CONTAINS
     ELSE
       l_neutflux = 0
     END IF
-    maxpoin = 2000
 !
     chemical_erosion_redep_fac = 1.0_R8
     chemical_erosion_be_fac = .false.
@@ -427,7 +434,10 @@ CONTAINS
     WRITE(hlp_frm, '(a6,i3,a3)') '(1x,a,', nsd, 'i4)'
     WRITE(*, hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
     WRITE(*, hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
-!
+    nrelax_sni(:) = 1
+    nrelax_smo(:) = 1
+    nrelax_see(:) = 1
+    nrelax_sei(:) = 1
     RETURN
   END SUBROUTINE ALLOC_B2MOD_NEUTRALS
 
@@ -458,16 +468,14 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_NEUTRALS_SAVE
 
 !
-  SUBROUTINE READ_NEUTRALS_NAMELIST_ST(nx, ny, ns, switch, dotest)
+  SUBROUTINE READ_NEUTRALS_NAMELIST_ST(nx, ny, ns, dotest)
     USE B2MOD_WALL, ONLY : track_index, ntrack, track_species
     USE B2MOD_INDIRECT_DIFFV_DIFFV
     USE B2MOD_ELEMENTS_DIFFV, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
     USE B2MOD_B2CMPA_DIFFV
-    USE B2MOD_SWITCHES_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    TYPE(SWITCHES), INTENT(IN) :: switch
     INTEGER :: nx, ny, ns
     LOGICAL :: dotest
     INTEGER :: is, ic, ix, istra, i, j, k, n, ii(1), itrack
@@ -511,12 +519,6 @@ CONTAINS
         nstrai = nstrai - 1
       ELSE IF (crcstra(nstrai+1) .EQ. 'T') THEN
         nstrat = nstrai + 1
-      ELSE IF (switch%use_eirene .NE. 0) THEN
-        nstrat = nstrai + 1
-        crcstra(nstrat) = 'T'
-        rcpos(nstrat) = 0
-        rcstart(nstrat) = 0
-        rcend(nstrat) = 0
       ELSE
         nstrat = nstrai
       END IF
@@ -607,7 +609,6 @@ CONTAINS
 &         .AND. 0.0_R8 .LT. rf_neut(3) .AND. 0.0_R8 .LT. rf_neut(4), &
 &         'faulty input rf_neut')
     CALL XERTST(0 .LE. issput_chemical, 'faulty input issput_chemical')
-    CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
     CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
@@ -619,6 +620,7 @@ CONTAINS
 &         'faulty input neutrals_time_mod')
     CALL XERTST(0.0_R8 .LE. neutrals_time_switch, &
 &         'faulty input neutrals_time_switch')
+!
     DO istra=1,nstrat
       IF (crcstra(istra) .EQ. 'N') THEN
         IF (old_style(istra)) THEN
@@ -718,8 +720,6 @@ CONTAINS
         CALL XERTST(0.0_R8 .LE. mrecyc(is, istra), 'faulty input mrecyc'&
 &            )
         CALL XERTST(0.0_R8 .LE. erecyc(is, istra), 'faulty input erecyc'&
-&            )
-        CALL XERTST(0.0_R8 .LE. mrecyc(is, istra), 'faulty input mrecyc'&
 &            )
         CALL XERTST(0.0_R8 .LE. rcion(is, istra), 'faulty input rcion')
         CALL XERTST(0.0_R8 .LE. phys_sput(is, istra), &
@@ -865,7 +865,25 @@ CONTAINS
       PRINT '(3x,50i5)', (msns(1, j), j=1,n)
       PRINT '(3x,50i5)', (msns(2, j), j=1,n)
     END IF
+!}
 !>>>
+    IF (debug_flags(90) .GT. 0) THEN
+!{
+      IF (debug_flags(91) .EQ. 0) debug_flags(91) = nnstsi - 1
+      CALL XERTST(debug_flags(90) .LE. nsts .AND. debug_flags(91) .LE. &
+&           nsts .AND. debug_flags(91) .GE. debug_flags(90), &
+&           'faulty non-standard surface number in debug_flags')
+      IF (debug_flags(92) .EQ. -1) debug_flags(92) = 1
+      IF (debug_flags(93) .EQ. -1) debug_flags(93) = nstrat
+      IF (debug_flags(94) .EQ. -1) debug_flags(94) = 0
+      IF (debug_flags(95) .EQ. -1) debug_flags(95) = 0
+      CALL XERTST(debug_flags(92) .GE. 0 .AND. debug_flags(92) .LE. &
+&           nstrat .AND. debug_flags(93) .LE. nstrat .AND. debug_flags(&
+&           93) .GE. debug_flags(92) .AND. debug_flags(94) .GE. 0 .AND. &
+&           debug_flags(94) .LE. nstrat .AND. debug_flags(95) .LE. &
+&           nstrat .AND. debug_flags(95) .GE. debug_flags(94), &
+&           'faulty stratum number in debug_flags')
+    END IF
 !
 !{
     DO j=1,nstrai
@@ -899,7 +917,7 @@ CONTAINS
 &           is_codes(is)
       END IF
     END DO
-    WRITE(hlp_frm, '(a,i2,a)') '(a,', ntrack, '(a2,1x))'
+    WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntrack, '(a2,1x))'
     WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 !.. Test consistency with region boundaries
     IF (.NOT.dotest) THEN
@@ -1090,10 +1108,10 @@ CONTAINS
 
 !  Differentiation of read_neutrals_namelist_us_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: b2recyc
-!   with respect to varying inputs: b2recyc
+!   with respect to varying inputs: recyc b2recyc
 !  Differentiation of read_neutrals_namelist_us in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: b2recyc
-!   with respect to varying inputs: b2recyc
+!   with respect to varying inputs: recyc b2recyc
 !   Plus diff mem management of: m.rcfcor:in-out
 !
 !  Differentiation of read_neutrals_namelist_us as a context to call tangent code (with options multiDirectional context noISIZE 
@@ -1127,7 +1145,6 @@ CONTAINS
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
-    INTRINSIC NINT
     INTRINSIC COUNT
     EXTERNAL FIND_FACES_NODIFF
     EXTERNAL XERRAB
@@ -1168,20 +1185,6 @@ CONTAINS
         nstrai = nstrai - 1
       ELSE IF (crcstra(nstrai+1) .EQ. 'T') THEN
         nstrat = nstrai + 1
-      ELSE IF (switch%use_eirene .NE. 0) THEN
-        nstrat = nstrai + 1
-        crcstra(nstrat) = 'T'
-        rcpos(nstrat) = 0
-        rcstart(nstrat) = 0
-        rcend(nstrat) = 0
-        IF (switch%recycle_afn .NE. 0) THEN
-          DO is=0,ns-1
-            IF (NINT(zn(is)) .EQ. 1) THEN
-              erecyc(is, nstrat) = 0.0_R8
-              mrecyc(is, nstrat) = 0.0_R8
-            END IF
-          END DO
-        END IF
       ELSE
         nstrat = nstrai
       END IF
@@ -1277,7 +1280,7 @@ CONTAINS
       DO is=0,ns-1
         IF (b2recyc(is, ist) .LT. 0.0_R8) THEN
           DO nd=1,nbdirs0
-            b2recycd0(nd, is, ist) = 0.D0
+            b2recycd0(nd, is, ist) = recycd0(nd, is, ist)
           END DO
           b2recyc(is, ist) = recyc(is, ist)
         END IF
@@ -1295,7 +1298,6 @@ CONTAINS
 &         .AND. 0.0_R8 .LT. rf_neut(3) .AND. 0.0_R8 .LT. rf_neut(4), &
 &         'faulty input rf_neut')
     CALL XERTST(0 .LE. issput_chemical, 'faulty input issput_chemical')
-    CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
     CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
@@ -1541,7 +1543,7 @@ CONTAINS
 
 !  Differentiation of read_neutrals_namelist_us in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: b2recyc
-!   with respect to varying inputs: b2recyc
+!   with respect to varying inputs: recyc b2recyc
 !   Plus diff mem management of: m.rcfcor:in-out
 !
 !  Differentiation of read_neutrals_namelist_us as a context to call tangent code (with options multiDirectional context noISIZE 
@@ -1574,7 +1576,6 @@ CONTAINS
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
-    INTRINSIC NINT
     INTRINSIC COUNT
     EXTERNAL FIND_FACES_NODIFF
     EXTERNAL XERRAB
@@ -1613,20 +1614,6 @@ CONTAINS
         nstrai = nstrai - 1
       ELSE IF (crcstra(nstrai+1) .EQ. 'T') THEN
         nstrat = nstrai + 1
-      ELSE IF (switch%use_eirene .NE. 0) THEN
-        nstrat = nstrai + 1
-        crcstra(nstrat) = 'T'
-        rcpos(nstrat) = 0
-        rcstart(nstrat) = 0
-        rcend(nstrat) = 0
-        IF (switch%recycle_afn .NE. 0) THEN
-          DO is=0,ns-1
-            IF (NINT(zn(is)) .EQ. 1) THEN
-              erecyc(is, nstrat) = 0.0_R8
-              mrecyc(is, nstrat) = 0.0_R8
-            END IF
-          END DO
-        END IF
       ELSE
         nstrat = nstrai
       END IF
@@ -1736,7 +1723,6 @@ CONTAINS
 &         .AND. 0.0_R8 .LT. rf_neut(3) .AND. 0.0_R8 .LT. rf_neut(4), &
 &         'faulty input rf_neut')
     CALL XERTST(0 .LE. issput_chemical, 'faulty input issput_chemical')
-    CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
     CALL XERTST(0.0_R8 .LE. eirene_step_dt, &
@@ -2004,7 +1990,6 @@ CONTAINS
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
-    INTRINSIC NINT
     INTRINSIC COUNT
     EXTERNAL FIND_FACES_NODIFF
     EXTERNAL XERRAB
@@ -2042,20 +2027,6 @@ CONTAINS
         nstrai = nstrai - 1
       ELSE IF (crcstra(nstrai+1) .EQ. 'T') THEN
         nstrat = nstrai + 1
-      ELSE IF (switch%use_eirene .NE. 0) THEN
-        nstrat = nstrai + 1
-        crcstra(nstrat) = 'T'
-        rcpos(nstrat) = 0
-        rcstart(nstrat) = 0
-        rcend(nstrat) = 0
-        IF (switch%recycle_afn .NE. 0) THEN
-          DO is=0,ns-1
-            IF (NINT(zn(is)) .EQ. 1) THEN
-              erecyc(is, nstrat) = 0.0_R8
-              mrecyc(is, nstrat) = 0.0_R8
-            END IF
-          END DO
-        END IF
       ELSE
         nstrat = nstrai
       END IF
@@ -2165,7 +2136,6 @@ CONTAINS
 &         .AND. 0.0_R8 .LT. rf_neut(3) .AND. 0.0_R8 .LT. rf_neut(4), &
 &         'faulty input rf_neut')
     CALL XERTST(0 .LE. issput_chemical, 'faulty input issput_chemical')
-    CALL XERTST(0 .LT. maxpoin, 'faulty input maxpoin')
     CALL XERTST(0.0_R8 .LE. eirene_step_cpu, &
 &         'faulty input eirene_step_cpu')
     CALL XERTST(0.0_R8 .LE. eirene_step_dt, &

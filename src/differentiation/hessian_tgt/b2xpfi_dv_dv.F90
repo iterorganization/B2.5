@@ -49,13 +49,15 @@ SUBROUTINE B2XPFI_DV_DV(nfc, ns, fna, fnad0, fnad, fnadd, fni, fnid0, &
   INTEGER :: arg1
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd0
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfi')
   arg1 = nfc*2
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd, fni, fnid0, fnid, fnidd&
-&            , 1, nbdirs, nbdirs0)
+  dummyzerodiffd0 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd0, dummyzerodiffd, fni, &
+&            fnid0, fnid, fnidd, 1, nbdirs, nbdirs0)
   DO is=0,ns-1
     arg1 = nfc*2
     CALL B2SAXPY_DV_DV(arg1, 1.0_R8, fna(1, 0, is), fnad0(:, 1, 0, is), &

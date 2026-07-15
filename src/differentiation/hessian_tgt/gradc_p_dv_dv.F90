@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of gradc_p_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: gfunp gfunpd funv funvd
+!   variations   of useful results: gfunp gfunpd
 !   with respect to varying inputs: fund funv funvd fun
 !   Plus diff mem management of: geo.fchc:in geo.fcht:in geo.fcqgam:in
 !                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
@@ -10,7 +10,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of gradc_p in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: gfunp funv
+!   variations   of useful results: gfunp
 !   with respect to varying inputs: funv fun
 !   Plus diff mem management of: mpg.intcellp:in geo.fchc:in geo.fcht:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
@@ -44,16 +44,23 @@ SUBROUTINE GRADC_P_DV_DV(ncv, nfc, nvx, mode, geo, geod0, geod, mpg, &
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
-  REAL(kind=r8) :: fund0(nbdirsmax0, ncv), funvd0(nbdirsmax0, nvx)
-  REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
-  REAL(kind=r8) :: fundd(nbdirsmax0, nbdirsmax, ncv), funvdd(nbdirsmax0&
-& , nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fund0(nbdirsmax0, ncv), funvd0(nbdirsmax0&
+& , nvx)
+  REAL(kind=r8), INTENT(IN) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, &
+& nvx)
+  REAL(kind=r8), INTENT(IN) :: fundd(nbdirsmax0, nbdirsmax, ncv), funvdd&
+& (nbdirsmax0, nbdirsmax, nvx)
 !   ..output arguments
-  REAL(kind=r8) :: gfunp(ncv)
-  REAL(kind=r8) :: gfunpd0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: gfunpd(nbdirsmax, ncv)
-  REAL(kind=r8) :: gfunpdd(nbdirsmax0, nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunp(ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunpd0(nbdirsmax0, ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunpd(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunpdd(nbdirsmax0, nbdirsmax, ncv)
+!   ..local 
+  REAL(kind=r8) :: funv_loc(nvx)
+  REAL(kind=r8) :: funv_locd0(nbdirsmax0, nvx)
+  REAL(kind=r8) :: funv_locd(nbdirsmax, nvx)
+  REAL(kind=r8) :: funv_locdd(nbdirsmax0, nbdirsmax, nvx)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -69,7 +76,9 @@ SUBROUTINE GRADC_P_DV_DV(ncv, nfc, nvx, mode, geo, geod0, geod, mpg, &
   REAL(kind=r8) :: gfunpfd0(nbdirsmax0, nfc)
   REAL(kind=r8) :: gfunpfd(nbdirsmax, nfc)
   REAL(kind=r8) :: gfunpfdd(nbdirsmax0, nbdirsmax, nfc)
+  INTEGER :: nd
   INTEGER :: nbdirs
+  INTEGER :: nd0
   INTEGER :: nbdirs0
 !
 !-----------------------------------------------------------------------
@@ -80,17 +89,34 @@ SUBROUTINE GRADC_P_DV_DV(ncv, nfc, nvx, mode, geo, geod0, geod, mpg, &
 &       'gradc_p--faulty argument mode')
 !
 !   ..interpolate fun to cell vertices, using volume weighted averaging
-  IF (mode .EQ. 0) CALL INTVERTEX_DV_DV(ncv, nvx, mpg, geo%vxvol, fun, &
-&                                 fund0, fund, fundd, funv, funvd0, &
-&                                 funvd, funvdd, nbdirs, nbdirs0)
+  IF (mode .EQ. 0) THEN
+    funv_locd = 0.d0
+    funv_locd0 = 0.D0
+    funv_locdd = 0.D0
+    CALL INTVERTEX_DV_DV(ncv, nvx, mpg, geo%vxvol, fun, fund0, fund, &
+&                  fundd, funv_loc, funv_locd0, funv_locd, funv_locdd, &
+&                  nbdirs, nbdirs0)
+  ELSE
+    funv_locdd = 0.D0
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+        funv_locdd(nd0, nd, :) = funvdd(nd0, nd, :)
+      END DO
+      funv_locd(nd, :) = funvd(nd, :)
+    END DO
+    DO nd0=1,nbdirs0
+      funv_locd0(nd0, :) = funvd0(nd0, :)
+    END DO
+    funv_loc = funv
+  END IF
 !
 !   ..compute gradients on faces
   gfunpfd = 0.d0
   gfunpfdd = 0.D0
   gfunpfd0 = 0.D0
   CALL GRAD_P_DV_DV(ncv, nfc, nvx, 1, geo, geod0, mpg, mpgd, fun, fund0&
-&             , fund, fundd, funv, funvd0, funvd, funvdd, gfunpf, &
-&             gfunpfd0, gfunpfd, gfunpfdd, nbdirs, nbdirs0)
+&             , fund, fundd, funv_loc, funv_locd0, funv_locd, funv_locdd&
+&             , gfunpf, gfunpfd0, gfunpfd, gfunpfdd, nbdirs, nbdirs0)
 !
 !   ..interpolate to centers
   CALL INTCELL_DV_DV(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunpfd0, &
@@ -109,7 +135,7 @@ END SUBROUTINE GRADC_P_DV_DV
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of gradc_p in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: gfunp funv
+!   variations   of useful results: gfunp
 !   with respect to varying inputs: funv fun
 !   Plus diff mem management of: mpg.intcellp:in geo.fchc:in geo.fcht:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
@@ -140,11 +166,15 @@ SUBROUTINE GRADC_P_DV_NODIFF(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, &
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
-  REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, &
+& nvx)
 !   ..output arguments
-  REAL(kind=r8) :: gfunp(ncv)
-  REAL(kind=r8) :: gfunpd(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunp(ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunpd(nbdirsmax, ncv)
+!   ..local 
+  REAL(kind=r8) :: funv_loc(nvx)
+  REAL(kind=r8) :: funv_locd(nbdirsmax, nvx)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -158,6 +188,7 @@ SUBROUTINE GRADC_P_DV_NODIFF(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, &
 !   ..local variables
   REAL(kind=r8) :: gfunpf(nfc)
   REAL(kind=r8) :: gfunpfd(nbdirsmax, nfc)
+  INTEGER :: nd
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -168,13 +199,21 @@ SUBROUTINE GRADC_P_DV_NODIFF(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, &
 &       'gradc_p--faulty argument mode')
 !
 !   ..interpolate fun to cell vertices, using volume weighted averaging
-  IF (mode .EQ. 0) CALL INTVERTEX_DV_NODIFF(ncv, nvx, mpg, geo%vxvol, &
-&                                     fun, fund, funv, funvd, nbdirs)
+  IF (mode .EQ. 0) THEN
+    funv_locd = 0.d0
+    CALL INTVERTEX_DV_NODIFF(ncv, nvx, mpg, geo%vxvol, fun, fund, &
+&                      funv_loc, funv_locd, nbdirs)
+  ELSE
+    DO nd=1,nbdirs
+      funv_locd(nd, :) = funvd(nd, :)
+    END DO
+    funv_loc = funv
+  END IF
 !
 !   ..compute gradients on faces
   gfunpfd = 0.d0
   CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, mpgd, fun, fund, &
-&                 funv, funvd, gfunpf, gfunpfd, nbdirs)
+&                 funv_loc, funv_locd, gfunpf, gfunpfd, nbdirs)
 !
 !   ..interpolate to centers
   CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, gfunpf, gfunpfd, &
@@ -212,9 +251,11 @@ SUBROUTINE GRADC_P_NODIFF_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, &
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv), funv(nvx)
 !   ..output arguments
-  REAL(kind=r8) :: gfunp(ncv)
+  REAL(kind=r8), INTENT(OUT) :: gfunp(ncv)
+!   ..local 
+  REAL(kind=r8) :: funv_loc(nvx)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -236,11 +277,15 @@ SUBROUTINE GRADC_P_NODIFF_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, &
 &       'gradc_p--faulty argument mode')
 !
 !   ..interpolate fun to cell vertices, using volume weighted averaging
-  IF (mode .EQ. 0) CALL INTVERTEX_NODIFF_NODIFF(ncv, nvx, mpg, geo%vxvol&
-&                                         , fun, funv)
+  IF (mode .EQ. 0) THEN
+    CALL INTVERTEX_NODIFF_NODIFF(ncv, nvx, mpg, geo%vxvol, fun, funv_loc&
+&                         )
+  ELSE
+    funv_loc = funv
+  END IF
 !
 !   ..compute gradients on faces
-  CALL GRAD_P_NODIFF_NODIFF(ncv, nfc, nvx, 1, geo, mpg, fun, funv, &
+  CALL GRAD_P_NODIFF_NODIFF(ncv, nfc, nvx, 1, geo, mpg, fun, funv_loc, &
 &                     gfunpf)
 !
 !   ..interpolate to centers

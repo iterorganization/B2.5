@@ -727,6 +727,7 @@ SUBROUTINE B2SAXPY_DV_DV(n, sa, sx, sxd0, sxd, sxdd, incx, sy, syd0, syd&
 & , sydd, incy, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
@@ -797,6 +798,7 @@ SUBROUTINE B2SAXPY_DV_NODIFF(n, sa, sx, sxd, incx, sy, syd, incy, nbdirs&
 &)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -845,6 +847,7 @@ END SUBROUTINE B2SAXPY_DV_NODIFF
 SUBROUTINE B2SAXPY_NODIFF_NODIFF(n, sa, sx, incx, sy, incy)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
+  USE B2MOD_OPENMP
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   INTEGER :: n, incx, incy

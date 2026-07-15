@@ -50,13 +50,15 @@ SUBROUTINE B2XPNE_DV_DV(ncv, ns, rza, rzad0, rzad, rzadd, na, nad0, nad&
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd0
   INTEGER :: nd0
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpne')
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd, ne, ned0, ned, nedd, 1, &
-&            nbdirs, nbdirs0)
+  dummyzerodiffd0 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd0, dummyzerodiffd, ne, &
+&            ned0, ned, nedd, 1, nbdirs, nbdirs0)
   DO is=0,ns-1
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0

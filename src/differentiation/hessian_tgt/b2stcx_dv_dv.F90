@@ -141,6 +141,7 @@ SUBROUTINE B2STCX_NODIFF_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, &
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, shn0, 1)
+  rg0 = switch%b2stcx_rg0
 !   ..compute sources due to charge exchange
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
@@ -234,7 +235,7 @@ SUBROUTINE B2STCX_NODIFF_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, &
         END IF
       END DO
 !     ..parallel momentum source
-      rg0 = switch%b2stcx_rg0
+!
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
         IF (mpg%cvreg(icv) .NE. 0) THEN
@@ -419,7 +420,6 @@ END SUBROUTINE B2STCX_NODIFF_NODIFF
 !   variations   of useful results: shi0 sna0 smq0 shn0
 !   with respect to varying inputs: ti tn na shi0 ua sna0 rcx smq0
 !                shn0
-!   Plus diff mem management of: geo.cvvol:in
 !
 !
 !
@@ -436,9 +436,9 @@ END SUBROUTINE B2STCX_NODIFF_NODIFF
 !
 !srv 09.01.01
 SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
-& geo, geod, mpg, na, nad, ua, uad, ti, tid, tn, tnd, ni, nid, rcx, rcxd&
-& , sna0, sna0d, smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, &
-& rcxhi, nbdirs)
+& geo, mpg, na, nad, ua, uad, ti, tid, tn, tnd, ni, rcx, rcxd, sna0, &
+& sna0d, smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, rcxhi, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES
@@ -459,13 +459,12 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ti(ncv), tn(ncv), &
 & ni(ncv, 0:1), rcx(ncv, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
-& ), rcxd(nbdirsmax, ncv, 0:ns-1)
+& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), rcxd(nbdirsmax, ncv, 0:&
+& ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(ncv, 0:1, 0:ns-1), smq0(ncv, 0:3, 0:ns-1), shi0(&
 & ncv, 0:3), shn0(ncv, 0:3), rcxna(ncv, 0:ns-1), rcxmo(ncv, 0:ns-1), &
@@ -589,6 +588,7 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
   dummyzerodiffd2 = 0.d0
   CALL SFILL_DV_NODIFF(arg1, 0.0_R8, dummyzerodiffd2, shn0, shn0d, 1, &
 &                nbdirs)
+  rg0 = switch%b2stcx_rg0
 !   ..compute sources due to charge exchange
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
@@ -811,7 +811,7 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
         END IF
       END DO
 !     ..parallel momentum source
-      rg0 = switch%b2stcx_rg0
+!
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
         IF (mpg%cvreg(icv) .NE. 0) THEN
@@ -1145,11 +1145,11 @@ END SUBROUTINE B2STCX_DV_NODIFF
 !   with respect to varying inputs: ti tn na shi0 smq0d nad ua
 !                sna0d sna0 tid rcxd rcx uad smq0 shn0 shi0d shn0d
 !                tnd
+!   Plus diff mem management of: geo.cvvol:in
 !  Differentiation of b2stcx in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: shi0 sna0 smq0 shn0
 !   with respect to varying inputs: ti tn na shi0 ua sna0 rcx smq0
 !                shn0
-!   Plus diff mem management of: geo.cvvol:in
 !
 !
 !
@@ -1165,12 +1165,12 @@ END SUBROUTINE B2STCX_DV_NODIFF
 !.specification
 !
 !srv 09.01.01
-SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
-& , geod, mpg, na, nad0, nad, nadd, ua, uad0, uad, uadd, ti, tid0, tid, &
-& tidd, tn, tnd0, tnd, tndd, ni, nid, rcx, rcxd0, rcxd, rcxdd, sna0, &
-& sna0d0, sna0d, sna0dd, smq0, smq0d0, smq0d, smq0dd, shi0, shi0d0, &
-& shi0d, shi0dd, shn0, shn0d0, shn0d, shn0dd, rcxna, rcxmo, rcxhi, &
-& nbdirs, nbdirs0)
+SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd0, &
+& switchd, geo, geod, mpg, na, nad0, nad, nadd, ua, uad0, uad, uadd, ti&
+& , tid0, tid, tidd, tn, tnd0, tnd, tndd, ni, nid, rcx, rcxd0, rcxd, &
+& rcxdd, sna0, sna0d0, sna0d, sna0dd, smq0, smq0d0, smq0d, smq0dd, shi0&
+& , shi0d0, shi0d, shi0dd, shn0, shn0d0, shn0d, shn0dd, rcxna, rcxmo, &
+& rcxhi, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES
@@ -1190,18 +1190,19 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, ns, is0, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ti(ncv), tn(ncv), &
 & ni(ncv, 0:1), rcx(ncv, 0:ns-1)
   REAL(kind=r8) :: nad0(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, &
-& 0:ns-1), tid0(nbdirsmax0, ncv), tnd0(nbdirsmax0, ncv), rcxd0(&
-& nbdirsmax0, ncv, 0:ns-1)
+& 0:ns-1), tid0(nbdirsmax0, ncv), tnd0(nbdirsmax0, ncv), nid(nbdirsmax0&
+& , ncv, 0:1), rcxd0(nbdirsmax0, ncv, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
-& ), rcxd(nbdirsmax, ncv, 0:ns-1)
+& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), rcxd(nbdirsmax, ncv, 0:&
+& ns-1)
   REAL(kind=r8) :: nadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), uadd(&
 & nbdirsmax0, nbdirsmax, ncv, 0:ns-1), tidd(nbdirsmax0, nbdirsmax, ncv)&
 & , tndd(nbdirsmax0, nbdirsmax, ncv), rcxdd(nbdirsmax0, nbdirsmax, ncv, &
@@ -1275,6 +1276,10 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
   REAL(r8) :: temp2
   REAL(r8), DIMENSION(nbdirsmax0) :: temp2d
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd3
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd4
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd5
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd6
   INTEGER :: nd0
   REAL(kind=r8) :: temp3
   REAL(kind=r8) :: temp4
@@ -1346,20 +1351,25 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
 !   ..initialise sources to 0
   arg1 = ncv*2*ns
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd, sna0, sna0d0, sna0d, &
-&            sna0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd3 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd3, dummyzerodiffd, sna0, &
+&            sna0d0, sna0d, sna0dd, 1, nbdirs, nbdirs0)
   arg1 = ncv*4*ns
   dummyzerodiffd0 = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd0, smq0, smq0d0, smq0d, &
-&            smq0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd4 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd4, dummyzerodiffd0, smq0&
+&            , smq0d0, smq0d, smq0dd, 1, nbdirs, nbdirs0)
   arg1 = ncv*4
   dummyzerodiffd1 = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd1, shi0, shi0d0, shi0d, &
-&            shi0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd5 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd5, dummyzerodiffd1, shi0&
+&            , shi0d0, shi0d, shi0dd, 1, nbdirs, nbdirs0)
   arg1 = ncv*4
   dummyzerodiffd2 = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd2, shn0, shn0d0, shn0d, &
-&            shn0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd6 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd6, dummyzerodiffd2, shn0&
+&            , shn0d0, shn0d, shn0dd, 1, nbdirs, nbdirs0)
+  rg0 = switch%b2stcx_rg0
   du0dd = 0.D0
   t2dd = 0.D0
   result11dd = 0.D0
@@ -1929,7 +1939,7 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
         END IF
       END DO
 !     ..parallel momentum source
-      rg0 = switch%b2stcx_rg0
+!
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
         IF (mpg%cvreg(icv) .NE. 0) THEN
@@ -2677,3 +2687,4 @@ CONTAINS
   END FUNCTION ROXA
 
 END SUBROUTINE B2STCX_DV_DV
+

@@ -26,10 +26,10 @@
 !
 !
 !
-SUBROUTINE B2TLH0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-& geod, mpg, mpgd, na, nad0, nad, nadd, ti, tn, tnd0, tnd, tndd, chcib, &
-& chcibd0, chcibd, chcibdd, chcb, chcbd0, chcbd, chcbdd, fllim0fhi, &
-& fllim0fhid, nbdirs, nbdirs0)
+SUBROUTINE B2TLH0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, na, nad0, nad, nadd, ti, tn, tnd0, tnd, &
+& tndd, chcib, chcibd0, chcibd, chcibdd, chcb, chcbd0, chcbd, chcbdd, &
+& fllim0fhi, fllim0fhid, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -48,6 +48,7 @@ SUBROUTINE B2TLH0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0

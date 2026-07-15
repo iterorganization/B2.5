@@ -19,7 +19,8 @@
 !   Plus diff mem management of: srwd.sch0:in srwd.she0:in srwd.shi0:in
 !                srwd.smo0:in srwd.sna0:in dv.fch:in dv.fna:in
 !                dv.fhe:in dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in
-!                geo.cvqgam:in geo.fcqgam:in st_extd.she:in st_extd.shi:in
+!                geo.cvhx:in geo.cvqgam:in geo.cvvol:in geo.fcht:in
+!                geo.fcvol:in geo.fcqgam:in st_extd.she:in st_extd.shi:in
 !                st_extd.sch:in st_extd.sna:in st_extd.smo:in st_ext.ne:in
 !                st_ext.ne2:in st_ext.ue:in st_ext.na:in st_ext.ni:in
 !                st_ext.ua:in st_ext.ta:in st_ext.sne:in st_ext.she:in
@@ -42,8 +43,7 @@
 !                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
 !                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
-!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvhx:in
-!                geo.cvqgam:in geo.cvvol:in geo.fcht:in geo.fcvol:in
+!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvqgam:in
 !                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
 !                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
@@ -1423,8 +1423,7 @@ END SUBROUTINE B2STBM_DV_DV
 !                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
 !                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
-!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvhx:in
-!                geo.cvqgam:in geo.cvvol:in geo.fcht:in geo.fcvol:in
+!                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvqgam:in
 !                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
 !                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in

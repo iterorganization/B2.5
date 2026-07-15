@@ -17,7 +17,6 @@ SUBROUTINE B2RUZD_NODIFF(nget, version, ns, zamin, zamax, zn, am, todo)
   USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral, partition_number, nspecies,&
 & amtol
   USE B2MOD_SUBSYS
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
   INTEGER :: nget, ns
@@ -79,7 +78,6 @@ SUBROUTINE B2RUZD_NODIFF(nget, version, ns, zamin, zamax, zn, am, todo)
 CONTAINS
 !
   LOGICAL FUNCTION LNEXT(is, js)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: is, js
     INTRINSIC NINT

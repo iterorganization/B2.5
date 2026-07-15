@@ -142,6 +142,7 @@ SUBROUTINE B2SQCX_DV_DV(ncv, ns, ev, switch, amh0, th0, th0d0, th0d, &
     t_avdd = 0.D0
     wrk0dd = 0.D0
   END IF
+!
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv
     DO nd0=1,nbdirs0
@@ -339,6 +340,7 @@ SUBROUTINE B2SQCX_DV_NODIFF(ncv, ns, ev, switch, amh0, th0, th0d, thn0, &
   ELSE
     wrk0d = 0.d0
   END IF
+!
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv
     t_av = 0.5_R8*(th0(icv)+thn0(icv))
@@ -478,6 +480,7 @@ SUBROUTINE B2SQCX_NODIFF_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, &
 !    ..test th0
     CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
   END IF
+!
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv
     t_av = 0.5_R8*(th0(icv)+thn0(icv))

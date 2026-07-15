@@ -19,13 +19,16 @@ SUBROUTINE INTFACE_DV_DV(ncv, nfc, fccv, fcvol, centre, centred0, &
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !
-  INTEGER :: ncv, nfc
-  INTEGER :: fccv(nfc, 2)
-  REAL(kind=r8) :: fcvol(nfc, 2), centre(ncv), face(nfc)
-  REAL(kind=r8) :: centred0(nbdirsmax0, ncv), faced0(nbdirsmax0, nfc)
-  REAL(kind=r8) :: centred(nbdirsmax, ncv), faced(nbdirsmax, nfc)
-  REAL(kind=r8) :: centredd(nbdirsmax0, nbdirsmax, ncv), facedd(&
-& nbdirsmax0, nbdirsmax, nfc)
+  INTEGER, INTENT(IN) :: ncv, nfc
+  INTEGER, INTENT(IN) :: fccv(nfc, 2)
+  REAL(kind=r8), INTENT(IN) :: fcvol(nfc, 2), centre(ncv)
+  REAL(kind=r8), INTENT(IN) :: centred0(nbdirsmax0, ncv)
+  REAL(kind=r8), INTENT(IN) :: centred(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(IN) :: centredd(nbdirsmax0, nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(OUT) :: face(nfc)
+  REAL(kind=r8), INTENT(OUT) :: faced0(nbdirsmax0, nfc)
+  REAL(kind=r8), INTENT(OUT) :: faced(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(OUT) :: facedd(nbdirsmax0, nbdirsmax, nfc)
   INTEGER :: ifc
   INTEGER :: nd
   REAL(kind=r8) :: temp

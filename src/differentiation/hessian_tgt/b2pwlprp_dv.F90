@@ -177,7 +177,11 @@ SUBROUTINE B2PWLPRP_NODIFF()
 !
   IF (ntrgsa .GT. 0) THEN
 !{
-    ntrgs = ntrgsa
+    IF (ntrgsa .EQ. 4 .AND. mpg%nxpt .LE. 1) THEN
+      ntrgs = 2
+    ELSE
+      ntrgs = ntrgsa
+    END IF
     IF (ntrgs .EQ. 1) THEN
       IF (mtrgedge(2, 1) .GT. 0) ltrgedge(1, 1) = mtrgedge(2, 1)
       IF (mtrgedge(1, 1) .GT. 0) ltrgedge(2, 1) = mtrgedge(1, 1)

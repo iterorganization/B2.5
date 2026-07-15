@@ -2,17 +2,17 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfrn_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy[save in b2mod_zhfrtf_diffv]
+!   variations   of useful results: *z2n_cv[save in b2mod_zhfrtf_diffv]
 !                *nal[save in b2mod_zhfrtf_diffv] *ia[save in b2mod_zhfrtf_diffv]
 !                *av_ualpha[save in b2mod_zhfrtf_diffv] *z_to_m1_ast[save in b2mod_zhfrtf_diffv]
-!                *z2n_xyd[save in b2mod_zhfrtf_diffv] *nald[save in b2mod_zhfrtf_diffv]
+!                *z2n_cvd[save in b2mod_zhfrtf_diffv] *nald[save in b2mod_zhfrtf_diffv]
 !                *iad[save in b2mod_zhfrtf_diffv] *av_ualphad[save in b2mod_zhfrtf_diffv]
 !                *z_to_m1_astd[save in b2mod_zhfrtf_diffv] *(dv.fna_eir)
 !                *(dv.pa) *(dvd.fna_eir) *(dvd.pa)
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf_diffv]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf_diffv]
 !                *nal[save in b2mod_zhfrtf_diffv] *ia[save in b2mod_zhfrtf_diffv]
 !                *av_ualpha[save in b2mod_zhfrtf_diffv] *z_to_m1_ast[save in b2mod_zhfrtf_diffv]
-!                *z2n_xyd[save in b2mod_zhfrtf_diffv] *nald[save in b2mod_zhfrtf_diffv]
+!                *z2n_cvd[save in b2mod_zhfrtf_diffv] *nald[save in b2mod_zhfrtf_diffv]
 !                *iad[save in b2mod_zhfrtf_diffv] *av_ualphad[save in b2mod_zhfrtf_diffv]
 !                *z_to_m1_astd[save in b2mod_zhfrtf_diffv] *(dv.fchvispar_a)
 !                *(dv.fchvisper_a) *(dv.fchvisq_a) *(dv.fchinert_a)
@@ -25,16 +25,16 @@
 !                *(cod.cdpa) *(co.cvla) *(co.cdna) *(co.cdpa) *(pld.na)
 !                *(pld.ua) *(pld.te) *(pld.ti) *(pld.tn) *(pl.na)
 !                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf_diffv]:in
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf_diffv]:in
 !                nal[save in b2mod_zhfrtf_diffv]:in ia[save in b2mod_zhfrtf_diffv]:in
 !                av_ualpha[save in b2mod_zhfrtf_diffv]:in z_to_m1_ast[save in b2mod_zhfrtf_diffv]:in
-!                z2n_xyd[save in b2mod_zhfrtf_diffv]:in nald[save in b2mod_zhfrtf_diffv]:in
+!                z2n_cvd[save in b2mod_zhfrtf_diffv]:in nald[save in b2mod_zhfrtf_diffv]:in
 !                iad[save in b2mod_zhfrtf_diffv]:in av_ualphad[save in b2mod_zhfrtf_diffv]:in
 !                z_to_m1_astd[save in b2mod_zhfrtf_diffv]:in c_hw_save:in
 !                c_hw_saved:in dv.fchvispar_a:in dv.fchvisper_a:in
 !                dv.fchvisq_a:in dv.fchinert_a:in dv.fchanml_a:in
 !                dv.fchviskt_a:in dv.fna_eir:in dv.fne_eir:in dv.fhe_eir:in
-!                dv.fhi_eir:in dv.pcca:in dv.pa:in dv.wadia:in
+!                dv.fhi_eir:in dv.pcca:in dv.ne:in dv.pa:in dv.wadia:in
 !                dv.vaecrb:in dv.wedia:in geo.fcbb:in geo.fcs:in
 !                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
 !                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
@@ -50,11 +50,11 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfrn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy[save in b2mod_zhfrtf]
+!   variations   of useful results: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fna_eir) *(dv.pa)
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fchvispar_a) *(dv.fchvisper_a) *(dv.fchvisq_a)
@@ -62,20 +62,20 @@
 !                *(dv.fna_eir) *(dv.pcca) *(dv.pa) *(dv.wadia)
 !                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdpa)
 !                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in z_to_m1_ast[save in b2mod_zhfrtf]:in
 !                c_hw_save:in dv.fchvispar_a:in dv.fchvisper_a:in
 !                dv.fchvisq_a:in dv.fchinert_a:in dv.fchanml_a:in
 !                dv.fchviskt_a:in dv.fna_eir:in dv.fne_eir:in dv.fhe_eir:in
 !                dv.fhi_eir:in dv.pcca:in dv.ne:in dv.ue:in dv.pa:in
-!                dv.wadia:in dv.vaecrb:in dv.wedia:in mpg.intcellp:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.vxvol:in st_ext.za2:in st_ext.na:in
-!                rt.rza:in rt.rz2:in co.chce:in co.chci:in co.cvla:in
-!                co.cdna:in co.cdpa:in pl.na:in pl.ua:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                dv.wadia:in dv.vaecrb:in dv.wedia:in dv.facdrift:in
+!                dv.fac_exb:in mpg.intcellp:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                st_ext.za2:in st_ext.na:in rt.rza:in rt.rz2:in
+!                co.chce:in co.chci:in co.cvla:in co.cdna:in co.cdpa:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -90,10 +90,10 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-& geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, co, cod0, &
-& cod, codd, rt, rtd0, rtd, rtdd, st_ext, st_extd0, st_extd, nbdirs, &
-& nbdirs0)
+SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
+& geo, geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd&
+& , co, cod0, cod, codd, rt, rtd0, rtd, rtdd, st_ext, st_extd0, st_extd&
+& , nbdirs, nbdirs0)
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
@@ -105,6 +105,7 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2ZHCO_DIFFV_DIFFV, ONLY : c_hw_save, c_hw_saved0, &
@@ -119,6 +120,7 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -168,7 +170,7 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !srv 14.07.10
   REAL(kind=r8) :: flo_eir(nfc, 0:1), scur(nfc, 0:1), fle_eir(nfc, 0:1)&
 & , floe_eir(nfc, 0:1), floi_eir(nfc, 0:1), floi_vhx(nfc), fnef(nfc, 0:1&
-& ), fnec(nfc, 0:1)
+& ), fnec(nfc, 0:1), fne_eir(nfc, 0:1)
   REAL(kind=r8) :: flo_eird0(nbdirsmax0, nfc, 0:1), scurd0(nbdirsmax0, &
 & nfc, 0:1), floi_vhxd0(nbdirsmax0, nfc)
   REAL(kind=r8) :: flo_eird(nbdirsmax, nfc, 0:1), scurd(nbdirsmax, nfc, &
@@ -276,6 +278,11 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
   END IF
 !
   meth = switch%b2tfnb_discr_meth
+!
+!    ..initialize
+  fne_eir = 0.0_R8
+  weight = 1.0_R8
+  fnef = 0.0_R8
   wrk00d = 0.d0
   rzfd = 0.d0
   scurd = 0.d0
@@ -319,7 +326,6 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 &               ), nbdirs, nbdirs0)
 !
 !   ..interpolate na and pa to cell faces
-    weight = 1.0_R8
     CALL INTFACE_DV_DV(ncv, nfc, mpg%fccv, weight, pl%na(:, is), pld0%na&
 &                (:, :, is), pld%na(:, :, is), pldd%na(:, :, :, is), nbf&
 &                , nbfd0, nbfd, nbfdd, nbdirs, nbdirs0)
@@ -684,8 +690,9 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     CALL B2TFVH_DV_DV(ncv, nfc, ns, geo, mpg, pl%na, pld0%na, pld%na, &
 &               pldd%na, pl%ua, pld0%ua, pld%ua, pldd%ua, floi_vhx, &
@@ -703,7 +710,7 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
   fle_eir(:, 1) = (switch%xvecrb*dv%veecrb(:, 1)+switch%xwdia*dv%wedia(:&
 &   , 1))*geo%fcs*geo%fcqalf(:, 1)
 !
-  dv%fne_eir = 0.0_R8
+!      dv%fne_eir = 0.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
 !accumulate conductive piece per species(fnec)
@@ -711,12 +718,14 @@ SUBROUTINE B2TFRN_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
       CALL CALCFLOW_NODIFF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, dv%ne, &
 &                           fle_eir, co%cdna(:, :, is), wrk00, fnef, &
 &                           fnec)
-      dv%fne_eir = dv%fne_eir + fnec
+!          dv%fne_eir = dv%fne_eir + fnec
+      fne_eir = fne_eir + fnec
     END IF
 !add convective piece (once)
 
   END DO
-  dv%fne_eir = dv%fne_eir + fnef
+!     dv%fne_eir = dv%fne_eir + fnef
+  dv%fne_eir = fne_eir + fnef
 !
 !   ..compute convective coefficients electron heat flux
   floe_eir(:, 0) = 2.5_R8*dv%fne_eir(:, 0) - c071f*dv%fch_p(:, 0)/qe*&
@@ -815,11 +824,11 @@ END SUBROUTINE B2TFRN_DV_DV
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tfrn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy[save in b2mod_zhfrtf]
+!   variations   of useful results: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fna_eir) *(dv.pa)
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *z_to_m1_ast[save in b2mod_zhfrtf]
 !                *(dv.fchvispar_a) *(dv.fchvisper_a) *(dv.fchvisq_a)
@@ -827,20 +836,20 @@ END SUBROUTINE B2TFRN_DV_DV
 !                *(dv.fna_eir) *(dv.pcca) *(dv.pa) *(dv.wadia)
 !                *(dv.vaecrb) *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdpa)
 !                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in z_to_m1_ast[save in b2mod_zhfrtf]:in
 !                c_hw_save:in dv.fchvispar_a:in dv.fchvisper_a:in
 !                dv.fchvisq_a:in dv.fchinert_a:in dv.fchanml_a:in
 !                dv.fchviskt_a:in dv.fna_eir:in dv.fne_eir:in dv.fhe_eir:in
 !                dv.fhi_eir:in dv.pcca:in dv.ne:in dv.ue:in dv.pa:in
-!                dv.wadia:in dv.vaecrb:in dv.wedia:in mpg.intcellp:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.vxvol:in st_ext.za2:in st_ext.na:in
-!                rt.rza:in rt.rz2:in co.chce:in co.chci:in co.cvla:in
-!                co.cdna:in co.cdpa:in pl.na:in pl.ua:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                dv.wadia:in dv.vaecrb:in dv.wedia:in dv.facdrift:in
+!                dv.fac_exb:in mpg.intcellp:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                st_ext.za2:in st_ext.na:in rt.rza:in rt.rz2:in
+!                co.chce:in co.chci:in co.cvla:in co.cdna:in co.cdpa:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -869,6 +878,7 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2ZHCO_DIFFV_DIFFV, ONLY : c_hw_save, c_hw_saved
@@ -920,7 +930,7 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !srv 14.07.10
   REAL(kind=r8) :: flo_eir(nfc, 0:1), scur(nfc, 0:1), fle_eir(nfc, 0:1)&
 & , floe_eir(nfc, 0:1), floi_eir(nfc, 0:1), floi_vhx(nfc), fnef(nfc, 0:1&
-& ), fnec(nfc, 0:1)
+& ), fnec(nfc, 0:1), fne_eir(nfc, 0:1)
   REAL(kind=r8) :: flo_eird(nbdirsmax, nfc, 0:1), scurd(nbdirsmax, nfc, &
 & 0:1), floi_vhxd(nbdirsmax, nfc)
   REAL(kind=r8) :: nbf(nfc), pbf(nfc), rzf(nfc), dpb(nfc, 0:1), dpbc(ncv&
@@ -993,6 +1003,11 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
   END IF
 !
   meth = switch%b2tfnb_discr_meth
+!
+!    ..initialize
+  fne_eir = 0.0_R8
+  weight = 1.0_R8
+  fnef = 0.0_R8
   wrk00d = 0.d0
   rzfd = 0.d0
   scurd = 0.d0
@@ -1007,12 +1022,12 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
   DO is=0,ns-1
 !
 !    ..compute partial pressure
-    CALL B2XPPB_DV(ncv, rt%rza(:, is), rtd%rza(:, :, is), pl%na(:, is), &
-&            pld%na(:, :, is), pl%te, pld%te, pl%ti, pld%ti, pl%tn, pld%&
-&            tn, is, dv%pa(:, is), dvd%pa(:, :, is), nbdirs)
+    CALL B2XPPB_DV_NODIFF(ncv, rt%rza(:, is), rtd%rza(:, :, is), pl%na(:&
+&                   , is), pld%na(:, :, is), pl%te, pld%te, pl%ti, pld%&
+&                   ti, pl%tn, pld%tn, is, dv%pa(:, is), dvd%pa(:, :, is&
+&                   ), nbdirs)
 !
 !   ..interpolate na and pa to cell faces
-    weight = 1.0_R8
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, pl%na(:, is), pld%na(:, &
 &             :, is), nbf, nbfd, nbdirs)
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, dv%pa(:, is), pbf)
@@ -1197,8 +1212,9 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     CALL B2TFVH_DV_NODIFF(ncv, nfc, ns, geo, mpg, pl%na, pld%na, pl%ua, &
 &                   pld%ua, floi_vhx, floi_vhxd, nbdirs)
@@ -1215,7 +1231,7 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
   fle_eir(:, 1) = (switch%xvecrb*dv%veecrb(:, 1)+switch%xwdia*dv%wedia(:&
 &   , 1))*geo%fcs*geo%fcqalf(:, 1)
 !
-  dv%fne_eir = 0.0_R8
+!      dv%fne_eir = 0.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
 !accumulate conductive piece per species(fnec)
@@ -1223,12 +1239,14 @@ SUBROUTINE B2TFRN_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
       CALL CALCFLOW_NODIFF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, dv%ne, &
 &                           fle_eir, co%cdna(:, :, is), wrk00, fnef, &
 &                           fnec)
-      dv%fne_eir = dv%fne_eir + fnec
+!          dv%fne_eir = dv%fne_eir + fnec
+      fne_eir = fne_eir + fnec
     END IF
 !add convective piece (once)
 
   END DO
-  dv%fne_eir = dv%fne_eir + fnef
+!     dv%fne_eir = dv%fne_eir + fnef
+  dv%fne_eir = fne_eir + fnef
 !
 !   ..compute convective coefficients electron heat flux
   floe_eir(:, 0) = 2.5_R8*dv%fne_eir(:, 0) - c071f*dv%fch_p(:, 0)/qe*&
@@ -1350,6 +1368,7 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2ZHCO_DIFFV_DIFFV, ONLY : c_hw_save
@@ -1391,7 +1410,7 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
 !srv 14.07.10
   REAL(kind=r8) :: flo_eir(nfc, 0:1), scur(nfc, 0:1), fle_eir(nfc, 0:1)&
 & , floe_eir(nfc, 0:1), floi_eir(nfc, 0:1), floi_vhx(nfc), fnef(nfc, 0:1&
-& ), fnec(nfc, 0:1)
+& ), fnec(nfc, 0:1), fne_eir(nfc, 0:1)
   REAL(kind=r8) :: nbf(nfc), pbf(nfc), rzf(nfc), dpb(nfc, 0:1), dpbc(ncv&
 & ), dnete(nfc, 0:1), weight(nfc, 2)
 !srv 13.01.17
@@ -1445,6 +1464,11 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
 !
   meth = switch%b2tfnb_discr_meth
 !
+!    ..initialize
+  fne_eir = 0.0_R8
+  weight = 1.0_R8
+  fnef = 0.0_R8
+!
   DO is=0,ns-1
 !
 !    ..compute partial pressure
@@ -1452,7 +1476,6 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
 &                pl%tn, is, dv%pa(:, is))
 !
 !   ..interpolate na and pa to cell faces
-    weight = 1.0_R8
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, pl%na(:, is), nbf)
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, dv%pa(:, is), pbf)
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, rt%rza(:, is), rzf)
@@ -1563,8 +1586,9 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
 !   ..velocity-dependent part of the heat flux
 !som 13.07.21
   floi_vhx = 0.0_R8
-  IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. 0 &
-&     .AND. switch%zhdanov_vel_heat .EQ. 1) THEN
+  IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 0 &
+&     .OR. switch%zhdanov_nc .EQ. 1) .AND. switch%zhdanov_vel_heat .EQ. &
+&     1) THEN
 !som 13.07.21
     CALL B2TFVH_NODIFF_NODIFF(ncv, nfc, ns, geo, mpg, pl%na, pl%ua, &
 &                       floi_vhx)
@@ -1581,7 +1605,7 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
   fle_eir(:, 1) = (switch%xvecrb*dv%veecrb(:, 1)+switch%xwdia*dv%wedia(:&
 &   , 1))*geo%fcs*geo%fcqalf(:, 1)
 !
-  dv%fne_eir = 0.0_R8
+!      dv%fne_eir = 0.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
 !accumulate conductive piece per species(fnec)
@@ -1589,12 +1613,14 @@ SUBROUTINE B2TFRN_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl&
       CALL CALCFLOW_NODIFF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, dv%ne, &
 &                           fle_eir, co%cdna(:, :, is), wrk00, fnef, &
 &                           fnec)
-      dv%fne_eir = dv%fne_eir + fnec
+!          dv%fne_eir = dv%fne_eir + fnec
+      fne_eir = fne_eir + fnec
     END IF
 !add convective piece (once)
 
   END DO
-  dv%fne_eir = dv%fne_eir + fnef
+!     dv%fne_eir = dv%fne_eir + fnef
+  dv%fne_eir = fne_eir + fnef
 !
 !   ..compute convective coefficients electron heat flux
   floe_eir(:, 0) = 2.5_R8*dv%fne_eir(:, 0) - c071f*dv%fch_p(:, 0)/qe*&

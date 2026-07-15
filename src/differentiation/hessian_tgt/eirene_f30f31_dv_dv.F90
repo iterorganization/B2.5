@@ -5,6 +5,237 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !
+SUBROUTINE WRITE_F30_NODIFF_NODIFF(geo, mpg)
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  INTEGER :: i, nb, ilbl, minlbl, maxlbl, nbfaces, nbverts
+  INTEGER, ALLOCATABLE :: bverts(:)
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
+  INTRINSIC COUNT
+!
+! open the file
+  WRITE(*, *) 'Writing fort.30 file'
+!
+  OPEN(unit=30, file='fort.30') 
+! identify range of face labels
+!
+  minlbl = MINVAL(mpg%fclbl)
+! first pass: identify number of boundary segments to be written
+  maxlbl = MAXVAL(mpg%fclbl)
+!
+  nb = 0
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      IF (nbfaces .GT. 0) nb = nb + 1
+    END IF
+!
+! write file
+
+  END DO
+!
+  WRITE(30, '(i3)') nb
+!
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+! corresponding number of vertices
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      nbverts = nbfaces + 1
+!
+      IF (nbfaces .GT. 0) THEN
+!
+        ALLOCATE(bverts(nbverts))
+! sort vertices of the boundary faces into a polygon
+!
+! write into fort.30
+        CALL SORT_VERTICES_NODIFF_NODIFF(nbverts, bverts, mpg%nfc, mpg%&
+&                                  fclbl, ilbl, mpg)
+!
+        WRITE(30, '(i3)') ilbl
+        WRITE(30, '(i12)') nbverts
+        DO i=1,nbverts
+          WRITE(30, '(2(2X,E21.14))') geo%vxx(bverts(i)), geo%vxy(bverts&
+&         (i))
+        END DO
+!
+        DEALLOCATE(bverts)
+      END IF
+    END IF
+! close file
+
+  END DO
+!
+  CLOSE(30) 
+!
+  RETURN
+END SUBROUTINE WRITE_F30_NODIFF_NODIFF
+
+!
+SUBROUTINE WRITE_F31_NODIFF_NODIFF(mpg)
+  USE B2MOD_TYPES
+  USE B2MOD_EIRENE_GLOBALS
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_BRAEIR
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!  version : 28.12.96 21:39
+!
+!
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
+!
+!
+!  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
+  INTEGER :: nxdd, nydd, nstra, nfl
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
+  INTEGER :: natm, nmol, nion, npls, nspz
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
+  INTEGER :: nlim, nsts, nsrfs, nsgmx
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
+!
+  INTEGER :: n1st, n2nd, n3rd
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
+  INTEGER :: n1f, n2f, n3f
+  PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
+  INTEGER :: ngitt, ngittp
+  PARAMETER (ngitt=n1st*n2nd*n3f+n1st*n3rd*n2f+n2nd*n3rd*n1f, ngittp=&
+&   ngitt+1)
+  INTEGER :: ndx, ndy
+  PARAMETER (ndx=nxdd, ndy=nydd)
+  INTEGER :: ndxp, ndyp, nlimps
+  PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
+  INTEGER :: ngtsft, nlmpgs
+  PARAMETER (ngtsft=def_ngstal*ngitt)
+  PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
+!
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  INTEGER :: i, ic, ifl, ntrgdat, istra
+  INTRINSIC COUNT
+!
+!  .. use approach to generalized user interface
+!
+!  .. plasma data
+  REWIND(31) 
+  WRITE(31, '(a)') '* EIRENE PLASMA FILE '
+  WRITE(31, '(a)') '*'
+  WRITE(31, '(a)') '*** MISC PLASMA DATA'
+  WRITE(31, '(a)') '*'
+  WRITE(31, '(a1,a6,15a15)') '*', 'Index', 'Te', 'ne', 'Bx', 'By', 'Bz'&
+& , 'Ex', 'Ey', 'Ez', 'pot', 'psi', 'f', 'Pux', 'Puy', 'Pvx', 'Pvy'
+  WRITE(31, '(a1,a6,15a15)') '*', ' ', '(eV)', '(1/m^3)', 'Tesla', &
+& 'Tesla', 'Tesla', '(V/m)', '(V/m)', '(V/m)', 'V', '??', '??', ' ', ' '&
+& , ' ', ' '
+!
+  WRITE(31, '(3i6)') mpg%ncv, mpg%nci, mpg%nfc
+!
+  DO ic=1,mpg%nci
+    WRITE(31, '(i7,15es15.7)') ic, teb(ic), neb(ic), bbxb(ic), bbyb(ic)&
+&   , bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8, pob(ic), 0.0_R8, 0.0_R8, pux(ic)&
+&   , puy(ic), pvx(ic), pvy(ic)
+  END DO
+!
+  DO ifl=1,nflai
+!
+    WRITE(31, '(a)') '*'
+    WRITE(31, '(a,i0,a)') '*** ION #', ifl, ' PLASMA DATA'
+    WRITE(31, '(a)') '*'
+    WRITE(31, '(a1,a6,5a15)') '*', 'Index', 'Ti', 'ni', 'Vx', 'Vy', 'Vz'
+    WRITE(31, '(a1,a6,5a15)') '*', ' ', '(eV)', '(1/m^3)', 'm/s', 'm/s'&
+&   , 'm/s'
+!
+    WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
+!
+    WRITE(31, '(i6)') mpg%nci
+!
+    DO ic=1,mpg%nci
+      WRITE(31, '(i7,5es15.7)') ic, tib(ic), dnib(ic, ifl), vxb(ic, ifl)&
+&     , vyb(ic, ifl), vzb(ic, ifl)
+    END DO
+!
+
+  END DO
+!
+!  .. target data
+  WRITE(31, '(a)') '*'
+  WRITE(31, '(a)') '*** TARGET DATA'
+  WRITE(31, '(a)') '*'
+!      write (31,'(i6)') mpg%nRc
+  WRITE(31, '(i6)') COUNT(trgt(1:mpg%nrc)%ntrgdat .GT. 0)
+!
+  DO istra=1,mpg%nrc
+    ntrgdat = trgt(istra)%ntrgdat
+    IF (ntrgdat .NE. 0) THEN
+      WRITE(31, '(a)') '*'
+      WRITE(31, '(a,i0)') '*** MISC TARGET DATA #', istra
+      WRITE(31, '(a)') '*'
+      WRITE(31, '(a1,2a6,6a15)') '*', 'Index', 'face', 'ori', 'Te', 'fe'&
+&     , 'fsh', 'length'
+      WRITE(31, '(a1,2a6,6a15)') '*', ' ', ' ', ' ', '(eV)', ' ', ' ', &
+&     ' '
+      WRITE(31, '(i6)') ntrgdat
+!
+      DO i=1,ntrgdat
+        WRITE(31, '(i7,i6,6es15.7)') i, trgt(istra)%faces(i), trgt(istra&
+&       )%fcori(i), trgt(istra)%tet(i), trgt(istra)%fe(i), trgt(istra)%&
+&       fsh(i), trgt(istra)%flength(i)
+      END DO
+!
+      DO ifl=1,nflai
+!
+        WRITE(31, '(a)') '*'
+        WRITE(31, '(a,i0,a,i0)') '*** ION #', ifl, ' TARGET DATA #', &
+&       istra
+        WRITE(31, '(a)') '*'
+!
+        WRITE(31, '(a1,a6,12a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
+&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr', 'Zi'
+        WRITE(31, '(a1,a6,12a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
+&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' ', ' '
+!
+        WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
+        WRITE(31, '(i6)') ntrgdat
+!
+        DO i=1,ntrgdat
+          WRITE(31, '(i7,12es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
+&         istra)%tit(i), trgt(istra)%dnit(i, ifl), trgt(istra)%vxt(i, &
+&         ifl), trgt(istra)%vyt(i, ifl), trgt(istra)%vzt(i, ifl), trgt(&
+&         istra)%fi(i, ifl), trgt(istra)%fel(i, ifl), trgt(istra)%vpart(&
+&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl), &
+&         trgt(istra)%zit(i, ifl)
+        END DO
+! ifl
+
+      END DO
+    END IF
+! istra
+
+  END DO
+  FLUSH(31) 
+  RETURN
+END SUBROUTINE WRITE_F31_NODIFF_NODIFF
+
+!
 !
 !
 !
@@ -388,8 +619,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF_NODIFF(ncv, nfc, ns, switch, mpg, gm, &
 !!          nflai=nflai+1
     IF (fluids_list(is) .NE. 0) THEN
       nflai = fluids_list(is)
-      CALL XERTST(nflai .LE. nfl,&
-&             'eirene_mc: increase NFLA in block 14 of Eirene input file')
+      CALL XERTST(nflai .LE. nfl, &
+&           'eirene_mc: increase NFLA in block 14 of Eirene input file')
       amb(nflai) = am(is)
       znb(nflai) = zn(is)
       IF (zamin(is) .EQ. zamax(is)) THEN
@@ -687,235 +918,4 @@ SUBROUTINE COPY_BACKGROUND_NODIFF_NODIFF(ncv, nfc, ns, switch, mpg, gm, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE COPY_BACKGROUND_NODIFF_NODIFF
-
-!
-SUBROUTINE WRITE_F30_NODIFF_NODIFF(geo, mpg)
-  USE B2US_MAP_DIFFV_DIFFV
-  USE B2US_GEO_DIFFV_DIFFV
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(GEOMETRY), INTENT(IN) :: geo
-  INTEGER :: i, nb, ilbl, minlbl, maxlbl, nbfaces, nbverts
-  INTEGER, ALLOCATABLE :: bverts(:)
-  INTRINSIC MINVAL
-  INTRINSIC MAXVAL
-  INTRINSIC COUNT
-!
-! open the file
-  WRITE(*, *) 'Writing fort.30 file'
-!
-  OPEN(unit=30, file='fort.30') 
-! identify range of face labels
-!
-  minlbl = MINVAL(mpg%fclbl)
-! first pass: identify number of boundary segments to be written
-  maxlbl = MAXVAL(mpg%fclbl)
-!
-  nb = 0
-! only treat faces with non-zero fclbl
-  DO ilbl=minlbl,maxlbl
-!
-! determine number of faces with this label
-    IF (ilbl .NE. 0) THEN
-!
-      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
-!
-      IF (nbfaces .GT. 0) nb = nb + 1
-    END IF
-!
-! write file
-
-  END DO
-!
-  WRITE(30, '(i3)') nb
-!
-! only treat faces with non-zero fclbl
-  DO ilbl=minlbl,maxlbl
-!
-! determine number of faces with this label
-    IF (ilbl .NE. 0) THEN
-!
-! corresponding number of vertices
-      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
-!
-      nbverts = nbfaces + 1
-!
-      IF (nbfaces .GT. 0) THEN
-!
-        ALLOCATE(bverts(nbverts))
-! sort vertices of the boundary faces into a polygon
-!
-! write into fort.30
-        CALL SORT_VERTICES_NODIFF_NODIFF(nbverts, bverts, mpg%nfc, mpg%&
-&                                  fclbl, ilbl, mpg)
-!
-        WRITE(30, '(i3)') ilbl
-        WRITE(30, '(i12)') nbverts
-        DO i=1,nbverts
-          WRITE(30, '(2(2X,E21.14))') geo%vxx(bverts(i)), geo%vxy(bverts&
-&         (i))
-        END DO
-!
-        DEALLOCATE(bverts)
-      END IF
-    END IF
-! close file
-
-  END DO
-!
-  CLOSE(30) 
-!
-  RETURN
-END SUBROUTINE WRITE_F30_NODIFF_NODIFF
-
-!
-SUBROUTINE WRITE_F31_NODIFF_NODIFF(mpg)
-  USE B2MOD_TYPES
-  USE B2MOD_EIRENE_GLOBALS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2US_GEO_DIFFV_DIFFV
-  USE B2US_MAP_DIFFV_DIFFV
-  USE B2US_PLASMA_DIFFV_DIFFV
-  USE B2MOD_BRAEIR
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-!  version : 28.12.96 21:39
-!
-!
-!     COUPLING DEFINITION COMMON (KOPPLDIM)
-!
-!
-!  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
-  INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
-& = def_nfl)
-  INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
-& , nspz=def_natm+def_nmol+def_nion+def_npls)
-  INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
-  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
-!
-  INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
-&   def_isoextra), n3rd=1)
-  INTEGER :: n1f, n2f, n3f
-  PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
-  INTEGER :: ngitt, ngittp
-  PARAMETER (ngitt=n1st*n2nd*n3f+n1st*n3rd*n2f+n2nd*n3rd*n1f, ngittp=&
-&   ngitt+1)
-  INTEGER :: ndx, ndy
-  PARAMETER (ndx=nxdd, ndy=nydd)
-  INTEGER :: ndxp, ndyp, nlimps
-  PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
-  INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=def_ngstal*ngitt)
-  PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
-!
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  INTEGER :: i, ic, ifl, ntrgdat, istra
-  INTRINSIC COUNT
-!
-!  .. use approach to generalized user interface
-!
-!  .. plasma data
-  REWIND(31) 
-  WRITE(31, '(a)') '* EIRENE PLASMA FILE '
-  WRITE(31, '(a)') '*'
-  WRITE(31, '(a)') '*** MISC PLASMA DATA'
-  WRITE(31, '(a)') '*'
-  WRITE(31, '(a1,a6,15a15)') '*', 'Index', 'Te', 'ne', 'Bx', 'By', 'Bz'&
-& , 'Ex', 'Ey', 'Ez', 'pot', 'psi', 'f', 'Pux', 'Puy', 'Pvx', 'Pvy'
-  WRITE(31, '(a1,a6,15a15)') '*', ' ', '(eV)', '(1/m^3)', 'Tesla', &
-& 'Tesla', 'Tesla', '(V/m)', '(V/m)', '(V/m)', 'V', '??', '??', ' ', ' '&
-& , ' ', ' '
-!
-  WRITE(31, '(3i6)') mpg%ncv, mpg%nci, mpg%nfc
-!
-  DO ic=1,mpg%nci
-    WRITE(31, '(i7,15es15.7)') ic, teb(ic), neb(ic), bbxb(ic), bbyb(ic)&
-&   , bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8, pob(ic), 0.0_R8, 0.0_R8, pux(ic)&
-&   , puy(ic), pvx(ic), pvy(ic)
-  END DO
-!
-  DO ifl=1,nflai
-!
-    WRITE(31, '(a)') '*'
-    WRITE(31, '(a,i0,a)') '*** ION #', ifl, ' PLASMA DATA'
-    WRITE(31, '(a)') '*'
-    WRITE(31, '(a1,a6,5a15)') '*', 'Index', 'Ti', 'ni', 'Vx', 'Vy', 'Vz'
-    WRITE(31, '(a1,a6,5a15)') '*', ' ', '(eV)', '(1/m^3)', 'm/s', 'm/s'&
-&   , 'm/s'
-!
-    WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
-!
-    WRITE(31, '(i6)') mpg%nci
-!
-    DO ic=1,mpg%nci
-      WRITE(31, '(i7,5es15.7)') ic, tib(ic), dnib(ic, ifl), vxb(ic, ifl)&
-&     , vyb(ic, ifl), vzb(ic, ifl)
-    END DO
-!
-
-  END DO
-!
-!  .. target data
-  WRITE(31, '(a)') '*'
-  WRITE(31, '(a)') '*** TARGET DATA'
-  WRITE(31, '(a)') '*'
-!      write (31,'(i6)') mpg%nRc
-  WRITE(31, '(i6)') COUNT(trgt(1:mpg%nrc)%ntrgdat .GT. 0)
-!
-  DO istra=1,mpg%nrc
-    ntrgdat = trgt(istra)%ntrgdat
-    IF (ntrgdat .NE. 0) THEN
-      WRITE(31, '(a)') '*'
-      WRITE(31, '(a,i0)') '*** MISC TARGET DATA #', istra
-      WRITE(31, '(a)') '*'
-      WRITE(31, '(a1,2a6,6a15)') '*', 'Index', 'face', 'ori', 'Te', 'fe'&
-&     , 'fsh', 'length'
-      WRITE(31, '(a1,2a6,6a15)') '*', ' ', ' ', ' ', '(eV)', ' ', ' ', &
-&     ' '
-      WRITE(31, '(i6)') ntrgdat
-!
-      DO i=1,ntrgdat
-        WRITE(31, '(i7,i6,6es15.7)') i, trgt(istra)%faces(i), trgt(istra&
-&       )%fcori(i), trgt(istra)%tet(i), trgt(istra)%fe(i), trgt(istra)%&
-&       fsh(i), trgt(istra)%flength(i)
-      END DO
-!
-      DO ifl=1,nflai
-!
-        WRITE(31, '(a)') '*'
-        WRITE(31, '(a,i0,a,i0)') '*** ION #', ifl, ' TARGET DATA #', &
-&       istra
-        WRITE(31, '(a)') '*'
-!
-        WRITE(31, '(a1,a6,12a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
-&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr', 'Zi'
-        WRITE(31, '(a1,a6,12a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
-&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' ', ' '
-!
-        WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
-        WRITE(31, '(i6)') ntrgdat
-!
-        DO i=1,ntrgdat
-          WRITE(31, '(i7,12es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
-&         istra)%tit(i), trgt(istra)%dnit(i, ifl), trgt(istra)%vxt(i, &
-&         ifl), trgt(istra)%vyt(i, ifl), trgt(istra)%vzt(i, ifl), trgt(&
-&         istra)%fi(i, ifl), trgt(istra)%fel(i, ifl), trgt(istra)%vpart(&
-&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl), &
-&         trgt(istra)%zit(i, ifl)
-        END DO
-! ifl
-
-      END DO
-    END IF
-! istra
-
-  END DO
-  FLUSH(31) 
-  RETURN
-END SUBROUTINE WRITE_F31_NODIFF_NODIFF
 

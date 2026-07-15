@@ -1771,8 +1771,8 @@ CONTAINS
 &                                  istra), dv%fluid_frac_hyb(ifc), dvd%&
 &                                  fluid_frac_hyb(:, ifc), pl, pld, tif&
 &                                  , tifd, tef, pof, pofd, pl%na(icv, is&
-&                                  ), dv%ne(icv), geo, geod, mpg, t0, &
-&                                  t0d, cosa, sina, switch%use_uy_uz_0, &
+&                                  ), dv%ne(icv), geo, mpg, t0, t0d, &
+&                                  cosa, sina, switch%use_uy_uz_0, &
 &                                  fnnrec, fnnrecd, fmomrec, fmomrecd, &
 &                                  nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &                                  fenerec, fenerecd, nbdirs)
@@ -1895,11 +1895,11 @@ CONTAINS
             ELSE IF (maxw(istra) .EQ. 1) THEN
               CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, is0, isign&
 &                                            , istra, farea, pl, pld, &
-&                                            tnf, tnfd, geo, geod, cosa&
-&                                            , sina, fnni, fnnid, fmomni&
-&                                            , fmomnid, nni, nnid, &
-&                                            nnwwni, nnwwnid, feneni, &
-&                                            fenenid, nbdirs)
+&                                            tnf, tnfd, geo, cosa, sina&
+&                                            , fnni, fnnid, fmomni, &
+&                                            fmomnid, nni, nnid, nnwwni&
+&                                            , nnwwnid, feneni, fenenid&
+&                                            , nbdirs)
             ELSE IF (maxw(istra) .EQ. 2) THEN
               CALL CALCINCIDENTFLUXESKN_DV(switch%kn_b1, switch%kn_b2, &
 &                                    icv, icn, ifc, isign, is0, is2, isi&
@@ -1976,9 +1976,9 @@ CONTAINS
 &                                               fluid_frac_hyb(ifc), dvd&
 &                                               %fluid_frac_hyb(:, ifc)&
 &                                               , pl, pld, tnf, tnfd, &
-&                                               geo, geod, mpg, cosa, &
-&                                               sina, fnnrefl, fnnrefld&
-&                                               , fmomrefl, fmomrefld, &
+&                                               geo, mpg, cosa, sina, &
+&                                               fnnrefl, fnnrefld, &
+&                                               fmomrefl, fmomrefld, &
 &                                               nnrefl, nnrefld, &
 &                                               nnwwnrefl, nnwwnrefld, &
 &                                               fenerefl, fenerefld, &
@@ -2792,8 +2792,8 @@ END SUBROUTINE B2STBR_PHYS_DV_NODIFF
 !                *(dvd.fluid_frac_hyb) *(srw.she0) *(srw.shi0)
 !                *(srw.shn0) *(srw.smo0) *(srw.sna0)
 !   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                int0ld int1ld int2ld int3ld int4ld b2recyc potpar
-!                potpard *(srwd.she0) *(srwd.shi0) *(srwd.shn0)
+!                int0ld int1ld int2ld int3ld int4ld b2recyc b2recycd
+!                potpar potpard *(srwd.she0) *(srwd.shi0) *(srwd.shn0)
 !                *(srwd.smo0) *(srwd.sna0) *(dv.fna) *(dv.fhm)
 !                *(dv.kin_frac_hyb) *(dv.fluid_frac_hyb) *(dv.ne)
 !                *(rtd.rlcx) *(rtd.rlsa) *(rtd.rza) *(rt.rlcx)
@@ -2851,10 +2851,10 @@ END SUBROUTINE B2STBR_PHYS_DV_NODIFF
 !.specification
 !
 SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
-& dtim, switch, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, pld, &
-& pldd, dv, dvd0, dvd, dvdd, co, rt, rtd0, rtd, rtdd, st_ext, srw, srwd0&
-& , srwd, srwdd, tchem, tchee, tphys, tphye, thevp, thvpe, trese, tresn&
-& , trfln, trfle, sput_src, sput_chem_model, reflection_on, &
+& dtim, switch, switchd0, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0&
+& , pld, pldd, dv, dvd0, dvd, dvdd, co, rt, rtd0, rtd, rtdd, st_ext, srw&
+& , srwd0, srwd, srwdd, tchem, tchee, tphys, tphye, thevp, thvpe, trese&
+& , tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
 & sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep, &
 & nbdirs, nbdirs0)
   USE B2MOD_TYPES
@@ -2885,6 +2885,7 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -3309,10 +3310,10 @@ CONTAINS
 !                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.smo0)
 !                *(srw.sna0) eincd
 !   with respect to varying inputs: int0l int1l int2l int3l int4l
-!                int0ld int1ld int2ld int3ld int4ld b2recyc *(srwd.she0)
-!                *(srwd.shi0) *(srwd.shn0) *(srwd.smo0) *(srwd.sna0)
-!                *(dv.fna) *(dv.fhm) *(dv.fluid_frac_hyb) *(dv.ne)
-!                *(rtd.rlcx) *(rtd.rlsa) *(rtd.rza) *(rt.rlcx)
+!                int0ld int1ld int2ld int3ld int4ld b2recyc b2recycd
+!                *(srwd.she0) *(srwd.shi0) *(srwd.shn0) *(srwd.smo0)
+!                *(srwd.sna0) *(dv.fna) *(dv.fhm) *(dv.fluid_frac_hyb)
+!                *(dv.ne) *(rtd.rlcx) *(rtd.rlsa) *(rtd.rza) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(dvd.fna) *(dvd.fhm) *(dvd.fluid_frac_hyb)
 !                *(dvd.ne) *(srw.she0) *(srw.shi0) *(srw.shn0)
 !                *(srw.smo0) *(srw.sna0) *(pld.na) *(pld.ua) *(pld.po)
@@ -3790,19 +3791,20 @@ CONTAINS
           temp1 = pl%ua(icv, is)/temp0
           temp2 = b2recyc(is, istra)*t0
           DO nd=1,nbdirs
-            temp4 = b2recycd(nd, is, istra)*t0 + b2recyc(is, istra)*t0d(&
+            temp4 = t0*b2recycd(nd, is, istra) + b2recyc(is, istra)*t0d(&
 &             nd)
             DO nd0=1,nbdirs0
 !! default neutral recycling/reflection model (always for non-hydrogenic species)
               srwdd%sna0(nd0, nd, icv, 0, is0) = srwdd%sna0(nd0, nd, icv&
-&               , 0, is0) + b2recycd(nd, is, istra)*t0d0(nd0) + t0d(nd)*&
-&               b2recycd0(nd0, is, istra) + b2recyc(is, istra)*t0dd(nd0&
-&               , nd)
+&               , 0, is0) + b2recycd(nd, is, istra)*t0d0(nd0) + t0*&
+&               b2recycdd(nd0, nd, is, istra) + t0d(nd)*b2recycd0(nd0, &
+&               is, istra) + b2recyc(is, istra)*t0dd(nd0, nd)
               srwdd%smo0(nd0, nd, icv, 0, is0) = srwdd%smo0(nd0, nd, icv&
 &               , 0, is0) + temp*(temp4*temp1d(nd0)+temp1*(b2recycd(nd, &
-&               is, istra)*t0d0(nd0)+t0d(nd)*b2recycd0(nd0, is, istra)+&
-&               b2recyc(is, istra)*t0dd(nd0, nd))+temp2*pldd%ua(nd0, nd&
-&               , icv, is)/temp0+pld%ua(nd, icv, is)*temp2d(nd0)/temp0)
+&               is, istra)*t0d0(nd0)+t0*b2recycdd(nd0, nd, is, istra)+&
+&               t0d(nd)*b2recycd0(nd0, is, istra)+b2recyc(is, istra)*&
+&               t0dd(nd0, nd))+temp2*pldd%ua(nd0, nd, icv, is)/temp0+pld&
+&               %ua(nd, icv, is)*temp2d(nd0)/temp0)
             END DO
             srwd%sna0(nd, icv, 0, is0) = srwd%sna0(nd, icv, 0, is0) + t0&
 &             *b2recycd(nd, is, istra) + b2recyc(is, istra)*t0d(nd)
@@ -3863,10 +3865,10 @@ CONTAINS
                 srwdd%shi0(nd0, nd, icv, 1) = srwdd%shi0(nd0, nd, icv, 1&
 &                 ) + switch%recycled_neutrals_contr*(temp4*(t0*max6d0(&
 &                 nd0)+max6*t0d0(nd0)-temp5*pld0%ti(nd0, icv))/pl%ti(icv&
-&                 )-temp5*(pld%ti(nd, icv)*temp2d(nd0)+temp2*pldd%ti(nd0&
-&                 , nd, icv))+temp6*temp2d(nd0)+temp2*(max6d(nd)*t0d0(&
-&                 nd0)+t0*max6dd(nd0, nd)+t0d(nd)*max6d0(nd0)+max6*t0dd(&
-&                 nd0, nd)))
+&                 )+temp5*(b2recycdd(nd0, nd, is, istra)-pld%ti(nd, icv)&
+&                 *temp2d(nd0)-temp2*pldd%ti(nd0, nd, icv))+temp6*temp2d&
+&                 (nd0)+temp2*(max6d(nd)*t0d0(nd0)+t0*max6dd(nd0, nd)+&
+&                 t0d(nd)*max6d0(nd0)+max6*t0dd(nd0, nd)))
               END DO
               srwd%shi0(nd, icv, 1) = srwd%shi0(nd, icv, 1) + switch%&
 &               recycled_neutrals_contr*(temp5*temp4+temp2*temp6)
@@ -3912,14 +3914,15 @@ CONTAINS
               DO nd0=1,nbdirs0
                 srwdd%shi0(nd0, nd, icv, 0) = srwdd%shi0(nd0, nd, icv, 0&
 &                 ) + switch%recycled_neutrals_contr*(b2recycd(nd, is, &
-&                 istra)*(t0*max7d0(nd0)+max7*t0d0(nd0))+temp6*b2recycd0&
-&                 (nd0, is, istra)+b2recyc(is, istra)*(max7d(nd)*t0d0(&
-&                 nd0)+t0*max7dd(nd0, nd)+t0d(nd)*max7d0(nd0)+max7*t0dd(&
-&                 nd0, nd)))
+&                 istra)*(t0*max7d0(nd0)+max7*t0d0(nd0))+max7*t0*&
+&                 b2recycdd(nd0, nd, is, istra)+temp6*b2recycd0(nd0, is&
+&                 , istra)+b2recyc(is, istra)*(max7d(nd)*t0d0(nd0)+t0*&
+&                 max7dd(nd0, nd)+t0d(nd)*max7d0(nd0)+max7*t0dd(nd0, nd)&
+&                 ))
               END DO
               srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + switch%&
-&               recycled_neutrals_contr*(b2recycd(nd, is, istra)*(max7*&
-&               t0)+b2recyc(is, istra)*temp6)
+&               recycled_neutrals_contr*(max7*t0*b2recycd(nd, is, istra)&
+&               +b2recyc(is, istra)*temp6)
             END DO
             DO nd0=1,nbdirs0
               srwd0%shi0(nd0, icv, 0) = srwd0%shi0(nd0, icv, 0) + switch&
@@ -3971,15 +3974,16 @@ CONTAINS
 &                                     phi_app, phi_appd0, phi_appd, &
 &                                     phi_appdd, farea, b2recyc(is, &
 &                                     istra), b2recycd0(:, is, istra), &
-&                                     b2recycd(:, is, istra), recycm(is&
-&                                     , istra), dv%fluid_frac_hyb(ifc), &
-&                                     dvd0%fluid_frac_hyb(:, ifc), dvd%&
+&                                     b2recycd(:, is, istra), b2recycdd(&
+&                                     :, :, is, istra), recycm(is, istra&
+&                                     ), dv%fluid_frac_hyb(ifc), dvd0%&
+&                                     fluid_frac_hyb(:, ifc), dvd%&
 &                                     fluid_frac_hyb(:, ifc), dvdd%&
 &                                     fluid_frac_hyb(:, :, ifc), pl, &
 &                                     pld0, pld, pldd, tif, tifd0, tifd&
 &                                     , tifdd, tef, pof, pofd0, pofd, &
 &                                     pofdd, pl%na(icv, is), dv%ne(icv)&
-&                                     , geo, geod, mpg, t0, t0d0, t0d, &
+&                                     , geo, geod0, mpg, t0, t0d0, t0d, &
 &                                     t0dd, cosa, sina, switch%&
 &                                     use_uy_uz_0, fnnrec, fnnrecd0, &
 &                                     fnnrecd, fnnrecdd, fmomrec, &
@@ -4214,11 +4218,11 @@ CONTAINS
 &                                               isign, istra, farea, pl&
 &                                               , pld0, pld, pldd, tnf, &
 &                                               tnfd0, tnfd, tnfdd, geo&
-&                                               , geod, cosa, sina, fnni&
-&                                               , fnnid0, fnnid, fnnidd&
-&                                               , fmomni, fmomnid0, &
-&                                               fmomnid, fmomnidd, nni, &
-&                                               nnid0, nnid, nnidd, &
+&                                               , geod0, cosa, sina, &
+&                                               fnni, fnnid0, fnnid, &
+&                                               fnnidd, fmomni, fmomnid0&
+&                                               , fmomnid, fmomnidd, nni&
+&                                               , nnid0, nnid, nnidd, &
 &                                               nnwwni, nnwwnid0, &
 &                                               nnwwnid, nnwwnidd, &
 &                                               feneni, fenenid0, &
@@ -4303,8 +4307,9 @@ CONTAINS
 &                                                 b2recyc(is, istra), &
 &                                                 b2recycd0(:, is, istra&
 &                                                 ), b2recycd(:, is, &
-&                                                 istra), recycm(is, &
-&                                                 istra), dv%&
+&                                                 istra), b2recycdd(:, :&
+&                                                 , is, istra), recycm(&
+&                                                 is, istra), dv%&
 &                                                 fluid_frac_hyb(ifc), &
 &                                                 dvd0%fluid_frac_hyb(:&
 &                                                 , ifc), dvd%&
@@ -4350,21 +4355,22 @@ CONTAINS
 &                                                  b2recyc(is, istra), &
 &                                                  b2recycd0(:, is, &
 &                                                  istra), b2recycd(:, &
-&                                                  is, istra), recycm(is&
-&                                                  , istra), dv%&
-&                                                  fluid_frac_hyb(ifc), &
-&                                                  dvd0%fluid_frac_hyb(:&
-&                                                  , ifc), dvd%&
+&                                                  is, istra), b2recycdd&
+&                                                  (:, :, is, istra), &
+&                                                  recycm(is, istra), dv&
+&                                                  %fluid_frac_hyb(ifc)&
+&                                                  , dvd0%fluid_frac_hyb&
+&                                                  (:, ifc), dvd%&
 &                                                  fluid_frac_hyb(:, ifc&
 &                                                  ), dvdd%&
 &                                                  fluid_frac_hyb(:, :, &
 &                                                  ifc), pl, pld0, pld, &
 &                                                  pldd, tnf, tnfd0, &
 &                                                  tnfd, tnfdd, geo, &
-&                                                  geod, mpg, cosa, sina&
-&                                                  , fnnrefl, fnnrefld0&
-&                                                  , fnnrefld, fnnrefldd&
-&                                                  , fmomrefl, &
+&                                                  geod0, mpg, cosa, &
+&                                                  sina, fnnrefl, &
+&                                                  fnnrefld0, fnnrefld, &
+&                                                  fnnrefldd, fmomrefl, &
 &                                                  fmomrefld0, fmomrefld&
 &                                                  , fmomrefldd, nnrefl&
 &                                                  , nnrefld0, nnrefld, &
@@ -4384,6 +4390,7 @@ CONTAINS
 &                                          , iwall, phi_app, farea, &
 &                                          b2recyc(is, istra), b2recycd0&
 &                                          (:, is, istra), b2recycd(:, &
+&                                          is, istra), b2recycdd(:, :, &
 &                                          is, istra), recycm(is, istra)&
 &                                          , dv%fluid_frac_hyb(ifc), &
 &                                          dvd0%fluid_frac_hyb(:, ifc), &
@@ -4421,7 +4428,8 @@ CONTAINS
 &                                             farea, b2recyc(is, istra)&
 &                                             , b2recycd0(:, is, istra)&
 &                                             , b2recycd(:, is, istra), &
-&                                             recycm(is, istra), dv%&
+&                                             b2recycdd(:, :, is, istra)&
+&                                             , recycm(is, istra), dv%&
 &                                             fluid_frac_hyb(ifc), dvd0%&
 &                                             fluid_frac_hyb(:, ifc), &
 &                                             dvd%fluid_frac_hyb(:, ifc)&
@@ -4766,19 +4774,19 @@ CONTAINS
             END DO
             temp0 = b2recyc(is, istra)*t0
             DO nd=1,nbdirs
-              temp6 = b2recycd(nd, is, istra)*t0 + b2recyc(is, istra)*&
+              temp6 = t0*b2recycd(nd, is, istra) + b2recyc(is, istra)*&
 &               t0d(nd)
               DO nd0=1,nbdirs0
                 srwdd%sna0(nd0, nd, icv, 0, is0) = srwdd%sna0(nd0, nd, &
-&                 icv, 0, is0) + b2recycd(nd, is, istra)*t0d0(nd0) + t0d&
-&                 (nd)*b2recycd0(nd0, is, istra) + b2recyc(is, istra)*&
-&                 t0dd(nd0, nd)
+&                 icv, 0, is0) + b2recycd(nd, is, istra)*t0d0(nd0) + t0*&
+&                 b2recycdd(nd0, nd, is, istra) + t0d(nd)*b2recycd0(nd0&
+&                 , is, istra) + b2recyc(is, istra)*t0dd(nd0, nd)
                 srwdd%smo0(nd0, nd, icv, 0, is0) = srwdd%smo0(nd0, nd, &
 &                 icv, 0, is0) + temp2*(pld%ua(nd, icv, is)*temp0d(nd0)+&
 &                 temp0*pldd%ua(nd0, nd, icv, is)+temp6*pld0%ua(nd0, icv&
 &                 , is)+pl%ua(icv, is)*(b2recycd(nd, is, istra)*t0d0(nd0&
-&                 )+t0d(nd)*b2recycd0(nd0, is, istra)+b2recyc(is, istra)&
-&                 *t0dd(nd0, nd)))
+&                 )+t0*b2recycdd(nd0, nd, is, istra)+t0d(nd)*b2recycd0(&
+&                 nd0, is, istra)+b2recyc(is, istra)*t0dd(nd0, nd)))
               END DO
               srwd%sna0(nd, icv, 0, is0) = srwd%sna0(nd, icv, 0, is0) + &
 &               t0*b2recycd(nd, is, istra) + b2recyc(is, istra)*t0d(nd)
@@ -4808,16 +4816,16 @@ CONTAINS
             temp = zaf(is)*tef + tif
             DO nd=1,nbdirs
               temp6 = tef*zafd(nd, is) + zaf(is)*tefd(nd) + tifd(nd)
-              temp5 = b2recycd(nd, is, istra)*t0 + b2recyc(is, istra)*&
+              temp5 = t0*b2recycd(nd, is, istra) + b2recyc(is, istra)*&
 &               t0d(nd)
               DO nd0=1,nbdirs0
                 srwdd%shi0(nd0, nd, icv, 0) = srwdd%shi0(nd0, nd, icv, 0&
 &                 ) + temp2*(temp6*temp0d(nd0)+temp0*(zafd(nd, is)*tefd0&
 &                 (nd0)+tef*zafdd(nd0, nd, is)+tefd(nd)*zafd0(nd0, is)+&
 &                 zaf(is)*tefdd(nd0, nd)+tifdd(nd0, nd))+temp5*tempd(nd0&
-&                 )+temp*(b2recycd(nd, is, istra)*t0d0(nd0)+t0d(nd)*&
-&                 b2recycd0(nd0, is, istra)+b2recyc(is, istra)*t0dd(nd0&
-&                 , nd)))
+&                 )+temp*(b2recycd(nd, is, istra)*t0d0(nd0)+t0*b2recycdd&
+&                 (nd0, nd, is, istra)+t0d(nd)*b2recycd0(nd0, is, istra)&
+&                 +b2recyc(is, istra)*t0dd(nd0, nd)))
               END DO
               srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) + temp2*(&
 &               temp0*temp6+temp*temp5)
@@ -5224,8 +5232,8 @@ CONTAINS
 &                                  istra), dv%fluid_frac_hyb(ifc), dvd%&
 &                                  fluid_frac_hyb(:, ifc), pl, pld, tif&
 &                                  , tifd, tef, pof, pofd, pl%na(icv, is&
-&                                  ), dv%ne(icv), geo, geod, mpg, t0, &
-&                                  t0d, cosa, sina, switch%use_uy_uz_0, &
+&                                  ), dv%ne(icv), geo, mpg, t0, t0d, &
+&                                  cosa, sina, switch%use_uy_uz_0, &
 &                                  fnnrec, fnnrecd, fmomrec, fmomrecd, &
 &                                  nnrec, nnrecd, nnwwnrec, nnwwnrecd, &
 &                                  fenerec, fenerecd, nbdirs)
@@ -5348,11 +5356,11 @@ CONTAINS
             ELSE IF (maxw(istra) .EQ. 1) THEN
               CALL CALCINCIDENTFLUXESMAXWELLIAN_DV(icv, ifc, is0, isign&
 &                                            , istra, farea, pl, pld, &
-&                                            tnf, tnfd, geo, geod, cosa&
-&                                            , sina, fnni, fnnid, fmomni&
-&                                            , fmomnid, nni, nnid, &
-&                                            nnwwni, nnwwnid, feneni, &
-&                                            fenenid, nbdirs)
+&                                            tnf, tnfd, geo, cosa, sina&
+&                                            , fnni, fnnid, fmomni, &
+&                                            fmomnid, nni, nnid, nnwwni&
+&                                            , nnwwnid, feneni, fenenid&
+&                                            , nbdirs)
             ELSE IF (maxw(istra) .EQ. 2) THEN
               CALL CALCINCIDENTFLUXESKN_DV(switch%kn_b1, switch%kn_b2, &
 &                                    icv, icn, ifc, isign, is0, is2, isi&
@@ -5429,9 +5437,9 @@ CONTAINS
 &                                               fluid_frac_hyb(ifc), dvd&
 &                                               %fluid_frac_hyb(:, ifc)&
 &                                               , pl, pld, tnf, tnfd, &
-&                                               geo, geod, mpg, cosa, &
-&                                               sina, fnnrefl, fnnrefld&
-&                                               , fmomrefl, fmomrefld, &
+&                                               geo, mpg, cosa, sina, &
+&                                               fnnrefl, fnnrefld, &
+&                                               fmomrefl, fmomrefld, &
 &                                               nnrefl, nnrefld, &
 &                                               nnwwnrefl, nnwwnrefld, &
 &                                               fenerefl, fenerefld, &

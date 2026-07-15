@@ -125,10 +125,10 @@ CONTAINS
 !                state_ext.sna:in state_ext.smo:in
 !
   SUBROUTINE SOURCE_INPUT_DV_DV(mpg, mpgd, geo, geod0, geod, switch, &
-&   switchd, state_ext, state_extd0, state_extd, state_extdd, ns, sna0, &
-&   sna0d0, sna0d, sna0dd, smo0, smo0d0, smo0d, smo0dd, she0, she0d0, &
-&   she0d, she0dd, shi0, shi0d0, shi0d, shi0dd, sch0, sch0d0, sch0d, &
-&   sch0dd, sne0, sne0d, nc, nbdirs, nbdirs0)
+&   switchd0, switchd, state_ext, state_extd0, state_extd, state_extdd, &
+&   ns, sna0, sna0d0, sna0d, sna0dd, smo0, smo0d0, smo0d, smo0dd, she0, &
+&   she0d0, she0d, she0dd, shi0, shi0d0, shi0d, shi0dd, sch0, sch0d0, &
+&   sch0d, sch0dd, sne0, sne0d, nc, nbdirs, nbdirs0)
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
@@ -145,6 +145,7 @@ CONTAINS
     TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
     TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
     TYPE(B2STATEEXT) :: state_ext
     TYPE(B2STATEEXT_DIFFV0) :: state_extd0
@@ -205,14 +206,12 @@ CONTAINS
       sdata(:, :, :, :) = 0.0_R8
       nxdata(:, :, :) = 0
       xdata(:, :, :, :) = 0.0_R8
-      DO nd=1,nbdirs
-        sna0d(nd, :, :, :) = 0.d0
-        smo0d(nd, :, :, :) = 0.d0
-        she0d(nd, :, :) = 0.d0
-        sne0d(nd, :, :) = 0.d0
-        sne0d(nd, :, :) = 0.d0
-        shi0d(nd, :, :) = 0.d0
-        sch0d(nd, :, :) = 0.d0
+      DO nd0=1,nbdirs0
+        sna0d0(nd0, :, :, :) = 0.D0
+        smo0d0(nd0, :, :, :) = 0.D0
+        she0d0(nd0, :, :) = 0.D0
+        shi0d0(nd0, :, :) = 0.D0
+        sch0d0(nd0, :, :) = 0.D0
       END DO
       sna0(:, :, :) = 0.0_R8
       sne0(:, :) = 0.0_R8
@@ -230,6 +229,7 @@ CONTAINS
       smo0d = 0.d0
       shi0d = 0.d0
       sna0d = 0.d0
+      sne0d = 0.d0
       sch0d = 0.d0
       she0d = 0.d0
       smo0d0 = 0.D0
@@ -783,15 +783,6 @@ CONTAINS
       sdata(:, :, :, :) = 0.0_R8
       nxdata(:, :, :) = 0
       xdata(:, :, :, :) = 0.0_R8
-      DO nd=1,nbdirs
-        sna0d(nd, :, :, :) = 0.d0
-        smo0d(nd, :, :, :) = 0.d0
-        she0d(nd, :, :) = 0.d0
-        sne0d(nd, :, :) = 0.d0
-        sne0d(nd, :, :) = 0.d0
-        shi0d(nd, :, :) = 0.d0
-        sch0d(nd, :, :) = 0.d0
-      END DO
       sna0(:, :, :) = 0.0_R8
       sne0(:, :) = 0.0_R8
       smo0(:, :, :) = 0.0_R8
@@ -808,6 +799,7 @@ CONTAINS
       smo0d = 0.d0
       shi0d = 0.d0
       sna0d = 0.d0
+      sne0d = 0.d0
       sch0d = 0.d0
       she0d = 0.d0
     END IF
@@ -1972,11 +1964,22 @@ CONTAINS
 &                       ddd, ndim, pr, pf, pfd0, pfd, pfdd, ifail, &
 &                       nbdirs, nbdirs0)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF_DV_DV(ndat, r, rd0, rd, felm, &
-&                                     felmd0, felmd, delm, delmd0, delmd&
-&                                     , delmdd, ndim, pr, pelm, pelmd0, &
-&                                     pelmd, pelmdd, ifail, nbdirs, &
-&                                     nbdirs0)
+            IF (elm_data) THEN
+              CALL E01BFF_DV_DV(ndat, r, rd0, rd, felm, felmd0, felmd, &
+&                         delm, delmd0, delmd, delmdd, ndim, pr, pelm, &
+&                         pelmd0, pelmd, pelmdd, ifail, nbdirs, nbdirs0)
+            ELSE
+              DO nd=1,nbdirs
+                DO nd0=nd,nbdirs0
+                  pelmdd(nd0, nd, :) = pfdd(nd0, nd, :)
+                END DO
+                pelmd(nd, :) = pfd(nd, :)
+              END DO
+              DO nd0=1,nbdirs0
+                pelmd0(nd0, :) = pfd0(nd0, :)
+              END DO
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -2945,9 +2948,15 @@ CONTAINS
             CALL E01BFF_DV(ndat, r, rd, f, fd, d, dd, ndim, pr, pf, pfd&
 &                    , ifail, nbdirs)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm&
-&                                  , delmd, ndim, pr, pelm, pelmd, ifail&
-&                                  , nbdirs)
+            IF (elm_data) THEN
+              CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm, delmd, ndim&
+&                      , pr, pelm, pelmd, ifail, nbdirs)
+            ELSE
+              DO nd=1,nbdirs
+                pelmd(nd, :) = pfd(nd, :)
+              END DO
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -3531,8 +3540,11 @@ CONTAINS
             ndim = nomp
             CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
-            IF (elm_data) CALL E01BFF(ndat, r, felm, delm, ndim, pr, &
-&                               pelm, ifail)
+            IF (elm_data) THEN
+              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+            ELSE
+              pelm = pf
+            END IF
 !
             IF (tr_ip_new_files) THEN
 !
@@ -3886,7 +3898,7 @@ CONTAINS
     INTEGER :: i, ifa
     INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
     REAL(kind=r8) :: r(nrr), pr(nrr), prtmp
-    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:)
+    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:), dsp(:)
     INTEGER :: ncall, nya
     CHARACTER(len=256) :: filenamer
     LOGICAL :: exist
@@ -3901,8 +3913,9 @@ CONTAINS
       IF (nomp .GT. 0) THEN
         ALLOCATE(pra(nomp))
         ALLOCATE(prdsa(nomp))
+        ALLOCATE(dsp(nomp))
         arg1 = icsepomp - 1
-        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp')
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp)
       END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF

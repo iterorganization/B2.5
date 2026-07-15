@@ -36,6 +36,7 @@ SUBROUTINE B2NXFC_DV_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd0&
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2nxfc
@@ -45,32 +46,33 @@ SUBROUTINE B2NXFC_DV_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd0&
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(nfc, 0:1)
-  REAL(kind=r8) :: robd0(nbdirsmax0, ncv), ubd0(nbdirsmax0, ncv), flubd0&
-& (nbdirsmax0, nfc, 0:1), cvsbd0(nbdirsmax0, nfc, 0:1)
-  REAL(kind=r8) :: robd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), flubd(&
-& nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1)
-  REAL(kind=r8) :: robdd(nbdirsmax0, nbdirsmax, ncv), ubdd(nbdirsmax0, &
-& nbdirsmax, ncv), flubdd(nbdirsmax0, nbdirsmax, nfc, 0:1), cvsbdd(&
-& nbdirsmax0, nbdirsmax, nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(&
+& nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: robd0(nbdirsmax0, ncv), ubd0(nbdirsmax0, &
+& ncv), flubd0(nbdirsmax0, nfc, 0:1), cvsbd0(nbdirsmax0, nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: robd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)&
+& , flubd(nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: robdd(nbdirsmax0, nbdirsmax, ncv), ubdd(&
+& nbdirsmax0, nbdirsmax, ncv), flubdd(nbdirsmax0, nbdirsmax, nfc, 0:1), &
+& cvsbdd(nbdirsmax0, nbdirsmax, nfc, 0:1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
-  REAL(kind=r8) :: flcbd0(nbdirsmax0, nfc, 0:1), cvcbd0(nbdirsmax0, nfc&
-& , 0:1)
-  REAL(kind=r8) :: flcbd(nbdirsmax, nfc, 0:1), cvcbd(nbdirsmax, nfc, 0:1&
-& )
-  REAL(kind=r8) :: flcbdd(nbdirsmax0, nbdirsmax, nfc, 0:1), cvcbdd(&
-& nbdirsmax0, nbdirsmax, nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcbd0(nbdirsmax0, nfc, 0:1), cvcbd0(&
+& nbdirsmax0, nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcbd(nbdirsmax, nfc, 0:1), cvcbd(&
+& nbdirsmax, nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcbdd(nbdirsmax0, nbdirsmax, nfc, 0:1)&
+& , cvcbdd(nbdirsmax0, nbdirsmax, nfc, 0:1)
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 02.07.08
-  REAL(kind=r8) :: wrkf(nfc)
-  REAL(kind=r8) :: wrkfd0(nbdirsmax0, nfc)
-  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc)
-  REAL(kind=r8) :: wrkfdd(nbdirsmax0, nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkf(nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkfd0(nbdirsmax0, nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkfd(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkfdd(nbdirsmax0, nbdirsmax, nfc)
 !
 !-----------------------------------------------------------------------
 !.documentation
@@ -175,7 +177,7 @@ SUBROUTINE B2NXFC_DV_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd0&
 !     ..compute wrkf
     CALL INTFACE_DV_DV(ncv, nfc, mpg%fccv, geo%fcvol, ub, ubd0, ubd, &
 &                ubdd, wrkf, wrkfd0, wrkfd, wrkfdd, nbdirs, nbdirs0)
-!     ..compute flcbx, cvcbx        
+!     ..compute flcbx, cvcbx
     DO ifc=1,nfc
       DO nd0=1,nbdirs0
         tempd(nd0) = robd0(nd0, mpg%fccv(ifc, 1)) + robd0(nd0, mpg%fccv(&
@@ -230,21 +232,26 @@ SUBROUTINE B2NXFC_DV_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd0&
 !
   IF (switch%b2nxfc_iout .NE. 0) THEN
 !sv 17.06.02 {
-    WRITE(charns, '(i3.3)') isb
-    arg10 = 'b2nxfc_flub_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
-    arg11 = 'b2nxfc_flub_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
-    arg10 = 'b2nxfc_flcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
-    arg11 = 'b2nxfc_flcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
-    arg10 = 'b2nxfc_cvcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
-    arg11 = 'b2nxfc_cvcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
-    arg12 = 'b2nxfc_rob'//charns
-    CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2NXFC OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(charns, '(i3.3)') isb
+      arg10 = 'b2nxfc_flub_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
+      arg11 = 'b2nxfc_flub_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
+      arg10 = 'b2nxfc_flcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
+      arg11 = 'b2nxfc_flcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
+      arg10 = 'b2nxfc_cvcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
+      arg11 = 'b2nxfc_cvcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
+      arg12 = 'b2nxfc_rob'//charns
+      CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    END IF
   END IF
 ! ..return
   ncall_b2nxfc = ncall_b2nxfc + 1
@@ -285,6 +292,7 @@ SUBROUTINE B2NXFC_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, &
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2nxfc
@@ -293,21 +301,22 @@ SUBROUTINE B2NXFC_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(nfc, 0:1)
-  REAL(kind=r8) :: robd(nbdirsmax, ncv), ubd(nbdirsmax, ncv), flubd(&
-& nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(&
+& nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: robd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)&
+& , flubd(nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
-  REAL(kind=r8) :: flcbd(nbdirsmax, nfc, 0:1), cvcbd(nbdirsmax, nfc, 0:1&
-& )
+  REAL(kind=r8), INTENT(OUT) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcbd(nbdirsmax, nfc, 0:1), cvcbd(&
+& nbdirsmax, nfc, 0:1)
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 02.07.08
-  REAL(kind=r8) :: wrkf(nfc)
-  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkf(nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkfd(nbdirsmax, nfc)
 !
 !-----------------------------------------------------------------------
 !.documentation
@@ -388,7 +397,7 @@ SUBROUTINE B2NXFC_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, &
 !     ..compute wrkf
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, ub, ubd, wrkf, wrkfd&
 &             , nbdirs)
-!     ..compute flcbx, cvcbx        
+!     ..compute flcbx, cvcbx
     DO ifc=1,nfc
       temp = rob(mpg%fccv(ifc, 1)) + rob(mpg%fccv(ifc, 2))
       DO nd=1,nbdirs
@@ -415,21 +424,26 @@ SUBROUTINE B2NXFC_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, &
 !
   IF (switch%b2nxfc_iout .NE. 0) THEN
 !sv 17.06.02 {
-    WRITE(charns, '(i3.3)') isb
-    arg10 = 'b2nxfc_flub_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
-    arg11 = 'b2nxfc_flub_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
-    arg10 = 'b2nxfc_flcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
-    arg11 = 'b2nxfc_flcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
-    arg10 = 'b2nxfc_cvcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
-    arg11 = 'b2nxfc_cvcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
-    arg12 = 'b2nxfc_rob'//charns
-    CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2NXFC OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(charns, '(i3.3)') isb
+      arg10 = 'b2nxfc_flub_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
+      arg11 = 'b2nxfc_flub_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
+      arg10 = 'b2nxfc_flcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
+      arg11 = 'b2nxfc_flcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
+      arg10 = 'b2nxfc_cvcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
+      arg11 = 'b2nxfc_cvcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
+      arg12 = 'b2nxfc_rob'//charns
+      CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    END IF
   END IF
 ! ..return
   ncall_b2nxfc = ncall_b2nxfc + 1
@@ -462,6 +476,7 @@ SUBROUTINE B2NXFC_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2nxfc
@@ -469,16 +484,17 @@ SUBROUTINE B2NXFC_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(nfc, 0:1)
+  REAL(kind=r8), INTENT(IN) :: rob(ncv), ub(ncv), flub(nfc, 0:1), cvsb(&
+& nfc, 0:1)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
+  REAL(kind=r8), INTENT(OUT) :: flcb(nfc, 0:1), cvcb(nfc, 0:1)
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 02.07.08
-  REAL(kind=r8) :: wrkf(nfc)
+  REAL(kind=r8), INTENT(INOUT) :: wrkf(nfc)
 !
 !-----------------------------------------------------------------------
 !.documentation
@@ -546,7 +562,7 @@ SUBROUTINE B2NXFC_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
   ELSE IF (switch%b2nxfc_style .EQ. 1) THEN
 !     ..compute wrkf
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, ub, wrkf)
-!     ..compute flcbx, cvcbx        
+!     ..compute flcbx, cvcbx
     DO ifc=1,nfc
       flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*wrkf(ifc)*(rob(mpg%&
 &       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5_R8
@@ -560,21 +576,26 @@ SUBROUTINE B2NXFC_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
 !
   IF (switch%b2nxfc_iout .NE. 0) THEN
 !sv 17.06.02 {
-    WRITE(charns, '(i3.3)') isb
-    arg10 = 'b2nxfc_flub_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
-    arg11 = 'b2nxfc_flub_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
-    arg10 = 'b2nxfc_flcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
-    arg11 = 'b2nxfc_flcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
-    arg10 = 'b2nxfc_cvcb_th'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
-    arg11 = 'b2nxfc_cvcb_r'//charns
-    CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
-    arg12 = 'b2nxfc_rob'//charns
-    CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    IF (IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2NXFC OpenMP warning: no file output in ', &
+&     'parallel mode'
+    ELSE
+      WRITE(charns, '(i3.3)') isb
+      arg10 = 'b2nxfc_flub_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 0), arg10)
+      arg11 = 'b2nxfc_flub_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flub(1, 1), arg11)
+      arg10 = 'b2nxfc_flcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 0), arg10)
+      arg11 = 'b2nxfc_flcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, flcb(1, 1), arg11)
+      arg10 = 'b2nxfc_cvcb_th'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 0), arg10)
+      arg11 = 'b2nxfc_cvcb_r'//charns
+      CALL MY_OUT_US(70, nfc, 1, cvcb(1, 1), arg11)
+      arg12 = 'b2nxfc_rob'//charns
+      CALL MY_OUT_US(70, ncv, 0, rob, arg12)
+    END IF
   END IF
 ! ..return
   ncall_b2nxfc = ncall_b2nxfc + 1

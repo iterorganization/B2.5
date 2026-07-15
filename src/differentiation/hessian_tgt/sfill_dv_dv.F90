@@ -21,9 +21,10 @@
 !
 !
 !
-SUBROUTINE SFILL_DV_DV(n, sa, sad, sx, sxd0, sxd, sxdd, incx, nbdirs, &
-& nbdirs0)
+SUBROUTINE SFILL_DV_DV(n, sa, sad0, sad, sx, sxd0, sxd, sxdd, incx, &
+& nbdirs, nbdirs0)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -31,7 +32,7 @@ SUBROUTINE SFILL_DV_DV(n, sa, sad, sx, sxd0, sxd, sxdd, incx, nbdirs, &
   IMPLICIT NONE
   INTEGER :: n, incx
   REAL(kind=r8) :: sa, sx(0:n*incx-1)
-  REAL(kind=r8) :: sxd0(nbdirsmax0, 0:n*incx-1)
+  REAL(kind=r8) :: sad0(nbdirsmax0), sxd0(nbdirsmax0, 0:n*incx-1)
   REAL(kind=r8) :: sad(nbdirsmax), sxd(nbdirsmax, 0:n*incx-1)
   REAL(kind=r8) :: sxdd(nbdirsmax0, nbdirsmax, 0:n*incx-1)
 !     ------------------------------------------------------------------
@@ -101,6 +102,7 @@ END SUBROUTINE SFILL_DV_DV
 !
 SUBROUTINE SFILL_DV_NODIFF(n, sa, sad, sx, sxd, incx, nbdirs)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -155,6 +157,7 @@ END SUBROUTINE SFILL_DV_NODIFF
 !
 SUBROUTINE SFILL_NODIFF_NODIFF(n, sa, sx, incx)
   USE B2MOD_TYPES
+  USE B2MOD_OPENMP
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE

@@ -18691,7 +18691,7 @@ CONTAINS
         DO is=0,ns-1
           CALL CSBC_IS_DV(icv1, ib, is, cs, csd, nbdirs)
           CALL VBC_IS_DV(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                  csbcd(1, icv1, is), wrk, nbdirs)
+&                  csbcd(:, icv1, is), wrk, nbdirs)
 !srv 15.02.26 }
         END DO
         temp2 = pz(icv1)/rz(icv1)
@@ -22517,7 +22517,7 @@ CONTAINS
         DO is=0,ns-1
           CALL CSBC_IS_DV(icv1, ib, is, cs, csd, nbdirs)
           CALL VBC_IS_DV(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                  csbcd(1, icv1, is), wrk, nbdirs)
+&                  csbcd(:, icv1, is), wrk, nbdirs)
 !srv 15.02.26 }
         END DO
         arg12 = pl%te(icv1)/me

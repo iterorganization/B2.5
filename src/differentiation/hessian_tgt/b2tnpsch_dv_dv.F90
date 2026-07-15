@@ -127,8 +127,8 @@ SUBROUTINE B2TNPSCH_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, &
 !srv 13.10.06
   fnbpsch = 0.0e0_R8
 !srv 02.01.07
-  DO nd=1,nbdirs
-    conbd(nd, :, :, :) = 0.d0
+  DO nd0=1,nbdirs0
+    conbd0(nd0, :, :, :) = 0.D0
   END DO
   conb = 0.0e0_R8
   flob = 0.0e0_R8
@@ -460,9 +460,6 @@ SUBROUTINE B2TNPSCH_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, &
 !srv 13.10.06
   fnbpsch = 0.0e0_R8
 !srv 02.01.07
-  DO nd=1,nbdirs
-    conbd(nd, :, :, :) = 0.d0
-  END DO
   conb = 0.0e0_R8
   flob = 0.0e0_R8
   facdriftm = MAXVAL(facdrift)

@@ -31,6 +31,9 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   REAL(kind=r8), SAVE :: dtee(0:cvregmax), dtee_ft(def_nyd)
   REAL(kind=r8), SAVE :: dtei(0:cvregmax), dtei_ft(def_nyd)
   REAL(kind=r8), SAVE :: dten(0:cvregmax)
+  REAL(kind=r8), SAVE :: min_na(0:nsdmax-1, 0:cvregmax)
+  REAL(kind=r8), SAVE :: min_nad0(nbdirsmax0, 0:nsdmax-1, 0:cvregmax)
+  REAL(kind=r8), SAVE :: min_nad(nbdirsmax, 0:nsdmax-1, 0:cvregmax)
 ! IYS 19.12.2017
   REAL(kind=r8), SAVE :: corr_core_dn(0:nsdmax-1)
 ! IYS 10.03.2023
@@ -70,9 +73,9 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
 &     , core_dt_suppression, core_dt_factor, solveco, solvemo, solvemt, &
 &     solvepo, solveee, solveei, solveen, solveet, write_nml_num, &
 &     numerics_filename, numerics_time_mod, numerics_time_switch, &
-&     solvekt, solvezt, corr_core_dn, corr_core_dt, add_te_corr_to_po, &
-&     sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft, dtmo_ft, &
-&     dtco_ft, dtei_ft
+&     solvekt, solvezt, min_na, corr_core_dn, corr_core_dt, &
+&     add_te_corr_to_po, sna_corr, taumax, do_sna_corr_core, dtfts, &
+&     dtee_ft, dtmo_ft, dtco_ft, dtei_ft
 !
 
 CONTAINS
@@ -117,6 +120,7 @@ CONTAINS
       time_factor_required = 0.1_R8
       core_dt_suppression = 1.0_R8
       core_dt_factor = 1.0_R8
+      min_na = switch%b2mndr_na_min
       solveco = .true.
       solvemo = .true.
       IF (switch%recycle_afn .NE. 1) THEN
@@ -250,6 +254,8 @@ CONTAINS
     CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtei')
     result1 = MINVAL(dten)
     CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dten')
+    result1 = MINVAL(min_na)
+    CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter min_na')
     result10 = MINVAL(dtfts)
     CALL XERTST(0 .LE. result10, 'faulty parametere dtfts')
     result1 = MINVAL(dtco_ft)

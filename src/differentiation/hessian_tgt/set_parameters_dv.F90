@@ -2,10 +2,10 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of set_parameters in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *par_opt_phys parm_hce parm_sig
-!                parm_alf parm_dna parm_dpa parm_vla parm_vsa parm_hci
-!                tdata b2recyc conpar mompar enepar enipar potpar
-!                enkpar switch.keps_cd switch.keps_heat switch.keps_heat_i
+!   variations   of useful results: *par_opt_phys tdata b2recyc
+!                conpar mompar enepar enipar potpar enkpar parm_hce
+!                parm_sig parm_alf parm_dna parm_dpa parm_vla parm_vsa
+!                parm_hci switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -14,10 +14,10 @@
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   with respect to varying inputs: *par_opt_phys parm_hce parm_sig
-!                parm_alf parm_dna parm_dpa parm_vla parm_vsa parm_hci
-!                tdata b2recyc conpar mompar enepar enipar potpar
-!                enkpar switch.keps_cd switch.keps_heat switch.keps_heat_i
+!   with respect to varying inputs: *par_opt_phys tdata b2recyc
+!                conpar mompar enepar enipar potpar enkpar parm_hce
+!                parm_sig parm_alf parm_dna parm_dpa parm_vla parm_vsa
+!                parm_hci switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -26,7 +26,7 @@
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   Plus diff mem management of: par_opt_phys:in
+!   Plus diff mem management of: par_opt_phys:in xnew:in
 !
 !
 !

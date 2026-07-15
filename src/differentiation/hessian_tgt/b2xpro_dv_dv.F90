@@ -47,8 +47,8 @@ SUBROUTINE B2XPRO_DV_DV(ncv, ns, mp, am, na, nad0, nad, nadd, ro, rod0, &
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpro')
-  DO nd=1,nbdirs
-    rod(nd, :) = 0.d0
+  DO nd0=1,nbdirs0
+    rod0(nd0, :) = 0.D0
   END DO
   ro = 0.0_R8
   rod = 0.d0
@@ -112,9 +112,6 @@ SUBROUTINE B2XPRO_DV_NODIFF(ncv, ns, mp, am, na, nad, ro, rod, st_ext, &
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpro')
-  DO nd=1,nbdirs
-    rod(nd, :) = 0.d0
-  END DO
   ro = 0.0_R8
   rod = 0.d0
   DO is=0,ns-1

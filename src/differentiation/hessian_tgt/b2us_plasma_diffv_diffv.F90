@@ -83,6 +83,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 !
 ! numerical coefficients (maybe move to separate object)
 !
+! last index is species index
 ! residuals
 !
 ! corrections
@@ -128,10 +129,11 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), ALLOCATABLE :: kin_frac_hyb(:), fluid_frac_hyb(:)
       REAL(r8), ALLOCATABLE :: kinrgy(:, :)
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: conc
-      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: flob, floe, floi, &
-&     floe_noc, floi_noc, flon, flokt, flozt, conn, conkt, conzt
-      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conb, cone, coni
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: floe, floi, floe_noc, &
+&     floi_noc, flon, flokt, flozt, conn, conkt, conzt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: cone, coni
       REAL(r8), DIMENSION(:), ALLOCATABLE :: fllime, fllimi
+      REAL(r8), ALLOCATABLE :: flob(:, :, :), conb(:, :, :, :)
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: resmo, resmo0
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: resco, resco0
       REAL(r8), DIMENSION(:), ALLOCATABLE :: respo, reshe, reshi, resht&
@@ -224,7 +226,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fluid_frac_hyb
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: kinrgy
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conc
-      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: flob
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floe
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floi
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floe_noc
@@ -235,11 +236,12 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conn
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conkt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conzt
-      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: cone
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: coni
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fllime
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fllimi
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: flob
+      REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resmo
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resmo0
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resco
@@ -367,7 +369,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fluid_frac_hyb
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: kinrgy
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conc
-      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: flob
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floe
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floi
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: floe_noc
@@ -378,11 +379,12 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conn
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conkt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: conzt
-      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: cone
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: coni
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fllime
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: fllimi
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: flob
+      REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resmo
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resmo0
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: resco
@@ -510,7 +512,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fluid_frac_hyb
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: kinrgy
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conc
-      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: flob
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: floe
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: floi
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: floe_noc
@@ -521,11 +522,12 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conn
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conkt
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: conzt
-      REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: cone
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: coni
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fllime
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: fllimi
+      REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: flob
+      REAL(r8), DIMENSION(:, :, :, :, :, :), ALLOCATABLE :: conb
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: resmo
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: resmo0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: resco
@@ -615,7 +617,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 &     alf0, dkt0, dzt0, dna_exb, hce_exb, hci_exb
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: dpa0, dna0, vsa0, hcib
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: vla0, vma0
-      REAL(r8), DIMENSION(:), ALLOCATABLE :: kt_neo
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: kt_neo, nu2, k2
       REAL(r8), DIMENSION(:), ALLOCATABLE :: alfx_c, sigx_c, sigx_kt, &
 &     hcix_c
       REAL(r8), DIMENSION(:), ALLOCATABLE :: fllim_ki, fllim_ke, &
@@ -688,6 +690,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: vla0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: vma0
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: kt_neo
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: nu2
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: k2
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: alfx_c
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sigx_c
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sigx_kt
@@ -772,6 +776,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: vla0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: vma0
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: kt_neo
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: nu2
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: k2
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: alfx_c
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sigx_c
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sigx_kt
@@ -856,6 +862,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: vla0
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: vma0
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: kt_neo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: nu2
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: k2
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: alfx_c
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sigx_c
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sigx_kt
@@ -1078,7 +1086,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 &     , b2sihs_divua, b2sihs_exbe, b2sihs_exba, b2sihs_visa, b2sihs_fraa&
 &     , b2sihs_str
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna0_eir_tot, &
-&     smo0_eir_tot
+&     smo0_eir_tot, smr0_eir_tot, smd0_eir_tot
       REAL(r8), DIMENSION(:), ALLOCATABLE :: sne0_eir_tot, she0_eir_tot&
 &     , shi0_eir_tot, shn0_eir_tot, sch0_eir_tot
   END TYPE B2SOURCEWORK
@@ -1147,6 +1155,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_str
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna0_eir_tot
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo0_eir_tot
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smr0_eir_tot
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smd0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sne0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi0_eir_tot
@@ -1218,6 +1228,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: b2sihs_str
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna0_eir_tot
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo0_eir_tot
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smr0_eir_tot
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smd0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sne0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she0_eir_tot
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi0_eir_tot
@@ -1289,6 +1301,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: b2sihs_str
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sna0_eir_tot
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smo0_eir_tot
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smr0_eir_tot
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smd0_eir_tot
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sne0_eir_tot
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: she0_eir_tot
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: shi0_eir_tot
@@ -1754,6 +1768,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna, smo
   END TYPE B2STATEEXT
   TYPE B2STATEEXT_DIFFV0
+      CHARACTER(len=13), ALLOCATABLE :: text(:, :)
       LOGICAL, DIMENSION(:, :), ALLOCATABLE :: is_neutral
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: am
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: ne
@@ -1811,16 +1826,18 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: na_mean, ua_mean
       REAL(r8), DIMENSION(:), ALLOCATABLE :: te_mean, ti_mean, po_mean, &
 &     kt_mean, zt_mean
-      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna_mean, smo_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: sna_mean, smo_mean, &
+&     smr_mean, smd_mean
       REAL(r8), DIMENSION(:), ALLOCATABLE :: she_mean, shi_mean, &
 &     shn_mean
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_na, e_ua
       REAL(r8), DIMENSION(:), ALLOCATABLE :: e_te, e_ti, e_po, e_kt, &
 &     e_zt
-      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_sna, e_smo
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_sna, e_smo, e_smr, &
+&     e_smd
       REAL(r8), DIMENSION(:), ALLOCATABLE :: e_she, e_shi, e_shn
   END TYPE B2AVERAGE
-  TYPE B2AVERAGE_DIFFV
+  TYPE B2AVERAGE_DIFFV0
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: na_mean
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: ua_mean
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: te_mean
@@ -1830,6 +1847,8 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: zt_mean
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna_mean
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smr_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smd_mean
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she_mean
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi_mean
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shn_mean
@@ -1842,6 +1861,38 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_zt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_sna
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smr
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smd
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_she
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shi
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shn
+  END TYPE B2AVERAGE_DIFFV0
+  TYPE B2AVERAGE_DIFFV
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: na_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: ua_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: te_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: ti_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: po_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: kt_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: zt_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smr_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smd_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: she_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shi_mean
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: shn_mean
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_na
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_ua
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_te
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_ti
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_po
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_kt
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_zt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_sna
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smo
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smr
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: e_smd
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_she
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shi
       REAL(r8), DIMENSION(:, :), ALLOCATABLE :: e_shn
@@ -1875,13 +1926,14 @@ CONTAINS
 !                std.co.dna_exb:in-out std.co.hce_exb:in-out std.co.hci_exb:in-out
 !                std.co.dpa0:in-out std.co.dna0:in-out std.co.vsa0:in-out
 !                std.co.hcib:in-out std.co.vla0:in-out std.co.vma0:in-out
-!                std.co.kt_neo:in-out std.co.alfx_c:in-out std.co.sigx_c:in-out
-!                std.co.sigx_kt:in-out std.co.hcix_c:in-out std.co.fllim_ki:in-out
-!                std.co.fllim_ke:in-out std.co.fllim_al:in-out
-!                std.co.fllim_al_c:in-out std.co.fllim_ki_c:in-out
-!                std.co.f_luc_ke:in-out std.co.f_luc_ki:in-out
-!                std.co.f_luc_et:in-out std.co.f_luc_sg:in-out
-!                std.co.f_luc_al:in-out std.co.alpha1f:in-out std.co.f_luc_ke_c:in-out
+!                std.co.kt_neo:in-out std.co.nu2:in-out std.co.k2:in-out
+!                std.co.alfx_c:in-out std.co.sigx_c:in-out std.co.sigx_kt:in-out
+!                std.co.hcix_c:in-out std.co.fllim_ki:in-out std.co.fllim_ke:in-out
+!                std.co.fllim_al:in-out std.co.fllim_al_c:in-out
+!                std.co.fllim_ki_c:in-out std.co.f_luc_ke:in-out
+!                std.co.f_luc_ki:in-out std.co.f_luc_et:in-out
+!                std.co.f_luc_sg:in-out std.co.f_luc_al:in-out
+!                std.co.alpha1f:in-out std.co.f_luc_ke_c:in-out
 !                std.co.f_luc_ki_c:in-out std.co.cssb:in-out std.dv.fch:in-out
 !                std.dv.fch_32:in-out std.dv.fch_52:in-out std.dv.fch_p:in-out
 !                std.dv.fchdia:in-out std.dv.fchin:in-out std.dv.fchvispar:in-out
@@ -1908,12 +1960,12 @@ CONTAINS
 !                std.dv.fnn_inc:in-out std.dv.fhm:in-out std.dv.fhp:in-out
 !                std.dv.fhj:in-out std.dv.fht:in-out std.dv.fkt:in-out
 !                std.dv.fzt:in-out std.dv.kin_frac_hyb:in-out std.dv.fluid_frac_hyb:in-out
-!                std.dv.kinrgy:in-out std.dv.conc:in-out std.dv.flob:in-out
-!                std.dv.floe:in-out std.dv.floi:in-out std.dv.floe_noc:in-out
-!                std.dv.floi_noc:in-out std.dv.flon:in-out std.dv.flokt:in-out
-!                std.dv.flozt:in-out std.dv.conn:in-out std.dv.conkt:in-out
-!                std.dv.conzt:in-out std.dv.conb:in-out std.dv.cone:in-out
-!                std.dv.coni:in-out std.dv.fllime:in-out std.dv.fllimi:in-out
+!                std.dv.kinrgy:in-out std.dv.conc:in-out std.dv.floe:in-out
+!                std.dv.floi:in-out std.dv.floe_noc:in-out std.dv.floi_noc:in-out
+!                std.dv.flon:in-out std.dv.flokt:in-out std.dv.flozt:in-out
+!                std.dv.conn:in-out std.dv.conkt:in-out std.dv.conzt:in-out
+!                std.dv.cone:in-out std.dv.coni:in-out std.dv.fllime:in-out
+!                std.dv.fllimi:in-out std.dv.flob:in-out std.dv.conb:in-out
 !                std.dv.resmo:in-out std.dv.resmo0:in-out std.dv.resco:in-out
 !                std.dv.resco0:in-out std.dv.respo:in-out std.dv.reshe:in-out
 !                std.dv.reshi:in-out std.dv.resht:in-out std.dv.resmt:in-out
@@ -1966,7 +2018,8 @@ CONTAINS
 !                std.srw.b2sihs_exbe:in-out std.srw.b2sihs_exba:in-out
 !                std.srw.b2sihs_visa:in-out std.srw.b2sihs_fraa:in-out
 !                std.srw.b2sihs_str:in-out std.srw.sna0_eir_tot:in-out
-!                std.srw.smo0_eir_tot:in-out std.srw.sne0_eir_tot:in-out
+!                std.srw.smo0_eir_tot:in-out std.srw.smr0_eir_tot:in-out
+!                std.srw.smd0_eir_tot:in-out std.srw.sne0_eir_tot:in-out
 !                std.srw.she0_eir_tot:in-out std.srw.shi0_eir_tot:in-out
 !                std.srw.shn0_eir_tot:in-out std.srw.sch0_eir_tot:in-out
 !                std.rt.rlcx:in-out std.rt.rlqa:in-out std.rt.rlrd:in-out
@@ -2028,131 +2081,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:in-out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:in-out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:in-out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:in-out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:in-out
+!                st.dv.fllimi:in-out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:in-out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:in-out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:in-out st.update.na:in-out st.update.pa:in-out
+!                st.update.po:in-out st.update.te:in-out st.update.ti:in-out
+!                st.update.kt:in-out st.update.zt:in-out
 !  Differentiation of createb2state as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: st.pl.na:in-out st.pl.ua:in-out
 !                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
@@ -2178,131 +2233,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:in-out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:in-out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:in-out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:in-out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:in-out
+!                st.dv.fllimi:in-out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:in-out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:in-out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:in-out st.update.na:in-out st.update.pa:in-out
+!                st.update.po:in-out st.update.te:in-out st.update.ti:in-out
+!                st.update.kt:in-out st.update.zt:in-out
 !
   SUBROUTINE CREATEB2STATE_DV_DV(ncv, nfc, ns, nsd0, nsd, st, std0, std&
 &   , stdd, nbdirs, nbdirs0)
@@ -2371,131 +2428,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:in-out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:in-out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:in-out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:in-out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:in-out
+!                st.dv.fllimi:in-out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:in-out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:in-out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:in-out st.update.na:in-out st.update.pa:in-out
+!                st.update.po:in-out st.update.te:in-out st.update.ti:in-out
+!                st.update.kt:in-out st.update.zt:in-out
 !
   SUBROUTINE CREATEB2STATE_DV(ncv, nfc, ns, nsd, st, std, nbdirs)
     USE B2MOD_DIFFSIZES
@@ -2550,131 +2609,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:in-out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:in-out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:in-out st.dv.fllimi:in-out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:in-out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:in-out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:in-out st.update.na:in-out
-!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
-!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:in-out
+!                st.dv.fllimi:in-out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:in-out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:in-out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:in-out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:in-out st.update.na:in-out st.update.pa:in-out
+!                st.update.po:in-out st.update.te:in-out st.update.ti:in-out
+!                st.update.kt:in-out st.update.zt:in-out
 !
   SUBROUTINE CREATEB2STATE_DV0(ncv, nfc, ns, nsd, st, std, nbdirs)
     USE B2MOD_DIFFSIZES
@@ -2751,13 +2812,14 @@ CONTAINS
 !                std.co.dna_exb:out std.co.hce_exb:out std.co.hci_exb:out
 !                std.co.dpa0:out std.co.dna0:out std.co.vsa0:out
 !                std.co.hcib:out std.co.vla0:out std.co.vma0:out
-!                std.co.kt_neo:out std.co.alfx_c:out std.co.sigx_c:out
-!                std.co.sigx_kt:out std.co.hcix_c:out std.co.fllim_ki:out
-!                std.co.fllim_ke:out std.co.fllim_al:out std.co.fllim_al_c:out
-!                std.co.fllim_ki_c:out std.co.f_luc_ke:out std.co.f_luc_ki:out
-!                std.co.f_luc_et:out std.co.f_luc_sg:out std.co.f_luc_al:out
-!                std.co.alpha1f:out std.co.f_luc_ke_c:out std.co.f_luc_ki_c:out
-!                std.co.cssb:out std.co_ns.vsaf_hadp_albe:out std.co_ns.vsaf_hbdp_al:out
+!                std.co.kt_neo:out std.co.nu2:out std.co.k2:out
+!                std.co.alfx_c:out std.co.sigx_c:out std.co.sigx_kt:out
+!                std.co.hcix_c:out std.co.fllim_ki:out std.co.fllim_ke:out
+!                std.co.fllim_al:out std.co.fllim_al_c:out std.co.fllim_ki_c:out
+!                std.co.f_luc_ke:out std.co.f_luc_ki:out std.co.f_luc_et:out
+!                std.co.f_luc_sg:out std.co.f_luc_al:out std.co.alpha1f:out
+!                std.co.f_luc_ke_c:out std.co.f_luc_ki_c:out std.co.cssb:out
+!                std.co_ns.vsaf_hadp_albe:out std.co_ns.vsaf_hbdp_al:out
 !                std.co_ns.vsaf_uadp_albe:out std.co_ns.vsaf_ubdp_al:out
 !                std.co_ns.hci_al_ast:out std.co_ns.chci_al_ast:out
 !                std.co_ns.cvsa_hadp_albe:out std.co_ns.cvsa_hbdp_al:out
@@ -2787,12 +2849,12 @@ CONTAINS
 !                std.dv.fnn_inc:out std.dv.fhm:out std.dv.fhp:out
 !                std.dv.fhj:out std.dv.fht:out std.dv.fkt:out std.dv.fzt:out
 !                std.dv.kin_frac_hyb:out std.dv.fluid_frac_hyb:out
-!                std.dv.kinrgy:out std.dv.conc:out std.dv.flob:out
-!                std.dv.floe:out std.dv.floi:out std.dv.floe_noc:out
-!                std.dv.floi_noc:out std.dv.flon:out std.dv.flokt:out
-!                std.dv.flozt:out std.dv.conn:out std.dv.conkt:out
-!                std.dv.conzt:out std.dv.conb:out std.dv.cone:out
-!                std.dv.coni:out std.dv.fllime:out std.dv.fllimi:out
+!                std.dv.kinrgy:out std.dv.conc:out std.dv.floe:out
+!                std.dv.floi:out std.dv.floe_noc:out std.dv.floi_noc:out
+!                std.dv.flon:out std.dv.flokt:out std.dv.flozt:out
+!                std.dv.conn:out std.dv.conkt:out std.dv.conzt:out
+!                std.dv.cone:out std.dv.coni:out std.dv.fllime:out
+!                std.dv.fllimi:out std.dv.flob:out std.dv.conb:out
 !                std.dv.resmo:out std.dv.resmo0:out std.dv.resco:out
 !                std.dv.resco0:out std.dv.respo:out std.dv.reshe:out
 !                std.dv.reshi:out std.dv.resht:out std.dv.resmt:out
@@ -2844,6 +2906,7 @@ CONTAINS
 !                std.srw.b2sihs_exba:out std.srw.b2sihs_visa:out
 !                std.srw.b2sihs_fraa:out std.srw.b2sihs_str:out
 !                std.srw.sna0_eir_tot:out std.srw.smo0_eir_tot:out
+!                std.srw.smr0_eir_tot:out std.srw.smd0_eir_tot:out
 !                std.srw.sne0_eir_tot:out std.srw.she0_eir_tot:out
 !                std.srw.shi0_eir_tot:out std.srw.shn0_eir_tot:out
 !                std.srw.sch0_eir_tot:out std.rt.rlcx:out std.rt.rlqa:out
@@ -2904,48 +2967,49 @@ CONTAINS
 !                st.co.dkt0:out st.co.dzt0:out st.co.dna_exb:out
 !                st.co.hce_exb:out st.co.hci_exb:out st.co.dpa0:out
 !                st.co.dna0:out st.co.vsa0:out st.co.hcib:out st.co.vla0:out
-!                st.co.vma0:out st.co.kt_neo:out st.co.alfx_c:out
-!                st.co.sigx_c:out st.co.sigx_kt:out st.co.hcix_c:out
-!                st.co.fllim_ki:out st.co.fllim_ke:out st.co.fllim_al:out
-!                st.co.fllim_al_c:out st.co.fllim_ki_c:out st.co.f_luc_ke:out
-!                st.co.f_luc_ki:out st.co.f_luc_et:out st.co.f_luc_sg:out
-!                st.co.f_luc_al:out st.co.alpha1f:out st.co.f_luc_ke_c:out
-!                st.co.f_luc_ki_c:out st.co.cssb:out st.co_ns.vsaf_hadp_albe:out
-!                st.co_ns.vsaf_hbdp_al:out st.co_ns.vsaf_uadp_albe:out
-!                st.co_ns.vsaf_ubdp_al:out st.co_ns.hci_al_ast:out
-!                st.co_ns.chci_al_ast:out st.co_ns.cvsa_hadp_albe:out
-!                st.co_ns.cvsa_hbdp_al:out st.co_ns.cvsa_uadp_albe:out
-!                st.co_ns.cvsa_ubdp_al:out st.co_ns.cvsahz_hadp_albe:out
-!                st.co_ns.cvsahz_hbdp_al:out st.co_ns.cvsahz_uadp_albe:out
-!                st.co_ns.cvsahz_ubdp_al:out st.dv.fch:out st.dv.fch_32:out
-!                st.dv.fch_52:out st.dv.fch_p:out st.dv.fchdia:out
-!                st.dv.fchin:out st.dv.fchvispar:out st.dv.fchvispar_a:out
-!                st.dv.fchvisper:out st.dv.fchvisper_a:out st.dv.fchvisq:out
-!                st.dv.fchvisq_a:out st.dv.fchinert:out st.dv.fchinert_a:out
-!                st.dv.fchanml:out st.dv.fchanml_a:out st.dv.fchviskt:out
-!                st.dv.fchviskt_a:out st.dv.fch_pi_c:out st.dv.fch_pi_f:out
-!                st.dv.fni_32:out st.dv.fni_52:out st.dv.fni:out
-!                st.dv.fni_he:out st.dv.fna:out st.dv.fna_mdf:out
-!                st.dv.fna_52:out st.dv.fna_32:out st.dv.fna_53:out
-!                st.dv.fna_52nd:out st.dv.fna_32nd:out st.dv.fna_nodrift:out
-!                st.dv.fna_he:out st.dv.fnapsch:out st.dv.fna_fcor:out
-!                st.dv.fna_eir:out st.dv.fna_exb:out st.dv.fmo:out
-!                st.dv.fne:out st.dv.fne_he:out st.dv.fne_32:out
-!                st.dv.fne_52:out st.dv.fne_eir:out st.dv.fne_53:out
-!                st.dv.fhe:out st.dv.fhe_mdf:out st.dv.fhet:out
-!                st.dv.fhepsch:out st.dv.fhe_eir:out st.dv.fhe_exb:out
-!                st.dv.fhi:out st.dv.fhi_mdf:out st.dv.fhit:out
-!                st.dv.fhipsch:out st.dv.fhi_eir:out st.dv.fhi_exb:out
-!                st.dv.fnn:out st.dv.fnn_32:out st.dv.fnn_52:out
-!                st.dv.fhn:out st.dv.fnn_inc:out st.dv.fhm:out
-!                st.dv.fhp:out st.dv.fhj:out st.dv.fht:out st.dv.fkt:out
-!                st.dv.fzt:out st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
-!                st.dv.kinrgy:out st.dv.conc:out st.dv.flob:out
-!                st.dv.floe:out st.dv.floi:out st.dv.floe_noc:out
-!                st.dv.floi_noc:out st.dv.flon:out st.dv.flokt:out
-!                st.dv.flozt:out st.dv.conn:out st.dv.conkt:out
-!                st.dv.conzt:out st.dv.conb:out st.dv.cone:out
-!                st.dv.coni:out st.dv.fllime:out st.dv.fllimi:out
+!                st.co.vma0:out st.co.kt_neo:out st.co.nu2:out
+!                st.co.k2:out st.co.alfx_c:out st.co.sigx_c:out
+!                st.co.sigx_kt:out st.co.hcix_c:out st.co.fllim_ki:out
+!                st.co.fllim_ke:out st.co.fllim_al:out st.co.fllim_al_c:out
+!                st.co.fllim_ki_c:out st.co.f_luc_ke:out st.co.f_luc_ki:out
+!                st.co.f_luc_et:out st.co.f_luc_sg:out st.co.f_luc_al:out
+!                st.co.alpha1f:out st.co.f_luc_ke_c:out st.co.f_luc_ki_c:out
+!                st.co.cssb:out st.co_ns.vsaf_hadp_albe:out st.co_ns.vsaf_hbdp_al:out
+!                st.co_ns.vsaf_uadp_albe:out st.co_ns.vsaf_ubdp_al:out
+!                st.co_ns.hci_al_ast:out st.co_ns.chci_al_ast:out
+!                st.co_ns.cvsa_hadp_albe:out st.co_ns.cvsa_hbdp_al:out
+!                st.co_ns.cvsa_uadp_albe:out st.co_ns.cvsa_ubdp_al:out
+!                st.co_ns.cvsahz_hadp_albe:out st.co_ns.cvsahz_hbdp_al:out
+!                st.co_ns.cvsahz_uadp_albe:out st.co_ns.cvsahz_ubdp_al:out
+!                st.dv.fch:out st.dv.fch_32:out st.dv.fch_52:out
+!                st.dv.fch_p:out st.dv.fchdia:out st.dv.fchin:out
+!                st.dv.fchvispar:out st.dv.fchvispar_a:out st.dv.fchvisper:out
+!                st.dv.fchvisper_a:out st.dv.fchvisq:out st.dv.fchvisq_a:out
+!                st.dv.fchinert:out st.dv.fchinert_a:out st.dv.fchanml:out
+!                st.dv.fchanml_a:out st.dv.fchviskt:out st.dv.fchviskt_a:out
+!                st.dv.fch_pi_c:out st.dv.fch_pi_f:out st.dv.fni_32:out
+!                st.dv.fni_52:out st.dv.fni:out st.dv.fni_he:out
+!                st.dv.fna:out st.dv.fna_mdf:out st.dv.fna_52:out
+!                st.dv.fna_32:out st.dv.fna_53:out st.dv.fna_52nd:out
+!                st.dv.fna_32nd:out st.dv.fna_nodrift:out st.dv.fna_he:out
+!                st.dv.fnapsch:out st.dv.fna_fcor:out st.dv.fna_eir:out
+!                st.dv.fna_exb:out st.dv.fmo:out st.dv.fne:out
+!                st.dv.fne_he:out st.dv.fne_32:out st.dv.fne_52:out
+!                st.dv.fne_eir:out st.dv.fne_53:out st.dv.fhe:out
+!                st.dv.fhe_mdf:out st.dv.fhet:out st.dv.fhepsch:out
+!                st.dv.fhe_eir:out st.dv.fhe_exb:out st.dv.fhi:out
+!                st.dv.fhi_mdf:out st.dv.fhit:out st.dv.fhipsch:out
+!                st.dv.fhi_eir:out st.dv.fhi_exb:out st.dv.fnn:out
+!                st.dv.fnn_32:out st.dv.fnn_52:out st.dv.fhn:out
+!                st.dv.fnn_inc:out st.dv.fhm:out st.dv.fhp:out
+!                st.dv.fhj:out st.dv.fht:out st.dv.fkt:out st.dv.fzt:out
+!                st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
+!                st.dv.kinrgy:out st.dv.conc:out st.dv.floe:out
+!                st.dv.floi:out st.dv.floe_noc:out st.dv.floi_noc:out
+!                st.dv.flon:out st.dv.flokt:out st.dv.flozt:out
+!                st.dv.conn:out st.dv.conkt:out st.dv.conzt:out
+!                st.dv.cone:out st.dv.coni:out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:out st.dv.conb:out
 !                st.dv.resmo:out st.dv.resmo0:out st.dv.resco:out
 !                st.dv.resco0:out st.dv.respo:out st.dv.reshe:out
 !                st.dv.reshi:out st.dv.resht:out st.dv.resmt:out
@@ -2991,7 +3055,8 @@ CONTAINS
 !                st.srw.b2sihs_divua:out st.srw.b2sihs_exbe:out
 !                st.srw.b2sihs_exba:out st.srw.b2sihs_visa:out
 !                st.srw.b2sihs_fraa:out st.srw.b2sihs_str:out st.srw.sna0_eir_tot:out
-!                st.srw.smo0_eir_tot:out st.srw.sne0_eir_tot:out
+!                st.srw.smo0_eir_tot:out st.srw.smr0_eir_tot:out
+!                st.srw.smd0_eir_tot:out st.srw.sne0_eir_tot:out
 !                st.srw.she0_eir_tot:out st.srw.shi0_eir_tot:out
 !                st.srw.shn0_eir_tot:out st.srw.sch0_eir_tot:out
 !                st.rt.rlcx:out st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out
@@ -3050,48 +3115,49 @@ CONTAINS
 !                st.co.dkt0:out st.co.dzt0:out st.co.dna_exb:out
 !                st.co.hce_exb:out st.co.hci_exb:out st.co.dpa0:out
 !                st.co.dna0:out st.co.vsa0:out st.co.hcib:out st.co.vla0:out
-!                st.co.vma0:out st.co.kt_neo:out st.co.alfx_c:out
-!                st.co.sigx_c:out st.co.sigx_kt:out st.co.hcix_c:out
-!                st.co.fllim_ki:out st.co.fllim_ke:out st.co.fllim_al:out
-!                st.co.fllim_al_c:out st.co.fllim_ki_c:out st.co.f_luc_ke:out
-!                st.co.f_luc_ki:out st.co.f_luc_et:out st.co.f_luc_sg:out
-!                st.co.f_luc_al:out st.co.alpha1f:out st.co.f_luc_ke_c:out
-!                st.co.f_luc_ki_c:out st.co.cssb:out st.co_ns.vsaf_hadp_albe:out
-!                st.co_ns.vsaf_hbdp_al:out st.co_ns.vsaf_uadp_albe:out
-!                st.co_ns.vsaf_ubdp_al:out st.co_ns.hci_al_ast:out
-!                st.co_ns.chci_al_ast:out st.co_ns.cvsa_hadp_albe:out
-!                st.co_ns.cvsa_hbdp_al:out st.co_ns.cvsa_uadp_albe:out
-!                st.co_ns.cvsa_ubdp_al:out st.co_ns.cvsahz_hadp_albe:out
-!                st.co_ns.cvsahz_hbdp_al:out st.co_ns.cvsahz_uadp_albe:out
-!                st.co_ns.cvsahz_ubdp_al:out st.dv.fch:out st.dv.fch_32:out
-!                st.dv.fch_52:out st.dv.fch_p:out st.dv.fchdia:out
-!                st.dv.fchin:out st.dv.fchvispar:out st.dv.fchvispar_a:out
-!                st.dv.fchvisper:out st.dv.fchvisper_a:out st.dv.fchvisq:out
-!                st.dv.fchvisq_a:out st.dv.fchinert:out st.dv.fchinert_a:out
-!                st.dv.fchanml:out st.dv.fchanml_a:out st.dv.fchviskt:out
-!                st.dv.fchviskt_a:out st.dv.fch_pi_c:out st.dv.fch_pi_f:out
-!                st.dv.fni_32:out st.dv.fni_52:out st.dv.fni:out
-!                st.dv.fni_he:out st.dv.fna:out st.dv.fna_mdf:out
-!                st.dv.fna_52:out st.dv.fna_32:out st.dv.fna_53:out
-!                st.dv.fna_52nd:out st.dv.fna_32nd:out st.dv.fna_nodrift:out
-!                st.dv.fna_he:out st.dv.fnapsch:out st.dv.fna_fcor:out
-!                st.dv.fna_eir:out st.dv.fna_exb:out st.dv.fmo:out
-!                st.dv.fne:out st.dv.fne_he:out st.dv.fne_32:out
-!                st.dv.fne_52:out st.dv.fne_eir:out st.dv.fne_53:out
-!                st.dv.fhe:out st.dv.fhe_mdf:out st.dv.fhet:out
-!                st.dv.fhepsch:out st.dv.fhe_eir:out st.dv.fhe_exb:out
-!                st.dv.fhi:out st.dv.fhi_mdf:out st.dv.fhit:out
-!                st.dv.fhipsch:out st.dv.fhi_eir:out st.dv.fhi_exb:out
-!                st.dv.fnn:out st.dv.fnn_32:out st.dv.fnn_52:out
-!                st.dv.fhn:out st.dv.fnn_inc:out st.dv.fhm:out
-!                st.dv.fhp:out st.dv.fhj:out st.dv.fht:out st.dv.fkt:out
-!                st.dv.fzt:out st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
-!                st.dv.kinrgy:out st.dv.conc:out st.dv.flob:out
-!                st.dv.floe:out st.dv.floi:out st.dv.floe_noc:out
-!                st.dv.floi_noc:out st.dv.flon:out st.dv.flokt:out
-!                st.dv.flozt:out st.dv.conn:out st.dv.conkt:out
-!                st.dv.conzt:out st.dv.conb:out st.dv.cone:out
-!                st.dv.coni:out st.dv.fllime:out st.dv.fllimi:out
+!                st.co.vma0:out st.co.kt_neo:out st.co.nu2:out
+!                st.co.k2:out st.co.alfx_c:out st.co.sigx_c:out
+!                st.co.sigx_kt:out st.co.hcix_c:out st.co.fllim_ki:out
+!                st.co.fllim_ke:out st.co.fllim_al:out st.co.fllim_al_c:out
+!                st.co.fllim_ki_c:out st.co.f_luc_ke:out st.co.f_luc_ki:out
+!                st.co.f_luc_et:out st.co.f_luc_sg:out st.co.f_luc_al:out
+!                st.co.alpha1f:out st.co.f_luc_ke_c:out st.co.f_luc_ki_c:out
+!                st.co.cssb:out st.co_ns.vsaf_hadp_albe:out st.co_ns.vsaf_hbdp_al:out
+!                st.co_ns.vsaf_uadp_albe:out st.co_ns.vsaf_ubdp_al:out
+!                st.co_ns.hci_al_ast:out st.co_ns.chci_al_ast:out
+!                st.co_ns.cvsa_hadp_albe:out st.co_ns.cvsa_hbdp_al:out
+!                st.co_ns.cvsa_uadp_albe:out st.co_ns.cvsa_ubdp_al:out
+!                st.co_ns.cvsahz_hadp_albe:out st.co_ns.cvsahz_hbdp_al:out
+!                st.co_ns.cvsahz_uadp_albe:out st.co_ns.cvsahz_ubdp_al:out
+!                st.dv.fch:out st.dv.fch_32:out st.dv.fch_52:out
+!                st.dv.fch_p:out st.dv.fchdia:out st.dv.fchin:out
+!                st.dv.fchvispar:out st.dv.fchvispar_a:out st.dv.fchvisper:out
+!                st.dv.fchvisper_a:out st.dv.fchvisq:out st.dv.fchvisq_a:out
+!                st.dv.fchinert:out st.dv.fchinert_a:out st.dv.fchanml:out
+!                st.dv.fchanml_a:out st.dv.fchviskt:out st.dv.fchviskt_a:out
+!                st.dv.fch_pi_c:out st.dv.fch_pi_f:out st.dv.fni_32:out
+!                st.dv.fni_52:out st.dv.fni:out st.dv.fni_he:out
+!                st.dv.fna:out st.dv.fna_mdf:out st.dv.fna_52:out
+!                st.dv.fna_32:out st.dv.fna_53:out st.dv.fna_52nd:out
+!                st.dv.fna_32nd:out st.dv.fna_nodrift:out st.dv.fna_he:out
+!                st.dv.fnapsch:out st.dv.fna_fcor:out st.dv.fna_eir:out
+!                st.dv.fna_exb:out st.dv.fmo:out st.dv.fne:out
+!                st.dv.fne_he:out st.dv.fne_32:out st.dv.fne_52:out
+!                st.dv.fne_eir:out st.dv.fne_53:out st.dv.fhe:out
+!                st.dv.fhe_mdf:out st.dv.fhet:out st.dv.fhepsch:out
+!                st.dv.fhe_eir:out st.dv.fhe_exb:out st.dv.fhi:out
+!                st.dv.fhi_mdf:out st.dv.fhit:out st.dv.fhipsch:out
+!                st.dv.fhi_eir:out st.dv.fhi_exb:out st.dv.fnn:out
+!                st.dv.fnn_32:out st.dv.fnn_52:out st.dv.fhn:out
+!                st.dv.fnn_inc:out st.dv.fhm:out st.dv.fhp:out
+!                st.dv.fhj:out st.dv.fht:out st.dv.fkt:out st.dv.fzt:out
+!                st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
+!                st.dv.kinrgy:out st.dv.conc:out st.dv.floe:out
+!                st.dv.floi:out st.dv.floe_noc:out st.dv.floi_noc:out
+!                st.dv.flon:out st.dv.flokt:out st.dv.flozt:out
+!                st.dv.conn:out st.dv.conkt:out st.dv.conzt:out
+!                st.dv.cone:out st.dv.coni:out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:out st.dv.conb:out
 !                st.dv.resmo:out st.dv.resmo0:out st.dv.resco:out
 !                st.dv.resco0:out st.dv.respo:out st.dv.reshe:out
 !                st.dv.reshi:out st.dv.resht:out st.dv.resmt:out
@@ -3137,7 +3203,8 @@ CONTAINS
 !                st.srw.b2sihs_divua:out st.srw.b2sihs_exbe:out
 !                st.srw.b2sihs_exba:out st.srw.b2sihs_visa:out
 !                st.srw.b2sihs_fraa:out st.srw.b2sihs_str:out st.srw.sna0_eir_tot:out
-!                st.srw.smo0_eir_tot:out st.srw.sne0_eir_tot:out
+!                st.srw.smo0_eir_tot:out st.srw.smr0_eir_tot:out
+!                st.srw.smd0_eir_tot:out st.srw.sne0_eir_tot:out
 !                st.srw.she0_eir_tot:out st.srw.shi0_eir_tot:out
 !                st.srw.shn0_eir_tot:out st.srw.sch0_eir_tot:out
 !                st.rt.rlcx:out st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out
@@ -3237,48 +3304,49 @@ CONTAINS
 !                st.co.dkt0:out st.co.dzt0:out st.co.dna_exb:out
 !                st.co.hce_exb:out st.co.hci_exb:out st.co.dpa0:out
 !                st.co.dna0:out st.co.vsa0:out st.co.hcib:out st.co.vla0:out
-!                st.co.vma0:out st.co.kt_neo:out st.co.alfx_c:out
-!                st.co.sigx_c:out st.co.sigx_kt:out st.co.hcix_c:out
-!                st.co.fllim_ki:out st.co.fllim_ke:out st.co.fllim_al:out
-!                st.co.fllim_al_c:out st.co.fllim_ki_c:out st.co.f_luc_ke:out
-!                st.co.f_luc_ki:out st.co.f_luc_et:out st.co.f_luc_sg:out
-!                st.co.f_luc_al:out st.co.alpha1f:out st.co.f_luc_ke_c:out
-!                st.co.f_luc_ki_c:out st.co.cssb:out st.co_ns.vsaf_hadp_albe:out
-!                st.co_ns.vsaf_hbdp_al:out st.co_ns.vsaf_uadp_albe:out
-!                st.co_ns.vsaf_ubdp_al:out st.co_ns.hci_al_ast:out
-!                st.co_ns.chci_al_ast:out st.co_ns.cvsa_hadp_albe:out
-!                st.co_ns.cvsa_hbdp_al:out st.co_ns.cvsa_uadp_albe:out
-!                st.co_ns.cvsa_ubdp_al:out st.co_ns.cvsahz_hadp_albe:out
-!                st.co_ns.cvsahz_hbdp_al:out st.co_ns.cvsahz_uadp_albe:out
-!                st.co_ns.cvsahz_ubdp_al:out st.dv.fch:out st.dv.fch_32:out
-!                st.dv.fch_52:out st.dv.fch_p:out st.dv.fchdia:out
-!                st.dv.fchin:out st.dv.fchvispar:out st.dv.fchvispar_a:out
-!                st.dv.fchvisper:out st.dv.fchvisper_a:out st.dv.fchvisq:out
-!                st.dv.fchvisq_a:out st.dv.fchinert:out st.dv.fchinert_a:out
-!                st.dv.fchanml:out st.dv.fchanml_a:out st.dv.fchviskt:out
-!                st.dv.fchviskt_a:out st.dv.fch_pi_c:out st.dv.fch_pi_f:out
-!                st.dv.fni_32:out st.dv.fni_52:out st.dv.fni:out
-!                st.dv.fni_he:out st.dv.fna:out st.dv.fna_mdf:out
-!                st.dv.fna_52:out st.dv.fna_32:out st.dv.fna_53:out
-!                st.dv.fna_52nd:out st.dv.fna_32nd:out st.dv.fna_nodrift:out
-!                st.dv.fna_he:out st.dv.fnapsch:out st.dv.fna_fcor:out
-!                st.dv.fna_eir:out st.dv.fna_exb:out st.dv.fmo:out
-!                st.dv.fne:out st.dv.fne_he:out st.dv.fne_32:out
-!                st.dv.fne_52:out st.dv.fne_eir:out st.dv.fne_53:out
-!                st.dv.fhe:out st.dv.fhe_mdf:out st.dv.fhet:out
-!                st.dv.fhepsch:out st.dv.fhe_eir:out st.dv.fhe_exb:out
-!                st.dv.fhi:out st.dv.fhi_mdf:out st.dv.fhit:out
-!                st.dv.fhipsch:out st.dv.fhi_eir:out st.dv.fhi_exb:out
-!                st.dv.fnn:out st.dv.fnn_32:out st.dv.fnn_52:out
-!                st.dv.fhn:out st.dv.fnn_inc:out st.dv.fhm:out
-!                st.dv.fhp:out st.dv.fhj:out st.dv.fht:out st.dv.fkt:out
-!                st.dv.fzt:out st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
-!                st.dv.kinrgy:out st.dv.conc:out st.dv.flob:out
-!                st.dv.floe:out st.dv.floi:out st.dv.floe_noc:out
-!                st.dv.floi_noc:out st.dv.flon:out st.dv.flokt:out
-!                st.dv.flozt:out st.dv.conn:out st.dv.conkt:out
-!                st.dv.conzt:out st.dv.conb:out st.dv.cone:out
-!                st.dv.coni:out st.dv.fllime:out st.dv.fllimi:out
+!                st.co.vma0:out st.co.kt_neo:out st.co.nu2:out
+!                st.co.k2:out st.co.alfx_c:out st.co.sigx_c:out
+!                st.co.sigx_kt:out st.co.hcix_c:out st.co.fllim_ki:out
+!                st.co.fllim_ke:out st.co.fllim_al:out st.co.fllim_al_c:out
+!                st.co.fllim_ki_c:out st.co.f_luc_ke:out st.co.f_luc_ki:out
+!                st.co.f_luc_et:out st.co.f_luc_sg:out st.co.f_luc_al:out
+!                st.co.alpha1f:out st.co.f_luc_ke_c:out st.co.f_luc_ki_c:out
+!                st.co.cssb:out st.co_ns.vsaf_hadp_albe:out st.co_ns.vsaf_hbdp_al:out
+!                st.co_ns.vsaf_uadp_albe:out st.co_ns.vsaf_ubdp_al:out
+!                st.co_ns.hci_al_ast:out st.co_ns.chci_al_ast:out
+!                st.co_ns.cvsa_hadp_albe:out st.co_ns.cvsa_hbdp_al:out
+!                st.co_ns.cvsa_uadp_albe:out st.co_ns.cvsa_ubdp_al:out
+!                st.co_ns.cvsahz_hadp_albe:out st.co_ns.cvsahz_hbdp_al:out
+!                st.co_ns.cvsahz_uadp_albe:out st.co_ns.cvsahz_ubdp_al:out
+!                st.dv.fch:out st.dv.fch_32:out st.dv.fch_52:out
+!                st.dv.fch_p:out st.dv.fchdia:out st.dv.fchin:out
+!                st.dv.fchvispar:out st.dv.fchvispar_a:out st.dv.fchvisper:out
+!                st.dv.fchvisper_a:out st.dv.fchvisq:out st.dv.fchvisq_a:out
+!                st.dv.fchinert:out st.dv.fchinert_a:out st.dv.fchanml:out
+!                st.dv.fchanml_a:out st.dv.fchviskt:out st.dv.fchviskt_a:out
+!                st.dv.fch_pi_c:out st.dv.fch_pi_f:out st.dv.fni_32:out
+!                st.dv.fni_52:out st.dv.fni:out st.dv.fni_he:out
+!                st.dv.fna:out st.dv.fna_mdf:out st.dv.fna_52:out
+!                st.dv.fna_32:out st.dv.fna_53:out st.dv.fna_52nd:out
+!                st.dv.fna_32nd:out st.dv.fna_nodrift:out st.dv.fna_he:out
+!                st.dv.fnapsch:out st.dv.fna_fcor:out st.dv.fna_eir:out
+!                st.dv.fna_exb:out st.dv.fmo:out st.dv.fne:out
+!                st.dv.fne_he:out st.dv.fne_32:out st.dv.fne_52:out
+!                st.dv.fne_eir:out st.dv.fne_53:out st.dv.fhe:out
+!                st.dv.fhe_mdf:out st.dv.fhet:out st.dv.fhepsch:out
+!                st.dv.fhe_eir:out st.dv.fhe_exb:out st.dv.fhi:out
+!                st.dv.fhi_mdf:out st.dv.fhit:out st.dv.fhipsch:out
+!                st.dv.fhi_eir:out st.dv.fhi_exb:out st.dv.fnn:out
+!                st.dv.fnn_32:out st.dv.fnn_52:out st.dv.fhn:out
+!                st.dv.fnn_inc:out st.dv.fhm:out st.dv.fhp:out
+!                st.dv.fhj:out st.dv.fht:out st.dv.fkt:out st.dv.fzt:out
+!                st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
+!                st.dv.kinrgy:out st.dv.conc:out st.dv.floe:out
+!                st.dv.floi:out st.dv.floe_noc:out st.dv.floi_noc:out
+!                st.dv.flon:out st.dv.flokt:out st.dv.flozt:out
+!                st.dv.conn:out st.dv.conkt:out st.dv.conzt:out
+!                st.dv.cone:out st.dv.coni:out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:out st.dv.conb:out
 !                st.dv.resmo:out st.dv.resmo0:out st.dv.resco:out
 !                st.dv.resco0:out st.dv.respo:out st.dv.reshe:out
 !                st.dv.reshi:out st.dv.resht:out st.dv.resmt:out
@@ -3324,7 +3392,8 @@ CONTAINS
 !                st.srw.b2sihs_divua:out st.srw.b2sihs_exbe:out
 !                st.srw.b2sihs_exba:out st.srw.b2sihs_visa:out
 !                st.srw.b2sihs_fraa:out st.srw.b2sihs_str:out st.srw.sna0_eir_tot:out
-!                st.srw.smo0_eir_tot:out st.srw.sne0_eir_tot:out
+!                st.srw.smo0_eir_tot:out st.srw.smr0_eir_tot:out
+!                st.srw.smd0_eir_tot:out st.srw.sne0_eir_tot:out
 !                st.srw.she0_eir_tot:out st.srw.shi0_eir_tot:out
 !                st.srw.shn0_eir_tot:out st.srw.sch0_eir_tot:out
 !                st.rt.rlcx:out st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out
@@ -3408,48 +3477,49 @@ CONTAINS
 !                st.co.dkt0:out st.co.dzt0:out st.co.dna_exb:out
 !                st.co.hce_exb:out st.co.hci_exb:out st.co.dpa0:out
 !                st.co.dna0:out st.co.vsa0:out st.co.hcib:out st.co.vla0:out
-!                st.co.vma0:out st.co.kt_neo:out st.co.alfx_c:out
-!                st.co.sigx_c:out st.co.sigx_kt:out st.co.hcix_c:out
-!                st.co.fllim_ki:out st.co.fllim_ke:out st.co.fllim_al:out
-!                st.co.fllim_al_c:out st.co.fllim_ki_c:out st.co.f_luc_ke:out
-!                st.co.f_luc_ki:out st.co.f_luc_et:out st.co.f_luc_sg:out
-!                st.co.f_luc_al:out st.co.alpha1f:out st.co.f_luc_ke_c:out
-!                st.co.f_luc_ki_c:out st.co.cssb:out st.co_ns.vsaf_hadp_albe:out
-!                st.co_ns.vsaf_hbdp_al:out st.co_ns.vsaf_uadp_albe:out
-!                st.co_ns.vsaf_ubdp_al:out st.co_ns.hci_al_ast:out
-!                st.co_ns.chci_al_ast:out st.co_ns.cvsa_hadp_albe:out
-!                st.co_ns.cvsa_hbdp_al:out st.co_ns.cvsa_uadp_albe:out
-!                st.co_ns.cvsa_ubdp_al:out st.co_ns.cvsahz_hadp_albe:out
-!                st.co_ns.cvsahz_hbdp_al:out st.co_ns.cvsahz_uadp_albe:out
-!                st.co_ns.cvsahz_ubdp_al:out st.dv.fch:out st.dv.fch_32:out
-!                st.dv.fch_52:out st.dv.fch_p:out st.dv.fchdia:out
-!                st.dv.fchin:out st.dv.fchvispar:out st.dv.fchvispar_a:out
-!                st.dv.fchvisper:out st.dv.fchvisper_a:out st.dv.fchvisq:out
-!                st.dv.fchvisq_a:out st.dv.fchinert:out st.dv.fchinert_a:out
-!                st.dv.fchanml:out st.dv.fchanml_a:out st.dv.fchviskt:out
-!                st.dv.fchviskt_a:out st.dv.fch_pi_c:out st.dv.fch_pi_f:out
-!                st.dv.fni_32:out st.dv.fni_52:out st.dv.fni:out
-!                st.dv.fni_he:out st.dv.fna:out st.dv.fna_mdf:out
-!                st.dv.fna_52:out st.dv.fna_32:out st.dv.fna_53:out
-!                st.dv.fna_52nd:out st.dv.fna_32nd:out st.dv.fna_nodrift:out
-!                st.dv.fna_he:out st.dv.fnapsch:out st.dv.fna_fcor:out
-!                st.dv.fna_eir:out st.dv.fna_exb:out st.dv.fmo:out
-!                st.dv.fne:out st.dv.fne_he:out st.dv.fne_32:out
-!                st.dv.fne_52:out st.dv.fne_eir:out st.dv.fne_53:out
-!                st.dv.fhe:out st.dv.fhe_mdf:out st.dv.fhet:out
-!                st.dv.fhepsch:out st.dv.fhe_eir:out st.dv.fhe_exb:out
-!                st.dv.fhi:out st.dv.fhi_mdf:out st.dv.fhit:out
-!                st.dv.fhipsch:out st.dv.fhi_eir:out st.dv.fhi_exb:out
-!                st.dv.fnn:out st.dv.fnn_32:out st.dv.fnn_52:out
-!                st.dv.fhn:out st.dv.fnn_inc:out st.dv.fhm:out
-!                st.dv.fhp:out st.dv.fhj:out st.dv.fht:out st.dv.fkt:out
-!                st.dv.fzt:out st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
-!                st.dv.kinrgy:out st.dv.conc:out st.dv.flob:out
-!                st.dv.floe:out st.dv.floi:out st.dv.floe_noc:out
-!                st.dv.floi_noc:out st.dv.flon:out st.dv.flokt:out
-!                st.dv.flozt:out st.dv.conn:out st.dv.conkt:out
-!                st.dv.conzt:out st.dv.conb:out st.dv.cone:out
-!                st.dv.coni:out st.dv.fllime:out st.dv.fllimi:out
+!                st.co.vma0:out st.co.kt_neo:out st.co.nu2:out
+!                st.co.k2:out st.co.alfx_c:out st.co.sigx_c:out
+!                st.co.sigx_kt:out st.co.hcix_c:out st.co.fllim_ki:out
+!                st.co.fllim_ke:out st.co.fllim_al:out st.co.fllim_al_c:out
+!                st.co.fllim_ki_c:out st.co.f_luc_ke:out st.co.f_luc_ki:out
+!                st.co.f_luc_et:out st.co.f_luc_sg:out st.co.f_luc_al:out
+!                st.co.alpha1f:out st.co.f_luc_ke_c:out st.co.f_luc_ki_c:out
+!                st.co.cssb:out st.co_ns.vsaf_hadp_albe:out st.co_ns.vsaf_hbdp_al:out
+!                st.co_ns.vsaf_uadp_albe:out st.co_ns.vsaf_ubdp_al:out
+!                st.co_ns.hci_al_ast:out st.co_ns.chci_al_ast:out
+!                st.co_ns.cvsa_hadp_albe:out st.co_ns.cvsa_hbdp_al:out
+!                st.co_ns.cvsa_uadp_albe:out st.co_ns.cvsa_ubdp_al:out
+!                st.co_ns.cvsahz_hadp_albe:out st.co_ns.cvsahz_hbdp_al:out
+!                st.co_ns.cvsahz_uadp_albe:out st.co_ns.cvsahz_ubdp_al:out
+!                st.dv.fch:out st.dv.fch_32:out st.dv.fch_52:out
+!                st.dv.fch_p:out st.dv.fchdia:out st.dv.fchin:out
+!                st.dv.fchvispar:out st.dv.fchvispar_a:out st.dv.fchvisper:out
+!                st.dv.fchvisper_a:out st.dv.fchvisq:out st.dv.fchvisq_a:out
+!                st.dv.fchinert:out st.dv.fchinert_a:out st.dv.fchanml:out
+!                st.dv.fchanml_a:out st.dv.fchviskt:out st.dv.fchviskt_a:out
+!                st.dv.fch_pi_c:out st.dv.fch_pi_f:out st.dv.fni_32:out
+!                st.dv.fni_52:out st.dv.fni:out st.dv.fni_he:out
+!                st.dv.fna:out st.dv.fna_mdf:out st.dv.fna_52:out
+!                st.dv.fna_32:out st.dv.fna_53:out st.dv.fna_52nd:out
+!                st.dv.fna_32nd:out st.dv.fna_nodrift:out st.dv.fna_he:out
+!                st.dv.fnapsch:out st.dv.fna_fcor:out st.dv.fna_eir:out
+!                st.dv.fna_exb:out st.dv.fmo:out st.dv.fne:out
+!                st.dv.fne_he:out st.dv.fne_32:out st.dv.fne_52:out
+!                st.dv.fne_eir:out st.dv.fne_53:out st.dv.fhe:out
+!                st.dv.fhe_mdf:out st.dv.fhet:out st.dv.fhepsch:out
+!                st.dv.fhe_eir:out st.dv.fhe_exb:out st.dv.fhi:out
+!                st.dv.fhi_mdf:out st.dv.fhit:out st.dv.fhipsch:out
+!                st.dv.fhi_eir:out st.dv.fhi_exb:out st.dv.fnn:out
+!                st.dv.fnn_32:out st.dv.fnn_52:out st.dv.fhn:out
+!                st.dv.fnn_inc:out st.dv.fhm:out st.dv.fhp:out
+!                st.dv.fhj:out st.dv.fht:out st.dv.fkt:out st.dv.fzt:out
+!                st.dv.kin_frac_hyb:out st.dv.fluid_frac_hyb:out
+!                st.dv.kinrgy:out st.dv.conc:out st.dv.floe:out
+!                st.dv.floi:out st.dv.floe_noc:out st.dv.floi_noc:out
+!                st.dv.flon:out st.dv.flokt:out st.dv.flozt:out
+!                st.dv.conn:out st.dv.conkt:out st.dv.conzt:out
+!                st.dv.cone:out st.dv.coni:out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:out st.dv.conb:out
 !                st.dv.resmo:out st.dv.resmo0:out st.dv.resco:out
 !                st.dv.resco0:out st.dv.respo:out st.dv.reshe:out
 !                st.dv.reshi:out st.dv.resht:out st.dv.resmt:out
@@ -3495,7 +3565,8 @@ CONTAINS
 !                st.srw.b2sihs_divua:out st.srw.b2sihs_exbe:out
 !                st.srw.b2sihs_exba:out st.srw.b2sihs_visa:out
 !                st.srw.b2sihs_fraa:out st.srw.b2sihs_str:out st.srw.sna0_eir_tot:out
-!                st.srw.smo0_eir_tot:out st.srw.sne0_eir_tot:out
+!                st.srw.smo0_eir_tot:out st.srw.smr0_eir_tot:out
+!                st.srw.smd0_eir_tot:out st.srw.sne0_eir_tot:out
 !                st.srw.she0_eir_tot:out st.srw.shi0_eir_tot:out
 !                st.srw.shn0_eir_tot:out st.srw.sch0_eir_tot:out
 !                st.rt.rlcx:out st.rt.rlqa:out st.rt.rlrd:out st.rt.rlbr:out
@@ -3608,6 +3679,7 @@ CONTAINS
     INTRINSIC ALLOCATED
     INTEGER :: nd
     INTEGER :: nbdirs
+    INTEGER :: nd0
     INTEGER :: nbdirs0
 !
     IF (ALLOCATED(plasma%na)) THEN
@@ -3672,14 +3744,17 @@ CONTAINS
       ALLOCATE(plasmad0%zt(nbdirsmax0, ncv))
       plasmad0%zt = 0.D0
       ALLOCATE(plasma%zt(ncv))
-      DO nd=1,nbdirs
 !
+      DO nd=1,nbdirs
         plasmad%na(nd, :, :) = 0.d0
-        plasmad%te(nd, :) = 0.d0
-        plasmad%ti(nd, :) = 0.d0
-        plasmad%tn(nd, :) = 0.d0
-        plasmad%kt(nd, :) = 0.d0
-        plasmad%zt(nd, :) = 0.d0
+      END DO
+      DO nd0=1,nbdirs0
+        plasmad0%na(nd0, :, :) = 0.D0
+        plasmad0%te(nd0, :) = 0.D0
+        plasmad0%ti(nd0, :) = 0.D0
+        plasmad0%tn(nd0, :) = 0.D0
+        plasmad0%kt(nd0, :) = 0.D0
+        plasmad0%zt(nd0, :) = 0.D0
       END DO
       plasma%na = 0._R8
       plasma%ua = 0._R8
@@ -3742,14 +3817,9 @@ CONTAINS
       ALLOCATE(plasmad%zt(nbdirsmax, ncv))
       plasmad%zt = 0.d0
       ALLOCATE(plasma%zt(ncv))
-      DO nd=1,nbdirs
 !
+      DO nd=1,nbdirs
         plasmad%na(nd, :, :) = 0.d0
-        plasmad%te(nd, :) = 0.d0
-        plasmad%ti(nd, :) = 0.d0
-        plasmad%tn(nd, :) = 0.d0
-        plasmad%kt(nd, :) = 0.d0
-        plasmad%zt(nd, :) = 0.d0
       END DO
       plasma%na = 0._R8
       plasma%ua = 0._R8
@@ -3779,6 +3849,7 @@ CONTAINS
     TYPE(B2PLASMA), INTENT(INOUT) :: plasma
     TYPE(B2PLASMA_DIFFV0), INTENT(INOUT) :: plasmad
     INTRINSIC ALLOCATED
+    INTEGER :: nd
     INTEGER :: nbdirs
 !
     IF (ALLOCATED(plasma%na)) THEN
@@ -3811,7 +3882,15 @@ CONTAINS
       ALLOCATE(plasmad%zt(nbdirsmax0, ncv))
       plasmad%zt = 0.D0
       ALLOCATE(plasma%zt(ncv))
+      DO nd=1,nbdirs
 !
+        plasmad%na(nd, :, :) = 0.D0
+        plasmad%te(nd, :) = 0.D0
+        plasmad%ti(nd, :) = 0.D0
+        plasmad%tn(nd, :) = 0.D0
+        plasmad%kt(nd, :) = 0.D0
+        plasmad%zt(nd, :) = 0.D0
+      END DO
       plasma%na = 0._R8
       plasma%ua = 0._R8
       plasma%po = 0._R8
@@ -4141,28 +4220,28 @@ CONTAINS
 !                coeff.hce_exb:in-out coeff.hci_exb:in-out coeff.dpa0:in-out
 !                coeff.dna0:in-out coeff.vsa0:in-out coeff.hcib:in-out
 !                coeff.vla0:in-out coeff.vma0:in-out coeff.kt_neo:in-out
-!                coeff.alfx_c:in-out coeff.sigx_c:in-out coeff.sigx_kt:in-out
-!                coeff.hcix_c:in-out coeff.fllim_ki:in-out coeff.fllim_ke:in-out
-!                coeff.fllim_al:in-out coeff.fllim_al_c:in-out
-!                coeff.fllim_ki_c:in-out coeff.f_luc_ke:in-out
-!                coeff.f_luc_ki:in-out coeff.f_luc_et:in-out coeff.f_luc_sg:in-out
-!                coeff.f_luc_al:in-out coeff.alpha1f:in-out coeff.f_luc_ke_c:in-out
-!                coeff.f_luc_ki_c:in-out coeff.cssb:in-out coeffd.csig:in-out
-!                coeffd.calf:in-out coeffd.csig_an:in-out coeffd.calf_an:in-out
-!                coeffd.csig_cl:in-out coeffd.calf_cl:in-out coeffd.csigin:in-out
-!                coeffd.chve:in-out coeffd.chce:in-out coeffd.chce_exb:in-out
-!                coeffd.chvi:in-out coeffd.chci:in-out coeffd.chci_exb:in-out
-!                coeffd.chcn:in-out coeffd.cdkt:in-out coeffd.cdzt:in-out
-!                coeffd.chvemx:in-out coeffd.chvimx:in-out coeffd.cvla:in-out
-!                coeffd.cdna:in-out coeffd.cdna_exb:in-out coeffd.cdpa:in-out
-!                coeffd.cvsa:in-out coeffd.cvlahz:in-out coeffd.cdnahz:in-out
-!                coeffd.cdpahz:in-out coeffd.cvsahz:in-out coeffd.cvsa_cl:in-out
-!                coeffd.cvsa_drho:in-out coeffd.cvsahz_cl:in-out
-!                coeffd.cvsahz_drho:in-out coeffd.cddi:in-out coeffd.cdde:in-out
-!                coeffd.chcb:in-out coeffd.cvsa_an:in-out coeffd.cvmahz:in-out
-!                coeffd.cvsahz_eff:in-out coeffd.chci_a:in-out
-!                coeffd.cthe:in-out coeffd.cthi:in-out coeffd.ceqp:in-out
-!                coeffd.fllim0fhi:in-out coeffd.fllimvisc:in-out
+!                coeff.nu2:in-out coeff.k2:in-out coeff.alfx_c:in-out
+!                coeff.sigx_c:in-out coeff.sigx_kt:in-out coeff.hcix_c:in-out
+!                coeff.fllim_ki:in-out coeff.fllim_ke:in-out coeff.fllim_al:in-out
+!                coeff.fllim_al_c:in-out coeff.fllim_ki_c:in-out
+!                coeff.f_luc_ke:in-out coeff.f_luc_ki:in-out coeff.f_luc_et:in-out
+!                coeff.f_luc_sg:in-out coeff.f_luc_al:in-out coeff.alpha1f:in-out
+!                coeff.f_luc_ke_c:in-out coeff.f_luc_ki_c:in-out
+!                coeff.cssb:in-out coeffd.csig:in-out coeffd.calf:in-out
+!                coeffd.csig_an:in-out coeffd.calf_an:in-out coeffd.csig_cl:in-out
+!                coeffd.calf_cl:in-out coeffd.csigin:in-out coeffd.chve:in-out
+!                coeffd.chce:in-out coeffd.chce_exb:in-out coeffd.chvi:in-out
+!                coeffd.chci:in-out coeffd.chci_exb:in-out coeffd.chcn:in-out
+!                coeffd.cdkt:in-out coeffd.cdzt:in-out coeffd.chvemx:in-out
+!                coeffd.chvimx:in-out coeffd.cvla:in-out coeffd.cdna:in-out
+!                coeffd.cdna_exb:in-out coeffd.cdpa:in-out coeffd.cvsa:in-out
+!                coeffd.cvlahz:in-out coeffd.cdnahz:in-out coeffd.cdpahz:in-out
+!                coeffd.cvsahz:in-out coeffd.cvsa_cl:in-out coeffd.cvsa_drho:in-out
+!                coeffd.cvsahz_cl:in-out coeffd.cvsahz_drho:in-out
+!                coeffd.cddi:in-out coeffd.cdde:in-out coeffd.chcb:in-out
+!                coeffd.cvsa_an:in-out coeffd.cvmahz:in-out coeffd.cvsahz_eff:in-out
+!                coeffd.chci_a:in-out coeffd.cthe:in-out coeffd.cthi:in-out
+!                coeffd.ceqp:in-out coeffd.fllim0fhi:in-out coeffd.fllimvisc:in-out
 !                coeffd.fllim0fna:in-out coeffd.vsaf_cl:in-out
 !                coeffd.vsaf_drho:in-out coeffd.hci_a:in-out coeffd.sig0:in-out
 !                coeffd.hce0:in-out coeffd.hci0:in-out coeffd.hcn0:in-out
@@ -4170,13 +4249,14 @@ CONTAINS
 !                coeffd.dna_exb:in-out coeffd.hce_exb:in-out coeffd.hci_exb:in-out
 !                coeffd.dpa0:in-out coeffd.dna0:in-out coeffd.vsa0:in-out
 !                coeffd.hcib:in-out coeffd.vla0:in-out coeffd.vma0:in-out
-!                coeffd.kt_neo:in-out coeffd.alfx_c:in-out coeffd.sigx_c:in-out
-!                coeffd.sigx_kt:in-out coeffd.hcix_c:in-out coeffd.fllim_ki:in-out
-!                coeffd.fllim_ke:in-out coeffd.fllim_al:in-out
-!                coeffd.fllim_al_c:in-out coeffd.fllim_ki_c:in-out
-!                coeffd.f_luc_ke:in-out coeffd.f_luc_ki:in-out
-!                coeffd.f_luc_et:in-out coeffd.f_luc_sg:in-out
-!                coeffd.f_luc_al:in-out coeffd.alpha1f:in-out coeffd.f_luc_ke_c:in-out
+!                coeffd.kt_neo:in-out coeffd.nu2:in-out coeffd.k2:in-out
+!                coeffd.alfx_c:in-out coeffd.sigx_c:in-out coeffd.sigx_kt:in-out
+!                coeffd.hcix_c:in-out coeffd.fllim_ki:in-out coeffd.fllim_ke:in-out
+!                coeffd.fllim_al:in-out coeffd.fllim_al_c:in-out
+!                coeffd.fllim_ki_c:in-out coeffd.f_luc_ke:in-out
+!                coeffd.f_luc_ki:in-out coeffd.f_luc_et:in-out
+!                coeffd.f_luc_sg:in-out coeffd.f_luc_al:in-out
+!                coeffd.alpha1f:in-out coeffd.f_luc_ke_c:in-out
 !                coeffd.f_luc_ki_c:in-out coeffd.cssb:in-out
 !  Differentiation of createb2coeff as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: coeff.csig:in-out coeff.calf:in-out
@@ -4201,13 +4281,14 @@ CONTAINS
 !                coeff.hce_exb:in-out coeff.hci_exb:in-out coeff.dpa0:in-out
 !                coeff.dna0:in-out coeff.vsa0:in-out coeff.hcib:in-out
 !                coeff.vla0:in-out coeff.vma0:in-out coeff.kt_neo:in-out
-!                coeff.alfx_c:in-out coeff.sigx_c:in-out coeff.sigx_kt:in-out
-!                coeff.hcix_c:in-out coeff.fllim_ki:in-out coeff.fllim_ke:in-out
-!                coeff.fllim_al:in-out coeff.fllim_al_c:in-out
-!                coeff.fllim_ki_c:in-out coeff.f_luc_ke:in-out
-!                coeff.f_luc_ki:in-out coeff.f_luc_et:in-out coeff.f_luc_sg:in-out
-!                coeff.f_luc_al:in-out coeff.alpha1f:in-out coeff.f_luc_ke_c:in-out
-!                coeff.f_luc_ki_c:in-out coeff.cssb:in-out
+!                coeff.nu2:in-out coeff.k2:in-out coeff.alfx_c:in-out
+!                coeff.sigx_c:in-out coeff.sigx_kt:in-out coeff.hcix_c:in-out
+!                coeff.fllim_ki:in-out coeff.fllim_ke:in-out coeff.fllim_al:in-out
+!                coeff.fllim_al_c:in-out coeff.fllim_ki_c:in-out
+!                coeff.f_luc_ke:in-out coeff.f_luc_ki:in-out coeff.f_luc_et:in-out
+!                coeff.f_luc_sg:in-out coeff.f_luc_al:in-out coeff.alpha1f:in-out
+!                coeff.f_luc_ke_c:in-out coeff.f_luc_ki_c:in-out
+!                coeff.cssb:in-out
 !
 !
   SUBROUTINE CREATEB2COEFF_DV_DV(ncv, nfc, ns, coeff, coeffd0, coeffd, &
@@ -4773,6 +4854,20 @@ CONTAINS
       ALLOCATE(coeffd0%kt_neo(nbdirsmax0, ncv), source=0._R8)
       coeffd0%kt_neo = 0.D0
       ALLOCATE(coeff%kt_neo(ncv), source=0._R8)
+      ALLOCATE(coeffdd%nu2(nbdirsmax0, nbdirsmax, ncv), source=0._R8)
+      coeffdd%nu2 = 0.D0
+      ALLOCATE(coeffd%nu2(nbdirsmax, ncv), source=0._R8)
+      coeffd%nu2 = 0.d0
+      ALLOCATE(coeffd0%nu2(nbdirsmax0, ncv), source=0._R8)
+      coeffd0%nu2 = 0.D0
+      ALLOCATE(coeff%nu2(ncv), source=0._R8)
+      ALLOCATE(coeffdd%k2(nbdirsmax0, nbdirsmax, ncv), source=0._R8)
+      coeffdd%k2 = 0.D0
+      ALLOCATE(coeffd%k2(nbdirsmax, ncv), source=0._R8)
+      coeffd%k2 = 0.d0
+      ALLOCATE(coeffd0%k2(nbdirsmax0, ncv), source=0._R8)
+      coeffd0%k2 = 0.D0
+      ALLOCATE(coeff%k2(ncv), source=0._R8)
 !
       ALLOCATE(coeffdd%fllim_ki(nbdirsmax0, nbdirsmax, nfc), source=&
 &     0._R8)
@@ -4942,13 +5037,14 @@ CONTAINS
 !                coeff.hce_exb:in-out coeff.hci_exb:in-out coeff.dpa0:in-out
 !                coeff.dna0:in-out coeff.vsa0:in-out coeff.hcib:in-out
 !                coeff.vla0:in-out coeff.vma0:in-out coeff.kt_neo:in-out
-!                coeff.alfx_c:in-out coeff.sigx_c:in-out coeff.sigx_kt:in-out
-!                coeff.hcix_c:in-out coeff.fllim_ki:in-out coeff.fllim_ke:in-out
-!                coeff.fllim_al:in-out coeff.fllim_al_c:in-out
-!                coeff.fllim_ki_c:in-out coeff.f_luc_ke:in-out
-!                coeff.f_luc_ki:in-out coeff.f_luc_et:in-out coeff.f_luc_sg:in-out
-!                coeff.f_luc_al:in-out coeff.alpha1f:in-out coeff.f_luc_ke_c:in-out
-!                coeff.f_luc_ki_c:in-out coeff.cssb:in-out
+!                coeff.nu2:in-out coeff.k2:in-out coeff.alfx_c:in-out
+!                coeff.sigx_c:in-out coeff.sigx_kt:in-out coeff.hcix_c:in-out
+!                coeff.fllim_ki:in-out coeff.fllim_ke:in-out coeff.fllim_al:in-out
+!                coeff.fllim_al_c:in-out coeff.fllim_ki_c:in-out
+!                coeff.f_luc_ke:in-out coeff.f_luc_ki:in-out coeff.f_luc_et:in-out
+!                coeff.f_luc_sg:in-out coeff.f_luc_al:in-out coeff.alpha1f:in-out
+!                coeff.f_luc_ke_c:in-out coeff.f_luc_ki_c:in-out
+!                coeff.cssb:in-out
 !
 !
   SUBROUTINE CREATEB2COEFF_DV(ncv, nfc, ns, coeff, coeffd, nbdirs)
@@ -5183,6 +5279,12 @@ CONTAINS
       ALLOCATE(coeffd%kt_neo(nbdirsmax, ncv), source=0._R8)
       coeffd%kt_neo = 0.d0
       ALLOCATE(coeff%kt_neo(ncv), source=0._R8)
+      ALLOCATE(coeffd%nu2(nbdirsmax, ncv), source=0._R8)
+      coeffd%nu2 = 0.d0
+      ALLOCATE(coeff%nu2(ncv), source=0._R8)
+      ALLOCATE(coeffd%k2(nbdirsmax, ncv), source=0._R8)
+      coeffd%k2 = 0.d0
+      ALLOCATE(coeff%k2(ncv), source=0._R8)
 !
       ALLOCATE(coeffd%fllim_ki(nbdirsmax, nfc), source=0._R8)
       coeffd%fllim_ki = 0.d0
@@ -5266,13 +5368,14 @@ CONTAINS
 !                coeff.hce_exb:in-out coeff.hci_exb:in-out coeff.dpa0:in-out
 !                coeff.dna0:in-out coeff.vsa0:in-out coeff.hcib:in-out
 !                coeff.vla0:in-out coeff.vma0:in-out coeff.kt_neo:in-out
-!                coeff.alfx_c:in-out coeff.sigx_c:in-out coeff.sigx_kt:in-out
-!                coeff.hcix_c:in-out coeff.fllim_ki:in-out coeff.fllim_ke:in-out
-!                coeff.fllim_al:in-out coeff.fllim_al_c:in-out
-!                coeff.fllim_ki_c:in-out coeff.f_luc_ke:in-out
-!                coeff.f_luc_ki:in-out coeff.f_luc_et:in-out coeff.f_luc_sg:in-out
-!                coeff.f_luc_al:in-out coeff.alpha1f:in-out coeff.f_luc_ke_c:in-out
-!                coeff.f_luc_ki_c:in-out coeff.cssb:in-out
+!                coeff.nu2:in-out coeff.k2:in-out coeff.alfx_c:in-out
+!                coeff.sigx_c:in-out coeff.sigx_kt:in-out coeff.hcix_c:in-out
+!                coeff.fllim_ki:in-out coeff.fllim_ke:in-out coeff.fllim_al:in-out
+!                coeff.fllim_al_c:in-out coeff.fllim_ki_c:in-out
+!                coeff.f_luc_ke:in-out coeff.f_luc_ki:in-out coeff.f_luc_et:in-out
+!                coeff.f_luc_sg:in-out coeff.f_luc_al:in-out coeff.alpha1f:in-out
+!                coeff.f_luc_ke_c:in-out coeff.f_luc_ki_c:in-out
+!                coeff.cssb:in-out
 !
 !
   SUBROUTINE CREATEB2COEFF_DV0(ncv, nfc, ns, coeff, coeffd, nbdirs)
@@ -5513,6 +5616,12 @@ CONTAINS
       ALLOCATE(coeffd%kt_neo(nbdirsmax0, ncv), source=0._R8)
       coeffd%kt_neo = 0.D0
       ALLOCATE(coeff%kt_neo(ncv), source=0._R8)
+      ALLOCATE(coeffd%nu2(nbdirsmax0, ncv), source=0._R8)
+      coeffd%nu2 = 0.D0
+      ALLOCATE(coeff%nu2(ncv), source=0._R8)
+      ALLOCATE(coeffd%k2(nbdirsmax0, ncv), source=0._R8)
+      coeffd%k2 = 0.D0
+      ALLOCATE(coeff%k2(ncv), source=0._R8)
 !
       ALLOCATE(coeffd%fllim_ki(nbdirsmax0, nfc), source=0._R8)
       coeffd%fllim_ki = 0.D0
@@ -5665,6 +5774,8 @@ CONTAINS
       ALLOCATE(coeff%hci_exb(ncv), source=0._R8)
 !
       ALLOCATE(coeff%kt_neo(ncv), source=0._R8)
+      ALLOCATE(coeff%nu2(ncv), source=0._R8)
+      ALLOCATE(coeff%k2(ncv), source=0._R8)
 !
       ALLOCATE(coeff%fllim_ki(nfc), source=0._R8)
       ALLOCATE(coeff%fllim_ke(nfc), source=0._R8)
@@ -5710,40 +5821,41 @@ CONTAINS
 !                coeff.dkt0:out coeff.dzt0:out coeff.dna_exb:out
 !                coeff.hce_exb:out coeff.hci_exb:out coeff.dpa0:out
 !                coeff.dna0:out coeff.vsa0:out coeff.hcib:out coeff.vla0:out
-!                coeff.vma0:out coeff.kt_neo:out coeff.alfx_c:out
-!                coeff.sigx_c:out coeff.sigx_kt:out coeff.hcix_c:out
-!                coeff.fllim_ki:out coeff.fllim_ke:out coeff.fllim_al:out
-!                coeff.fllim_al_c:out coeff.fllim_ki_c:out coeff.f_luc_ke:out
-!                coeff.f_luc_ki:out coeff.f_luc_et:out coeff.f_luc_sg:out
-!                coeff.f_luc_al:out coeff.alpha1f:out coeff.f_luc_ke_c:out
-!                coeff.f_luc_ki_c:out coeff.cssb:out coeffd.csig:out
-!                coeffd.calf:out coeffd.csig_an:out coeffd.calf_an:out
-!                coeffd.csig_cl:out coeffd.csigin:out coeffd.chve:out
-!                coeffd.chce:out coeffd.chce_exb:out coeffd.chvi:out
-!                coeffd.chci:out coeffd.chci_exb:out coeffd.chcn:out
-!                coeffd.cdkt:out coeffd.cdzt:out coeffd.chvemx:out
-!                coeffd.chvimx:out coeffd.cvla:out coeffd.cdna:out
-!                coeffd.cdna_exb:out coeffd.cdpa:out coeffd.cvsa:out
-!                coeffd.cvlahz:out coeffd.cdnahz:out coeffd.cdpahz:out
-!                coeffd.cvsahz:out coeffd.cvsa_cl:out coeffd.cvsa_drho:out
-!                coeffd.cvsahz_cl:out coeffd.cvsahz_drho:out coeffd.cddi:out
-!                coeffd.cdde:out coeffd.chcb:out coeffd.cvsa_an:out
-!                coeffd.cvmahz:out coeffd.cvsahz_eff:out coeffd.chci_a:out
-!                coeffd.cthe:out coeffd.cthi:out coeffd.ceqp:out
-!                coeffd.fllim0fhi:out coeffd.fllimvisc:out coeffd.fllim0fna:out
-!                coeffd.vsaf_cl:out coeffd.vsaf_drho:out coeffd.hci_a:out
-!                coeffd.sig0:out coeffd.hce0:out coeffd.hci0:out
-!                coeffd.hcn0:out coeffd.alf0:out coeffd.dkt0:out
-!                coeffd.dzt0:out coeffd.dna_exb:out coeffd.hce_exb:out
-!                coeffd.hci_exb:out coeffd.dpa0:out coeffd.dna0:out
-!                coeffd.vsa0:out coeffd.hcib:out coeffd.vla0:out
-!                coeffd.vma0:out coeffd.kt_neo:out coeffd.alfx_c:out
-!                coeffd.sigx_c:out coeffd.sigx_kt:out coeffd.hcix_c:out
-!                coeffd.fllim_ki:out coeffd.fllim_ke:out coeffd.fllim_al:out
-!                coeffd.fllim_al_c:out coeffd.fllim_ki_c:out coeffd.f_luc_ke:out
-!                coeffd.f_luc_ki:out coeffd.f_luc_et:out coeffd.f_luc_sg:out
-!                coeffd.f_luc_al:out coeffd.alpha1f:out coeffd.f_luc_ke_c:out
-!                coeffd.f_luc_ki_c:out coeffd.cssb:out
+!                coeff.vma0:out coeff.kt_neo:out coeff.nu2:out
+!                coeff.k2:out coeff.alfx_c:out coeff.sigx_c:out
+!                coeff.sigx_kt:out coeff.hcix_c:out coeff.fllim_ki:out
+!                coeff.fllim_ke:out coeff.fllim_al:out coeff.fllim_al_c:out
+!                coeff.fllim_ki_c:out coeff.f_luc_ke:out coeff.f_luc_ki:out
+!                coeff.f_luc_et:out coeff.f_luc_sg:out coeff.f_luc_al:out
+!                coeff.alpha1f:out coeff.f_luc_ke_c:out coeff.f_luc_ki_c:out
+!                coeff.cssb:out coeffd.csig:out coeffd.calf:out
+!                coeffd.csig_an:out coeffd.calf_an:out coeffd.csig_cl:out
+!                coeffd.csigin:out coeffd.chve:out coeffd.chce:out
+!                coeffd.chce_exb:out coeffd.chvi:out coeffd.chci:out
+!                coeffd.chci_exb:out coeffd.chcn:out coeffd.cdkt:out
+!                coeffd.cdzt:out coeffd.chvemx:out coeffd.chvimx:out
+!                coeffd.cvla:out coeffd.cdna:out coeffd.cdna_exb:out
+!                coeffd.cdpa:out coeffd.cvsa:out coeffd.cvlahz:out
+!                coeffd.cdnahz:out coeffd.cdpahz:out coeffd.cvsahz:out
+!                coeffd.cvsa_cl:out coeffd.cvsa_drho:out coeffd.cvsahz_cl:out
+!                coeffd.cvsahz_drho:out coeffd.cddi:out coeffd.cdde:out
+!                coeffd.chcb:out coeffd.cvsa_an:out coeffd.cvmahz:out
+!                coeffd.cvsahz_eff:out coeffd.chci_a:out coeffd.cthe:out
+!                coeffd.cthi:out coeffd.ceqp:out coeffd.fllim0fhi:out
+!                coeffd.fllimvisc:out coeffd.fllim0fna:out coeffd.vsaf_cl:out
+!                coeffd.vsaf_drho:out coeffd.hci_a:out coeffd.sig0:out
+!                coeffd.hce0:out coeffd.hci0:out coeffd.hcn0:out
+!                coeffd.alf0:out coeffd.dkt0:out coeffd.dzt0:out
+!                coeffd.dna_exb:out coeffd.hce_exb:out coeffd.hci_exb:out
+!                coeffd.dpa0:out coeffd.dna0:out coeffd.vsa0:out
+!                coeffd.hcib:out coeffd.vla0:out coeffd.vma0:out
+!                coeffd.kt_neo:out coeffd.nu2:out coeffd.k2:out
+!                coeffd.alfx_c:out coeffd.sigx_c:out coeffd.sigx_kt:out
+!                coeffd.hcix_c:out coeffd.fllim_ki:out coeffd.fllim_ke:out
+!                coeffd.fllim_al:out coeffd.fllim_al_c:out coeffd.fllim_ki_c:out
+!                coeffd.f_luc_ke:out coeffd.f_luc_ki:out coeffd.f_luc_et:out
+!                coeffd.f_luc_sg:out coeffd.f_luc_al:out coeffd.alpha1f:out
+!                coeffd.f_luc_ke_c:out coeffd.f_luc_ki_c:out coeffd.cssb:out
 !  Differentiation of destroyb2coeff as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: coeff.csig:out coeff.calf:out
 !                coeff.csig_an:out coeff.calf_an:out coeff.csig_cl:out
@@ -5765,13 +5877,14 @@ CONTAINS
 !                coeff.dkt0:out coeff.dzt0:out coeff.dna_exb:out
 !                coeff.hce_exb:out coeff.hci_exb:out coeff.dpa0:out
 !                coeff.dna0:out coeff.vsa0:out coeff.hcib:out coeff.vla0:out
-!                coeff.vma0:out coeff.kt_neo:out coeff.alfx_c:out
-!                coeff.sigx_c:out coeff.sigx_kt:out coeff.hcix_c:out
-!                coeff.fllim_ki:out coeff.fllim_ke:out coeff.fllim_al:out
-!                coeff.fllim_al_c:out coeff.fllim_ki_c:out coeff.f_luc_ke:out
-!                coeff.f_luc_ki:out coeff.f_luc_et:out coeff.f_luc_sg:out
-!                coeff.f_luc_al:out coeff.alpha1f:out coeff.f_luc_ke_c:out
-!                coeff.f_luc_ki_c:out coeff.cssb:out
+!                coeff.vma0:out coeff.kt_neo:out coeff.nu2:out
+!                coeff.k2:out coeff.alfx_c:out coeff.sigx_c:out
+!                coeff.sigx_kt:out coeff.hcix_c:out coeff.fllim_ki:out
+!                coeff.fllim_ke:out coeff.fllim_al:out coeff.fllim_al_c:out
+!                coeff.fllim_ki_c:out coeff.f_luc_ke:out coeff.f_luc_ki:out
+!                coeff.f_luc_et:out coeff.f_luc_sg:out coeff.f_luc_al:out
+!                coeff.alpha1f:out coeff.f_luc_ke_c:out coeff.f_luc_ki_c:out
+!                coeff.cssb:out
 !
 !
   SUBROUTINE DESTROYB2COEFF_DV_DV(coeff, coeffd0, coeffd, coeffdd, &
@@ -6210,7 +6323,6 @@ CONTAINS
       END IF
       DEALLOCATE(coeff%cthi)
 !
-!
       IF (ALLOCATED(coeffd%ceqp)) THEN
         IF (ALLOCATED(coeffdd%ceqp)) THEN
           DEALLOCATE(coeffdd%ceqp)
@@ -6435,6 +6547,26 @@ CONTAINS
         DEALLOCATE(coeffd0%kt_neo)
       END IF
       DEALLOCATE(coeff%kt_neo)
+      IF (ALLOCATED(coeffd%nu2)) THEN
+        IF (ALLOCATED(coeffdd%nu2)) THEN
+          DEALLOCATE(coeffdd%nu2)
+        END IF
+        DEALLOCATE(coeffd%nu2)
+      END IF
+      IF (ALLOCATED(coeffd0%nu2)) THEN
+        DEALLOCATE(coeffd0%nu2)
+      END IF
+      DEALLOCATE(coeff%nu2)
+      IF (ALLOCATED(coeffd%k2)) THEN
+        IF (ALLOCATED(coeffdd%k2)) THEN
+          DEALLOCATE(coeffdd%k2)
+        END IF
+        DEALLOCATE(coeffd%k2)
+      END IF
+      IF (ALLOCATED(coeffd0%k2)) THEN
+        DEALLOCATE(coeffd0%k2)
+      END IF
+      DEALLOCATE(coeff%k2)
 !
       IF (ALLOCATED(coeffd%fllim_ki)) THEN
         IF (ALLOCATED(coeffdd%fllim_ki)) THEN
@@ -6643,13 +6775,14 @@ CONTAINS
 !                coeff.dkt0:out coeff.dzt0:out coeff.dna_exb:out
 !                coeff.hce_exb:out coeff.hci_exb:out coeff.dpa0:out
 !                coeff.dna0:out coeff.vsa0:out coeff.hcib:out coeff.vla0:out
-!                coeff.vma0:out coeff.kt_neo:out coeff.alfx_c:out
-!                coeff.sigx_c:out coeff.sigx_kt:out coeff.hcix_c:out
-!                coeff.fllim_ki:out coeff.fllim_ke:out coeff.fllim_al:out
-!                coeff.fllim_al_c:out coeff.fllim_ki_c:out coeff.f_luc_ke:out
-!                coeff.f_luc_ki:out coeff.f_luc_et:out coeff.f_luc_sg:out
-!                coeff.f_luc_al:out coeff.alpha1f:out coeff.f_luc_ke_c:out
-!                coeff.f_luc_ki_c:out coeff.cssb:out
+!                coeff.vma0:out coeff.kt_neo:out coeff.nu2:out
+!                coeff.k2:out coeff.alfx_c:out coeff.sigx_c:out
+!                coeff.sigx_kt:out coeff.hcix_c:out coeff.fllim_ki:out
+!                coeff.fllim_ke:out coeff.fllim_al:out coeff.fllim_al_c:out
+!                coeff.fllim_ki_c:out coeff.f_luc_ke:out coeff.f_luc_ki:out
+!                coeff.f_luc_et:out coeff.f_luc_sg:out coeff.f_luc_al:out
+!                coeff.alpha1f:out coeff.f_luc_ke_c:out coeff.f_luc_ki_c:out
+!                coeff.cssb:out
 !
 !
   SUBROUTINE DESTROYB2COEFF_DV(coeff, coeffd, nbdirs)
@@ -6837,7 +6970,6 @@ CONTAINS
       END IF
       DEALLOCATE(coeff%cthi)
 !
-!
       IF (ALLOCATED(coeffd%ceqp)) THEN
         DEALLOCATE(coeffd%ceqp)
       END IF
@@ -6930,6 +7062,14 @@ CONTAINS
         DEALLOCATE(coeffd%kt_neo)
       END IF
       DEALLOCATE(coeff%kt_neo)
+      IF (ALLOCATED(coeffd%nu2)) THEN
+        DEALLOCATE(coeffd%nu2)
+      END IF
+      DEALLOCATE(coeff%nu2)
+      IF (ALLOCATED(coeffd%k2)) THEN
+        DEALLOCATE(coeffd%k2)
+      END IF
+      DEALLOCATE(coeff%k2)
 !
       IF (ALLOCATED(coeffd%fllim_ki)) THEN
         DEALLOCATE(coeffd%fllim_ki)
@@ -7030,13 +7170,14 @@ CONTAINS
 !                coeff.dkt0:out coeff.dzt0:out coeff.dna_exb:out
 !                coeff.hce_exb:out coeff.hci_exb:out coeff.dpa0:out
 !                coeff.dna0:out coeff.vsa0:out coeff.hcib:out coeff.vla0:out
-!                coeff.vma0:out coeff.kt_neo:out coeff.alfx_c:out
-!                coeff.sigx_c:out coeff.sigx_kt:out coeff.hcix_c:out
-!                coeff.fllim_ki:out coeff.fllim_ke:out coeff.fllim_al:out
-!                coeff.fllim_al_c:out coeff.fllim_ki_c:out coeff.f_luc_ke:out
-!                coeff.f_luc_ki:out coeff.f_luc_et:out coeff.f_luc_sg:out
-!                coeff.f_luc_al:out coeff.alpha1f:out coeff.f_luc_ke_c:out
-!                coeff.f_luc_ki_c:out coeff.cssb:out
+!                coeff.vma0:out coeff.kt_neo:out coeff.nu2:out
+!                coeff.k2:out coeff.alfx_c:out coeff.sigx_c:out
+!                coeff.sigx_kt:out coeff.hcix_c:out coeff.fllim_ki:out
+!                coeff.fllim_ke:out coeff.fllim_al:out coeff.fllim_al_c:out
+!                coeff.fllim_ki_c:out coeff.f_luc_ke:out coeff.f_luc_ki:out
+!                coeff.f_luc_et:out coeff.f_luc_sg:out coeff.f_luc_al:out
+!                coeff.alpha1f:out coeff.f_luc_ke_c:out coeff.f_luc_ki_c:out
+!                coeff.cssb:out
 !
 !
   SUBROUTINE DESTROYB2COEFF_DV0(coeff, coeffd, nbdirs)
@@ -7224,7 +7365,6 @@ CONTAINS
       END IF
       DEALLOCATE(coeff%cthi)
 !
-!
       IF (ALLOCATED(coeffd%ceqp)) THEN
         DEALLOCATE(coeffd%ceqp)
       END IF
@@ -7317,6 +7457,14 @@ CONTAINS
         DEALLOCATE(coeffd%kt_neo)
       END IF
       DEALLOCATE(coeff%kt_neo)
+      IF (ALLOCATED(coeffd%nu2)) THEN
+        DEALLOCATE(coeffd%nu2)
+      END IF
+      DEALLOCATE(coeff%nu2)
+      IF (ALLOCATED(coeffd%k2)) THEN
+        DEALLOCATE(coeffd%k2)
+      END IF
+      DEALLOCATE(coeff%k2)
 !
       IF (ALLOCATED(coeffd%fllim_ki)) THEN
         DEALLOCATE(coeffd%fllim_ki)
@@ -7457,7 +7605,6 @@ CONTAINS
       DEALLOCATE(coeff%cthe)
       DEALLOCATE(coeff%cthi)
 !
-!
       DEALLOCATE(coeff%ceqp)
 !
       DEALLOCATE(coeff%fllim0fna)
@@ -7484,6 +7631,8 @@ CONTAINS
       DEALLOCATE(coeff%hci_exb)
 !
       DEALLOCATE(coeff%kt_neo)
+      DEALLOCATE(coeff%nu2)
+      DEALLOCATE(coeff%k2)
 !
       DEALLOCATE(coeff%fllim_ki)
       DEALLOCATE(coeff%fllim_ke)
@@ -8378,12 +8527,12 @@ CONTAINS
 !                dv.fhn:in-out dv.fnn_inc:in-out dv.fhm:in-out
 !                dv.fhp:in-out dv.fhj:in-out dv.fht:in-out dv.fkt:in-out
 !                dv.fzt:in-out dv.kin_frac_hyb:in-out dv.fluid_frac_hyb:in-out
-!                dv.kinrgy:in-out dv.conc:in-out dv.flob:in-out
-!                dv.floe:in-out dv.floi:in-out dv.floe_noc:in-out
-!                dv.floi_noc:in-out dv.flon:in-out dv.flokt:in-out
-!                dv.flozt:in-out dv.conn:in-out dv.conkt:in-out
-!                dv.conzt:in-out dv.conb:in-out dv.cone:in-out
-!                dv.coni:in-out dv.fllime:in-out dv.fllimi:in-out
+!                dv.kinrgy:in-out dv.conc:in-out dv.floe:in-out
+!                dv.floi:in-out dv.floe_noc:in-out dv.floi_noc:in-out
+!                dv.flon:in-out dv.flokt:in-out dv.flozt:in-out
+!                dv.conn:in-out dv.conkt:in-out dv.conzt:in-out
+!                dv.cone:in-out dv.coni:in-out dv.fllime:in-out
+!                dv.fllimi:in-out dv.flob:in-out dv.conb:in-out
 !                dv.resmo:in-out dv.resmo0:in-out dv.resco:in-out
 !                dv.resco0:in-out dv.respo:in-out dv.reshe:in-out
 !                dv.reshi:in-out dv.resht:in-out dv.resmt:in-out
@@ -8424,12 +8573,12 @@ CONTAINS
 !                dvd.fnn_inc:in-out dvd.fhm:in-out dvd.fhp:in-out
 !                dvd.fhj:in-out dvd.fht:in-out dvd.fkt:in-out dvd.fzt:in-out
 !                dvd.kin_frac_hyb:in-out dvd.fluid_frac_hyb:in-out
-!                dvd.kinrgy:in-out dvd.conc:in-out dvd.flob:in-out
-!                dvd.floe:in-out dvd.floi:in-out dvd.floe_noc:in-out
-!                dvd.floi_noc:in-out dvd.flon:in-out dvd.flokt:in-out
-!                dvd.flozt:in-out dvd.conn:in-out dvd.conkt:in-out
-!                dvd.conzt:in-out dvd.conb:in-out dvd.cone:in-out
-!                dvd.coni:in-out dvd.fllime:in-out dvd.fllimi:in-out
+!                dvd.kinrgy:in-out dvd.conc:in-out dvd.floe:in-out
+!                dvd.floi:in-out dvd.floe_noc:in-out dvd.floi_noc:in-out
+!                dvd.flon:in-out dvd.flokt:in-out dvd.flozt:in-out
+!                dvd.conn:in-out dvd.conkt:in-out dvd.conzt:in-out
+!                dvd.cone:in-out dvd.coni:in-out dvd.fllime:in-out
+!                dvd.fllimi:in-out dvd.flob:in-out dvd.conb:in-out
 !                dvd.resmo:in-out dvd.resmo0:in-out dvd.resco:in-out
 !                dvd.resco0:in-out dvd.respo:in-out dvd.reshe:in-out
 !                dvd.reshi:in-out dvd.resht:in-out dvd.resmt:in-out
@@ -8472,12 +8621,12 @@ CONTAINS
 !                dv.fhn:in-out dv.fnn_inc:in-out dv.fhm:in-out
 !                dv.fhp:in-out dv.fhj:in-out dv.fht:in-out dv.fkt:in-out
 !                dv.fzt:in-out dv.kin_frac_hyb:in-out dv.fluid_frac_hyb:in-out
-!                dv.kinrgy:in-out dv.conc:in-out dv.flob:in-out
-!                dv.floe:in-out dv.floi:in-out dv.floe_noc:in-out
-!                dv.floi_noc:in-out dv.flon:in-out dv.flokt:in-out
-!                dv.flozt:in-out dv.conn:in-out dv.conkt:in-out
-!                dv.conzt:in-out dv.conb:in-out dv.cone:in-out
-!                dv.coni:in-out dv.fllime:in-out dv.fllimi:in-out
+!                dv.kinrgy:in-out dv.conc:in-out dv.floe:in-out
+!                dv.floi:in-out dv.floe_noc:in-out dv.floi_noc:in-out
+!                dv.flon:in-out dv.flokt:in-out dv.flozt:in-out
+!                dv.conn:in-out dv.conkt:in-out dv.conzt:in-out
+!                dv.cone:in-out dv.coni:in-out dv.fllime:in-out
+!                dv.fllimi:in-out dv.flob:in-out dv.conb:in-out
 !                dv.resmo:in-out dv.resmo0:in-out dv.resco:in-out
 !                dv.resco0:in-out dv.respo:in-out dv.reshe:in-out
 !                dv.reshi:in-out dv.resht:in-out dv.resmt:in-out
@@ -9227,21 +9376,23 @@ CONTAINS
       ALLOCATE(dv%fac_vis(nfc), source=0._R8)
 !
 ! numerical coefficients
-      ALLOCATE(dvdd%flob(nbdirsmax0, nbdirsmax, nfc, 0:1), source=0._R8)
+      ALLOCATE(dvdd%flob(nbdirsmax0, nbdirsmax, nfc, 0:1, 0:ns-1), &
+&     source=0._R8)
       dvdd%flob = 0.D0
-      ALLOCATE(dvd%flob(nbdirsmax, nfc, 0:1), source=0._R8)
+      ALLOCATE(dvd%flob(nbdirsmax, nfc, 0:1, 0:ns-1), source=0._R8)
       dvd%flob = 0.d0
-      ALLOCATE(dvd0%flob(nbdirsmax0, nfc, 0:1), source=0._R8)
+      ALLOCATE(dvd0%flob(nbdirsmax0, nfc, 0:1, 0:ns-1), source=0._R8)
       dvd0%flob = 0.D0
-      ALLOCATE(dv%flob(nfc, 0:1), source=0._R8)
-      ALLOCATE(dvdd%conb(nbdirsmax0, nbdirsmax, nfc, 0:1, 0:4), source=&
-&     0._R8)
+      ALLOCATE(dv%flob(nfc, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(dvdd%conb(nbdirsmax0, nbdirsmax, nfc, 0:1, 0:4, 0:ns-1), &
+&     source=0._R8)
       dvdd%conb = 0.D0
-      ALLOCATE(dvd%conb(nbdirsmax, nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dvd%conb(nbdirsmax, nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       dvd%conb = 0.d0
-      ALLOCATE(dvd0%conb(nbdirsmax0, nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dvd0%conb(nbdirsmax0, nfc, 0:1, 0:4, 0:ns-1), source=&
+&     0._R8)
       dvd0%conb = 0.D0
-      ALLOCATE(dv%conb(nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%conb(nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       ALLOCATE(dvdd%conc(nbdirsmax0, nbdirsmax, nfc, 0:1), source=0._R8)
       dvdd%conc = 0.D0
       ALLOCATE(dvd%conc(nbdirsmax, nfc, 0:1), source=0._R8)
@@ -9682,12 +9833,12 @@ CONTAINS
 !                dv.fhn:in-out dv.fnn_inc:in-out dv.fhm:in-out
 !                dv.fhp:in-out dv.fhj:in-out dv.fht:in-out dv.fkt:in-out
 !                dv.fzt:in-out dv.kin_frac_hyb:in-out dv.fluid_frac_hyb:in-out
-!                dv.kinrgy:in-out dv.conc:in-out dv.flob:in-out
-!                dv.floe:in-out dv.floi:in-out dv.floe_noc:in-out
-!                dv.floi_noc:in-out dv.flon:in-out dv.flokt:in-out
-!                dv.flozt:in-out dv.conn:in-out dv.conkt:in-out
-!                dv.conzt:in-out dv.conb:in-out dv.cone:in-out
-!                dv.coni:in-out dv.fllime:in-out dv.fllimi:in-out
+!                dv.kinrgy:in-out dv.conc:in-out dv.floe:in-out
+!                dv.floi:in-out dv.floe_noc:in-out dv.floi_noc:in-out
+!                dv.flon:in-out dv.flokt:in-out dv.flozt:in-out
+!                dv.conn:in-out dv.conkt:in-out dv.conzt:in-out
+!                dv.cone:in-out dv.coni:in-out dv.fllime:in-out
+!                dv.fllimi:in-out dv.flob:in-out dv.conb:in-out
 !                dv.resmo:in-out dv.resmo0:in-out dv.resco:in-out
 !                dv.resco0:in-out dv.respo:in-out dv.reshe:in-out
 !                dv.reshi:in-out dv.resht:in-out dv.resmt:in-out
@@ -10005,12 +10156,12 @@ CONTAINS
       ALLOCATE(dv%fac_vis(nfc), source=0._R8)
 !
 ! numerical coefficients
-      ALLOCATE(dvd%flob(nbdirsmax, nfc, 0:1), source=0._R8)
+      ALLOCATE(dvd%flob(nbdirsmax, nfc, 0:1, 0:ns-1), source=0._R8)
       dvd%flob = 0.d0
-      ALLOCATE(dv%flob(nfc, 0:1), source=0._R8)
-      ALLOCATE(dvd%conb(nbdirsmax, nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%flob(nfc, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(dvd%conb(nbdirsmax, nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       dvd%conb = 0.d0
-      ALLOCATE(dv%conb(nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%conb(nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       ALLOCATE(dvd%conc(nbdirsmax, nfc, 0:1), source=0._R8)
       dvd%conc = 0.d0
       ALLOCATE(dv%conc(nfc, 0:1), source=0._R8)
@@ -10238,12 +10389,12 @@ CONTAINS
 !                dv.fhn:in-out dv.fnn_inc:in-out dv.fhm:in-out
 !                dv.fhp:in-out dv.fhj:in-out dv.fht:in-out dv.fkt:in-out
 !                dv.fzt:in-out dv.kin_frac_hyb:in-out dv.fluid_frac_hyb:in-out
-!                dv.kinrgy:in-out dv.conc:in-out dv.flob:in-out
-!                dv.floe:in-out dv.floi:in-out dv.floe_noc:in-out
-!                dv.floi_noc:in-out dv.flon:in-out dv.flokt:in-out
-!                dv.flozt:in-out dv.conn:in-out dv.conkt:in-out
-!                dv.conzt:in-out dv.conb:in-out dv.cone:in-out
-!                dv.coni:in-out dv.fllime:in-out dv.fllimi:in-out
+!                dv.kinrgy:in-out dv.conc:in-out dv.floe:in-out
+!                dv.floi:in-out dv.floe_noc:in-out dv.floi_noc:in-out
+!                dv.flon:in-out dv.flokt:in-out dv.flozt:in-out
+!                dv.conn:in-out dv.conkt:in-out dv.conzt:in-out
+!                dv.cone:in-out dv.coni:in-out dv.fllime:in-out
+!                dv.fllimi:in-out dv.flob:in-out dv.conb:in-out
 !                dv.resmo:in-out dv.resmo0:in-out dv.resco:in-out
 !                dv.resco0:in-out dv.respo:in-out dv.reshe:in-out
 !                dv.reshi:in-out dv.resht:in-out dv.resmt:in-out
@@ -10563,12 +10714,13 @@ CONTAINS
       ALLOCATE(dv%fac_vis(nfc), source=0._R8)
 !
 ! numerical coefficients
-      ALLOCATE(dvd%flob(nbdirsmax0, nfc, 0:1), source=0._R8)
+      ALLOCATE(dvd%flob(nbdirsmax0, nfc, 0:1, 0:ns-1), source=0._R8)
       dvd%flob = 0.D0
-      ALLOCATE(dv%flob(nfc, 0:1), source=0._R8)
-      ALLOCATE(dvd%conb(nbdirsmax0, nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%flob(nfc, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(dvd%conb(nbdirsmax0, nfc, 0:1, 0:4, 0:ns-1), source=0._R8&
+&     )
       dvd%conb = 0.D0
-      ALLOCATE(dv%conb(nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%conb(nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       ALLOCATE(dvd%conc(nbdirsmax0, nfc, 0:1), source=0._R8)
       dvd%conc = 0.D0
       ALLOCATE(dv%conc(nfc, 0:1), source=0._R8)
@@ -10888,8 +11040,8 @@ CONTAINS
       ALLOCATE(dv%fac_vis(nfc), source=0._R8)
 !
 ! numerical coefficients
-      ALLOCATE(dv%flob(nfc, 0:1), source=0._R8)
-      ALLOCATE(dv%conb(nfc, 0:1, 0:4), source=0._R8)
+      ALLOCATE(dv%flob(nfc, 0:1, 0:ns-1), source=0._R8)
+      ALLOCATE(dv%conb(nfc, 0:1, 0:4, 0:ns-1), source=0._R8)
       ALLOCATE(dv%conc(nfc, 0:1), source=0._R8)
       ALLOCATE(dv%fllime(nfc), source=0._R8)
       ALLOCATE(dv%floe(nfc, 0:1), source=0._R8)
@@ -11012,11 +11164,11 @@ CONTAINS
 !                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fnn_inc:out
 !                dv.fhm:out dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out
 !                dv.fzt:out dv.kin_frac_hyb:out dv.fluid_frac_hyb:out
-!                dv.kinrgy:out dv.conc:out dv.flob:out dv.floe:out
-!                dv.floi:out dv.floe_noc:out dv.floi_noc:out dv.flon:out
-!                dv.flokt:out dv.flozt:out dv.conn:out dv.conkt:out
-!                dv.conzt:out dv.conb:out dv.cone:out dv.coni:out
-!                dv.fllime:out dv.fllimi:out dv.resmo:out dv.resmo0:out
+!                dv.kinrgy:out dv.conc:out dv.floe:out dv.floi:out
+!                dv.floe_noc:out dv.floi_noc:out dv.flon:out dv.flokt:out
+!                dv.flozt:out dv.conn:out dv.conkt:out dv.conzt:out
+!                dv.cone:out dv.coni:out dv.fllime:out dv.fllimi:out
+!                dv.flob:out dv.conb:out dv.resmo:out dv.resmo0:out
 !                dv.resco:out dv.resco0:out dv.respo:out dv.reshe:out
 !                dv.reshi:out dv.resht:out dv.resmt:out dv.reshn:out
 !                dv.reskt:out dv.reszt:out dv.reshe0:out dv.reshi0:out
@@ -11050,10 +11202,10 @@ CONTAINS
 !                dvd.fnn_inc:out dvd.fhm:out dvd.fhp:out dvd.fhj:out
 !                dvd.fht:out dvd.fkt:out dvd.fzt:out dvd.kin_frac_hyb:out
 !                dvd.fluid_frac_hyb:out dvd.kinrgy:out dvd.conc:out
-!                dvd.flob:out dvd.floe:out dvd.floi:out dvd.floe_noc:out
-!                dvd.floi_noc:out dvd.flon:out dvd.flokt:out dvd.flozt:out
-!                dvd.conn:out dvd.conkt:out dvd.conzt:out dvd.conb:out
-!                dvd.cone:out dvd.coni:out dvd.fllime:out dvd.fllimi:out
+!                dvd.floe:out dvd.floi:out dvd.floe_noc:out dvd.floi_noc:out
+!                dvd.flon:out dvd.flokt:out dvd.flozt:out dvd.conn:out
+!                dvd.conkt:out dvd.conzt:out dvd.cone:out dvd.coni:out
+!                dvd.fllime:out dvd.fllimi:out dvd.flob:out dvd.conb:out
 !                dvd.resmo:out dvd.resmo0:out dvd.resco:out dvd.resco0:out
 !                dvd.respo:out dvd.reshe:out dvd.reshi:out dvd.resht:out
 !                dvd.resmt:out dvd.reshn:out dvd.reskt:out dvd.reszt:out
@@ -11088,11 +11240,11 @@ CONTAINS
 !                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fnn_inc:out
 !                dv.fhm:out dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out
 !                dv.fzt:out dv.kin_frac_hyb:out dv.fluid_frac_hyb:out
-!                dv.kinrgy:out dv.conc:out dv.flob:out dv.floe:out
-!                dv.floi:out dv.floe_noc:out dv.floi_noc:out dv.flon:out
-!                dv.flokt:out dv.flozt:out dv.conn:out dv.conkt:out
-!                dv.conzt:out dv.conb:out dv.cone:out dv.coni:out
-!                dv.fllime:out dv.fllimi:out dv.resmo:out dv.resmo0:out
+!                dv.kinrgy:out dv.conc:out dv.floe:out dv.floi:out
+!                dv.floe_noc:out dv.floi_noc:out dv.flon:out dv.flokt:out
+!                dv.flozt:out dv.conn:out dv.conkt:out dv.conzt:out
+!                dv.cone:out dv.coni:out dv.fllime:out dv.fllimi:out
+!                dv.flob:out dv.conb:out dv.resmo:out dv.resmo0:out
 !                dv.resco:out dv.resco0:out dv.respo:out dv.reshe:out
 !                dv.reshi:out dv.resht:out dv.resmt:out dv.reshn:out
 !                dv.reskt:out dv.reszt:out dv.reshe0:out dv.reshi0:out
@@ -12574,11 +12726,11 @@ CONTAINS
 !                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fnn_inc:out
 !                dv.fhm:out dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out
 !                dv.fzt:out dv.kin_frac_hyb:out dv.fluid_frac_hyb:out
-!                dv.kinrgy:out dv.conc:out dv.flob:out dv.floe:out
-!                dv.floi:out dv.floe_noc:out dv.floi_noc:out dv.flon:out
-!                dv.flokt:out dv.flozt:out dv.conn:out dv.conkt:out
-!                dv.conzt:out dv.conb:out dv.cone:out dv.coni:out
-!                dv.fllime:out dv.fllimi:out dv.resmo:out dv.resmo0:out
+!                dv.kinrgy:out dv.conc:out dv.floe:out dv.floi:out
+!                dv.floe_noc:out dv.floi_noc:out dv.flon:out dv.flokt:out
+!                dv.flozt:out dv.conn:out dv.conkt:out dv.conzt:out
+!                dv.cone:out dv.coni:out dv.fllime:out dv.fllimi:out
+!                dv.flob:out dv.conb:out dv.resmo:out dv.resmo0:out
 !                dv.resco:out dv.resco0:out dv.respo:out dv.reshe:out
 !                dv.reshi:out dv.resht:out dv.resmt:out dv.reshn:out
 !                dv.reskt:out dv.reszt:out dv.reshe0:out dv.reshi0:out
@@ -13209,11 +13361,11 @@ CONTAINS
 !                dv.fnn_32:out dv.fnn_52:out dv.fhn:out dv.fnn_inc:out
 !                dv.fhm:out dv.fhp:out dv.fhj:out dv.fht:out dv.fkt:out
 !                dv.fzt:out dv.kin_frac_hyb:out dv.fluid_frac_hyb:out
-!                dv.kinrgy:out dv.conc:out dv.flob:out dv.floe:out
-!                dv.floi:out dv.floe_noc:out dv.floi_noc:out dv.flon:out
-!                dv.flokt:out dv.flozt:out dv.conn:out dv.conkt:out
-!                dv.conzt:out dv.conb:out dv.cone:out dv.coni:out
-!                dv.fllime:out dv.fllimi:out dv.resmo:out dv.resmo0:out
+!                dv.kinrgy:out dv.conc:out dv.floe:out dv.floi:out
+!                dv.floe_noc:out dv.floi_noc:out dv.flon:out dv.flokt:out
+!                dv.flozt:out dv.conn:out dv.conkt:out dv.conzt:out
+!                dv.cone:out dv.coni:out dv.fllime:out dv.fllimi:out
+!                dv.flob:out dv.conb:out dv.resmo:out dv.resmo0:out
 !                dv.resco:out dv.resco0:out dv.respo:out dv.reshe:out
 !                dv.reshi:out dv.resht:out dv.resmt:out dv.reshn:out
 !                dv.reskt:out dv.reszt:out dv.reshe0:out dv.reshi0:out
@@ -15397,6 +15549,7 @@ CONTAINS
 !                srwd.b2sihs_exba:in-out srwd.b2sihs_visa:in-out
 !                srwd.b2sihs_fraa:in-out srwd.b2sihs_str:in-out
 !                srwd.sna0_eir_tot:in-out srwd.smo0_eir_tot:in-out
+!                srwd.smr0_eir_tot:in-out srwd.smd0_eir_tot:in-out
 !                srwd.sne0_eir_tot:in-out srwd.she0_eir_tot:in-out
 !                srwd.shi0_eir_tot:in-out srwd.shn0_eir_tot:in-out
 !                srwd.sch0_eir_tot:in-out srw.sch0:in-out srw.she0:in-out
@@ -15421,7 +15574,8 @@ CONTAINS
 !                srw.b2sihs_divua:in-out srw.b2sihs_exbe:in-out
 !                srw.b2sihs_exba:in-out srw.b2sihs_visa:in-out
 !                srw.b2sihs_fraa:in-out srw.b2sihs_str:in-out srw.sna0_eir_tot:in-out
-!                srw.smo0_eir_tot:in-out srw.sne0_eir_tot:in-out
+!                srw.smo0_eir_tot:in-out srw.smr0_eir_tot:in-out
+!                srw.smd0_eir_tot:in-out srw.sne0_eir_tot:in-out
 !                srw.she0_eir_tot:in-out srw.shi0_eir_tot:in-out
 !                srw.shn0_eir_tot:in-out srw.sch0_eir_tot:in-out
 !  Differentiation of createb2sourcework as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -15447,7 +15601,8 @@ CONTAINS
 !                srw.b2sihs_divua:in-out srw.b2sihs_exbe:in-out
 !                srw.b2sihs_exba:in-out srw.b2sihs_visa:in-out
 !                srw.b2sihs_fraa:in-out srw.b2sihs_str:in-out srw.sna0_eir_tot:in-out
-!                srw.smo0_eir_tot:in-out srw.sne0_eir_tot:in-out
+!                srw.smo0_eir_tot:in-out srw.smr0_eir_tot:in-out
+!                srw.smd0_eir_tot:in-out srw.sne0_eir_tot:in-out
 !                srw.she0_eir_tot:in-out srw.shi0_eir_tot:in-out
 !                srw.shn0_eir_tot:in-out srw.sch0_eir_tot:in-out
 !
@@ -15998,6 +16153,24 @@ CONTAINS
 &     )
       srwd0%smo0_eir_tot = 0.D0
       ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwdd%smr0_eir_tot(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), &
+&     source=0._R8)
+      srwdd%smr0_eir_tot = 0.D0
+      ALLOCATE(srwd%smr0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      srwd%smr0_eir_tot = 0.d0
+      ALLOCATE(srwd0%smr0_eir_tot(nbdirsmax0, ncv, 0:ns-1), source=0._R8&
+&     )
+      srwd0%smr0_eir_tot = 0.D0
+      ALLOCATE(srw%smr0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwdd%smd0_eir_tot(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), &
+&     source=0._R8)
+      srwdd%smd0_eir_tot = 0.D0
+      ALLOCATE(srwd%smd0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      srwd%smd0_eir_tot = 0.d0
+      ALLOCATE(srwd0%smd0_eir_tot(nbdirsmax0, ncv, 0:ns-1), source=0._R8&
+&     )
+      srwd0%smd0_eir_tot = 0.D0
+      ALLOCATE(srw%smd0_eir_tot(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srwdd%sne0_eir_tot(nbdirsmax0, nbdirsmax, ncv), source=&
 &     0._R8)
       srwdd%sne0_eir_tot = 0.D0
@@ -16066,7 +16239,8 @@ CONTAINS
 !                srw.b2sihs_divua:in-out srw.b2sihs_exbe:in-out
 !                srw.b2sihs_exba:in-out srw.b2sihs_visa:in-out
 !                srw.b2sihs_fraa:in-out srw.b2sihs_str:in-out srw.sna0_eir_tot:in-out
-!                srw.smo0_eir_tot:in-out srw.sne0_eir_tot:in-out
+!                srw.smo0_eir_tot:in-out srw.smr0_eir_tot:in-out
+!                srw.smd0_eir_tot:in-out srw.sne0_eir_tot:in-out
 !                srw.she0_eir_tot:in-out srw.shi0_eir_tot:in-out
 !                srw.shn0_eir_tot:in-out srw.sch0_eir_tot:in-out
 !
@@ -16287,6 +16461,12 @@ CONTAINS
       ALLOCATE(srwd%smo0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
       srwd%smo0_eir_tot = 0.d0
       ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%smr0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      srwd%smr0_eir_tot = 0.d0
+      ALLOCATE(srw%smr0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%smd0_eir_tot(nbdirsmax, ncv, 0:ns-1), source=0._R8)
+      srwd%smd0_eir_tot = 0.d0
+      ALLOCATE(srw%smd0_eir_tot(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srwd%sne0_eir_tot(nbdirsmax, ncv), source=0._R8)
       srwd%sne0_eir_tot = 0.d0
       ALLOCATE(srw%sne0_eir_tot(ncv), source=0._R8)
@@ -16330,7 +16510,8 @@ CONTAINS
 !                srw.b2sihs_divua:in-out srw.b2sihs_exbe:in-out
 !                srw.b2sihs_exba:in-out srw.b2sihs_visa:in-out
 !                srw.b2sihs_fraa:in-out srw.b2sihs_str:in-out srw.sna0_eir_tot:in-out
-!                srw.smo0_eir_tot:in-out srw.sne0_eir_tot:in-out
+!                srw.smo0_eir_tot:in-out srw.smr0_eir_tot:in-out
+!                srw.smd0_eir_tot:in-out srw.sne0_eir_tot:in-out
 !                srw.she0_eir_tot:in-out srw.shi0_eir_tot:in-out
 !                srw.shn0_eir_tot:in-out srw.sch0_eir_tot:in-out
 !
@@ -16551,6 +16732,12 @@ CONTAINS
       ALLOCATE(srwd%smo0_eir_tot(nbdirsmax0, ncv, 0:ns-1), source=0._R8)
       srwd%smo0_eir_tot = 0.D0
       ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%smr0_eir_tot(nbdirsmax0, ncv, 0:ns-1), source=0._R8)
+      srwd%smr0_eir_tot = 0.D0
+      ALLOCATE(srw%smr0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srwd%smd0_eir_tot(nbdirsmax0, ncv, 0:ns-1), source=0._R8)
+      srwd%smd0_eir_tot = 0.D0
+      ALLOCATE(srw%smd0_eir_tot(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srwd%sne0_eir_tot(nbdirsmax0, ncv), source=0._R8)
       srwd%sne0_eir_tot = 0.D0
       ALLOCATE(srw%sne0_eir_tot(ncv), source=0._R8)
@@ -16655,6 +16842,8 @@ CONTAINS
 !
       ALLOCATE(srw%sna0_eir_tot(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srw%smo0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%smr0_eir_tot(ncv, 0:ns-1), source=0._R8)
+      ALLOCATE(srw%smd0_eir_tot(ncv, 0:ns-1), source=0._R8)
       ALLOCATE(srw%sne0_eir_tot(ncv), source=0._R8)
       ALLOCATE(srw%she0_eir_tot(ncv), source=0._R8)
       ALLOCATE(srw%shn0_eir_tot(ncv), source=0._R8)
@@ -16686,12 +16875,13 @@ CONTAINS
 !                srwd.b2sihs_joule:out srwd.b2sihs_divue:out srwd.b2sihs_divua:out
 !                srwd.b2sihs_exbe:out srwd.b2sihs_exba:out srwd.b2sihs_visa:out
 !                srwd.b2sihs_fraa:out srwd.b2sihs_str:out srwd.sna0_eir_tot:out
-!                srwd.smo0_eir_tot:out srwd.sne0_eir_tot:out srwd.she0_eir_tot:out
-!                srwd.shi0_eir_tot:out srwd.shn0_eir_tot:out srwd.sch0_eir_tot:out
-!                srw.sch0:out srw.she0:out srw.shi0:out srw.sne0:out
-!                srw.shn0:out srw.skt0:out srw.szt0:out srw.smo0:out
-!                srw.smq0:out srw.sna0:out srw.smcf:out srw.smpr:out
-!                srw.smpt:out srw.smfr:out srw.b2stbc_sch:out srw.b2stbc_she:out
+!                srwd.smo0_eir_tot:out srwd.smr0_eir_tot:out srwd.smd0_eir_tot:out
+!                srwd.sne0_eir_tot:out srwd.she0_eir_tot:out srwd.shi0_eir_tot:out
+!                srwd.shn0_eir_tot:out srwd.sch0_eir_tot:out srw.sch0:out
+!                srw.she0:out srw.shi0:out srw.sne0:out srw.shn0:out
+!                srw.skt0:out srw.szt0:out srw.smo0:out srw.smq0:out
+!                srw.sna0:out srw.smcf:out srw.smpr:out srw.smpt:out
+!                srw.smfr:out srw.b2stbc_sch:out srw.b2stbc_she:out
 !                srw.b2stbc_shi:out srw.b2stbc_sne:out srw.b2stbc_shn:out
 !                srw.b2stbc_skt:out srw.b2stbc_szt:out srw.b2stbc_smo:out
 !                srw.b2stbc_sna:out srw.b2stbm_sch:out srw.b2stbm_she:out
@@ -16707,8 +16897,9 @@ CONTAINS
 !                srw.b2sihs_divue:out srw.b2sihs_divua:out srw.b2sihs_exbe:out
 !                srw.b2sihs_exba:out srw.b2sihs_visa:out srw.b2sihs_fraa:out
 !                srw.b2sihs_str:out srw.sna0_eir_tot:out srw.smo0_eir_tot:out
-!                srw.sne0_eir_tot:out srw.she0_eir_tot:out srw.shi0_eir_tot:out
-!                srw.shn0_eir_tot:out srw.sch0_eir_tot:out
+!                srw.smr0_eir_tot:out srw.smd0_eir_tot:out srw.sne0_eir_tot:out
+!                srw.she0_eir_tot:out srw.shi0_eir_tot:out srw.shn0_eir_tot:out
+!                srw.sch0_eir_tot:out
 !  Differentiation of destroyb2sourcework as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srw.sch0:out srw.she0:out srw.shi0:out
 !                srw.sne0:out srw.shn0:out srw.skt0:out srw.szt0:out
@@ -16729,8 +16920,9 @@ CONTAINS
 !                srw.b2sihs_joule:out srw.b2sihs_divue:out srw.b2sihs_divua:out
 !                srw.b2sihs_exbe:out srw.b2sihs_exba:out srw.b2sihs_visa:out
 !                srw.b2sihs_fraa:out srw.b2sihs_str:out srw.sna0_eir_tot:out
-!                srw.smo0_eir_tot:out srw.sne0_eir_tot:out srw.she0_eir_tot:out
-!                srw.shi0_eir_tot:out srw.shn0_eir_tot:out srw.sch0_eir_tot:out
+!                srw.smo0_eir_tot:out srw.smr0_eir_tot:out srw.smd0_eir_tot:out
+!                srw.sne0_eir_tot:out srw.she0_eir_tot:out srw.shi0_eir_tot:out
+!                srw.shn0_eir_tot:out srw.sch0_eir_tot:out
 !
   SUBROUTINE DESTROYB2SOURCEWORK_DV_DV(srw, srwd0, srwd, srwdd, nbdirs, &
 &   nbdirs0)
@@ -17398,6 +17590,26 @@ CONTAINS
         DEALLOCATE(srwd0%smo0_eir_tot)
       END IF
       DEALLOCATE(srw%smo0_eir_tot)
+      IF (ALLOCATED(srwd%smr0_eir_tot)) THEN
+        IF (ALLOCATED(srwdd%smr0_eir_tot)) THEN
+          DEALLOCATE(srwdd%smr0_eir_tot)
+        END IF
+        DEALLOCATE(srwd%smr0_eir_tot)
+      END IF
+      IF (ALLOCATED(srwd0%smr0_eir_tot)) THEN
+        DEALLOCATE(srwd0%smr0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smr0_eir_tot)
+      IF (ALLOCATED(srwd%smd0_eir_tot)) THEN
+        IF (ALLOCATED(srwdd%smd0_eir_tot)) THEN
+          DEALLOCATE(srwdd%smd0_eir_tot)
+        END IF
+        DEALLOCATE(srwd%smd0_eir_tot)
+      END IF
+      IF (ALLOCATED(srwd0%smd0_eir_tot)) THEN
+        DEALLOCATE(srwd0%smd0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smd0_eir_tot)
       IF (ALLOCATED(srwd%sne0_eir_tot)) THEN
         IF (ALLOCATED(srwdd%sne0_eir_tot)) THEN
           DEALLOCATE(srwdd%sne0_eir_tot)
@@ -17473,8 +17685,9 @@ CONTAINS
 !                srw.b2sihs_joule:out srw.b2sihs_divue:out srw.b2sihs_divua:out
 !                srw.b2sihs_exbe:out srw.b2sihs_exba:out srw.b2sihs_visa:out
 !                srw.b2sihs_fraa:out srw.b2sihs_str:out srw.sna0_eir_tot:out
-!                srw.smo0_eir_tot:out srw.sne0_eir_tot:out srw.she0_eir_tot:out
-!                srw.shi0_eir_tot:out srw.shn0_eir_tot:out srw.sch0_eir_tot:out
+!                srw.smo0_eir_tot:out srw.smr0_eir_tot:out srw.smd0_eir_tot:out
+!                srw.sne0_eir_tot:out srw.she0_eir_tot:out srw.shi0_eir_tot:out
+!                srw.shn0_eir_tot:out srw.sch0_eir_tot:out
 !
   SUBROUTINE DESTROYB2SOURCEWORK_DV(srw, srwd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -17753,6 +17966,14 @@ CONTAINS
         DEALLOCATE(srwd%smo0_eir_tot)
       END IF
       DEALLOCATE(srw%smo0_eir_tot)
+      IF (ALLOCATED(srwd%smr0_eir_tot)) THEN
+        DEALLOCATE(srwd%smr0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smr0_eir_tot)
+      IF (ALLOCATED(srwd%smd0_eir_tot)) THEN
+        DEALLOCATE(srwd%smd0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smd0_eir_tot)
       IF (ALLOCATED(srwd%sne0_eir_tot)) THEN
         DEALLOCATE(srwd%sne0_eir_tot)
       END IF
@@ -17798,8 +18019,9 @@ CONTAINS
 !                srw.b2sihs_joule:out srw.b2sihs_divue:out srw.b2sihs_divua:out
 !                srw.b2sihs_exbe:out srw.b2sihs_exba:out srw.b2sihs_visa:out
 !                srw.b2sihs_fraa:out srw.b2sihs_str:out srw.sna0_eir_tot:out
-!                srw.smo0_eir_tot:out srw.sne0_eir_tot:out srw.she0_eir_tot:out
-!                srw.shi0_eir_tot:out srw.shn0_eir_tot:out srw.sch0_eir_tot:out
+!                srw.smo0_eir_tot:out srw.smr0_eir_tot:out srw.smd0_eir_tot:out
+!                srw.sne0_eir_tot:out srw.she0_eir_tot:out srw.shi0_eir_tot:out
+!                srw.shn0_eir_tot:out srw.sch0_eir_tot:out
 !
   SUBROUTINE DESTROYB2SOURCEWORK_DV0(srw, srwd, nbdirs)
     USE B2MOD_DIFFSIZES
@@ -18078,6 +18300,14 @@ CONTAINS
         DEALLOCATE(srwd%smo0_eir_tot)
       END IF
       DEALLOCATE(srw%smo0_eir_tot)
+      IF (ALLOCATED(srwd%smr0_eir_tot)) THEN
+        DEALLOCATE(srwd%smr0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smr0_eir_tot)
+      IF (ALLOCATED(srwd%smd0_eir_tot)) THEN
+        DEALLOCATE(srwd%smd0_eir_tot)
+      END IF
+      DEALLOCATE(srw%smd0_eir_tot)
       IF (ALLOCATED(srwd%sne0_eir_tot)) THEN
         DEALLOCATE(srwd%sne0_eir_tot)
       END IF
@@ -18186,6 +18416,8 @@ CONTAINS
 !
       DEALLOCATE(srw%sna0_eir_tot)
       DEALLOCATE(srw%smo0_eir_tot)
+      DEALLOCATE(srw%smr0_eir_tot)
+      DEALLOCATE(srw%smd0_eir_tot)
       DEALLOCATE(srw%sne0_eir_tot)
       DEALLOCATE(srw%she0_eir_tot)
       DEALLOCATE(srw%shi0_eir_tot)
@@ -19493,6 +19725,7 @@ CONTAINS
 !                snap.dmodt:in-out snap.dhedt:in-out snap.dhidt:in-out
 !                snap.dhndt:in-out snap.dktdt:in-out snap.dztdt:in-out
 !
+!
   SUBROUTINE CREATEB2PLASMASNAPSHOT_DV_DV(ncv, nfc, ns, snap, snapd0, &
 &   snapd, snapdd, nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -19788,6 +20021,7 @@ CONTAINS
 !                snap.dmodt:in-out snap.dhedt:in-out snap.dhidt:in-out
 !                snap.dhndt:in-out snap.dktdt:in-out snap.dztdt:in-out
 !
+!
   SUBROUTINE CREATEB2PLASMASNAPSHOT_DV(ncv, nfc, ns, snap, snapd, nbdirs&
 & )
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -19928,6 +20162,7 @@ CONTAINS
 !                snap.dmodt:in-out snap.dhedt:in-out snap.dhidt:in-out
 !                snap.dhndt:in-out snap.dktdt:in-out snap.dztdt:in-out
 !
+!
   SUBROUTINE CREATEB2PLASMASNAPSHOT_DV0(ncv, nfc, ns, snap, snapd, &
 &   nbdirs)
     USE B2MOD_DIFFSIZES
@@ -20054,6 +20289,7 @@ CONTAINS
     END IF
   END SUBROUTINE CREATEB2PLASMASNAPSHOT_DV0
 
+!
 !
   SUBROUTINE CREATEB2PLASMASNAPSHOT(ncv, nfc, ns, snap)
     USE B2MOD_DIFFSIZES
@@ -20913,6 +21149,7 @@ CONTAINS
 !                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
 !                diag.reshereg:in-out diag.reshireg:in-out
 !
+!
   SUBROUTINE CREATEB2DIAGNOSTIC_DV_DV(ncv, ns, nnreg, diag, diagd0, &
 &   diagd, diagdd, nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -21059,6 +21296,7 @@ CONTAINS
 !                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
 !                diag.reshereg:in-out diag.reshireg:in-out
 !
+!
   SUBROUTINE CREATEB2DIAGNOSTIC_DV(ncv, ns, nnreg, diag, diagd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
@@ -21132,6 +21370,7 @@ CONTAINS
 !                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
 !                diag.reshereg:in-out diag.reshireg:in-out
 !
+!
   SUBROUTINE CREATEB2DIAGNOSTIC_DV0(ncv, ns, nnreg, diag, diagd, nbdirs)
     USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
@@ -21198,6 +21437,7 @@ CONTAINS
     END IF
   END SUBROUTINE CREATEB2DIAGNOSTIC_DV0
 
+!
 !
   SUBROUTINE CREATEB2DIAGNOSTIC(ncv, ns, nnreg, diag)
     USE B2MOD_DIFFSIZES
@@ -22119,7 +22359,6 @@ CONTAINS
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
     TYPE(B2STATEEXT_DIFFV_DIFFV), INTENT(INOUT) :: state_extdd
     INTRINSIC ALLOCATED
-    INTEGER :: ii1
     INTEGER :: nd
     INTEGER :: nbdirs
     INTEGER :: nd0
@@ -22129,12 +22368,6 @@ CONTAINS
       RETURN
     ELSE
 !
-      ALLOCATE(state_extd%text(nbdirsmax, 0:ns_ext-1))
-      DO ii1=0,ns_ext-1
-        DO nd=1,nbdirsmax
-          state_extd%text(nd, ii1) = ''
-        END DO
-      END DO
       ALLOCATE(state_ext%text(0:ns_ext-1))
       ALLOCATE(state_extd%is_neutral(nbdirsmax, 0:ns_ext-1))
       DO nd=1,nbdirsmax
@@ -22270,18 +22503,20 @@ CONTAINS
       state_ext%fhi = 0.0_R8
       state_ext%fa = 0.0_R8
       state_ext%sne = 0.0_R8
-      DO nd=1,nbdirs
-        state_extd%she(nd, :) = 0.d0
-        state_extd%shi(nd, :) = 0.d0
-        state_extd%sch(nd, :) = 0.d0
-        state_extd%sna(nd, :, :) = 0.d0
-        state_extd%smo(nd, :, :) = 0.d0
+      DO nd0=1,nbdirs0
+        state_extd0%she(nd0, :) = 0.D0
+        state_extd0%shi(nd0, :) = 0.D0
+        state_extd0%sch(nd0, :) = 0.D0
+        state_extd0%sna(nd0, :, :) = 0.D0
+        state_extd0%smo(nd0, :, :) = 0.D0
       END DO
       state_ext%she = 0.0_R8
       state_ext%shi = 0.0_R8
       state_ext%sch = 0.0_R8
       state_ext%sna = 0.0_R8
       state_ext%smo = 0.0_R8
+! default
+      state_ext%ns = 0
 !
       RETURN
     END IF
@@ -22307,7 +22542,6 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
     INTRINSIC ALLOCATED
-    INTEGER :: ii1
     INTEGER :: nd
     INTEGER :: nbdirs
 !
@@ -22315,12 +22549,6 @@ CONTAINS
       RETURN
     ELSE
 !
-      ALLOCATE(state_extd%text(nbdirsmax, 0:ns_ext-1))
-      DO ii1=0,ns_ext-1
-        DO nd=1,nbdirsmax
-          state_extd%text(nd, ii1) = ''
-        END DO
-      END DO
       ALLOCATE(state_ext%text(0:ns_ext-1))
       ALLOCATE(state_extd%is_neutral(nbdirsmax, 0:ns_ext-1))
       DO nd=1,nbdirsmax
@@ -22402,22 +22630,107 @@ CONTAINS
       state_ext%fhi = 0.0_R8
       state_ext%fa = 0.0_R8
       state_ext%sne = 0.0_R8
+      state_ext%she = 0.0_R8
+      state_ext%shi = 0.0_R8
+      state_ext%sch = 0.0_R8
+      state_ext%sna = 0.0_R8
+      state_ext%smo = 0.0_R8
+! default
+      state_ext%ns = 0
+!
+      RETURN
+    END IF
+  END SUBROUTINE CREATEB2STATEEXT_DV
+
+!  Differentiation of createb2stateext as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: state_ext.she:in-out state_ext.shi:in-out
+!                state_ext.sch:in-out state_ext.sna:in-out state_ext.smo:in-out
+!
+!
+! External plasma
+  SUBROUTINE CREATEB2STATEEXT_DV0(ncv, nfc, ns_ext, state_ext, &
+&   state_extd, nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ncv, nfc, ns_ext
+    TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2STATEEXT_DIFFV0), INTENT(INOUT) :: state_extd
+    INTRINSIC ALLOCATED
+    INTEGER :: nd
+    INTEGER :: nbdirs
+!
+    IF (ALLOCATED(state_ext%text)) THEN
+      RETURN
+    ELSE
+!
+      ALLOCATE(state_ext%text(0:ns_ext-1))
+      ALLOCATE(state_ext%is_neutral(0:ns_ext-1))
+      ALLOCATE(state_ext%zn(0:ns_ext-1))
+      ALLOCATE(state_ext%am(0:ns_ext-1))
+      ALLOCATE(state_ext%za(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%za2(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%pt(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%ne(1:ncv))
+      ALLOCATE(state_ext%ne2(1:ncv))
+      ALLOCATE(state_ext%ue(1:ncv))
+      ALLOCATE(state_ext%na(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%ni(1:ncv, 0:1))
+      ALLOCATE(state_ext%ua(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%ta(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_ext%fhi(1:nfc, 0:1))
+      ALLOCATE(state_ext%fa(1:nfc, 0:1, 0:ns_ext-1))
+      ALLOCATE(state_ext%sne(1:ncv))
+      ALLOCATE(state_extd%she(nbdirsmax0, 1:ncv))
+      state_extd%she = 0.D0
+      ALLOCATE(state_ext%she(1:ncv))
+      ALLOCATE(state_extd%shi(nbdirsmax0, 1:ncv))
+      state_extd%shi = 0.D0
+      ALLOCATE(state_ext%shi(1:ncv))
+      ALLOCATE(state_extd%sch(nbdirsmax0, 1:ncv))
+      state_extd%sch = 0.D0
+      ALLOCATE(state_ext%sch(1:ncv))
+      ALLOCATE(state_extd%sna(nbdirsmax0, 1:ncv, 0:ns_ext-1))
+      state_extd%sna = 0.D0
+      ALLOCATE(state_ext%sna(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_extd%smo(nbdirsmax0, 1:ncv, 0:ns_ext-1))
+      state_extd%smo = 0.D0
+      ALLOCATE(state_ext%smo(1:ncv, 0:ns_ext-1))
+      state_ext%text = ''
+      state_ext%is_neutral = .false.
+      state_ext%zn = 0.0_R8
+      state_ext%am = 0.0_R8
+      state_ext%za = 0.0_R8
+      state_ext%za2 = 0.0_R8
+      state_ext%pt = 0.0_R8
+      state_ext%ne = 0.0_R8
+      state_ext%ne2 = 0.0_R8
+      state_ext%ue = 0.0_R8
+      state_ext%na = 0.0_R8
+      state_ext%ni = 0.0_R8
+      state_ext%ua = 0.0_R8
+      state_ext%ta = 0.0_R8
+      state_ext%fhi = 0.0_R8
+      state_ext%fa = 0.0_R8
+      state_ext%sne = 0.0_R8
       DO nd=1,nbdirs
-        state_extd%she(nd, :) = 0.d0
-        state_extd%shi(nd, :) = 0.d0
-        state_extd%sch(nd, :) = 0.d0
-        state_extd%sna(nd, :, :) = 0.d0
-        state_extd%smo(nd, :, :) = 0.d0
+        state_extd%she(nd, :) = 0.D0
+        state_extd%shi(nd, :) = 0.D0
+        state_extd%sch(nd, :) = 0.D0
+        state_extd%sna(nd, :, :) = 0.D0
+        state_extd%smo(nd, :, :) = 0.D0
       END DO
       state_ext%she = 0.0_R8
       state_ext%shi = 0.0_R8
       state_ext%sch = 0.0_R8
       state_ext%sna = 0.0_R8
       state_ext%smo = 0.0_R8
+! default
+      state_ext%ns = 0
 !
       RETURN
     END IF
-  END SUBROUTINE CREATEB2STATEEXT_DV
+  END SUBROUTINE CREATEB2STATEEXT_DV0
 
 !
 !
@@ -22477,6 +22790,8 @@ CONTAINS
       state_ext%sch = 0.0_R8
       state_ext%sna = 0.0_R8
       state_ext%smo = 0.0_R8
+! default
+      state_ext%ns = 0
 !
       RETURN
     END IF
@@ -22520,8 +22835,8 @@ CONTAINS
       RETURN
     ELSE
 !
-      IF (ALLOCATED(state_extd%text)) THEN
-        DEALLOCATE(state_extd%text)
+      IF (ALLOCATED(state_extd0%text)) THEN
+        DEALLOCATE(state_extd0%text)
       END IF
       DEALLOCATE(state_ext%text)
       IF (ALLOCATED(state_extd%is_neutral)) THEN
@@ -22708,6 +23023,116 @@ CONTAINS
       RETURN
     ELSE
 !
+      DEALLOCATE(state_ext%text)
+      IF (ALLOCATED(state_extd%is_neutral)) THEN
+        DEALLOCATE(state_extd%is_neutral)
+      END IF
+      DEALLOCATE(state_ext%is_neutral)
+      DEALLOCATE(state_ext%zn)
+      IF (ALLOCATED(state_extd%am)) THEN
+        DEALLOCATE(state_extd%am)
+      END IF
+      DEALLOCATE(state_ext%am)
+      IF (ALLOCATED(state_extd%za)) THEN
+        DEALLOCATE(state_extd%za)
+      END IF
+      DEALLOCATE(state_ext%za)
+      IF (ALLOCATED(state_extd%za2)) THEN
+        DEALLOCATE(state_extd%za2)
+      END IF
+      DEALLOCATE(state_ext%za2)
+      IF (ALLOCATED(state_extd%pt)) THEN
+        DEALLOCATE(state_extd%pt)
+      END IF
+      DEALLOCATE(state_ext%pt)
+      IF (ALLOCATED(state_extd%ne)) THEN
+        DEALLOCATE(state_extd%ne)
+      END IF
+      DEALLOCATE(state_ext%ne)
+      IF (ALLOCATED(state_extd%ne2)) THEN
+        DEALLOCATE(state_extd%ne2)
+      END IF
+      DEALLOCATE(state_ext%ne2)
+      IF (ALLOCATED(state_extd%ue)) THEN
+        DEALLOCATE(state_extd%ue)
+      END IF
+      DEALLOCATE(state_ext%ue)
+      IF (ALLOCATED(state_extd%na)) THEN
+        DEALLOCATE(state_extd%na)
+      END IF
+      DEALLOCATE(state_ext%na)
+      IF (ALLOCATED(state_extd%ni)) THEN
+        DEALLOCATE(state_extd%ni)
+      END IF
+      DEALLOCATE(state_ext%ni)
+      IF (ALLOCATED(state_extd%ua)) THEN
+        DEALLOCATE(state_extd%ua)
+      END IF
+      DEALLOCATE(state_ext%ua)
+      IF (ALLOCATED(state_extd%ta)) THEN
+        DEALLOCATE(state_extd%ta)
+      END IF
+      DEALLOCATE(state_ext%ta)
+      IF (ALLOCATED(state_extd%fhi)) THEN
+        DEALLOCATE(state_extd%fhi)
+      END IF
+      DEALLOCATE(state_ext%fhi)
+      IF (ALLOCATED(state_extd%fa)) THEN
+        DEALLOCATE(state_extd%fa)
+      END IF
+      DEALLOCATE(state_ext%fa)
+      IF (ALLOCATED(state_extd%sne)) THEN
+        DEALLOCATE(state_extd%sne)
+      END IF
+      DEALLOCATE(state_ext%sne)
+      IF (ALLOCATED(state_extd%she)) THEN
+        DEALLOCATE(state_extd%she)
+      END IF
+      DEALLOCATE(state_ext%she)
+      IF (ALLOCATED(state_extd%shi)) THEN
+        DEALLOCATE(state_extd%shi)
+      END IF
+      DEALLOCATE(state_ext%shi)
+      IF (ALLOCATED(state_extd%sch)) THEN
+        DEALLOCATE(state_extd%sch)
+      END IF
+      DEALLOCATE(state_ext%sch)
+      IF (ALLOCATED(state_extd%sna)) THEN
+        DEALLOCATE(state_extd%sna)
+      END IF
+      DEALLOCATE(state_ext%sna)
+      IF (ALLOCATED(state_extd%smo)) THEN
+        DEALLOCATE(state_extd%smo)
+      END IF
+      DEALLOCATE(state_ext%smo)
+!
+      RETURN
+    END IF
+  END SUBROUTINE DESTROYB2STATEEXT_DV
+
+!  Differentiation of destroyb2stateext as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: state_ext.am:out state_ext.ne:out
+!                state_ext.ne2:out state_ext.ue:out state_ext.za:out
+!                state_ext.za2:out state_ext.pt:out state_ext.na:out
+!                state_ext.ni:out state_ext.ua:out state_ext.ta:out
+!                state_ext.fhi:out state_ext.fa:out state_ext.sne:out
+!                state_ext.she:out state_ext.shi:out state_ext.sch:out
+!                state_ext.sna:out state_ext.smo:out
+!
+!
+  SUBROUTINE DESTROYB2STATEEXT_DV0(state_ext, state_extd, nbdirs)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+    TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2STATEEXT_DIFFV0), INTENT(INOUT) :: state_extd
+    INTRINSIC ALLOCATED
+    INTEGER :: nbdirs
+!
+    IF (.NOT.ALLOCATED(state_ext%text)) THEN
+      RETURN
+    ELSE
+!
       IF (ALLOCATED(state_extd%text)) THEN
         DEALLOCATE(state_extd%text)
       END IF
@@ -22796,7 +23221,7 @@ CONTAINS
 !
       RETURN
     END IF
-  END SUBROUTINE DESTROYB2STATEEXT_DV
+  END SUBROUTINE DESTROYB2STATEEXT_DV0
 
 !
 !
@@ -23314,8 +23739,9 @@ CONTAINS
 !                std.co.hce_exb:in-out std.co.hci_exb:in-out std.co.dpa0:in-out
 !                std.co.dna0:in-out std.co.vsa0:in-out std.co.hcib:in-out
 !                std.co.vla0:in-out std.co.vma0:out std.co.kt_neo:out
-!                std.co.alfx_c:in-out std.co.sigx_c:in-out std.co.sigx_kt:in-out
-!                std.co.hcix_c:in-out std.co.fllim_ki:in-out std.co.fllim_ke:in-out
+!                std.co.nu2:in-out std.co.k2:in-out std.co.alfx_c:in-out
+!                std.co.sigx_c:in-out std.co.sigx_kt:in-out std.co.hcix_c:in-out
+!                std.co.fllim_ki:in-out std.co.fllim_ke:in-out
 !                std.co.fllim_al:in-out std.co.fllim_al_c:in-out
 !                std.co.fllim_ki_c:in-out std.co.f_luc_ke:in-out
 !                std.co.f_luc_ki:in-out std.co.f_luc_et:in-out
@@ -23347,12 +23773,12 @@ CONTAINS
 !                std.dv.fhp:in-out std.dv.fhj:in-out std.dv.fht:in-out
 !                std.dv.fkt:in-out std.dv.fzt:in-out std.dv.kin_frac_hyb:in-out
 !                std.dv.fluid_frac_hyb:in-out std.dv.kinrgy:in-out
-!                std.dv.conc:in-out std.dv.flob:in-out std.dv.floe:in-out
-!                std.dv.floi:in-out std.dv.floe_noc:out std.dv.floi_noc:out
-!                std.dv.flon:in-out std.dv.flokt:in-out std.dv.flozt:in-out
-!                std.dv.conn:in-out std.dv.conkt:in-out std.dv.conzt:in-out
-!                std.dv.conb:in-out std.dv.cone:in-out std.dv.coni:in-out
-!                std.dv.fllime:out std.dv.fllimi:out std.dv.resmo:in-out
+!                std.dv.conc:in-out std.dv.floe:in-out std.dv.floi:in-out
+!                std.dv.floe_noc:out std.dv.floi_noc:out std.dv.flon:in-out
+!                std.dv.flokt:in-out std.dv.flozt:in-out std.dv.conn:in-out
+!                std.dv.conkt:in-out std.dv.conzt:in-out std.dv.cone:in-out
+!                std.dv.coni:in-out std.dv.fllime:out std.dv.fllimi:out
+!                std.dv.flob:in-out std.dv.conb:in-out std.dv.resmo:in-out
 !                std.dv.resmo0:in-out std.dv.resco:in-out std.dv.resco0:in-out
 !                std.dv.respo:in-out std.dv.reshe:in-out std.dv.reshi:in-out
 !                std.dv.resht:in-out std.dv.resmt:in-out std.dv.reshn:in-out
@@ -23365,7 +23791,7 @@ CONTAINS
 !                std.dv.pccm:in-out std.dv.ne:in-out std.dv.ni:in-out
 !                std.dv.nn:in-out std.dv.ue:in-out std.dv.ne2:in-out
 !                std.dv.pa:in-out std.dv.pz:in-out std.dv.lnlam:in-out
-!                std.dv.uadia:out std.dv.vadia:in-out std.dv.wadia:in-out
+!                std.dv.uadia:in-out std.dv.vadia:in-out std.dv.wadia:in-out
 !                std.dv.vaecrb:in-out std.dv.vedia:in-out std.dv.wedia:out
 !                std.dv.veecrb:in-out std.dv.facdrift:out std.dv.fac_exb:out
 !                std.dv.fac_vis:out std.dv.dnadt:in-out std.dv.dmodt:in-out
@@ -23405,6 +23831,7 @@ CONTAINS
 !                std.srw.b2sihs_exba:out std.srw.b2sihs_visa:out
 !                std.srw.b2sihs_fraa:out std.srw.b2sihs_str:out
 !                std.srw.sna0_eir_tot:out std.srw.smo0_eir_tot:out
+!                std.srw.smr0_eir_tot:out std.srw.smd0_eir_tot:out
 !                std.srw.sne0_eir_tot:out std.srw.she0_eir_tot:out
 !                std.srw.shi0_eir_tot:out std.srw.shn0_eir_tot:out
 !                std.srw.sch0_eir_tot:out std.rt.rlcx:in-out std.rt.rlqa:in-out
@@ -23466,131 +23893,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:out st.dv.fllimi:out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fmo:out st.psnl.fhi:out st.psnl.fhe:out
-!                st.psnl.fhn:out st.psnl.fkt:out st.psnl.fzt:out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fmo:out st.psnc.fhi:out
-!                st.psnc.fhe:out st.psnc.fhn:out st.psnc.fkt:out
-!                st.psnc.fzt:out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:out st.update.na:out st.update.pa:out
+!                st.update.po:out st.update.te:out st.update.ti:out
+!                st.update.kt:out st.update.zt:out
 !  Differentiation of read_state as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: st.pl.na:in-out st.pl.ua:in-out
 !                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
@@ -23616,131 +24045,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:out st.dv.fllimi:out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:out st.psnl.fna:in-out st.psnl.fmo:out
+!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
+!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:out st.psnc.fna:in-out
+!                st.psnc.fmo:out st.psnc.fhi:out st.psnc.fhe:out
+!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:out st.update.na:out st.update.pa:out
+!                st.update.po:out st.update.te:out st.update.ti:out
+!                st.update.kt:out st.update.zt:out
 !
 !**********************************************************************
 !
@@ -23926,131 +24357,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:out st.dv.fllimi:out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
-!                st.psnl.fmo:in-out st.psnl.fhi:in-out st.psnl.fhe:in-out
-!                st.psnl.fhn:out st.psnl.fkt:in-out st.psnl.fzt:in-out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
-!                st.psnc.fna:in-out st.psnc.fmo:in-out st.psnc.fhi:in-out
-!                st.psnc.fhe:in-out st.psnc.fhn:out st.psnc.fkt:in-out
-!                st.psnc.fzt:in-out st.psnc.kinrgy:in-out st.psnc.resco0:in-out
-!                st.psnc.resmo0:in-out st.psnc.reshi0:in-out st.psnc.reshe0:in-out
-!                st.psnc.reshn0:in-out st.psnc.reskt0:in-out st.psnc.reszt0:in-out
-!                st.psnc.dnadt:in-out st.psnc.dmodt:in-out st.psnc.dhedt:in-out
-!                st.psnc.dhidt:in-out st.psnc.dhndt:in-out st.psnc.dktdt:in-out
-!                st.psnc.dztdt:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:out st.psnl.fna:in-out st.psnl.fmo:out
+!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
+!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:out st.psnc.fna:in-out
+!                st.psnc.fmo:out st.psnc.fhi:out st.psnc.fhe:out
+!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:out st.update.na:out st.update.pa:out
+!                st.update.po:out st.update.te:out st.update.ti:out
+!                st.update.kt:out st.update.zt:out
 !
 !**********************************************************************
 !
@@ -24229,131 +24662,133 @@ CONTAINS
 !                st.co.dzt0:in-out st.co.dna_exb:in-out st.co.hce_exb:in-out
 !                st.co.hci_exb:in-out st.co.dpa0:in-out st.co.dna0:in-out
 !                st.co.vsa0:in-out st.co.hcib:in-out st.co.vla0:in-out
-!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.alfx_c:in-out
-!                st.co.sigx_c:in-out st.co.sigx_kt:in-out st.co.hcix_c:in-out
-!                st.co.fllim_ki:in-out st.co.fllim_ke:in-out st.co.fllim_al:in-out
-!                st.co.fllim_al_c:in-out st.co.fllim_ki_c:in-out
-!                st.co.f_luc_ke:in-out st.co.f_luc_ki:in-out st.co.f_luc_et:in-out
-!                st.co.f_luc_sg:in-out st.co.f_luc_al:in-out st.co.alpha1f:in-out
-!                st.co.f_luc_ke_c:in-out st.co.f_luc_ki_c:in-out
-!                st.co.cssb:in-out st.dv.fch:in-out st.dv.fch_32:in-out
-!                st.dv.fch_52:in-out st.dv.fch_p:in-out st.dv.fchdia:in-out
-!                st.dv.fchin:in-out st.dv.fchvispar:in-out st.dv.fchvispar_a:in-out
-!                st.dv.fchvisper:in-out st.dv.fchvisper_a:in-out
-!                st.dv.fchvisq:in-out st.dv.fchvisq_a:in-out st.dv.fchinert:in-out
-!                st.dv.fchinert_a:in-out st.dv.fchanml:in-out st.dv.fchanml_a:in-out
-!                st.dv.fchviskt:in-out st.dv.fchviskt_a:in-out
-!                st.dv.fch_pi_c:in-out st.dv.fch_pi_f:in-out st.dv.fni_32:in-out
-!                st.dv.fni_52:in-out st.dv.fni:in-out st.dv.fni_he:in-out
-!                st.dv.fna:in-out st.dv.fna_mdf:in-out st.dv.fna_52:in-out
-!                st.dv.fna_32:in-out st.dv.fna_53:in-out st.dv.fna_52nd:in-out
-!                st.dv.fna_32nd:in-out st.dv.fna_nodrift:in-out
-!                st.dv.fna_he:in-out st.dv.fnapsch:in-out st.dv.fna_fcor:in-out
-!                st.dv.fna_eir:in-out st.dv.fna_exb:in-out st.dv.fmo:in-out
-!                st.dv.fne:in-out st.dv.fne_he:in-out st.dv.fne_32:in-out
-!                st.dv.fne_52:in-out st.dv.fne_eir:in-out st.dv.fne_53:in-out
-!                st.dv.fhe:in-out st.dv.fhe_mdf:in-out st.dv.fhet:out
-!                st.dv.fhepsch:in-out st.dv.fhe_eir:in-out st.dv.fhe_exb:in-out
-!                st.dv.fhi:in-out st.dv.fhi_mdf:in-out st.dv.fhit:out
-!                st.dv.fhipsch:in-out st.dv.fhi_eir:in-out st.dv.fhi_exb:in-out
-!                st.dv.fnn:in-out st.dv.fnn_32:in-out st.dv.fnn_52:in-out
-!                st.dv.fhn:in-out st.dv.fnn_inc:in-out st.dv.fhm:in-out
-!                st.dv.fhp:in-out st.dv.fhj:in-out st.dv.fht:in-out
-!                st.dv.fkt:in-out st.dv.fzt:in-out st.dv.kin_frac_hyb:in-out
-!                st.dv.fluid_frac_hyb:in-out st.dv.kinrgy:in-out
-!                st.dv.conc:in-out st.dv.flob:in-out st.dv.floe:in-out
+!                st.co.vma0:in-out st.co.kt_neo:in-out st.co.nu2:in-out
+!                st.co.k2:in-out st.co.alfx_c:in-out st.co.sigx_c:in-out
+!                st.co.sigx_kt:in-out st.co.hcix_c:in-out st.co.fllim_ki:in-out
+!                st.co.fllim_ke:in-out st.co.fllim_al:in-out st.co.fllim_al_c:in-out
+!                st.co.fllim_ki_c:in-out st.co.f_luc_ke:in-out
+!                st.co.f_luc_ki:in-out st.co.f_luc_et:in-out st.co.f_luc_sg:in-out
+!                st.co.f_luc_al:in-out st.co.alpha1f:in-out st.co.f_luc_ke_c:in-out
+!                st.co.f_luc_ki_c:in-out st.co.cssb:in-out st.dv.fch:in-out
+!                st.dv.fch_32:in-out st.dv.fch_52:in-out st.dv.fch_p:in-out
+!                st.dv.fchdia:in-out st.dv.fchin:in-out st.dv.fchvispar:in-out
+!                st.dv.fchvispar_a:in-out st.dv.fchvisper:in-out
+!                st.dv.fchvisper_a:in-out st.dv.fchvisq:in-out
+!                st.dv.fchvisq_a:in-out st.dv.fchinert:in-out st.dv.fchinert_a:in-out
+!                st.dv.fchanml:in-out st.dv.fchanml_a:in-out st.dv.fchviskt:in-out
+!                st.dv.fchviskt_a:in-out st.dv.fch_pi_c:in-out
+!                st.dv.fch_pi_f:in-out st.dv.fni_32:in-out st.dv.fni_52:in-out
+!                st.dv.fni:in-out st.dv.fni_he:in-out st.dv.fna:in-out
+!                st.dv.fna_mdf:in-out st.dv.fna_52:in-out st.dv.fna_32:in-out
+!                st.dv.fna_53:in-out st.dv.fna_52nd:in-out st.dv.fna_32nd:in-out
+!                st.dv.fna_nodrift:in-out st.dv.fna_he:in-out st.dv.fnapsch:in-out
+!                st.dv.fna_fcor:in-out st.dv.fna_eir:in-out st.dv.fna_exb:in-out
+!                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
+!                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
+!                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
+!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
+!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
+!                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
+!                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
+!                st.dv.fht:in-out st.dv.fkt:in-out st.dv.fzt:in-out
+!                st.dv.kin_frac_hyb:in-out st.dv.fluid_frac_hyb:in-out
+!                st.dv.kinrgy:in-out st.dv.conc:in-out st.dv.floe:in-out
 !                st.dv.floi:in-out st.dv.floe_noc:in-out st.dv.floi_noc:in-out
 !                st.dv.flon:in-out st.dv.flokt:in-out st.dv.flozt:in-out
 !                st.dv.conn:in-out st.dv.conkt:in-out st.dv.conzt:in-out
-!                st.dv.conb:in-out st.dv.cone:in-out st.dv.coni:in-out
-!                st.dv.fllime:out st.dv.fllimi:out st.dv.resmo:in-out
-!                st.dv.resmo0:in-out st.dv.resco:in-out st.dv.resco0:in-out
-!                st.dv.respo:in-out st.dv.reshe:in-out st.dv.reshi:in-out
-!                st.dv.resht:in-out st.dv.resmt:in-out st.dv.reshn:in-out
-!                st.dv.reskt:in-out st.dv.reszt:in-out st.dv.reshe0:in-out
-!                st.dv.reshi0:in-out st.dv.reshn0:in-out st.dv.reskt0:in-out
-!                st.dv.reszt0:in-out st.dv.corua:in-out st.dv.corpa:in-out
-!                st.dv.corut:in-out st.dv.corpo:in-out st.dv.cortt:in-out
-!                st.dv.corte:in-out st.dv.corti:in-out st.dv.cortn:in-out
-!                st.dv.corkt:in-out st.dv.corzt:in-out st.dv.pcca:in-out
-!                st.dv.pccm:in-out st.dv.ne:in-out st.dv.ni:in-out
-!                st.dv.nn:in-out st.dv.ue:in-out st.dv.ne2:in-out
-!                st.dv.pa:in-out st.dv.pz:in-out st.dv.lnlam:in-out
-!                st.dv.uadia:in-out st.dv.vadia:in-out st.dv.wadia:in-out
-!                st.dv.vaecrb:in-out st.dv.vedia:in-out st.dv.wedia:in-out
-!                st.dv.veecrb:in-out st.dv.facdrift:in-out st.dv.fac_exb:in-out
-!                st.dv.fac_vis:in-out st.dv.dnadt:in-out st.dv.dmodt:in-out
-!                st.dv.dhedt:in-out st.dv.dhidt:in-out st.dv.dhndt:in-out
-!                st.dv.dktdt:in-out st.dv.dztdt:in-out st.sr.sch:in-out
-!                st.sr.she:in-out st.sr.shi:in-out st.sr.sne:in-out
-!                st.sr.shn:in-out st.sr.skt:in-out st.sr.szt:in-out
-!                st.sr.smo:in-out st.sr.smq:in-out st.sr.sna:in-out
-!                st.sr.shedt:in-out st.sr.sktdt:in-out st.sr.sztdt:in-out
-!                st.sr.snedt:in-out st.sr.shidt:in-out st.sr.shndt:in-out
-!                st.sr.schdt:in-out st.sr.smodt:in-out st.sr.snadt:in-out
-!                st.sr.skt_diss:in-out st.sr.skt_prod:in-out st.srw.sch0:in-out
-!                st.srw.she0:in-out st.srw.shi0:in-out st.srw.sne0:in-out
-!                st.srw.shn0:in-out st.srw.skt0:in-out st.srw.szt0:in-out
-!                st.srw.smo0:in-out st.srw.smq0:in-out st.srw.sna0:in-out
-!                st.srw.smcf:in-out st.srw.smpr:in-out st.srw.smpt:in-out
-!                st.srw.smfr:in-out st.srw.b2stbc_sch:in-out st.srw.b2stbc_she:in-out
-!                st.srw.b2stbc_shi:in-out st.srw.b2stbc_sne:in-out
-!                st.srw.b2stbc_shn:in-out st.srw.b2stbc_skt:in-out
-!                st.srw.b2stbc_szt:in-out st.srw.b2stbc_smo:in-out
-!                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
-!                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
-!                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
-!                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
-!                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
-!                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
-!                st.srw.b2stbr_szt:in-out st.srw.b2stbr_smo:in-out
-!                st.srw.b2stbr_sna:in-out st.srw.b2npmo_smaf:in-out
-!                st.srw.b2npmo_smag:in-out st.srw.b2npmo_smav:in-out
-!                st.srw.rsana:in-out st.srw.rsahi:in-out st.srw.rsamo:in-out
-!                st.srw.rrana:in-out st.srw.rrahi:in-out st.srw.rramo:in-out
-!                st.srw.rcxna:in-out st.srw.rcxhi:in-out st.srw.rcxmo:in-out
-!                st.srw.rqahe:in-out st.srw.rqrad:in-out st.srw.rqbrm:in-out
-!                st.srw.b2sihs_joule:in-out st.srw.b2sihs_divue:in-out
-!                st.srw.b2sihs_divua:in-out st.srw.b2sihs_exbe:in-out
-!                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
-!                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
-!                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
-!                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
-!                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
-!                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
-!                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
-!                st.rt.rza:in-out st.rt.rz2:in-out st.rt.rpt:in-out
-!                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
-!                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
-!                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
-!                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
-!                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fmo:out st.psnl.fhi:out st.psnl.fhe:out
-!                st.psnl.fhn:out st.psnl.fkt:out st.psnl.fzt:out
-!                st.psnl.kinrgy:in-out st.psnl.resco0:in-out st.psnl.resmo0:in-out
-!                st.psnl.reshi0:in-out st.psnl.reshe0:in-out st.psnl.reshn0:in-out
-!                st.psnl.reskt0:in-out st.psnl.reszt0:in-out st.psnl.dnadt:in-out
-!                st.psnl.dmodt:in-out st.psnl.dhedt:in-out st.psnl.dhidt:in-out
-!                st.psnl.dhndt:in-out st.psnl.dktdt:in-out st.psnl.dztdt:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
-!                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
-!                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fmo:out st.psnc.fhi:out
-!                st.psnc.fhe:out st.psnc.fhn:out st.psnc.fkt:out
-!                st.psnc.fzt:out st.psnc.kinrgy:in-out st.psnc.resco0:out
-!                st.psnc.resmo0:out st.psnc.reshi0:out st.psnc.reshe0:out
-!                st.psnc.reshn0:out st.psnc.reskt0:out st.psnc.reszt0:out
-!                st.psnc.dnadt:out st.psnc.dmodt:out st.psnc.dhedt:out
-!                st.psnc.dhidt:out st.psnc.dhndt:out st.psnc.dktdt:out
-!                st.psnc.dztdt:out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.dv.cone:in-out st.dv.coni:in-out st.dv.fllime:out
+!                st.dv.fllimi:out st.dv.flob:in-out st.dv.conb:in-out
+!                st.dv.resmo:in-out st.dv.resmo0:in-out st.dv.resco:in-out
+!                st.dv.resco0:in-out st.dv.respo:in-out st.dv.reshe:in-out
+!                st.dv.reshi:in-out st.dv.resht:in-out st.dv.resmt:in-out
+!                st.dv.reshn:in-out st.dv.reskt:in-out st.dv.reszt:in-out
+!                st.dv.reshe0:in-out st.dv.reshi0:in-out st.dv.reshn0:in-out
+!                st.dv.reskt0:in-out st.dv.reszt0:in-out st.dv.corua:in-out
+!                st.dv.corpa:in-out st.dv.corut:in-out st.dv.corpo:in-out
+!                st.dv.cortt:in-out st.dv.corte:in-out st.dv.corti:in-out
+!                st.dv.cortn:in-out st.dv.corkt:in-out st.dv.corzt:in-out
+!                st.dv.pcca:in-out st.dv.pccm:in-out st.dv.ne:in-out
+!                st.dv.ni:in-out st.dv.nn:in-out st.dv.ue:in-out
+!                st.dv.ne2:in-out st.dv.pa:in-out st.dv.pz:in-out
+!                st.dv.lnlam:in-out st.dv.uadia:in-out st.dv.vadia:in-out
+!                st.dv.wadia:in-out st.dv.vaecrb:in-out st.dv.vedia:in-out
+!                st.dv.wedia:in-out st.dv.veecrb:in-out st.dv.facdrift:in-out
+!                st.dv.fac_exb:in-out st.dv.fac_vis:in-out st.dv.dnadt:in-out
+!                st.dv.dmodt:in-out st.dv.dhedt:in-out st.dv.dhidt:in-out
+!                st.dv.dhndt:in-out st.dv.dktdt:in-out st.dv.dztdt:in-out
+!                st.sr.sch:in-out st.sr.she:in-out st.sr.shi:in-out
+!                st.sr.sne:in-out st.sr.shn:in-out st.sr.skt:in-out
+!                st.sr.szt:in-out st.sr.smo:in-out st.sr.smq:in-out
+!                st.sr.sna:in-out st.sr.shedt:in-out st.sr.sktdt:in-out
+!                st.sr.sztdt:in-out st.sr.snedt:in-out st.sr.shidt:in-out
+!                st.sr.shndt:in-out st.sr.schdt:in-out st.sr.smodt:in-out
+!                st.sr.snadt:in-out st.sr.skt_diss:in-out st.sr.skt_prod:in-out
+!                st.srw.sch0:in-out st.srw.she0:in-out st.srw.shi0:in-out
+!                st.srw.sne0:in-out st.srw.shn0:in-out st.srw.skt0:in-out
+!                st.srw.szt0:in-out st.srw.smo0:in-out st.srw.smq0:in-out
+!                st.srw.sna0:in-out st.srw.smcf:in-out st.srw.smpr:in-out
+!                st.srw.smpt:in-out st.srw.smfr:in-out st.srw.b2stbc_sch:in-out
+!                st.srw.b2stbc_she:in-out st.srw.b2stbc_shi:in-out
+!                st.srw.b2stbc_sne:in-out st.srw.b2stbc_shn:in-out
+!                st.srw.b2stbc_skt:in-out st.srw.b2stbc_szt:in-out
+!                st.srw.b2stbc_smo:in-out st.srw.b2stbc_sna:in-out
+!                st.srw.b2stbm_sch:in-out st.srw.b2stbm_she:in-out
+!                st.srw.b2stbm_shi:in-out st.srw.b2stbm_sne:in-out
+!                st.srw.b2stbm_smo:in-out st.srw.b2stbm_smq:out
+!                st.srw.b2stbm_sna:in-out st.srw.b2stbr_sch:in-out
+!                st.srw.b2stbr_she:in-out st.srw.b2stbr_shi:in-out
+!                st.srw.b2stbr_sne:in-out st.srw.b2stbr_shn:in-out
+!                st.srw.b2stbr_skt:in-out st.srw.b2stbr_szt:in-out
+!                st.srw.b2stbr_smo:in-out st.srw.b2stbr_sna:in-out
+!                st.srw.b2npmo_smaf:in-out st.srw.b2npmo_smag:in-out
+!                st.srw.b2npmo_smav:in-out st.srw.rsana:in-out
+!                st.srw.rsahi:in-out st.srw.rsamo:in-out st.srw.rrana:in-out
+!                st.srw.rrahi:in-out st.srw.rramo:in-out st.srw.rcxna:in-out
+!                st.srw.rcxhi:in-out st.srw.rcxmo:in-out st.srw.rqahe:in-out
+!                st.srw.rqrad:in-out st.srw.rqbrm:in-out st.srw.b2sihs_joule:in-out
+!                st.srw.b2sihs_divue:in-out st.srw.b2sihs_divua:in-out
+!                st.srw.b2sihs_exbe:in-out st.srw.b2sihs_exba:in-out
+!                st.srw.b2sihs_visa:in-out st.srw.b2sihs_fraa:in-out
+!                st.srw.b2sihs_str:in-out st.srw.sna0_eir_tot:in-out
+!                st.srw.smo0_eir_tot:in-out st.srw.smr0_eir_tot:in-out
+!                st.srw.smd0_eir_tot:in-out st.srw.sne0_eir_tot:out
+!                st.srw.she0_eir_tot:in-out st.srw.shi0_eir_tot:in-out
+!                st.srw.shn0_eir_tot:in-out st.srw.sch0_eir_tot:out
+!                st.rt.rlcx:in-out st.rt.rlqa:in-out st.rt.rlrd:in-out
+!                st.rt.rlbr:in-out st.rt.rlra:in-out st.rt.rlsa:in-out
+!                st.rt.rlza:in-out st.rt.rlz2:in-out st.rt.rlpt:in-out
+!                st.rt.rlpi:in-out st.rt.rlqr:in-out st.rt.rza:in-out
+!                st.rt.rz2:in-out st.rt.rpt:in-out st.rt.rpi:in-out
+!                st.rtw.rsa:in-out st.rtw.rra:in-out st.rtw.rqa:in-out
+!                st.rtw.rrd:in-out st.rtw.rbr:in-out st.rtw.rcx:in-out
+!                st.rtw.rqr:in-out st.psnl.na:in-out st.psnl.ua:in-out
+!                st.psnl.po:in-out st.psnl.te:in-out st.psnl.ti:in-out
+!                st.psnl.tn:in-out st.psnl.kt:in-out st.psnl.zt:in-out
+!                st.psnl.ne:in-out st.psnl.ni:in-out st.psnl.nn:in-out
+!                st.psnl.fch:in-out st.psnl.fna:in-out st.psnl.fmo:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnl.resco0:in-out st.psnl.resmo0:in-out st.psnl.reshi0:in-out
+!                st.psnl.reshe0:in-out st.psnl.reshn0:in-out st.psnl.reskt0:in-out
+!                st.psnl.reszt0:in-out st.psnl.dnadt:in-out st.psnl.dmodt:in-out
+!                st.psnl.dhedt:in-out st.psnl.dhidt:in-out st.psnl.dhndt:in-out
+!                st.psnl.dktdt:in-out st.psnl.dztdt:in-out st.psnc.na:in-out
+!                st.psnc.ua:in-out st.psnc.po:in-out st.psnc.te:in-out
+!                st.psnc.ti:in-out st.psnc.tn:in-out st.psnc.kt:in-out
+!                st.psnc.zt:in-out st.psnc.ne:in-out st.psnc.ni:in-out
+!                st.psnc.nn:in-out st.psnc.fch:in-out st.psnc.fna:in-out
+!                st.psnc.fmo:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.psnc.resco0:in-out st.psnc.resmo0:in-out
+!                st.psnc.reshi0:in-out st.psnc.reshe0:in-out st.psnc.reshn0:in-out
+!                st.psnc.reskt0:in-out st.psnc.reszt0:in-out st.psnc.dnadt:in-out
+!                st.psnc.dmodt:in-out st.psnc.dhedt:in-out st.psnc.dhidt:in-out
+!                st.psnc.dhndt:in-out st.psnc.dktdt:in-out st.psnc.dztdt:in-out
+!                st.update.ua:out st.update.na:out st.update.pa:out
+!                st.update.po:out st.update.te:out st.update.ti:out
+!                st.update.kt:out st.update.zt:out
 !
 !**********************************************************************
 !
@@ -25049,6 +25484,10 @@ CONTAINS
       CALL CFRURE(ninp, arg1, st%srw%sna0_eir_tot, 'sna0_eir')
       arg1 = ncv*ns
       CALL CFRURE(ninp, arg1, st%srw%smo0_eir_tot, 'smo0_eir')
+      arg1 = ncv*ns
+      CALL CFRURE_OPT(ninp, arg1, st%srw%smr0_eir_tot, 'smr0_eir')
+      arg1 = ncv*ns
+      CALL CFRURE_OPT(ninp, arg1, st%srw%smd0_eir_tot, 'smd0_eir')
       CALL CFRURE(ninp, ncv, st%srw%she0_eir_tot, 'she0_eir')
       CALL CFRURE(ninp, ncv, st%srw%shi0_eir_tot, 'shi0_eir')
       CALL CFRURE(ninp, ncv, st%srw%sch0_eir_tot, 'sch0_eir')
@@ -25062,11 +25501,11 @@ CONTAINS
       CALL CFRURE(ninp, ncv, st%srw%b2sihs_str, 'b2sihs_str')
       CALL CFRURE(ninp, ncv, st%srw%b2sihs_visa, 'b2sihs_visa')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smaf, 'b2npmo_smaf')
+      CALL CFRURE_OPT(ninp, arg1, st%srw%b2npmo_smaf, 'b2npmo_smaf')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smag, 'b2npmo_smag')
+      CALL CFRURE_OPT(ninp, arg1, st%srw%b2npmo_smag, 'b2npmo_smag')
       arg1 = ncv*4*ns
-      CALL CFRURE(ninp, arg1, st%srw%b2npmo_smav, 'b2npmo_smav')
+      CALL CFRURE_OPT(ninp, arg1, st%srw%b2npmo_smav, 'b2npmo_smav')
       arg1 = ncv*ns
       CALL CFRURE(ninp, arg1, st%srw%smcf, 'smcf')
       arg1 = ncv*ns
@@ -25401,6 +25840,10 @@ CONTAINS
       CALL CFWURE(nout, arg1, st%srw%sna0_eir_tot, 'sna0_eir')
       arg1 = ncv*ns
       CALL CFWURE(nout, arg1, st%srw%smo0_eir_tot, 'smo0_eir')
+      arg1 = ncv*ns
+      CALL CFWURE(nout, arg1, st%srw%smr0_eir_tot, 'smr0_eir')
+      arg1 = ncv*ns
+      CALL CFWURE(nout, arg1, st%srw%smd0_eir_tot, 'smd0_eir')
       CALL CFWURE(nout, ncv, st%srw%she0_eir_tot, 'she0_eir')
       CALL CFWURE(nout, ncv, st%srw%shi0_eir_tot, 'shi0_eir')
       CALL CFWURE(nout, ncv, st%srw%sch0_eir_tot, 'sch0_eir')

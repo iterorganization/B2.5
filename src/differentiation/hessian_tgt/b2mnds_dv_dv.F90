@@ -25,7 +25,7 @@
 !.specification
 !
 SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
-& , switchd, nbdirs, nbdirs0)
+& , switchd0, switchd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_VERSION
@@ -49,6 +49,7 @@ SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
   INTEGER :: nsd(nbdirsmax)
   INTEGER :: nout(0:11)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
 !   ..output arguments (unspecified on entry)
 !     (none)
@@ -136,6 +137,7 @@ SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
 &     B2RFCP_NODIFF_NODIFF, B2XXID, B2MWQ0_NODIFF_NODIFF, &
 &     B2WFCP_NODIFF_NODIFF, B2WUCP_NODIFF_NODIFF, B2RUZD_NODIFF, &
 &     B2WUZD, B2XVCP_NODIFF_NODIFF
+  EXTERNAL B2RURC_DV_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -337,7 +339,7 @@ SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
 ! overwrite with values provided in b2mn.dat
   CALL READ_SWITCHES(switch)
 ! check the values of the switches
-  CALL CHECK_SWITCHES(switch, ns)
+  CALL CHECK_SWITCHES(switch, ns, nspecies)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
@@ -491,6 +493,7 @@ SUBROUTINE B2MNDS_DV_NODIFF(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, &
 &     B2RFCP_NODIFF_NODIFF, B2XXID, B2MWQ0_NODIFF_NODIFF, &
 &     B2WFCP_NODIFF_NODIFF, B2WUCP_NODIFF_NODIFF, B2RUZD_NODIFF, &
 &     B2WUZD, B2XVCP_NODIFF_NODIFF
+  EXTERNAL B2RURC_DV_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -685,7 +688,7 @@ SUBROUTINE B2MNDS_DV_NODIFF(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, &
 ! overwrite with values provided in b2mn.dat
   CALL READ_SWITCHES(switch)
 ! check the values of the switches
-  CALL CHECK_SWITCHES(switch, ns)
+  CALL CHECK_SWITCHES(switch, ns, nspecies)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
@@ -1018,7 +1021,7 @@ SUBROUTINE B2MNDS_NODIFF_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 ! overwrite with values provided in b2mn.dat
   CALL READ_SWITCHES(switch)
 ! check the values of the switches
-  CALL CHECK_SWITCHES(switch, ns)
+  CALL CHECK_SWITCHES(switch, ns, nspecies)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !

@@ -2,24 +2,24 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tqna_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfdna cfdpa cfvla cfvsa cfhci
-!                cfhce cfsig cfalf tdata dkt0d hce_exbd hce_exb
+!   variations   of useful results: tdata cfdna cfdpa cfvla cfvsa
+!                cfhci cfhce cfsig cfalf dkt0d hce_exbd hce_exb
 !                hci0 vsa0 hci_exbd sig0 vla0d dna0d alf0 hcibd
 !                sig0d hce0d vsa0d dna_exb hcib dna_exbd hcn0 dna0
 !                dzt0d dkt0 alf0d vla0 hce0 dzt0 hci0d dpa0 hci_exb
 !                hcn0d dpa0d
-!   with respect to varying inputs: parm_hce parm_sig parm_alf
+!   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf tdata
-!                dkt0d hce_exbd hce_exb hci0 vsa0 hci_exbd sig0
-!                vla0d dna0d *(dv.ne) *(dv.ni) *(dv.vaecrb) alf0
-!                hcibd sig0d hce0d vsa0d *(rtd.rlcx) *(rtd.rlsa)
-!                *(rtd.rza) *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb
-!                hcib dna_exbd *(dvd.ne) *(dvd.ni) *(dvd.vaecrb)
-!                hcn0 dna0 dzt0d dkt0 switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf dkt0d
+!                hce_exbd hce_exb hci0 vsa0 hci_exbd sig0 vla0d
+!                dna0d *(dv.ne) *(dv.ni) *(dv.vaecrb) alf0 hcibd
+!                sig0d hce0d vsa0d *(rtd.rlcx) *(rtd.rlsa) *(rtd.rza)
+!                *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib dna_exbd
+!                *(dvd.ne) *(dvd.ni) *(dvd.vaecrb) hcn0 dna0 dzt0d
+!                dkt0 switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !                alf0d *(pld.na) *(pld.te) *(pld.ti) *(pld.tn)
 !                *(pld.kt) *(pld.zt) *(pl.na) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt) vla0 hce0 dzt0 hci0d
@@ -349,6 +349,21 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   INTEGER :: nbdirs
   INTEGER :: nd0
   REAL(r8), DIMENSION(ncv) :: temp4
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd14
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd15
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd16
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd17
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd18
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd19
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd20
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd21
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd22
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd23
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd24
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd25
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd26
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd27
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd28
   REAL(kind=r8) :: temp5
   REAL(r8) :: temp6
   REAL(kind=r8) :: temp7
@@ -398,6 +413,9 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       arg10 = geo%cvbb(:, 3)
       DO nd=1,nbdirs
         switchd%b2tqna_bb_ref(nd) = 0.d0
+      END DO
+      DO nd0=1,nbdirs0
+        switchd0%b2tqna_bb_ref(nd0) = 0.D0
       END DO
       switch%b2tqna_bb_ref = SUM(arg10)/REAL(ncv, r8)
       WRITE(*, *) 'b2tqna: bb_ref set to ', switch%b2tqna_bb_ref
@@ -530,61 +548,79 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..compute dna0, dpa0, vla0, vma0, vsa0, hci0
 !     (initialise hci0 to 0)
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd, hci0, hci0d0, hci0d, &
-&            hci0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd14 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd14, dummyzerodiffd, hci0, &
+&            hci0d0, hci0d, hci0dd, 1, nbdirs, nbdirs0)
   dummyzerodiffd0 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd0, hcn0, hcn0d0, hcn0d, &
-&            hcn0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd15 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd15, dummyzerodiffd0, hcn0&
+&            , hcn0d0, hcn0d, hcn0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns
   dummyzerodiffd1 = 0.d0
-  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd1, dna0, dna0d0, dna0d, &
-&            dna0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd16 = 0.D0
+  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd16, dummyzerodiffd1, &
+&            dna0, dna0d0, dna0d, dna0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns
   dummyzerodiffd2 = 0.d0
-  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd2, dpa0, dpa0d0, dpa0d, &
-&            dpa0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd17 = 0.D0
+  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd17, dummyzerodiffd2, &
+&            dpa0, dpa0d0, dpa0d, dpa0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns*2
   dummyzerodiffd3 = 0.d0
-  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd3, vla0, vla0d0, vla0d, &
-&            vla0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd18 = 0.D0
+  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd18, dummyzerodiffd3, &
+&            vla0, vla0d0, vla0d, vla0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns
   dummyzerodiffd4 = 0.d0
-  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd4, vsa0, vsa0d0, vsa0d, &
-&            vsa0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd19 = 0.D0
+  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd19, dummyzerodiffd4, &
+&            vsa0, vsa0d0, vsa0d, vsa0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns
   dummyzerodiffd5 = 0.d0
-  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd5, hcib, hcibd0, hcibd, &
-&            hcibdd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd20 = 0.D0
+  CALL SFILL_DV_DV(arg11, 0.0_R8, dummyzerodiffd20, dummyzerodiffd5, &
+&            hcib, hcibd0, hcibd, hcibdd, 1, nbdirs, nbdirs0)
   arg11 = ncv*ns*2
   CALL SFILL_NODIFF_NODIFF(arg11, 0.0_R8, vma0, 1)
   dummyzerodiffd6 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd6, hce0, hce0d0, hce0d, &
-&            hce0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd21 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd21, dummyzerodiffd6, hce0&
+&            , hce0d0, hce0d, hce0dd, 1, nbdirs, nbdirs0)
   dummyzerodiffd7 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd7, sig0, sig0d0, sig0d, &
-&            sig0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd22 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd22, dummyzerodiffd7, sig0&
+&            , sig0d0, sig0d, sig0dd, 1, nbdirs, nbdirs0)
   dummyzerodiffd8 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd8, alf0, alf0d0, alf0d, &
-&            alf0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd23 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd23, dummyzerodiffd8, alf0&
+&            , alf0d0, alf0d, alf0dd, 1, nbdirs, nbdirs0)
   arg11 = ncv*2
   CALL SFILL_NODIFF_NODIFF(arg11, 0.0_R8, hvi0, 1)
   arg11 = ncv*2
   CALL SFILL_NODIFF_NODIFF(arg11, 0.0_R8, hve0, 1)
   dummyzerodiffd9 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd9, dkt0, dkt0d0, dkt0d, &
-&            dkt0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd24 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd24, dummyzerodiffd9, dkt0&
+&            , dkt0d0, dkt0d, dkt0dd, 1, nbdirs, nbdirs0)
   dummyzerodiffd10 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd10, dzt0, dzt0d0, dzt0d, &
-&            dzt0dd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd25 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd25, dummyzerodiffd10, dzt0&
+&            , dzt0d0, dzt0d, dzt0dd, 1, nbdirs, nbdirs0)
   dummyzerodiffd11 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd11, dna_exb, dna_exbd0, &
-&            dna_exbd, dna_exbdd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd26 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd26, dummyzerodiffd11, &
+&            dna_exb, dna_exbd0, dna_exbd, dna_exbdd, 1, nbdirs, nbdirs0&
+&           )
   dummyzerodiffd12 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd12, hce_exb, hce_exbd0, &
-&            hce_exbd, hce_exbdd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd27 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd27, dummyzerodiffd12, &
+&            hce_exb, hce_exbd0, hce_exbd, hce_exbdd, 1, nbdirs, nbdirs0&
+&           )
   dummyzerodiffd13 = 0.d0
-  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd13, hci_exb, hci_exbd0, &
-&            hci_exbd, hci_exbdd, 1, nbdirs, nbdirs0)
+  dummyzerodiffd28 = 0.D0
+  CALL SFILL_DV_DV(ncv, 0.0_R8, dummyzerodiffd28, dummyzerodiffd13, &
+&            hci_exb, hci_exbd0, hci_exbd, hci_exbdd, 1, nbdirs, nbdirs0&
+&           )
   y1dd = 0.D0
   df0dd = 0.D0
   arg1dd = 0.D0
@@ -1715,7 +1751,18 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 ! User transport options
   IF (switch%user_transport .NE. 0) THEN
 !! the default transport model calculated above is used. Nothing to do.
-    CALL XERRAB('transport model undefined or not yet converted')
+    IF (switch%user_transport .EQ. 6) THEN
+!srv 13.06.08
+      CALL SET_TRANSPORT_SRV_DV_DV(geo, mpg, ns, ncv, switch, dna0, &
+&                            dna0d0, dna0d, dna0dd, hcib, hcibd0, hcibd&
+&                            , hcibdd, vsa0, vsa0d0, vsa0d, vsa0dd, vla0&
+&                            , vla0d0, vla0d, vla0dd, hce0, hce0d0, &
+&                            hce0d, hce0dd, sig0, sig0d0, sig0d, sig0dd&
+&                            , alf0, alf0d0, alf0d, alf0dd, hci0, hci0d0&
+&                            , hci0d, hci0dd, nbdirs, nbdirs0)
+    ELSE
+      CALL XERRAB('transport model undefined or not yet converted')
+    END IF
   END IF
 ! sc  implementation of turbulence closure models 29.11.2018-23/9/2020
   IF (switch%transport_keps .NE. 0) CALL SET_TRANSPORT_KEPS_DV_DV(ncv, &
@@ -1778,6 +1825,7 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (switch%transport_afn .NE. 0) CALL SET_TRANSPORT_AFN_DV_DV(ncv, ns&
 &                                                         , nscx, iscx, &
 &                                                         switch, &
+&                                                         switchd0, &
 &                                                         switchd, pl, &
 &                                                         pld0, pld, &
 &                                                         pldd, dv, dvd0&
@@ -2117,6 +2165,2104 @@ SUBROUTINE B2TQNA_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.end b2tqna
 !
 END SUBROUTINE B2TQNA_DV_DV
+
+!  Differentiation of set_transport_srv_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 sig0 vla0d dna0d
+!                alf0 hcibd sig0d hce0d vsa0d hcib dna0 alf0d vla0
+!                hce0 hci0d
+!   with respect to varying inputs: vsa0 sig0 vla0d dna0d alf0
+!                hcibd sig0d hce0d vsa0d hcib dna0 alf0d vla0 hce0
+!  Differentiation of set_transport_srv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 sig0 alf0 hcib dna0
+!                vla0 hce0
+!   with respect to varying inputs: vsa0 sig0 alf0 hcib dna0 vla0
+!                hce0
+!
+SUBROUTINE SET_TRANSPORT_SRV_DV_DV(geo, mpg, ns, ncv, switch, dna0, &
+& dna0d0, dna0d, dna0dd, hcib, hcibd0, hcibd, hcibdd, vsa0, vsa0d0, &
+& vsa0d, vsa0dd, vla0, vla0d0, vla0d, vla0dd, hce0, hce0d0, hce0d, &
+& hce0dd, sig0, sig0d0, sig0d, sig0dd, alf0, alf0d0, alf0d, alf0dd, hci0&
+& , hci0d0, hci0d, hci0dd, nbdirs, nbdirs0)
+!
+  USE B2MOD_TYPES
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : ft_ds_omp, ft_ds_imp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: ncv, ns
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  LOGICAL :: cond
+!
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hcib(ncv, 0:ns-&
+& 1), hce0(ncv), vla0(ncv, 0:1, 0:ns-1), sig0(ncv), alf0(ncv), hci0(ncv)
+  REAL(kind=r8) :: dna0d0(nbdirsmax0, ncv, 0:ns-1), vsa0d0(nbdirsmax0, &
+& ncv, 0:ns-1), hcibd0(nbdirsmax0, ncv, 0:ns-1), hce0d0(nbdirsmax0, ncv)&
+& , vla0d0(nbdirsmax0, ncv, 0:1, 0:ns-1), sig0d0(nbdirsmax0, ncv), &
+& alf0d0(nbdirsmax0, ncv), hci0d0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
+& 0:ns-1), hcibd(nbdirsmax, ncv, 0:ns-1), hce0d(nbdirsmax, ncv), vla0d(&
+& nbdirsmax, ncv, 0:1, 0:ns-1), sig0d(nbdirsmax, ncv), alf0d(nbdirsmax, &
+& ncv), hci0d(nbdirsmax, ncv)
+  REAL(kind=r8) :: dna0dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), vsa0dd(&
+& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), hcibdd(nbdirsmax0, nbdirsmax, ncv&
+& , 0:ns-1), hce0dd(nbdirsmax0, nbdirsmax, ncv), vla0dd(nbdirsmax0, &
+& nbdirsmax, ncv, 0:1, 0:ns-1), sig0dd(nbdirsmax0, nbdirsmax, ncv), &
+& alf0dd(nbdirsmax0, nbdirsmax, ncv), hci0dd(nbdirsmax0, nbdirsmax, ncv)
+!
+  INTEGER :: ift, is, icv, icv2, ifc
+  INTRINSIC MIN
+  INTRINSIC MOD
+  INTEGER :: nd
+  INTEGER :: nbdirs
+  INTEGER :: nd0
+  INTEGER :: nbdirs0
+!
+  DO icv=1,ncv
+    IF (icv .LE. mpg%nci) THEN
+      ift = mpg%cvft(icv)
+      icv2 = icv
+    ELSE
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv2 = mpg%fccv(ifc, 2)
+      ELSE
+        icv2 = mpg%fccv(ifc, 1)
+      END IF
+      ift = mpg%cvft(icv2)
+    END IF
+! special treatment for sig0 and al0
+    IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) .EQ. 0&
+&   ) THEN
+! special case for divertor regions
+      DO is=1,ns-1
+        IF (.NOT.is_neutral(is)) THEN
+! div SOL LFS
+! div SOL HFS
+! PFR
+          cond = ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. &
+&           ft_ds_omp(ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch&
+&           %hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .OR. mpg%&
+&           ftreg(ift) .EQ. 3
+          IF (switch%na_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa4*dna0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa4*dna0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa4*dna0d0(nd0, icv, is&
+&               )
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa2*dna0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa2*dna0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa2*dna0d0(nd0, icv, is&
+&               )
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa3*dna0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa3*dna0d0(nd0, icv, is&
+&               )
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+          END IF
+          IF (switch%vsa_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa4*vsa0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              vsa0d(nd, icv, is) = switch%vsa_alfa4*vsa0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa4*vsa0d0(nd0, icv, &
+&               is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa2*vsa0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              vsa0d(nd, icv, is) = switch%vsa_alfa2*vsa0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa2*vsa0d0(nd0, icv, &
+&               is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa3*vsa0dd(nd0, &
+&                 nd, icv, is)
+              END DO
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa3*vsa0d0(nd0, icv, &
+&               is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+          END IF
+          IF (switch%ti_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa4*hcibdd(nd0, &
+&                 nd, icv, is)
+              END DO
+              hcibd(nd, icv, is) = switch%ti_alfa4*hcibd(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              hcibd0(nd0, icv, is) = switch%ti_alfa4*hcibd0(nd0, icv, is&
+&               )
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa2*hcibdd(nd0, &
+&                 nd, icv, is)
+              END DO
+              hcibd(nd, icv, is) = switch%ti_alfa2*hcibd(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              hcibd0(nd0, icv, is) = switch%ti_alfa2*hcibd0(nd0, icv, is&
+&               )
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa3*hcibdd(nd0, &
+&                 nd, icv, is)
+              END DO
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+            END DO
+            DO nd0=1,nbdirs0
+              hcibd0(nd0, icv, is) = switch%ti_alfa3*hcibd0(nd0, icv, is&
+&               )
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+          END IF
+          IF (switch%vla_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa4*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              vla0d(nd, icv, 1, is) = switch%vla_alfa4*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa4*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa2*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              vla0d(nd, icv, 1, is) = switch%vla_alfa2*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa2*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa3*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa3*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END IF
+      END DO
+      IF (switch%te_alfa4 .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa4*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa4*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa4*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa4
+      ELSE IF (cond) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa2*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa2*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa2*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa3*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa3*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      END IF
+    ELSE IF (.NOT.(ft_ds_omp(ift) .LE. -switch%bar_width .AND. ft_ds_omp&
+&       (ift) .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2))) THEN
+! do nothing in core outside barrier
+      IF (ft_ds_omp(ift) .GT. -switch%bar_width .AND. ft_ds_omp(ift) &
+&         .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+! transport barrier
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa1*dna0dd(nd0, &
+&                 nd, icv, is)
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa1*vsa0dd(nd0, &
+&                 nd, icv, is)
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa1*hcibdd(nd0, &
+&                 nd, icv, is)
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa1*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa1*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa1*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa1*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa1*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa1*dna0d0(nd0, icv, is&
+&               )
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa1*vsa0d0(nd0, icv, &
+&               is)
+              hcibd0(nd0, icv, is) = switch%ti_alfa1*hcibd0(nd0, icv, is&
+&               )
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa1*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa1
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa1
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa1
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa1
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa1*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa1*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa1*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa1
+      ELSE IF ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) THEN
+! inner SOL LFS
+! inner SOL HFS
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa2*dna0dd(nd0, &
+&                 nd, icv, is)
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa2*vsa0dd(nd0, &
+&                 nd, icv, is)
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa2*hcibdd(nd0, &
+&                 nd, icv, is)
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa2*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa2*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa2*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa2*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa2*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa2*dna0d0(nd0, icv, is&
+&               )
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa2*vsa0d0(nd0, icv, &
+&               is)
+              hcibd0(nd0, icv, is) = switch%ti_alfa2*hcibd0(nd0, icv, is&
+&               )
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa2*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa2*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa2*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa2*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE IF ((ft_ds_omp(ift) .GT. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GT. 0.0_R8) .OR. (ft_ds_imp(ift) .GT. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GT. 0.0_R8)) THEN
+! outer SOL LFS
+! outer SOL HFS
+!
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa3*dna0dd(nd0, &
+&                 nd, icv, is)
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa3*vsa0dd(nd0, &
+&                 nd, icv, is)
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa3*hcibdd(nd0, &
+&                 nd, icv, is)
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa3*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa3*dna0d0(nd0, icv, is&
+&               )
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa3*vsa0d0(nd0, icv, &
+&               is)
+              hcibd0(nd0, icv, is) = switch%ti_alfa3*hcibd0(nd0, icv, is&
+&               )
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa3*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa3*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa3*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE IF (ft_ds_omp(ift) .EQ. -999.0_R8 .AND. ft_ds_imp(ift) .EQ. -&
+&         999.0_R8) THEN
+! assume that only far SOL is left
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                dna0dd(nd0, nd, icv, is) = switch%na_alfa3*dna0dd(nd0, &
+&                 nd, icv, is)
+                vsa0dd(nd0, nd, icv, is) = switch%vsa_alfa3*vsa0dd(nd0, &
+&                 nd, icv, is)
+                hcibdd(nd0, nd, icv, is) = switch%ti_alfa3*hcibdd(nd0, &
+&                 nd, icv, is)
+                vla0dd(nd0, nd, icv, 1, is) = switch%vla_alfa3*vla0dd(&
+&                 nd0, nd, icv, 1, is)
+              END DO
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            DO nd0=1,nbdirs0
+              dna0d0(nd0, icv, is) = switch%na_alfa3*dna0d0(nd0, icv, is&
+&               )
+              vsa0d0(nd0, icv, is) = switch%vsa_alfa3*vsa0d0(nd0, icv, &
+&               is)
+              hcibd0(nd0, icv, is) = switch%ti_alfa3*hcibd0(nd0, icv, is&
+&               )
+              vla0d0(nd0, icv, 1, is) = switch%vla_alfa3*vla0d0(nd0, icv&
+&               , 1, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hce0dd(nd0, nd, icv) = switch%te_alfa3*hce0dd(nd0, nd, icv)
+          END DO
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        DO nd0=1,nbdirs0
+          hce0d0(nd0, icv) = switch%te_alfa3*hce0d0(nd0, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE
+        WRITE(*, '(a,1i6,1i4,2es12.3,a)') 'b2tqna: iCv,iFt,ds_o,imp=', &
+&       icv, ift, ft_ds_omp(ift), ft_ds_imp(ift), ' was not detected!'
+      END IF
+    END IF
+! transport barrier
+    IF (ft_ds_omp(ift) .GT. -switch%sig_bar_width .AND. ft_ds_omp(ift) &
+&       .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          sig0dd(nd0, nd, icv) = switch%sig_alfa1*sig0dd(nd0, nd, icv)
+          alf0dd(nd0, nd, icv) = switch%sig_alfa1*alf0dd(nd0, nd, icv)
+        END DO
+        sig0d(nd, icv) = switch%sig_alfa1*sig0d(nd, icv)
+        alf0d(nd, icv) = switch%sig_alfa1*alf0d(nd, icv)
+      END DO
+      DO nd0=1,nbdirs0
+        sig0d0(nd0, icv) = switch%sig_alfa1*sig0d0(nd0, icv)
+        alf0d0(nd0, icv) = switch%sig_alfa1*alf0d0(nd0, icv)
+      END DO
+      sig0(icv) = sig0(icv)*switch%sig_alfa1
+      alf0(icv) = alf0(icv)*switch%sig_alfa1
+    ELSE IF (((ft_ds_omp(ift) .LE. switch%sig_sol_width .AND. ft_ds_omp(&
+&       ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%sig_sol_width&
+&       .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .AND. MOD(mpg%cvreg(icv), 4) &
+&       .EQ. 2) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+! inner SOL LFS
+! inner SOL HFS
+          sig0dd(nd0, nd, icv) = switch%sig_alfa2*sig0dd(nd0, nd, icv)
+          alf0dd(nd0, nd, icv) = switch%sig_alfa2*alf0dd(nd0, nd, icv)
+        END DO
+        sig0d(nd, icv) = switch%sig_alfa2*sig0d(nd, icv)
+        alf0d(nd, icv) = switch%sig_alfa2*alf0d(nd, icv)
+      END DO
+      DO nd0=1,nbdirs0
+        sig0d0(nd0, icv) = switch%sig_alfa2*sig0d0(nd0, icv)
+        alf0d0(nd0, icv) = switch%sig_alfa2*alf0d0(nd0, icv)
+      END DO
+      sig0(icv) = sig0(icv)*switch%sig_alfa2
+      alf0(icv) = alf0(icv)*switch%sig_alfa2
+    END IF
+  END DO
+!
+  hci0 = 0.0_R8
+  hci0d = 0.d0
+  hci0d0 = 0.D0
+  hci0dd = 0.D0
+  DO is=1,ns-1
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+        hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, is)
+      END DO
+      hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+    END DO
+    DO nd0=1,nbdirs0
+      hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+    END DO
+    hci0 = hci0 + hcib(:, is)
+  END DO
+!
+
+END SUBROUTINE SET_TRANSPORT_SRV_DV_DV
+
+!  Differentiation of set_transport_afn_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 dna0d hcibd vsa0d
+!                hcib hcn0 dna0 hci0d dpa0 hcn0d dpa0d
+!   with respect to varying inputs: vsa0 dna0d *(dv.ne) hcibd vsa0d
+!                *(rtd.rlcx) *(rtd.rlsa) *(rt.rlcx) *(rt.rlsa)
+!                hcib *(dvd.ne) dna0 *(pld.na) *(pld.te) *(pld.ti)
+!                *(pld.tn) *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0 dpa0d
+!   Plus diff mem management of: dv.ne:in rtd.rlcx:in rtd.rlsa:in
+!                rt.rlcx:in rt.rlsa:in dvd.ne:in pld.na:in pld.te:in
+!                pld.ti:in pld.tn:in pl.na:in pl.te:in pl.ti:in
+!                pl.tn:in
+!  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
+!   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
+!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0
+!   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
+!                pl.na:in pl.te:in pl.ti:in pl.tn:in
+!
+!
+!**************************************************************************************
+!*****************     New KU Leuven transport model for neutrals *********************
+!**************************************************************************************
+SUBROUTINE SET_TRANSPORT_AFN_DV_DV(ncv, ns, nscx, iscx, switch, switchd0&
+& , switchd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, &
+& rtdd, dna0, dna0d0, dna0d, dna0dd, dpa0, dpa0d0, dpa0d, dpa0dd, vla0, &
+& vma0, vsa0, vsa0d0, vsa0d, vsa0dd, hci0, hci0d0, hci0d, hci0dd, hcn0, &
+& hcn0d0, hcn0d, hcn0dd, hcib, hcibd0, hcibd, hcibdd, nbdirs, nbdirs0)
+  USE B2MOD_TYPES
+  USE B2MOD_MATH_DIFFV_DIFFV
+  USE B2MOD_INDIRECT_DIFFV_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPT_DIFFV_DIFFV
+  USE B2MOD_RATES
+  USE B2MOD_TRANSPORT_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_SUBSYS
+!  Hint: nCv should be the size of dimension 1 of array arg1
+!  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+  IMPLICIT NONE
+!
+!   ..input arguments (unchanged on exit)
+  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
+  TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
+  TYPE(B2PLASMA), INTENT(IN) :: pl
+  TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
+  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
+  TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV0), INTENT(INOUT) :: dvd0
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
+  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(INOUT) :: dvdd
+  TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
+  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  TYPE(B2RATES_DIFFV_DIFFV), INTENT(IN) :: rtdd
+  REAL(kind=r8) :: t_av, df0
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: t_avd0, df0d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: t_avd, df0d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: t_avdd, df0dd
+!   ..input/output arguments
+  REAL(kind=r8), INTENT(INOUT) :: hci0(ncv), hcn0(ncv), hcib(ncv, 0:ns-1&
+& )
+  REAL(kind=r8), INTENT(INOUT) :: hci0d0(nbdirsmax0, ncv), hcn0d0(&
+& nbdirsmax0, ncv), hcibd0(nbdirsmax0, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(INOUT) :: hci0d(nbdirsmax, ncv), hcn0d(nbdirsmax&
+& , ncv), hcibd(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8), INTENT(INOUT) :: hci0dd(nbdirsmax0, nbdirsmax, ncv), &
+& hcn0dd(nbdirsmax0, nbdirsmax, ncv), hcibdd(nbdirsmax0, nbdirsmax, ncv&
+& , 0:ns-1)
+!   ..output arguments (unspecified on entry)
+!srv 15.12.05
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
+& 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
+  REAL(kind=r8) :: dna0d0(nbdirsmax0, ncv, 0:ns-1), dpa0d0(nbdirsmax0, &
+& ncv, 0:ns-1), vsa0d0(nbdirsmax0, ncv, 0:ns-1)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
+& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
+  REAL(kind=r8) :: dna0dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), dpa0dd(&
+& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), vsa0dd(nbdirsmax0, nbdirsmax, ncv&
+& , 0:ns-1)
+!   ..workspace arguments (unspecified on entry and on exit)
+  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
+  REAL(kind=r8) :: wrk0d0(nbdirsmax0, ncv), vcxd0(nbdirsmax0), diond0(&
+& nbdirsmax0), vnnd0(nbdirsmax0)
+  REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
+& nbdirsmax), vnnd(nbdirsmax)
+  REAL(kind=r8) :: wrk0dd(nbdirsmax0, nbdirsmax, ncv), vcxdd(nbdirsmax0&
+& , nbdirsmax), diondd(nbdirsmax0, nbdirsmax), vnndd(nbdirsmax0, &
+& nbdirsmax)
+  INTEGER :: is, k, ic, icv
+  INTRINSIC NINT
+  INTRINSIC SQRT
+  INTRINSIC LOG
+  INTRINSIC MIN
+  INTRINSIC ANY
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: y1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: y1dd
+  REAL(r8), DIMENSION(ncv) :: arg1
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg1d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg1dd
+  REAL(kind=r8) :: arg10
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg10d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
+  REAL(r8) :: arg2
+  REAL(r8), DIMENSION(nbdirsmax0) :: arg2d0
+  REAL(r8), DIMENSION(nbdirsmax) :: arg2d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg2dd
+  REAL(kind=r8) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result1dd
+  REAL(r8) :: arg11
+  REAL(r8), DIMENSION(nbdirsmax0) :: arg11d0
+  REAL(r8), DIMENSION(nbdirsmax) :: arg11d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg11dd
+  INTEGER :: nd
+  REAL(r8), DIMENSION(ncv) :: temp
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: tempd
+  REAL(kind=r8) :: temp0
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp0d
+  REAL(r8) :: temp1
+  REAL(r8), DIMENSION(nbdirsmax0) :: temp1d
+  REAL(r8) :: temp2
+  REAL(r8), DIMENSION(nbdirsmax0) :: temp2d
+  REAL(kind=r8) :: temp3
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp3d
+  REAL(kind=r8) :: temp4
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp4d
+  INTEGER :: nbdirs
+  INTEGER :: nd0
+  REAL(r8), DIMENSION(ncv) :: temp5
+  REAL(r8) :: temp6
+  REAL(r8) :: temp7
+  REAL(r8) :: temp8
+  REAL(kind=r8) :: temp9
+  REAL(kind=r8) :: temp10
+  REAL(kind=r8) :: temp11
+  REAL(kind=r8) :: temp12
+  INTEGER :: nbdirs0
+!
+!   ..subprogram start-up calls
+  CALL SUBINI('set_transport_afn')
+  y1dd = 0.D0
+  df0dd = 0.D0
+  arg1dd = 0.D0
+  arg11dd = 0.D0
+  diondd = 0.D0
+  arg2dd = 0.D0
+  t_avdd = 0.D0
+  vnndd = 0.D0
+  result1dd = 0.D0
+  wrk0dd = 0.D0
+  arg10dd = 0.D0
+  DO is=0,ns-1
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+! only for hydrogenic species
+!
+      k = 0
+      DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
+        k = k + 1
+      END DO
+      CALL XERTST(k .LT. nscx, 'CX species index not found!')
+      arg1 = pl%tn/mp
+      temp5 = SQRT(arg1)
+      DO nd0=1,nbdirs0
+        arg1d0(nd0, :) = pld0%tn(nd0, :)/mp
+        WHERE (arg1 .EQ. 0.D0) 
+          tempd(nd0, :) = 0.D0
+        ELSEWHERE
+          tempd(nd0, :) = arg1d0(nd0, :)/(2.0*temp5)
+        END WHERE
+      END DO
+      temp = temp5
+      DO nd=1,nbdirs
+!
+        DO nd0=1,nbdirs0
+          arg1dd(nd0, nd, :) = pldd%tn(nd0, nd, :)/mp
+        END DO
+        arg1d(nd, :) = pld%tn(nd, :)/mp
+        DO nd0=1,nbdirs0
+          WHERE (arg1 .EQ. 0.d0) wrk0dd(nd0, nd, :) = 0.D0
+        END DO
+        WHERE (arg1 .EQ. 0.d0) 
+          wrk0d(nd, :) = 0.d0
+        ELSEWHERE
+          temp5 = arg1d(nd, :)/(2.0*temp)
+        END WHERE
+        DO nd0=1,nbdirs0
+          WHERE (.NOT.arg1 .EQ. 0.d0) wrk0dd(nd0, nd, :) = (arg1dd(nd0, &
+&             nd, :)-temp5*2.0*tempd(nd0, :))/(2.0*temp)
+        END DO
+        WHERE (.NOT.arg1 .EQ. 0.d0) wrk0d(nd, :) = temp5
+      END DO
+      DO nd0=1,nbdirs0
+        wrk0d0(nd0, :) = tempd(nd0, :)
+      END DO
+      wrk0 = temp
+      DO icv=1,ncv
+        vcx = 0.0_R8
+        vcxd = 0.d0
+        vcxd0 = 0.D0
+        vcxdd = 0.D0
+        DO ic=0,ns-1
+          t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
+          arg10 = t_av/(am(is)*ev)
+          DO nd0=1,nbdirs0
+            t_avd0(nd0) = 0.5_R8*(pld0%ti(nd0, icv)+pld0%tn(nd0, icv))
+            arg10d0(nd0) = t_avd0(nd0)/(am(is)*ev)
+            temp0d(nd0) = arg10d0(nd0)/arg10
+            temp1d(nd0) = rtd0%rlcx(nd0, icv, 1, ic, k)
+          END DO
+          temp0 = LOG(arg10)
+          temp1 = rt%rlcx(icv, 1, ic, k)
+          DO nd=1,nbdirs
+            t_avd(nd) = 0.5_R8*(pld%ti(nd, icv)+pld%tn(nd, icv))
+            arg10d(nd) = t_avd(nd)/(am(is)*ev)
+            temp6 = rtd%rlcx(nd, icv, 1, ic, k)
+            temp7 = temp1/arg10
+            DO nd0=1,nbdirs0
+              t_avdd(nd0, nd) = 0.5_R8*(pldd%ti(nd0, nd, icv)+pldd%tn(&
+&               nd0, nd, icv))
+              arg10dd(nd0, nd) = t_avdd(nd0, nd)/(am(is)*ev)
+              arg2dd(nd0, nd) = rtdd%rlcx(nd0, nd, icv, 0, ic, k) + &
+&               temp6*temp0d(nd0) + temp0*rtdd%rlcx(nd0, nd, icv, 1, ic&
+&               , k) + temp7*arg10dd(nd0, nd) + arg10d(nd)*(temp1d(nd0)-&
+&               temp7*arg10d0(nd0))/arg10
+            END DO
+            arg2d(nd) = rtd%rlcx(nd, icv, 0, ic, k) + temp0*temp6 + &
+&             arg10d(nd)*temp7
+          END DO
+          DO nd0=1,nbdirs0
+            arg2d0(nd0) = rtd0%rlcx(nd0, icv, 0, ic, k) + temp0*temp1d(&
+&             nd0) + temp1*temp0d(nd0)
+          END DO
+          arg2 = rt%rlcx(icv, 0, ic, k) + temp1*temp0
+          CALL EXPU_DV_DV(arg2, arg2d0, arg2d, arg2dd, result1, &
+&                   result1d0, result1d, result1dd, nbdirs, nbdirs0)
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              vcxdd(nd0, nd) = vcxdd(nd0, nd) + pld%na(nd, icv, ic)*&
+&               result1d0(nd0) + result1*pldd%na(nd0, nd, icv, ic) + &
+&               result1d(nd)*pld0%na(nd0, icv, ic) + pl%na(icv, ic)*&
+&               result1dd(nd0, nd)
+            END DO
+            vcxd(nd) = vcxd(nd) + result1*pld%na(nd, icv, ic) + pl%na(&
+&             icv, ic)*result1d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            vcxd0(nd0) = vcxd0(nd0) + result1*pld0%na(nd0, icv, ic) + pl&
+&             %na(icv, ic)*result1d0(nd0)
+          END DO
+          vcx = vcx + pl%na(icv, ic)*result1
+        END DO
+        arg11 = pl%te(icv)/ev
+        DO nd0=1,nbdirs0
+          arg11d0(nd0) = pld0%te(nd0, icv)/ev
+          temp1d(nd0) = arg11d0(nd0)/arg11
+        END DO
+        temp1 = LOG(arg11)
+        DO nd=1,nbdirs
+          arg11d(nd) = pld%te(nd, icv)/ev
+          temp7 = rtd%rlsa(nd, icv, 1, is)
+          temp6 = arg11d(nd)/arg11
+          DO nd0=1,nbdirs0
+            arg11dd(nd0, nd) = pldd%te(nd0, nd, icv)/ev
+            arg2dd(nd0, nd) = rtdd%rlsa(nd0, nd, icv, 0, is) + temp7*&
+&             temp1d(nd0) + temp1*rtdd%rlsa(nd0, nd, icv, 1, is) + temp6&
+&             *rtd0%rlsa(nd0, icv, 1, is) + rt%rlsa(icv, 1, is)*(arg11dd&
+&             (nd0, nd)-temp6*arg11d0(nd0))/arg11
+          END DO
+          arg2d(nd) = rtd%rlsa(nd, icv, 0, is) + temp1*temp7 + rt%rlsa(&
+&           icv, 1, is)*temp6
+        END DO
+        DO nd0=1,nbdirs0
+          arg2d0(nd0) = rtd0%rlsa(nd0, icv, 0, is) + temp1*rtd0%rlsa(nd0&
+&           , icv, 1, is) + rt%rlsa(icv, 1, is)*temp1d(nd0)
+        END DO
+        arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
+        CALL EXPU_DV_DV(arg2, arg2d0, arg2d, arg2dd, dion, diond0, diond&
+&                 , diondd, nbdirs, nbdirs0)
+        IF (switch%afn_vnn .EQ. 1) THEN
+          temp1 = pl%tn(icv)/kbolt
+          DO nd0=1,nbdirs0
+!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+            temp1d(nd0) = pld0%tn(nd0, icv)/kbolt
+            temp2d(nd0) = 0.25_R8*temp1**(-0.75)*temp1d(nd0)
+          END DO
+          temp2 = temp1**0.25_R8
+          DO nd=1,nbdirs
+            temp7 = temp1**(-0.75)
+            temp6 = pl%na(icv, is)/kbolt
+            temp8 = temp6*pld%tn(nd, icv)
+            DO nd0=1,nbdirs0
+              vnndd(nd0, nd) = 1.0e-6_R8*5.2958e-11_R8*(0.25_R8*(temp7*(&
+&               pld%tn(nd, icv)*pld0%na(nd0, icv, is)/kbolt+temp6*pldd%&
+&               tn(nd0, nd, icv))-temp8*0.75*temp1**(-1.75)*temp1d(nd0))&
+&               +pld%na(nd, icv, is)*temp2d(nd0)+temp2*pldd%na(nd0, nd, &
+&               icv, is))
+            END DO
+            vnnd(nd) = 1.0e-6_R8*5.2958e-11_R8*(0.25_R8*(temp8*temp7)+&
+&             temp2*pld%na(nd, icv, is))
+          END DO
+          DO nd0=1,nbdirs0
+            vnnd0(nd0) = 1.0e-6_R8*5.2958e-11_R8*(pl%na(icv, is)*temp2d(&
+&             nd0)+temp2*pld0%na(nd0, icv, is))
+          END DO
+          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp2*pl%na(icv, is))
+        ELSE
+          vnn = 0.0_R8
+          vnnd = 0.d0
+          vnnd0 = 0.D0
+          vnndd = 0.D0
+        END IF
+!         ..Total coefficients
+! limit df0
+        result1 = SQRT(am(is))
+        temp0 = result1*result1*(vcx+dion*dv%ne(icv)+vnn)
+        temp9 = wrk0(icv)*wrk0(icv)/temp0
+        DO nd0=1,nbdirs0
+          temp0d(nd0) = result1**2*(vcxd0(nd0)+dv%ne(icv)*diond0(nd0)+&
+&           dion*dvd0%ne(nd0, icv)+vnnd0(nd0))
+          temp3d(nd0) = (2*wrk0(icv)*wrk0d0(nd0, icv)-temp9*temp0d(nd0))&
+&           /temp0
+        END DO
+        temp3 = temp9
+        DO nd=1,nbdirs
+          temp9 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, icv)&
+&           + vnnd(nd)
+          temp10 = (2*wrk0(icv)*wrk0d(nd, icv)-result1*result1*temp3*&
+&           temp9)/temp0
+          DO nd0=1,nbdirs0
+            df0dd(nd0, nd) = (wrk0d(nd, icv)*2*wrk0d0(nd0, icv)+2*wrk0(&
+&             icv)*wrk0dd(nd0, nd, icv)-result1**2*(temp9*temp3d(nd0)+&
+&             temp3*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0, icv)+dv%ne(&
+&             icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0(nd0)+dion*dvdd&
+&             %ne(nd0, nd, icv)+vnndd(nd0, nd)))-temp10*temp0d(nd0))/&
+&             temp0
+          END DO
+          df0d(nd) = temp10
+        END DO
+        DO nd0=1,nbdirs0
+          df0d0(nd0) = temp3d(nd0)
+        END DO
+        df0 = temp3
+        IF (switch%b2tqna_max_df0 .GT. df0) THEN
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              y1dd(nd0, nd) = df0dd(nd0, nd)
+            END DO
+            y1d(nd) = df0d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            y1d0(nd0) = df0d0(nd0)
+          END DO
+          y1 = df0
+        ELSE
+          y1 = switch%b2tqna_max_df0
+          y1d = 0.d0
+          y1dd = 0.D0
+          y1d0 = 0.D0
+        END IF
+        IF (switch%b2tqna_min_df0 .LT. y1) THEN
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              df0dd(nd0, nd) = y1dd(nd0, nd)
+            END DO
+            df0d(nd) = y1d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            df0d0(nd0) = y1d0(nd0)
+          END DO
+          df0 = y1
+        ELSE
+          df0 = switch%b2tqna_min_df0
+          df0d = 0.d0
+          df0dd = 0.D0
+          df0d0 = 0.D0
+        END IF
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+          temp3 = vcx + dion*dv%ne(icv) + vnn
+          temp10 = df0*vnn/temp3
+          DO nd0=1,nbdirs0
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+            temp3d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
+&             dvd0%ne(nd0, icv) + vnnd0(nd0)
+            temp0d(nd0) = (vnn*df0d0(nd0)+df0*vnnd0(nd0)-temp10*temp3d(&
+&             nd0))/temp3
+          END DO
+          temp0 = temp10
+          DO nd=1,nbdirs
+            temp10 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
+&             icv) + vnnd(nd)
+            temp9 = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*temp10)/temp3
+            DO nd0=1,nbdirs0
+              dna0dd(nd0, nd, icv, is) = (df0d(nd)*vnnd0(nd0)+vnn*df0dd(&
+&               nd0, nd)+vnnd(nd)*df0d0(nd0)+df0*vnndd(nd0, nd)-temp10*&
+&               temp0d(nd0)-temp0*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0&
+&               , icv)+dv%ne(icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0&
+&               (nd0)+dion*dvdd%ne(nd0, nd, icv)+vnndd(nd0, nd))-temp9*&
+&               temp3d(nd0))/temp3
+            END DO
+            dna0d(nd, icv, is) = temp9
+          END DO
+          dna0(icv, is) = temp0
+          temp3 = vcx + dion*dv%ne(icv) + vnn
+          temp2 = pl%tn(icv)*temp3
+          temp0 = vcx + dion*dv%ne(icv)
+          temp10 = df0*temp0/temp2
+          DO nd0=1,nbdirs0
+            dna0d0(nd0, icv, is) = temp0d(nd0)
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+            temp3d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
+&             dvd0%ne(nd0, icv) + vnnd0(nd0)
+            temp2d(nd0) = temp3*pld0%tn(nd0, icv) + pl%tn(icv)*temp3d(&
+&             nd0)
+            temp0d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
+&             dvd0%ne(nd0, icv)
+            temp4d(nd0) = (temp0*df0d0(nd0)+df0*temp0d(nd0)-temp10*&
+&             temp2d(nd0))/temp2
+          END DO
+          temp4 = temp10
+          DO nd=1,nbdirs
+            temp10 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
+&             icv)
+            temp9 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
+&             icv) + vnnd(nd)
+            temp11 = temp3*pld%tn(nd, icv) + pl%tn(icv)*temp9
+            temp12 = (temp0*df0d(nd)+df0*temp10-temp4*temp11)/temp2
+            DO nd0=1,nbdirs0
+              dpa0dd(nd0, nd, icv, is) = (df0d(nd)*temp0d(nd0)+temp0*&
+&               df0dd(nd0, nd)+temp10*df0d0(nd0)+df0*(vcxdd(nd0, nd)+&
+&               diond(nd)*dvd0%ne(nd0, icv)+dv%ne(icv)*diondd(nd0, nd)+&
+&               dvd%ne(nd, icv)*diond0(nd0)+dion*dvdd%ne(nd0, nd, icv))-&
+&               temp11*temp4d(nd0)-temp4*(pld%tn(nd, icv)*temp3d(nd0)+&
+&               temp3*pldd%tn(nd0, nd, icv)+temp9*pld0%tn(nd0, icv)+pl%&
+&               tn(icv)*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0, icv)+dv%&
+&               ne(icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0(nd0)+dion&
+&               *dvdd%ne(nd0, nd, icv)+vnndd(nd0, nd)))-temp12*temp2d(&
+&               nd0))/temp2
+            END DO
+            dpa0d(nd, icv, is) = temp12
+          END DO
+          DO nd0=1,nbdirs0
+            dpa0d0(nd0, icv, is) = temp4d(nd0)
+          END DO
+          dpa0(icv, is) = temp4
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          temp12 = df0/pl%tn(icv)
+          DO nd0=1,nbdirs0
+            temp4d(nd0) = (df0d0(nd0)-temp12*pld0%tn(nd0, icv))/pl%tn(&
+&             icv)
+          END DO
+          temp4 = temp12
+          DO nd=1,nbdirs
+            temp12 = (df0d(nd)-temp4*pld%tn(nd, icv))/pl%tn(icv)
+            DO nd0=1,nbdirs0
+              dpa0dd(nd0, nd, icv, is) = (df0dd(nd0, nd)-pld%tn(nd, icv)&
+&               *temp4d(nd0)-temp4*pldd%tn(nd0, nd, icv)-temp12*pld0%tn(&
+&               nd0, icv))/pl%tn(icv)
+            END DO
+            dpa0d(nd, icv, is) = temp12
+          END DO
+          DO nd0=1,nbdirs0
+            dpa0d0(nd0, icv, is) = temp4d(nd0)
+          END DO
+          dpa0(icv, is) = temp4
+        END IF
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            vsa0dd(nd0, nd, icv, is) = mp*am(is)*(pld%na(nd, icv, is)*&
+&             df0d0(nd0)+df0*pldd%na(nd0, nd, icv, is)+df0d(nd)*pld0%na(&
+&             nd0, icv, is)+pl%na(icv, is)*df0dd(nd0, nd))
+            hcibdd(nd0, nd, icv, is) = 2.5_R8*(pld%na(nd, icv, is)*df0d0&
+&             (nd0)+df0*pldd%na(nd0, nd, icv, is)+df0d(nd)*pld0%na(nd0, &
+&             icv, is)+pl%na(icv, is)*df0dd(nd0, nd))
+          END DO
+          vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
+&           icv, is)*df0d(nd))
+          hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
+&           , is)*df0d(nd))
+        END DO
+        DO nd0=1,nbdirs0
+          vsa0d0(nd0, icv, is) = mp*am(is)*(df0*pld0%na(nd0, icv, is)+pl&
+&           %na(icv, is)*df0d0(nd0))
+          hcibd0(nd0, icv, is) = 2.5_R8*(df0*pld0%na(nd0, icv, is)+pl%na&
+&           (icv, is)*df0d0(nd0))
+        END DO
+        vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
+        hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
+!
+!! end loop over cells
+      END DO
+!
+!   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+    END IF
+!! end loop over species
+
+  END DO
+!
+!   ..recompute hci0, hcn0
+  hci0 = 0.0_R8
+  hcn0 = 0.0_R8
+  hci0d = 0.d0
+  hcn0d = 0.d0
+  hci0d0 = 0.D0
+  hcn0d0 = 0.D0
+  hci0dd = 0.D0
+  hcn0dd = 0.D0
+  DO is=0,ns-1
+!     ..compute hci0
+    IF (switch%tn_style .EQ. 0) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
+&           is)
+        END DO
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      DO nd0=1,nbdirs0
+        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (.NOT.is_neutral(is)) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :&
+&             , is)
+          END DO
+          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+        END DO
+        hci0 = hci0 + hcib(:, is)
+      END IF
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
+&           is)
+        END DO
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      DO nd0=1,nbdirs0
+        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    END IF
+!     ..compute hcn0
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hcn0dd(nd0, nd, :) = hcn0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
+&           is)
+        END DO
+        hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      DO nd0=1,nbdirs0
+        hcn0d0(nd0, :) = hcn0d0(nd0, :) + hcibd0(nd0, :, is)
+      END DO
+      hcn0 = hcn0 + hcib(:, is)
+    END IF
+  END DO
+!
+!   ..return
+  CALL SUBEND()
+  RETURN
+END SUBROUTINE SET_TRANSPORT_AFN_DV_DV
+
+!  Differentiation of set_transport_keps_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: dkt0d hce_exbd hce_exb hci0
+!                vsa0 hci_exbd sig0 dna0d alf0 hcibd sig0d hce0d
+!                vsa0d dna_exb hcib dna_exbd dna0 dzt0d dkt0 alf0d
+!                hce0 dzt0 hci0d hci_exb
+!   with respect to varying inputs: dkt0d hce_exbd hce_exb vsa0
+!                sig0 dna0d *(dv.ne) *(dv.vaecrb) alf0 hcibd sig0d
+!                hce0d vsa0d *(rtd.rza) *(rt.rza) dna_exb hcib
+!                dna_exbd *(dvd.ne) *(dvd.vaecrb) dna0 dzt0d dkt0
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                alf0d *(pld.na) *(pld.te) *(pld.ti) *(pld.kt)
+!                *(pld.zt) *(pl.na) *(pl.te) *(pl.ti) *(pl.kt)
+!                *(pl.zt) hce0 dzt0
+!   Plus diff mem management of: dv.ne:in dv.vaecrb:in geo.cvbb:in
+!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fcvol:in
+!                geo.fcqalf:in rtd.rza:in rt.rza:in dvd.ne:in dvd.vaecrb:in
+!                pld.na:in pld.te:in pld.ti:in pld.kt:in pld.zt:in
+!                pl.na:in pl.te:in pl.ti:in pl.kt:in pl.zt:in
+!  Differentiation of set_transport_keps in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hce_exb hci0 vsa0 sig0 alf0
+!                dna_exb hcib dna0 dkt0 hce0 dzt0 hci_exb
+!   with respect to varying inputs: hce_exb vsa0 sig0 *(dv.ne)
+!                *(dv.vaecrb) alf0 *(rt.rza) dna_exb hcib dna0
+!                dkt0 switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                *(pl.na) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt) hce0
+!                dzt0
+!   Plus diff mem management of: dv.ne:in dv.vaecrb:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fcvol:in geo.fcqalf:in rt.rza:in pl.na:in
+!                pl.te:in pl.ti:in pl.kt:in pl.zt:in
+!
+SUBROUTINE SET_TRANSPORT_KEPS_DV_DV(ncv, nfc, nvx, ns, ismain, switch, &
+& switchd0, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, &
+& dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, dna0, dna0d0, dna0d, dna0dd&
+& , vsa0, vsa0d0, vsa0d, vsa0dd, hce0, hce0d0, hce0d, hce0dd, hci0, &
+& hci0d0, hci0d, hci0dd, hcib, hcibd0, hcibd, hcibdd, sig0, sig0d0, &
+& sig0d, sig0dd, alf0, alf0d0, alf0d, alf0dd, dkt0, dkt0d0, dkt0d, &
+& dkt0dd, dzt0, dzt0d0, dzt0d, dzt0dd, dna_exb, dna_exbd0, dna_exbd, &
+& dna_exbdd, hce_exb, hce_exbd0, hce_exbd, hce_exbdd, hci_exb, hci_exbd0&
+& , hci_exbd, hci_exbdd, nbdirs, nbdirs0)
+  USE B2MOD_TYPES
+  USE B2MOD_CONSTANTS
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : nomp, omp, icsepomp
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder
+  USE B2MOD_SUBSYS
+!  Hint: nCv should be the size of dimension 1 of array arg1
+!  Hint: nCv should be the size of dimension 1 of array result1
+!  Hint: nCv should be the size of dimension 1 of array cvbb
+!  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+!  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+  IMPLICIT NONE
+!   ..input arguments (unchanged on exit)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
+  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
+  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+  TYPE(B2PLASMA), INTENT(IN) :: pl
+  TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
+  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
+  TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
+  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES_DIFFV0), INTENT(IN) :: dvd0
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(IN) :: dvdd
+  TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
+  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  TYPE(B2RATES_DIFFV_DIFFV), INTENT(IN) :: rtdd
+!   ..input/output arguments
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib&
+& (ncv, 0:ns-1), sig0(ncv), alf0(ncv), hce0(ncv), dkt0(ncv), dzt0(ncv), &
+& dna_exb(ncv), hce_exb(ncv), hci_exb(ncv), rhol(ncv)
+  REAL(kind=r8) :: dna0d0(nbdirsmax0, ncv, 0:ns-1), vsa0d0(nbdirsmax0, &
+& ncv, 0:ns-1), hci0d0(nbdirsmax0, ncv), hcibd0(nbdirsmax0, ncv, 0:ns-1)&
+& , sig0d0(nbdirsmax0, ncv), alf0d0(nbdirsmax0, ncv), hce0d0(nbdirsmax0&
+& , ncv), dkt0d0(nbdirsmax0, ncv), dzt0d0(nbdirsmax0, ncv), dna_exbd0(&
+& nbdirsmax0, ncv), hce_exbd0(nbdirsmax0, ncv), hci_exbd0(nbdirsmax0, &
+& ncv), rhold0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
+& 0:ns-1), hci0d(nbdirsmax, ncv), hcibd(nbdirsmax, ncv, 0:ns-1), sig0d(&
+& nbdirsmax, ncv), alf0d(nbdirsmax, ncv), hce0d(nbdirsmax, ncv), dkt0d(&
+& nbdirsmax, ncv), dzt0d(nbdirsmax, ncv), dna_exbd(nbdirsmax, ncv), &
+& hce_exbd(nbdirsmax, ncv), hci_exbd(nbdirsmax, ncv), rhold(nbdirsmax, &
+& ncv)
+  REAL(kind=r8) :: dna0dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), vsa0dd(&
+& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), hci0dd(nbdirsmax0, nbdirsmax, ncv&
+& ), hcibdd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), sig0dd(nbdirsmax0, &
+& nbdirsmax, ncv), alf0dd(nbdirsmax0, nbdirsmax, ncv), hce0dd(nbdirsmax0&
+& , nbdirsmax, ncv), dkt0dd(nbdirsmax0, nbdirsmax, ncv), dzt0dd(&
+& nbdirsmax0, nbdirsmax, ncv), dna_exbdd(nbdirsmax0, nbdirsmax, ncv), &
+& hce_exbdd(nbdirsmax0, nbdirsmax, ncv), hci_exbdd(nbdirsmax0, nbdirsmax&
+& , ncv), rholdd(nbdirsmax0, nbdirsmax, ncv)
+!   ..local variables
+  INTEGER :: is
+  REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
+  REAL(kind=r8) :: wrkfd0(nbdirsmax0, nfc), wrkcd0(nbdirsmax0, ncv), &
+& sheard0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), sheard(&
+& nbdirsmax, ncv)
+  REAL(kind=r8) :: wrkfdd(nbdirsmax0, nbdirsmax, nfc), wrkcdd(nbdirsmax0&
+& , nbdirsmax, ncv), sheardd(nbdirsmax0, nbdirsmax, ncv)
+  INTRINSIC SQRT
+  INTRINSIC ABS
+  EXTERNAL XERRAB
+  INTRINSIC NINT
+  INTRINSIC MIN
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs0d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs0dd
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: dabs1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: dabs1dd
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs2d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs2dd
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs3d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs3dd
+  REAL(r8), DIMENSION(ncv) :: arg1
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg1d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg1dd
+  REAL(kind=r8), DIMENSION(ncv) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: result1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result1dd
+  REAL(r8) :: arg10
+  REAL(r8), DIMENSION(nbdirsmax0) :: arg10d0
+  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
+  REAL(kind=r8) :: result10
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result10d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result10dd
+  REAL(r8), DIMENSION(ncv) :: arg11
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg11d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg11d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg11dd
+  REAL(r8), DIMENSION(ncv) :: result11
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: result11d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result11dd
+  REAL(r8), DIMENSION(ncv) :: arg12
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg12d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg12d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg12dd
+  REAL(r8), DIMENSION(ncv) :: result12
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: result12d0
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result12d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result12dd
+  REAL(kind=r8), DIMENSION(ncv) :: arg13
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: arg13d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg13d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg13dd
+  REAL(kind=r8), DIMENSION(ncv) :: result13
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: result13d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result13d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result13dd
+  INTEGER :: nd
+  REAL(kind=r8), DIMENSION(ncv) :: temp
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: tempd
+  REAL(kind=r8) :: temp0
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp1d
+  REAL(r8), DIMENSION(ncv) :: temp2
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp2d
+  REAL(kind=r8), DIMENSION(ncv) :: temp3
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp3d
+  REAL(kind=r8), DIMENSION(ncv) :: temp4
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp4d
+  REAL(r8), DIMENSION(ncv) :: temp5
+  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp5d
+  REAL(kind=r8), DIMENSION(ncv) :: temp6
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp6d
+  REAL(r8) :: temp7
+  REAL(r8), DIMENSION(nbdirsmax0) :: temp7d
+  INTEGER :: nbdirs
+  INTEGER :: nd0
+  REAL(r8), DIMENSION(ncv) :: temp8
+  REAL(kind=r8), DIMENSION(ncv) :: temp9
+  REAL(kind=r8), DIMENSION(ncv) :: temp10
+  REAL(r8) :: temp11
+  REAL(kind=r8) :: temp12
+  REAL(kind=r8) :: temp13
+  REAL(r8), DIMENSION(ncv) :: temp14
+  REAL(r8), DIMENSION(ncv) :: temp15
+  REAL(r8), DIMENSION(nCv) :: temp16
+  INTEGER :: nbdirs0
+!
+!   ..subprogram start-up calls
+  CALL SUBINI('set_transport_keps')
+  IF (ncall_transp_keps .EQ. 0) THEN
+    IF (switch%keps_local .NE. 1) THEN
+      CALL XERTST(nomp .GT. 0, &
+&           'No CVs in omp list, check rzomp in b2.user.parameters')
+      CALL XERTST(icsepomp .GT. 0, &
+&           'Invalid icsepomp value, check rzomp in b2.user.parameters')
+    END IF
+  END IF
+  hci_exb = 0.0_R8
+  hci_exbd = 0.d0
+  dabs0d = 0.d0
+  dabs2d = 0.d0
+  dabs3d = 0.d0
+  hci_exbdd = 0.D0
+  hci_exbd0 = 0.D0
+  result13dd = 0.D0
+  result10dd = 0.D0
+  arg1dd = 0.D0
+  dabs0d0 = 0.D0
+  dabs2d0 = 0.D0
+  dabs3d0 = 0.D0
+  dabs2dd = 0.D0
+  arg11dd = 0.D0
+  result11dd = 0.D0
+  dabs3dd = 0.D0
+  arg12dd = 0.D0
+  dabs0dd = 0.D0
+  wrkfdd = 0.D0
+  result12dd = 0.D0
+  rholdd = 0.D0
+  arg13dd = 0.D0
+  result1dd = 0.D0
+  dabs1dd = 0.D0
+  arg10dd = 0.D0
+  DO is=0,ns-1
+    IF (.NOT.is_neutral(is)) THEN
+      IF (switch%keps_local .EQ. 1) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0dd(&
+&             nd0, nd, :) = qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd, :, &
+&               ismain)
+          END DO
+          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
+&           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d0(&
+&           nd0, :) = qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, ismain)
+        END DO
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
+&           rza(:, ismain)*qe*geo%cvbb(:, 3)
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&             dabs0dd(nd0, nd, :) = -(qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd&
+&               , :, ismain))
+          END DO
+          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&           dabs0d0(nd0, :) = -(qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, &
+&             ismain))
+        END DO
+        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
+&          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+        arg1 = 2.0_R8*pl%ti/(am(ismain)*mp)
+        temp8 = SQRT(arg1)
+        DO nd0=1,nbdirs0
+          arg1d0(nd0, :) = 2.0_R8*pld0%ti(nd0, :)/(am(ismain)*mp)
+          WHERE (arg1 .EQ. 0.D0) 
+            tempd(nd0, :) = 0.D0
+          ELSEWHERE
+            tempd(nd0, :) = arg1d0(nd0, :)/(2.0*temp8)
+          END WHERE
+          result1d0(nd0, :) = tempd(nd0, :)
+        END DO
+        temp = temp8
+        result1 = temp
+        DO nd=1,nbdirs
+!   ..compute local Larmor radius
+          DO nd0=1,nbdirs0
+            arg1dd(nd0, nd, :) = 2.0_R8*pldd%ti(nd0, nd, :)/(am(ismain)*&
+&             mp)
+          END DO
+          arg1d(nd, :) = 2.0_R8*pld%ti(nd, :)/(am(ismain)*mp)
+          DO nd0=1,nbdirs0
+            WHERE (arg1 .EQ. 0.d0) result1dd(nd0, nd, :) = 0.D0
+          END DO
+          WHERE (arg1 .EQ. 0.d0) 
+            result1d(nd, :) = 0.d0
+          ELSEWHERE
+            temp8 = arg1d(nd, :)/(2.0*temp)
+          END WHERE
+          DO nd0=1,nbdirs0
+            WHERE (.NOT.arg1 .EQ. 0.d0) result1dd(nd0, nd, :) = (arg1dd(&
+&               nd0, nd, :)-temp8*2.0*tempd(nd0, :))/(2.0*temp)
+          END DO
+          WHERE (.NOT.arg1 .EQ. 0.d0) result1d(nd, :) = temp8
+          temp9 = result1/dabs0
+          temp10 = (result1d(nd, :)-dabs0d(nd, :)*temp9)/dabs0
+          DO nd0=1,nbdirs0
+            rholdd(nd0, nd, :) = am(ismain)*mp*(result1dd(nd0, nd, :)-&
+&             temp9*dabs0dd(nd0, nd, :)-dabs0d(nd, :)*(result1d0(nd0, :)&
+&             -temp9*dabs0d0(nd0, :))/dabs0-temp10*dabs0d0(nd0, :))/&
+&             dabs0
+          END DO
+          rhold(nd, :) = am(ismain)*mp*temp10
+        END DO
+        DO nd0=1,nbdirs0
+          rhold0(nd0, :) = am(ismain)*mp*(result1d0(nd0, :)-result1*&
+&           dabs0d0(nd0, :)/dabs0)/dabs0
+        END DO
+        rhol = am(ismain)*mp*result1/dabs0
+      ELSE
+        IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
+&           .GE. 0.) THEN
+          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              dabs1dd(nd0, nd) = temp0*rtdd%rza(nd0, nd, omp(icsepomp), &
+&               ismain)
+            END DO
+            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
+          END DO
+          DO nd0=1,nbdirs0
+            dabs1d0(nd0) = temp0*rtd0%rza(nd0, omp(icsepomp), ismain)
+          END DO
+          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
+        ELSE
+          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              dabs1dd(nd0, nd) = -(temp0*rtdd%rza(nd0, nd, omp(icsepomp)&
+&               , ismain))
+            END DO
+            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
+          END DO
+          DO nd0=1,nbdirs0
+            dabs1d0(nd0) = -(temp0*rtd0%rza(nd0, omp(icsepomp), ismain))
+          END DO
+          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
+        END IF
+        arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
+        temp11 = SQRT(arg10)
+        DO nd0=1,nbdirs0
+          arg10d0(nd0) = 2.0_R8*pld0%ti(nd0, omp(icsepomp))/(am(ismain)*&
+&           mp)
+          IF (arg10 .EQ. 0.D0) THEN
+            temp1d(nd0) = 0.D0
+          ELSE
+            temp1d(nd0) = arg10d0(nd0)/(2.0*temp11)
+          END IF
+          result10d0(nd0) = temp1d(nd0)
+        END DO
+        temp1 = temp11
+        result10 = temp1
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            arg10dd(nd0, nd) = 2.0_R8*pldd%ti(nd0, nd, omp(icsepomp))/(&
+&             am(ismain)*mp)
+          END DO
+          arg10d(nd) = 2.0_R8*pld%ti(nd, omp(icsepomp))/(am(ismain)*mp)
+          IF (arg10 .EQ. 0.d0) THEN
+            DO nd0=1,nbdirs0
+              result10dd(nd0, nd) = 0.D0
+            END DO
+            result10d(nd) = 0.d0
+          ELSE
+            temp11 = arg10d(nd)/(2.0*temp1)
+            DO nd0=1,nbdirs0
+              result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp11*2.0*temp1d(&
+&               nd0))/(2.0*temp1)
+            END DO
+            result10d(nd) = temp11
+          END IF
+          temp12 = result10/dabs1
+          temp13 = (result10d(nd)-dabs1d(nd)*temp12)/dabs1
+          DO nd0=1,nbdirs0
+            rholdd(nd0, nd, :) = am(ismain)*mp*(result10dd(nd0, nd)-&
+&             temp12*dabs1dd(nd0, nd)-dabs1d(nd)*(result10d0(nd0)-temp12&
+&             *dabs1d0(nd0))/dabs1-temp13*dabs1d0(nd0))/dabs1
+          END DO
+          rhold(nd, :) = am(ismain)*mp*temp13
+        END DO
+        DO nd0=1,nbdirs0
+          rhold0(nd0, :) = am(ismain)*mp*(result10d0(nd0)-result10*&
+&           dabs1d0(nd0)/dabs1)/dabs1
+        END DO
+        rhol = am(ismain)*mp*result10/dabs1
+      END IF
+!       ..compute radial shear of diamagnetic ExB velocity
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          wrkfdd(nd0, nd, :) = geo%fcbb(:, 3)*dvdd%vaecrb(nd0, nd, :, 0&
+&           , ismain)/geo%fcbb(:, 2)
+        END DO
+        wrkfd(nd, :) = geo%fcbb(:, 3)*dvd%vaecrb(nd, :, 0, ismain)/geo%&
+&         fcbb(:, 2)
+      END DO
+      DO nd0=1,nbdirs0
+        wrkfd0(nd0, :) = geo%fcbb(:, 3)*dvd0%vaecrb(nd0, :, 0, ismain)/&
+&         geo%fcbb(:, 2)
+      END DO
+      wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
+      wrkcd = 0.d0
+      wrkcd0 = 0.D0
+      wrkcdd = 0.D0
+      CALL INTCELL_DV_DV(nfc, ncv, mpg, mpg%intcellr, wrkf, wrkfd0, &
+&                  wrkfd, wrkfdd, wrkc, wrkcd0, wrkcd, wrkcdd, nbdirs, &
+&                  nbdirs0)
+      sheard = 0.d0
+      sheardd = 0.D0
+      sheard0 = 0.D0
+      CALL GRADC_DIV_R_DV_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrkc, &
+&                      wrkcd0, wrkcd, wrkcdd, wrkf, wrkfd0, wrkfd, &
+&                      wrkfdd, shear, sheard0, sheard, sheardd, nbdirs, &
+&                      nbdirs0)
+      IF (switch%transport_keps .EQ. 1) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (shear .GE. 0.) dabs2dd(nd0, nd, :) = sheardd(nd0, nd&
+&               , :)
+          END DO
+          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (shear .GE. 0.) dabs2d0(nd0, :) = sheard0(nd0, :)
+        END DO
+        WHERE (shear .GE. 0.) dabs2 = shear
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (.NOT.shear .GE. 0.) dabs2dd(nd0, nd, :) = -sheardd(&
+&               nd0, nd, :)
+          END DO
+          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (.NOT.shear .GE. 0.) dabs2d0(nd0, :) = -sheard0(nd0, :)
+        END DO
+        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
+        arg11 = pl%kt/(am(ismain)*mp)
+        temp8 = SQRT(arg11)
+        temp2 = temp8
+        result11 = temp2
+        temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
+&         keps_shear*dabs2)
+        temp10 = switch%keps_cd/temp3
+        DO nd0=1,nbdirs0
+          arg11d0(nd0, :) = pld0%kt(nd0, :)/(am(ismain)*mp)
+          WHERE (arg11 .EQ. 0.D0) 
+            temp2d(nd0, :) = 0.D0
+          ELSEWHERE
+            temp2d(nd0, :) = arg11d0(nd0, :)/(2.0*temp8)
+          END WHERE
+          result11d0(nd0, :) = temp2d(nd0, :)
+          temp3d(nd0, :) = am(ismain)*mp*((result11d0(nd0, :)-result11*&
+&           rhold0(nd0, :)/rhol)/rhol+dabs2*switchd0%keps_shear(nd0)+&
+&           switch%keps_shear*dabs2d0(nd0, :))
+          temp4d(nd0, :) = temp10*pld0%kt(nd0, :) + pl%kt*(switchd0%&
+&           keps_cd(nd0)-temp10*temp3d(nd0, :))/temp3
+        END DO
+        temp4 = pl%kt*temp10
+        DO nd=1,nbdirs
+!   ..compute D according to KUL, using kt only
+!wdk at the moment: assumption that kt is related to main ion species;
+!wdk same dna_ExB for all ion species
+          DO nd0=1,nbdirs0
+            arg11dd(nd0, nd, :) = pldd%kt(nd0, nd, :)/(am(ismain)*mp)
+          END DO
+          arg11d(nd, :) = pld%kt(nd, :)/(am(ismain)*mp)
+          DO nd0=1,nbdirs0
+            WHERE (arg11 .EQ. 0.d0) result11dd(nd0, nd, :) = 0.D0
+          END DO
+          WHERE (arg11 .EQ. 0.d0) 
+            result11d(nd, :) = 0.d0
+          ELSEWHERE
+            temp8 = arg11d(nd, :)/(2.0*temp2)
+          END WHERE
+          DO nd0=1,nbdirs0
+            WHERE (.NOT.arg11 .EQ. 0.d0) result11dd(nd0, nd, :) = (&
+&               arg11dd(nd0, nd, :)-temp8*2.0*temp2d(nd0, :))/(2.0*temp2&
+&               )
+          END DO
+          WHERE (.NOT.arg11 .EQ. 0.d0) result11d(nd, :) = temp8
+          temp8 = result11/rhol
+          temp14 = (result11d(nd, :)-rhold(nd, :)*temp8)/rhol
+          temp15 = temp14 + switchd%keps_shear(nd)*dabs2 + switch%&
+&           keps_shear*dabs2d(nd, :)
+          temp10 = (switchd%keps_cd(nd)*pl%kt+switch%keps_cd*pld%kt(nd, &
+&           :)-am(ismain)*mp*temp4*temp15)/temp3
+          DO nd0=1,nbdirs0
+            dna_exbdd(nd0, nd, :) = (switchd%keps_cd(nd)*pld0%kt(nd0, :)&
+&             +pld%kt(nd, :)*switchd0%keps_cd(nd0)+switch%keps_cd*pldd%&
+&             kt(nd0, nd, :)-am(ismain)*mp*(temp15*temp4d(nd0, :)+temp4*&
+&             ((result11dd(nd0, nd, :)-temp8*rholdd(nd0, nd, :)-rhold(nd&
+&             , :)*(result11d0(nd0, :)-temp8*rhold0(nd0, :))/rhol-temp14&
+&             *rhold0(nd0, :))/rhol+switchd%keps_shear(nd)*dabs2d0(nd0, &
+&             :)+dabs2d(nd, :)*switchd0%keps_shear(nd0)+switch%&
+&             keps_shear*dabs2dd(nd0, nd, :)))-temp10*temp3d(nd0, :))/&
+&             temp3
+            dna0dd(nd0, nd, :, is) = switch%keps_fac*dna_exbdd(nd0, nd, &
+&             :) + (1.0_R8-switch%keps_fac)*dna0dd(nd0, nd, :, is)
+          END DO
+          dna_exbd(nd, :) = temp10
+          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
+&           switch%keps_fac)*dna0d(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          dna_exbd0(nd0, :) = temp4d(nd0, :)
+          dna0d0(nd0, :, is) = switch%keps_fac*dna_exbd0(nd0, :) + (&
+&           1.0_R8-switch%keps_fac)*dna0d0(nd0, :, is)
+        END DO
+        dna_exb = temp4
+        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
+&         -switch%keps_fac)*dna0(:, is)
+      ELSE IF (switch%transport_keps .EQ. 2) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (shear .GE. 0.) dabs3dd(nd0, nd, :) = sheardd(nd0, nd&
+&               , :)
+          END DO
+          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (shear .GE. 0.) dabs3d0(nd0, :) = sheard0(nd0, :)
+        END DO
+        WHERE (shear .GE. 0.) dabs3 = shear
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            WHERE (.NOT.shear .GE. 0.) dabs3dd(nd0, nd, :) = -sheardd(&
+&               nd0, nd, :)
+          END DO
+          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          WHERE (.NOT.shear .GE. 0.) dabs3d0(nd0, :) = -sheard0(nd0, :)
+        END DO
+        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
+        arg12 = pl%zt/(am(ismain)*mp)
+        temp15 = SQRT(arg12)
+        temp5 = temp15
+        result12 = temp5
+        temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
+&         keps_shear*dabs3)
+        temp10 = switch%keps_cd/temp4
+        DO nd0=1,nbdirs0
+          arg12d0(nd0, :) = pld0%zt(nd0, :)/(am(ismain)*mp)
+          WHERE (arg12 .EQ. 0.D0) 
+            temp5d(nd0, :) = 0.D0
+          ELSEWHERE
+            temp5d(nd0, :) = arg12d0(nd0, :)/(2.0*temp15)
+          END WHERE
+          result12d0(nd0, :) = temp5d(nd0, :)
+          temp4d(nd0, :) = am(ismain)*mp*(result12d0(nd0, :)+dabs3*&
+&           switchd0%keps_shear(nd0)+switch%keps_shear*dabs3d0(nd0, :))
+          temp3d(nd0, :) = temp10*pld0%kt(nd0, :) + pl%kt*(switchd0%&
+&           keps_cd(nd0)-temp10*temp4d(nd0, :))/temp4
+        END DO
+        temp3 = pl%kt*temp10
+        DO nd=1,nbdirs
+!   ..compute D according to KUL, using kt and zt
+          DO nd0=1,nbdirs0
+            arg12dd(nd0, nd, :) = pldd%zt(nd0, nd, :)/(am(ismain)*mp)
+          END DO
+          arg12d(nd, :) = pld%zt(nd, :)/(am(ismain)*mp)
+          DO nd0=1,nbdirs0
+            WHERE (arg12 .EQ. 0.d0) result12dd(nd0, nd, :) = 0.D0
+          END DO
+          WHERE (arg12 .EQ. 0.d0) 
+            result12d(nd, :) = 0.d0
+          ELSEWHERE
+            temp15 = arg12d(nd, :)/(2.0*temp5)
+          END WHERE
+          DO nd0=1,nbdirs0
+            WHERE (.NOT.arg12 .EQ. 0.d0) result12dd(nd0, nd, :) = (&
+&               arg12dd(nd0, nd, :)-temp15*2.0*temp5d(nd0, :))/(2.0*&
+&               temp5)
+          END DO
+          WHERE (.NOT.arg12 .EQ. 0.d0) result12d(nd, :) = temp15
+          temp15 = result12d(nd, :) + switchd%keps_shear(nd)*dabs3 + &
+&           switch%keps_shear*dabs3d(nd, :)
+          temp10 = (switchd%keps_cd(nd)*pl%kt+switch%keps_cd*pld%kt(nd, &
+&           :)-am(ismain)*mp*temp3*temp15)/temp4
+          DO nd0=1,nbdirs0
+            dna_exbdd(nd0, nd, :) = (switchd%keps_cd(nd)*pld0%kt(nd0, :)&
+&             +pld%kt(nd, :)*switchd0%keps_cd(nd0)+switch%keps_cd*pldd%&
+&             kt(nd0, nd, :)-am(ismain)*mp*(temp15*temp3d(nd0, :)+temp3*&
+&             (result12dd(nd0, nd, :)+switchd%keps_shear(nd)*dabs3d0(nd0&
+&             , :)+dabs3d(nd, :)*switchd0%keps_shear(nd0)+switch%&
+&             keps_shear*dabs3dd(nd0, nd, :)))-temp10*temp4d(nd0, :))/&
+&             temp4
+            dna0dd(nd0, nd, :, is) = switch%keps_fac*dna_exbdd(nd0, nd, &
+&             :) + (1.0_R8-switch%keps_fac)*dna0dd(nd0, nd, :, is)
+          END DO
+          dna_exbd(nd, :) = temp10
+          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
+&           switch%keps_fac)*dna0d(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          dna_exbd0(nd0, :) = temp3d(nd0, :)
+          dna0d0(nd0, :, is) = switch%keps_fac*dna_exbd0(nd0, :) + (&
+&           1.0_R8-switch%keps_fac)*dna0d0(nd0, :, is)
+        END DO
+        dna_exb = temp3
+        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
+&         -switch%keps_fac)*dna0(:, is)
+      ELSE
+        CALL XERRAB('wrong value transport_keps')
+      END IF
+      IF (switch%keps_visc .GT. 0.0_R8) THEN
+        temp0 = am(is)*switch%keps_fac*mp
+        DO nd=1,nbdirs
+          temp10 = switchd%keps_visc(nd)*dna_exb + switch%keps_visc*&
+&           dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            vsa0dd(nd0, nd, :, is) = temp0*(pld%na(nd, :, is)*(dna_exb*&
+&             switchd0%keps_visc(nd0)+switch%keps_visc*dna_exbd0(nd0, :)&
+&             )+(switch%vsa_min+switch%keps_visc*dna_exb)*pldd%na(nd0, &
+&             nd, :, is)+temp10*pld0%na(nd0, :, is)+pl%na(:, is)*(&
+&             switchd%keps_visc(nd)*dna_exbd0(nd0, :)+dna_exbd(nd, :)*&
+&             switchd0%keps_visc(nd0)+switch%keps_visc*dna_exbdd(nd0, nd&
+&             , :))) + (1.0_R8-switch%keps_fac)*vsa0dd(nd0, nd, :, is)
+          END DO
+          vsa0d(nd, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
+&           dna_exb)*pld%na(nd, :, is)+pl%na(:, is)*temp10) + (1.0_R8-&
+&           switch%keps_fac)*vsa0d(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          vsa0d0(nd0, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
+&           dna_exb)*pld0%na(nd0, :, is)+pl%na(:, is)*(dna_exb*switchd0%&
+&           keps_visc(nd0)+switch%keps_visc*dna_exbd0(nd0, :))) + (&
+&           1.0_R8-switch%keps_fac)*vsa0d0(nd0, :, is)
+        END DO
+        vsa0(:, is) = temp0*(pl%na(:, is)*(switch%vsa_min+switch%&
+&         keps_visc*dna_exb)) + (1.0_R8-switch%keps_fac)*vsa0(:, is)
+      END IF
+      IF (switch%keps_heat .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          temp10 = switchd%keps_heat(nd)*dna_exb + switch%keps_heat*&
+&           dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            hce_exbdd(nd0, nd, :) = temp10*dvd0%ne(nd0, :) + dv%ne*(&
+&             switchd%keps_heat(nd)*dna_exbd0(nd0, :)+dna_exbd(nd, :)*&
+&             switchd0%keps_heat(nd0)+switch%keps_heat*dna_exbdd(nd0, nd&
+&             , :)) + dvd%ne(nd, :)*(dna_exb*switchd0%keps_heat(nd0)+&
+&             switch%keps_heat*dna_exbd0(nd0, :)) + switch%keps_heat*&
+&             dna_exb*dvdd%ne(nd0, nd, :)
+          END DO
+          hce_exbd(nd, :) = dv%ne*temp10 + switch%keps_heat*dna_exb*dvd%&
+&           ne(nd, :)
+          temp10 = switchd%keps_heat(nd)*dna_exb + switch%keps_heat*&
+&           dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            hce0dd(nd0, nd, :) = switch%keps_fac*(temp10*dvd0%ne(nd0, :)&
+&             +dv%ne*(switchd%keps_heat(nd)*dna_exbd0(nd0, :)+dna_exbd(&
+&             nd, :)*switchd0%keps_heat(nd0)+switch%keps_heat*dna_exbdd(&
+&             nd0, nd, :))+dvd%ne(nd, :)*(dna_exb*switchd0%keps_heat(nd0&
+&             )+switch%keps_heat*dna_exbd0(nd0, :))+(switch%hce_min+&
+&             switch%keps_heat*dna_exb)*dvdd%ne(nd0, nd, :)) + (1.0_R8-&
+&             switch%keps_fac)*hce0dd(nd0, nd, :)
+          END DO
+          hce0d(nd, :) = switch%keps_fac*(dv%ne*temp10+(switch%hce_min+&
+&           switch%keps_heat*dna_exb)*dvd%ne(nd, :)) + (1.0_R8-switch%&
+&           keps_fac)*hce0d(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          hce_exbd0(nd0, :) = dv%ne*(dna_exb*switchd0%keps_heat(nd0)+&
+&           switch%keps_heat*dna_exbd0(nd0, :)) + switch%keps_heat*&
+&           dna_exb*dvd0%ne(nd0, :)
+          hce0d0(nd0, :) = switch%keps_fac*(dv%ne*(dna_exb*switchd0%&
+&           keps_heat(nd0)+switch%keps_heat*dna_exbd0(nd0, :))+(switch%&
+&           hce_min+switch%keps_heat*dna_exb)*dvd0%ne(nd0, :)) + (1.0_R8&
+&           -switch%keps_fac)*hce0d0(nd0, :)
+        END DO
+        hce_exb = switch%keps_heat*dna_exb*dv%ne
+        hce0 = (switch%keps_heat*dna_exb+switch%hce_min)*dv%ne*switch%&
+&         keps_fac + (1.0_R8-switch%keps_fac)*hce0
+      END IF
+      IF (switch%keps_heat_i .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          temp10 = switchd%keps_heat_i(nd)*dna_exb + switch%keps_heat_i*&
+&           dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            hci_exbdd(nd0, nd, :) = hci_exbdd(nd0, nd, :) + temp10*pld0%&
+&             na(nd0, :, is) + pl%na(:, is)*(switchd%keps_heat_i(nd)*&
+&             dna_exbd0(nd0, :)+dna_exbd(nd, :)*switchd0%keps_heat_i(nd0&
+&             )+switch%keps_heat_i*dna_exbdd(nd0, nd, :)) + pld%na(nd, :&
+&             , is)*(dna_exb*switchd0%keps_heat_i(nd0)+switch%&
+&             keps_heat_i*dna_exbd0(nd0, :)) + switch%keps_heat_i*&
+&             dna_exb*pldd%na(nd0, nd, :, is)
+          END DO
+          hci_exbd(nd, :) = hci_exbd(nd, :) + pl%na(:, is)*temp10 + &
+&           switch%keps_heat_i*dna_exb*pld%na(nd, :, is)
+          temp10 = switchd%keps_heat_i(nd)*dna_exb + switch%keps_heat_i*&
+&           dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            hcibdd(nd0, nd, :, is) = switch%keps_fac*(temp10*pld0%na(nd0&
+&             , :, is)+pl%na(:, is)*(switchd%keps_heat_i(nd)*dna_exbd0(&
+&             nd0, :)+dna_exbd(nd, :)*switchd0%keps_heat_i(nd0)+switch%&
+&             keps_heat_i*dna_exbdd(nd0, nd, :))+pld%na(nd, :, is)*(&
+&             dna_exb*switchd0%keps_heat_i(nd0)+switch%keps_heat_i*&
+&             dna_exbd0(nd0, :))+(switch%hci_min+switch%keps_heat_i*&
+&             dna_exb)*pldd%na(nd0, nd, :, is)) + (1.0_R8-switch%&
+&             keps_fac)*hcibdd(nd0, nd, :, is)
+          END DO
+          hcibd(nd, :, is) = switch%keps_fac*(pl%na(:, is)*temp10+(&
+&           switch%hci_min+switch%keps_heat_i*dna_exb)*pld%na(nd, :, is)&
+&           ) + (1.0_R8-switch%keps_fac)*hcibd(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          hci_exbd0(nd0, :) = hci_exbd0(nd0, :) + pl%na(:, is)*(dna_exb*&
+&           switchd0%keps_heat_i(nd0)+switch%keps_heat_i*dna_exbd0(nd0, &
+&           :)) + switch%keps_heat_i*dna_exb*pld0%na(nd0, :, is)
+          hcibd0(nd0, :, is) = switch%keps_fac*(pl%na(:, is)*(dna_exb*&
+&           switchd0%keps_heat_i(nd0)+switch%keps_heat_i*dna_exbd0(nd0, &
+&           :))+(switch%hci_min+switch%keps_heat_i*dna_exb)*pld0%na(nd0&
+&           , :, is)) + (1.0_R8-switch%keps_fac)*hcibd0(nd0, :, is)
+        END DO
+        hci_exb = hci_exb + switch%keps_heat_i*dna_exb*pl%na(:, is)
+        hcib(:, is) = switch%keps_fac*(switch%keps_heat_i*dna_exb+switch&
+&         %hci_min)*pl%na(:, is) + (1.0_R8-switch%keps_fac)*hcib(:, is)
+      END IF
+      IF (switch%keps_sig .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          temp10 = switchd%keps_sig(nd)*(switch%dna_min+dna_exb) + &
+&           switch%keps_sig*dna_exbd(nd, :)
+          DO nd0=1,nbdirs0
+            sig0dd(nd0, nd, :) = qe*switch%keps_fac*(temp10*dvd0%ne(nd0&
+&             , omp(icsepomp))+dv%ne(omp(icsepomp))*(switchd%keps_sig(nd&
+&             )*dna_exbd0(nd0, :)+dna_exbd(nd, :)*switchd0%keps_sig(nd0)&
+&             +switch%keps_sig*dna_exbdd(nd0, nd, :))+dvd%ne(nd, omp(&
+&             icsepomp))*((switch%dna_min+dna_exb)*switchd0%keps_sig(nd0&
+&             )+switch%keps_sig*dna_exbd0(nd0, :))+switch%keps_sig*(&
+&             switch%dna_min+dna_exb)*dvdd%ne(nd0, nd, omp(icsepomp))) +&
+&             (1.0_R8-switch%keps_fac)*sig0dd(nd0, nd, :)
+          END DO
+          sig0d(nd, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*temp10&
+&           +switch%keps_sig*(switch%dna_min+dna_exb)*dvd%ne(nd, omp(&
+&           icsepomp))) + (1.0_R8-switch%keps_fac)*sig0d(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          sig0d0(nd0, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*((&
+&           switch%dna_min+dna_exb)*switchd0%keps_sig(nd0)+switch%&
+&           keps_sig*dna_exbd0(nd0, :))+switch%keps_sig*(switch%dna_min+&
+&           dna_exb)*dvd0%ne(nd0, omp(icsepomp))) + (1.0_R8-switch%&
+&           keps_fac)*sig0d0(nd0, :)
+        END DO
+        sig0 = switch%keps_sig*(dna_exb+switch%dna_min)*qe*dv%ne(omp(&
+&         icsepomp))*switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+      END IF
+      IF (switch%keps_alf .GT. 0.0_R8) THEN
+        arg13 = qe/pl%te
+        temp10 = SQRT(arg13)
+        DO nd0=1,nbdirs0
+          arg13d0(nd0, :) = -(qe*pld0%te(nd0, :)/pl%te**2)
+          WHERE (arg13 .EQ. 0.D0) 
+            temp6d(nd0, :) = 0.D0
+          ELSEWHERE
+            temp6d(nd0, :) = arg13d0(nd0, :)/(2.0*temp10)
+          END WHERE
+          result13d0(nd0, :) = temp6d(nd0, :)
+          temp7d(nd0) = dvd0%ne(nd0, omp(icsepomp))
+        END DO
+        temp6 = temp10
+        result13 = temp6
+        temp7 = dv%ne(omp(icsepomp))
+        DO nd=1,nbdirs
+          temp16 = pld%te(nd, :)/(pl%te*pl%te)
+          DO nd0=1,nbdirs0
+            arg13dd(nd0, nd, :) = -(qe*(pldd%te(nd0, nd, :)-temp16*2*pl%&
+&             te*pld0%te(nd0, :))/pl%te**2)
+          END DO
+          arg13d(nd, :) = -(qe*temp16)
+          DO nd0=1,nbdirs0
+            WHERE (arg13 .EQ. 0.d0) result13dd(nd0, nd, :) = 0.D0
+          END DO
+          WHERE (arg13 .EQ. 0.d0) 
+            result13d(nd, :) = 0.d0
+          ELSEWHERE
+            temp10 = arg13d(nd, :)/(2.0*temp6)
+          END WHERE
+          DO nd0=1,nbdirs0
+            WHERE (.NOT.arg13 .EQ. 0.d0) result13dd(nd0, nd, :) = (&
+&               arg13dd(nd0, nd, :)-temp10*2.0*temp6d(nd0, :))/(2.0*&
+&               temp6)
+          END DO
+          WHERE (.NOT.arg13 .EQ. 0.d0) result13d(nd, :) = temp10
+          temp15 = temp7*dna_exbd(nd, :) + (switch%dna_min+dna_exb)*dvd%&
+&           ne(nd, omp(icsepomp))
+          temp10 = switchd%keps_alf(nd)*result13 + switch%keps_alf*&
+&           result13d(nd, :)
+          DO nd0=1,nbdirs0
+            alf0dd(nd0, nd, :) = switch%keps_fac*(temp15*(result13*&
+&             switchd0%keps_alf(nd0)+switch%keps_alf*result13d0(nd0, :))&
+&             +switch%keps_alf*result13*(dna_exbd(nd, :)*temp7d(nd0)+&
+&             temp7*dna_exbdd(nd0, nd, :)+dvd%ne(nd, omp(icsepomp))*&
+&             dna_exbd0(nd0, :)+(switch%dna_min+dna_exb)*dvdd%ne(nd0, nd&
+&             , omp(icsepomp)))+temp10*(temp7*dna_exbd0(nd0, :)+(switch%&
+&             dna_min+dna_exb)*temp7d(nd0))+(switch%dna_min+dna_exb)*&
+&             temp7*(switchd%keps_alf(nd)*result13d0(nd0, :)+result13d(&
+&             nd, :)*switchd0%keps_alf(nd0)+switch%keps_alf*result13dd(&
+&             nd0, nd, :))) + (1.0_R8-switch%keps_fac)*alf0dd(nd0, nd, :&
+&             )
+          END DO
+          alf0d(nd, :) = switch%keps_fac*(switch%keps_alf*result13*&
+&           temp15+(switch%dna_min+dna_exb)*temp7*temp10) + (1.0_R8-&
+&           switch%keps_fac)*alf0d(nd, :)
+        END DO
+        DO nd0=1,nbdirs0
+          alf0d0(nd0, :) = switch%keps_fac*(temp7*switch%keps_alf*(&
+&           result13*dna_exbd0(nd0, :)+(switch%dna_min+dna_exb)*&
+&           result13d0(nd0, :))+(switch%dna_min+dna_exb)*result13*(&
+&           switch%keps_alf*temp7d(nd0)+temp7*switchd0%keps_alf(nd0))) +&
+&           (1.0_R8-switch%keps_fac)*alf0d0(nd0, :)
+        END DO
+        alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
+&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
+      END IF
+      DO nd=1,nbdirs
+        temp10 = switchd%keps_dkt(nd)*dna0(:, ismain) + switch%keps_dkt*&
+&         dna0d(nd, :, ismain)
+        DO nd0=1,nbdirs0
+          dkt0dd(nd0, nd, :) = temp10*pld0%na(nd0, :, ismain) + pl%na(:&
+&           , ismain)*(switchd%keps_dkt(nd)*dna0d0(nd0, :, ismain)+dna0d&
+&           (nd, :, ismain)*switchd0%keps_dkt(nd0)+switch%keps_dkt*&
+&           dna0dd(nd0, nd, :, ismain)) + pld%na(nd, :, ismain)*(dna0(:&
+&           , ismain)*switchd0%keps_dkt(nd0)+switch%keps_dkt*dna0d0(nd0&
+&           , :, ismain)) + switch%keps_dkt*dna0(:, ismain)*pldd%na(nd0&
+&           , nd, :, ismain)
+        END DO
+        dkt0d(nd, :) = pl%na(:, ismain)*temp10 + switch%keps_dkt*dna0(:&
+&         , ismain)*pld%na(nd, :, ismain)
+        temp10 = switchd%keps_dzt(nd)*dna0(:, ismain) + switch%keps_dzt*&
+&         dna0d(nd, :, ismain)
+        DO nd0=1,nbdirs0
+          dzt0dd(nd0, nd, :) = temp10*pld0%na(nd0, :, ismain) + pl%na(:&
+&           , ismain)*(switchd%keps_dzt(nd)*dna0d0(nd0, :, ismain)+dna0d&
+&           (nd, :, ismain)*switchd0%keps_dzt(nd0)+switch%keps_dzt*&
+&           dna0dd(nd0, nd, :, ismain)) + pld%na(nd, :, ismain)*(dna0(:&
+&           , ismain)*switchd0%keps_dzt(nd0)+switch%keps_dzt*dna0d0(nd0&
+&           , :, ismain)) + switch%keps_dzt*dna0(:, ismain)*pldd%na(nd0&
+&           , nd, :, ismain)
+        END DO
+        dzt0d(nd, :) = pl%na(:, ismain)*temp10 + switch%keps_dzt*dna0(:&
+&         , ismain)*pld%na(nd, :, ismain)
+      END DO
+      DO nd0=1,nbdirs0
+        dkt0d0(nd0, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd0%&
+&         keps_dkt(nd0)+switch%keps_dkt*dna0d0(nd0, :, ismain)) + switch&
+&         %keps_dkt*dna0(:, ismain)*pld0%na(nd0, :, ismain)
+        dzt0d0(nd0, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd0%&
+&         keps_dzt(nd0)+switch%keps_dzt*dna0d0(nd0, :, ismain)) + switch&
+&         %keps_dzt*dna0(:, ismain)*pld0%na(nd0, :, ismain)
+      END DO
+      dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
+      dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
+    END IF
+  END DO
+!   ..recompute hci0
+  hci0 = 0.0_R8
+  hci0d = 0.d0
+  hci0d0 = 0.D0
+  hci0dd = 0.D0
+  DO is=0,ns-1
+    IF (switch%tn_style .EQ. 0) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
+&           is)
+        END DO
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      DO nd0=1,nbdirs0
+        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (.NOT.is_neutral(is)) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :&
+&             , is)
+          END DO
+          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+        END DO
+        DO nd0=1,nbdirs0
+          hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+        END DO
+        hci0 = hci0 + hcib(:, is)
+      END IF
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
+&           is)
+        END DO
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      DO nd0=1,nbdirs0
+        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    END IF
+  END DO
+  IF (switch%keps_fac*switch%keps_inc .GT. 1.0_R8) THEN
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.d0
+    END DO
+    DO nd0=1,nbdirs0
+      switchd0%keps_fac(nd0) = 0.D0
+    END DO
+    switch%keps_fac = 1.0_R8
+  ELSE
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.d0
+    END DO
+    DO nd0=1,nbdirs0
+      switchd0%keps_fac(nd0) = 0.D0
+    END DO
+    switch%keps_fac = switch%keps_fac*switch%keps_inc
+  END IF
+  IF (switch%keps_inc .GT. 1.0_R8) WRITE(*, *) 'b2tqna_keps_fac = ', &
+&                                  switch%keps_fac
+!
+  IF (switch%keps_iout .EQ. 1) THEN
+    CALL MY_OUT_US(70, ncv, 0, rhol, 'b2tqna_keps_rhol')
+    CALL MY_OUT_US(70, ncv, 0, shear, 'b2tqna_keps_shear')
+  END IF
+!
+!   ..return
+  ncall_transp_keps = ncall_transp_keps + 1
+  CALL SUBEND()
+  RETURN
+!
+END SUBROUTINE SET_TRANSPORT_KEPS_DV_DV
 
 !        Generated by TAPENADE     (INRIA, Ecuador team)
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
@@ -3101,7 +5247,15 @@ SUBROUTINE B2TQNA_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 ! User transport options
   IF (switch%user_transport .NE. 0) THEN
 !! the default transport model calculated above is used. Nothing to do.
-    CALL XERRAB('transport model undefined or not yet converted')
+    IF (switch%user_transport .EQ. 6) THEN
+!srv 13.06.08
+      CALL SET_TRANSPORT_SRV_DV_NODIFF(geo, mpg, ns, ncv, switch, dna0, &
+&                                dna0d, hcib, hcibd, vsa0, vsa0d, vla0, &
+&                                vla0d, hce0, hce0d, sig0, sig0d, alf0, &
+&                                alf0d, hci0, hci0d, nbdirs)
+    ELSE
+      CALL XERRAB('transport model undefined or not yet converted')
+    END IF
   END IF
 ! sc  implementation of turbulence closure models 29.11.2018-23/9/2020
   IF (switch%transport_keps .NE. 0) CALL SET_TRANSPORT_KEPS_DV_NODIFF(&
@@ -3327,6 +5481,979 @@ SUBROUTINE B2TQNA_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.end b2tqna
 !
 END SUBROUTINE B2TQNA_DV_NODIFF
+
+!  Differentiation of set_transport_srv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 sig0 alf0 hcib dna0
+!                vla0 hce0
+!   with respect to varying inputs: vsa0 sig0 alf0 hcib dna0 vla0
+!                hce0
+!
+SUBROUTINE SET_TRANSPORT_SRV_DV_NODIFF(geo, mpg, ns, ncv, switch, dna0, &
+& dna0d, hcib, hcibd, vsa0, vsa0d, vla0, vla0d, hce0, hce0d, sig0, sig0d&
+& , alf0, alf0d, hci0, hci0d, nbdirs)
+!
+  USE B2MOD_TYPES
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : ft_ds_omp, ft_ds_imp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: ncv, ns
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  LOGICAL :: cond
+!
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hcib(ncv, 0:ns-&
+& 1), hce0(ncv), vla0(ncv, 0:1, 0:ns-1), sig0(ncv), alf0(ncv), hci0(ncv)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
+& 0:ns-1), hcibd(nbdirsmax, ncv, 0:ns-1), hce0d(nbdirsmax, ncv), vla0d(&
+& nbdirsmax, ncv, 0:1, 0:ns-1), sig0d(nbdirsmax, ncv), alf0d(nbdirsmax, &
+& ncv), hci0d(nbdirsmax, ncv)
+!
+  INTEGER :: ift, is, icv, icv2, ifc
+  INTRINSIC MIN
+  INTRINSIC MOD
+  INTEGER :: nd
+  INTEGER :: nbdirs
+!
+  DO icv=1,ncv
+    IF (icv .LE. mpg%nci) THEN
+      ift = mpg%cvft(icv)
+      icv2 = icv
+    ELSE
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv2 = mpg%fccv(ifc, 2)
+      ELSE
+        icv2 = mpg%fccv(ifc, 1)
+      END IF
+      ift = mpg%cvft(icv2)
+    END IF
+! special treatment for sig0 and al0
+    IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) .EQ. 0&
+&   ) THEN
+! special case for divertor regions
+      DO is=1,ns-1
+        IF (.NOT.is_neutral(is)) THEN
+! div SOL LFS
+! div SOL HFS
+! PFR
+          cond = ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. &
+&           ft_ds_omp(ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch&
+&           %hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .OR. mpg%&
+&           ftreg(ift) .EQ. 3
+          IF (switch%na_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa4*dna0d(nd, icv, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa2*dna0d(nd, icv, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+          END IF
+          IF (switch%vsa_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              vsa0d(nd, icv, is) = switch%vsa_alfa4*vsa0d(nd, icv, is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              vsa0d(nd, icv, is) = switch%vsa_alfa2*vsa0d(nd, icv, is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+            END DO
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+          END IF
+          IF (switch%ti_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              hcibd(nd, icv, is) = switch%ti_alfa4*hcibd(nd, icv, is)
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              hcibd(nd, icv, is) = switch%ti_alfa2*hcibd(nd, icv, is)
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+            END DO
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+          END IF
+          IF (switch%vla_alfa4 .GT. 0.0_R8) THEN
+            DO nd=1,nbdirs
+              vla0d(nd, icv, 1, is) = switch%vla_alfa4*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa4
+          ELSE IF (cond) THEN
+            DO nd=1,nbdirs
+              vla0d(nd, icv, 1, is) = switch%vla_alfa2*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          ELSE
+            DO nd=1,nbdirs
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END IF
+      END DO
+      IF (switch%te_alfa4 .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa4*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa4
+      ELSE IF (cond) THEN
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa2*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      END IF
+    ELSE IF (.NOT.(ft_ds_omp(ift) .LE. -switch%bar_width .AND. ft_ds_omp&
+&       (ift) .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2))) THEN
+! do nothing in core outside barrier
+      IF (ft_ds_omp(ift) .GT. -switch%bar_width .AND. ft_ds_omp(ift) &
+&         .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+! transport barrier
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa1*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa1*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa1*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa1*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa1
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa1
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa1
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa1
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa1*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa1
+      ELSE IF ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) THEN
+! inner SOL LFS
+! inner SOL HFS
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa2*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa2*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa2*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa2*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa2*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE IF ((ft_ds_omp(ift) .GT. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GT. 0.0_R8) .OR. (ft_ds_imp(ift) .GT. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GT. 0.0_R8)) THEN
+! outer SOL LFS
+! outer SOL HFS
+!
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE IF (ft_ds_omp(ift) .EQ. -999.0_R8 .AND. ft_ds_imp(ift) .EQ. -&
+&         999.0_R8) THEN
+! assume that only far SOL is left
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              dna0d(nd, icv, is) = switch%na_alfa3*dna0d(nd, icv, is)
+              vsa0d(nd, icv, is) = switch%vsa_alfa3*vsa0d(nd, icv, is)
+              hcibd(nd, icv, is) = switch%ti_alfa3*hcibd(nd, icv, is)
+              vla0d(nd, icv, 1, is) = switch%vla_alfa3*vla0d(nd, icv, 1&
+&               , is)
+            END DO
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        DO nd=1,nbdirs
+          hce0d(nd, icv) = switch%te_alfa3*hce0d(nd, icv)
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE
+        WRITE(*, '(a,1i6,1i4,2es12.3,a)') 'b2tqna: iCv,iFt,ds_o,imp=', &
+&       icv, ift, ft_ds_omp(ift), ft_ds_imp(ift), ' was not detected!'
+      END IF
+    END IF
+! transport barrier
+    IF (ft_ds_omp(ift) .GT. -switch%sig_bar_width .AND. ft_ds_omp(ift) &
+&       .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+      DO nd=1,nbdirs
+        sig0d(nd, icv) = switch%sig_alfa1*sig0d(nd, icv)
+        alf0d(nd, icv) = switch%sig_alfa1*alf0d(nd, icv)
+      END DO
+      sig0(icv) = sig0(icv)*switch%sig_alfa1
+      alf0(icv) = alf0(icv)*switch%sig_alfa1
+    ELSE IF (((ft_ds_omp(ift) .LE. switch%sig_sol_width .AND. ft_ds_omp(&
+&       ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%sig_sol_width&
+&       .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .AND. MOD(mpg%cvreg(icv), 4) &
+&       .EQ. 2) THEN
+      DO nd=1,nbdirs
+! inner SOL LFS
+! inner SOL HFS
+        sig0d(nd, icv) = switch%sig_alfa2*sig0d(nd, icv)
+        alf0d(nd, icv) = switch%sig_alfa2*alf0d(nd, icv)
+      END DO
+      sig0(icv) = sig0(icv)*switch%sig_alfa2
+      alf0(icv) = alf0(icv)*switch%sig_alfa2
+    END IF
+  END DO
+!
+  hci0 = 0.0_R8
+  hci0d = 0.d0
+  DO is=1,ns-1
+    DO nd=1,nbdirs
+      hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+    END DO
+    hci0 = hci0 + hcib(:, is)
+  END DO
+!
+
+END SUBROUTINE SET_TRANSPORT_SRV_DV_NODIFF
+
+!  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
+!   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
+!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0
+!   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
+!                pl.na:in pl.te:in pl.ti:in pl.tn:in
+!
+!
+!**************************************************************************************
+!*****************     New KU Leuven transport model for neutrals *********************
+!**************************************************************************************
+SUBROUTINE SET_TRANSPORT_AFN_DV_NODIFF(ncv, ns, nscx, iscx, switch, &
+& switchd, pl, pld, dv, dvd, rt, rtd, dna0, dna0d, dpa0, dpa0d, vla0, &
+& vma0, vsa0, vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
+  USE B2MOD_TYPES
+  USE B2MOD_MATH_DIFFV_DIFFV
+  USE B2MOD_INDIRECT_DIFFV_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPT_DIFFV_DIFFV
+  USE B2MOD_RATES
+  USE B2MOD_TRANSPORT_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_SUBSYS
+!  Hint: nCv should be the size of dimension 1 of array arg1
+!  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!
+!   ..input arguments (unchanged on exit)
+  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
+  TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
+  TYPE(B2PLASMA), INTENT(IN) :: pl
+  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
+  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
+  TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+  REAL(kind=r8) :: t_av, df0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: t_avd, df0d
+!   ..input/output arguments
+  REAL(kind=r8), INTENT(INOUT) :: hci0(ncv), hcn0(ncv), hcib(ncv, 0:ns-1&
+& )
+  REAL(kind=r8), INTENT(INOUT) :: hci0d(nbdirsmax, ncv), hcn0d(nbdirsmax&
+& , ncv), hcibd(nbdirsmax, ncv, 0:ns-1)
+!   ..output arguments (unspecified on entry)
+!srv 15.12.05
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
+& 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
+& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
+!   ..workspace arguments (unspecified on entry and on exit)
+  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
+  REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
+& nbdirsmax), vnnd(nbdirsmax)
+  INTEGER :: is, k, ic, icv
+  INTRINSIC NINT
+  INTRINSIC SQRT
+  INTRINSIC LOG
+  INTRINSIC MIN
+  INTRINSIC ANY
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+  REAL(r8), DIMENSION(ncv) :: arg1
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
+  REAL(kind=r8) :: arg10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(r8) :: arg2
+  REAL(r8), DIMENSION(nbdirsmax) :: arg2d
+  REAL(kind=r8) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
+  REAL(r8) :: arg11
+  REAL(r8), DIMENSION(nbdirsmax) :: arg11d
+  INTEGER :: nd
+  REAL(r8), DIMENSION(ncv) :: temp
+  REAL(kind=r8) :: temp0
+  REAL(r8) :: temp1
+  REAL(r8) :: temp2
+  REAL(kind=r8) :: temp3
+  REAL(kind=r8) :: temp4
+  INTEGER :: nbdirs
+!
+!   ..subprogram start-up calls
+  CALL SUBINI('set_transport_afn')
+  DO is=0,ns-1
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+! only for hydrogenic species
+!
+      k = 0
+      DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
+        k = k + 1
+      END DO
+      CALL XERTST(k .LT. nscx, 'CX species index not found!')
+      arg1 = pl%tn/mp
+      temp = SQRT(arg1)
+      DO nd=1,nbdirs
+!
+        arg1d(nd, :) = pld%tn(nd, :)/mp
+        WHERE (arg1 .EQ. 0.d0) 
+          wrk0d(nd, :) = 0.d0
+        ELSEWHERE
+          wrk0d(nd, :) = arg1d(nd, :)/(2.0*temp)
+        END WHERE
+      END DO
+      wrk0 = temp
+      DO icv=1,ncv
+        vcx = 0.0_R8
+        vcxd = 0.d0
+        DO ic=0,ns-1
+          t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
+          arg10 = t_av/(am(is)*ev)
+          temp0 = LOG(arg10)
+          temp1 = rt%rlcx(icv, 1, ic, k)
+          DO nd=1,nbdirs
+            t_avd(nd) = 0.5_R8*(pld%ti(nd, icv)+pld%tn(nd, icv))
+            arg10d(nd) = t_avd(nd)/(am(is)*ev)
+            arg2d(nd) = rtd%rlcx(nd, icv, 0, ic, k) + temp0*rtd%rlcx(nd&
+&             , icv, 1, ic, k) + temp1*arg10d(nd)/arg10
+          END DO
+          arg2 = rt%rlcx(icv, 0, ic, k) + temp1*temp0
+          CALL EXPU_DV(arg2, arg2d, result1, result1d, nbdirs)
+          DO nd=1,nbdirs
+            vcxd(nd) = vcxd(nd) + result1*pld%na(nd, icv, ic) + pl%na(&
+&             icv, ic)*result1d(nd)
+          END DO
+          vcx = vcx + pl%na(icv, ic)*result1
+        END DO
+        arg11 = pl%te(icv)/ev
+        temp1 = LOG(arg11)
+        DO nd=1,nbdirs
+          arg11d(nd) = pld%te(nd, icv)/ev
+          arg2d(nd) = rtd%rlsa(nd, icv, 0, is) + temp1*rtd%rlsa(nd, icv&
+&           , 1, is) + rt%rlsa(icv, 1, is)*arg11d(nd)/arg11
+        END DO
+        arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
+        CALL EXPU_DV(arg2, arg2d, dion, diond, nbdirs)
+        IF (switch%afn_vnn .EQ. 1) THEN
+!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+          temp1 = pl%tn(icv)/kbolt
+          temp2 = temp1**0.25_R8
+          DO nd=1,nbdirs
+            vnnd(nd) = 5.2958e-11_R8*1.0e-6_R8*(pl%na(icv, is)*0.25_R8*&
+&             temp1**(-0.75)*pld%tn(nd, icv)/kbolt+temp2*pld%na(nd, icv&
+&             , is))
+          END DO
+          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp2*pl%na(icv, is))
+        ELSE
+          vnn = 0.0_R8
+          vnnd = 0.d0
+        END IF
+!         ..Total coefficients
+! limit df0
+        result1 = SQRT(am(is))
+        temp0 = result1*result1*(vcx+dion*dv%ne(icv)+vnn)
+        temp3 = wrk0(icv)*wrk0(icv)/temp0
+        DO nd=1,nbdirs
+          df0d(nd) = (2*wrk0(icv)*wrk0d(nd, icv)-temp3*result1**2*(vcxd(&
+&           nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
+&           temp0
+        END DO
+        df0 = temp3
+        IF (switch%b2tqna_max_df0 .GT. df0) THEN
+          DO nd=1,nbdirs
+            y1d(nd) = df0d(nd)
+          END DO
+          y1 = df0
+        ELSE
+          y1 = switch%b2tqna_max_df0
+          y1d = 0.d0
+        END IF
+        IF (switch%b2tqna_min_df0 .LT. y1) THEN
+          DO nd=1,nbdirs
+            df0d(nd) = y1d(nd)
+          END DO
+          df0 = y1
+        ELSE
+          df0 = switch%b2tqna_min_df0
+          df0d = 0.d0
+        END IF
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          temp3 = vcx + dion*dv%ne(icv) + vnn
+          temp0 = df0*vnn/temp3
+          DO nd=1,nbdirs
+            dna0d(nd, icv, is) = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*(vcxd(&
+&             nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
+&             temp3
+          END DO
+          dna0(icv, is) = temp0
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          temp3 = vcx + dion*dv%ne(icv) + vnn
+          temp2 = pl%tn(icv)*temp3
+          temp0 = vcx + dion*dv%ne(icv)
+          temp4 = df0*temp0/temp2
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (temp0*df0d(nd)+df0*(vcxd(nd)+dv%ne(icv&
+&             )*diond(nd)+dion*dvd%ne(nd, icv))-temp4*(temp3*pld%tn(nd, &
+&             icv)+pl%tn(icv)*(vcxd(nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne&
+&             (nd, icv)+vnnd(nd))))/temp2
+          END DO
+          dpa0(icv, is) = temp4
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          temp4 = df0/pl%tn(icv)
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (df0d(nd)-temp4*pld%tn(nd, icv))/pl%tn(&
+&             icv)
+          END DO
+          dpa0(icv, is) = temp4
+        END IF
+        DO nd=1,nbdirs
+          vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
+&           icv, is)*df0d(nd))
+          hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
+&           , is)*df0d(nd))
+        END DO
+        vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
+        hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
+!
+!! end loop over cells
+      END DO
+!
+!   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+    END IF
+!! end loop over species
+
+  END DO
+!
+!   ..recompute hci0, hcn0
+  hci0 = 0.0_R8
+  hcn0 = 0.0_R8
+  hci0d = 0.d0
+  hcn0d = 0.d0
+  DO is=0,ns-1
+!     ..compute hci0
+    IF (switch%tn_style .EQ. 0) THEN
+      DO nd=1,nbdirs
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (.NOT.is_neutral(is)) THEN
+        DO nd=1,nbdirs
+          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+        END DO
+        hci0 = hci0 + hcib(:, is)
+      END IF
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
+      DO nd=1,nbdirs
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    END IF
+!     ..compute hcn0
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+      DO nd=1,nbdirs
+        hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      hcn0 = hcn0 + hcib(:, is)
+    END IF
+  END DO
+!
+!   ..return
+  CALL SUBEND()
+  RETURN
+END SUBROUTINE SET_TRANSPORT_AFN_DV_NODIFF
+
+!  Differentiation of set_transport_keps in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: hce_exb hci0 vsa0 sig0 alf0
+!                dna_exb hcib dna0 dkt0 hce0 dzt0 hci_exb
+!   with respect to varying inputs: hce_exb vsa0 sig0 *(dv.ne)
+!                *(dv.vaecrb) alf0 *(rt.rza) dna_exb hcib dna0
+!                dkt0 switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                *(pl.na) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt) hce0
+!                dzt0
+!   Plus diff mem management of: dv.ne:in dv.vaecrb:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fcvol:in geo.fcqalf:in rt.rza:in pl.na:in
+!                pl.te:in pl.ti:in pl.kt:in pl.zt:in
+!
+SUBROUTINE SET_TRANSPORT_KEPS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, &
+& switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, dna0&
+& , dna0d, vsa0, vsa0d, hce0, hce0d, hci0, hci0d, hcib, hcibd, sig0, &
+& sig0d, alf0, alf0d, dkt0, dkt0d, dzt0, dzt0d, dna_exb, dna_exbd, &
+& hce_exb, hce_exbd, hci_exb, hci_exbd, nbdirs)
+  USE B2MOD_TYPES
+  USE B2MOD_CONSTANTS
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : nomp, omp, icsepomp
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder
+  USE B2MOD_SUBSYS
+!  Hint: nCv should be the size of dimension 1 of array arg1
+!  Hint: nCv should be the size of dimension 1 of array result1
+!  Hint: nCv should be the size of dimension 1 of array cvbb
+!  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!   ..input arguments (unchanged on exit)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+  TYPE(B2PLASMA), INTENT(IN) :: pl
+  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
+  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
+  TYPE(B2RATES), INTENT(IN) :: rt
+  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
+!   ..input/output arguments
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib&
+& (ncv, 0:ns-1), sig0(ncv), alf0(ncv), hce0(ncv), dkt0(ncv), dzt0(ncv), &
+& dna_exb(ncv), hce_exb(ncv), hci_exb(ncv), rhol(ncv)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
+& 0:ns-1), hci0d(nbdirsmax, ncv), hcibd(nbdirsmax, ncv, 0:ns-1), sig0d(&
+& nbdirsmax, ncv), alf0d(nbdirsmax, ncv), hce0d(nbdirsmax, ncv), dkt0d(&
+& nbdirsmax, ncv), dzt0d(nbdirsmax, ncv), dna_exbd(nbdirsmax, ncv), &
+& hce_exbd(nbdirsmax, ncv), hci_exbd(nbdirsmax, ncv), rhold(nbdirsmax, &
+& ncv)
+!   ..local variables
+  INTEGER :: is
+  REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
+  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), sheard(&
+& nbdirsmax, ncv)
+  INTRINSIC SQRT
+  INTRINSIC ABS
+  EXTERNAL XERRAB
+  INTRINSIC NINT
+  INTRINSIC MIN
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
+  REAL(r8), DIMENSION(ncv) :: arg1
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
+  REAL(kind=r8), DIMENSION(ncv) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result1d
+  REAL(r8) :: arg10
+  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(kind=r8) :: result10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
+  REAL(r8), DIMENSION(ncv) :: arg11
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg11d
+  REAL(r8), DIMENSION(ncv) :: result11
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
+  REAL(r8), DIMENSION(ncv) :: arg12
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg12d
+  REAL(r8), DIMENSION(ncv) :: result12
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result12d
+  REAL(kind=r8), DIMENSION(ncv) :: arg13
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg13d
+  REAL(kind=r8), DIMENSION(ncv) :: result13
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result13d
+  INTEGER :: nd
+  REAL(kind=r8), DIMENSION(ncv) :: temp
+  REAL(kind=r8) :: temp0
+  REAL(kind=r8) :: temp1
+  REAL(r8), DIMENSION(ncv) :: temp2
+  REAL(kind=r8), DIMENSION(ncv) :: temp3
+  REAL(kind=r8), DIMENSION(ncv) :: temp4
+  REAL(r8), DIMENSION(ncv) :: temp5
+  REAL(kind=r8), DIMENSION(ncv) :: temp6
+  REAL(r8) :: temp7
+  INTEGER :: nbdirs
+!
+!   ..subprogram start-up calls
+  CALL SUBINI('set_transport_keps')
+  IF (ncall_transp_keps .EQ. 0) THEN
+    IF (switch%keps_local .NE. 1) THEN
+      CALL XERTST(nomp .GT. 0, &
+&           'No CVs in omp list, check rzomp in b2.user.parameters')
+      CALL XERTST(icsepomp .GT. 0, &
+&           'Invalid icsepomp value, check rzomp in b2.user.parameters')
+    END IF
+  END IF
+  hci_exb = 0.0_R8
+  hci_exbd = 0.d0
+  dabs0d = 0.d0
+  dabs2d = 0.d0
+  dabs3d = 0.d0
+  DO is=0,ns-1
+    IF (.NOT.is_neutral(is)) THEN
+      IF (switch%keps_local .EQ. 1) THEN
+        DO nd=1,nbdirs
+          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
+&           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
+        END DO
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
+&           rza(:, ismain)*qe*geo%cvbb(:, 3)
+        DO nd=1,nbdirs
+          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
+        END DO
+        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
+&          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+        arg1 = 2.0_R8*pl%ti/(am(ismain)*mp)
+        temp = SQRT(arg1)
+        result1 = temp
+        DO nd=1,nbdirs
+!   ..compute local Larmor radius
+          arg1d(nd, :) = 2.0_R8*pld%ti(nd, :)/(am(ismain)*mp)
+          WHERE (arg1 .EQ. 0.d0) 
+            result1d(nd, :) = 0.d0
+          ELSEWHERE
+            result1d(nd, :) = arg1d(nd, :)/(2.0*temp)
+          END WHERE
+          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*dabs0d(&
+&           nd, :)/dabs0)/dabs0
+        END DO
+        rhol = am(ismain)*mp*result1/dabs0
+      ELSE
+        IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
+&           .GE. 0.) THEN
+          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
+          DO nd=1,nbdirs
+            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
+          END DO
+          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
+        ELSE
+          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
+          DO nd=1,nbdirs
+            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
+          END DO
+          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
+        END IF
+        arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
+        temp1 = SQRT(arg10)
+        result10 = temp1
+        DO nd=1,nbdirs
+          arg10d(nd) = 2.0_R8*pld%ti(nd, omp(icsepomp))/(am(ismain)*mp)
+          IF (arg10 .EQ. 0.d0) THEN
+            result10d(nd) = 0.d0
+          ELSE
+            result10d(nd) = arg10d(nd)/(2.0*temp1)
+          END IF
+          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*dabs1d(nd&
+&           )/dabs1)/dabs1
+        END DO
+        rhol = am(ismain)*mp*result10/dabs1
+      END IF
+!       ..compute radial shear of diamagnetic ExB velocity
+      DO nd=1,nbdirs
+        wrkfd(nd, :) = geo%fcbb(:, 3)*dvd%vaecrb(nd, :, 0, ismain)/geo%&
+&         fcbb(:, 2)
+      END DO
+      wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
+      wrkcd = 0.d0
+      CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellr, wrkf, wrkfd, &
+&                      wrkc, wrkcd, nbdirs)
+      sheard = 0.d0
+      CALL GRADC_DIV_R_DV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrkc&
+&                          , wrkcd, wrkf, wrkfd, shear, sheard, nbdirs)
+      IF (switch%transport_keps .EQ. 1) THEN
+        DO nd=1,nbdirs
+          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
+        END DO
+        WHERE (shear .GE. 0.) dabs2 = shear
+        DO nd=1,nbdirs
+          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
+        END DO
+        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
+        arg11 = pl%kt/(am(ismain)*mp)
+        temp2 = SQRT(arg11)
+        result11 = temp2
+        temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
+&         keps_shear*dabs2)
+        temp4 = switch%keps_cd*pl%kt/temp3
+        DO nd=1,nbdirs
+!   ..compute D according to KUL, using kt only
+!wdk at the moment: assumption that kt is related to main ion species;
+!wdk same dna_ExB for all ion species
+          arg11d(nd, :) = pld%kt(nd, :)/(am(ismain)*mp)
+          WHERE (arg11 .EQ. 0.d0) 
+            result11d(nd, :) = 0.d0
+          ELSEWHERE
+            result11d(nd, :) = arg11d(nd, :)/(2.0*temp2)
+          END WHERE
+          dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
+&           pld%kt(nd, :)-temp4*am(ismain)*mp*((result11d(nd, :)-&
+&           result11*rhold(nd, :)/rhol)/rhol+dabs2*switchd%keps_shear(nd&
+&           )+switch%keps_shear*dabs2d(nd, :)))/temp3
+          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
+&           switch%keps_fac)*dna0d(nd, :, is)
+        END DO
+        dna_exb = temp4
+        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
+&         -switch%keps_fac)*dna0(:, is)
+      ELSE IF (switch%transport_keps .EQ. 2) THEN
+        DO nd=1,nbdirs
+          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
+        END DO
+        WHERE (shear .GE. 0.) dabs3 = shear
+        DO nd=1,nbdirs
+          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
+        END DO
+        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
+        arg12 = pl%zt/(am(ismain)*mp)
+        temp5 = SQRT(arg12)
+        result12 = temp5
+        temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
+&         keps_shear*dabs3)
+        temp3 = switch%keps_cd*pl%kt/temp4
+        DO nd=1,nbdirs
+!   ..compute D according to KUL, using kt and zt
+          arg12d(nd, :) = pld%zt(nd, :)/(am(ismain)*mp)
+          WHERE (arg12 .EQ. 0.d0) 
+            result12d(nd, :) = 0.d0
+          ELSEWHERE
+            result12d(nd, :) = arg12d(nd, :)/(2.0*temp5)
+          END WHERE
+          dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
+&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+dabs3*&
+&           switchd%keps_shear(nd)+switch%keps_shear*dabs3d(nd, :)))/&
+&           temp4
+          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
+&           switch%keps_fac)*dna0d(nd, :, is)
+        END DO
+        dna_exb = temp3
+        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
+&         -switch%keps_fac)*dna0(:, is)
+      ELSE
+        CALL XERRAB('wrong value transport_keps')
+      END IF
+      IF (switch%keps_visc .GT. 0.0_R8) THEN
+        temp0 = am(is)*switch%keps_fac*mp
+        DO nd=1,nbdirs
+          vsa0d(nd, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
+&           dna_exb)*pld%na(nd, :, is)+pl%na(:, is)*(dna_exb*switchd%&
+&           keps_visc(nd)+switch%keps_visc*dna_exbd(nd, :))) + (1.0_R8-&
+&           switch%keps_fac)*vsa0d(nd, :, is)
+        END DO
+        vsa0(:, is) = temp0*(pl%na(:, is)*(switch%vsa_min+switch%&
+&         keps_visc*dna_exb)) + (1.0_R8-switch%keps_fac)*vsa0(:, is)
+      END IF
+      IF (switch%keps_heat .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          hce_exbd(nd, :) = dv%ne*(dna_exb*switchd%keps_heat(nd)+switch%&
+&           keps_heat*dna_exbd(nd, :)) + switch%keps_heat*dna_exb*dvd%ne&
+&           (nd, :)
+          hce0d(nd, :) = switch%keps_fac*(dv%ne*(dna_exb*switchd%&
+&           keps_heat(nd)+switch%keps_heat*dna_exbd(nd, :))+(switch%&
+&           hce_min+switch%keps_heat*dna_exb)*dvd%ne(nd, :)) + (1.0_R8-&
+&           switch%keps_fac)*hce0d(nd, :)
+        END DO
+        hce_exb = switch%keps_heat*dna_exb*dv%ne
+        hce0 = (switch%keps_heat*dna_exb+switch%hce_min)*dv%ne*switch%&
+&         keps_fac + (1.0_R8-switch%keps_fac)*hce0
+      END IF
+      IF (switch%keps_heat_i .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          hci_exbd(nd, :) = hci_exbd(nd, :) + pl%na(:, is)*(dna_exb*&
+&           switchd%keps_heat_i(nd)+switch%keps_heat_i*dna_exbd(nd, :)) &
+&           + switch%keps_heat_i*dna_exb*pld%na(nd, :, is)
+          hcibd(nd, :, is) = switch%keps_fac*(pl%na(:, is)*(dna_exb*&
+&           switchd%keps_heat_i(nd)+switch%keps_heat_i*dna_exbd(nd, :))+&
+&           (switch%hci_min+switch%keps_heat_i*dna_exb)*pld%na(nd, :, is&
+&           )) + (1.0_R8-switch%keps_fac)*hcibd(nd, :, is)
+        END DO
+        hci_exb = hci_exb + switch%keps_heat_i*dna_exb*pl%na(:, is)
+        hcib(:, is) = switch%keps_fac*(switch%keps_heat_i*dna_exb+switch&
+&         %hci_min)*pl%na(:, is) + (1.0_R8-switch%keps_fac)*hcib(:, is)
+      END IF
+      IF (switch%keps_sig .GT. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          sig0d(nd, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*((&
+&           switch%dna_min+dna_exb)*switchd%keps_sig(nd)+switch%keps_sig&
+&           *dna_exbd(nd, :))+switch%keps_sig*(switch%dna_min+dna_exb)*&
+&           dvd%ne(nd, omp(icsepomp))) + (1.0_R8-switch%keps_fac)*sig0d(&
+&           nd, :)
+        END DO
+        sig0 = switch%keps_sig*(dna_exb+switch%dna_min)*qe*dv%ne(omp(&
+&         icsepomp))*switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
+      END IF
+      IF (switch%keps_alf .GT. 0.0_R8) THEN
+        arg13 = qe/pl%te
+        temp6 = SQRT(arg13)
+        result13 = temp6
+        temp7 = dv%ne(omp(icsepomp))
+        DO nd=1,nbdirs
+          arg13d(nd, :) = -(qe*pld%te(nd, :)/pl%te**2)
+          WHERE (arg13 .EQ. 0.d0) 
+            result13d(nd, :) = 0.d0
+          ELSEWHERE
+            result13d(nd, :) = arg13d(nd, :)/(2.0*temp6)
+          END WHERE
+          alf0d(nd, :) = switch%keps_fac*(switch%keps_alf*result13*(&
+&           temp7*dna_exbd(nd, :)+(switch%dna_min+dna_exb)*dvd%ne(nd, &
+&           omp(icsepomp)))+(switch%dna_min+dna_exb)*temp7*(result13*&
+&           switchd%keps_alf(nd)+switch%keps_alf*result13d(nd, :))) + (&
+&           1.0_R8-switch%keps_fac)*alf0d(nd, :)
+        END DO
+        alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
+&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
+      END IF
+      DO nd=1,nbdirs
+        dkt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
+&         keps_dkt(nd)+switch%keps_dkt*dna0d(nd, :, ismain)) + switch%&
+&         keps_dkt*dna0(:, ismain)*pld%na(nd, :, ismain)
+        dzt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
+&         keps_dzt(nd)+switch%keps_dzt*dna0d(nd, :, ismain)) + switch%&
+&         keps_dzt*dna0(:, ismain)*pld%na(nd, :, ismain)
+      END DO
+      dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
+      dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
+    END IF
+  END DO
+!   ..recompute hci0
+  hci0 = 0.0_R8
+  hci0d = 0.d0
+  DO is=0,ns-1
+    IF (switch%tn_style .EQ. 0) THEN
+      DO nd=1,nbdirs
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (.NOT.is_neutral(is)) THEN
+        DO nd=1,nbdirs
+          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+        END DO
+        hci0 = hci0 + hcib(:, is)
+      END IF
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
+      DO nd=1,nbdirs
+        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
+      END DO
+      hci0 = hci0 + hcib(:, is)
+    END IF
+  END DO
+  IF (switch%keps_fac*switch%keps_inc .GT. 1.0_R8) THEN
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.d0
+    END DO
+    switch%keps_fac = 1.0_R8
+  ELSE
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.d0
+    END DO
+    switch%keps_fac = switch%keps_fac*switch%keps_inc
+  END IF
+  IF (switch%keps_inc .GT. 1.0_R8) WRITE(*, *) 'b2tqna_keps_fac = ', &
+&                                  switch%keps_fac
+!
+  IF (switch%keps_iout .EQ. 1) THEN
+    CALL MY_OUT_US(70, ncv, 0, rhol, 'b2tqna_keps_rhol')
+    CALL MY_OUT_US(70, ncv, 0, shear, 'b2tqna_keps_shear')
+  END IF
+!
+!   ..return
+  ncall_transp_keps = ncall_transp_keps + 1
+  CALL SUBEND()
+  RETURN
+!
+END SUBROUTINE SET_TRANSPORT_KEPS_DV_NODIFF
 
 !
 !
@@ -3923,7 +7050,14 @@ SUBROUTINE B2TQNA_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 ! User transport options
   IF (switch%user_transport .NE. 0) THEN
 !! the default transport model calculated above is used. Nothing to do.
-    CALL XERRAB('transport model undefined or not yet converted')
+    IF (switch%user_transport .EQ. 6) THEN
+!srv 13.06.08
+      CALL SET_TRANSPORT_SRV_NODIFF_NODIFF(geo, mpg, ns, ncv, switch, &
+&                                    dna0, hcib, vsa0, vla0, hce0, sig0&
+&                                    , alf0, hci0)
+    ELSE
+      CALL XERRAB('transport model undefined or not yet converted')
+    END IF
   END IF
 ! sc  implementation of turbulence closure models 29.11.2018-23/9/2020
   IF (switch%transport_keps .NE. 0) CALL &
@@ -4042,883 +7176,178 @@ SUBROUTINE B2TQNA_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !
 END SUBROUTINE B2TQNA_NODIFF_NODIFF
 
-!  Differentiation of set_transport_afn_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hci0 vsa0 dna0d hcibd vsa0d
-!                hcib hcn0 dna0 hci0d dpa0 hcn0d dpa0d
-!   with respect to varying inputs: vsa0 dna0d *(dv.ne) hcibd vsa0d
-!                *(rtd.rlcx) *(rtd.rlsa) *(rt.rlcx) *(rt.rlsa)
-!                hcib *(dvd.ne) dna0 *(pld.na) *(pld.te) *(pld.ti)
-!                *(pld.tn) *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
-!                dpa0 dpa0d
-!   Plus diff mem management of: dv.ne:in rtd.rlcx:in rtd.rlsa:in
-!                rt.rlcx:in rt.rlsa:in dvd.ne:in pld.na:in pld.te:in
-!                pld.ti:in pld.tn:in pl.na:in pl.te:in pl.ti:in
-!                pl.tn:in
-!  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
-!   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
-!                dpa0
-!   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
-!                pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
+SUBROUTINE SET_TRANSPORT_SRV_NODIFF_NODIFF(geo, mpg, ns, ncv, switch, &
+& dna0, hcib, vsa0, vla0, hce0, sig0, alf0, hci0)
 !
-!**************************************************************************************
-!*****************     New KU Leuven transport model for neutrals *********************
-!**************************************************************************************
-SUBROUTINE SET_TRANSPORT_AFN_DV_DV(ncv, ns, nscx, iscx, switch, switchd&
-& , pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, dna0&
-& , dna0d0, dna0d, dna0dd, dpa0, dpa0d0, dpa0d, dpa0dd, vla0, vma0, vsa0&
-& , vsa0d0, vsa0d, vsa0dd, hci0, hci0d0, hci0d, hci0dd, hcn0, hcn0d0, &
-& hcn0d, hcn0dd, hcib, hcibd0, hcibd, hcibdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
-  USE B2MOD_MATH_DIFFV_DIFFV
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
-  USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPT_DIFFV_DIFFV
-  USE B2MOD_RATES
-  USE B2MOD_TRANSPORT_NAMELIST_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
-  USE B2US_PLASMA_DIFFV_DIFFV
-  USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array arg1
-!  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
-!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
-  IMPLICIT NONE
-!
-!   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
-  TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
-  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
-  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-  TYPE(B2DERIVATIVES_DIFFV0), INTENT(INOUT) :: dvd0
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
-  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(INOUT) :: dvdd
-  TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
-  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2RATES_DIFFV_DIFFV), INTENT(IN) :: rtdd
-  REAL(kind=r8) :: t_av, df0
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: t_avd0, df0d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: t_avd, df0d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: t_avdd, df0dd
-!   ..input/output arguments
-  REAL(kind=r8), INTENT(INOUT) :: hci0(ncv), hcn0(ncv), hcib(ncv, 0:ns-1&
-& )
-  REAL(kind=r8), INTENT(INOUT) :: hci0d0(nbdirsmax0, ncv), hcn0d0(&
-& nbdirsmax0, ncv), hcibd0(nbdirsmax0, ncv, 0:ns-1)
-  REAL(kind=r8), INTENT(INOUT) :: hci0d(nbdirsmax, ncv), hcn0d(nbdirsmax&
-& , ncv), hcibd(nbdirsmax, ncv, 0:ns-1)
-  REAL(kind=r8), INTENT(INOUT) :: hci0dd(nbdirsmax0, nbdirsmax, ncv), &
-& hcn0dd(nbdirsmax0, nbdirsmax, ncv), hcibdd(nbdirsmax0, nbdirsmax, ncv&
-& , 0:ns-1)
-!   ..output arguments (unspecified on entry)
-!srv 15.12.05
-  REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
-& 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: dna0d0(nbdirsmax0, ncv, 0:ns-1), dpa0d0(nbdirsmax0, &
-& ncv, 0:ns-1), vsa0d0(nbdirsmax0, ncv, 0:ns-1)
-  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
-& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
-  REAL(kind=r8) :: dna0dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), dpa0dd(&
-& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), vsa0dd(nbdirsmax0, nbdirsmax, ncv&
-& , 0:ns-1)
-!   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
-  REAL(kind=r8) :: wrk0d0(nbdirsmax0, ncv), vcxd0(nbdirsmax0), diond0(&
-& nbdirsmax0), vnnd0(nbdirsmax0)
-  REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
-& nbdirsmax), vnnd(nbdirsmax)
-  REAL(kind=r8) :: wrk0dd(nbdirsmax0, nbdirsmax, ncv), vcxdd(nbdirsmax0&
-& , nbdirsmax), diondd(nbdirsmax0, nbdirsmax), vnndd(nbdirsmax0, &
-& nbdirsmax)
-  INTEGER :: is, k, ic, icv
-  INTRINSIC NINT
-  INTRINSIC SQRT
-  INTRINSIC LOG
-  INTRINSIC MIN
-  INTRINSIC ANY
-  REAL(kind=r8) :: y1
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: y1d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: y1dd
-  REAL(r8), DIMENSION(ncv) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg1d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg1dd
-  REAL(kind=r8) :: arg10
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg10d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
-  REAL(r8) :: arg2
-  REAL(r8), DIMENSION(nbdirsmax0) :: arg2d0
-  REAL(r8), DIMENSION(nbdirsmax) :: arg2d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg2dd
-  REAL(kind=r8) :: result1
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result1d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result1dd
-  REAL(r8) :: arg11
-  REAL(r8), DIMENSION(nbdirsmax0) :: arg11d0
-  REAL(r8), DIMENSION(nbdirsmax) :: arg11d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg11dd
-  INTEGER :: nd
-  REAL(r8), DIMENSION(ncv) :: temp
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: tempd
-  REAL(kind=r8) :: temp0
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp0d
-  REAL(r8) :: temp1
-  REAL(r8), DIMENSION(nbdirsmax0) :: temp1d
-  REAL(r8) :: temp2
-  REAL(r8), DIMENSION(nbdirsmax0) :: temp2d
-  REAL(kind=r8) :: temp3
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp3d
-  REAL(kind=r8) :: temp4
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp4d
-  INTEGER :: nbdirs
-  INTEGER :: nd0
-  REAL(r8), DIMENSION(ncv) :: temp5
-  REAL(r8) :: temp6
-  REAL(r8) :: temp7
-  REAL(r8) :: temp8
-  REAL(kind=r8) :: temp9
-  REAL(kind=r8) :: temp10
-  REAL(kind=r8) :: temp11
-  REAL(kind=r8) :: temp12
-  INTEGER :: nbdirs0
-!
-!   ..subprogram start-up calls
-  CALL SUBINI('set_transport_afn')
-  y1dd = 0.D0
-  df0dd = 0.D0
-  arg1dd = 0.D0
-  arg11dd = 0.D0
-  diondd = 0.D0
-  arg2dd = 0.D0
-  t_avdd = 0.D0
-  vnndd = 0.D0
-  result1dd = 0.D0
-  wrk0dd = 0.D0
-  arg10dd = 0.D0
-  DO is=0,ns-1
-    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-! only for hydrogenic species
-!
-      k = 0
-      DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
-        k = k + 1
-      END DO
-      CALL XERTST(k .LT. nscx, 'CX species index not found!')
-      arg1 = pl%tn/mp
-      temp5 = SQRT(arg1)
-      DO nd0=1,nbdirs0
-        arg1d0(nd0, :) = pld0%tn(nd0, :)/mp
-        WHERE (arg1 .EQ. 0.D0) 
-          tempd(nd0, :) = 0.D0
-        ELSEWHERE
-          tempd(nd0, :) = arg1d0(nd0, :)/(2.0*temp5)
-        END WHERE
-      END DO
-      temp = temp5
-      DO nd=1,nbdirs
-!
-        DO nd0=1,nbdirs0
-          arg1dd(nd0, nd, :) = pldd%tn(nd0, nd, :)/mp
-        END DO
-        arg1d(nd, :) = pld%tn(nd, :)/mp
-        DO nd0=1,nbdirs0
-          WHERE (arg1 .EQ. 0.d0) wrk0dd(nd0, nd, :) = 0.D0
-        END DO
-        WHERE (arg1 .EQ. 0.d0) 
-          wrk0d(nd, :) = 0.d0
-        ELSEWHERE
-          temp5 = arg1d(nd, :)/(2.0*temp)
-        END WHERE
-        DO nd0=1,nbdirs0
-          WHERE (.NOT.arg1 .EQ. 0.d0) wrk0dd(nd0, nd, :) = (arg1dd(nd0, &
-&             nd, :)-temp5*2.0*tempd(nd0, :))/(2.0*temp)
-        END DO
-        WHERE (.NOT.arg1 .EQ. 0.d0) wrk0d(nd, :) = temp5
-      END DO
-      DO nd0=1,nbdirs0
-        wrk0d0(nd0, :) = tempd(nd0, :)
-      END DO
-      wrk0 = temp
-      DO icv=1,ncv
-        vcx = 0.0_R8
-        vcxd = 0.d0
-        vcxd0 = 0.D0
-        vcxdd = 0.D0
-        DO ic=0,ns-1
-          t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
-          arg10 = t_av/(am(is)*ev)
-          DO nd0=1,nbdirs0
-            t_avd0(nd0) = 0.5_R8*(pld0%ti(nd0, icv)+pld0%tn(nd0, icv))
-            arg10d0(nd0) = t_avd0(nd0)/(am(is)*ev)
-            temp0d(nd0) = arg10d0(nd0)/arg10
-            temp1d(nd0) = rtd0%rlcx(nd0, icv, 1, ic, k)
-          END DO
-          temp0 = LOG(arg10)
-          temp1 = rt%rlcx(icv, 1, ic, k)
-          DO nd=1,nbdirs
-            t_avd(nd) = 0.5_R8*(pld%ti(nd, icv)+pld%tn(nd, icv))
-            arg10d(nd) = t_avd(nd)/(am(is)*ev)
-            temp6 = rtd%rlcx(nd, icv, 1, ic, k)
-            temp7 = temp1/arg10
-            DO nd0=1,nbdirs0
-              t_avdd(nd0, nd) = 0.5_R8*(pldd%ti(nd0, nd, icv)+pldd%tn(&
-&               nd0, nd, icv))
-              arg10dd(nd0, nd) = t_avdd(nd0, nd)/(am(is)*ev)
-              arg2dd(nd0, nd) = rtdd%rlcx(nd0, nd, icv, 0, ic, k) + &
-&               temp6*temp0d(nd0) + temp0*rtdd%rlcx(nd0, nd, icv, 1, ic&
-&               , k) + temp7*arg10dd(nd0, nd) + arg10d(nd)*(temp1d(nd0)-&
-&               temp7*arg10d0(nd0))/arg10
-            END DO
-            arg2d(nd) = rtd%rlcx(nd, icv, 0, ic, k) + temp0*temp6 + &
-&             arg10d(nd)*temp7
-          END DO
-          DO nd0=1,nbdirs0
-            arg2d0(nd0) = rtd0%rlcx(nd0, icv, 0, ic, k) + temp0*temp1d(&
-&             nd0) + temp1*temp0d(nd0)
-          END DO
-          arg2 = rt%rlcx(icv, 0, ic, k) + temp1*temp0
-          CALL EXPU_DV_DV(arg2, arg2d0, arg2d, arg2dd, result1, &
-&                   result1d0, result1d, result1dd, nbdirs, nbdirs0)
-          DO nd=1,nbdirs
-            DO nd0=nd,nbdirs0
-              vcxdd(nd0, nd) = vcxdd(nd0, nd) + pld%na(nd, icv, ic)*&
-&               result1d0(nd0) + result1*pldd%na(nd0, nd, icv, ic) + &
-&               result1d(nd)*pld0%na(nd0, icv, ic) + pl%na(icv, ic)*&
-&               result1dd(nd0, nd)
-            END DO
-            vcxd(nd) = vcxd(nd) + result1*pld%na(nd, icv, ic) + pl%na(&
-&             icv, ic)*result1d(nd)
-          END DO
-          DO nd0=1,nbdirs0
-            vcxd0(nd0) = vcxd0(nd0) + result1*pld0%na(nd0, icv, ic) + pl&
-&             %na(icv, ic)*result1d0(nd0)
-          END DO
-          vcx = vcx + pl%na(icv, ic)*result1
-        END DO
-        arg11 = pl%te(icv)/ev
-        DO nd0=1,nbdirs0
-          arg11d0(nd0) = pld0%te(nd0, icv)/ev
-          temp1d(nd0) = arg11d0(nd0)/arg11
-        END DO
-        temp1 = LOG(arg11)
-        DO nd=1,nbdirs
-          arg11d(nd) = pld%te(nd, icv)/ev
-          temp7 = rtd%rlsa(nd, icv, 1, is)
-          temp6 = arg11d(nd)/arg11
-          DO nd0=1,nbdirs0
-            arg11dd(nd0, nd) = pldd%te(nd0, nd, icv)/ev
-            arg2dd(nd0, nd) = rtdd%rlsa(nd0, nd, icv, 0, is) + temp7*&
-&             temp1d(nd0) + temp1*rtdd%rlsa(nd0, nd, icv, 1, is) + temp6&
-&             *rtd0%rlsa(nd0, icv, 1, is) + rt%rlsa(icv, 1, is)*(arg11dd&
-&             (nd0, nd)-temp6*arg11d0(nd0))/arg11
-          END DO
-          arg2d(nd) = rtd%rlsa(nd, icv, 0, is) + temp1*temp7 + rt%rlsa(&
-&           icv, 1, is)*temp6
-        END DO
-        DO nd0=1,nbdirs0
-          arg2d0(nd0) = rtd0%rlsa(nd0, icv, 0, is) + temp1*rtd0%rlsa(nd0&
-&           , icv, 1, is) + rt%rlsa(icv, 1, is)*temp1d(nd0)
-        END DO
-        arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
-        CALL EXPU_DV_DV(arg2, arg2d0, arg2d, arg2dd, dion, diond0, diond&
-&                 , diondd, nbdirs, nbdirs0)
-        IF (switch%afn_vnn .EQ. 1) THEN
-          temp1 = pl%tn(icv)/kbolt
-          DO nd0=1,nbdirs0
-!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-            temp1d(nd0) = pld0%tn(nd0, icv)/kbolt
-            temp2d(nd0) = 0.25_R8*temp1**(-0.75)*temp1d(nd0)
-          END DO
-          temp2 = temp1**0.25_R8
-          DO nd=1,nbdirs
-            temp7 = temp1**(-0.75)
-            temp6 = pl%na(icv, is)/kbolt
-            temp8 = temp6*pld%tn(nd, icv)
-            DO nd0=1,nbdirs0
-              vnndd(nd0, nd) = 1.0e-6_R8*5.2958e-11_R8*(0.25_R8*(temp7*(&
-&               pld%tn(nd, icv)*pld0%na(nd0, icv, is)/kbolt+temp6*pldd%&
-&               tn(nd0, nd, icv))-temp8*0.75*temp1**(-1.75)*temp1d(nd0))&
-&               +pld%na(nd, icv, is)*temp2d(nd0)+temp2*pldd%na(nd0, nd, &
-&               icv, is))
-            END DO
-            vnnd(nd) = 1.0e-6_R8*5.2958e-11_R8*(0.25_R8*(temp8*temp7)+&
-&             temp2*pld%na(nd, icv, is))
-          END DO
-          DO nd0=1,nbdirs0
-            vnnd0(nd0) = 1.0e-6_R8*5.2958e-11_R8*(pl%na(icv, is)*temp2d(&
-&             nd0)+temp2*pld0%na(nd0, icv, is))
-          END DO
-          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp2*pl%na(icv, is))
-        ELSE
-          vnn = 0.0_R8
-          vnnd = 0.d0
-          vnnd0 = 0.D0
-          vnndd = 0.D0
-        END IF
-!         ..Total coefficients
-! limit df0
-        result1 = SQRT(am(is))
-        temp0 = result1*result1*(vcx+dion*dv%ne(icv)+vnn)
-        temp9 = wrk0(icv)*wrk0(icv)/temp0
-        DO nd0=1,nbdirs0
-          temp0d(nd0) = result1**2*(vcxd0(nd0)+dv%ne(icv)*diond0(nd0)+&
-&           dion*dvd0%ne(nd0, icv)+vnnd0(nd0))
-          temp3d(nd0) = (2*wrk0(icv)*wrk0d0(nd0, icv)-temp9*temp0d(nd0))&
-&           /temp0
-        END DO
-        temp3 = temp9
-        DO nd=1,nbdirs
-          temp9 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, icv)&
-&           + vnnd(nd)
-          temp10 = (2*wrk0(icv)*wrk0d(nd, icv)-result1*result1*temp3*&
-&           temp9)/temp0
-          DO nd0=1,nbdirs0
-            df0dd(nd0, nd) = (wrk0d(nd, icv)*2*wrk0d0(nd0, icv)+2*wrk0(&
-&             icv)*wrk0dd(nd0, nd, icv)-result1**2*(temp9*temp3d(nd0)+&
-&             temp3*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0, icv)+dv%ne(&
-&             icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0(nd0)+dion*dvdd&
-&             %ne(nd0, nd, icv)+vnndd(nd0, nd)))-temp10*temp0d(nd0))/&
-&             temp0
-          END DO
-          df0d(nd) = temp10
-        END DO
-        DO nd0=1,nbdirs0
-          df0d0(nd0) = temp3d(nd0)
-        END DO
-        df0 = temp3
-        IF (switch%b2tqna_max_df0 .GT. df0) THEN
-          DO nd=1,nbdirs
-            DO nd0=nd,nbdirs0
-              y1dd(nd0, nd) = df0dd(nd0, nd)
-            END DO
-            y1d(nd) = df0d(nd)
-          END DO
-          DO nd0=1,nbdirs0
-            y1d0(nd0) = df0d0(nd0)
-          END DO
-          y1 = df0
-        ELSE
-          y1 = switch%b2tqna_max_df0
-          y1d = 0.d0
-          y1dd = 0.D0
-          y1d0 = 0.D0
-        END IF
-        IF (switch%b2tqna_min_df0 .LT. y1) THEN
-          DO nd=1,nbdirs
-            DO nd0=nd,nbdirs0
-              df0dd(nd0, nd) = y1dd(nd0, nd)
-            END DO
-            df0d(nd) = y1d(nd)
-          END DO
-          DO nd0=1,nbdirs0
-            df0d0(nd0) = y1d0(nd0)
-          END DO
-          df0 = y1
-        ELSE
-          df0 = switch%b2tqna_min_df0
-          df0d = 0.d0
-          df0dd = 0.D0
-          df0d0 = 0.D0
-        END IF
-        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
-          temp3 = vcx + dion*dv%ne(icv) + vnn
-          temp10 = df0*vnn/temp3
-          DO nd0=1,nbdirs0
-! assign fraction to density diffusion (nn-collisions)
-! based on ratio of ion/neutral collision frequency
-            temp3d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
-&             dvd0%ne(nd0, icv) + vnnd0(nd0)
-            temp0d(nd0) = (vnn*df0d0(nd0)+df0*vnnd0(nd0)-temp10*temp3d(&
-&             nd0))/temp3
-          END DO
-          temp0 = temp10
-          DO nd=1,nbdirs
-            temp10 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
-&             icv) + vnnd(nd)
-            temp9 = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*temp10)/temp3
-            DO nd0=1,nbdirs0
-              dna0dd(nd0, nd, icv, is) = (df0d(nd)*vnnd0(nd0)+vnn*df0dd(&
-&               nd0, nd)+vnnd(nd)*df0d0(nd0)+df0*vnndd(nd0, nd)-temp10*&
-&               temp0d(nd0)-temp0*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0&
-&               , icv)+dv%ne(icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0&
-&               (nd0)+dion*dvdd%ne(nd0, nd, icv)+vnndd(nd0, nd))-temp9*&
-&               temp3d(nd0))/temp3
-            END DO
-            dna0d(nd, icv, is) = temp9
-          END DO
-          dna0(icv, is) = temp0
-          temp3 = vcx + dion*dv%ne(icv) + vnn
-          temp2 = pl%tn(icv)*temp3
-          temp0 = vcx + dion*dv%ne(icv)
-          temp10 = df0*temp0/temp2
-          DO nd0=1,nbdirs0
-            dna0d0(nd0, icv, is) = temp0d(nd0)
-!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
-            temp3d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
-&             dvd0%ne(nd0, icv) + vnnd0(nd0)
-            temp2d(nd0) = temp3*pld0%tn(nd0, icv) + pl%tn(icv)*temp3d(&
-&             nd0)
-            temp0d(nd0) = vcxd0(nd0) + dv%ne(icv)*diond0(nd0) + dion*&
-&             dvd0%ne(nd0, icv)
-            temp4d(nd0) = (temp0*df0d0(nd0)+df0*temp0d(nd0)-temp10*&
-&             temp2d(nd0))/temp2
-          END DO
-          temp4 = temp10
-          DO nd=1,nbdirs
-            temp10 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
-&             icv)
-            temp9 = vcxd(nd) + dv%ne(icv)*diond(nd) + dion*dvd%ne(nd, &
-&             icv) + vnnd(nd)
-            temp11 = temp3*pld%tn(nd, icv) + pl%tn(icv)*temp9
-            temp12 = (temp0*df0d(nd)+df0*temp10-temp4*temp11)/temp2
-            DO nd0=1,nbdirs0
-              dpa0dd(nd0, nd, icv, is) = (df0d(nd)*temp0d(nd0)+temp0*&
-&               df0dd(nd0, nd)+temp10*df0d0(nd0)+df0*(vcxdd(nd0, nd)+&
-&               diond(nd)*dvd0%ne(nd0, icv)+dv%ne(icv)*diondd(nd0, nd)+&
-&               dvd%ne(nd, icv)*diond0(nd0)+dion*dvdd%ne(nd0, nd, icv))-&
-&               temp11*temp4d(nd0)-temp4*(pld%tn(nd, icv)*temp3d(nd0)+&
-&               temp3*pldd%tn(nd0, nd, icv)+temp9*pld0%tn(nd0, icv)+pl%&
-&               tn(icv)*(vcxdd(nd0, nd)+diond(nd)*dvd0%ne(nd0, icv)+dv%&
-&               ne(icv)*diondd(nd0, nd)+dvd%ne(nd, icv)*diond0(nd0)+dion&
-&               *dvdd%ne(nd0, nd, icv)+vnndd(nd0, nd)))-temp12*temp2d(&
-&               nd0))/temp2
-            END DO
-            dpa0d(nd, icv, is) = temp12
-          END DO
-          DO nd0=1,nbdirs0
-            dpa0d0(nd0, icv, is) = temp4d(nd0)
-          END DO
-          dpa0(icv, is) = temp4
-!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
-        ELSE
-          temp12 = df0/pl%tn(icv)
-          DO nd0=1,nbdirs0
-            temp4d(nd0) = (df0d0(nd0)-temp12*pld0%tn(nd0, icv))/pl%tn(&
-&             icv)
-          END DO
-          temp4 = temp12
-          DO nd=1,nbdirs
-            temp12 = (df0d(nd)-temp4*pld%tn(nd, icv))/pl%tn(icv)
-            DO nd0=1,nbdirs0
-              dpa0dd(nd0, nd, icv, is) = (df0dd(nd0, nd)-pld%tn(nd, icv)&
-&               *temp4d(nd0)-temp4*pldd%tn(nd0, nd, icv)-temp12*pld0%tn(&
-&               nd0, icv))/pl%tn(icv)
-            END DO
-            dpa0d(nd, icv, is) = temp12
-          END DO
-          DO nd0=1,nbdirs0
-            dpa0d0(nd0, icv, is) = temp4d(nd0)
-          END DO
-          dpa0(icv, is) = temp4
-        END IF
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            vsa0dd(nd0, nd, icv, is) = mp*am(is)*(pld%na(nd, icv, is)*&
-&             df0d0(nd0)+df0*pldd%na(nd0, nd, icv, is)+df0d(nd)*pld0%na(&
-&             nd0, icv, is)+pl%na(icv, is)*df0dd(nd0, nd))
-            hcibdd(nd0, nd, icv, is) = 2.5_R8*(pld%na(nd, icv, is)*df0d0&
-&             (nd0)+df0*pldd%na(nd0, nd, icv, is)+df0d(nd)*pld0%na(nd0, &
-&             icv, is)+pl%na(icv, is)*df0dd(nd0, nd))
-          END DO
-          vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
-&           icv, is)*df0d(nd))
-          hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
-&           , is)*df0d(nd))
-        END DO
-        DO nd0=1,nbdirs0
-          vsa0d0(nd0, icv, is) = mp*am(is)*(df0*pld0%na(nd0, icv, is)+pl&
-&           %na(icv, is)*df0d0(nd0))
-          hcibd0(nd0, icv, is) = 2.5_R8*(df0*pld0%na(nd0, icv, is)+pl%na&
-&           (icv, is)*df0d0(nd0))
-        END DO
-        vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
-        hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
-!
-!! end loop over cells
-      END DO
-!
-!   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
-&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
-&       'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
-&                                        'vla0 is not zero for neutrals'&
-&                                          //&
-&                                          'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
-&                                        'vma0 is not zero for neutrals'&
-&                                          //&
-&                                          'Recommended choice is zero!'
-    END IF
-!! end loop over species
-
-  END DO
-!
-!   ..recompute hci0, hcn0
-  hci0 = 0.0_R8
-  hcn0 = 0.0_R8
-  hci0d = 0.d0
-  hcn0d = 0.d0
-  hci0d0 = 0.D0
-  hcn0d0 = 0.D0
-  hci0dd = 0.D0
-  hcn0dd = 0.D0
-  DO is=0,ns-1
-!     ..compute hci0
-    IF (switch%tn_style .EQ. 0) THEN
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
-&           is)
-        END DO
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      DO nd0=1,nbdirs0
-        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    ELSE IF (switch%tn_style .EQ. 1) THEN
-      IF (.NOT.is_neutral(is)) THEN
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :&
-&             , is)
-          END DO
-          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-        END DO
-        hci0 = hci0 + hcib(:, is)
-      END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
-&           is)
-        END DO
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      DO nd0=1,nbdirs0
-        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    END IF
-!     ..compute hcn0
-    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          hcn0dd(nd0, nd, :) = hcn0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
-&           is)
-        END DO
-        hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      DO nd0=1,nbdirs0
-        hcn0d0(nd0, :) = hcn0d0(nd0, :) + hcibd0(nd0, :, is)
-      END DO
-      hcn0 = hcn0 + hcib(:, is)
-    END IF
-  END DO
-!
-!   ..return
-  CALL SUBEND()
-  RETURN
-END SUBROUTINE SET_TRANSPORT_AFN_DV_DV
-
-!  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
-!   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
-!                dpa0
-!   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
-!                pl.na:in pl.te:in pl.ti:in pl.tn:in
-!
-!
-!**************************************************************************************
-!*****************     New KU Leuven transport model for neutrals *********************
-!**************************************************************************************
-SUBROUTINE SET_TRANSPORT_AFN_DV_NODIFF(ncv, ns, nscx, iscx, switch, &
-& switchd, pl, pld, dv, dvd, rt, rtd, dna0, dna0d, dpa0, dpa0d, vla0, &
-& vma0, vsa0, vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
-  USE B2MOD_TYPES
-  USE B2MOD_MATH_DIFFV_DIFFV
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
-  USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPT_DIFFV_DIFFV
-  USE B2MOD_RATES
-  USE B2MOD_TRANSPORT_NAMELIST_DIFFV_DIFFV
-  USE B2MOD_SWITCHES_DIFFV_DIFFV
-  USE B2US_PLASMA_DIFFV_DIFFV
-  USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array arg1
-!  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2MOD_B2CMPA_DIFFV, ONLY : is_neutral
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : ft_ds_omp, ft_ds_imp
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+  INTEGER, INTENT(IN) :: ncv, ns
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  LOGICAL :: cond
 !
-!   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
-  TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
-  TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  REAL(kind=r8) :: t_av, df0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: t_avd, df0d
-!   ..input/output arguments
-  REAL(kind=r8), INTENT(INOUT) :: hci0(ncv), hcn0(ncv), hcib(ncv, 0:ns-1&
-& )
-  REAL(kind=r8), INTENT(INOUT) :: hci0d(nbdirsmax, ncv), hcn0d(nbdirsmax&
-& , ncv), hcibd(nbdirsmax, ncv, 0:ns-1)
-!   ..output arguments (unspecified on entry)
-!srv 15.12.05
-  REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
-& 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
-& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
-!   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
-  REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
-& nbdirsmax), vnnd(nbdirsmax)
-  INTEGER :: is, k, ic, icv
-  INTRINSIC NINT
-  INTRINSIC SQRT
-  INTRINSIC LOG
+  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hcib(ncv, 0:ns-&
+& 1), hce0(ncv), vla0(ncv, 0:1, 0:ns-1), sig0(ncv), alf0(ncv), hci0(ncv)
+!
+  INTEGER :: ift, is, icv, icv2, ifc
   INTRINSIC MIN
-  INTRINSIC ANY
-  REAL(kind=r8) :: y1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
-  REAL(r8), DIMENSION(ncv) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
-  REAL(kind=r8) :: arg10
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(r8) :: arg2
-  REAL(r8), DIMENSION(nbdirsmax) :: arg2d
-  REAL(kind=r8) :: result1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
-  REAL(r8) :: arg11
-  REAL(r8), DIMENSION(nbdirsmax) :: arg11d
-  INTEGER :: nd
-  REAL(r8), DIMENSION(ncv) :: temp
-  REAL(kind=r8) :: temp0
-  REAL(r8) :: temp1
-  REAL(r8) :: temp2
-  REAL(kind=r8) :: temp3
-  REAL(kind=r8) :: temp4
-  INTEGER :: nbdirs
+  INTRINSIC MOD
 !
-!   ..subprogram start-up calls
-  CALL SUBINI('set_transport_afn')
-  DO is=0,ns-1
-    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-! only for hydrogenic species
-!
-      k = 0
-      DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
-        k = k + 1
-      END DO
-      CALL XERTST(k .LT. nscx, 'CX species index not found!')
-      arg1 = pl%tn/mp
-      temp = SQRT(arg1)
-      DO nd=1,nbdirs
-!
-        arg1d(nd, :) = pld%tn(nd, :)/mp
-        WHERE (arg1 .EQ. 0.d0) 
-          wrk0d(nd, :) = 0.d0
-        ELSEWHERE
-          wrk0d(nd, :) = arg1d(nd, :)/(2.0*temp)
-        END WHERE
-      END DO
-      wrk0 = temp
-      DO icv=1,ncv
-        vcx = 0.0_R8
-        vcxd = 0.d0
-        DO ic=0,ns-1
-          t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
-          arg10 = t_av/(am(is)*ev)
-          temp0 = LOG(arg10)
-          temp1 = rt%rlcx(icv, 1, ic, k)
-          DO nd=1,nbdirs
-            t_avd(nd) = 0.5_R8*(pld%ti(nd, icv)+pld%tn(nd, icv))
-            arg10d(nd) = t_avd(nd)/(am(is)*ev)
-            arg2d(nd) = rtd%rlcx(nd, icv, 0, ic, k) + temp0*rtd%rlcx(nd&
-&             , icv, 1, ic, k) + temp1*arg10d(nd)/arg10
-          END DO
-          arg2 = rt%rlcx(icv, 0, ic, k) + temp1*temp0
-          CALL EXPU_DV(arg2, arg2d, result1, result1d, nbdirs)
-          DO nd=1,nbdirs
-            vcxd(nd) = vcxd(nd) + result1*pld%na(nd, icv, ic) + pl%na(&
-&             icv, ic)*result1d(nd)
-          END DO
-          vcx = vcx + pl%na(icv, ic)*result1
-        END DO
-        arg11 = pl%te(icv)/ev
-        temp1 = LOG(arg11)
-        DO nd=1,nbdirs
-          arg11d(nd) = pld%te(nd, icv)/ev
-          arg2d(nd) = rtd%rlsa(nd, icv, 0, is) + temp1*rtd%rlsa(nd, icv&
-&           , 1, is) + rt%rlsa(icv, 1, is)*arg11d(nd)/arg11
-        END DO
-        arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
-        CALL EXPU_DV(arg2, arg2d, dion, diond, nbdirs)
-        IF (switch%afn_vnn .EQ. 1) THEN
-!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-          temp1 = pl%tn(icv)/kbolt
-          temp2 = temp1**0.25_R8
-          DO nd=1,nbdirs
-            vnnd(nd) = 5.2958e-11_R8*1.0e-6_R8*(pl%na(icv, is)*0.25_R8*&
-&             temp1**(-0.75)*pld%tn(nd, icv)/kbolt+temp2*pld%na(nd, icv&
-&             , is))
-          END DO
-          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp2*pl%na(icv, is))
-        ELSE
-          vnn = 0.0_R8
-          vnnd = 0.d0
-        END IF
-!         ..Total coefficients
-! limit df0
-        result1 = SQRT(am(is))
-        temp0 = result1*result1*(vcx+dion*dv%ne(icv)+vnn)
-        temp3 = wrk0(icv)*wrk0(icv)/temp0
-        DO nd=1,nbdirs
-          df0d(nd) = (2*wrk0(icv)*wrk0d(nd, icv)-temp3*result1**2*(vcxd(&
-&           nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
-&           temp0
-        END DO
-        df0 = temp3
-        IF (switch%b2tqna_max_df0 .GT. df0) THEN
-          DO nd=1,nbdirs
-            y1d(nd) = df0d(nd)
-          END DO
-          y1 = df0
-        ELSE
-          y1 = switch%b2tqna_max_df0
-          y1d = 0.d0
-        END IF
-        IF (switch%b2tqna_min_df0 .LT. y1) THEN
-          DO nd=1,nbdirs
-            df0d(nd) = y1d(nd)
-          END DO
-          df0 = y1
-        ELSE
-          df0 = switch%b2tqna_min_df0
-          df0d = 0.d0
-        END IF
-        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
-! assign fraction to density diffusion (nn-collisions)
-! based on ratio of ion/neutral collision frequency
-          temp3 = vcx + dion*dv%ne(icv) + vnn
-          temp0 = df0*vnn/temp3
-          DO nd=1,nbdirs
-            dna0d(nd, icv, is) = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*(vcxd(&
-&             nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
-&             temp3
-          END DO
-          dna0(icv, is) = temp0
-!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
-          temp3 = vcx + dion*dv%ne(icv) + vnn
-          temp2 = pl%tn(icv)*temp3
-          temp0 = vcx + dion*dv%ne(icv)
-          temp4 = df0*temp0/temp2
-          DO nd=1,nbdirs
-            dpa0d(nd, icv, is) = (temp0*df0d(nd)+df0*(vcxd(nd)+dv%ne(icv&
-&             )*diond(nd)+dion*dvd%ne(nd, icv))-temp4*(temp3*pld%tn(nd, &
-&             icv)+pl%tn(icv)*(vcxd(nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne&
-&             (nd, icv)+vnnd(nd))))/temp2
-          END DO
-          dpa0(icv, is) = temp4
-!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
-        ELSE
-          temp4 = df0/pl%tn(icv)
-          DO nd=1,nbdirs
-            dpa0d(nd, icv, is) = (df0d(nd)-temp4*pld%tn(nd, icv))/pl%tn(&
-&             icv)
-          END DO
-          dpa0(icv, is) = temp4
-        END IF
-        DO nd=1,nbdirs
-          vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
-&           icv, is)*df0d(nd))
-          hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
-&           , is)*df0d(nd))
-        END DO
-        vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
-        hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
-!
-!! end loop over cells
-      END DO
-!
-!   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
-&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
-&       'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
-&                                        'vla0 is not zero for neutrals'&
-&                                          //&
-&                                          'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
-&                                        'vma0 is not zero for neutrals'&
-&                                          //&
-&                                          'Recommended choice is zero!'
-    END IF
-!! end loop over species
-
-  END DO
-!
-!   ..recompute hci0, hcn0
-  hci0 = 0.0_R8
-  hcn0 = 0.0_R8
-  hci0d = 0.d0
-  hcn0d = 0.d0
-  DO is=0,ns-1
-!     ..compute hci0
-    IF (switch%tn_style .EQ. 0) THEN
-      DO nd=1,nbdirs
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    ELSE IF (switch%tn_style .EQ. 1) THEN
-      IF (.NOT.is_neutral(is)) THEN
-        DO nd=1,nbdirs
-          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-        END DO
-        hci0 = hci0 + hcib(:, is)
+  DO icv=1,ncv
+    IF (icv .LE. mpg%nci) THEN
+      ift = mpg%cvft(icv)
+      icv2 = icv
+    ELSE
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv2 = mpg%fccv(ifc, 2)
+      ELSE
+        icv2 = mpg%fccv(ifc, 1)
       END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-      DO nd=1,nbdirs
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
+      ift = mpg%cvft(icv2)
     END IF
-!     ..compute hcn0
-    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-      DO nd=1,nbdirs
-        hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
+! special treatment for sig0 and al0
+    IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) .EQ. 0&
+&   ) THEN
+! special case for divertor regions
+      DO is=1,ns-1
+        IF (.NOT.is_neutral(is)) THEN
+! div SOL LFS
+! div SOL HFS
+! PFR
+          cond = ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. &
+&           ft_ds_omp(ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch&
+&           %hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .OR. mpg%&
+&           ftreg(ift) .EQ. 3
+          IF (switch%na_alfa4 .GT. 0.0_R8) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa4
+          ELSE IF (cond) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+          ELSE
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+          END IF
+          IF (switch%vsa_alfa4 .GT. 0.0_R8) THEN
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa4
+          ELSE IF (cond) THEN
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+          ELSE
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+          END IF
+          IF (switch%ti_alfa4 .GT. 0.0_R8) THEN
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa4
+          ELSE IF (cond) THEN
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+          ELSE
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+          END IF
+          IF (switch%vla_alfa4 .GT. 0.0_R8) THEN
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa4
+          ELSE IF (cond) THEN
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          ELSE
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END IF
       END DO
-      hcn0 = hcn0 + hcib(:, is)
+      IF (switch%te_alfa4 .GT. 0.0_R8) THEN
+        hce0(icv) = hce0(icv)*switch%te_alfa4
+      ELSE IF (cond) THEN
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      END IF
+    ELSE IF (.NOT.(ft_ds_omp(ift) .LE. -switch%bar_width .AND. ft_ds_omp&
+&       (ift) .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2))) THEN
+! do nothing in core outside barrier
+      IF (ft_ds_omp(ift) .GT. -switch%bar_width .AND. ft_ds_omp(ift) &
+&         .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+! transport barrier
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa1
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa1
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa1
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa1
+          END IF
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa1
+      ELSE IF ((ft_ds_omp(ift) .LE. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GE. 0.0_R8)) THEN
+! inner SOL LFS
+! inner SOL HFS
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa2
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa2
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa2
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa2
+          END IF
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa2
+      ELSE IF ((ft_ds_omp(ift) .GT. switch%lfs_sol_width .AND. ft_ds_omp&
+&         (ift) .GT. 0.0_R8) .OR. (ft_ds_imp(ift) .GT. switch%&
+&         hfs_sol_width .AND. ft_ds_imp(ift) .GT. 0.0_R8)) THEN
+! outer SOL LFS
+! outer SOL HFS
+!
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE IF (ft_ds_omp(ift) .EQ. -999.0_R8 .AND. ft_ds_imp(ift) .EQ. -&
+&         999.0_R8) THEN
+! assume that only far SOL is left
+        DO is=1,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            dna0(icv, is) = dna0(icv, is)*switch%na_alfa3
+            vsa0(icv, is) = vsa0(icv, is)*switch%vsa_alfa3
+            hcib(icv, is) = hcib(icv, is)*switch%ti_alfa3
+            vla0(icv, 1, is) = vla0(icv, 1, is)*switch%vla_alfa3
+          END IF
+        END DO
+        hce0(icv) = hce0(icv)*switch%te_alfa3
+      ELSE
+        WRITE(*, '(a,1i6,1i4,2es12.3,a)') 'b2tqna: iCv,iFt,ds_o,imp=', &
+&       icv, ift, ft_ds_omp(ift), ft_ds_imp(ift), ' was not detected!'
+      END IF
+    END IF
+! transport barrier
+    IF (ft_ds_omp(ift) .GT. -switch%sig_bar_width .AND. ft_ds_omp(ift) &
+&       .LE. 0.0_R8 .AND. mpg%cvonclosedsurface(icv2)) THEN
+      sig0(icv) = sig0(icv)*switch%sig_alfa1
+      alf0(icv) = alf0(icv)*switch%sig_alfa1
+    ELSE IF (((ft_ds_omp(ift) .LE. switch%sig_sol_width .AND. ft_ds_omp(&
+&       ift) .GE. 0.0_R8) .OR. (ft_ds_imp(ift) .LE. switch%sig_sol_width&
+&       .AND. ft_ds_imp(ift) .GE. 0.0_R8)) .AND. MOD(mpg%cvreg(icv), 4) &
+&       .EQ. 2) THEN
+! inner SOL LFS
+! inner SOL HFS
+      sig0(icv) = sig0(icv)*switch%sig_alfa2
+      alf0(icv) = alf0(icv)*switch%sig_alfa2
     END IF
   END DO
 !
-!   ..return
-  CALL SUBEND()
-  RETURN
-END SUBROUTINE SET_TRANSPORT_AFN_DV_NODIFF
+  hci0 = 0.0_R8
+  DO is=1,ns-1
+    hci0 = hci0 + hcib(:, is)
+  END DO
+!
+
+END SUBROUTINE SET_TRANSPORT_SRV_NODIFF_NODIFF
 
 !
 !
@@ -5074,1358 +7503,6 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF_NODIFF(ncv, ns, nscx, iscx, switch, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE SET_TRANSPORT_AFN_NODIFF_NODIFF
-
-!  Differentiation of set_transport_keps_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: dkt0d hce_exbd hce_exb hci0
-!                vsa0 hci_exbd sig0 dna0d alf0 hcibd sig0d hce0d
-!                vsa0d dna_exb hcib dna_exbd dna0 dzt0d dkt0 alf0d
-!                hce0 dzt0 hci0d hci_exb
-!   with respect to varying inputs: dkt0d hce_exbd hce_exb vsa0
-!                sig0 dna0d *(dv.ne) *(dv.vaecrb) alf0 hcibd sig0d
-!                hce0d vsa0d *(rtd.rza) *(rt.rza) dna_exb hcib
-!                dna_exbd *(dvd.ne) *(dvd.vaecrb) dna0 dzt0d dkt0
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                alf0d *(pld.na) *(pld.te) *(pld.ti) *(pld.kt)
-!                *(pld.zt) *(pl.na) *(pl.te) *(pl.ti) *(pl.kt)
-!                *(pl.zt) hce0 dzt0
-!   Plus diff mem management of: dv.ne:in dv.vaecrb:in geo.cvbb:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fcvol:in
-!                geo.fcqalf:in rtd.rza:in rt.rza:in dvd.ne:in dvd.vaecrb:in
-!                pld.na:in pld.te:in pld.ti:in pld.kt:in pld.zt:in
-!                pl.na:in pl.te:in pl.ti:in pl.kt:in pl.zt:in
-!  Differentiation of set_transport_keps in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hce_exb hci0 vsa0 sig0 alf0
-!                dna_exb hcib dna0 dkt0 hce0 dzt0 hci_exb
-!   with respect to varying inputs: hce_exb vsa0 sig0 *(dv.ne)
-!                *(dv.vaecrb) alf0 *(rt.rza) dna_exb hcib dna0
-!                dkt0 switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                *(pl.na) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt) hce0
-!                dzt0
-!   Plus diff mem management of: dv.ne:in dv.vaecrb:in mpg.intcellr:in
-!                geo.cvbb:in geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fcvol:in geo.fcqalf:in rt.rza:in pl.na:in
-!                pl.te:in pl.ti:in pl.kt:in pl.zt:in
-!
-SUBROUTINE SET_TRANSPORT_KEPS_DV_DV(ncv, nfc, nvx, ns, ismain, switch, &
-& switchd0, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, pld, pldd, &
-& dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, dna0, dna0d0, dna0d, dna0dd&
-& , vsa0, vsa0d0, vsa0d, vsa0dd, hce0, hce0d0, hce0d, hce0dd, hci0, &
-& hci0d0, hci0d, hci0dd, hcib, hcibd0, hcibd, hcibdd, sig0, sig0d0, &
-& sig0d, sig0dd, alf0, alf0d0, alf0d, alf0dd, dkt0, dkt0d0, dkt0d, &
-& dkt0dd, dzt0, dzt0d0, dzt0d, dzt0dd, dna_exb, dna_exbd0, dna_exbd, &
-& dna_exbdd, hce_exb, hce_exbd0, hce_exbd, hce_exbdd, hci_exb, hci_exbd0&
-& , hci_exbd, hci_exbdd, nbdirs, nbdirs0)
-  USE B2MOD_TYPES
-  USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2US_GEO_DIFFV_DIFFV
-  USE B2US_MAP_DIFFV_DIFFV
-  USE B2US_PLASMA_DIFFV_DIFFV
-  USE B2MOD_SWITCHES_DIFFV_DIFFV
-  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : nomp, omp, icsepomp
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
-  USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder
-  USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array arg1
-!  Hint: nCv should be the size of dimension 1 of array result1
-!  Hint: nCv should be the size of dimension 1 of array cvbb
-!  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
-!  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
-  IMPLICIT NONE
-!   ..input arguments (unchanged on exit)
-  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
-  TYPE(SWITCHES), INTENT(INOUT) :: switch
-  TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
-  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-  TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
-  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2PLASMA_DIFFV_DIFFV), INTENT(IN) :: pldd
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV0), INTENT(IN) :: dvd0
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
-  TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(IN) :: dvdd
-  TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
-  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2RATES_DIFFV_DIFFV), INTENT(IN) :: rtdd
-!   ..input/output arguments
-  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib&
-& (ncv, 0:ns-1), sig0(ncv), alf0(ncv), hce0(ncv), dkt0(ncv), dzt0(ncv), &
-& dna_exb(ncv), hce_exb(ncv), hci_exb(ncv), rhol(ncv)
-  REAL(kind=r8) :: dna0d0(nbdirsmax0, ncv, 0:ns-1), vsa0d0(nbdirsmax0, &
-& ncv, 0:ns-1), hci0d0(nbdirsmax0, ncv), hcibd0(nbdirsmax0, ncv, 0:ns-1)&
-& , sig0d0(nbdirsmax0, ncv), alf0d0(nbdirsmax0, ncv), hce0d0(nbdirsmax0&
-& , ncv), dkt0d0(nbdirsmax0, ncv), dzt0d0(nbdirsmax0, ncv), dna_exbd0(&
-& nbdirsmax0, ncv), hce_exbd0(nbdirsmax0, ncv), hci_exbd0(nbdirsmax0, &
-& ncv), rhold0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
-& 0:ns-1), hci0d(nbdirsmax, ncv), hcibd(nbdirsmax, ncv, 0:ns-1), sig0d(&
-& nbdirsmax, ncv), alf0d(nbdirsmax, ncv), hce0d(nbdirsmax, ncv), dkt0d(&
-& nbdirsmax, ncv), dzt0d(nbdirsmax, ncv), dna_exbd(nbdirsmax, ncv), &
-& hce_exbd(nbdirsmax, ncv), hci_exbd(nbdirsmax, ncv), rhold(nbdirsmax, &
-& ncv)
-  REAL(kind=r8) :: dna0dd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), vsa0dd(&
-& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), hci0dd(nbdirsmax0, nbdirsmax, ncv&
-& ), hcibdd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), sig0dd(nbdirsmax0, &
-& nbdirsmax, ncv), alf0dd(nbdirsmax0, nbdirsmax, ncv), hce0dd(nbdirsmax0&
-& , nbdirsmax, ncv), dkt0dd(nbdirsmax0, nbdirsmax, ncv), dzt0dd(&
-& nbdirsmax0, nbdirsmax, ncv), dna_exbdd(nbdirsmax0, nbdirsmax, ncv), &
-& hce_exbdd(nbdirsmax0, nbdirsmax, ncv), hci_exbdd(nbdirsmax0, nbdirsmax&
-& , ncv), rholdd(nbdirsmax0, nbdirsmax, ncv)
-!   ..local variables
-  INTEGER :: is
-  REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
-  REAL(kind=r8) :: wrkfd0(nbdirsmax0, nfc), wrkcd0(nbdirsmax0, ncv), &
-& sheard0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), sheard(&
-& nbdirsmax, ncv)
-  REAL(kind=r8) :: wrkfdd(nbdirsmax0, nbdirsmax, nfc), wrkcdd(nbdirsmax0&
-& , nbdirsmax, ncv), sheardd(nbdirsmax0, nbdirsmax, ncv)
-  INTRINSIC SQRT
-  INTRINSIC ABS
-  EXTERNAL XERRAB
-  INTRINSIC NINT
-  INTRINSIC MIN
-  REAL(kind=r8), DIMENSION(ncv) :: dabs0
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs0d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs0dd
-  REAL(kind=r8) :: dabs1
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: dabs1d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: dabs1dd
-  REAL(kind=r8), DIMENSION(ncv) :: dabs2
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs2d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs2dd
-  REAL(kind=r8), DIMENSION(ncv) :: dabs3
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs3d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs3dd
-  REAL(r8), DIMENSION(ncv) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg1d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg1dd
-  REAL(kind=r8), DIMENSION(ncv) :: result1
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: result1d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result1d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result1dd
-  REAL(r8) :: arg10
-  REAL(r8), DIMENSION(nbdirsmax0) :: arg10d0
-  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg10dd
-  REAL(kind=r8) :: result10
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result10d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result10dd
-  REAL(r8), DIMENSION(ncv) :: arg11
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg11d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg11d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg11dd
-  REAL(r8), DIMENSION(ncv) :: result11
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: result11d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result11dd
-  REAL(r8), DIMENSION(ncv) :: arg12
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: arg12d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg12d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg12dd
-  REAL(r8), DIMENSION(ncv) :: result12
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: result12d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result12d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result12dd
-  REAL(kind=r8), DIMENSION(ncv) :: arg13
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: arg13d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg13d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: arg13dd
-  REAL(kind=r8), DIMENSION(ncv) :: result13
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: result13d0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result13d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: result13dd
-  INTEGER :: nd
-  REAL(kind=r8), DIMENSION(ncv) :: temp
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: tempd
-  REAL(kind=r8) :: temp0
-  REAL(kind=r8) :: temp1
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp1d
-  REAL(r8), DIMENSION(ncv) :: temp2
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp2d
-  REAL(kind=r8), DIMENSION(ncv) :: temp3
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp3d
-  REAL(kind=r8), DIMENSION(ncv) :: temp4
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp4d
-  REAL(r8), DIMENSION(ncv) :: temp5
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: temp5d
-  REAL(kind=r8), DIMENSION(ncv) :: temp6
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp6d
-  REAL(r8) :: temp7
-  REAL(r8), DIMENSION(nbdirsmax0) :: temp7d
-  INTEGER :: nbdirs
-  INTEGER :: nd0
-  REAL(r8), DIMENSION(ncv) :: temp8
-  REAL(kind=r8), DIMENSION(ncv) :: temp9
-  REAL(kind=r8), DIMENSION(ncv) :: temp10
-  REAL(r8) :: temp11
-  REAL(kind=r8) :: temp12
-  REAL(kind=r8) :: temp13
-  REAL(r8), DIMENSION(ncv) :: temp14
-  REAL(r8), DIMENSION(ncv) :: temp15
-  REAL(r8), DIMENSION(nCv) :: temp16
-  INTEGER :: nbdirs0
-!
-!   ..subprogram start-up calls
-  CALL SUBINI('set_transport_keps')
-  IF (ncall_transp_keps .EQ. 0) THEN
-    IF (switch%keps_local .NE. 1) THEN
-      CALL XERTST(nomp .GT. 0, &
-&           'No CVs in omp list, check rzomp in b2.user.parameters')
-      CALL XERTST(icsepomp .GT. 0, &
-&           'Invalid icsepomp value, check rzomp in b2.user.parameters')
-    END IF
-  END IF
-  hci_exb = 0.0_R8
-  hci_exbd = 0.d0
-  dabs0d = 0.d0
-  dabs2d = 0.d0
-  dabs3d = 0.d0
-  hci_exbdd = 0.D0
-  hci_exbd0 = 0.D0
-  result13dd = 0.D0
-  result10dd = 0.D0
-  arg1dd = 0.D0
-  dabs0d0 = 0.D0
-  dabs2d0 = 0.D0
-  dabs3d0 = 0.D0
-  dabs2dd = 0.D0
-  arg11dd = 0.D0
-  result11dd = 0.D0
-  dabs3dd = 0.D0
-  arg12dd = 0.D0
-  dabs0dd = 0.D0
-  wrkfdd = 0.D0
-  result12dd = 0.D0
-  rholdd = 0.D0
-  arg13dd = 0.D0
-  result1dd = 0.D0
-  dabs1dd = 0.D0
-  arg10dd = 0.D0
-  DO is=0,ns-1
-    IF (.NOT.is_neutral(is)) THEN
-      IF (switch%keps_local .EQ. 1) THEN
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0dd(&
-&             nd0, nd, :) = qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd, :, &
-&               ismain)
-          END DO
-          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
-&           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d0(&
-&           nd0, :) = qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, ismain)
-        END DO
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
-&           rza(:, ismain)*qe*geo%cvbb(:, 3)
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
-&             dabs0dd(nd0, nd, :) = -(qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd&
-&               , :, ismain))
-          END DO
-          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
-&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
-&           dabs0d0(nd0, :) = -(qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, &
-&             ismain))
-        END DO
-        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
-&          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
-        arg1 = 2.0_R8*pl%ti/(am(ismain)*mp)
-        temp8 = SQRT(arg1)
-        DO nd0=1,nbdirs0
-          arg1d0(nd0, :) = 2.0_R8*pld0%ti(nd0, :)/(am(ismain)*mp)
-          WHERE (arg1 .EQ. 0.D0) 
-            tempd(nd0, :) = 0.D0
-          ELSEWHERE
-            tempd(nd0, :) = arg1d0(nd0, :)/(2.0*temp8)
-          END WHERE
-          result1d0(nd0, :) = tempd(nd0, :)
-        END DO
-        temp = temp8
-        result1 = temp
-        DO nd=1,nbdirs
-!   ..compute local Larmor radius
-          DO nd0=1,nbdirs0
-            arg1dd(nd0, nd, :) = 2.0_R8*pldd%ti(nd0, nd, :)/(am(ismain)*&
-&             mp)
-          END DO
-          arg1d(nd, :) = 2.0_R8*pld%ti(nd, :)/(am(ismain)*mp)
-          DO nd0=1,nbdirs0
-            WHERE (arg1 .EQ. 0.d0) result1dd(nd0, nd, :) = 0.D0
-          END DO
-          WHERE (arg1 .EQ. 0.d0) 
-            result1d(nd, :) = 0.d0
-          ELSEWHERE
-            temp8 = arg1d(nd, :)/(2.0*temp)
-          END WHERE
-          DO nd0=1,nbdirs0
-            WHERE (.NOT.arg1 .EQ. 0.d0) result1dd(nd0, nd, :) = (arg1dd(&
-&               nd0, nd, :)-temp8*2.0*tempd(nd0, :))/(2.0*temp)
-          END DO
-          WHERE (.NOT.arg1 .EQ. 0.d0) result1d(nd, :) = temp8
-          temp9 = result1/dabs0
-          temp10 = (result1d(nd, :)-dabs0d(nd, :)*temp9)/dabs0
-          DO nd0=1,nbdirs0
-            rholdd(nd0, nd, :) = am(ismain)*mp*(result1dd(nd0, nd, :)-&
-&             temp9*dabs0dd(nd0, nd, :)-dabs0d(nd, :)*(result1d0(nd0, :)&
-&             -temp9*dabs0d0(nd0, :))/dabs0-temp10*dabs0d0(nd0, :))/&
-&             dabs0
-          END DO
-          rhold(nd, :) = am(ismain)*mp*temp10
-        END DO
-        DO nd0=1,nbdirs0
-          rhold0(nd0, :) = am(ismain)*mp*(result1d0(nd0, :)-result1*&
-&           dabs0d0(nd0, :)/dabs0)/dabs0
-        END DO
-        rhol = am(ismain)*mp*result1/dabs0
-      ELSE
-        IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
-&           .GE. 0.) THEN
-          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
-          DO nd=1,nbdirs
-            DO nd0=nd,nbdirs0
-              dabs1dd(nd0, nd) = temp0*rtdd%rza(nd0, nd, omp(icsepomp), &
-&               ismain)
-            END DO
-            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
-          END DO
-          DO nd0=1,nbdirs0
-            dabs1d0(nd0) = temp0*rtd0%rza(nd0, omp(icsepomp), ismain)
-          END DO
-          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
-        ELSE
-          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
-          DO nd=1,nbdirs
-            DO nd0=nd,nbdirs0
-              dabs1dd(nd0, nd) = -(temp0*rtdd%rza(nd0, nd, omp(icsepomp)&
-&               , ismain))
-            END DO
-            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
-          END DO
-          DO nd0=1,nbdirs0
-            dabs1d0(nd0) = -(temp0*rtd0%rza(nd0, omp(icsepomp), ismain))
-          END DO
-          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
-        END IF
-        arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
-        temp11 = SQRT(arg10)
-        DO nd0=1,nbdirs0
-          arg10d0(nd0) = 2.0_R8*pld0%ti(nd0, omp(icsepomp))/(am(ismain)*&
-&           mp)
-          IF (arg10 .EQ. 0.D0) THEN
-            temp1d(nd0) = 0.D0
-          ELSE
-            temp1d(nd0) = arg10d0(nd0)/(2.0*temp11)
-          END IF
-          result10d0(nd0) = temp1d(nd0)
-        END DO
-        temp1 = temp11
-        result10 = temp1
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            arg10dd(nd0, nd) = 2.0_R8*pldd%ti(nd0, nd, omp(icsepomp))/(&
-&             am(ismain)*mp)
-          END DO
-          arg10d(nd) = 2.0_R8*pld%ti(nd, omp(icsepomp))/(am(ismain)*mp)
-          IF (arg10 .EQ. 0.d0) THEN
-            DO nd0=1,nbdirs0
-              result10dd(nd0, nd) = 0.D0
-            END DO
-            result10d(nd) = 0.d0
-          ELSE
-            temp11 = arg10d(nd)/(2.0*temp1)
-            DO nd0=1,nbdirs0
-              result10dd(nd0, nd) = (arg10dd(nd0, nd)-temp11*2.0*temp1d(&
-&               nd0))/(2.0*temp1)
-            END DO
-            result10d(nd) = temp11
-          END IF
-          temp12 = result10/dabs1
-          temp13 = (result10d(nd)-dabs1d(nd)*temp12)/dabs1
-          DO nd0=1,nbdirs0
-            rholdd(nd0, nd, :) = am(ismain)*mp*(result10dd(nd0, nd)-&
-&             temp12*dabs1dd(nd0, nd)-dabs1d(nd)*(result10d0(nd0)-temp12&
-&             *dabs1d0(nd0))/dabs1-temp13*dabs1d0(nd0))/dabs1
-          END DO
-          rhold(nd, :) = am(ismain)*mp*temp13
-        END DO
-        DO nd0=1,nbdirs0
-          rhold0(nd0, :) = am(ismain)*mp*(result10d0(nd0)-result10*&
-&           dabs1d0(nd0)/dabs1)/dabs1
-        END DO
-        rhol = am(ismain)*mp*result10/dabs1
-      END IF
-!       ..compute radial shear of diamagnetic ExB velocity
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          wrkfdd(nd0, nd, :) = geo%fcbb(:, 3)*dvdd%vaecrb(nd0, nd, :, 0&
-&           , ismain)/geo%fcbb(:, 2)
-        END DO
-        wrkfd(nd, :) = geo%fcbb(:, 3)*dvd%vaecrb(nd, :, 0, ismain)/geo%&
-&         fcbb(:, 2)
-      END DO
-      DO nd0=1,nbdirs0
-        wrkfd0(nd0, :) = geo%fcbb(:, 3)*dvd0%vaecrb(nd0, :, 0, ismain)/&
-&         geo%fcbb(:, 2)
-      END DO
-      wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
-      wrkcd = 0.d0
-      wrkcd0 = 0.D0
-      wrkcdd = 0.D0
-      CALL INTCELL_DV_DV(nfc, ncv, mpg, mpg%intcellr, wrkf, wrkfd0, &
-&                  wrkfd, wrkfdd, wrkc, wrkcd0, wrkcd, wrkcdd, nbdirs, &
-&                  nbdirs0)
-      sheard = 0.d0
-      sheardd = 0.D0
-      sheard0 = 0.D0
-      CALL GRADC_DIV_R_DV_DV(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrkc, &
-&                      wrkcd0, wrkcd, wrkcdd, wrkf, wrkfd0, wrkfd, &
-&                      wrkfdd, shear, sheard0, sheard, sheardd, nbdirs, &
-&                      nbdirs0)
-      IF (switch%transport_keps .EQ. 1) THEN
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (shear .GE. 0.) dabs2dd(nd0, nd, :) = sheardd(nd0, nd&
-&               , :)
-          END DO
-          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (shear .GE. 0.) dabs2d0(nd0, :) = sheard0(nd0, :)
-        END DO
-        WHERE (shear .GE. 0.) dabs2 = shear
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (.NOT.shear .GE. 0.) dabs2dd(nd0, nd, :) = -sheardd(&
-&               nd0, nd, :)
-          END DO
-          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (.NOT.shear .GE. 0.) dabs2d0(nd0, :) = -sheard0(nd0, :)
-        END DO
-        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
-        arg11 = pl%kt/(am(ismain)*mp)
-        temp8 = SQRT(arg11)
-        temp2 = temp8
-        result11 = temp2
-        temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
-&         keps_shear*dabs2)
-        temp10 = switch%keps_cd/temp3
-        DO nd0=1,nbdirs0
-          arg11d0(nd0, :) = pld0%kt(nd0, :)/(am(ismain)*mp)
-          WHERE (arg11 .EQ. 0.D0) 
-            temp2d(nd0, :) = 0.D0
-          ELSEWHERE
-            temp2d(nd0, :) = arg11d0(nd0, :)/(2.0*temp8)
-          END WHERE
-          result11d0(nd0, :) = temp2d(nd0, :)
-          temp3d(nd0, :) = am(ismain)*mp*((result11d0(nd0, :)-result11*&
-&           rhold0(nd0, :)/rhol)/rhol+dabs2*switchd0%keps_shear(nd0)+&
-&           switch%keps_shear*dabs2d0(nd0, :))
-          temp4d(nd0, :) = temp10*pld0%kt(nd0, :) + pl%kt*(switchd0%&
-&           keps_cd(nd0)-temp10*temp3d(nd0, :))/temp3
-        END DO
-        temp4 = pl%kt*temp10
-        DO nd=1,nbdirs
-!   ..compute D according to KUL, using kt only
-!wdk at the moment: assumption that kt is related to main ion species;
-!wdk same dna_ExB for all ion species
-          DO nd0=1,nbdirs0
-            arg11dd(nd0, nd, :) = pldd%kt(nd0, nd, :)/(am(ismain)*mp)
-          END DO
-          arg11d(nd, :) = pld%kt(nd, :)/(am(ismain)*mp)
-          DO nd0=1,nbdirs0
-            WHERE (arg11 .EQ. 0.d0) result11dd(nd0, nd, :) = 0.D0
-          END DO
-          WHERE (arg11 .EQ. 0.d0) 
-            result11d(nd, :) = 0.d0
-          ELSEWHERE
-            temp8 = arg11d(nd, :)/(2.0*temp2)
-          END WHERE
-          DO nd0=1,nbdirs0
-            WHERE (.NOT.arg11 .EQ. 0.d0) result11dd(nd0, nd, :) = (&
-&               arg11dd(nd0, nd, :)-temp8*2.0*temp2d(nd0, :))/(2.0*temp2&
-&               )
-          END DO
-          WHERE (.NOT.arg11 .EQ. 0.d0) result11d(nd, :) = temp8
-          temp8 = result11/rhol
-          temp14 = (result11d(nd, :)-rhold(nd, :)*temp8)/rhol
-          temp15 = temp14 + switchd%keps_shear(nd)*dabs2 + switch%&
-&           keps_shear*dabs2d(nd, :)
-          temp10 = (switchd%keps_cd(nd)*pl%kt+switch%keps_cd*pld%kt(nd, &
-&           :)-am(ismain)*mp*temp4*temp15)/temp3
-          DO nd0=1,nbdirs0
-            dna_exbdd(nd0, nd, :) = (switchd%keps_cd(nd)*pld0%kt(nd0, :)&
-&             +pld%kt(nd, :)*switchd0%keps_cd(nd0)+switch%keps_cd*pldd%&
-&             kt(nd0, nd, :)-am(ismain)*mp*(temp15*temp4d(nd0, :)+temp4*&
-&             ((result11dd(nd0, nd, :)-temp8*rholdd(nd0, nd, :)-rhold(nd&
-&             , :)*(result11d0(nd0, :)-temp8*rhold0(nd0, :))/rhol-temp14&
-&             *rhold0(nd0, :))/rhol+switchd%keps_shear(nd)*dabs2d0(nd0, &
-&             :)+dabs2d(nd, :)*switchd0%keps_shear(nd0)+switch%&
-&             keps_shear*dabs2dd(nd0, nd, :)))-temp10*temp3d(nd0, :))/&
-&             temp3
-            dna0dd(nd0, nd, :, is) = switch%keps_fac*dna_exbdd(nd0, nd, &
-&             :) + (1.0_R8-switch%keps_fac)*dna0dd(nd0, nd, :, is)
-          END DO
-          dna_exbd(nd, :) = temp10
-          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
-&           switch%keps_fac)*dna0d(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          dna_exbd0(nd0, :) = temp4d(nd0, :)
-          dna0d0(nd0, :, is) = switch%keps_fac*dna_exbd0(nd0, :) + (&
-&           1.0_R8-switch%keps_fac)*dna0d0(nd0, :, is)
-        END DO
-        dna_exb = temp4
-        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
-&         -switch%keps_fac)*dna0(:, is)
-      ELSE IF (switch%transport_keps .EQ. 2) THEN
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (shear .GE. 0.) dabs3dd(nd0, nd, :) = sheardd(nd0, nd&
-&               , :)
-          END DO
-          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (shear .GE. 0.) dabs3d0(nd0, :) = sheard0(nd0, :)
-        END DO
-        WHERE (shear .GE. 0.) dabs3 = shear
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            WHERE (.NOT.shear .GE. 0.) dabs3dd(nd0, nd, :) = -sheardd(&
-&               nd0, nd, :)
-          END DO
-          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          WHERE (.NOT.shear .GE. 0.) dabs3d0(nd0, :) = -sheard0(nd0, :)
-        END DO
-        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
-        arg12 = pl%zt/(am(ismain)*mp)
-        temp15 = SQRT(arg12)
-        temp5 = temp15
-        result12 = temp5
-        temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
-&         keps_shear*dabs3)
-        temp10 = switch%keps_cd/temp4
-        DO nd0=1,nbdirs0
-          arg12d0(nd0, :) = pld0%zt(nd0, :)/(am(ismain)*mp)
-          WHERE (arg12 .EQ. 0.D0) 
-            temp5d(nd0, :) = 0.D0
-          ELSEWHERE
-            temp5d(nd0, :) = arg12d0(nd0, :)/(2.0*temp15)
-          END WHERE
-          result12d0(nd0, :) = temp5d(nd0, :)
-          temp4d(nd0, :) = am(ismain)*mp*(result12d0(nd0, :)+dabs3*&
-&           switchd0%keps_shear(nd0)+switch%keps_shear*dabs3d0(nd0, :))
-          temp3d(nd0, :) = temp10*pld0%kt(nd0, :) + pl%kt*(switchd0%&
-&           keps_cd(nd0)-temp10*temp4d(nd0, :))/temp4
-        END DO
-        temp3 = pl%kt*temp10
-        DO nd=1,nbdirs
-!   ..compute D according to KUL, using kt and zt
-          DO nd0=1,nbdirs0
-            arg12dd(nd0, nd, :) = pldd%zt(nd0, nd, :)/(am(ismain)*mp)
-          END DO
-          arg12d(nd, :) = pld%zt(nd, :)/(am(ismain)*mp)
-          DO nd0=1,nbdirs0
-            WHERE (arg12 .EQ. 0.d0) result12dd(nd0, nd, :) = 0.D0
-          END DO
-          WHERE (arg12 .EQ. 0.d0) 
-            result12d(nd, :) = 0.d0
-          ELSEWHERE
-            temp15 = arg12d(nd, :)/(2.0*temp5)
-          END WHERE
-          DO nd0=1,nbdirs0
-            WHERE (.NOT.arg12 .EQ. 0.d0) result12dd(nd0, nd, :) = (&
-&               arg12dd(nd0, nd, :)-temp15*2.0*temp5d(nd0, :))/(2.0*&
-&               temp5)
-          END DO
-          WHERE (.NOT.arg12 .EQ. 0.d0) result12d(nd, :) = temp15
-          temp15 = result12d(nd, :) + switchd%keps_shear(nd)*dabs3 + &
-&           switch%keps_shear*dabs3d(nd, :)
-          temp10 = (switchd%keps_cd(nd)*pl%kt+switch%keps_cd*pld%kt(nd, &
-&           :)-am(ismain)*mp*temp3*temp15)/temp4
-          DO nd0=1,nbdirs0
-            dna_exbdd(nd0, nd, :) = (switchd%keps_cd(nd)*pld0%kt(nd0, :)&
-&             +pld%kt(nd, :)*switchd0%keps_cd(nd0)+switch%keps_cd*pldd%&
-&             kt(nd0, nd, :)-am(ismain)*mp*(temp15*temp3d(nd0, :)+temp3*&
-&             (result12dd(nd0, nd, :)+switchd%keps_shear(nd)*dabs3d0(nd0&
-&             , :)+dabs3d(nd, :)*switchd0%keps_shear(nd0)+switch%&
-&             keps_shear*dabs3dd(nd0, nd, :)))-temp10*temp4d(nd0, :))/&
-&             temp4
-            dna0dd(nd0, nd, :, is) = switch%keps_fac*dna_exbdd(nd0, nd, &
-&             :) + (1.0_R8-switch%keps_fac)*dna0dd(nd0, nd, :, is)
-          END DO
-          dna_exbd(nd, :) = temp10
-          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
-&           switch%keps_fac)*dna0d(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          dna_exbd0(nd0, :) = temp3d(nd0, :)
-          dna0d0(nd0, :, is) = switch%keps_fac*dna_exbd0(nd0, :) + (&
-&           1.0_R8-switch%keps_fac)*dna0d0(nd0, :, is)
-        END DO
-        dna_exb = temp3
-        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
-&         -switch%keps_fac)*dna0(:, is)
-      ELSE
-        CALL XERRAB('wrong value transport_keps')
-      END IF
-      IF (switch%keps_visc .GT. 0.0_R8) THEN
-        temp0 = am(is)*switch%keps_fac*mp
-        DO nd=1,nbdirs
-          temp10 = switchd%keps_visc(nd)*dna_exb + switch%keps_visc*&
-&           dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            vsa0dd(nd0, nd, :, is) = temp0*(pld%na(nd, :, is)*(dna_exb*&
-&             switchd0%keps_visc(nd0)+switch%keps_visc*dna_exbd0(nd0, :)&
-&             )+(switch%vsa_min+switch%keps_visc*dna_exb)*pldd%na(nd0, &
-&             nd, :, is)+temp10*pld0%na(nd0, :, is)+pl%na(:, is)*(&
-&             switchd%keps_visc(nd)*dna_exbd0(nd0, :)+dna_exbd(nd, :)*&
-&             switchd0%keps_visc(nd0)+switch%keps_visc*dna_exbdd(nd0, nd&
-&             , :))) + (1.0_R8-switch%keps_fac)*vsa0dd(nd0, nd, :, is)
-          END DO
-          vsa0d(nd, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
-&           dna_exb)*pld%na(nd, :, is)+pl%na(:, is)*temp10) + (1.0_R8-&
-&           switch%keps_fac)*vsa0d(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          vsa0d0(nd0, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
-&           dna_exb)*pld0%na(nd0, :, is)+pl%na(:, is)*(dna_exb*switchd0%&
-&           keps_visc(nd0)+switch%keps_visc*dna_exbd0(nd0, :))) + (&
-&           1.0_R8-switch%keps_fac)*vsa0d0(nd0, :, is)
-        END DO
-        vsa0(:, is) = temp0*(pl%na(:, is)*(switch%vsa_min+switch%&
-&         keps_visc*dna_exb)) + (1.0_R8-switch%keps_fac)*vsa0(:, is)
-      END IF
-      IF (switch%keps_heat .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          temp10 = switchd%keps_heat(nd)*dna_exb + switch%keps_heat*&
-&           dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            hce_exbdd(nd0, nd, :) = temp10*dvd0%ne(nd0, :) + dv%ne*(&
-&             switchd%keps_heat(nd)*dna_exbd0(nd0, :)+dna_exbd(nd, :)*&
-&             switchd0%keps_heat(nd0)+switch%keps_heat*dna_exbdd(nd0, nd&
-&             , :)) + dvd%ne(nd, :)*(dna_exb*switchd0%keps_heat(nd0)+&
-&             switch%keps_heat*dna_exbd0(nd0, :)) + switch%keps_heat*&
-&             dna_exb*dvdd%ne(nd0, nd, :)
-          END DO
-          hce_exbd(nd, :) = dv%ne*temp10 + switch%keps_heat*dna_exb*dvd%&
-&           ne(nd, :)
-          temp10 = switchd%keps_heat(nd)*dna_exb + switch%keps_heat*&
-&           dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            hce0dd(nd0, nd, :) = switch%keps_fac*(temp10*dvd0%ne(nd0, :)&
-&             +dv%ne*(switchd%keps_heat(nd)*dna_exbd0(nd0, :)+dna_exbd(&
-&             nd, :)*switchd0%keps_heat(nd0)+switch%keps_heat*dna_exbdd(&
-&             nd0, nd, :))+dvd%ne(nd, :)*(dna_exb*switchd0%keps_heat(nd0&
-&             )+switch%keps_heat*dna_exbd0(nd0, :))+(switch%hce_min+&
-&             switch%keps_heat*dna_exb)*dvdd%ne(nd0, nd, :)) + (1.0_R8-&
-&             switch%keps_fac)*hce0dd(nd0, nd, :)
-          END DO
-          hce0d(nd, :) = switch%keps_fac*(dv%ne*temp10+(switch%hce_min+&
-&           switch%keps_heat*dna_exb)*dvd%ne(nd, :)) + (1.0_R8-switch%&
-&           keps_fac)*hce0d(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          hce_exbd0(nd0, :) = dv%ne*(dna_exb*switchd0%keps_heat(nd0)+&
-&           switch%keps_heat*dna_exbd0(nd0, :)) + switch%keps_heat*&
-&           dna_exb*dvd0%ne(nd0, :)
-          hce0d0(nd0, :) = switch%keps_fac*(dv%ne*(dna_exb*switchd0%&
-&           keps_heat(nd0)+switch%keps_heat*dna_exbd0(nd0, :))+(switch%&
-&           hce_min+switch%keps_heat*dna_exb)*dvd0%ne(nd0, :)) + (1.0_R8&
-&           -switch%keps_fac)*hce0d0(nd0, :)
-        END DO
-        hce_exb = switch%keps_heat*dna_exb*dv%ne
-        hce0 = (switch%keps_heat*dna_exb+switch%hce_min)*dv%ne*switch%&
-&         keps_fac + (1.0_R8-switch%keps_fac)*hce0
-      END IF
-      IF (switch%keps_heat_i .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          temp10 = switchd%keps_heat_i(nd)*dna_exb + switch%keps_heat_i*&
-&           dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            hci_exbdd(nd0, nd, :) = hci_exbdd(nd0, nd, :) + temp10*pld0%&
-&             na(nd0, :, is) + pl%na(:, is)*(switchd%keps_heat_i(nd)*&
-&             dna_exbd0(nd0, :)+dna_exbd(nd, :)*switchd0%keps_heat_i(nd0&
-&             )+switch%keps_heat_i*dna_exbdd(nd0, nd, :)) + pld%na(nd, :&
-&             , is)*(dna_exb*switchd0%keps_heat_i(nd0)+switch%&
-&             keps_heat_i*dna_exbd0(nd0, :)) + switch%keps_heat_i*&
-&             dna_exb*pldd%na(nd0, nd, :, is)
-          END DO
-          hci_exbd(nd, :) = hci_exbd(nd, :) + pl%na(:, is)*temp10 + &
-&           switch%keps_heat_i*dna_exb*pld%na(nd, :, is)
-          temp10 = switchd%keps_heat_i(nd)*dna_exb + switch%keps_heat_i*&
-&           dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            hcibdd(nd0, nd, :, is) = switch%keps_fac*(temp10*pld0%na(nd0&
-&             , :, is)+pl%na(:, is)*(switchd%keps_heat_i(nd)*dna_exbd0(&
-&             nd0, :)+dna_exbd(nd, :)*switchd0%keps_heat_i(nd0)+switch%&
-&             keps_heat_i*dna_exbdd(nd0, nd, :))+pld%na(nd, :, is)*(&
-&             dna_exb*switchd0%keps_heat_i(nd0)+switch%keps_heat_i*&
-&             dna_exbd0(nd0, :))+(switch%hci_min+switch%keps_heat_i*&
-&             dna_exb)*pldd%na(nd0, nd, :, is)) + (1.0_R8-switch%&
-&             keps_fac)*hcibdd(nd0, nd, :, is)
-          END DO
-          hcibd(nd, :, is) = switch%keps_fac*(pl%na(:, is)*temp10+(&
-&           switch%hci_min+switch%keps_heat_i*dna_exb)*pld%na(nd, :, is)&
-&           ) + (1.0_R8-switch%keps_fac)*hcibd(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          hci_exbd0(nd0, :) = hci_exbd0(nd0, :) + pl%na(:, is)*(dna_exb*&
-&           switchd0%keps_heat_i(nd0)+switch%keps_heat_i*dna_exbd0(nd0, &
-&           :)) + switch%keps_heat_i*dna_exb*pld0%na(nd0, :, is)
-          hcibd0(nd0, :, is) = switch%keps_fac*(pl%na(:, is)*(dna_exb*&
-&           switchd0%keps_heat_i(nd0)+switch%keps_heat_i*dna_exbd0(nd0, &
-&           :))+(switch%hci_min+switch%keps_heat_i*dna_exb)*pld0%na(nd0&
-&           , :, is)) + (1.0_R8-switch%keps_fac)*hcibd0(nd0, :, is)
-        END DO
-        hci_exb = hci_exb + switch%keps_heat_i*dna_exb*pl%na(:, is)
-        hcib(:, is) = switch%keps_fac*(switch%keps_heat_i*dna_exb+switch&
-&         %hci_min)*pl%na(:, is) + (1.0_R8-switch%keps_fac)*hcib(:, is)
-      END IF
-      IF (switch%keps_sig .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          temp10 = switchd%keps_sig(nd)*(switch%dna_min+dna_exb) + &
-&           switch%keps_sig*dna_exbd(nd, :)
-          DO nd0=1,nbdirs0
-            sig0dd(nd0, nd, :) = qe*switch%keps_fac*(temp10*dvd0%ne(nd0&
-&             , omp(icsepomp))+dv%ne(omp(icsepomp))*(switchd%keps_sig(nd&
-&             )*dna_exbd0(nd0, :)+dna_exbd(nd, :)*switchd0%keps_sig(nd0)&
-&             +switch%keps_sig*dna_exbdd(nd0, nd, :))+dvd%ne(nd, omp(&
-&             icsepomp))*((switch%dna_min+dna_exb)*switchd0%keps_sig(nd0&
-&             )+switch%keps_sig*dna_exbd0(nd0, :))+switch%keps_sig*(&
-&             switch%dna_min+dna_exb)*dvdd%ne(nd0, nd, omp(icsepomp))) +&
-&             (1.0_R8-switch%keps_fac)*sig0dd(nd0, nd, :)
-          END DO
-          sig0d(nd, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*temp10&
-&           +switch%keps_sig*(switch%dna_min+dna_exb)*dvd%ne(nd, omp(&
-&           icsepomp))) + (1.0_R8-switch%keps_fac)*sig0d(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          sig0d0(nd0, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*((&
-&           switch%dna_min+dna_exb)*switchd0%keps_sig(nd0)+switch%&
-&           keps_sig*dna_exbd0(nd0, :))+switch%keps_sig*(switch%dna_min+&
-&           dna_exb)*dvd0%ne(nd0, omp(icsepomp))) + (1.0_R8-switch%&
-&           keps_fac)*sig0d0(nd0, :)
-        END DO
-        sig0 = switch%keps_sig*(dna_exb+switch%dna_min)*qe*dv%ne(omp(&
-&         icsepomp))*switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
-      END IF
-      IF (switch%keps_alf .GT. 0.0_R8) THEN
-        arg13 = qe/pl%te
-        temp10 = SQRT(arg13)
-        DO nd0=1,nbdirs0
-          arg13d0(nd0, :) = -(qe*pld0%te(nd0, :)/pl%te**2)
-          WHERE (arg13 .EQ. 0.D0) 
-            temp6d(nd0, :) = 0.D0
-          ELSEWHERE
-            temp6d(nd0, :) = arg13d0(nd0, :)/(2.0*temp10)
-          END WHERE
-          result13d0(nd0, :) = temp6d(nd0, :)
-          temp7d(nd0) = dvd0%ne(nd0, omp(icsepomp))
-        END DO
-        temp6 = temp10
-        result13 = temp6
-        temp7 = dv%ne(omp(icsepomp))
-        DO nd=1,nbdirs
-          temp16 = pld%te(nd, :)/(pl%te*pl%te)
-          DO nd0=1,nbdirs0
-            arg13dd(nd0, nd, :) = -(qe*(pldd%te(nd0, nd, :)-temp16*2*pl%&
-&             te*pld0%te(nd0, :))/pl%te**2)
-          END DO
-          arg13d(nd, :) = -(qe*temp16)
-          DO nd0=1,nbdirs0
-            WHERE (arg13 .EQ. 0.d0) result13dd(nd0, nd, :) = 0.D0
-          END DO
-          WHERE (arg13 .EQ. 0.d0) 
-            result13d(nd, :) = 0.d0
-          ELSEWHERE
-            temp10 = arg13d(nd, :)/(2.0*temp6)
-          END WHERE
-          DO nd0=1,nbdirs0
-            WHERE (.NOT.arg13 .EQ. 0.d0) result13dd(nd0, nd, :) = (&
-&               arg13dd(nd0, nd, :)-temp10*2.0*temp6d(nd0, :))/(2.0*&
-&               temp6)
-          END DO
-          WHERE (.NOT.arg13 .EQ. 0.d0) result13d(nd, :) = temp10
-          temp15 = temp7*dna_exbd(nd, :) + (switch%dna_min+dna_exb)*dvd%&
-&           ne(nd, omp(icsepomp))
-          temp10 = switchd%keps_alf(nd)*result13 + switch%keps_alf*&
-&           result13d(nd, :)
-          DO nd0=1,nbdirs0
-            alf0dd(nd0, nd, :) = switch%keps_fac*(temp15*(result13*&
-&             switchd0%keps_alf(nd0)+switch%keps_alf*result13d0(nd0, :))&
-&             +switch%keps_alf*result13*(dna_exbd(nd, :)*temp7d(nd0)+&
-&             temp7*dna_exbdd(nd0, nd, :)+dvd%ne(nd, omp(icsepomp))*&
-&             dna_exbd0(nd0, :)+(switch%dna_min+dna_exb)*dvdd%ne(nd0, nd&
-&             , omp(icsepomp)))+temp10*(temp7*dna_exbd0(nd0, :)+(switch%&
-&             dna_min+dna_exb)*temp7d(nd0))+(switch%dna_min+dna_exb)*&
-&             temp7*(switchd%keps_alf(nd)*result13d0(nd0, :)+result13d(&
-&             nd, :)*switchd0%keps_alf(nd0)+switch%keps_alf*result13dd(&
-&             nd0, nd, :))) + (1.0_R8-switch%keps_fac)*alf0dd(nd0, nd, :&
-&             )
-          END DO
-          alf0d(nd, :) = switch%keps_fac*(switch%keps_alf*result13*&
-&           temp15+(switch%dna_min+dna_exb)*temp7*temp10) + (1.0_R8-&
-&           switch%keps_fac)*alf0d(nd, :)
-        END DO
-        DO nd0=1,nbdirs0
-          alf0d0(nd0, :) = switch%keps_fac*(temp7*switch%keps_alf*(&
-&           result13*dna_exbd0(nd0, :)+(switch%dna_min+dna_exb)*&
-&           result13d0(nd0, :))+(switch%dna_min+dna_exb)*result13*(&
-&           switch%keps_alf*temp7d(nd0)+temp7*switchd0%keps_alf(nd0))) +&
-&           (1.0_R8-switch%keps_fac)*alf0d0(nd0, :)
-        END DO
-        alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
-&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
-      END IF
-      DO nd=1,nbdirs
-        temp10 = switchd%keps_dkt(nd)*dna0(:, ismain) + switch%keps_dkt*&
-&         dna0d(nd, :, ismain)
-        DO nd0=1,nbdirs0
-          dkt0dd(nd0, nd, :) = temp10*pld0%na(nd0, :, ismain) + pl%na(:&
-&           , ismain)*(switchd%keps_dkt(nd)*dna0d0(nd0, :, ismain)+dna0d&
-&           (nd, :, ismain)*switchd0%keps_dkt(nd0)+switch%keps_dkt*&
-&           dna0dd(nd0, nd, :, ismain)) + pld%na(nd, :, ismain)*(dna0(:&
-&           , ismain)*switchd0%keps_dkt(nd0)+switch%keps_dkt*dna0d0(nd0&
-&           , :, ismain)) + switch%keps_dkt*dna0(:, ismain)*pldd%na(nd0&
-&           , nd, :, ismain)
-        END DO
-        dkt0d(nd, :) = pl%na(:, ismain)*temp10 + switch%keps_dkt*dna0(:&
-&         , ismain)*pld%na(nd, :, ismain)
-        temp10 = switchd%keps_dzt(nd)*dna0(:, ismain) + switch%keps_dzt*&
-&         dna0d(nd, :, ismain)
-        DO nd0=1,nbdirs0
-          dzt0dd(nd0, nd, :) = temp10*pld0%na(nd0, :, ismain) + pl%na(:&
-&           , ismain)*(switchd%keps_dzt(nd)*dna0d0(nd0, :, ismain)+dna0d&
-&           (nd, :, ismain)*switchd0%keps_dzt(nd0)+switch%keps_dzt*&
-&           dna0dd(nd0, nd, :, ismain)) + pld%na(nd, :, ismain)*(dna0(:&
-&           , ismain)*switchd0%keps_dzt(nd0)+switch%keps_dzt*dna0d0(nd0&
-&           , :, ismain)) + switch%keps_dzt*dna0(:, ismain)*pldd%na(nd0&
-&           , nd, :, ismain)
-        END DO
-        dzt0d(nd, :) = pl%na(:, ismain)*temp10 + switch%keps_dzt*dna0(:&
-&         , ismain)*pld%na(nd, :, ismain)
-      END DO
-      DO nd0=1,nbdirs0
-        dkt0d0(nd0, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd0%&
-&         keps_dkt(nd0)+switch%keps_dkt*dna0d0(nd0, :, ismain)) + switch&
-&         %keps_dkt*dna0(:, ismain)*pld0%na(nd0, :, ismain)
-        dzt0d0(nd0, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd0%&
-&         keps_dzt(nd0)+switch%keps_dzt*dna0d0(nd0, :, ismain)) + switch&
-&         %keps_dzt*dna0(:, ismain)*pld0%na(nd0, :, ismain)
-      END DO
-      dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
-      dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
-    END IF
-  END DO
-!   ..recompute hci0
-  hci0 = 0.0_R8
-  hci0d = 0.d0
-  hci0d0 = 0.D0
-  hci0dd = 0.D0
-  DO is=0,ns-1
-    IF (switch%tn_style .EQ. 0) THEN
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
-&           is)
-        END DO
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      DO nd0=1,nbdirs0
-        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    ELSE IF (switch%tn_style .EQ. 1) THEN
-      IF (.NOT.is_neutral(is)) THEN
-        DO nd=1,nbdirs
-          DO nd0=nd,nbdirs0
-            hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :&
-&             , is)
-          END DO
-          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-        END DO
-        DO nd0=1,nbdirs0
-          hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-        END DO
-        hci0 = hci0 + hcib(:, is)
-      END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          hci0dd(nd0, nd, :) = hci0dd(nd0, nd, :) + hcibdd(nd0, nd, :, &
-&           is)
-        END DO
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      DO nd0=1,nbdirs0
-        hci0d0(nd0, :) = hci0d0(nd0, :) + hcibd0(nd0, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    END IF
-  END DO
-  IF (switch%keps_fac*switch%keps_inc .GT. 1.0_R8) THEN
-    DO nd=1,nbdirs
-      switchd%keps_fac(nd) = 0.d0
-    END DO
-    switch%keps_fac = 1.0_R8
-  ELSE
-    DO nd=1,nbdirs
-      switchd%keps_fac(nd) = 0.d0
-    END DO
-    switch%keps_fac = switch%keps_fac*switch%keps_inc
-  END IF
-  IF (switch%keps_inc .GT. 1.0_R8) WRITE(*, *) 'b2tqna_keps_fac = ', &
-&                                  switch%keps_fac
-!
-  IF (switch%keps_iout .EQ. 1) THEN
-    CALL MY_OUT_US(70, ncv, 0, rhol, 'b2tqna_keps_rhol')
-    CALL MY_OUT_US(70, ncv, 0, shear, 'b2tqna_keps_shear')
-  END IF
-!
-!   ..return
-  ncall_transp_keps = ncall_transp_keps + 1
-  CALL SUBEND()
-  RETURN
-!
-END SUBROUTINE SET_TRANSPORT_KEPS_DV_DV
-
-!  Differentiation of set_transport_keps in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hce_exb hci0 vsa0 sig0 alf0
-!                dna_exb hcib dna0 dkt0 hce0 dzt0 hci_exb
-!   with respect to varying inputs: hce_exb vsa0 sig0 *(dv.ne)
-!                *(dv.vaecrb) alf0 *(rt.rza) dna_exb hcib dna0
-!                dkt0 switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                *(pl.na) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt) hce0
-!                dzt0
-!   Plus diff mem management of: dv.ne:in dv.vaecrb:in mpg.intcellr:in
-!                geo.cvbb:in geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fcvol:in geo.fcqalf:in rt.rza:in pl.na:in
-!                pl.te:in pl.ti:in pl.kt:in pl.zt:in
-!
-SUBROUTINE SET_TRANSPORT_KEPS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, &
-& switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, dna0&
-& , dna0d, vsa0, vsa0d, hce0, hce0d, hci0, hci0d, hcib, hcibd, sig0, &
-& sig0d, alf0, alf0d, dkt0, dkt0d, dzt0, dzt0d, dna_exb, dna_exbd, &
-& hce_exb, hce_exbd, hci_exb, hci_exbd, nbdirs)
-  USE B2MOD_TYPES
-  USE B2MOD_CONSTANTS
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2US_GEO_DIFFV_DIFFV
-  USE B2US_MAP_DIFFV_DIFFV
-  USE B2US_PLASMA_DIFFV_DIFFV
-  USE B2MOD_SWITCHES_DIFFV_DIFFV
-  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : nomp, omp, icsepomp
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
-  USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder
-  USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array arg1
-!  Hint: nCv should be the size of dimension 1 of array result1
-!  Hint: nCv should be the size of dimension 1 of array cvbb
-!  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-!   ..input arguments (unchanged on exit)
-  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
-  TYPE(SWITCHES), INTENT(INOUT) :: switch
-  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-  TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  TYPE(B2PLASMA), INTENT(IN) :: pl
-  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
-  TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  TYPE(B2DERIVATIVES_DIFFV), INTENT(IN) :: dvd
-  TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-!   ..input/output arguments
-  REAL(kind=r8) :: dna0(ncv, 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib&
-& (ncv, 0:ns-1), sig0(ncv), alf0(ncv), hce0(ncv), dkt0(ncv), dzt0(ncv), &
-& dna_exb(ncv), hce_exb(ncv), hci_exb(ncv), rhol(ncv)
-  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
-& 0:ns-1), hci0d(nbdirsmax, ncv), hcibd(nbdirsmax, ncv, 0:ns-1), sig0d(&
-& nbdirsmax, ncv), alf0d(nbdirsmax, ncv), hce0d(nbdirsmax, ncv), dkt0d(&
-& nbdirsmax, ncv), dzt0d(nbdirsmax, ncv), dna_exbd(nbdirsmax, ncv), &
-& hce_exbd(nbdirsmax, ncv), hci_exbd(nbdirsmax, ncv), rhold(nbdirsmax, &
-& ncv)
-!   ..local variables
-  INTEGER :: is
-  REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
-  REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), sheard(&
-& nbdirsmax, ncv)
-  INTRINSIC SQRT
-  INTRINSIC ABS
-  EXTERNAL XERRAB
-  INTRINSIC NINT
-  INTRINSIC MIN
-  REAL(kind=r8), DIMENSION(ncv) :: dabs0
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
-  REAL(kind=r8) :: dabs1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
-  REAL(kind=r8), DIMENSION(ncv) :: dabs2
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
-  REAL(kind=r8), DIMENSION(ncv) :: dabs3
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
-  REAL(r8), DIMENSION(ncv) :: arg1
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg1d
-  REAL(kind=r8), DIMENSION(ncv) :: result1
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result1d
-  REAL(r8) :: arg10
-  REAL(r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(kind=r8) :: result10
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
-  REAL(r8), DIMENSION(ncv) :: arg11
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg11d
-  REAL(r8), DIMENSION(ncv) :: result11
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
-  REAL(r8), DIMENSION(ncv) :: arg12
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg12d
-  REAL(r8), DIMENSION(ncv) :: result12
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result12d
-  REAL(kind=r8), DIMENSION(ncv) :: arg13
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg13d
-  REAL(kind=r8), DIMENSION(ncv) :: result13
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: result13d
-  INTEGER :: nd
-  REAL(kind=r8), DIMENSION(ncv) :: temp
-  REAL(kind=r8) :: temp0
-  REAL(kind=r8) :: temp1
-  REAL(r8), DIMENSION(ncv) :: temp2
-  REAL(kind=r8), DIMENSION(ncv) :: temp3
-  REAL(kind=r8), DIMENSION(ncv) :: temp4
-  REAL(r8), DIMENSION(ncv) :: temp5
-  REAL(kind=r8), DIMENSION(ncv) :: temp6
-  REAL(r8) :: temp7
-  INTEGER :: nbdirs
-!
-!   ..subprogram start-up calls
-  CALL SUBINI('set_transport_keps')
-  IF (ncall_transp_keps .EQ. 0) THEN
-    IF (switch%keps_local .NE. 1) THEN
-      CALL XERTST(nomp .GT. 0, &
-&           'No CVs in omp list, check rzomp in b2.user.parameters')
-      CALL XERTST(icsepomp .GT. 0, &
-&           'Invalid icsepomp value, check rzomp in b2.user.parameters')
-    END IF
-  END IF
-  hci_exb = 0.0_R8
-  hci_exbd = 0.d0
-  dabs0d = 0.d0
-  dabs2d = 0.d0
-  dabs3d = 0.d0
-  DO is=0,ns-1
-    IF (.NOT.is_neutral(is)) THEN
-      IF (switch%keps_local .EQ. 1) THEN
-        DO nd=1,nbdirs
-          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
-&           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
-        END DO
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
-&           rza(:, ismain)*qe*geo%cvbb(:, 3)
-        DO nd=1,nbdirs
-          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
-&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
-        END DO
-        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
-&          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
-        arg1 = 2.0_R8*pl%ti/(am(ismain)*mp)
-        temp = SQRT(arg1)
-        result1 = temp
-        DO nd=1,nbdirs
-!   ..compute local Larmor radius
-          arg1d(nd, :) = 2.0_R8*pld%ti(nd, :)/(am(ismain)*mp)
-          WHERE (arg1 .EQ. 0.d0) 
-            result1d(nd, :) = 0.d0
-          ELSEWHERE
-            result1d(nd, :) = arg1d(nd, :)/(2.0*temp)
-          END WHERE
-          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*dabs0d(&
-&           nd, :)/dabs0)/dabs0
-        END DO
-        rhol = am(ismain)*mp*result1/dabs0
-      ELSE
-        IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
-&           .GE. 0.) THEN
-          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
-          DO nd=1,nbdirs
-            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
-          END DO
-          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
-        ELSE
-          temp0 = qe*geo%cvbb(omp(icsepomp), 3)
-          DO nd=1,nbdirs
-            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
-          END DO
-          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
-        END IF
-        arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
-        temp1 = SQRT(arg10)
-        result10 = temp1
-        DO nd=1,nbdirs
-          arg10d(nd) = 2.0_R8*pld%ti(nd, omp(icsepomp))/(am(ismain)*mp)
-          IF (arg10 .EQ. 0.d0) THEN
-            result10d(nd) = 0.d0
-          ELSE
-            result10d(nd) = arg10d(nd)/(2.0*temp1)
-          END IF
-          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*dabs1d(nd&
-&           )/dabs1)/dabs1
-        END DO
-        rhol = am(ismain)*mp*result10/dabs1
-      END IF
-!       ..compute radial shear of diamagnetic ExB velocity
-      DO nd=1,nbdirs
-        wrkfd(nd, :) = geo%fcbb(:, 3)*dvd%vaecrb(nd, :, 0, ismain)/geo%&
-&         fcbb(:, 2)
-      END DO
-      wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
-      wrkcd = 0.d0
-      CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellr, wrkf, wrkfd, &
-&                      wrkc, wrkcd, nbdirs)
-      sheard = 0.d0
-      CALL GRADC_DIV_R_DV_NODIFF(ncv, nfc, nvx, 1, geo, mpg, mpgd, wrkc&
-&                          , wrkcd, wrkf, wrkfd, shear, sheard, nbdirs)
-      IF (switch%transport_keps .EQ. 1) THEN
-        DO nd=1,nbdirs
-          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
-        END DO
-        WHERE (shear .GE. 0.) dabs2 = shear
-        DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
-        END DO
-        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
-        arg11 = pl%kt/(am(ismain)*mp)
-        temp2 = SQRT(arg11)
-        result11 = temp2
-        temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
-&         keps_shear*dabs2)
-        temp4 = switch%keps_cd*pl%kt/temp3
-        DO nd=1,nbdirs
-!   ..compute D according to KUL, using kt only
-!wdk at the moment: assumption that kt is related to main ion species;
-!wdk same dna_ExB for all ion species
-          arg11d(nd, :) = pld%kt(nd, :)/(am(ismain)*mp)
-          WHERE (arg11 .EQ. 0.d0) 
-            result11d(nd, :) = 0.d0
-          ELSEWHERE
-            result11d(nd, :) = arg11d(nd, :)/(2.0*temp2)
-          END WHERE
-          dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
-&           pld%kt(nd, :)-temp4*am(ismain)*mp*((result11d(nd, :)-&
-&           result11*rhold(nd, :)/rhol)/rhol+dabs2*switchd%keps_shear(nd&
-&           )+switch%keps_shear*dabs2d(nd, :)))/temp3
-          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
-&           switch%keps_fac)*dna0d(nd, :, is)
-        END DO
-        dna_exb = temp4
-        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
-&         -switch%keps_fac)*dna0(:, is)
-      ELSE IF (switch%transport_keps .EQ. 2) THEN
-        DO nd=1,nbdirs
-          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
-        END DO
-        WHERE (shear .GE. 0.) dabs3 = shear
-        DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
-        END DO
-        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
-        arg12 = pl%zt/(am(ismain)*mp)
-        temp5 = SQRT(arg12)
-        result12 = temp5
-        temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
-&         keps_shear*dabs3)
-        temp3 = switch%keps_cd*pl%kt/temp4
-        DO nd=1,nbdirs
-!   ..compute D according to KUL, using kt and zt
-          arg12d(nd, :) = pld%zt(nd, :)/(am(ismain)*mp)
-          WHERE (arg12 .EQ. 0.d0) 
-            result12d(nd, :) = 0.d0
-          ELSEWHERE
-            result12d(nd, :) = arg12d(nd, :)/(2.0*temp5)
-          END WHERE
-          dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
-&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+dabs3*&
-&           switchd%keps_shear(nd)+switch%keps_shear*dabs3d(nd, :)))/&
-&           temp4
-          dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
-&           switch%keps_fac)*dna0d(nd, :, is)
-        END DO
-        dna_exb = temp3
-        dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
-&         -switch%keps_fac)*dna0(:, is)
-      ELSE
-        CALL XERRAB('wrong value transport_keps')
-      END IF
-      IF (switch%keps_visc .GT. 0.0_R8) THEN
-        temp0 = am(is)*switch%keps_fac*mp
-        DO nd=1,nbdirs
-          vsa0d(nd, :, is) = temp0*((switch%vsa_min+switch%keps_visc*&
-&           dna_exb)*pld%na(nd, :, is)+pl%na(:, is)*(dna_exb*switchd%&
-&           keps_visc(nd)+switch%keps_visc*dna_exbd(nd, :))) + (1.0_R8-&
-&           switch%keps_fac)*vsa0d(nd, :, is)
-        END DO
-        vsa0(:, is) = temp0*(pl%na(:, is)*(switch%vsa_min+switch%&
-&         keps_visc*dna_exb)) + (1.0_R8-switch%keps_fac)*vsa0(:, is)
-      END IF
-      IF (switch%keps_heat .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          hce_exbd(nd, :) = dv%ne*(dna_exb*switchd%keps_heat(nd)+switch%&
-&           keps_heat*dna_exbd(nd, :)) + switch%keps_heat*dna_exb*dvd%ne&
-&           (nd, :)
-          hce0d(nd, :) = switch%keps_fac*(dv%ne*(dna_exb*switchd%&
-&           keps_heat(nd)+switch%keps_heat*dna_exbd(nd, :))+(switch%&
-&           hce_min+switch%keps_heat*dna_exb)*dvd%ne(nd, :)) + (1.0_R8-&
-&           switch%keps_fac)*hce0d(nd, :)
-        END DO
-        hce_exb = switch%keps_heat*dna_exb*dv%ne
-        hce0 = (switch%keps_heat*dna_exb+switch%hce_min)*dv%ne*switch%&
-&         keps_fac + (1.0_R8-switch%keps_fac)*hce0
-      END IF
-      IF (switch%keps_heat_i .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          hci_exbd(nd, :) = hci_exbd(nd, :) + pl%na(:, is)*(dna_exb*&
-&           switchd%keps_heat_i(nd)+switch%keps_heat_i*dna_exbd(nd, :)) &
-&           + switch%keps_heat_i*dna_exb*pld%na(nd, :, is)
-          hcibd(nd, :, is) = switch%keps_fac*(pl%na(:, is)*(dna_exb*&
-&           switchd%keps_heat_i(nd)+switch%keps_heat_i*dna_exbd(nd, :))+&
-&           (switch%hci_min+switch%keps_heat_i*dna_exb)*pld%na(nd, :, is&
-&           )) + (1.0_R8-switch%keps_fac)*hcibd(nd, :, is)
-        END DO
-        hci_exb = hci_exb + switch%keps_heat_i*dna_exb*pl%na(:, is)
-        hcib(:, is) = switch%keps_fac*(switch%keps_heat_i*dna_exb+switch&
-&         %hci_min)*pl%na(:, is) + (1.0_R8-switch%keps_fac)*hcib(:, is)
-      END IF
-      IF (switch%keps_sig .GT. 0.0_R8) THEN
-        DO nd=1,nbdirs
-          sig0d(nd, :) = qe*switch%keps_fac*(dv%ne(omp(icsepomp))*((&
-&           switch%dna_min+dna_exb)*switchd%keps_sig(nd)+switch%keps_sig&
-&           *dna_exbd(nd, :))+switch%keps_sig*(switch%dna_min+dna_exb)*&
-&           dvd%ne(nd, omp(icsepomp))) + (1.0_R8-switch%keps_fac)*sig0d(&
-&           nd, :)
-        END DO
-        sig0 = switch%keps_sig*(dna_exb+switch%dna_min)*qe*dv%ne(omp(&
-&         icsepomp))*switch%keps_fac + (1.0_R8-switch%keps_fac)*sig0
-      END IF
-      IF (switch%keps_alf .GT. 0.0_R8) THEN
-        arg13 = qe/pl%te
-        temp6 = SQRT(arg13)
-        result13 = temp6
-        temp7 = dv%ne(omp(icsepomp))
-        DO nd=1,nbdirs
-          arg13d(nd, :) = -(qe*pld%te(nd, :)/pl%te**2)
-          WHERE (arg13 .EQ. 0.d0) 
-            result13d(nd, :) = 0.d0
-          ELSEWHERE
-            result13d(nd, :) = arg13d(nd, :)/(2.0*temp6)
-          END WHERE
-          alf0d(nd, :) = switch%keps_fac*(switch%keps_alf*result13*(&
-&           temp7*dna_exbd(nd, :)+(switch%dna_min+dna_exb)*dvd%ne(nd, &
-&           omp(icsepomp)))+(switch%dna_min+dna_exb)*temp7*(result13*&
-&           switchd%keps_alf(nd)+switch%keps_alf*result13d(nd, :))) + (&
-&           1.0_R8-switch%keps_fac)*alf0d(nd, :)
-        END DO
-        alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
-&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
-      END IF
-      DO nd=1,nbdirs
-        dkt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
-&         keps_dkt(nd)+switch%keps_dkt*dna0d(nd, :, ismain)) + switch%&
-&         keps_dkt*dna0(:, ismain)*pld%na(nd, :, ismain)
-        dzt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
-&         keps_dzt(nd)+switch%keps_dzt*dna0d(nd, :, ismain)) + switch%&
-&         keps_dzt*dna0(:, ismain)*pld%na(nd, :, ismain)
-      END DO
-      dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
-      dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
-    END IF
-  END DO
-!   ..recompute hci0
-  hci0 = 0.0_R8
-  hci0d = 0.d0
-  DO is=0,ns-1
-    IF (switch%tn_style .EQ. 0) THEN
-      DO nd=1,nbdirs
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    ELSE IF (switch%tn_style .EQ. 1) THEN
-      IF (.NOT.is_neutral(is)) THEN
-        DO nd=1,nbdirs
-          hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-        END DO
-        hci0 = hci0 + hcib(:, is)
-      END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
-      DO nd=1,nbdirs
-        hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
-      END DO
-      hci0 = hci0 + hcib(:, is)
-    END IF
-  END DO
-  IF (switch%keps_fac*switch%keps_inc .GT. 1.0_R8) THEN
-    DO nd=1,nbdirs
-      switchd%keps_fac(nd) = 0.d0
-    END DO
-    switch%keps_fac = 1.0_R8
-  ELSE
-    DO nd=1,nbdirs
-      switchd%keps_fac(nd) = 0.d0
-    END DO
-    switch%keps_fac = switch%keps_fac*switch%keps_inc
-  END IF
-  IF (switch%keps_inc .GT. 1.0_R8) WRITE(*, *) 'b2tqna_keps_fac = ', &
-&                                  switch%keps_fac
-!
-  IF (switch%keps_iout .EQ. 1) THEN
-    CALL MY_OUT_US(70, ncv, 0, rhol, 'b2tqna_keps_rhol')
-    CALL MY_OUT_US(70, ncv, 0, shear, 'b2tqna_keps_shear')
-  END IF
-!
-!   ..return
-  ncall_transp_keps = ncall_transp_keps + 1
-  CALL SUBEND()
-  RETURN
-!
-END SUBROUTINE SET_TRANSPORT_KEPS_DV_NODIFF
 
 !
 SUBROUTINE SET_TRANSPORT_KEPS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, &

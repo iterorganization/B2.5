@@ -5,94 +5,286 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-SUBROUTINE INIT_WALL_NODIFF_NODIFF(mpg)
+FUNCTION LAYER_KAPPA_NODIFF_NODIFF(ibnd, t) RESULT (layer_kappa)
   USE B2MOD_TYPES
-  USE B2MOD_GEO_DIFFV_DIFFV
-  USE B2MOD_RATES
-  USE B2MOD_PLASMA_DIFFV
-  USE B2MOD_SPUTTER_DIFFV_DIFFV
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
-  USE B2MOD_WALL
   USE B2MOD_LAYER
-  USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPB_DIFFV
-  USE B2MOD_B2CMFS
-  USE B2MOD_EXTERNAL_DIFFV_DIFFV
-  USE B2US_MAP_DIFFV_DIFFV
-  USE B2MOD_SUBSYS
-  USE B2MOD_DIMENSIONS
+  USE B2MOD_WALL
+  USE B2MOD_SPUTTER_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  TYPE(MAPPING), INTENT(IN) :: mpg
+  INTEGER :: ibnd
+  REAL(kind=r8) :: t, layer_kappa
+  INTEGER :: nz, itrack
+  REAL(kind=r8) :: tcels, teff, a(5)
+  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
+  EXTERNAL XERRAB
 !
-  EXTERNAL XERTST, IPGETI, IPGETR
+  tcels = t - 273.15_R8
 !
-  CALL SUBINI('init_wall')
-  CALL SUBEND()
-  RETURN
-END SUBROUTINE INIT_WALL_NODIFF_NODIFF
+!xpb First count the bulk contribution
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
+  nz = matsurf_nconstituents(ibnd)
+!xpb The bulk or coating surface parameters
+  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
+&     .LT. coating_thickness(ibnd)) THEN
+    a(1) = coating_kappa_a1(ibnd)
+    a(2) = coating_kappa_a2(ibnd)
+    a(3) = coating_kappa_a3(ibnd)
+    a(4) = coating_kappa_a4(ibnd)
+    a(5) = coating_kappa_a5(ibnd)
+    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (coat Kappa) !')
+    END IF
+    coating_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
+    layer_kappa = coating_value*frac
+  ELSE
+    a(1) = matbulk_kappa_a1(ibnd)
+    a(2) = matbulk_kappa_a2(ibnd)
+    a(3) = matbulk_kappa_a3(ibnd)
+    a(4) = matbulk_kappa_a4(ibnd)
+    a(5) = matbulk_kappa_a5(ibnd)
+    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (bulk Kappa) !')
+    END IF
+    bulk_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
+    layer_kappa = bulk_value*frac
+  END IF
+  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
+    RETURN
+  ELSE
+!xpb Loop over deposited species contributions
+    DO itrack=1,ntargsp
+      frac = layer_relconstituents(ibnd, nz+itrack)
+      a(1) = species_kappa_a1(itrack)
+      a(2) = species_kappa_a2(itrack)
+      a(3) = species_kappa_a3(itrack)
+      a(4) = species_kappa_a4(itrack)
+      a(5) = species_kappa_a5(itrack)
+      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
+        teff = t
+      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
+        teff = tcels
+      ELSE
+        CALL XERRAB('Unrecognized temperature units (species Kappa) !')
+      END IF
+      layer_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
+      layer_kappa = layer_kappa + layer_value*frac
+    END DO
+!
+    RETURN
+  END IF
+END FUNCTION LAYER_KAPPA_NODIFF_NODIFF
 
 !
-SUBROUTINE GET_WALL_DATA_NODIFF_NODIFF(mpg, nx, ny, ns, boris, &
-& wall_namelist_used)
+FUNCTION DLAYER_KAPPABYDT_NODIFF_NODIFF(ibnd, t) RESULT (&
+&dlayer_kappabydt)
   USE B2MOD_TYPES
-  USE B2MOD_GEO_DIFFV_DIFFV
+  USE B2MOD_LAYER
   USE B2MOD_WALL
-  USE B2MOD_PLASMA_DIFFV
   USE B2MOD_SPUTTER_DIFFV_DIFFV
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
-  USE B2MOD_EXTERNAL_DIFFV_DIFFV
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
-  USE B2MOD_SUBSYS
-  USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  INTEGER, INTENT(IN) :: nx, ny, ns
-  REAL(kind=r8), INTENT(IN) :: boris
-  LOGICAL, INTENT(IN) :: wall_namelist_used
-!
   INTEGER :: ibnd
-  CHARACTER(len=16) :: hlp_frm
-  INTRINSIC LEN_TRIM
+  REAL(kind=r8) :: t, dlayer_kappabydt
+  INTEGER :: nz, itrack
+  REAL(kind=r8) :: tcels, teff, a(2:5)
+  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
+  EXTERNAL XERRAB
 !
-  CALL SUBINI('get_wall_data')
-!xpb  Test namelist input
-  IF (ntargsp .GT. 0) THEN
-    WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntargsp, '(a2,1x))'
-    WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntargsp)
+  tcels = t - 273.15_R8
+!
+!xpb First count the bulk contribution
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
+  nz = matsurf_nconstituents(ibnd)
+!xpb The bulk or coating surface parameters
+  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
+&     .LT. coating_thickness(ibnd)) THEN
+    a(2) = coating_kappa_a2(ibnd)
+    a(3) = coating_kappa_a3(ibnd)
+    a(4) = coating_kappa_a4(ibnd)
+    a(5) = coating_kappa_a5(ibnd)
+    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (coat dKappadT) !')
+    END IF
+    coating_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*&
+&     teff)*teff
+    dlayer_kappabydt = coating_value*frac
   ELSE
-    WRITE(*, '(1x,a)') 'No tracked wall material species'
+    a(2) = matbulk_kappa_a2(ibnd)
+    a(3) = matbulk_kappa_a3(ibnd)
+    a(4) = matbulk_kappa_a4(ibnd)
+    a(5) = matbulk_kappa_a5(ibnd)
+    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (bulk dKappadT) !')
+    END IF
+    bulk_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*teff&
+&     )*teff
+    dlayer_kappabydt = bulk_value*frac
   END IF
-  nbnd = mpg%ncg
-  DO ibnd=1,nbnd
-    IF (backplate_temp(ibnd) .EQ. 0.0_R8) backplate_temp(ibnd) = &
-&       plate_temp
-    IF (plate_thickness(ibnd) .EQ. 0.0_R8) plate_thickness(ibnd) = &
-&       plate_thick
-    IF (plate_time_factor(ibnd) .EQ. 0.0_R8) plate_time_factor(ibnd) = &
-&       1.0_R8
-! Graphite
-    IF (LEN_TRIM(surface_material_name(ibnd)) .EQ. 0) &
-&     surface_material_name(ibnd)(1:1) = 'C'
-! Graphite
-    IF (LEN_TRIM(bulk_material_name(ibnd)) .EQ. 0) bulk_material_name(&
-&     ibnd)(1:1) = 'C'
-  END DO
+  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
+    RETURN
+  ELSE
+!xpb Loop over deposited species contributions
+    DO itrack=1,ntargsp
+      frac = layer_relconstituents(ibnd, nz+itrack)
+      a(2) = species_kappa_a2(itrack)
+      a(3) = species_kappa_a3(itrack)
+      a(4) = species_kappa_a4(itrack)
+      a(5) = species_kappa_a5(itrack)
+      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
+        teff = t
+      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
+        teff = tcels
+      ELSE
+        CALL XERRAB(&
+&             'Unrecognized temperature units (species dKappadT) !')
+      END IF
+      layer_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*&
+&       teff)*teff
+      dlayer_kappabydt = dlayer_kappabydt + layer_value*frac
+    END DO
 !
-  CALL SUBEND()
+    RETURN
+  END IF
+END FUNCTION DLAYER_KAPPABYDT_NODIFF_NODIFF
+
+!
+FUNCTION LAYER_CP_NODIFF_NODIFF(ibnd, t) RESULT (layer_cp)
+  USE B2MOD_TYPES
+  USE B2MOD_WALL
+  USE B2MOD_LAYER
+  USE B2MOD_SPUTTER_DIFFV_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  INTEGER :: ibnd
+  REAL(kind=r8) :: t, layer_cp
+  INTEGER :: nz, itrack, mf, cf, sf
+  REAL(kind=r8) :: tcels, teff
+  REAL(kind=r8) :: b(4)
+  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
+  EXTERNAL XERRAB
+!
+  tcels = t - 273.15_R8
+!
+!xpb First count the bulk contribution
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
+  nz = matsurf_nconstituents(ibnd)
+!xpb The bulk or coating surface parameters
+  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
+&     .LT. coating_thickness(ibnd)) THEN
+    b(1) = coating_cp_b1(ibnd)
+    b(2) = coating_cp_b2(ibnd)
+    b(3) = coating_cp_b3(ibnd)
+    b(4) = coating_cp_b4(ibnd)
+    cf = coating_format(ibnd)
+    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (coat Cp) !')
+    END IF
+    IF (cf .EQ. 1) THEN
+      coating_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
+    ELSE
+      coating_value = b(1) + b(2)*teff - b(3)/teff**2
+    END IF
+    layer_cp = coating_value*frac
+  ELSE
+    b(1) = matbulk_cp_b1(ibnd)
+    b(2) = matbulk_cp_b2(ibnd)
+    b(3) = matbulk_cp_b3(ibnd)
+    b(4) = matbulk_cp_b4(ibnd)
+    mf = matbulk_format(ibnd)
+    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
+      teff = t
+    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
+      teff = tcels
+    ELSE
+      CALL XERRAB('Unrecognized temperature units (bulk Cp) !')
+    END IF
+    IF (mf .EQ. 1) THEN
+      bulk_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
+    ELSE
+      bulk_value = b(1) + b(2)*teff - b(3)/teff**2
+    END IF
+    layer_cp = bulk_value*frac
+  END IF
+!xpb Loop over deposited species contributions
+  IF (layer_nconstituents(ibnd) .GT. nz) THEN
+    DO itrack=1,ntargsp
+      frac = layer_relconstituents(ibnd, nz+itrack)
+      b(1) = species_cp_b1(itrack)
+      b(2) = species_cp_b2(itrack)
+      b(3) = species_cp_b3(itrack)
+      b(4) = species_cp_b4(itrack)
+      sf = species_cp_format(itrack)
+      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
+        teff = t
+      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
+        teff = tcels
+      ELSE
+        CALL XERRAB('Unrecognized temperature units (species Cp) !')
+      END IF
+      IF (sf .EQ. 1) THEN
+        layer_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
+      ELSE
+        layer_value = b(1) + b(2)*t - b(3)/t**2
+      END IF
+      layer_cp = layer_cp + layer_value*frac
+    END DO
+  END IF
+!
   RETURN
-END SUBROUTINE GET_WALL_DATA_NODIFF_NODIFF
+END FUNCTION LAYER_CP_NODIFF_NODIFF
+
+!
+FUNCTION LAYER_EMISSIVITY_NODIFF_NODIFF(ibnd) RESULT (layer_emissivity)
+  USE B2MOD_TYPES
+  USE B2MOD_LAYER
+  USE B2MOD_WALL
+  USE B2MOD_SPUTTER_DIFFV_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  INTEGER :: ibnd
+  INTEGER :: nz, itrack
+  REAL(kind=r8) :: layer_emissivity
+  REAL(kind=r8) :: layer_value, frac
+!
+!xpb First count the bulk contribution
+  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
+  nz = matsurf_nconstituents(ibnd)
+!xpb The bulk or coating surface parameters
+  layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
+  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
+    RETURN
+  ELSE
+!xpb Loop over deposited species contributions
+    DO itrack=1,ntargsp
+      frac = layer_relconstituents(ibnd, nz+itrack)
+      layer_value = species_blackbody_emiss(itrack)
+      layer_emissivity = layer_emissivity + layer_value*frac
+    END DO
+!
+    RETURN
+  END IF
+END FUNCTION LAYER_EMISSIVITY_NODIFF_NODIFF
 
 !
 SUBROUTINE ADD_LAYER_THICKNESS_NODIFF_NODIFF(ns, ibnd)
@@ -449,284 +641,92 @@ SUBROUTINE COMPOSE_LAYER_NODIFF_NODIFF(ibnd, sput_frac)
 END SUBROUTINE COMPOSE_LAYER_NODIFF_NODIFF
 
 !
-FUNCTION LAYER_KAPPA_NODIFF_NODIFF(ibnd, t) RESULT (layer_kappa)
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+SUBROUTINE INIT_WALL_NODIFF_NODIFF(mpg)
   USE B2MOD_TYPES
-  USE B2MOD_LAYER
-  USE B2MOD_WALL
+  USE B2MOD_GEO_DIFFV_DIFFV
+  USE B2MOD_RATES
+  USE B2MOD_PLASMA_DIFFV
   USE B2MOD_SPUTTER_DIFFV_DIFFV
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-  INTEGER :: ibnd
-  REAL(kind=r8) :: t, layer_kappa
-  INTEGER :: nz, itrack
-  REAL(kind=r8) :: tcels, teff, a(5)
-  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
-  EXTERNAL XERRAB
-!
-  tcels = t - 273.15_R8
-!
-!xpb First count the bulk contribution
-  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
-  nz = matsurf_nconstituents(ibnd)
-!xpb The bulk or coating surface parameters
-  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
-&     .LT. coating_thickness(ibnd)) THEN
-    a(1) = coating_kappa_a1(ibnd)
-    a(2) = coating_kappa_a2(ibnd)
-    a(3) = coating_kappa_a3(ibnd)
-    a(4) = coating_kappa_a4(ibnd)
-    a(5) = coating_kappa_a5(ibnd)
-    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (coat Kappa) !')
-    END IF
-    coating_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
-    layer_kappa = coating_value*frac
-  ELSE
-    a(1) = matbulk_kappa_a1(ibnd)
-    a(2) = matbulk_kappa_a2(ibnd)
-    a(3) = matbulk_kappa_a3(ibnd)
-    a(4) = matbulk_kappa_a4(ibnd)
-    a(5) = matbulk_kappa_a5(ibnd)
-    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (bulk Kappa) !')
-    END IF
-    bulk_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
-    layer_kappa = bulk_value*frac
-  END IF
-  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
-    RETURN
-  ELSE
-!xpb Loop over deposited species contributions
-    DO itrack=1,ntargsp
-      frac = layer_relconstituents(ibnd, nz+itrack)
-      a(1) = species_kappa_a1(itrack)
-      a(2) = species_kappa_a2(itrack)
-      a(3) = species_kappa_a3(itrack)
-      a(4) = species_kappa_a4(itrack)
-      a(5) = species_kappa_a5(itrack)
-      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
-        teff = t
-      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
-        teff = tcels
-      ELSE
-        CALL XERRAB('Unrecognized temperature units (species Kappa) !')
-      END IF
-      layer_value = a(1) + (a(2)+(a(3)+(a(4)+a(5)*teff)*teff)*teff)*teff
-      layer_kappa = layer_kappa + layer_value*frac
-    END DO
-!
-    RETURN
-  END IF
-END FUNCTION LAYER_KAPPA_NODIFF_NODIFF
-
-!
-FUNCTION DLAYER_KAPPABYDT_NODIFF_NODIFF(ibnd, t) RESULT (&
-&dlayer_kappabydt)
-  USE B2MOD_TYPES
-  USE B2MOD_LAYER
-  USE B2MOD_WALL
-  USE B2MOD_SPUTTER_DIFFV_DIFFV
-  USE B2MOD_DIFFSIZES
-  IMPLICIT NONE
-  INTEGER :: ibnd
-  REAL(kind=r8) :: t, dlayer_kappabydt
-  INTEGER :: nz, itrack
-  REAL(kind=r8) :: tcels, teff, a(2:5)
-  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
-  EXTERNAL XERRAB
-!
-  tcels = t - 273.15_R8
-!
-!xpb First count the bulk contribution
-  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
-  nz = matsurf_nconstituents(ibnd)
-!xpb The bulk or coating surface parameters
-  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
-&     .LT. coating_thickness(ibnd)) THEN
-    a(2) = coating_kappa_a2(ibnd)
-    a(3) = coating_kappa_a3(ibnd)
-    a(4) = coating_kappa_a4(ibnd)
-    a(5) = coating_kappa_a5(ibnd)
-    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (coat dKappadT) !')
-    END IF
-    coating_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*&
-&     teff)*teff
-    dlayer_kappabydt = coating_value*frac
-  ELSE
-    a(2) = matbulk_kappa_a2(ibnd)
-    a(3) = matbulk_kappa_a3(ibnd)
-    a(4) = matbulk_kappa_a4(ibnd)
-    a(5) = matbulk_kappa_a5(ibnd)
-    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (bulk dKappadT) !')
-    END IF
-    bulk_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*teff&
-&     )*teff
-    dlayer_kappabydt = bulk_value*frac
-  END IF
-  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
-    RETURN
-  ELSE
-!xpb Loop over deposited species contributions
-    DO itrack=1,ntargsp
-      frac = layer_relconstituents(ibnd, nz+itrack)
-      a(2) = species_kappa_a2(itrack)
-      a(3) = species_kappa_a3(itrack)
-      a(4) = species_kappa_a4(itrack)
-      a(5) = species_kappa_a5(itrack)
-      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
-        teff = t
-      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
-        teff = tcels
-      ELSE
-        CALL XERRAB(&
-&             'Unrecognized temperature units (species dKappadT) !')
-      END IF
-      layer_value = a(2) + (2.0_R8*a(3)+(3.0_R8*a(4)+4.0_R8*a(5)*teff)*&
-&       teff)*teff
-      dlayer_kappabydt = dlayer_kappabydt + layer_value*frac
-    END DO
-!
-    RETURN
-  END IF
-END FUNCTION DLAYER_KAPPABYDT_NODIFF_NODIFF
-
-!
-FUNCTION LAYER_CP_NODIFF_NODIFF(ibnd, t) RESULT (layer_cp)
-  USE B2MOD_TYPES
+  USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_WALL
   USE B2MOD_LAYER
-  USE B2MOD_SPUTTER_DIFFV_DIFFV
+  USE B2MOD_B2CMPA_DIFFV
+  USE B2MOD_B2CMPB_DIFFV
+  USE B2MOD_B2CMFS
+  USE B2MOD_EXTERNAL_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ibnd
-  REAL(kind=r8) :: t, layer_cp
-  INTEGER :: nz, itrack, mf, cf, sf
-  REAL(kind=r8) :: tcels, teff
-  REAL(kind=r8) :: b(4)
-  REAL(kind=r8) :: bulk_value, coating_value, layer_value, frac
-  EXTERNAL XERRAB
+  TYPE(MAPPING), INTENT(IN) :: mpg
 !
-  tcels = t - 273.15_R8
+  EXTERNAL XERTST, IPGETI, IPGETR
 !
-!xpb First count the bulk contribution
-  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
-  nz = matsurf_nconstituents(ibnd)
-!xpb The bulk or coating surface parameters
-  IF (coating_thickness(ibnd) .GT. 0.0_R8 .AND. target_depth(ibnd, 1) &
-&     .LT. coating_thickness(ibnd)) THEN
-    b(1) = coating_cp_b1(ibnd)
-    b(2) = coating_cp_b2(ibnd)
-    b(3) = coating_cp_b3(ibnd)
-    b(4) = coating_cp_b4(ibnd)
-    cf = coating_format(ibnd)
-    IF (coating_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (coating_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (coat Cp) !')
-    END IF
-    IF (cf .EQ. 1) THEN
-      coating_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
-    ELSE
-      coating_value = b(1) + b(2)*teff - b(3)/teff**2
-    END IF
-    layer_cp = coating_value*frac
-  ELSE
-    b(1) = matbulk_cp_b1(ibnd)
-    b(2) = matbulk_cp_b2(ibnd)
-    b(3) = matbulk_cp_b3(ibnd)
-    b(4) = matbulk_cp_b4(ibnd)
-    mf = matbulk_format(ibnd)
-    IF (bulk_temp_unit(ibnd) .EQ. 'K') THEN
-      teff = t
-    ELSE IF (bulk_temp_unit(ibnd) .EQ. 'C') THEN
-      teff = tcels
-    ELSE
-      CALL XERRAB('Unrecognized temperature units (bulk Cp) !')
-    END IF
-    IF (mf .EQ. 1) THEN
-      bulk_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
-    ELSE
-      bulk_value = b(1) + b(2)*teff - b(3)/teff**2
-    END IF
-    layer_cp = bulk_value*frac
-  END IF
-!xpb Loop over deposited species contributions
-  IF (layer_nconstituents(ibnd) .GT. nz) THEN
-    DO itrack=1,ntargsp
-      frac = layer_relconstituents(ibnd, nz+itrack)
-      b(1) = species_cp_b1(itrack)
-      b(2) = species_cp_b2(itrack)
-      b(3) = species_cp_b3(itrack)
-      b(4) = species_cp_b4(itrack)
-      sf = species_cp_format(itrack)
-      IF (species_temp_unit(ibnd) .EQ. 'K') THEN
-        teff = t
-      ELSE IF (species_temp_unit(ibnd) .EQ. 'C') THEN
-        teff = tcels
-      ELSE
-        CALL XERRAB('Unrecognized temperature units (species Cp) !')
-      END IF
-      IF (sf .EQ. 1) THEN
-        layer_value = b(1) + (b(2)+(b(3)+b(4)*teff)*teff)*teff
-      ELSE
-        layer_value = b(1) + b(2)*t - b(3)/t**2
-      END IF
-      layer_cp = layer_cp + layer_value*frac
-    END DO
-  END IF
-!
+  CALL SUBINI('init_wall')
+  CALL SUBEND()
   RETURN
-END FUNCTION LAYER_CP_NODIFF_NODIFF
+END SUBROUTINE INIT_WALL_NODIFF_NODIFF
 
 !
-FUNCTION LAYER_EMISSIVITY_NODIFF_NODIFF(ibnd) RESULT (layer_emissivity)
+SUBROUTINE GET_WALL_DATA_NODIFF_NODIFF(mpg, nx, ny, ns, boris, &
+& wall_namelist_used)
   USE B2MOD_TYPES
-  USE B2MOD_LAYER
+  USE B2MOD_GEO_DIFFV_DIFFV
   USE B2MOD_WALL
+  USE B2MOD_PLASMA_DIFFV
   USE B2MOD_SPUTTER_DIFFV_DIFFV
+  USE B2MOD_INDIRECT_DIFFV_DIFFV
+  USE B2MOD_EXTERNAL_DIFFV_DIFFV
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_SUBSYS
+  USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  INTEGER, INTENT(IN) :: nx, ny, ns
+  REAL(kind=r8), INTENT(IN) :: boris
+  LOGICAL, INTENT(IN) :: wall_namelist_used
+!
   INTEGER :: ibnd
-  INTEGER :: nz, itrack
-  REAL(kind=r8) :: layer_emissivity
-  REAL(kind=r8) :: layer_value, frac
+  CHARACTER(len=16) :: hlp_frm
+  INTRINSIC LEN_TRIM
 !
-!xpb First count the bulk contribution
-  frac = layer_relconstituents(ibnd, 1)/matsurf_relconstituents(ibnd, 1)
-  nz = matsurf_nconstituents(ibnd)
-!xpb The bulk or coating surface parameters
-  layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
-  IF (layer_nconstituents(ibnd) .EQ. nz) THEN
-    RETURN
+  CALL SUBINI('get_wall_data')
+!xpb  Test namelist input
+  IF (ntargsp .GT. 0) THEN
+    WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntargsp, '(a2,1x))'
+    WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntargsp)
   ELSE
-!xpb Loop over deposited species contributions
-    DO itrack=1,ntargsp
-      frac = layer_relconstituents(ibnd, nz+itrack)
-      layer_value = species_blackbody_emiss(itrack)
-      layer_emissivity = layer_emissivity + layer_value*frac
-    END DO
-!
-    RETURN
+    WRITE(*, '(1x,a)') 'No tracked wall material species'
   END IF
-END FUNCTION LAYER_EMISSIVITY_NODIFF_NODIFF
+  nbnd = mpg%ncg
+  DO ibnd=1,nbnd
+    IF (backplate_temp(ibnd) .EQ. 0.0_R8) backplate_temp(ibnd) = &
+&       plate_temp
+    IF (plate_thickness(ibnd) .EQ. 0.0_R8) plate_thickness(ibnd) = &
+&       plate_thick
+    IF (plate_time_factor(ibnd) .EQ. 0.0_R8) plate_time_factor(ibnd) = &
+&       1.0_R8
+! Graphite
+    IF (LEN_TRIM(surface_material_name(ibnd)) .EQ. 0) &
+&     surface_material_name(ibnd)(1:1) = 'C'
+! Graphite
+    IF (LEN_TRIM(bulk_material_name(ibnd)) .EQ. 0) bulk_material_name(&
+&     ibnd)(1:1) = 'C'
+  END DO
+!
+  CALL SUBEND()
+  RETURN
+END SUBROUTINE GET_WALL_DATA_NODIFF_NODIFF
 

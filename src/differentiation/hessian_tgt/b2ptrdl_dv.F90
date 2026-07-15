@@ -190,6 +190,7 @@ SUBROUTINE B2PTRDL_NODIFF(nwe, ntg, rdl, tg_only)
 
     END DO
   END IF
+!
 !======================================================================
   RETURN
 END SUBROUTINE B2PTRDL_NODIFF

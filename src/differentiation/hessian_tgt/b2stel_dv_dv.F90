@@ -191,6 +191,7 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
   srw%rsana = 0.0_R8
   srw%rsahi = 0.0_R8
   srw%rsamo = 0.0_R8
+!
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source
@@ -654,9 +655,9 @@ END SUBROUTINE B2STEL_NODIFF_NODIFF
 !                *(srw.rqrad) *(srw.rqbrm) *(rtw.rsa) *(rtw.rra)
 !                *(rtw.rqa) *(rtw.rrd) *(rtw.rbr) *(rtw.rqr) *(pl.na)
 !                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in geo.cvbb:in
-!                geo.cvvol:in geo.fcvol:in rt.rlqa:in rt.rlra:in
-!                rt.rlsa:in rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in dv.facdrift:in
+!                dv.fac_exb:in rt.rlqa:in rt.rlra:in rt.rlsa:in
+!                rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
 !                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
 !                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
 !                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
@@ -676,8 +677,8 @@ END SUBROUTINE B2STEL_NODIFF_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
-& , pl, pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
+SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, &
+& pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFFV_DIFFV
   USE B2MOD_TALLIES
@@ -702,7 +703,6 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
   INTEGER :: ncv, nfc, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
@@ -884,6 +884,7 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
   shn0_iond = 0.d0
   sna0_iond = 0.d0
   shi0_iond = 0.d0
+!
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source
@@ -1712,11 +1713,12 @@ END SUBROUTINE B2STEL_DV_NODIFF
 !                *(pl.te) *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: srwd.she0:in srwd.shi0:in srwd.shn0:in
 !                srwd.smq0:in srwd.sna0:in srwd.rqrad:in srwd.rqbrm:in
-!                dv.ne:in dv.ni:in dv.nn:in rtwd.rsa:in rtwd.rra:in
-!                rtwd.rqa:in rtwd.rrd:in rtwd.rbr:in rtwd.rqr:in
-!                rtd.rlqa:in rtd.rlra:in rtd.rlsa:in rtd.rpi:in
-!                rt.rlqa:in rt.rlra:in rt.rlsa:in rt.rpi:in dvd.ne:in
-!                dvd.ni:in dvd.nn:in srw.she0:in srw.shi0:in srw.shn0:in
+!                dv.ne:in dv.ni:in dv.nn:in geo.cvbb:in geo.cvvol:in
+!                geo.fcvol:in rtwd.rsa:in rtwd.rra:in rtwd.rqa:in
+!                rtwd.rrd:in rtwd.rbr:in rtwd.rqr:in rtd.rlqa:in
+!                rtd.rlra:in rtd.rlsa:in rtd.rpi:in rt.rlqa:in
+!                rt.rlra:in rt.rlsa:in rt.rpi:in dvd.ne:in dvd.ni:in
+!                dvd.nn:in srw.she0:in srw.shi0:in srw.shn0:in
 !                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
 !                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
 !                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
@@ -1733,9 +1735,9 @@ END SUBROUTINE B2STEL_DV_NODIFF
 !                *(srw.rqrad) *(srw.rqbrm) *(rtw.rsa) *(rtw.rra)
 !                *(rtw.rqa) *(rtw.rrd) *(rtw.rbr) *(rtw.rqr) *(pl.na)
 !                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in geo.cvbb:in
-!                geo.cvvol:in geo.fcvol:in rt.rlqa:in rt.rlra:in
-!                rt.rlsa:in rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in dv.facdrift:in
+!                dv.fac_exb:in rt.rlqa:in rt.rlra:in rt.rlsa:in
+!                rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
 !                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
 !                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
 !                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
@@ -1785,7 +1787,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   INTEGER :: ncv, nfc, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV0), INTENT(IN) :: pld0
@@ -1908,6 +1910,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   REAL(r8) :: temp2
   REAL(r8), DIMENSION(nbdirsmax0) :: temp2d
   INTEGER :: nbdirs
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd0
   INTEGER :: nd0
   REAL(kind=r8) :: temp3
   REAL(r8) :: temp4
@@ -1999,8 +2002,10 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, smq0_rec, 1)
   arg1 = ncv*4
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd, srw%she0, srwd0%she0, &
-&            srwd%she0, srwdd%she0, 1, nbdirs, nbdirs0)
+  dummyzerodiffd0 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd0, dummyzerodiffd, srw%&
+&            she0, srwd0%she0, srwd%she0, srwdd%she0, 1, nbdirs, nbdirs0&
+&           )
   arg1 = ncv*4
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, she0_ion, 1)
   arg1 = ncv*4
@@ -2040,6 +2045,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   max2dd = 0.D0
   shi0_iond0 = 0.D0
   t1dd = 0.D0
+!
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source

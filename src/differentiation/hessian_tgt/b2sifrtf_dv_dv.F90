@@ -27,10 +27,13 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
   USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
+  USE B2MOD_FRTF_NCCORR_DIFFV_DIFFV, ONLY : corr_fria, corr_tfia, &
+& alpha_hs_style, g_hs_style
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2sifrtf
@@ -103,16 +106,18 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
   EXTERNAL NANCHECK
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
   INTEGER :: arg1
   REAL(kind=r8) :: arg10
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   CHARACTER(len=16) :: arg11
-  CHARACTER(len=21) :: arg12
-  CHARACTER(len=26) :: arg13
-  CHARACTER(len=15) :: arg14
-  CHARACTER(len=12) :: arg15
-  CHARACTER(len=11) :: arg16
+  CHARACTER(len=11) :: arg12
+  CHARACTER(len=14) :: arg13
+  CHARACTER(len=21) :: arg14
+  CHARACTER(len=26) :: arg15
+  CHARACTER(len=15) :: arg16
+  CHARACTER(len=12) :: arg17
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -129,8 +134,18 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
 &         .LE. switch%b2sifr_phm3, &
 &         'faulty internal parameter phm0, phm1, phm2, phm3')
     CALL IPGETI('b2sifrtf_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
 !iys 17.04.17
     CALL IPGETI('b2wdat_iout', iout_b2wdat)
+    IF (iout_b2wdat .EQ. 4 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode (b2wdat)'
+      iout_b2wdat = 0
+    END IF
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc, nVx
@@ -194,7 +209,15 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
 !     ..actual use of the Zhdanov closure
     DO icv=1,mpg%nci
       t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1))
+      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1), corr_fria(&
+&                    icv, isb))
+    END DO
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. &
+&     1 .AND. switch%zhdanov_nc .EQ. 1) THEN
+    DO icv=1,mpg%nci
+      t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
+      CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial(icv, 0:1), corr_fria(&
+&                    icv, isb))
     END DO
   ELSE
     smbfrial_test = 0.0_R8
@@ -204,7 +227,8 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
 !       ..test run of the Zhdanov closure
       DO icv=1,mpg%nci
         t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1))
+        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1), &
+&                      corr_fria(icv, isb))
       END DO
     END IF
 !     ..standard friction force calculation
@@ -276,25 +300,79 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
 !     ..actual use of the Zhdanov closure
     DO icv=1,mpg%nci
       CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                    smbtfial(icv, 0), smbtfial_nofl(icv, 0))
+&                    smbtfial(icv, 0), smbtfial_nofl(icv, 0), corr_tfia(&
+&                    icv, isb))
     END DO
-  ELSE
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ.&
+&     1 .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
+!     ..test run of the Zhdanov closure
     smbtfial_test = 0.0_R8
     smbtfial_test_nofl = 0.0_R8
-    IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 1 &
-&       .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
-!som 01.07.2021
-!       ..test run of the Zhdanov closure
-      DO icv=1,mpg%nci
-        CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                      smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0)&
-&                     )
+    DO icv=1,mpg%nci
+      CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
+&                    smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0), &
+&                    corr_tfia(icv, isb))
+    END DO
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      CALL B2SCOPY_NODIFF_NODIFF(ncv, smbtfial_test(:, 0), 1, smbtfial(:&
+&                          , 0), 1)
+      CALL B2SCOPY_NODIFF_NODIFF(ncv, smbtfial_test_nofl(:, 0), 1, &
+&                          smbtfial_nofl(:, 0), 1)
+    ELSE
+!     ..standard thermal force calculation
+      DO icv=1,ncv
+        ka(icv) = FKA(icv, isb)
+      END DO
+!
+      DO is=0,ns-1
+        IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
+&           is_neutral(is))) THEN
+          DO icv=1,mpg%nci
+            kabtf(icv) = FKABTF(icv, isb, is)
+            kbatf(icv) = FKABTF(icv, is, isb)
+!             kb(iCv)    = fka(iCv,is)
+            kb(icv) = FKA_NEW(icv, is, rz2_temp, na_temp, am_sqrt)
+            kabvp(icv) = FKABVP(icv, isb, is)
+!        .. calculations could be simplified
+!        .. but we did not do it in order to have the same formulae as manual
+            result1 = SQRT(mp)
+            arg10 = am(isb)*am(is)/(am(isb)+am(is))
+            result2 = SQRT(arg10)
+            calfab = zetap(icv)/result1*qe*(na(icv, isb)+na(icv, is))*&
+&             result2*(kabtf(icv)/kb(icv)-kbatf(icv)/ka(icv))*geo%cvbb(&
+&             icv, 0)/geo%cvbb(icv, 3)
+            coef = switch%b2sifr_phm3*rz2(icv, isb)*rz2(icv, is)*calfab*&
+&             mp/(zetap(icv)*qe)
+!        .. apply flux limit
+            IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(&
+&               icv))) THEN
+              arg10 = ti(icv)/mp
+              result1 = SQRT(arg10)
+              jabmax = qe*kabvp(icv)*result1*(na(icv, isb)+na(icv, is))
+              IF (calfab*gti(icv) .GE. 0.) THEN
+                abs0 = calfab*gti(icv)
+              ELSE
+                abs0 = -(calfab*gti(icv))
+              END IF
+              t0 = abs0/(cflim(4)*jabmax)
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+            ELSE
+              fllim_al_ab = 1.0_R8
+            END IF
+            t0 = na(icv, isb)*na(icv, is)/(na(icv, isb)+na(icv, is))*gti&
+&             (icv)
+            smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
+            smbtfial_nofl(icv, 0) = smbtfial_nofl(icv, 0) + coef*t0
+          END DO
+        END IF
       END DO
     END IF
+  ELSE
 !     ..standard thermal force calculation
     DO icv=1,ncv
       ka(icv) = FKA(icv, isb)
     END DO
+!
     DO is=0,ns-1
       IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
 &         is_neutral(is))) THEN
@@ -321,11 +399,11 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
             result1 = SQRT(arg10)
             jabmax = qe*kabvp(icv)*result1*(na(icv, isb)+na(icv, is))
             IF (calfab*gti(icv) .GE. 0.) THEN
-              abs0 = calfab*gti(icv)
+              abs1 = calfab*gti(icv)
             ELSE
-              abs0 = -(calfab*gti(icv))
+              abs1 = -(calfab*gti(icv))
             END IF
-            t0 = abs0/(cflim(4)*jabmax)
+            t0 = abs1/(cflim(4)*jabmax)
             fllim_al_ab = 1.0_R8/(1.0_R8+t0)
           ELSE
             fllim_al_ab = 1.0_R8
@@ -369,21 +447,30 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
     arg11 = 'b2sifrtf_smotfea'//chns
     CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
     CALL MY_OUT_US(70, ncv, 0, ue, 'b2sifrtf_ue')
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      arg12 = 'b2sifrtf_cf'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_fria(:, isb), arg12)
+      arg12 = 'b2sifrtf_ct'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_tfia(:, isb), arg12)
+      arg13 = 'b2sifrtf_alpha'//chns
+      CALL MY_OUT_US(70, ncv, 0, alpha_hs_style(:, isb), arg13)
+      CALL MY_OUT_US(70, ncv, 0, g_hs_style, 'b2sifrtf_g')
+    END IF
 !
     wrk = geo%cvvol*geo%cvhz*(smbfrial_test(:, 0)+smbfrial_test(:, 1)*ua&
 &     (:, isb)+smbfrial_test(:, 2)*na(:, isb)*mp*am(isb)+smbfrial_test(:&
 &     , 3)*ua(:, isb)*na(:, isb)*mp*am(isb))
-    arg12 = 'b2sifrtf_smofria_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smofria_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test(:, 0)
-    arg12 = 'b2sifrtf_smotfia_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_nofl(:, 0)
-    arg12 = 'b2sifrtf_smotfia_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test_nofl(:, 0)
-    arg13 = 'b2sifrtf_smotfia_test_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+    arg15 = 'b2sifrtf_smotfia_test_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
   END IF
 !
   IF (iout .GT. 1) THEN
@@ -393,28 +480,28 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
       DO icv=1,ncv
         wrk(icv) = FKABVP(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabvp_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabtf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, is, isb)
       END DO
-      arg14 = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kbatf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, isb)
       END DO
-      arg15 = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_ka_'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, is)
       END DO
-      arg15 = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_kb_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
     END DO
 !
     CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, &
@@ -428,8 +515,8 @@ SUBROUTINE B2SIFRTF_NODIFF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch&
     CALL MY_OUT_US(70, ncv, 0, sigx_c, 'b2sifrtf_sigx_c')
     CALL MY_OUT_US(70, ncv, 0, zetae, 'b2sifrtf_zetae')
 !
-    arg16 = 'b2sifrtf_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg16)
+    arg12 = 'b2sifrtf_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg12)
   END IF
 !
 ! ..return
@@ -492,13 +579,13 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     fka = 0.0_R8
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
     fka = fka*rz2(icv, a)
@@ -545,19 +632,20 @@ END SUBROUTINE B2SIFRTF_NODIFF_NODIFF
 !  Differentiation of b2sifrtf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: smbtf smbfria smbtfea smbtfia
 !                smbch smbfrea
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *gt_ac[save in b2mod_zhfrtf]
 !                *gtalc[save in b2mod_zhfrtf] *c_r_ta[save in b2mod_b2zhco]
 !                *c_r_tb[save in b2mod_b2zhco] *c_r_w[save in b2mod_b2zhco]
-!                ti cimp1 cimp2 na sigx_c ne ce1 ua zeff ue zetae
-!                zetap f_luc_sg alfx_c gte gti rz2
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!                *corr_tfia *corr_fria ti cimp1 cimp2 na sigx_c
+!                ne ce1 ua zeff ue zetae zetap f_luc_sg alfx_c
+!                gte gti rz2
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in gt_ac[save in b2mod_zhfrtf]:in
 !                gtalc[save in b2mod_zhfrtf]:in c_r_ta[save in b2mod_b2zhco]:in
 !                c_r_tb[save in b2mod_b2zhco]:in c_r_w[save in b2mod_b2zhco]:in
-!                mpg.intcellp:in geo.cvvol:in
+!                corr_tfia:in corr_fria:in mpg.intcellp:in
 !
 !
 !
@@ -573,22 +661,26 @@ END SUBROUTINE B2SIFRTF_NODIFF_NODIFF
 !.specification
 !
 SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
-& geo, geod, mpg, mpgd, na, nad, ua, uad, ue, ued, te, ted, ti, tid, ni&
-& , nid, ne, ned, ne2, ne2d, rza, rz2, rz2d, po, zetap, zetapd, zetae, &
-& zetaed, gti, gtid, gte, gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, &
-& cimp2d, zeff, zeffd, f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, &
-& sigx_cd, st_ext, smbfrea, smbfread, smbfria, smbfriad, smbtfea, &
-& smbtfead, smbtfia, smbtfiad, smbch, smbchd, smbtf, smbtfd, nbdirs)
+& geo, mpg, mpgd, na, nad, ua, uad, ue, ued, te, ti, tid, ni, ne, ned, &
+& ne2, rza, rz2, rz2d, po, zetap, zetapd, zetae, zetaed, gti, gtid, gte&
+& , gted, ce1, ce1d, ce2, cimp1, cimp1d, cimp2, cimp2d, zeff, zeffd, &
+& f_luc_sg, f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, st_ext, smbfrea&
+& , smbfread, smbfria, smbfriad, smbtfea, smbtfead, smbtfia, smbtfiad, &
+& smbch, smbchd, smbtf, smbtfd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
   USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : b2mod_zhfrtf_tf, &
 & b2mod_zhfrtf_tf_dv, b2mod_zhfrtf_fr, b2mod_zhfrtf_fr_dv
+  USE B2MOD_FRTF_NCCORR_DIFFV_DIFFV, ONLY : corr_fria, corr_friad, &
+& corr_tfia, corr_tfiad, alpha_hs_style, alpha_hs_styled, g_hs_style, &
+& g_hs_styled
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2sifrtf
@@ -600,7 +692,6 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
   INTEGER :: ncv, nfc, nvx, ns, isb, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -610,8 +701,7 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
 & , ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1), zeff(ncv), &
 & f_luc_sg(nfc), alfx_c(ncv), sigx_c(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ued(nbdirsmax, ncv), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), &
-& nid(nbdirsmax, ncv, 0:1), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), &
+& -1), ued(nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), &
 & rz2d(nbdirsmax, ncv, 0:ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax&
 & , ncv), gtid(nbdirsmax, ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, &
 & ncv), cimp1d(nbdirsmax, ncv, 0:ns-1), cimp2d(nbdirsmax, ncv, 0:ns-1), &
@@ -674,7 +764,7 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
 & , 0:3), smbtfial_nofl(ncv, 0:3), smbtfial_test_nofl(ncv, 0:3)
   REAL(kind=r8) :: smbfriald(nbdirsmax, ncv, 0:3), smbfreald(nbdirsmax, &
 & ncv, 0:3), smbtfiald(nbdirsmax, ncv, 0:3), smbtfeald(nbdirsmax, ncv, 0&
-& :3)
+& :3), smbtfial_testd(nbdirsmax, ncv, 0:3)
   REAL(kind=r8) :: rz2_temp(ns*ncv), na_temp(ns*ncv), am_sqrt(0:ns-1, 0:&
 & ns-1)
   REAL(kind=r8) :: rz2_tempd(nbdirsmax, ns*ncv), na_tempd(nbdirsmax, ns*&
@@ -689,6 +779,8 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
   INTEGER :: arg1
   REAL(kind=r8) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
@@ -696,11 +788,12 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
   REAL(kind=r8) :: result2
   CHARACTER(len=16) :: arg11
-  CHARACTER(len=21) :: arg12
-  CHARACTER(len=26) :: arg13
-  CHARACTER(len=15) :: arg14
-  CHARACTER(len=12) :: arg15
-  CHARACTER(len=11) :: arg16
+  CHARACTER(len=11) :: arg12
+  CHARACTER(len=14) :: arg13
+  CHARACTER(len=21) :: arg14
+  CHARACTER(len=26) :: arg15
+  CHARACTER(len=15) :: arg16
+  CHARACTER(len=12) :: arg17
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
@@ -726,8 +819,18 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
 &         .LE. switch%b2sifr_phm3, &
 &         'faulty internal parameter phm0, phm1, phm2, phm3')
     CALL IPGETI('b2sifrtf_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
 !iys 17.04.17
     CALL IPGETI('b2wdat_iout', iout_b2wdat)
+    IF (iout_b2wdat .EQ. 4 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode (b2wdat)'
+      iout_b2wdat = 0
+    END IF
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc, nVx
@@ -804,7 +907,23 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
       END DO
       t0 = mp*(temp*na(icv, isb))
       CALL B2MOD_ZHFRTF_FR_DV(icv, isb, t0, t0d, smbfrial(icv, 0:1), &
-&                       smbfriald(:, icv, 0:1), nbdirs)
+&                       smbfriald(:, icv, 0:1), corr_fria(icv, isb), &
+&                       corr_friad(:, icv, isb), nbdirs)
+    END DO
+    kabvpd = 0.d0
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. &
+&     1 .AND. switch%zhdanov_nc .EQ. 1) THEN
+    smbfriald = 0.d0
+    DO icv=1,mpg%nci
+      temp = rz2(icv, isb)/zetap(icv)
+      DO nd=1,nbdirs
+        t0d(nd) = mp*(na(icv, isb)*(rz2d(nd, icv, isb)-temp*zetapd(nd, &
+&         icv))/zetap(icv)+temp*nad(nd, icv, isb))
+      END DO
+      t0 = mp*(temp*na(icv, isb))
+      CALL B2MOD_ZHFRTF_FR_DV(icv, isb, t0, t0d, smbfrial(icv, 0:1), &
+&                       smbfriald(:, icv, 0:1), corr_fria(icv, isb), &
+&                       corr_friad(:, icv, isb), nbdirs)
     END DO
     kabvpd = 0.d0
   ELSE
@@ -815,7 +934,8 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
 !       ..test run of the Zhdanov closure
       DO icv=1,mpg%nci
         t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1))
+        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1), &
+&                      corr_fria(icv, isb))
       END DO
       kabvpd = 0.d0
       smbfriald = 0.d0
@@ -963,24 +1083,146 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
     DO icv=1,mpg%nci
       CALL B2MOD_ZHFRTF_TF_DV(icv, isb, switch%zhcscorr, na(icv, isb), &
 &                       nad(:, icv, isb), smbtfial(icv, 0), smbtfiald(:&
-&                       , icv, 0), smbtfial_nofl(icv, 0), nbdirs)
+&                       , icv, 0), smbtfial_nofl(icv, 0), corr_tfia(icv&
+&                       , isb), corr_tfiad(:, icv, isb), nbdirs)
     END DO
-  ELSE
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ.&
+&     1 .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
+!     ..test run of the Zhdanov closure
     smbtfial_test = 0.0_R8
     smbtfial_test_nofl = 0.0_R8
-    IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 1 &
-&       .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
-!som 01.07.2021
-!       ..test run of the Zhdanov closure
-      DO icv=1,mpg%nci
-        CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                      smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0)&
-&                     )
-      END DO
-      kad = 0.d0
+    smbtfial_testd = 0.d0
+    DO icv=1,mpg%nci
+      CALL B2MOD_ZHFRTF_TF_DV(icv, isb, switch%zhcscorr, na(icv, isb), &
+&                       nad(:, icv, isb), smbtfial_test(icv, 0), &
+&                       smbtfial_testd(:, icv, 0), smbtfial_test_nofl(&
+&                       icv, 0), corr_tfia(icv, isb), corr_tfiad(:, icv&
+&                       , isb), nbdirs)
+    END DO
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      smbtfiald = 0.d0
+      CALL B2SCOPY_DV_NODIFF(ncv, smbtfial_test(:, 0), smbtfial_testd(:&
+&                      , :, 0), 1, smbtfial(:, 0), smbtfiald(:, :, 0), 1&
+&                      , nbdirs)
+      CALL B2SCOPY_NODIFF_NODIFF(ncv, smbtfial_test_nofl(:, 0), 1, &
+&                          smbtfial_nofl(:, 0), 1)
     ELSE
       kad = 0.d0
+!     ..standard thermal force calculation
+      DO icv=1,ncv
+        CALL FKA_DV(icv, isb, ka(icv), kad(:, icv), nbdirs)
+      END DO
+      kbd = 0.d0
+      kabtfd = 0.d0
+      smbtfiald = 0.d0
+      kbatfd = 0.d0
+!
+      DO is=0,ns-1
+        IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
+&           is_neutral(is))) THEN
+          DO icv=1,mpg%nci
+            CALL FKABTF_DV(icv, isb, is, kabtf(icv), kabtfd(:, icv), &
+&                    nbdirs)
+            CALL FKABTF_DV(icv, is, isb, kbatf(icv), kbatfd(:, icv), &
+&                    nbdirs)
+!             kb(iCv)    = fka(iCv,is)
+            CALL FKA_NEW_DV(icv, is, rz2_temp, rz2_tempd, na_temp, &
+&                     na_tempd, am_sqrt, kb(icv), kbd(:, icv), nbdirs)
+            CALL FKABVP_DV(icv, isb, is, kabvp(icv), kabvpd(:, icv), &
+&                    nbdirs)
+!        .. calculations could be simplified
+!        .. but we did not do it in order to have the same formulae as manual
+            result1 = SQRT(mp)
+            arg10 = am(isb)*am(is)/(am(isb)+am(is))
+            result2 = SQRT(arg10)
+            temp3 = qe*result2*geo%cvbb(icv, 0)
+            temp2 = result1*geo%cvbb(icv, 3)
+            temp1 = zetap(icv)/temp2
+            temp0 = na(icv, isb) + na(icv, is)
+            temp = kabtf(icv)/kb(icv)
+            temp4 = kbatf(icv)/ka(icv)
+            temp5 = temp - temp4
+            DO nd=1,nbdirs
+              calfabd(nd) = temp3*(temp0*temp1*((kabtfd(nd, icv)-temp*&
+&               kbd(nd, icv))/kb(icv)-(kbatfd(nd, icv)-temp4*kad(nd, icv&
+&               ))/ka(icv))+temp5*(temp1*(nad(nd, icv, isb)+nad(nd, icv&
+&               , is))+temp0*zetapd(nd, icv)/temp2))
+            END DO
+            calfab = temp3*(temp5*(temp0*temp1))
+            temp5 = rz2(icv, is)/(qe*zetap(icv))
+            temp4 = rz2(icv, isb)*calfab
+            DO nd=1,nbdirs
+              coefd(nd) = switch%b2sifr_phm3*mp*(temp5*(calfab*rz2d(nd, &
+&               icv, isb)+rz2(icv, isb)*calfabd(nd))+temp4*(rz2d(nd, icv&
+&               , is)-temp5*qe*zetapd(nd, icv))/(qe*zetap(icv)))
+            END DO
+            coef = switch%b2sifr_phm3*mp*(temp4*temp5)
+!        .. apply flux limit
+            IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(&
+&               icv))) THEN
+              arg10 = ti(icv)/mp
+              temp5 = SQRT(arg10)
+              DO nd=1,nbdirs
+                arg10d(nd) = tid(nd, icv)/mp
+                IF (arg10 .EQ. 0.d0) THEN
+                  result1d(nd) = 0.d0
+                ELSE
+                  result1d(nd) = arg10d(nd)/(2.0*temp5)
+                END IF
+              END DO
+              result1 = temp5
+              temp5 = na(icv, isb) + na(icv, is)
+              DO nd=1,nbdirs
+                jabmaxd(nd) = qe*(temp5*(result1*kabvpd(nd, icv)+kabvp(&
+&                 icv)*result1d(nd))+kabvp(icv)*result1*(nad(nd, icv, &
+&                 isb)+nad(nd, icv, is)))
+              END DO
+              jabmax = qe*(kabvp(icv)*result1*temp5)
+              IF (calfab*gti(icv) .GE. 0.) THEN
+                DO nd=1,nbdirs
+                  abs0d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv&
+&                   )
+                END DO
+                abs0 = calfab*gti(icv)
+              ELSE
+                DO nd=1,nbdirs
+                  abs0d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv&
+&                   ))
+                END DO
+                abs0 = -(calfab*gti(icv))
+              END IF
+              temp5 = abs0/(cflim(4)*jabmax)
+              t0 = temp5
+              DO nd=1,nbdirs
+                t0d(nd) = (abs0d(nd)-temp5*cflim(4)*jabmaxd(nd))/(cflim(&
+&                 4)*jabmax)
+                fllim_al_abd(nd) = -(t0d(nd)/(t0+1.0_R8)**2)
+              END DO
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+            ELSE
+              fllim_al_ab = 1.0_R8
+              fllim_al_abd = 0.d0
+            END IF
+            temp5 = na(icv, isb) + na(icv, is)
+            temp4 = na(icv, is)/temp5
+            temp3 = na(icv, isb)*gti(icv)
+            t0 = temp3*temp4
+            DO nd=1,nbdirs
+              t0d(nd) = temp4*(gti(icv)*nad(nd, icv, isb)+na(icv, isb)*&
+&               gtid(nd, icv)) + temp3*(nad(nd, icv, is)-temp4*(nad(nd, &
+&               icv, isb)+nad(nd, icv, is)))/temp5
+              smbtfiald(nd, icv, 0) = smbtfiald(nd, icv, 0) + t0*(coef*&
+&               fllim_al_abd(nd)+fllim_al_ab*coefd(nd)) + fllim_al_ab*&
+&               coef*t0d(nd)
+            END DO
+            smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
+            smbtfial_nofl(icv, 0) = smbtfial_nofl(icv, 0) + coef*t0
+          END DO
+        END IF
+      END DO
     END IF
+  ELSE
+    kad = 0.d0
 !     ..standard thermal force calculation
     DO icv=1,ncv
       CALL FKA_DV(icv, isb, ka(icv), kad(:, icv), nbdirs)
@@ -989,6 +1231,7 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
     kabtfd = 0.d0
     smbtfiald = 0.d0
     kbatfd = 0.d0
+!
     DO is=0,ns-1
       IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
 &         is_neutral(is))) THEN
@@ -1007,20 +1250,20 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
           result1 = SQRT(mp)
           arg10 = am(isb)*am(is)/(am(isb)+am(is))
           result2 = SQRT(arg10)
-          temp3 = qe*result2*geo%cvbb(icv, 0)
-          temp2 = result1*geo%cvbb(icv, 3)
-          temp1 = zetap(icv)/temp2
-          temp0 = na(icv, isb) + na(icv, is)
-          temp = kabtf(icv)/kb(icv)
-          temp4 = kbatf(icv)/ka(icv)
-          temp5 = temp - temp4
+          temp5 = qe*result2*geo%cvbb(icv, 0)
+          temp4 = result1*geo%cvbb(icv, 3)
+          temp3 = zetap(icv)/temp4
+          temp2 = na(icv, isb) + na(icv, is)
+          temp1 = kabtf(icv)/kb(icv)
+          temp0 = kbatf(icv)/ka(icv)
+          temp = temp1 - temp0
           DO nd=1,nbdirs
-            calfabd(nd) = temp3*(temp0*temp1*((kabtfd(nd, icv)-temp*kbd(&
-&             nd, icv))/kb(icv)-(kbatfd(nd, icv)-temp4*kad(nd, icv))/ka(&
-&             icv))+temp5*(temp1*(nad(nd, icv, isb)+nad(nd, icv, is))+&
-&             temp0*zetapd(nd, icv)/temp2))
+            calfabd(nd) = temp5*(temp2*temp3*((kabtfd(nd, icv)-temp1*kbd&
+&             (nd, icv))/kb(icv)-(kbatfd(nd, icv)-temp0*kad(nd, icv))/ka&
+&             (icv))+temp*(temp3*(nad(nd, icv, isb)+nad(nd, icv, is))+&
+&             temp2*zetapd(nd, icv)/temp4))
           END DO
-          calfab = temp3*(temp5*(temp0*temp1))
+          calfab = temp5*(temp*(temp2*temp3))
           temp5 = rz2(icv, is)/(qe*zetap(icv))
           temp4 = rz2(icv, isb)*calfab
           DO nd=1,nbdirs
@@ -1052,19 +1295,19 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
             jabmax = qe*(kabvp(icv)*result1*temp5)
             IF (calfab*gti(icv) .GE. 0.) THEN
               DO nd=1,nbdirs
-                abs0d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv)
+                abs1d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv)
               END DO
-              abs0 = calfab*gti(icv)
+              abs1 = calfab*gti(icv)
             ELSE
               DO nd=1,nbdirs
-                abs0d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv))
+                abs1d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv))
               END DO
-              abs0 = -(calfab*gti(icv))
+              abs1 = -(calfab*gti(icv))
             END IF
-            temp5 = abs0/(cflim(4)*jabmax)
+            temp5 = abs1/(cflim(4)*jabmax)
             t0 = temp5
             DO nd=1,nbdirs
-              t0d(nd) = (abs0d(nd)-temp5*cflim(4)*jabmaxd(nd))/(cflim(4)&
+              t0d(nd) = (abs1d(nd)-temp5*cflim(4)*jabmaxd(nd))/(cflim(4)&
 &               *jabmax)
               fllim_al_abd(nd) = -(t0d(nd)/(t0+1.0_R8)**2)
             END DO
@@ -1129,21 +1372,30 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
     arg11 = 'b2sifrtf_smotfea'//chns
     CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
     CALL MY_OUT_US(70, ncv, 0, ue, 'b2sifrtf_ue')
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      arg12 = 'b2sifrtf_cf'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_fria(:, isb), arg12)
+      arg12 = 'b2sifrtf_ct'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_tfia(:, isb), arg12)
+      arg13 = 'b2sifrtf_alpha'//chns
+      CALL MY_OUT_US(70, ncv, 0, alpha_hs_style(:, isb), arg13)
+      CALL MY_OUT_US(70, ncv, 0, g_hs_style, 'b2sifrtf_g')
+    END IF
 !
     wrk = geo%cvvol*geo%cvhz*(smbfrial_test(:, 0)+smbfrial_test(:, 1)*ua&
 &     (:, isb)+smbfrial_test(:, 2)*na(:, isb)*mp*am(isb)+smbfrial_test(:&
 &     , 3)*ua(:, isb)*na(:, isb)*mp*am(isb))
-    arg12 = 'b2sifrtf_smofria_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smofria_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test(:, 0)
-    arg12 = 'b2sifrtf_smotfia_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_nofl(:, 0)
-    arg12 = 'b2sifrtf_smotfia_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test_nofl(:, 0)
-    arg13 = 'b2sifrtf_smotfia_test_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+    arg15 = 'b2sifrtf_smotfia_test_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
   END IF
 !
   IF (iout .GT. 1) THEN
@@ -1153,28 +1405,28 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
       DO icv=1,ncv
         wrk(icv) = FKABVP(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabvp_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabtf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, is, isb)
       END DO
-      arg14 = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kbatf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, isb)
       END DO
-      arg15 = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_ka_'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, is)
       END DO
-      arg15 = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_kb_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
     END DO
 !
     CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, &
@@ -1188,8 +1440,8 @@ SUBROUTINE B2SIFRTF_DV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, &
     CALL MY_OUT_US(70, ncv, 0, sigx_c, 'b2sifrtf_sigx_c')
     CALL MY_OUT_US(70, ncv, 0, zetae, 'b2sifrtf_zetae')
 !
-    arg16 = 'b2sifrtf_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg16)
+    arg12 = 'b2sifrtf_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg12)
   END IF
 !
 ! ..return
@@ -1342,7 +1594,7 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -1352,8 +1604,8 @@ CONTAINS
     END DO
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       DO nd=1,nbdirs
         fkad(nd) = fkad(nd) + result10*result20*(na(icv, r)*rz2d(nd, icv&
 &         , r)+rz2(icv, r)*nad(nd, icv, r))
@@ -1376,13 +1628,13 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     fka = 0.0_R8
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
     fka = fka*rz2(icv, a)
@@ -1496,47 +1748,50 @@ END SUBROUTINE B2SIFRTF_DV_NODIFF
 !   variations   of useful results: smbtf smbtfd smbfread smbtfead
 !                smbfria smbtfea smbchd smbfriad smbtfiad smbtfia
 !                smbch smbfrea
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf_diffv]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf_diffv]
 !                *nal[save in b2mod_zhfrtf_diffv] *ia[save in b2mod_zhfrtf_diffv]
 !                *av_ualpha[save in b2mod_zhfrtf_diffv] *gt_ac[save in b2mod_zhfrtf_diffv]
-!                *gtalc[save in b2mod_zhfrtf_diffv] *z2n_xyd[save in b2mod_zhfrtf_diffv]
+!                *gtalc[save in b2mod_zhfrtf_diffv] *z2n_cvd[save in b2mod_zhfrtf_diffv]
 !                *nald[save in b2mod_zhfrtf_diffv] *iad[save in b2mod_zhfrtf_diffv]
 !                *av_ualphad[save in b2mod_zhfrtf_diffv] *gt_acd[save in b2mod_zhfrtf_diffv]
 !                *gtalcd[save in b2mod_zhfrtf_diffv] *c_r_ta[save in b2mod_b2zhco_diffv]
 !                *c_r_tb[save in b2mod_b2zhco_diffv] *c_r_w[save in b2mod_b2zhco_diffv]
 !                *c_r_tad[save in b2mod_b2zhco_diffv] *c_r_tbd[save in b2mod_b2zhco_diffv]
-!                *c_r_wd[save in b2mod_b2zhco_diffv] ti cimp1 gtid
+!                *c_r_wd[save in b2mod_b2zhco_diffv] *corr_tfia
+!                *corr_friad *corr_tfiad *corr_fria ti cimp1 gtid
 !                cimp2 na sigx_c ne sigx_cd nad ce1 f_luc_sgd ua
 !                zeff cimp1d ue tid zeffd zetae ned uad zetap f_luc_sg
 !                zetaed cimp2d alfx_c rz2d ued alfx_cd gted gte
 !                gti rz2 ce1d zetapd
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf_diffv]:in
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf_diffv]:in
 !                nal[save in b2mod_zhfrtf_diffv]:in ia[save in b2mod_zhfrtf_diffv]:in
 !                av_ualpha[save in b2mod_zhfrtf_diffv]:in gt_ac[save in b2mod_zhfrtf_diffv]:in
-!                gtalc[save in b2mod_zhfrtf_diffv]:in z2n_xyd[save in b2mod_zhfrtf_diffv]:in
+!                gtalc[save in b2mod_zhfrtf_diffv]:in z2n_cvd[save in b2mod_zhfrtf_diffv]:in
 !                nald[save in b2mod_zhfrtf_diffv]:in iad[save in b2mod_zhfrtf_diffv]:in
 !                av_ualphad[save in b2mod_zhfrtf_diffv]:in gt_acd[save in b2mod_zhfrtf_diffv]:in
 !                gtalcd[save in b2mod_zhfrtf_diffv]:in c_r_ta[save in b2mod_b2zhco_diffv]:in
 !                c_r_tb[save in b2mod_b2zhco_diffv]:in c_r_w[save in b2mod_b2zhco_diffv]:in
 !                c_r_tad[save in b2mod_b2zhco_diffv]:in c_r_tbd[save in b2mod_b2zhco_diffv]:in
-!                c_r_wd[save in b2mod_b2zhco_diffv]:in
+!                c_r_wd[save in b2mod_b2zhco_diffv]:in corr_tfia:in
+!                corr_friad:in corr_tfiad:in corr_fria:in geo.cvvol:in
 !srv 01.07.05 }
 !  Differentiation of b2sifrtf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: smbtf smbfria smbtfea smbtfia
 !                smbch smbfrea
-!   with respect to varying inputs: *z2n_xy[save in b2mod_zhfrtf]
+!   with respect to varying inputs: *z2n_cv[save in b2mod_zhfrtf]
 !                *nal[save in b2mod_zhfrtf] *ia[save in b2mod_zhfrtf]
 !                *av_ualpha[save in b2mod_zhfrtf] *gt_ac[save in b2mod_zhfrtf]
 !                *gtalc[save in b2mod_zhfrtf] *c_r_ta[save in b2mod_b2zhco]
 !                *c_r_tb[save in b2mod_b2zhco] *c_r_w[save in b2mod_b2zhco]
-!                ti cimp1 cimp2 na sigx_c ne ce1 ua zeff ue zetae
-!                zetap f_luc_sg alfx_c gte gti rz2
-!   Plus diff mem management of: z2n_xy[save in b2mod_zhfrtf]:in
+!                *corr_tfia *corr_fria ti cimp1 cimp2 na sigx_c
+!                ne ce1 ua zeff ue zetae zetap f_luc_sg alfx_c
+!                gte gti rz2
+!   Plus diff mem management of: z2n_cv[save in b2mod_zhfrtf]:in
 !                nal[save in b2mod_zhfrtf]:in ia[save in b2mod_zhfrtf]:in
 !                av_ualpha[save in b2mod_zhfrtf]:in gt_ac[save in b2mod_zhfrtf]:in
 !                gtalc[save in b2mod_zhfrtf]:in c_r_ta[save in b2mod_b2zhco]:in
 !                c_r_tb[save in b2mod_b2zhco]:in c_r_w[save in b2mod_b2zhco]:in
-!                mpg.intcellp:in geo.cvvol:in
+!                corr_tfia:in corr_fria:in mpg.intcellp:in
 !
 !
 !
@@ -1571,10 +1826,15 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : b2mod_zhfrtf_tf, &
 & b2mod_zhfrtf_tf_dv, b2mod_zhfrtf_tf_dv_dv, b2mod_zhfrtf_fr, &
 & b2mod_zhfrtf_fr_dv, b2mod_zhfrtf_fr_dv_dv
+  USE B2MOD_FRTF_NCCORR_DIFFV_DIFFV, ONLY : corr_fria, corr_friad0, &
+& corr_friad, corr_friadd, corr_tfia, corr_tfiad0, corr_tfiad, &
+& corr_tfiadd, alpha_hs_style, alpha_hs_styled0, alpha_hs_styled, &
+& alpha_hs_styledd, g_hs_style, g_hs_styled0, g_hs_styled, g_hs_styledd
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
+  USE B2MOD_OPENMP
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2sifrtf
@@ -1587,7 +1847,7 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   INTEGER :: ncv, nfc, nvx, ns, isb, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+  TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
@@ -1597,15 +1857,16 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 & , ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1), zeff(ncv), &
 & f_luc_sg(nfc), alfx_c(ncv), sigx_c(ncv)
   REAL(kind=r8) :: nad0(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, &
-& 0:ns-1), ued0(nbdirsmax0, ncv), tid0(nbdirsmax0, ncv), ned0(nbdirsmax0&
-& , ncv), rz2d0(nbdirsmax0, ncv, 0:ns-1), zetapd0(nbdirsmax0, ncv), &
-& zetaed0(nbdirsmax0, ncv), gtid0(nbdirsmax0, ncv), gted0(nbdirsmax0, &
-& ncv), ce1d0(nbdirsmax0, ncv), cimp1d0(nbdirsmax0, ncv, 0:ns-1), &
-& cimp2d0(nbdirsmax0, ncv, 0:ns-1), zeffd0(nbdirsmax0, ncv), f_luc_sgd0(&
-& nbdirsmax0, nfc), alfx_cd0(nbdirsmax0, ncv), sigx_cd0(nbdirsmax0, ncv)
+& 0:ns-1), ued0(nbdirsmax0, ncv), ted(nbdirsmax0, ncv), tid0(nbdirsmax0&
+& , ncv), nid(nbdirsmax0, ncv, 0:1), ned0(nbdirsmax0, ncv), ne2d(&
+& nbdirsmax0, ncv), rz2d0(nbdirsmax0, ncv, 0:ns-1), zetapd0(nbdirsmax0, &
+& ncv), zetaed0(nbdirsmax0, ncv), gtid0(nbdirsmax0, ncv), gted0(&
+& nbdirsmax0, ncv), ce1d0(nbdirsmax0, ncv), cimp1d0(nbdirsmax0, ncv, 0:&
+& ns-1), cimp2d0(nbdirsmax0, ncv, 0:ns-1), zeffd0(nbdirsmax0, ncv), &
+& f_luc_sgd0(nbdirsmax0, nfc), alfx_cd0(nbdirsmax0, ncv), sigx_cd0(&
+& nbdirsmax0, ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), ued(nbdirsmax, ncv), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), &
-& nid(nbdirsmax, ncv, 0:1), ned(nbdirsmax, ncv), ne2d(nbdirsmax, ncv), &
+& -1), ued(nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), &
 & rz2d(nbdirsmax, ncv, 0:ns-1), zetapd(nbdirsmax, ncv), zetaed(nbdirsmax&
 & , ncv), gtid(nbdirsmax, ncv), gted(nbdirsmax, ncv), ce1d(nbdirsmax, &
 & ncv), cimp1d(nbdirsmax, ncv, 0:ns-1), cimp2d(nbdirsmax, ncv, 0:ns-1), &
@@ -1699,13 +1960,14 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 & , 0:3), smbtfial_nofl(ncv, 0:3), smbtfial_test_nofl(ncv, 0:3)
   REAL(kind=r8) :: smbfriald0(nbdirsmax0, ncv, 0:3), smbfreald0(&
 & nbdirsmax0, ncv, 0:3), smbtfiald0(nbdirsmax0, ncv, 0:3), smbtfeald0(&
-& nbdirsmax0, ncv, 0:3)
+& nbdirsmax0, ncv, 0:3), smbtfial_testd0(nbdirsmax0, ncv, 0:3)
   REAL(kind=r8) :: smbfriald(nbdirsmax, ncv, 0:3), smbfreald(nbdirsmax, &
 & ncv, 0:3), smbtfiald(nbdirsmax, ncv, 0:3), smbtfeald(nbdirsmax, ncv, 0&
-& :3)
+& :3), smbtfial_testd(nbdirsmax, ncv, 0:3)
   REAL(kind=r8) :: smbfrialdd(nbdirsmax0, nbdirsmax, ncv, 0:3), &
 & smbfrealdd(nbdirsmax0, nbdirsmax, ncv, 0:3), smbtfialdd(nbdirsmax0, &
-& nbdirsmax, ncv, 0:3), smbtfealdd(nbdirsmax0, nbdirsmax, ncv, 0:3)
+& nbdirsmax, ncv, 0:3), smbtfealdd(nbdirsmax0, nbdirsmax, ncv, 0:3), &
+& smbtfial_testdd(nbdirsmax0, nbdirsmax, ncv, 0:3)
   REAL(kind=r8) :: rz2_temp(ns*ncv), na_temp(ns*ncv), am_sqrt(0:ns-1, 0:&
 & ns-1)
   REAL(kind=r8) :: rz2_tempd0(nbdirsmax0, ns*ncv), na_tempd0(nbdirsmax0&
@@ -1726,6 +1988,10 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: abs0d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs0dd
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: abs1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs1dd
   INTEGER :: arg1
   REAL(kind=r8) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg10d0
@@ -1737,11 +2003,12 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result1dd
   REAL(kind=r8) :: result2
   CHARACTER(len=16) :: arg11
-  CHARACTER(len=21) :: arg12
-  CHARACTER(len=26) :: arg13
-  CHARACTER(len=15) :: arg14
-  CHARACTER(len=12) :: arg15
-  CHARACTER(len=11) :: arg16
+  CHARACTER(len=11) :: arg12
+  CHARACTER(len=14) :: arg13
+  CHARACTER(len=21) :: arg14
+  CHARACTER(len=26) :: arg15
+  CHARACTER(len=15) :: arg16
+  CHARACTER(len=12) :: arg17
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: tempd
@@ -1781,8 +2048,18 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 &         .LE. switch%b2sifr_phm3, &
 &         'faulty internal parameter phm0, phm1, phm2, phm3')
     CALL IPGETI('b2sifrtf_iout', iout)
+    IF (iout .NE. 0 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode'
+      iout = 0
+    END IF
 !iys 17.04.17
     CALL IPGETI('b2wdat_iout', iout_b2wdat)
+    IF (iout_b2wdat .EQ. 4 .AND. IN_PARALLEL()) THEN
+      WRITE(*, *) 'B2SIFRTF OpenMP warning: no file output in ', &
+&     'parallel mode (b2wdat)'
+      iout_b2wdat = 0
+    END IF
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
 !   ..test nCv, nFc, nVx
@@ -1892,7 +2169,50 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
       CALL B2MOD_ZHFRTF_FR_DV_DV(icv, isb, t0, t0d0, t0d, t0dd, smbfrial&
 &                          (icv, 0:1), smbfriald0(:, icv, 0:1), &
 &                          smbfriald(:, icv, 0:1), smbfrialdd(:, :, icv&
-&                          , 0:1), nbdirs, nbdirs0)
+&                          , 0:1), corr_fria(icv, isb), corr_friad0(:, &
+&                          icv, isb), corr_friad(:, icv, isb), &
+&                          corr_friadd(:, :, icv, isb), nbdirs, nbdirs0)
+    END DO
+    kabvpd = 0.d0
+    coefdd = 0.D0
+    kabvpd0 = 0.D0
+    kabvpdd = 0.D0
+    result1dd = 0.D0
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. switch%zhdanov_test .EQ. &
+&     1 .AND. switch%zhdanov_nc .EQ. 1) THEN
+    smbfriald = 0.d0
+    t0dd = 0.D0
+    smbfriald0 = 0.D0
+    smbfrialdd = 0.D0
+    DO icv=1,mpg%nci
+      temp7 = rz2(icv, isb)/zetap(icv)
+      DO nd0=1,nbdirs0
+        tempd(nd0) = (rz2d0(nd0, icv, isb)-temp7*zetapd0(nd0, icv))/&
+&         zetap(icv)
+      END DO
+      temp = temp7
+      DO nd=1,nbdirs
+        temp7 = rz2d(nd, icv, isb) - temp*zetapd(nd, icv)
+        temp6 = na(icv, isb)/zetap(icv)
+        DO nd0=1,nbdirs0
+          t0dd(nd0, nd) = mp*(temp7*(nad0(nd0, icv, isb)-temp6*zetapd0(&
+&           nd0, icv))/zetap(icv)+temp6*(rz2dd(nd0, nd, icv, isb)-zetapd&
+&           (nd, icv)*tempd(nd0)-temp*zetapdd(nd0, nd, icv))+nad(nd, icv&
+&           , isb)*tempd(nd0)+temp*nadd(nd0, nd, icv, isb))
+        END DO
+        t0d(nd) = mp*(temp6*temp7+temp*nad(nd, icv, isb))
+      END DO
+      DO nd0=1,nbdirs0
+        t0d0(nd0) = mp*(na(icv, isb)*tempd(nd0)+temp*nad0(nd0, icv, isb)&
+&         )
+      END DO
+      t0 = mp*(temp*na(icv, isb))
+      CALL B2MOD_ZHFRTF_FR_DV_DV(icv, isb, t0, t0d0, t0d, t0dd, smbfrial&
+&                          (icv, 0:1), smbfriald0(:, icv, 0:1), &
+&                          smbfriald(:, icv, 0:1), smbfrialdd(:, :, icv&
+&                          , 0:1), corr_fria(icv, isb), corr_friad0(:, &
+&                          icv, isb), corr_friad(:, icv, isb), &
+&                          corr_friadd(:, :, icv, isb), nbdirs, nbdirs0)
     END DO
     kabvpd = 0.d0
     coefdd = 0.D0
@@ -1907,7 +2227,8 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !       ..test run of the Zhdanov closure
       DO icv=1,mpg%nci
         t0 = rz2(icv, isb)*na(icv, isb)*mp/zetap(icv)
-        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1))
+        CALL B2MOD_ZHFRTF_FR(icv, isb, t0, smbfrial_test(icv, 0:1), &
+&                      corr_fria(icv, isb))
       END DO
       kabvpd = 0.d0
       smbfriald = 0.d0
@@ -2273,29 +2594,343 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 &                          , nad0(:, icv, isb), nad(:, icv, isb), nadd(:&
 &                          , :, icv, isb), smbtfial(icv, 0), smbtfiald0(&
 &                          :, icv, 0), smbtfiald(:, icv, 0), smbtfialdd(&
-&                          :, :, icv, 0), smbtfial_nofl(icv, 0), nbdirs&
-&                          , nbdirs0)
+&                          :, :, icv, 0), smbtfial_nofl(icv, 0), &
+&                          corr_tfia(icv, isb), corr_tfiad0(:, icv, isb)&
+&                          , corr_tfiad(:, icv, isb), corr_tfiadd(:, :, &
+&                          icv, isb), nbdirs, nbdirs0)
     END DO
-  ELSE
+  ELSE IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ.&
+&     1 .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
+!     ..test run of the Zhdanov closure
     smbtfial_test = 0.0_R8
     smbtfial_test_nofl = 0.0_R8
-    IF (switch%zhdanov_closure .EQ. 1 .AND. (switch%zhdanov_test .EQ. 1 &
-&       .OR. switch%zhdanov_tf_fr .EQ. 0)) THEN
-!som 01.07.2021
-!       ..test run of the Zhdanov closure
-      DO icv=1,mpg%nci
-        CALL B2MOD_ZHFRTF_TF(icv, isb, switch%zhcscorr, na(icv, isb), &
-&                      smbtfial_test(icv, 0), smbtfial_test_nofl(icv, 0)&
-&                     )
-      END DO
-      kad = 0.d0
-      kad0 = 0.D0
-      kadd = 0.D0
+    smbtfial_testd = 0.d0
+    smbtfial_testdd = 0.D0
+    smbtfial_testd0 = 0.D0
+    DO icv=1,mpg%nci
+      CALL B2MOD_ZHFRTF_TF_DV_DV(icv, isb, switch%zhcscorr, na(icv, isb)&
+&                          , nad0(:, icv, isb), nad(:, icv, isb), nadd(:&
+&                          , :, icv, isb), smbtfial_test(icv, 0), &
+&                          smbtfial_testd0(:, icv, 0), smbtfial_testd(:&
+&                          , icv, 0), smbtfial_testdd(:, :, icv, 0), &
+&                          smbtfial_test_nofl(icv, 0), corr_tfia(icv, &
+&                          isb), corr_tfiad0(:, icv, isb), corr_tfiad(:&
+&                          , icv, isb), corr_tfiadd(:, :, icv, isb), &
+&                          nbdirs, nbdirs0)
+    END DO
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      smbtfiald = 0.d0
+      smbtfiald0 = 0.D0
+      smbtfialdd = 0.D0
+      CALL B2SCOPY_DV_DV(ncv, smbtfial_test(:, 0), smbtfial_testd0(:, :&
+&                  , 0), smbtfial_testd(:, :, 0), smbtfial_testdd(:, :, &
+&                  :, 0), 1, smbtfial(:, 0), smbtfiald0(:, :, 0), &
+&                  smbtfiald(:, :, 0), smbtfialdd(:, :, :, 0), 1, nbdirs&
+&                  , nbdirs0)
+      CALL B2SCOPY_NODIFF_NODIFF(ncv, smbtfial_test_nofl(:, 0), 1, &
+&                          smbtfial_nofl(:, 0), 1)
     ELSE
       kad = 0.d0
       kad0 = 0.D0
       kadd = 0.D0
+!     ..standard thermal force calculation
+      DO icv=1,ncv
+        CALL FKA_DV_DV(icv, isb, ka(icv), kad0(:, icv), kad(:, icv), &
+&                kadd(:, :, icv), nbdirs, nbdirs0)
+      END DO
+      kbd = 0.d0
+      kabtfd = 0.d0
+      smbtfiald = 0.d0
+      kbatfd = 0.d0
+      kbd0 = 0.D0
+      fllim_al_abdd = 0.D0
+      jabmaxdd = 0.D0
+      kabtfd0 = 0.D0
+      smbtfialdd = 0.D0
+      kabtfdd = 0.D0
+      calfabdd = 0.D0
+      abs0dd = 0.D0
+      kbdd = 0.D0
+      smbtfiald0 = 0.D0
+      kbatfd0 = 0.D0
+      kbatfdd = 0.D0
+      arg10dd = 0.D0
+!
+      DO is=0,ns-1
+        IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
+&           is_neutral(is))) THEN
+          DO icv=1,mpg%nci
+            CALL FKABTF_DV_DV(icv, isb, is, kabtf(icv), kabtfd0(:, icv)&
+&                       , kabtfd(:, icv), kabtfdd(:, :, icv), nbdirs, &
+&                       nbdirs0)
+            CALL FKABTF_DV_DV(icv, is, isb, kbatf(icv), kbatfd0(:, icv)&
+&                       , kbatfd(:, icv), kbatfdd(:, :, icv), nbdirs, &
+&                       nbdirs0)
+!             kb(iCv)    = fka(iCv,is)
+            CALL FKA_NEW_DV_DV(icv, is, rz2_temp, rz2_tempd0, rz2_tempd&
+&                        , rz2_tempdd, na_temp, na_tempd0, na_tempd, &
+&                        na_tempdd, am_sqrt, kb(icv), kbd0(:, icv), kbd(&
+&                        :, icv), kbdd(:, :, icv), nbdirs, nbdirs0)
+            CALL FKABVP_DV_DV(icv, isb, is, kabvp(icv), kabvpd0(:, icv)&
+&                       , kabvpd(:, icv), kabvpdd(:, :, icv), nbdirs, &
+&                       nbdirs0)
+!        .. calculations could be simplified
+!        .. but we did not do it in order to have the same formulae as manual
+            result1 = SQRT(mp)
+            arg10 = am(isb)*am(is)/(am(isb)+am(is))
+            result2 = SQRT(arg10)
+            temp3 = qe*result2*geo%cvbb(icv, 0)
+            temp2 = result1*geo%cvbb(icv, 3)
+            temp8 = kabtf(icv)/kb(icv)
+            DO nd0=1,nbdirs0
+              temp1d(nd0) = zetapd0(nd0, icv)/temp2
+              temp0d(nd0) = nad0(nd0, icv, isb) + nad0(nd0, icv, is)
+              tempd(nd0) = (kabtfd0(nd0, icv)-temp8*kbd0(nd0, icv))/kb(&
+&               icv)
+            END DO
+            temp1 = zetap(icv)/temp2
+            temp0 = na(icv, isb) + na(icv, is)
+            temp = temp8
+            temp8 = kbatf(icv)/ka(icv)
+            DO nd0=1,nbdirs0
+              temp4d(nd0) = (kbatfd0(nd0, icv)-temp8*kad0(nd0, icv))/ka(&
+&               icv)
+              temp5d(nd0) = tempd(nd0) - temp4d(nd0)
+            END DO
+            temp4 = temp8
+            temp5 = temp - temp4
+            DO nd=1,nbdirs
+              temp8 = (kbatfd(nd, icv)-temp4*kad(nd, icv))/ka(icv)
+              temp7 = (kabtfd(nd, icv)-temp*kbd(nd, icv))/kb(icv)
+              temp6 = temp7 - temp8
+              temp9 = nad(nd, icv, isb) + nad(nd, icv, is)
+              temp10 = temp1*temp9 + zetapd(nd, icv)*temp0/temp2
+              DO nd0=1,nbdirs0
+                calfabdd(nd0, nd) = temp3*(temp6*(temp1*temp0d(nd0)+&
+&                 temp0*temp1d(nd0))+temp0*temp1*((kabtfdd(nd0, nd, icv)&
+&                 -kbd(nd, icv)*tempd(nd0)-temp*kbdd(nd0, nd, icv)-temp7&
+&                 *kbd0(nd0, icv))/kb(icv)-(kbatfdd(nd0, nd, icv)-kad(nd&
+&                 , icv)*temp4d(nd0)-temp4*kadd(nd0, nd, icv)-temp8*kad0&
+&                 (nd0, icv))/ka(icv))+temp10*temp5d(nd0)+temp5*(temp9*&
+&                 temp1d(nd0)+temp1*(nadd(nd0, nd, icv, isb)+nadd(nd0, &
+&                 nd, icv, is))+temp0*zetapdd(nd0, nd, icv)/temp2+zetapd&
+&                 (nd, icv)*temp0d(nd0)/temp2))
+              END DO
+              calfabd(nd) = temp3*(temp0*temp1*temp6+temp5*temp10)
+            END DO
+            calfab = temp3*(temp5*(temp0*temp1))
+            temp10 = rz2(icv, is)/(qe*zetap(icv))
+            DO nd0=1,nbdirs0
+              calfabd0(nd0) = temp3*(temp1*(temp0*temp5d(nd0)+temp5*&
+&               temp0d(nd0))+temp5*temp0*temp1d(nd0))
+              temp5d(nd0) = (rz2d0(nd0, icv, is)-temp10*qe*zetapd0(nd0, &
+&               icv))/(qe*zetap(icv))
+              temp4d(nd0) = calfab*rz2d0(nd0, icv, isb) + rz2(icv, isb)*&
+&               calfabd0(nd0)
+            END DO
+            temp5 = temp10
+            temp4 = rz2(icv, isb)*calfab
+            DO nd=1,nbdirs
+              temp10 = calfab*rz2d(nd, icv, isb) + rz2(icv, isb)*calfabd&
+&               (nd)
+              temp9 = temp4/(qe*zetap(icv))
+              temp8 = rz2d(nd, icv, is) - qe*temp5*zetapd(nd, icv)
+              DO nd0=1,nbdirs0
+                coefdd(nd0, nd) = switch%b2sifr_phm3*mp*(temp10*temp5d(&
+&                 nd0)+temp5*(rz2d(nd, icv, isb)*calfabd0(nd0)+calfab*&
+&                 rz2dd(nd0, nd, icv, isb)+calfabd(nd)*rz2d0(nd0, icv, &
+&                 isb)+rz2(icv, isb)*calfabdd(nd0, nd))+temp9*(rz2dd(nd0&
+&                 , nd, icv, is)-qe*(zetapd(nd, icv)*temp5d(nd0)+temp5*&
+&                 zetapdd(nd0, nd, icv)))+temp8*(temp4d(nd0)-temp9*qe*&
+&                 zetapd0(nd0, icv))/(qe*zetap(icv)))
+              END DO
+              coefd(nd) = switch%b2sifr_phm3*mp*(temp5*temp10+temp8*&
+&               temp9)
+            END DO
+            DO nd0=1,nbdirs0
+              coefd0(nd0) = switch%b2sifr_phm3*mp*(temp5*temp4d(nd0)+&
+&               temp4*temp5d(nd0))
+            END DO
+            coef = switch%b2sifr_phm3*mp*(temp4*temp5)
+!        .. apply flux limit
+            IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(&
+&               icv))) THEN
+              arg10 = ti(icv)/mp
+              temp10 = SQRT(arg10)
+              DO nd0=1,nbdirs0
+                arg10d0(nd0) = tid0(nd0, icv)/mp
+                IF (arg10 .EQ. 0.D0) THEN
+                  temp5d(nd0) = 0.D0
+                ELSE
+                  temp5d(nd0) = arg10d0(nd0)/(2.0*temp10)
+                END IF
+              END DO
+              temp5 = temp10
+              DO nd=1,nbdirs
+                DO nd0=nd,nbdirs0
+                  arg10dd(nd0, nd) = tidd(nd0, nd, icv)/mp
+                END DO
+                arg10d(nd) = tid(nd, icv)/mp
+                IF (arg10 .EQ. 0.d0) THEN
+                  DO nd0=1,nbdirs0
+                    result1dd(nd0, nd) = 0.D0
+                  END DO
+                  result1d(nd) = 0.d0
+                ELSE
+                  temp10 = arg10d(nd)/(2.0*temp5)
+                  DO nd0=1,nbdirs0
+                    result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp10*2.0*&
+&                     temp5d(nd0))/(2.0*temp5)
+                  END DO
+                  result1d(nd) = temp10
+                END IF
+              END DO
+              DO nd0=1,nbdirs0
+                result1d0(nd0) = temp5d(nd0)
+                temp5d(nd0) = nad0(nd0, icv, isb) + nad0(nd0, icv, is)
+              END DO
+              result1 = temp5
+              temp5 = na(icv, isb) + na(icv, is)
+              DO nd=1,nbdirs
+                temp10 = result1*kabvpd(nd, icv) + kabvp(icv)*result1d(&
+&                 nd)
+                temp9 = nad(nd, icv, isb) + nad(nd, icv, is)
+                DO nd0=1,nbdirs0
+                  jabmaxdd(nd0, nd) = qe*(temp10*temp5d(nd0)+temp5*(&
+&                   kabvpd(nd, icv)*result1d0(nd0)+result1*kabvpdd(nd0, &
+&                   nd, icv)+result1d(nd)*kabvpd0(nd0, icv)+kabvp(icv)*&
+&                   result1dd(nd0, nd))+temp9*(result1*kabvpd0(nd0, icv)&
+&                   +kabvp(icv)*result1d0(nd0))+kabvp(icv)*result1*(nadd&
+&                   (nd0, nd, icv, isb)+nadd(nd0, nd, icv, is)))
+                END DO
+                jabmaxd(nd) = qe*(temp5*temp10+kabvp(icv)*result1*temp9)
+              END DO
+              DO nd0=1,nbdirs0
+                jabmaxd0(nd0) = qe*(result1*temp5*kabvpd0(nd0, icv)+&
+&                 kabvp(icv)*(temp5*result1d0(nd0)+result1*temp5d(nd0)))
+              END DO
+              jabmax = qe*(kabvp(icv)*result1*temp5)
+              IF (calfab*gti(icv) .GE. 0.) THEN
+                DO nd=1,nbdirs
+                  DO nd0=nd,nbdirs0
+                    abs0dd(nd0, nd) = calfabd(nd)*gtid0(nd0, icv) + gti(&
+&                     icv)*calfabdd(nd0, nd) + gtid(nd, icv)*calfabd0(&
+&                     nd0) + calfab*gtidd(nd0, nd, icv)
+                  END DO
+                  abs0d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv&
+&                   )
+                END DO
+                DO nd0=1,nbdirs0
+                  abs0d0(nd0) = gti(icv)*calfabd0(nd0) + calfab*gtid0(&
+&                   nd0, icv)
+                END DO
+                abs0 = calfab*gti(icv)
+              ELSE
+                DO nd=1,nbdirs
+                  DO nd0=nd,nbdirs0
+                    abs0dd(nd0, nd) = -(calfabd(nd)*gtid0(nd0, icv)) - &
+&                     gti(icv)*calfabdd(nd0, nd) - gtid(nd, icv)*&
+&                     calfabd0(nd0) - calfab*gtidd(nd0, nd, icv)
+                  END DO
+                  abs0d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv&
+&                   ))
+                END DO
+                DO nd0=1,nbdirs0
+                  abs0d0(nd0) = -(gti(icv)*calfabd0(nd0)+calfab*gtid0(&
+&                   nd0, icv))
+                END DO
+                abs0 = -(calfab*gti(icv))
+              END IF
+              temp10 = abs0/(cflim(4)*jabmax)
+              DO nd0=1,nbdirs0
+                temp5d(nd0) = (abs0d0(nd0)-temp10*cflim(4)*jabmaxd0(nd0)&
+&                 )/(cflim(4)*jabmax)
+                t0d0(nd0) = temp5d(nd0)
+              END DO
+              temp5 = temp10
+              t0 = temp5
+              DO nd=1,nbdirs
+                temp10 = (abs0d(nd)-cflim(4)*temp5*jabmaxd(nd))/(cflim(4&
+&                 )*jabmax)
+                DO nd0=1,nbdirs0
+                  t0dd(nd0, nd) = (abs0dd(nd0, nd)-cflim(4)*(jabmaxd(nd)&
+&                   *temp5d(nd0)+temp5*jabmaxdd(nd0, nd))-temp10*cflim(4&
+&                   )*jabmaxd0(nd0))/(cflim(4)*jabmax)
+                END DO
+                t0d(nd) = temp10
+                temp10 = t0d(nd)/((t0+1.0_R8)*(t0+1.0_R8))
+                DO nd0=1,nbdirs0
+                  fllim_al_abdd(nd0, nd) = -((t0dd(nd0, nd)-temp10*2*(t0&
+&                   +1.0_R8)*t0d0(nd0))/(t0+1.0_R8)**2)
+                END DO
+                fllim_al_abd(nd) = -temp10
+              END DO
+              DO nd0=1,nbdirs0
+                fllim_al_abd0(nd0) = -(t0d0(nd0)/(t0+1.0_R8)**2)
+              END DO
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
+            ELSE
+              fllim_al_ab = 1.0_R8
+              fllim_al_abd = 0.d0
+              fllim_al_abdd = 0.D0
+              fllim_al_abd0 = 0.D0
+            END IF
+            temp5 = na(icv, isb) + na(icv, is)
+            temp10 = na(icv, is)/temp5
+            temp4 = temp10
+            temp3 = na(icv, isb)*gti(icv)
+            DO nd0=1,nbdirs0
+              temp5d(nd0) = nad0(nd0, icv, isb) + nad0(nd0, icv, is)
+              temp4d(nd0) = (nad0(nd0, icv, is)-temp10*temp5d(nd0))/&
+&               temp5
+              temp3d(nd0) = gti(icv)*nad0(nd0, icv, isb) + na(icv, isb)*&
+&               gtid0(nd0, icv)
+              t0d0(nd0) = temp4*temp3d(nd0) + temp3*temp4d(nd0)
+            END DO
+            t0 = temp3*temp4
+            DO nd=1,nbdirs
+              temp10 = gti(icv)*nad(nd, icv, isb) + na(icv, isb)*gtid(nd&
+&               , icv)
+              temp9 = temp3/temp5
+              temp8 = nad(nd, icv, isb) + nad(nd, icv, is)
+              temp7 = nad(nd, icv, is) - temp4*temp8
+              DO nd0=1,nbdirs0
+                t0dd(nd0, nd) = temp10*temp4d(nd0) + temp4*(nad(nd, icv&
+&                 , isb)*gtid0(nd0, icv)+gti(icv)*nadd(nd0, nd, icv, isb&
+&                 )+gtid(nd, icv)*nad0(nd0, icv, isb)+na(icv, isb)*gtidd&
+&                 (nd0, nd, icv)) + temp9*(nadd(nd0, nd, icv, is)-temp8*&
+&                 temp4d(nd0)-temp4*(nadd(nd0, nd, icv, isb)+nadd(nd0, &
+&                 nd, icv, is))) + temp7*(temp3d(nd0)-temp9*temp5d(nd0))&
+&                 /temp5
+              END DO
+              t0d(nd) = temp4*temp10 + temp7*temp9
+              temp10 = coef*fllim_al_abd(nd) + fllim_al_ab*coefd(nd)
+              DO nd0=1,nbdirs0
+                smbtfialdd(nd0, nd, icv, 0) = smbtfialdd(nd0, nd, icv, 0&
+&                 ) + temp10*t0d0(nd0) + t0*(fllim_al_abd(nd)*coefd0(nd0&
+&                 )+coef*fllim_al_abdd(nd0, nd)+coefd(nd)*fllim_al_abd0(&
+&                 nd0)+fllim_al_ab*coefdd(nd0, nd)) + t0d(nd)*(coef*&
+&                 fllim_al_abd0(nd0)+fllim_al_ab*coefd0(nd0)) + &
+&                 fllim_al_ab*coef*t0dd(nd0, nd)
+              END DO
+              smbtfiald(nd, icv, 0) = smbtfiald(nd, icv, 0) + t0*temp10 &
+&               + fllim_al_ab*coef*t0d(nd)
+            END DO
+            DO nd0=1,nbdirs0
+              smbtfiald0(nd0, icv, 0) = smbtfiald0(nd0, icv, 0) + t0*(&
+&               coef*fllim_al_abd0(nd0)+fllim_al_ab*coefd0(nd0)) + &
+&               fllim_al_ab*coef*t0d0(nd0)
+            END DO
+            smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
+            smbtfial_nofl(icv, 0) = smbtfial_nofl(icv, 0) + coef*t0
+          END DO
+        END IF
+      END DO
     END IF
+  ELSE
+    kad = 0.d0
+    kad0 = 0.D0
+    kadd = 0.D0
 !     ..standard thermal force calculation
     DO icv=1,ncv
       CALL FKA_DV_DV(icv, isb, ka(icv), kad0(:, icv), kad(:, icv), kadd(&
@@ -2312,12 +2947,13 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     smbtfialdd = 0.D0
     kabtfdd = 0.D0
     calfabdd = 0.D0
-    abs0dd = 0.D0
     kbdd = 0.D0
     smbtfiald0 = 0.D0
     kbatfd0 = 0.D0
     kbatfdd = 0.D0
+    abs1dd = 0.D0
     arg10dd = 0.D0
+!
     DO is=0,ns-1
       IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.&
 &         is_neutral(is))) THEN
@@ -2341,50 +2977,50 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
           result1 = SQRT(mp)
           arg10 = am(isb)*am(is)/(am(isb)+am(is))
           result2 = SQRT(arg10)
-          temp3 = qe*result2*geo%cvbb(icv, 0)
-          temp2 = result1*geo%cvbb(icv, 3)
-          temp8 = kabtf(icv)/kb(icv)
+          temp5 = qe*result2*geo%cvbb(icv, 0)
+          temp4 = result1*geo%cvbb(icv, 3)
+          temp10 = kabtf(icv)/kb(icv)
           DO nd0=1,nbdirs0
-            temp1d(nd0) = zetapd0(nd0, icv)/temp2
-            temp0d(nd0) = nad0(nd0, icv, isb) + nad0(nd0, icv, is)
-            tempd(nd0) = (kabtfd0(nd0, icv)-temp8*kbd0(nd0, icv))/kb(icv&
-&             )
-          END DO
-          temp1 = zetap(icv)/temp2
-          temp0 = na(icv, isb) + na(icv, is)
-          temp = temp8
-          temp8 = kbatf(icv)/ka(icv)
-          DO nd0=1,nbdirs0
-            temp4d(nd0) = (kbatfd0(nd0, icv)-temp8*kad0(nd0, icv))/ka(&
+            temp3d(nd0) = zetapd0(nd0, icv)/temp4
+            temp2d(nd0) = nad0(nd0, icv, isb) + nad0(nd0, icv, is)
+            temp1d(nd0) = (kabtfd0(nd0, icv)-temp10*kbd0(nd0, icv))/kb(&
 &             icv)
-            temp5d(nd0) = tempd(nd0) - temp4d(nd0)
           END DO
-          temp4 = temp8
-          temp5 = temp - temp4
+          temp3 = zetap(icv)/temp4
+          temp2 = na(icv, isb) + na(icv, is)
+          temp1 = temp10
+          temp10 = kbatf(icv)/ka(icv)
+          DO nd0=1,nbdirs0
+            temp0d(nd0) = (kbatfd0(nd0, icv)-temp10*kad0(nd0, icv))/ka(&
+&             icv)
+            tempd(nd0) = temp1d(nd0) - temp0d(nd0)
+          END DO
+          temp0 = temp10
+          temp = temp1 - temp0
           DO nd=1,nbdirs
-            temp8 = (kbatfd(nd, icv)-temp4*kad(nd, icv))/ka(icv)
-            temp7 = (kabtfd(nd, icv)-temp*kbd(nd, icv))/kb(icv)
-            temp6 = temp7 - temp8
-            temp9 = nad(nd, icv, isb) + nad(nd, icv, is)
-            temp10 = temp1*temp9 + zetapd(nd, icv)*temp0/temp2
+            temp10 = (kbatfd(nd, icv)-temp0*kad(nd, icv))/ka(icv)
+            temp9 = (kabtfd(nd, icv)-temp1*kbd(nd, icv))/kb(icv)
+            temp8 = temp9 - temp10
+            temp7 = nad(nd, icv, isb) + nad(nd, icv, is)
+            temp6 = temp3*temp7 + zetapd(nd, icv)*temp2/temp4
             DO nd0=1,nbdirs0
-              calfabdd(nd0, nd) = temp3*(temp6*(temp1*temp0d(nd0)+temp0*&
-&               temp1d(nd0))+temp0*temp1*((kabtfdd(nd0, nd, icv)-kbd(nd&
-&               , icv)*tempd(nd0)-temp*kbdd(nd0, nd, icv)-temp7*kbd0(nd0&
-&               , icv))/kb(icv)-(kbatfdd(nd0, nd, icv)-kad(nd, icv)*&
-&               temp4d(nd0)-temp4*kadd(nd0, nd, icv)-temp8*kad0(nd0, icv&
-&               ))/ka(icv))+temp10*temp5d(nd0)+temp5*(temp9*temp1d(nd0)+&
-&               temp1*(nadd(nd0, nd, icv, isb)+nadd(nd0, nd, icv, is))+&
-&               temp0*zetapdd(nd0, nd, icv)/temp2+zetapd(nd, icv)*temp0d&
-&               (nd0)/temp2))
+              calfabdd(nd0, nd) = temp5*(temp8*(temp3*temp2d(nd0)+temp2*&
+&               temp3d(nd0))+temp2*temp3*((kabtfdd(nd0, nd, icv)-kbd(nd&
+&               , icv)*temp1d(nd0)-temp1*kbdd(nd0, nd, icv)-temp9*kbd0(&
+&               nd0, icv))/kb(icv)-(kbatfdd(nd0, nd, icv)-kad(nd, icv)*&
+&               temp0d(nd0)-temp0*kadd(nd0, nd, icv)-temp10*kad0(nd0, &
+&               icv))/ka(icv))+temp6*tempd(nd0)+temp*(temp7*temp3d(nd0)+&
+&               temp3*(nadd(nd0, nd, icv, isb)+nadd(nd0, nd, icv, is))+&
+&               temp2*zetapdd(nd0, nd, icv)/temp4+zetapd(nd, icv)*temp2d&
+&               (nd0)/temp4))
             END DO
-            calfabd(nd) = temp3*(temp0*temp1*temp6+temp5*temp10)
+            calfabd(nd) = temp5*(temp2*temp3*temp8+temp*temp6)
           END DO
-          calfab = temp3*(temp5*(temp0*temp1))
+          calfab = temp5*(temp*(temp2*temp3))
           temp10 = rz2(icv, is)/(qe*zetap(icv))
           DO nd0=1,nbdirs0
-            calfabd0(nd0) = temp3*(temp1*(temp0*temp5d(nd0)+temp5*temp0d&
-&             (nd0))+temp5*temp0*temp1d(nd0))
+            calfabd0(nd0) = temp5*(temp3*(temp2*tempd(nd0)+temp*temp2d(&
+&             nd0))+temp*temp2*temp3d(nd0))
             temp5d(nd0) = (rz2d0(nd0, icv, is)-temp10*qe*zetapd0(nd0, &
 &             icv))/(qe*zetap(icv))
             temp4d(nd0) = calfab*rz2d0(nd0, icv, isb) + rz2(icv, isb)*&
@@ -2473,45 +3109,45 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
             IF (calfab*gti(icv) .GE. 0.) THEN
               DO nd=1,nbdirs
                 DO nd0=nd,nbdirs0
-                  abs0dd(nd0, nd) = calfabd(nd)*gtid0(nd0, icv) + gti(&
+                  abs1dd(nd0, nd) = calfabd(nd)*gtid0(nd0, icv) + gti(&
 &                   icv)*calfabdd(nd0, nd) + gtid(nd, icv)*calfabd0(nd0)&
 &                   + calfab*gtidd(nd0, nd, icv)
                 END DO
-                abs0d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv)
+                abs1d(nd) = gti(icv)*calfabd(nd) + calfab*gtid(nd, icv)
               END DO
               DO nd0=1,nbdirs0
-                abs0d0(nd0) = gti(icv)*calfabd0(nd0) + calfab*gtid0(nd0&
+                abs1d0(nd0) = gti(icv)*calfabd0(nd0) + calfab*gtid0(nd0&
 &                 , icv)
               END DO
-              abs0 = calfab*gti(icv)
+              abs1 = calfab*gti(icv)
             ELSE
               DO nd=1,nbdirs
                 DO nd0=nd,nbdirs0
-                  abs0dd(nd0, nd) = -(calfabd(nd)*gtid0(nd0, icv)) - gti&
+                  abs1dd(nd0, nd) = -(calfabd(nd)*gtid0(nd0, icv)) - gti&
 &                   (icv)*calfabdd(nd0, nd) - gtid(nd, icv)*calfabd0(nd0&
 &                   ) - calfab*gtidd(nd0, nd, icv)
                 END DO
-                abs0d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv))
+                abs1d(nd) = -(gti(icv)*calfabd(nd)+calfab*gtid(nd, icv))
               END DO
               DO nd0=1,nbdirs0
-                abs0d0(nd0) = -(gti(icv)*calfabd0(nd0)+calfab*gtid0(nd0&
+                abs1d0(nd0) = -(gti(icv)*calfabd0(nd0)+calfab*gtid0(nd0&
 &                 , icv))
               END DO
-              abs0 = -(calfab*gti(icv))
+              abs1 = -(calfab*gti(icv))
             END IF
-            temp10 = abs0/(cflim(4)*jabmax)
+            temp10 = abs1/(cflim(4)*jabmax)
             DO nd0=1,nbdirs0
-              temp5d(nd0) = (abs0d0(nd0)-temp10*cflim(4)*jabmaxd0(nd0))/&
+              temp5d(nd0) = (abs1d0(nd0)-temp10*cflim(4)*jabmaxd0(nd0))/&
 &               (cflim(4)*jabmax)
               t0d0(nd0) = temp5d(nd0)
             END DO
             temp5 = temp10
             t0 = temp5
             DO nd=1,nbdirs
-              temp10 = (abs0d(nd)-cflim(4)*temp5*jabmaxd(nd))/(cflim(4)*&
+              temp10 = (abs1d(nd)-cflim(4)*temp5*jabmaxd(nd))/(cflim(4)*&
 &               jabmax)
               DO nd0=1,nbdirs0
-                t0dd(nd0, nd) = (abs0dd(nd0, nd)-cflim(4)*(jabmaxd(nd)*&
+                t0dd(nd0, nd) = (abs1dd(nd0, nd)-cflim(4)*(jabmaxd(nd)*&
 &                 temp5d(nd0)+temp5*jabmaxdd(nd0, nd))-temp10*cflim(4)*&
 &                 jabmaxd0(nd0))/(cflim(4)*jabmax)
               END DO
@@ -2641,21 +3277,30 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     arg11 = 'b2sifrtf_smotfea'//chns
     CALL MY_OUT_US(70, ncv, 0, wrk, arg11)
     CALL MY_OUT_US(70, ncv, 0, ue, 'b2sifrtf_ue')
+    IF (switch%zhdanov_nc .EQ. 1) THEN
+      arg12 = 'b2sifrtf_cf'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_fria(:, isb), arg12)
+      arg12 = 'b2sifrtf_ct'//chns
+      CALL MY_OUT_US(70, ncv, 0, corr_tfia(:, isb), arg12)
+      arg13 = 'b2sifrtf_alpha'//chns
+      CALL MY_OUT_US(70, ncv, 0, alpha_hs_style(:, isb), arg13)
+      CALL MY_OUT_US(70, ncv, 0, g_hs_style, 'b2sifrtf_g')
+    END IF
 !
     wrk = geo%cvvol*geo%cvhz*(smbfrial_test(:, 0)+smbfrial_test(:, 1)*ua&
 &     (:, isb)+smbfrial_test(:, 2)*na(:, isb)*mp*am(isb)+smbfrial_test(:&
 &     , 3)*ua(:, isb)*na(:, isb)*mp*am(isb))
-    arg12 = 'b2sifrtf_smofria_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smofria_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test(:, 0)
-    arg12 = 'b2sifrtf_smotfia_test'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_test'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_nofl(:, 0)
-    arg12 = 'b2sifrtf_smotfia_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg12)
+    arg14 = 'b2sifrtf_smotfia_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
     wrk = geo%cvvol*geo%cvhz*smbtfial_test_nofl(:, 0)
-    arg13 = 'b2sifrtf_smotfia_test_nofl'//chns
-    CALL MY_OUT_US(70, ncv, 0, wrk, arg13)
+    arg15 = 'b2sifrtf_smotfia_test_nofl'//chns
+    CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
   END IF
 !
   IF (iout .GT. 1) THEN
@@ -2665,28 +3310,28 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
       DO icv=1,ncv
         wrk(icv) = FKABVP(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabvp_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, isb, is)
       END DO
-      arg14 = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kabtf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKABTF(icv, is, isb)
       END DO
-      arg14 = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg14)
+      arg16 = 'b2sifrtf_kbatf_'//chns//'_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg16)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, isb)
       END DO
-      arg15 = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_ka_'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
       DO icv=1,ncv
         wrk(icv) = FKA(icv, is)
       END DO
-      arg15 = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, wrk, arg15)
+      arg17 = 'b2sifrtf_kb_'//chis
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg17)
     END DO
 !
     CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, &
@@ -2700,8 +3345,8 @@ SUBROUTINE B2SIFRTF_DV_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL MY_OUT_US(70, ncv, 0, sigx_c, 'b2sifrtf_sigx_c')
     CALL MY_OUT_US(70, ncv, 0, zetae, 'b2sifrtf_zetae')
 !
-    arg16 = 'b2sifrtf_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg16)
+    arg12 = 'b2sifrtf_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg12)
   END IF
 !
 ! ..return
@@ -3005,7 +3650,7 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -3021,8 +3666,8 @@ CONTAINS
     fkad0 = 0.D0
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
           fkadd(nd0, nd) = fkadd(nd0, nd) + result10*result20*(rz2d(nd, &
@@ -3068,7 +3713,7 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -3078,8 +3723,8 @@ CONTAINS
     END DO
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       DO nd=1,nbdirs
         fkad(nd) = fkad(nd) + result10*result20*(na(icv, r)*rz2d(nd, icv&
 &         , r)+rz2(icv, r)*nad(nd, icv, r))
@@ -3102,13 +3747,13 @@ CONTAINS
     INTEGER :: r
     INTRINSIC SQRT
     REAL(kind=r8) :: result10
-    REAL(kind=r8) :: arg17
+    REAL(kind=r8) :: arg18
     REAL(kind=r8) :: result20
     fka = 0.0_R8
     DO r=0,ns-1
       result10 = SQRT(mp)
-      arg17 = am(a)*am(r)/(am(a)+am(r))
-      result20 = SQRT(arg17)
+      arg18 = am(a)*am(r)/(am(a)+am(r))
+      result20 = SQRT(arg18)
       fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
     fka = fka*rz2(icv, a)

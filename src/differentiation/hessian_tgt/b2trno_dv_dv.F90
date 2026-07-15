@@ -2,34 +2,8 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2trno_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfdna cfdpa cfvla cfvsa cfhci
-!                cfhce cfsig cfalf tdata *(cod.csig) *(cod.calf)
-!                *(cod.csig_an) *(cod.chce) *(cod.chce_exb) *(cod.chci)
-!                *(cod.chci_exb) *(cod.chcn) *(cod.cdkt) *(cod.cdzt)
-!                *(cod.cvla) *(cod.cdna) *(cod.cdna_exb) *(cod.cdpa)
-!                *(cod.cvsa) *(cod.cvlahz) *(cod.cdpahz) *(cod.cvsahz)
-!                *(cod.chcb) *(cod.sig0) *(cod.hce0) *(cod.hci0)
-!                *(cod.hcn0) *(cod.alf0) *(cod.dkt0) *(cod.dzt0)
-!                *(cod.dna_exb) *(cod.hce_exb) *(cod.hci_exb) *(cod.dpa0)
-!                *(cod.dna0) *(cod.vsa0) *(cod.hcib) *(cod.vla0)
-!                *(co.csig) *(co.calf) *(co.csig_an) *(co.chce)
-!                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
-!                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
-!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
-!                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
-!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
-!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
-!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0)
-!   with respect to varying inputs: parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf tdata
-!                *(dv.ne) *(dv.ni) *(dv.vaecrb) *(rtd.rlcx) *(rtd.rlsa)
-!                *(rtd.rza) *(rt.rlcx) *(rt.rlsa) *(rt.rza) *(dvd.ne)
-!                *(dvd.ni) *(dvd.vaecrb) switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2tfhi_fconkt switch.b2tfhi_fconzt
-!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!   variations   of useful results: tdata cfdna cfdpa cfvla cfvsa
+!                cfhci cfhce cfsig cfalf *(dv.lnlam) *(dvd.lnlam)
 !                *(cod.csig) *(cod.calf) *(cod.csig_an) *(cod.chce)
 !                *(cod.chce_exb) *(cod.chci) *(cod.chci_exb) *(cod.chcn)
 !                *(cod.cdkt) *(cod.cdzt) *(cod.cvla) *(cod.cdna)
@@ -46,58 +20,86 @@
 !                *(co.chcb) *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0)
 !                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
-!                *(co.vsa0) *(co.hcib) *(co.vla0) *(pld.na) *(pld.ua)
-!                *(pld.te) *(pld.ti) *(pld.tn) *(pld.kt) *(pld.zt)
-!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
-!                *(pl.zt)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
-!                geo.cvhy:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in st_ext.ni:in rtd.rlcx:in rtd.rlsa:in
-!                rtd.rza:in rt.rlcx:in rt.rlsa:in rt.rza:in dvd.ne:in
-!                dvd.ni:in dvd.vaecrb:in cod.csig:in cod.calf:in
-!                cod.csig_an:in cod.chce:in cod.chce_exb:in cod.chci:in
-!                cod.chci_exb:in cod.chcn:in cod.cdkt:in cod.cdzt:in
-!                cod.cvla:in cod.cdna:in cod.cdna_exb:in cod.cdpa:in
-!                cod.cvsa:in cod.cvlahz:in cod.cdpahz:in cod.cvsahz:in
-!                cod.chcb:in cod.sig0:in cod.hce0:in cod.hci0:in
-!                cod.hcn0:in cod.alf0:in cod.dkt0:in cod.dzt0:in
-!                cod.dna_exb:in cod.hce_exb:in cod.hci_exb:in cod.dpa0:in
-!                cod.dna0:in cod.vsa0:in cod.hcib:in cod.vla0:in
-!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
-!                co.chve:in co.chce:in co.chce_exb:in co.chvi:in
-!                co.chci:in co.chci_exb:in co.chcn:in co.cdkt:in
-!                co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
-!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
-!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
-!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
-!                pld.na:in pld.ua:in pld.te:in pld.ti:in pld.tn:in
-!                pld.kt:in pld.zt:in pl.na:in pl.ua:in pl.te:in
-!                pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                *(co.vsa0) *(co.hcib) *(co.vla0)
+!   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
+!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
+!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
+!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rtd.rlcx)
+!                *(rtd.rlsa) *(rtd.rza) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
+!                *(dvd.ne) *(dvd.ni) *(dvd.lnlam) *(dvd.vaecrb)
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
+!                switch.b2tqna_ballooning_rescale *(cod.csig) *(cod.calf)
+!                *(cod.csig_an) *(cod.chce) *(cod.chce_exb) *(cod.chci)
+!                *(cod.chci_exb) *(cod.chcn) *(cod.cdkt) *(cod.cdzt)
+!                *(cod.cvla) *(cod.cdna) *(cod.cdna_exb) *(cod.cdpa)
+!                *(cod.cvsa) *(cod.cvlahz) *(cod.cdpahz) *(cod.cvsahz)
+!                *(cod.chcb) *(cod.sig0) *(cod.hce0) *(cod.hci0)
+!                *(cod.hcn0) *(cod.alf0) *(cod.dkt0) *(cod.dzt0)
+!                *(cod.dna_exb) *(cod.hce_exb) *(cod.hci_exb) *(cod.dpa0)
+!                *(cod.dna0) *(cod.vsa0) *(cod.hcib) *(cod.vla0)
+!                *(co.csig) *(co.calf) *(co.csig_an) *(co.chce)
+!                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
+!                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
+!                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
+!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
+!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0) *(pld.na)
+!                *(pld.ua) *(pld.te) *(pld.ti) *(pld.tn) *(pld.kt)
+!                *(pld.zt) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
+!                *(pl.tn) *(pl.kt) *(pl.zt)
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
+!                dv.vaecrb:in geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in st_ext.am:in st_ext.na:in
+!                st_ext.ni:in st_ext.ta:in rtd.rlcx:in rtd.rlsa:in
+!                rtd.rza:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in
+!                dvd.ne:in dvd.ni:in dvd.lnlam:in dvd.vaecrb:in
+!                cod.csig:in cod.calf:in cod.csig_an:in cod.chce:in
+!                cod.chce_exb:in cod.chci:in cod.chci_exb:in cod.chcn:in
+!                cod.cdkt:in cod.cdzt:in cod.cvla:in cod.cdna:in
+!                cod.cdna_exb:in cod.cdpa:in cod.cvsa:in cod.cvlahz:in
+!                cod.cdpahz:in cod.cvsahz:in cod.chcb:in cod.sig0:in
+!                cod.hce0:in cod.hci0:in cod.hcn0:in cod.alf0:in
+!                cod.dkt0:in cod.dzt0:in cod.dna_exb:in cod.hce_exb:in
+!                cod.hci_exb:in cod.dpa0:in cod.dna0:in cod.vsa0:in
+!                cod.hcib:in cod.vla0:in co.csig:in co.calf:in
+!                co.csig_an:in co.calf_an:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.chcb:in
+!                co.cvsa_an:in co.cvmahz:in co.fllim0fhi:in co.sig0:in
+!                co.hce0:in co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in
+!                co.dzt0:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.dpa0:in co.dna0:in co.vsa0:in co.hcib:in co.vla0:in
+!                co.vma0:in pld.na:in pld.ua:in pld.te:in pld.ti:in
+!                pld.tn:in pld.kt:in pld.zt:in pl.na:in pl.ua:in
+!                pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !        Generated by TAPENADE     (INRIA, Ecuador team)
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: tdata cfdna cfdpa cfvla cfvsa
-!                cfhci cfhce cfsig cfalf *(co.csig) *(co.calf)
-!                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
-!                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
-!                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
-!                *(co.cvsa) *(co.cvlahz) *(co.cdpahz) *(co.cvsahz)
-!                *(co.chcb) *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0)
-!                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
-!                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
-!                *(co.vsa0) *(co.hcib) *(co.vla0)
+!                cfhci cfhce cfsig cfalf *(dv.lnlam) *(co.csig)
+!                *(co.calf) *(co.csig_an) *(co.chce) *(co.chce_exb)
+!                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
+!                *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
+!                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
+!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
+!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0)
 !   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
 !                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
+!                *(rt.rza) switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
@@ -111,24 +113,25 @@
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
 !                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in st_ext.ni:in rt.rlcx:in
-!                rt.rlsa:in rt.rza:in co.csig:in co.calf:in co.csig_an:in
-!                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
-!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
-!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
-!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
-!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
-!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
+!                dv.vaecrb:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhy:in geo.cvqgam:in
+!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.am:in
+!                st_ext.na:in st_ext.ni:in st_ext.ta:in rt.rlcx:in
+!                rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
+!                co.csig_an:in co.calf_an:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.chcb:in
+!                co.cvsa_an:in co.cvmahz:in co.fllim0fhi:in co.sig0:in
+!                co.hce0:in co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in
+!                co.dzt0:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.dpa0:in co.dna0:in co.vsa0:in co.hcib:in co.vla0:in
+!                co.vma0:in pl.na:in pl.ua:in pl.te:in pl.ti:in
+!                pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -249,7 +252,7 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ifc, is, mode, k, cvs(2)
+  INTEGER :: icv, ifc, is, mode, k, cvs(2)
 !srv 17.06.08
   CHARACTER(len=3) :: chns
 !srv 07.12.15
@@ -257,17 +260,17 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   INTEGER, SAVE :: set_chcb_0=0
 !srv 20.09.17
   REAL(kind=r8) :: csig_stoch(nfc), chce_stoch(nfc)
-  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkc(ncv), wrk0, hvi0(ncv, 0:&
-& 1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv(nfc, 0:1, 0:ns-1), &
-& cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc, 0:ns-1), inctran
-  REAL(kind=r8) :: wrkcd0(nbdirsmax0, ncv), cdpa0d0(nbdirsmax0, nfc, 0:&
-& ns-1), cvsa0d0(nbdirsmax0, nfc, 0:ns-1), chcibd0(nbdirsmax0, nfc, 0:ns&
-& -1)
-  REAL(kind=r8) :: wrkd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), hvi0d(&
-& nbdirsmax, ncv, 0:1), hve0d(nbdirsmax, ncv, 0:1), flcd(nbdirsmax, nfc&
-& , 0:1, 0:ns-1), flvd(nbdirsmax, nfc, 0:1, 0:ns-1), cdpa0d(nbdirsmax, &
-& nfc, 0:ns-1), cvsa0d(nbdirsmax, nfc, 0:ns-1), chcibd(nbdirsmax, nfc, 0&
-& :ns-1)
+  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkfc(nfc), wrkc(ncv), wrkcc(&
+& ncv), wrk0, hvi0(ncv, 0:1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv&
+& (nfc, 0:1, 0:ns-1), cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc&
+& , 0:ns-1), inctran
+  REAL(kind=r8) :: wrkd(nbdirsmax0, nfc), wrkcd0(nbdirsmax0, ncv), &
+& cdpa0d0(nbdirsmax0, nfc, 0:ns-1), cvsa0d0(nbdirsmax0, nfc, 0:ns-1), &
+& chcibd0(nbdirsmax0, nfc, 0:ns-1)
+  REAL(kind=r8) :: wrkcd(nbdirsmax, ncv), hvi0d(nbdirsmax, ncv, 0:1), &
+& hve0d(nbdirsmax, ncv, 0:1), flcd(nbdirsmax, nfc, 0:1, 0:ns-1), flvd(&
+& nbdirsmax, nfc, 0:1, 0:ns-1), cdpa0d(nbdirsmax, nfc, 0:ns-1), cvsa0d(&
+& nbdirsmax, nfc, 0:ns-1), chcibd(nbdirsmax, nfc, 0:ns-1)
   REAL(kind=r8) :: wrkcdd(nbdirsmax0, nbdirsmax, ncv), cdpa0dd(&
 & nbdirsmax0, nbdirsmax, nfc, 0:ns-1), cvsa0dd(nbdirsmax0, nbdirsmax, &
 & nfc, 0:ns-1), chcibdd(nbdirsmax0, nbdirsmax, nfc, 0:ns-1)
@@ -285,6 +288,7 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &     B2TXSY_DV_DV
   EXTERNAL B2XVSG
   INTRINSIC NINT
+  INTRINSIC MIN
   INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: result1
@@ -306,6 +310,8 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   REAL(r8), DIMENSION(nbdirsmax, nfc, 0:1, 0:ns-1) :: dummyzerodiffd2
   INTEGER :: nbdirs
   INTEGER :: nd0
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd3
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd4
   INTEGER :: nbdirs0
 !   ..initialisation
 !
@@ -377,6 +383,7 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &             cod0%hce_exb, cod%hce_exb, codd%hce_exb, co%hci_exb, cod0%&
 &             hci_exb, cod%hci_exb, codd%hci_exb, nbdirs, nbdirs0)
 !   ..incorporate geometry
+!
   inctran = switch%b2txcx_increase_transp_coefs
   chcibd = 0.d0
   cdpa0d = 0.d0
@@ -521,7 +528,6 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &               ), codd%cvsahz(:, :, 1:nfc, 1, is), nbdirs, nbdirs0)
 !srv 09.01.01
   END DO
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -556,7 +562,6 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   ELSE
     wrkcdd = 0.D0
   END IF
-!
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
   co%cvsa_an = co%cvsa
@@ -658,9 +663,43 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &             chci_exb(:, 1:nfc, 1), codd%chci_exb(:, :, 1:nfc, 1), &
 &             nbdirs, nbdirs0)
 !
+  IF (switch%min_collisions .GT. 0.0_R8) THEN
+    CALL B2TLNL_DV_DV(mpg%ncv, switch, switchd0, switchd, switch%&
+&               icase_ii, pl%te, pld0%te, pld%te, pldd%te, pl%ti, pld0%&
+&               ti, pld%ti, pldd%ti, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, dv&
+&               %lnlam, dvd0%lnlam, dvd%lnlam, dvdd%lnlam, nbdirs, &
+&               nbdirs0)
+    CALL B2TXNCI_NODIFF_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, &
+&                        rt%rz2, dv%ne, dv%ne2, pl%na, dv%lnlam, ismain&
+&                        , st_ext, wrkfc, wrkcc)
+  ELSE
+    wrkfc = 1.0_R8
+  END IF
   IF (set_chcb_0 .EQ. 1) THEN
     DO k=1,mpg%ncg
       ifc = mpg%fcs_wall(k)
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv = mpg%fccv(ifc, 2)
+      ELSE
+        icv = mpg%fccv(ifc, 1)
+      END IF
+      IF (wrkfc(ifc) .LE. switch%min_collisions .AND. (.NOT.mpg%&
+&         cvonclosedsurface(icv))) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            codd%cvsa(nd0, nd, ifc, 0:1, :) = 0.D0
+            codd%cvsahz(nd0, nd, ifc, 0:1, :) = 0.D0
+          END DO
+          cod%cvsa(nd, ifc, 0:1, :) = 0.d0
+          cod%cvsahz(nd, ifc, 0:1, :) = 0.d0
+        END DO
+        DO nd0=1,nbdirs0
+          cod0%cvsa(nd0, ifc, 0:1, :) = 0.D0
+          cod0%cvsahz(nd0, ifc, 0:1, :) = 0.D0
+        END DO
+        co%cvsa(ifc, 0:1, :) = 0.0_R8
+        co%cvsahz(ifc, 0:1, :) = 0.0_R8
+      END IF
       IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. 0.) &
 &     THEN
         wrk0 = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -675,12 +714,16 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
             codd%csig(nd0, nd, ifc, 1) = 0.D0
             codd%chce(nd0, nd, ifc, 1) = 0.D0
             codd%cdna(nd0, nd, ifc, 1, :) = 0.D0
+            codd%cvsa(nd0, nd, ifc, 1, :) = 0.D0
+            codd%cvsahz(nd0, nd, ifc, 1, :) = 0.D0
           END DO
           cod%chcb(nd, ifc, 1, :) = 0.d0
           cod%calf(nd, ifc, 1) = 0.d0
           cod%csig(nd, ifc, 1) = 0.d0
           cod%chce(nd, ifc, 1) = 0.d0
           cod%cdna(nd, ifc, 1, :) = 0.d0
+          cod%cvsa(nd, ifc, 1, :) = 0.d0
+          cod%cvsahz(nd, ifc, 1, :) = 0.d0
         END DO
         DO nd0=1,nbdirs0
           cod0%chcb(nd0, ifc, 1, :) = 0.D0
@@ -688,12 +731,17 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           cod0%csig(nd0, ifc, 1) = 0.D0
           cod0%chce(nd0, ifc, 1) = 0.D0
           cod0%cdna(nd0, ifc, 1, :) = 0.D0
+          cod0%cvsa(nd0, ifc, 1, :) = 0.D0
+          cod0%cvsahz(nd0, ifc, 1, :) = 0.D0
         END DO
         co%chcb(ifc, 1, :) = 0.0_R8
         co%calf(ifc, 1) = 0.0_R8
         co%csig(ifc, 1) = 0.0_R8
         co%chce(ifc, 1) = 0.0_R8
         co%cdna(ifc, 1, :) = 0.0_R8
+        co%cvsa(ifc, 1, :) = 0.0_R8
+        co%cdnahz(ifc, 1, :) = 0.0_R8
+        co%cvsahz(ifc, 1, :) = 0.0_R8
       END IF
     END DO
     DO ifc=1,mpg%nfc
@@ -721,27 +769,51 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
             DO nd=1,nbdirs
               DO nd0=nd,nbdirs0
                 codd%cdna(nd0, nd, ifc, 1, is) = 0.D0
+                codd%cvsa(nd0, nd, ifc, 1, is) = 0.D0
+                codd%cvsahz(nd0, nd, ifc, 1, is) = 0.D0
               END DO
               cod%cdna(nd, ifc, 1, is) = 0.d0
+              cod%cvsa(nd, ifc, 1, is) = 0.d0
+              cod%cvsahz(nd, ifc, 1, is) = 0.d0
             END DO
             DO nd0=1,nbdirs0
               cod0%cdna(nd0, ifc, 1, is) = 0.D0
+              cod0%cvsa(nd0, ifc, 1, is) = 0.D0
+              cod0%cvsahz(nd0, ifc, 1, is) = 0.D0
             END DO
             co%cdna(ifc, 1, is) = 0.0_R8
+            co%cvsa(ifc, 1, is) = 0.0_R8
+            co%cdnahz(ifc, 1, is) = 0.0_R8
+            co%cvsahz(ifc, 1, is) = 0.0_R8
           ELSE
             DO nd=1,nbdirs
               DO nd0=nd,nbdirs0
                 codd%cdna(nd0, nd, ifc, 1, is) = codd%cdna(nd0, nd, ifc&
 &                 , 1, is)/inctran
+                codd%cvsa(nd0, nd, ifc, 1, is) = codd%cvsa(nd0, nd, ifc&
+&                 , 1, is)/inctran
+                codd%cvsahz(nd0, nd, ifc, 1, is) = codd%cvsahz(nd0, nd, &
+&                 ifc, 1, is)/inctran
               END DO
               cod%cdna(nd, ifc, 1, is) = cod%cdna(nd, ifc, 1, is)/&
+&               inctran
+              cod%cvsa(nd, ifc, 1, is) = cod%cvsa(nd, ifc, 1, is)/&
+&               inctran
+              cod%cvsahz(nd, ifc, 1, is) = cod%cvsahz(nd, ifc, 1, is)/&
 &               inctran
             END DO
             DO nd0=1,nbdirs0
               cod0%cdna(nd0, ifc, 1, is) = cod0%cdna(nd0, ifc, 1, is)/&
 &               inctran
+              cod0%cvsa(nd0, ifc, 1, is) = cod0%cvsa(nd0, ifc, 1, is)/&
+&               inctran
+              cod0%cvsahz(nd0, ifc, 1, is) = cod0%cvsahz(nd0, ifc, 1, is&
+&               )/inctran
             END DO
             co%cdna(ifc, 1, is) = co%cdna(ifc, 1, is)/inctran
+            co%cvsa(ifc, 1, is) = co%cvsa(ifc, 1, is)/inctran
+            co%cdnahz(ifc, 1, is) = co%cdnahz(ifc, 1, is)/inctran
+            co%cvsahz(ifc, 1, is) = co%cvsahz(ifc, 1, is)/inctran
           END IF
         END DO
         IF (co%csig(ifc, 0)*geo%fcqalf(ifc, 0) .GT. 0.0_R8) THEN
@@ -784,13 +856,15 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..set csigx = 0 and calfx = 0
   IF (switch%csig_an_style .EQ. 1) THEN
     dummyzerodiffd0 = 0.d0
-    CALL SFILL_DV_DV(nfc, 0.0_R8, dummyzerodiffd0, co%csig(1, 0), cod0%&
-&              csig(:, 1, 0), cod%csig(:, 1, 0), codd%csig(:, :, 1, 0), &
-&              1, nbdirs, nbdirs0)
+    dummyzerodiffd3 = 0.D0
+    CALL SFILL_DV_DV(nfc, 0.0_R8, dummyzerodiffd3, dummyzerodiffd0, co%&
+&              csig(1, 0), cod0%csig(:, 1, 0), cod%csig(:, 1, 0), codd%&
+&              csig(:, :, 1, 0), 1, nbdirs, nbdirs0)
     dummyzerodiffd1 = 0.d0
-    CALL SFILL_DV_DV(nfc, 0.0_R8, dummyzerodiffd1, co%calf(1, 0), cod0%&
-&              calf(:, 1, 0), cod%calf(:, 1, 0), codd%calf(:, :, 1, 0), &
-&              1, nbdirs, nbdirs0)
+    dummyzerodiffd4 = 0.D0
+    CALL SFILL_DV_DV(nfc, 0.0_R8, dummyzerodiffd4, dummyzerodiffd1, co%&
+&              calf(1, 0), cod0%calf(:, 1, 0), cod%calf(:, 1, 0), codd%&
+&              calf(:, :, 1, 0), 1, nbdirs, nbdirs0)
   END IF
 !   ..set strange velocities chve, chvi
 !      call sfill (nFc*2, 0.0_R8, co%chve, 1)
@@ -912,35 +986,35 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (switch%flux_limit_to_dpa .NE. 0) THEN
 !srv 15.06.08 {
 !   .. apply flux limit to neutrals contribution to cdpa and cdpahz
-    CALL B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-&               geod, mpg, mpgd, pl%na, pld0%na, pld%na, pldd%na, pl%te&
-&               , pld0%te, pld%te, pldd%te, pl%ti, pld0%ti, pld%ti, pldd&
-&               %ti, pl%tn, pld0%tn, pld%tn, pldd%tn, rt%rza, rtd0%rza, &
-&               rtd%rza, rtdd%rza, cdpa0, cdpa0d0, cdpa0d, cdpa0dd, co%&
-&               cdpa, cod0%cdpa, cod%cdpa, codd%cdpa, co%cdpahz, cod0%&
-&               cdpahz, cod%cdpahz, codd%cdpahz, flc, flcd, nbdirs, &
-&               nbdirs0)
+    CALL B2TLC0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, geo&
+&               , geod0, geod, mpg, mpgd, pl%na, pld0%na, pld%na, pldd%&
+&               na, pl%te, pld0%te, pld%te, pldd%te, pl%ti, pld0%ti, pld&
+&               %ti, pldd%ti, pl%tn, pld0%tn, pld%tn, pldd%tn, rt%rza, &
+&               rtd0%rza, rtd%rza, rtdd%rza, cdpa0, cdpa0d0, cdpa0d, &
+&               cdpa0dd, co%cdpa, cod0%cdpa, cod%cdpa, codd%cdpa, co%&
+&               cdpahz, cod0%cdpahz, cod%cdpahz, codd%cdpahz, flc, flcd&
+&               , nbdirs, nbdirs0)
   END IF
 !
   IF (switch%flux_limit_to_vsa .NE. 0) THEN
 !srv 15.06.08 {
 !   .. apply flux limit to neutrals contribution to cvsa and cvsahz
-    CALL B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
-&               geod, mpg, mpgd, pl%na, pld0%na, pld%na, pldd%na, pl%ua&
-&               , pld0%ua, pld%ua, pldd%ua, pl%te, pl%tn, pld0%tn, pld%&
-&               tn, pldd%tn, rt%rza, cvsa0, cvsa0d0, cvsa0d, cvsa0dd, co&
-&               %cvsa, cod0%cvsa, cod%cvsa, codd%cvsa, co%cvsahz, cod0%&
-&               cvsahz, cod%cvsahz, codd%cvsahz, flv, flvd, nbdirs, &
-&               nbdirs0)
+    CALL B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, geo&
+&               , geod0, geod, mpg, mpgd, pl%na, pld0%na, pld%na, pldd%&
+&               na, pl%ua, pld0%ua, pld%ua, pldd%ua, pl%te, pl%tn, pld0%&
+&               tn, pld%tn, pldd%tn, rt%rza, cvsa0, cvsa0d0, cvsa0d, &
+&               cvsa0dd, co%cvsa, cod0%cvsa, cod%cvsa, codd%cvsa, co%&
+&               cvsahz, cod0%cvsahz, cod%cvsahz, codd%cvsahz, flv, flvd&
+&               , nbdirs, nbdirs0)
   END IF
 !
 !   ..apply flux limit to neutrals contribution to chcb
   dummyzerodiffd2 = 0.d0
-  CALL B2TLH0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, geod&
-&             , mpg, mpgd, pl%na, pld0%na, pld%na, pldd%na, pl%ti, pl%tn&
-&             , pld0%tn, pld%tn, pldd%tn, chcib, chcibd0, chcibd, &
-&             chcibdd, co%chcb, cod0%chcb, cod%chcb, codd%chcb, co%&
-&             fllim0fhi, dummyzerodiffd2, nbdirs, nbdirs0)
+  CALL B2TLH0_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, geo, &
+&             geod0, geod, mpg, mpgd, pl%na, pld0%na, pld%na, pldd%na, &
+&             pl%ti, pl%tn, pld0%tn, pld%tn, pldd%tn, chcib, chcibd0, &
+&             chcibd, chcibdd, co%chcb, cod0%chcb, cod%chcb, codd%chcb, &
+&             co%fllim0fhi, dummyzerodiffd2, nbdirs, nbdirs0)
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
       codd%chci(nd0, nd, :, :) = 0.D0
@@ -1019,17 +1093,17 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       co%chcn = co%chcn + co%chcb(:, :, is)
     END IF
   END DO
-  DO nd=1,nbdirs
+  DO nd0=1,nbdirs0
 !
 !   ..test sign of chce, chci
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
+    wrkd(nd0, :) = 0.D0
   END DO
   wrk(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
   CALL B2XVSG(nfc, wrk, 1, 'chce', '.ge.')
@@ -1194,20 +1268,20 @@ END SUBROUTINE B2TRNO_DV_DV
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: tdata cfdna cfdpa cfvla cfvsa
-!                cfhci cfhce cfsig cfalf *(co.csig) *(co.calf)
-!                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
-!                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
-!                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
-!                *(co.cvsa) *(co.cvlahz) *(co.cdpahz) *(co.cvsahz)
-!                *(co.chcb) *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0)
-!                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
-!                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
-!                *(co.vsa0) *(co.hcib) *(co.vla0)
+!                cfhci cfhce cfsig cfalf *(dv.lnlam) *(co.csig)
+!                *(co.calf) *(co.csig_an) *(co.chce) *(co.chce_exb)
+!                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
+!                *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
+!                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
+!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
+!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0)
 !   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
 !                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
 !                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
+!                *(rt.rza) switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
@@ -1221,24 +1295,25 @@ END SUBROUTINE B2TRNO_DV_DV
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
 !                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
-!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.vxvol:in st_ext.ni:in rt.rlcx:in
-!                rt.rlsa:in rt.rza:in co.csig:in co.calf:in co.csig_an:in
-!                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
-!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
-!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
-!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
-!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
-!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
-!                pl.zt:in
+!   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
+!                dv.vaecrb:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhy:in geo.cvqgam:in
+!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.am:in
+!                st_ext.na:in st_ext.ni:in st_ext.ta:in rt.rlcx:in
+!                rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
+!                co.csig_an:in co.calf_an:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.chcb:in
+!                co.cvsa_an:in co.cvmahz:in co.fllim0fhi:in co.sig0:in
+!                co.hce0:in co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in
+!                co.dzt0:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.dpa0:in co.dna0:in co.vsa0:in co.hcib:in co.vla0:in
+!                co.vma0:in pl.na:in pl.ua:in pl.te:in pl.ti:in
+!                pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -1345,7 +1420,7 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ifc, is, mode, k, cvs(2)
+  INTEGER :: icv, ifc, is, mode, k, cvs(2)
 !srv 17.06.08
   CHARACTER(len=3) :: chns
 !srv 07.12.15
@@ -1353,14 +1428,14 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   INTEGER, SAVE :: set_chcb_0=0
 !srv 20.09.17
   REAL(kind=r8) :: csig_stoch(nfc), chce_stoch(nfc)
-  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkc(ncv), wrk0, hvi0(ncv, 0:&
-& 1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv(nfc, 0:1, 0:ns-1), &
-& cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc, 0:ns-1), inctran
-  REAL(kind=r8) :: wrkd(nbdirsmax, nfc), wrkcd(nbdirsmax, ncv), hvi0d(&
-& nbdirsmax, ncv, 0:1), hve0d(nbdirsmax, ncv, 0:1), flcd(nbdirsmax, nfc&
-& , 0:1, 0:ns-1), flvd(nbdirsmax, nfc, 0:1, 0:ns-1), cdpa0d(nbdirsmax, &
-& nfc, 0:ns-1), cvsa0d(nbdirsmax, nfc, 0:ns-1), chcibd(nbdirsmax, nfc, 0&
-& :ns-1)
+  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkfc(nfc), wrkc(ncv), wrkcc(&
+& ncv), wrk0, hvi0(ncv, 0:1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv&
+& (nfc, 0:1, 0:ns-1), cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc&
+& , 0:ns-1), inctran
+  REAL(kind=r8) :: wrkcd(nbdirsmax, ncv), hvi0d(nbdirsmax, ncv, 0:1), &
+& hve0d(nbdirsmax, ncv, 0:1), flcd(nbdirsmax, nfc, 0:1, 0:ns-1), flvd(&
+& nbdirsmax, nfc, 0:1, 0:ns-1), cdpa0d(nbdirsmax, nfc, 0:ns-1), cvsa0d(&
+& nbdirsmax, nfc, 0:ns-1), chcibd(nbdirsmax, nfc, 0:ns-1)
   EXTERNAL XERTST, SFILL_NODIFF_NODIFF, smin, smax
   EXTERNAL SFILL_DV_NODIFF
 !   ..procedures
@@ -1372,6 +1447,7 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &     B2TXSX_DV_NODIFF, B2TXSY_DV_NODIFF
   EXTERNAL B2XVSG
   INTRINSIC NINT
+  INTRINSIC MIN
   INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: result1
@@ -1456,6 +1532,7 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                 dna_exb, co%hce_exb, cod%hce_exb, co%hci_exb, cod%&
 &                 hci_exb, nbdirs)
 !   ..incorporate geometry
+!
   inctran = switch%b2txcx_increase_transp_coefs
   chcibd = 0.d0
   cdpa0d = 0.d0
@@ -1552,7 +1629,6 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                   1, is), cod%cvsahz(:, 1:nfc, 1, is), nbdirs)
 !srv 09.01.01
   END DO
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -1572,7 +1648,6 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       END IF
     END DO
   END IF
-!
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
   co%cvsa_an = co%cvsa
@@ -1638,9 +1713,33 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                 %hci_exb, cod%hci_exb, co%chci_exb(1:nfc, 1), cod%&
 &                 chci_exb(:, 1:nfc, 1), nbdirs)
 !
+  IF (switch%min_collisions .GT. 0.0_R8) THEN
+    CALL B2TLNL_DV_NODIFF(mpg%ncv, switch, switchd, switch%icase_ii, pl%&
+&                   te, pld%te, pl%ti, pld%ti, dv%ne, dvd%ne, dv%lnlam, &
+&                   dvd%lnlam, nbdirs)
+    CALL B2TXNCI_NODIFF_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, &
+&                        rt%rz2, dv%ne, dv%ne2, pl%na, dv%lnlam, ismain&
+&                        , st_ext, wrkfc, wrkcc)
+  ELSE
+    wrkfc = 1.0_R8
+  END IF
   IF (set_chcb_0 .EQ. 1) THEN
     DO k=1,mpg%ncg
       ifc = mpg%fcs_wall(k)
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv = mpg%fccv(ifc, 2)
+      ELSE
+        icv = mpg%fccv(ifc, 1)
+      END IF
+      IF (wrkfc(ifc) .LE. switch%min_collisions .AND. (.NOT.mpg%&
+&         cvonclosedsurface(icv))) THEN
+        DO nd=1,nbdirs
+          cod%cvsa(nd, ifc, 0:1, :) = 0.d0
+          cod%cvsahz(nd, ifc, 0:1, :) = 0.d0
+        END DO
+        co%cvsa(ifc, 0:1, :) = 0.0_R8
+        co%cvsahz(ifc, 0:1, :) = 0.0_R8
+      END IF
       IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. 0.) &
 &     THEN
         wrk0 = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -1654,12 +1753,17 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
           cod%csig(nd, ifc, 1) = 0.d0
           cod%chce(nd, ifc, 1) = 0.d0
           cod%cdna(nd, ifc, 1, :) = 0.d0
+          cod%cvsa(nd, ifc, 1, :) = 0.d0
+          cod%cvsahz(nd, ifc, 1, :) = 0.d0
         END DO
         co%chcb(ifc, 1, :) = 0.0_R8
         co%calf(ifc, 1) = 0.0_R8
         co%csig(ifc, 1) = 0.0_R8
         co%chce(ifc, 1) = 0.0_R8
         co%cdna(ifc, 1, :) = 0.0_R8
+        co%cvsa(ifc, 1, :) = 0.0_R8
+        co%cdnahz(ifc, 1, :) = 0.0_R8
+        co%cvsahz(ifc, 1, :) = 0.0_R8
       END IF
     END DO
     DO ifc=1,mpg%nfc
@@ -1678,14 +1782,26 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &             ifc, 1) .GT. 0.0_R8) THEN
             DO nd=1,nbdirs
               cod%cdna(nd, ifc, 1, is) = 0.d0
+              cod%cvsa(nd, ifc, 1, is) = 0.d0
+              cod%cvsahz(nd, ifc, 1, is) = 0.d0
             END DO
             co%cdna(ifc, 1, is) = 0.0_R8
+            co%cvsa(ifc, 1, is) = 0.0_R8
+            co%cdnahz(ifc, 1, is) = 0.0_R8
+            co%cvsahz(ifc, 1, is) = 0.0_R8
           ELSE
             DO nd=1,nbdirs
               cod%cdna(nd, ifc, 1, is) = cod%cdna(nd, ifc, 1, is)/&
 &               inctran
+              cod%cvsa(nd, ifc, 1, is) = cod%cvsa(nd, ifc, 1, is)/&
+&               inctran
+              cod%cvsahz(nd, ifc, 1, is) = cod%cvsahz(nd, ifc, 1, is)/&
+&               inctran
             END DO
             co%cdna(ifc, 1, is) = co%cdna(ifc, 1, is)/inctran
+            co%cvsa(ifc, 1, is) = co%cvsa(ifc, 1, is)/inctran
+            co%cdnahz(ifc, 1, is) = co%cdnahz(ifc, 1, is)/inctran
+            co%cvsahz(ifc, 1, is) = co%cvsahz(ifc, 1, is)/inctran
           END IF
         END DO
         IF (co%csig(ifc, 0)*geo%fcqalf(ifc, 0) .GT. 0.0_R8) THEN
@@ -1841,18 +1957,8 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       co%chcn = co%chcn + co%chcb(:, :, is)
     END IF
   END DO
-  DO nd=1,nbdirs
 !
 !   ..test sign of chce, chci
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-    wrkd(nd, :) = 0.d0
-  END DO
   wrk(:) = co%chce(:, 0)*geo%fcqalf(:, 0)
   CALL B2XVSG(nfc, wrk, 1, 'chce', '.ge.')
   wrk(:) = co%chce(:, 1)*geo%fcqalf(:, 1)
@@ -2103,7 +2209,7 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ifc, is, mode, k, cvs(2)
+  INTEGER :: icv, ifc, is, mode, k, cvs(2)
 !srv 17.06.08
   CHARACTER(len=3) :: chns
 !srv 07.12.15
@@ -2111,9 +2217,10 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   INTEGER, SAVE :: set_chcb_0=0
 !srv 20.09.17
   REAL(kind=r8) :: csig_stoch(nfc), chce_stoch(nfc)
-  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkc(ncv), wrk0, hvi0(ncv, 0:&
-& 1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv(nfc, 0:1, 0:ns-1), &
-& cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc, 0:ns-1), inctran
+  REAL(kind=r8) :: wrk(nfc), wrk1(nfc, 2), wrkfc(nfc), wrkc(ncv), wrkcc(&
+& ncv), wrk0, hvi0(ncv, 0:1), hve0(ncv, 0:1), flc(nfc, 0:1, 0:ns-1), flv&
+& (nfc, 0:1, 0:ns-1), cdpa0(nfc, 0:ns-1), cvsa0(nfc, 0:ns-1), chcib(nfc&
+& , 0:ns-1), inctran
   EXTERNAL XERTST, SFILL_NODIFF_NODIFF, smin, smax
 !   ..procedures
   REAL(kind=r8) :: smin, smax
@@ -2122,6 +2229,7 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &     B2TXCY_NODIFF_NODIFF, B2TXSX_NODIFF_NODIFF, B2TXSY_NODIFF_NODIFF
   EXTERNAL B2XVSG
   INTRINSIC NINT
+  INTRINSIC MIN
   INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: result1
@@ -2193,6 +2301,7 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                     hvi0, hve0, co%dkt0, co%dzt0, co%dna_exb, co%&
 &                     hce_exb, co%hci_exb)
 !   ..incorporate geometry
+!
   inctran = switch%b2txcx_increase_transp_coefs
   DO is=0,ns-1
     CALL B2TXCX_NODIFF_NODIFF(ncv, nfc, inctran, mode, geo, mpg, geo%&
@@ -2266,7 +2375,6 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                       vsa0(1:ncv, is), co%cvsahz(1:nfc, 1, is))
 !srv 09.01.01
   END DO
-!
 !   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 !   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
   IF (switch%transport_afn .EQ. 1) THEN
@@ -2280,7 +2388,6 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       END IF
     END DO
   END IF
-!
 !   ..save the anomalous transport coefficients                       !srv 04.10.99
 !srv 04.10.99
   co%cvsa_an = co%cvsa
@@ -2324,9 +2431,28 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL B2TXCY_NODIFF_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs&
 &                     , co%hci_exb, co%chci_exb(1:nfc, 1))
 !
+  IF (switch%min_collisions .GT. 0.0_R8) THEN
+    CALL B2TLNL_NODIFF_NODIFF(mpg%ncv, switch, switch%icase_ii, pl%te, &
+&                       pl%ti, dv%ne, dv%lnlam)
+    CALL B2TXNCI_NODIFF_NODIFF(mpg, geo, switch, ncv, ns, pl%ti, pl%te, &
+&                        rt%rz2, dv%ne, dv%ne2, pl%na, dv%lnlam, ismain&
+&                        , st_ext, wrkfc, wrkcc)
+  ELSE
+    wrkfc = 1.0_R8
+  END IF
   IF (set_chcb_0 .EQ. 1) THEN
     DO k=1,mpg%ncg
       ifc = mpg%fcs_wall(k)
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icv = mpg%fccv(ifc, 2)
+      ELSE
+        icv = mpg%fccv(ifc, 1)
+      END IF
+      IF (wrkfc(ifc) .LE. switch%min_collisions .AND. (.NOT.mpg%&
+&         cvonclosedsurface(icv))) THEN
+        co%cvsa(ifc, 0:1, :) = 0.0_R8
+        co%cvsahz(ifc, 0:1, :) = 0.0_R8
+      END IF
       IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. 0.) &
 &     THEN
         wrk0 = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -2339,6 +2465,9 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
         co%csig(ifc, 1) = 0.0_R8
         co%chce(ifc, 1) = 0.0_R8
         co%cdna(ifc, 1, :) = 0.0_R8
+        co%cvsa(ifc, 1, :) = 0.0_R8
+        co%cdnahz(ifc, 1, :) = 0.0_R8
+        co%cvsahz(ifc, 1, :) = 0.0_R8
       END IF
     END DO
     DO ifc=1,mpg%nfc
@@ -2352,8 +2481,14 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &             is)*geo%fcqalf(ifc, 0) + co%cdpa(ifc, 1, is)*geo%fcqalf(&
 &             ifc, 1) .GT. 0.0_R8) THEN
             co%cdna(ifc, 1, is) = 0.0_R8
+            co%cvsa(ifc, 1, is) = 0.0_R8
+            co%cdnahz(ifc, 1, is) = 0.0_R8
+            co%cvsahz(ifc, 1, is) = 0.0_R8
           ELSE
             co%cdna(ifc, 1, is) = co%cdna(ifc, 1, is)/inctran
+            co%cvsa(ifc, 1, is) = co%cvsa(ifc, 1, is)/inctran
+            co%cdnahz(ifc, 1, is) = co%cdnahz(ifc, 1, is)/inctran
+            co%cvsahz(ifc, 1, is) = co%cvsahz(ifc, 1, is)/inctran
           END IF
         END DO
         IF (co%csig(ifc, 0)*geo%fcqalf(ifc, 0) .GT. 0.0_R8) THEN

@@ -33,6 +33,7 @@ SUBROUTINE RATSTR_NODIFF_NODIFF(nrid, nz, rtt, nt, rtn, nn, rtsa, rtra, &
 !     09/12/07 xpb : source CODATA 2006 (http://www.nist.gov/)
 !     19/03/18 xpb : source CODATA 2014 (http://www.nist.gov/)
 !     03/06/19 xpb : source CODATA 2018 (http://www.nist.gov/)
+!     26/03/26 xpb : source CODATA 2022 (http://www.nist.gov/)
 !     -------------------------------------------------------------------------
 !
 # ifndef CONSTANTS_PROVIDED

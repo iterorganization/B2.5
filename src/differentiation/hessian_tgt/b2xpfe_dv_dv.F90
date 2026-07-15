@@ -68,17 +68,20 @@ SUBROUTINE B2XPFE_DV_DV(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, rzad0, &
   INTEGER :: nd
   INTEGER :: nbdirs
   INTRINSIC MAX
+  REAL(r8), DIMENSION(nbdirsmax0) :: dummyzerodiffd0
   INTEGER :: nd0
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfe')
   arg1 = nfc*2
   dummyzerodiffd = 0.d0
-  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd, fne, fned0, fned, fnedd&
-&            , 1, nbdirs, nbdirs0)
+  dummyzerodiffd0 = 0.D0
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd0, dummyzerodiffd, fne, &
+&            fned0, fned, fnedd, 1, nbdirs, nbdirs0)
   wrkfd = 0.d0
   wrkfd0 = 0.D0
   wrkfdd = 0.D0
+!
   DO is=0,ns-1
     CALL INTFACE_DV_DV(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), rzad0(&
 &                :, :, is), rzad(:, :, is), rzadd(:, :, :, is), wrkf, &
@@ -199,6 +202,7 @@ SUBROUTINE B2XPFE_DV_NODIFF(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza, &
   CALL SFILL_DV_NODIFF(arg1, 0.0_R8, dummyzerodiffd, fne, fned, 1, &
 &                nbdirs)
   wrkfd = 0.d0
+!
   DO is=0,ns-1
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), rzad(:, :&
 &             , is), wrkf, wrkfd, nbdirs)
@@ -269,6 +273,7 @@ SUBROUTINE B2XPFE_NODIFF_NODIFF(ncv, nfc, ns, ns_ext, geo, mpg, qe, rza&
 !$$$  call subini ('b2xpfe')
   arg1 = nfc*2
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, fne, 1)
+!
   DO is=0,ns-1
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, rza(:, is), wrkf)
     fne(:, 0) = fne(:, 0) + fna(:, 0, is)*wrkf

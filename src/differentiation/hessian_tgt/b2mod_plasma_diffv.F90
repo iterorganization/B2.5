@@ -16,7 +16,6 @@ MODULE B2MOD_PLASMA_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_VERSION
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !srv 10.06.08 { 13.01.17
@@ -64,7 +63,6 @@ MODULE B2MOD_PLASMA_DIFFV
 CONTAINS
 !
   SUBROUTINE ALLOC_B2MOD_PLASMA(nxd, nyd, nsd)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd
 !
@@ -234,7 +232,6 @@ CONTAINS
 
 !
   SUBROUTINE DEALLOC_B2MOD_PLASMA()
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTRINSIC ALLOCATED
 !
@@ -368,7 +365,6 @@ CONTAINS
   SUBROUTINE READ_B2MOD_PLASMA(nxd, nyd, nsd, nread)
     USE B2MOD_CONSTANTS
     USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nsd, nread
     INTEGER :: is
@@ -782,7 +778,6 @@ CONTAINS
 
 !
   SUBROUTINE WRITE_B2MOD_PLASMA(nwrite)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nwrite
     EXTERNAL CFWURE
@@ -937,6 +932,8 @@ CONTAINS
     CALL CFWURE(nwrite, arg1, fchanml, 'fchanml')
     arg1 = SIZE(fna_eir)
     CALL CFWURE(nwrite, arg1, fna_eir, 'fna_eir')
+    arg1 = SIZE(fch_p)
+    CALL CFWURE(nwrite, arg1, fch_p, 'fch_p')
 !
     RETURN
   END SUBROUTINE WRITE_B2MOD_PLASMA

@@ -27,8 +27,8 @@
 !                *par_opt_phys *(st.pl.na) *(st.pl.te) *(st.pl.ti)
 !                *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: par_opt_phys:in b2data:in b2dataoncf:in
-!                b2voloncf:in st.pl.na:in st.pl.te:in st.pl.ti:in
-!                st.dv.fht:in st.dv.ne:in
+!                b2voloncf:in b2psi:in st.pl.na:in st.pl.te:in
+!                st.pl.ti:in st.dv.fht:in st.dv.ne:in
 !
 !
 !
@@ -57,7 +57,8 @@ SUBROUTINE B2USR_COST_FUNCTION_DV_DV(ncv, nfc, nvx, ns, geo, geod0, mpg&
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : vold, voldd0, voldd, volddd, cfnorm, &
 & cfnormd0, cfnormd, cfnormdd, nncf, b2rr, b2voloncf, b2voloncfd0, &
 & b2voloncfd, b2voloncfdd, b2data, b2datad0, b2datad, b2datadd, &
-& b2dataoncf, b2dataoncfd0, b2dataoncfd, b2dataoncfdd, b2psi, ompind
+& b2dataoncf, b2dataoncfd0, b2dataoncfd, b2dataoncfdd, b2psi, b2psid, &
+& ompind
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -888,8 +889,8 @@ END SUBROUTINE B2USR_COST_FUNCTION_DV_DV
 !                *par_opt_phys *(st.pl.na) *(st.pl.te) *(st.pl.ti)
 !                *(st.dv.fht) *(st.dv.ne)
 !   Plus diff mem management of: par_opt_phys:in b2data:in b2dataoncf:in
-!                b2voloncf:in st.pl.na:in st.pl.te:in st.pl.ti:in
-!                st.dv.fht:in st.dv.ne:in
+!                b2voloncf:in b2psi:in st.pl.na:in st.pl.te:in
+!                st.pl.ti:in st.dv.fht:in st.dv.ne:in
 !
 !
 !
@@ -911,12 +912,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st&
   USE B2MOD_CONSTANTS
   USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : omp, nomp, icsepomp, &
 & psi_omp
-  USE B2MOD_B2CMPA_DIFFV, ONLY : am, amd
+  USE B2MOD_B2CMPA_DIFFV, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : vold, voldd, cfnorm, cfnormd, nncf, &
 & b2rr, b2voloncf, b2voloncfd, b2data, b2datad, b2dataoncf, b2dataoncfd,&
-& b2psi, ompind
+& b2psi, b2psid, ompind
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES

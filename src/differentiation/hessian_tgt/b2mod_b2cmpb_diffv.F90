@@ -14,9 +14,9 @@
 !
 MODULE B2MOD_B2CMPB_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_DIFFSIZES
   USE B2MOD_B2CMPA_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     (/b2cmpb/ contains physics parameters for boundary conditions)
   INTEGER :: cbnrmx

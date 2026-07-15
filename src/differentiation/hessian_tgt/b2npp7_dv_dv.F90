@@ -81,7 +81,6 @@ SUBROUTINE B2NPP7_NODIFF_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, &
   EXTERNAL B2XVSG, B2XVFF_NODIFF0, B2URSD_NODIFF_NODIFF, &
 &     B2USP7_NODIFF_NODIFF, B2UPPO
   INTEGER :: arg1
-  EXTERNAL MY_OUT
 !   ..initialisation
   DATA ncall /0/
 !

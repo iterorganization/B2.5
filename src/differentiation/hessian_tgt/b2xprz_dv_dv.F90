@@ -48,8 +48,8 @@ SUBROUTINE B2XPRZ_DV_DV(ncv, ns, mp, am, na, nad0, nad, nadd, rz, rzd0, &
   INTEGER :: nbdirs0
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xprz')
-  DO nd=1,nbdirs
-    rzd(nd, :) = 0.d0
+  DO nd0=1,nbdirs0
+    rzd0(nd0, :) = 0.D0
   END DO
   rz = 0.0_R8
   rzd = 0.d0
@@ -117,9 +117,6 @@ SUBROUTINE B2XPRZ_DV_NODIFF(ncv, ns, mp, am, na, nad, rz, rzd, st_ext, &
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xprz')
-  DO nd=1,nbdirs
-    rzd(nd, :) = 0.d0
-  END DO
   rz = 0.0_R8
   rzd = 0.d0
   DO is=0,ns-1

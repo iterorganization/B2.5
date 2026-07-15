@@ -44,6 +44,10 @@
      & , only : c_hTA_an_fl_save, c_R_TA_an_save
       use b2mod_frtf_nccorr
      & , only : b2mod_frtf_nccorr_coefs
+#ifndef NAGFOR
+      use b2mod_frtf_nccorr
+     & , only : corr_tfia, g_hs_style, corr_fria, alpha_hs_style
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

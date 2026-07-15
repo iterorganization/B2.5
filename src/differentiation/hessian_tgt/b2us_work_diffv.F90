@@ -15,7 +15,6 @@
 MODULE B2US_WORK_DIFFV
   USE B2MOD_TYPES
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
   REAL(kind=r8), ALLOCATABLE, SAVE :: delne(:), delni(:, :), delna(:, :)&
@@ -27,7 +26,6 @@ MODULE B2US_WORK_DIFFV
 CONTAINS
 !
   SUBROUTINE ALLOC_B2US_WORK(ncv, nsd)
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: ncv, nsd
 !
@@ -52,7 +50,6 @@ CONTAINS
 
 !
   SUBROUTINE DEALLOC_B2US_WORK()
-  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTRINSIC ALLOCATED
 !

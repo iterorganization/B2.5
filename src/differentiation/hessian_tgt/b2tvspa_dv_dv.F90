@@ -2,18 +2,18 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tvspa_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
-!                *avm_u *rho_a_rel *z_to_m1_ast *z2n_xyd *nald
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
+!                *avm_u *rho_a_rel *z_to_m1_ast *z2n_cvd *nald
 !                *iad *av_ualphad *avm_ud *rho_a_reld *z_to_m1_astd
 !                fchvispar_a fchvispard fchvispar_ad fchvispar
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
-!                *avm_u *rho_a_rel *z_to_m1_ast *z2n_xyd *nald
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
+!                *avm_u *rho_a_rel *z_to_m1_ast *z2n_cvd *nald
 !                *iad *av_ualphad *avm_ud *rho_a_reld *z_to_m1_astd
 !                ti vsaf_drho na vsaf_cl nad ua fchvispar_a tid
 !                vsaf_ubdp_al uad vsaf_uadp_albed vsaf_ubdp_ald
 !                fchvispar_ad vsaf_drhod vsaf_cld vsaf_uadp_albe
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
-!                avm_u:in rho_a_rel:in z_to_m1_ast:in z2n_xyd:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
+!                avm_u:in rho_a_rel:in z_to_m1_ast:in z2n_cvd:in
 !                nald:in iad:in av_ualphad:in avm_ud:in rho_a_reld:in
 !                z_to_m1_astd:in geo.cvbb:in geo.cvonedbsq:in geo.fcbb:in
 !                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcqgam:in
@@ -22,12 +22,12 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tvspa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast fchvispar_a fchvispar
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast ti vsaf_drho na
 !                vsaf_cl ua fchvispar_a vsaf_ubdp_al vsaf_uadp_albe
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in geo.cvbb:in
 !                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
@@ -74,8 +74,8 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, z2n_xyd0, z2n_xyd, &
-& z2n_xydd, ia, iad0, iad, iadd, av_ualpha, av_ualphad0, av_ualphad, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, z2n_cvd0, z2n_cvd, &
+& z2n_cvdd, ia, iad0, iad, iadd, av_ualpha, av_ualphad0, av_ualphad, &
 & av_ualphadd, z_to_m1_ast, z_to_m1_astd0, z_to_m1_astd, z_to_m1_astdd, &
 & rho_a_rel, rho_a_reld0, rho_a_reld, rho_a_reldd
 !  Hint: nFc should be the size of dimension 1 of array fcbb
@@ -224,19 +224,16 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
     wrk1d = 0.d0
     wrk3d = 0.d0
     wrk4d = 0.d0
-    wrkvxd = 0.d0
     dvpard = 0.d0
     fchvispardd = 0.D0
     fchvispard0 = 0.D0
     wrkdd = 0.D0
     wrk4dd = 0.D0
     wrk1dd = 0.D0
-    wrkvxdd = 0.D0
     dvpardd = 0.D0
     wrk1d0 = 0.D0
     wrk3d0 = 0.D0
     wrk4d0 = 0.D0
-    wrkvxd0 = 0.D0
     wrk3dd = 0.D0
     dvpard0 = 0.D0
 !srv 24.06.99
@@ -260,6 +257,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             wrkd0(nd0, :) = result11*uad0(nd0, :, is)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
+          wrkvxdd = 0.D0
+          wrkvxd0 = 0.D0
           CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, mpgd, wrk&
 &                     , wrkd0, wrkd, wrkdd, wrkvx, wrkvxd0, wrkvxd, &
 &                     wrkvxdd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, &
@@ -305,6 +305,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             wrkd0(nd0, :) = result11*uad0(nd0, :, is)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
+          wrkvxdd = 0.D0
+          wrkvxd0 = 0.D0
           CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, mpgd, wrk&
 &                     , wrkd0, wrkd, wrkdd, wrkvx, wrkvxd0, wrkvxd, &
 &                     wrkvxdd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, &
@@ -340,6 +343,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             wrkd0(nd0, :) = result11*avm_ud0(nd0, :)
           END DO
           wrk = avm_u*result11
+          wrkvxd = 0.d0
+          wrkvxdd = 0.D0
+          wrkvxd0 = 0.D0
           CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, mpgd, wrk&
 &                     , wrkd0, wrkd, wrkdd, wrkvx, wrkvxd0, wrkvxd, &
 &                     wrkvxdd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, &
@@ -379,6 +385,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
 &             (is)-1))/nal(:, s2nucl(is)-1)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
+          wrkvxdd = 0.D0
+          wrkvxd0 = 0.D0
           CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, mpgd, wrk&
 &                     , wrkd0, wrkd, wrkdd, wrkvx, wrkvxd0, wrkvxd, &
 &                     wrkvxdd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, &
@@ -436,6 +445,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
 &                   ))
                 END DO
                 wrk = ua(:, nucl2s(inucl, iz))*result11
+                wrkvxd = 0.d0
+                wrkvxdd = 0.D0
+                wrkvxd0 = 0.D0
                 CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, &
 &                           mpgd, wrk, wrkd0, wrkd, wrkdd, wrkvx, &
 &                           wrkvxd0, wrkvxd, wrkvxdd, wrk3, wrk3d0, &
@@ -533,6 +545,9 @@ SUBROUTINE B2TVSPA_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                 tempd(nd0, :) = nad0(nd0, :, nucl2s(s2nucl(is)-1, iz))
               END DO
               wrk = ua(:, nucl2s(s2nucl(is)-1, iz))*result11
+              wrkvxd = 0.d0
+              wrkvxdd = 0.D0
+              wrkvxd0 = 0.D0
               CALL GRAD_P_DV_DV(ncv, nfc, nvx, 0, geo, geod0, mpg, mpgd&
 &                         , wrk, wrkd0, wrkd, wrkdd, wrkvx, wrkvxd0, &
 &                         wrkvxd, wrkvxdd, wrk3, wrk3d0, wrk3d, wrk3dd, &
@@ -698,12 +713,12 @@ END SUBROUTINE B2TVSPA_DV_DV
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tvspa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *z2n_xy *nal *ia *av_ualpha
+!   variations   of useful results: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast fchvispar_a fchvispar
-!   with respect to varying inputs: *z2n_xy *nal *ia *av_ualpha
+!   with respect to varying inputs: *z2n_cv *nal *ia *av_ualpha
 !                *avm_u *rho_a_rel *z_to_m1_ast ti vsaf_drho na
 !                vsaf_cl ua fchvispar_a vsaf_ubdp_al vsaf_uadp_albe
-!   Plus diff mem management of: z2n_xy:in nal:in ia:in av_ualpha:in
+!   Plus diff mem management of: z2n_cv:in nal:in ia:in av_ualpha:in
 !                avm_u:in rho_a_rel:in z_to_m1_ast:in geo.cvbb:in
 !                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
@@ -746,7 +761,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, z2n_xyd, ia, iad, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, z2n_cvd, ia, iad, &
 & av_ualpha, av_ualphad, z_to_m1_ast, z_to_m1_astd, rho_a_rel, &
 & rho_a_reld
 !  Hint: nFc should be the size of dimension 1 of array fcbb
@@ -861,7 +876,6 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
     wrk1d = 0.d0
     wrk3d = 0.d0
     wrk4d = 0.d0
-    wrkvxd = 0.d0
     dvpard = 0.d0
 !srv 24.06.99
     DO is=0,ns-1
@@ -878,6 +892,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             wrkd(nd, :) = result11*uad(nd, :, is)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
           CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrk, &
 &                         wrkd, wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
           DO nd=1,nbdirs
@@ -903,6 +918,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             wrkd(nd, :) = result11*uad(nd, :, is)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
           CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrk, &
 &                         wrkd, wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
           DO nd=1,nbdirs
@@ -920,6 +936,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             wrkd(nd, :) = result11*avm_ud(nd, :)
           END DO
           wrk = avm_u*result11
+          wrkvxd = 0.d0
           CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrk, &
 &                         wrkd, wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
           DO nd=1,nbdirs
@@ -937,6 +954,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             wrkd(nd, :) = result11*uad(nd, :, is)
           END DO
           wrk = ua(:, is)*result11
+          wrkvxd = 0.d0
           CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrk, &
 &                         wrkd, wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
 !
@@ -966,6 +984,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
                   wrkd(nd, :) = result11*uad(nd, :, nucl2s(inucl, iz))
                 END DO
                 wrk = ua(:, nucl2s(inucl, iz))*result11
+                wrkvxd = 0.d0
                 CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, &
 &                               wrk, wrkd, wrkvx, wrkvxd, wrk3, wrk3d, &
 &                               nbdirs)
@@ -1013,6 +1032,7 @@ SUBROUTINE B2TVSPA_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 &                 iz))
               END DO
               wrk = ua(:, nucl2s(s2nucl(is)-1, iz))*result11
+              wrkvxd = 0.d0
               CALL GRAD_P_DV_NODIFF(ncv, nfc, nvx, 0, geo, mpg, mpgd, &
 &                             wrk, wrkd, wrkvx, wrkvxd, wrk3, wrk3d, &
 &                             nbdirs)
@@ -1139,7 +1159,7 @@ SUBROUTINE B2TVSPA_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_xy, ia, av_ualpha, &
+  USE B2MOD_ZHFRTF_DIFFV_DIFFV, ONLY : z2n_cv, ia, av_ualpha, &
 & z_to_m1_ast, rho_a_rel
 !  Hint: nFc should be the size of dimension 1 of array fcbb
 !  Hint: nCv should be the size of dimension 1 of array cvbb

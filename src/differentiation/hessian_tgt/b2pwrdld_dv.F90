@@ -63,7 +63,20 @@ SUBROUTINE B2PWRDLD_NODIFF()
     radld(i) = 0.0_R8
   END DO
 !
-!
+  IF (ntrg .EQ. 0) THEN
+    k = 0
+    DO i=1,nwldrad
+      l = lwldrad(i)
+      m = luwrk(l)
+      IF (m .EQ. 0) THEN
+        lwldrad(i) = 0
+      ELSE
+        k = k + 1
+        ltrg(k) = m
+      END IF
+    END DO
+    ntrg = k
+  END IF
 !
 !*** Now specify the radiation sources - in W (remember, the additional
 !*** sources are in MW !!!)

@@ -40,16 +40,19 @@ SUBROUTINE DIFF_P_DV_DV(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, fun, &
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
-  REAL(kind=r8) :: fund0(nbdirsmax0, ncv), funvd0(nbdirsmax0, nvx)
-  REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
-  REAL(kind=r8) :: fundd(nbdirsmax0, nbdirsmax, ncv), funvdd(nbdirsmax0&
-& , nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv)
+  REAL(kind=r8), INTENT(IN) :: fund0(nbdirsmax0, ncv)
+  REAL(kind=r8), INTENT(IN) :: fund(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(IN) :: fundd(nbdirsmax0, nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(INOUT) :: funv(nvx)
+  REAL(kind=r8), INTENT(INOUT) :: funvd0(nbdirsmax0, nvx)
+  REAL(kind=r8), INTENT(INOUT) :: funvd(nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(INOUT) :: funvdd(nbdirsmax0, nbdirsmax, nvx)
 !   ..output arguments
-  REAL(kind=r8) :: dfunp(nfc)
-  REAL(kind=r8) :: dfunpd0(nbdirsmax0, nfc)
-  REAL(kind=r8) :: dfunpd(nbdirsmax, nfc)
-  REAL(kind=r8) :: dfunpdd(nbdirsmax0, nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunp(nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunpd0(nbdirsmax0, nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunpd(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunpdd(nbdirsmax0, nbdirsmax, nfc)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -154,11 +157,13 @@ SUBROUTINE DIFF_P_DV_NODIFF(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
-  REAL(kind=r8) :: fund(nbdirsmax, ncv), funvd(nbdirsmax, nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv)
+  REAL(kind=r8), INTENT(IN) :: fund(nbdirsmax, ncv)
+  REAL(kind=r8), INTENT(INOUT) :: funv(nvx)
+  REAL(kind=r8), INTENT(INOUT) :: funvd(nbdirsmax, nvx)
 !   ..output arguments
-  REAL(kind=r8) :: dfunp(nfc)
-  REAL(kind=r8) :: dfunpd(nbdirsmax, nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunp(nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunpd(nbdirsmax, nfc)
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -240,9 +245,10 @@ SUBROUTINE DIFF_P_NODIFF_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv&
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  REAL(kind=r8) :: fun(ncv), funv(nvx)
+  REAL(kind=r8), INTENT(IN) :: fun(ncv)
+  REAL(kind=r8), INTENT(INOUT) :: funv(nvx)
 !   ..output arguments
-  REAL(kind=r8) :: dfunp(nfc)
+  REAL(kind=r8), INTENT(OUT) :: dfunp(nfc)
 !-----------------------------------------------------------------------
 !.documentation
 !

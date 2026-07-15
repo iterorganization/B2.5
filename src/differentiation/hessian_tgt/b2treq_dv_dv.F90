@@ -26,10 +26,10 @@
 !.specification
 !
 !xpb !srv 01.07.09
-SUBROUTINE B2TREQ_DV_DV(ncv, switch, switchd, vol, vold, te, ted0, ted, &
-& tedd, ti, tid0, tid, tidd, ne, ned0, ned, nedd, ni, nid0, nid, nidd, &
-& ne2m, ne2md0, ne2md, ne2mdd, lnlam, lnlamd0, lnlamd, lnlamdd, st_ext, &
-& ceqp, ceqpd0, ceqpd, ceqpdd, nbdirs, nbdirs0)
+SUBROUTINE B2TREQ_DV_DV(ncv, switch, switchd0, switchd, vol, vold, te, &
+& ted0, ted, tedd, ti, tid0, tid, tidd, ne, ned0, ned, nedd, ni, nid0, &
+& nid, nidd, ne2m, ne2md0, ne2md, ne2mdd, lnlam, lnlamd0, lnlamd, &
+& lnlamdd, st_ext, ceqp, ceqpd0, ceqpd, ceqpdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -47,17 +47,18 @@ SUBROUTINE B2TREQ_DV_DV(ncv, switch, switchd, vol, vold, te, ted0, ted, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !xpb !srv 01.07.09
   REAL(kind=r8) :: vol(ncv), ni(ncv, 0:1), te(ncv), ti(ncv), ne(ncv), &
 & ne2m(ncv), lnlam(ncv)
-  REAL(kind=r8) :: nid0(nbdirsmax0, ncv, 0:1), ted0(nbdirsmax0, ncv), &
-& tid0(nbdirsmax0, ncv), ned0(nbdirsmax0, ncv), ne2md0(nbdirsmax0, ncv)&
-& , lnlamd0(nbdirsmax0, ncv)
-  REAL(kind=r8) :: vold(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ted(&
-& nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(&
-& nbdirsmax, ncv), lnlamd(nbdirsmax, ncv)
+  REAL(kind=r8) :: vold(nbdirsmax0, ncv), nid0(nbdirsmax0, ncv, 0:1), &
+& ted0(nbdirsmax0, ncv), tid0(nbdirsmax0, ncv), ned0(nbdirsmax0, ncv), &
+& ne2md0(nbdirsmax0, ncv), lnlamd0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(&
+& nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(nbdirsmax, ncv), lnlamd(&
+& nbdirsmax, ncv)
   REAL(kind=r8) :: nidd(nbdirsmax0, nbdirsmax, ncv, 0:1), tedd(&
 & nbdirsmax0, nbdirsmax, ncv), tidd(nbdirsmax0, nbdirsmax, ncv), nedd(&
 & nbdirsmax0, nbdirsmax, ncv), ne2mdd(nbdirsmax0, nbdirsmax, ncv), &
@@ -131,9 +132,9 @@ SUBROUTINE B2TREQ_DV_DV(ncv, switch, switchd, vol, vold, te, ted0, ted, &
   END IF
 !
 !srv 20.09.11
-  CALL B2TLNL_DV_DV(ncv, switch, switchd, switch%icase_ei, te, ted0, ted&
-&             , tedd, ti, tid0, tid, tidd, ne, ned0, ned, nedd, lnlam, &
-&             lnlamd0, lnlamd, lnlamdd, nbdirs, nbdirs0)
+  CALL B2TLNL_DV_DV(ncv, switch, switchd0, switchd, switch%icase_ei, te&
+&             , ted0, ted, tedd, ti, tid0, tid, tidd, ne, ned0, ned, &
+&             nedd, lnlam, lnlamd0, lnlamd, lnlamdd, nbdirs, nbdirs0)
 !   ..compute ceqp
   DO icv=1,ncv
 !srv 01.07.09
@@ -195,9 +196,9 @@ END SUBROUTINE B2TREQ_DV_DV
 !.specification
 !
 !xpb !srv 01.07.09
-SUBROUTINE B2TREQ_DV_NODIFF(ncv, switch, switchd, vol, vold, te, ted, ti&
-& , tid, ne, ned, ni, nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, &
-& ceqpd, nbdirs)
+SUBROUTINE B2TREQ_DV_NODIFF(ncv, switch, switchd, vol, te, ted, ti, tid&
+& , ne, ned, ni, nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, ceqpd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -219,9 +220,9 @@ SUBROUTINE B2TREQ_DV_NODIFF(ncv, switch, switchd, vol, vold, te, ted, ti&
 !xpb !srv 01.07.09
   REAL(kind=r8) :: vol(ncv), ni(ncv, 0:1), te(ncv), ti(ncv), ne(ncv), &
 & ne2m(ncv), lnlam(ncv)
-  REAL(kind=r8) :: vold(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ted(&
-& nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(&
-& nbdirsmax, ncv), lnlamd(nbdirsmax, ncv)
+  REAL(kind=r8) :: nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(&
+& nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(nbdirsmax, ncv), lnlamd(&
+& nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: ceqp(ncv)
   REAL(kind=r8) :: ceqpd(nbdirsmax, ncv)

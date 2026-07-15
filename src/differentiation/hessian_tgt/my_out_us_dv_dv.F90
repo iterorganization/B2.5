@@ -40,6 +40,8 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
   EXTERNAL IPGETI, XERTST
   INTRINSIC TRIM
 !
+!
+!
   IF (ncall .EQ. 0) THEN
     CALL IPGETI('b2wdat_append', iappend)
     CALL IPGETI('my_out_digits', ndigits)

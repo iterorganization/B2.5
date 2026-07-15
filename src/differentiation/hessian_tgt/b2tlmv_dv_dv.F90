@@ -30,11 +30,12 @@
 !
 !
 !srv 09.01.01
-SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
-& , geod0, geod, mpg, mpgd, nb, nbd0, nbd, nbdd, tb, tbd0, tbd, tbdd, ub&
-& , ubd0, ubd, ubdd, collisnumf, collisnumfd0, collisnumfd, collisnumfdd&
-& , vsbfx, vsbfxd0, vsbfxd, vsbfxdd, cvsbx, cvsbxd0, cvsbxd, cvsbxdd, &
-& cvsbxhz, cvsbxhzd0, cvsbxhzd, cvsbxhzdd, fl, nbdirs, nbdirs0)
+SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd0, &
+& switchd, geo, geod0, geod, mpg, mpgd, nb, nbd0, nbd, nbdd, tb, tbd0, &
+& tbd, tbdd, ub, ubd0, ubd, ubdd, collisnumf, collisnumfd0, collisnumfd&
+& , collisnumfdd, vsbfx, vsbfxd0, vsbfxd, vsbfxdd, cvsbx, cvsbxd0, &
+& cvsbxd, cvsbxdd, cvsbxhz, cvsbxhzd0, cvsbxhzd, cvsbxhzdd, fl, nbdirs, &
+& nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -51,6 +52,7 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -76,7 +78,7 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
 !srv 12.04.04
   CHARACTER :: charns*3
   REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
-& nbf(nfc)
+& nbf(nfc), wrk
   REAL(kind=r8) :: qcld0(nbdirsmax0), qfld0(nbdirsmax0), tfld0(&
 & nbdirsmax0), ubvd0(nbdirsmax0, nvx), dubd0(nbdirsmax0, nfc), &
 & cflmv_locd0(nbdirsmax0, nfc), nbfd0(nbdirsmax0, nfc)
@@ -90,21 +92,30 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   INTRINSIC MAX
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: y1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: y1dd
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: abs1d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs1dd
+  REAL(kind=r8) :: max1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: max1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: max1dd
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: abs3d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs3d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs3dd
-  REAL(kind=r8) :: max1
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: max1d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: max1dd
+  REAL(kind=r8) :: max2
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: max2d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max2d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: max2dd
   CHARACTER(len=7) :: arg1
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -357,11 +368,13 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
       fl(ifc) = tfl
     END DO
   ELSE
+    y1dd = 0.D0
     tfldd = 0.D0
     abs3dd = 0.D0
     qfldd = 0.D0
     max1dd = 0.D0
     qcldd = 0.D0
+    max2dd = 0.D0
 !sw 18sep2014 TESTING only (SOLPS4 discr), i.e. switch off mom.flux
 !             limit
 !      else if(style.eq.2) then
@@ -372,6 +385,60 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+        IF (switch%min_collisions .GT. 0.0_R8) THEN
+          wrk = switch%cvsa_low_col_mltpl
+          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
+&             *(1.0_R8-wrk) + wrk) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                y1dd(nd0, nd) = (1.0_R8-wrk)*collisnumfdd(nd0, nd, ifc)/&
+&                 5.0_R8
+              END DO
+              y1d(nd) = (1.0_R8-wrk)*collisnumfd(nd, ifc)/5.0_R8
+            END DO
+            DO nd0=1,nbdirs0
+              y1d0(nd0) = (1.0_R8-wrk)*collisnumfd0(nd0, ifc)/5.0_R8
+            END DO
+            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
+&             wrk) + wrk
+          ELSE
+            y1 = 1.0_R8
+            y1d = 0.d0
+            y1dd = 0.D0
+            y1d0 = 0.D0
+          END IF
+          IF (wrk .LT. y1) THEN
+            DO nd=1,nbdirs
+              DO nd0=nd,nbdirs0
+                max1dd(nd0, nd) = y1dd(nd0, nd)
+              END DO
+              max1d(nd) = y1d(nd)
+            END DO
+            DO nd0=1,nbdirs0
+              max1d0(nd0) = y1d0(nd0)
+            END DO
+            max1 = y1
+          ELSE
+            max1 = wrk
+            max1d = 0.d0
+            max1d0 = 0.D0
+            max1dd = 0.D0
+          END IF
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              cflmv_locdd(nd0, nd, ifc) = cflmv_locd(nd, ifc)*max1d0(nd0&
+&               ) + max1*cflmv_locdd(nd0, nd, ifc) + max1d(nd)*&
+&               cflmv_locd0(nd0, ifc) + cflmv_loc(ifc)*max1dd(nd0, nd)
+            END DO
+            cflmv_locd(nd, ifc) = max1*cflmv_locd(nd, ifc) + cflmv_loc(&
+&             ifc)*max1d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            cflmv_locd0(nd0, ifc) = max1*cflmv_locd0(nd0, ifc) + &
+&             cflmv_loc(ifc)*max1d0(nd0)
+          END DO
+          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+        END IF
         IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
           DO nd=1,nbdirs
             DO nd0=nd,nbdirs0
@@ -479,37 +546,37 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
           END IF
         ELSE
           IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max1 = 1.0e-16_R8
-            max1d = 0.d0
-            max1d0 = 0.D0
-            max1dd = 0.D0
+            max2 = 1.0e-16_R8
+            max2d = 0.d0
+            max2d0 = 0.D0
+            max2dd = 0.D0
           ELSE
             DO nd=1,nbdirs
               DO nd0=nd,nbdirs0
-                max1dd(nd0, nd) = collisnumfdd(nd0, nd, ifc)
+                max2dd(nd0, nd) = collisnumfdd(nd0, nd, ifc)
               END DO
-              max1d(nd) = collisnumfd(nd, ifc)
+              max2d(nd) = collisnumfd(nd, ifc)
             END DO
             DO nd0=1,nbdirs0
-              max1d0(nd0) = collisnumfd0(nd0, ifc)
+              max2d0(nd0) = collisnumfd0(nd0, ifc)
             END DO
-            max1 = collisnumf(ifc)
+            max2 = collisnumf(ifc)
           END IF
-          temp5 = 1.0/(cflmv_loc(ifc)*max1)
+          temp5 = 1.0/(cflmv_loc(ifc)*max2)
           DO nd0=1,nbdirs0
-            temp0d(nd0) = -(temp5*(max1*cflmv_locd0(nd0, ifc)+cflmv_loc(&
-&             ifc)*max1d0(nd0))/(cflmv_loc(ifc)*max1))
+            temp0d(nd0) = -(temp5*(max2*cflmv_locd0(nd0, ifc)+cflmv_loc(&
+&             ifc)*max2d0(nd0))/(cflmv_loc(ifc)*max2))
           END DO
           temp0 = temp5
           DO nd=1,nbdirs
-            temp5 = temp0/(cflmv_loc(ifc)*max1)
-            temp4 = max1*cflmv_locd(nd, ifc) + cflmv_loc(ifc)*max1d(nd)
+            temp5 = temp0/(cflmv_loc(ifc)*max2)
+            temp4 = max2*cflmv_locd(nd, ifc) + cflmv_loc(ifc)*max2d(nd)
             DO nd0=1,nbdirs0
-              tfldd(nd0, nd) = -(temp5*(cflmv_locd(nd, ifc)*max1d0(nd0)+&
-&               max1*cflmv_locdd(nd0, nd, ifc)+max1d(nd)*cflmv_locd0(nd0&
-&               , ifc)+cflmv_loc(ifc)*max1dd(nd0, nd))+temp4*(temp0d(nd0&
-&               )-temp5*(max1*cflmv_locd0(nd0, ifc)+cflmv_loc(ifc)*&
-&               max1d0(nd0)))/(cflmv_loc(ifc)*max1))
+              tfldd(nd0, nd) = -(temp5*(cflmv_locd(nd, ifc)*max2d0(nd0)+&
+&               max2*cflmv_locdd(nd0, nd, ifc)+max2d(nd)*cflmv_locd0(nd0&
+&               , ifc)+cflmv_loc(ifc)*max2dd(nd0, nd))+temp4*(temp0d(nd0&
+&               )-temp5*(max2*cflmv_locd0(nd0, ifc)+cflmv_loc(ifc)*&
+&               max2d0(nd0)))/(cflmv_loc(ifc)*max2))
             END DO
             tfld(nd) = -(temp4*temp5)
           END DO
@@ -643,22 +710,27 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
 !srv 12.04.04
   CHARACTER :: charns*3
   REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
-& nbf(nfc)
+& nbf(nfc), wrk
   REAL(kind=r8) :: qcld(nbdirsmax), qfld(nbdirsmax), tfld(nbdirsmax), &
 & ubvd(nbdirsmax, nvx), dubd(nbdirsmax, nfc), cflmv_locd(nbdirsmax, nfc)&
 & , nbfd(nbdirsmax, nfc)
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   INTRINSIC MAX
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
+  REAL(kind=r8) :: max1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs3d
-  REAL(kind=r8) :: max1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
+  REAL(kind=r8) :: max2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max2d
   CHARACTER(len=7) :: arg1
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -790,6 +862,34 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+        IF (switch%min_collisions .GT. 0.0_R8) THEN
+          wrk = switch%cvsa_low_col_mltpl
+          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
+&             *(1.0_R8-wrk) + wrk) THEN
+            DO nd=1,nbdirs
+              y1d(nd) = (1.0_R8-wrk)*collisnumfd(nd, ifc)/5.0_R8
+            END DO
+            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
+&             wrk) + wrk
+          ELSE
+            y1 = 1.0_R8
+            y1d = 0.d0
+          END IF
+          IF (wrk .LT. y1) THEN
+            DO nd=1,nbdirs
+              max1d(nd) = y1d(nd)
+            END DO
+            max1 = y1
+          ELSE
+            max1 = wrk
+            max1d = 0.d0
+          END IF
+          DO nd=1,nbdirs
+            cflmv_locd(nd, ifc) = max1*cflmv_locd(nd, ifc) + cflmv_loc(&
+&             ifc)*max1d(nd)
+          END DO
+          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+        END IF
         IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
           DO nd=1,nbdirs
             qcld(nd) = -(dub(ifc)*cvsbxd(nd, ifc)+cvsbx(ifc)*dubd(nd, &
@@ -835,18 +935,18 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
           END IF
         ELSE
           IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max1 = 1.0e-16_R8
-            max1d = 0.d0
+            max2 = 1.0e-16_R8
+            max2d = 0.d0
           ELSE
             DO nd=1,nbdirs
-              max1d(nd) = collisnumfd(nd, ifc)
+              max2d(nd) = collisnumfd(nd, ifc)
             END DO
-            max1 = collisnumf(ifc)
+            max2 = collisnumf(ifc)
           END IF
-          temp0 = 1.0/(cflmv_loc(ifc)*max1)
+          temp0 = 1.0/(cflmv_loc(ifc)*max2)
           DO nd=1,nbdirs
-            tfld(nd) = -(temp0*(max1*cflmv_locd(nd, ifc)+cflmv_loc(ifc)*&
-&             max1d(nd))/(cflmv_loc(ifc)*max1))
+            tfld(nd) = -(temp0*(max2*cflmv_locd(nd, ifc)+cflmv_loc(ifc)*&
+&             max2d(nd))/(cflmv_loc(ifc)*max2))
           END DO
           tfl = temp0 + 1.0_R8
         END IF
@@ -925,16 +1025,19 @@ SUBROUTINE B2TLMV_NODIFF_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, &
 !srv 12.04.04
   CHARACTER :: charns*3
   REAL(kind=r8) :: qcl, qfl, tfl, ubv(nvx), dub(nfc), cflmv_loc(nfc), &
-& nbf(nfc)
+& nbf(nfc), wrk
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   INTRINSIC MAX
+  REAL(kind=r8) :: y1
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: max1
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
-  REAL(kind=r8) :: max1
+  REAL(kind=r8) :: max2
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -1014,6 +1117,22 @@ SUBROUTINE B2TLMV_NODIFF_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, &
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+        IF (switch%min_collisions .GT. 0.0_R8) THEN
+          wrk = switch%cvsa_low_col_mltpl
+          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
+&             *(1.0_R8-wrk) + wrk) THEN
+            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
+&             wrk) + wrk
+          ELSE
+            y1 = 1.0_R8
+          END IF
+          IF (wrk .LT. y1) THEN
+            max1 = y1
+          ELSE
+            max1 = wrk
+          END IF
+          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+        END IF
         IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
           qcl = -(cvsbx(ifc)*dub(ifc))
           IF (geo%fcpbs(ifc) .GE. 0.) THEN
@@ -1036,11 +1155,11 @@ SUBROUTINE B2TLMV_NODIFF_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, &
           END IF
         ELSE
           IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max1 = 1.0e-16_R8
+            max2 = 1.0e-16_R8
           ELSE
-            max1 = collisnumf(ifc)
+            max2 = collisnumf(ifc)
           END IF
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max1)
+          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
         END IF
         cvsbx(ifc) = cvsbx(ifc)/tfl
         cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
