@@ -122,7 +122,7 @@
      8  ehxp(nCv), smt(nCv,0:3), cst,                                  !srv 17.01.14
      9  flct(nFc,0:1), wrk1(nCv), wrks(nCv),
      1  smqdu(nCv), wrk0(nCv), wrk2(nCv), wrk3(nCv,0:ns-1),
-     2  ctcfb(nCv), ctcft(nCv),                                        !srv 06.04.07
+     2   wrk4(nCv,0:ns-1),ctcfb(nCv), ctcft(nCv),                      !srv 06.04.07
      3  zeff(nCv), zmff(nCv),                                          !srv 13.01.17 {
      4  ce1(nCv), ce2(nCv),
      5  cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
@@ -919,6 +919,10 @@ c     ..compare 9-pt stencil matrix
      &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                   ! = 0
      &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
      &    /ts_factor
+        do iCv=1,mpg%nCi
+        wrk4(iCv,is) = dtmo(is,mpg%cvReg(iCv)) *
+     &                       (dv%dmodt(iCv,is) - wrk3(iCv,is))
+        enddo
       enddo
 
 *   ..correct pcca
@@ -929,6 +933,7 @@ c     ..compare 9-pt stencil matrix
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
         call my_out_us(70,nCv,0,dv%dmodt(1,is),'b2npmo_dmodt'//chns)
         call my_out_us(70,nCv,0,wrk3(1,is),'b2npmo_mavadnadt'//chns)
+        call my_out_us(70,nCv,0,wrk4(1,is),'b2npmo_manadvadt'//chns)
        enddo
       endif                                                             !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then
