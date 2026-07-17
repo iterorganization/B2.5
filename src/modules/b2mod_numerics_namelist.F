@@ -168,10 +168,11 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
-      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
-        solveet=.false.
-        solvemt=.false.
-      endif
+! lkw 17.07.2026 - sometimes it is worth solving the equation for total energy to reduce noise in heat exchange term 
+!      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
+!        solveet=.false.
+!        solvemt=.false.
+!      endif
       last_solve_5=.true.
       last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
@@ -252,13 +253,13 @@
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          call xertst(b2mndt_style.le.1.or..not.solveet(ireg),
-     &     'Time-dependent mode requires SOLVEET = .false.!')
+          if (.not. (b2mndt_style.le.1.or..not.solveet(ireg))
+     &     write(*,*) 'Time-dependent mode requires SOLVEET = .false.!'
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          call xertst(b2mndt_style.le.1.or..not.solvemt(ireg),
-     &     'Time-dependent mode requires SOLVEMT = .false.!')
+          if (.not. (b2mndt_style.le.1.or..not.solvemt(ireg))
+     &     write(*,*) 'Time-dependent mode requires SOLVEMT = .false.!')
         end do
       else if (file_ok.and.new) then
         call xerrab ('Found unexpected '//trim(filename))
