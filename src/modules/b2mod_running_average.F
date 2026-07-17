@@ -760,7 +760,7 @@ c      of the momentum sources (=nfl for parallel momentum only,
 c                               =3*nfl for vectorial momentum sources)
 c local variables
       integer :: io, iun, idum(0:3), iex
-      character :: check*10, line*51
+      character :: check*10, line*57
       logical :: found, no_vector
 #ifdef LEGACYCOMP
       integer newunit
@@ -795,7 +795,7 @@ c local variables
       if (io == 0) then
         ! Scan until we find the start of underrelaxed sources data
         do
-          read(iun, '(A)', iostat=io) line
+          read(iun, '(A57)', iostat=io) line
           if (io /= 0) then
             call xerrab('Underrelaxed sources not found before EOF')
           end if
