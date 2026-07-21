@@ -253,13 +253,13 @@
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          if (.not. (b2mndt_style.le.1.or..not.solveet(ireg))
+          if (.not. (b2mndt_style.le.1.or..not.solveet(ireg)))
      &     write(*,*) 'Time-dependent mode requires SOLVEET = .false.!'
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          if (.not. (b2mndt_style.le.1.or..not.solvemt(ireg))
-     &     write(*,*) 'Time-dependent mode requires SOLVEMT = .false.!')
+          if (.not. (b2mndt_style.le.1.or..not.solvemt(ireg)))
+     &     write(*,*) 'Time-dependent mode requires SOLVEMT = .false.!'
         end do
       else if (file_ok.and.new) then
         call xerrab ('Found unexpected '//trim(filename))

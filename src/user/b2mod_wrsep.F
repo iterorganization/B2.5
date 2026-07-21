@@ -143,7 +143,7 @@ c*** Local variables of general use
       save
 c======================================================================
 
-      if(first_time_step) return
+!      if(first_time_step) return
 
       if(ank_tracing.eq.0) return
 
