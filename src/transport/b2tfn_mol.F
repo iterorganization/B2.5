@@ -252,6 +252,9 @@ cc molecule velocities are kept at the value read from the input mol_bg
        call my_out_us(70,nFc,1,term,'b2tfn_term_mol_th')
        call my_out_us(70,nFc,1,fn_mol0(:,0),'b2tfn_mol_conv_th')
        call my_out_us(70,nFc,1,fn_mol0(:,1),'b2tfn_mol_conv_r')
+       call my_out_us(70,nCv,0,u_pol_mol(:,0),'b2tfn_mol_u_pol') ! poloidal
+       call my_out_us(70,nCv,0,u_rad_mol(:,0),'b2tfn_mol_u_rad') ! radial
+       call my_out_us(70,nCv,0,u_tor_mol(:,0),'b2tfn_mol_u_tor') ! toroidal
       endif
 
 * ..return
