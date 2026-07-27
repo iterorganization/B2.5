@@ -8981,6 +8981,31 @@ cwdk    Todo: corrections for BCCON.ne.14
      .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
+* -- BCMOM_MOL=3 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY BASED ON THE NORMAL VELOCITY CONSISTENT WITH THE THERMAL RELEASE
+
+        case (3)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL =  3 : specified parallel velocity according ',
+     .      ' to thermal release '
+            call xertst(BCENE_MOL(IB).eq.1,
+     .     'BCMOM_MOL = 3 requires BCENE_MOL = 1')
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            t0 = ENEPAR_MOL(IB,1)                 !! wall temperature
+            t0 = sqrt(2.0_R8*t0*ev/(pi*am_d2*mp)) !! normal velocity of emitted molecules
+            !! FM_TODO: sign?? vn must alwl
+            t0 = -t0*pit(iCv1)*geo%fcQalf(iFc,0)*    !! projection normal -> parallel
+     .            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            sr_mol%sm_mol(iCv1,0)=
+     .       VBIG*NE00*am_d2*t0*geo%fcS(iFc)*
+     .       geo%fcHz(iFc)
+            sr_mol%sm_mol(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
       case default
         write(*,*) BCMOM_MOL(IB)
         call xerrab ('Nothing implemented yet for BCMOM_MOL')
