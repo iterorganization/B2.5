@@ -69,7 +69,7 @@ BLD = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
+LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL} ${LD_SSP}
 
 ifdef LD_CATALYST
   CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
@@ -150,6 +150,7 @@ endif
 LD = $(FC)
 LN = $(FN)
 # LDOPTS = -Bstatic
+LDOPTS += -L$(EBROOTSUITESPARSE)/lib
 
 
 #!!!Local Variables:
