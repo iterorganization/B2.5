@@ -1560,6 +1560,7 @@ ${INCLOCAL}/b2local.h: ${MAKES}
 	echo "c" >> ${INCLOCAL}/b2local.h
 
 ${OBJDIR}/mpiversion.mk: ${MAKES}
+	@mkdir -p ${OBJDIR}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else
