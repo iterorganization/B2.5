@@ -4389,7 +4389,7 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &               %ua, stdd%pl%ua, st%pl%te, std0%pl%te, std%pl%te, stdd%&
 &               pl%te, st%pl%ti, std0%pl%ti, std%pl%ti, stdd%pl%ti, st%&
 &               dv%ne, std0%dv%ne, std%dv%ne, stdd%dv%ne, st%dv%ni, std0&
-&               %dv%ni, std%dv%ni, stdd%dv%ni, dummyzerodiffd1, st%sr, &
+&               %dv%ni, std%dv%ni, stdd%dv%ni, st%dv%nn, dummyzerodiffd1, st%sr, &
 &               std0%sr, std%sr, stdd%sr, .false., nbdirs, nbdirs0)
 !     ..include contributions due to timestep                            !xpb
 !srv 23.07.21
@@ -4418,9 +4418,9 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &               %psnc%kt, st%psnc%zt, std0%psnc%zt, std%psnc%zt, stdd%&
 &               psnc%zt, st%pl%na, dummyzerodiffd10, st%pl%ua, std%pl%ua&
 &               , st%pl%te, std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti&
-&               , dummyzerodiffd9, st%pl%tn, dummyzerodiffd8, &
-&               dummyzerodiffd7, dummyzerodiffd6, dummyzerodiffd5, &
-&               dummyzerodiffd4, st%pl%kt, dummyzerodiffd3, st%pl%zt, &
+&               , dummyzerodiffd9, st%pl%tn, dummyzerodiffd8, st%dv%ne, &
+&               dummyzerodiffd7, st%dv%ni, dummyzerodiffd6, st%dv%nn, dummyzerodiffd5, &
+&               st%dv%kinrgy, dummyzerodiffd4, st%pl%kt, dummyzerodiffd3, st%pl%zt, &
 &               dummyzerodiffd2, st%sr, std0%sr, std%sr, stdd%sr, &
 &               .false., nbdirs, nbdirs0)
 !     ..stabilise the source coefficients                                !xpb
@@ -4434,7 +4434,7 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &               , st%pl%te, std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti&
 &               , std0%pl%ti, std%pl%ti, stdd%pl%ti, st%pl%tn, std0%pl%&
 &               tn, std%pl%tn, stdd%pl%tn, st%pl%po, std0%pl%po, std%pl%&
-&               po, stdd%pl%po, dummyzerodiffd13, dummyzerodiffd12, &
+&               po, stdd%pl%po, st%dv%ne, dummyzerodiffd13, st%dv%ni, dummyzerodiffd12, st%dv%nn, &
 &               dummyzerodiffd11, st%pl%kt, std0%pl%kt, std%pl%kt, stdd%&
 &               pl%kt, st%pl%zt, std0%pl%zt, std%pl%zt, stdd%pl%zt, st%&
 &               sr, std0%sr, std%sr, stdd%sr, nbdirs, nbdirs0)
@@ -4861,9 +4861,9 @@ SUBROUTINE B2NEWS__DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &               %psnc%kt, st%psnc%zt, std0%psnc%zt, std%psnc%zt, stdd%&
 &               psnc%zt, st%pl%na, dummyzerodiffd22, st%pl%ua, std%pl%ua&
 &               , st%pl%te, std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti&
-&               , dummyzerodiffd21, st%pl%tn, dummyzerodiffd20, &
-&               dummyzerodiffd19, dummyzerodiffd18, dummyzerodiffd17, &
-&               dummyzerodiffd16, st%pl%kt, dummyzerodiffd15, st%pl%zt, &
+&               , dummyzerodiffd21, st%pl%tn, dummyzerodiffd20, st%dv%ne, &
+&               dummyzerodiffd19, st%dv%ni, dummyzerodiffd18, st%dv%nn, dummyzerodiffd17, &
+&               st%dv%kinrgy, dummyzerodiffd16, st%pl%kt, dummyzerodiffd15, st%pl%zt, &
 &               dummyzerodiffd14, st%sr, std0%sr, std%sr, stdd%sr, &
 &               .true., nbdirs, nbdirs0)
   END IF

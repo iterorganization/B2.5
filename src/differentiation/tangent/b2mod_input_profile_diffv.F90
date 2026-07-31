@@ -177,6 +177,7 @@ CONTAINS
       smo0d = 0.D0
       shi0d = 0.D0
       sna0d = 0.D0
+      sne0d = 0.D0
       sch0d = 0.D0
       she0d = 0.D0
     END IF

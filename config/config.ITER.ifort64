@@ -68,7 +68,7 @@ endif
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS    += -g -C -debug all -traceback -check all -fpe0
+FCOPTS    += -g -C -debug all -traceback -check all -fpe0 -warn interfaces
 LDOPTS    += -check all
 else
 FCOPTS    += -O2

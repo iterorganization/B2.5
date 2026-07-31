@@ -4052,7 +4052,7 @@ SUBROUTINE B2MNDT_DV0_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                   nbdirs0)
 !srv 03.07.03 }
         dummyzerodiffd27 = 0.D0
-        CALL B2TREQ_DV_DV(ncv, switch, switchd0, switchd, &
+        CALL B2TREQ_DV_DV(ncv, switch, switchd0, switchd, geo%cvvol, &
 &                   dummyzerodiffd27, st%pl%te, std0%pl%te, std%pl%te, &
 &                   stdd%pl%te, st%pl%ti, std0%pl%ti, std%pl%ti, stdd%pl&
 &                   %ti, st%dv%ne, std0%dv%ne, std%dv%ne, stdd%dv%ne, st&

@@ -4509,7 +4509,7 @@ SUBROUTINE B2NEWS_M_DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &               %ua, stdd%pl%ua, st%pl%te, std0%pl%te, std%pl%te, stdd%&
 &               pl%te, st%pl%ti, std0%pl%ti, std%pl%ti, stdd%pl%ti, st%&
 &               dv%ne, std0%dv%ne, std%dv%ne, stdd%dv%ne, st%dv%ni, std0&
-&               %dv%ni, std%dv%ni, stdd%dv%ni, dummyzerodiffd2, st%sr, &
+&               %dv%ni, std%dv%ni, stdd%dv%ni, st%dv%nn, dummyzerodiffd2, st%sr, &
 &               std0%sr, std%sr, stdd%sr, .false., nbdirs, nbdirs0)
 !     ..include contributions due to timestep                            !xpb
 !srv 23.07.21
@@ -4538,9 +4538,9 @@ SUBROUTINE B2NEWS_M_DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &               %psnc%kt, st%psnc%zt, std0%psnc%zt, std%psnc%zt, stdd%&
 &               psnc%zt, st%pl%na, dummyzerodiffd11, st%pl%ua, std%pl%ua&
 &               , st%pl%te, std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti&
-&               , dummyzerodiffd10, st%pl%tn, dummyzerodiffd9, &
-&               dummyzerodiffd8, dummyzerodiffd7, dummyzerodiffd6, &
-&               dummyzerodiffd5, st%pl%kt, dummyzerodiffd4, st%pl%zt, &
+&               , dummyzerodiffd10, st%pl%tn, dummyzerodiffd9, st%dv%ne, &
+&               dummyzerodiffd8, st%dv%ni, dummyzerodiffd7, st%dv%nn, dummyzerodiffd6, &
+&               st%dv%kinrgy, dummyzerodiffd5, st%pl%kt, dummyzerodiffd4, st%pl%zt, &
 &               dummyzerodiffd3, st%sr, std0%sr, std%sr, stdd%sr, &
 &               .false., nbdirs, nbdirs0)
 !     ..stabilise the source coefficients                                !xpb
@@ -4554,7 +4554,7 @@ SUBROUTINE B2NEWS_M_DV0_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &               , st%pl%te, std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti&
 &               , std0%pl%ti, std%pl%ti, stdd%pl%ti, st%pl%tn, std0%pl%&
 &               tn, std%pl%tn, stdd%pl%tn, st%pl%po, std0%pl%po, std%pl%&
-&               po, stdd%pl%po, dummyzerodiffd14, dummyzerodiffd13, &
+&               po, stdd%pl%po, st%dv%ne, dummyzerodiffd14, st%dv%ni, dummyzerodiffd13, st%dv%nn, &
 &               dummyzerodiffd12, st%pl%kt, std0%pl%kt, std%pl%kt, stdd%&
 &               pl%kt, st%pl%zt, std0%pl%zt, std%pl%zt, stdd%pl%zt, st%&
 &               sr, std0%sr, std%sr, stdd%sr, nbdirs, nbdirs0)

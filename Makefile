@@ -242,7 +242,7 @@ endif
 endif
 SOLPSINCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
-TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml ${DOCDIR}/*.py
+TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${SRCDIR}/*/*/*.F ${SRCDIR}/*/*/*.F90 ${DOCDIR}/*.xml ${DOCDIR}/*.py
 ifdef DIFF
 SOLPSINCLUDE += -I${SRCB2}/${DIFFDIR}
 ##SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
@@ -1560,6 +1560,7 @@ ${INCLOCAL}/b2local.h: ${MAKES}
 	echo "c" >> ${INCLOCAL}/b2local.h
 
 ${OBJDIR}/mpiversion.mk: ${MAKES}
+	@mkdir -p ${OBJDIR}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else
