@@ -2721,11 +2721,27 @@ c   (ionising_core option)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
 
-* -- BCCON=30  Fixed density based on pressure
+* -- BCCON=30 -- Particle flux per unit area profile is read from a file.
+* ---------------------------------------------------------------------
+
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if CONPAR(IS,IB,2) > 0.0, the profile is scaled such that CONPAR(IS,IB,1) gives
+*          the max. density of the profile.
+*     otherwise the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* ---------------------------------------------------------------------
+        case (30)
+          call xerrab ('b2stbc_phys -- BCCON = 30 not adapted for WG')
+
+* -- BCCON=31  Fixed density based on pressure
 !ap 2026.03.31 implemented to reproduce baratron pressure in TCV
 !   pressure should be in mbar, then converted in Pa in the code
+!!TODO move it to SI
 
-        case (30)
+        case (31)
           if(ncall_b2stbc_phys.eq.0) then
             if (CONPAR(IS,IB,1).eq.0.0_R8) then
               CONPAR(IS,IB,1) = switch%b2mndr_na_min
