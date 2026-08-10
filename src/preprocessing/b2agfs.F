@@ -346,6 +346,9 @@
 !     .. Construct additional connectivity data (fcCv, vxCv, vxFc)
             call calc_add_connectivity(m)
 
+!     .. Update guard cell data
+            call update_guard_cells(m)
+
 !     .. Order the vertices and faces as rightturning
 !     .. and consequently check convexity
             call order_vertices(g,m)
