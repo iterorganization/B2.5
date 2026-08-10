@@ -353,7 +353,7 @@
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0, lblgm)
       use b2mod_ad
      & , only : old_erosion, old_deposition
       implicit none
@@ -364,6 +364,7 @@
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
+      character lblgm*120
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -968,7 +969,7 @@
       nFc = mpg%nFc
       nVx = mpg%nVx
 *   ..initialise files and common
-      call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
+      call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch, lblgm)
 *   ..set internal parameters on first (and only) call
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)

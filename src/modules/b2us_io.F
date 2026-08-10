@@ -13,7 +13,8 @@
 
       public :: read_b2fgmtry,  write_b2fgmtry,
      .          read_b2fstate,  write_b2fstate,
-     .          read_b2fplasma, write_b2fplasma
+     .          read_b2fplasma, write_b2fplasma,
+     .          read_b2fgmtry_header
 
       contains
 
@@ -21,6 +22,53 @@
 *     Module containing basic routines for reading/writing data files
 *     in unstructured format.
 *     Note: file headers are read elsewhere
+
+      subroutine read_b2fgmtry_header(ninp, version, m, lblgm, isymm)
+      implicit none
+      integer, intent(in) :: ninp
+      character(10), intent(in) :: version
+      type(mapping), intent(inout) :: m
+      character(120), intent(out) :: lblgm
+      integer, intent(out) :: isymm
+      integer :: idum(0:9)
+
+      if (version.ge.'03.002.000') then
+        call cfruin (ninp, 7, idum, 'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+        m%nCi = idum(0)
+        m%nCg = idum(1)
+        m%nCv = idum(2)
+        m%nFc = idum(3)
+        m%nVx = idum(4)
+        m%nFs = idum(5)
+        m%nFt = idum(6)
+
+        call cfruin (ninp, 5, idum,
+     &    'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+        m%nCmxVx = idum(0)
+        m%nCmxFc = idum(1)
+        m%nVmxCv = idum(2)
+        m%nVmxFc = idum(3)
+        m%nCmxNv = idum(4)
+
+        call cfruin (ninp, 1, idum, 'isClassicalGrid')
+        m%isClassicalGrid = idum(0)
+        call cfruin (ninp, 3, idum, 'nx,ny,nncut')
+        m%nx = idum(0)
+        m%ny = idum(1)
+        m%nncut = idum(2)
+
+        call cfruch (ninp, 120, lblgm, 'label')
+        call cfruin (ninp, 1, idum, 'isymm')
+        isymm = idum(0)
+      else
+        call xerrab('read_b2fgmtry_header: old version detected, ' //
+     &    'not supported')
+      endif
+
+      return
+      end subroutine read_b2fgmtry_header
+
+***********************************************************************
 ***********************************************************************
 
       subroutine read_b2fgmtry (ninp, mpg, gm)

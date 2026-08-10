@@ -17,6 +17,7 @@
       use b2us_io
       use b2mod_switches
       use b2mod_xerset
+      use b2mod_b2cmfs, only : isymm
 #if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi      ! IGNORE
 #endif
@@ -139,6 +140,7 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       logical file_open
+      character*120 lblgm
 #ifdef _OPENMP
       real(kind=R8) :: cpu_s, cpu_f
 #else
@@ -216,26 +218,8 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from plasma state file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0)
-      mpg%nCg = idum(1)
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  lblgm, isymm)
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from b2fparam file
@@ -249,7 +233,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call createB2State (nCv, nFc, ns, state)
       call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
 *   ..call driver routines
-      call b2mndr_0 (ninp, nout, ns, ns0)
+      call b2mndr_0 (ninp, nout, ns, ns0, lblgm)
       call b2mndr_1 (nout, ns, 0)
       call b2mndr_2 (nout, ns)
 *   ..write plasma state
