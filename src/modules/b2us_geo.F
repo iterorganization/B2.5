@@ -457,13 +457,17 @@
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
      &           inv_dist(mpg%nVx)
-      integer :: count_up, count_down, count_eq
-      integer, allocatable :: old_face_list(:), verts(:)
+      integer :: count_up, count_down, count_eq, ndivStrVx,
+     &           ndivStr, ndivTg, tXptVx
+      integer, allocatable :: old_face_list(:), verts(:),
+     &           divStrVx(:), divStrVxind(:), tdivFc(:),
+     &           tdivFcVx1(:), tdivFcVx2(:)
       integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
+      logical, allocatable :: isPrimaryXpoint(:)
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
@@ -477,19 +481,24 @@
       call is_periodic( mpg, gm )
 
 *   ..identify cells on closed surfaces
-      if (mpg%nnreg(0).eq.1) then
-        mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
-      else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
-     .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        write (*,*) 'b2us_geo: general topology, core region 1+4n'
         mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
-      else if (mpg%nnreg(0).eq.7) then
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
       else
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
-        write (*,*) 'Warning: unknown number of regions'
-        write (*,*) 'Assuming core is region 1'
-        !call xerrab ('Unknown number of regions!')
-      end if
+        if (mpg%nnreg(0).eq.1) then
+          mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
+        else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
+     .           mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
+          mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
+        else if (mpg%nnreg(0).eq.7) then
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+        else
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+          write (*,*) 'Warning: unknown number of regions'
+          write (*,*) 'Assuming core is region 1'
+          !call xerrab ('Unknown number of regions!')
+        end if
+      endif
 
 *   ..set weights for interpolation to faces
       if (switch%fcVol_style.eq.0) then
@@ -995,11 +1004,15 @@
 *   ..determine topology and sign of psi derivative
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        write (*,*) 'b2us_geo: general topology orientation kept'
+      else
       iXpt = 0
-      if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
+      if (mpg%nnreg(0).eq.1) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       elseif (mpg%nnreg(0).eq.2) then
+        if (allocated(mpg%tgVx).and.mpg%nTgc.gt.0) then
         do i = mpg%vxFcP(mpg%tgVx(1),1),
      &         mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
           iFc = mpg%vxFc(i)
@@ -1020,7 +1033,11 @@
      &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
           end if
         end do
-      else if (mpg%nnreg(0).eq.4) then
+        else
+          write (*,*) 'b2us_geo: limiter topology without ' //
+     &      'tangency point; leaving default orientation'
+        end if
+      else if (mpg%nnreg(0).eq.4.and.mpg%nXpt.ge.1) then
         do i = mpg%vxFcP(mpg%Xpt(1),1),
      &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
           iFc = mpg%vxFc(i)
@@ -1039,9 +1056,9 @@
           end if
         end do
         iXpt = 1
-      else if (mpg%nnreg(0).eq.5) then
+      else if (mpg%nnreg(0).eq.5.and.mpg%nXpt.ge.1) then
         iXpt = 1
-      else if (mpg%nnreg(0).ge.7) then
+      else if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.1) then
         active = .false.
         do i = mpg%vxCvP(mpg%Xpt(1),1),
      &         mpg%vxCvP(mpg%Xpt(1),1) + mpg%vxCvP(mpg%Xpt(1),2) - 1
@@ -1050,7 +1067,7 @@
         end do
         if (active) then
           iXpt = 1
-        else
+        else if (mpg%nXpt.ge.2) then
           iXpt = 2
         end if
       end if
@@ -1118,11 +1135,96 @@
       else
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
+      endif
 
       if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-      if (allocated(mpg%strDiv)) then
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        write (*,*) 'b2us_geo: general topology, not reorienting ' //
+     &    'divertor face list'
+
+        allocate(isPrimaryXpoint(mpg%nVx))
+        isPrimaryXpoint = .false.
+        if (allocated(mpg%Xpt)) then
+          do k = 1, size(mpg%Xpt)
+            call xertst(mpg%Xpt(k).gt.0.and.
+     &        mpg%Xpt(k).le.mpg%nVx,
+     &        'b2us_geo: X-point vertex ID out of range')
+            isPrimaryXpoint(mpg%Xpt(k)) = mpg%isPrimaryXpt(k).eq.1
+          end do
+        end if
+
+        do i = 1, mpg%nDiv
+          ndivStr = count(mpg%strDiv.eq.i)
+          if (allocated(mpg%tgDiv)) then
+            ndivTg = count(mpg%tgDiv.eq.i)
+          else
+            ndivTg = 0
+          end if
+          ndivStrVx = ndivStr + ndivTg
+
+          call xertst(ndivStrVx.gt.0,
+     &      'b2us_geo: no strike point for divertor target')
+
+          allocate(divStrVx(ndivStrVx), divStrVxind(ndivStr))
+          divStrVx(1:ndivStr) = pack(mpg%strVx, mpg%strDiv.eq.i)
+          divStrVxind = pack((/(k, k = 1, mpg%nStr)/),
+     &                       mpg%strDiv.eq.i)
+          if (ndivTg.gt.0) then
+            divStrVx(ndivStr+1:ndivStrVx) =
+     &        pack(mpg%tgVx, mpg%tgDiv.eq.i)
+          end if
+
+          if (ndivStrVx.eq.1) then
+            mpg%ivdiv(i) = divStrVx(1)
+          else
+            match_found = .false.
+            k = 1
+            do while ((.not.match_found).and.k.le.size(divStrVxind))
+              tXptVx = mpg%strXpt(divStrVxind(k))
+              if (tXptVx.gt.0.and.tXptVx.le.mpg%nVx) then
+                if (isPrimaryXpoint(tXptVx)) then
+                  match_found = .true.
+                  mpg%ivdiv(i) = divStrVx(k)
+                end if
+              end if
+              k = k + 1
+            end do
+            if (.not.match_found) mpg%ivdiv(i) = divStrVx(1)
+          end if
+
+          tdivFc = mpg%divFc(mpg%divFcP(i,1):
+     &      mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+          tdivFcVx1 = mpg%fcVx(tdivFc,1)
+          tdivFcVx2 = mpg%fcVx(tdivFc,2)
+
+          match_found = .false.
+          k = 1
+          do while ((k.lt.mpg%divFcP(i,2)).and..not.match_found)
+            if (((tdivFcVx1(k).eq.mpg%ivdiv(i)).or.
+     &           (tdivFcVx2(k).eq.mpg%ivdiv(i))).and.
+     &          ((tdivFcVx1(k+1).eq.mpg%ivdiv(i)).or.
+     &           (tdivFcVx2(k+1).eq.mpg%ivdiv(i)))) then
+              match_found = .true.
+              mpg%ifdiv(i) = k + 1
+            end if
+            k = k + 1
+          end do
+
+          call xertst(match_found,
+     &      'b2us_geo: no target face for strike point')
+
+          deallocate(divStrVx, divStrVxind, tdivFc,
+     &               tdivFcVx1, tdivFcVx2)
+        end do
+
+        deallocate(isPrimaryXpoint)
+
+      else if (allocated(mpg%strDiv).and.mpg%nStr.gt.0.and.
+     &         mpg%nDiv.gt.0) then
+       mpg%ifdiv = 0
+       mpg%ivdiv = 0
        do i = 1, maxval(mpg%strDiv)
         match_found = .false.
         k = 1
@@ -1237,7 +1339,7 @@
             end do
           end do
         end do
-        call xertst (match_found .or. mpg%nXpt.eq.0,
+       call xertst (match_found .or. mpg%nXpt.eq.0,
      &   'No matching face found for strike point !')
        end do
       end if
@@ -1314,10 +1416,12 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: iCv, iCv1, iCv2, ic
-      integer :: iFc, iFs, iFt, iVx, i, j
+      integer :: iFc, iFs, iFt, iVx, i, j, k, l,
+     &  nFsEndpoint, nFsFaceAtVertex
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), L1, L2, LL,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
+      logical :: fsIsClosedLoop
       external ipgeti, my_out_us, xerrab
 
       call ipgeti ('b2mndr_conn_style', conn_style)
@@ -1422,13 +1526,32 @@
           gm%fsConn(iFs) = gm%fsConn(iFs) +
      &                     gm%fcHt(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)
         end do
+        nFsEndpoint = 0
+        do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+          iFc = mpg%fsFc(i)
+          do k = 1, 2
+            iVx = mpg%fcVx(iFc,k)
+            nFsFaceAtVertex = 0
+            do l = mpg%vxFcP(iVx,1),
+     &        mpg%vxFcP(iVx,1)+mpg%vxFcP(iVx,2)-1
+              if (mpg%fcFs(mpg%vxFc(l)).eq.iFs) then
+                nFsFaceAtVertex = nFsFaceAtVertex + 1
+              endif
+            enddo
+            if (nFsFaceAtVertex.eq.1) then
+              nFsEndpoint = nFsEndpoint + 1
+            endif
+          enddo
+        enddo
+        fsIsClosedLoop = mpg%fsFcP(iFs,2).gt.0 .and. nFsEndpoint.eq.0
         iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
-        if (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
+        if (fsIsClosedLoop .or.
+     &      (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
      &       (mpg%cvOnClosedSurface(iCv2).or.iCv2.gt.mpg%nCi)) .or.
      &        iFs.eq.mpg%iFssep .or.
-     &       (iFs.eq.mpg%iFssep2.and.mpg%iFssep2.gt.0)) then
+     &       (iFs.eq.mpg%iFssep2.and.mpg%iFssep2.gt.0))) then
           do j = mpg%fsVxP(iFs,1), mpg%fsVxP(iFs,1)+mpg%fsVxP(iFs,2)-1
             iVx = mpg%fsVx(j)
             gm%vxConn(iVx) = gm%fsConn(iFs)
@@ -1480,6 +1603,10 @@
       logical :: closed, end_found, all_closed
 
       mpg%periodic_bc = 0
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        write (*,*) 'b2us_geo: general topology not periodic'
+        return
+      endif
       if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.5) then
         mpg%periodic_bc = 1
       else if (mpg%nnreg(0).eq.1) then
