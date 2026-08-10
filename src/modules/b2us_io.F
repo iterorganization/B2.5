@@ -22,6 +22,7 @@
 *     Module containing basic routines for reading/writing data files
 *     in unstructured format.
 *     Note: file headers are read elsewhere
+***********************************************************************
 
       subroutine read_b2fgmtry_header(ninp, version, m, lblgm, isymm)
       implicit none
@@ -33,6 +34,15 @@
       integer :: idum(0:9)
 
       if (version.ge.'03.002.000') then
+        m%hasTopologicalData = .false.
+        m%topoID = 0
+        m%nXpt = 0
+        m%nOpt = 0
+        m%nStr = 0
+        m%nTgc = 0
+        m%nDiv = 0
+        m%nfcDiv = 0
+
         call cfruin (ninp, 7, idum, 'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
         m%nCi = idum(0)
         m%nCg = idum(1)
@@ -52,10 +62,29 @@
 
         call cfruin (ninp, 1, idum, 'isClassicalGrid')
         m%isClassicalGrid = idum(0)
-        call cfruin (ninp, 3, idum, 'nx,ny,nncut')
-        m%nx = idum(0)
-        m%ny = idum(1)
-        m%nncut = idum(2)
+        call cfruin_opt (ninp, 3, idum, 'nx,ny,nncut')
+        if (m%isClassicalGrid.eq.1) then
+          m%nx = idum(0)
+          m%ny = idum(1)
+          m%nncut = idum(2)
+        else
+          m%nx = -1
+          m%ny = -1
+          m%nncut = -1
+        endif
+
+        if (version.ge.'03.002.002') then
+          m%hasTopologicalData = .true.
+          call cfruin (ninp, 1, idum, 'topoflag')
+          m%topoID = idum(0)
+          call cfruin (ninp, 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+          m%nXpt = idum(0)
+          m%nOpt = idum(1)
+          m%nStr = idum(2)
+          m%nTgc = idum(3)
+          m%nDiv = idum(4)
+          m%nfcDiv = idum(5)
+        endif
 
         call cfruch (ninp, 120, lblgm, 'label')
         call cfruin (ninp, 1, idum, 'isymm')
@@ -68,7 +97,6 @@
       return
       end subroutine read_b2fgmtry_header
 
-***********************************************************************
 ***********************************************************************
 
       subroutine read_b2fgmtry (ninp, mpg, gm)

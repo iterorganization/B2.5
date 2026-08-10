@@ -17,8 +17,10 @@
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
-     &             nFci
+     &             nOpt, nDiv, nfcDiv, nFci
         integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
+        logical :: hasTopologicalData
+        integer :: topoID
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
@@ -77,12 +79,22 @@
         integer, allocatable :: fsVx(:)                ! list of vertices belonging to the flux surfaces
         integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
 
+        integer, allocatable :: alliFssep(:)           ! all separatrix flux surface indices
         integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
+        integer, allocatable :: Opt(:)                 ! vertex numbers for the O-points
+        integer, allocatable :: isPrimaryXpt(:)        ! primary X-point flag
+        integer, allocatable :: XptFsID(:)             ! flux surface index for each X-point
+        integer, allocatable :: XptStrP(:,:)           ! pointer for strike points per X-point
+        integer, allocatable :: XptStr(:)              ! strike points for each X-point
         integer, allocatable :: strVxP(:,:)            !(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
+        integer, allocatable :: strXpt(:)              ! X-point vertex for each strike point
         integer, allocatable :: strVx(:)               ! list of vertex numbers for the strike points
         integer, allocatable :: tgVx(:)                ! list of vertex numbers for the tangency points
+        integer, allocatable :: tgDiv(:)               ! divertor target for each tangency point
+        integer, allocatable :: tgFsID(:)              ! flux surface index for each tangency point
         integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor target on which it is located
                                                        ! The divertor targets are labelled from 1 to 4 starting travelling from West to East in the computational domain
+        integer, allocatable :: strFsID(:)             ! flux surface index for each strike point
         integer, allocatable :: divFcP(:,:)            ! For each divertor target, the list of associated divertor faces, and their number
         integer, allocatable :: divFc(:)               ! ORDERED list of faces forming the divertor targets
         real (kind=R8), allocatable :: divFcOr(:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
@@ -197,6 +209,24 @@
 #endif
       endif
 
+      if (m%hasTopologicalData) then
+        allocate(m%Xpt(m%nXpt))
+        allocate(m%Opt(m%nOpt))
+        allocate(m%strVx(m%nStr))
+        allocate(m%strVxP(m%nXpt,2))
+        allocate(m%tgVx(m%nTgc))
+        allocate(m%strDiv(m%nStr))
+        allocate(m%divFcP(m%nDiv,2))
+        allocate(m%divFc(m%nfcDiv))
+        allocate(m%isPrimaryXpt(m%nXpt))
+        allocate(m%XptFsID(m%nXpt))
+        allocate(m%strFsID(m%nStr))
+        allocate(m%tgFsID(m%nTgc))
+        allocate(m%strXpt(m%nStr))
+        allocate(m%XptStrP(m%nXpt,2))
+        allocate(m%tgDiv(m%nTgc))
+      endif
+
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
@@ -299,6 +329,24 @@
       m%IMPr = 0
       m%IMPz = 0
 
+      if (m%hasTopologicalData) then
+        m%Xpt = 0
+        m%Opt = 0
+        m%strVxP = 0
+        m%strVx = 0
+        m%tgVx = 0
+        m%strDiv = 0
+        m%divFcP = 0
+        m%divFc = 0
+        m%isPrimaryXpt = 0
+        m%XptFsID = 0
+        m%strFsID = 0
+        m%tgDiv = 0
+        m%tgFsID = 0
+        m%strXpt = 0
+        m%XptStrP = 0
+      endif
+
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
       write (*,*) '=================================='
@@ -358,11 +406,21 @@
       if (allocated(m%fsVx)) deallocate (m%fsVx)
       deallocate (m%vxFs)
 
+      if (allocated(m%alliFssep)) deallocate (m%alliFssep)
       if (allocated(m%Xpt)) deallocate (m%Xpt)
+      if (allocated(m%Opt)) deallocate (m%Opt)
+      if (allocated(m%isPrimaryXpt)) deallocate (m%isPrimaryXpt)
+      if (allocated(m%XptFsID)) deallocate (m%XptFsID)
+      if (allocated(m%XptStrP)) deallocate (m%XptStrP)
+      if (allocated(m%XptStr)) deallocate (m%XptStr)
       if (allocated(m%strVxP)) deallocate (m%strVxP)
+      if (allocated(m%strXpt)) deallocate (m%strXpt)
       if (allocated(m%strVx)) deallocate (m%strVx)
       if (allocated(m%tgVx)) deallocate (m%tgVx)
+      if (allocated(m%tgDiv)) deallocate (m%tgDiv)
+      if (allocated(m%tgFsID)) deallocate (m%tgFsID)
       if (allocated(m%strDiv)) deallocate (m%strDiv)
+      if (allocated(m%strFsID)) deallocate (m%strFsID)
       if (allocated(m%divFcP)) deallocate (m%divFcP)
       if (allocated(m%divFc)) deallocate (m%divFc)
       if (allocated(m%divFcOr)) deallocate (m%divFcOr)
@@ -535,9 +593,13 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: n2, nx
+      integer :: n2, nx, i
       type (mapping), intent (inout) :: mpg
-      external cfruin, cfrure
+      character(8)  :: idcod
+      character(32) :: id
+      external cfruin, cfrure, xerrab
+      logical streql
+      external streql
 
 #ifdef DBG
       nx_st = mpg%nx
@@ -585,6 +647,55 @@
       call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
+      if (b2fgmtry_version.ge.'03.002.002'.and.
+     &    mpg%hasTopologicalData) then
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.streql('Vx',id))) then
+          call xerrab('read_mapping: expected Xpt topology')
+        endif
+        do i = 1, mpg%nXpt
+          read(iun, *) mpg%Xpt(i), mpg%isPrimaryXpt(i),
+     &      mpg%XptFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.streql('Vx',id))) then
+          call xerrab('read_mapping: expected O-point topology')
+        endif
+        do i = 1, mpg%nOpt
+          read(iun, *) mpg%Opt(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.streql('Vx',id))) then
+          call xerrab('read_mapping: expected strike topology')
+        endif
+        do i = 1, mpg%nStr
+          read(iun, *) mpg%strVx(i), mpg%strXpt(i),
+     &      mpg%strDiv(i), mpg%strFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.streql('Vx',id))) then
+          call xerrab('read_mapping: expected tangency topology')
+        endif
+        do i = 1, mpg%nTgc
+          read(iun, *) mpg%tgVx(i), mpg%tgDiv(i),
+     &      mpg%tgFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.streql('divFcP1',id)))
+     &    then
+          call xerrab('read_mapping: expected divertor topology')
+        endif
+        do i = 1, mpg%nDiv
+          read(iun, *) mpg%divFcP(i,1), mpg%divFcP(i,2)
+        enddo
+
+        call cfruin (iun, mpg%nfcDiv, mpg%divFc, 'divFc')
+      endif
+
 #ifdef DBG
       imapCv  = mpg%imapCv
       imapFcx = mpg%imapFcx
@@ -603,7 +714,7 @@
 
       implicit none
       integer, intent(in) :: nout
-      integer :: idum(0:9), n2
+      integer :: idum(0:9), n2, i
       type (mapping), intent (in) :: mpg
       external cfwuin, cfwure
 
@@ -649,6 +760,38 @@
       call cfwuin (nout, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfwuin (nout, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
+      if (mpg%hasTopologicalData) then
+        write(nout, *) '*cf:    Vx isPrimary fsID'
+        do i = 1, mpg%nXpt
+          write(nout, *) mpg%Xpt(i), mpg%isPrimaryXpt(i),
+     &      mpg%XptFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    Vx'
+        do i = 1, mpg%nOpt
+          write(nout, *) mpg%Opt(i)
+        enddo
+
+        write(nout, *) '*cf:    Vx Xpt divID fsID'
+        do i = 1, mpg%nStr
+          write(nout, *) mpg%strVx(i), mpg%strXpt(i),
+     &      mpg%strDiv(i), mpg%strFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    Vx divID fsID'
+        do i = 1, mpg%nTgc
+          write(nout, *) mpg%tgVx(i), mpg%tgDiv(i),
+     &      mpg%tgFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    divFcP1 divFcP2'
+        do i = 1, mpg%nDiv
+          write(nout, *) mpg%divFcP(i,1), mpg%divFcP(i,2)
+        enddo
+
+        call cfwuin (nout, mpg%nfcDiv, mpg%divFc, 'divFc')
+      endif
+
       return
       end subroutine write_mapping
 
@@ -657,7 +800,7 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, j, k, l, indd
+      integer :: i, j, k, l, indd, ind
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, fscount, iactive, icount, fccount,
@@ -665,10 +808,11 @@
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:),
-     *                        regcount(:)
+     *                        regcount(:), counter(:), mapXptID(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi),
      * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
       logical :: duplicate, left_match_found, right_match_found
+      logical, allocatable :: issep(:)
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -764,7 +908,127 @@ cwdk  can be derived directly from data in that file
       m%fsVx(1:m%nFsVxmx) = indFsVx(1:m%nFsVxmx)
       deallocate(indFsVx)
 
+      if (m%hasTopologicalData) then
+        if (m%nXpt.gt.0) then
+          do i = 1, m%nXpt
+            if (m%XptFsID(i).le.0.or.
+     &          m%XptFsID(i).gt.m%nFs) then
+              call xerrab('init_mapping: X-point flux surface ID ' //
+     &          'out of range')
+            endif
+          enddo
+          allocate(issep(maxval(m%XptFsID)))
+          issep = .false.
+          do i = 1, m%nXpt
+            issep(m%XptFsID(i)) = .true.
+          enddo
+          allocate(m%alliFssep(count(issep)))
+          icount = 0
+          do i = 1, size(issep)
+            if (issep(i)) then
+              icount = icount + 1
+              m%alliFssep(icount) = i
+            endif
+          enddo
+          deallocate(issep)
+
+          allocate(mapXptID(m%nVx))
+          mapXptID = 0
+          do i = 1, m%nXpt
+            if (m%Xpt(i).le.0.or.m%Xpt(i).gt.m%nVx) then
+              call xerrab('init_mapping: X-point vertex ID ' //
+     &          'out of range')
+            endif
+            mapXptID(m%Xpt(i)) = i
+          enddo
+
+          m%XptStrP = 0
+          m%XptStrP(1,1) = 1
+          do i = 1, m%nStr
+            if (m%strXpt(i).le.0.or.
+     &          m%strXpt(i).gt.m%nVx) then
+              call xerrab('init_mapping: strike-point X-point ' //
+     &          'vertex ID out of range')
+            endif
+            j = mapXptID(m%strXpt(i))
+            if (j.le.0) then
+              call xerrab('init_mapping: strike point references ' //
+     &          'unknown X-point')
+            endif
+            m%XptStrP(j,2) = m%XptStrP(j,2) + 1
+          enddo
+          do i = 2, m%nXpt
+            m%XptStrP(i,1) = m%XptStrP(i-1,1) +
+     &        m%XptStrP(i-1,2)
+          enddo
+
+          if (allocated(m%XptStr)) deallocate(m%XptStr)
+          allocate(m%XptStr(sum(m%XptStrP(:,2))))
+          allocate(counter(m%nVx))
+          m%XptStr = 0
+          counter = 0
+          do i = 1, m%nStr
+            j = mapXptID(m%strXpt(i))
+            ind = counter(m%strXpt(i)) + m%XptStrP(j,1)
+            m%XptStr(ind) = i
+            counter(m%strXpt(i)) = counter(m%strXpt(i)) + 1
+          enddo
+
+          m%strVxP = m%XptStrP
+
+          m%iFssep = 0
+          m%iFssep2 = 0
+          if (size(m%alliFssep).eq.1) then
+            m%iFssep = m%alliFssep(1)
+          else if (size(m%alliFssep).eq.2) then
+            if (count(m%isPrimaryXpt.eq.1).eq.1) then
+              do j = 1, m%nXpt
+                if (m%isPrimaryXpt(j).eq.1) m%iFssep = m%XptFsID(j)
+              enddo
+              if (m%nXpt.eq.2) then
+                do j = 1, m%nXpt
+                  if (m%isPrimaryXpt(j).ne.1) m%iFssep2 = m%XptFsID(j)
+                enddo
+              endif
+            endif
+          endif
+
+          deallocate(counter)
+          deallocate(mapXptID)
+        endif
+
+        if (m%iFssep.eq.0.and.m%nnreg(0).eq.2) then
+          iFc = 1
+          do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
+            iCv1 = m%fcCv(iFc,1)
+            iCv2 = m%fcCv(iFc,2)
+            if (m%cvReg(iCv1).ne.m%cvReg(iCv2).and.
+     &        m%cvReg(iCv1).ne.0.and.m%cvReg(iCv2).ne.0.and.
+     &        m%fcFs(iFc).ne.0) then
+              m%iFssep = m%fcFs(iFc)
+            endif
+            if (m%iFssep.eq.0) iFc = iFc + 1
+          enddo
+          if (m%iFssep.ne.0) then
+            if (allocated(m%alliFssep)) deallocate(m%alliFssep)
+            allocate(m%alliFssep(1))
+            m%alliFssep(1) = m%iFssep
+          endif
+        endif
+
+        if (allocated(m%divFcOr)) deallocate(m%divFcOr)
+        allocate(m%divFcOr(m%nfcDiv))
+        m%divFcOr = 0.0_R8
+        if (allocated(m%ifdiv)) deallocate(m%ifdiv)
+        if (allocated(m%ivdiv)) deallocate(m%ivdiv)
+        allocate(m%ifdiv(m%nDiv))
+        allocate(m%ivdiv(m%nDiv))
+        m%ifdiv = 0
+        m%ivdiv = 0
+      endif
+
 !! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
+      if (.not.m%hasTopologicalData) then
       allocate(indXpt(m%nVx))
       indXpt = 0
       m%nXpt = 0
@@ -1003,13 +1267,15 @@ cwdk  can be derived directly from data in that file
         end if
       end if
       deallocate(indXpt)
+      endif
 
-      if (allocated(m%strDiv)) then
+      if (allocated(m%strDiv).and..not.m%hasTopologicalData) then
        indd = maxval(m%strDiv)
        if (indd.gt.0) then
-        allocate(m%ifdiv(maxval(m%strDiv)))
-        allocate(m%ivdiv(maxval(m%strDiv)))
-        allocate(m%divFcP(maxval(m%strDiv),2))
+        m%nDiv = indd
+        allocate(m%ifdiv(m%nDiv))
+        allocate(m%ivdiv(m%nDiv))
+        allocate(m%divFcP(m%nDiv,2))
         allocate(indFc(m%nFc))
         icount = 0
         m%ifdiv = 0
@@ -1026,10 +1292,11 @@ cwdk  can be derived directly from data in that file
             end if
           end do
         end do
-        allocate(m%divFc(icount))
-        allocate(m%divFcOr(icount))
+        m%nfcDiv = icount
+        allocate(m%divFc(m%nfcDiv))
+        allocate(m%divFcOr(m%nfcDiv))
         m%divFcOr = 0.0_R8
-        m%divFc(1:icount) = indFc(1:icount)
+        m%divFc(1:m%nfcDiv) = indFc(1:m%nfcDiv)
         do i = 1, indd ! now re-order them
           allocate(old_face_list(m%divFcP(i,2)))
           allocate(new_face_list(m%divFcP(i,2)))
@@ -1107,12 +1374,14 @@ cwdk  can be derived directly from data in that file
        end if
       end if
 
-      if (allocated(freg)) then
-        deallocate(freg)
-      else
-        write(*,*) 'Targetless topology detected :'
-        write(*,*) 'Strike point data not defined'
-      end if
+      if (.not.m%hasTopologicalData) then
+        if (allocated(freg)) then
+          deallocate(freg)
+        else
+          write(*,*) 'Targetless topology detected :'
+          write(*,*) 'Strike point data not defined'
+        end if
+      endif
 
       allocate(m%cvAlongBoundary(m%nCv))
       m%cvAlongBoundary = .false.
