@@ -271,6 +271,49 @@ c***  Standard set-up:
         end do
         ic = ic + 1
       end do
+      if (.not.found .and. m%hasTopologicalData) then
+          if (allocated(m%alliFssep)) then
+            print *, 'read_b2mod_user_namelist: looking for ' //
+     &        'separatrix based on topological data'
+            ic = 1
+            do while (ic.le.nomp .and..not.found)
+              do i = m%cvFcP(omp(ic),1),
+     &             m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+                iFc = m%cvFc(i)
+                if (any(m%fcFs(iFc).eq.m%alliFssep)) then
+                  icsepomp = ic + 1
+                  ifsepomp = iFc
+                  found = .true.
+                end if
+              end do
+              ic = ic + 1
+            end do
+          end if
+      end if
+      if (.not.found .and. m%hasTopologicalData) then
+        print *, 'read_b2mod_user_namelist: no OMP separatrix, ' //
+     &    'using first available flux surface'
+        ic = 1
+        do while (ic.le.nomp .and..not.found)
+          do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+            iFc = m%cvFc(i)
+            if (m%fcFs(iFc).ne.0) then
+              icsepomp = ic + 1
+              ifsepomp = iFc
+              found = .true.
+            end if
+          end do
+          ic = ic + 1
+        end do
+      end if
+      if (.not.found) then
+        call xerrab('read_b2mod_user_namelist: no OMP ' //
+     &    'separatrix position')
+      else
+        print *, 'read_b2mod_user_namelist: taking ifsepomp = ',
+     &    ifsepomp
+      end if
 ! csc get psi for each OMP cell
       psi_omp = 0.0_R8
       do ic = 1, nomp
@@ -522,6 +565,51 @@ c*** Set default values according to current species list
         end do
         ic = ic + 1
       end do
+      if (.not.found .and. m%hasTopologicalData) then
+          if (allocated(m%alliFssep)) then
+            print *, 'read_b2mod_user_namelist: looking for ' //
+     &        'separatrix based on topological data'
+            ic = 1
+            do while (ic.le.nimp .and..not.found)
+              do i = m%cvFcP(imp(ic),1),
+     &             m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+                iFc = m%cvFc(i)
+                if (any(m%fcFs(iFc).eq.m%alliFssep)) then
+                  icsepimp = ic + 1
+                  ifsepimp = iFc
+                  found = .true.
+                end if
+              end do
+              ic = ic + 1
+            end do
+          end if
+      end if
+      if (.not.found .and. m%hasTopologicalData) then
+        print *, 'read_b2mod_user_namelist: no IMP separatrix, ' //
+     &    'using first available flux surface'
+        ic = 1
+        do while (ic.le.nimp .and..not.found)
+          do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+            iFc = m%cvFc(i)
+            if (m%fcFs(iFc).ne.0) then
+              icsepimp = ic + 1
+              ifsepimp = iFc
+              found = .true.
+            end if
+          end do
+          ic = ic + 1
+        end do
+      end if
+      if (.not.found) then
+        write(*,'(a/a/a)')
+     &    'Warning: did not find separatrix location in IMP definition,',
+     &    '         check specification of RZIMP in b2.user.parameters',
+     &    '         if IMP is needed.'
+      else
+        print *, 'read_b2mod_user_namelist: taking ifsepimp = ',
+     &    ifsepimp
+      end if
 ! csc get psi for each OMP cell
       psi_imp = 0.0_R8
       do ic = 1, nimp
@@ -604,10 +692,6 @@ c*** Set default values according to current species list
           ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
         end if
       end do
-      if (.not.found) write(*,'(a/a/a)')
-     &  'Warning: did not find separatrix location in IMP definition,',
-     &  '         check specification of RZIMP in b2.user.parameters',
-     &  '         if IMP is needed.'
       if (m%isClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
