@@ -641,6 +641,14 @@ contains
 
     if (mpg%nnreg(0) == 7) then
         active = .false.
+        if (mpg%nXpt == 1) then
+            geometryId = GEOMETRY_SN
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
+                firstgmid = .false.
+            end if
+            return
+        else
         do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
                                       & mpg%vxCvP(mpg%Xpt(1),2) - 1
           iCv = mpg%vxCv(i)
@@ -677,6 +685,7 @@ contains
                 firstgmid = .false.
             end if
             return
+        end if
         end if
     end if
 
@@ -728,6 +737,7 @@ contains
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
               firstgmid = .false.
             end if
+            return
         elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
             geometryID = GEOMETRY_SN
             if (firstgmid) then
