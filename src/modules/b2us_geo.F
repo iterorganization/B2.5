@@ -1741,6 +1741,8 @@ cxpb  and the radial value to 'radial' faces.
       integer, intent(in) :: ifc, ivx
       real(kind=R8), intent (inout) :: LL
       integer fc_current, vx_current, fc_next, vx1, vx2, j
+      integer nstep, max_steps
+      logical visited_face(mpg%nFc)
       logical found_next
 
 csc   This routine follows a flux surface starting from a vertex of a face
@@ -1750,6 +1752,10 @@ csc   than previous face, then identify next vertex
       fc_current = ifc
       vx_current = ivx
       found_next = .true.
+      nstep = 0
+      max_steps = mpg%nFc + 1
+      visited_face = .false.
+      visited_face(fc_current) = .true.
       do while (found_next)
          ! we have a new face, loop over all faces connected to the current vertex
          found_next = .false.
@@ -1759,6 +1765,7 @@ csc   than previous face, then identify next vertex
            if (fc_next==fc_current) cycle  ! we ingore the current face
            ! check if face belongs to same flux tube
            if (mpg%fcFs(fc_next)==ifs) then
+             if (visited_face(fc_next)) cycle
              ! face belongs to flux tube and is not the previous face
              found_next = .true.
              LL = LL + geo%fcHt(fc_next)*geo%fcBb(fc_next,3)/
@@ -1773,10 +1780,23 @@ csc   than previous face, then identify next vertex
              endif
              ! update the current face number
              fc_current = fc_next
+             visited_face(fc_current) = .true.
            endif
            ! stop the for loop if we found the next face
            if (found_next) exit
          enddo
+         if (found_next) then
+           nstep = nstep + 1
+           if (nstep.gt.max_steps) then
+             write (*,*) 'follow_flux_surface: runaway detected'
+             write (*,*) '  ifs, ifc, ivx = ', ifs, ifc, ivx
+             write (*,*) '  fc_current, vx_current = ',
+     &         fc_current, vx_current
+             write (*,*) '  nstep, max_steps = ', nstep, max_steps
+             call flush(6)
+             call xerrab ('follow_flux_surface runaway')
+           endif
+         endif
       end do! while
 
 
