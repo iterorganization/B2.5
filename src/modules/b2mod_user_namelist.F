@@ -604,10 +604,9 @@ c*** Set default values according to current species list
         end do
       end if
       if (.not.found) then
-        write(*,'(a/a/a)')
-     &    'Warning: did not find separatrix location in IMP definition,',
-     &    '         check specification of RZIMP in b2.user.parameters',
-     &    '         if IMP is needed.'
+        write(*,'(a)') 'Warning: no IMP separatrix location'
+        write(*,'(a)') '         check RZIMP in b2.user.parameters'
+        write(*,'(a)') '         if IMP is needed.'
       else
         print *, 'read_b2mod_user_namelist: taking ifsepimp = ',
      &    ifsepimp
