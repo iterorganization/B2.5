@@ -96,7 +96,7 @@
       real (kind=R8) ::
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
      &  pzaverage, pzsum, volsum,
-     &  vbc(nCv,0:ns-1), csbc(nCv,0:ns-1)
+     &  wrk, wrks, vbc, csbc
 #ifdef WG_TODO
      1  ,volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
@@ -602,43 +602,42 @@ cwdk  now need to recompute full diamagnetic component for ud
 
       contains
 
-      subroutine csbc_is(iCv1,ib,is,cs)                               !srv 15.02.26 {
+      subroutine csbc_is(iCv1,ib,is,csbc)                            !srv 15.02.26 {
       implicit none
       integer iCv1, ib, is
-      real (kind=R8) :: cs
+      real (kind=R8) :: csbc
 
       if (mompar(is,ib,2).lt.0.5_R8) then
-        cs = sqrt(pz(iCv1)/rz(iCv1))
-        csbc(iCv1,is) = cs
+        csbc = sqrt(pz(iCv1)/rz(iCv1))
       else
-        cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
+        csbc = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
      &    (am(is)*mp))
-        csbc(iCv1,is) = cs
       endif
       return
       end subroutine csbc_is                                          !srv 15.02.26 }
 
-      subroutine vbc_is(ib,is,ibc,iCv1,iCv2,iFc,cs,wrk)               !srv 15.02.26 {
+      subroutine vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc)   !srv 15.02.26 {
       implicit none
       integer ib, is, ibc, iCv1, iCv2, iFc
-      real (kind=R8) :: cs  ! cs=csbc(iCv1,is)
-      real (kind=R8) :: wrk, vbnd, t0
+      real (kind=R8) :: csbc
+      real (kind=R8) :: vbnd, vbndm, t0
+      real (kind=R8) :: wrks, vbc
 
-      wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
-     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+      wrks = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
       vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
       if (mompar(is,ib,2).lt.0.5_R8) then
-        t0 = 2.0_R8*cs*abs(wrk)
-        vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-        vbc(iCv1,is) = cs*wrk - vbnd*sign(1.0_R8,wrk)
+        t0 = 2.0_R8*csbc*abs(wrks)
+        vbndm = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
+        vbc = csbc*wrks - vbndm*sign(1.0_R8,wrks)
       else
-        t0 = 2.0_R8*cs*abs(wrk)
-        vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-        vbc(iCv1,is) = cs*wrk - vbnd*sign(1.0_R8,wrk)
-        vbc(iCv1,is) = max(vbc(iCv1,is)*sign(1.0_R8,wrk),
-     &                     wrk*pl%ua(iCv2,is))*sign(1.0_R8,wrk)
+        t0 = 2.0_R8*csbc*abs(wrks)
+        vbndm = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
+        vbc = csbc*wrks - vbndm*sign(1.0_R8,wrks)
+        vbc = max(vbc*sign(1.0_R8,wrks),
+     &                     wrks*pl%ua(iCv2,is))*sign(1.0_R8,wrks)
       endif
       return
       end subroutine vbc_is                                           !srv 15.02.26 }
@@ -650,11 +649,8 @@ cwdk  now need to recompute full diamagnetic component for ud
 #ifdef B25_EIRENE
       integer isa, ism, ix, k
 #endif
-      real (kind=R8) :: t0, t1, t2, t3, t4, vbnd,
+      real (kind=R8) :: s1, t0, t1, t2, t3, t4, vbnd,
      .  totpar, totflux, totfluxn, totfluxi, a, cs, csb, wrk
-#ifdef WG_TODO
-      real (kind=R8) :: s1
-#endif
       real (kind=R8), external :: intvertex_s
       logical ishigh
 
@@ -1307,12 +1303,13 @@ c   (ionising_core option)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                     ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
-            call csbc_is(iCv1,ib,is,cs)                                  !srv 15.02.26
-            call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc(iCv1,is),wrk)       !srv 15.02.26
-            if (abs(wrk) < geo%Qalfmin) then
+            s1 = abs(geo%fcPbs(iFc))
+            call csbc_is(iCv1,ib,is,csbc)                                !srv 15.02.26
+            call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc)      !srv 15.02.26
+            if (abs(wrks) < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) =
-     &         -geo%fcS(iFc)*mompar(is,ib,1)*cs*geo%Qalfmax
+     &         -geo%fcS(iFc)*mompar(is,ib,1)*csbc*geo%Qalfmax
               sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.eq.0) then
@@ -1343,13 +1340,9 @@ c   (ionising_core option)
                 endif
               endif
             else
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*mompar(is,ib,1)*
-     &          max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &          sign(1.0_R8,wrk)+vbnd)
+     &          max(csbc*abs(wrks),vbc*sign(1.0_R8,wrks)+vbnd)
               if (conpar(is,ib,2).gt.0.0_R8) then
                 srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
      .           co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
@@ -3307,10 +3300,11 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
               srw%smo0(iCv1,1,is)=
      .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
             else
-              call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc(icv1,is),wrk)    !srv 15.02.26
+              call csbc_is(iCv1,ib,is,csbc)                             !srv 15.02.26
+              call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc)   !srv 15.02.26
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
-     &         mompar(is,ib,1)*vbc(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
+     &         mompar(is,ib,1)*vbc*geo%fcS(iFc)*geo%fcHz(iFc)
               srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &          abs(geo%fcPbshz(iFc))                                   !srv 07.05.09 }
@@ -6060,10 +6054,6 @@ cxpb code segment analog to b2tfhi
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          do is=0,ns-1                                               !srv 15.02.26 {
-            call csbc_is(iCv1,ib,is,cs)
-            call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc(iCv1,is),wrk)
-          enddo                                                      !srv 15.02.26 }
           cs = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
           t1 = 0.0_R8
@@ -6094,12 +6084,10 @@ cxpb code segment analog to b2tfhi
             else
               do is = 0, ns-1
                 if(is_neutral(is)) cycle
-                vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                  dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &                  mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+                call csbc_is(iCv1,ib,is,csbc)                           !srv 15.02.26
+                call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc) !srv 15.02.26
                 t0 = t0 + mompar(is,ib,1)*pl%na(iCv1,is)*geo%fcS(iFc)*
-     &               max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &               sign(1.0_R8,wrk)+vbnd)
+     &               max(csbc*abs(wrk),vbc*sign(1.0_R8,wrk)+vbnd)
                 if (conpar(is,ib,2).gt.0.0_R8)
      &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
      &              *pl%na(iCv1,is)
@@ -7596,10 +7584,6 @@ c              fchi=0.0_R8
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           iVx1 = mpg%fcVx(iFc,1)
           iVx2 = mpg%fcVx(iFc,2)
-          do is = 0, ns-1                                            !srv 15.02.26 {
-            call csbc_is(iCv1,ib,is,cs)
-            call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc(iCv1,is),wrk)
-          enddo                                                      !srv 15.02.26 }
           vte  = sqrt(pl%te(iCv1)/me)
           t0 = 0.0_R8
           wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)
@@ -7615,12 +7599,11 @@ c              fchi=0.0_R8
             s1 = geo%fcS(iFc)
             do is = 0, ns-1
               if(is_neutral(is)) cycle
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+              call csbc_is(iCv1,ib,is,csbc)                             !srv 15.02.26
+              call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc)   !srv 15.02.26
               t0 = t0 + rt%rza(iCv1,is)*mompar(is,ib,1)*s1*
-     &             max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &             sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
+     &         max(csbc*abs(wrk),vbc*sign(1.0_R8,wrk)+vbnd)*
+     &         pl%na(iCv1,is)
             enddo
             fchi = qe*t0
             fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*abs(wrk)*
