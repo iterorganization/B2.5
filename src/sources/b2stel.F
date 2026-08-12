@@ -334,7 +334,7 @@
 *       ..compute electron heat source
            t2 = t0*pl%na(iCv,is)*rt%rpi(iCv,is)*ev
            she0_rec(iCv,0) = she0_rec(iCv,0)+(1.0_R8+rf0)*t2
-           she0_rec(iCv,0) = she0_rec(iCv,3)-
+           she0_rec(iCv,3) = she0_rec(iCv,3)-
      &                         rf0*t2/(dv%ne(iCv)*pl%te(iCv))
 *       ..compute atom heat source
            if (switch%tn_style.eq.0.or.nint(zn(is)).ne.1
