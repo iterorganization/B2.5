@@ -7602,9 +7602,8 @@ c              fchi=0.0_R8
               call csbc_is(iCv1,ib,is,csbc)                             !srv 15.02.26
               call vbc_is(ib,is,ibc,iCv1,iCv2,iFc,csbc,wrks,vbnd,vbc)   !srv 15.02.26
               t0 = t0 + rt%rza(iCv1,is)*mompar(is,ib,1)*s1*
-     &             max(csbc*abs(wrk),
-     &             vbc*sign(1.0_R8,wrk)+vbnd)*
-     &             pl%na(iCv1,is)
+     &         max(csbc*abs(wrk),vbc*sign(1.0_R8,wrk)+vbnd)*
+     &         pl%na(iCv1,is)
             enddo
             fchi = qe*t0
             fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*abs(wrk)*
