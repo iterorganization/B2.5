@@ -547,10 +547,10 @@ cdjm Jan2017 Keep linearised sources for balance
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv)
       integer :: iy,iy2,i,ifail,spec,nspec,iir,iFc,iFt,iCv,iCn,
-     &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
+     &      is,nsp(1:ns+1),iloop,ncall,ndat,
      &      kind_coeff,kind_data,ic
-      real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
-     &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
+      real(kind=R8), allocatable, dimension(:) :: f,r,pr,pf,d,
+     &    pelm,felm,delm,prof
       real (kind=R8) :: poloidal_scale_factor
       logical, save :: elm_region, elm_data
 #ifdef WG_TODO
@@ -657,11 +657,16 @@ cdjm Jan2017 Keep linearised sources for balance
       do kind_coeff=1,nkind_coeff
         do spec=0,ns-1
           do kind_data=1,nkind_data
-!           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
             ndat=ndata(kind_data,kind_coeff,spec)
-            if (ndat.eq.0) goto 1
+            if (ndat.eq.0) cycle
             call xertst(ndat.le.nrr,
      .      'Increase NYD in b2mod_dimensions to match size of profile')
+            allocate(r(ndat), f(ndat), d(ndat), felm(ndat),
+     &        delm(ndat))
+            r = 0.0_R8
+            f = 0.0_R8
+            felm = 0.0_R8
+            delm = 0.0_R8
             nspec=1
             nsp(1)=spec
             do is=1,ns
@@ -679,17 +684,14 @@ cdjm Jan2017 Keep linearised sources for balance
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
-
+            allocate(pr(nomp), pf(nomp), pelm(nomp), prof(nomp))
             call calc_dist(geo,omp,nomp,icsepomp,pr)
 
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
-!           write(*,*) 'zwischen,ifail=',ifail
-            ndim = nomp ! FIXME
-            call E01BFF(ndat,r,f,d,ndim,pr,pf,ifail)
-!           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
+            call E01BFF(ndat,r,f,d,nomp,pr,pf,ifail)
             if (elm_data) then
-              call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
+              call E01BFF(ndat,r,felm,delm,nomp,pr,pelm,ifail)
             else
               pelm=pf
             endif
@@ -701,7 +703,7 @@ cdjm Jan2017 Keep linearised sources for balance
                   write (93,*) r(iy),f(iy),felm(iy)
                 enddo
 
-                do iy=1,ndim
+                do iy=1,nomp
                   write (94,*) pr(iy),pf(iy),pelm(iy)
                 enddo
               else
@@ -709,7 +711,7 @@ cdjm Jan2017 Keep linearised sources for balance
                   write (93,*) r(iy),f(iy)
                 enddo
 
-                do iy=1,ndim
+                do iy=1,nomp
                   write (94,*) pr(iy),pf(iy)
                 enddo
               endif
@@ -719,7 +721,7 @@ cdjm Jan2017 Keep linearised sources for balance
               do iFt=1,mpg%nFt
                 iy = ft_omp(iFt)
                 if (iy.eq.0) then
-                  iy2 = ndim ! The flux tube does not intercept the OMP
+                  iy2 = nomp ! The flux tube does not intercept the OMP
                              ! Assume it lies in the far SOL
                 else
                   iy2=iy
@@ -753,9 +755,9 @@ cdjm Jan2017 Keep linearised sources for balance
      1             (ldiv.and.no_div))) then
 
                     if (elm_region) then
-                      prof(1:ndim)=pelm(1:ndim)
+                      prof(1:nomp)=pelm(1:nomp)
                     else
-                      prof(1:ndim)=pf(1:ndim)
+                      prof(1:nomp)=pf(1:nomp)
                     endif
 
                     if (kind_coeff.eq.1) then
@@ -816,7 +818,7 @@ cdjm Jan2017 Keep linearised sources for balance
                 if ((iir.eq.1).or.(iir.eq.5)) then ! core boundary
                   iy2 = 1
                 elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
-                  iy2 = ndim
+                  iy2 = nomp
                 else
                   cycle
                 endif
@@ -845,9 +847,9 @@ cdjm Jan2017 Keep linearised sources for balance
      1            (ldiv.and.no_div))) then
 
                   if (elm_region) then
-                    prof(1:ndim)=pelm(1:ndim)
+                    prof(1:nomp)=pelm(1:nomp)
                   else
-                    prof(1:ndim)=pf(1:ndim)
+                    prof(1:nomp)=pf(1:nomp)
                   endif
 
                   if (kind_coeff.eq.1) then
@@ -905,7 +907,7 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) then
                 write(hlp_frm,'(a,i3,a)')
      .           '(a,1x,a,',nspec,'(1x,i3),3f14.7)'
-                do iy=1,ndim
+                do iy=1,nomp
                   if (kind_coeff.eq.1)
      >              write (*,hlp_frm) 'transport=Dna','spec=',
      &              (nsp(i),i=1,nspec),pr(iy),pf(iy),pelm(iy)
@@ -937,7 +939,7 @@ cdjm Jan2017 Keep linearised sources for balance
               else
                 write(hlp_frm,'(a,i3,a)')
      .           '(a,1x,a,',nspec,'(1x,i3),2f14.7)'
-                do iy=1,ndim
+                do iy=1,nomp
                   if (kind_coeff.eq.1)
      >              write (*,hlp_frm) 'transport=Dna','spec=',
      &              (nsp(i),i=1,nspec),pr(iy),pf(iy)
@@ -969,9 +971,8 @@ cdjm Jan2017 Keep linearised sources for balance
               endif
             endif
 
-!           deallocate(f,r,pr,pf,felm,pelm)
+            deallocate(f, r, pr, pf, felm, pelm, delm, prof, d)
             iloop=iloop+1
-    1       continue
           enddo !kind_data
         enddo !spec=0,ns-1
       enddo !kind_coeff
