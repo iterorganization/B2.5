@@ -862,9 +862,19 @@ cc particle fluxes
 
 cc momentum update
         if (solvemo_mol) then
+          if (switch%b2tfmol_3D_style0.eq.1) then !! TEMP !! while testing perpendicular momentum equations
           call b2npmo_mol (nCv, nFc, nVx,
      &     switch, geo, mpg, ncall_b2news_, rxf1, dtim,
-     &     st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
+     &     st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl) 
+          endif
+          if (switch%b2tfmol_3D_mom.ne.0) then 
+            call b2npmo_mol_perp (nCv, nFc, nVx,
+     &      switch, geo, mpg, ncall_b2news_, rxf1, dtim,
+     &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
+          else
+            st%dv%resmo_mol_rad = 0.0_R8 
+            st%dv%resmo_mol_dia = 0.0_R8
+          endif
         endif
 
 cc re-evaluate particle fluxes

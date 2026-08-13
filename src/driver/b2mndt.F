@@ -311,7 +311,7 @@ ctmp.dpc
             call createB2RatesWork_mol(nCv,1,st%rtw)
           endif
           call b2spfm (nCv, 1, st%pl%te, st%pl%ti, st%dv%ne, 
-     .                 st%pl%ua(:,1), st%rt, st%dv, switch) !! TODO generalize index 
+     .                 st%pl%ua(:,1), st%rt, st%dv, switch, geo) !! TODO generalize index 
         endif
 ctmp.dpc
 *    ..intermediate iteration

@@ -6,6 +6,7 @@
       use b2mod_constants
       use b2us_plasma
       use b2mod_subsys
+      use b2us_geo
       implicit none
 
       integer, save :: ns_mol
@@ -32,15 +33,18 @@
       contains
 
 
-      subroutine init_molecules_background_ext(nCv,nms,read_mol_bg)
+      subroutine init_molecules_background_ext(nCv,nms,read_mol_bg,geo)
+      use b2us_geo
       implicit none
 
 c input variables
       integer, intent(in) :: nCv, nms, read_mol_bg 
+      type (geometry), intent (in) :: geo
       !! nms = number of moleuclar species read from b2.neutrals
       !! read_mol_bg = set initial state from mol_bg file (1), or start from flat state (0)
 c local variables
       integer :: io, iun, idum(0:1), iex
+      real (kind=R8) :: pit(nCv), pit2(nCv)
       character :: check*10
 #ifdef LEGACYCOMP
       integer newunit
@@ -93,7 +97,11 @@ c local variables
           call cfrure (iun, idum(0)*idum(1), t_moli, 'tmi_ext')
           call cfrure (iun, idum(0)*idum(1), u_pol_mol, 'uu_ext')
           call cfrure (iun, idum(0)*idum(1), u_rad_mol, 'vv_ext')
-          write (*,*) ' external molecule background read succesfully '
+          write (*,*) ' external molecule background read succesfully ' 
+          pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3)
+          pit2 = abs(geo%cvBb(:,2))/geo%cvBb(:,3)
+          u_dia_mol(:,0) = (u_pol_mol(:,0)-u_mol(:,0)*pit)/pit2
+
         else
           call xerrab('NO FILE mol_bg FOUND')
         end if
@@ -161,6 +169,15 @@ c local variables
         u_mol(iCv,0) =sign(
      &                  min(abs(u_mol(iCv,0)),um_max),
      &                          u_mol(iCv,0))
+        u_dia_mol(iCv,0) =sign(
+     &                  min(abs(u_dia_mol(iCv,0)),um_max),
+     &                          u_dia_mol(iCv,0))
+        u_rad_mol(iCv,0) =sign(
+     &                  min(abs(u_rad_mol(iCv,0)),um_max),
+     &                          u_rad_mol(iCv,0))
+        u_pol_mol(iCv,0) =sign(
+     &                  min(abs(u_pol_mol(iCv,0)),um_max),
+     &                          u_pol_mol(iCv,0))
       enddo
 
       end subroutine set_limits_mol_state
@@ -178,6 +195,11 @@ c to standard output
       call my_out_us(70,nCv,0,n_mol(:,0),'n_mol_final')
       call my_out_us(70,nCv,0,u_mol(:,0),'u_mol_final')
       call my_out_us(70,nCv,0,t_mol(:,0),'t_mol_final')
+      call my_out_us(70,nCv,0,u_dia_mol(:,0),'u_dia_mol_final')
+      call my_out_us(70,nCv,0,u_rad_mol(:,0),'u_rad_mol_final')
+      call my_out_us(70,nCv,0,u_pol_mol(:,0),'u_pol_mol_final')
+      call my_out_us(70,nCv,0,u_tor_mol(:,0),'u_tor_mol_final')
+
 
 c separate file to allow continuation
       idum(0) = nCv

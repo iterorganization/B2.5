@@ -37,7 +37,7 @@
      *  NUEOUT, FS, FFAC, DFS, S2
 #endif
       use b2mod_fluid_molecules
-     & , only : am_d2, n_mol, u_mol, t_mol
+     & , only : am_d2, n_mol, u_mol, t_mol, u_rad_mol, u_dia_mol
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -8970,8 +8970,8 @@ cwdk    Todo: corrections for BCCON.ne.14
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             iVx1 = mpg%fcVx(iFc,1)
             iVx2 = mpg%fcVx(iFc,2)
-            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
-            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,u_mol(:,0))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,u_mol(:,0))
             sr_mol%sm_mol(iCv1,0)=
      .         VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (mompar_mol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
@@ -8998,10 +8998,10 @@ cwdk    Todo: corrections for BCCON.ne.14
             t0 = ENEPAR_MOL(IB,1)                 !! wall temperature
             t0 = sqrt(2.0_R8*t0*ev/(pi*am_d2*mp)) !! normal velocity of emitted molecules
             !! FM_TODO: sign?? vn must alwl
-            t0 = -t0*pit(iCv1)*geo%fcQalf(iFc,0)*    !! projection normal -> parallel
+            t1 = -t0*pit(iCv1)*geo%fcQalf(iFc,0)*    !! projection normal -> parallel
      .            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
             sr_mol%sm_mol(iCv1,0)=
-     .       VBIG*NE00*am_d2*t0*geo%fcS(iFc)*
+     .       VBIG*NE00*am_d2*t1*geo%fcS(iFc)*
      .       geo%fcHz(iFc)
             sr_mol%sm_mol(iCv1,1)=
      .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
@@ -9010,6 +9010,172 @@ cwdk    Todo: corrections for BCCON.ne.14
       case default
         write(*,*) BCMOM_MOL(IB)
         call xerrab ('Nothing implemented yet for BCMOM_MOL')
+
+
+      end select 
+
+
+* -- BOUNDARY CONDITIONS FOR DIAMAGNETC MOMENTUM EQUATION MOLECULES -- 
+      select case (BCMOM_MOL_DIA(IB))
+
+      case (0)
+        continue
+
+* -- BCMOM_MOL_DIA=1 -- PRESCRIBE THE VALUE OF THE DIAMAGNETIC VELOCITY
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_DIA =  1 : specified diamagnetic velocity ',
+     .      MOMPAR_MOL_DIA(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          sr_mol%sm_mol_dia(iCv1,0)=
+     .       VBIG*NE00*am_d2*mompar_mol_dia(ib,1)*geo%fcS(iFc)
+          sr_mol%sm_mol_dia(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
+* -- BCMOM_MOL_DIA=2 -- PRESCRIBE THE GRADIENT OF THE DIAMAGNETIC VELOCITY
+
+        case (2)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM_MOL_DIA =  2 : diamagnetic velocity gradient ',
+     .       MOMPAR_MOL_DIA(IB,1),' on ',
+     .       BCCHAR(IB),boundary_location(ib)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,u_dia_mol(:,0))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,u_dia_mol(:,0))
+            sr_mol%sm_mol_dia(iCv1,0)=
+     .        VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*
+     .        (mompar_mol_dia(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + u_dia_mol(iCv2,0))
+            sr_mol%sm_mol_dia(iCv1,1)=
+     .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)
+          enddo
+
+* -- BCMOM_MOL_DIA=3 -- PRESCRIBE THE VALUE OF THE DIAMAGNETIC VELOCITY BASED ON THE NORMAL VELOCITY CONSISTENT WITH THE THERMAL RELEASE
+
+        case (3)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_DIA = 3 : specified parallel velocity according ',
+     .      ' to thermal release '
+            call xertst(BCENE_MOL(IB).eq.1,
+     .     'BCMOM_MOL_DIA = 3 requires BCENE_MOL = 1')
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            t0 = ENEPAR_MOL(IB,1)                 !! wall temperature
+            t0 = sqrt(2.0_R8*t0*ev/(pi*am_d2*mp)) !! normal velocity of emitted molecules
+            !! FM_TODO: sign?? vn must alwl
+            t1 = -t0*pit2(iCv1)*geo%fcQalf(iFc,0)*    !! projection normal -> diamagnetic
+     .            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            sr_mol%sm_mol_dia(iCv1,0)=
+     .       VBIG*NE00*am_d2*t1*geo%fcS(iFc)*
+     .       geo%fcHz(iFc)
+            sr_mol%sm_mol_dia(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
+      case default
+        write(*,*) BCMOM_MOL_DIA(IB)
+        call xerrab ('Nothing implemented yet for BCMOM_MOL_DIA')
+
+
+      end select 
+
+
+* -- BOUNDARY CONDITIONS FOR RADIAL MOMENTUM EQUATION MOLECULES -- 
+      select case (BCMOM_MOL_RAD(IB))
+
+      case (0)
+        continue
+
+* -- BCMOM_MOL_RAD=1 -- PRESCRIBE THE VALUE OF THE RADIAL VELOCITY
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_RAD =  1 : specified radial velocity ',
+     .      MOMPAR_MOL_RAD(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          sr_mol%sm_mol_rad(iCv1,0)=
+     .       VBIG*NE00*am_d2*mompar_mol_rad(ib,1)*geo%fcS(iFc)
+          sr_mol%sm_mol_rad(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
+* -- BCMOM_MOL_RAD=2 -- PRESCRIBE THE GRADIENT OF THE RADIAL VELOCITY
+        case (2)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM_MOL_RAD =  2 : radial velocity gradient ',
+     .       MOMPAR_MOL_RAD(IB,1),' on ',
+     .       BCCHAR(IB),boundary_location(ib)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,u_rad_mol(:,0))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,u_rad_mol(:,0))
+            sr_mol%sm_mol_rad(iCv1,0)=
+     .        VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*
+     .        (mompar_mol_rad(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + u_rad_mol(iCv2,0))
+            sr_mol%sm_mol_rad(iCv1,1)=
+     .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)
+          enddo
+
+* -- BCMOM_MOL_RAD=3 -- PRESCRIBE THE VALUE OF THE RADIAL VELOCITY BASED ON THE NORMAL VELOCITY CONSISTENT WITH THE THERMAL RELEASE
+
+        case (3)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_RAD = 3 : specified radial velocity according ',
+     .      ' to thermal release '
+            call xertst(BCENE_MOL(IB).eq.1,
+     .     'BCMOM_MOL_RAD = 3 requires BCENE_MOL = 1')
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            t0 = ENEPAR_MOL(IB,1)                 !! wall temperature
+            t0 = sqrt(2.0_R8*t0*ev/(pi*am_d2*mp)) !! normal velocity of emitted molecules
+            !! FM_TODO: sign?? vn must alwl
+            t1 = -t0*pit2(iCv1)*geo%fcQalf(iFc,1)*    !! projection normal -> radial
+     .            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            sr_mol%sm_mol_rad(iCv1,0)=
+     .       VBIG*NE00*am_d2*t1*geo%fcS(iFc)*
+     .       geo%fcHz(iFc)
+            sr_mol%sm_mol_rad(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
+      case default
+        write(*,*) BCMOM_MOL_RAD(IB)
+        call xerrab ('Nothing implemented yet for BCMOM_MOL_RAD')
 
 
       end select 
@@ -9182,6 +9348,16 @@ cwdk    Todo: corrections for BCCON.ne.14
 
       return
       end function pit
+
+        function pit2(iCv)
+        implicit none
+        integer, intent(in) :: iCv
+        real (kind=R8) :: pit2
+  
+        pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
+  
+        return
+        end function pit2
 
 *-----------------------------------------------------------------------
 *.specification

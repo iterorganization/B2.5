@@ -116,12 +116,16 @@
 
         ! For fluid molecules (to be rearranged later on, and species to be generalized)
         real(R8), allocatable :: fn_mol(:,:), fm_mol(:,:), fh_mol(:,:),  !! fluxes
-     .                           fn_mol_fcor(:,:)
+     .              fn_mol_fcor(:,:), fm_mol_rad(:,:), fm_mol_dia(:,:)
         real(R8), allocatable :: dndt_mol(:), dmdt_mol(:), dhdt_mol(:)   !! time derivatives
         real(R8), allocatable :: resco_mol(:), resmo_mol(:), resh_mol(:) !! residuals
         real(R8), allocatable :: flo_mol(:,:), con_mol(:,:,:)            !! coefficients for linearization (continuity)
         real(R8), allocatable :: floh_mol(:,:), conh_mol(:,:,:)          !! coefficients for linearization (heat) (similar to coni, cone etc)
         real(R8), allocatable :: coru_mol(:), corp_mol(:), cort_mol(:)   !! correction steps   
+        real(R8), allocatable :: coru_mol_rad(:), coru_mol_dia(:)
+        real(R8), allocatable :: resmo_mol_rad(:), resmo_mol_dia(:)
+
+
 
       end type B2Derivatives
 
@@ -218,7 +222,8 @@
 
       type B2SourceMol
         real(R8), dimension(:,:), allocatable :: sn_mol, sm_mol, sh_mol,
-     .            sn_dt_mol, sm_dt_mol, sh_dt_mol
+     .            sn_dt_mol, sm_dt_mol, sh_dt_mol,
+     .            sm_mol_rad, sm_mol_dia, sm_dt_mol_rad, sm_dt_mol_dia
       end type B2SourceMol
 
       type B2SourceEir
@@ -336,7 +341,8 @@
      .                            reshereg(:), reshireg(:)
 
         ! fluid molecules
-        real (R8) :: aresco_mol, aresmo_mol, aresh_mol
+        real (R8) :: aresco_mol, aresmo_mol, aresh_mol,
+     .               aresmo_mol_rad, aresmo_mol_dia
       end type B2Diagnostic
 
       type B2Update
@@ -1520,34 +1526,46 @@
       ! molecules
       allocate( dv % fn_mol( nFc,0:1) )
       allocate( dv % fm_mol( nFc,0:1) )
+      allocate( dv % fm_mol_rad( nFc,0:1) )
+      allocate( dv % fm_mol_dia( nFc,0:1) )
       allocate( dv % fh_mol( nFc,0:1) )
       allocate( dv % dndt_mol( nCv) )
       allocate( dv % dmdt_mol( nCv) )
       allocate( dv % dhdt_mol( nCv) )
       allocate( dv % resco_mol( nCv) )
       allocate( dv % resmo_mol( nCv) )
+      allocate( dv % resmo_mol_rad( nCv) )
+      allocate( dv % resmo_mol_dia( nCv) )
       allocate( dv % resh_mol( nCv) )
       allocate( dv % fn_mol_fcor( nFc,0:1) )
       allocate( dv % flo_mol (nFc, 0:1) )
       allocate( dv % con_mol (nFc, 0:1, 0:4) )
       allocate( dv % coru_mol( nCv ) )
+      allocate( dv % coru_mol_rad( nCv ) )
+      allocate( dv % coru_mol_dia( nCv ) )
       allocate( dv % corp_mol( nCv ) )
       allocate( dv % cort_mol( nCv ) )
       allocate( dv % floh_mol (nFc, 0:1) )
       allocate( dv % conh_mol (nFc, 0:1, 0:2) )
       dv % fn_mol = 0.0_R8
       dv % fm_mol = 0.0_R8
+      dv % fm_mol_rad = 0.0_R8
+      dv % fm_mol_dia = 0.0_R8
       dv % fh_mol = 0.0_R8
       dv % dndt_mol = 0.0_R8
       dv % dmdt_mol = 0.0_R8
       dv % dhdt_mol = 0.0_R8
       dv % resco_mol = 0.0_R8
       dv % resmo_mol = 0.0_R8
+      dv % resmo_mol_rad = 0.0_R8
+      dv % resmo_mol_dia = 0.0_R8
       dv % resh_mol = 0.0_R8
       dv % fn_mol_fcor = 0.0_R8
       dv % flo_mol = 0.0_R8
       dv % con_mol = 0.0_R8
       dv % coru_mol = 0.0_R8
+      dv % coru_mol_rad = 0.0_R8
+      dv % coru_mol_dia = 0.0_R8
       dv % corp_mol = 0.0_R8
       dv % cort_mol = 0.0_R8
       dv % floh_mol = 0.0_R8
@@ -1720,17 +1738,23 @@
 ! Molecules
       deallocate( dv % fn_mol )
       deallocate( dv % fm_mol )
+      deallocate( dv % fm_mol_rad )
+      deallocate( dv % fm_mol_dia )
       deallocate( dv % fh_mol )
       deallocate( dv % dndt_mol )
       deallocate( dv % dmdt_mol )
       deallocate( dv % dhdt_mol )
       deallocate( dv % resco_mol )
       deallocate( dv % resmo_mol )
+      deallocate( dv % resmo_mol_rad )
+      deallocate( dv % resmo_mol_dia )
       deallocate( dv % resh_mol )
       deallocate( dv % fn_mol_fcor )
       deallocate( dv % flo_mol )
       deallocate( dv % con_mol )
       deallocate( dv % coru_mol )
+      deallocate( dv % coru_mol_rad )
+      deallocate( dv % coru_mol_dia )
       deallocate( dv % corp_mol )
       deallocate( dv % cort_mol )
       deallocate( dv % floh_mol )
@@ -2247,6 +2271,11 @@
             allocate( sr_mol % sn_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
             allocate( sr_mol % sm_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
             allocate( sr_mol % sh_dt_mol( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_mol_rad( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_mol_dia( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_dt_mol_rad( nCv, 0:1 ), SOURCE=0._R8 )
+            allocate( sr_mol % sm_dt_mol_dia( nCv, 0:1 ), SOURCE=0._R8 )
+
 #else
             allocate( sr_mol % sn_mol( nCv, 0:1 ) )
             allocate( sr_mol % sm_mol( nCv, 0:1 ) )
@@ -2254,13 +2283,22 @@
             allocate( sr_mol % sn_dt_mol( nCv, 0:1 ) )
             allocate( sr_mol % sm_dt_mol( nCv, 0:1 ) )
             allocate( sr_mol % sh_dt_mol( nCv, 0:1 ) )
-      
+            allocate( sr_mol % sm_mol_rad( nCv, 0:1 ) )
+            allocate( sr_mol % sm_mol_dia( nCv, 0:1 ) )
+            allocate( sr_mol % sm_dt_mol_rad( nCv, 0:1 ) )
+            allocate( sr_mol % sm_dt_mol_dia( nCv, 0:1 ) )
+
             sr_mol % sn_mol = 0._R8
             sr_mol % sm_mol = 0._R8
             sr_mol % sh_mol = 0._R8
             sr_mol % sn_dt_mol = 0._R8
             sr_mol % sm_dt_mol = 0._R8
             sr_mol % sh_dt_mol = 0._R8
+            sr_mol % sm_mol_rad = 0._R8
+            sr_mol % sm_mol_dia = 0._R8
+            sr_mol % sm_dt_mol_rad = 0._R8
+            sr_mol % sm_dt_mol_dia = 0._R8
+
 #endif
       
       return
@@ -2277,6 +2315,10 @@
       deallocate( sr_mol % sn_dt_mol )
       deallocate( sr_mol % sm_dt_mol )
       deallocate( sr_mol % sh_dt_mol )
+      deallocate( sr_mol % sm_mol_rad )
+      deallocate( sr_mol % sm_mol_dia )
+      deallocate( sr_mol % sm_dt_mol_rad )
+      deallocate( sr_mol % sm_dt_mol_dia )
 
       return
       end subroutine destroyB2SourceMol

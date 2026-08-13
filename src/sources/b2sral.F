@@ -250,11 +250,13 @@
       if (switch%fluid_molecules.ne.0) then
         if (background_was_read.eq.0) then
           call init_molecules_background_ext(nCv,nms_fl,
-     &          switch%read_molecules_ext)
+     &          switch%read_molecules_ext,geo)
         endif
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sn_mol, 1) !! TODO where to place best?
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol, 1)
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sh_mol, 1)
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_rad, 1)
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_dia, 1)
       endif
 
 * ..compute source coefficients

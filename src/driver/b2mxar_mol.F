@@ -36,7 +36,7 @@
 *   ..local variables
       integer iCv
       real (kind=R8) ::
-     *  navi, movi, prvm, t0, t1
+     *  navi, movi, prvm, t0, t1, t1_rad, t1_dia
 *   ..procedures
       intrinsic sqrt, abs
       external xertst
@@ -60,17 +60,21 @@
           navi = navi+geo%cvVol(iCv)*n_mol(iCv,0)
           movi = movi+geo%cvVol(iCv)*
      &      n_mol(iCv,0)*sqrt(t_mol(iCv,0)*am_d2*mp)
-
       enddo
       t0 = 0.0_R8
       t1 = 0.0_R8
+      t1_rad = 0.0_R8
+      t1_dia = 0.0_R8
       do iCv = 1, mpg%nCi
        t0 = t0+abs(dv%resco_mol(iCv))
        t1 = t1+abs(dv%resmo_mol(iCv))
+       t1_rad = t1_rad+abs(dv%resmo_mol_rad(iCv))
+       t1_dia = t1_dia+abs(dv%resmo_mol_dia(iCv))
       enddo
       diag%aresco_mol = t0/navi
       diag%aresmo_mol = t1/movi
-
+      diag%aresmo_mol_rad = t1_rad/movi
+      diag%aresmo_mol_dia = t1_dia/movi
 
 *   ..compute prvm
       prvm = 0.0_R8

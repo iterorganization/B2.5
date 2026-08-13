@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2spfm (nCv, nms, te, ti, ne, ua, rt, dv, switch)
+      subroutine b2spfm (nCv, nms, te, ti, ne, ua, rt, dv, switch, geo)
       use b2mod_types
       use b2mod_b2cmrc_mol
       use b2us_plasma
@@ -10,10 +10,12 @@
       use b2mod_subsys
       use b2mod_fluid_molecules
       use b2mod_switches
+      use b2us_geo
       implicit none
 *   ..input arguments (unchanged on exit)
       type (B2Derivatives), intent (inout) :: dv
       type (switches), intent (inout) :: switch
+      type (geometry), intent (in) :: geo
       integer nCv, nms
       real (kind=R8) ::
      *  te(nCv), ne(nCv), ti(nCv), ua(nCv)
@@ -80,7 +82,7 @@
 
       if (background_was_read.eq.0) then
         call init_molecules_background_ext(nCv,nms,
-     &            switch%read_molecules_ext)
+     &            switch%read_molecules_ext,geo)
       endif
 
 * ..compute rate coefficients
