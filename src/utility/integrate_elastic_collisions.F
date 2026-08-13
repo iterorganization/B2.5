@@ -49,17 +49,18 @@
 
 *   ..local variables
       real (kind = R8) ::P(1:9), Tt, Tb, dV_coll,
-     .                   VXN, VYN, VZN, ZRG, VXI, VYI, VZI,
-     .                   VXDR, VYDR, VZDR,
-     .                   VXNp, VYNp, VZNp, VXIp, VYIp, VZIp, !! post-collisional velocities
-     .                   delta_mom_x, delta_mom_x_sum, 
-     .                   delta_E, delta_E_sum, AMU, CVEL2A,
-     .                   FG1, FG2, FG3, FCRG, cou, poly(1:9),
-     .                   rc1min, rc1max, rc2min, rc2max, vth, 
-     .                   ADDT, ADDTL, TII, CVELI2, TMASS,
-     .                   PVELQ, SIGVEL, EEFEL, RCMIN, RCMAX, ELB,
-     .                   EMINL, FP(1:6), b2_sngl_poly, CVELAA, mr,
-     .                   rate_mom0, rate_E0, denom_E
+     .     VXN, VYN, VZN, ZRG, VXI, VYI, VZI, VXDR, VYDR, VZDR,
+     .     VXNp, VYNp, VZNp, VXIp, VYIp, VZIp, !! post-collisional velocities
+     .     delta_mom_x, delta_mom_x_sum, delta_E, delta_E_sum,
+     .     AMU, CVEL2A, FG1, FG2, FG3, FCRG, cou, poly(1:9),
+     .     rc1min, rc1max, rc2min, rc2max, vth, 
+     .     ADDT, ADDTL, TII, CVELI2, TMASS,
+     .     PVELQ, SIGVEL, EEFEL, RCMIN, RCMAX, ELB, EMINL, FP(1:6),
+     .     b2_sngl_poly, CVELAA, mr,  rate_mom0, rate_E0, denom_E,
+     .     delta_E_out(0:nt,0:ntr,-1:n_mcoll), dE, fric_tot, ratio, 
+     .     delta_mom_x_out(0:nt,0:ntr,0:n_mcoll), dE_tot, dE_T,
+     .     ratio_out(0:nt,0:ntr,0:n_mcoll), wrk, rel_err, fric,
+     .     rel_err_out(0:nt,0:ntr,0:n_mcoll), dE_num, dE_reconstr
       integer :: i_n, i, j, k, neg_rate_cnt_m, neg_rate_cnt_E, N_mult,
      .           N_final
 
@@ -95,6 +96,8 @@ cc private variables
 !$omp& private(VXN, VYN, VZN, VXI, VYI, VZI)
 !$omp& private(VXNp, VYNp, VZNp, VXIp, VYIp, VZIp)
 !$omp& private(EEFEL, ELB, SIGVEL, PVELQ, cou, poly, rate_mom0, rate_E0)
+!$omp& private(delta_E_out, delta_mom_x_out)
+
 #endif
 
       rate_mom = 0.0_R8
@@ -141,6 +144,7 @@ cc FIRST DO ONLY MOMENTUM: 3D table
               dV_coll = 0.0_R8           
               N_mult = 10                        !! take 10x more particles for energy
             else
+              delta_E_sum = 0.0_R8    
               delta_mom_x_sum = 0.0_R8       
               dV_coll = rt_mcoll(k)*vth          !! velocity difference in the direction of the momentum transfer [m/s]
               N_mult = 1
@@ -195,12 +199,17 @@ cc calculate contributions with Monte Carlo sampling
                 !! calculate momentum transferred
                 delta_mom_x = mt*(VXN-VXNp)*SIGVEL/100.0_R8 !! x = direction of interest + convert back to m/s
                 delta_mom_x_sum = delta_mom_x_sum + delta_mom_x
+                !! calculate energy transferred
+                delta_E = 0.5_R8*mt*( (VXN**2+VYN**2+VZN**2)-
+     .                (VXNp**2+VYNp**2+VZNp**2))*SIGVEL/1.0e4_R8
+                delta_E_sum = delta_E_sum + delta_E
               endif
             enddo !! end Monte Carlo loop
 cc compute final data entries
             if (k.eq. -1) then
               !! energy
               delta_E = delta_E_sum / N_final          !! average over Monte Carlo samples
+              delta_E_out(i,j,k) = delta_E
               rate_E0 =delta_E/denom_E
               if (rate_E0.gt.0) then
                 rate_E(i,j) = rate_E0                  !! save result
@@ -213,6 +222,7 @@ cc compute final data entries
             else
               !! momentum
               delta_mom_x = delta_mom_x_sum / N_final  !! average over Monte Carlo samples
+              delta_mom_x_out(i,j,k) = delta_mom_x
               rate_mom0 = delta_mom_x/mr/dV_coll
               if (rate_mom0.gt.0) then
                 rate_mom(i,j,k) = rate_mom0             !! save result
@@ -222,6 +232,8 @@ cc compute final data entries
                 rate_mom(i,j,k) = 1.0e-20_R8  
                 neg_rate_cnt_m = neg_rate_cnt_m + 1
               endif
+              delta_E = delta_E_sum / N_final          !! average over Monte Carlo samples
+              delta_E_out(i,j,k) = delta_E
             endif
 cc end loops over table dimensions   
           enddo 
@@ -239,6 +251,51 @@ cc end loops over table dimensions
       write(*,*) 'negative E rate obtained for'
       write(*,*) neg_rate_cnt_E, 'out of'
       write(*,*) (nt+1)*(ntr+1), 'entries'
+
+!! put both in single loop, document everything
+      do i = 0, nt
+        Tb = rtt(i)                          !! Background temperature (ion) [ev]
+        vth = sqrt(2.0_R8*Tb*ev/(mp*2.0_R8))   !! Thermal velocity TODO generalize species, mass   [m/s]
+        do j = 0, ntr
+          Tt = Tb*rttr(j)                        !! 'Target' temperature (neutral molecule) [ev]
+          do k = 0, n_mcoll                     !! k = -1 -> energy term, k = 0:n_mcoll -> momentum
+            write(*,*) 'i, j, k', i, j, k
+            dV_coll = rt_mcoll(k)*vth          !! velocity difference in the direction of the momentum transfer [m/s]
+            dE_tot = -delta_E_out(i,j,k)        !! total energy gain molecules
+            write(*,*) 'dE_tot', dE_tot
+            dE_T = -delta_E_out(i,j,-1)          !! energy gain molecules without bulk velocity
+            write(*,*) 'dE_T', dE_T
+            wrk = -dV_coll*delta_mom_x_out(i,j,k) !! drag work on molecules
+            write(*,*) 'wrk', wrk 
+            dE = dE_tot-dE_T-wrk
+            write(*,*) 'diff dE', dE
+            fric_tot = abs(wrk)
+            write(*,*) 'fric_tot', fric_tot 
+            ratio = dE/fric_tot 
+            write(*,*) 'ratio', ratio
+            ratio_out(i,j,k) = ratio
+            dE_reconstr = dE_T + wrk + fric_tot/3.0_R8
+            write(*,*) 'dE reconstr', dE_reconstr
+            fric = wrk + fric_tot/3.0_R8
+            rel_err = abs(dE_tot-dE_reconstr)/
+     .       max(max(abs(dE_tot),abs(fric)),
+     .           max(abs(dE_reconstr),abs(dE_T))) 
+            rel_err_out(i,j,k) = rel_err 
+            write(*,*) 'rel error', rel_err
+          enddo
+        enddo
+      enddo
+
+
+      call my_out_us(70,(nt+1)*(ntr+1)*(n_mcoll+1),0,delta_mom_x_out,
+     .                                            'delta_mom_x_out')
+      call my_out_us(70,(nt+1)*(ntr+1)*(n_mcoll+2),0,delta_E_out,
+     .                                            'delta_E_out')
+      call my_out_us(70,(nt+1)*(ntr+1)*(n_mcoll+1),0,ratio_out,
+     .                                            'ratio_out')
+      call my_out_us(70,(nt+1)*(ntr+1)*(n_mcoll+1),0,rel_err_out,
+     .                                            'rel_err')
+
 
 * ..return
       call subend ()
