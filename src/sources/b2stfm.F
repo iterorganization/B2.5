@@ -318,17 +318,24 @@ cc TODO compare this nmi with the one directly from EIRENE. Should match if all 
       endif
 
 cc compute a factor to reduce specific source terms when the density is close to the minimum numerical denisity
-      do ism = 0, ns_mol-1
-        do iCv = 1, nCv
-          nm = n_mol(iCv,ism)
-          if (nm.gt.nm_min_ext.and.nm.lt.nm_min_ext*nm_fac) then 
-            fac_nlim(iCv,ism) = (log(nm)-log(nm_min))/
-     .                          (log(nm_fac*nm_min_ext)-log(nm_min_ext))
-          else
-            fac_nlim(iCv,ism) = 1.0_R8
-          endif
+      if (switch%b2stfm_nlim.ne.0.0_R8) then
+        if (switch%b2stfm_nlim.le.nm_min_ext) then 
+          call xerrab('b2stfm_nlim must be greater than nm_min_ext')
+        endif
+        do ism = 0, ns_mol-1
+          do iCv = 1, nCv
+            nm = n_mol(iCv,ism)
+            if (nm.gt.nm_min_ext.and.nm.lt.switch%b2stfm_nlim) then 
+              fac_nlim(iCv,ism) = (log(nm)-log(nm_min_ext))/
+     .                  (log(switch%b2stfm_nlim)-log(nm_min_ext))
+            else
+              fac_nlim(iCv,ism) = 1.0_R8
+            endif
+          enddo
         enddo
-      enddo
+      else
+        fac_nlim = 1.0_R8
+      endif
 
 * ..Particle sources
 
@@ -1000,14 +1007,16 @@ cc dissociative ionization (2), electron energy source
         mfp(iCV) = vth/
      .      (pl%na(iCv,1)*rtw%r_ec_m(iCv,0)*  
      .                       switch%b2stfm_freac_ec)     !! mean free path
-        t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_nd(iCv,0)*
+        if (switch%b2stfm_diff_coeff_sinks.eq.1) then !! add also the sink terms in the transport coefficients
+          t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_nd(iCv,0)*
      .                       switch%b2stfm_freac_nd
-        t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_d(iCv,0)*
+          t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_d(iCv,0)*
      .                       switch%b2stfm_freac_d
-        t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_di1(iCv,0)*
+          t0 =  t0 + m_D2*dv%ne(iCv)*rtw%r_di1(iCv,0)*
      .                       switch%b2stfm_freac_di1
-        t0 =  t0 + m_D2*pl%na(iCv,1)*rtw%r_ic(iCv,0)*
+          t0 =  t0 + m_D2*pl%na(iCv,1)*rtw%r_ic(iCv,0)*
      .                       switch%b2stfm_freac_ic
+        endif
         diff_coeff(iCv) = 1.0_R8/t0
         coeff_vi(iCv) = mr*pl%na(iCv,1)*rtw%r_ec_m(iCv,0)* 
      .               switch%b2stfm_freac_ec/t0

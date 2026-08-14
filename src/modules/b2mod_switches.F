@@ -637,6 +637,7 @@ c Fluid molecules
       integer :: b2tral_mode_mol
       integer :: b2sihs_mol
       integer :: b2stfm_diff_coeff_ene_style
+      integer :: b2stfm_diff_coeff_sinks
       integer :: b2stfm_debug_icv
       integer :: b2stfm_ekin_perp
       integer :: b2stfm_recompute_perp_vels
@@ -660,6 +661,8 @@ c Fluid molecules
       real (kind=R8) :: b2stfm_erp_di2
       real (kind=R8) :: b2tqna_mol_sf    !! scale factor for viscosity (to experiment)
       real (kind=R8) :: b2tqna_mol_sfd   !! scale factor for diffusion coefficient and heat conduction
+      real (kind=R8) :: b2stfm_nlim
+
 
 c Matrix solver
       integer :: b2uxus_style
@@ -1338,6 +1341,7 @@ c Fluid molecules
       s % b2tral_mode_mol = -1
       s % b2sihs_mol = 1
       s % b2stfm_diff_coeff_ene_style = 0
+      s % b2stfm_diff_coeff_sinks = 0
       s % b2stfm_debug_icv = 0
       s % b2stfm_ekin_perp = 0
       s % b2stfm_recompute_perp_vels = 0
@@ -1361,6 +1365,8 @@ c Fluid molecules
       s % b2stfm_erp_di2   = 0.0_R8 
       s % b2tqna_mol_sf    = 1.0_R8 
       s % b2tqna_mol_sfd   = 1.0_R8 
+      s % b2stfm_nlim      = 0.0_R8 
+
 
 c Matrix solver
       s % b2uxus_style = 2
@@ -2154,6 +2160,8 @@ c Fluid molecules
       call ipgeti ('b2sihs_mol', s % b2sihs_mol)
       call ipgeti ('b2stfm_diff_coeff_ene_style', 
      .              s % b2stfm_diff_coeff_ene_style)
+      call ipgeti ('b2stfm_diff_coeff_sinks', 
+     .              s % b2stfm_diff_coeff_sinks)
       call ipgeti ('b2stfm_debug_icv', s % b2stfm_debug_icv)
       call ipgeti ('b2stfm_ekin_perp', s % b2stfm_ekin_perp)
       call ipgeti ('b2stfm_recompute_perp_vels', 
@@ -2177,7 +2185,9 @@ c Fluid molecules
       call ipgetr ('b2stfm_erp_de',   s % b2stfm_erp_de) 
       call ipgetr ('b2stfm_erp_di2',  s % b2stfm_erp_di2) 
       call ipgetr ('b2tqna_mol_sf',   s % b2tqna_mol_sf) 
-      call ipgetr ('b2tqna_mol_sfd',   s % b2tqna_mol_sfd) 
+      call ipgetr ('b2tqna_mol_sfd',  s % b2tqna_mol_sfd) 
+      call ipgetr ('b2stfm_nlim',     s % b2stfm_nlim) 
+
 
 c Matrix solver
       call ipgeti ('b2uxus_style', s % b2uxus_style) 
