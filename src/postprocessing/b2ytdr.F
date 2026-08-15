@@ -800,7 +800,7 @@ c 2002-09-11: logic revised
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read new geometry and metric
-      call b2ytgm (ninp(3), nx1, ny1, nncut, nnreg)
+      call b2ytgm (ninp(3), nx1, ny1, nncut, nnreg, periodic_bc)
       nncut1 = nncut
       nnreg1 = nnreg
       periodic_bc1 = periodic_bc
@@ -1480,6 +1480,8 @@ c 2002-09-11: logic revised
       call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
+      neoclassical_iystart = -1
+      neoclassical_iyend = jsep
       call ipgeti ('b2tqna_neoclassical_iystart', neoclassical_iystart)
       call ipgeti ('b2tqna_neoclassical_iyend', neoclassical_iyend)
       call ipgeti ('b2tqna_iy1', iy1)
@@ -5120,6 +5122,10 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
      .             (REACZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
                   call xertst (ier.eq.0, 'error reading reac2 flag')
                   IEND = IEND + ITOK
+                  CALL EIRENE_READ_TOKEN
+     .             (REACZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+                  IEND = IEND + ITOK
+                  call xertst (ier.eq.0, 'error reading crc flag')
                 ELSE
                   REAC2=REPEAT(' ',50)
                   ITOK = INDEX(ZEILE(IEND:),'FT')
@@ -6115,21 +6121,6 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
      &        INDEX(TEXTP(JPLS),'BE').GT.0)) THEN ! Correcting a common ANK mistake
             NCHARP(JPLS)=4
           END IF
-          IF (NMASSP(JPLS).EQ.2.AND.NCHARP(JPLS).EQ.2.AND. ! Correcting another
-     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').EQ.1) THEN
-            NPRTP(JPLS)=2
-          END IF
-          IF (NPRTP(JPLS).EQ.2.AND.INDEX(TEXTP(JPLS),'H2(B)').GT.1) THEN ! And another
-            I=INDEX(TEXTP(JPLS),'H2(B)')
-            DO JATM = 1, NATM
-              IF(streql(TEXTP(JPLS)(1:I-1),TEXTA(JATM)))
-     >         NPRTP(JPLS)=NPRTA(JATM)
-            END DO
-            DO JMOL = 1, NMOL
-              IF(streql(TEXTP(JPLS)(1:I-1),TEXTM(JMOL)))
-     >         NPRTP(JPLS)=NPRTM(JMOL)
-            END DO
-          END IF
           FOUND = .FALSE.
           DO JATM = 1, NATMI
             IF (FOUND) CYCLE
@@ -6338,13 +6329,27 @@ cxpb Now we have read the species data and can identify the bundles
         NBGK1 = 0
         DO 5113 JPLS=1,NPLSI
           found = .false.
-          is = 0
-          do while (.not.found .and. is.lt.ns1)
-            found = NPRTP(JPLS).eq.1 .and.
-     .       nint(am1(is)).eq.NMASSP(JPLS) .and.
-     .       nint(zn1(is)).eq.NCHARP(JPLS) .and.
-     .       nint(zamin1(is)).le.NCHRGP(JPLS) .and.
-     .       nint(zamax1(is)).ge.NCHRGP(JPLS)
+          if (index(TEXTP(JPLS),'(B)').eq.0) then
+            is = 0
+            do while (.not.found .and. is.lt.ns1)
+              found = NPRTP(JPLS).eq.1 .and.
+     .         nint(am1(is)).eq.NMASSP(JPLS) .and.
+     .         nint(zn1(is)).eq.NCHARP(JPLS) .and.
+     .         nint(zamin1(is)).le.NCHRGP(JPLS) .and.
+     .         nint(zamax1(is)).ge.NCHRGP(JPLS)
+              if (found) then
+                eb2ibcr(jpls) = is
+              else
+                is = is + 1
+              endif
+            end do
+          else
+            do jatm = 1, natm1
+              found = found .or. (iatm1(jatm).ne.0 .and.
+     .         NMASSA(JATM).eq.NMASSP(JPLS) .and.
+     .         NCHARA(JATM).eq.NCHARP(JPLS) .and.
+     .         NCHRGP(JPLS).eq.0 .and. NPRTA(JATM).eq.NPRTP(JPLS) )
+            end do
             if (.not.found) then
               do jmol = 1, nmol1
                 found = found .or. (imol1(jmol).ne.0 .and.
@@ -6353,22 +6358,15 @@ cxpb Now we have read the species data and can identify the bundles
      .           NCHRGP(JPLS).eq.0 .and. NPRTM(JMOL).eq.NPRTP(JPLS) )
               end do
             end if
-            if (found .and. index(TEXTP(JPLS),'(B)').eq.0) then
-              eb2ibcr(jpls) = is
-            else
-              is = is + 1
-            endif
-          enddo
-          if (found .and. index(TEXTP(JPLS),'(B)').GT.0) then
-            eb2ibcr(jpls) = ns1 + NBGK1
-            NBGK1 = NBGK1 + 1
+            if (found) then
+              eb2ibcr(jpls) = ns1 + NBGK1
+              NBGK1 = NBGK1 + 1
+            end if
           end if
           if (.not.found) then
             eb2ibcr(jpls) = -1
-            if (index(TEXTP(JPLS),'(B)').eq.0) then
-              write(*,*) 'Ion species corresponding to ',
-     .         trim(TEXTP(JPLS)),' not found! Removing...'
-            end if
+            write(*,*) 'Ion species corresponding to ',
+     .       trim(TEXTP(JPLS)),' not found! Removing...'
           end if
  5113   CONTINUE
         NPLSI1 = (ns1-nspecies1)+NBGK1
