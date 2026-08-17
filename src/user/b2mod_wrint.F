@@ -342,13 +342,13 @@ csw 20sep2013 added
             if (is.eq.0) cycle
             nasum(is,ir) = nasum(is,ir) +
      .                     dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
-            if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is)) +
+            if(hlp_l) nsla_tmp(is) = nsla_tmp(is) +
      .                                 dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
             do imol = 1, nnmoli
               if (mlcmp(iatm,imol).gt.0) then
                 nasum(is,ir) = nasum(is,ir) +
      .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
-                if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is))
+                if(hlp_l) nsla_tmp(is) = nsla_tmp(is)
      .              + mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
               endif
             end do
