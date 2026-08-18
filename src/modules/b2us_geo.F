@@ -1137,7 +1137,10 @@
       end if
       endif
 
-      if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
+!! Explicit topology supplies target data, so still derive strike faces
+!! when temp_ignore_geo bypasses heuristic geometry handling.
+      if (temp_ignore_geo.eq.0.or.
+     &    (mpg%hasTopologicalData.and.mpg%topoID.eq.0)) then
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
       if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
