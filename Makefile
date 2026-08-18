@@ -769,14 +769,14 @@ ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -ge 10; echo $$?),0)
 ${OBJDIR}/b2mod_mdsplus.o: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -Wno-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -Wno-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 	@if [ -f b2mod_mdsplus.${MOD} ] ; then /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ ; fi
@@ -785,14 +785,14 @@ ifneq (${MOD},o)
 ${OBJDIR}/b2mod_mdsplus.${MOD}: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -Wno-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2mod_mdsplus.f
 else
 	-${CPP} ${DEFINES} ${DPFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2mod_mdsplus.f
 endif
-	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -Wno-argument-mismatch ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
+	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch -w ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.f
 endif
 	@if [ -f b2mod_mdsplus.o ] ; then /bin/mv b2mod_mdsplus.o ${OBJDIR}/ ; fi
 ifeq ($(strip $(LINK_MOD)),)
