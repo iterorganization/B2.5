@@ -988,7 +988,7 @@ endif
 
 ${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}
 ${OBJDIR}/init.o: ${OBJDIR}/eirdiag.${MOD}
-${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD}
+${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD} ${OBJDIR}/eirdiag.${MOD}
 ${OBJDIR}/user_default.o: ${OBJDIR}/eirdiag.${MOD}
 
 ifneq (${MOD},o)
@@ -997,6 +997,8 @@ ${OBJDIR}/avltree.${MOD}: ${OBJDIR}/ccona.${MOD}
 ${OBJDIR}/braeir.${MOD}: ${OBJDIR}/parmmod.${MOD}
 ${OBJDIR}/caprmc.${MOD}: ${OBJDIR}/cgrid.${MOD} ${OBJDIR}/comxs.${MOD} ${OBJDIR}/comsou.${MOD}
 ${OBJDIR}/ccflux.${MOD}: ${OBJDIR}/ctrig.${MOD} ${OBJDIR}/cgeom.${MOD}
+${OBJDIR}/ccoupl.${MOD}: ${OBJDIR}/parmmod.${MOD}
+${OBJDIR}/clgin.${MOD}: ${OBJDIR}/parmmod.${MOD}
 ${OBJDIR}/ccrm.${MOD}: ${OBJDIR}/cestim.${MOD} ${OBJDIR}/csdvi.${MOD} ${OBJDIR}/czt1.${MOD} ${OBJDIR}/photon.${MOD}
 ${OBJDIR}/comxs.${MOD}: ${OBJDIR}/cupd.${MOD}
 ${OBJDIR}/cpes.${MOD}: ${OBJDIR}/comprt.${MOD} ${OBJDIR}/ctrcei.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
@@ -1010,6 +1012,8 @@ ${OBJDIR}/avltree.o: ${OBJDIR}/ccona.o
 ${OBJDIR}/braeir.o: ${OBJDIR}/parmmod.o
 ${OBJDIR}/caprmc.o: ${OBJDIR}/cgrid.o ${OBJDIR}/comxs.o ${OBJDIR}/comsou.o
 ${OBJDIR}/ccflux.o: ${OBJDIR}/ctrig.o ${OBJDIR}/cgeom.o
+${OBJDIR}/ccoupl.o: ${OBJDIR}/parmmod.o
+${OBJDIR}/clgin.o: ${OBJDIR}/parmmod.o
 ${OBJDIR}/ccrm.o: ${OBJDIR}/cestim.o ${OBJDIR}/csdvi.o ${OBJDIR}/czt1.o ${OBJDIR}/photon.o
 ${OBJDIR}/comxs.o: ${OBJDIR}/cupd.o
 ${OBJDIR}/cpes.o: ${OBJDIR}/comprt.o ${OBJDIR}/ctrcei.o ${OBJDIR}/eirmod_precision.o
