@@ -24,7 +24,7 @@
 
 *  .. multiply with poloidal face area
       fch_pi_f(:,0) = fch_pi_f(:,0)*geo%fcS(:)*geo%fcQalf(:,0)
-     &                                         *switch%prl_cur
+     &                                        *switch%prl_cur
 
 *  .. set radial component zero
       fch_pi_f(:,1) = 0.0_R8
