@@ -14,7 +14,7 @@
      *  axm, wid,
      *  sdiva0, sdiva1, sdivd0, sdivd1,
      *  dxb, dxc, dxm, dya, dyb, dym, dxa0, dxa1, dxd0, dxd1
-      complex*16, save :: w0, w1, wm0, wm1
+      complex(kind=R8), save :: w0, w1, wm0, wm1
 *     (Following data are meant to fit some Sonnet equilibrium for
 *     Asdex-Upgrade.  The fit is only approximate.)
       real (kind=R8) :: cpsi, xmid, btmid, snl, ycore,
@@ -22,7 +22,7 @@
       parameter (cpsi=0.41_R8, xmid=1.65_R8, btmid=2.00_R8,
      *  snl=0.94_R8, ycore=4.0e-1_R8, xslo=1.53_R8, yslo=-0.83_R8,
      *  xshi=1.65_R8, yshi=1.32_R8, sqz=0.0_R8)
-      complex*16 :: ii, shift1, shift2
+      complex(kind=R8) :: ii, shift1, shift2
       parameter (ii=(0.0_R8,1.0_R8),
      *  shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8))
       logical, save :: init
@@ -183,7 +183,7 @@
       logical iscut0, iscut1, iscut2
       integer type
       real (kind=R8) :: w0x
-      complex*16 w2, w3, w4, w5, w6
+      complex(kind=R8) w2, w3, w4, w5, w6
 *   ..procedures
       intrinsic real, cmplx, sqrt, exp, log, aimag
       logical esseq
@@ -378,8 +378,8 @@
       w6 = cmplx(xshi-xslo,yshi-yslo,R8)*w5/(2.0_R8*ii)+
      &     cmplx(xslo+xshi,yslo+yshi,R8)/2.0_R8
 *   ..poloidal coordinates
-      crx0 = real(w6)
-      cry0 = aimag(w6)
+      crx0 = real(w6,R8)
+      cry0 = real(aimag(w6),R8)
 *   ..magnetic field
       psi0 = gpsi(w0y)
       fbz0 = gfbz(w0y)
@@ -387,6 +387,23 @@
 * ..return
       call subend ()
       return
+
+      contains
+
+      complex(kind=R8) function fracr(w0,s0) result(cres)
+      implicit none
+      complex(kind=R8), intent(in) :: w0, s0
+      cres = (w0+s0)/(CMPLX(s0%RE,-s0%IM,KIND=R8)*w0+1.0_R8)
+      return
+      end function fracr
+
+      complex(kind=R8) function fraci(w0,s0) result(cres)
+      implicit none
+      complex(kind=R8), intent(in) :: w0, s0
+      cres = (w0+s0)/(1.0_R8-s0*w0)
+      return
+      end function fraci
+
       end subroutine b2agsp
 
 *-----------------------------------------------------------------------
@@ -440,8 +457,8 @@
 *   ..invert w2=ii to find wm1, xm, ym
       w1 = (ii-shift1)/(1.0_R8-conjg(shift1)*ii)
       wm1 = (2.0_R8/pi)*ii*log(1.0_R8+(w1+ii)*ii/snl)
-      xm = real(wm1-wm0)
-      ym = aimag(wm1-wm0)
+      xm = real(wm1-wm0,R8)
+      ym = real(aimag(wm1-wm0),R8)
 *   ..live with a Sun f77 (1992, SC1.0) compiler error
 *     (!! using 'f77 -fast' or 'f77 -O' on the Sparc it turns out that,
 *     without the following no-op call to dummyz, the variable wm0 is
@@ -502,21 +519,6 @@
      &  fm3((tb-t0)/(tb-ta),fb,-dfb*(tb-ta),fa))
       return
       end function fm4
-
-      complex*16 function fracr(w0,s0)
-      implicit none
-      complex*16 w0, s0
-      intrinsic conjg
-      fracr = (w0+s0)/(conjg(s0)*w0+1.0_R8)
-      return
-      end function fracr
-
-      complex*16 function fraci(w0,s0)
-      implicit none
-      complex*16 w0, s0
-      fraci = (w0+s0)/(1.0_R8-s0*w0)
-      return
-      end function fraci
 
       function f0xa0(t0)
       implicit none
@@ -593,7 +595,7 @@
       subroutine dummyz (z)
       use b2mod_types
       implicit none
-      complex*16 z
+      complex(kind=R8) z
 *     ------------------------------------------------------------------
 *     This subroutine does nothing.
 *     ------------------------------------------------------------------

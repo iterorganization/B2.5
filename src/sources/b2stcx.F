@@ -288,7 +288,7 @@ ctmp.dpc
      &         (1.0_R8+rg0)*t2
             endif
             rcxmo(ix,iy,is)=rcxmo(ix,iy,is)+t1*ua(ix,iy,is)
-            rcxmo(ix,iy,is0)=rcxmo(ix,iy,is0)-t2*ua(ix,iy,is)
+            rcxmo(ix,iy,is0)=rcxmo(ix,iy,is0)-t2*ua(ix,iy,is0)
             rcxmoreg(region(ix,iy,0),is)=
      1       rcxmoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
             rcxmoreg(region(ix,iy,0),is0)=

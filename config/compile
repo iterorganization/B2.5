@@ -40,6 +40,14 @@ endif
 	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
 
 ifneq (${MOD},o)
+# The compiler writes the .mod file as a side effect of producing the .o,
+# so make .mod depend on .o (no recipe).  This avoids a parallel-make race
+# where the duplicate "%.${MOD}: %.F" rule and the "%.o: %.F" rule above
+# would both compile the same source concurrently and clobber each other's
+# .mod file via the leading "rm -f" in both recipes.
+${OBJDIR}/%.${MOD} : ${OBJDIR}/%.o
+	@true
+
 ${OBJDIR}/%.${MOD} : %.F        # ../src/modules/
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
@@ -102,6 +110,10 @@ endif
 	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBNDIR}/ ; fi
 
 ifneq (${MOD},o)
+# Same noop rule for OBNDIR to prevent double-compilation in parallel builds.
+${OBNDIR}/%.${MOD} : ${OBNDIR}/%.o
+	@true
+
 ${OBNDIR}/%.${MOD} : %.F        # ../src/modules/
 	@- /bin/rm -f ${OBNDIR}/$*.f ${OBNDIR}/$*.o ${OBNDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)

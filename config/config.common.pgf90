@@ -1,8 +1,8 @@
 ifeq (${FC},f77)
-FC = pgf90
+  FC = pgf90
 endif
 ifeq (${FN},)
-FN = pgf90
+  FN = pgf90
 endif
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
@@ -10,8 +10,8 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 LINK_MOD = 
 
 ifndef SOLPS_CPP
-DEFINES += -DPGF90 -DNOQUAD
-FCOPTS  += -Mnorpath
+  DEFINES += -DPGF90 -DNOQUAD
+  FCOPTS  += -Mnorpath
 endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V | grep "pgf90" | awk 'match($$0,/[0-9]+\.[0-9]+\-[0-9]+/){print substr($$0, RSTART, RLENGTH)}' | cut -d '.' -f 1 )
@@ -22,25 +22,25 @@ INCMOD   = -I
 DBLOPTION =
 FCOPTS  += -Mbackslash
 ifdef SOLPS_DEBUG
-FCOPTS  += -C -g -Mchkptr -Mchkstk
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 19; echo $$?),0)
-FCOPTS  += -Mchkfpstk -Mpgicoff
-endif
-LDOPTS  += -g -C
+  FCOPTS  += -C -g -Mchkptr -Mchkstk
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 19; echo $$?),0)
+    FCOPTS  += -Mchkfpstk -Mpgicoff
+  endif
+  LDOPTS  += -g -C
 else
-#FCOPTS += -O2
-#FCOPTS += -fast
-FCOPTS  += -fast -Mvect=nofuse
+# FCOPTS += -O2
+# FCOPTS += -fast
+  FCOPTS  += -fast -Mvect=nofuse
 endif
 ifdef SOLPS_OPENMP
-FPOPTS += -mp=nonuma
-LPOPTS += -mp=nonuma
+  FPOPTS += -mp=nonuma
+  LPOPTS += -mp=nonuma
 endif
 ifdef SOLPS_MPI
-FPOPTS  += -Mmpi=mpich
-INCMODS += ${MPI_CPP}
-LPOPTS  += ${LD_MPI}
-DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  FPOPTS  += -Mmpi=mpich
+  INCMODS += ${MPI_CPP}
+  LPOPTS  += ${LD_MPI}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifndef SOLPS_CPP
@@ -123,7 +123,7 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES += ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
 endif
 
 LD = ${FC}

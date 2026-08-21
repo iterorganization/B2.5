@@ -271,7 +271,7 @@ c  version : 08.08.2000 11:35
      .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
               ENDIF
             ELSEIF (DEF.LT.RC2MN(IR)) THEN
-              IF (IF2MN(IR).LT.0) THEN
+              IF (IF2MN(IR).EQ.0) THEN
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8
@@ -314,7 +314,7 @@ c  version : 08.08.2000 11:35
      .                             FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
               ENDIF
             ELSEIF (DEF.GT.RC2MX(IR)) THEN
-              IF (IF2MX(IR).LT.0) THEN
+              IF (IF2MX(IR).EQ.0) THEN
                 DO I = 0, 8
                   TEI=TEF**I
                   DO J = 0, 8

@@ -853,15 +853,12 @@ contains
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: nibnd, frac, u, v,                                 &
             &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
-            &             vtor, nisep, nasum
+            &             vtor, nisep, nasum, nesum, nepeak
         real(IDS_real) :: power_convected(4),                                &
             &             power_conducted(4), power_neutrals(4),             &
             &             power_incident(4), power_flux_peak(4),             &
             &             power_recomb_neutrals(4), power_radiated(4),       &
             &             recycled_flux(4)
-# if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        real(IDS_real) :: nesum
-# endif
         real(IDS_real), allocatable :: wrdtrg(:,:,:)
 # ifdef B25_EIRENE
         real(IDS_real), allocatable :: un0(:,:,:,:), um0(:,:,:,:)
@@ -6047,7 +6044,7 @@ contains
                       &         z_square_average,                             &
                       &   value = rz2(:,:,ispion(is,js)) )
                 !! Ionization potential
-#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 )
+#   if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION < 2 )
                   call write_quantity( edge_grid,                             &
                       &   val = profiles_ggd%ion( is )%                       &
                       &         state( js )%ionisation_potential,             &
@@ -8793,7 +8790,7 @@ contains
           case ('B')
             call write_sourced_value( summary%local%separatrix%n_i%boron, nisep )
             call write_sourced_value( summary%local%separatrix_average%n_i%boron, u )
-#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
             call write_sourced_value( summary%local%separatrix%velocity_phi%boron, -vtor )
             call write_sourced_value( summary%local%separatrix_average%velocity_phi%boron, -v )
 #   endif
@@ -9039,12 +9036,36 @@ contains
           allocate ( summary%local%divertor_plate( ntrgts ) )
 #  endif
           do i = 1, ntrgts
+            u = 0.0_R8
+            v = 0.0_R8
+            nesum = 0.0_R8
+            nepeak = 0.0_R8
+            do iy = -1, ny
+              if (region(ixpos(itrg(i)),iy,0).eq.0) cycle
+              if (bottomiy(ixpos(itrg(i)),iy).eq.-2) cycle
+              if (topiy(ixpos(itrg(i)),iy).eq.ny+1) cycle
+              u = max ( u, te(ixpos(itrg(i)),iy)/ev )
+              nepeak = max ( nepeak, ne(ixpos(itrg(i)),iy) )
+              nesum = nesum + gs(ifpos(itrg(i)),iy,0)* &
+                &             ne(ixpos(itrg(i)),iy)
+              v = v + te(ixpos(itrg(i)),iy)/ev*gs(ifpos(itrg(i)),iy,0)* &
+                &     ne(ixpos(itrg(i)),iy)
+            end do
+            if (nesum.gt.0.0_R8) v = v / nesum
 #  if ( IMAS_MINOR_VERSION > 34 || IMAS_MAJOR_VERSION > 3 )
             call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
             call write_sourced_value( summary%local%divertor_target(i)%t_e, &
               &  0.5_R8 * (te(ixpos(itrg(i)),iypos(itrg(i)))+  &
               &            te(topix(ixpos(itrg(i)),iypos(itrg(i))), &
               &               topiy(ixpos(itrg(i)),iypos(itrg(i)))))/ev )
+#   if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%t_e_peak, u )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%t_e_n_e_weighted_average, v )
+            call write_sourced_value( &
+              &  summary%local%divertor_target(i)%n_e_peak, nepeak )
+#   endif
             call write_sourced_value( summary%local%divertor_target(i)%t_i_average, &
               &  0.5_R8 * (ti(ixpos(itrg(i)),iypos(itrg(i)))+  &
               &            ti(topix(ixpos(itrg(i)),iypos(itrg(i))), &
@@ -11709,8 +11730,12 @@ contains
         case ('T')
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
         case ('DT')
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
+          call add_sourced_value( summary%gas_injection_rates%deuterium_tritium, gpff )
+#  else
           call add_sourced_value( summary%gas_injection_rates%deuterium, gpff/2.0_R8 )
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff/2.0_R8 )
+#  endif
         case ('He')
           if (nint(am(is)).eq.3) then
             call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
@@ -11723,6 +11748,11 @@ contains
         case ('Be')
           call add_sourced_value( summary%gas_injection_rates%beryllium, gpff*zn(is) )
           summary%gas_injection_rates%impurity_seeding%value = 1
+#  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && ( IMAS_MINOR_VERSION > 1 || ( IMAS_MINOR_VERSION == 1 && IMAS_MICRO_VERSION > 1 ) ) ) )
+        case ('B')
+          call add_sourced_value( summary%gas_injection_rates%boron, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+#  endif
         case ('C')
           call add_sourced_value( summary%gas_injection_rates%carbon, gpff*zn(is) )
           summary%gas_injection_rates%impurity_seeding%value = 1

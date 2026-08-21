@@ -1519,6 +1519,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
          not_default = not_default.or.(shot.gt.0.and.run.ge.0)
+         imasdir = ' '
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -1529,8 +1530,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      >    call get_environment_variable('IMASDIR',value=imasdir)
 #endif
 #endif
-         if (not_default) imasdir = trim(home_dir)//'/public/imasdb/'
-     &                            //trim(database)//'/'//trim(version)
+         if (streql(imasdir,' '))
+     >    imasdir = trim(home_dir)//trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
      &                            //'/0'
 #endif

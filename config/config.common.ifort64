@@ -1,23 +1,41 @@
+# FN is the serial Fortran compiler used to build the netCDF utility programs.
+# If still unset (e.g. setup script exported FC=ifx without setting FN), pick
+# ifort when available, otherwise fall back to the same driver as FC.
 ifeq (${FC},f77)
-FC = ifort
+  ifneq ($(shell command -v ifort 2>/dev/null),)
+    FC = ifort
+  endif
 endif
 ifeq (${FN},)
-FN = ifort
+  ifneq ($(shell command -v ifort 2>/dev/null),)
+    FN = ifort
+  else
+    FN = ${FC}
+  endif
 endif
 ifeq (${CC},cc)
-ifneq (${FC},ftn)
-CC = icc
+  ifneq (${FC},ftn)
+    ifneq ($(shell command -v icc 2>/dev/null),)
+      CC = icc
+    else
+      CC = icx
+    endif
+  endif
 endif
-endif
-# Use of ifx OpenMP is unsafe at the moment
+# Use of ifx OpenMP is unsafe at the moment, but only swap if a usable ifort
+# is present (intel-compilers 2025.x onwards ships only ifx).
 ifneq (,$(findstring ifx,${FC}))
   ifdef SOLPS_OPENMP
-    FN = ifort
-    MPI_FC = mpiifort
-    ifdef SOLPS_MPI
-      FC = ${MPI_FC}
+    ifneq ($(shell command -v ifort 2>/dev/null),)
+      FN = ifort
+      MPI_FC = mpiifort
+      ifdef SOLPS_MPI
+        FC = ${MPI_FC}
+      else
+        FC = ifort
+      endif
     else
-      FC = ifort
+      $(error Intel compiler ifx is incompatible with OpenMP usage!)
     endif
   endif
 endif
@@ -64,12 +82,17 @@ ifndef COMPILER_REDEF
   endif
  endif
  ifdef SOLPS_OPENMP
-  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-   FPOPTS += -qopenmp
-   LPOPTS += -qopenmp
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+   FPOPTS += -fiopenmp
+   LPOPTS += -fiopenmp
   else
-   FPOPTS += -openmp
-   LPOPTS += -openmp
+   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+    FPOPTS += -qopenmp -qopenmp-threadprivate=compat
+    LPOPTS += -qopenmp
+   else
+    FPOPTS += -openmp
+    LPOPTS += -openmp
+   endif
   endif
  endif
 else
@@ -190,12 +213,12 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES += ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXX      = c++
-CXXFLAGS = -std=c++11
+  CXX      = c++
+  CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
 endif
 
 ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
+  LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD       = ${FC}

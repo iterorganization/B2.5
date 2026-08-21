@@ -94,7 +94,7 @@
 #ifdef B25_EIRENE
       character extension*4
 #endif
-      character cnamip*80, cvalip*80, line*500
+      character cnamip*80, cvalip*80, line*500, ligne*500
       logical file_open, file_exists, file_tri_exists, todo
 *   ..procedures
       logical is_comment, streql
@@ -186,8 +186,12 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           call ipsetc (cnamip, cvalip)
+         end if
        end if
        goto 1
     2 continue
