@@ -309,6 +309,31 @@
      .              ifail)
         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
      .              iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
+*    .. region 2 : periodic_bc.eq.1 : central part
+        if (.not.flip) then
+         wrk1(ixa-1,iya-1) = fun(ixm,iym)
+         wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+         wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+         wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+         wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+         wrk1(ixb+1,iya-1) = fun(ixp,iym)
+         wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+         wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+       else
+         wrk1(ixa-1,iya-1) = fun(ixp,iym)
+         wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+         wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+         wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+         wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+         wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+         wrk1(ixb+1,iya-1) = fun(ixm,iym)
+         wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+         wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+        endif
+        call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
+     .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
+     .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
 *    .. region 2 : periodic_bc.eq.1 : eastern edge
         if (.not.flip) then
           wrk1(nx,iya-1) = fun(nx,iym)
@@ -323,6 +348,20 @@
      .              ifail)
         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(nx,iya-1:iyb+1),d,
      .              iyd-iyc+1,yy1(iyc:iyd),fun1(nx1,iyc:iyd),ifail)
+*    .. region 2 : periodic_bc.eq.1 : top row
+        if (.not.flip) then
+          wrk1(ixa-1,ny) = fun(ixm,ny)
+          wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
+          wrk1(ixb+1,ny) = fun(ixp,ny)
+        else
+          wrk1(ixa-1,ny) = fun(ixp,ny)
+          wrk1(ixa:ixb,ny) = fun(ixb:ixa:-1,ny)
+          wrk1(ixb+1,ny) = fun(ixm,ny)
+        endif
+        call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
+     .              ifail)
+        call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
+     .              ixd-ixc+1,xx1(ixc:ixd),fun1(ixc:ixd,ny1),ifail)
        else
         iya = jsep+1
         iym = jsep

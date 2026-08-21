@@ -13137,16 +13137,18 @@ cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
      . (non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside)
       use b2mod_indirect
       use b2mod_geo2
+      use b2mod_b2plot
+     , , only : jsep
       implicit none
 *   ..input arguments (unchanged on exit)
       integer non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside
 *   ..local variables
-      integer ireg, ipos, nsize, nsize1
+      integer ireg, ipos, nsize, nsize1, jxi1, jxa1, jsep1
       integer ixiso, ixiso1, inseliy, inseliy1, nxtr, nxtl, nxtr1, nxtl1
       logical atend, flip
 *   ..procedures
       integer convert_position
-      external convert_position, get_nxt, b2yt_nxt
+      external convert_position, get_nxt, b2yt_jsep, b2yt_nxt
       intrinsic min, max
 
 c xory  = 1 : x-direction
@@ -13263,6 +13265,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
          inseliy = -2
          inseliy1 = -2
         endif
+        if (nncut.eq.0) call b2yt_jsep (nx1, ny1, jxi1, jxa1, jsep1)
         if (xory.eq.1) then   ! do other easy ix cases first
          if (ix.eq.ixiso-1) then
           conformal_convert=ixiso1-1
@@ -13422,6 +13425,12 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
          else if (nncut.eq.1 .and. periodic_bc.eq.1 .and.
      .    iy.eq.inseliy) then
           conformal_convert=inseliy1
+         else if (nncut.eq.0 .and. periodic_bc.eq.1 .and.
+     .    iy.eq.jsep-1) then
+          conformal_convert=jsep1-1
+         else if (nncut.eq.0 .and. periodic_bc.eq.1 .and.
+     .    iy.eq.jsep) then
+          conformal_convert=jsep1
          else if (iy.eq.ny-1) then
           conformal_convert=ny1-1
          else if (nncut.eq.0) then
