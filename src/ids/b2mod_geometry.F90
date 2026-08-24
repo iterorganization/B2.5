@@ -697,7 +697,7 @@ contains
               end if
             end do
           end do
-          nActive = count( is_active(1:mpg%nXpt) == .true. )
+          nActive = count( is_active(1:mpg%nXpt) .eqv. .true. )
           if (nActive.eq.2) then
             geometryId = GEOMETRY_CDN
             if (firstgmid(1)) then
@@ -788,7 +788,7 @@ contains
               end if
             end do
           end do
-          nActive = count( is_active(1:mpg%nXpt) == .true. )
+          nActive = count( is_active(1:mpg%nXpt) .eqv. .true. )
           if (nActive.eq.2) then
             geometryId = GEOMETRY_CDN
             if (firstgmid(2)) then
