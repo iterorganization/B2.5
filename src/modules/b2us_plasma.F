@@ -95,7 +95,8 @@
         real(R8), dimension(:,:), allocatable :: pccm
 
         ! derived state quantities
-        ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
+        ! ni(:,0) is the total atom density (ions+neutrals), ni(:,1) is the total ion density (see b2xpni)
+        ! ue is parallel electron velocity
         ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
         ! pa(:,0:ns-1) is partial pressure
         real(R8), allocatable :: ne(:), ni(:,:), nn(:), ue(:), ne2(:),
