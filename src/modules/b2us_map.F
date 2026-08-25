@@ -1028,9 +1028,11 @@ cwdk  can be derived directly from data in that file
         icount = 0
         m%ifdiv = 0
         m%ivdiv = 0
-        m%divFcP(1,1) = 1
+        m%divFcP(:,1) = 0
         m%divFcP(:,2) = 0
         do i = 1, indd  ! first assemble all the faces
+          if (freg(i).eq.0) cycle
+          if (maxval(m%divFcP(:,1)).eq.0) m%divFcP(i,1) = 1
           if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1) + m%divFcP(i-1,2)
           do iFc = 1, m%nFc
             if (m%fcReg(iFc).eq.freg(i)) then
