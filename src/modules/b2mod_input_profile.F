@@ -1065,7 +1065,7 @@ c*** Clear data to forget previous profiles
           allocate(pra(nomp))
           allocate(prdsa(nomp))
           allocate(dsp(nomp))
-          call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsp',dsp)
+          call output_ds_cv(mpg,geo,nomp,omp,icsepomp,'dsp',dsp)
         end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
