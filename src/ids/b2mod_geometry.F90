@@ -599,19 +599,14 @@ contains
         geometryId = GEOMETRY_STELLARATORISLAND
         if (firstgmid(1)) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
-            firstgmid = .false.
+            firstgmid(1) = .false.
         end if
         return
     end if
 
     if (mpg%nnreg(0) == 7) then
-        if (mpg%iactive.eq.1) then
-          Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(1)))
-          Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(2)))
-        else
-          Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(2)))
-          Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(1)))
-        end if
+        Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
+        Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iinactive)))
         if ((Xpsi_active.lt.Xpsi_snowflake.and.geo%psi_increasing).or. &
           & (Xpsi_active.gt.Xpsi_snowflake.and..not.geo%psi_increasing)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
@@ -629,7 +624,7 @@ contains
             end if
             return
         end if
-        if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
+        if (mpg%vxFs(mpg%Xpt(mpg%iactive)) == mpg%vxFs(mpg%Xpt(mpg%iinactive))) then
             geometryId = GEOMETRY_UNSPECIFIED
             if (firstgmid(1)) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
@@ -706,6 +701,7 @@ contains
               call logmsg( LOGWARNING, "Standard diagnostic output may fail.")
               firstgmid(1) = .false.
             end if
+            deallocate( is_active )
             return
           else if (nActive.eq.1 .and. is_above_plasma) then
             geometryId = GEOMETRY_DDN_TOP
@@ -715,6 +711,8 @@ contains
               call logmsg( LOGWARNING, "Standard diagnostic output may fail.")
               firstgmid(1) = .false.
             end if
+            deallocate( is_active )
+            return
           else if (nActive.eq.1 .and. .not.is_above_plasma) then
             geometryId = GEOMETRY_DDN_BOTTOM
             if (firstgmid(1)) then
@@ -723,8 +721,9 @@ contains
               call logmsg( LOGWARNING, "Standard diagnostic output may fail.")
               firstgmid(1) = .false.
             end if
+            deallocate( is_active )
+            return
           end if
-          deallocate( is_active )
         endif
       else if (object.eq.2) then
         if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
@@ -733,6 +732,7 @@ contains
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
             firstgmid(2) = .false.
           end if
+          return
         elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
           geometryID = GEOMETRY_SN
           if (firstgmid(2)) then
@@ -795,6 +795,7 @@ contains
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN")
               firstgmid(2) = .false.
             end if
+            deallocate( is_active )
             return
           else if (nActive.eq.1 .and. is_above_plasma) then
             geometryId = GEOMETRY_DDN_TOP
@@ -802,14 +803,17 @@ contains
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_TOP")
               firstgmid(2) = .false.
             end if
+            deallocate( is_active )
+            return
           else if (nActive.eq.1 .and. .not.is_above_plasma) then
             geometryId = GEOMETRY_DDN_BOTTOM
             if (firstgmid(2)) then
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM")
               firstgmid(2) = .false.
             end if
+            deallocate( is_active )
+            return
           end if
-          deallocate( is_active )
         end if
       end if
     end if
