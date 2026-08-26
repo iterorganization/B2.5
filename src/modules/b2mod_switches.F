@@ -2689,6 +2689,9 @@ c ECH model
      1              'b2sral_ECH_absorption_frac must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ech_Rdep.or.s%use_ech.eq.0,
      1              'b2sral_ECH_Rdep must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%a0.or.s%ech_gaussian_type.ne.1,
+     1              'b2tqna_minor_radius must be .gt. 0.0 when'//
+     2               ' ech_gaussian_type is 1')
 
 c ICH model
       call xertst ((0.le.s%use_ich).and.(s%use_ich.le.1),
