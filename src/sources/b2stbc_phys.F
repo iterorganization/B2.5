@@ -2766,8 +2766,8 @@ c   (ionising_core option)
           do ibc = 1, mpg%bcCvP(ib,2) ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1) ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) ! number of the guard cell face
-            prescr_dens = conpar(is,ib,1)*100/Tgauge* ! multiplication x100: mbar-to-Pa
-     .        sqrt(Tgauge/pl%ti(iCv1))
+            prescr_dens = conpar(is,ib,1)*100/pl%tn(iCv1)* ! multiplication x100: mbar-to-Pa
+     .        sqrt(pl%tn(iCv1)/Tgauge)
             write(*,'(a,1p,g14.7,a,i3)')
      .       'Density is ',prescr_dens,' for species ',IS
             srw%sna0(iCv1,0,is) =
