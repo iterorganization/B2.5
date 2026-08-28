@@ -3011,7 +3011,7 @@
 					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is modulated as per the poloidal density distribution of the ions, and neutrals come back as fully-stripped ions.
 					'eirene_ionizing_core' is an alias for this switch.
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary.
-					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the BCCON = 13 type boundary condition, for which a negative value for ionizing_core is required.
+					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the BCCON = 8/13/29 type boundary condition. For BCCON=13/29, a negative value for ionizing_core is required.
 					Cannot be used in conjunction with 'eirene_ank_mods'.
 					Use of this switch is not allowed if the core boundary condition is not of a flux type. Moreover, certain boundary conditions expressly include the flux of neutrals already (BCCON = 6, 19, 21, 23, 26, or 27), in which case use of this switch is redundant and should be avoided.
 				</description>
@@ -3500,6 +3500,28 @@
 				<type>real</type>
 				<description>
 					Potential drop used for BCENI/E = 15 when the potential equation is not solved (pot_eq.ne.1), in units of the local electron temperature.
+				</description>
+			</switch>
+			<switch>
+				<name>afn_ionising_core</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, this switch activates the ionising core option for AFN. This is a translation of the eirene ionising core option into a fluid description.
+					It is only compatible with the following core BC: a zero-flux BC for the plasma density (BCCON=8;conpar(is,ib,1)=0); a leakage BC for neutral density with leakage factor -1/4 (BCCON=10;conpar(is,ib,1)=-0.25).
+					The switch has no effect if any other values of BCCON are used at the core boundary.
+					This is equivalent to assuming that a neutral flux equal to the one-sided Maxwellian particle flux 1/4*nn*v_th leaks into the core, and this same flux is sent back into the domain as ions.
+				</description>
+			</switch>
+			<switch>
+				<name>afn_timedep_puff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to a positive integer value, this switch allows to specify an arbitrary AFN puff time trace through the input file puff.dat.
+					The input file should contain a list of puff values (s^{-1}), each corresponding to a subsequent time step, longer or equal than the total number of time-steps specified with b2mndr_ntim.
+                    The positive integer value assigned to the switch should correspond to the boundary index IB in b2.boundary.parameters where the puff is desired.
+					This option only works with BCCON=8. The flux conpar(is,ib,1) specified in b2.boundary.parameters will be overwritten by the values in puff.dat.
 				</description>
 			</switch>
 			<switchgroup>

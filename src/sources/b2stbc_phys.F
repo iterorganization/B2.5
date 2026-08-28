@@ -158,6 +158,10 @@
       real (kind=R8) :: harm, upwind
       external harm, upwind
 #endif
+      real (kind=R8) :: timedep_puff(0:switch%ntim-1), core_flux
+      character*27 filename
+      integer itim_
+      logical lexist
 *-----------------------------------------------------------------------
 *.computation
 
@@ -952,12 +956,55 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             US   = US + geo%fcS(iFc)
           enddo
+          ! time-dependent AFN puff option
+          if (switch%afn_timedep_puff.eq.IB) then ! switch must be set to the index specified in b2.boundary.parameters of the boundary where time-dependent puff is desired
+            filename='puff.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,*) (timedep_puff(:))
+            close(70)
+            itim_ = int(tim/switch%dtim)
+            call xertst(itim_.ge.0.and.itim_.le.switch%ntim,
+     &                  'error in puff.dat input file!')
+            conpar(is,iB,1) = timedep_puff(itim_)
+            call xertst(conpar(is,iB,1).ge.0.0_R8,
+     &                  'negative puff is not allowed in puff.dat!')
+            write(*,'(a,1p,g14.7,a,1p,g14.7,a)')
+     &            'Using puff equal to ', CONPAR(IS,IB,1), 
+     &            ' at time ', tim, ' '
+          endif
+          totpar = conpar(is,ib,1)
+          ! ionising core options
+          if (switch%ionising_core.ne.0.or.switch%afn_ionising_core        ! if ionizing core activated
+     &        .and.mpg%cvOnClosedSurface(iCv1)) then                       ! if the last guard cell belongs to a closed surface
+            if (switch%afn_ionising_core.eq.1) then                        ! with AFN conpar(is,ib,3) must be computed here, with Eirene it is done in b2mod_eirene
+
+              core_flux=0.0_R8
+              do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over CVs of core boundary
+                iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+                iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+                core_flux   = core_flux +
+     &            (dv%fna(iFc,0,0)+dv%fna(iFc,1,0))*                       ! is = 0 atom flux through boundary (fixed with leakage BC for AFN to one-sided Maxwellian particle flux)
+     &            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+              enddo
+              conpar(is,ib,3) = core_flux
+              write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     &              'afn_ionising_core: conpar(is,ib,3) = ',
+     &              conpar(is,ib,3),' for is,ib = ',is,ib
+            else
+              write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     &              'eirene_ionising_core: conpar(is,ib,3) = ',
+     &             conpar(is,ib,3),' for is,ib = ',is,ib
+            endif
+            totpar = totpar + conpar(is,ib,3) ! add recycled ion flux
+          endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
-     .        conpar(is,iB,1)/US*geo%fcS(iFc)
+     .        totpar/US*geo%fcS(iFc)
             srw%sna0(iCv1,1,is) = 0.0_R8
             sna0_no_mdf(iCv1,0,is) = sna0_no_mdf(iCv1,0,is) +
      .        srw%sna0(iCv1,0,is)
@@ -1041,6 +1088,11 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      .        'ionising_core switch usage inconsistent with BCCON = 10')
              call xertst (conpar(is,ib,2).ge.0.0_R8,                    !lkw 30.06.2022
      .        'For BCCON = 10, CONPAR(,,2) should not be negative')
+             if (switch%afn_ionising_core.eq.1) then
+               call xertst (conpar(is,ib,1).eq.-0.25_R8,
+     &           'For afn ionizing core to be correct,' // 
+     &           'leakage factor for neutrals must be -0.25!')
+             endif
           endif
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
@@ -1049,11 +1101,18 @@ cwdk      compatibility for E/W boundaries
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the plasma cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = geo%fcS(iFc)*
-     &         sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
-     &         (am(is)*mp))*conpar(is,ib,1)
-            sna0_no_mdf(iCv1,:,is) =
-     &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
+            if (.not.is_neutral(is)) then
+              srw%sna0(iCv1,1,is) = geo%fcS(iFc)*
+     &          sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
+     &          (am(is)*mp))*conpar(is,ib,1)
+              sna0_no_mdf(iCv1,:,is) =
+     &          sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
+            elseif (is_neutral(is)) then ! using one-sided particle flux from Maxwellian distribution
+              srw%sna0(iCv1,1,is) = geo%fcS(iFc)*
+     &          sqrt(8*pl%tn(iCv1)/(pi*am(is)*mp))*conpar(is,ib,1) ! conpar(is,ib,1) = -1/4
+              sna0_no_mdf(iCv1,:,is) =
+     &          sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
+            endif
             if (switch%mdf_fnb.eq.0) then
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
      &          max(0.0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -1236,7 +1295,7 @@ cwdk      compatibility for E/W boundaries
      2       ' for species ',IS,' with parameters ',
      3       CONPAR(IS,IB,1),CONPAR(IS,IB,2)
             icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
-            if (switch%ionising_core.gt.0) write(*,*)
+            if (switch%ionising_core.ne.0) write(*,*)
      .       'imposed flux adapted due to ionising_core switch usage'
           endif
 *       ..compute average density on boundary
@@ -5784,6 +5843,7 @@ cxpb code segment analog to b2tfhi
         endif
         do ibc = 1, mpg%bcCvP(ib,2)
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8

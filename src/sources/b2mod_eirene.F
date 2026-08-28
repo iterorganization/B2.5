@@ -4205,7 +4205,8 @@ cxpb  core recycling into ions of the highest ionisation stage
         do j = 1, nnatmi
           is = ishigh(j)
 cnh also ionising core option for bccon=29
-          if(bccon(is,ib).eq.13.or.bccon(is,ib).eq.29) then
+          if(bccon(is,ib).eq.13.or.bccon(is,ib).eq.29
+     &        .or.bccon(is,ib).eq.8) then
             found = .true.
             conpar(is,ib,3) = conpar(is,ib,3) + core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)

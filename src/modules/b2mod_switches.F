@@ -70,6 +70,8 @@ c Advanced fluid neutral models
       integer :: afn_bcs_use_coarse
       integer :: afn_vnn
       integer :: afn_vnn_ndiff
+      integer :: afn_ionising_core
+      integer :: afn_timedep_puff
 
 c Zhdanov closure switches
       integer :: Zhdanov_closure
@@ -372,6 +374,9 @@ c hard limit velocities
       real(kind=R8) :: ion_vlct_restrict_ua
 
 c MMS
+      integer :: use_mms
+      integer :: equation_sources
+      integer :: boundary_sources
       integer:: set_na_numerical
       integer:: set_ua_numerical
       integer:: set_ti_numerical
@@ -578,9 +583,8 @@ c b2mndr
       real (kind=R8) :: b2mndr_hz
       real (kind=R8) :: b2mndr_stim
       real (kind=R8) :: neutral_rescale
-      integer :: use_mms
-      integer :: equation_sources
-      integer :: boundary_sources
+      integer :: ntim
+      real (kind=R8) :: dtim
 
 c b2ag
       real (kind=R8) :: b2agmt_width
@@ -711,6 +715,8 @@ c Advanced fluid neutral models
       s % afn_bcs_use_coarse = 1
       s % afn_vnn = 1
       s % afn_vnn_ndiff = 0
+      s % afn_ionising_core = 0
+      s % afn_timedep_puff = 0
 
 c Zhdanov closure switches
       s % Zhdanov_closure = 0
@@ -1001,6 +1007,10 @@ c Zhdanov closure switches
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
 
+c MMS
+      s % use_mms = 0
+      s % equation_sources = 0
+      s % boundary_sources = 0
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
       s % set_te_numerical = 0
@@ -1255,9 +1265,8 @@ c b2mndr
       s % b2mndr_hz = 1.0_R8
       s % b2mndr_stim = 0.0_R8
       s % neutral_rescale = 1.0_R8
-      s % use_mms = 0
-      s % equation_sources = 0
-      s % boundary_sources = 0
+      s % ntim = 1
+      s % dtim = 1.0_R8
 
 c b2ag
       s % b2agmt_width = 1.0_R8
@@ -1388,6 +1397,8 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
       call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
       call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
+      call ipgeti ('afn_ionising_core',s % afn_ionising_core)
+      call ipgeti ('afn_timedep_puff',s % afn_timedep_puff)
 
 c Zhdanov closure
       call ipgeti ('b2tral_Zhdanov_closure', s % Zhdanov_closure)
@@ -1707,6 +1718,9 @@ c hard limit velocities
      &                                         s % ion_vlct_restrict_M)
 
 c MMS
+      call ipgeti ('b2mndr_use_mms', s % use_mms)
+      call ipgeti ('b2mndr_equation_sources', s % equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s % boundary_sources)
       call ipgeti ('b2mndr_set_na_numerical', s % set_na_numerical)
       call ipgeti ('b2mndr_set_ua_numerical', s % set_ua_numerical)
       call ipgeti ('b2mndr_set_te_numerical', s % set_te_numerical)
@@ -2028,9 +2042,8 @@ c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s % b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s % neutral_rescale)
-      call ipgeti ('b2mndr_use_mms', s % use_mms)
-      call ipgeti ('b2mndr_equation_sources', s % equation_sources)
-      call ipgeti ('b2mndr_boundary_sources', s % boundary_sources)
+      call ipgeti ('b2mndr_ntim', s % ntim)
+      call ipgetr ('b2mndr_dtim', s % dtim)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s % b2agmt_width)
@@ -2730,6 +2743,13 @@ c AFN neutral model
       if(s%AFN_out.ne.0.and.s%recycle_afn.eq.0) then
         call xerrab('b2stbr_recycle_afn should be 1 when writing '//
      &   'AFN output')
+      endif
+      if(s%afn.eq.0.and.s%afn_ionising_core.ne.0) then
+        call xerrab('AFN ionising core can only be used with AFN on!')
+      endif
+      if(s%afn.eq.0.and.s%afn_timedep_puff.ne.0) then
+        call xerrab('AFN time-dependent puff can only be used ' //
+     &   'with AFN on!')
       endif
 
 c spatially hybrid neutrals
