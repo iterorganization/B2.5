@@ -1,6 +1,7 @@
       subroutine b2mds(nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep,BoRiS)
       use b2mod_types
       use b2mod_geo
+      use b2mod_time
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -378,10 +379,12 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (0.le.sput_phys_col.and.sput_phys_col.le.9,
      1 'faulty b2stbr_sput_phys_col')
       call ipgeti ('b2stbr_sput_phys_model', sput_phys_model)
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
       call get_boundary_namelist
-      if (boundary_namelist.eq.1)
-     > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx, ny, ns, tim)
+      else
+        call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      endif
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in b2mod_dimensions')
       call xertst (nniso.le.nnisod,
      . 'increase DEF_NISO in b2mod_dimensions')

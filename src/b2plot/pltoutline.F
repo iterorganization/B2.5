@@ -4,8 +4,9 @@ c
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_indirect
+      use b2mod_boundary_namelist
       implicit none
-      integer ix,iy
+      integer ib,ix,iy
       logical physical
 
 c       call gslwsc_d(1.0_R8)
@@ -35,6 +36,37 @@ c       call gslwsc_d(1.0_R8)
      1                    crx(ix,iy,3),cry(ix,iy,3))
           enddo
         enddo
+        do ib=1,nbc
+          if (bcchar(ib).eq.'S') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(crx(bc_list_x(ix,ib),bc_list_y(ix,ib),2),
+     1                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),2),
+     2                     crx(bc_list_x(ix,ib),bc_list_y(ix,ib),3),
+     3                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),3))
+            end do
+          else if (bcchar(ib).eq.'N') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(crx(bc_list_x(ix,ib),bc_list_y(ix,ib),0),
+     1                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),0),
+     2                     crx(bc_list_x(ix,ib),bc_list_y(ix,ib),1),
+     3                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
+            end do
+          else if (bcchar(ib).eq.'W') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(crx(bc_list_x(ix,ib),bc_list_y(ix,ib),1),
+     1                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),1),
+     2                     crx(bc_list_x(ix,ib),bc_list_y(ix,ib),3),
+     3                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),3))
+            end do
+          else if (bcchar(ib).eq.'E') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(crx(bc_list_x(ix,ib),bc_list_y(ix,ib),0),
+     1                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),0),
+     2                     crx(bc_list_x(ix,ib),bc_list_y(ix,ib),2),
+     3                     cry(bc_list_x(ix,ib),bc_list_y(ix,ib),2))
+            end do
+          end if
+        enddo
       else
         do ix=-1,nx
           do iy=-1,ny
@@ -55,6 +87,37 @@ c       call gslwsc_d(1.0_R8)
      >       call lined_d(xx(ix,1)       ,yy(iy,1)+1.0_R8,
      1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
           enddo
+        enddo
+        do ib=1,nbc
+          if (bcchar(ib).eq.'S') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(xx(bc_list_x(ix,ib),1),
+     1                     yy(bc_list_y(ix,ib),1)+1.0_R8,
+     2                     xx(bc_list_x(ix,ib),1)+1.0_R8,
+     3                     yy(bc_list_y(ix,ib),1)+1.0_R8)
+            end do
+          else if (bcchar(ib).eq.'N') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(xx(bc_list_x(ix,ib),1),
+     1                     yy(bc_list_y(ix,ib),1),
+     2                     xx(bc_list_x(ix,ib),1)+1.0_R8,
+     3                     yy(bc_list_y(ix,ib),1))
+            end do
+          else if (bcchar(ib).eq.'W') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(xx(bc_list_x(ix,ib),1)+1.0_R8,
+     1                     yy(bc_list_y(ix,ib),1),
+     2                     xx(bc_list_x(ix,ib),1)+1.0_R8,
+     3                     yy(bc_list_y(ix,ib),1)+1.0_R8)
+            end do
+          else if (bcchar(ib).eq.'E') then
+            do ix = 1, bc_list_size(ib)
+              call lined_d(xx(bc_list_x(ix,ib),1),
+     1                     yy(bc_list_y(ix,ib),1),
+     2                     xx(bc_list_x(ix,ib),1),
+     3                     yy(bc_list_y(ix,ib),1)+1.0_R8)
+            end do
+          end if
         enddo
       endif
 #ifndef PLPLOT

@@ -257,7 +257,8 @@
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
        do iy = 0, ny-1
         do ix = 0, nx-1
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &      topiy(ix,iy).ne.ny+1) then
           shest(ix,iy,0) = shest(ix,iy,0)-
      &    (ne(topix(ix,iy),topiy(ix,iy))*te(topix(ix,iy),topiy(ix,iy))
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
@@ -402,7 +403,8 @@
       b2sihs_exbe=0.0_R8
       do iy = 0, ny-1
        do ix = 0, nx-1
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
+        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &     topiy(ix,iy).ne.ny+1) then                                 !srv 26.11.02
 !         wrk0(ix,iy) = bb(ix,iy,3)*vol(ix,iy)/hx(ix,iy)/hy(ix,iy)*(
 !     &      (po(topix(ix,iy),topiy(ix,iy))-
 !     &       po(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -589,7 +591,8 @@ cwdk compute radial differences of ua at cell faces
         enddo                                                         !srv 28.08.02 21.07.05 16.10.17 }
         do iy = 0, ny-1
          do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &       topiy(ix,iy).ne.ny+1) then                               !srv 26.11.02
            t0 = phm2*(1.0_R8-BoRiS)*
      &       (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))        !srv 21.07.05 }
      &           *0.5e0_R8

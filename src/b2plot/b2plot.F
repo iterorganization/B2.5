@@ -784,7 +784,13 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
         enddo
       enddo
 c
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+cxpb initialize the data necessary for boundary conditions
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx, ny, ns, tim)
+      else
+        call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      endif
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
       call xertst(nbc.le.nbcd,
@@ -3794,7 +3800,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           call copy(fchdia(:,:,1,1),1.0_R8,nz,textbl)
         case ('niso')
-          description='Isolating region'
+          description='Isolated regions'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
@@ -3805,9 +3811,10 @@ c     assumes that bb is OK for 1d cases
             do iy=nyiso1(iso),nyiso2(iso)
               do ix=nxiso1(iso),nxiso2(iso)
                 if(mach(ix,iy,0) .gt. 0.0_R8) then
-                  write(*,*) 'Overlapping isolating region in cell ',
-     2                          ix,iy,' for isolating regions ',
-     3                          nint(mach(ix,iy,0)),' and ',iso
+                  write(*,'(a,2i4,a,i2,a,i2)')
+     1              'Overlapping isolated region in cell ',
+     2               ix,iy,' for isolated regions ',
+     3               nint(mach(ix,iy,0)),' and ',iso
                 else
                   mach(ix,iy,0)=iso
                 endif
@@ -3826,10 +3833,10 @@ c     assumes that bb is OK for 1d cases
           do ibc=1,nbc
             do ix = 1, bc_list_size(ibc)
               if (mach(bc_list_x(ix,ibc),bc_list_y(ix,ibc),0).ne.0) then
-                write(*,*)
+                write(*,'(a,2i4,a,i2,a,i2)')
      1           'Overlapping boundary conditions in cell ',
      2            bc_list_x(ix,ibc),bc_list_y(ix,ibc),
-     3            ' for boundary condition ',
+     3            ' for boundary conditions ',
      4            nint(mach(bc_list_x(ix,ibc),bc_list_y(ix,ibc),0)),
      5            ' and ',ibc
               else
@@ -3853,10 +3860,10 @@ c     assumes that bb is OK for 1d cases
               do ix = 1, rc_list_size(ibc)
                 if (mach(rc_list_x(ix,ibc),rc_list_y(ix,ibc),0).ne.0)
      >           then
-                  write(*,*)
+                  write(*,'(a,2i4,a,i2,a,i2)')
      1             'Overlapping recycling conditions in cell ',
      2              rc_list_x(ix,ibc),rc_list_y(ix,ibc),
-     3              ' for recycling condition ',
+     3              ' for recycling conditions ',
      4              nint(mach(rc_list_x(ix,ibc),rc_list_y(ix,ibc),0)),
      5              ' and ',ibc
                 else

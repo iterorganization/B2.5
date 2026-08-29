@@ -1536,8 +1536,12 @@ c 2002-09-11: logic revised
 *   ..bundling values
       filename='b2.boundary.parameters'
       call find_file(filename,todo)
-      if (boundary_namelist.eq.1.or.todo)
-     > call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      call get_boundary_namelist
+      if (boundary_namelist.eq.1.or.todo) then
+        call initialize_b2mod_boundary(nx, ny, ns, tim)
+      else
+        call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      endif
       filename='b2.sputter_save.parameters'
       call find_file(filename,sputter_namelist_used)
       filename='b2.wall_save.parameters'
@@ -13425,6 +13429,12 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
         else if (xory.eq.2) then   ! do other easy iy cases
          if (iy.eq.0) then
           conformal_convert=0
+         else if (iy.eq.ny-1) then
+          conformal_convert=ny1-1
+         else if (nncut.eq.0 .and. iy.eq.jsep) then
+          conformal_convert=jsep1
+         else if (nncut.eq.0 .and. iy.eq.jsep+1) then
+          conformal_convert=jsep1+1
          else if (nncut.ge.1 .and. iy.eq.topcut(1)) then
           conformal_convert=topcut1(1)
          else if (nncut.ge.1 .and. iy.eq.topcut(1)+1) then
@@ -13433,21 +13443,17 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
           conformal_convert=topcut1(2)
          else if (nncut.eq.2 .and. iy.eq.topcut(2)+1) then
           conformal_convert=topcut1(2)+1
-         else if (nncut.eq.1 .and. periodic_bc.eq.1 .and.
-     .    iy.eq.inseliy) then
-          conformal_convert=inseliy1
-         else if (nncut.eq.0 .and. periodic_bc.eq.1 .and.
-     .    iy.eq.jsep-1) then
-          conformal_convert=jsep1-1
-         else if (nncut.eq.0 .and. periodic_bc.eq.1 .and.
-     .    iy.eq.jsep) then
-          conformal_convert=jsep1
-         else if (iy.eq.ny-1) then
-          conformal_convert=ny1-1
-         else if (nncut.eq.0) then
+         else if (nncut.eq.0 .and. jsep.eq.-2) then
           nsize = ny
           nsize1 = ny1
           conformal_convert = convert_position(iy,nsize,nsize1,0,atend)
+         else if (nncut.eq.0 .and. iy.lt.jsep) then
+          nsize = jsep
+          nsize1 = jsep1
+          conformal_convert = convert_position(iy,nsize,nsize1,2,atend)
+         else if (nncut.eq.1 .and. periodic_bc.eq.1 .and.
+     .    iy.eq.inseliy) then
+          conformal_convert=inseliy1
          else if (nncut.eq.1 .and. iy.lt.topcut(1)) then
           nsize = topcut(1)
           nsize1 = topcut1(1)
@@ -13463,6 +13469,11 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
           conformal_convert = min(topcut1(1),topcut1(2)) +
      .     convert_position(iy-min(topcut(1),topcut(2)),
      .      nsize,nsize1,3,atend)
+         else if (nncut.eq.0 .and. iy.gt.jsep) then
+          nsize = ny-jsep
+          nsize1 = ny1-jsep1
+          conformal_convert = jsep1 +
+     .     convert_position(iy-jsep,nsize,nsize1,2,atend)
          else if (nncut.eq.2 .and. iy.gt.max(topcut(1),topcut(2))) then
           nsize = ny-max(topcut(1),topcut(2))
           nsize1 = ny1-max(topcut1(1),topcut1(2))

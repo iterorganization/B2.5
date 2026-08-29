@@ -1272,7 +1272,12 @@ c.. Test consistency with physical edges within the computational domain
       coincide = .true.
       do ib = 1, nbc
         do ix = 1, bc_list_size(ib)
-          bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
+          if (bc(bc_list_x(ix,ib),bc_list_y(ix,ib)).eq.0) then
+            bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
+          else
+            bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib*100 +
+     &       bc(bc_list_x(ix,ib),bc_list_y(ix,ib))
+          end if
         end do
       end do
       do ib = 1, nstrai
@@ -1283,8 +1288,15 @@ c.. Test consistency with physical edges within the computational domain
         end do
         lbcstra(ib) = bc(rc_list_x(1,ib),rc_list_y(1,ib))
         do ix = 2, rc_list_size(ib)
-          coincide(ib) = coincide(ib) .and.
-     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.lbcstra(ib)
+          coincide(ib) = coincide(ib) .and. (
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.lbcstra(ib) .or.
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.
+     &                                     mod(lbcstra(ib),100) .or.
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.(lbcstra(ib)/100)
+     &      .or.
+     &     mod(bc(rc_list_x(ix,ib),rc_list_y(ix,ib)),100).eq.
+     &                                              lbcstra(ib) .or.
+     &    (bc(rc_list_x(ix,ib),rc_list_y(ix,ib))/100).eq.lbcstra(ib) )
         end do
       end do
       do ib = 1, nstrai

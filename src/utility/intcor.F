@@ -232,7 +232,8 @@ cxpb Check that this is a standard X-point                               !xpb
       endif
 
 c special treatment of diverted island X-points                          !xpb
-      do iy = -1, ny-1                                                   !xpb
+      if (nnreg(0).eq.5) then
+       do iy = -1, ny-1                                                  !xpb
         do ix = -1, nx-1                                                 !xpb
           if(topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) then  !xpb
             ix1=topix(rightix(ix,iy),rightiy(ix,iy))                     !xpb
@@ -255,10 +256,12 @@ c special treatment of diverted island X-points                          !xpb
 cxpb No corner(ix2,iy2) is assigned as this would map into a dead cell   !xpb
           endif                                                          !xpb
         enddo                                                            !xpb
-      enddo                                                              !xpb
+       enddo                                                             !xpb
+      endif
 
 c special treatment of limiter tangency X-points                         !xpb
-      do iy = 0, ny-1                                                    !xpb
+      if (nncut.eq.0) then
+       do iy = 0, ny-1                                                   !xpb
         do ix = -1, nx-1                                                 !xpb
           if(bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).eq.iy
      &     .and. ny.gt.1) then                                           !xpb
@@ -266,7 +269,8 @@ c special treatment of limiter tangency X-points                         !xpb
             iy1=rightiy(ix,iy)                                           !xpb
             ix2=bottomix(ix,iy)                                          !xpb
             iy2=bottomiy(ix,iy)
-            corner(ix1,iy1)=(centre(ix1,iy1)*vol(ix2,iy)+                !xpb
+            if (topiy(ix1,iy1).ne.ny+1) then
+             corner(ix1,iy1)=(centre(ix1,iy1)*vol(ix2,iy)+               !xpb
      2        centre(topix(ix1,iy1),topiy(ix1,iy1))*                     !xpb
      2        vol(leftix(ix2,iy),leftiy(ix2,iy))+                        !xpb
      3        centre(leftix(ix1,iy),leftiy(ix1,iy))*                     !xpb
@@ -280,10 +284,13 @@ c special treatment of limiter tangency X-points                         !xpb
      3        vol(leftix(ix1,iy1),leftiy(ix1,iy1))+vol(ix1,iy1)+         !xpb
      5        vol(topix(ix1,iy1),topiy(ix1,iy1))+                        !xpb
      6        vol(leftix(ix1,iy),leftiy(ix1,iy)))                        !xpb
-            corner(ix2,iy2)=corner(ix1,iy1)
+             corner(ix2,iy2)=corner(ix1,iy1)
+            endif
           endif                                                          !xpb
         enddo                                                            !xpb
-      enddo                                                              !xpb
+       enddo                                                             !xpb
+      endif
 #endif
+
       return
       end subroutine intcor
