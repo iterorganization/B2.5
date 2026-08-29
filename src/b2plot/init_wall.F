@@ -59,19 +59,25 @@ cxpb  Northern boundaries (excluding diverted island)
       ix = -1
       ixn = rightix(ix,iy)
       iyn = rightiy(ix,iy)
-      if (rightix(ixn,iyn).ne.nx+1) then
-         idir = 2               ! 0 : left, 1: bottom, 2: right, 3: top
+      if (rightix(ixn,iyn).ne.nx+1 .and. region(ixn,iyn,0).ne.0) then
+        idir = 2               ! 0 : left, 1: bottom, 2: right, 3: top
       else
 ! we have the special case that there are no cells on the top
-         idir = 1
-         ixn = bottomix(ixn,iyn)
-         iyn = bottomiy(ixn,iyn)
-         write(*,*) 'Top skipped'
+        idir = 1
+        ixn = bottomix(ixn,iyn)
+        iyn = bottomiy(ixn,iyn)
+        write(*,*) 'Top skipped'
+        do while ( region(ixn,iyn,0).eq.0 .and. iyn.ge.0 )
+! this was a dead zone, find the start of the real grid
+          idir = 2
+          ixn = bottomix(ixn,iyn)
+          iyn = bottomiy(ixn,iyn)
+        end do
       endif
       if(debug_init_wall.gt.0) then
         write(*,'(a,i3,1x,i3,1x,i1)')
      &   'init_wall(debug) start: ixn, iyn, idir ',
-     &   ixn, iyn, idir
+     &    ixn, iyn, idir
       endif
       nsegments = 1
       wall_begin(1) = 1
@@ -79,15 +85,15 @@ cxpb  Northern boundaries (excluding diverted island)
         nbnd = nbnd + 1
         imapx_tmp(nbnd) = ixn
         imapy_tmp(nbnd) = iyn
-        xymap_tmp(ixn,iyn)= nbnd
+        xymap_tmp(ixn,iyn) = nbnd
         ix = ixn
         iy = iyn
         DIRVALUE: select case (idir)
           case(0)  ! left
-            r1(nbnd)=crx(ix,iy,3)
-            z1(nbnd)=cry(ix,iy,3)
-            r2(nbnd)=crx(ix,iy,2)
-            z2(nbnd)=cry(ix,iy,2)
+            r1(nbnd) = crx(ix,iy,3)
+            z1(nbnd) = cry(ix,iy,3)
+            r2(nbnd) = crx(ix,iy,2)
+            z2(nbnd) = cry(ix,iy,2)
             plate_area(nbnd) = gs(topix(ix,iy),topiy(ix,iy),1)
             ixn = leftix(ix,iy)
             iyn = leftiy(ix,iy)
@@ -98,15 +104,15 @@ cxpb  Northern boundaries (excluding diverted island)
               iyn = leftiy(topix(ix,iy),topiy(ix,iy))
               if(iyn.eq.ny) then
 ! special case for 1d linear device
-                 write(*,*) 'Special treatment: 1d linear device'
-                 iyn = iy+1
+                write(*,*) 'Special treatment: 1d linear device'
+                iyn = iy+1
               endif
               wall_end(nsegments) = nbnd
               nsegments = nsegments + 1
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=0 (left) to idir=3 (top)'
               endif
             elseif (bottomiy(ixn,iyn).ne.-2) then
@@ -118,20 +124,21 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=0 (left) to idir=1 (bottom)'
               endif
             endif
           case(1)  ! bottom
             plate_area(nbnd) = gs(ix,iy,0)
-            r1(nbnd)=crx(ix,iy,2)
-            z1(nbnd)=cry(ix,iy,2)
-            r2(nbnd)=crx(ix,iy,0)
-            z2(nbnd)=cry(ix,iy,0)
+            r1(nbnd) = crx(ix,iy,2)
+            z1(nbnd) = cry(ix,iy,2)
+            r2(nbnd) = crx(ix,iy,0)
+            z2(nbnd) = cry(ix,iy,0)
             ixn = bottomix(ix,iy)
             iyn = bottomiy(ix,iy)
             call check_ok(nx, ny, ixn, iyn, idir)
-            if (bottomiy(ixn,iyn).eq.-2) then
+            if (bottomiy(ixn,iyn).eq.-2 .and.
+     &          rightix(ixn,iyn).eq.nx+1) then
               idir = 0
               ixn = bottomix(leftix(ix,iy),leftiy(ix,iy))
               iyn = bottomiy(leftix(ix,iy),leftiy(ix,iy))
@@ -140,7 +147,7 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug) (acute corner): '//
      &           'switching from idir=1 (bottom) to idir=0 (left)'
               endif
             else if (leftix(ixn,iyn).eq.-2) then
@@ -150,19 +157,38 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=1 (bottom) to idir=3 (top)'
               endif
             else if (rightix(ixn,iyn).ne.nx+1) then
+              ixn = bottomix(ix,iy)
+              iyn = bottomiy(ix,iy)
+              if(debug_init_wall.gt.0) then
+                write(*,'(a,i3,1x,i3,1x,i1)')
+     &          'init_wall(debug) continue: ixn, iyn, idir ',
+     *           ixn, iyn, idir
+              endif
+              nbnd = nbnd + 1
+              imapx_tmp(nbnd) = ixn
+              imapy_tmp(nbnd) = iyn
+              xymap_tmp(ixn,iyn) = nbnd
+              ix = ixn
+              iy = iyn
+              plate_area(nbnd) = gs(ix,iy,1)
+              r1(nbnd) = crx(ix,iy,0)
+              z1(nbnd) = cry(ix,iy,0)
+              r2(nbnd) = crx(ix,iy,1)
+              z2(nbnd) = cry(ix,iy,1)
+              wall_end(nsegments) = nbnd
               idir = 2
-              ixn = rightix(bottomix(ix,iy),bottomiy(ix,iy))
-              iyn = rightiy(bottomix(ix,iy),bottomiy(ix,iy))
+              ixn = rightix(ix,iy)
+              iyn = rightiy(ix,iy)
               wall_end(nsegments) = nbnd
               nsegments = nsegments + 1
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug) (obtuse corner): '//
      &           'switching from idir=1 (bottom) to idir=2 (right)'
               endif
             elseif (iy.eq.iyn) then
@@ -176,20 +202,22 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=1 (bottom) to idir=0 (left)'
               endif
             endif
           case(2)  ! right
             plate_area(nbnd) = gs(ix,iy,1)
-            r1(nbnd)=crx(ix,iy,0)
-            z1(nbnd)=cry(ix,iy,0)
-            r2(nbnd)=crx(ix,iy,1)
-            z2(nbnd)=cry(ix,iy,1)
+            r1(nbnd) = crx(ix,iy,0)
+            z1(nbnd) = cry(ix,iy,0)
+            r2(nbnd) = crx(ix,iy,1)
+            z2(nbnd) = cry(ix,iy,1)
             ixn = rightix(ix,iy)
             iyn = rightiy(ix,iy)
             call check_ok(nx, ny, ixn, iyn, idir)
-            if (rightix(ixn,iyn).eq.nx+1) then
+            if (rightix(ixn,iyn).eq.nx+1 .and.
+     &          bottomiy(bottomix(ixn,iyn),bottomiy(ixn,iyn)).ne.iyn)
+     >       then
               idir = 1
               ixn = rightix(bottomix(ix,iy),bottomiy(ix,iy))
               iyn = rightiy(bottomix(ix,iy),bottomiy(ix,iy))
@@ -203,10 +231,11 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=2 (right) to idir=1 (bottom)'
               endif
-            else if (topiy(ixn,iyn).ne.ny+1) then
+            else if (topiy(ixn,iyn).ne.ny+1 .and.
+     &               bottomiy(ixn,iyn).eq.-2) then
               idir = 3
               ixn = topix(rightix(ix,iy),rightiy(ix,iy))
               iyn = topiy(rightix(ix,iy),rightiy(ix,iy))
@@ -215,16 +244,54 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug) (acute corner): '//
      &           'switching from idir=2 (right) to idir=3 (top)'
               endif
+            else if (topiy(ixn,iyn).ne.ny+1) then
+              ixn = rightix(ix,iy)
+              iyn = rightiy(ix,iy)
+              if(debug_init_wall.gt.0) then
+                write(*,'(a,i3,1x,i3,1x,i1)')
+     &          'init_wall(debug) continue: ixn, iyn, idir ',
+     *           ixn, iyn, idir
+              endif
+              nbnd = nbnd + 1
+              imapx_tmp(nbnd) = ixn
+              imapy_tmp(nbnd) = iyn
+              xymap_tmp(ixn,iyn) = nbnd
+              ix = ixn
+              iy = iyn
+              plate_area(nbnd) = gs(ix,iy,1)
+              r1(nbnd) = crx(ix,iy,0)
+              z1(nbnd) = cry(ix,iy,0)
+              r2(nbnd) = crx(ix,iy,1)
+              z2(nbnd) = cry(ix,iy,1)
+              wall_end(nsegments) = nbnd
+              idir = 3
+              ixn = topix(ix,iy)
+              iyn = topiy(ix,iy)
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+              if(debug_init_wall.gt.1) then
+                write(*,*)
+     &           'init_wall(debug) (obtuse corner): '//
+     &           'switching from idir=2 (right) to idir=3 (top)'
+              endif
+            else if (rightix(ixn,iyn).eq.nx+1) then
+              ixn = topix(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     .                    rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+              iyn = topiy(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     .                    rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
             endif
           case(3)  ! top
             plate_area(nbnd) = gs(rightix(ix,iy),rightiy(ix,iy),0)
-            r1(nbnd)=crx(ix,iy,1)
-            z1(nbnd)=cry(ix,iy,1)
-            r2(nbnd)=crx(ix,iy,3)
-            z2(nbnd)=cry(ix,iy,3)
+            r1(nbnd) = crx(ix,iy,1)
+            z1(nbnd) = cry(ix,iy,1)
+            r2(nbnd) = crx(ix,iy,3)
+            z2(nbnd) = cry(ix,iy,3)
             ixn = topix(ix,iy)
             iyn = topiy(ix,iy)
             call check_ok(nx, ny, ixn, iyn, idir)
@@ -237,7 +304,7 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=3 (top) to idir=2 (right)'
               endif
             else if (leftix(ixn,iyn).ne.-2) then
@@ -249,7 +316,7 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=3 (top) to idir=0 (left)'
               endif
             elseif (iy.eq.iyn) then
@@ -263,7 +330,7 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_begin(nsegments) = nbnd+1
               if(debug_init_wall.gt.1) then
                 write(*,*)
-     &           'init_wall(debug): ',
+     &           'init_wall(debug): '//
      &           'switching from idir=3 (top) to idir=2 (right)'
               endif
             endif
