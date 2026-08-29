@@ -176,7 +176,7 @@ cxpb  Standard case
           call intcor(nx,ny,weight,po,poc)                               !lk 12.12.07
           do iy = 0, ny-1
             do ix = 0, nx
-              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
+              if(leftix(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then    !srv 26.11.02
                veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)/               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1          (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))* ! signmf* !srv
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
@@ -219,7 +219,7 @@ cxpb  Standard case
           call intcor(nx,ny,weight,po,poc)                               !lk 12.12.07
           do iy = 0, ny-1
             do ix = 0, nx
-              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
+              if(leftix(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then    !srv 26.11.02
                 veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2              *(poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))*        !srv 13.05.16 }
      &           wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy)   ! IYS 04.03.2019
