@@ -91,14 +91,25 @@ cc molecule sources
      *  sn_mol_d(nCv), sn_mol_nd(nCv), sn_mol_di1(nCv),
      *  sn_mol_ic(nCv), sn_mol_ec(nCv), sn_mol_tot(nCv)
       real (kind=R8) :: 
+     !! parallel
      *  sm_mol_d(nCv), sm_mol_nd(nCv), sm_mol_di1(nCv),
      *  sm_mol_ic(nCv), sm_mol_ec(nCv), sm_mol_tot(nCv),
+     !! rad
      *  sm_mol_rad_d(nCv,0:1), sm_mol_rad_nd(nCv,0:1), 
      *  sm_mol_rad_di1(nCv,0:1), sm_mol_rad_ic(nCv,0:1),
      *  sm_mol_rad_ec(nCv,0:1), sm_mol_rad_tot(nCv,0:1),
+     !! dia
      *  sm_mol_dia_d(nCv,0:1), sm_mol_dia_nd(nCv,0:1), 
      *  sm_mol_dia_di1(nCv,0:1), sm_mol_dia_ic(nCv,0:1),
-     *  sm_mol_dia_ec(nCv,0:1), sm_mol_dia_tot(nCv,0:1)
+     *  sm_mol_dia_ec(nCv,0:1), sm_mol_dia_tot(nCv,0:1),
+     !! pol
+     *  sm_mol_pol_d(nCv,0:1), sm_mol_pol_nd(nCv,0:1), 
+     *  sm_mol_pol_di1(nCv,0:1), sm_mol_pol_ic(nCv,0:1),
+     *  sm_mol_pol_ec(nCv,0:1), sm_mol_pol_tot(nCv,0:1),
+     !! tor
+     *  sm_mol_tor_d(nCv,0:1), sm_mol_tor_nd(nCv,0:1), 
+     *  sm_mol_tor_di1(nCv,0:1), sm_mol_tor_ic(nCv,0:1),
+     *  sm_mol_tor_ec(nCv,0:1), sm_mol_tor_tot(nCv,0:1)
       real (kind=R8) :: 
      *  sh_mol_d(nCv), sh_mol_nd(nCv), sh_mol_di1(nCv),
      *  sh_mol_ic(nCv), sh_mol_ec(nCv), sh_mol_tot(nCv)
@@ -111,7 +122,8 @@ cc molecule sources
      *                  wrk(nCv), vsq(nCv), vsqi(nCv)
       real (kind=R8) :: t0, freac, num_a, den_a, a0, mr, s0, t0_i, t0_a,
      *                  t0_mol, tau_inv, beta_num, beta_denom, m_d2,
-     *                  total_mol_sink, mfp(nCv), vth, t0_rad, t0_dia
+     *                  total_mol_sink, mfp(nCv), vth, t0_rad, t0_dia,
+     *                  t0_pol, t0_tor
       real (kind=R8), allocatable :: alpha(:,:), nmi_new(:,:)
       real (kind=R8), parameter :: eps = 1e-10_R8, nm_fac = 1000.0_R8 
       real (kind=R8) :: fac_nlim(nCv,0:ns_mol-1), nm
@@ -201,6 +213,18 @@ cc molecule sources
       call sfill (nCv*2, 0.0_R8, sm_mol_dia_ic, 1)
       call sfill (nCv*2, 0.0_R8, sm_mol_dia_ec, 1)
 
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_d, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_nd, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_di1, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_ic, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_ec, 1)
+
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_d, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_nd, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_di1, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_ic, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_ec, 1)
+
       call sfill (nCv, 0.0_R8, sh_mol_d, 1)
       call sfill (nCv, 0.0_R8, sh_mol_nd, 1)
       call sfill (nCv, 0.0_R8, sh_mol_di1, 1)
@@ -212,7 +236,8 @@ cc molecule sources
       call sfill (nCv, 0.0_R8, sh_mol_tot, 1)
       call sfill (nCv*2, 0.0_R8, sm_mol_rad_tot, 1)
       call sfill (nCv*2, 0.0_R8, sm_mol_dia_tot, 1)
-
+      call sfill (nCv*2, 0.0_R8, sm_mol_pol_tot, 1)
+      call sfill (nCv*2, 0.0_R8, sm_mol_tor_tot, 1)
 
 cc temporary, total energy source, for benchmarking with matlab
       call sfill (nCv, 0.0_R8, se_mol_d, 1)
@@ -498,10 +523,11 @@ cc non-dissociative ionization
           t0 =  am_d2*mp*rate_nd(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
           sm_mol_nd(iCv) = -t0
           !! perpendicular directions
-          t0_rad =  am_d2*mp*rate_nd(iCv)
-          t0_dia =  am_d2*mp*rate_nd(iCv)
-          sm_mol_rad_nd(iCv,1) = -t0_rad
-          sm_mol_dia_nd(iCv,1) = -t0_dia
+          t0 =  am_d2*mp*rate_nd(iCv)
+          sm_mol_rad_nd(iCv,1) = -t0
+          sm_mol_dia_nd(iCv,1) = -t0
+          sm_mol_pol_nd(iCv,1) = -t0
+          sm_mol_tor_nd(iCv,1) = -t0
         enddo
       enddo
 
@@ -513,10 +539,11 @@ cc dissociation, parallel momentum source
           smo0_d(iCv,0,is_a) = t0
           sm_mol_d(iCv) = -t0
           !! perpendicular directions
-          t0_rad =  am_d2*mp*rate_d(iCv)
-          t0_dia =  am_d2*mp*rate_d(iCv)
-          sm_mol_rad_d(iCv,1) = -t0_rad
-          sm_mol_dia_d(iCv,1) = -t0_dia
+          t0 =  am_d2*mp*rate_d(iCv)
+          sm_mol_rad_d(iCv,1) = -t0
+          sm_mol_dia_d(iCv,1) = -t0
+          sm_mol_pol_d(iCv,1) = -t0
+          sm_mol_tor_d(iCv,1) = -t0
         enddo
       enddo
 
@@ -530,10 +557,11 @@ cc dissociative ionization (1), parallel momentum source
           smo0_di1(iCv,0,is_i) = 0.5_R8*t0
           sm_mol_di1(iCv) = -t0
           !! perpendicular direction
-          t0_rad =  am_d2*mp*rate_di1(iCv)
-          t0_dia =  am_d2*mp*rate_di1(iCv)
-          sm_mol_rad_di1(iCv,1) = -t0_rad
-          sm_mol_dia_di1(iCv,1) = -t0_dia
+          t0 =  am_d2*mp*rate_di1(iCv)
+          sm_mol_rad_di1(iCv,1) = -t0
+          sm_mol_dia_di1(iCv,1) = -t0
+          sm_mol_pol_di1(iCv,1) = -t0
+          sm_mol_tor_di1(iCv,1) = -t0
         enddo
       enddo
 
@@ -549,10 +577,11 @@ cc ion conversion, parallel momentum source
           t0 =  am_d2*mp*rate_ic(iCv)*u_mol(iCv,0)*geo%cvHz(iCv)
           sm_mol_ic(iCv) = -t0
           !! perpendicular
-          t0_rad =  am_d2*mp*rate_ic(iCv)
-          t0_dia =  am_d2*mp*rate_ic(iCv)
-          sm_mol_rad_ic(iCv,1) = -t0_rad
-          sm_mol_dia_ic(iCv,1) = -t0_dia
+          t0 =  am_d2*mp*rate_ic(iCv)
+          sm_mol_rad_ic(iCv,1) = -t0
+          sm_mol_dia_ic(iCv,1) = -t0
+          sm_mol_pol_ic(iCv,1) = -t0
+          sm_mol_tor_ic(iCv,1) = -t0
         enddo
       enddo
 
@@ -565,10 +594,22 @@ cc elastic collisions, parallel momentum source
           smo0_ec(iCv,0,is_i) = t0
           sm_mol_ec(iCv) = -t0
           !! perpendicular
-          t0_rad =  mr*rate_ec_m(iCv)
-          t0_dia =  mr*rate_ec_m(iCv)
-          sm_mol_rad_ec(iCv,1) = -t0_rad
-          sm_mol_dia_ec(iCv,1) = -t0_dia
+          t0 =  mr*rate_ec_m(iCv)
+          t0 =  mr*rate_ec_m(iCv)   
+          sm_mol_rad_ec(iCv,1) = -t0
+          sm_mol_dia_ec(iCv,1) = -t0
+          !! pol
+          t0_pol =  mr*rate_ec_m(iCv)*
+     .       (pit(iCv)*pl%ua(iCv,1))
+          sm_mol_pol_ec(iCv,0) = t0_pol 
+          t0_pol =  mr*rate_ec_m(iCv)
+          sm_mol_pol_ec(iCv,1) = -t0_pol 
+          !! tor
+          t0_tor =  mr*rate_ec_m(iCv)*
+     .       (pit2(iCv)*pl%ua(iCv,1))
+          sm_mol_tor_ec(iCv,0) = t0_tor 
+          t0_tor =  mr*rate_ec_m(iCv)
+          sm_mol_tor_ec(iCv,1) = -t0_tor
         enddo
       enddo
 
@@ -956,6 +997,10 @@ cc dissociative ionization (2), electron energy source
      .             sm_mol_rad_ic + sm_mol_rad_ec
       sm_mol_dia_tot = sm_mol_dia_d + sm_mol_dia_nd + sm_mol_dia_di1 + 
      .             sm_mol_dia_ic + sm_mol_dia_ec
+      sm_mol_pol_tot = sm_mol_pol_d + sm_mol_pol_nd + sm_mol_pol_di1 + 
+     .             sm_mol_pol_ic + sm_mol_pol_ec
+      sm_mol_tor_tot = sm_mol_tor_d + sm_mol_tor_nd + sm_mol_tor_di1 + 
+     .             sm_mol_tor_ic + sm_mol_tor_ec
 
       total_mol_sink = sum(sn_mol_tot)
       write(*,*) 'total volumetric sink of molecules'
@@ -965,10 +1010,14 @@ cc dissociative ionization (2), electron energy source
       sr_mol%sn_mol(:,0) = sr_mol%sn_mol(:,0) + 0.5_R8*sn_mol_tot
       sr_mol%sm_mol(:,0) = sr_mol%sm_mol(:,0) + 0.5_R8*sm_mol_tot
       sr_mol%sh_mol(:,0) = sr_mol%sh_mol(:,0) + 0.5_R8*sh_mol_tot
-      sr_mol%sm_mol_rad(:,0) = sr_mol%sm_mol_rad(:,0) +  !! here everytinng in 1?
+      sr_mol%sm_mol_rad(:,0) = sr_mol%sm_mol_rad(:,0) +  
      .                         sm_mol_rad_tot(:,0)
       sr_mol%sm_mol_dia(:,0) = sr_mol%sm_mol_dia(:,0) + 
      .                         sm_mol_dia_tot(:,0)
+      sr_mol%sm_mol_pol(:,0) = sr_mol%sm_mol_pol(:,0) +  
+     .                         sm_mol_pol_tot(:,0)
+      sr_mol%sm_mol_tor(:,0) = sr_mol%sm_mol_tor(:,0) + 
+     .                         sm_mol_tor_tot(:,0)
 
       sr_mol%sn_mol(:,1) = sr_mol%sn_mol(:,1) +
      .                     0.5_R8*sn_mol_tot/n_mol(:,0)
@@ -980,6 +1029,10 @@ cc dissociative ionization (2), electron energy source
      .                     sm_mol_rad_tot(:,1)
       sr_mol%sm_mol_dia(:,1) = sr_mol%sm_mol_dia(:,1) + 
      .                     sm_mol_dia_tot(:,1)
+      sr_mol%sm_mol_pol(:,1) = sr_mol%sm_mol_pol(:,1) + 
+     .                     sm_mol_pol_tot(:,1)
+      sr_mol%sm_mol_tor(:,1) = sr_mol%sm_mol_tor(:,1) + 
+     .                     sm_mol_tor_tot(:,1)
 
 
 !! Calculate time constant tau for use in the transport model
@@ -1185,6 +1238,14 @@ cc Molecules
      .                            'b2stfm_sm_dia0_mol')
         call my_out_us(70,nCv,0,sm_mol_dia_tot(:,1),
      .                            'b2stfm_sm_dia1_mol')
+        call my_out_us(70,nCv,0,sm_mol_pol_tot(:,0),
+     .                            'b2stfm_sm_pol0_mol')
+        call my_out_us(70,nCv,0,sm_mol_pol_tot(:,1),
+     .                            'b2stfm_sm_pol1_mol')
+        call my_out_us(70,nCv,0,sm_mol_tor_tot(:,0),
+     .                            'b2stfm_sm_tor0_mol')
+        call my_out_us(70,nCv,0,sm_mol_tor_tot(:,1),
+     .                            'b2stfm_sm_tor1_mol')
 c for debugging, maybe remove later 
         call my_out_us(70,nCv,0,sh_mol_d(:),
      .                            'b2stfm_sh_mol_d')

@@ -38,8 +38,8 @@
       integer :: iFc, meth, is_main_ion                                
       character chns*3                                                 
       real (kind=R8) :: nmf(nFc), pm(nCv), fn_mol0(nFc,0:1),
-     *   flo(nFc,0:1), term(nFc), flob0(nFc,0:1), conb0(nFc,0:1),
-     *   cdpm(nFc,0:1), cdpm_RC(nFc,0:1),  dpbm(nFc), dpm(nFc,0:1),
+     *   flo(nFc,0:1), term(nFc,0:1), flob0(nFc,0:1), conb0(nFc,0:1),
+     *   cdpm(nFc,0:1), cdpm_RC(nFc,0:1),  dpbm(nFc,0:1), dpm(nFc,0:1),
      *   flo0(nFc,0:1), con0(nFc,0:1), flo1(nFc,0:1), con1(nFc,0:1),
      *   flo_tmp(nFc, 0:1), con_tmp(nFc, 0:1, 0:4),
      *   nif(nFc), fnan(nFc,0:1), vif(nFc,0:1), nm_eq(nCv), nm_eqf(nFc),
@@ -48,9 +48,10 @@
      *   umf(nFc), wrk(nCv), wrkf(nFc,0:1), wrkVx(nVx), conv(nFc),
      *   dummy_fc0(nFc,0:1), dummy_fc1(nFc,0:1), zeroes_fc0(nFc,0:1),
      *   weight(nFc,2), kmpr(nCv), kmprv(nVx), pit(nFc), pit2(nFc),
-     *   coeff_vif(nFc), fn_dp(nFc,0:1), umf_rad(nFc), umf_dia(nFc)
+     *   coeff_vif(nFc), fn_dp(nFc,0:1), umf_rad(nFc), umf_dia(nFc),
+     .   umf_pol(nFc), umf_tor(nFc)
       real (kind=R8) ::                                     
-     *   dpmc(nCv)           !! poloidal pressure gradient at cell center
+     *   dpmc(nCv,0:1)           !! pressure gradient at cell center
       real (kind=R8) ::      !! only for postprocessing
      *  ww(nFc), vv(nFc), uu(nFc), 
      *  wwc(nCv), vvc(nCv), uuc(nCv), pitc(nCv), pit2c(nCv)  
@@ -89,7 +90,7 @@
 *     at cell centers
       pm = n_mol(:,0)*t_mol(:,0)
       call diff(nCv, nFc, nVx, 0, geo, mpg, pm, wrkVx, dpm)
-      call gradc_p(nCv, nFc, nVx, 1, geo, mpg, pm, wrkVx,
+      call gradc(nCv, nFc, nVx, 1, geo, mpg, pm, wrkVx,
      &  dpmc)
 
 *   ..precompute kmpr and its differences
@@ -101,10 +102,12 @@
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,u_mol(:,0),umf)
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,u_rad_mol(:,0),umf_rad)
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,u_dia_mol(:,0),umf_dia)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,u_pol_mol(:,0),umf_pol)
       else
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,u_mol(:,0),umf)
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,u_rad_mol(:,0),umf_rad)
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,u_dia_mol(:,0),umf_dia)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,u_pol_mol(:,0),umf_pol)
       endif
 
 *   ..quantities needed for the ion-convective part in the pressure-diffusion equation
@@ -131,7 +134,8 @@
       pit2 = dabs(geo%fcBb(:,2))/geo%fcBb(:,3) !! b_phi / B
       vif(:,0) = (vif(:,0)-uif*pit)/pit2
 
-      if (switch%b2tfn_mol_conv.eq.1) then
+      if (switch%b2tfn_mol_conv.eq.1.and.
+     .              switch%b2tfmol_3D_mom.ne.2) then
         conv = geo%fcPbs*umf
       else
         conv = 0.0_R8
@@ -148,8 +152,11 @@
         flo(:,1) = 0.0_R8
       endif
 
-      if (switch%b2tfmol_3D_mom.ne.0) then 
+      if (switch%b2tfmol_3D_mom.eq.1) then 
         flo(:,0) = flo(:,0) + umf_dia*geo%fcS*geo%fcQalf(:,0)*pit2 
+        flo(:,1) = flo(:,1) + umf_rad*geo%fcS*geo%fcQalf(:,1) 
+      elseif (switch%b2tfmol_3D_mom.eq.2) then
+        flo(:,0) = flo(:,0) + umf_pol*geo%fcS*geo%fcQalf(:,0)
         flo(:,1) = flo(:,1) + umf_rad*geo%fcS*geo%fcQalf(:,1) 
       endif
 
@@ -159,17 +166,41 @@
      &     dummy_fc0, dummy_fc1)
 
 *   ..compute Rhie-Chow term
-      do iFc = 1, nFc
-        cdpm_RC(iFc,0) = switch%b2npco_pcm1*0.5_R8*geo%fcPbs(iFc)*
-     &   (dv%pcc_mol(mpg%fcCv(iFc,1),1)*n_mol(mpg%fcCv(iFc,1),0) +
-     &    dv%pcc_mol(mpg%fcCv(iFc,2),1)*n_mol(mpg%fcCv(iFc,2),0))/
-     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
-        dpbm(iFc) = 0.5_R8*geo%fcQgam(iFc,0)*
-     &   (dpmc(mpg%fcCv(iFc,1)) + dpmc(mpg%fcCv(iFc,2)))*
-     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
-      enddo
-      cdpm_RC(:,1) = 0.0_R8
-      term   = -cdpm_RC(:,0)*(dpm(:,0) - dpbm)
+      if (switch%b2tfmol_3D_mom.lt.2) then
+        do iFc = 1, nFc
+          cdpm_RC(iFc,0) = switch%b2npco_pcm1*0.5_R8*geo%fcPbs(iFc)*
+     &     (dv%pcc_mol(mpg%fcCv(iFc,1),1)*n_mol(mpg%fcCv(iFc,1),0) +
+     &      dv%pcc_mol(mpg%fcCv(iFc,2),1)*n_mol(mpg%fcCv(iFc,2),0))/
+     &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+          dpbm(iFc,0) = 0.5_R8*geo%fcQgam(iFc,0)*
+     &     (dpmc(mpg%fcCv(iFc,1),0) + dpmc(mpg%fcCv(iFc,2),0))*
+     &     (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+        enddo
+        cdpm_RC(:,1) = 0.0_R8
+        term(:,0)   = -cdpm_RC(:,0)*(dpm(:,0) - dpbm(:,0))
+        term(:,1) = 0.0_R8
+      else
+        do iFc = 1, nFc
+          cdpm_RC(iFc,0) = switch%b2npco_pcm1*0.5_R8*geo%fcQalf(iFc,0)*
+     &                     geo%fcS(iFc)*
+     &     (dv%pcc_mol_pol(mpg%fcCv(iFc,1),1)*n_mol(mpg%fcCv(iFc,1),0) +
+     &      dv%pcc_mol_pol(mpg%fcCv(iFc,2),1)*n_mol(mpg%fcCv(iFc,2),0))/
+     &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+          cdpm_RC(iFc,1) = switch%b2npco_pcm1*0.5_R8*geo%fcQalf(iFc,1)*
+     &                     geo%fcS(iFc)*
+     &     (dv%pcc_mol_rad(mpg%fcCv(iFc,1),1)*n_mol(mpg%fcCv(iFc,1),0) +
+     &      dv%pcc_mol_rad(mpg%fcCv(iFc,2),1)*n_mol(mpg%fcCv(iFc,2),0))/
+     &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+          dpbm(iFc,0) = 0.5_R8*geo%fcQgam(iFc,0)*
+     &     (dpmc(mpg%fcCv(iFc,1),0) + dpmc(mpg%fcCv(iFc,2),0))*
+     &     (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+          dpbm(iFc,1) = 0.5_R8*geo%fcQgam(iFc,1)*
+     &     (dpmc(mpg%fcCv(iFc,1),1) + dpmc(mpg%fcCv(iFc,2),1))*
+     &     (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+        enddo
+        term(:,0)   = -cdpm_RC(:,0)*(dpm(:,0) - dpbm(:,0))
+        term(:,1)   = -cdpm_RC(:,1)*(dpm(:,1) - dpbm(:,1))
+      endif
 
 *   ..pressure-diffusion contribution
       if (switch%b2tfmol_3D_mom.eq.0) then 
@@ -182,8 +213,8 @@
 
 
 *   ..compute other fluxes
-      dv%fn_mol(:,0) = fn_mol0(:,0) + fn_dp(:,0) + term 
-      dv%fn_mol(:,1) = fn_mol0(:,1) + fn_dp(:,1)
+      dv%fn_mol(:,0) = fn_mol0(:,0) + fn_dp(:,0) + term(:,0) 
+      dv%fn_mol(:,1) = fn_mol0(:,1) + fn_dp(:,1) + term(:,1) 
 
       if (switch%b2tfmol_3D_mom.eq.0) then 
         dv%fn_mol_fcor(:,0) = fn_mol0(:,0)*geo%fcHz - 
@@ -254,8 +285,10 @@ c limit also these velocity components to avoid numerical issues
        wwc =sign(min(abs(wwc),um_max),wwc)
 
        if (switch%b2stfm_recompute_perp_vels.ne.0) then
-         u_pol_mol(:,0) = uuc
-         u_tor_mol(:,0) = wwc !! FM_TODO?
+         if (switch%b2tfmol_3D_mom.ne.2) then
+           u_pol_mol(:,0) = uuc
+           u_tor_mol(:,0) = wwc !! FM_TODO?
+         endif
          if (switch%b2tfmol_3D_mom.eq.0) then !! otherwise they will be computed in b2npmo_mol_perp
            u_rad_mol(:,0) = vvc
            u_dia_mol(:,0) = (u_pol_mol(:,0)-u_mol(:,0)*pitc)/pit2c
@@ -282,7 +315,8 @@ cc molecule velocities are kept at the value read from the input mol_bg
        call my_out_us(70,nFc,1,flo(:,0),'b2tfn_flo_mol_th')
        call my_out_us(70,nFc,1,flo(:,1),'b2tfn_flo_mol_r')
        call my_out_us(70,nFc,1,nmf,'b2tfn_nmf')
-       call my_out_us(70,nFc,1,term,'b2tfn_term_mol_th')
+       call my_out_us(70,nFc,1,term(:,0),'b2tfn_term_mol_th')
+       call my_out_us(70,nFc,1,term(:,1),'b2tfn_term_mol_r')
        call my_out_us(70,nFc,1,fn_mol0(:,0),'b2tfn_mol_conv_th')
        call my_out_us(70,nFc,1,fn_mol0(:,1),'b2tfn_mol_conv_r')
        call my_out_us(70,nCv,0,u_pol_mol(:,0),'b2tfn_mol_u_pol') ! poloidal

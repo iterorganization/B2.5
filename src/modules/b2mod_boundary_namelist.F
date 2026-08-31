@@ -27,7 +27,8 @@ cank }
      *   NIISO(:),
      *   BC_FACE_ORI(:,:),
      *   CONPAR_MOL(:,:), MOMPAR_MOL(:,:), ENEPAR_MOL(:,:),
-     *   MOMPAR_MOL_DIA(:,:), MOMPAR_MOL_RAD(:,:)
+     *   MOMPAR_MOL_DIA(:,:), MOMPAR_MOL_RAD(:,:),
+     *   MOMPAR_MOL_POL(:,:), MOMPAR_MOL_TOR(:,:)
       integer, allocatable, save ::
      *   BCPOS(:),
      *   BCSTART(:),
@@ -52,7 +53,8 @@ cank }
      *   NBCFACES(:),
      *   BC_FACES(:,:),
      *   BCCON_MOL(:), BCMOM_MOL(:), BCENE_MOL(:),
-     *   BCMOM_MOL_DIA(:), BCMOM_MOL_RAD(:)
+     *   BCMOM_MOL_DIA(:), BCMOM_MOL_RAD(:),
+     *   BCMOM_MOL_POL(:), BCMOM_MOL_TOR(:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
      *   ACCHAR(:)
@@ -67,7 +69,9 @@ cank }
       real (kind=R8), save :: ENKPAR(NBCD,2)
       real (kind=R8), save :: ENZPAR(NBCD,2)
       real (kind=R8), save :: CONPAR_MOL(NBCD,2), MOMPAR_MOL(NBCD,2),
-     .ENEPAR_MOL(NBCD,2), MOMPAR_MOL_DIA(NBCD,2), MOMPAR_MOL_RAD(NBCD,2)
+     .ENEPAR_MOL(NBCD,2), MOMPAR_MOL_DIA(NBCD,2), 
+     .MOMPAR_MOL_RAD(NBCD,2), MOMPAR_MOL_POL(NBCD,2),
+     .MOMPAR_MOL_TOR(NBCD,2)
       integer, save :: BCPOS(NBCD)
       integer, save :: BCSTART(NBCD)
       integer, save :: BCEND(NBCD)
@@ -86,6 +90,7 @@ cank }
       integer, save :: BCENZ(NBCD)
       integer, save :: BCCON_MOL(NBCD), BCMOM_MOL(NBCD), BCENE_MOL(NBCD)
       integer, save :: BCMOM_MOL_DIA(NBCD), BCMOM_MOL_RAD(NBCD)
+      integer, save :: BCMOM_MOL_POL(NBCD), BCMOM_MOL_TOR(NBCD)
       character*1, save :: BCCHAR(NBCD)
       character*1, save :: ACCHAR(NBCD)
       integer, save :: NXISO1(NNISOD)
@@ -129,8 +134,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
      . boundary_filename,boundary_time_mod,boundary_time_switch,
      . lcbs, write_nml_bnd,
      . BCCON_MOL, BCMOM_MOL, BCENE_MOL, BCMOM_MOL_DIA, BCMOM_MOL_RAD,
+     . BCMOM_MOL_POL, BCMOM_MOL_TOR,
      . CONPAR_MOL, MOMPAR_MOL, ENEPAR_MOL,
-     . MOMPAR_MOL_DIA, MOMPAR_MOL_RAD
+     . MOMPAR_MOL_DIA, MOMPAR_MOL_RAD, MOMPAR_MOL_POL, MOMPAR_MOL_TOR
 
       contains
 
@@ -282,12 +288,16 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(BCMOM_MOL(nbcd_in))
       allocate(BCMOM_MOL_DIA(nbcd_in))
       allocate(BCMOM_MOL_RAD(nbcd_in))
+      allocate(BCMOM_MOL_POL(nbcd_in))
+      allocate(BCMOM_MOL_TOR(nbcd_in))
       allocate(BCENE_MOL(nbcd_in))
       allocate(CONPAR_MOL(nbcd_in,2))
       allocate(MOMPAR_MOL(nbcd_in,2))
       allocate(ENEPAR_MOL(nbcd_in,2))
       allocate(MOMPAR_DIA(nbcd_in,2))
       allocate(MOMPAR_RAD(nbcd_in,2))
+      allocate(MOMPAR_POL(nbcd_in,2))
+      allocate(MOMPAR_TOR(nbcd_in,2))
 
 #else
 #ifdef WG_OUT
@@ -349,12 +359,16 @@ csw 18feb2014 added for correct implementation of boundary conditions
       bcmom_mol=0
       bcmom_mol_dia=0
       bcmom_mol_rad=0
+      bcmom_mol_pol=0
+      bcmom_mol_tor=0
       bcene_mol=0
       conpar_mol = 0.0_R8
       mompar_mol = 0.0_R8
       enepar_mol = 0.0_R8
       mompar_mol_dia = 0.0_R8
       mompar_mol_rad = 0.0_R8
+      mompar_mol_pol = 0.0_R8
+      mompar_mol_tor = 0.0_R8
 
 
       return
@@ -400,11 +414,15 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(BCMOM_MOL)
       deallocate(BCMOM_MOL_RAD)
       deallocate(BCMOM_MOL_DIA)
+      deallocate(BCMOM_MOL_POL)
+      deallocate(BCMOM_MOL_TOR)
       deallocate(BCENE_MOL)
       deallocate(CONPAR_MOL)
       deallocate(MOMPAR_MOL)
       deallocate(MOMPAR_MOL_DIA)
       deallocate(MOMPAR_MOL_RAD)
+      deallocate(MOMPAR_MOL_POL)
+      deallocate(MOMPAR_MOL_TOR)
       deallocate(ENEPAR_MOL)
 #endif
       deallocate(isOnFluxBoundary)

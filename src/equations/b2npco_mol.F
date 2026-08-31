@@ -44,7 +44,7 @@
 *   ..local variables
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv), pm(nCv), um(nCv), nm(nCv),
-     *   rxg_npco_mol
+     *   rxg_npco_mol, um_pol(nCv), um_rad(nCv)
       logical warning
       integer :: iCv
       integer, save :: ncall_b2npco_mol = 0
@@ -82,6 +82,9 @@
       nm = n_mol(:,0)
       pm = nm*t_mol(:,0)
       um = u_mol(:,0)
+      um_pol = u_pol_mol(:,0)
+      um_rad = u_rad_mol(:,0)
+
 
 *   ..extensive tests on first few calls
       if (ncall_b2npco_mol.lt.3) then
@@ -112,25 +115,39 @@
      &   solvcreg, 1, rxg_npco_mol, nm, pm,
      &   sr_mol%sn_mol(:,1), dv%flo_mol(:,:), dv%con_mol(:,:,:),
      &   dv%resco_mol(:), dv%corp_mol, aa, 'b2usco__mol')
+
 *   ..apply correction
-      call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
+      if (switch%b2tfmol_3D_mom.lt.2) then
+        call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
      &   solve_ua, solvcreg, rxf, switch%b2npco_pcm0, dv%corp_mol,
      &   dv%pcc_mol(:,0),
      &   pm, nm, um, 1, psnl)
+      !! update states
+        n_mol(:,0) = nm
+        u_mol(:,0) = um 
+      else
+        call b2upco_perp (nCv, nFc, nVx, geo, mpg, nregionv,
+     &   solve_ua, solvcreg, rxf, switch%b2npco_pcm0, dv%corp_mol,
+     &   dv%pcc_mol_pol(:,0),dv%pcc_mol_rad(:,0),
+     &   pm, nm, um_pol, um_rad, psnl, switch%b2npco_iout)
+      !! update states
+        n_mol(:,0) = nm
+        if (switch%b2tfmol_3D_pol.eq.1) u_pol_mol(:,0) = um_pol
+        if (switch%b2tfmol_3D_rad.eq.1) u_rad_mol(:,0) = um_rad
+      endif
 
 *    ..compute time derivative
       ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
       dv%dndt_mol = (-sr_mol%sn_dt_mol(:,1)*nm
      &                   -sr_mol%sn_dt_mol(:,0))
 
-*   ..update states
-      n_mol(:,0) = nm
-      u_mol(:,0) = um 
+
 
 *    ..output quantities for continuity equation
-      if(switch%b2tfmol_iout.ne.0) then       
+      if(switch%b2npco_iout.ne.0) then       
         call my_out_us(70,nCv,0,pm,'b2npco_mol_pm')
         call my_out_us(70,nCv,0,dv%resco_mol,'b2npco_resco_mol')
+        call my_out_us(70,nCv,0,dv%resco_mol,'b2npco_corpb_mol')
       endif
 
 * ..return

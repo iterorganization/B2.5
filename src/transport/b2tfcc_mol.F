@@ -70,46 +70,80 @@
 
 *   ..correct floh, conh, for molecules
 
+      if (switch%b2tfmol_3D_mom.lt.2) then
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-
-      flo(:,0) = -switch%xfac*2.5_R8*co%cdp_mol(:,0)*dnw(:,0)*tmf 
-      flo(:,1) = -switch%xfac*2.5_R8*co%cdp_mol(:,1)*dnw(:,1)*tmf
-      con(:,0) =  switch%xfac*2.5_R8*co%cdp_mol(:,0)*nwf*tmf
-      con(:,1) =  switch%xfac*2.5_R8*co%cdp_mol(:,1)*nwf*tmf
+        flo(:,0) = -switch%xfac*2.5_R8*co%cdp_mol(:,0)*dnw(:,0)*tmf 
+        flo(:,1) = -switch%xfac*2.5_R8*co%cdp_mol(:,1)*dnw(:,1)*tmf
+        con(:,0) =  switch%xfac*2.5_R8*co%cdp_mol(:,0)*nwf*tmf
+        con(:,1) =  switch%xfac*2.5_R8*co%cdp_mol(:,1)*nwf*tmf
 
 
 *    ..compute coefficients for stencil
-      call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
+        call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
-      dv%floh_mol        = dv%floh_mol        + flo0
-      dv%conh_mol(:,:,0) = dv%conh_mol(:,:,0) + con0
+        dv%floh_mol        = dv%floh_mol        + flo0
+        dv%conh_mol(:,:,0) = dv%conh_mol(:,:,0) + con0
+      endif
 
 
 *   ..add contributions from Rhie-Chow term to floh, conh, for molecules
-
-      do iFc = 1, nFc
-        con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
+      if (switch%b2tfmol_3D_mom.lt.2) then
+        do iFc = 1, nFc
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcPbs(iFc)*
      &    (dv%pcc_mol(mpg%fcCv(iFc,1),1)*
      &     nw(mpg%fcCv(iFc,1))*tm(mpg%fcCv(iFc,1))  +
      &     dv%pcc_mol(mpg%fcCv(iFc,2),1)*
      &     nw(mpg%fcCv(iFc,2))*tm(mpg%fcCv(iFc,2)) )/
      &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
-      enddo
+        enddo
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-       flo(:,0) = -con(:,0)*dnw(:,0)
-       con(:,0) =  con(:,0)*nwf
+        flo(:,0) = -con(:,0)*dnw(:,0)
+        con(:,0) =  con(:,0)*nwf
 
-       flo(:,1) = 0.0_R8
-       con(:,1) = 0.0_R8
+        flo(:,1) = 0.0_R8
+        con(:,1) = 0.0_R8
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
+        call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
-       dv%floh_mol        = dv%floh_mol        + flo0
-       dv%conh_mol(:,:,0) = dv%conh_mol(:,:,0) + con0
+        dv%floh_mol        = dv%floh_mol        + flo0
+        dv%conh_mol(:,:,0) = dv%conh_mol(:,:,0) + con0
+      else
+        do iFc = 1, nFc
+          con(iFc,0) = switch%b2npht_pcm1*1.25_R8*geo%fcS(iFc)*
+     &                 geo%fcQalf(iFc,0)*
+     &    (dv%pcc_mol_pol(mpg%fcCv(iFc,1),1)*
+     &     nw(mpg%fcCv(iFc,1))*tm(mpg%fcCv(iFc,1))  +
+     &     dv%pcc_mol_pol(mpg%fcCv(iFc,2),1)*
+     &     nw(mpg%fcCv(iFc,2))*tm(mpg%fcCv(iFc,2)) )/
+     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+
+          con(iFc,1) = switch%b2npht_pcm1*1.25_R8*geo%fcS(iFc)*
+     &                 geo%fcQalf(iFc,1)*
+     &    (dv%pcc_mol_rad(mpg%fcCv(iFc,1),1)*
+     &     nw(mpg%fcCv(iFc,1))*tm(mpg%fcCv(iFc,1))  +
+     &     dv%pcc_mol_rad(mpg%fcCv(iFc,2),1)*
+     &     nw(mpg%fcCv(iFc,2))*tm(mpg%fcCv(iFc,2)) )/
+     &    (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+        enddo
+
+*    ..compute poloidal/radial coefficients for pressure diffusion term
+        flo(:,0) = -con(:,0)*dnw(:,0)
+        con(:,0) =  con(:,0)*nwf
+
+        flo(:,1) = -con(:,1)*dnw(:,1)
+        con(:,1) =  con(:,1)*nwf
+
+*    ..compute coefficients for stencil
+        call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
+
+*    ..add to previous contributions
+        dv%floh_mol        = dv%floh_mol        + flo0
+        dv%conh_mol(:,:,0) = dv%conh_mol(:,:,0) + con0
+      endif
 
 * ..return
       call subend ()

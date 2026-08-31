@@ -79,12 +79,22 @@
         sr_mol%sm_dt_mol(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
         !! perpendicular directions (no Hz here!)
         t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*ts_factor
+        !! rad
         sr_mol%sm_dt_mol_rad(iCv,0) = t0*am_d2*mp*n_mol(iCv,0)*
      &                            u_rad_mol(iCv,0)
         sr_mol%sm_dt_mol_rad(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
+        !! dia
         sr_mol%sm_dt_mol_dia(iCv,0) = t0*am_d2*mp*n_mol(iCv,0)*
      &                            u_dia_mol(iCv,0)
         sr_mol%sm_dt_mol_dia(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
+        !! pol
+        sr_mol%sm_dt_mol_pol(iCv,0) = t0*am_d2*mp*n_mol(iCv,0)*
+     &                            u_pol_mol(iCv,0)
+        sr_mol%sm_dt_mol_pol(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
+        !! tor
+        sr_mol%sm_dt_mol_tor(iCv,0) = t0*am_d2*mp*n_mol(iCv,0)*
+     &                            u_tor_mol(iCv,0)
+        sr_mol%sm_dt_mol_tor(iCv,1) =-t0*am_d2*mp*n_mol(iCv,0)
       enddo
 
 *   ..modify sh_dt_mol
@@ -102,6 +112,8 @@
        sr_mol%sh_mol = sr_mol%sh_mol + sr_mol%sh_dt_mol
        sr_mol%sm_mol_rad = sr_mol%sm_mol_rad + sr_mol%sm_dt_mol_rad
        sr_mol%sm_mol_dia = sr_mol%sm_mol_dia + sr_mol%sm_dt_mol_dia
+       sr_mol%sm_mol_pol = sr_mol%sm_mol_pol + sr_mol%sm_dt_mol_pol
+       sr_mol%sm_mol_tor = sr_mol%sm_mol_tor + sr_mol%sm_dt_mol_tor
 
 
 * ..return

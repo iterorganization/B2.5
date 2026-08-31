@@ -48,7 +48,8 @@
       integer iCv
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1), wrkc(nFc,0:1,0:2), tm0(nCv),
-     * nm0(nCv), um0(nCv), sh_final(nCv,0:3), sh0_mol(nCv,0:3), wrk(nCv)                                         
+     * nm0(nCv), um0(nCv), sh_final(nCv,0:3), sh0_mol(nCv,0:3), 
+     * wrk(nCv), um0_pol(nCv), um0_rad(nCv)                                      
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
@@ -95,6 +96,8 @@
       tm0 = t_mol(:,0)
       nm0 = n_mol(:,0)
       um0 = u_mol(:,0)
+      um0_pol = u_pol_mol(:,0)
+      um0_rad = u_rad_mol(:,0)
       sh_final(:,0) = sr_mol%sh_mol(:,0)
       sh_final(:,1) = sr_mol%sh_mol(:,1)
       sh_final(:,2) = 0.0_R8
@@ -122,16 +125,27 @@ cc        switch%b2uxus_style = 2
      &  dv%cort_mol, wrkf, wrkc, aa, switch)
 
 *   ..apply correction
-      call b2upht_mol (nCv, nFc, nVx, switch, geo, mpg,
+      if (switch%b2tfmol_3D_mom.lt.2) then
+        call b2upht_mol (nCv, nFc, nVx, switch, geo, mpg,
      &  ua_solve, rxf, dv%cort_mol,
      &  dv%pcc_mol(1:nCv,0),nm0, um0, tm0)
+        t_mol(:,0) = tm0
+      else
+        call b2upht_mol_perp (nCv, nFc, nVx, switch, geo, mpg,
+     &  ua_solve, rxf, dv%cort_mol,
+     &  dv%pcc_mol_pol(1:nCv,0), dv%pcc_mol_rad(1:nCv,0),
+     &  nm0, um0_pol, um0_rad, tm0)
+        t_mol(:,0) = tm0
+        u_pol_mol(:,0) = um0_pol 
+        u_rad_mol(:,0) = um0_rad
+      endif
+
 
 *   ..compute physical time-derivative after correction has been applied
 *   .. m*d(nT)/dt = m*[n*(dT/dt) + T*(dn/dt)]
       dv%dhdt_mol = - ( sr_mol%sh_dt_mol(:,0)
      &       +sr_mol%sh_dt_mol(:,1)*tm0)/ts_factor
 
-      t_mol(:,0) = tm0
 
       if(switch%b2tfmol_iout.ne.0) then       
         call my_out_us(70,nCv,0,tm0,'b2npht_mol_tm')

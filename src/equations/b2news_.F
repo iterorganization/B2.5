@@ -851,10 +851,17 @@ cc particle fluxes
      &   switch, geo, mpg, st%pl, st%dv, st%co)
 
 cc dummy npmo call for pcc_mol
-        call b2npmo_mol (nCv, nFc, nVx,
+        if (switch%b2tfmol_3D_mom.lt.2) then
+          call b2npmo_mol (nCv, nFc, nVx,
      &    switch, geo, mpg, ncall_b2news_, 0.0_R8, dtim,
      &    st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
-        st%dv%resmo_mol = 0.0_R8
+          st%dv%resmo_mol = 0.0_R8
+        else
+          call b2npmo_mol_3D (nCv, nFc, nVx,
+     &      switch, geo, mpg, ncall_b2news_, 0.0_R8, dtim,
+     &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)  
+        endif
+
 
 cc particle fluxes
         call b2tfn_mol (nCv, nFc, nVx,
@@ -867,13 +874,21 @@ cc momentum update
      &     switch, geo, mpg, ncall_b2news_, rxf1, dtim,
      &     st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl) 
           endif
-          if (switch%b2tfmol_3D_mom.ne.0) then 
+          if (switch%b2tfmol_3D_mom.eq.1) then !! add diamagnetic and radial momentum eq to parallel one
             call b2npmo_mol_perp (nCv, nFc, nVx,
      &      switch, geo, mpg, ncall_b2news_, rxf1, dtim,
      &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
-          else
-            st%dv%resmo_mol_rad = 0.0_R8 
-            st%dv%resmo_mol_dia = 0.0_R8
+
+            st%dv%resmo_mol_pol = 0.0_R8 
+            st%dv%resmo_mol_tor = 0.0_R8
+          elseif (switch%b2tfmol_3D_mom.eq.2) then !!  do toroidal - poloidal - radial momentum eqs 
+            call b2npmo_mol_3D (nCv, nFc, nVx,
+     &      switch, geo, mpg, ncall_b2news_, rxf1, dtim,
+     &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)       
+            st%dv%resmo_mol = 0.0_R8
+            st%dv%resmo_mol_dia = 0.0_R8  
+          else 
+            call xerrab('b2tfmol_3D_mom should be 0, 1 or 2')
           endif
         endif
 

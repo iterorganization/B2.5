@@ -83,6 +83,12 @@
       if (background_was_read.eq.0) then
         call init_molecules_background_ext(nCv,nms,
      &            switch%read_molecules_ext,geo)
+        if (switch%b2tfmol_3D_style3.eq.0) then !! set to zero
+            u_pol_mol = 0.0_R8 
+            u_rad_mol = 0.0_R8 
+            u_tor_mol = 0.0_R8 
+            u_dia_mol = 0.0_R8
+        endif
       endif
 
 * ..compute rate coefficients

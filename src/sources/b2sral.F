@@ -252,11 +252,13 @@
           call init_molecules_background_ext(nCv,nms_fl,
      &          switch%read_molecules_ext,geo)
         endif
-        call sfill (nCv*2, 0.0_R8, st%sr_mol%sn_mol, 1) !! TODO where to place best?
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sn_mol, 1) !! FM_TODO where to place best?
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol, 1)
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sh_mol, 1)
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_rad, 1)
         call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_dia, 1)
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_pol, 1)
+        call sfill (nCv*2, 0.0_R8, st%sr_mol%sm_mol_tor, 1)
       endif
 
 * ..compute source coefficients
@@ -347,6 +349,9 @@
       write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
       if(main_call.or.wrong_flow)                                  !xpb !srv 18.05.09 }
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
+      st%sr_mol%sn_mol_save = st%sr_mol%sn_mol !! save after computation of boundary sources
+
+
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
      &  geo, mpg, st%pl, st%dv, st_ext, st%srw, main_call)

@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usmo_perp (nCv, nFc, nVx, switch, geo, mpg,
+      subroutine b2usmo_3D (nCv, nFc, nVx, switch, geo, mpg,
      &  nregionv, solvereg, itcnt, rxg, rob, pb, ub,            
-     &  smb, flcb, cvsb, resmb, ctcfb, corub, aa, aad0, name)     
+     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)     
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -24,7 +24,7 @@
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  corub(nCv)
+     *  corub(nCv), pccb(nCv,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), aad0(nCv), flcb0(nFc,0:1), cvsb0(nFc,0:1)
@@ -34,7 +34,7 @@
 *
 *  1. purpose
 *
-*     B2USMO_PERP computes a correction towards the solution of the
+*     B2USMO_3D computes a correction towards the solution of the
 *     perpendicular momentum balance equation for one molecular species.
 *
 *
@@ -58,7 +58,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2usmo_perp')
+      call subini ('b2usmo_3D')
 *   ..test nCv, nFc
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
@@ -181,6 +181,18 @@
          enddo
         endif
       enddo
+*   ..compute pccb
+      pccb = 0.0_R8
+! $AD II-LOOP
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
+        if (solvereg(ireg)) then
+         pccb(iCv,0) = geo%cvVol(iCv)/aa(mpg%cvNvP(iCv,1))      
+         pccb(iCv,1) = geo%cvVol(iCv)/aad0(iCv)              
+        else
+         resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
+        endif
+      enddo
 *   ..contribution from linearization of centrifugal force
 ! $AD II-LOOP
       do iCv = 1, nCv
@@ -210,7 +222,7 @@
 !$OMP MASTER
 #endif
           write(*,*)
-     .     'b2usmo_perp OpenMP warning: no file IO in parallel mode'
+     .     'b2usmo_3D OpenMP warning: no file IO in parallel mode'
 #ifdef _OPENMP
 !$OMP END MASTER
 #endif
@@ -246,4 +258,4 @@
 *-----------------------------------------------------------------------
 *.end b2usmo
 
-      end subroutine b2usmo_perp
+      end subroutine b2usmo_3D

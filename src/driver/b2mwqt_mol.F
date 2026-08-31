@@ -73,7 +73,7 @@
      &  0.0_R8.le.diag%aresh_mol,
      & 'faulty argument aresco_mol / aresh_mol')
 *   ..set and test nfld (number of fields)
-      nfld = 7
+      nfld = 9
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 
 * ..get data for output
@@ -91,6 +91,10 @@
       z(k) = diag%aresmo_mol_rad
       k = k+1
       z(k) = diag%aresmo_mol_dia
+      k = k+1
+      z(k) = diag%aresmo_mol_pol
+      k = k+1
+      z(k) = diag%aresmo_mol_tor
       k = k+1
       z(k) = diag%aresh_mol
       k = k+1

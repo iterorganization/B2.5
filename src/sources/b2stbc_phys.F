@@ -37,7 +37,8 @@
      *  NUEOUT, FS, FFAC, DFS, S2
 #endif
       use b2mod_fluid_molecules
-     & , only : am_d2, n_mol, u_mol, t_mol, u_rad_mol, u_dia_mol
+     & , only : am_d2, n_mol, u_mol, t_mol, u_rad_mol, u_dia_mol, 
+     &          u_pol_mol, u_tor_mol
       use b2mod_subsys
       use b2mod_dimensions
       implicit none
@@ -100,7 +101,7 @@
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
      *  vte, s1, fche, fchi, t0, t1, t2,                                !srv 15.11.07
-     1  t3, t4, totflux, dsh, vt,
+     1  t3, t4, totflux, dsh, vt, nnf,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
      &  pzaverage, pzsum, volsum, totfluxi, totfluxn,
@@ -9173,10 +9174,206 @@ cwdk    Todo: corrections for BCCON.ne.14
      .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
+* -- BCMOM_MOL_RAD=4 -- PRESCRIBE THE VALUE OF THE POLOIDAL VELOCITY BASED ON THE PARTICLE FLUX
+
+      case (4)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_RAD =  4 : specified radial velocity ',
+     .      MOMPAR_MOL_RAD(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          t0 = sr_mol%sn_mol_save(iCv1,0)+                             !! particle source
+     .         sr_mol%sn_mol_save(iCv1,1)*n_mol(iCv1,0) 
+          nnf = (n_mol(mpg%fcCv(iFc,1),0)*geo%fcHc(iFc,2)+
+     &         n_mol(mpg%fcCv(iFc,2),0)*geo%fcHc(iFc,1))/
+     &        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+          t1 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     .         t0 / geo%fcS(iFc) / nnf                                 !! flux density
+          t2 = t1*geo%fcQalf(iFc,1)                                    !! projection to radial direction
+          sr_mol%sm_mol_rad(iCv1,0)=                                   !! impose the velocity
+     .       VBIG*NE00*am_d2*t2*geo%fcS(iFc)
+          sr_mol%sm_mol_rad(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
       case default
         write(*,*) BCMOM_MOL_RAD(IB)
         call xerrab ('Nothing implemented yet for BCMOM_MOL_RAD')
 
+
+      end select 
+
+
+* -- BOUNDARY CONDITIONS FOR POLOIDAL MOMENTUM EQUATION MOLECULES -- 
+      select case (BCMOM_MOL_POL(IB))
+
+      case (0)
+        continue
+
+* -- BCMOM_MOL_POL=1 -- PRESCRIBE THE VALUE OF THE POLOIDAL VELOCITY
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_POL =  1 : specified poloidal velocity ',
+     .      MOMPAR_MOL_POL(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          sr_mol%sm_mol_pol(iCv1,0)=
+     .       VBIG*NE00*am_d2*mompar_mol_pol(ib,1)*geo%fcS(iFc)
+          sr_mol%sm_mol_pol(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
+* -- BCMOM_MOL_POL=2 -- PRESCRIBE THE GRADIENT OF THE POLOIDAL VELOCITY
+
+        case (2)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM_MOL_POL =  2 : poloidal velocity gradient ',
+     .       MOMPAR_MOL_POL(IB,1),' on ',
+     .       BCCHAR(IB),boundary_location(ib)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,u_pol_mol(:,0))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,u_pol_mol(:,0))
+            sr_mol%sm_mol_pol(iCv1,0)=
+     .        VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*
+     .        (mompar_mol_pol(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + u_pol_mol(iCv2,0))
+            sr_mol%sm_mol_pol(iCv1,1)=
+     .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)
+          enddo
+
+
+* -- BCMOM_MOL_POL=3 -- PRESCRIBE THE VALUE OF THE POLOIDAL VELOCITY BASED ON THE NORMAL VELOCITY CONSISTENT WITH THE THERMAL RELEASE
+
+        case (3)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_POL = 3 : specified parallel velocity according ',
+     .      ' to thermal release '
+            call xertst(BCENE_MOL(IB).eq.1,
+     .     'BCMOM_MOL_POL = 3 requires BCENE_MOL = 1')
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            t0 = ENEPAR_MOL(IB,1)                 !! wall temperature
+            t0 = sqrt(2.0_R8*t0*ev/(pi*am_d2*mp)) !! normal velocity of emitted molecules
+            !! FM_TODO: sign?? vn must alwl
+            t1 = -t0*geo%fcQalf(iFc,0)*    !! projection normal -> diamagnetic
+     .            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            sr_mol%sm_mol_pol(iCv1,0)=
+     .       VBIG*NE00*am_d2*t1*geo%fcS(iFc)*
+     .       geo%fcHz(iFc)
+            sr_mol%sm_mol_pol(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
+* -- BCMOM_MOL_POL=4 -- PRESCRIBE THE VALUE OF THE POLOIDAL VELOCITY BASED ON THE PARTICLE FLUX
+
+      case (4)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_POL =  4 : specified poloidal velocity ',
+     .      MOMPAR_MOL_POL(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          t0 = sr_mol%sn_mol_save(iCv1,0)+                            !! particle source
+     .         sr_mol%sn_mol_save(iCv1,1)*n_mol(iCv1,0) 
+          nnf = (n_mol(mpg%fcCv(iFc,1),0)*geo%fcHc(iFc,2)+
+     .         n_mol(mpg%fcCv(iFc,2),0)*geo%fcHc(iFc,1))/
+     .        (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+          t1 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     .         t0 / geo%fcS(iFc) / nnf                                 !! flux density
+          t2 = t1*geo%fcQalf(iFc,0)                                    !! projection to poloidal direction
+          sr_mol%sm_mol_pol(iCv1,0)=                                   !! impose the velocity
+     .       VBIG*NE00*am_d2*t2*geo%fcS(iFc)
+          sr_mol%sm_mol_pol(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
+      case default
+        write(*,*) BCMOM_MOL_POL(IB)
+        call xerrab ('Nothing implemented yet for BCMOM_MOL_POL')
+
+      end select 
+
+
+* -- BOUNDARY CONDITIONS FOR TOROIDAL MOMENTUM EQUATION MOLECULES -- 
+      select case (BCMOM_MOL_TOR(IB))
+
+      case (0)
+        continue
+
+* -- BCMOM_MOL_TOR=1 -- PRESCRIBE THE VALUE OF THE TOROIDAL VELOCITY
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .     'BCMOM_MOL_TOR =  1 : specified toroidal velocity ',
+     .      MOMPAR_MOL_TOR(IB,1),' on ',
+     .      BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          sr_mol%sm_mol_tor(iCv1,0)=
+     .       VBIG*NE00*am_d2*mompar_mol_tor(ib,1)*geo%fcS(iFc)
+          sr_mol%sm_mol_tor(iCv1,1)=
+     .      -VBIG*NE00*am_d2*geo%fcS(iFc)
+        enddo
+
+* -- BCMOM_MOL_TOR=2 -- PRESCRIBE THE GRADIENT OF THE TOROIDAL VELOCITY
+
+        case (2)
+          if(ncall_b2stbc_phys.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM_MOL_TOR =  2 : toroidal velocity gradient ',
+     .       MOMPAR_MOL_TOR(IB,1),' on ',
+     .       BCCHAR(IB),boundary_location(ib)
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,u_tor_mol(:,0))
+            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,u_tor_mol(:,0))
+            sr_mol%sm_mol_tor(iCv1,0)=
+     .        VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)*
+     .        (mompar_mol_tor(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + u_tor_mol(iCv2,0))
+            sr_mol%sm_mol_tor(iCv1,1)=
+     .        -VBIG*am_d2*n_mol(iCv1,0)*geo%fcS(iFc)
+          enddo
+
+      case default
+        write(*,*) BCMOM_MOL_TOR(IB)
+        call xerrab ('Nothing implemented yet for BCMOM_MOL_TOR')
 
       end select 
 

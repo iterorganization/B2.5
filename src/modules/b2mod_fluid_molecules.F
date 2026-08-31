@@ -178,6 +178,9 @@ c local variables
         u_pol_mol(iCv,0) =sign(
      &                  min(abs(u_pol_mol(iCv,0)),um_max),
      &                          u_pol_mol(iCv,0))
+        u_tor_mol(iCv,0) =sign(
+     &                  min(abs(u_tor_mol(iCv,0)),um_max),
+     &                          u_tor_mol(iCv,0))
       enddo
 
       end subroutine set_limits_mol_state

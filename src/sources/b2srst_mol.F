@@ -73,6 +73,14 @@
         sr_mol%sm_mol_dia(iCv,0) = sr_mol%sm_mol_dia(iCv,0)+
      &     max(0.0_R8,sr_mol%sm_mol_dia(iCv,1))*u_dia_mol(iCv,0)
         sr_mol%sm_mol_dia(iCv,1) = min(sr_mol%sm_mol_dia(iCv,1),0.0_R8)
+
+        sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0)+
+     &     max(0.0_R8,sr_mol%sm_mol_pol(iCv,1))*u_pol_mol(iCv,0)
+        sr_mol%sm_mol_pol(iCv,1) = min(sr_mol%sm_mol_pol(iCv,1),0.0_R8)
+
+        sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0)+
+     &     max(0.0_R8,sr_mol%sm_mol_tor(iCv,1))*u_tor_mol(iCv,0)
+        sr_mol%sm_mol_tor(iCv,1) = min(sr_mol%sm_mol_tor(iCv,1),0.0_R8)
       enddo
 
 
