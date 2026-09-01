@@ -602,13 +602,13 @@ cwdk  now need to recompute full diamagnetic component for ud
      &      'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
      &       IB,' MAY NOT BE CONSISTENT!'
             WRITE(*,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-            WRITE(*,'(a2)') 'BCENE/I=15, BCPOT=11, ',
+            WRITE(*,'(2a)') 'BCENE/I=15, BCPOT=11, ',
      &       'with BCMOM=13 and BCCON=14 for all ion species'
             write(0,'(a,i2,a)')
      &      'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
      &       IB,' MAY NOT BE CONSISTENT!'
             WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-            WRITE(0,'(a2)') 'BCENE/I=15, BCPOT=11, ',
+            WRITE(0,'(2a)') 'BCENE/I=15, BCPOT=11, ',
      &       'with BCMOM=13 and BCCON=14 for all ion species'
           END IF
           ! New drift compatible BCs (still in test, print warnings)
@@ -5639,12 +5639,12 @@ cxpb  and max(,,) statement for stability
      4     ' on ',BCCHAR(IB),boundary_location(ib)
           if(fix_fch_in_fhe_sheath.eq.0 .and.
      &       fix_sx_in_fhe_sheath.eq.0) then !srv 08.05.09
-            write(*,'(a2)')
+            write(*,'(2a)')
      1       'WARNING: Wrong (old) implementation of ',
      2       'the FCH contribution to FHE used'
           else if (fix_fch_in_fhe_sheath.eq.1 .and.
      &       fix_sx_in_fhe_sheath.eq.0) then
-            write(*,'(a2)')
+            write(*,'(2a)')
      1       'WARNING: Wrong (second) implementation of ',
      2       'the FCH contribution to FHE used'
           endif
@@ -9513,7 +9513,7 @@ cxpb Careful here because of BC number clash
         if(new_boundary_files) then
           if (boundary_version.ge.'01.001.030' .and.
      &        boundary_version.lt.'02.000.000') then
-            write(*,'(a2)') 'BCENI=21 type B.C. moved to 25 ',
+            write(*,'(2a)') 'BCENI=21 type B.C. moved to 25 ',
      &       ' because of clash with 5.2 numbering. '
             write(*,*) 'Please modify b2.boundary.parameters file'
             call xerrab('B2STBC -- BCENI=25, DISPLACED')
