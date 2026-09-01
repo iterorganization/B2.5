@@ -9,7 +9,8 @@
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
-     *   fun(-1:nx,-1:ny), fun1(-1:nx1,-1:ny1), wrk1(-1:nx,-1:ny1)
+     *   fun(-1:nx,-1:ny), fun1(-1:nx1,-1:ny1),
+     *   wrk1(-1:nx,-1:max(ny,ny1))
       integer non_commensurate
       integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
@@ -129,7 +130,7 @@
         enddo
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
-          yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
+         yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
         enddo
         yy(iyb+1) = 1.0_R8
         do iy1 = iyc, iyd
@@ -198,7 +199,7 @@
         enddo
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb+1
-          yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
+         yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
         enddo
         do iy1 = iyc, iyd
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
@@ -262,7 +263,7 @@
          iyd = inseliy1
         endif
         do iy = iya-1, iyb+1
-          yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
+         yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
         enddo
         do iy1 = iyc, iyd
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)

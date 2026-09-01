@@ -1272,6 +1272,7 @@ ${OBJDIR}/braeir.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD} ${O
 ${OBJDIR}/caprmc.${MOD}: ${OBJDIR}/cgrid.${MOD} ${OBJDIR}/comxs.${MOD} ${OBJDIR}/comsou.${MOD}
 ${OBJDIR}/ccflux.${MOD}: ${OBJDIR}/ctrig.${MOD} ${OBJDIR}/cgeom.${MOD}
 ${OBJDIR}/ccoupl.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD}
+${OBJDIR}/clgin.${MOD}: ${OBJDIR}/parmmod.${MOD}
 ${OBJDIR}/ccrm.${MOD}: ${OBJDIR}/cestim.${MOD} ${OBJDIR}/csdvi.${MOD} ${OBJDIR}/czt1.${MOD} ${OBJDIR}/photon.${MOD}
 ${OBJDIR}/ceirsrt.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/b2mod_dimensions.${MOD}
 ${OBJDIR}/clgin.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD}
@@ -1288,6 +1289,7 @@ ${OBJDIR}/braeir.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o ${OBJDIR}/b2mod_di
 ${OBJDIR}/caprmc.o: ${OBJDIR}/cgrid.o ${OBJDIR}/comxs.o ${OBJDIR}/comsou.o
 ${OBJDIR}/ccflux.o: ${OBJDIR}/ctrig.o ${OBJDIR}/cgeom.o
 ${OBJDIR}/ccoupl.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o
+${OBJDIR}/clgin.o: ${OBJDIR}/parmmod.o
 ${OBJDIR}/ccrm.o: ${OBJDIR}/cestim.o ${OBJDIR}/csdvi.o ${OBJDIR}/czt1.o ${OBJDIR}/photon.o
 ${OBJDIR}/ceirsrt.o: ${OBJDIR}/precision.o ${OBJDIR}/b2mod_dimensions.o
 ${OBJDIR}/clgin.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o
@@ -1560,6 +1562,7 @@ ${INCLOCAL}/b2local.h: ${MAKES}
 	echo "c" >> ${INCLOCAL}/b2local.h
 
 ${OBJDIR}/mpiversion.mk: ${MAKES}
+	@mkdir -p ${OBJDIR}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else

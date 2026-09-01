@@ -160,7 +160,7 @@
         if (nncut.eq.0 .and. periodic_bc.eq.1) then  ! limiter core
          ixa = 0
          iya = 0
-         ixb = nx-1
+         ixb = nx-2
          ixm = ixb
          ixp = ixa
          iyb = topcut(1)-1
@@ -267,7 +267,7 @@
         call interp2d(nx+1,ny-topcut(1)+2,nx1+1,ny1-topcut1(1),
      .   xx(0:nx),yy(topcut(1)-1:ny),xx1(0:nx1),yy1(topcut1(1):ny1-1),
      .   fa(0:nx,topcut(1)-1:ny),fa1(0:nx1,topcut1(1):ny1-1))
-        fx1(0:nx1,topcut1(1):ny1-1) = fa1(0:nx1,topcut(1):ny1-1)*
+        fx1(0:nx1,topcut1(1):ny1-1) = fa1(0:nx1,topcut1(1):ny1-1)*
      .   (hy1(0:nx1,topcut1(1):ny1-1)*qc1(0:nx1,topcut1(1):ny1-1))
 *     ..region 2 : limiter SOL : top row (including eastern edge)
         call E01BEF(nx+1,xx(0:nx),fx(0:nx,ny),d,ifail)

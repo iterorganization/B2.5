@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ytgm (nget, nx1, ny1, nncut, nnreg)
+      subroutine b2ytgm (nget, nx1, ny1, nncut, nnreg, periodic_bc)
       use b2mod_types
       use b2mod_geo2
       use b2mod_math
@@ -13,7 +13,7 @@
 *   ..input arguments (unchanged on exit)
       integer nget, nx1, ny1
 *   ..output arguments (unspecified on entry)
-      integer nncut, nnreg(0:2)
+      integer nncut, nnreg(0:2), periodic_bc
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -169,7 +169,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, idum(0:9), periodic_bc
+      integer n2, ix, iy, idum(0:9)
       integer iFace, offset
 *   ..procedures
       external xertst, cfrure, cfruin
