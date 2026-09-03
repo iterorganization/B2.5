@@ -8,6 +8,7 @@
      *   field(-1:nxd,-1:nyd,0:nsd-1)
       integer ix,iy,is
       integer ixn,iyn
+
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
@@ -23,13 +24,22 @@
             elseif (bottomiy(ix,iy).eq.-2) then
               ixn=topix(ix,iy)
               iyn=topiy(ix,iy)
-            elseif (topiy(ix,iy).eq.ny+1 .and. leftix(ix,iy).eq.-2) then
+            elseif (topiy(ix,iy).eq.ny+1 .and. leftix(ix,iy).eq.-2
+     &       .and. bottomix(ix,iy).eq.ix) then
               ixn=rightix(bottomix(ix,iy),bottomiy(ix,iy))
               iyn=rightiy(bottomix(ix,iy),bottomiy(ix,iy))
-            elseif (topiy(ix,iy).eq.ny+1 .and. rightix(ix,iy).eq.nx+1) 
-     >       then
+            elseif (topiy(ix,iy).eq.ny+1 .and. leftix(ix,iy).eq.-2
+     &       .and. bottomix(ix,iy).ne.ix) then
+              ixn=bottomix(rightix(ix,iy),rightiy(ix,iy))
+              iyn=bottomiy(rightix(ix,iy),rightiy(ix,iy))
+            elseif (topiy(ix,iy).eq.ny+1 .and. rightix(ix,iy).eq.nx+1
+     &       .and. bottomix(ix,iy).eq.ix) then
               ixn=leftix(bottomix(ix,iy),bottomiy(ix,iy))
               iyn=leftiy(bottomix(ix,iy),bottomiy(ix,iy))
+            elseif (topiy(ix,iy).eq.ny+1 .and. rightix(ix,iy).eq.nx+1
+     &       .and. bottomix(ix,iy).ne.ix) then
+              ixn=bottomix(leftix(ix,iy),leftiy(ix,iy))
+              iyn=bottomiy(leftix(ix,iy),leftiy(ix,iy))
             elseif (topiy(ix,iy).eq.ny+1) then
               ixn=bottomix(ix,iy)
               iyn=bottomiy(ix,iy)
@@ -40,8 +50,9 @@
               ixn=leftix(ix,iy)
               iyn=leftiy(ix,iy)
             endif
-            if (ixn.ne.ix .or. iyn.ne.iy) 
-     >        field(ix,iy,is)=field(ixn,iyn,is)
+            if (ixn.ne.ix .or. iyn.ne.iy) then
+              field(ix,iy,is)=field(ixn,iyn,is)
+            end if
           enddo
         enddo
       enddo

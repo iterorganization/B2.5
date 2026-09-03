@@ -346,9 +346,12 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
-      if (boundary_namelist.eq.1)
-     > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx, ny, ns, tim)
+      else
+        call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      endif
       call alloc_b2mod_neutrals
      . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)

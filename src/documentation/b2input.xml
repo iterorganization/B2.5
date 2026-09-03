@@ -607,6 +607,7 @@
 					Pulse number : Pulse number identifying the run (supersedes b2mndr_shot_number). Defaults to the last number found in shotnumber.history, or 0 if the file is not found. Must be positive and non-zero if an IMAS data entry is requested. If using IMAS Access Layer 4, cannot exceed 214748.
 					Run number : The number of the run. Must be positive or zero. If using IMAS Access Layer 4, limited to 5 digits (i.e. span from 0 to 99999).
 					Database : IMAS IDS database name (supersedes b2mndr_device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention. Can be used to rebuild the IMASDIR path.
+					Backend : IMAS backend to be used. Only available if using IMAS Access Layer 5. Access Layer 4 always uses the MDSplus backend. Allowed choices are 'mdsplus', 'hdf5' (default), or 'ascii'.
 					User : The user who ran the simulation. Can be used to rebuild the IMASDIR path.
 				</description>
 				<switch>
@@ -643,6 +644,11 @@
 					<name>b2mndr_user</name>
 					<default>$(USER)</default>
 					<type>string</type>
+				</switch>
+				<switch>
+					<name>b2mndr_ids_backend</name>
+					<default>See description</default>
+					<type>character*8</type>
 				</switch>
 			</switchgroup>
 			<switch>

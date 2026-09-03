@@ -489,7 +489,7 @@ c Drift terms
           call intcor(nx,ny,weight,ne,nec)                               !srv 13.05.16
           do iy = 0, ny-1
            do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
+             if(leftix(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then     !srv 26.11.02
                 wedia(ix,iy,0) = facdrift(ix,iy)/                        !srv 13.05.16 {
      1           (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      2           (bb(ix,iy,2)/bb(ix,iy,3)**2
@@ -524,7 +524,7 @@ c Drift terms
 
           do iy = 0, ny-1
            do ix = 0, nx
-            if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
+            if(leftix(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then      !srv 26.11.02
               wedia(ix,iy,0) = facdrift(ix,iy)/                          !IYS 04.03.2019 {
      1        (qe * hyl(ix,iy) * qc(ix,iy))
      &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
