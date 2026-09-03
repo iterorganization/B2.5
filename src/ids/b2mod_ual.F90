@@ -180,11 +180,11 @@ contains
         character(len=24), intent(in) :: treename    !< The name of the IMAS IDS database
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+        character(len=24), intent(in) :: username    !< Creator/owner of the IMAS IDS
             !< database
-        character(len=24), intent(in) :: database   !< IMAS database name
+        character(len=24), intent(in) :: database    !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        character(len=24), intent(in) :: version     !< Major version of the IMAS IDS
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
