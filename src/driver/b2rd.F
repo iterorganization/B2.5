@@ -68,10 +68,10 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:2)
-      real (kind=R8), allocatable :: zero(:,:)
+      integer nout(0:2)
 #ifdef MDSPLUS
 #     include "mdslib.inc"
+      integer ninp(0:0)
       integer idum(0:9), io, ishot, n2, nx, ny, ns
       integer status, retlen
       integer ix, iy, is
@@ -82,6 +82,7 @@
      *     rfn(:,:,:), rfnx(:,:,:), rfny(:,:,:),
      *     rfn2(:,:,:,:)
       real (kind=R8), allocatable :: za(:)
+      real (kind=R8), allocatable :: zero(:,:)
       logical file_open
 *   ..procedures
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
@@ -91,7 +92,9 @@
 #endif
       external prgini, prgend, cfopen
 *   ..initialise input/output units
+#ifdef MDSPLUS
       data ninp/50/
+#endif
       data nout/60,61,62/
 
 *-----------------------------------------------------------------------

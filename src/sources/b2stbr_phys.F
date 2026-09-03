@@ -655,7 +655,7 @@ c lcore           is this a core element?
       real (kind=R8) hh, hhn, Phi_app, area, pof
       logical lcore, found
 
-      integer is0, is1, is2, is, k, iwall, itrack
+      integer is0, is1, is2, is, k, iwall, itrack, ibc, ibc1, ibc2
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
@@ -668,6 +668,25 @@ c lcore           is this a core element?
       external mass_density
 
       iwall=xymap(ix,iy)
+      if (lbcstra(istra).le.DEF_NBC) then
+        ibc = lbcstra(istra)
+      else
+        ibc1 = lbcstra(istra)/100
+        ibc2 = mod(lbcstra(istra),100)
+        if (bcchar(ibc1).eq.'E'.or.bcchar(ibc1).eq.'W') then
+          if (idir.eq.0) then
+            ibc = ibc1
+          else
+            ibc = ibc2
+          end if
+        elseif (bcchar(ibc1).eq.'N'.or.bcchar(ibc1).eq.'S') then
+          if (idir.eq.0) then
+            ibc = ibc2
+          else
+            ibc = ibc1
+          end if
+        end if
+      end if
 cdpc-exp
       if(sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
      .   iwall.eq.0) then
@@ -684,7 +703,7 @@ c no mixed materials
       else  ! mixed materials
 c calculate the fraction from each constituent of the mixed material
         if(output.ge.10)
-     &       write(*,*) 'b2stbr_phys.recycle: ix,iy,iwall',ix,iy,iwall
+     &   write(*,*) 'b2stbr_phys.recycle: ix,iy,iwall',ix,iy,iwall
 c the base material ("0") is assumed to have an unnormalised weight
 c sput_mixed_alpha (default 1)
         sput_frac(0)=sput_mixed_alpha
@@ -826,6 +845,7 @@ cdpc-end
       else
         if (iwall.eq.0) then
           write(*,*) 'xymap returned zero for ix,iy = ',ix,iy
+          write(0,*) 'xymap returned zero for ix,iy = ',ix,iy
           call xerrab ('Invalid iwall setting!')
         endif
         if (plate_model.eq.0) then
@@ -888,9 +908,8 @@ cdpc
         endif
         sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
         if (is_neutral(is0)) then                 ! IYS 18.09.2018
-          sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
-     &     sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
-     &     recyc(is,istra)*t0
+          sna_stbr_neut(b2espcr(is0),ibc) =
+     &     sna_stbr_neut(b2espcr(is0),ibc) + recyc(is,istra)*t0
           if (output.gt.2) write(*,*) 'Recycling: ',
      &     'Contribution to sna_stbr_neut. is0 = ',
      &      is0,' istra = ',istra,' ix = ',ix,' iy = ',iy
@@ -988,8 +1007,8 @@ c chemical sputtering
             if (sput_dst_bulk.ne.-1) then
               sna0(ix,iy,0,sput_dst_bulk) =
      &         sna0(ix,iy,0,sput_dst_bulk) + t1
-              sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
-     &         sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) + t1
+              sna_stbr_neut(b2espcr(sput_dst_bulk),ibc) =
+     &         sna_stbr_neut(b2espcr(sput_dst_bulk),ibc) + t1
               if (output.gt.2) write(*,*)
      &         'Chemical sputtering from bulk: ',
      &         'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
@@ -1123,8 +1142,8 @@ cxpb We first treat the bulk material
               tphys(is) = tphys(is) + t1
               sna0(ix,iy,0,sput_dst_bulk) =
      &         sna0(ix,iy,0,sput_dst_bulk) + t1
-              sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
-     &         sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) + t1
+              sna_stbr_neut(b2espcr(sput_dst_bulk),ibc) =
+     &         sna_stbr_neut(b2espcr(sput_dst_bulk),ibc) + t1
               if (output.gt.2) write(*,*)
      &         'Physical sputtering from bulk: ',
      &         'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
@@ -1224,10 +1243,9 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                 tphys(is) = tphys(is) + t1
                 sna0(ix,iy,0,target_intcode(itrack)) =
      &           sna0(ix,iy,0,target_intcode(itrack)) + t1
-                sna_stbr_sput(b2espcr(target_intcode(itrack)),
-     &            lbcstra(istra)) = t1 +
-     &           sna_stbr_sput(b2espcr(target_intcode(itrack)),
-     &            lbcstra(istra))
+                sna_stbr_sput(b2espcr(target_intcode(itrack)),ibc) =
+     &           t1 +
+     &           sna_stbr_sput(b2espcr(target_intcode(itrack)),ibc)
 !                 write(*,*)
 !     &     'Erosion. Contribution to sna_stbr_sput. is = ',
 !     $    target_intcode(itrack),' istra = ',istra,' ix = ',
@@ -1366,8 +1384,8 @@ c thermal evaporation     ! no fix for mixed materials yet
             t1=GammaEvap*area*therm_evap
             t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
             sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
-            sna_stbr_sput(b2espcr(is),lbcstra(istra)) =   ! IYS 18.09.2018
-     &       sna_stbr_sput(b2espcr(is),lbcstra(istra)) + t1
+            sna_stbr_sput(b2espcr(is),ibc) =   ! IYS 18.09.2018
+     &       sna_stbr_sput(b2espcr(is),ibc) + t1
             if (output.gt.2) write(*,*)
      &       'Thermal evaporation : ',
      &       'Contribution to sna_stbr_sput. is = ',is,
@@ -1410,8 +1428,8 @@ c radiation enhanced sublimation
             if (sput_dst_bulk.ne.-1) then
               sna0(ix,iy,0,sput_dst_bulk) =
      &         sna0(ix,iy,0,sput_dst_bulk) + t1
-              sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =   ! IYS 18.09.2018
-     &         sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) + t1
+              sna_stbr_sput(b2espcr(sput_dst_bulk),ibc) =   ! IYS 18.09.2018
+     &         sna_stbr_sput(b2espcr(sput_dst_bulk),ibc) + t1
               if (output.gt.2) write(*,*)
      &         'RES sputtering: ',
      &         'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
@@ -1487,8 +1505,8 @@ cxpb  as deposition
             if (reflection_on.eq.1) then
               sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
               if (is_neutral(is)) then                           ! IYS 18.09.2018
-                sna_stbr_neut(b2espcr(is),lbcstra(istra)) =
-     &           sna_stbr_neut(b2espcr(is),lbcstra(istra)) + t1
+                sna_stbr_neut(b2espcr(is),ibc) =
+     &           sna_stbr_neut(b2espcr(is),ibc) + t1
                 if (output.gt.2) write(*,*) 'Reflection:',
      >           ' Contribution to sna_stbr_neut. is = ',is,
      &           ' istra = ',istra,' ix = ',ix,' iy = ',iy
@@ -1496,8 +1514,8 @@ cxpb  as deposition
             else
               sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0) + t1    ! reflection to the neutral
               if (is_neutral(is0)) then                          ! IYS 18.09.2018
-                sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
-     &           sna_stbr_neut(b2espcr(is0),lbcstra(istra)) + t1
+                sna_stbr_neut(b2espcr(is0),ibc) =
+     &           sna_stbr_neut(b2espcr(is0),ibc) + t1
                 if (output.gt.2)
      >           write(*,*) 'Reflection into neutral:',
      &            'Contribution to sna_stbr_neut. is0 = ',is0,
@@ -1520,8 +1538,8 @@ cxpb  as deposition
             sna0(ix,iy,0,is+1) = sna0(ix,iy,0,is+1)+
      2       rcion(is,istra)*t0/neutral_sources_rescale
             if (is_neutral(is+1)) then           ! IYS 18.09.2018
-              sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) =
-     &         sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) +
+              sna_stbr_neut(b2espcr(is+1),ibc) =
+     &         sna_stbr_neut(b2espcr(is+1),ibc) +
      2         rcion(is,istra)*t0/neutral_sources_rescale
               if (output.gt.2) write(*,*) 'Recycling into ions: ',
      &         'Contribution to sna_stbr_neut. is+1 = ',is+1,
@@ -1560,8 +1578,8 @@ cxpb
             sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &       recyc(is,istra)*t0
             if (is_neutral(is0)) then          ! IYS 18.09.2018
-              sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
-     &         sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
+              sna_stbr_neut(b2espcr(is0),ibc) =
+     &         sna_stbr_neut(b2espcr(is0),ibc) +
      &         recyc(is,istra)*t0
               if (output.gt.2) write(*,*) 'Core recycling: ',
      &         'Contribution to sna_stbr_neut. is0 = ',is0,

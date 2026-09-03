@@ -598,15 +598,17 @@ cwdk  now need to recompute full diamagnetic component for ud
             END DO
           END IF
           IF (.not.consistent) then
-            write(*,*) 'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
+            write(*,'(a,i2,a)')
+     &      'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
      &       IB,' MAY NOT BE CONSISTENT!'
             WRITE(*,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-            WRITE(*,*) 'BCENE/I=15, BCPOT=11, ',
+            WRITE(*,'(2a)') 'BCENE/I=15, BCPOT=11, ',
      &       'with BCMOM=13 and BCCON=14 for all ion species'
-            write(0,*) 'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
+            write(0,'(a,i2,a)')
+     &      'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
      &       IB,' MAY NOT BE CONSISTENT!'
             WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-            WRITE(0,*) 'BCENE/I=15, BCPOT=11, ',
+            WRITE(0,'(2a)') 'BCENE/I=15, BCPOT=11, ',
      &       'with BCMOM=13 and BCCON=14 for all ion species'
           END IF
           ! New drift compatible BCs (still in test, print warnings)
@@ -626,19 +628,23 @@ cwdk  now need to recompute full diamagnetic component for ud
             END IF
             IF (new_driftCompatible) then
               IF (.not.consistent) then
-                write(*,*) '!!! FOR SPECIES: ', IS, 'ON BOUNDARY: ',
-     &              IB, ': Inconsistency in using new drift sheath BCs!'
+                write(*,'(a,i3,a,i2,a)')
+     &           '!!! FOR SPECIES ', IS, ' ON BOUNDARY ',
+     &            IB, ': Inconsistency in using new drift sheath BCs!'
                 WRITE(*,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-                WRITE(*,*) 'BCCON=14, BCMOM=13, BCENI=15, ',
-     &              'BCENI=15 with bcene_15_style=1, ',
-     &              'and [BCPOT=3 or BCPOT=11 with istyle_fchi=0]'
+                WRITE(*,'(3a)')
+     &           'BCCON=14, BCMOM=13, BCENI=15, ',
+     &           'BCENI=15 with bcene_15_style=1, ',
+     &           'and [BCPOT=3 or BCPOT=11 with istyle_fchi=0]'
                 WRITE(*,*) 'See b2stbc_phys.F for more info.'
-                write(0,*) '!!! FOR SPECIES: ', IS, 'ON BOUNDARY: ',
-     &              IB, ': Inconsistency in using new drift sheath BCs!'
+                write(0,'(a,i3,a,i2,a)')
+     &           '!!! FOR SPECIES ', IS, ' ON BOUNDARY ',
+     &            IB, ': Inconsistency in using new drift sheath BCs!'
                 WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
-                WRITE(0,*) 'BCCON=14, BCMOM=13, BCENI=15, ',
-     &              'BCENI=15 with bcene_15_style=1, ',
-     &              'and [BCPOT=3 or BCPOT=11 with istyle_fchi=0]'
+                WRITE(0,'(3a)')
+     &           'BCCON=14, BCMOM=13, BCENI=15, ',
+     &           'BCENI=15 with bcene_15_style=1, ',
+     &           'and [BCPOT=3 or BCPOT=11 with istyle_fchi=0]'
                 WRITE(0,*) 'See b2stbc_phys.F for more info.'
               ELSE
                 write(*,*) '- Using new drift sheath BCs -'
@@ -3643,7 +3649,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               write(*,'(a,a,a,i3)')
      &         'BCCON = 27 : given total particle flux for all ',
      &         'ionisation states within the isonuclear sequence with ',
-     &         'constant density for ionisation stage ion is =', is
+     &         'constant density for ionisation stage is =', is
               DO IBW=IB,NBC
                 if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -5153,7 +5159,8 @@ cxpb  and max(,,) statement for stability
             DO IX = 1, BC_LIST_SIZE(IB)
               SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     1         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     1         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     1              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
      .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
@@ -5175,7 +5182,8 @@ cxpb  and max(,,) statement for stability
             DO IY = 1, BC_LIST_SIZE(IB)
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     1         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     1         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     1              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
      .                te(bc_list_x(iy,ib),bc_list_y(iy,ib))+
      .                ti(bc_list_x(iy,ib),bc_list_y(iy,ib)))/
@@ -5631,11 +5639,13 @@ cxpb  and max(,,) statement for stability
      4     ' on ',BCCHAR(IB),boundary_location(ib)
           if(fix_fch_in_fhe_sheath.eq.0 .and.
      &       fix_sx_in_fhe_sheath.eq.0) then !srv 08.05.09
-            write(*,*) 'WARNING: Wrong (old) implementation of ',
+            write(*,'(2a)')
+     1       'WARNING: Wrong (old) implementation of ',
      2       'the FCH contribution to FHE used'
           else if (fix_fch_in_fhe_sheath.eq.1 .and.
      &       fix_sx_in_fhe_sheath.eq.0) then
-            write(*,*) 'WARNING: Wrong (second) implementation of ',
+            write(*,'(2a)')
+     1       'WARNING: Wrong (second) implementation of ',
      2       'the FCH contribution to FHE used'
           endif
         endif
@@ -9503,7 +9513,7 @@ cxpb Careful here because of BC number clash
         if(new_boundary_files) then
           if (boundary_version.ge.'01.001.030' .and.
      &        boundary_version.lt.'02.000.000') then
-            write(*,*) 'BCENI=21 type B.C. moved to 25 ',
+            write(*,'(2a)') 'BCENI=21 type B.C. moved to 25 ',
      &       ' because of clash with 5.2 numbering. '
             write(*,*) 'Please modify b2.boundary.parameters file'
             call xerrab('B2STBC -- BCENI=25, DISPLACED')
@@ -9776,7 +9786,7 @@ cxpb Careful here because of BC number clash
       case (24)
 !IYS 04.03.2013 {
         if(new_boundary_files.and.(.not.once_bceni)) then             !srv 05.08.22
-          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux',
+          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux'//
      &                   ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
@@ -10126,8 +10136,8 @@ cxpb Careful here because of BC number clash
 
       case (27)
         if(new_boundary_files.and.(.not.once_bceni)) then             !srv 05.08.22
-          write(*,*) 'BCENI = 27 : Given integrated ion heat flux',
-     &               ' with constant Ti '
+          write(*,'(a)') 'BCENI = 27 : Given integrated ion heat flux'//
+     &                   ' with constant Ti '
 !         write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
             if (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
@@ -11385,7 +11395,7 @@ c end of implementation
 
       case (17)
         if(ncall.eq.0) then
-          write(*,*) 'BCPOT = 17 : sheath potential '//
+          write(*,'(a,a1,a)') 'BCPOT = 17 : sheath potential '//
      1     ' (floating target) bc on ',BCCHAR(IB),boundary_location(ib)
           currentOld(ib) = potpar(ib,2)
           currentCounter(ib) = 0

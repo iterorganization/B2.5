@@ -123,12 +123,14 @@ csw 18feb2014 added for correct implementation of boundary conditions
       implicit none
       external ipgeti
 
-cxpb The default is to force usage of b2.boundary.namelist for DN cases
+cxpb The default is to force usage of b2.boundary.namelist
+cxpb for DN and limiter cases
       if (boundary_namelist_set) return
       boundary_namelist=0
       call ipgeti('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.0) then
         if (nnreg(0).ge.7) boundary_namelist=1
+        if (nnreg(0).eq.2 .and. periodic_bc.eq.1) boundary_namelist=1
       end if
       boundary_namelist_set = .true.
       return
@@ -874,60 +876,85 @@ c..  only test guard cells that have a real cell on the other side
         enddo
       enddo
 c..  test that boundary cells are guard cells
+c..  test corner cells separately, but only external corners
       do ib = 1, nbc
         if (bcchar(ib).eq.'N') then
           if (old_style(ib)) then
-            do ix = bcstart(ib), bcend(ib)
+            if (bcstart(ib).eq.-1)
+     >       call xertst(topiy(bcstart(ib),bcpos(ib)).eq.ny+1,
+     &        'Inconsistent boundary North-West corner!')
+            do ix = bcstart(ib)+1, bcend(ib)-1
               call xertst(topiy(ix,bcpos(ib)).eq.ny+1,
-     &         'inconsistent North boundary!')
+     &         'Inconsistent North boundary!')
             enddo
+            if (bcend(ib).eq.nx)
+     >       call xertst(topiy(bcend(ib),bcpos(ib)).eq.ny+1,
+     &        'Inconsistent boundary North-East corner!')
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
      .         topiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.ny+1,
-     &         'inconsistent North boundary!')
+     &         'Inconsistent North boundary!')
             end do
           endif
         endif
         if (bcchar(ib).eq.'S') then
           if (old_style(ib)) then
-            do ix = bcstart(ib), bcend(ib)
+            if (bcstart(ib).eq.-1)
+     >       call xertst(bottomiy(bcstart(ib),bcpos(ib)).eq.-2,
+     &        'Inconsistent boundary South-West corner!')
+            do ix = bcstart(ib)+1, bcend(ib)-1
               call xertst(bottomiy(ix,bcpos(ib)).eq.-2,
-     &         'inconsistent South boundary!')
+     &         'Inconsistent South boundary!')
             enddo
+            if (bcend(ib).eq.nx)
+     >       call xertst(bottomiy(bcend(ib),bcpos(ib)).eq.-2,
+     &        'Inconsistent boundary South-East corner!')
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
      .         bottomiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
-     &         'inconsistent South boundary!')
+     &         'Inconsistent South boundary!')
             end do
           endif
         endif
         if (bcchar(ib).eq.'E') then
           if (old_style(ib)) then
-            do iy = bcstart(ib), bcend(ib)
+            if (bcstart(ib).eq.-1)
+     >       call xertst(rightix(bcpos(ib),bcstart(ib)).eq.nx+1,
+     &        'Inconsistent boundary South-East corner!')
+            do iy = bcstart(ib)+1, bcend(ib)-1
               call xertst(rightix(bcpos(ib),iy).eq.nx+1,
-     &         'inconsistent East boundary!')
+     &         'Inconsistent East boundary!')
             enddo
+            if (bcend(ib).eq.ny)
+     >       call xertst(rightix(bcpos(ib),bcend(ib)).eq.nx+1,
+     &        'Inconsistent boundary North-East corner!')
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
      .         rightix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.nx+1,
-     &         'inconsistent East boundary!')
+     &         'Inconsistent East boundary!')
             end do
           endif
         endif
         if (bcchar(ib).eq.'W') then
           if (old_style(ib)) then
-            do iy = bcstart(ib), bcend(ib)
+            if (bcstart(ib).eq.-1)
+     >       call xertst(leftix(bcpos(ib),bcstart(ib)).eq.-2,
+     &        'Inconsistent boundary South-West corner!')
+            do iy = bcstart(ib)+1, bcend(ib)-1
               call xertst(leftix(bcpos(ib),iy).eq.-2,
-     &         'inconsistent West boundary!')
+     &         'Inconsistent West boundary!')
             enddo
+            if (bcend(ib).eq.ny)
+     >       call xertst(leftix(bcpos(ib),bcend(ib)).eq.-2,
+     &        'Inconsistent boundary North-West corner!')
           else
             do ic = 1, bc_list_size(ib)
               call xertst(
      .         leftix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
-     &         'inconsistent West boundary!')
+     &         'Inconsistent West boundary!')
             end do
           endif
         endif
