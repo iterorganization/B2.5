@@ -2159,10 +2159,14 @@ c              it is NOT IYSs style)
           allocate(sni_av_pmpl(size(sni,1),size(sni,2),size(sni,3)))
           allocate(sni_av_pipl(size(sni,1),size(sni,2),size(sni,3)))
           allocate(sni_av_pppl(size(sni,1),size(sni,2),size(sni,3)))
-          allocate(smo_av_mapl(size(smo,1),size(smo,2),size(smo,3)))
-          allocate(smo_av_mmpl(size(smo,1),size(smo,2),size(smo,3)))
-          allocate(smo_av_mipl(size(smo,1),size(smo,2),size(smo,3)))
-          allocate(smo_av_mppl(size(smo,1),size(smo,2),size(smo,3)))
+          allocate(smo_av_mapl(size(smo_mapl,1),size(smo_mapl,2),
+     .                         size(smo_mapl,3)))
+          allocate(smo_av_mmpl(size(smo_mmpl,1),size(smo_mmpl,2),
+     .                         size(smo_mmpl,3)))
+          allocate(smo_av_mipl(size(smo_mipl,1),size(smo_mipl,2),
+     .                         size(smo_mipl,3)))
+          allocate(smo_av_mppl(size(smo_mppl,1),size(smo_mppl,2),
+     .                         size(smo_mppl,3)))
           allocate(sei_av_eapl(size(sei,1),size(sei,2),size(sei,3)))
           allocate(sei_av_empl(size(sei,1),size(sei,2),size(sei,3)))
           allocate(sei_av_eipl(size(sei,1),size(sei,2),size(sei,3)))
@@ -4789,14 +4793,14 @@ c!###}
      .                      size(sni,2), size(sni,3)))
         allocate(sni_s_pppl(size(sni,1),
      .                      size(sni,2), size(sni,3)))
-        allocate(smo_s_mapl(size(smo,1),
-     .                      size(smo,2), size(smo,3)))
-        allocate(smo_s_mmpl(size(smo,1),
-     .                      size(smo,2), size(smo,3)))
-        allocate(smo_s_mipl(size(smo,1),
-     .                      size(smo,2), size(smo,3)))
-        allocate(smo_s_mppl(size(smo,1),
-     .                      size(smo,2), size(smo,3)))
+        allocate(smo_s_mapl(size(smo_mapl,1),
+     .                      size(smo_mapl,2), size(smo_mapl,3)))
+        allocate(smo_s_mmpl(size(smo_mmpl,1),
+     .                      size(smo_mmpl,2), size(smo_mmpl,3)))
+        allocate(smo_s_mipl(size(smo_mipl,1),
+     .                      size(smo_mipl,2), size(smo_mipl,3)))
+        allocate(smo_s_mppl(size(smo_mppl,1),
+     .                      size(smo_mppl,2), size(smo_mppl,3)))
         allocate(sne_s_pael(size(see,1),
      .                      size(see,2)))
         allocate(sne_s_pmel(size(see,1),
