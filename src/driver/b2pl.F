@@ -13,6 +13,7 @@
       use b2mod_ppout
       use b2mod_xerset
       use b2mod_dimensions
+      use b2mod_b2cmfs, only : isymm
       implicit none
 
 *-----------------------------------------------------------------------
@@ -71,6 +72,7 @@
 *   ..local variables
       integer ninp(0:6), nout(0:2), nCv, nFc, ns, idum(0:9), io
       logical file_open
+      character*120 cdum
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
@@ -135,26 +137,8 @@
       call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from plasma state file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0)
-      mpg%nCg = idum(1)
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  cdum, isymm)
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from b2fparam file

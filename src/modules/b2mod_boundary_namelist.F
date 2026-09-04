@@ -1087,12 +1087,31 @@ c.. Make a list of core boundaries
                 end if
               end if
             end if
+            if (todo .and. m%hasTopologicalData) then
+              ic = 1
+              assigned = .false.
+              do while (ic.le.ncbs)
+                if (lcbs(ic).eq.ib) then
+                  if (.not.done(ic)) then
+                    assigned = .true.
+                    done(ic) = .true.
+                  end if
+                end if
+                ic = ic + 1
+              end do
+              if (assigned) then
+                write(*,*) 'Using explicitly declared core boundary ',
+     .            ib
+              end if
+            end if
           endif
         enddo
         if (maxval(m%fsVxP(:,2)).gt.2) then
           if ((m%nnreg(0).gt.1.or.m%periodic_bc.eq.1).and.
      &        .not.(all(m%cvOnClosedSurface).eqv..false.)) then
-            call xertst(1.le.ncbs, 'faulty parameters ncbs')
+            if (.not.m%hasTopologicalData) then
+              call xertst(1.le.ncbs, 'faulty parameters ncbs')
+            end if
           end if
         end if
         do ib = 1, ncbs
