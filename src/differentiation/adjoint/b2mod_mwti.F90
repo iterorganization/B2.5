@@ -225,13 +225,13 @@ contains
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         end if
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp,'dsi',dsi)
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         end if
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp,'dsa',dsa)
       endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
@@ -242,7 +242,7 @@ contains
           if (.not. allocated(dsl)) then
             allocate(dsl(1:mpg%divFcP(i,2)), dsLT(1:mpg%divFcP(i,2)), dsLP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
           inquire(file='dsL', exist=file_exists)
           if (file_exists) then
             open(99,file='dsLT')
@@ -265,7 +265,7 @@ contains
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl',dstl)
             inquire(file='dsTL', exist=file_exists)
             if (file_exists) then
               open(99,file='dsTLT')
@@ -287,7 +287,7 @@ contains
             if (.not. allocated(dsr)) then
               allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
             end if
-            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+            call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
             inquire(file='dsR', exist=file_exists)
             if (file_exists) then
               open(99,file='dsRT')
@@ -310,7 +310,7 @@ contains
           if (.not. allocated(dstr)) then
             allocate(dstr(1:mpg%divFcP(i,2)), dsTRT(1:mpg%divFcP(i,2)), dsTRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr',dstr)
           inquire(file='dsTR', exist=file_exists)
           if (file_exists) then
             open(99,file='dsTRT')
@@ -332,7 +332,7 @@ contains
           if (.not. allocated(dsr)) then
             allocate(dsr(1:mpg%divFcP(i,2)), dsRT(1:mpg%divFcP(i,2)), dsRP(1:mpg%divFcP(i,2)))
           end if
-          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+          call output_ds_fc(geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
           if (file_exists) then
             open(99,file='dsRT')
           else
@@ -3389,7 +3389,7 @@ contains
                 (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
     enddo
     if(isep.ne.0) then
-      ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
+      ds_offset=(ds(isep-1)+ds(isep))/2.0_R8
       do i=1,nlist
         ds(i)=ds(i)-ds_offset
       enddo
@@ -3421,7 +3421,7 @@ contains
       ds(i) = ds(i-1)+ 0.5_R8 * (geo%fcHt(fclist(i-1)) + geo%fcHt(fclist(i)))
     enddo
     if(isep.ne.0) then
-      ds_offset = (ds(isep)+ds(isep+1))/2.0_R8
+      ds_offset = (ds(isep-1)+ds(isep))/2.0_R8
       do i = 1, nlist
         ds(i) = ds(i) - ds_offset
       enddo

@@ -71,13 +71,13 @@
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         endif
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp,'dsi',dsi)
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         endif
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp,'dsa',dsa)
       endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
@@ -89,33 +89,33 @@
             allocate(dsl(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
         case (2)
           if (mpg%nnreg(0).ge.7) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstl',dstl)
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl',dstl)
           else
             if (.not. allocated(dsr)) then
               allocate(dsr(1:mpg%divFcP(i,2)))
             endif
             call output_ds_fc
-     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
           end if
         case (3)
           if (.not. allocated(dstr)) then
             allocate(dstr(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dstr',dstr)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr',dstr)
         case (4)
           if (.not. allocated(dsr)) then
             allocate(dsr(1:mpg%divFcP(i,2)))
           endif
           call output_ds_fc
-     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsr',dsr)
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr',dsr)
         end select
         deallocate(fclist)
       end do

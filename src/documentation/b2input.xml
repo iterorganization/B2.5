@@ -5981,6 +5981,8 @@
 				<type>integer</type>
 				<description>
 					If '1', SPb new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>
@@ -6004,8 +6006,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPb new form of calculating ion heat flux is used.
-					It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating ion heat flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>
@@ -6055,8 +6058,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPb new form of calculating particle flux is used.
-					It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating particle flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>
