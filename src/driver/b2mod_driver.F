@@ -120,7 +120,8 @@
 #if AL_MAJOR_VERSION > 4
       use ids_routines  ! IGNORE
      , , only : imas_open, al_build_uri_from_legacy_parameters,
-     ,          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
+     ,          OPEN_PULSE, STRMAXLEN,
+     ,          MDSPLUS_BACKEND, HDF5_BACKEND, ASCII_BACKEND
 #else
       use ids_routines  ! IGNORE
      , , only : imas_open_env
@@ -265,6 +266,9 @@
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
 #if AL_MAJOR_VERSION < 5
       character treename*24
+#else
+      character ids_backend*24
+      integer backend_flag
 #endif
       character username*24, database*24, version*24
       character old_imas_version*132, imas_version*132
@@ -316,6 +320,9 @@
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
+#if AL_MAJOR_VERSION > 4
+      data ids_backend /'hdf5'/
+#endif
       data b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data savefile/'plasmastate.xxxx'/,
@@ -1466,6 +1473,17 @@ csw 09oct2012
 #endif
 #if AL_MAJOR_VERSION > 4
          call ipgetc('b2mndr_ids_path', path )
+         call ipgetc('b2mndr_ids_backend', ids_backend )
+         call chcase(0, ids_backend)
+         if (streql(ids_backend,'hdf5')) then
+           backend_flag = HDF5_BACKEND
+         else if (streql(ids_backend,'mdsplus')) then
+           backend_flag = MDSPLUS_BACKEND
+         else if (streql(ids_backend,'ascii')) then
+           backend_flag = ASCII_BACKEND
+         else
+           call xerrab('Unsupported IMAS backend !')
+         end if
          not_default = not_default.or..not.streql(path,' ')
 #else
          treename = 'ids'
@@ -2830,7 +2848,7 @@ c new CDF movie option
           if (idx.eq.0.and.continued) then
 #if AL_MAJOR_VERSION > 4
             uri =
-     .       'imas:mdsplus?path='//trim(ids_path)
+     .       'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
             write(*,'(2a)')
      .        "Checking if IMAS data entry already exists : ",
      .         trim(ids_path)
@@ -2851,7 +2869,7 @@ c new CDF movie option
                 l=index(ids_path,'imasdb/ITER')
                 write(olddir,'(a)')
      .           ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
-                uri = 'imas:mdsplus?path='//trim(olddir)
+                uri = 'imas:'//trim(ids_backend)//'?path='//trim(olddir)
                 call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
                 call imas_open_env(treename, shot, run, idx,
@@ -2868,7 +2886,7 @@ c new CDF movie option
                 l=index(ids_path,'imasdb/iter')
                 write(olddir,'(a)')
      .           ids_path(1:l-1)//'imasdb/ITER'//ids_path(l+11:256)
-                uri = 'imas:mdsplus?path='//trim(olddir)
+                uri = 'imas:'//trim(ids_backend)//'?path='//trim(olddir)
                 call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
                 call imas_open_env(treename, shot, run, idx,
@@ -3010,19 +3028,21 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               tmp_run = run + 1000
 #if AL_MAJOR_VERSION > 4
                     call al_build_uri_from_legacy_parameters
-     &               ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &               ( backend_flag, shot, run, trim(username),
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_source, status )
                     if (database.eq.'iter'.or.
      &                  index(ids_path,'imasdb/iter').gt.0) then
                       call al_build_uri_from_legacy_parameters
-     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
-     &                   'ITER', int2str(IMAS_MAJOR_VERSION), '',
+     &                 ( backend_flag, shot, tmp_run,
+     &                   trim(username), 'ITER',
+     &                   int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                     else
                       call al_build_uri_from_legacy_parameters
-     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
-     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 ( backend_flag, shot, tmp_run,
+     &                   trim(username), trim(database),
+     &                   int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                     end if
 #if IMAS_MAJOR_VERSION < 4
@@ -3061,12 +3081,14 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                  index(ids_path,'imasdb/iter').eq.0) then
 #if AL_MAJOR_VERSION > 4
                       call al_build_uri_from_legacy_parameters
-     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
-     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 ( backend_flag, shot, tmp_run,
+     &                   trim(username), trim(database),
+     &                   int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_source, status )
                       call al_build_uri_from_legacy_parameters
-     &                 ( MDSPLUS_BACKEND, shot, run, trim(username),
-     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 ( backend_flag, shot, run,
+     &                   trim(username), trim(database),
+     &                   int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                       write(systemarg,'(a,a,a,a)')
      &                  'idscp -s ',trim(uri_source),
@@ -3097,7 +3119,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                       write(ids_path(l+7:l+10),'(a4)') 'ITER'
                     end if
 #if AL_MAJOR_VERSION > 4
-                    uri = 'imas:mdsplus?path='//trim(ids_path)
+                    uri = 'imas:'//trim(ids_backend)//
+     .                    '?path='//trim(ids_path)
                     call imas_open( uri, OPEN_PULSE,
      .               idx, status, message )
 #else
@@ -3369,7 +3392,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        divertors,
 #endif
 #if AL_MAJOR_VERSION > 4
-     &        ids_path,
+     &        ids_path, ids_backend,
 #else
      &        treename, shot, run, username, database, version,
 #endif
@@ -3378,7 +3401,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (write_av)
      &       call put_batch_edge(
 #if AL_MAJOR_VERSION > 4
-     &        ids_path,
+     &        ids_path, ids_backend,
 #else
      &        treename, shot, run, username, database, version,
 #endif
@@ -3694,10 +3717,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      time_slice_index, num_time_slices )
         else if (continued) then
 #if AL_MAJOR_VERSION > 4
-          uri = 'imas:mdsplus?path='//trim(ids_path)
-          write(*,'(2a)')
+          uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
+          write(*,'(5a)')
      .     "Checking if IMAS data entry already exists : ",
-     .      trim(ids_path)
+     .      trim(ids_path)," with ",trim(ids_backend)," backend"
           call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
           write(*,'(2a,2i8)')
@@ -3716,7 +3739,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               write(olddir,'(a)')
      .         ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
               ids_path = trim(olddir)
-              uri = 'imas:mdsplus?path='//trim(ids_path)
+              uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
               call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
               call imas_open_env(treename, shot, run, idx,
@@ -3734,7 +3757,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               write(olddir,'(a)')
      .         ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
               ids_path = trim(olddir)
-              uri = 'imas:mdsplus?path='//trim(ids_path)
+              uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
               call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
               call imas_open_env(treename, shot, run, idx,
@@ -3827,18 +3850,18 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &             tmp_run = run + 1000
 #if AL_MAJOR_VERSION > 4
                   call al_build_uri_from_legacy_parameters
-     &             ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &             ( backend_flag, shot, run, trim(username),
      &               trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &               uri_source, status )
                   if (database.eq.'iter'.or.
      &                index(ids_path,'imasdb/iter').gt.0) then
                     call al_build_uri_from_legacy_parameters
-     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &               ( backend_flag, shot, tmp_run, trim(username),
      &                 'ITER', int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                   else
                     call al_build_uri_from_legacy_parameters
-     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &               ( backend_flag, shot, tmp_run, trim(username),
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                   end if
@@ -3914,7 +3937,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     write(ids_path(l+7:l+10),'(a4)') 'ITER'
                   end if
 #if AL_MAJOR_VERSION > 4
-                  uri = 'imas:mdsplus?path='//trim(ids_path)
+                  uri = 'imas:'//trim(ids_backend)//
+     .                  '?path='//trim(ids_path)
                   call imas_open( uri, OPEN_PULSE,
      .             idx, status, message )
 #else
@@ -4055,7 +4079,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      divertors,
 #endif
 #if AL_MAJOR_VERSION > 4
-     &      ids_path,
+     &      ids_path, ids_backend,
 #else
      &      treename, shot, run, username, database, version,
 #endif

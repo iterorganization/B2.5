@@ -79,7 +79,7 @@ program b2_ual_write
     use b2mod_main &
      & , only : b2mn_init
     use b2mod_driver &
-     & , only : idx, ids_path, dtim, continued, &
+     & , only : idx, ids_path, ids_backend, backend_flag, dtim, continued, &
      &          shot, run, username, database, version, &
      &          old_edge_profiles, equilibrium, wall, &
      &          old_imas_version, old_start_time, old_end_time, &
@@ -143,7 +143,7 @@ program b2_ual_write
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
      & , only : imas_open, al_build_uri_from_legacy_parameters, &
-     &          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
+     &          OPEN_PULSE, STRMAXLEN
 #else
     use ids_routines &  ! IGNORE
      & , only : imas_open_env
@@ -383,7 +383,7 @@ program b2_ual_write
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
 #if AL_MAJOR_VERSION > 4
-    uri = 'imas:mdsplus?path='//trim(ids_path)
+    uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
     write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
       &  trim(ids_path)
     call imas_open( uri, OPEN_PULSE, idx, status, message )
@@ -399,7 +399,7 @@ program b2_ual_write
 #if AL_MAJOR_VERSION > 4
         l=index(ids_path,'imasdb/ITER')
         write(olddir,'(a)') ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
-        uri = 'imas:mdsplus?path='//trim(olddir)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(olddir)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
         call imas_open_env(treename, shot, run, idx, username, 'iter', version, status)
@@ -413,7 +413,7 @@ program b2_ual_write
 #if AL_MAJOR_VERSION > 4
         l=index(ids_path,'imasdb/iter')
         write(olddir,'(a)') ids_path(1:l-1)//'imasdb/ITER'//ids_path(l+11:256)
-        uri = 'imas:mdsplus?path='//trim(olddir)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(olddir)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
         call imas_open_env(treename, shot, run, idx, username, 'ITER', version, status)
@@ -514,17 +514,17 @@ program b2_ual_write
               & tmp_run = run + 1000
 #if AL_MAJOR_VERSION > 4
             call al_build_uri_from_legacy_parameters                 &
-              & ( MDSPLUS_BACKEND, shot, run, trim(username),        &
+              & ( backend_flag, shot, run, trim(username),           &
               &   trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
               &   uri_source, status )
             if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) then
               call al_build_uri_from_legacy_parameters               &
-                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                & ( backend_flag, shot, tmp_run, trim(username),     &
                 &   'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
                 &   uri_dest, status )
             else
               call al_build_uri_from_legacy_parameters               &
-                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                & ( backend_flag, shot, tmp_run, trim(username),     &
                 &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
                 &   uri_dest, status )
             end if
@@ -562,11 +562,11 @@ program b2_ual_write
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) then
 #if AL_MAJOR_VERSION > 4
               call al_build_uri_from_legacy_parameters               &
-                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                & ( backend_flag, shot, tmp_run, trim(username),     &
                 &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
                 &   uri_source, status )
               call al_build_uri_from_legacy_parameters               &
-                & ( MDSPLUS_BACKEND, shot, run, trim(username),      &
+                & ( backend_flag, shot, run, trim(username),         &
                 &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
                 &   uri_dest, status )
               write(systemarg,'(a,a,a,a)')                     &
@@ -598,7 +598,7 @@ program b2_ual_write
               write(ids_path(l+7:l+10),'(a4)') 'ITER'
             end if
 #if AL_MAJOR_VERSION > 4
-            uri = 'imas:mdsplus?path='//trim(ids_path)
+            uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
             call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
             call imas_open_env(treename, shot, run, idx, &
@@ -700,7 +700,7 @@ program b2_ual_write
         &   divertors, &
 #endif
 #if AL_MAJOR_VERSION > 4
-        &   ids_path, &
+        &   ids_path, ids_backend, &
 #else
         &   treename, shot, run, username, database, version, &
 #endif

@@ -121,7 +121,7 @@ contains
             &   divertors, &
 #endif
 #if AL_MAJOR_VERSION > 4
-            &   ids_path, &
+            &   ids_path, ids_backend, &
 #else
             &   treename, shot, run, username, database, version, &
 #endif
@@ -176,16 +176,17 @@ contains
             !< designed to store run data related to the divertor plates
 #endif
 #if AL_MAJOR_VERSION > 4
-        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+        character(len=256), intent(in) :: ids_path   !< The path to the IMAS data entry
+        character(len=24), intent(in) :: ids_backend !< IMAS backend to be used
 #else
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        character(len=24), intent(in) :: treename    !< The name of the IMAS IDS database
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+        character(len=24), intent(in) :: username    !< Creator/owner of the IMAS IDS
             !< database
-        character(len=24), intent(in) :: database   !< IMAS database name
+        character(len=24), intent(in) :: database    !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        character(len=24), intent(in) :: version     !< Major version of the IMAS IDS
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
@@ -229,7 +230,7 @@ contains
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
-          uri = 'imas:mdsplus?path='//trim(ids_path)
+          uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
 #if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
@@ -465,7 +466,7 @@ contains
 
     subroutine put_batch_edge( &
 #if AL_MAJOR_VERSION > 4
-            &   ids_path, &
+            &   ids_path, ids_backend, &
 #else
             &   treename, shot, run, username, database, version, &
 #endif
@@ -496,16 +497,17 @@ contains
             !< designed to store run summary data
 #endif
 #if AL_MAJOR_VERSION > 4
-        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+        character(len=256), intent(in) :: ids_path   !< The path to the IMAS data entry
+        character(len=24), intent(in) :: ids_backend !< IMAS backend to be used
 #else
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        character(len=24), intent(in) :: treename    !< The name of the IMAS IDS database
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+        character(len=24), intent(in) :: username    !< Creator/owner of the IMAS IDS
             !< database
-        character(len=24), intent(in) :: database   !< IMAS database name
+        character(len=24), intent(in) :: database    !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        character(len=24), intent(in) :: version     !< Major version of the IMAS IDS
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
@@ -541,7 +543,7 @@ contains
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
-          uri = 'imas:mdsplus?path='//trim(ids_path)
+          uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
 #if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           if (do_summary) then
             allocate( description%uri(1) )
@@ -1053,7 +1055,7 @@ contains
     !! with Fortran90
     subroutine read_ids( idx, &
 #if AL_MAJOR_VERSION > 4
-         & ids_path )
+         & ids_path, ids_backend )
 #else
          & treename, shot, run, username, database, version )
 #endif
@@ -1062,15 +1064,16 @@ contains
         implicit none
         integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
 #if AL_MAJOR_VERSION > 4
-        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+        character(len=256), intent(in) :: ids_path   !< The path to the IMAS data entry
+        character(len=24), intent(in) :: ids_backend !< IMAS backend to be used
 #else
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        character(len=24), intent(in) :: treename    !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
-        character(len=24), intent(in) :: database   !< IMAS IDS database name
+        character(len=24), intent(in) :: username    !< Creator/owner of the IMAS IDS database
+        character(len=24), intent(in) :: database    !< IMAS IDS database name
             !< (i. e. solps-iter, ITER, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
+        character(len=24), intent(in) :: version     !< Major version of the IMAS IDS database
 #endif
         !! Internal variables
 #if AL_MAJOR_VERSION > 4
@@ -1079,14 +1082,14 @@ contains
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data in edge plasma profiles (includes the scrape-off layer and
-            !<  possibly part of the confined plasma)
+            !< possibly part of the confined plasma)
         integer :: status
 
         gridSubset_index = 3
 
         !! Open input datafile from local database
 #if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(ids_path)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
         write(0,*) "Started reading input IMAS data entry", trim(uri)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
         call xertst ( status.eq.0, trim(message) )
