@@ -887,6 +887,8 @@ cc momentum update
      &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)       
             st%dv%resmo_mol = 0.0_R8
             st%dv%resmo_mol_dia = 0.0_R8  
+          elseif (switch%b2tfmol_3D_mom.eq.0) then 
+            !! do nothing here
           else 
             call xerrab('b2tfmol_3D_mom should be 0, 1 or 2')
           endif

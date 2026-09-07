@@ -144,7 +144,7 @@
 
       call b2smcu_3D (nCv, nFc, nVx, am_d2*mp, switch,  geo, mpg,   
      *   n_mol(:,0), u_pol_mol(:,0), u_rad_mol(:,0), u_tor_mol(:,0),
-     *   smcu_pol, smcu_rad, smcu_tor)
+     *   co%vs_mol,smcu_pol, smcu_rad, smcu_tor)
 
 *    ..compute total perpendicular momentum sources
       sm_mol_rad(:,0) = sr_mol%sm_mol_rad(:,0) + smgp_rad + smcu_rad
@@ -259,6 +259,9 @@ cc print out sources before update
        call my_out_us(70,nCv,0,sm_mol_tor(:,1),'b2npmo_mol_sm_tor1_tot')
        call my_out_us(70,nCv,0,sm_mol_tor(:,2),'b2npmo_mol_sm_tor2_tot')
        call my_out_us(70,nCv,0,sm_mol_tor(:,3),'b2npmo_mol_sm_tor3_tot')
+       call my_out_us(70,nCv,0,smcu_pol,'b2npmo_mol_smcu_pol')
+       call my_out_us(70,nCv,0,smcu_rad,'b2npmo_mol_smcu_rad')
+       call my_out_us(70,nCv,0,smcu_tor,'b2npmo_mol_smcu_tor')
       end if
 
 
