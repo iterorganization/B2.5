@@ -38,7 +38,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k, ixb, iyb
       integer, save :: iout = 0
       integer, save :: use_9pt_stencil = 1
       character chark*1
@@ -192,13 +192,24 @@ cwdk add 9-point contributions
           aa9(ix,iy,-3) = 0.0_R8
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy), bottomiy(ix,iy),3) = -conc(ix,iy,1,1)
+          ixb = bottomix(ix,iy)
+          iyb = bottomiy(ix,iy)
+          if (solvereg(ibot)) then
+           if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c           ..ordinary case: target's own top pointer reciprocates
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = -conc(ix,iy,1,1)
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
+           else if (bottomix(ixb,iyb).eq.ix .and.
+     &              bottomiy(ixb,iyb).eq.iy) then
+c           ..limiter-topology mutual-bottom pairing: target calls US
+c           ..its bottom neighbour too, so route into ITS bottom slot
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),-3) = -conc(ix,iy,1,1)
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
+           endif
           if (solvereg(ireg))
      >     aa9(ix,iy,0) = aa9(ix,iy,0)+conc(ix,iy,1,1)
-          if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
           if (solvereg(ireg))
      >     aa9(ix,iy,-3) = -conc(ix,iy,1,1)
           if (use_9pt_stencil.ne.0) then

@@ -55,7 +55,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, ixb, iyb
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       integer, save :: iadd_9 = 1, iout = 0                             !srv 13.10.06
@@ -272,12 +272,22 @@ cwdk todo: rscal(pb)-logic
           t1 =-0.5_R8*flob(ix,iy,1,1)
      &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)                    !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+          ixb = bottomix(ix,iy)
+          iyb = bottomiy(ix,iy)
           if (solvereg(ibot)) then
-           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
-     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*rscal(pb(ix,iy))
-           aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+           if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c           ..ordinary case: target's own top pointer reciprocates
+            aa9(ixb,iyb,3) = aa9(ixb,iyb,3) + t0*rscal(pb(ix,iy))
+            aa9(ixb,iyb,0) = aa9(ixb,iyb,0) - t1*rscal(pb(ixb,iyb))
+           else if (bottomix(ixb,iyb).eq.ix .and.
+     &              bottomiy(ixb,iyb).eq.iy) then
+c           ..limiter-topology mutual-bottom pairing: target calls US
+c           ..its bottom neighbour too, so route into ITS bottom slot
+            aa9(ixb,iyb,-3) = aa9(ixb,iyb,-3) + t0*rscal(pb(ix,iy))
+            aa9(ixb,iyb,0)  = aa9(ixb,iyb,0)  - t1*rscal(pb(ixb,iyb))
+           endif
+c          ..else: connectivity isn't reciprocal at all; skip rather
+c          ..than write into an unrelated slot
           endif
           if (solvereg(ireg)) then
            aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))

@@ -149,11 +149,24 @@ cwdk add 9-point contributions
           aa11(ix,iy,-3) = 0.0_R8
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+          ixb = bottomix(ix,iy)
+          iyb = bottomiy(ix,iy)
           if (solvereg(ibot)) then
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
+           if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c           ..ordinary case: target's own top pointer reciprocates
+            aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),3)-conc(ix,iy,1,1)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
+            aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
+           else if (bottomix(ixb,iyb).eq.ix .and.
+     &              bottomiy(ixb,iyb).eq.iy) then
+c           ..limiter-topology mutual-bottom pairing: target calls US
+c           ..its bottom neighbour too, so route into ITS bottom slot
+            aa11(bottomix(ix,iy),bottomiy(ix,iy),-3) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy),-3)-conc(ix,iy,1,1)
+            aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
+           endif
           endif
           if (solvereg(ireg)) then
            aa11(ix,iy, 0) = aa11(ix,iy, 0)+conc(ix,iy,1,1)

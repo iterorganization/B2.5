@@ -40,7 +40,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, ixb, iyb
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0                                       !srv 17.06.02
@@ -195,16 +195,25 @@ csw 18feb2014 corrected BCs (SOLPS4)
           t1 = -flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0)
      &                                 - conb(ix,iy,1,1,2) !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*rscal(pb(ix,iy))
+          ixb = bottomix(ix,iy)
+          iyb = bottomiy(ix,iy)
+          if (solvereg(ibot)) then
+           if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c           ..ordinary case: target's own top pointer reciprocates
+            aa5(ixb,iyb,2) = t0*rscal(pb(ix,iy))
+            aa5(ixb,iyb,0) = aa5(ixb,iyb,0)-t1*rscal(pb(ixb,iyb))
+           else if (bottomix(ixb,iyb).eq.ix .and.
+     &              bottomiy(ixb,iyb).eq.iy) then
+c           ..limiter-topology mutual-bottom pairing: target calls US
+c           ..its bottom neighbour too, so route into ITS bottom slot
+            aa5(ixb,iyb,-2) = t0*rscal(pb(ix,iy))
+            aa5(ixb,iyb,0)  = aa5(ixb,iyb,0)-t1*rscal(pb(ixb,iyb))
+           endif
+          endif
           if (solvereg(ireg))
      >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0*rscal(pb(ix,iy))
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &      aa5(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           if (solvereg(ireg))
-     >     aa5(ix,iy,-2) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+     >     aa5(ix,iy,-2) = t1*rscal(pb(ixb,iyb))
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.

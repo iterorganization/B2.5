@@ -46,7 +46,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, ixb, iyb
       integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       logical new_matrix
       save ncall
@@ -226,13 +226,25 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solveet(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
+         ixb = bottomix(ix,iy)
+         iyb = bottomiy(ix,iy)
+         if (solveet(ibot)) then
+          if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c          ..ordinary case: target's own top pointer reciprocates
+           aa5(ixb,iyb,2) = t0
+           aa5(ixb,iyb,0) = aa5(ixb,iyb,0)-t1
+          else if (bottomix(ixb,iyb).eq.ix .and.
+     &             bottomiy(ixb,iyb).eq.iy) then
+c          ..limiter-topology mutual-bottom pairing: target calls US
+c          ..its bottom neighbour too, so route into ITS bottom slot
+           aa5(ixb,iyb,-2) = t0
+           aa5(ixb,iyb,0)  = aa5(ixb,iyb,0)-t1
+          endif
+c         ..else: connectivity isn't reciprocal at all; skip rather
+c         ..than write into an unrelated slot
+         endif
          if (solveet(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solveet(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
-     &     aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
          if (solveet(ireg))
      >    aa5(ix,iy,-2) = t1
 cxpb
@@ -380,13 +392,25 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solveee(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
+         ixb = bottomix(ix,iy)
+         iyb = bottomiy(ix,iy)
+         if (solveee(ibot)) then
+          if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c          ..ordinary case: target's own top pointer reciprocates
+           aa5(ixb,iyb,2) = t0
+           aa5(ixb,iyb,0) = aa5(ixb,iyb,0)-t1
+          else if (bottomix(ixb,iyb).eq.ix .and.
+     &             bottomiy(ixb,iyb).eq.iy) then
+c          ..limiter-topology mutual-bottom pairing: target calls US
+c          ..its bottom neighbour too, so route into ITS bottom slot
+           aa5(ixb,iyb,-2) = t0
+           aa5(ixb,iyb,0)  = aa5(ixb,iyb,0)-t1
+          endif
+c         ..else: connectivity isn't reciprocal at all; skip rather
+c         ..than write into an unrelated slot
+         endif
          if (solveee(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solveee(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
-     &       aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
          if (solveee(ireg))
      >    aa5(ix,iy,-2) = t1
 cxpb
@@ -535,16 +559,27 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solveei(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*scalr(ti(ix,iy))
+         ixb = bottomix(ix,iy)
+         iyb = bottomiy(ix,iy)
+         if (solveei(ibot)) then
+          if (topix(ixb,iyb).eq.ix .and. topiy(ixb,iyb).eq.iy) then
+c          ..ordinary case: target's own top pointer reciprocates
+           aa5(ixb,iyb,2) = t0*scalr(ti(ix,iy))
+           aa5(ixb,iyb,0) = aa5(ixb,iyb,0)-t1*scalr(ti(ixb,iyb))
+          else if (bottomix(ixb,iyb).eq.ix .and.
+     &             bottomiy(ixb,iyb).eq.iy) then
+c          ..limiter-topology mutual-bottom pairing: target calls US
+c          ..its bottom neighbour too, so route into ITS bottom slot
+           aa5(ixb,iyb,-2) = t0*scalr(ti(ix,iy))
+           aa5(ixb,iyb,0)  = aa5(ixb,iyb,0)-t1*scalr(ti(ixb,iyb))
+          endif
+c         ..else: connectivity isn't reciprocal at all; skip rather
+c         ..than write into an unrelated slot
+         endif
          if (solveei(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0*scalr(ti(ix,iy))
-         if (solveei(ibot))
-     >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
-     &    aa5(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &    -t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
          if (solveei(ireg))
-     >    aa5(ix,iy,-2) = t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
+     >    aa5(ix,iy,-2) = t1*scalr(ti(ixb,iyb))
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &      topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
