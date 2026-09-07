@@ -188,8 +188,8 @@ cxpb for DN and limiter cases
                   if(region(ix,iy,0).ne.0) then
                      done=.false.
                      region(ix,iy,0) = 0
-                     resignore(ix,iy,1)=0
-                     resignore(ix,iy,2)=0
+                     resignore(ix,iy,1) = 0
+                     resignore(ix,iy,2) = 0
                      write(*,*)
      .                    'REGION set to zero for dead cell ',ix,iy
                   endif
@@ -200,15 +200,15 @@ cxpb for DN and limiter cases
             write(*,*) 'Isolated region was unknown from geometry'
             do ib = 1, nniso
                do ix = nxiso1(ib), nxiso2(ib)
-                  bottomiy(ix,nyiso1(ib))=nyiso2(ib)
+                  bottomiy(ix,nyiso1(ib)) = nyiso2(ib)
                   write(*,*) 'ix,iy,iyb',ix,nyiso1(ib),nyiso2(ib)
-                  topiy(ix,nyiso2(ib))=nyiso1(ib)
+                  topiy(ix,nyiso2(ib)) = nyiso1(ib)
                   write(*,*) 'ix,iy,iyt',ix,nyiso2(ib),nyiso1(ib)
                enddo
                do iy = nyiso1(ib),nyiso2(ib)
-                  leftix(nxiso1(ib),iy)=nxiso2(ib)
+                  leftix(nxiso1(ib),iy) = nxiso2(ib)
                   write(*,*) 'ix,iy,ixl',nxiso1(ib),iy,nxiso2(ib)
-                  rightix(nxiso2(ib),iy)=nxiso1(ib)
+                  rightix(nxiso2(ib),iy) = nxiso1(ib)
                   write(*,*) 'ix,iy,ixr',nxiso2(ib),iy,nxiso1(ib)
                enddo
             enddo
@@ -792,8 +792,8 @@ c.. Make a list of core boundaries
         do ix = nxiso1(ib), nxiso2(ib)
           do iy = nyiso1(ib), nyiso2(ib)
             region(ix,iy,0) = 0
-            resignore(ix,iy,1)=0
-            resignore(ix,iy,2)=0
+            resignore(ix,iy,1) = 0
+            resignore(ix,iy,2) = 0
           enddo
         enddo
       enddo
@@ -807,24 +807,20 @@ c.. Make a list of core boundaries
      &               leftiy(ixx, iyy) .eq. iy) then
                     write(*,*) 'updated left neighbour of ', ixx, iyy
                     leftix(ixx, iyy) = -2
-                    leftiy(ixx, iyy) = -2
                   endif
                   if(rightix(ixx, iyy) .eq. ix .and.
      &               rightiy(ixx, iyy) .eq. iy) then
                     write(*,*) 'updated right neighbour of ', ixx, iyy
                     rightix(ixx, iyy) = nx+1
-                    rightiy(ixx, iyy) = ny+1
                   endif
                   if(bottomix(ixx, iyy) .eq. ix .and.
      &               bottomiy(ixx, iyy) .eq. iy) then
                     write(*,*) 'updated bottom neighbour of ', ixx, iyy
-                    bottomix(ixx, iyy) = -2
                     bottomiy(ixx, iyy) = -2
                   endif
                   if(topix(ixx, iyy) .eq. ix .and.
      &               topiy(ixx, iyy) .eq. iy) then
                     write(*,*) 'updated top neighbour of ', ixx, iyy
-                    topix(ixx, iyy) = nx+1
                     topiy(ixx, iyy) = ny+1
                   endif
                 endif

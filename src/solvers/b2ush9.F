@@ -182,9 +182,10 @@
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-         flo0(ix,iy,0,0:1)   = 0.0e0_R8
-         con0(ix,iy,0,0:1,:) = 0.0e0_R8                               !srv 02.01.07
+        if(leftix(ix,iy).eq.-2 .or.
+     &    (.not.solveee(ireg) .and. .not.solveei(ireg)) ) then
+         flo0(ix,iy,0,0:1)   = 0.0_R8
+         con0(ix,iy,0,0:1,:) = 0.0_R8                                 !srv 02.01.07
         else
          if (solveee(ireg) .and. solveei(ireg)) then
           t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*                              !srv 02.01.07 {
@@ -238,8 +239,8 @@ cwdk add linearization for 9-point terms
       enddo
 *   ..compute flo0y, con0y
       do ix = -1, nx
-       flo0(ix,-1,1,0:1) = 0.0e0_R8
-       con0(ix,-1,1,0:1,:) = 0.0e0_R8                                 !srv 02.01.07
+       flo0(ix,-1,1,0:1) = 0.0_R8
+       con0(ix,-1,1,0:1,:) = 0.0_R8                                   !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
@@ -262,10 +263,15 @@ cwdk add linearization for 9-point terms
 cwdk add linearization for 9-point terms
           flo0(ix,iy,1,0)   = floe(ix,iy,1,0)
           con0(ix,iy,1,0,0) = cone(ix,iy,1,0,0)
+        else
+          flo0(ix,iy,1,1)   = 0.0_R8
+          con0(ix,iy,1,1,0) = 0.0_R8
+          flo0(ix,iy,1,0)   = 0.0_R8
+          con0(ix,iy,1,0,0) = 0.0_R8
         endif
        enddo
       enddo
-      aa9 = 0.0e0_R8
+      aa9 = 0.0_R8
 *   ..compute the nine-point matrix
       do iy = -1, ny
        do ix = -1, nx
@@ -286,16 +292,19 @@ cwdk add linearization for 9-point terms
      &    -shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
           if (style_b2mndt.lt.2) aa9(ix,iy,0) = aa9(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*ti(ix,iy))                          !srv 02.01.07
+        else
+          aa9(ix,iy,0) = 1.0_R8
         endif
        enddo
       enddo
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-         aa9(ix,iy,-1) = 0.0e0_R8
-         aa9(ix,iy,-4) = 0.0e0_R8
-         aa9(ix,iy, 2) = 0.0e0_R8
+        if(leftix(ix,iy).eq.-2 .or.
+     &    (.not.solveee(ireg) .and. .not.solveei(ireg)) ) then
+         aa9(ix,iy,-1) = 0.0_R8
+         aa9(ix,iy,-4) = 0.0_R8
+         aa9(ix,iy, 2) = 0.0_R8
         else                                                          !srv 26.11.02 }
          t0 =  0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
          t1 = -0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
@@ -366,25 +375,30 @@ cwdk add 9-point contributions
           endif
          endif
         endif                                                         !srv 26.11.02
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0_R8              !srv 26.11.02
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
-        t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
-        ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveee(ireg) .or. solveei(ireg)) then
-         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
-         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
-        endif
-        if (solveee(ibot) .or. solveei(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
-     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
+        if(bottomiy(ix,iy).eq.-2 .or.
+     &    (.not.solveee(ireg) .and. .not.solveei(ireg)) ) then
+         aa9(ix,iy,-3) = 0.0_R8
+        else
+         t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+         if (solveee(ireg) .or. solveei(ireg)) then
+          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
+          aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
+         endif
+         if (solveee(ibot) .or. solveei(ibot)) then
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+     &     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+     &     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
+         endif
         endif
         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
@@ -556,9 +570,10 @@ cwdk add 9-point contributions
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
-        if(leftix(ix,iy).eq.-2) then
-         flo0(ix,iy,0,0:1) = 0.0e0_R8
-         con0(ix,iy,0,0:1,:) = 0.0e0_R8                               !srv 02.01.07
+        ireg = region(ix,iy,0)
+        if(leftix(ix,iy).eq.-2 .or. .not.solveee(ireg)) then
+         flo0(ix,iy,0,0:1) = 0.0_R8
+         con0(ix,iy,0,0:1,:) = 0.0_R8                                 !srv 02.01.07
         else
          t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*                               !srv 02.01.07 {
      &    (pccm1(leftix(ix,iy),leftiy(ix,iy))*
@@ -590,7 +605,7 @@ cwdk add linearization for 9-point terms
        enddo
       enddo
 *   ..compute the nine-point matrix
-      aa9 = 0.0e0_R8                                                  !srv 28.05.08
+      aa9 = 0.0_R8                                                    !srv 28.05.08
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -605,10 +620,10 @@ cwdk add linearization for 9-point terms
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-         aa9(ix,iy,-1) = 0.0e0_R8
-         aa9(ix,iy,-4) = 0.0e0_R8
-         aa9(ix,iy, 2) = 0.0e0_R8
+        if(leftix(ix,iy).eq.-2 .or. .not.solveee(ireg)) then
+         aa9(ix,iy,-1) = 0.0_R8
+         aa9(ix,iy,-4) = 0.0_R8
+         aa9(ix,iy, 2) = 0.0_R8
         else                                                          !srv 26.11.02 }
          t0 =  0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
          t1 = -0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
@@ -678,25 +693,27 @@ cwdk add 9-point contributions
           endif
          endif
         endif                                                         !srv 26.11.02
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0_R8              !srv 26.11.02
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
-        t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
-        ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveee(ireg)) then
-         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
-         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
-        endif
-        if (solveee(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+        if(bottomiy(ix,iy).eq.-2 .or. .not.solveee(ireg)) then
+         t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+         if (solveee(ireg)) then
+          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
+          aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
+         endif
+         if (solveee(ibot)) then
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
+         endif
         endif
         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
@@ -856,9 +873,10 @@ cwdk add 9-point contributions
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
-        if(leftix(ix,iy).eq.-2) then
-         flo0(ix,iy,0,0:1) = 0.0e0_R8
-         con0(ix,iy,0,0:1,:) = 0.0e0_R8                               !srv 02.01.07
+        ireg = region(ix,iy,0)
+        if(leftix(ix,iy).eq.-2 .or. .not.solveei(ireg)) then
+         flo0(ix,iy,0,0:1) = 0.0_R8
+         con0(ix,iy,0,0:1,:) = 0.0_R8                                 !srv 02.01.07
         else
          t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*                               !srv 02.01.07 {
      &    (pccm1(leftix(ix,iy),leftiy(ix,iy))*
@@ -891,7 +909,7 @@ cwdk add linearization for 9-point terms
        enddo
       enddo
 *   ..compute the nine-point matrix
-      aa9 = 0.0e0_R8                                                  !srv 28.05.08
+      aa9 = 0.0_R8                                                    !srv 28.05.08
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -906,10 +924,10 @@ cwdk add linearization for 9-point terms
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-         aa9(ix,iy,-1) = 0.0e0_R8
-         aa9(ix,iy,-4) = 0.0e0_R8
-         aa9(ix,iy, 2) = 0.0e0_R8
+        if(leftix(ix,iy).eq.-2 .or. .not.solveei(ireg)) then
+         aa9(ix,iy,-1) = 0.0_R8
+         aa9(ix,iy,-4) = 0.0_R8
+         aa9(ix,iy, 2) = 0.0_R8
         else                                                          !srv 26.11.02 }
          t0 =  0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
          t1 = -0.5_R8*flo0(ix,iy,0,0)-con0(ix,iy,0,0,0)               !srv 02.01.07
@@ -981,27 +999,31 @@ cwdk todo: scalr()-functionality; is 1.0 for now
           endif
          endif
         endif                                                         !srv 26.11.02
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0_R8              !srv 26.11.02
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                     !srv 02.01.07
-        t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                     !srv 02.01.07
-        ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solveei(ireg)) then
-         aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0*scalr(ti(ix,iy))
-         aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1*
+        if (bottomiy(ix,iy).eq.-2 .or. .not.solveei(ireg)) then
+         aa9(ix,iy,-3) = 0.0_R8
+        else
+         t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)               !srv 02.01.07
+         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+         if (solveei(ireg)) then
+          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0*scalr(ti(ix,iy))
+          aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1*
      &     scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
-        endif
-        if (solveei(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
+         endif
+         if (solveei(ibot)) then
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*scalr(ti(ix,iy))
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
+          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1*
      &      scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
+         endif
         endif
         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
@@ -1168,7 +1190,7 @@ cwdk add 9-point contributions
       function scalr(t0)
       implicit none
       real(kind=R8) :: scalr, t0
-      scalr = 1.0e0_R8  ! t0                                          !srv 02.01.07
+      scalr = 1.0_R8  ! t0                                            !srv 02.01.07
       return
       end function scalr
 

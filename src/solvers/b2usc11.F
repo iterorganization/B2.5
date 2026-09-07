@@ -190,7 +190,7 @@
       do iy = -1, ny
        do ix = -1, nx                                                  !srv 26.11.02 {
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
+        if(leftix(ix,iy).eq.-2 .or. .not.solvereg(ireg)) then
           aa11(ix,iy,-1) = 0.0e0_R8
         else                                                           !srv 26.11.02 }
           t0 =  flob(ix,iy,0,0)/2.0_R8
@@ -280,7 +280,7 @@ cwdk todo: rscal(pb)-logic
       do iy = -1, ny
        do ix = -1, nx
          ireg = region(ix,iy,0)
-         if(bottomiy(ix,iy).eq.-2) then
+         if(bottomiy(ix,iy).eq.-2 .or. .not.solvereg(ireg)) then
           aa11(ix,iy,-3) = 0.0_R8
          else
           t0 = 0.5_R8*flob(ix,iy,1,1)

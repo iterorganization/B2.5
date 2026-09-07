@@ -739,16 +739,16 @@
 					 ..do i0=1,nstg0
 					  ..compute log-log linearised rate coefficients
 					  ..do i1=1,nstg1
-					   ..compute source linearisation
+					   ..compute source linearisation (Eirene call)
 					   ..do i2=1,nstg2
-					    ..perform one inner iteration
+					    ..perform one inner iteration (on fluid equations)
 					    ..re-compute auxiliary quantities
 					    ..produce monitoring output
 					   ..enddo
 					  ..enddo
 					 ..enddo
-					This can be completed by the the 'b2mndt_nstg_ares??' switches.
-					See 'Numerics' section for details.
+					This can be completed by the the 'b2mndt_nstg_ares??' switches. See 'Numerics' section for details.
+					It is recommended to use these inner iterations when running in time-dependent mode (b2mndt_style=2) to make residuals converge within each time-step.
 				</description>
 				<switch>
 					<name>b2mndt_nstg0</name>
@@ -5069,6 +5069,8 @@
 				<type>integer</type>
 				<description>
 					If '1', SPb new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>
@@ -5092,8 +5094,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPb new form of calculating ion heat flux is used.
-					It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating ion heat flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>
@@ -5173,8 +5176,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPb new form of calculating particle flux is used.
-					It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating particle flux is used. It is recommended '1' for runs with drifts.
+					New form is in [V. Rozhansky, NF 2009]. Old form is in [V. Rozhansky, NF 2001].
+					The modified fluxes ('mdf') are denoted by a tilde hat in the model equations section of the manual.
 				</description>
 			</switch>
 			<switch>

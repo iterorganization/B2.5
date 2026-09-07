@@ -145,7 +145,7 @@ csw 18feb2014 corrected BCs (SOLPS4)
         endif
 
         ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
+        if(leftix(ix,iy).eq.-2 .or. .not.solvereg(ireg)) then
          aa5(ix,iy,-1) = 0.0_R8
         else
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
@@ -182,7 +182,7 @@ csw 18feb2014 corrected BCs (SOLPS4)
         endif
 
         ireg = region(ix,iy,0)
-        if(bottomiy(ix,iy).eq.-2) then
+        if(bottomiy(ix,iy).eq.-2 .or. .not.solvereg(ireg)) then
          aa5(ix,iy,-2) = 0.0_R8
         else
          if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {

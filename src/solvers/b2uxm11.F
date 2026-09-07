@@ -122,33 +122,51 @@
      &      .not.solvereg(ireg)) then
 
          else
-            ixl = leftix(ix,iy)
-            iyl = leftiy(ix,iy)
+          ixl = leftix(ix,iy)
+          iyl = leftiy(ix,iy)
+          if (topiy(ixl,iyl).ne.ny+1) then
             aaf(ix,iy,-1) = conb(ixl,iyl,0,0,0) -
      &                      conb(topix(ixl,iyl),topiy(ixl,iyl),0,0,1)
+          else
+           ixt = topix(ix,iy)
+           iyt = topiy(ix,iy)
+           if (leftix(ixt,iyt).ne.-2) then
+            aaf(ix,iy,-1) = conb(ixl,iyl,0,0,0) -
+     &                      conb(leftix(ixt,iyt),leftiy(ixt,iyt),0,0,1)
+           endif
+          endif
          endif
 *       Case of right neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
 
          else
-            ixr = rightix(ix,iy)
-            iyr = rightiy(ix,iy)
+          ixr = rightix(ix,iy)
+          iyr = rightiy(ix,iy)
+          if (topiy(ixr,iyr).ne.ny+1) then
             aaf(ix,iy,1) = - conb(ixr,iyr,0,0,0) +
      &                       conb(topix(ixr,iyr),topiy(ixr,iyr),0,0,1)
+          else
+           ixt = topix(ix,iy)
+           iyt = topiy(ix,iy)
+           if (rightix(ixt,iyt).ne.nx+1) then
+            aaf(ix,iy,1) = - conb(ixr,iyr,0,0,0) +
+     &       conb(rightix(ixt,iyt),rightiy(ixt,iyt),0,0,1)
+           endif
+          endif
          endif
         enddo
        enddo
 
        if(iout.ne.0) then
-          call my_out(70,nx,ny,conb(-1,-1,0,0,0),'conbx3'//trim(name))
-          call my_out(70,nx,ny,conb(-1,-1,0,0,1),'conbx4'//trim(name))
-          call my_out(70,nx,ny,conb(-1,-1,1,1,0),'conby3'//trim(name))
-          call my_out(70,nx,ny,conb(-1,-1,1,1,1),'conby4'//trim(name))
+        call my_out(70,nx,ny,conb(-1,-1,0,0,0),'conbx3'//trim(name))
+        call my_out(70,nx,ny,conb(-1,-1,0,0,1),'conbx4'//trim(name))
+        call my_out(70,nx,ny,conb(-1,-1,1,1,0),'conby3'//trim(name))
+        call my_out(70,nx,ny,conb(-1,-1,1,1,1),'conby4'//trim(name))
 
-          call my_out(70,nx,ny,aaf(-1,-1,-1),'aafm1'//trim(name))
-          call my_out(70,nx,ny,aaf(-1,-1, 1),'aafp1'//trim(name))
-          endif
+        call my_out(70,nx,ny,aaf(-1,-1,-1),'aafm1'//trim(name))
+        call my_out(70,nx,ny,aaf(-1,-1, 1),'aafp1'//trim(name))
+       endif
 
 *     from P.Sch y-part of nine-point stencil
        do iy = -1, ny
@@ -161,9 +179,17 @@
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
-          if (rightix(ixb,iyb).ne.nx+1)
-     >     aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
-     &      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,1)
+          if (rightix(ixb,iyb).ne.nx+1) then
+            aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
+     &       conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,1)
+          else
+           ixr = rightix(ix,iy)
+           iyr = rightiy(ix,iy)
+           if (bottomiy(ixr,iyr).ne.-2) then
+            aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
+     &       conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),1,1,1)
+           endif
+          endif
          endif
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
@@ -172,8 +198,17 @@
          else
           ixt = topix(ix,iy)
           iyt = topiy(ix,iy)
-          aaf(ix,iy,2) =  conb(ixt,iyt,1,1,0) -
-     &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
+          if (rightix(ixt,iyt).ne.nx+1) then
+            aaf(ix,iy,2) =  conb(ixt,iyt,1,1,0) -
+     &       conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
+          else
+           ixr = rightix(ix,iy)
+           iyr = rightiy(ix,iy)
+           if (topiy(ixr,iyr).ne.ny+1) then
+            aaf(ix,iy,2) =  conb(ixt,iyt,1,1,0) -
+     &       conb(topix(ixr,iyr),topiy(ixr,iyr),1,1,1)
+           endif
+          endif
          endif
         enddo
        enddo
@@ -208,10 +243,12 @@
      &               - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,0,1)
      &               + conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,1,0)
                aa11(ix,iy,-6) = 0.0e0_R8
-            else if (leftix(ixb,iyb).ne.-2) then
-               aa11(ix,iy,-4) = aa11(ix,iy,-4)                          !srv 28.05.08
-     &              - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,0,1)
-               aa11(ix,iy,-6) = aa11(ix,iy,-6) +                        !srv 28.05.08
+            else
+               if (bottomiy(ixl,iyl).ne.-2)
+     >          aa11(ix,iy,-4) = aa11(ix,iy,-4) -                       !srv 28.05.08
+     &                conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,0,1)
+               if (leftix(ixb,iyb).ne.-2)
+     >          aa11(ix,iy,-6) = aa11(ix,iy,-6) +                       !srv 28.05.08
      &                conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,1,0)
             endif
          endif
@@ -232,9 +269,11 @@
      &                    conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1,1)
              aa11(ix,iy,5) = 0.0e0_R8
             else
-             aa11(ix,iy,2) = aa11(ix,iy,2) +                            !srv 28.05.08
+             if (topiy(ixl,iyl).ne.ny+1)
+     >        aa11(ix,iy,2) = aa11(ix,iy,2) +                           !srv 28.05.08
      &                      conb(topix(ixl,iyl),topiy(ixl,iyl),0,0,0)
-             aa11(ix,iy,5) = aa11(ix,iy,5) -                            !srv 28.05.08
+             if (leftix(ixt,iyt).ne.-2)
+     >        aa11(ix,iy,5) = aa11(ix,iy,5) -                           !srv 28.05.08
      &                      conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1,1)
             endif
          endif
@@ -254,10 +293,12 @@
      &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,0,1)
      &                 - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,0)
               aa11(ix,iy,-5) = 0.0e0_R8
-            else if (rightix(ixb,iyb).ne.nx+1) then
-              aa11(ix,iy,-2) = aa11(ix,iy,-2) +                         !srv 28.05.08
+            else
+              if (bottomiy(ixr,iyr).ne.-2)
+     >         aa11(ix,iy,-2) = aa11(ix,iy,-2) +                        !srv 28.05.08
      &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,0,1)
-              aa11(ix,iy,-5) = aa11(ix,iy,-5) -                         !srv 28.05.08
+              if (rightix(ixb,iyb).ne.nx+1)
+     >         aa11(ix,iy,-5) = aa11(ix,iy,-5) -                        !srv 28.05.08
      &                   conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,0)
             endif
          endif
@@ -278,9 +319,11 @@
      &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
               aa11(ix,iy,6) = 0.0e0_R8
             else
-              aa11(ix,iy,4) = aa11(ix,iy,4) -                           !srv 28.05.08
+              if (topiy(ixr,iyr).ne.ny+1)
+     >         aa11(ix,iy,4) = aa11(ix,iy,4) -                          !srv 28.05.08
      &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0,0)
-              aa11(ix,iy,6) = aa11(ix,iy,6) +                           !srv 28.05.08
+              if (rightix(ixt,iyt).ne.nx+1)
+     >         aa11(ix,iy,6) = aa11(ix,iy,6) +                          !srv 28.05.08
      &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
             endif
          endif
@@ -291,7 +334,7 @@
 *     viscosity perpendicular current by numerically
 !      call b2unavspr7n(nx, ny, isb, zb, fac_vis, po, ti, nb, pb, aa7)  !srv 02.04.18
 
-      call b2unavspr7a(nx, ny, nregionv, solvereg, isb, zb,              !srv 02.04.18 {
+      call b2unavspr7a(nx, ny, nregionv, solvereg, isb, zb,             !srv 02.04.18 {
      &              fac_vis, ti, nb, pb, aa7)
 *  .. calculate the coefficients of 7-point stencil from
 *     viscosity perpendicular current by analytically
