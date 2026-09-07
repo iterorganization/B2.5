@@ -887,7 +887,14 @@
 
 *    ..apply Luciani correction for the ion conductivity
       chci0_luc=0.0_R8
-      chci0_luc(:,0) = chci0_luc(:,0)*co%f_luc_ki
+      do iFc = 1, nFc
+        if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
+     &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+          chci0_luc(iFc,0) = chci0(iFc,0)*co%f_luc_ki(iFc)
+        else
+          chci0_luc(iFc,0) = chci0(iFc,0)
+        endif
+      enddo
       hci0(:,0) = hci0(:,0)*co%f_luc_ki_c
       do i = 0, nspecies-1
         chci0_al_luc(:,0,i) = chci0_al(:,0,i)*co%f_luc_ki
