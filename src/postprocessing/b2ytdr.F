@@ -66,6 +66,13 @@ c 2002-09-11: logic revised
       use eirmod_coutau
      , , only : eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl,
+     ,          NTARGI, NTGPRT, NSPZI, NSPZE, NLPBLS,
+     ,          NDT, NPTC, NPTCM, NTRFRM,
+#ifdef WG_TODO
+     ,          NINCT, NIXY, NTIN, NTEN, NIFLG, NTRFRM,
+#endif
+     ,          IFLB, FCTE, BMASS, NAINB, NAOTB, NCOND
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
@@ -12733,11 +12740,12 @@ cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
       integer non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside
 *   ..local variables
       integer ireg, ipos, nsize, nsize1
+      integer jxi, jxa, jsep, jxi1, jxa1, jsep1
       integer ixiso, ixiso1, inseliy, inseliy1, nxtr, nxtl, nxtr1, nxtl1
       logical atend
 *   ..procedures
       integer convert_position
-      external convert_position, get_nxt, b2yt_nxt
+      external convert_position, get_jsep, get_nxt, b2yt_jsep, b2yt_nxt
       intrinsic min, max
 
 c xory  = 1 : x-direction
@@ -12848,6 +12856,10 @@ c       = 4 : center
          inseliy = -2
          inseliy1 = -2
         endif
+        if (nncut.eq.0) then
+          call get_jsep(nx,ny,jxi,jxa,jsep)
+          call b2yt_jsep (nx1, ny1, jxi1, jxa1, jsep1)
+        end if
         if (xory.eq.1) then   ! do other easy ix cases first
          if (ix.eq.ixiso-1) then
           conformal_convert=ixiso1-1
@@ -12944,6 +12956,12 @@ c       = 4 : center
         else if (xory.eq.2) then   ! do other easy iy cases
          if (iy.eq.0) then
           conformal_convert=0
+         else if (iy.eq.ny-1) then
+          conformal_convert=ny1-1
+         else if (nncut.eq.0 .and. iy.eq.jsep) then
+          conformal_convert=jsep1
+         else if (nncut.eq.0 .and. iy.eq.jsep+1) then
+          conformal_convert=jsep1+1
          else if (nncut.ge.1 .and. iy.eq.topcut(1)) then
           conformal_convert=topcut1(1)
          else if (nncut.ge.1 .and. iy.eq.topcut(1)+1) then
@@ -12952,15 +12970,17 @@ c       = 4 : center
           conformal_convert=topcut1(2)
          else if (nncut.eq.2 .and. iy.eq.topcut(2)+1) then
           conformal_convert=topcut1(2)+1
-         else if (nncut.eq.1 .and. periodic_bc.eq.1 .and.
-     .    iy.eq.inseliy) then
-          conformal_convert=inseliy1
-         else if (iy.eq.ny-1) then
-          conformal_convert=ny1-1
-         else if (nncut.eq.0) then
+         else if (nncut.eq.0 .and. jsep.eq.-2) then
           nsize = ny
           nsize1 = ny1
           conformal_convert = convert_position(iy,nsize,nsize1,0,atend)
+         else if (nncut.eq.0 .and. iy.lt.jsep) then
+          nsize = jsep
+          nsize1 = jsep1
+          conformal_convert = convert_position(iy,nsize,nsize1,2,atend)
+         else if (nncut.eq.1 .and. periodic_bc.eq.1 .and.
+     .    iy.eq.inseliy) then
+          conformal_convert=inseliy1
          else if (nncut.eq.1 .and. iy.lt.topcut(1)) then
           nsize = topcut(1)
           nsize1 = topcut1(1)
@@ -12976,6 +12996,11 @@ c       = 4 : center
           conformal_convert = min(topcut1(1),topcut1(2)) +
      .     convert_position(iy-min(topcut(1),topcut(2)),
      .      nsize,nsize1,3,atend)
+         else if (nncut.eq.0 .and. iy.gt.jsep) then
+          nsize = ny-jsep
+          nsize1 = ny1-jsep1
+          conformal_convert = jsep1 +
+     .     convert_position(iy-jsep,nsize,nsize1,2,atend)
          else if (nncut.eq.2 .and. iy.gt.max(topcut(1),topcut(2))) then
           nsize = ny-max(topcut(1),topcut(2))
           nsize1 = ny1-max(topcut1(1),topcut1(2))

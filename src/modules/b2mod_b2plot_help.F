@@ -295,7 +295,7 @@
      2    'rad comp of the ion E\mU\dB vel [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
-     5    'Isolating region',
+     5    'Isolated regions',
      6    'ix (normalised)',
      7    'iy (normalised)',
      8    'ix',
