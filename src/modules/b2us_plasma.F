@@ -94,10 +94,14 @@
         real(R8), dimension(:,:,:), allocatable :: pcca
         real(R8), dimension(:,:), allocatable :: pccm
 
-        ! derived state quantities
-        ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
-        ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
-        ! pa(:,0:ns-1) is partial pressure
+        ! derived state quantities, at cell centres
+        ! first dimension is cv
+        ! ni(:,0) is the total heavy particle density (ions+neutrals)
+        ! ni(:,1) is the total ion density (see b2xpni)
+        ! ue is the parallel electron velocity
+        ! ne is the electron density
+        ! ne2 is the Z_effective elect. den. computed w. squared charge rz2
+        ! pa(:,0:ns-1) is the partial pressure per species
         real(R8), allocatable :: ne(:), ni(:,:), nn(:), ue(:), ne2(:),
      .                           pa(:,:), pz(:), lnlam(:)
 

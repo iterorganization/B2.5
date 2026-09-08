@@ -5784,6 +5784,7 @@ cxpb code segment analog to b2tfhi
         endif
         do ibc = 1, mpg%bcCvP(ib,2)
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
@@ -6476,7 +6477,7 @@ cxpb Careful here because of BC number clash
         if(ncall_b2stbc_phys.eq.0) then
           if (boundary_version.ge.'01.001.030' .and.
      &        boundary_version.lt.'02.000.000') then
-            write(*,*) 'BCENI=21 type B.C. moved to 25 ',
+            write(*,'(2a)') 'BCENI=21 type B.C. moved to 25 ',
      &       ' because of clash with 5.2 numbering. '
             write(*,*) 'Please modify b2.boundary.parameters file'
             call xerrab('B2STBC -- BCENI=25, DISPLACED')
@@ -6710,7 +6711,7 @@ cwdk     * need to correct this BC for hybrid scheme
       case (24)
 !IYS 04.03.2013 {
         if(ncall_b2stbc_phys.eq.0) then
-          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux',
+          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux'//
      &                   ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
@@ -6972,8 +6973,8 @@ cwdk     * need to correct this BC for hybrid scheme
 
       case (27)
         if(ncall_b2stbc_phys.eq.0) then
-          write(*,*) 'BCENI = 27 : Given integrated ion heat flux',
-     &               ' with constant Ti '
+          write(*,'(a)') 'BCENI = 27 : Given integrated ion heat flux'//
+     &                   ' with constant Ti '
 !         write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
             if ((BCCHAR(IBW).EQ.'S'.or.BCCHAR(IBW).EQ.'A').and.
