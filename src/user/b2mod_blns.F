@@ -720,6 +720,35 @@ c*** Puffing/seeding rate and recycling source
 !       End of the loop over strata
           enddo
 
+c*** ------------------------------------------------------------------
+c*** Pumped neutral flux at the EIRENE additional surfaces (js<=nnlimi)
+c*** not already counted by the recycling-strata loop above (tracked by
+c*** hlp_pump_counted). Plasma-facing recycling surfaces are skipped
+c*** here, so a pump on either surface type is counted exactly once.
+c*** ------------------------------------------------------------------
+          do js = 1,nnlimi
+#ifdef B25_EIRENE
+            if (iliin(js) .le. 0) cycle                                 ! non-transparent surfaces only
+#endif
+            do j = 1,nnatmi
+              if (latmscl(j).eq.ls .and.
+     &            .not. hlp_pump_counted(j,js)) then
+                flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)
+                hlp_pump_counted(j,js) = .TRUE.
+              end if
+            end do
+            do ic = 1,nnmoli
+              do j = 1,nnatmi
+                if (latmscl(j).eq.ls .and. mlcmp(j,ic).gt.0 .and.
+     &              .not. hlp_pump_counted(nnatmi+ic,js)) then
+                  flxnw_pump(ls) = flxnw_pump(ls) +
+     &               mlcmp(j,ic) * wlpump(nnatmi+ic,js)
+                  hlp_pump_counted(nnatmi+ic,js) = .TRUE.
+                end if
+              end do
+            end do
+          end do
+
 c**********************************
 ! The neutral fluxes from Eirene are now computed
 c**********************************

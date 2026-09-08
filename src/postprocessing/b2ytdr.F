@@ -66,6 +66,13 @@ c 2002-09-11: logic revised
       use eirmod_coutau
      , , only : eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl,
+     ,          NTARGI, NTGPRT, NSPZI, NSPZE, NLPBLS,
+     ,          NDT, NPTC, NPTCM, NTRFRM,
+#ifdef WG_TODO
+     ,          NINCT, NIXY, NTIN, NTEN, NIFLG, NTRFRM,
+#endif
+     ,          IFLB, FCTE, BMASS, NAINB, NAOTB, NCOND
       use eirmod_cestim
       use eirmod_ctrcei
       use eirmod_eirbra
