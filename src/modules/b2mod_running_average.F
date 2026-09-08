@@ -760,7 +760,7 @@ c      of the momentum sources (=nfl for parallel momentum only,
 c                               =3*nfl for vectorial momentum sources)
 c local variables
       integer :: io, iun, idum(0:3), iex
-      character :: check*10, line*51
+      character :: check*10, line*120
       logical :: found, no_vector
 #ifdef LEGACYCOMP
       integer newunit
