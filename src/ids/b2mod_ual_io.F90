@@ -1464,7 +1464,7 @@ contains
             end do
           end do
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
-          select case (is_codes(eb2spcr(is)))
+          select case (is_codes(eb2spcr(i)))
           case ('H')
             call write_sourced_constant_2( summary%composition%hydrogen, frac )
           case ('D')
