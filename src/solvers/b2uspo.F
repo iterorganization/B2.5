@@ -208,6 +208,7 @@ c           ..its bottom neighbour too, so route into ITS bottom slot
             aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
            endif
+          endif
           if (solvereg(ireg))
      >     aa9(ix,iy,0) = aa9(ix,iy,0)+conc(ix,iy,1,1)
           if (solvereg(ireg))
