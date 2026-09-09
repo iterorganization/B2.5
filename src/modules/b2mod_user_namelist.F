@@ -388,9 +388,9 @@ c***  Standard set-up:
           end if
           if (iFs1.eq.0 .and. iFs.ne.0) then
             if (wall_face(1)) then
-              iFs2 = iFs
+              iFs1 = iFs ! before: iFs2, but this would fail the elseif check below on wall_face(1) with an out of bounds
             else
-              iFs1 = iFs
+              iFs2 = iFs ! before: iFs1
             end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
@@ -692,9 +692,9 @@ c*** Set default values according to current species list
           end if
           if (iFs1.eq.0 .and. iFs.ne.0) then
             if (wall_face(1)) then
-              iFs2 = iFs
+              iFs1 = iFs ! before: iFs2, but this would fail the elseif check below on wall_face(1) with an out of bounds
             else
-              iFs1 = iFs
+              iFs2 = iFs ! before: iFs1
             end if
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs

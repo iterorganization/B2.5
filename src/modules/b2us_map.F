@@ -1467,46 +1467,8 @@ cwdk  can be derived directly from data in that file
             exit
           endif
         enddo
-        if (.not.is_found) then
-          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
-            m%nFci = m%nFci+1
-          endif
-        endif
       enddo
-      allocate(m%fcs_wall_ind(m%nFci,2))
-      j = 1
-      l = 1
-      do k=1,m%nCg-1
-        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-          m%fcs_wall_ind(l,1) = j
-          m%fcs_wall_ind(l,2) = k-j+1
-          j = k+1
-          l = l+1
-        endif
-      enddo
-      ! Doing the last cell by hand if it is on its own flux tube
-      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
-     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
-        m%fcs_wall_ind(l,1) = m%nCg
-        m%fcs_wall_ind(l,2) = 1
-      end if
-
-      write(*,*) "list of boundary faces in one flux tube:"
-      do j=1,m%nFci
-        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
-        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
-        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
-     &                        m%fcs_wall_ind(j,1)+m%fcs_wall_ind(j,2)-1)
-      enddo
-
-*   .. write out some data
-      write (*,*) 'nXpt, nStr, nTgc, nOpt, nDiv ', m%nXpt, m%nStr, 
-     &  m%nTgc, m%nOpt, m%nDiv
-      write (*,*) 'nFsVxmx          ', m%nFsVxmx
-
+      
       return
       end subroutine init_mapping
 
