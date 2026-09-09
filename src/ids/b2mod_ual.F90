@@ -245,11 +245,15 @@ contains
 #if AL_MAJOR_VERSION > 4
             write(0,*) 'Make sure the IDS path directory exists.'
             write(0,*) 'IDS path requested is : '//trim(ids_path)
-            call xerrab( trim(message) )
+            if ( allocated(message) ) then
+              call xerrab( trim(message) )
+            else
+              call xerrab( 'Error opening IMAS database !' )
+            end if
 #else
             write(0,*) 'Make sure it exists or create it with the command:'
             write(0,*) 'imasdb '//trim(database)
-            call xerrab( 'Error opening IMAS database !')
+            call xerrab( 'Error opening IMAS database !' )
 #endif
           endif
 
@@ -560,11 +564,15 @@ contains
 #if AL_MAJOR_VERSION > 4
             write(0,*) 'Make sure the IDS path directory exists.'
             write(0,*) 'IDS path requested is : '//trim(ids_path)
-            call xerrab( trim(message) )
+            if ( allocated(message) ) then
+              call xerrab( trim(message) )
+            else
+              call xerrab( 'Error opening IMAS database !' )
+            end if
 #else
             write(0,*) 'Make sure it exists or create it with the command:'
             write(0,*) 'imasdb '//trim(database)
-            call xerrab( 'Error opening IMAS database !')
+            call xerrab( 'Error opening IMAS database !' )
 #endif
           endif
 
@@ -1092,15 +1100,19 @@ contains
         uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
         write(0,*) "Started reading input IMAS data entry", trim(uri)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
-        call xertst ( status.eq.0, trim(message) )
+        if ( allocated(message) ) then
+          call xertst ( status.eq.0, trim(message) )
+        else
+          call xertst ( status.eq.0, 'Error opening IMAS database !' )
+        end if
 #else
         write(0,*) "Started reading input IMAS data entry", idx, shot, run
         call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
-        call xertst ( status.eq.0, 'Error opening IMAS database !')
+        call xertst ( status.eq.0, 'Error opening IMAS database !' )
 #endif
         call ids_get(idx, "edge_profiles", edge_profiles, status)
-        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
+        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !' )
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
@@ -1234,13 +1246,17 @@ contains
                   & ( HDF5_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                   &   '', uri, lStatus )
                 call imas_open( uri, FORCE_CREATE_PULSE, idx, lStatus, message )
-                call xertst ( lStatus.eq.0, trim(message) )
+                if ( allocated(message) ) then
+                  call xertst ( lStatus.eq.0, trim(message) )
+                else
+                  call xertst ( lStatus.eq.0, 'Error opening IMAS database !' )
+                end if
 # else
 #  if ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                    &   lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, FORCE_CREATE_PULSE, '', lStatus )
-                call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
+                call xertst ( lStatus.eq.0, 'Error opening IMAS database !' )
 #  else
                 write(hlp_frm,'(a,i1,a)') &
                    &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
@@ -1257,12 +1273,16 @@ contains
                         & ( MDSPLUS_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                         &   '', uri, lStatus )
                     call imas_open( uri, FORCE_CREATE_PULSE, idx, lStatus, message )
-                    call xertst ( lStatus.eq.0, trim(message) )
+                    if ( allocated(message) ) then
+                      call xertst ( lStatus.eq.0, trim(message) )
+                    else
+                      call xertst ( lStatus.eq.0, 'Error opening IMAS database !' )
+                    end if
 # else
                     call imas_create_env( lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion,    &
                         &   lStatus)
-                    call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
+                    call xertst ( lStatus.eq.0, 'Error opening IMAS database !' )
 # endif
                 else
 # if AL_MAJOR_VERSION < 4
@@ -1280,13 +1300,17 @@ contains
                   & ( HDF5_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                   &   '', uri, lStatus )
                 call imas_open ( uri, OPEN_PULSE, idx, lStatus, message )
-                call xertst ( lStatus.eq.0, trim(message) )
+                if ( allocated(message) ) then
+                  call xertst ( lStatus.eq.0, trim(message) )
+                else
+                  call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !' )
+                end if
 # else
 #  if ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                         &    lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, OPEN_PULSE, '', lStatus )
-                call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
+                call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !' )
 #  else
                 write(hlp_frm,'(a,i1,a)') &
                    &  '(a,i1,a,i',len_of_digits(AL_MINOR_VERSION),',a)'
@@ -1303,11 +1327,15 @@ contains
                         & ( MDSPLUS_BACKEND, lShot, lRun, lUser, lTokamak, lDataversion, &
                         &   '', uri, lStatus )
                     call imas_open( uri, OPEN_PULSE, idx, lStatus, message )
-                    call xertst ( lStatus.eq.0, trim(message) )
+                    if ( allocated(message) ) then
+                      call xertst ( lStatus.eq.0, trim(message) )
+                    else
+                      call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !' )
+                    end if
 # else
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion, lStatus)
-                    call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !')
+                    call xertst ( lStatus.eq.0, 'Error opening IMAS data entry !' )
 # endif
                 else
 # if AL_MAJOR_VERSION < 4
