@@ -529,10 +529,10 @@
        ! With this method, numerical error on the 5-point contribution on
        ! gradient calculation is significantly reduced for general grids
 
-       fcQgam1(iFc,0) = sinang(ec1fc(0),ec1fc(1),fn(0),fn(1))
+       fcQgam1(iFc,0) = abs(sinang(ec1fc(0),ec1fc(1),fn(0),fn(1)))
        fcQgam1(iFc,1) = cosang(ec1fc(0),ec1fc(1),fn(0),fn(1))
 
-       fcQgam2(iFc,0) = sinang(efcc2(0),efcc2(1),fn(0),fn(1))
+       fcQgam2(iFc,0) = abs(sinang(efcc2(0),efcc2(1),fn(0),fn(1)))
        fcQgam2(iFc,1) = cosang(efcc2(0),efcc2(1),fn(0),fn(1))
 
        g%fcQgam(iFc,0) = ( fcQgam1(iFc,0)*g%fcHc(iFc,1) +
