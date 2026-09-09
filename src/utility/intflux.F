@@ -22,7 +22,9 @@ c
 c Provides an interpolation of face flux quantities to cell centers
 c The flux carries the cell-centered density of the quantity being transported
 c We first interpolate the density to cell faces
-c We then compute an effective velocity at cell faces
+c We then compute an effective velocity at cell faces.  The projected area
+c retains the sign of fcQalf because face orientation can reverse across
+c topology cuts.
 C We interpolate this velocity to cell centers
 c We multiply the interpolated velocity by the density and the projected area
       use b2mod_types
@@ -47,7 +49,7 @@ c ..compute the effective velocity
         do iFc = 1, nFc
           if (geo%fcQalf(iFc,idir).ne.0.0_R8.and.qf(iFc).ne.0.0_R8) then
             wrkf(iFc,idir) = faceflux(iFc,idir)/qf(iFc)/
-     .                      (geo%fcS(iFc)*abs(geo%fcQalf(iFc,idir)))
+     .                      (geo%fcS(iFc)*geo%fcQalf(iFc,idir))
           else
             wrkf(iFc,idir) = 0.0_R8
           end if
