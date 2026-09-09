@@ -1525,6 +1525,11 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          CALL PXFGETENV ('IMAS_VERSION', 0,
      .                              imas_version, lenval, ierror)
 #else
+#ifdef __APPLE__
+         home_dir = ' '
+         device_env = ' '
+         imas_version = ' '
+#endif
          call get_environment_variable('HOME', status=ierror,
      .                                         length=lenval)
          if (ierror.eq.0) call get_environment_variable('HOME',
@@ -1576,9 +1581,14 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
 #endif
          if (streql(imasdir,' '))
+#ifdef __APPLE__
+     >    imasdir = trim(home_dir)//'/public/imasdb/'//
+     >    trim(database)//'/'//trim(version)
+#else
      >    imasdir = trim(home_dir)//trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
      &                            //'/0'
+#endif
 #endif
          if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
            l=index(imasdir,'imasdb/')
