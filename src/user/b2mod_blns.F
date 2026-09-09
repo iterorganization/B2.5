@@ -190,7 +190,7 @@ c----------------------------------------------------------------------
      1 js, ks, ls, kks, use_recyceir, first
 c======================================================================
 
-      if(first_time_step) return
+!      if(first_time_step) return
 
       if(ank_tracing.eq.0) return
 
