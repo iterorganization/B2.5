@@ -76,7 +76,7 @@ program b2_ual_rewrite
      & , only : nx, ny, ns, &
      &          b2mn_init
     use b2mod_driver &
-     & , only : idx, ids_path, backend_flag, &
+     & , only : idx, ids_path, ids_backend, backend_flag, &
      &          shot, run, username, database, version, &
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
