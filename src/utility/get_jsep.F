@@ -83,6 +83,7 @@
       use b2mod_subsys
       implicit none
       integer nx, nxtl, nxtr
+      integer nxmid
 
       call subini ('get_nxt')
 
@@ -116,6 +117,15 @@ cxpb  Compute position of additional targets in DN and Snowflake configurations
      &              nxtr.lt.nx)
             nxtr=nxtr+1
           enddo
+        endif
+
+        ! fallback: if legacy search collapses to nxtl=nxtr=0,
+        ! use average of cuts
+        if (nxtl.eq.0 .and. nxtr.eq.0) then
+          write(*,*) 'nxtl.eq.nxtr.eq.0! Trying fallback option'
+          nxmid = (leftcut(2) + rightcut(2)) / 2
+          nxtl = nxmid - 1
+          nxtr = nxmid
         endif
         write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif
