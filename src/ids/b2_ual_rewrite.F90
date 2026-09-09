@@ -423,7 +423,7 @@ program b2_ual_rewrite
 #if AL_MAJOR_VERSION > 4
     write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
       &  trim(ids_path)
-    uri = 'imas:mdsplus?path='//trim(ids_path)
+    uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
     call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
     write(0,'(2a,2i8)') &
@@ -582,18 +582,22 @@ program b2_ual_rewrite
           write(new_path(l+7:l+10),'(a4)') 'ITER'
         end if
 #if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(new_path)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
         call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-        call xertst ( status.eq.0, trim(message) )
+        if ( allocated(message) ) then
+          call xertst ( status.eq.0, trim(message) )
+        else
+          call xertst( status.eq.0, 'Error recreating IDS with new DD version !' )
+        end if
 #else
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status )
-        call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
+        call xertst( status.eq.0, 'Error recreating IDS with new DD version !' )
 #endif
       else if (.not.same_run_number) then
         call close_ual(idx)
 #if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(new_path)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
         call imas_open_env(treename, shot, new_run, idx, &
@@ -608,13 +612,17 @@ program b2_ual_rewrite
             write(new_path(l+7:l+10),'(a4)') 'ITER'
           end if
 #if AL_MAJOR_VERSION > 4
-          uri = 'imas:mdsplus?path='//trim(new_path)
+          uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-          call xertst( status.eq.0, trim(message) )
+          if ( allocated(message) ) then
+            call xertst( status.eq.0, trim(message) )
+          else
+            call xertst( status.eq.0, 'Error creating new IDS file !' )
+          end if
 #else
           call imas_create_env(treename, shot, new_run, 0, 0, idx, &
             &                  username, database, version, status )
-          call xertst( status.eq.0, 'Error creating new IDS file !')
+          call xertst( status.eq.0, 'Error creating new IDS file !' )
 #endif
         end if
       end if
@@ -627,13 +635,17 @@ program b2_ual_rewrite
         write(new_path(l+7:l+10),'(a4)') 'ITER'
       end if
 #if AL_MAJOR_VERSION > 4
-      uri = 'imas:mdsplus?path='//trim(new_path)
+      uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
       call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-      call xertst( status.eq.0, trim(message) )
+      if ( allocated(message) ) then
+        call xertst( status.eq.0, trim(message) )
+      else
+        call xertst( status.eq.0, 'Error creating new IDS !' )
+      end if
 #else
       call imas_create_env(treename, shot, run, 0, 0, idx, &
         &                  username, database, version, status )
-      call xertst( status.eq.0, 'Error creating new IDS !')
+      call xertst( status.eq.0, 'Error creating new IDS !' )
 #endif
     end if
     !! Create/Write the set data to IDSs
