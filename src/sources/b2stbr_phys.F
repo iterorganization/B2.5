@@ -613,7 +613,11 @@ c new variables for advanced fluid neutral reflection/recycling model
      &     fn_inc_mol, fm_inc_mol, fe_inc_mol, n_inc_mol, nww_inc_mol,
      &     fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol, 
      &     nww_refl_mol, n_mol_sum, nww_mol_sum, fn_refla_mol, 
-     &     fm_refla_mol, fe_refla_mol, n_refla_mol, nww_refla_mol
+     &     fm_refla_mol, fe_refla_mol, n_refla_mol, nww_refla_mol,
+     &     fm_inc_mol_pol, fm_inc_mol_rad, fm_inc_mol_tor, 
+     &     fm_rec_mol_pol, fm_rec_mol_rad, fm_rec_mol_tor, 
+     &     fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor, 
+     &     fm_refla_mol_pol, fm_refla_mol_rad, fm_refla_mol_tor
 
 #ifdef WG_TODO
       iwall=xymap(ix,iy)
@@ -959,8 +963,9 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,
      &              cosa, sina, switch%use_uy_uz_0,
      &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec,
-     &              fn_rec_mol,fm_rec_mol, n_rec_mol, fe_rec_mol, 
-     &              switch%fluid_molecules)
+     &              fn_rec_mol,fm_rec_mol, fm_rec_mol_pol,
+     &              fm_rec_mol_rad, fm_rec_mol_tor, 
+     &              n_rec_mol, fe_rec_mol, switch%fluid_molecules)
              else
                 fnnrec = 0.0_R8
                 fmomrec = 0.0_R8
@@ -971,6 +976,9 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                 fm_rec_mol = 0.0_R8
                 fe_rec_mol = 0.0_R8
                 n_rec_mol = 0.0_R8
+                fm_rec_mol_pol = 0.0_R8
+                fm_rec_mol_rad = 0.0_R8
+                fm_rec_mol_tor = 0.0_R8
              endif
 
              snan =
@@ -1005,6 +1013,12 @@ cmb   net neutral energy source from recycling
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_rec_mol
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_rec_mol
      .                                *geo%cvhz(iCv)
+              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+     .                                   fm_rec_mol_pol
+              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+     .                                   fm_rec_mol_rad
+              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+     .                                   fm_rec_mol_tor
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_rec_mol
               n_mol_sum = n_mol_sum + n_rec_mol
              endif
@@ -1080,8 +1094,9 @@ cmb   net momentum sources from neutral particle reflection
      &              cosa, sina, switch%use_uy_uz_0,switch%use_uy_uz_1,
      &              switch%diffusion_bc_safeguard,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &              fene_el,
-     &              fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fene_el,fn_refla_mol,fm_refla_mol,
+     &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
+     &              n_refla_mol, 
      &              fe_refla_mol, switch%fluid_molecules)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
@@ -1090,7 +1105,9 @@ cmb   net momentum sources from neutral particle reflection
      &              recycm(is,istra),dv%fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &              fene_el,fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fene_el,fn_refla_mol,fm_refla_mol, 
+     &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
+     &              n_refla_mol, 
      &              fe_refla_mol, switch%fluid_molecules)
                else 
                  call CalcReflectedFluxesKn(switch%Kn_b1,
@@ -1104,7 +1121,9 @@ cmb   net momentum sources from neutral particle reflection
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
      &              switch%L_macro_AFN, fnnrefl,fmomrefl,nnrefl,
      &              nnwwnrefl,fenerefl,fene_el,
-     &              fn_refla_mol,fm_refla_mol, n_refla_mol, 
+     &              fn_refla_mol,fm_refla_mol, 
+     &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
+     &              n_refla_mol, 
      &              fe_refla_mol, switch%fluid_molecules)
                endif
              else
@@ -1114,6 +1133,13 @@ cmb   net momentum sources from neutral particle reflection
                nnwwnrefl = 0.0_R8
                fenerefl = 0.0_R8
                fene_el = 0.0_R8
+               fn_refla_mol = 0.0_R8 
+               fm_refla_mol = 0.0_R8 
+               fm_refla_mol_pol = 0.0_R8 
+               fm_refla_mol_rad = 0.0_R8 
+               fm_refla_mol_tor = 0.0_R8 
+               n_refla_mol = 0.0_R8 
+               fe_refla_mol = 0.0_R8
              endif
 
 cnh  adding the reflected particle source (with the molecular part subtracted)
@@ -1158,19 +1184,29 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
              if (switch%fluid_molecules.ne.0) then
               !! incident molecules
               call CalcIncidentFluxesMolecules(iCv,iCn,iFc,is0,isign,
+     &              switch%b2tfmol_3D_mom,
      &              farea,pl,tmf,geo,cosa,sina,fn_inc_mol,
-     &              fm_inc_mol,n_inc_mol,nww_inc_mol,fe_inc_mol)
+     &              fm_inc_mol,fm_inc_mol_pol,fm_inc_mol_rad,
+     &              fm_inc_mol_tor,n_inc_mol,nww_inc_mol,fe_inc_mol)
 
               !! reflected molecules
               call CalcReflectedFluxesMolecules(iCv,iCn,iFc,
-     &            isign, is0, farea, b2recyc(is,istra), pl, tmf,
+     &            isign, switch%b2tfmol_3D_mom,
+     &            is0, farea, b2recyc(is,istra), pl, tmf,
      &            geo, mpg, cosa,sina, fn_refl_mol,
-     &            fm_refl_mol, n_refl_mol, nww_refl_mol, fe_refl_mol)
+     &            fm_refl_mol, fm_refl_mol_pol, fm_refl_mol_rad, 
+     &            fm_refl_mol_tor, n_refl_mol, nww_refl_mol,fe_refl_mol)
 c contribution from incident molecules
               sn_inc_mol_out(iCv) = fn_inc_mol
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) - fn_inc_mol  !! careful with signs, only fn_inc_mol is defined positive when going into the wall
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
      .                                *geo%cvhz(iCv)
+              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+     .                                   fm_inc_mol_pol  
+              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+     .                                   fm_inc_mol_rad  
+              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+     .                                   fm_inc_mol_tor  
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_inc_mol
 c contribution from self-reflected molecules
               sn_refl_mol_out(iCv) = fn_refl_mol
@@ -1178,11 +1214,23 @@ c contribution from self-reflected molecules
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refl_mol
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refl_mol
      .                                *geo%cvhz(iCv)
+              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+     .                                   fm_refl_mol_pol  
+              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+     .                                   fm_refl_mol_rad  
+              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+     .                                   fm_refl_mol_tor  
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refl_mol
 c contributions from atoms returning as molecules
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refla_mol
               sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refla_mol
      .                                *geo%cvhz(iCv)
+              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+     .                                fm_refla_mol_pol
+              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+     .                                fm_refla_mol_rad
+              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+     .                                fm_refla_mol_tor
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refla_mol
               n_mol_sum = n_mol_sum + n_inc_mol
               nww_mol_sum = nww_mol_sum + nww_inc_mol

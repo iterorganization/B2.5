@@ -592,7 +592,8 @@ c     Convert energy flux densities in net energy flux contributions
      &            pl,tif,tef,pof,nif,nef,
      &            geo,mpg,t0, cosa, sina, use_uy_uz_0,
      &            fnnrec,fmomrec,nnrec,nnwwnrec,fenerec,fn_rec_mol,
-     &            fm_rec_mol,n_rec_mol,fe_rec_mol, fluid_molecules)
+     &            fm_rec_mol,fm_rec_mol_pol,fm_rec_mol_rad,
+     &            fm_rec_mol_tor,n_rec_mol,fe_rec_mol, fluid_molecules)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 c     on the diffusion approximation (see papers of Niels Horsten).
@@ -621,7 +622,8 @@ c     Output variables:
 c     fmomni: momentum flux of incident neutrals.
       real (kind=R8), intent(out) :: fnnrec, fmomrec, nnrec, nnwwnrec,
      &                               fenerec, fn_rec_mol, fm_rec_mol, 
-     &                               n_rec_mol, fe_rec_mol
+     &                               n_rec_mol, fe_rec_mol,
+     &  fm_rec_mol_pol, fm_rec_mol_rad, fm_rec_mol_tor
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    shpottauj,pf,pcorf,pt,vt,
@@ -789,14 +791,18 @@ c     Convert energy flux densities in energy fluxes
       fenerec = fenec*area
 
       if (fluid_molecules.ne.0) then
-            if (recycm.ne.1.0_R8) then 
-              call xerrab('fluid molecules require recycm=1!!')
-            endif
-            fn_rec_mol = fna_mol_rec
-            fmomrecp_mol = -isign*(fmoz_mol*cosa)*
-     2              area +isign*pnc_mol*area*cosa
-            fm_rec_mol = pit*fmomrecp_mol 
-            fe_rec_mol = fenec_mol*area
+        if (recycm.ne.1.0_R8) then 
+          call xerrab('fluid molecules require recycm=1!!')
+        endif
+        fn_rec_mol = fna_mol_rec
+        fmomrecp_mol = -isign*(fmoz_mol*cosa)*
+     2                area +isign*pnc_mol*area*cosa
+        fm_rec_mol = pit*fmomrecp_mol 
+        fm_rec_mol_pol = fmomrecp_mol 
+        fm_rec_mol_tor = 0.0_R8 
+        fm_rec_mol_rad = -isign*(fmoz_mol*sina)*
+     2                area +isign*pnc_mol*area*sina
+        fe_rec_mol = fenec_mol*area
       endif
 
       call subend ()
@@ -810,8 +816,9 @@ c     Convert energy flux densities in energy fluxes
      &            nef,geo,mpg,rt,dnndy,dnndz,
      &            cosa, sina, use_uy_uz_0,use_uy_uz_1,safeguard,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
-     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
-     &            fluid_molecules)
+     &            fn_refl_mol, fm_refl_mol, fm_refl_mol_pol, 
+     &            fm_refl_mol_rad, fm_refl_mol_tor, 
+     &            n_refl_mol,fe_refl_mol,fluid_molecules)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
@@ -841,7 +848,8 @@ c     incident neutrals.
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
      &                             nnwwnrefl,fenerefl,fene_el,
      &                             fn_refl_mol, fm_refl_mol, 
-     &                             n_refl_mol, fe_refl_mol
+     &                             n_refl_mol, fe_refl_mol,
+     &  fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor 
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    pf,pcorf,pt,vt,vion,vcx,vtot,
@@ -1076,12 +1084,19 @@ c TODO for fluid molecules
         fmomreflp_mol = -isign*(fmoz_mol*cosa)*
      .      area +isign*pn_mol*area*cosa
         fm_refl_mol = pit*fmomreflp_mol 
+        fm_refl_mol_pol = fmomreflp_mol 
+        fm_refl_mol_tor = 0.0_R8 
+        fm_refl_mol_rad =  -isign*(fmoz_mol*sina)*
+     .      area +isign*pn_mol*area*sina
         fe_refl_mol = fene_mol*area
       else
         fn_refl_mol = 0.0_R8 
         fm_refl_mol = 0.0_R8 
         fe_refl_mol = 0.0_R8 
         n_refl_mol = 0.0_R8
+        fm_refl_mol_pol = 0.0_R8 
+        fm_refl_mol_rad = 0.0_R8 
+        fm_refl_mol_tor = 0.0_R8
       endif
 
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
@@ -1090,8 +1105,9 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tnf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
-     &            fn_refl_mol, fm_refl_mol, n_refl_mol,  fe_refl_mol,
-     &            fluid_molecules)
+     &            fn_refl_mol, fm_refl_mol,fm_refl_mol_pol, 
+     &            fm_refl_mol_rad, fm_refl_mol_tor, 
+     &            n_refl_mol, fe_refl_mol, fluid_molecules)
       endif
 
       call subend ()
@@ -1107,8 +1123,9 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, L,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el,
-     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
-     &            fluid_molecules)
+     &            fn_refl_mol, fm_refl_mol, fm_refl_mol_pol, 
+     &            fm_refl_mol_rad, fm_refl_mol_tor, 
+     &            n_refl_mol,fe_refl_mol, fluid_molecules)
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_b2cmpa
@@ -1130,7 +1147,8 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
 c     Output variables:
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
      &                             nnwwnrefl,fenerefl,fene_el,
-     &       fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol
+     &       fn_refl_mol, fm_refl_mol, fm_refl_mol_pol, fm_refl_mol_rad,
+     &       fm_refl_mol_tor, fe_refl_mol, n_refl_mol
 c     Internal variables
       real (kind=R8)::
      &    vion,vcx,vtot,
@@ -1141,9 +1159,11 @@ c     Internal variables
       real (kind = R8):: fnnreflD,fmomreflD,nnreflD,nnwwnreflD,
      &    fenereflD,fene_elD
       real (kind = R8):: fn_refl_molM, fm_refl_molM, fe_refl_molM,
-     &    n_refl_molM
+     &    n_refl_molM, fm_refl_mol_polM, fm_refl_mol_radM, 
+     &    fm_refl_mol_torM
       real (kind = R8):: fn_refl_molD, fm_refl_molD, fe_refl_molD,
-     &    n_refl_molD
+     &    n_refl_molD, fm_refl_mol_polD, fm_refl_mol_radD, 
+     &    fm_refl_mol_torD
 
       call subini ('CalcReflectedFluxesKn')
 
@@ -1173,23 +1193,26 @@ c     Calculate rate coefficients at boundary
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el,
-     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
-     &            fluid_molecules)
+     &            fn_refl_mol, fm_refl_mol, fm_refl_mol_pol, 
+     &            fm_refl_mol_rad, fm_refl_mol_tor, 
+     &            n_refl_mol,fe_refl_mol, fluid_molecules)
       elseif (Kn.gt.Kn_b2) then
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,
      &            pl,tnf,geo, mpg,cosa, sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,fene_el,
-     &            fn_refl_mol, fm_refl_mol, n_refl_mol,fe_refl_mol,
-     &            fluid_molecules)
+     &            fn_refl_mol, fm_refl_mol, fm_refl_mol_pol,
+     &            fm_refl_mol_rad, fm_refl_mol_tor, 
+     &            n_refl_mol, fe_refl_mol, fluid_molecules)
       else
         call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
      &            tnf,geo, mpg,cosa, sina,
      &            fnnreflM,fmomreflM,nnreflM,nnwwnreflM,fenereflM,
      &            fene_elM,
-     &            fn_refl_molM, fm_refl_molM, n_refl_molM,fe_refl_molM,
-     &            fluid_molecules)
+     &            fn_refl_molM, fm_refl_molM, fm_refl_mol_polM,
+     &            fm_refl_mol_radM, fm_refl_mol_torM,
+     &             n_refl_molM,fe_refl_molM, fluid_molecules)
 
         call CalcReflectedFluxesDiffusion(iCv,iCn,nCi,iFc,
      &            isign,isn,iscx0,isi,istra,iwall,
@@ -1198,8 +1221,9 @@ c     Calculate rate coefficients at boundary
      &            cosa, sina, use_uy_uz_0, use_uy_uz_1, 1,!! <- '1': = safeguard for diffusion BCs
      &            fnnreflD,fmomreflD,nnreflD,nnwwnreflD,fenereflD,
      &            fene_elD,
-     &            fn_refl_molD, fm_refl_molD, n_refl_molD,fe_refl_molD,
-     &            fluid_molecules)
+     &            fn_refl_molD, fm_refl_molD, fm_refl_mol_polD,
+     &            fm_refl_mol_radD, fm_refl_mol_torD,
+     &             n_refl_molD,fe_refl_molD,fluid_molecules)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fnnreflD,fnnreflM,fnnrefl)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fmomreflD,fmomreflM,
      &                     fmomrefl)
@@ -1215,9 +1239,15 @@ c     Calculate rate coefficients at boundary
      &                     fn_refl_mol)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fm_refl_molD,fm_refl_molM,
      &                     fm_refl_mol)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fm_refl_mol_polD,
+     &                    fm_refl_mol_polM, fm_refl_mol_pol)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fm_refl_mol_radD,
+     &                     fm_refl_mol_radM,fm_refl_mol_rad)
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,fm_refl_mol_torD,
+     &                     fm_refl_mol_torM,fm_refl_mol_tor)
           call CalcLinComb(Kn,Kn_b1,Kn_b2,fe_refl_molD,fe_refl_molM,
      &                     fe_refl_mol)
-      call CalcLinComb(Kn,Kn_b1,Kn_b2,n_refl_molD,n_refl_molM,
+          call CalcLinComb(Kn,Kn_b1,Kn_b2,n_refl_molD,n_refl_molM,
      &                     n_refl_mol)
 
       endif
@@ -1230,7 +1260,8 @@ c     Calculate rate coefficients at boundary
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
      &            tf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
-     &            fene_el, fn_refl_mol, fm_refl_mol, n_refl_mol,
+     &            fene_el, fn_refl_mol, fm_refl_mol, fm_refl_mol_pol,
+     &            fm_refl_mol_rad, fm_refl_mol_tor, n_refl_mol,
      &            fe_refl_mol, fluid_molecules)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
@@ -1252,7 +1283,8 @@ c     for the incident neutrals.
 c     Output variables
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
      &                             nnwwnrefl,fenerefl,fene_el,
-     & fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol
+     & fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol,
+     & fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor
 c     Internal variables
       real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,
      &     pit,pit2,mn,nnf,ux,uz,
@@ -1434,12 +1466,19 @@ c TODO for fluid molecules
         fmomreflp_mol = -isign*(fmoz_mol*cosa)*
      .      area +isign*pn_mol*area*cosa
         fm_refl_mol = pit*fmomreflp_mol 
+        fm_refl_mol_pol = fmomreflp_mol 
+        fm_refl_mol_rad = -isign*(fmoz_mol*sina)*
+     .      area +isign*pn_mol*area*sina
+        fm_refl_mol_tor = 0.0_R8 
         fe_refl_mol = fene_mol*area
       else
         fn_refl_mol = 0.0_R8 
         fm_refl_mol = 0.0_R8 
         fe_refl_mol = 0.0_R8 
         n_refl_mol = 0.0_R8
+        fm_refl_mol_pol = 0.0_R8 
+        fm_refl_mol_rad = 0.0_R8 
+        fm_refl_mol_tor = 0.0_r8
       endif
 
       call subend ()
@@ -1773,8 +1812,9 @@ c         do nothing to prevent oscillations if minimum Kn is just around Kn_b1
       end subroutine precompute_kul_quant
 
       subroutine CalcIncidentFluxesMolecules(iCv,iCn,iFc,ism,isign,
-     &            area,pl,tm,geo, cosa, sina,
+     &            mom_3D,area,pl,tm,geo, cosa, sina,
      &            fn_inc_mol,fm_inc_mol,
+     &            fm_inc_mol_pol,fm_inc_mol_rad, fm_inc_mol_tor,
      &            nmi,nmwwni,fe_inc_mol)
 c     This routine calculates the incident molecule fluxes based on
 c     a truncated Maxwellian for the incident molecule. It is assumed that only the
@@ -1789,36 +1829,46 @@ c     Input variables
 c     isn is the neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in) :: iCv, iCn, iFc, ism
+      integer,intent(in) :: iCv, iCn, iFc, ism, mom_3D
       real (kind=R8),intent(in) :: area, isign, cosa, sina
 c     Output variables
       real (kind=R8),intent(out):: fn_inc_mol,fm_inc_mol,nmi,nmwwni,
-     &                             fe_inc_mol
+     &    fe_inc_mol, fm_inc_mol_pol, fm_inc_mol_rad, fm_inc_mol_tor
 c     Intent in or local recompuation depends on iCv or iCn
       real (kind=R8) :: tm
 c     Internal variables
       real (kind=R8):: pit,pit2,mm,nmf,ux,uy,uz,
      1    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     2    fmox,fmoy,fmoz,pm,fmommip,fmommit,umf
+     2    fmox,fmoy,fmoz,pm,fmommip,fmommit,fmommir,umf, umf_pol,
+     3    umf_rad, umf_tor
 
       call subini ('CalcIncidentFluxesMolecules')
 c     Initialize/calculate some variables
 c      nmf = n_mol(iCv,ism)
 
-      nmf = n_mol(iCn,ism) !! experiment, take from iCn instead of iCv
-      tm =  t_mol(iCn,ism)
-      umf = u_mol(iCn,ism)
+      nmf = n_mol(iCv,ism) 
+      tm =  t_mol(iCv,ism)
+      umf = u_mol(iCv,ism)
+      umf_pol = u_pol_mol(iCv,ism) 
+      umf_rad = u_rad_mol(iCv,ism)
+      umf_tor = u_tor_mol(iCv,ism)
 
 
-      mm = am(ism)*mp*2.0_R8 !! TODO generalize, molecule mass
+      mm = am(ism)*mp*2.0_R8 !! FM_TODO generalize, molecule mass
       pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
       pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
 
-      ux = umf*pit2
-      uy = -sina*isign*umf*pit
-      uz = -cosa*isign*umf*pit
+      if (mom_3D.lt.2) then 
+        ux = umf*pit2
+        uy = -sina*isign*umf*pit
+        uz = -cosa*isign*umf*pit
+      else
+        ux = umf_tor 
+        uy = -sina*isign*umf_pol+cosa*isign*umf_rad
+        uz = -cosa*isign*umf_pol-sina*isign*umf_rad
+      endif
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tm,mm,i0l,i0r,i1l,i1r,i2l,i2r,
@@ -1851,8 +1901,13 @@ c     Convert particle flux densities in fluxes
 c     Calculate incident poloidal momentum flux of molecules
       fmommip = isign*(fmoz*cosa + fmoy*sina)*
      2   area + isign*pm*area*cosa
+      fmommir = isign*(fmoz*sina - fmoy*cosa)* 
+     2   area + isign*pm*area*sina
       fmommit = -fmox*area
       fm_inc_mol = pit*fmommip + pit2*fmommit
+      fm_inc_mol_pol = fmommip 
+      fm_inc_mol_tor = fmommit 
+      fm_inc_mol_rad = fmommir
 
 c     Convert energy flux densities in net energy flux contributions
       fe_inc_mol = -fe_inc_mol*area
@@ -1864,8 +1919,10 @@ c     Convert energy flux densities in net energy flux contributions
 
 
       subroutine CalcReflectedFluxesMolecules(iCv,iCn,iFc,isign,
-     &            ism,area,recyc0,pl,tm,geo,mpg,cosa,sina,
-     &            fn_refl_mol,fm_refl_mol,nmrefl,nmwwnrefl,fe_refl_mol)
+     &            mom_3D,ism,area,recyc0,pl,tm,geo,mpg,cosa,sina,
+     &            fn_refl_mol,fm_refl_mol,
+     &            fm_refl_mol_pol,fm_refl_mol_rad,fm_refl_mol_tor,
+     &            nmrefl,nmwwnrefl,fe_refl_mol)
 c     This routine calculates the reflected molecule particle, momentum and energy fluxes with incident molecule flux based on a truncated Maxwellian
 c     for the incident molecules. All incident molecules come back as moleucles (unless pumped), so no TRIM calculations are needed here.
       use b2mod_b2cmpa
@@ -1879,35 +1936,44 @@ c     for the incident molecules. All incident molecules come back as moleucles 
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer,intent(in):: iCv, iCn, iFc, ism
+      integer,intent(in):: iCv, iCn, iFc, ism, mom_3D
       real (kind=R8),intent(in):: area, recyc0, isign, sina,
      &                            cosa
 c     Output variables
       real (kind=R8),intent(out):: fn_refl_mol,fm_refl_mol,nmrefl,
-     &                             nmwwnrefl,fe_refl_mol
+     &                             nmwwnrefl,fe_refl_mol,
+     &   fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor
 c     Intent in or local recompuation depends on iCv or iCn
       real (kind=R8) :: tm
 c     Internal variables
       real (kind=R8):: pt,vt,
-     &     pit,pit2,mm,nmf,umf,ux,uz,
+     &     pit,pit2,mm,nmf,umf,uz,
      &     i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     &     fnmi,fmox,fmoy,fmoz,fmomreflp,pm, fene
+     &     fnmi,fmox,fmoy,fmoz,fmomreflp,pm, fene, umf_pol, umf_rad,
+     &     umf_tor
 
       call subini ('CalcReflectedFluxesMolecules') !! TODO merge this function with the incident one? Lot of code duplication
 c     Initialize/calculate some variables
 c      nmf = n_mol(iCv,ism)
 c      umf = u_mol(iCv,ism)
 
-      nmf = n_mol(iCn,ism) !! experiment, take from iCn instead of iCv
-      tm =  t_mol(iCn,ism)
-      umf = u_mol(iCn,ism)
+      nmf = n_mol(iCv,ism) 
+      tm =  t_mol(iCv,ism)
+      umf = u_mol(iCv,ism)
+      umf_pol = u_pol_mol(iCv,ism) 
+      umf_rad = u_rad_mol(iCv,ism)
+      umf_tor = u_tor_mol(iCv,ism)
+
 
       mm = am(ism)*mp*2.0_R8 !! TODO generalize
       pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
       pit2 = abs(geo%cvBb(iCv,2))/geo%cvBb(iCv,3)
 c     Molecule velocity components: toroidal (x),tangential (y), and normal (z)
-      ux =  umf*pit2
-      uz = -cosa*isign*umf*pit
+      if (mom_3D.lt.2) then 
+        uz = -cosa*isign*umf*pit
+      else
+        uz = -cosa*isign*umf_pol-sina*isign*umf_rad
+      endif
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tm,mm,i0l,i0r,i1l,i1r,i2l,i2r,
@@ -1942,6 +2008,10 @@ c     Calculate reflected poloidal momentum flux of molecules
       fmomreflp = -isign*(fmoz*cosa + fmoy*sina)*
      2   area +isign*pm*area*cosa
       fm_refl_mol = pit*fmomreflp 
+      fm_refl_mol_pol = fmomreflp 
+      fm_refl_mol_rad = -isign*(fmoz*sina - fmoy*cosa)*
+     .   area +isign*pm*area*sina
+      fm_refl_mol_tor = 0.0_R8
 c     Convert energy flux densities in energy fluxes
       fe_refl_mol = fene*area
 
