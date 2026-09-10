@@ -119,7 +119,7 @@ cc molecule sources
      *  se_ec_fr(nCv), se_ec_kin(nCv), tkin, tfr
 cc molecule sources
       real (kind=R8) :: F_p, F_d, F_r, Vcom_p, Vcom_d, Vcom_r, 
-     *                  wrk(nCv), vsq(nCv), vsqi(nCv)
+     *                  wrk(nCv), vsq(nCv), vsqi(nCv), vsq_3D(nCv)
       real (kind=R8) :: t0, freac, num_a, den_a, a0, mr, s0, t0_i, t0_a,
      *                  t0_mol, tau_inv, beta_num, beta_denom, m_d2,
      *                  total_mol_sink, mfp(nCv), vth, t0_rad, t0_dia,
@@ -262,6 +262,9 @@ cc set diamagnetic velocity
       else
         vsq = u_mol(:,0)**2+u_dia_mol(:,0)**2+u_rad_mol(:,0)**2
         vsqi = u_moli(:,0)**2+u_dia_mol(:,0)**2+u_rad_mol(:,0)**2
+      endif
+      if (switch%b2tfmol_3D_mom.eq.2) then 
+        vsq_3D = u_pol_mol(:,0)**2+u_rad_mol(:,0)**2+u_tor_mol(:,0)**2
       endif
 
 
@@ -656,8 +659,16 @@ cc non-dissociative ionization
      .          0.5_R8*vsq(iCv)*am_d2*mp)
             se_mol_nd(iCv) = t0_mol
             !! conversion total -> internal for molecule
-            t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_nd(iCv)/geo%cvHz(iCv)
+            if (switch%b2tfmol_3D_mom.lt.2) then
+             t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_nd(iCv)/geo%cvHz(iCv)
      .         + 0.5_R8*am_d2*mp*sn_mol_nd(iCv)*u_mol(iCv,0)**2  
+            else
+              t0_mol = t0_mol - 
+     .         (u_pol_mol(iCv,0)**2*sm_mol_pol_nd(iCv,1) + 
+     .          u_rad_mol(iCv,0)**2*sm_mol_rad_nd(iCv,1) + 
+     .          u_tor_mol(iCv,0)**2*sm_mol_tor_nd(iCv,1))
+     .         + 0.5_R8*am_d2*mp*sn_mol_nd(iCv)*vsq_3D(iCv)  
+            endif
             sh_mol_nd(iCv) = t0_mol
           enddo
         enddo
@@ -687,8 +698,16 @@ cc dissociation, ion energy source
             t0_mol = t0_mol
             se_mol_d(iCv) = t0_mol
             !! conversion total -> internal for molecule
-            t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_d(iCv)/geo%cvHz(iCv)+
-     .         0.5_R8*am_d2*mp*sn_mol_d(iCv)*u_mol(iCv,0)**2  
+            if (switch%b2tfmol_3D_mom.lt.2) then 
+              t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_d(iCv)/geo%cvHz(iCv)
+     .        + 0.5_R8*am_d2*mp*sn_mol_d(iCv)*u_mol(iCv,0)**2  
+            else 
+              t0_mol = t0_mol -
+     .         (u_pol_mol(iCv,0)**2*sm_mol_pol_d(iCv,1) + 
+     .          u_rad_mol(iCv,0)**2*sm_mol_rad_d(iCv,1) + 
+     .          u_tor_mol(iCv,0)**2*sm_mol_tor_d(iCv,1))
+     .         + 0.5_R8*am_d2*mp*sn_mol_d(iCv)*vsq_3D(iCv)
+            endif
             sh_mol_d(iCv) = t0_mol*fac_nlim(iCv,ism)
           enddo
         enddo
@@ -725,8 +744,16 @@ cc dissociative ionization (1), ion energy source
             t0_mol = t0_mol
             se_mol_di1(iCv) = t0_mol
             !! conversion total -> internal for molecule
-            t0_mol = t0_mol -u_mol(iCv,0)*sm_mol_di1(iCv)/geo%cvHz(iCv)
+            if (switch%b2tfmol_3D_mom.lt.2) then
+             t0_mol = t0_mol -u_mol(iCv,0)*sm_mol_di1(iCv)/geo%cvHz(iCv)
      .         + 0.5_R8*am_d2*mp*sn_mol_di1(iCv)*u_mol(iCv,0)**2  
+            else 
+              t0_mol = t0_mol -
+     .         (u_pol_mol(iCv,0)**2*sm_mol_pol_di1(iCv,1) + 
+     .          u_rad_mol(iCv,0)**2*sm_mol_rad_di1(iCv,1) + 
+     .          u_tor_mol(iCv,0)**2*sm_mol_tor_di1(iCv,1))
+     .         + 0.5_R8*am_d2*mp*sn_mol_di1(iCv)*vsq_3D(iCv)
+            endif
             sh_mol_di1(iCv) = t0_mol*fac_nlim(iCv,ism)
           enddo
         enddo
@@ -763,8 +790,16 @@ cc ion conversion, ion energy source
             t0_mol = t0_mol
             se_mol_ic(iCv) = t0_mol
             !! conversion total -> internal for molecule
-            t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_ic(iCv)/geo%cvHz(iCv)
+            if (switch%b2tfmol_3D_mom.lt.2) then 
+             t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_ic(iCv)/geo%cvHz(iCv)
      .         + 0.5_R8*am_d2*mp*sn_mol_ic(iCv)*u_mol(iCv,0)**2 
+            else 
+              t0_mol = t0_mol -
+     .         (u_pol_mol(iCv,0)**2*sm_mol_pol_ic(iCv,1) + 
+     .          u_rad_mol(iCv,0)**2*sm_mol_rad_ic(iCv,1) + 
+     .          u_tor_mol(iCv,0)**2*sm_mol_tor_ic(iCv,1))
+     .         + 0.5_R8*am_d2*mp*sn_mol_ic(iCv)*vsq_3D(iCv)
+            endif
             sh_mol_ic(iCv) = t0_mol*fac_nlim(iCv,ism)
           enddo
         enddo
@@ -815,7 +850,16 @@ cc elastic collisions, ion energy source
             !! for the molecule
             se_mol_ec(iCv) = t0_mol
             !! conversion total -> internal for molecule
-            t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_ec(iCv)/geo%cvHz(iCv) 
+            if (switch%b2tfmol_3D_mom.lt.2) then 
+             t0_mol = t0_mol - u_mol(iCv,0)*sm_mol_ec(iCv)/geo%cvHz(iCv) 
+            else 
+              t0_mol = t0_mol - 
+     .         (u_pol_mol(iCv,0)*
+     .   (sm_mol_pol_ec(iCv,0)+u_pol_mol(iCv,0)*sm_mol_pol_ec(iCv,1)) + 
+     .          u_rad_mol(iCv,0)**2*sm_mol_rad_ec(iCv,1) + 
+     .          u_tor_mol(iCv,0)*
+     .   (sm_mol_tor_ec(iCv,0)+u_tor_mol(iCv,0)*sm_mol_tor_ec(iCv,1)))
+             endif
             sh_mol_ec(iCv) = t0_mol
           enddo
         enddo
