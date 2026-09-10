@@ -65,7 +65,8 @@
      .  ro(nCv), cst, cvs_temp(nFc,0:1),                                
      .  wrk0(nCv),wrk1(nCv), mass, dummy_out(nCv,0:1),
      .  zeroes_f(nFc,0:1), zeroes_c(nFc), zeroes_nCv(nCv),
-     .  pit(nCv), pit2(nCv), smcu_pol(nCv), smcu_rad(nCv), smcu_tor(nCv)
+     .  pit(nCv), pit2(nCv), smcu_pol(nCv,0:1), smcu_rad(nCv,0:1),
+     .  smcu_tor(nCv,0:1)
       real (kind=R8), save :: rxg_npmo_mol_perp = 0.0_R8
       logical new_matrix, warning
 *   ..procedures
@@ -141,24 +142,29 @@
 *    ..compute centrifugal force term                                  
 !      call b2sicf (nCv, nFc, nVx, 0, am_d2*mp, switch,  geo, mpg,   
 !     *   n_mol(:,0), u_mol(:,0), sm_cf, ctcfb, wrk0)
-
-      call b2smcu_3D (nCv, nFc, nVx, am_d2*mp, switch,  geo, mpg,   
+      if (switch%b2smcu_3D.eq.1) then 
+        call b2smcu_3D (nCv, nFc, nVx, am_d2*mp, switch,  geo, mpg,   
      *   n_mol(:,0), u_pol_mol(:,0), u_rad_mol(:,0), u_tor_mol(:,0),
      *   co%vs_mol,smcu_pol, smcu_rad, smcu_tor)
+      else 
+        smcu_pol = 0.0_R8 
+        smcu_rad = 0.0_R8 
+        smcu_tor = 0.0_R8
+      endif
 
 *    ..compute total perpendicular momentum sources
-      sm_mol_rad(:,0) = sr_mol%sm_mol_rad(:,0) + smgp_rad + smcu_rad
-      sm_mol_rad(:,1) = sr_mol%sm_mol_rad(:,1)
+      sm_mol_rad(:,0) = sr_mol%sm_mol_rad(:,0)+smgp_rad+smcu_rad(:,0)
+      sm_mol_rad(:,1) = sr_mol%sm_mol_rad(:,1)+smcu_rad(:,1)
       sm_mol_rad(:,2) = 0.0_R8
       sm_mol_rad(:,3) = 0.0_R8 
 
-      sm_mol_pol(:,0) = sr_mol%sm_mol_pol(:,0) + smgp_pol + smcu_pol
-      sm_mol_pol(:,1) = sr_mol%sm_mol_pol(:,1)
+      sm_mol_pol(:,0) = sr_mol%sm_mol_pol(:,0)+smgp_pol+smcu_pol(:,0)
+      sm_mol_pol(:,1) = sr_mol%sm_mol_pol(:,1)+smcu_pol(:,1)
       sm_mol_pol(:,2) = 0.0_R8
       sm_mol_pol(:,3) = 0.0_R8 
 
-      sm_mol_tor(:,0) = sr_mol%sm_mol_tor(:,0) + smcu_tor
-      sm_mol_tor(:,1) = sr_mol%sm_mol_tor(:,1)
+      sm_mol_tor(:,0) = sr_mol%sm_mol_tor(:,0)+smcu_tor(:,0)
+      sm_mol_tor(:,1) = sr_mol%sm_mol_tor(:,1)+smcu_tor(:,1)
       sm_mol_tor(:,2) = 0.0_R8
       sm_mol_tor(:,3) = 0.0_R8 
 

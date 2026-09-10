@@ -633,6 +633,7 @@ c Fluid molecules
       integer :: b2stfm_recompute_molion
       integer :: b2tfmol_iout
       integer :: b2smcu_3D_iout
+      integer :: b2smcu_3D
       integer :: b2tfn_mol_ionv
       integer :: b2tfn_mol_conv
       integer :: b2tral_mode_mol
@@ -1342,6 +1343,7 @@ c Fluid molecules
       s % b2stfm_recompute_molion = 0
       s % b2tfmol_iout = 0
       s % b2smcu_3D_iout = 0
+      s % b2smcu_3D = 1
       s % b2tfn_mol_ionv = 0
       s % b2tfn_mol_conv = 1
       s % b2tral_mode_mol = -1
@@ -2165,6 +2167,7 @@ c Fluid molecules
      .             s % b2stfm_recompute_molion)  
       call ipgeti ('b2tfmol_iout', s % b2tfmol_iout)
       call ipgeti ('b2smcu_3D_iout', s % b2smcu_3D_iout)
+      call ipgeti ('b2smcu_3D', s % b2smcu_3D)
       call ipgeti ('b2tfn_mol_ionv', s % b2tfn_mol_ionv)
       call ipgeti ('b2tfn_mol_conv', s % b2tfn_mol_conv)
       call ipgeti ('b2tral_mode_mol', s % b2tral_mode_mol)

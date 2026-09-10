@@ -20,7 +20,7 @@
      *   mb, nb(nCv), u_pol(nCv), u_rad(nCv), u_tor(nCv), vs_mol(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8), intent(out) ::
-     *   sm_pol(nCv), sm_rad(nCv), sm_tor(nCv)                       
+     *   sm_pol(nCv,0:1), sm_rad(nCv,0:1), sm_tor(nCv,0:1)                       
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -112,7 +112,7 @@ cc      enddo
       call gradc_r(nCv,nFc,nVx,0,geo,mpg,u_tor,zeroes_Vx,dutdr)
 
 
-*   .. compute curvature pieces of convectieve terms
+*   .. compute curvature pieces of convective terms
       do iCv = 1, mpg%nCi
         t0 = vol(iCv)*mb*u_rad(iCv)*nb(iCv)*
      .         (dhxdy(iCv)/hx(iCv)*u_pol(iCv) -
@@ -128,12 +128,12 @@ cc      enddo
      .         (dhzdx(iCv)/hz(iCv)*u_tor(iCv))  
         t5 = vol(iCv)*mb*u_rad(iCv)*nb(iCv)*
      .         (dhzdy(iCv)/hz(iCv)*u_tor(iCv)) 
-        sm_pol(iCv) = t0 + t1 
-        sm_rad(iCv) = t2 + t3 
-        sm_tor(iCv) = t4 + t5
-        curv_conv_pol(iCv) = t0 + t1 
-        curv_conv_rad(iCv) = t2 + t3 
-        curv_conv_tor(iCv) = t4 + t5
+        sm_pol(iCv,0) = -t0 - t1 
+        sm_rad(iCv,0) = -t2 - t3 
+        sm_tor(iCv,0) = -t4 - t5
+        curv_conv_pol(iCv) = -t0 - t1 
+        curv_conv_rad(iCv) = -t2 - t3 
+        curv_conv_tor(iCv) = -t4 - t5
       enddo
 
 *   .. compute gradients of sqrt(g)/hx or hy
@@ -195,21 +195,35 @@ cc first compute the term inside the derivative, then the derivative, then add t
       term_t_r = dterm_t_r*hy/vol
 
 
-*   .. compute terms related to divergence of the stress tensor
-      div_Pi_p = term_p_p + term_p_r + sigma_p_r/hx*dhxdy 
-     *           - sigma_r_r/hy*dhydx - sigma_t_t/hz*dhzdx 
-      div_Pi_r = term_r_p + term_r_r + sigma_p_r/hy*dhydx 
-     *           - sigma_p_p/hx*dhxdy - sigma_t_t/hz*dhzdy 
-      div_Pi_t = term_t_p + term_t_r + sigma_p_t/hz*dhzdx 
-     *           + sigma_r_t/hz*dhzdy
+*   .. compute terms related to divergence of the stress tensor (+ multiply by cell volume to get source per cell)
+      div_Pi_p = vol*(term_p_p + term_p_r + sigma_p_r/hx*dhxdy 
+     *           - sigma_r_r/hy*dhydx - sigma_t_t/hz*dhzdx) 
+      div_Pi_r = vol*(term_r_p + term_r_r + sigma_p_r/hy*dhydx 
+     *           - sigma_p_p/hx*dhxdy - sigma_t_t/hz*dhzdy) 
+      div_Pi_t = vol*(term_t_p + term_t_r + sigma_p_t/hz*dhzdx 
+     *           + sigma_r_t/hz*dhzdy)
 
 
       do iCv = 1, mpg%nCi
-        sm_pol(iCv) = sm_pol(iCv) + div_Pi_p(iCv)
-        sm_rad(iCv) = sm_rad(iCv) + div_Pi_r(iCv)
-        sm_tor(iCv) = sm_tor(iCv) + div_Pi_t(iCv)
+        sm_pol(iCv,0) = sm_pol(iCv,0) - div_Pi_p(iCv)
+        sm_rad(iCv,0) = sm_rad(iCv,0) - div_Pi_r(iCv)
+        sm_tor(iCv,0) = sm_tor(iCv,0) - div_Pi_t(iCv)
       enddo
 
+cc linearize
+      do iCv = 1, mpg%nCi
+        sm_rad(iCv,0) = sm_rad(iCv,0)+
+     &     max(0.0_R8,sm_rad(iCv,1))*u_rad(iCv)
+        sm_rad(iCv,1) = min(sm_rad(iCv,1),0.0_R8)
+
+        sm_pol(iCv,0) = sm_pol(iCv,0)+
+     &     max(0.0_R8,sm_pol(iCv,1))*u_pol(iCv)
+        sm_pol(iCv,1) = min(sm_pol(iCv,1),0.0_R8)
+
+        sm_tor(iCv,0) = sm_tor(iCv,0)+
+     &     max(0.0_R8,sm_tor(iCv,1))*u_tor(iCv)
+        sm_tor(iCv,1) = min(sm_tor(iCv,1),0.0_R8)
+      enddo
 
 
       if (switch%b2smcu_3D_iout.ne.0) then                         
