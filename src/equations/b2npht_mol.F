@@ -106,8 +106,13 @@
 * ..main computation
 
 *   ..compute final heat sources
-      call b2sihs_mol (nCv, nFc, nVx, switch, geo, mpg,
-     &  co%cvs_mol,  co%cvshz_mol_eff, sh0_mol)
+      if (switch%b2tfmol_3D_mom.lt.2) then
+        call b2sihs_mol (nCv, nFc, nVx, switch, geo, mpg,
+     &  co%cvs_mol, co%cvshz_mol_eff, sh0_mol)
+      else !! FM_TODO undo !!
+        call b2sihs_mol_3D (nCv, nFc, nVx, switch, geo, mpg,
+     &  co%cvs_mol, co%cvshz_mol_eff, sh0_mol)
+      endif
 
       call b2saxpy (nCv*4, 1.0_R8, sh0_mol, 1, sh_final, 1)
 
