@@ -100,36 +100,14 @@
       call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0)
-      mpg%nCg = idum(1)
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  lblgm, isymm)
       call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain parameters from b2fplasmf file
       call cfruin (ninp(4),3,idum,'nCv,nFc,ns')
       call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
      &  'faulty input nCv, nFc, ns from b2fplasmf file')
-*   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data

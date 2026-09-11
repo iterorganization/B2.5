@@ -15,6 +15,8 @@
       use b2mod_ad
      , , only: nncf
       use b2us_data
+      use b2us_io, only : read_b2fgmtry_header
+      use b2mod_b2cmfs, only : isymm
 #if ( defined(USE_MPI) && MPI_MOD > 0 )
       use mpi      ! IGNORE
 #endif
@@ -128,6 +130,7 @@
 
 *   ..local variables
       integer idum(0:9)
+      character*120 cdum
 #ifdef _OPENMP
       real (kind=R8) :: cpu_s, cpu_f
 #else
@@ -194,26 +197,8 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         call xerrab('Using old input format. Run b2us first.')
       endif
 *   ..obtain mapping/geometry dimensions from file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0)
-      mpg%nCg = idum(1)
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  cdum, isymm)
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)

@@ -145,7 +145,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer i, j, is, iCv, iFc, ireg
+    integer i, j, is, iCv, iFc, ireg, nTarget
     integer target_offset
 
     real (kind=R8) :: fettmp, fdir
@@ -209,6 +209,10 @@ contains
     call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
          (is_neutral(ismain0).or.ismain0.eq.ismain), &
          'invalid main neutral species index ismain0')
+    nTarget = mpg%nDiv
+    if (nTarget.eq.0.and.allocated(mpg%strDiv)) then
+      if (size(mpg%strDiv).gt.0) nTarget = maxval(mpg%strDiv)
+    endif
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
       gridGeometry = geometryId ( mpg, geo, 1 )
@@ -220,6 +224,23 @@ contains
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
+      if (nTarget.gt.0) then
+        call xertst(allocated(mpg%divFcP), &
+          'Invalid divertor topology: divFcP not allocated')
+        call xertst(allocated(mpg%ifdiv), &
+          'Invalid divertor topology: ifdiv not allocated')
+        call xertst(size(mpg%divFcP,1).ge.nTarget, &
+          'Invalid divertor topology: divFcP too small')
+        call xertst(size(mpg%ifdiv).ge.nTarget, &
+          'Invalid divertor topology: ifdiv too small')
+        do i = 1, nTarget
+          call xertst(mpg%divFcP(i,2).gt.0, &
+            'Invalid divertor topology: empty target face list')
+          call xertst(1.le.mpg%ifdiv(i).and. &
+            mpg%ifdiv(i).le.mpg%divFcP(i,2), &
+            'Invalid divertor topology: invalid target strike face')
+        enddo
+      endif
       nc = max(mpg%nXpt,1)
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
@@ -233,7 +254,7 @@ contains
         end if
         call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
       endif
-      do i = 1, maxval(mpg%strDiv)
+      do i = 1, nTarget
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcp(i,2)) = &
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
@@ -261,7 +282,7 @@ contains
           enddo
           close(99)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. nTarget.ge.4) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
@@ -665,7 +686,7 @@ contains
     end if
     fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
     namxip = 0.0_R8; nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8
-    if (allocated(mpg%divFcP)) then
+    if (nTarget .gt. 0) then
       do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
@@ -713,9 +734,9 @@ contains
 
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     namxap = 0.0_R8; nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
-    if (maxval(mpg%strDiv).gt.0) then
-      do i = mpg%divFcP(maxval(mpg%strDiv),1), &
-           & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
+    if (nTarget .gt. 0) then
+      do i = mpg%divFcP(nTarget,1), &
+           & mpg%divFcP(nTarget,1) + mpg%divFcP(nTarget,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
           iCv = mpg%fcCv(iFc,1)
@@ -760,7 +781,7 @@ contains
 #endif
     end if
 
-    if(mpg%nXpt.ge.2.and.maxval(mpg%strDiv).gt.2) then
+    if(mpg%nXpt.ge.2.and.nTarget.gt.2) then
       do i = mpg%divFcP(2,1), mpg%divFcP(2,1) + mpg%divFcP(2,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
@@ -1717,7 +1738,7 @@ contains
         posepa(1) = pl%po(cvtrg)
         ktsepa(1) = pl%kt(cvtrg)
       else if (gridGeometry.eq.GEOMETRY_DDN_BOTTOM) then
-        if (maxval(mpg%strDiv).gt.2) then
+        if (nTarget.gt.2) then
           iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
           if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
             & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
@@ -1999,7 +2020,7 @@ contains
         deallocate(slice)
         call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
       endif
-      do k = 1, maxval(mpg%strDiv)
+      do k = 1, nTarget
         select case (k)
         case (1)
           allocate(fclist(mpg%divFcP(1,2)))
@@ -2033,7 +2054,7 @@ contains
           call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
           call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. nTarget.ge.4) then
             allocate(fclist(mpg%divFcP(2,2)))
             allocate(cvlist(mpg%divFcP(2,2)))
             allocate(cnlist(mpg%divFcP(2,2)))
@@ -2065,7 +2086,7 @@ contains
             call rwcdf(rw,ncid,'dsTLT',imap,dsTLT,iret)
             call rwcdf(rw,ncid,'dsTLP',imap,dsTLP,iret)  
           else
-            ireg=maxval(mpg%strDiv)
+            ireg = nTarget
             allocate(fclist(mpg%divFcP(ireg,2)))
             allocate(cvlist(mpg%divFcP(ireg,2)))
             allocate(cnlist(mpg%divFcP(ireg,2)))
@@ -2129,7 +2150,7 @@ contains
           call rwcdf(rw,ncid,'dsTRT',imap,dsTRT,iret)
           call rwcdf(rw,ncid,'dsTRP',imap,dsTRP,iret)  
         case(4)
-          ireg=maxval(mpg%strDiv)
+          ireg = nTarget
           allocate(fclist(mpg%divFcP(ireg,2)))
           allocate(cvlist(mpg%divFcP(ireg,2)))
           allocate(cnlist(mpg%divFcP(ireg,2)))
@@ -2301,7 +2322,7 @@ contains
       call rwcdf(rw,ncid,'fetsapp',imap,fetsapp,iret)
       call rwcdf(rw,ncid,'fchsapp',imap,fchsapp,iret)
     !
-      if (maxval(mpg%strDiv).ge.1) then
+      if (nTarget.ge.1) then
         imap(1)=1     ! bl
         imap(2)=1
         allocate(slice(mpg%divFcP(1,2)))
@@ -2520,11 +2541,11 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.2) then
+      if (nTarget.ge.2) then
         imap(1)=1     ! br
         imap(2)=1
         imap(3)=1
-        ireg=maxval(mpg%strDiv)
+        ireg = nTarget
         allocate(slice(mpg%divFcP(ireg,2)))
         allocate(slice_ns(mpg%divFcP(ireg,2),ns))
         if (nnatmi.gt.0) then
@@ -2635,7 +2656,7 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.3) then
+      if (nTarget.ge.3) then
         imap(1)=1     ! tr
         imap(2)=1
         imap(3)=1
@@ -2749,7 +2770,7 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.4) then
+      if (nTarget.ge.4) then
         imap(1)=1     ! tl
         imap(2)=1
         imap(3)=1

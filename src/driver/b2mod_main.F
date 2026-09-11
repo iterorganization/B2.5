@@ -20,6 +20,7 @@
       use b2mod_switches
       use b2mod_recycle
       use b2mod_xerset
+      use b2mod_b2cmfs, only : isymm
 #if ( defined(B25_EIRENE) && defined(USE_MPI) )
       use eirmod_parmmod
      , , only : ifoff
@@ -171,6 +172,7 @@
       subroutine b2mn_init
       implicit none
       integer idum(0:9)
+      character*120 lblgm
 
 *   ..program start-up calls
 #ifdef USE_MPI
@@ -236,26 +238,8 @@ csw
         call xerrab('Using old input format. Run b2us first.')
       endif
 *   ..obtain mapping/geometry dimensions from file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  lblgm, isymm)
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)
@@ -280,7 +264,7 @@ csw
       call alloc_b2mod_astra_to_b2 (mpg, DEF_NYD)
       call alloc_b2mod_b2_to_astra (mpg, DEF_NYD, ns)
 
-      call b2mndr_0 (ninp, nout, ns, ns0)
+      call b2mndr_0 (ninp, nout, ns, ns0, lblgm)
 
       return
       end subroutine b2mn_init

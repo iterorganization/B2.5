@@ -141,26 +141,8 @@
       call cfverr (ninp(2), b2fparam_version)                          !xpb
       call cfverr (ninp(3), b2fstati_version)                          !xpb
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &  lblgm, isymm)
       call xertst (0.lt.mpg%nCv.and.0.lt.mpg%nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from parameters file
@@ -208,11 +190,6 @@
        end if
        goto 1
     2 continue
-*   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..load default values of switches
       call read_first_switches(switch)
       call set_defaults_switches(switch,ns)

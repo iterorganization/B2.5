@@ -354,4 +354,5 @@ c    Version 03.002.001  25.06.25 Added Qalfmin/max variables to b2fgmtry
 c                                 Added srw arrays to b2fplasma
 c                                 Added multi-species netCDF tally output
 c                                 Open-source release
+c    Version 03.002.002  11.08.26 Added optional topology records to b2fgmtry
 c
