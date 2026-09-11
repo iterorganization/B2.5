@@ -161,6 +161,6 @@
 !$omp threadprivate(primal_res, gradient_res)
 #endif
 
-      logical, save :: firstgmid = .true.
+      logical, save :: firstgmid(2) = .true.
 
       end module b2mod_ad
