@@ -126,18 +126,18 @@
       call ipgetc ('b2agfs_geometry', local_sonnet)
       lblgm=local_sonnet
       periodic_bc=0
-      call ipgeti ('b2agfs_periodic_bc',periodic_bc)
+      call ipgeti ('b2agfs_periodic_bc', periodic_bc)
       call xertst (abs(periodic_bc).le.1, 'faulty argument periodic_bc')
-      call ipgetr ('b2agfs_xoffset',xoffset)
-      call ipgetr ('b2agfs_yoffset',yoffset)
-      call ipgetr ('b2agfs_xrescale',xrescale)
+      call ipgetr ('b2agfs_xoffset', xoffset)
+      call ipgetr ('b2agfs_yoffset', yoffset)
+      call ipgetr ('b2agfs_xrescale', xrescale)
       call xertst (0.0_R8.ne.xrescale,'faulty argument xrescale')
-      call ipgetr ('b2agfs_yrescale',yrescale)
+      call ipgetr ('b2agfs_yrescale', yrescale)
       call xertst (0.0_R8.ne.yrescale,'faulty argument yrescale')
-      call ipgeti ('b2agfs_Bt_adjust',Bt_adjust)
+      call ipgeti ('b2agfs_Bt_adjust', Bt_adjust)
       call xertst (Bt_adjust.eq.0 .or. Bt_adjust.eq.1,
      &  'faulty argument Bt_adjust')
-      call ipgetr ('b2agfs_Bt_rescale',Bt_rescale)
+      call ipgetr ('b2agfs_Bt_rescale', Bt_rescale)
       call xertst (0.0_R8.ne.Bt_rescale,'faulty argument Bt_rescale')
       call ipgeti ('b2agfs_Bt_reversal', Bt_reversal)
       call xertst (Bt_reversal.eq.0 .or. Bt_reversal.eq.1,
@@ -149,7 +149,7 @@
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
-      call ipgeti ('b2agfs_intcellP_new' , intcellP_new)
+      call ipgeti ('b2agfs_intcellP_new', intcellP_new)
       call xertst (intcellP_new.eq.0 .or. intcellP_new.eq.1,
      &  'faulty argument intcellP_new')
 
@@ -166,13 +166,14 @@
      &       m%cvLbl(iCv) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
 
         if (Bt_adjust.eq.1) then
-            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
-          g%cvBb(iCv,2) = g%cvBb(iCv,2)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
-            elseif (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
-          g%cvBb(iCv,2) = g%cvBb(iCv,2)*g%cvY(iCv)/(g%cvY(iCv)+yoffset)
-            endif
-          g%cvBb(iCv,0) = abs(g%cvBb(iCv,0))
-     &          /g%cvBb(iCv,2)*g%cvBb(iCv,3)
+          if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+            g%cvBb(iCv,2) =
+     .       g%cvBb(iCv,2)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
+          elseif (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+            g%cvBb(iCv,2) =
+     .       g%cvBb(iCv,2)*g%cvY(iCv)/(g%cvY(iCv)+yoffset)
+          endif
+          g%cvBb(iCv,0) = abs(g%cvBb(iCv,0))/g%cvBb(iCv,2)*g%cvBb(iCv,3)
           g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,2)**2)
         endif
       enddo
@@ -180,7 +181,7 @@
       g%cvX = g%cvX*xrescale + xoffset
       g%cvY = g%cvY*yrescale + yoffset
 
-      ! offsets on face and vertex magneticfield
+      ! offsets on face and vertex magnetic field
       if (Bt_adjust.eq.1) then
         fcX = 0.5_R8*(g%vxX(m%fcVx(:,1))+g%vxX(m%fcVx(:,2)))
         fcY = 0.5_R8*(g%vxY(m%fcVx(:,1))+g%vxY(m%fcVx(:,2)))
@@ -200,14 +201,13 @@
           g%vxBb(:,1) = g%vxBb(:,1)*g%vxY/(g%vxY + yoffset)
           g%vxFfbz = g%vxFfbz*g%vxY/(g%vxY + yoffset)
         endif
-          g%fcBb(:,0) = abs(g%fcBb(:,0))
-     &          /g%fcBb(:,2)*g%fcBb(:,3)
-          g%fcBb(:,3) = sqrt(g%fcBb(:,0)**2 + g%fcBb(:,2)**2)
+        g%fcBb(:,0) = abs(g%fcBb(:,0))/g%fcBb(:,2)*g%fcBb(:,3)
+        g%fcBb(:,3) = sqrt(g%fcBb(:,0)**2 + g%fcBb(:,2)**2)
       endif
       g%vxX = g%vxX*xrescale+xoffset
       g%vxY = g%vxY*yrescale+yoffset
 
-      ! Bt_rescale, pit rescale and Bt_reversal
+      ! Bt_rescale, pit_rescale and Bt_reversal
       g%cvBb(:,0)=g%cvBb(:,0)*Bt_rescale*pit_rescale
       g%cvBb(:,1)=g%cvBb(:,1)*Bt_rescale*pit_rescale
       g%fcBb(:,0)=g%fcBb(:,0)*Bt_rescale*pit_rescale
@@ -216,20 +216,20 @@
       g%vxBb(:,1)=g%vxBb(:,1)*Bt_rescale*pit_rescale
       g%vxFpsi = g%vxFpsi*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
-         g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
-         g%fcBb(:,2) = -g%fcBb(:,2)*Bt_rescale
-         g%vxFfbz    = -g%vxFfbz*Bt_rescale
+        g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
+        g%fcBb(:,2) = -g%fcBb(:,2)*Bt_rescale
+        g%vxFfbz    = -g%vxFfbz*Bt_rescale
       else
-         g%cvBb(:,2) = g%cvBb(:,2)*Bt_rescale
-         g%fcBb(:,2) = g%fcBb(:,2)*Bt_rescale
-         g%vxFfbz    = g%vxFfbz*Bt_rescale
+        g%cvBb(:,2) = g%cvBb(:,2)*Bt_rescale
+        g%fcBb(:,2) = g%fcBb(:,2)*Bt_rescale
+        g%vxFfbz    = g%vxFfbz*Bt_rescale
       endif
       g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2+g%cvBb(:,1)**2+g%cvBb(:,2)**2)
       g%fcBb(:,3) = sqrt(g%fcBb(:,0)**2+g%fcBb(:,1)**2+g%fcBb(:,2)**2)
 
  9999 continue
       ! main connectivity already established in Make_traduit_b2us
-      ! MAYBE HERE BUILD OTHER CONNECTIVITIES NEEDED FOR B2FGMTRY_us? OR TO EARLY
+      ! MAYBE HERE BUILD OTHER CONNECTIVITIES NEEDED FOR B2FGMTRY_us? OR TOO EARLY
 !      call init_connectivity(nx1,ny1,crx1,cry1,cflag,
 !     & leftix1,leftiy1,rightix1,rightiy1,
 !     & topix1,topiy1,bottomix1,bottomiy1,

@@ -3340,6 +3340,7 @@ c only read a subset of the data as needed by the calling routine(s)
           status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
           call check_cdf_status(status)
           eirene_mc_piel_sne_bal = data2
+          deallocate(data2)
         case ('eirene_mc_eael_she_bal')
           allocate(data2(vdims(1),vdims(2)))
           status=nf_get_vara_double(ncid,ivar,start,vdims,data2)

@@ -105,10 +105,12 @@ function run_test {
   if [ -z "$KMP_STACKSIZE" ]; then
     export KMP_STACKSIZE=128MB
   fi
-  if [ -z "$OMP_STACKSIZE" ]; then
-    if [ "$COMPILER" != "ifort64" ]; then
+  if [ "$COMPILER" != "ifort64" ]; then
+    if [ -z "$OMP_STACKSIZE" ]; then
       export OMP_STACKSIZE=128MB
     fi
+  else
+    unset OMP_STACKSIZE
   fi
   if [ -n "$SOLPS_MPI" ]; then
     echo "Found MPI mode"

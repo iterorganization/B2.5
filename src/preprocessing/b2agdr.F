@@ -224,13 +224,13 @@
       endif
 
 *   ..correct pbsx on the proper mesh
-      if(redef_gmtry.ne.0) then
-         call b2agbs(g,m)
+      if (redef_gmtry.ne.0) then
+        call b2agbs(g,m)
       endif
 
 *   ..writing some important information 
-      write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
-      write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
+      write(*,*) 'b2agdr: g%cvBb(m%nCv,0) ', g%cvBb(m%nCv,0)
+      write(*,*) 'b2agdr: g%cvEb(m%nCv,0) ', g%cvEb(m%nCv,0)
       write(*,'()')
       if (g%vxFfBz(m%nVx).gt.0.0_R8) then
         write(*,'(a)')
@@ -264,7 +264,7 @@
         write(nout(0),'(/2x,a)')
      .   'This case has ZERO toroidal magnetic field.'
       endif
-      if (g%cvBb(m%nCv,2).ne.0.0_R8) then
+      if (g%cvEb(m%nCv,2).ne.0.0_R8) then
         write(*,'(a)')
      .   'If this is not correct, please set :'
         write(*,'(a)')
@@ -273,7 +273,7 @@
      .   'If already set to "1", set to "0" instead.'
       endif
       write(*,'()')
-      if (g%cvBb(m%nCv,0).gt.0.0_R8) then
+      if (g%cvEb(m%nCv,0).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE poloidal magnetic field.'
         write(*,'(a)')
@@ -324,14 +324,14 @@
      .   'This is the OPPOSITE convention as for '//
      .   'poloidal quantities.'
       end if
-      if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).lt.0.0_R8) then
+      if (g%cvEb(m%nCv,0)*g%cvEb(m%nCv,2).lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
         write(nout(0),'(2x,a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
-      else if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).gt.0.0_R8) then
+      else if (g%cvEb(m%nCv,0)*g%cvEb(m%nCv,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has COUNTER-directed plasma current and '//
      .   'toroidal field.'
@@ -348,6 +348,7 @@
       write(*,'()')
 
       !Take absolute values of magnetic field to comply with b2ag
+      !Already done in b2agmt for unstructured grids
       g%cvBb = abs(g%cvBb)
       g%fcBb = abs(g%fcBb)
       g%vxBb = abs(g%vxBb)
