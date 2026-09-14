@@ -91,6 +91,16 @@
       m%ny    = ny
       m%nncut = nncut
 
+!  structured-grid conversion does not provide explicit topology records
+      m%hasTopologicalData = .false.
+      m%topoID = 0
+      m%nXpt = 0
+      m%nOpt = 0
+      m%nStr = 0
+      m%nTgc = 0
+      m%nDiv = 0
+      m%nfcDiv = 0
+
       classical = isClassicalGrid(cflags)
 
       write (*,*) 'Creating mapping ...'
