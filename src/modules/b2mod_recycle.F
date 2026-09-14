@@ -626,7 +626,7 @@ c     fmomni: momentum flux of incident neutrals.
      &  fm_rec_mol_pol, fm_rec_mol_rad, fm_rec_mol_tor
 c     Internal variables
       real (kind=R8):: cs,Mj,
-     &    shpottauj,pf,pcorf,pt,vt,
+     &    shpottauj,pf,pcorf,pt,vt,vn,
      &    pit,pit2,mn,ux,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
@@ -719,7 +719,7 @@ c     Calculate fast and thermal recycled parts
         vt = sqrt(2.0_R8*E_fc*eV/mn)
       else
         m_mol = 2.0_R8*mn !!  FM_TODO generalize masses
-        vt = sqrt(2.0_R8*E_wall*eV/m_mol)
+        vn = pi/4*sqrt(8.0_R8*E_wall*eV/m_mol) !! average normal velocity
       endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -751,7 +751,7 @@ c     Recycled momentum flux densities
         fmoz = fmoz + 2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*
      1  fluid_frac_hyb
       else !! separate contribution for fluid molecules
-        fmoz_mol = 2.0_R8/3.0_R8*m_mol*pt*fdni*vt
+        fmoz_mol = m_mol*pt*fdni*vn
       endif
 c       Pressure of recycled neutrals
       pnc = pcorf*mn/3.0_R8*rp11i*cs**2*fdni/(-i1l)*fluid_frac_hyb
@@ -759,7 +759,7 @@ c       Pressure of recycled neutrals
       if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
         pnc=pnc+2.0_R8/3.0_R8*mn*(1-recycm)*pt*fdni*vt*fluid_frac_hyb
       else !! separate contribution for fluid molecules
-        pnc_mol = 2.0_R8/3.0_R8*m_mol*pt*fdni*vt
+        pnc_mol = 2.0_R8/3.0_R8*m_mol*pt*fdni*vn
       endif
 c       Density of recycled neutrals
       nnrec = pcorf*rp21i*fdni/(-i1l)*fluid_frac_hyb
@@ -767,7 +767,7 @@ c       Density of recycled neutrals
       if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
         nnrec = nnrec+(1-recycm)*pt*fdni*2.0_R8/vt*fluid_frac_hyb
       else !! separate contribution for fluid molecules
-        n_rec_mol = pt*fdni*2.0_R8/vt !! FM_TODO check factor 2 here
+        n_rec_mol = pt*fdni*2.0_R8/vn !! FM_TODO check factor 2 here
       endif
 c       product of density and toroidal velocity
       nnwwnrec = pcorf*rp31i*cs*sign(1.0_R8,ux)*fdni/(-i1l)*
@@ -779,7 +779,7 @@ c     recycled total energy flux density of neutrals
       if (fluid_molecules.eq.0) then  !! atoms released with FC energy are added
         fenec=fenec+0.5_R8*mn*(1-recycm)*pt*fdni*vt**2*fluid_frac_hyb
       else !! separate contribution for fluid molecules
-        fenec_mol =  0.5_R8*m_mol*pt*fdni*vt**2
+        fenec_mol =  0.5_R8*m_mol*pt*fdni*vn**2
       endif
 
 c     Calculate recycled poloidal momentum flux of neutrals
@@ -852,7 +852,7 @@ c     incident neutrals.
      &  fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor 
 c     Internal variables
       real (kind=R8):: cs,Mj,
-     &    pf,pcorf,pt,vt,vion,vcx,vtot,
+     &    pf,pcorf,pt,vt,vn,vion,vcx,vtot,
      &     pit,pit2,mn,nnf,ux,uy,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
@@ -996,7 +996,7 @@ c     Calculate fast and thermal reflected parts
         vt = sqrt(2.0_R8*E_fc*eV/mn)
       else
         m_mol = mn*2.0_R8
-        vt = sqrt(2.0_R8*E_wall*eV/(m_mol)) !! FM_TODO generalize mass
+        vn = pi/4*sqrt(8.0_R8*E_wall*eV/(m_mol)) !! FM_TODO generalize mass
       endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -1032,7 +1032,7 @@ c     reflected momentum flux densities
         fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
      1  fluid_frac_hyb
       else
-        fmoz_mol = pt*2.0_R8/3.0_R8*m_mol*fnni_nodrifts*vt
+        fmoz_mol = pt*m_mol*fnni_nodrifts*vn
       endif 
 c       Pressure of reflected neutrals
       pn = pcorf*mn/3.0_R8*vcx/vtot*(nnf*rp11i*cs**2+
@@ -1042,7 +1042,7 @@ c       Pressure of reflected neutrals
         pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni_nodrifts*vt*
      1  fluid_frac_hyb
       else 
-        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni_nodrifts*vt
+        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni_nodrifts*vn
       endif
 c       Density of reflected neutrals
       nnrefl = pcorf*vcx/vtot*(nnf*rp21i+1.0_R8/vtot*dnndz*rp22i*cs)*
@@ -1052,7 +1052,7 @@ c       Density of reflected neutrals
         nnrefl = nnrefl+(1-recycm)*pt*fnni_nodrifts*2.0_R8/vt*
      1  fluid_frac_hyb
       else
-        n_refl_mol = pt*fnni_nodrifts*2.0_R8/vt
+        n_refl_mol = pt*fnni_nodrifts*2.0_R8/vn
       endif
 c       product of density and toroidal velocity
       nnwwnrefl = pcorf*vcx/vtot*(nnf*rp31i*cs+
@@ -1286,7 +1286,7 @@ c     Output variables
      & fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol,
      & fm_refl_mol_pol, fm_refl_mol_rad, fm_refl_mol_tor
 c     Internal variables
-      real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,
+      real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,vn,
      &     pit,pit2,mn,nnf,ux,uz,
      &     i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &     rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
@@ -1397,7 +1397,7 @@ c     Calculate fast and thermal reflected parts
         vt = sqrt(2.0_R8*E_fc*eV/mn)
       else
         m_mol = 2.0_R8*mn
-        vt = sqrt(2.0_R8*E_wall*eV/m_mol)
+        vn = pi/4*sqrt(8.0_R8*E_wall*eV/m_mol)
       endif
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -1421,7 +1421,7 @@ c     reflected momentum flux densities
         fmoz = fmoz + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*
      1   fluid_frac_hyb
       else 
-        fmoz_mol = pt*2.0_R8/3.0_R8*m_mol*fnni*vt
+        fmoz_mol = pt*m_mol*fnni*vn
       endif
 c     Pressure of reflected neutrals
       pn = pcorf*mn/3.0_R8*nnf*rp11i*cs**2*fluid_frac_hyb
@@ -1429,7 +1429,7 @@ c     Pressure of reflected neutrals
       if (fluid_molecules.eq.0) then
         pn = pn + (1-recycm)*pt*2.0_R8/3.0_R8*mn*fnni*vt*fluid_frac_hyb
       else
-        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni*vt
+        pn_mol = pt*2.0_R8/3.0_R8*m_mol*fnni*vn
       endif
 c     Density of reflected neutrals
       nnrefl = pcorf*nnf*rp21i*fluid_frac_hyb
@@ -1437,7 +1437,7 @@ c     Density of reflected neutrals
       if (fluid_molecules.eq.0) then
         nnrefl = nnrefl+(1-recycm)*pt*fnni*2.0_R8/vt*fluid_frac_hyb
       else
-        n_refl_mol = pt*fnni*2.0_R8/vt
+        n_refl_mol = pt*fnni*2.0_R8/vn
       endif
 c     Product of density and toroidal velocity
       nnwwnrefl = pcorf*nnf*rp31i*cs*sign(1.0_R8,ux)*fluid_frac_hyb
@@ -1946,7 +1946,7 @@ c     Output variables
 c     Intent in or local recompuation depends on iCv or iCn
       real (kind=R8) :: tm
 c     Internal variables
-      real (kind=R8):: pt,vt,
+      real (kind=R8):: pt,vn,
      &     pit,pit2,mm,nmf,umf,uz,
      &     i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &     fnmi,fmox,fmoy,fmoz,fmomreflp,pm, fene, umf_pol, umf_rad,
@@ -1984,7 +1984,7 @@ c     Calculate incident particle flux density
 
 c     All incident molecules that are not pumped away return as molecules
       pt = recyc0
-      vt = sqrt(2.0_R8*E_wall*eV/mm)
+      vn = pi/4*sqrt(8.0_R8*E_wall*eV/mm)
 
 c     Flux of reflected molecules
       fn_refl_mol = pt*fnmi*area
@@ -1993,12 +1993,12 @@ c     Flux of reflected molecules
 c     reflected momentum flux densities
       fmox = 0._R8
       fmoy = 0._R8
-      fmoz = pt*2.0_R8/3.0_R8*mm*fnmi*vt
+      fmoz = pt*mm*fnmi*vn
 
 c     Pressure of reflected molecules
-      pm = pt*2.0_R8/3.0_R8*mm*fnmi*vt
+      pm = pt*2.0_R8/3.0_R8*mm*fnmi*vn
 c     Density of reflected molecules
-      nmrefl = pt*fnmi*2.0_R8/vt
+      nmrefl = pt*fnmi*2.0_R8/vn
 c     Product of density and toroidal velocity
       nmwwnrefl = 0._R8
 c     reflected total energy flux density of molecules
