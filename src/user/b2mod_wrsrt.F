@@ -13,7 +13,7 @@ c
 c*** lv    :  version number to appear in the file
 c
       integer lv
-      parameter (lv=20171020)
+      parameter (lv=20260721)
       integer ltrc
       parameter (ltrc=ntrc_srt)
       integer, save :: lun
@@ -25,31 +25,32 @@ c***..........................................................(regions)
 c***     totenre_  tesum      total plasma energy \int 3/2 n_e T_e dV plus
 c***                          \int 3/2 n_i T_i dV plus \int 1/2 m_a n_a u_{a||}^2 dV
 c***
+c***        Qrad_  qrad_tot   total radiation losses 
+c***                          b2bremreg(k) + b2radreg(k) + rdneureg(k)
+c***
 c***..........................................................(species)
-c***     SSNItot_  ssni_tmp   neutral-related source of ions
+c***     N_a_tot_  Natm_tmp   total number of neutrals
+c***                          pdena_int(:,0)
 c***
 c***..............................................(species and regions)
-c***     SSNIreg_  ssna_tmp   neutral-related source of ions
+c***     N_i_reg_  nisum      total numer of ions 
+c***
+c***     N_a_reg_  nasum      total numer of neutrals 
 c***
 c***...........................................................(strata)
-c***     Stratum_  fluxt_tmp  primary sources of neutrals
+c***     
 c***
 c***...............................................(species and strata)
-c***     SSNIstr_             neutral-related source of ions
-c***     sclfact_  sclf_tmp   scaling factors for neutral fluxes
-c***     sclrtio_  rtio_tmp   figure of merit for scaling (should be 0)
 c***
-c***..........................................................(species)
-c***     res_rci_  rrci_tmp   residuals in impurity balance
-c-----------------------------------------------------------------------
+
 
       integer, save :: nrg_tmp, nr_tmp, nsp_tmp, ns_tmp, na_tmp, nfl_tmp
       integer nrgn_tmp
-      parameter (nrgn_tmp=1) ! Number of quantities computed in each region
+      parameter (nrgn_tmp=2) ! Number of quantities computed in each region
       integer nspc_tmp
       parameter (nspc_tmp=1)
       integer nsar_tmp
-      parameter (nsar_tmp=2)
+      parameter (nsar_tmp=3)
       character, save :: hlp_hr(nrgn_tmp)*8
       character, save :: hlp_hs(nspc_tmp)*8
       character, save :: hlp_ha(nsar_tmp)*8
@@ -57,9 +58,9 @@ c-----------------------------------------------------------------------
       character, save :: f*(lenfnm), hlp_frm*256
 c-----------------------------------------------------------------------
 c*** Column headers:
-      data hlp_hr / 'totenre_' /
+      data hlp_hr / 'totenre_', '   Qrad_' /
       data hlp_hs / 'N_a_tot_' /
-      data hlp_ha / 'N_i_reg_', 'N_a_reg_' /
+      data hlp_ha / 'N_i_reg_', 'N_a_reg_', 'mom_reg_' /
 c-----------------------------------------------------------------------
 
       contains
@@ -77,6 +78,7 @@ c-----------------------------------------------------------------------
       use b2us_map
       use b2us_geo
       use b2us_plasma
+      use b2mod_tallies                 ! IYS 26.02.2026
       implicit none
 c
       integer, intent(in) :: ns
@@ -85,10 +87,10 @@ c
       type(B2state), intent(in) :: st
 c
 c*** Values by regions
-      real (kind=R8) :: tesum(2*DEF_NCUT)
+      real (kind=R8) :: tesum(2*DEF_NCUT), qrad_tot(2*DEF_NCUT)
 
       real (kind=R8) :: equr_tmp(2*DEF_NCUT,nrgn_tmp)
-      equivalence (equr_tmp(1,1), tesum)
+      equivalence (equr_tmp(1,1), tesum), (equr_tmp(1,2), qrad_tot)
 c
 c*** Values by species
       real (kind=R8) :: equs_tmp(DEF_NATM,nspc_tmp)
@@ -98,8 +100,10 @@ c*** Values by species
 c*** Values by species and regions
       real (kind=R8) :: equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)     ! IYS 29.09.2017 added total number of neutrals
-      equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
+     *     nasum(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT),    ! IYS 29.09.2017 added total number of neutrals
+     *     amomsum(DEF_NATM,2*DEF_NCUT)                               ! IYS 21.07.2026
+      equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum), ! IYS 29.09.2017
+     *            (equa_tmp(1,1,3), amomsum)
 c-----------------------------------------------------------------------
 c*** Local variables of general use
       integer i, j, k, ir, is, iCv
@@ -144,8 +148,6 @@ csw 20sep2013 added
      &          + 1.5_R8*st%pl%te(iCv)*st%dv%ne(iCv)*geo%cvVol(iCv)
      &          + 1.5_R8*st%pl%ti(iCv)*st%dv%ni(iCv,0)*geo%cvVol(iCv)
         do is=0,ns-1
-          nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .                        st%pl%na(iCv,is)*geo%cvVol(iCv)
           tesum(ir) = tesum(ir) + 0.5_R8*mp*am(is)*
      &       st%pl%na(iCv,is)*(st%pl%ua(iCv,is)**2)*geo%cvVol(iCv)
           if (is_neutral(is)) then
@@ -155,7 +157,13 @@ csw 20sep2013 added
 ! the whole B2.5 domain
             Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
      .                              st%pl%na(iCv,is)*geo%cvVol(iCv)
-          endif
+          else
+            nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
+     .                        st%pl%na(iCv,is)*geo%cvVol(iCv)
+            amomsum(b2espcr(is),ir) = amomsum(b2espcr(is),ir) +
+     &              mp*am(is) * st%pl%na(iCv,is) * st%pl%ua(iCv,is) *
+     &              geo%cvHz(iCv) * geo%cvVol(iCv) 
+         endif
         end do
 #ifdef B25_EIRENE
         do iatm = 1, nnatmi
@@ -171,6 +179,10 @@ csw 20sep2013 added
         end do
 #endif
       enddo
+
+      do k=1,mpg%nnreg(0)
+        qrad_tot(k) = b2bremreg(k) + b2radreg(k) + rdneureg(k)
+      end do
 
       if(filedata(ltrc)) then
 c
