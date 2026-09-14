@@ -1011,14 +1011,16 @@ cmb   net neutral energy source from recycling
 
              if (switch%fluid_molecules.ne.0) then
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_rec_mol
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_rec_mol
+              if (switch%b2stbr_no_fm_mom.eq.1) then
+                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_rec_mol
      .                                *geo%cvhz(iCv)
-              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+                sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
      .                                   fm_rec_mol_pol
-              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+                sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
      .                                   fm_rec_mol_rad
-              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+                sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
      .                                   fm_rec_mol_tor
+              endif
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_rec_mol
               n_mol_sum = n_mol_sum + n_rec_mol
              endif
@@ -1199,38 +1201,44 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
 c contribution from incident molecules
               sn_inc_mol_out(iCv) = fn_inc_mol
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) - fn_inc_mol  !! careful with signs, only fn_inc_mol is defined positive when going into the wall
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
+              if (switch%b2stbr_no_fm_mom.eq.1) then 
+                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_inc_mol  !! the others are already 'signed' correctly by themselves (similar as the atom variables)
      .                                *geo%cvhz(iCv)
-              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+                sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
      .                                   fm_inc_mol_pol  
-              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+                sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
      .                                   fm_inc_mol_rad  
-              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+                sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
      .                                   fm_inc_mol_tor  
+              endif
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_inc_mol
 c contribution from self-reflected molecules
               sn_refl_mol_out(iCv) = fn_refl_mol
               sn_refla_mol_out(iCv) = fn_refla_mol
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refl_mol
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refl_mol
+              if (switch%b2stbr_no_fm_mom.eq.1) then 
+                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0)+fm_refl_mol
      .                                *geo%cvhz(iCv)
-              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+                sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
      .                                   fm_refl_mol_pol  
-              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+                sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
      .                                   fm_refl_mol_rad  
-              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+                sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
      .                                   fm_refl_mol_tor  
+              endif
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refl_mol
 c contributions from atoms returning as molecules
               sr_mol%sn_mol(iCv,0) = sr_mol%sn_mol(iCv,0) + fn_refla_mol
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + fm_refla_mol
+              if (switch%b2stbr_no_fm_mom.eq.1) then 
+                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0)+fm_refla_mol
      .                                *geo%cvhz(iCv)
-              sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+                sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
      .                                fm_refla_mol_pol
-              sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+                sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
      .                                fm_refla_mol_rad
-              sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
+                sr_mol%sm_mol_tor(iCv,0) = sr_mol%sm_mol_tor(iCv,0) + 
      .                                fm_refla_mol_tor
+              endif
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_refla_mol
               n_mol_sum = n_mol_sum + n_inc_mol
               nww_mol_sum = nww_mol_sum + nww_inc_mol
@@ -1257,7 +1265,9 @@ c              nww_mol_sum = nww_mol_sum + nww_refla_mol !!  (contribution is ze
      &            cosa*2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/  !! FM_TODO generalize mass
      &            n_mol_sum*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
      &            geo%cvHz(iCv)
-              sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol
+              if (switch%b2stbr_no_fm_mom.eq.1) then 
+                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol
+              endif
               n_mol_sum = 0.0_R8
               nww_mol_sum = 0.0_R8
              endif

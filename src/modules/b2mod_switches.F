@@ -651,6 +651,7 @@ c Fluid molecules
       integer :: b2tfmol_3D_rad    !! temporary !! to test perp momentum equations in a step-wise manner
       integer :: b2tfmol_3D_pol    !! temporary !! to test perp momentum equations in a step-wise manner
       integer :: b2tfmol_3D_tor    !! temporary !! to test perp momentum equations in a step-wise manner
+      integer :: b2stbr_no_fm_mom
       real (kind=R8) :: b2stfm_freac_nd
       real (kind=R8) :: b2stfm_freac_d
       real (kind=R8) :: b2stfm_freac_di1
@@ -1361,6 +1362,7 @@ c Fluid molecules
       s % b2tfmol_3D_rad = 1
       s % b2tfmol_3D_pol = 1
       s % b2tfmol_3D_tor = 1
+      s % b2stbr_no_fm_mom = 0
       s % b2stfm_freac_nd  = 1.0_R8
       s % b2stfm_freac_d   = 1.0_R8
       s % b2stfm_freac_di1 = 1.0_R8
@@ -2188,6 +2190,7 @@ c Fluid molecules
       call ipgeti ('b2tfmol_3D_rad', s % b2tfmol_3D_rad)
       call ipgeti ('b2tfmol_3D_pol', s % b2tfmol_3D_pol)
       call ipgeti ('b2tfmol_3D_tor', s % b2tfmol_3D_tor)
+      call ipgeti ('b2stbr_no_fm_mom', s % b2stbr_no_fm_mom)
       call ipgetr ('b2stfm_freac_nd', s % b2stfm_freac_nd) 
       call ipgetr ('b2stfm_freac_d',  s % b2stfm_freac_d) 
       call ipgetr ('b2stfm_freac_di1',s % b2stfm_freac_di1) 
