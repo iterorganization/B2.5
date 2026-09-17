@@ -869,12 +869,16 @@ cc particle fluxes
 
 cc momentum update
         if (solvemo_mol) then
-          if (switch%b2tfmol_3D_style0.eq.1) then !! TEMP !! while testing perpendicular momentum equations
-          call b2npmo_mol (nCv, nFc, nVx,
+          if (switch%b2tfmol_3D_mom.eq.0) then 
+            call b2npmo_mol (nCv, nFc, nVx,
      &     switch, geo, mpg, ncall_b2news_, rxf1, dtim,
      &     st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl) 
-          endif
-          if (switch%b2tfmol_3D_mom.eq.1) then !! add diamagnetic and radial momentum eq to parallel one
+          elseif (switch%b2tfmol_3D_mom.eq.1) then !! add diamagnetic and radial momentum eq to parallel one
+            if (switch%b2tfmol_3D_style0.eq.1) then !! TEMP !! while testing perpendicular momentum equations
+              call b2npmo_mol (nCv, nFc, nVx,
+     &          switch, geo, mpg, ncall_b2news_, rxf1, dtim,
+     &          st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl) 
+              endif
             call b2npmo_mol_perp (nCv, nFc, nVx,
      &      switch, geo, mpg, ncall_b2news_, rxf1, dtim,
      &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)
@@ -887,8 +891,6 @@ cc momentum update
      &      st%pl, st%dv, st%co, st%rt, st%sr_mol, st%psnl)       
             st%dv%resmo_mol = 0.0_R8
             st%dv%resmo_mol_dia = 0.0_R8  
-          elseif (switch%b2tfmol_3D_mom.eq.0) then 
-            !! do nothing here
           else 
             call xerrab('b2tfmol_3D_mom should be 0, 1 or 2')
           endif
