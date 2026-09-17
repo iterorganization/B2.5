@@ -594,7 +594,7 @@ c dnndz           the gradient of the main neutral species density across the bo
 
       integer is0, is1, is2, is, isi, k, iwall
       real (kind=R8) :: tef, tif, tnf, tmf, taf, zaf(0:ns-1),
-     &     rpf(0:ns-1), ptf, t0
+     &     rpf(0:ns-1), ptf, t0, t1, p2
 #ifdef WG_TODO
      &   , sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
@@ -609,7 +609,7 @@ c new variables for advanced fluid neutral reflection/recycling model
      &     fmomrefl,fmomrec,fenerec,fenerefl,fene_el, nnrefl,nnwwnrefl,
      &     nnrec,nnwwnrec,nnsum,nnwwnsum,snan,smon,farea,q_conv,
      &     sina, cosa, smon_mol, q_conv_mol,
-     &     fn_rec_mol, fm_rec_mol, fe_rec_mol, n_rec_mol,
+     &     fn_rec_mol, fm_rec_mol, fe_rec_mol, n_rec_mol, nww_rec_mol,
      &     fn_inc_mol, fm_inc_mol, fe_inc_mol, n_inc_mol, nww_inc_mol,
      &     fn_refl_mol, fm_refl_mol, fe_refl_mol, n_refl_mol, 
      &     nww_refl_mol, n_mol_sum, nww_mol_sum, fn_refla_mol, 
@@ -965,7 +965,8 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
      &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec,
      &              fn_rec_mol,fm_rec_mol, fm_rec_mol_pol,
      &              fm_rec_mol_rad, fm_rec_mol_tor, 
-     &              n_rec_mol, fe_rec_mol, switch%fluid_molecules)
+     &              n_rec_mol, nww_rec_mol, fe_rec_mol, 
+     &              switch%fluid_molecules, switch%b2stbr_fm_pm_mode)
              else
                 fnnrec = 0.0_R8
                 fmomrec = 0.0_R8
@@ -1023,6 +1024,7 @@ cmb   net neutral energy source from recycling
               endif
               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + fe_rec_mol
               n_mol_sum = n_mol_sum + n_rec_mol
+              nww_mol_sum = nww_mol_sum + nww_rec_mol
              endif
 
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
@@ -1052,6 +1054,15 @@ c          while B2.5 uses internal energy equations.
              else
                srw%shn0(iCv,0) = srw%shn0(iCv,0) + q_conv
              endif
+
+            !! FM_TODO: do q_conv_mol 
+c             if (switch%fluid_molecules.ne.0) then 
+c               q_conv_mol =  (isign*
+c     &             (tmf*u_mol(iCv,0)*geo%fcpbs(iFc)*
+c     &             n_mol(iCv,0) +
+c     &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
+c     &             switch%neutral_sources_rescale*strasclfl(istra)
+c             endif
 
              if (maxw(istra).eq.0) then
                call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
@@ -1098,8 +1109,9 @@ cmb   net momentum sources from neutral particle reflection
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el,fn_refla_mol,fm_refla_mol,
      &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
-     &              n_refla_mol, 
-     &              fe_refla_mol, switch%fluid_molecules)
+     &              n_refla_mol, nww_refla_mol,
+     &              fe_refla_mol, switch%fluid_molecules,
+     &              switch%b2stbr_fm_pm_mode)
                elseif (maxw(istra).eq.1) then
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
@@ -1109,8 +1121,9 @@ cmb   net momentum sources from neutral particle reflection
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el,fn_refla_mol,fm_refla_mol, 
      &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
-     &              n_refla_mol, 
-     &              fe_refla_mol, switch%fluid_molecules)
+     &              n_refla_mol, nww_refla_mol,
+     &              fe_refla_mol, switch%fluid_molecules,
+     &              switch%b2stbr_fm_pm_mode)
                else 
                  call CalcReflectedFluxesKn(switch%Kn_b1,
      &              switch%Kn_b2,
@@ -1125,8 +1138,8 @@ cmb   net momentum sources from neutral particle reflection
      &              nnwwnrefl,fenerefl,fene_el,
      &              fn_refla_mol,fm_refla_mol, 
      &              fm_refla_mol_pol,fm_refla_mol_rad,fm_refla_mol_tor,
-     &              n_refla_mol, 
-     &              fe_refla_mol, switch%fluid_molecules)
+     &              n_refla_mol, nww_refla_mol,fe_refla_mol,
+     &              switch%fluid_molecules, switch%b2stbr_fm_pm_mode)            
                endif
              else
                fnnrefl = 0.0_R8
@@ -1186,14 +1199,14 @@ cc Take care of fluid molecules hitting the wall and coming back as molecules
              if (switch%fluid_molecules.ne.0) then
               !! incident molecules
               call CalcIncidentFluxesMolecules(iCv,iCn,iFc,is0,isign,
-     &              switch%b2tfmol_3D_mom,
+     &              switch%b2tfmol_3D_mom,switch%b2stbr_fm_pm_mode,
      &              farea,pl,tmf,geo,cosa,sina,fn_inc_mol,
      &              fm_inc_mol,fm_inc_mol_pol,fm_inc_mol_rad,
      &              fm_inc_mol_tor,n_inc_mol,nww_inc_mol,fe_inc_mol)
 
               !! reflected molecules
               call CalcReflectedFluxesMolecules(iCv,iCn,iFc,
-     &            isign, switch%b2tfmol_3D_mom,
+     &            isign, switch%b2tfmol_3D_mom,switch%b2stbr_fm_pm_mode,
      &            is0, farea, b2recyc(is,istra), pl, tmf,
      &            geo, mpg, cosa,sina, fn_refl_mol,
      &            fm_refl_mol, fm_refl_mol_pol, fm_refl_mol_rad, 
@@ -1243,9 +1256,9 @@ c contributions from atoms returning as molecules
               n_mol_sum = n_mol_sum + n_inc_mol
               nww_mol_sum = nww_mol_sum + nww_inc_mol
               n_mol_sum = n_mol_sum + n_refl_mol
-              nww_mol_sum = nww_mol_sum + nww_refl_mol !! (contribution is zero for isotropic molecules)
+              nww_mol_sum = nww_mol_sum + nww_refl_mol 
               n_mol_sum = n_mol_sum + n_refla_mol
-c              nww_mol_sum = nww_mol_sum + nww_refla_mol !!  (contribution is zero for isotropic molecules)
+              nww_mol_sum = nww_mol_sum + nww_refla_mol 
              endif
 
            endif
@@ -1260,16 +1273,33 @@ c              nww_mol_sum = nww_mol_sum + nww_refla_mol !!  (contribution is ze
              nnsum = 0.0_R8
              nnwwnsum = 0.0_R8
 
-             if (switch%fluid_molecules.ne.0) then
-              smon_mol = -isign*
-     &            cosa*2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/  !! FM_TODO generalize mass
-     &            n_mol_sum*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
-     &            geo%cvHz(iCv)
-              if (switch%b2stbr_no_fm_mom.eq.0) then 
-                sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol
-              endif
-              n_mol_sum = 0.0_R8
-              nww_mol_sum = 0.0_R8
+             if (switch%fluid_molecules.ne.0.and.
+     &                       switch%b2stbr_no_fm_mom.eq.0) then
+               if (switch%b2stbr_fm_pm_mode.eq.0) then
+                 !! term-2 pressure contribution 
+                 p2 = 2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/ !! FM_TODO generalize mass
+     &            n_mol_sum
+                 smon_mol = -isign*p2*
+     &             cosa**farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &             geo%cvHz(iCv)
+                 sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol 
+                 sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) - 
+     &              isign*p2*farea*cosa  
+                  sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) - 
+     &              isign*p2*farea*sina    
+               else
+                 p2 = 0.5_R8*(t_mol(iCn,0)*n_mol(iCn,0)+
+     &                        t_mol(iCv,0)*n_mol(iCv,0))
+                 t1 = -isign*p2*farea
+                 sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + t1*cosa*
+     &              geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*geo%cvHz(iCv)
+                 sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) + 
+     &              t1*cosa  
+                 sr_mol%sm_mol_rad(iCv,0) = sr_mol%sm_mol_rad(iCv,0) + 
+     &              t1*sina    
+               endif
+               n_mol_sum = 0.0_R8
+               nww_mol_sum = 0.0_R8
              endif
            endif
 
