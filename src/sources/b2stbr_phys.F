@@ -1280,7 +1280,7 @@ c contributions from atoms returning as molecules
                  p2 = 2.0_R8*am(is0)*mp/3.0_R8*nww_mol_sum**2/ !! FM_TODO generalize mass
      &            n_mol_sum
                  smon_mol = -isign*p2*
-     &             cosa**farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
+     &             cosa*farea*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*
      &             geo%cvHz(iCv)
                  sr_mol%sm_mol(iCv,0) = sr_mol%sm_mol(iCv,0) + smon_mol 
                  sr_mol%sm_mol_pol(iCv,0) = sr_mol%sm_mol_pol(iCv,0) - 
