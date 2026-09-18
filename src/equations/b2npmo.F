@@ -5,6 +5,7 @@
      &  switch, geo, mpg,
      &  itcnt, solving, rxf, dtim, pl, dv, rt, co, co_ns, sr, srw,
      &  psnl, st_ext)
+      use b2mod_growth_guard, only : growth_bound
       use b2mod_types
       use b2mod_math
       use b2mod_constants
@@ -134,6 +135,7 @@
      2  zf1(nCv), zf2(nCv),
      3  rho_b_rel(nCv), resmt(nCv)
 
+      real(kind=R8) :: guard_du
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                             !srv 13.01.17 05.07.17
@@ -757,7 +759,17 @@ c     ..compare 9-pt stencil matrix
         do iCv = 1, mpg%nCi ! internal cells
          ireg = mpg%cvReg(iCv)
          if (solvemo(is,ireg)) then
-          if(solvemt(ireg)) then                                        !srv 22.05.18
+          if (switch%growth_guard.eq.1) then
+*   ..growth guard: cap the parallel-velocity change to growth_mach*cs
+            guard_du = dv%corua(iCv,is)
+            if (solvemt(ireg)) guard_du =
+     &        med(dv%corua(iCv,is),dv%corut(iCv),
+     &        dv%corua(iCv,is)+dv%corut(iCv))
+            cst = sqrt(pz(iCv)/rz(iCv))
+            pl%ua(iCv,is) = pl%ua(iCv,is)+
+     &        growth_bound(rxf*guard_du,cst,
+     &        switch%growth_mach,2,iCv)
+          else if(solvemt(ireg)) then                                        !srv 22.05.18
             pl%ua(iCv,is) = pl%ua(iCv,is)+
      &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
      &        dv%corua(iCv,is)+dv%corut(iCv))

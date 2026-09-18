@@ -4,6 +4,7 @@
       subroutine b2usmo (nCv, nFc, nVx, switch, geo, mpg,
      &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,            !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)      !srv 06.04.07
+      use b2mod_growth_guard, only : growth_diagonal
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -234,6 +235,18 @@
 
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
+c Growth guard on momentum: uses the same V*Hz mass factor as
+c the momentum source; both signs of the acceleration are damped
+      if (switch%growth_guard.eq.1) then
+        do iCv=1,mpg%nCi
+          if (.not.solvereg(mpg%cvReg(iCv))) cycle
+          csb = sqrt(pz(iCv)/rzb(iCv))
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      growth_diagonal(resmb(iCv),csb,
+     &      rob(iCv)*geo%cvVol(iCv)*geo%cvHz(iCv)*csb,
+     &      switch%growth_mach,2,iCv)
+        enddo
+      endif
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name,              !srv 18.03.10
      .             switch%b2uxus_style)
 
