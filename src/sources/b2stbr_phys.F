@@ -1056,13 +1056,13 @@ c          while B2.5 uses internal energy equations.
              endif
 
             !! FM_TODO: do q_conv_mol 
-c             if (switch%fluid_molecules.ne.0) then 
-c               q_conv_mol =  (isign*
-c     &             (tmf*u_mol(iCv,0)*geo%fcpbs(iFc)*
-c     &             n_mol(iCv,0) +
-c     &             (dv%fhm(iFc,0,is0)+dv%fhm(iFc,1,is0)) ))*
-c     &             switch%neutral_sources_rescale*strasclfl(istra)
-c             endif
+             if (switch%fluid_molecules.ne.0) then 
+               q_conv_mol =  (isign*
+     &             (tmf*u_mol(iCv,0)*geo%fcpbs(iFc)*
+     &             n_mol(iCv,0) +
+     &             (dv%fhm_mol(iFc,0)+dv%fhm_mol(iFc,1)) ))
+               sr_mol%sh_mol(iCv,0) = sr_mol%sh_mol(iCv,0) + q_conv
+             endif
 
              if (maxw(istra).eq.0) then
                call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
