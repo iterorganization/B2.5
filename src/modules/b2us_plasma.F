@@ -118,7 +118,7 @@
         ! For fluid molecules (to be rearranged later on, and species to be generalized)
         real(R8), allocatable :: fn_mol(:,:), fm_mol(:,:), fh_mol(:,:),  !! fluxes
      .              fn_mol_fcor(:,:), fm_mol_rad(:,:), fm_mol_dia(:,:),
-     .               fm_mol_pol(:,:), fm_mol_tor(:,:)
+     .               fm_mol_pol(:,:), fm_mol_tor(:,:), fhm_mol(:,:)
         real(R8), allocatable :: dndt_mol(:), dmdt_mol(:), dhdt_mol(:)   !! time derivatives
         real(R8), allocatable :: resco_mol(:), resmo_mol(:), resh_mol(:) !! residuals
         real(R8), allocatable :: flo_mol(:,:), con_mol(:,:,:)            !! coefficients for linearization (continuity)
@@ -1543,6 +1543,7 @@
       allocate( dv % fm_mol_dia( nFc,0:1) )
       allocate( dv % fm_mol_pol( nFc,0:1) )
       allocate( dv % fm_mol_tor( nFc,0:1) )
+      allocate( dv % fhm_mol( nFc,0:1) )
       allocate( dv % fh_mol( nFc,0:1) )
       allocate( dv % dndt_mol( nCv) )
       allocate( dv % dmdt_mol( nCv) )
@@ -1572,6 +1573,7 @@
       dv % fm_mol_dia = 0.0_R8
       dv % fm_mol_pol = 0.0_R8
       dv % fm_mol_tor = 0.0_R8
+      dv % fhm_mol = 0.0_R8
       dv % fh_mol = 0.0_R8
       dv % dndt_mol = 0.0_R8
       dv % dmdt_mol = 0.0_R8
@@ -1767,6 +1769,7 @@
       deallocate( dv % fm_mol_dia )
       deallocate( dv % fm_mol_pol )
       deallocate( dv % fm_mol_tor )
+      deallocate( dv % fhm_mol )
       deallocate( dv % fh_mol )
       deallocate( dv % dndt_mol )
       deallocate( dv % dmdt_mol )

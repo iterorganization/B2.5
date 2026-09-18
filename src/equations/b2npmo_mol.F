@@ -141,7 +141,7 @@
 *    ..compute residual
       call b2urmo (nCv, nFc, nVx, switch, geo, mpg, 0, u_mol(:,0),
      &    ro, sm_mol, flub, co%cvshz_mol(:,:), dv%resmo_mol(:),
-     &    dv%fm_mol(:,:), zeroes_f, co%cvshz_mol_eff(:,:))      
+     &    dv%fm_mol(:,:), dv%fhm_mol(:,:), co%cvshz_mol_eff(:,:))      
 
 
       if (switch%b2npmo_iout.ne.0) then 
