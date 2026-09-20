@@ -438,12 +438,12 @@
         write(*,*) 'put_cdf_field3: dna'
         call put_cdf_field3(ncid,'dna',state%co%dna0,nCv,ns)
         write(*,*) 'put_cdf_field3: dpa'
-        do is=0,ns-1
+        do is=1,ns
           if (switch%tn_style.eq.0) then
-            dummy3(:,is) = state%co%dpa0(:,is)*(state%rt%rza(:,is)* 
+            dummy3(:,is) = state%co%dpa0(:,is-1)*(state%rt%rza(:,is-1)*
      .            state%pl%te(:)+state%pl%ti(:))
           else
-            dummy3(:,is) = state%co%dpa0(:,is)*state%pl%tn(:)
+            dummy3(:,is) = state%co%dpa0(:,is-1)*state%pl%tn(:)
           endif
         enddo
         call put_cdf_field3(ncid,'dpa',dummy3,nCv,ns)
@@ -468,9 +468,9 @@
         dummy3(:,:) = state%co%vla0(:,1,:)
         call put_cdf_field3(ncid,'vlay',dummy3,nCv,ns)
         write(*,*) 'put_cdf_field3: vsa'
-        do is=0,ns-1
-          dummy3(:,is) = state%co%vsa0(:,is)/(mp*am(is)*  
-     .        state%pl%na(:,is))
+        do is=1,ns
+          dummy3(:,is) = state%co%vsa0(:,is-1)/(mp*am(is-1)*
+     .        state%pl%na(:,is-1))
         enddo
         call put_cdf_field3(ncid,'vsa',dummy3,nCv,ns)
       endif
