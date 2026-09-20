@@ -829,6 +829,22 @@ c.. Make a list of core boundaries
           enddo
         enddo
       enddo
+      if (periodic_bc.eq.1) then
+cxpb ..enforce connectivity for real cells at periodic ends
+cxpb ..when both guard cells are in isolated regions
+        do iy = -1, ny
+          if (region(0,iy,0).eq.0 .and. region(nx-1,iy,0).eq.0) cycle
+          if (region(0,iy,0).ne.0 .and. region(nx-1,iy,0).ne.0) then
+            if (region(-1,iy,0).eq.0 .and. region(nx,iy,0).eq.0) then
+              leftix(0,iy) = nx-1
+              write(*,*) 'updated left neighbour of ', 0, iy
+              rightix(nx-1,iy) = 0
+              write(*,*) 'updated right neighbour of ', nx-1, iy
+            end if
+          end if
+        end do
+      end if
+
 c..  test that all boundary cells to the real domain are covered at least once
 c..  we exclude corners from this test
 c..  only test guard cells that have a real cell on the other side
