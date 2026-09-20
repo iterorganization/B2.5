@@ -3150,7 +3150,7 @@ cdjm Update ion heat sources
         call write_cdf_double(ncid,'eirene_mc_pppl_sna_bal',
      &                     eirene_mc_pppl_sna_bal_av,vdims,3)
         call write_cdf_double(ncid,'eirene_mc_core_sna_bal',
-     &                     eirene_mc_core_sna_bal_av,vdims,3)
+     &                     eirene_mc_core_sna_bal_av,vdims,2)
         call write_cdf_double(ncid,'eirene_mc_mapl_smo_bal',
      &                     eirene_mc_mapl_smo_bal_av,vdims,3)
         call write_cdf_double(ncid,'eirene_mc_mmpl_smo_bal',

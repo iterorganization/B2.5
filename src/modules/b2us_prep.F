@@ -2475,7 +2475,7 @@
       logical :: cvAlongBoundary(mpg%nCv), is_mod_fc(mpg%nFc),
      *   is_found, center_inside, proj_found
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
-      integer :: crossings, nVx_cell, iVx_k, iVx_k1, k_next
+      integer :: crossings, nVx_cell, iVx_k, k_next
       real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
      *   cur_len(2), cen_len(2)
       real (kind=R8) :: v1_x, v1_y, v2_x, v2_y, x_intersect
