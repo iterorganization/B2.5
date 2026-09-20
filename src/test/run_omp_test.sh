@@ -103,11 +103,11 @@ function run_test {
   export OMP_NUM_THREADS=$4
   export KMP_AFFINITY=verbose,norespect,compact
   if [ -z "$KMP_STACKSIZE" ]; then
-    export KMP_STACKSIZE=128MB
+    export KMP_STACKSIZE=128M
   fi
   if [ "$COMPILER" != "ifort64" ]; then
     if [ -z "$OMP_STACKSIZE" ]; then
-      export OMP_STACKSIZE=128MB
+      export OMP_STACKSIZE=128M
     fi
   else
     unset OMP_STACKSIZE
