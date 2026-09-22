@@ -261,9 +261,12 @@ contains
       end if
       dsLT = 0.0_R8
       do iy=iylstrt,iylend
-        if(region(-1,iy,0).ne.0) then
+        if (region(-1,iy,0).ne.0) then
           write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)
           dsLT(iy) = gs(rightix(-1,iy),rightiy(-1,iy),0)
+        else if (region(-1+target_offset,iy,0).ne.0) then
+          write(99,*) gs(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)
+          dsLT(iy) = gs(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)
         endif
       enddo
       close(99)
@@ -275,9 +278,12 @@ contains
       end if
       dsRT = 0.0_R8
       do iy=iyrstrt,iyrend
-        if(region(nx,iy,0).ne.0) then
+        if (region(nx,iy,0).ne.0) then
           write(99,*) gs(nx,iy,0)
           dsRT(iy) = gs(nx,iy,0)
+        else if (region(nx-target_offset,iy,0).ne.0) then
+          write(99,*) gs(nx-target_offset,iy,0)
+          dsRT(iy) = gs(nx-target_offset,iy,0)
         endif
       enddo
       close(99)
@@ -311,18 +317,28 @@ contains
       open(99,file='dsLP')
       dsLP = 0.0_R8
       do iy=iylstrt,iylend
-        if(region(-1,iy,0).ne.0) then
+        if (region(-1,iy,0).ne.0) then
           write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy),0)
           dsLP(iy) = gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy),0)
+        else if (region(-1+target_offset,iy,0).ne.0) then
+          write(99,*) &
+        &  gs(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)* &
+        &  qc(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)
+          dsLP(iy) = &
+        &  gs(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)* &
+        &  qc(rightix(-1+target_offset,iy),rightiy(-1+target_offset,iy),0)
         endif
       enddo
       close(99)
       open(99,file='dsRP')
       dsRP = 0.0_R8
       do iy=iyrstrt,iyrend
-        if(region(nx,iy,0).ne.0) then
+        if (region(nx,iy,0).ne.0) then
           write(99,*) gs(nx,iy,0)*qc(nx,iy,0)
           dsRP(iy) = gs(nx,iy,0)*qc(nx,iy,0)
+        else if (region(nx-target_offset,iy,0).ne.0) then
+          write(99,*) gs(nx-target_offset,iy,0)*qc(nx-target_offset,iy,0)
+          dsRP(iy) = gs(nx-target_offset,iy,0)*qc(nx-target_offset,iy,0)
         endif
       enddo
       close(99)
@@ -4946,11 +4962,25 @@ contains
       iystart=iystart+1
     enddo
     call xertst(iystart.le.ny, 'faulty parameter iystart')
+    if(iystart.eq.ny) then
+      iystart=-1
+      do while (region(iref+target_offset,iystart,0).eq.0 .and. iystart.lt.ny)
+        iystart=iystart+1
+      enddo
+      call xertst(iystart.le.ny, 'faulty parameter iystart')
+    endif
     iyend=ny
     do while (region(iref,iyend,0).eq.0 .and. iyend.gt.-1)
       iyend=iyend-1
     enddo
     call xertst(iyend.ge.-1, 'faulty parameter iyend')
+    if (iyend.eq.-1) then
+      iyend=ny
+      do while (region(iref+target_offset,iyend,0).eq.0 .and. iyend.gt.-1)
+        iyend=iyend-1
+      enddo
+      call xertst(iyend.ge.-1, 'faulty parameter iyend')
+    endif
     if(iystart.eq.ny.and.iyend.eq.-1) then
       ! special case [DPC]
       iystart=-1

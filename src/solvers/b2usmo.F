@@ -54,17 +54,18 @@
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, csb, csb1
+     *  cfc0, aad0_boost0, t0, t1, csb, csb1
 #ifdef _OPENMP
-!$OMP THREADPRIVATE(ncall, cfc0, iout)
+!$OMP THREADPRIVATE(ncall, cfc0, aad0_boost0)
+!$OMP THREADPRIVATE(iout)
 !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
 #endif
-      save ncall, cfc0
+      save ncall, cfc0, aad0_boost0
 *   ..procedures
       external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p
 *   ..initialisation
-      data ncall/0/, cfc0/1.0_R8/
+      data ncall/0/, cfc0/1.0_R8/, aad0_boost0/0.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -76,6 +77,9 @@
       if (ncall.eq.0) then
        call ipgetr ('b2usmo_cfc0', cfc0)
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
+       call ipgetr ('b2usmo_aad0_boost0', aad0_boost0)                !xpb 20.09.21
+       call xertst (0.0_R8.le.aad0_boost0,
+     &  'faulty internal parameter aad0_boost0')
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
@@ -129,6 +133,8 @@
          aa5(ix,iy,0) = aad0(ix,iy)
          if (style_b2mndt.lt.2) aa5(ix,iy,0) = aa5(ix,iy,0)+
      &    abs(resmb(ix,iy))/(rxg*csb1)
+         if (aad0_boost0.gt.0.0_R8) aa5(ix,iy,0) = aa5(ix,iy,0)+      !xpb 20.09.21
+     &    abs(resmb(ix,iy))/csb1*aad0_boost0/(csb*rob(ix,iy))         !xpb 20.09.21
         else
          aa5(ix,iy,0) = 1.0_R8
          aad0(ix,iy) = 0.0_R8
