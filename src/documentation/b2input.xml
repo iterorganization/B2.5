@@ -5698,6 +5698,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2usmo_aad0_boost0</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Local boost to the parallel momentum equation matrix diagonal (aad0/aa5(ix,iy,0)), active when densities near the b2mndr_na_min floor, used to damp out the numerical instability leading to some supra-luminal velocities.
+					Recommended range: of order 1.e-6. Should be comparable in order of magnitude to the minimal value of product csb*rob, over the valid computational cells, of the main ion species.
+					Not yet ported to the automatically-differentiated (tangent/hessian/adjoint) variants of b2mod_switches/b2usmo.
+				</description>
+			</switch>
+			<switch>
 				<name>b2news_poteq</name>
 				<default>1</default>
 				<type>integer</type>
