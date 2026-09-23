@@ -40,7 +40,7 @@
       real (kind=R8) ::
      &   floe(-1:nx,-1:ny,0:1,0:1), cone(-1:nx,-1:ny,0:1,0:1,0:2),
      *   fhe(-1:nx,-1:ny,0:1,0:1), fhe_mdf(-1:nx,-1:ny,0:1,0:1),
-     &   fhePSch(-1:nx,-1:ny,0:1,0:1), fllime(ix,iy)                     !srv 13.10.06
+     &   fhePSch(-1:nx,-1:ny,0:1,0:1), fllime(-1:nx,-1:ny)               !srv 13.10.06
 *   ..local variables
       real (kind=R8) :: upfac, hybfac !djm Jan2017
 *   ..common blocks
