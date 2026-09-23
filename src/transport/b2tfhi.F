@@ -73,7 +73,7 @@
       integer, save :: lim_flux = 0, mdf_fhi = 0                         !srv 04.02.03 13.10.06
       integer, save :: drift_style
       integer, save :: conductive_limit = 1
-      real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
+      real (kind=R8), save :: PSch=1.0_R8                                !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
@@ -143,7 +143,7 @@
       call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,
      1  na, ti, cddi, coni, fhiPSch)
 
-      fhi_mdf = 0.0e0_R8                                                 !srv 13.10.06
+      fhi_mdf = 0.0_R8                                                   !srv 13.10.06
 
 * ..compute fluxes and linearisation
       do is = 0, ns-1
@@ -188,7 +188,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              do is = 0, ns-1
 !wdk use of cvsa in coni0 ensures consistency w.r.t. flux limits and discretization
                floi0 = am(is)*mp*fna(ix,iy,0,0,is)
-               coni0 = 4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,0,is)
+               coni0 = 4.0_R8/3.0_R8*cvsa(ix,iy,0,0,is)
                t1 = dim ( coni0,
      .          abs(floi0) *
      .          max(0.0_R8,
@@ -202,9 +202,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              enddo
            endif
            scur =
-     &      1.5e0_R8/qe*(fchinert(ix,iy,0,0)+fchvispar(ix,iy,0,0)
-     &                  +fchanml(ix,iy,0,0)+fchvisper(ix,iy,0,0)
-     &                  +fchvisq(ix,iy,0,0))*xcur
+     &      1.5_R8/qe*(fchinert(ix,iy,0,0)+fchvispar(ix,iy,0,0)
+     &                +fchanml(ix,iy,0,0)+fchvisper(ix,iy,0,0)
+     &                +fchvisq(ix,iy,0,0))*xcur
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,0,0)+
      1      2.5_R8*fni_52(ix,iy,0,0)+
      &      chvi(ix,iy,0,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+
@@ -399,19 +399,19 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                           (1.0_R8-upfac)*ti(ix,iy))
              fhi_cond(ix,iy,0,0) = -coni0*dti0
              fhi_pschused(ix,iy,0,0) = 0.0_R8
-             fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+             fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+             fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+             fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+             fhi_visq(ix,iy,0,0) = 1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+             fhi_anml(ix,iy,0,0) = 1.5_R8/qe*fchanml(ix,iy,0,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_vzh(ix,iy,0,0) = 0.0_R8
@@ -440,19 +440,19 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              fhi_dia(ix,iy,0,0) = 0.0_R8
              fhi_cond(ix,iy,0,0) = -coni0_mdf*dti0_mdf
              fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
-             fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+             fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+             fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+             fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &                    xcur*(upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+             fhi_visq(ix,iy,0,0) = 1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+             fhi_anml(ix,iy,0,0) = 1.5_R8/qe*fchanml(ix,iy,0,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_vzh(ix,iy,0,0) = 0.0_R8
@@ -500,7 +500,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
         if(bottomiy(ix,iy).eq.-2) then
          floi(ix,iy,1,1) = 0.0_R8
          coni(ix,iy,1,1,0) = 0.0_R8                                      !srv 02.01.07
-         fhi_mdf(ix,iy,1,1) = 0.0e0_R8                                   !srv 13.10.06
+         fhi_mdf(ix,iy,1,1) = 0.0_R8                                     !srv 13.10.06
          fhi(ix,iy,1,1) = 0.0_R8
          fhit(ix,iy,1,1) = 0.0_R8
          w2(ix,iy,:) = 0.0_R8
@@ -546,9 +546,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              enddo
            endif
            scur =
-     &      1.5e0_R8/qe*(fchinert(ix,iy,1,1)+fchvispar(ix,iy,1,1)
-     &                  +fchanml(ix,iy,1,1)+vis_per*fchvisper(ix,iy,1,1)  !srv 02.10.17
-     &                  +vis_q*fchvisq(ix,iy,1,1))*ycur                   !srv 02.10.17
+     &      1.5_R8/qe*(fchinert(ix,iy,1,1)+fchvispar(ix,iy,1,1)
+     &                +fchanml(ix,iy,1,1)+vis_per*fchvisper(ix,iy,1,1)    !srv 02.10.17
+     &                +vis_q*fchvisq(ix,iy,1,1))*ycur                     !srv 02.10.17
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1,1)+
      1      2.5_R8*fni_52(ix,iy,1,1)+
      2      chvi(ix,iy,1,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
@@ -615,19 +615,19 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_cond(ix,iy,1,1) = -coni(ix,iy,1,1,0)*
      &        (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-             fhi_inert(ix,iy,1,1) = 1.5e0_R8/qe*fchinert(ix,iy,1,1)*
+             fhi_inert(ix,iy,1,1) = 1.5_R8/qe*fchinert(ix,iy,1,1)*
      &        ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_vispar(ix,iy,1,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1,1)*
+             fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &        ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visper(ix,iy,1,1) =
-     &         1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*            !srv 02.10.17
+     &         1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*              !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visq(ix,iy,1,1) =
-     &         1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*ycur*                !srv 02.10.17
+     &         1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*ycur*                  !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*ycur*
+             fhi_anml(ix,iy,1,1) = 1.5_R8/qe*fchanml(ix,iy,1,1)*ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_vzh(ix,iy,1,1) = 0.0_R8
            endif

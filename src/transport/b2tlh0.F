@@ -311,12 +311,12 @@
          if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then
            call my_out(70, nx, ny, hcimx(-1,-1,0,is),'hcimx'//charns)
            call my_out(70, nx, ny, hcimx(-1,-1,1,is),'hcimy'//charns)
-           w1 = 1.0e0_R8
-           where (hcimx(:,:,0,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
+           w1 = 1.0_R8
+           where (hcimx(:,:,0,is) /= 0.0_R8) w1 = hcib(:,:,is)
      &                                          /hcimx(:,:,0,is)
            call my_out(70, nx, ny, w1,'chcimx'//charns)
-           w1 = 1.0e0_R8
-           where (hcimx(:,:,1,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
+           w1 = 1.0_R8
+           where (hcimx(:,:,1,is) /= 0.0_R8) w1 = hcib(:,:,is)
      &                                          /hcimx(:,:,1,is)
            call my_out(70, nx, ny, w1,'chcimy'//charns)
          else

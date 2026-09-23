@@ -1136,13 +1136,13 @@ c      with diamagnetic drift part                                       !srv 13
      & vol, hx, hy, hy1, qc, qs,                                         !srv 29.01.20
      1 te, po, ne, na, vedia, fne, chce, chve, calf,                     !srv 11.07.99 18.01.02 01.07.09
      & chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
-     & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
+     & floe, cone, fhe, fhe_mdf, fhePSch, fllime, .true.)                !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, hy1, qc, qs, bb,  !som 13.07.21
      1  ti, ni, na, fni, fna_he, ua,
      &  chci, cddi, chvi, chvimx, cvsa, vadia,                           !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,
-     &  fhi, fhi_mdf, fhiPSch, floi, coni,                               !srv 13.10.06
+     &  fhi, fhi_mdf, fhiPSch, floi, coni, fllimi,                       !srv 13.10.06
      &  .true.)                                                          !djm Jan2017
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02

@@ -83,7 +83,7 @@
      &   tex, tex0,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
-      real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
+      real (kind=R8), save :: PSch=1.0_R8                               !srv 17.01.07
       real (kind=R8) ::
      &    ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1),
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                          !srv 13.01.17
@@ -165,7 +165,7 @@
       call b2tepsch(nx, ny, ns, hx, hy, qs, facdrift, cdde, te,          !srv 19.02.21 !som 03.11.21
      &              ne, cone, fhePSch)
 
-      fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
+      fhe_mdf = 0.0_R8                                                   !srv 13.10.06
 
       call b2xehx (nx, ny, te, po, ne, ehx_)                             !srv 13.01.17 {
       if(style.eq.2) then
@@ -176,7 +176,7 @@
           enddo
         enddo
       else
-        c071 = 0.71e0_R8
+        c071 = 0.71_R8
       endif                                                              !srv 13.01.17
 
 * ..compute fluxes and linearisation
@@ -187,7 +187,7 @@
           if(leftix(ix,iy).eq.-2) then
             floe(ix,iy,0,0) = 0.0_R8
             cone(ix,iy,0,0,0) = 0.0_R8                                   !srv 02.01.07
-            fhe_mdf(ix,iy,0,0) = 0.0e0_R8                                !srv 13.10.06
+            fhe_mdf(ix,iy,0,0) = 0.0_R8                                  !srv 13.10.06
             fhe(ix,iy,0,0) = 0.0_R8
             fhet(ix,iy,0,0) = 0.0_R8
             fllime(ix,iy) = 1.0_R8
@@ -433,7 +433,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
           if (bottomiy(ix,iy).eq.-2) then
             floe(ix,iy,1,1) = 0.0_R8
             cone(ix,iy,1,1,0) = 0.0_R8                                   !srv 02.01.07
-            fhe_mdf(ix,iy,1,1) = 0.0e0_R8                                !srv 13.10.06
+            fhe_mdf(ix,iy,1,1) = 0.0_R8                                  !srv 13.10.06
             fhe(ix,iy,1,1) = 0.0_R8
             fhet(ix,iy,1,1) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
@@ -459,7 +459,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1,1)+
      1         2.5_R8*fne_52(ix,iy,1,1)-
-     &         5.0e0_R8/2.0e0_R8*fchstoch(ix,iy,1,1)/qe+                 !lk 21.02.08 !srv 17.12.13
+     &         5.0_R8/2.0_R8*fchstoch(ix,iy,1,1)/qe+                     !lk 21.02.08 !srv 17.12.13
      &         chve(ix,iy,1,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=

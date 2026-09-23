@@ -5,7 +5,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      1  vol, hx, hy, hy1, qc, qs, bb,                                   !som 13.07.21
      1  ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,    !srv 17.05.99 27.12.01
      &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
-     &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
+     &  fhi, fhi_mdf, fhiPSch, floi, coni, fllimi,                      !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
       use b2mod_math
@@ -47,7 +47,8 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8) ::
      *   fhi(-1:nx,-1:ny,0:1,0:1),
      &   fhi_mdf(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),    !srv 13.10.06
-     1   floi(-1:nx,-1:ny,0:1,0:1), coni(-1:nx,-1:ny,0:1,0:1,0:2)
+     1   floi(-1:nx,-1:ny,0:1,0:1), coni(-1:nx,-1:ny,0:1,0:1,0:2),
+     2   fllimi(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -244,6 +245,7 @@ cpax
          coni(ix,iy,0,0:1,0)   = 0.0_R8                                 !srv 02.01.07
          fhi(ix,iy,0:1,0)      = 0.0_R8
          fhi_mdf(ix,iy,0:1,0)  = 0.0_R8                                 !srv 13.10.06
+         fllimi(ix,iy)         = 1.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0,0:1) = 0.0_R8                                 !djm Jan2017
            fhi_52(ix,iy,0,0:1) = 0.0_R8
@@ -312,6 +314,7 @@ cwdk 10.03.16 unified treatment of chvimx in b2tlhi.F. Test for b2tqca_model no 
 
           dti0 = dti/(1.0_R8+t0)
           t1 = t0/(1.0_R8+t0)
+          fllimi(ix,iy) = 1.0_R8+t0
 
 csw 13mar2013 modified hybrid SOLPS4 style (overwrite cone0)
           if(b2tfhi_hybr2 .ne. 0) then
@@ -461,6 +464,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
            t0_mdf =coni0_mdf*abs(dti)/(flomx*
      &                  max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
            t1_mdf = t0_mdf/(1.0_R8+t0_mdf)                              !srv 17.06.09 {
+           fllimi(ix,iy) = 1.0_R8+t0_mdf
 
 csw 27nov2012 added check upwind (SOLPS4 style)
            if(b2_upwind .ne. 0) then
@@ -1124,6 +1128,7 @@ csw 18feb2014 remove fluxes between guard cells
             fhiPSch(ix,iy,0,0:1)=0.0_R8
             floi(ix,iy,0,0:1)=0.0_R8
             coni(ix,iy,0,0:1,:)=0.0_R8
+            fllimi(ix,iy)=1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
               fhi_32(ix,iy,0,0:1) = 0.0_R8 !djm Jan2017
               fhi_52(ix,iy,0,0:1) = 0.0_R8
@@ -1188,9 +1193,10 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
        DO IX=NXISO1(IB), NXISO2(IB)
         DO IY=NYISO1(IB), NYISO2(IB)
-         fhi(ix,iy,0,0:1)   =0.0_R8
-         floi(ix,iy,0,0:1)  =0.0_R8
-         coni(ix,iy,0,0:1,:)=0.0_R8                                     !srv 02.01.07
+         fhi(ix,iy,0,0:1)    = 0.0_R8
+         floi(ix,iy,0,0:1)   = 0.0_R8
+         coni(ix,iy,0,0:1,:) = 0.0_R8                                   !srv 02.01.07
+         fllimi(ix,iy)       = 1.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0,0:1) = 0.0_R8 !djm Jan2017
            fhi_52(ix,iy,0,0:1) = 0.0_R8
@@ -1260,6 +1266,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fni(-1,-1,1,1),'b2tfhi__fniy')
        call my_out(70,nx,ny,ni(-1,-1,0),'b2tfhi__ni0')
        call my_out(70,nx,ny,ni(-1,-1,1),'b2tfhi__ni1')
+       call my_out(70,nx,ny,fllimi,'b2tfhi__fllimi')
       endif                                                             !srv 18.06.08 }
 * ..return
       ncall = ncall+1
