@@ -256,8 +256,7 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
           if (zamin(is) == zamax(is)) then
             zab(nflai)=zamin(is)
           else
-            call xerrab ('eirene_mc: do not use bundled ' //
-     .                   'species for Eirene')
+            zab(nflai)=0.5_R8*(zamin(is)+zamax(is))
           end if
 * cell centred
           do ic = 1, nCv

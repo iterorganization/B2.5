@@ -195,9 +195,6 @@
       call sfill (nCv, 0.0_R8, sig(1,1), 1)
       call sfill (nCv, 0.0_R8, alf(1,1), 1)
 
-      sig(:,:) = sig(:,:)*switch%prl_cur                                 !srv 15.06.18
-      alf(:,:) = alf(:,:)*switch%prl_cur                                 !srv 15.06.18
-
       if(switch%b2tqce_iout.ne.0) then                                   !srv 16.06.08 {
         call my_out_us(70,nCv,0,tau,'taue')
         call my_out_us(70,nCv,0,hce(1,0),'hce_th')

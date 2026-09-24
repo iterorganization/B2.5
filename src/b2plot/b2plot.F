@@ -1492,16 +1492,37 @@ c
               if (mpg%cvFt(iCn).eq.iFt) cycle
               if (mpg%cvFt(iCn).eq.iFm) cycle
               if (mpg%cvFt(iCn).eq.iFp) cycle
-              if (iFm.eq.0) iFm = mpg%cvFt(iCn)
-              if (iFm.ne.0) iFp = mpg%cvFt(iCn)
+              if (iFm.eq.0 .and. iFp.eq.0) then
+                iFm = mpg%cvFt(iCn)
+              else if (iFm.ne.0 .and. iFp.eq.0) then
+                iFp = mpg%cvFt(iCn)
+              end if
             end do
           end do
-          if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1)))) then
-            shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFm))/
-     &       (rave(iFp)-rave(iFm))
-          else
-            shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
-     &       (rave(iFt)-rave(iFm))
+          if (iFm.ne.0 .and. iFp.ne.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))) .and.
+     &          mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1)))) then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFm))/
+     &         (rave(iFp)-rave(iFm))
+            else if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1))))
+     >       then
+              shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
+     &         (rave(iFt)-rave(iFm))
+            else if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))))
+     >       then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFt))/
+     &         (rave(iFp)-rave(iFt))
+            end if
+          else if (iFm.eq.0 .and. iFp.ne.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1)))) then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFt))/
+     &         (rave(iFp)-rave(iFt))
+            end if
+          else if (iFm.ne.0 .and. iFp.eq.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1)))) then
+              shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
+     &         (rave(iFt)-rave(iFm))
+            end if
           endif
         endif
       enddo
@@ -4376,16 +4397,17 @@ c     assumes that bb is OK for 1d cases
           call copy(mach(1,1),1.0_R8,nz,textbl)
 #ifdef WG_TODO
         case ('niso')
-          description='Isolating region'
+          description='Isolated region'
           nz=1
           mach(:,0)=0.0_R8
           do iso=1,nniso
             do iy=nyiso1(iso),nyiso2(iso)
               do ix=nxiso1(iso),nxiso2(iso)
                 if(mach(ix,iy,0) .gt. 0.0_R8) then
-                  write(*,*) 'Overlapping isolating region in cell ',
-     2                          ix,iy,' for isolating regions ',
-     3                          nint(mach(ix,iy,0)),' and ',iso
+                  write(*,'(a,2i4,a,i2,a,i2)')
+     1             'Overlapping isolated region in cell ',
+     2              ix,iy,' for isolated regions ',
+     3              nint(mach(ix,iy,0)),' and ',iso
                 else
                   mach(ix,iy,0)=iso
                 endif
@@ -4402,9 +4424,9 @@ c     assumes that bb is OK for 1d cases
             do i = mpg%bcCvP(ibc,1),
      &             mpg%bcCvP(ibc,1) + mpg%bcCvP(ibc,2) - 1
               if (mach(mpg%bcCv(i,1),0).ne.0) then
-                write(*,*)
+                write(*,'(a,i6,a,i2,a,i2)')
      1           'Overlapping boundary conditions in cell ',
-     2            mpg%bcCv(i,1),' for boundary condition ',
+     2            mpg%bcCv(i,1),' for boundary conditions ',
      4            nint(mach(mpg%bcCv(i,1),0)),' and ',ibc
               else
                 mach(mpg%bcCv(i,1),0) = real(ibc,R8)
@@ -4423,9 +4445,9 @@ c     assumes that bb is OK for 1d cases
               do i = mpg%rcCvP(ibc,1),
      &               mpg%rcCvP(ibc,1) + mpg%rcCvP(ibc,2) - 1
                 if (mach(mpg%rcCv(i,1),0).ne.0) then
-                  write(*,*)
+                  write(*,'(a,i6,a,i2,a,i2)')
      1             'Overlapping recycling conditions in cell ',
-     2              mpg%rcCv(i,1),' for recycling condition ',
+     2              mpg%rcCv(i,1),' for recycling conditions ',
      4              nint(mach(mpg%rcCv(i,1),0)),' and ',ibc
                 else
                   mach(mpg%rcCv(i,1),0) = real(ibc,R8)

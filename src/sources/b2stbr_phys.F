@@ -791,6 +791,7 @@ c and this strata should be ignored here
 #ifdef WG_TODO
          if(iwall.eq.0) then
             write(*,*) 'xymap returned zero for ix,iy = ',ix,iy
+            write(0,*) 'xymap returned zero for ix,iy = ',ix,iy
             call xerrab ('Invalid iwall setting!')
          endif
          if (plate_model.eq.0) then

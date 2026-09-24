@@ -1464,7 +1464,7 @@ contains
             end do
           end do
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
-          select case (is_codes(eb2spcr(is)))
+          select case (is_codes(eb2spcr(i)))
           case ('H')
             call write_sourced_constant_2( summary%composition%hydrogen, frac )
           case ('D')
@@ -4257,7 +4257,7 @@ contains
                  &  sources_ggd(i)%neutral( j )%element(1) )
                   sources_ggd(i)%neutral( j )%name = species_list( js )
                   allocate( sources_ggd(i)%neutral( j )%state(1) )
-                  allocate( sources_ggd(i)%neutral( j )%state(1) )
+                  allocate( sources_ggd(i)%neutral( j )%state(1)%name(1) )
                   sources_ggd(i)%neutral( j )%state(1)%name = spclabel
                   call fill_atom_neutral_type( js, &
                     &  sources_ggd(i)%neutral( j )%state(1)%neutral_type )
@@ -5897,10 +5897,11 @@ contains
                 &         electrons%energy%flux,                        &
                 &   value = tmpFace )
 #   endif
+            tmpFace(:) = state%co%fllim_ke(:) * state%co%f_luc_ke(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_limiter,                &
-                &   value = state%dv%fllime )
+                &   value = tmpFace  )
             tmpCv(:) = ( state%sr%she(:,0) +                            &
                 &        state%sr%she(:,1) * state%pl%te(:) +           &
                 &        state%sr%she(:,2) * state%dv%ne(:) +           &
@@ -6029,10 +6030,11 @@ contains
             call write_face_scalar( transport_grid,                     &
                 &   val = transport_ggd(1)%electrons%energy%flux_radial, &
                 &   value = flxFace(:,1) )
+            tmpFace(:) = state%co%fllim_ke(:) * state%co%f_luc_ke(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = transport_ggd(1)%                             &
                 &         electrons%energy%flux_limiter,                &
-                &   value = state%dv%fllime )
+                &   value = tmpFace )
             tmpCv(:) = ( state%sr%she(:,0) +                            &
                 &        state%sr%she(:,1) * state%pl%te(:) +           &
                 &        state%sr%she(:,2) * state%dv%ne(:) +           &
@@ -6184,10 +6186,11 @@ contains
                 &         total_ion_energy%flux,                        &
                 &   value = tmpFace )
 #   endif
+            tmpFace(:) = state%co%fllim_ki(:) * state%co%f_luc_ki(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_limiter,                &
-                &   value = state%dv%fllimi )
+                &   value = tmpFace )
             !! Ion energy sources
             tmpCv(:) = ( state%sr%shi(:,0) +                            &
                 &        state%sr%shi(:,1) * state%pl%ti(:) +           &
@@ -6305,10 +6308,11 @@ contains
             call write_face_scalar( transport_grid,                   &
                 &   val = transport_ggd(1)%total_ion_energy%flux_radial, &
                 &   value = flxFace(:,1) )
+            tmpFace(:) = state%co%fllim_ki(:) * state%co%f_luc_ki(:)
             call write_face_scalar( transport_grid,                   &
                 &   val = transport_ggd(1)%total_ion_energy%          &
                 &         flux_limiter,                               &
-                &   value = state%dv%fllimi )
+                &   value = tmpFace )
             !! Ion energy sources
             tmpCv(:) = ( state%sr%shi(:,0) +                          &
                 &        state%sr%shi(:,1) * state%pl%ti(:) +         &

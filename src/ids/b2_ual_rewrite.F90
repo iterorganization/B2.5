@@ -76,7 +76,7 @@ program b2_ual_rewrite
      & , only : ns, &
      &          b2mn_init
     use b2mod_driver &
-     & , only : idx, ids_path, dtim, &
+     & , only : idx, ids_path, ids_backend, backend_flag, dtim, &
      &          shot, run, username, database, version, &
      &          old_imas_version, imas_version, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
@@ -149,7 +149,7 @@ program b2_ual_rewrite
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
      & , only : imas_open, al_build_uri_from_legacy_parameters, &
-     &          OPEN_PULSE, FORCE_CREATE_PULSE, STRMAXLEN, MDSPLUS_BACKEND
+     &          OPEN_PULSE, FORCE_CREATE_PULSE, STRMAXLEN
 #else
     use ids_routines &  ! IGNORE
      & , only : imas_open_env
@@ -438,7 +438,7 @@ program b2_ual_rewrite
 #if AL_MAJOR_VERSION > 4
     write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
       &  trim(ids_path)
-    uri = 'imas:mdsplus?path='//trim(ids_path)
+    uri = 'imas:'//trim(ids_backend)//'?path='//trim(ids_path)
     call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
     write(0,'(2a,2i8)') &
@@ -500,17 +500,17 @@ program b2_ual_rewrite
           tmp_run = run + 1000
 #if AL_MAJOR_VERSION > 4
           call al_build_uri_from_legacy_parameters              &
-     &     ( MDSPLUS_BACKEND, shot, run, trim(username),        &
+     &     ( backend_flag, shot, run, trim(username),           &
      &       trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
      &       uri_source, status )
           if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) then
             call al_build_uri_from_legacy_parameters            &
-     &       ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+     &       ( backend_flag, shot, tmp_run, trim(username),     &
      &         'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
      &         uri_dest, status )
           else
             call al_build_uri_from_legacy_parameters            &
-     &       ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+     &       ( backend_flag, shot, tmp_run, trim(username),     &
      &         trim(database), int2str(IMAS_MAJOR_VERSION), '', &
      &         uri_dest, status )
           end if
@@ -553,17 +553,17 @@ program b2_ual_rewrite
         end if
 #if AL_MAJOR_VERSION > 4
         call al_build_uri_from_legacy_parameters              &
-     &   ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),    &
+     &   ( backend_flag, shot, tmp_run, trim(username),       &
      &     trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
      &     uri_source, status )
         if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) then
           call al_build_uri_from_legacy_parameters            &
-     &     ( MDSPLUS_BACKEND, shot, new_run, trim(username),  &
+     &     ( backend_flag, shot, new_run, trim(username),     &
      &       'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
      &       uri_dest, status )
         else
           call al_build_uri_from_legacy_parameters            &
-     &     ( MDSPLUS_BACKEND, shot, new_run, trim(username),  &
+     &     ( backend_flag, shot, new_run, trim(username),     &
      &       trim(database), int2str(IMAS_MAJOR_VERSION), '', &
      &       uri_dest, status )
         end if
@@ -597,18 +597,22 @@ program b2_ual_rewrite
           write(new_path(l+7:l+10),'(a4)') 'ITER'
         end if
 #if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(new_path)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
         call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-        call xertst ( status.eq.0, trim(message) )
+        if ( allocated(message) ) then
+          call xertst ( status.eq.0, trim(message) )
+        else
+          call xertst( status.eq.0, 'Error recreating IDS with new DD version !' )
+        end if
 #else
         call imas_open_env(treename, shot, new_run, idx, &
           &                username, database, version, status )
-        call xertst( status.eq.0, 'Error recreating IDS with new DD version !')
+        call xertst( status.eq.0, 'Error recreating IDS with new DD version !' )
 #endif
       else if (.not.same_run_number) then
         call close_ual(idx)
 #if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(new_path)
+        uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
         call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
         call imas_open_env(treename, shot, new_run, idx, &
@@ -623,13 +627,17 @@ program b2_ual_rewrite
             write(new_path(l+7:l+10),'(a4)') 'ITER'
           end if
 #if AL_MAJOR_VERSION > 4
-          uri = 'imas:mdsplus?path='//trim(new_path)
+          uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-          call xertst( status.eq.0, trim(message) )
+          if ( allocated(message) ) then
+            call xertst( status.eq.0, trim(message) )
+          else
+            call xertst( status.eq.0, 'Error creating new IDS file !' )
+          end if
 #else
           call imas_create_env(treename, shot, new_run, 0, 0, idx, &
             &                  username, database, version, status )
-          call xertst( status.eq.0, 'Error creating new IDS file !')
+          call xertst( status.eq.0, 'Error creating new IDS file !' )
 #endif
         end if
       end if
@@ -642,13 +650,17 @@ program b2_ual_rewrite
         write(new_path(l+7:l+10),'(a4)') 'ITER'
       end if
 #if AL_MAJOR_VERSION > 4
-      uri = 'imas:mdsplus?path='//trim(new_path)
+      uri = 'imas:'//trim(ids_backend)//'?path='//trim(new_path)
       call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
-      call xertst( status.eq.0, trim(message) )
+      if ( allocated(message) ) then
+        call xertst( status.eq.0, trim(message) )
+      else
+        call xertst( status.eq.0, 'Error creating new IDS !' )
+      end if
 #else
       call imas_create_env(treename, shot, run, 0, 0, idx, &
         &                  username, database, version, status )
-      call xertst( status.eq.0, 'Error creating new IDS !')
+      call xertst( status.eq.0, 'Error creating new IDS !' )
 #endif
     end if
     !! Create/Write the set data to IDSs

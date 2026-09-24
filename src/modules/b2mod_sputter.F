@@ -1431,10 +1431,7 @@ c   K(T) = 1/(KA * T + KB)
       implicit none
       integer ibnd
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      logical, save  :: coating
-#ifdef _OPENMP
-!$OMP THREADPRIVATE(coating)
-#endif
+      logical :: coating
       real (kind=R8) :: layer_Kappa
       external layer_Kappa
 

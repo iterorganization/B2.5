@@ -217,7 +217,11 @@ c first deal with the time vector
           deallocate(data1)
         else
 c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
-          if(varname(3:4).eq.'3d') then
+           if (ndims.gt.2) then
+              write(*,*) 'Case for ndims > 2 not coded'
+              cycle
+           endif
+           if(varname(3:4).eq.'3d') then
             index=0
             do i=1,6
               if(varname(5:6).eq.cdf_suffix(i)) then

@@ -979,7 +979,7 @@ void adStack_endRepeat() {
 
 /** Used only by 2nd thread. Not locked */
 void storeInFile(BlockContents* blockContents) {
-  sprintf(tapStackFileName, "tapStack%05i\0", blockContents->rank) ;
+  sprintf(tapStackFileName, "tapStack%05i", blockContents->rank) ;
   FILE *tapStackFile = fopen(tapStackFileName, "wb") ;
   fwrite(blockContents->contents, 1, BLOCK_SIZE, tapStackFile) ;
   fclose(tapStackFile) ;
@@ -987,7 +987,7 @@ void storeInFile(BlockContents* blockContents) {
 
 /** Used only by 2nd thread. Not locked */
 void restoreFromFile(BlockContents* blockContents /*, RepetitionLevel* repetitionForbidsRemove*/) {
-  sprintf(tapStackFileName, "tapStack%05i\0", blockContents->rank) ;
+  sprintf(tapStackFileName, "tapStack%05i", blockContents->rank) ;
   FILE *tapStackFile = fopen(tapStackFileName, "rb") ;
   fread(blockContents->contents, 1, BLOCK_SIZE, tapStackFile) ;
   fclose(tapStackFile) ;
@@ -996,7 +996,7 @@ void restoreFromFile(BlockContents* blockContents /*, RepetitionLevel* repetitio
 /** Used only by 1st thread. Not locked */
 void removeStorageFile(int blockRank) {
   char tapStackFileNameBis[14] ;
-  sprintf(tapStackFileNameBis, "tapStack%05i\0", blockRank) ;
+  sprintf(tapStackFileNameBis, "tapStack%05i", blockRank) ;
 #ifdef _ADSTACKTRACE
   printf("  Remove storage file %s\n", tapStackFileNameBis) ;
 #endif
@@ -2034,7 +2034,7 @@ void dumpRepetitionLevels() {
 void showErrorContext() {
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
-  printf("t%09i ERROR AT:", ts.tv_nsec) ; showLocation(curStack, tappos) ;
+  printf("t%09li ERROR AT:", ts.tv_nsec) ; showLocation(curStack, tappos) ;
 #ifdef _ADSTACKTRACE
   printf(" STACK:") ; dumpStack(curStack) ; printf("\n") ;
   printf("FILE ACTION QUEUE:\n") ;
@@ -2045,7 +2045,7 @@ void showErrorContext() {
 }
 
 void adStack_showPeakSize() {
-  printf("Peak stack size (%1li blocks): %1llu bytes\n",
+  printf("Peak stack size (%1li blocks): %1lu bytes\n",
          maxBlocks, maxBlocks*((long int)BLOCK_SIZE)) ;
 }
 

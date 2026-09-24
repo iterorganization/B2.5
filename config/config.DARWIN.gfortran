@@ -8,6 +8,8 @@ NAGDIR ?= ${LAPACK_DIR}
 LD_NAG     = -L${NAGDIR}/lib -llapack -lblas
 LD_SSP ?= -L${SUITESPARSE_HOME}/lib -lumfpack -lamd -lcolamd -lsuitesparseconfig
 
+LD_AL = $(shell pkg-config ${IMAS_PKG_LIST} --libs | sed -E 's/-Wl,--defsym,[^[:space:]]+[[:space:]]*//g')
+
 CPP = /usr/bin/cpp -traditional
 
 GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')

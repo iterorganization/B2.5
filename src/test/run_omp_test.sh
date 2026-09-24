@@ -103,12 +103,14 @@ function run_test {
   export OMP_NUM_THREADS=$4
   export KMP_AFFINITY=verbose,norespect,compact
   if [ -z "$KMP_STACKSIZE" ]; then
-    export KMP_STACKSIZE=128MB
+    export KMP_STACKSIZE=128M
   fi
-  if [ -z "$OMP_STACKSIZE" ]; then
-    if [ "$COMPILER" != "ifort64" ]; then
-      export OMP_STACKSIZE=128MB
+  if [ "$COMPILER" != "ifort64" ]; then
+    if [ -z "$OMP_STACKSIZE" ]; then
+      export OMP_STACKSIZE=128M
     fi
+  else
+    unset OMP_STACKSIZE
   fi
   if [ -n "$SOLPS_MPI" ]; then
     echo "Found MPI mode"
@@ -118,10 +120,18 @@ function run_test {
 
   if [ $4 -eq 1 ]; then
     echo Running B2.5 in serial mode
-    b2run -o $MPI_OPTS -s b2mn 2>&1 | tee run.log
+    if [ "$MPI_OPTS" != "" ]; then
+      b2run -o $MPI_OPTS -s b2mn 2>&1 | tee run.log
+    else
+      b2run -s b2mn 2>&1 | tee run.log
+    fi
   else
     echo Running B2.5 using $4 threads
-    b2run -o $MPI_OPTS -s -t $4 b2mn 2>&1 | tee run.log
+    if [ "$MPI_OPTS" != "" ]; then
+      b2run -o $MPI_OPTS -s -t $4 b2mn 2>&1 | tee run.log
+    else
+      b2run -s -t $4 b2mn 2>&1 | tee run.log
+    fi
   fi
   cd ..
 }

@@ -121,7 +121,7 @@
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain lblmn
-      call b2xxid ('b2mn', lblmn(1:60))
+      call b2xxid ('b2us', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
       label = lblmn
 *   ..obtain version numbers                                           !xpb
@@ -279,6 +279,14 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
+!ap At this point the whole b2mn.dat file has been read in goto 1
+!   continue statement. If needed to read internal parameters, file must
+!   be rewound and then read again from the beginning.
+*   ..rewind of ninp(0)
+      rewind(ninp(0))
+*   ..dummy read to obtain lblmn
+      call b2xxid ('b2us', lblmn(1:60))
+      call b2rflb (ninp(0), lblmn(61:120))
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)

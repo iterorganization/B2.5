@@ -148,7 +148,8 @@
       integer is, is1, n2
       integer drift_style
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na_new, na_min, sum
+     *   wrk0(-1:nx,-1:max(ny,ny1)),
+     *   wrk1(-1:nx1,-1:ny1), na_new, na_min, sum
       save na_new, na_min, drift_style
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/, drift_style/1/
 *   ..procedures

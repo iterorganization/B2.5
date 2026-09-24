@@ -341,13 +341,13 @@ csw 20sep2013 added
           is = latmscl(iatm)
           if (is.eq.0) cycle
           nasum(is,ir) = nasum(is,ir) + dab2(iCv,iatm,1)*geo%cvVol(iCv)
-          if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is)) +
+          if(hlp_l) nsla_tmp(is) = nsla_tmp(is) +
      .                                  dab2(iCv,iatm,1)*geo%cvVol(iCv)
           do imol = 1, nnmoli
             if (mlcmp(iatm,imol).gt.0) then
               nasum(is,ir) = nasum(is,ir) +
      .         mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
-              if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is))
+              if(hlp_l) nsla_tmp(is) = nsla_tmp(is)
      .         + mlcmp(iatm,imol)*dmb2(iCv,imol,1)*geo%cvVol(iCv)
             endif
           end do
