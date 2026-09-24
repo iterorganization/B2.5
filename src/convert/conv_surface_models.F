@@ -27,6 +27,7 @@
      .                        ilbls_eir(:), ilble_eir(:)
       logical :: found, lhelp(60), lwgf
       integer :: artificial_slab=0, spatial_hybrid = 0
+      integer :: b2us_nasmod_mode = 0 ! 0 (default): convert block 15, 1: block 15 correctly defined through uinp
       integer :: find_loc
 #ifdef LEGACYCOMP
       integer newunit
@@ -34,8 +35,10 @@
 #endif
       intrinsic pack
 
+      ! Read switches
       call ipgeti ('artificial_slab', artificial_slab)
       call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)
+      call ipgeti ('b2us_nasmod_mode', b2us_nasmod_mode)
 
       nd = mpg%nRc + mpg%nBc
       if (artificial_slab > 0) nd = nd + 4*nncut
@@ -311,28 +314,42 @@
         write (iouteir,'(a)') trim(line)
       end do
 
-      if (nasmod /= 0) then
-        if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
-          !! limiter or linear case: only NW and NE corners
-          j = find_loc(node_vert,nnode,mpg%icornVx(2))
-          read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-          j = find_loc(node_vert,nnode,mpg%icornVx(4))
-          read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-        elseif (count(mpg%icornVx > 0) == nasmod) then
-          !! SN of DN case: 4 or 8 corners
-          do i = 1, nasmod
-            j = find_loc(node_vert,nnode,mpg%icornVx(i))
+      select case (b2us_nasmod_mode) 
+
+      case (0) ! need to modify block 15
+        if (nasmod /= 0) then
+          if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
+            !! limiter or linear case: only NW and NE corners
+            j = find_loc(node_vert,nnode,mpg%icornVx(2))
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
             write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-          end do
+            j = find_loc(node_vert,nnode,mpg%icornVx(4))
+            read (ineir,'(2i6)') ihelp(1), ihelp(2)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          elseif (count(mpg%icornVx > 0) == nasmod) then
+            !! SN of DN case: 4 or 8 corners
+            do i = 1, nasmod
+              j = find_loc(node_vert,nnode,mpg%icornVx(i))
+              read (ineir,'(2i6)') ihelp(1), ihelp(2)
+              write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+            end do
+          else
+          call xerrab('conv_surface_models -- nasmod')
+          endif
         else
-         call xerrab('conv_surface_models -- nasmod')
+          write (*,*) "Warning: found NASMOD = 0 in input block 15"
         endif
-      else
-         write (*,*) "Warning: found NASMOD = 0 in input block 15"
-      endif
+      case (1) 
+        ! No need to modify block 15: just read and dump
+        do i = 1, nasmod 
+          read (ineir,'(a500)') line
+          write (iouteir,'(a)') trim(line)
+        end do 
+      case default 
+        print *, 'value of b2us_nasmod_mode = ', b2us_nasmod_mode 
+        call xerrab('conv_surface_models: b2us_nasmod_mode value ' // 
+     .    'not recognized')
+      end select
 
 !  copy input file until end of file
       do
