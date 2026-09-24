@@ -4908,7 +4908,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy. Style.eq.3 = PARDISO (Intel MKL)
+					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy, Style.eq.3 = PARDISO (Intel MKL), Style.eq.4 = UMFPACK from SuiteSparse.
 					NOTE: style 0 and 1 are deprecated. PARDISO is faster than MA28 but requires MKL on your system.
 				</description>
 			</switch>
