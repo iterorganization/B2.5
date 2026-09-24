@@ -358,6 +358,8 @@
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 
+      logical :: eirene_wall_read = .false.
+
       contains
 
       subroutine b2mndr_0 (ninp, nout, ns, ns0)
@@ -2148,12 +2150,13 @@ cxpb for neutral fluxes used in b2stbc_phys
       CALL EIRENE_SETCON
       if (switch%use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
-     &    delta_ids_time.gt.0.0_R8) then
+     &    delta_ids_time.gt.0.0_R8.or.switch%use_eirene.ne.0) then
         call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
           call ngread(mpg,geo,ns,switch,ismain,iflag)
+          eirene_wall_read = .true.
         endif
       endif
 #else
@@ -2291,6 +2294,11 @@ c new CDF movie option (1st frame at t=0)
 #endif
 #endif
       character*256 filename, fort31name
+#ifdef B25_EIRENE
+      character*256 filename_eir
+      logical ex_eir
+      integer iflag_eir
+#endif
 #if ( defined(B25_EIRENE) || defined(IMAS) )
       character*512 systemarg
 #endif
@@ -2639,8 +2647,21 @@ c new CDF movie option
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0.and.ntim.ne.0) then
-          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
+          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) then
+#ifdef B25_EIRENE
+            if (switch%use_eirene.ne.0 .and.
+     &          .not.eirene_wall_read) then
+              filename_eir = fort_lc//'44'
+              call find_file(filename_eir,ex_eir)
+              if (ex_eir) then
+                open(unit=44,file=filename_eir)
+                call ngread(mpg,geo,ns,switch,ismain,iflag_eir)
+                eirene_wall_read = .true.
+              endif
+            endif
+#endif
+            call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
+          endif
         endif
 *    ..loop
 #endif
