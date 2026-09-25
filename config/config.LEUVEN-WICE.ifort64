@@ -12,6 +12,8 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
+LD_SSP ?= -lumfpack -lamd -lcolamd -lsuitesparseconfig
+
 CPP      = /lib/cpp -traditional
 
 ifdef USE_MPI

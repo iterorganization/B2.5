@@ -534,6 +534,9 @@ ALL: ensure_adas
 NOPLOT: ensure_adas
 MAIN: ensure_adas
 endif
+ifneq ($(wildcard $(EBROOTSUITESPARSE)),)
+DEFINES += -DUMFPACK
+endif
 
 DIMSDIR = ${SRCDIR}/modules
 ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)

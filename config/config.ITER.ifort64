@@ -39,6 +39,8 @@ DEFINES   += -DNO_OPT
 
 CPP        = /lib/cpp -traditional
 
+LD_SSP ?= -lumfpack -lamd -lcolamd -lsuitesparseconfig
+
 # Avoid usage of ifx compiler until its issues are fixed
 # ifeq (,$(findstring CentOS,$(OS)))
 # MPI_FC    ?= mpiifort -fc=mpiifx
