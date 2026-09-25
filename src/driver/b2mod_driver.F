@@ -278,6 +278,8 @@
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
       real (kind=R8) ::
+     *  delta_cdfchord_time, save_cdfchord_time
+      real (kind=R8) ::
      *  delta_plasma_time, save_plasma_time
       real (kind=R8) ::
      *  delta_ids_time, save_ids_time
@@ -312,6 +314,7 @@
       save delta_tran_time, save_tran_time, tran_num
 #endif
       save delta_cdfmovie_time, save_cdfmovie_time
+      save delta_cdfchord_time, save_cdfchord_time
       save delta_plasma_time, save_plasma_time
       save delta_ids_time, save_ids_time
       save min_areshe, min_areshi, min_aresco, min_aresmo,
@@ -351,6 +354,7 @@
      1     tran_num/0/
 #endif
       data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
+      data delta_cdfchord_time/0.0_R8/, save_cdfchord_time/0.0_R8/
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data delta_ids_time/0.0_R8/, save_ids_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
@@ -1111,6 +1115,13 @@
        call xertst (delta_cdfmovie_time.eq.0.0_R8.or.
      &              delta_cdfmovie_time.ge.dtim,
      &  'b2mndr_cdfmovietim too short compared to timestep !')
+       call ipgetr ('b2mndr_cdfchordtim', delta_cdfchord_time)
+       if (delta_cdfchord_time.gt.0.0_R8)
+     >  write(*,*) 'Saving CDF chord files every ',
+     1  delta_cdfchord_time,' simulation seconds'
+       call xertst (delta_cdfchord_time.eq.0.0_R8.or.
+     &              delta_cdfchord_time.ge.dtim,
+     &  'b2mndr_cdfchordtim too short compared to timestep !')
        call ipgetr ('b2mndr_plasmatim', delta_plasma_time)
        if (delta_plasma_time.gt.0.0_R8)
      >  write(*,*) 'Saving plasma state files every ',
@@ -2099,6 +2110,7 @@ c   --> better way doing this is necessary)
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
       save_cdfmovie_time = tim + delta_cdfmovie_time
+      save_cdfchord_time = tim + delta_cdfchord_time
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -2175,6 +2187,18 @@ c new CDF movie option (1st frame at t=0)
 #endif
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
+      endif
+c new CDF chord option (1st frame at t=0)
+      if(tim.ge.(save_cdfchord_time-dtim/2.0_R8).and.
+     1 delta_cdfchord_time.gt.0.0_R8) then
+        if(switch%use_eirene.eq.0) then
+#ifndef NO_CDF
+          call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+          write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
+#endif
+        endif
+        save_cdfchord_time=save_cdfchord_time+delta_cdfchord_time
       endif
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
@@ -2596,6 +2620,16 @@ c new CDF movie option
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
+        endif
+c new CDF chord option
+        if(tim.ge.(save_cdfchord_time-dtim/2.0_R8).and.
+     1    delta_cdfchord_time.gt.0.0_R8) then
+#ifndef NO_CDF
+          call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+          write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
+#endif
+          save_cdfchord_time=save_cdfchord_time+delta_cdfchord_time
         endif
 #endif
         lwti = .false.
@@ -3660,6 +3694,15 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
+#endif
+      endif
+*   ..produce last CDF chord frame if not yet done
+      if(tim.gt.save_cdfchord_time-delta_cdfchord_time+dtim.and.
+     1  delta_cdfchord_time.gt.0.0_R8) then
+#ifndef NO_CDF
+        call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+        write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
 #endif
       endif
 *   ..produce 2d profiles if not yet done

@@ -86,6 +86,7 @@
       integer :: ismain = 1, ismain0 = 0, tally = 1
       integer :: write_triangles = 0
       real (kind=R8) :: delta_cdfmovie_time = 0.0_R8
+      real (kind=R8) :: delta_cdfchord_time = 0.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
       character filename_tri*256
@@ -475,15 +476,31 @@
           call b2co_movies_cdf
 #ifndef NO_CDF
 #ifdef B25_EIRENE
-     .     (nCv, nFc, ns, nnatmi, nnmoli, ncvtot, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, ncvtot, tim, switch)
 #else
-     .     (nCv, nFc, ns, nnatmi, nnmoli, 0, tim)
+     .     (nCv, nFc, ns, nnatmi, nnmoli, 0, tim, switch)
 #endif
 #endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
      .               'no b2movies.nc file found'
+        end if
+      end if
+      call ipgetr ('b2mndr_cdfchordtim', delta_cdfchord_time)
+      if (todo.and.delta_cdfchord_time.gt.0.0_R8) then
+        filename='b2chords.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_chords_cdf
+#ifndef NO_CDF
+     .     (ns, tim, switch)
+#endif
+          write(*,*) 'Returned from b2co_chords_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_chords_cdf because '//
+     .               'no b2chords.nc file found'
         end if
       end if
 *   ..close other files
