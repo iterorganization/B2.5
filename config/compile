@@ -95,6 +95,7 @@ ${OBJDIR}/%.o : %.cxx	#cxx source files
 
 ifneq (${OBJDIR},${OBNDIR})
 ${OBNDIR}/%.o : %.F
+	@mkdir -p ${OBNDIR}
 	@- /bin/rm -f ${OBNDIR}/$*.f ${OBNDIR}/$*.o ${OBNDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FN} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
@@ -115,6 +116,7 @@ ${OBNDIR}/%.${MOD} : ${OBNDIR}/%.o
 	@true
 
 ${OBNDIR}/%.${MOD} : %.F        # ../src/modules/
+	@mkdir -p ${OBNDIR}
 	@- /bin/rm -f ${OBNDIR}/$*.f ${OBNDIR}/$*.o ${OBNDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FN} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
