@@ -1457,6 +1457,11 @@ ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
+ifneq (${OBJDIR},${OBNDIR})
+ifeq ($(shell [ -d ${OBNDIR} ] && echo yes || echo no ),no)
+	-mkdir -p ${OBNDIR}
+endif
+endif
 	printf '# Dummy dependencies file for B2.5\n' > ${OBJDIR}/dependencies
 	${MAKE} tags
 	${MAKE} VERSION
