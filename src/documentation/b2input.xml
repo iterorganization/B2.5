@@ -5586,6 +5586,34 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_growth_guard</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Local, per-cell safeguard on the density, parallel-momentum and electron/ion/neutral energy equations.
+					If growth_guard.eq.1, it prevents nonlinear blow-ups of plasma quantities from common instabilities caused by small cell volumes and/or very low density and temperatures, including ionization runaway and transport-driven density/energy pile-up.
+					In each cell it adds D = max(0, |R| - f*C/dtim)/(f*xscale) to the correction matrix only and caps the increment. R is the assembled residual, C the state variable (density, parallel velocity or thermal energy), and f is growth_frac for density/energy, growth_mach for parallel velocity.
+					The correction does not affect a steady state solution.
+                    Requires b2mndt_style.eq.1, b2mndt_ckn.eq.1 and b2mndt_bdf.eq.1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_growth_frac</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Used when b2mndt_growth_guard.eq.1: maximum per-correction fractional increment for density and temperatures. Both increases and decreases are limited.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_growth_mach</name>
+				<default>0.25</default>
+				<type>real</type>
+				<description>
+					Used when b2mndt_growth_guard.eq.1: maximum per-correction increment for the parallel velocity in units of the local sound speed. Both increases and decreases are limited.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndt_rxf</name>
 				<default>See description</default>
 				<type>real</type>
