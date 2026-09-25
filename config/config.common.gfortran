@@ -150,7 +150,10 @@ endif
 LD = $(FC)
 LN = $(FN)
 # LDOPTS = -Bstatic
-LDOPTS += -L$(EBROOTSUITESPARSE)/lib
+
+ifdef EBROOTSUITESPARSE
+  LDOPTS += -L$(EBROOTSUITESPARSE)/lib
+endif
 
 
 #!!!Local Variables:

@@ -220,7 +220,9 @@ MOD      = mod
 
 BLD      = ar rucv
 
-LDOPTS += -L$(EBROOTSUITESPARSE)/lib
+ifdef EBROOTSUITESPARSE
+  LDOPTS += -L$(EBROOTSUITESPARSE)/lib
+endif
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
