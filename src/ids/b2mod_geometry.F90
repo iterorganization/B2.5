@@ -8,7 +8,7 @@ module b2mod_geometry
 
     !! Geometry/topology IDs (obtain using function geometryId)
 
-    integer, parameter :: GEOMETRY_COUNT = 13
+    integer, parameter :: GEOMETRY_COUNT = 14
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -25,6 +25,7 @@ module b2mod_geometry
     integer, parameter :: GEOMETRY_STRUCTURED_SPACES = 10
     integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 11
     integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 12
+    integer, parameter :: GEOMETRY_GENERAL = 13
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
@@ -67,7 +68,8 @@ module b2mod_geometry
         &       5,  5,  6,  4, & !! GEOMETRY_STELLARATORISLAND
         &       1,  0,  0,  0, & !! GEOMETRY_STRUCTURED_SPACES
         &       7,  9,  2, 15, & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &       7,  9,  2, 15  & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &       7,  9,  2, 15, & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &       0,  0,  0,  0  & !! GEOMETRY_GENERAL
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
@@ -85,7 +87,8 @@ module b2mod_geometry
         &    'ISLAND     ', &
         &    'STRUCTURED ', &
         &    'LFS_SF-    ', &
-        &    'LFS_SF+    '  &
+        &    'LFS_SF+    ', &
+        &    'GENERAL    '  &
         &   /)
 
     character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
@@ -102,7 +105,8 @@ module b2mod_geometry
         &    'Stellarator island geometry                       ', &
         &    'Structured grid built with multiple 1-D spaces    ', &
         &    'Low-field side Snowflake-minus geometry           ', &
-        &    'Low-field side Snowflake-plus geometry            '  &
+        &    'Low-field side Snowflake-plus geometry            ', &
+        &    'General geometry and topology                     '  &
         &   /)
 
     !! Region names
@@ -343,7 +347,16 @@ module b2mod_geometry
         &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
         &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
         &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
-        &   'Third outer leg baffle          '                                      &
+        &   'Third outer leg baffle          ',                                     &
+        & & ! GEOMETRY_GENERAL
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                 &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU              &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -415,7 +428,12 @@ module b2mod_geometry
         &    1,  2,  3,  4,  5,  6,  7,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    2,  3,  6,  7,  9, 10, 11, 12, 13,  0,  0,  0,  0,  0,  0, &
         &   15, 17,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
-        &    1,  4,  5,  8, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26  &
+        &    1,  4,  5,  8, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, &
+        & & ! GEOMETRY_GENERAL
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -512,7 +530,14 @@ module b2mod_geometry
         &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
         &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
         &    SOUTH, SOUTH, SOUTH, NORTH, NORTH,                               &
-        &    NORTH,                                              NODIRECTION  &
+        &    NORTH,                                              NODIRECTION, &
+        & & ! GEOMETRY_GENERAL
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION                                         &
         & &
         &  /), &
         & (/REGION_NUMBER_MAX, GEOMETRY_COUNT/) )
@@ -541,6 +566,17 @@ contains
     external xerrab, xertst
 
     call xertst ( object.eq.1.or.object.eq.2, 'incorrect object setting in geometryId')
+
+    ! If topological mesh data is available, we assume a general
+    ! magnetic field topology.
+    if (mpg%hasTopologicalData) then
+        geometryId = GEOMETRY_GENERAL
+        if (firstgmid) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_GENERAL")
+            firstgmid = .false.
+        end if
+        return
+    end if
 
     if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR
@@ -605,6 +641,14 @@ contains
 
     if (mpg%nnreg(0) == 7) then
         active = .false.
+        if (mpg%nXpt == 1) then
+            geometryId = GEOMETRY_SN
+            if (firstgmid) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
+                firstgmid = .false.
+            end if
+            return
+        else
         do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
                                       & mpg%vxCvP(mpg%Xpt(1),2) - 1
           iCv = mpg%vxCv(i)
@@ -641,6 +685,7 @@ contains
                 firstgmid = .false.
             end if
             return
+        end if
         end if
     end if
 
@@ -692,6 +737,7 @@ contains
               call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
               firstgmid = .false.
             end if
+            return
         elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
             geometryID = GEOMETRY_SN
             if (firstgmid) then

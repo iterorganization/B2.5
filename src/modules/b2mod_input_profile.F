@@ -730,8 +730,15 @@ cdjm Jan2017 Keep linearised sources for balance
      &                                    mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
-                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
-                  ldiv = mod(iir-1,4)+1.ge.3
+                  if (mpg%hasTopologicalData) then
+c                   General topologies do not use the old region-ID
+c                   private-flux/divertor classification.
+                    lpflux = .false.
+                    ldiv = .false.
+                  else
+                    lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
+                    ldiv = mod(iir-1,4)+1.ge.3
+                  end if
                   poloidal_scale_factor = 1.0_R8
                   elm_region = .false.
 #ifdef WG_TODO
@@ -820,10 +827,22 @@ cdjm Jan2017 Keep linearised sources for balance
                 elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
                   iy2 = nomp
                 else
-                  cycle
+                  if (mpg%hasTopologicalData) then
+c                   Treat unclassified guard cells as far SOL.
+                    iy2 = nomp
+                  else
+                    cycle
+                  end if
                 endif
-                lpflux = mpg%ftReg(mpg%cvFt(iCn)).eq.3
-                ldiv=mod(iir-1,4)+1.ge.3
+                if (mpg%hasTopologicalData) then
+c                 General topologies do not use the old region-ID
+c                 private-flux/divertor classification.
+                  lpflux = .false.
+                  ldiv = .false.
+                else
+                  lpflux = mpg%ftReg(mpg%cvFt(iCn)).eq.3
+                  ldiv = mod(iir-1,4)+1.ge.3
+                end if
                 poloidal_scale_factor = 1.0_R8
                 elm_region=.false.
 #ifdef WG_TODO
