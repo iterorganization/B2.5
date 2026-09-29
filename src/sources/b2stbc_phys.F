@@ -962,7 +962,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             call find_file(filename,lexist)
             call xertst(lexist,'File '//trim(filename)//' not found')
             open(70,file=trim(filename))
-            read (70,*) (timedep_puff(:))
+            read (70,*) timedep_puff(:)
             close(70)
             itim_ = int(tim/switch%dtim)
             call xertst(itim_.ge.0.and.itim_.le.switch%ntim,
@@ -976,7 +976,8 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
           endif
           totpar = conpar(is,ib,1)
           ! ionising core options
-          if (switch%ionising_core.ne.0.or.switch%afn_ionising_core        ! if ionizing core activated
+          if ((switch%ionising_core.ne.0.or.
+     &         switch%afn_ionising_core.ne.0)                              ! if ionizing core activated
      &        .and.mpg%cvOnClosedSurface(iCv1)) then                       ! if the last guard cell belongs to a closed surface
             if (switch%afn_ionising_core.eq.1) then                        ! with AFN conpar(is,ib,3) must be computed here, with Eirene it is done in b2mod_eirene
 
