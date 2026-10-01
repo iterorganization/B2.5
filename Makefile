@@ -437,11 +437,14 @@ endif
 
 mods : ${MODMODS}
 
+# b2cdci.F and b2cdcn.F are generated into a private temporary file and renamed
+# into place, so concurrent sub-makes (parallel b25eirene_* targets, or several
+# compilers building in the same tree) never compile a truncated file
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
-	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
+	-cd ${DOCDIR}; ( ${PYTHON} b2cdci.py b2cdci.F.$$$$ || echo "! Error building b2cdci.F from b2input.xml" > b2cdci.F.$$$$ ) && mv -f b2cdci.F.$$$$ b2cdci.F
 
 ${DOCDIR}/b2cdcn.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdcn.py
-	-cd ${DOCDIR}; ${PYTHON} b2cdcn.py || echo "! Error building b2cdcn.F from b2input.xml" > ${DOCDIR}/b2cdcn.F
+	-cd ${DOCDIR}; ( ${PYTHON} b2cdcn.py b2cdcn.F.$$$$ || echo "! Error building b2cdcn.F from b2input.xml" > b2cdcn.F.$$$$ ) && mv -f b2cdcn.F.$$$$ b2cdcn.F
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
@@ -1216,30 +1219,35 @@ echo:
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
+# Placeholder files for local code. They are created only when missing, so
+# user modifications are never overwritten, and each one is written to a
+# private temporary file and renamed into place, so concurrent sub-makes
+# (parallel b25eirene_* targets, or several compilers building in the same
+# tree) cannot interleave their output.
 ${SRCLOCAL}/b2local.F:
 	mkdir -p ${SRCLOCAL}
-	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "c store local or locally modified subroutines in this directory" >> ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
-	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
+	{ echo "      subroutine b2local" ; \
+	  echo "c" ; \
+	  echo "c store local or locally modified subroutines in this directory" ; \
+	  echo "c" ; \
+	  echo "      use b2mod_local" ; \
+	  echo '#include "b2local.h"' ; \
+	  echo "c" ; \
+	  echo "      end subroutine b2local" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
 ${MODLOCAL}/b2mod_local.F:
 	mkdir -p ${MODLOCAL}
-	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
-	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
-	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
+	{ echo "      module b2mod_local" ; \
+	  echo "c" ; \
+	  echo "c store local or locally modified modules in this directory" ; \
+	  echo "c" ; \
+	  echo "      end module b2mod_local" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
 ${INCLOCAL}/b2local.h:
 	mkdir -p ${INCLOCAL}
-	echo "c" > ${INCLOCAL}/b2local.h
-	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h
-	echo "c" >> ${INCLOCAL}/b2local.h
+	{ echo "c" ; \
+	  echo "c store local or locally modified include files in this directory" ; \
+	  echo "c" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
 ${OBJDIR}/mpiversion.mk: ${MAKES}
 	@mkdir -p ${OBJDIR}
