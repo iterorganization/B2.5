@@ -40,6 +40,7 @@
       use eirmod_ctrcei
       use eirmod_braeir
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt

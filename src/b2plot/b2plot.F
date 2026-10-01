@@ -60,6 +60,8 @@ c 2002-09-11: logic revised
       use eirmod_infcop
       use eirmod_braeir
       use eirmod_cestim
+      use eirmod_ccoupl
+     , , only: eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_coutau
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
