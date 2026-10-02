@@ -1598,7 +1598,9 @@ cc BCMOM
         do is=0,ns-1
           if (bcmom(is,ib).eq.3) then
             bcmom(is,ib) = 13
+            bccon(is,ib) = 14
             write(*,*) 'Automatically changing BCMOM from 3 to 13'
+            write(*,*) 'and accompanying BCCON to 14'
             changed = .true.
           endif
         enddo
