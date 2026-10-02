@@ -101,7 +101,9 @@
      *   guard_rescale, dg, fcPsi, ec1fc(0:1), efcc2(0:1),
      *   econf(0:1), fn(0:1), tol_angles, cvFpsi(1:m%nCv),
      *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc),
-     *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1)
+     *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
+     *   rawQgam1, rawQgam2, signedHc1, signedHc2,
+     *   sideTolerance
       integer, save :: style = 0
 *   ..procedures
       intrinsic sqrt
@@ -489,6 +491,29 @@
        econf(1) = (g%fcHc(iFc,2)*ec1fc(1) + g%fcHc(iFc,1)*efcc2(1))
      &            /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
 
+       ! The oriented face normal points away from c1. On a valid face,
+       ! both center-to-face vectors therefore have positive projections.
+       ! Check the raw geometry before poloidal faces replace the connector.
+       t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
+       t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
+       fn(0) = t0
+       fn(1) = t1
+       rawQgam1 = sinang(ec1fc(0),ec1fc(1),fn(0),fn(1))
+       rawQgam2 = sinang(efcc2(0),efcc2(1),fn(0),fn(1))
+       signedHc1 = rawQgam1*g%fcHc(iFc,1)
+       signedHc2 = rawQgam2*g%fcHc(iFc,2)
+       sideTolerance = 1.0e-6_R8*g%fcHt(iFc)
+
+       if (signedHc1.lt.-sideTolerance .or.
+     &     signedHc2.lt.-sideTolerance) then
+         write(*,*) 'ERROR b2agmt: cell centers on same face side'
+         write(*,*) '  iFc, c1, c2: ', iFc, c1, c2
+         write(*,*) '  face midpoint (x,y): ', fcX(iFc), fcY(iFc)
+         write(*,*) '  signed center distances [mm]: ',
+     &     1.0e3_R8*signedHc1, 1.0e3_R8*signedHc2
+         call xerrab('b2agmt: invalid face geometry')
+       endif
+
        ! Corrections for specific geometries
        ! poloidal faces
        ! =  is a face across the poloidal direction in a cell with aligned radial faces
@@ -510,14 +535,6 @@
            efcc2(1) = -g%fcEb(iFc,1)
          endif
        endif
-
-       ! Calculate face normal (not normalized!)
-       ! general: dx_normal = dy_verts  (= y2 - y1)
-       !          dy_normal = -dx_verts (= x1 - x2)
-       t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
-       t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
-       fn(0) = t0
-       fn(1) = t1
 
 *    .. compute angles
        ! gamma - angle between cell connector (on face) and the face normal
