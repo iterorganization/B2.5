@@ -55,7 +55,7 @@ c*** Set the indices of the cells in question
 
 c*** Calculate the balances for each cell in question
       
-      iVx = mpg%Xpt(1)
+      iVx = mpg%Xpt(mpg%iactive)
       n_points = mpg%vxCvP(iVx,2)
       allocate(iCx(n_points),
      .         iFxm(n_points),iFxp(n_points),

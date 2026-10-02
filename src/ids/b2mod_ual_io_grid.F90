@@ -2418,10 +2418,10 @@ contains
                 psi_average = psi_average + geo%vxFpsi(iVx)
               end do
               psi_average = psi_average / real(mpg%cvVxP(iCv,2))
-              if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(1)),      &
-                                   & geo%vxFpsi(mpg%Xpt(2))).and. &
-                & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(1)),      &
-                                   & geo%vxFpsi(mpg%Xpt(2)))) then
+              if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(mpg%iactive)),      &
+                                   & geo%vxFpsi(mpg%Xpt(mpg%iinactive))).and. &
+                & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(mpg%iactive)),      &
+                                   & geo%vxFpsi(mpg%Xpt(mpg%iinactive)))) then
                 iInd = iInd + 1
                 indexList2d( iInd, SPACE_POLOIDALPLANE ) = iCv
               end if
