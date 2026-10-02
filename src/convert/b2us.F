@@ -236,31 +236,8 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
         write (*,*) 'Reading unstructured b2fgmtry...'
 
 *     ..obtain mapping/geometry dimensions from file
-        call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-        mpg%nCi = idum(0)
-        mpg%nCg = idum(1)
-        mpg%nCv = idum(2)
-        mpg%nFc = idum(3)
-        mpg%nVx = idum(4)
-        mpg%nFs = idum(5)
-        mpg%nFt = idum(6)
-        call cfruin (ninp(1),5,idum,
-     .    'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-        mpg%nCmxVx = idum(0)
-        mpg%nCmxFc = idum(1)
-        mpg%nVmxCv = idum(2)
-        mpg%nVmxFc = idum(3)
-        mpg%nCmxNv = idum(4)
-        call cfruin (ninp(1),1,idum,'isClassicalGrid')
-        mpg%isClassicalGrid = idum(0)
-        call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-        mpg%nx    = idum(0)
-        mpg%ny    = idum(1)
-        mpg%nncut = idum(2)
-*     ..read header for geometry
-        call cfruch (ninp(1), 120, lblgm, 'label')
-        call cfruin (ninp(1), 1, idum, 'isymm')
-        isymm = idum(0)
+        call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &   lblgm, isymm)
 *     ..allocate mapping and geometry
         call alloc_mapping (mpg)
         call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
@@ -290,6 +267,8 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
+      rewind(ninp(0))
+      call b2rflb (ninp(0), lblmn(61:120))
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
       call b2xvcp (ns)

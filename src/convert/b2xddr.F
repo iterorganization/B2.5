@@ -19,12 +19,12 @@
 *     (none)
 *   ..common blocks
 *   ..local variables
-      integer is, idum(0:9)
+      integer is
       real (kind=R8) :: za(0:ns-1)
-      character lblgm*120, lblcp*120, lblmn*120
+      character lblcp*120, lblmn*120
 *   ..procedures
       external xertst
-      external cfruch, cfruin
+      external cfruch
       external b2rugm, b2rucp, b2ruzd, b2rups, b2xvps, process
 
 *   ..subprogram start-up calls
@@ -42,8 +42,6 @@
 
 * ..computation
 *   ..read geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
       call read_b2fgmtry (ninp(1), mpg, geo)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
