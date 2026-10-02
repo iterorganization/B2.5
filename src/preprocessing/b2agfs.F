@@ -340,6 +340,9 @@
             call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      1       cvBp,cvBt,cvFpsi)
 
+!      .. Preprocess the grid before further computations
+            call preprocess_grid(g, m, nnFs)
+
 !      .. Create the guard cells
             call create_guard_cells(nnCv,g,m)
 
@@ -657,6 +660,47 @@
 91    call xerrab('read_traduitoutb2us: error reading geometry file')
 
       end subroutine read_traduitoutb2us
+
+*-----------------------------------------------------------------------
+
+      subroutine preprocess_grid(g, m, nnFs)
+
+      ! This routine preprocesses the grid right after reading the 
+      ! traduit file. Currently, the following steps are done:
+      ! - psi values at vertices are equated to those of the flux
+      !   surface they belong to. Psi values of vertices that are
+      !   not on flux surfaces are unchanged. We don't do any 
+      !   sanity checks yet (e.g. whether vertices belong only to
+      !   a single flux surface)
+
+      ! Modules
+      use b2us_geo
+      use b2us_map 
+
+      ! Arguments
+      type(geometry), intent(inout)     :: g ! geometry
+      type(mapping), intent(in)         :: m ! mapping
+      integer, intent(in)               :: nnFs ! number of flux surfaces
+
+      ! Internal
+      integer :: i, j 
+      integer, allocatable, dimension(:)    :: tFc, tVx
+
+      ! Adjust psi values of vertices
+      do i = 1, nnFs
+        ! Get the faces of the current flux surface
+        tFc = m%fsFc(m%fsFcP(i, 1):m%fsFcP(i, 1)+m%fsFcP(i, 2)-1)
+
+        ! Get the vertices of these faces
+        tVx = [m%fcVx(tFc, 1), m%fcVx(tFc, 2)]
+
+        ! Set the flux value 
+        g%vxFpsi(tVx) = g%fsPsi(i)
+      end do 
+
+      end subroutine
+
+*-----------------------------------------------------------------------
 
 *-----------------------------------------------------------------------
 

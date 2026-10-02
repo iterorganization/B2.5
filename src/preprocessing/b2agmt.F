@@ -286,7 +286,8 @@
          ! If it is possible to put the cell center of the guard cell on the same psi
          ! as the boundary cell, this is done. Otherwise the cell center is placed
          ! in the extension of the vector from the boundary cell center and the face center.
-         if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
+         if (abs(fcPsi - bcFpsi)/
+     &      (abs((g%vxFpsi(v2)-g%vxFpsi(v1)))+1e-30)
      &       .lt. 1e-1_R8) then !get the guard cell on the same fpsi
            !Calculate intersection point - find point on face where psi = fcPsi
            t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))
