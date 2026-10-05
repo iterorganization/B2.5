@@ -26,7 +26,7 @@
 *   ..local variables
       integer is, idum(0:9), k, ismain
       integer external_species
-      character lblgm*120, lblcp*120, lblmn*120, lblrc*120
+      character lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
 *   ..initialisation
       save ismain, external_species
@@ -78,9 +78,6 @@
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
 *   ..read geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
       call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry (mpg, geo, switch)
 *   ..read plasma state file
