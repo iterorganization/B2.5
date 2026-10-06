@@ -45,29 +45,10 @@
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       integer ni_lb
-      integer, save :: write_b25_state_variables = 1
-      integer, save :: write_b25_fluxes = 0
-      integer, save :: write_b25_sources = 0
-      integer, save :: write_b25_transport = 0
-      integer, save :: write_eirene_state_variables = 0
-      integer, save :: write_eirene_fluxes = 0
-      integer, save :: write_eirene_sources = 0
-      integer, save :: write_triangles = 0
       character*256, save :: filename
       logical ex
       save ncall
       data ncall/0/
-
-      call ipgeti ('cdfmovie_b25_state_variables',
-     1  write_b25_state_variables)
-      call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
-      call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
-      call ipgeti ('cdfmovie_b25_transport', write_b25_transport)
-      call ipgeti ('cdfmovie_eirene_state_variables',
-     1  write_eirene_state_variables)
-      call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
-      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
-      call ipgeti ('cdfmovie_triangles', write_triangles)
 
       call subini ('cdfmovie')
       if (ncall.eq.0) then
@@ -92,7 +73,7 @@
           call create_cdf_start(ncid, filename,
      &     nCv, nFc, ns, nnatmi, nnmoli, nCi+1)
 #endif
-          if (write_b25_state_variables.ge.1) then
+          if (switch%write_b25_state_variables.ge.1) then
             call create_cdf_field3(ncid, 'na', 1, 1,
      1       'Ion density', 'm^-3')
             call create_cdf_field2(ncid, 'ne', 1,
@@ -106,7 +87,7 @@
             call create_cdf_field2(ncid, 'po', 1,
      1       'Electric potential', 'V')
           endif
-          if (write_b25_fluxes.ge.1) then
+          if (switch%write_b25_fluxes.ge.1) then
             call create_cdf_field3(ncid, 'fnax', 2, 1,
      1       'Poloidal particle flux', 's^-1')
             call create_cdf_field3(ncid, 'fnay', 2, 1,
@@ -124,7 +105,7 @@
             call create_cdf_field2(ncid, 'fchy', 2,
      1       'Radial electric current', 'A')
           endif
-          if (write_b25_sources.ge.1) then
+          if (switch%write_b25_sources.ge.1) then
             call create_cdf_field3(ncid, 'rsana', 1, 1,
      1       'Volumetric ionisation rate', 'm^-3 s^-1')
             call create_cdf_field3(ncid, 'rsahi', 1, 1,
@@ -157,7 +138,7 @@
             call create_cdf_field2(ncid, 'rqradsum', 1,
      1       'Total volumetric line radiation rate', 'W m^-3')
           endif
-          if (write_b25_transport.ge.1) then
+          if (switch%write_b25_transport.ge.1) then
             call create_cdf_field3(ncid, 'dna', 1, 1,
      1       'Particle density-driven diffusivity', 'm^-2 s^-1')
             call create_cdf_field3(ncid, 'dpa', 1, 1,
@@ -174,7 +155,7 @@
      1       'Anomalous viscosity', 'm kg^-1 s^-1') 
           endif   
 #ifdef B25_EIRENE
-          if (write_eirene_state_variables.ge.1) then
+          if (switch%write_eirene_state_variables.ge.1) then
             if(nnatmi.gt.0) then
               call create_cdf_field3(ncid, 'dab2', 1, 2,
      1         'Atom density', 'm^-3')
@@ -188,7 +169,7 @@
      1         'Molecule temperature', 'eV')
             endif
           endif
-          if (write_eirene_fluxes.ge.1) then
+          if (switch%write_eirene_fluxes.ge.1) then
             if(nnatmi.gt.0) then
               call create_cdf_field3(ncid, 'rfluxa', 1, 2,
      1         'Atomic radial flux density', 'm^-2 s^-1')
@@ -210,7 +191,7 @@
      1         'Molecular poloidal energy flux density', 'W m^-2')
             endif
           endif
-          if (write_eirene_sources.ge.1) then
+          if (switch%write_eirene_sources.ge.1) then
             if(nnatmi.gt.0) then
               call create_cdf_field3(ncid, 'eirene_papl_sna', 1, 1,
      1         'Particle source from atom-plasma interactions',
@@ -260,7 +241,7 @@
       endif
 
 #ifdef B25_EIRENE
-      if (ncall.eq.0 .and. write_triangles.ge.1) then
+      if (ncall.eq.0 .and. switch%write_triangles.ge.1) then
         filename_tri='eirenemovies.nc'
         call find_file(filename_tri,ex)
         if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
@@ -310,7 +291,7 @@
 
       write(*,*) 'put_cdf_start'
       call put_cdf_start(ncid,filename,time)
-      if (write_b25_state_variables.ge.1) then
+      if (switch%write_b25_state_variables.ge.1) then
         write(*,*) 'put_cdf_field3: na'
         call put_cdf_field3(ncid,'na',state%pl%na,nCv,ns)
         write(*,*) 'put_cdf_field2: ne'
@@ -326,7 +307,7 @@
         write(*,*) 'put_cdf_field2: po'
         call put_cdf_field2(ncid,'po',state%pl%po,nCv)
       endif
-      if (write_b25_fluxes.ge.1) then
+      if (switch%write_b25_fluxes.ge.1) then
         dummy3nFc(:,:) = state%dv%fna(:,0,:)
         write(*,*) 'put_cdf_field3: fnax'
         call put_cdf_field3(ncid,'fnax',dummy3nFc,nFc,ns)
@@ -352,7 +333,7 @@
         write(*,*) 'put_cdf_field2: fchy'
         call put_cdf_field2(ncid,'fchy',dummynFc,nFc)
       endif
-      if (write_b25_sources.ge.1) then
+      if (switch%write_b25_sources.ge.1) then
         dummy3 = 0.0_R8
         do is=1,ns
           dummy3(:,is) = state%srw%rsana(:,is-1)/geo%cvVol(:)
@@ -434,7 +415,7 @@
         write(*,*) 'put_cdf_field2: rqradsum'
         call put_cdf_field2(ncid,'rqradsum',dummy,nCv)
       endif
-      if (write_b25_transport.ge.1) then
+      if (switch%write_b25_transport.ge.1) then
         write(*,*) 'put_cdf_field3: dna'
         call put_cdf_field3(ncid,'dna',state%co%dna0,nCv,ns)
         write(*,*) 'put_cdf_field3: dpa'
@@ -475,7 +456,7 @@
         call put_cdf_field3(ncid,'vsa',dummy3,nCv,ns)
       endif
 #ifdef B25_EIRENE
-      if (write_eirene_state_variables.ge.1) then
+      if (switch%write_eirene_state_variables.ge.1) then
         if(nnatmi.gt.0) then
           dummy3atm = 0.0_R8
           dummy3atm(1:nCv,1:nnatmi) = dab2(1:nCv,1:nnatmi,1)
@@ -497,7 +478,7 @@
           call put_cdf_field3(ncid,'tmb2',dummy3mol,nCv,nnmoli)
         endif
       endif
-      if (write_eirene_fluxes.ge.1) then
+      if (switch%write_eirene_fluxes.ge.1) then
         if(nnatmi.gt.0) then
           dummy3atm = 0.0_R8
           dummy3atm(1:nCv,1:nnatmi) =
@@ -543,7 +524,7 @@
           call put_cdf_field3(ncid,'pefluxm',dummy3mol,nCv,nnmoli)
         endif
       endif
-      if (write_eirene_sources.ge.1) then
+      if (switch%write_eirene_sources.ge.1) then
         if(nnatmi.gt.0) then
           nstrad=size(eirene_mc_papl_sna_bal,3)
           dummy3 = 0.0_R8
@@ -627,14 +608,14 @@
      .       eirene_mc_emel_she_bal(1:nCv,istra)/geo%cvVol(1:nCv)
           enddo
           write(*,*) 'put_cdf_field2: eirene_emel_she'
-          call put_cdf_field2(ncid,'eirene_emel_she',dummy3,nCv)
+          call put_cdf_field2(ncid,'eirene_emel_she',dummy,nCv)
           dummy = 0.0_R8
           do istra = 1, nstrad
             dummy(1:nCv) = dummy(1:nCv) +
      .       eirene_mc_empl_shi_bal(1:nCv,istra)/geo%cvVol(1:nCv)
           enddo
           write(*,*) 'put_cdf_field2: eirene_empl_shi'
-          call put_cdf_field2(ncid,'eirene_empl_shi',dummy3,nCv)
+          call put_cdf_field2(ncid,'eirene_empl_shi',dummy,nCv)
           dummy3mol = 0.0_R8
           do imoli = 1, nnmoli
             dummy3mol(:,imoli) = emolrad(:,imoli,0)/geo%cvVol(:)
@@ -654,7 +635,7 @@
       call put_cdf_end(ncid)
 
 #ifdef B25_EIRENE
-      if (write_triangles.ge.1) then
+      if (switch%write_triangles.ge.1) then
         write(*,*) 'put_cdf_start'
         call put_cdf_start(ncid,filename_tri,time)
         if (nnatmi.gt.0) then

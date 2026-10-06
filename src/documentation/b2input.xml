@@ -3807,6 +3807,86 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndr_cdfchordtim</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If non-zero, the movie files b2chords.nc and eirenechords.nc are generated (the second one only in case of coupled runs), containing quantities interpolated along the custom chords defined by rzchords in b2.user.parameters. Gives the real-time interval between writes of chord frames in b2chords.nc and eirenechords.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_state_variables</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_state_variables.ge.1 then the plasma state variables (na, ne, Te, Ti, etc.) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_fluxes.ge.1 then the plasma flux densities (fna(x/y), fhe(x/y), fhi(x/y), etc.) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_transport</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_transport.ge.1 then the anomalous transport coefficients interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_state_variables</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_state_variables.ge.1 then the neutrals state variables (atom and molecule densities and temperatures), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_fluxes.ge.1 then the neutrals fluxes (atom and molecule particle and energy flux densities), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_sources.ge.1 then the plasma sources due to plasma-neutrals interactions (particle and energy sources for each fluid species, and neutrals radiation from atoms and molecules), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_triangles</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to eirenechords.nc. If cdfchord_triangles.ge.1 then the neutral quantities on the Eirene triangular grid (atom and molecule particle/energy/momentum densities), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_resolution</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
+					Spatial resolution, in m, of the profiles interpolated along the chords and written to b2chords.nc and eirenechords.nc. Each chord is sampled at this step in length between its two endpoints.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_ntim_save</name>
 				<default>0</default>
 				<type>integer</type>
@@ -9136,6 +9216,16 @@
 					Coordinates defining a segment. All control volumes intersected by this segment will be part of the inner midplane.
 					rzimp(1,1:2) holds the R-coordinates of the first and second point of the segment.
 					rzimp(2,1:2) holds the Z-coordinates of the first and second point of the segment.
+				</description>
+			</switch>
+			<switch>
+				<name>RZCHORDS</name>
+				<default>0.0</default>
+				<type>real array of size (2,2,nchordmax) [nchordmax=100]</type>
+				<description>
+					Coordinates defining the custom straight chords along which quantities are interpolated and written to b2chords.nc and eirenechords.nc (enabled by the cdfchord_* switches and b2mndr_cdfchordtim in b2mn.dat).
+					rzchords(1,j,k) holds the R-coordinate and rzchords(2,j,k) the Z-coordinate; j=1 is the start point and j=2 the end point of chord number k.
+					The number of chords is inferred automatically from the number of contiguously defined entries (chords must be defined as 1..nchords, without gaps).
 				</description>
 			</switch>
 			<switch>
