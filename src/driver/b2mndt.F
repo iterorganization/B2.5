@@ -4,6 +4,7 @@
       subroutine b2mndt (nout, nCv, nFc, nVx, ns,
      . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch,
      . geo, mpg, st, st_ext, st_avg, ierr)
+      use b2mod_growth_guard, only : growth_begin, growth_report
       use b2mod_types
       use b2mod_constants
       use b2mod_diag
@@ -208,6 +209,7 @@
      &                switch%nstg_areshi.gt.0.0_R8.or.
      &                switch%nstg_aresco.gt.0.0_R8.or.
      &                switch%nstg_aresmo.gt.0.0_R8
+      if (switch%growth_guard.eq.1) call growth_begin(dtim)
 *   ..time-dependent MMS test                                            !fc 21.03.24
       if (switch%use_mms.eq.2.and.itim.gt.0) then
         if(switch%equation_sources.ne.0)
@@ -601,6 +603,8 @@ ctmp.dpc
      . call running_average(nCv,ns,st%pl,st%srw,st_avg)
       if (ibatch_av_all > 0)
      . call batch_av_all(itim,ntim_batch,nCv,st%pl,ns)
+
+      if (switch%growth_guard.eq.1) call growth_report(itim)
 
 * ..return
       ncall_b2mndt = ncall_b2mndt+1
