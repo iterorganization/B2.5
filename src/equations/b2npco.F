@@ -184,7 +184,7 @@ cdjm Jan2017 update particle source components for balance
         endif
       endif
 
-      if(switch%b2mndt_style.eq.2) then                                  !srv 07.07.21 {
+      if(switch%b2mndt_style.gt.1) then                                  !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nCv, mpg%nCi, isb, dtim,
      &   geo%cvVol, psnl%na(:,isb), switch, mpg, sr%snadt(1,0,isb))

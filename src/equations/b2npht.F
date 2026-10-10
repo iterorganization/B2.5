@@ -309,7 +309,7 @@ cdjm Jan2017 update particle source components for balance
           endif
         endif
 c time-dependent treatment                                              !srv 07.07.21 {
-      if(switch%b2mndt_style.eq.2) then
+      if(switch%b2mndt_style.gt.1) then
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
@@ -339,7 +339,7 @@ cc while the second contribution corresponds to T dn/dt
           shi0 = shi0 + sr%shidt
         else                                 ! separate ion and neutral energy equation
           wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *ts_factor*psnl%ti/dtim*geo%cvVol
+     &           *psnl%ti/dtim*geo%cvVol
           wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
           sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
           shi0 = shi0 + sr%shidt

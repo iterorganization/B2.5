@@ -182,7 +182,7 @@
      &  call read_boundary_sources(nCv, ns, switch, itim, mpg)          !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       if (switch%b2mndt_style.eq.2) then
+       if (switch%b2mndt_style.gt.1) then
          write(*,*) 'Running in time-dependent mode'
        endif
        ! compute time-stepping factor based on time integration scheme
@@ -386,13 +386,13 @@ ctmp.dpc
      &     st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni,
      &     st%dv%nn, st%sr, .true.)                                      !srv 11.09.09 {
 *     ..stabilise the source coefficients                                !srv 07.07.21 {
-          if(switch%b2mndt_style.eq.2 .and. use_b2srst.eq.1)
+          if(switch%b2mndt_style.gt.1 .and. use_b2srst.eq.1)
      &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,             !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
-          if (switch%b2mndt_style.ne.2) then
+          if (switch%b2mndt_style.eq.1) then
 *     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
             call b2srdt (nCv, ns, dtim, switch, geo, mpg, st%dv,
      &       st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti,
@@ -432,7 +432,7 @@ ctmp.dpc
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
 
-            if (switch%b2mndt_style.eq.1) then
+            if (switch%b2mndt_style.ne.2) then ! EXPERIMENTAL: style 1 is steady-state, style 3 is new time-dependent
 
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,

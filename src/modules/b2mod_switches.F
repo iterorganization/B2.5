@@ -1238,7 +1238,7 @@ c b2mndt
       s % nstg_areshe = 0.0_R8
       s % nstg_areshi = 0.0_R8
       s % BoRiS = 0.0_R8
-      if (s % b2mndt_style.eq.2) then
+      if (s % b2mndt_style.gt.1) then
         s % b2mndt_rxf = 1.0_R8
       else
         s % b2mndt_rxf = 0.5_R8
@@ -2641,8 +2641,8 @@ c b2mndt
      &  'faulty internal parameter nstg_aresmo')
       call xertst (0.0_R8.le.s%b2mndt_rxf.and.s%b2mndt_rxf.le.1.0_R8,
      &  'faulty internal parameter rxf')
-      call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
-     &  'b2mndt_style should be 1 or 2')
+      call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2
+     &  .or.s%b2mndt_style.eq.3, 'b2mndt_style should be 1 or 2 or 3')
       call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
      &  'b2mndt_ckn should be 1 or 2')
       call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
@@ -2804,7 +2804,7 @@ c controlling minimum density via b2.numerics
       endif
 
 c Variable local timestepping
-      if(s%b2mndt_style.eq.2 .and.
+      if(s%b2mndt_style.gt.1 .and.
      &           s%b2mndt_var_style.ne.0) then
         call xerrab('Variable local timestepping '//
      &   'not yet allowed for transient simulations')

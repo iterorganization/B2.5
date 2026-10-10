@@ -108,7 +108,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       do iCv = 1, nCv
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-          if (switch%b2mndt_style.lt.2) then                          !srv 13.10.06 {
+          if (switch%b2mndt_style.ne.2) then                          !srv 13.10.06 {
             aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+
      &       abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))
           else

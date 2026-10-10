@@ -168,7 +168,7 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
-      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
+      if (switch%b2mndt_style.gt.1) then !! do not solve total momentum and energy equation in time-dependent mode
         solveet=.false.
         solvemt=.false.
       endif

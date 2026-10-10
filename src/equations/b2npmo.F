@@ -541,7 +541,7 @@ cdjm Jan2017 update momentum source components for balance
        endif
 *    .. calculate time-dependent source
 *    .. ts_factor = time-stepping multiplication factor
-       if (switch%b2mndt_style.eq.2) then
+       if (switch%b2mndt_style.gt.1) then
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
