@@ -1114,9 +1114,13 @@
 
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
-! no. of flux surfaces (conservative estimate)
-      m%nFs = max(1,(1 + 1*nncut)*(ny + 2))
-      m%nFt = m%nFs
+! Safe upper bounds for flux-surface and flux-tube pointer arrays.
+! Voids and targets can split a structured-grid row into several
+! pieces, so an estimate based only on ny and nncut is insufficient.
+! Every flux surface contains a face and every flux tube a physical
+! cell. The exact counts are assigned after construction.
+      m%nFs = max(1,m%nFc)
+      m%nFt = max(1,m%nCi)
 
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg
