@@ -38,6 +38,12 @@
      ,                 imp(nromp), icsepimp, ifsepimp, nimp
       integer, allocatable :: ft_imp(:), ft_omp(:)
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
+c*** rzchords: custom chords for b2chords.nc and eirenechords.nc.
+c***           rzchords(i,j,k): i=1 R, i=2 Z; j=1 start point, j=2 end point;
+c***           k=chord number.
+      integer, parameter :: nchordmax = 100
+      integer, save :: nchords = 0
+      real (kind=R8), save :: rzchords(2,2,nchordmax)
       real (kind=R8) :: psi_omp(nromp), psi_imp(nromp)
       real (kind=R8), allocatable :: fs_ds_imp(:), fs_ds_omp(:)
       real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
@@ -68,7 +74,8 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,rzomp,rzimp,
-     ,  Te_det_threshold,q95_albll,R0_albll,B0_albll,trgshp
+     ,  Te_det_threshold,q95_albll,R0_albll,B0_albll,trgshp,
+     ,  rzchords
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -169,6 +176,7 @@ c***  Standard set-up:
       print_isat=.false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
+      rzchords = 0.0_R8
       ft_imp = 0
       ft_omp = 0
       fs_ds_imp = -999.0_R8
@@ -211,7 +219,7 @@ c***  Standard set-up:
 
       logical :: file_ok, on_wall, wall_face(2)
       character*260 filename
-      integer i
+      integer i, ichord
       logical done, ifail, found
       integer j, k, is, im
       logical old_style
@@ -239,6 +247,24 @@ c***  Standard set-up:
         user_namelist_used = .false.
         filedata(ntrc_usr) = .false.
       endif
+
+c*** count the custom chords defined in rzchords (must be contiguous 1..nchords)
+      nchords = 0
+      do ichord = 1, nchordmax
+        if (rzchords(1,1,ichord).ne.0.0_R8 .or.
+     &      rzchords(1,2,ichord).ne.0.0_R8 .or.
+     &      rzchords(2,1,ichord).ne.0.0_R8 .or.
+     &      rzchords(2,2,ichord).ne.0.0_R8) nchords = ichord
+      enddo
+      do ichord = 1, nchords
+        call xertst(rzchords(1,1,ichord).ne.0.0_R8 .or.
+     &      rzchords(1,2,ichord).ne.0.0_R8 .or.
+     &      rzchords(2,1,ichord).ne.0.0_R8 .or.
+     &      rzchords(2,2,ichord).ne.0.0_R8,
+     &      'rzchords must define chords contiguously as 1..nchords')
+      enddo
+      if (nchords.gt.0) write(*,*)
+     &  'Number of custom chords defined in rzchords: ', nchords
 
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
