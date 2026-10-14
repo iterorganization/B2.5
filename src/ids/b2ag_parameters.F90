@@ -210,7 +210,7 @@ contains
            endif
 
            ! Additional topological data?
-           if (grid_version >= "03.002.001") then 
+           if (grid_version >= "03.002.002") then 
             ! Set flag
             m%hasTopologicalData = .true. 
 

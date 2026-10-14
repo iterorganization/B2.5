@@ -110,8 +110,8 @@
             m%nCornVx = 0
           endif    
 
-*   .. write topological data if available
-          if (version .ge. '03.002.001') then 
+*   .. read topological data if available
+          if (version .ge. '03.002.002') then 
             ! Set logical
             m%hasTopologicalData = .true. 
 
@@ -127,6 +127,16 @@
             m%nTgc = idum(3)
             m%nDiv = idum(4)
             m%nfcDiv = idum(5)
+          else
+            ! Set default values
+            m%hasTopologicalData = .false. 
+            m%topoID = 0 ! to be determined later
+            m%nXpt = 0
+            m%nOpt = 0
+            m%nStr = 0
+            m%nTgc = 0
+            m%nDiv = 0
+            m%nfcDiv = 0
           end if 
 
           call cfruch (ninp, 120, lblgm, 'label')

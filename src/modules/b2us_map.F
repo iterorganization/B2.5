@@ -1078,13 +1078,10 @@ cwdk  can be derived directly from data in that file
             end if
           end if
         end do
-      end if 
 
-      ! Determine strike points, tangency points, and related quantities
-      if (.not. m%hasTopologicalData) then 
-!! use a different approach for slab cases with cuts,
-!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
-!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+        !! use a different approach for slab cases with cuts,
+        !! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
+        !! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
         call ipgeti ('artificial_slab', artificial_slab)
         if (m%nXpt.eq.0.and.artificial_slab.eq.1) then
           do iVx = 1, m%nVx
@@ -1113,18 +1110,29 @@ cwdk  can be derived directly from data in that file
           end do
         endif
 
+      end if 
 
+      ! Determine strike points, tangency points, and related quantities
+      if (.not. m%hasTopologicalData) then 
         ! Recompute from scratch
         m%nStr = 0
         m%nTgc = 0
         if (m%nXpt.gt.0) then
           allocate(m%Xpt(m%nXpt))
+          allocate(m%isPrimaryXpt(m%nXpt))
+          allocate(m%XptFsID(m%nXpt))
           m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
+          m%isPrimaryXpt=0
+          m%XptFsID=0
           if (iactive.ne.0) then
+            m%isPrimaryXpt(iactive)=1
             do i = 1, m%vxFcP(m%Xpt(iactive),2)
               iFs = m%fcFs(m%vxFc(m%vxFcP(m%Xpt(iactive),1)+i-1))
               if (iFs.eq.0) cycle
-              if (m%iFssep.eq.0) m%iFssep = iFs
+              if (m%iFssep.eq.0) then
+                m%iFssep = iFs
+                m%XptFsID = iFs
+              endif
               if (m%iFssep2.eq.0.and.iFs.ne.m%iFssep) m%iFssep2 = iFs
             end do
           end if
@@ -1177,8 +1185,16 @@ cwdk  can be derived directly from data in that file
           allocate(m%strVx(m%nStr))
           m%strVx(1:m%nStr) = indXpt(1:m%nStr)
           allocate(m%strDiv(m%nStr))
+          allocate(m%strXpt(m%nStr))
+          allocate(m%strFsID(m%nStr))
           allocate(freg(m%nStr))
           m%strDiv = 0
+          do i = 1,m%nXpt
+            do j = 1,m%strVxP(i,2)
+              m%strXpt(m%strVxP(i,1) + j - 1) = m%Xpt(i)
+            end do
+          end do
+          m%strFsID=0
           freg = 0
           do i = 1, m%nStr
             iVx = m%strVx(i)
@@ -1208,8 +1224,12 @@ cwdk  can be derived directly from data in that file
               end if
             end do
           end do
-          allocate(m%tgVx(m%nTgc)) !csc needed for adjoint AD
-      else if (m%nnreg(0).eq.2) then
+          allocate(m%tgVx(m%nTgc)) !csc needed for adjoint 
+          allocate(m%tgDiv(m%nTgc))
+          allocate(m%tgFsID(m%nTgc))
+          m%tgDiv=0
+          m%tgFsID=0
+        else if (m%nnreg(0).eq.2) then
           allocate(freg(2))
           iFc = 1
           icount = 0
@@ -1244,7 +1264,11 @@ cwdk  can be derived directly from data in that file
           end do
           m%nTgc = icount
           allocate(m%tgVx(m%nTgc))
+          allocate(m%tgDiv(m%nTgc))
+          allocate(m%tgFsID(m%nTgc))
           m%tgVx(1:m%nTgc) = indXpt(1:m%nTgc)
+          m%tgDiv=0
+          m%tgFsID=0
           allocate(m%strDiv(2))
           m%strDiv(1) = 1
           m%strDiv(2) = 2
@@ -1416,6 +1440,11 @@ cwdk  can be derived directly from data in that file
           write(*,*) 'Strike point data not defined'
         end if
       end if 
+
+      if (.not. m%hasTopologicalData) then 
+        write(*,*) 'Finished preparing topological data.'
+        m%hasTopologicalData=.true.
+      endif
 
       allocate(m%cvAlongBoundary(m%nCv))
       m%cvAlongBoundary = .false.

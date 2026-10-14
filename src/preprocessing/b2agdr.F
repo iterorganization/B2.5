@@ -424,12 +424,7 @@
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F
-*   ..temporary hack to keep older 03.002.000 version working with 03.002.001
-      if (m%hasTopologicalData) then 
-         call cfverw (nout(1), '03.002.001')
-      else
-         call cfverw (nout(1), newversion)
-      end if 
+      call cfverw (nout(1), newversion)
       idum(0) = m%nCi
       idum(1) = m%nCg
       idum(2) = m%nCv

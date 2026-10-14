@@ -621,6 +621,7 @@ cdpc-debug
 
 !   ..conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
+      call init_mapping (mpg)
       write (*,*) 'Mapping created'
       call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
@@ -655,6 +656,21 @@ cdpc-debug
         idum(2) = -1
       endif
       call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+!  .. write topological data if available
+      if (mpg%hasTopologicalData) then 
+         ! Topoflag
+         idum(0) = mpg%topoID
+         call cfwuin (nout(1), 1, idum, 'topoflag')
+
+         ! Number of X-points etc
+         idum(0) = mpg%nXpt 
+         idum(1) = mpg%nOpt 
+         idum(2) = mpg%nStr 
+         idum(3) = mpg%nTgc 
+         idum(4) = mpg%nDiv 
+         idum(5) = mpg%nfcDiv 
+         call cfwuin (nout(1), 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+      end if 
       call cfwuch (nout(1), 120, lblgm, 'label')
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')

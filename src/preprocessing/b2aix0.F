@@ -5,7 +5,9 @@
       use b2mod_types
       use b2mod_subsys
       use b2mod_version
+      use b2mod_b2cmfs
       use b2us_map
+      use b2us_io
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1)
@@ -53,7 +55,7 @@
 
 *   ..local variables
       integer idum(0:6)
-      character id*8
+      character id*8, lblgm*120
 *   ..procedures
       logical streql
       external xertst, xerrab, streql
@@ -78,52 +80,8 @@
       if (b2fgmtry_version .lt. '03.002.000') then
         call xerrab('Using old input format. Run b2us first.')
       endif
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
-      if (mpg%isClassicalGrid.eq.1) then
-        mpg%nCornVx = mpg%nx
-      else
-        idum = 0
-        !call cfruin_opt (ninp(1),1,idum,'nCornVx')
-        mpg%nCornVx = idum(0)
-      endif
-
-*   ..read topological data if available
-      if (b2fgmtry_version >= '03.002.001') then 
-        ! Set logical
-        mpg%hasTopologicalData = .true. 
-
-        ! Read topological mesh flag
-        call cfruin(ninp(1), 1, idum, 'topoflag')
-        mpg%topoID = idum(0)
-
-        ! Read number of topological points
-        call cfruin(ninp(1), 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
-        mpg%nXpt = idum(0)
-        mpg%nOpt = idum(1)
-        mpg%nStr = idum(2)
-        mpg%nTgc = idum(3)
-        mpg%nDiv = idum(4)
-        mpg%nfcDiv = idum(5)
-      end if  
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg, lblgm,
+     &  isymm)
 
 *   ..test basic dimensions
       nCv = mpg%nCv

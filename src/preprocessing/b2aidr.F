@@ -441,11 +441,6 @@
      &   'Initial densities must be larger than na_min!')
       end do
 
-*   ..read the header of geometry file
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read the mapping and geometry
       call read_b2fgmtry (ninp(1), mpg, geo)
 
