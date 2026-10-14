@@ -4,6 +4,8 @@
       subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv,
      &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb,
      &   psnl)
+      use b2mod_growth_guard, only : growth_bound
+      use b2mod_constants, only : mp
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
@@ -52,6 +54,8 @@
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv),                                         !lk 30.06.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), na_min            !lk 30.06.17
+      real(kind=R8) :: guard_nb(nCv), guard_pb(nCv), guard_dn,
+     &                 guard_delta, guard_cs
       logical too_low_density(mpg%nFt)                              ! IYS 27.11.2017
 *   ..procedures
       external xertst, ipgetr
@@ -72,7 +76,21 @@
 
 * ..implement the correction
 *   ..compute wrk
+      if (switch%growth_guard.eq.1) then
+        guard_nb = nb
+        guard_pb = pb
+*     ..limit dp before its gradient is used in the velocity correction
+        if (rxf.gt.0.0_R8) then
+          do iCv=1,mpg%nCi
+            guard_delta = rxf*corpb(iCv)
+            guard_dn = growth_bound(guard_delta,pb(iCv),
+     &        switch%growth_frac,1,iCv)
+            if (guard_dn.ne.guard_delta) corpb(iCv) = guard_dn/rxf
+          enddo
+        endif
+      else
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk)
+      endif
 *   ..compute new pb and nb
       do iCv = 1, nCv
         if (0.0_R8.le.corpb(iCv)) then
@@ -160,13 +178,43 @@
         nb = nb_
         pb = pb_
       endif                                          !srv 25.07.17 }                                           !srv 25.07.17
+! growth guard: cap the density/pressure increment after core smoothing too
+! then rebuild dp so the pressure-gradient velocity correction uses the accepted value
+      if (switch%growth_guard.eq.1) then
+        do iCv=1,mpg%nCi
+          guard_dn = nb(iCv)-guard_nb(iCv)
+          guard_delta = growth_bound(guard_dn,guard_nb(iCv),
+     &      switch%growth_frac,1,iCv)
+          if (guard_delta.ne.guard_dn) then
+            t0 = 1.0_R8+guard_delta/guard_nb(iCv)
+            nb(iCv) = guard_nb(iCv)*t0
+            pb(iCv) = guard_pb(iCv)*t0
+            if (rxf.gt.0.0_R8) then
+              if (t0.ge.1.0_R8) then
+                corpb(iCv) = (t0-1.0_R8)*guard_pb(iCv)/rxf
+              else
+                corpb(iCv) = (1.0_R8-1.0_R8/t0)*guard_pb(iCv)/rxf
+              endif
+            endif
+          endif
+        enddo
+        call gradc_p(nCv,nFc,nVx,0,geo,mpg,corpb,wrkv,wrk)
+      endif
 *   ..compute new ub
       if (ua_solve) then
        do iCv = 1, mpg%nCi ! internal cells only
 *       (note the further damping on the velocity correction)
          ireg = mpg%cvReg(iCv)
-         if(solvereg(ireg))
-     &    ub(iCv) = ub(iCv)-pcm0*rxf*pccb0(iCv)*wrk(iCv)
+         if (solvereg(ireg)) then
+           if (switch%growth_guard.eq.1) then
+             guard_cs = sqrt((pb(iCv)/nb(iCv))/(mp*am(isb)))
+             guard_delta = -pcm0*rxf*pccb0(iCv)*wrk(iCv)
+             ub(iCv) = ub(iCv)+growth_bound(guard_delta,guard_cs,
+     &         switch%growth_mach,2,iCv)
+           else
+             ub(iCv) = ub(iCv)-pcm0*rxf*pccb0(iCv)*wrk(iCv)
+           endif
+         endif
        enddo
       endif
 
