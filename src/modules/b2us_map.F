@@ -1330,6 +1330,7 @@ cwdk  can be derived directly from data in that file
 
       if (allocated(m%strDiv) .and. .not. m%hasTopologicalData) then
        indd = maxval(m%strDiv)
+       m%nDiv=indd
        if (indd.gt.0) then
         allocate(m%ifdiv(maxval(m%strDiv)))
         allocate(m%ivdiv(maxval(m%strDiv)))
@@ -1352,6 +1353,7 @@ cwdk  can be derived directly from data in that file
         end do
         allocate(m%divFc(icount))
         allocate(m%divFcOr(icount))
+        m%nfcDiv=icount
         m%divFcOr = 0.0_R8
         m%divFc(1:icount) = indFc(1:icount)
         do i = 1, indd ! now re-order them
