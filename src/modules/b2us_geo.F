@@ -492,10 +492,12 @@
 *   ..identify cells on closed surfaces
       if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
         mpg%cvOnClosedSurface = .false.
+*       GENERAL region numbers are producer-local.  Use the physical
+*       tube connectivity instead of assuming that the core is ftReg 1.
         do iCv = 1, mpg%nCv
           iFt = mpg%cvFt(iCv)
           if (iFt.ge.1 .and. iFt.le.mpg%nFt) then
-            mpg%cvOnClosedSurface(iCv) = mpg%ftReg(iFt).eq.1
+            mpg%cvOnClosedSurface(iCv) = ftIsClosed(iFt)
           endif
         enddo
       else
