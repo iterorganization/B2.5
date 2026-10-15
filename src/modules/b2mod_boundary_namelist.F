@@ -1687,14 +1687,22 @@ cc BCPOT
         end do
       end do
 
-      if (allocated(m%strDiv)) then
-        indd = maxval(m%strDiv)
+      indd = divertor_target_count(m)
+      if (indd.gt.0) then
+        call xertst(allocated(m%divFcP).and.allocated(m%divFc).and.
+     &    allocated(m%divFcOr),
+     &    'bc_to_struct -- target arrays are not allocated')
+        call xertst(size(m%divFcP,1).ge.indd,
+     &    'bc_to_struct -- target pointer array is too small')
+        m%divFcOr = 0.0_R8
         do i = 1, indd
           do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
             iFc = m%divFc(j)
             do k = 1, size(m%bcFc)
               if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
             end do
+            call xertst(abs(m%divFcOr(j)).eq.1.0_R8,
+     &        'bc_to_struct -- target face has no orientation')
           end do
         end do
       end if

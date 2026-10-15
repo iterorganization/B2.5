@@ -13,6 +13,7 @@
      .          init_mapping, get_version,
      .          calc_add_connectivity, update_guard_cells,
      .          validate_divertor_targets,
+     .          divertor_target_count,
      .          is_pfr_cell, is_divertor_cell
 
       type, public :: mapping
@@ -138,6 +139,27 @@
         end type mapping
 
       contains
+
+**********************************************************************
+
+!> Return the number of mapped divertor targets.
+!! Explicit topology carries an authoritative target count independently
+!! of its strike-point records.  Metadata-free input retains the legacy
+!! convention in which the largest strike-target label gives the count.
+      integer function divertor_target_count(m)
+      implicit none
+      type(mapping), intent(in) :: m
+
+      divertor_target_count = 0
+      if (m%hasTopologicalData) then
+        divertor_target_count = m%nDiv
+      else if (allocated(m%strDiv)) then
+        if (size(m%strDiv).gt.0)
+     .    divertor_target_count = maxval(m%strDiv)
+      endif
+
+      return
+      end function divertor_target_count
 
 **********************************************************************
 

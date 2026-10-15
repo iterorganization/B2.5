@@ -38,6 +38,7 @@ c 2002-09-11: logic revised
       use b2mod_ranges
       use b2us_plasma
       use b2us_data
+      use b2us_map, only: divertor_target_count
       use b2mod_switches
 #ifdef NAGF95
       use f90_unix       ! IGNORE
@@ -151,7 +152,7 @@ c
      *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   boundary_namelist, neutrals_namelist,
-     *   sput_frac_flag, use_eirene, geometryType
+     *   sput_frac_flag, use_eirene, geometryType, nTargets
 
 #ifndef NO_CDF
       real (kind=R8) ::
@@ -2825,6 +2826,9 @@ c
             write(*,*) 'b2plot: fixed target pressure summary is not ',
      1        'defined for general topology; skipping summary'
           else
+          nTargets = divertor_target_count(mpg)
+          call xertst(nTargets.gt.0,
+     1      'b2plot: standard target pressure summary has no targets')
           suml=0.0_R8
           sumr=0.0_R8
           do iy=max(1,mpg%ifdiv(1)),mpg%divFcP(1,2)
@@ -2834,9 +2838,8 @@ c
      1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
      2                geo%cvX(iCv)*geo%cvHy(iCv)
           end do
-          do iy=max(1,mpg%ifdiv(maxval(mpg%strDiv))),
-     .          mpg%divFcP(maxval(mpg%strDiv),2)
-            iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+iy-1)
+          do iy=max(1,mpg%ifdiv(nTargets)),mpg%divFcP(nTargets,2)
+            iFc=mpg%divFc(mpg%divFcP(nTargets,1)+iy-1)
             iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
             sumr(1)=sumr(1)+mach(iCv,0)*
      1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*

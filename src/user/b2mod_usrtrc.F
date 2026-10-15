@@ -168,6 +168,7 @@ c*** Column headers:
       data hlp_hs / 'i', 'o' /
 
       integer, private :: gridGeometry, plasmaGeometry
+      integer, private :: nTargets
       integer, private :: inner_m4, outer_m4
 
       integer, save :: n_pad_str
@@ -1184,8 +1185,8 @@ c West target
       end do !}
 c East target
       hlp_ppwo=0.0_R8
-      do i=1,mpg%divFcP(maxval(mpg%strDiv),2) !{
-        iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+      do i=1,mpg%divFcP(nTargets,2) !{
+        iFc=mpg%divFc(mpg%divFcP(nTargets,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
@@ -1204,22 +1205,22 @@ c East target
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
         do is=1,nnatmi
-          wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
+          wnutrg(i,nTargets)=wnutrg(i,nTargets)+
      .     ewlda_res(is,ias)-ewldea_res(is,ias)
         end do
         do is=1,nnmoli
-          wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
+          wnutrg(i,nTargets)=wnutrg(i,nTargets)+
      .     ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
         end do
-        wnutpr(i,maxval(mpg%strDiv))=ewldrp_res(ias)
+        wnutpr(i,nTargets)=ewldrp_res(ias)
 #endif
-        wtarg(i,maxval(mpg%strDiv))=
-     .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
-     .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
-        hlp_ppwo=max(hlp_ppwo,wtarg(i,maxval(mpg%strDiv)))
+        wtarg(i,nTargets)=
+     .   (hlp-wnutpr(i,nTargets))*trgshp(nTargets)
+     .       +wnutrg(i,nTargets)+wrad(i,nTargets,0)
+        hlp_ppwo=max(hlp_ppwo,wtarg(i,nTargets))
       end do !}
 
-      if(maxval(mpg%strDiv).gt.2) then !{
+      if(nTargets.gt.2) then !{
         hlp_pwou=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
@@ -1292,22 +1293,22 @@ c East target
       end if !}
 
       if(debug_flags(81).gt.0) then
-        write(frm,700) maxval(mpg%strDiv)
+        write(frm,700) nTargets
   700   format('(',i3,'(2x,e15.7))')
 C total power
         open(3,file='targb2.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C neutrals
         open(3,file='targb2n.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wnutrg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wnutrg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C plasma
-        do j=1,maxval(mpg%strDiv)
+        do j=1,nTargets
           do i=1,mpg%divFcP(j,2)
             wtarg(i,itg_tmp(j))=
      .       (wtarg(i,itg_tmp(j))-wnutrg(i,itg_tmp(j))
@@ -1315,14 +1316,14 @@ C plasma
           end do
         end do
         open(3,file='targb2pl.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C radiation
         open(3,file='targb2r.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wrad(i,itg_tmp(j),0),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wrad(i,itg_tmp(j),0),j=1,nTargets)
         end do
         close(3)
       end if
@@ -1541,7 +1542,7 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
 
       if(hlp_dbg) print *,'### print_isat=',print_isat    !###
 
-      do k=1,maxval(mpg%strDiv) !{
+      do k=1,nTargets !{
         d=1.0e18_R8
         if(mpg%ifdiv(k).le.0.or.
      .     mpg%ifdiv(k).gt.mpg%divFcP(k,2)) then !{
@@ -1555,7 +1556,7 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
           iFt=mpg%cvFt(iCv)
           e=2.0_R8*pz(iCv)
           if(e.gt.0.0_R8.and.iFt.gt.0) then
-            if (nimp.gt.0.and.k.le.maxval(mpg%strDiv)/2) then
+            if (nimp.gt.0.and.k.le.nTargets/2) then
               d=min(d,pz(imp(ft_imp(iFt)))/e)
             else
               d=min(d,pz(omp(ft_omp(iFt)))/e)
@@ -1806,7 +1807,7 @@ caap tbd add nphoti
      .                            ex,mgl3_tmp,n,ntrc_tmp !###
         if(ex .and. mgl3_tmp.gt.0) then !{
           i=0
-          do k=1,maxval(mpg%strDiv) !{
+          do k=1,nTargets !{
             n=n+1
             i=i+1
             hlp_hdr(n)=hlp_hg3(itg_tmp(k))
@@ -1950,6 +1951,20 @@ c-----------------------------------------------------------------------
       tab=char(9)
       gridGeometry = geometryId( mpg, geo, 1 )
       plasmaGeometry = geometryId( mpg, geo, 2 )
+      nTargets = divertor_target_count(mpg)
+
+      if (gridGeometry.eq.GEOMETRY_GENERAL) then
+        write(*,*) 'b2usrtri: user.trc is not defined for GENERAL'
+        filedata(ltrc) = .false.
+        return
+      endif
+      if (nTargets.le.0) then
+        write(*,*) 'b2usrtri: no standard targets; disabling user.trc'
+        filedata(ltrc) = .false.
+        return
+      endif
+      call xertst(nTargets.le.size(itg_tmp),
+     ,  'b2usrtri: too many standard targets')
 
 c*** private-flux inner/outer follow the target reordering
       call is_upper_single_null(mpg, geo, lusn)
@@ -2246,13 +2261,13 @@ c
       if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_hg2
       n=n+ngl2_tmp
       mgl3_tmp=0
-      do k=1,maxval(mpg%strDiv) !{
+      do k=1,nTargets !{
         if(print_isat) mgl3_tmp=mgl3_tmp+1
       end do !}
       ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
       if(ex .and. mgl3_tmp.gt.0) then !{
         i=0
-        do k=1,maxval(mpg%strDiv) !{
+        do k=1,nTargets !{
           n=n+1
           i=i+1
           hlp_hdr(n)=hlp_hg3(itg_tmp(k))

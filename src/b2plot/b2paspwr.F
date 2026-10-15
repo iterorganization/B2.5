@@ -11,6 +11,7 @@ c***  square meter. ig-1000 cells are treated as "close to the targets"
 c======================================================================
       use helper
       use b2mod_types
+      use b2us_map, only: divertor_target_count
       use b2mod_diag
       use b2mod_geometry, only: geometryId, GEOMETRY_GENERAL
       use b2mod_ipmain
@@ -70,7 +71,9 @@ c======================================================================
      &    // 'for general topology; skipping power summary'
         return
       endif
-      if (ntrgts.eq.0) ntrgts=maxval(mpg%strDiv)
+      if (ntrgts.eq.0) ntrgts=divertor_target_count(mpg)
+      call xertst(ntrgts.gt.0.and.ntrgts.le.ntrgsx,
+     &  'b2paspwr: invalid number of standard targets')
       n_hlp=ntrgts*m_hlp+m_hlpa
 
 c*** Calculate the input power for each divertor

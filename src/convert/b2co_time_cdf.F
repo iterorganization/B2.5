@@ -79,7 +79,8 @@
      &      gridGeometry.eq.GEOMETRY_SN.or.
      &      gridGeometry.eq.GEOMETRY_CDN.or.
      &      gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
-     &      gridGeometry.eq.GEOMETRY_DDN_TOP) ntgt = mpg%nDiv
+     &      gridGeometry.eq.GEOMETRY_DDN_TOP)
+     &    ntgt = divertor_target_count(mpg)
         lgeo_dn = gridGeometry.eq.GEOMETRY_CDN.or.
      &            gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
      &            gridGeometry.eq.GEOMETRY_DDN_TOP

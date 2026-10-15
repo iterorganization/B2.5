@@ -172,7 +172,7 @@ c
       integer lun
       parameter (lun=96)
       integer indsrf(stacklen)
-      integer i, j, im, in, is, iCv, iFc, k, n, nindsrf
+      integer i, j, im, in, is, iCv, iFc, k, n, nindsrf, nTargets
       logical found
       character frm*128, filename*256, extralabel*256
 c=======================================================================
@@ -188,6 +188,12 @@ c*** serialized order of GENERAL targets does not define that pairing.
         if (geometryId(mpg,gm,1).eq.GEOMETRY_GENERAL) then
           write(0,*) 'b2paux: particle.flx requires standard '
      &      // 'inner/outer targets; skipping for general topology'
+          return
+        endif
+        nTargets = divertor_target_count(mpg)
+        if (nTargets.le.0) then
+          write(0,*) 'b2paux: particle.flx requires at least one '
+     &      // 'target; skipping output'
           return
         endif
         allocate(hlp_pi(nspecies),hlp_po(nspecies))
@@ -213,10 +219,10 @@ c*** serialized order of GENERAL targets does not define that pairing.
             hlp_pi(k)=hlp_pi(k)+mpg%divFcOr(mpg%divFcP(1,1)+i-1)*
      .       (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
           end do
-          do i=1,mpg%divFcP(maxval(mpg%strDiv),2)
-            iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+          do i=1,mpg%divFcP(nTargets,2)
+            iFc=mpg%divFc(mpg%divFcP(nTargets,1)+i-1)
             hlp_po(k)=hlp_po(k)+
-     .        mpg%divFcOr(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)*
+     .        mpg%divFcOr(mpg%divFcP(nTargets,1)+i-1)*
      .       (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
           end do
         end do
