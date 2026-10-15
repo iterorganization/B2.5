@@ -257,7 +257,8 @@
 *     null, bottom-primary disconnected double null, and top-primary
 *     disconnected double null.  Value 13 denotes general topology.
 *     B2.5 validates a declared standard family against the explicit
-*     topology and otherwise uses the general family at runtime.
+*     topology and rejects the input when the declaration and metadata
+*     are inconsistent.
 *
 *     nXpt, nOpt, nStr, nTgc, nDiv, nfcDiv - integers
 *     Numbers of X-points, O-points, strike points, closed-contour

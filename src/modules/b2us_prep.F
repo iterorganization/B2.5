@@ -2576,7 +2576,7 @@ c*** every required record even when the corresponding count is zero.
       m%tgDiv = 0
       m%tgFsID = 0
 
-c*** Match GOAT's definition: an X-point is primary exactly when it is a
+c*** Match the GOAT definition: an X-point is primary exactly when it is a
 c*** vertex of a core (cvReg=1) topology cell.
       do i = 1, m%nXpt
         call xertst (m%Xpt(i).gt.0.and.m%Xpt(i).le.m%nVx,
@@ -2613,7 +2613,7 @@ c*** case with an artificial separatrix but no physical X-point.
       enddo
 
 c*** Assign a tangency shared by two target chains to the later target,
-c*** matching GOAT's vertex-to-target assignment order.  A tangency not
+c*** matching the GOAT vertex-to-target assignment order.  A tangency not
 c*** on a target retains target ID zero.
       do i = 1, m%nTgc
         call xertst (m%tgVx(i).gt.0.and.m%tgVx(i).le.m%nVx,

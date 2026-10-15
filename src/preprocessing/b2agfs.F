@@ -543,7 +543,7 @@
             call xerrab('read_traduitoutb2us: expected tgVx record')
           endif
 
-          ! GOAT's pointer table has the target ID followed by the
+          ! The GOAT pointer table has the target ID followed by the
           ! one-based packed-list start and face count.
           read(nrid,*,err=91) idcod, id
           if (streql('*cf:',idcod).and.streql('div',id)) then

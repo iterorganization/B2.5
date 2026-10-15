@@ -512,7 +512,6 @@
           mpg%cvOnClosedSurface = mpg%cvReg.eq.1
           write (*,*) 'Warning: unknown number of regions'
           write (*,*) 'Assuming core is region 1'
-          !call xerrab ('Unknown number of regions!')
         end if
       endif
 

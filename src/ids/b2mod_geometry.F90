@@ -965,7 +965,7 @@ contains
         return
     end if
 
-    ! Match GOAT's side test: use the O-point height when available,
+    ! Match the GOAT side test: use the O-point height when available,
     ! otherwise the centroid height of the core cells.
     if (mpg%nOpt.eq.1 .and. allocated(mpg%Opt)) then
         yRef = geo%vxY(mpg%Opt(1))
