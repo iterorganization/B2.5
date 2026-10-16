@@ -7,7 +7,10 @@
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
      .          init_geometry, calc_conn, check_geometry,
-     .          divide_by_area, split_face_flux, pitch
+     .          is_upper_single_null,
+     .          init_mapping_periodicity,
+     .          divide_by_area, split_face_flux, pitch,
+     .          validate_target_references
 
       type, public :: geometry
 
@@ -72,7 +75,10 @@
 
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
-        logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
+        logical :: psi_increasing
+!       true if psi increases from core to the reference surface
+        logical :: psi_orientation_defined
+!       psi_increasing has a derived or legacy-defined meaning
 
         real (kind=R8) :: signmf  ! Direction of poloidal field
                                   ! +1: Going clockwise around plasma
@@ -222,6 +228,8 @@
 
       g%LSN = .true.
       g%psi_increasing = .true.
+      g%psi_orientation_defined = .false.
+      g%signmf = 1.0_R8
 
       g%Qalfmax = 1.0e-3_R8
       g%Qalfmin = 1.0e-3_R8
@@ -456,14 +464,14 @@
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
-     &           inv_dist(mpg%nVx)
+     &           inv_dist(mpg%nVx), ivtmp(2)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv), psi_active,
      .  dpsi_max_down, dpsi_max_up
-      logical match_found
+      logical match_found, isUSN, ftIsClosed(mpg%nFt)
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
@@ -473,23 +481,38 @@
       nFc = mpg%nFc
       nVx = mpg%nVx
 
-*   ..identify periodicity
-      call is_periodic( mpg, gm )
+*   ..classify flux tubes and identify periodicity
+      ftIsClosed = .false.
+      if ((mpg%hasTopologicalData .and. mpg%topoID.eq.0) .or.
+     &    mpg%nnreg(0).eq.1) then
+        call classify_flux_tubes (mpg, ftIsClosed)
+      endif
+      call is_periodic (mpg, ftIsClosed)
 
 *   ..identify cells on closed surfaces
-      if (mpg%nnreg(0).eq.1) then
-        mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
-      else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
-     .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
-        mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
-      else if (mpg%nnreg(0).eq.7) then
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        mpg%cvOnClosedSurface = .false.
+        do iCv = 1, mpg%nCv
+          iFt = mpg%cvFt(iCv)
+          if (iFt.ge.1 .and. iFt.le.mpg%nFt) then
+            mpg%cvOnClosedSurface(iCv) = mpg%ftReg(iFt).eq.1
+          endif
+        enddo
       else
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
-        write (*,*) 'Warning: unknown number of regions'
-        write (*,*) 'Assuming core is region 1'
-        !call xerrab ('Unknown number of regions!')
-      end if
+        if (mpg%nnreg(0).eq.1) then
+          mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
+        else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
+     .           mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
+          mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
+        else if (mpg%nnreg(0).eq.7) then
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+        else
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+          write (*,*) 'Warning: unknown number of regions'
+          write (*,*) 'Assuming core is region 1'
+          !call xerrab ('Unknown number of regions!')
+        end if
+      endif
 
 *   ..set weights for interpolation to faces
       if (switch%fcVol_style.eq.0) then
@@ -995,6 +1018,9 @@
 *   ..determine topology and sign of psi derivative
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        call derive_general_psi_orientation(mpg, gm)
+      else
       iXpt = 0
       if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
@@ -1063,8 +1089,11 @@
         end if
        end do
       end if
+      gm%psi_orientation_defined = .true.
+      endif
 
-      if (mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
+      if (.not.(mpg%hasTopologicalData.and.mpg%topoID.eq.0).and.
+     >    mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
      > then
 !! look for the inactive X-point as the one closest in psi-space to the
 !! active X-point
@@ -1092,6 +1121,7 @@
       if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
         do while (t0.eq.0.0_R8.and.iFt.lt.mpg%nFt)
           iFt=iFt+1
+          if (mpg%ftCvP(iFt,2).le.0) cycle
           iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
           if (mpg%cvOnClosedSurface(iCv)) then
             do i=1,mpg%ftCvP(iFt,2)
@@ -1111,6 +1141,7 @@
         iFt=0
         do while (gm%signmf.eq.0.0_R8.and.iFt.lt.mpg%nFt)
           iFt=iFt+1
+          if (mpg%ftCvP(iFt,2).le.0) cycle
           iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
           if (mpg%cvOnClosedSurface(iCv)) then
             do i=1,mpg%ftCvP(iFt,2)
@@ -1128,10 +1159,47 @@
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
-      if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
+      if (temp_ignore_geo.eq.0.or.
+     &    (mpg%hasTopologicalData.and.mpg%geometryID.eq.13)) then
 !! Invert the divertor face list if not in correct psi order
-!! and identify strike point face indices
-      if (allocated(mpg%strDiv)) then
+!! and identify target reference face indices
+!   ..GOAT target regions remain clockwise, while the legacy
+!     single-null API numbers the inner target first
+      call is_upper_single_null(mpg, gm, isUSN)
+      if (isUSN) then
+        ivtmp = mpg%divFcP(1,:)
+        mpg%divFcP(1,:) = mpg%divFcP(2,:)
+        mpg%divFcP(2,:) = ivtmp
+        do i = 1, mpg%nStr
+          if (mpg%strDiv(i).eq.1) then
+            mpg%strDiv(i) = 2
+          else if (mpg%strDiv(i).eq.2) then
+            mpg%strDiv(i) = 1
+          endif
+        enddo
+        if (allocated(mpg%tgDiv)) then
+          do i = 1, mpg%nTgc
+            if (mpg%tgDiv(i).eq.1) then
+              mpg%tgDiv(i) = 2
+            else if (mpg%tgDiv(i).eq.2) then
+              mpg%tgDiv(i) = 1
+            endif
+          enddo
+        endif
+        write (*,*) 'b2us_geo: upper single null, first divertor '
+     &    // 'set to inner, second to outer'
+      endif
+
+      if (mpg%hasTopologicalData.and.mpg%geometryID.eq.13) then
+!! True GENERAL retains its serialized target lists, but the historical
+!! ifdiv/ivdiv interface has no unique meaning for an arbitrary target.
+!! Consumers that require standard target labels are disabled for this
+!! family; b2time retains only its midplane data.
+        write (*,*) 'b2us_geo: general topology, preserving serialized '
+     &    // 'target order and leaving legacy references unset'
+        mpg%ifdiv = 0
+        mpg%ivdiv = 0
+      else if (allocated(mpg%strDiv).and.size(mpg%strDiv).gt.0) then
        do i = 1, maxval(mpg%strDiv)
         match_found = .false.
         k = 1
@@ -1214,10 +1282,12 @@
                     mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                     mpg%ivdiv(i) = iVx1
                   else ! Two strike points on the same target
-                       ! We label the active one only
+                       ! Keep the primary iFssep strike when a DDN
+                       ! target is also crossed by iFssep2.
                     if (mpg%vxFs(iVx1).eq.mpg%iFssep.or.
      &                 (mpg%vxFs(iVx1).eq.mpg%iFssep2.and.
-     &                  mpg%iFssep2.gt.0)) then
+     &                  mpg%iFssep2.gt.0.and.
+     &                  mpg%vxFs(mpg%ivdiv(i)).ne.mpg%iFssep)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx1
                     end if
@@ -1233,10 +1303,12 @@
                     mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                     mpg%ivdiv(i) = iVx2
                   else ! Two strike points on the same target
-                       ! We label the active one only
+                       ! Keep the primary iFssep strike when a DDN
+                       ! target is also crossed by iFssep2.
                     if (mpg%vxFs(iVx2).eq.mpg%iFssep.or.
      &                 (mpg%vxFs(iVx2).eq.mpg%iFssep2.and.
-     &                  mpg%iFssep2.gt.0)) then
+     &                  mpg%iFssep2.gt.0.and.
+     &                  mpg%vxFs(mpg%ivdiv(i)).ne.mpg%iFssep)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx2
                     end if
@@ -1250,6 +1322,8 @@
      &   'No matching face found for strike point !')
        end do
       end if
+
+      if (mpg%nDiv.gt.0) call validate_target_references(mpg)
 
       else
         write (*,*) 'Warning: temp_ignore_geo switch used'
@@ -1317,16 +1391,79 @@
 
 ***********************************************************************
 
+!> Validate the derived reference used to split each target.  A target
+!! may deliberately have no serialized strike/tangency reference, in
+!! which case both indices remain zero.
+      subroutine validate_target_references(mpg)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+      integer :: i, iFc, iList
+      external xerrab
+
+      if (mpg%nDiv.le.0) return
+      if (.not.allocated(mpg%ifdiv).or.
+     &    .not.allocated(mpg%ivdiv))
+     &  call xerrab('validate_target_references: reference arrays ' //
+     &    'not allocated')
+      if (size(mpg%ifdiv).lt.mpg%nDiv.or.
+     &    size(mpg%ivdiv).lt.mpg%nDiv) then
+        write(*,*) 'validate_target_references: array sizes, nDiv = ',
+     &    size(mpg%ifdiv), size(mpg%ivdiv), mpg%nDiv
+        call xerrab('validate_target_references: reference arrays ' //
+     &    'too small')
+      endif
+
+      do i = 1, mpg%nDiv
+        if (mpg%ifdiv(i).eq.0.and.mpg%ivdiv(i).eq.0) cycle
+        if (mpg%ifdiv(i).eq.0.or.mpg%ivdiv(i).eq.0) then
+          write(*,*) 'validate_target_references: target/face index/',
+     &      'vertex = ', i, mpg%ifdiv(i), mpg%ivdiv(i)
+          call xerrab('validate_target_references: partially set ' //
+     &      'target reference')
+        endif
+        if (mpg%ifdiv(i).lt.1.or.
+     &      mpg%ifdiv(i).gt.mpg%divFcP(i,2)) then
+          write(*,*) 'validate_target_references: target/index/',
+     &      'count = ', i, mpg%ifdiv(i), mpg%divFcP(i,2)
+          call xerrab('validate_target_references: reference face ' //
+     &      'index out of range')
+        endif
+        if (mpg%ivdiv(i).lt.1.or.mpg%ivdiv(i).gt.mpg%nVx) then
+          write(*,*) 'validate_target_references: target/vertex/nVx = ',
+     &      i, mpg%ivdiv(i), mpg%nVx
+          call xerrab('validate_target_references: reference vertex ' //
+     &      'out of range')
+        endif
+
+        iList = mpg%divFcP(i,1)+mpg%ifdiv(i)-1
+        iFc = mpg%divFc(iList)
+        if (all(mpg%fcVx(iFc,1:2).ne.mpg%ivdiv(i))) then
+          write(*,*) 'validate_target_references: target/list/face/',
+     &      'vertex/face vertices = ', i, iList, iFc, mpg%ivdiv(i),
+     &      mpg%fcVx(iFc,1:2)
+          call xerrab('validate_target_references: reference vertex ' //
+     &      'is not on selected target face')
+        endif
+      enddo
+
+      return
+      end subroutine validate_target_references
+
+***********************************************************************
+
       subroutine calc_conn (mpg, gm)
       use b2us_map
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: iCv, iCv1, iCv2, ic
-      integer :: iFc, iFs, iFt, iVx, i, j
+      integer :: iFc, iFs, iFt, iVx, i, j, k, l,
+     &  nFsEndpoint, nFsFaceAtVertex
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), L1, L2, LL,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
+      logical :: fsIsClosedLoop
       external ipgeti, my_out_us, xerrab
 
       call ipgeti ('b2mndr_conn_style', conn_style)
@@ -1431,10 +1568,29 @@
           gm%fsConn(iFs) = gm%fsConn(iFs) +
      &                     gm%fcHt(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)
         end do
+        nFsEndpoint = 0
+        do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+          iFc = mpg%fsFc(i)
+          do k = 1, 2
+            iVx = mpg%fcVx(iFc,k)
+            nFsFaceAtVertex = 0
+            do l = mpg%vxFcP(iVx,1),
+     &        mpg%vxFcP(iVx,1)+mpg%vxFcP(iVx,2)-1
+              if (mpg%fcFs(mpg%vxFc(l)).eq.iFs) then
+                nFsFaceAtVertex = nFsFaceAtVertex + 1
+              endif
+            enddo
+            if (nFsFaceAtVertex.eq.1) then
+              nFsEndpoint = nFsEndpoint + 1
+            endif
+          enddo
+        enddo
+        fsIsClosedLoop = mpg%fsFcP(iFs,2).gt.0 .and. nFsEndpoint.eq.0
         iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
-        if (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
+        if (fsIsClosedLoop .or.
+     &      ((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
      &       (mpg%cvOnClosedSurface(iCv2).or.iCv2.gt.mpg%nCi)) .or.
      &        iFs.eq.mpg%iFssep .or.
      &       (iFs.eq.mpg%iFssep2.and.mpg%iFssep2.gt.0)) then
@@ -1480,74 +1636,270 @@
 
 **********************************************************************
 
-      subroutine is_periodic ( mpg, gm )
+      subroutine classify_flux_tubes (mpg, ftIsClosed)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+      logical, intent(out) :: ftIsClosed(mpg%nFt)
+      integer :: i, iCv, iCv1, iCv2, iFc, iFt, iHead, iStart,
+     &  iTail, nSelf, nTerminal, nTubeCv, nTubeFc
+      integer, allocatable :: cellOwner(:), faceOwner(:), incident(:),
+     &  neighborCount(:), neighbor1(:), neighbor2(:), queue(:)
+      logical, allocatable :: inTube(:), visited(:)
+      external xerrab
+
+*   Classify each flux tube from its declared cell and poloidal-face
+*   connectivity. A physical tube must be one connected path with two
+*   terminal faces or one connected cycle with no terminal faces.
+      allocate (cellOwner(mpg%nCv), faceOwner(mpg%nFc),
+     &  incident(mpg%nCv),
+     &  neighborCount(mpg%nCv), neighbor1(mpg%nCv),
+     &  neighbor2(mpg%nCv), queue(mpg%nCv),
+     &  inTube(mpg%nCv), visited(mpg%nCv))
+      cellOwner = 0
+      faceOwner = 0
+      ftIsClosed = .false.
+
+      do iFt = 1, mpg%nFt
+        nTubeCv = mpg%ftCvP(iFt,2)
+        nTubeFc = mpg%ftFcP(iFt,2)
+        if (nTubeCv.lt.0 .or. nTubeFc.lt.0) then
+          write (*,*) 'b2us_geo: negative list count for flux tube ',
+     &                iFt
+          call xerrab ('Malformed flux-tube connectivity')
+          return
+        endif
+        if (nTubeCv.gt.0) then
+          iStart = mpg%ftCvP(iFt,1)
+          if (iStart.lt.1 .or.
+     &        iStart+nTubeCv-1.gt.size(mpg%ftCv)) then
+            write (*,*) 'b2us_geo: invalid cell list for flux tube ',
+     &                  iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+        endif
+        if (nTubeFc.gt.0) then
+          iStart = mpg%ftFcP(iFt,1)
+          if (iStart.lt.1 .or.
+     &        iStart+nTubeFc-1.gt.size(mpg%ftFc)) then
+            write (*,*) 'b2us_geo: invalid face list for flux tube ',
+     &                  iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+        endif
+
+        inTube = .false.
+        incident = 0
+        neighborCount = 0
+        neighbor1 = 0
+        neighbor2 = 0
+        visited = .false.
+        nSelf = 0
+        nTerminal = 0
+
+        if (nTubeCv.eq.0) then
+          if (nTubeFc.ne.0) then
+            write (*,*) 'b2us_geo: faces on empty flux tube ', iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          cycle
+        endif
+
+        do i = mpg%ftCvP(iFt,1),
+     &           mpg%ftCvP(iFt,1)+nTubeCv-1
+          iCv = mpg%ftCv(i)
+          if (iCv.lt.1 .or. iCv.gt.mpg%nCv) then
+            write (*,*) 'b2us_geo: invalid cell in flux tube ', iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          if (inTube(iCv) .or. cellOwner(iCv).ne.0) then
+            write (*,*) 'b2us_geo: duplicate cell in flux tube ', iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          inTube(iCv) = .true.
+          cellOwner(iCv) = iFt
+        enddo
+
+*       Face-less guard-only tubes do not represent periodic physical
+*       surfaces. calc_conn validates and handles their geometry
+*       separately.
+        if (nTubeFc.eq.0) cycle
+
+        do i = mpg%ftFcP(iFt,1),
+     &           mpg%ftFcP(iFt,1)+nTubeFc-1
+          iFc = mpg%ftFc(i)
+          if (iFc.lt.1 .or. iFc.gt.mpg%nFc) then
+            write (*,*) 'b2us_geo: invalid face in flux tube ', iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          if (faceOwner(iFc).ne.0) then
+            write (*,*) 'b2us_geo: duplicate flux-tube face ', iFc
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          faceOwner(iFc) = iFt
+          iCv1 = mpg%fcCv(iFc,1)
+          iCv2 = mpg%fcCv(iFc,2)
+          if (iCv1.lt.1 .or. iCv1.gt.mpg%nCv .or.
+     &        iCv2.lt.1 .or. iCv2.gt.mpg%nCv) then
+            write (*,*) 'b2us_geo: invalid face cells in flux tube ',
+     &                  iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+
+          if (inTube(iCv1) .and. inTube(iCv2)) then
+            if (iCv1.eq.iCv2) then
+              nSelf = nSelf + 1
+              incident(iCv1) = incident(iCv1) + 1
+            else
+              incident(iCv1) = incident(iCv1) + 1
+              incident(iCv2) = incident(iCv2) + 1
+              neighborCount(iCv1) = neighborCount(iCv1) + 1
+              neighborCount(iCv2) = neighborCount(iCv2) + 1
+              if (neighborCount(iCv1).eq.1) then
+                neighbor1(iCv1) = iCv2
+              else if (neighborCount(iCv1).eq.2) then
+                neighbor2(iCv1) = iCv2
+              endif
+              if (neighborCount(iCv2).eq.1) then
+                neighbor1(iCv2) = iCv1
+              else if (neighborCount(iCv2).eq.2) then
+                neighbor2(iCv2) = iCv1
+              endif
+            endif
+          else if (inTube(iCv1) .or. inTube(iCv2)) then
+            nTerminal = nTerminal + 1
+            if (inTube(iCv1)) then
+              incident(iCv1) = incident(iCv1) + 1
+            else
+              incident(iCv2) = incident(iCv2) + 1
+            endif
+          else
+            write (*,*) 'b2us_geo: face has no cell in flux tube ',
+     &                  iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+        enddo
+
+        do i = mpg%ftCvP(iFt,1),
+     &           mpg%ftCvP(iFt,1)+nTubeCv-1
+          iCv = mpg%ftCv(i)
+          if (incident(iCv).ne.2 .or.
+     &        neighborCount(iCv).gt.2) then
+            write (*,*) 'b2us_geo: branched or incomplete flux tube ',
+     &                  iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+        enddo
+
+        if (nTubeCv.eq.1) then
+          if (nTerminal.eq.0 .and. nSelf.eq.2) then
+            ftIsClosed(iFt) = .true.
+          else if (nTerminal.ne.2 .or. nSelf.ne.0) then
+            write (*,*) 'b2us_geo: invalid one-cell flux tube ', iFt
+            call xerrab ('Malformed flux-tube connectivity')
+            return
+          endif
+          cycle
+        endif
+
+        if (nSelf.ne.0 .or.
+     &      (nTerminal.ne.0 .and. nTerminal.ne.2)) then
+          write (*,*) 'b2us_geo: invalid endpoints for flux tube ',
+     &                iFt
+          call xerrab ('Malformed flux-tube connectivity')
+          return
+        endif
+
+*       Traverse through bounded neighbor lists. This verifies that a
+*       nominal path or cycle has no disconnected component.
+        iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
+        iHead = 1
+        iTail = 1
+        queue(1) = iCv
+        visited(iCv) = .true.
+        do while (iHead.le.iTail)
+          iCv = queue(iHead)
+          iHead = iHead + 1
+          if (neighborCount(iCv).ge.1) then
+            if (.not.visited(neighbor1(iCv))) then
+              iTail = iTail + 1
+              queue(iTail) = neighbor1(iCv)
+              visited(neighbor1(iCv)) = .true.
+            endif
+          endif
+          if (neighborCount(iCv).ge.2) then
+            if (.not.visited(neighbor2(iCv))) then
+              iTail = iTail + 1
+              queue(iTail) = neighbor2(iCv)
+              visited(neighbor2(iCv)) = .true.
+            endif
+          endif
+        enddo
+        if (iTail.ne.nTubeCv) then
+          write (*,*) 'b2us_geo: disconnected flux tube ', iFt
+          call xerrab ('Malformed flux-tube connectivity')
+          return
+        endif
+        ftIsClosed(iFt) = nTerminal.eq.0
+      enddo
+
+      deallocate (cellOwner, faceOwner, incident, neighborCount,
+     &  neighbor1, neighbor2, queue, inTube, visited)
+      return
+      end subroutine classify_flux_tubes
+
+**********************************************************************
+
+      subroutine is_periodic (mpg, ftIsClosed)
       use b2us_map
       implicit none
       type(mapping), intent(inout) :: mpg
-      type(geometry), intent(in) :: gm
-      integer :: iCvm, iCvn, iCvp, iCv, iFc, iFt, icount
-      logical :: closed, end_found, all_closed
+      logical, intent(in) :: ftIsClosed(mpg%nFt)
 
       mpg%periodic_bc = 0
+      if (mpg%hasTopologicalData .and. mpg%topoID.eq.0) then
+        if (mpg%nFt.gt.0) then
+          if (any(ftIsClosed)) mpg%periodic_bc = 1
+        endif
+        return
+      endif
       if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.5) then
         mpg%periodic_bc = 1
       else if (mpg%nnreg(0).eq.1) then
-        all_closed = mpg%nFt.gt.0
-        do iFt = 1, mpg%nFt
-          closed = .false.
-          iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
-          if (mpg%ftCvP(iFt,2).gt.1) then
-            iCvm = iCv
-            iCvn = 0
-            do iFc = mpg%cvFcP(iCv,1),
-     &               mpg%cvFcP(iCv,1) + mpg%cvFcP(iCv,2) - 1
-              if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
-              if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCv) then
-                iCvn = mpg%fcCv(mpg%cvFc(iFc),2)
-              else
-                iCvn = mpg%fcCv(mpg%cvFc(iFc),1)
-              end if
-            end do
-            closed = iCvn.eq.0
-            end_found = iCvn.eq.0
-            do while (.not.end_found)
-              iCvp = 0
-              do iFc = mpg%cvFcP(iCvn,1),
-     &                 mpg%cvFcP(iCvn,1) + mpg%cvFcP(iCvn,2) - 1
-                if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
-                if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCvm) cycle
-                if (mpg%fcCv(mpg%cvFc(iFc),2).eq.iCvm) cycle
-                if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCvn) then
-                  iCvp = mpg%fcCv(mpg%cvFc(iFc),2)
-                else
-                  iCvp = mpg%fcCv(mpg%cvFc(iFc),1)
-                end if
-              end do
-              iCvm = iCvn
-              iCvn = iCvp
-              closed = iCvp.eq.iCv
-              end_found = closed .or. iCvp.eq.0
-            end do
-          else if (mpg%ftCvP(iFt,2).eq.1) then
-            icount = 0
-            iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
-            do iFc = mpg%cvFcP(iCv,1), mpg%cvFcP(iCv,1) +
-     &                                 mpg%cvFcP(iCv,2) - 1
-              if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
-              if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCv .and.
-     &            mpg%fcCv(mpg%cvFc(iFc),2).eq.iCv) icount = icount + 1
-            end do
-            closed = icount.eq.2
-          else if (mpg%ftCvP(iFt,2).eq.0) then
-            closed = .true.
-          end if
-          all_closed = all_closed .and. closed
-        end do
-        if (all_closed) mpg%periodic_bc = 1
+        if (mpg%nFt.gt.0) then
+          if (all(ftIsClosed)) mpg%periodic_bc = 1
+        endif
       end if
 
       return
       end subroutine is_periodic
+
+***********************************************************************
+
+      subroutine init_mapping_periodicity (mpg)
+      use b2us_map
+      implicit none
+      type(mapping), intent(inout) :: mpg
+      logical :: ftIsClosed(mpg%nFt)
+
+c*** Initialize only the connectivity-derived periodicity needed for
+c*** legacy geometry classification.  Unlike init_geometry, this does
+c*** not modify any stored metric or geometry quantities.
+      call classify_flux_tubes (mpg, ftIsClosed)
+      call is_periodic (mpg, ftIsClosed)
+
+      return
+      end subroutine init_mapping_periodicity
 
 ***********************************************************************
 
@@ -1623,6 +1975,8 @@ cxpb  and the radial value to 'radial' faces.
       integer, intent(in) :: ifc, ivx
       real(kind=R8), intent (inout) :: LL
       integer fc_current, vx_current, fc_next, vx1, vx2, j
+      integer nstep, max_steps
+      logical visited_face(mpg%nFc)
       logical found_next
 
 csc   This routine follows a flux surface starting from a vertex of a face
@@ -1632,6 +1986,10 @@ csc   than previous face, then identify next vertex
       fc_current = ifc
       vx_current = ivx
       found_next = .true.
+      nstep = 0
+      max_steps = mpg%nFc + 1
+      visited_face = .false.
+      visited_face(fc_current) = .true.
       do while (found_next)
          ! we have a new face, loop over all faces connected to the current vertex
          found_next = .false.
@@ -1641,6 +1999,7 @@ csc   than previous face, then identify next vertex
            if (fc_next==fc_current) cycle  ! we ingore the current face
            ! check if face belongs to same flux tube
            if (mpg%fcFs(fc_next)==ifs) then
+             if (visited_face(fc_next)) cycle
              ! face belongs to flux tube and is not the previous face
              found_next = .true.
              LL = LL + geo%fcHt(fc_next)*geo%fcBb(fc_next,3)/
@@ -1655,15 +2014,167 @@ csc   than previous face, then identify next vertex
              endif
              ! update the current face number
              fc_current = fc_next
+             visited_face(fc_current) = .true.
            endif
            ! stop the for loop if we found the next face
            if (found_next) exit
          enddo
+         if (found_next) then
+           nstep = nstep + 1
+           if (nstep.gt.max_steps) then
+             write (*,*) 'follow_flux_surface: runaway detected'
+             write (*,*) '  ifs, ifc, ivx = ', ifs, ifc, ivx
+             write (*,*) '  fc_current, vx_current = ',
+     &         fc_current, vx_current
+             write (*,*) '  nstep, max_steps = ', nstep, max_steps
+             call flush(6)
+             call xerrab ('follow_flux_surface runaway')
+           endif
+         endif
       end do! while
 
 
       return
       end subroutine follow_flux_surface
+
+***********************************************************************
+
+      subroutine derive_general_psi_orientation(m, g)
+      use b2us_map
+      implicit none
+c*** Derive the global direction of psi for an explicit GENERAL grid
+c*** without reducing its topology to one active X-point.  Every usable
+c*** core-side comparison at every primary X-point must agree.  If the
+c*** grid has no primary X-point, core-connected tangencies provide the
+c*** same comparison for limiter-like topology.  A coreless grid, an
+c*** all-constant psi field, or metadata without a usable core-side
+c*** comparison leaves the orientation explicitly undefined.
+      type(mapping), intent(in) :: m
+      type(geometry), intent(inout) :: g
+      integer :: i, j, k, iCv, iVx, iFs, iFsRef, nRef, nVote,
+     &           iVoteRef, iVoteInner
+      integer, allocatable :: refVx(:)
+      logical :: usePrimary, vote
+      real(kind=R8) :: psiRef, psiInner, psiScale, psiTol,
+     &                 psiVoteRef, psiVoteInner
+      external xerrab, xertst
+
+      g%psi_orientation_defined = .false.
+      nRef = 0
+      usePrimary = .false.
+
+      if (m%nXpt.gt.0.and.allocated(m%Xpt).and.
+     &    allocated(m%isPrimaryXpt)) then
+        call xertst(size(m%Xpt).eq.size(m%isPrimaryXpt),
+     &    'b2us_geo: inconsistent X-point primary metadata')
+        nRef = count(m%isPrimaryXpt.eq.1)
+        usePrimary = nRef.gt.0
+      end if
+
+      if (usePrimary) then
+        allocate(refVx(nRef))
+        refVx = pack(m%Xpt, m%isPrimaryXpt.eq.1)
+      else if (m%nTgc.gt.0.and.allocated(m%tgVx)) then
+        call xertst(size(m%tgVx).eq.m%nTgc,
+     &    'b2us_geo: inconsistent tangency-point metadata')
+        nRef = size(m%tgVx)
+        allocate(refVx(nRef))
+        refVx = m%tgVx
+      else
+        write (*,*) 'b2us_geo: general topology has no primary ' //
+     &    'X-point or tangency; psi orientation is undefined'
+        return
+      end if
+
+      call xertst(allocated(m%cvOnClosedSurface),
+     &  'b2us_geo: closed-surface state is not allocated')
+      nVote = 0
+      do i = 1, nRef
+        call xertst(refVx(i).gt.0.and.refVx(i).le.m%nVx,
+     &    'b2us_geo: psi-orientation reference vertex out of range')
+        iFsRef = m%vxFs(refVx(i))
+        if (iFsRef.le.0.or.iFsRef.gt.m%nFs) cycle
+        psiRef = g%fsPsi(iFsRef)
+
+        do j = m%vxCvP(refVx(i),1),
+     &           m%vxCvP(refVx(i),1)+m%vxCvP(refVx(i),2)-1
+          iCv = m%vxCv(j)
+          if (iCv.lt.1.or.iCv.gt.m%nCi) cycle
+          if (.not.m%cvOnClosedSurface(iCv)) cycle
+
+          do k = m%cvVxP(iCv,1),
+     &             m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1
+            iVx = m%cvVx(k)
+            iFs = m%vxFs(iVx)
+            if (iFs.le.0.or.iFs.gt.m%nFs.or.iFs.eq.iFsRef) cycle
+            psiInner = g%fsPsi(iFs)
+            psiScale = max(1.0_R8, abs(psiRef), abs(psiInner))
+            psiTol = 100.0_R8*epsilon(1.0_R8)*psiScale
+            if (abs(psiRef-psiInner).le.psiTol) cycle
+            vote = psiInner.lt.psiRef
+
+            if (nVote.eq.0) then
+              g%psi_increasing = vote
+              iVoteRef = refVx(i)
+              iVoteInner = iVx
+              psiVoteRef = psiRef
+              psiVoteInner = psiInner
+            else if (vote.neqv.g%psi_increasing) then
+              write (*,*) 'b2us_geo: inconsistent general-topology ' //
+     &          'psi-orientation comparisons'
+              write (*,*) '  first reference/core vertices ',
+     &          iVoteRef, iVoteInner, ' psi ',
+     &          psiVoteRef, psiVoteInner
+              write (*,*) '  conflicting reference/core vertices ',
+     &          refVx(i), iVx, ' psi ', psiRef, psiInner
+              call xerrab('b2us_geo: general-topology psi ' //
+     &          'orientation is not globally consistent')
+            end if
+            nVote = nVote + 1
+          end do
+        end do
+      end do
+
+      if (nVote.gt.0) then
+        g%psi_orientation_defined = .true.
+        if (usePrimary) then
+          write (*,*) 'b2us_geo: general-topology psi orientation ' //
+     &      'derived from primary X-point comparisons'
+        else
+          write (*,*) 'b2us_geo: general-topology psi orientation ' //
+     &      'derived from tangency comparisons'
+        end if
+      else
+        write (*,*) 'b2us_geo: no distinct core/reference psi ' //
+     &    'comparison; psi orientation is undefined'
+      end if
+
+      deallocate(refVx)
+      return
+      end subroutine derive_general_psi_orientation
+
+***********************************************************************
+
+      subroutine is_upper_single_null(m, gm, res)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: m
+      type(geometry), intent(in) :: gm
+      logical, intent(out) :: res
+      integer :: k, iVxP
+
+      res = .false.
+      if (.not.(m%hasTopologicalData.and.m%geometryID.eq.4.and.
+     &    m%nDiv.eq.2.and.allocated(m%Opt).and.
+     &    allocated(m%Xpt))) return
+      if (size(m%Opt).lt.1) return
+      iVxP = 0
+      do k = 1, size(m%Xpt)
+        if (m%isPrimaryXpt(k).eq.1) iVxP = m%Xpt(k)
+      enddo
+      if (iVxP.gt.0) res = gm%vxY(iVxP).gt.gm%vxY(m%Opt(1))
+      return
+      end subroutine is_upper_single_null
 
 ***********************************************************************
 
