@@ -8,7 +8,7 @@ module b2mod_geometry
 
     !! Geometry/topology IDs (obtain using function geometryId)
 
-    integer, parameter :: GEOMETRY_COUNT = 13
+    integer, parameter :: GEOMETRY_COUNT = 14
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -25,6 +25,7 @@ module b2mod_geometry
     integer, parameter :: GEOMETRY_STRUCTURED_SPACES = 10
     integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 11
     integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 12
+    integer, parameter :: GEOMETRY_GENERAL = 13
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
@@ -67,7 +68,8 @@ module b2mod_geometry
         &       5,  5,  6,  4, & !! GEOMETRY_STELLARATORISLAND
         &       1,  0,  0,  0, & !! GEOMETRY_STRUCTURED_SPACES
         &       7,  9,  2, 15, & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &       7,  9,  2, 15  & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &       7,  9,  2, 15, & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &       0,  0,  0,  0  & !! GEOMETRY_GENERAL
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
@@ -85,7 +87,8 @@ module b2mod_geometry
         &    'ISLAND     ', &
         &    'STRUCTURED ', &
         &    'LFS_SF-    ', &
-        &    'LFS_SF+    '  &
+        &    'LFS_SF+    ', &
+        &    'GENERAL    '  &
         &   /)
 
     character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
@@ -102,7 +105,8 @@ module b2mod_geometry
         &    'Stellarator island geometry                       ', &
         &    'Structured grid built with multiple 1-D spaces    ', &
         &    'Low-field side Snowflake-minus geometry           ', &
-        &    'Low-field side Snowflake-plus geometry            '  &
+        &    'Low-field side Snowflake-plus geometry            ', &
+        &    'General geometry and topology                     '  &
         &   /)
 
     !! Region names
@@ -343,7 +347,16 @@ module b2mod_geometry
         &   'Outer entrance baffle           ', 'First outer leg PFR wall        ', &
         &   'Second outer leg PFR wall       ', 'Third outer leg PFR wall        ', &
         &   'First outer leg baffle          ', 'Second outer leg baffle         ', &
-        &   'Third outer leg baffle          '                                      &
+        &   'Third outer leg baffle          ',                                     &
+        & & ! GEOMETRY_GENERAL
+        &   'Plasma'//repeat(' ',26),                                               &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                 &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU              &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -415,7 +428,12 @@ module b2mod_geometry
         &    1,  2,  3,  4,  5,  6,  7,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    2,  3,  6,  7,  9, 10, 11, 12, 13,  0,  0,  0,  0,  0,  0, &
         &   15, 17,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
-        &    1,  4,  5,  8, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26  &
+        &    1,  4,  5,  8, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, &
+        & & ! GEOMETRY_GENERAL
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
+        &    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -512,7 +530,14 @@ module b2mod_geometry
         &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
         &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
         &    SOUTH, SOUTH, SOUTH, NORTH, NORTH,                               &
-        &    NORTH,                                              NODIRECTION  &
+        &    NORTH,                                              NODIRECTION, &
+        & & ! GEOMETRY_GENERAL
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION                                         &
         & &
         &  /), &
         & (/REGION_NUMBER_MAX, GEOMETRY_COUNT/) )
@@ -537,11 +562,50 @@ contains
     integer, intent(in) :: object
     integer :: i, j, iCv, nActive
     real(kind=R8) :: Xpsi_active, Xpsi_snowflake
-    logical :: active, is_above_plasma
+    logical :: active, is_above_plasma, declaredOk
     logical, allocatable :: is_active(:)
+    character(len=96) :: reason
     external xerrab, xertst
 
     call xertst ( object.eq.1.or.object.eq.2, 'incorrect object setting in geometryId')
+
+    ! Explicit topology metadata is authoritative. Trust a declared
+    ! standard family only after checking it against the serialized
+    ! records. Reject malformed declarations rather than mixing the
+    ! declared basic family with GEOMETRY_GENERAL behavior.
+    if (mpg%hasTopologicalData) then
+        geometryId = GEOMETRY_GENERAL
+        if (mpg%geometryID.ge.GEOMETRY_LINEAR .and. &
+          & mpg%geometryID.le.GEOMETRY_DDN_TOP) then
+            call validateDeclaredGeometry(mpg, geo, declaredOk, reason)
+            if (declaredOk) then
+                geometryId = mpg%geometryID
+                if (firstgmid(object)) call logmsg(LOGDEBUG, &
+                  & "b2mod_geometry.geometryId(): using declared " // &
+                  & "GEOMETRY_ID")
+            else
+                write(*,'(a,i0)') &
+                  & "b2mod_geometry.geometryId(): invalid " // &
+                  & "GEOMETRY_ID ", mpg%geometryID
+                write(*,'(a,a)') &
+                  & "  topology metadata check failed: ", trim(reason)
+                call xerrab("Declared GEOMETRY_ID is inconsistent " // &
+                  & "with explicit topology metadata")
+            end if
+        else if (mpg%geometryID.eq.GEOMETRY_GENERAL) then
+            if (firstgmid(object)) call logmsg(LOGDEBUG, &
+              & "b2mod_geometry.geometryId(): declared " // &
+              & "GEOMETRY_GENERAL")
+        else
+            write(*,'(a,i0)') &
+              & "b2mod_geometry.geometryId(): unsupported " // &
+              & "GEOMETRY_ID ", mpg%geometryID
+            call xerrab("Unsupported declared GEOMETRY_ID in " // &
+              & "explicit topology metadata")
+        end if
+        firstgmid(object) = .false.
+        return
+    end if
 
     if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR
@@ -827,6 +891,145 @@ contains
     call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )
 
   end function geometryId
+
+
+  !> Validate a serialized basic-family GEOMETRY_ID against the
+  !> topology records supplied by the grid producer.
+  subroutine validateDeclaredGeometry( mpg, geo, ok, reason )
+    use b2mod_types &
+     & , only: R8
+    use b2us_map &
+     & , only: mapping
+    use b2us_geo &
+     & , only: geometry
+    implicit none
+    type(mapping), intent(in) :: mpg
+    type(geometry), intent(in) :: geo
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: reason
+    integer :: nPrimExp, nRegBase, iCv, iXpt, nCore
+    integer :: nPrimBelow, nPrimAbove, nSecBelow, nSecAbove
+    real(kind=R8) :: yRef
+
+    ! GOAT primary means that the X-point is connected directly to the
+    ! core: CDN has two primaries, while DDN has one primary and one
+    ! secondary X-point.
+    select case (mpg%geometryID)
+    case (GEOMETRY_LINEAR, GEOMETRY_CYLINDER)
+        nPrimExp = 0
+        nRegBase = 1
+    case (GEOMETRY_LIMITER)
+        nPrimExp = 0
+        nRegBase = 2
+    case (GEOMETRY_SN)
+        nPrimExp = 1
+        nRegBase = 4
+    case (GEOMETRY_CDN)
+        nPrimExp = 2
+        nRegBase = 8
+    case default
+        nPrimExp = 1
+        nRegBase = 8
+    end select
+
+    ok = .false.
+    reason = ' '
+    if (mpg%nOpt.ge.2) then
+        reason = 'more than one O-point'
+        return
+    end if
+    if (maxval(mpg%cvReg).lt.nRegBase) then
+        reason = 'too few volume regions'
+        return
+    end if
+    if (mpg%geometryID.eq.GEOMETRY_LINEAR .and. &
+      & mpg%periodic_bc.gt.0) then
+        reason = 'linear grid is periodic'
+        return
+    end if
+    if (mpg%geometryID.eq.GEOMETRY_CYLINDER .and. &
+      & mpg%periodic_bc.ne.1) then
+        reason = 'cylindrical grid is not periodic'
+        return
+    end if
+    if (.not.allocated(mpg%isPrimaryXpt)) then
+        ok = .true.
+        return
+    end if
+    if (count(mpg%isPrimaryXpt.eq.1).ne.nPrimExp) then
+        reason = 'primary X-point count'
+        return
+    end if
+    if (nPrimExp.eq.0) then
+        ok = .true.
+        return
+    end if
+
+    ! Match GOAT's side test: use the O-point height when available,
+    ! otherwise the centroid height of the core cells.
+    if (mpg%nOpt.eq.1 .and. allocated(mpg%Opt)) then
+        yRef = geo%vxY(mpg%Opt(1))
+    else
+        yRef = 0.0_R8
+        nCore = 0
+        do iCv = 1, mpg%nCi
+            if (mpg%cvReg(iCv).ge.1 .and. &
+              & mpg%cvReg(iCv).le.nRegBase .and. &
+              & mod(mpg%cvReg(iCv)-1,4).eq.0) then
+                yRef = yRef + geo%cvY(iCv)
+                nCore = nCore + 1
+            end if
+        end do
+        if (nCore.eq.0) then
+            reason = 'no core cells'
+            return
+        end if
+        yRef = yRef/real(nCore, R8)
+    end if
+
+    nPrimBelow = 0
+    nPrimAbove = 0
+    nSecBelow = 0
+    nSecAbove = 0
+    do iXpt = 1, mpg%nXpt
+        if (geo%vxY(mpg%Xpt(iXpt)).ge.yRef) then
+            if (mpg%isPrimaryXpt(iXpt).eq.1) then
+                nPrimAbove = nPrimAbove + 1
+            else
+                nSecAbove = nSecAbove + 1
+            end if
+        else
+            if (mpg%isPrimaryXpt(iXpt).eq.1) then
+                nPrimBelow = nPrimBelow + 1
+            else
+                nSecBelow = nSecBelow + 1
+            end if
+        end if
+    end do
+
+    select case (mpg%geometryID)
+    case (GEOMETRY_SN)
+        ok = (nPrimBelow.eq.1 .and. &
+           & nPrimAbove+nSecAbove.eq.0) .or. &
+           & (nPrimAbove.eq.1 .and. nPrimBelow+nSecBelow.eq.0)
+    case (GEOMETRY_CDN)
+        ok = nPrimBelow.eq.1 .and. nPrimAbove.eq.1
+    case (GEOMETRY_DDN_BOTTOM)
+        if (mpg%isClassicalGrid.eq.1) then
+            ok = nPrimBelow.eq.1
+        else
+            ok = nPrimBelow.eq.1 .and. nSecAbove.ge.1
+        end if
+    case (GEOMETRY_DDN_TOP)
+        if (mpg%isClassicalGrid.eq.1) then
+            ok = nPrimAbove.eq.1
+        else
+            ok = nPrimAbove.eq.1 .and. nSecBelow.ge.1
+        end if
+    end select
+    if (.not.ok) reason = 'X-point positions relative to the core'
+
+  end subroutine validateDeclaredGeometry
 
 
   !> Return number of regions of a given type for a given grid geometry.

@@ -23,6 +23,11 @@
       use b2mod_b2cmfs
       use b2mod_connectivity
       use b2mod_running_average
+      use b2mod_geometry
+     .  , only : geometryId, GEOMETRY_LINEAR, GEOMETRY_CYLINDER,
+     .           GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_CDN,
+     .           GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP,
+     .           GEOMETRY_GENERAL
       use carre_constants
 
       implicit none
@@ -31,6 +36,7 @@
 
       public :: calc_mapping,
      .          prep_geometry,
+     .          finalize_legacy_topology,
      .          prep_plasma, prep_plasma_ext, prep_state, prep_average,
      .          to_struct_plasma,
      .          conv_regions, conv_midplane                             !srv 16.11.22
@@ -90,6 +96,19 @@
       m%nx    = nx
       m%ny    = ny
       m%nncut = nncut
+
+!  Structured-grid conversion starts without explicit topology records.
+!  The legacy finalizer can promote the inferred state after geometry
+!  exists.
+      m%hasTopologicalData = .false.
+      m%topoID = 0
+      m%geometryID = GEOMETRY_GENERAL
+      m%nXpt = 0
+      m%nOpt = 0
+      m%nStr = 0
+      m%nTgc = 0
+      m%nDiv = 0
+      m%nfcDiv = 0
 
       classical = isClassicalGrid(cflags)
 
@@ -2458,6 +2477,165 @@
 
       return
       end subroutine calc_mapping
+
+***********************************************************************
+
+      subroutine finalize_legacy_topology(m, gm)
+      implicit none
+      type(mapping), intent(inout) :: m
+      type(geometry), intent(in) :: gm
+      integer, parameter :: TM_GENERAL = 0, TM_SN = 1, TM_DN = 2,
+     .                      TM_LINEAR = 3, TM_LIMITER = 4
+      integer :: i, j, k, istart, iend, nreg
+      external xertst
+
+c*** Promote the established structured-grid inference to the explicit
+c*** record set required by b2fgmtry 03.002.002.  Keep the metadata flag
+c*** false until geometryId has used the unchanged legacy classifier.
+      call xertst (.not.m%hasTopologicalData,
+     .  'finalize_legacy_topology: metadata already present')
+      call init_mapping (m)
+      call init_mapping_periodicity (m)
+
+      nreg = maxval(m%cvReg)
+      select case (nreg)
+      case (1, 2, 4, 8)
+        m%geometryID = geometryId(m, gm, 1)
+      case default
+        m%geometryID = GEOMETRY_GENERAL
+      end select
+
+      select case (m%geometryID)
+      case (GEOMETRY_LINEAR, GEOMETRY_CYLINDER)
+        m%topoID = TM_LINEAR
+      case (GEOMETRY_LIMITER)
+        m%topoID = TM_LIMITER
+      case (GEOMETRY_SN)
+        m%topoID = TM_SN
+      case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
+        m%topoID = TM_DN
+      case default
+        m%topoID = TM_GENERAL
+        m%geometryID = GEOMETRY_GENERAL
+      end select
+
+c*** The legacy inference stores target counts implicitly in the array
+c*** shapes.  Materialize them before validating the serialized record
+c*** set.
+      if (allocated(m%divFcP)) then
+        m%nDiv = size(m%divFcP,1)
+      else
+        m%nDiv = 0
+      endif
+      if (allocated(m%divFc)) then
+        m%nfcDiv = size(m%divFc)
+      else
+        m%nfcDiv = 0
+      endif
+
+      call xertst (m%nXpt.eq.0.or.allocated(m%Xpt),
+     .  'finalize_legacy_topology: missing X-point list')
+      call xertst (m%nStr.eq.0.or.allocated(m%strVx),
+     .  'finalize_legacy_topology: missing strike-point list')
+      call xertst (m%nTgc.eq.0.or.allocated(m%tgVx),
+     .  'finalize_legacy_topology: missing tangency-point list')
+      call xertst (m%nStr.eq.0.or.allocated(m%strDiv),
+     .  'finalize_legacy_topology: missing strike-target list')
+      call xertst (m%nDiv.eq.0.or.allocated(m%divFcP),
+     .  'finalize_legacy_topology: missing target pointers')
+      call xertst (m%nfcDiv.eq.0.or.allocated(m%divFc),
+     .  'finalize_legacy_topology: missing target-face list')
+
+c*** Allocate zero-sized lists as well, because the .002 writer emits
+c*** every required record even when the corresponding count is zero.
+      if (.not.allocated(m%Xpt)) allocate(m%Xpt(0))
+      if (.not.allocated(m%strVx)) allocate(m%strVx(0))
+      if (.not.allocated(m%tgVx)) allocate(m%tgVx(0))
+      if (.not.allocated(m%strDiv)) allocate(m%strDiv(0))
+      if (.not.allocated(m%divFcP)) allocate(m%divFcP(0,2))
+      if (.not.allocated(m%divFc)) allocate(m%divFc(0))
+      if (.not.allocated(m%strVxP)) allocate(m%strVxP(0,2))
+
+      m%nOpt = 0
+      if (allocated(m%Opt)) deallocate(m%Opt)
+      allocate(m%Opt(0))
+
+      if (allocated(m%isPrimaryXpt)) deallocate(m%isPrimaryXpt)
+      if (allocated(m%XptFsID)) deallocate(m%XptFsID)
+      if (allocated(m%strXpt)) deallocate(m%strXpt)
+      if (allocated(m%strFsID)) deallocate(m%strFsID)
+      if (allocated(m%tgDiv)) deallocate(m%tgDiv)
+      if (allocated(m%tgFsID)) deallocate(m%tgFsID)
+      allocate(m%isPrimaryXpt(m%nXpt), m%XptFsID(m%nXpt))
+      allocate(m%strXpt(m%nStr), m%strFsID(m%nStr))
+      allocate(m%tgDiv(m%nTgc), m%tgFsID(m%nTgc))
+      m%isPrimaryXpt = 0
+      m%XptFsID = 0
+      m%strXpt = 0
+      m%strFsID = 0
+      m%tgDiv = 0
+      m%tgFsID = 0
+
+c*** Match GOAT's definition: an X-point is primary exactly when it is a
+c*** vertex of a core (cvReg=1) topology cell.
+      do i = 1, m%nXpt
+        call xertst (m%Xpt(i).gt.0.and.m%Xpt(i).le.m%nVx,
+     .    'finalize_legacy_topology: invalid X-point vertex')
+        m%XptFsID(i) = m%vxFs(m%Xpt(i))
+        call xertst (m%XptFsID(i).gt.0.and.
+     .               m%XptFsID(i).le.m%nFs,
+     .    'finalize_legacy_topology: invalid X-point surface')
+        do j = m%vxCvP(m%Xpt(i),1),
+     .           m%vxCvP(m%Xpt(i),1)+m%vxCvP(m%Xpt(i),2)-1
+          if (m%cvReg(m%vxCv(j)).eq.1) m%isPrimaryXpt(i) = 1
+        enddo
+      enddo
+
+c*** The inferred strVxP grouping identifies the X-point that owns each
+c*** strike.  A zero parent remains possible only for a legacy linear
+c*** case with an artificial separatrix but no physical X-point.
+      do i = 1, m%nXpt
+        istart = m%strVxP(i,1)
+        iend = istart + m%strVxP(i,2) - 1
+        do j = istart, iend
+          call xertst (j.gt.0.and.j.le.m%nStr,
+     .      'finalize_legacy_topology: invalid strike pointer')
+          m%strXpt(j) = m%Xpt(i)
+        enddo
+      enddo
+      do i = 1, m%nStr
+        call xertst (m%strVx(i).gt.0.and.m%strVx(i).le.m%nVx,
+     .    'finalize_legacy_topology: invalid strike vertex')
+        m%strFsID(i) = m%vxFs(m%strVx(i))
+        call xertst (m%strFsID(i).gt.0.and.
+     .               m%strFsID(i).le.m%nFs,
+     .    'finalize_legacy_topology: invalid strike surface')
+      enddo
+
+c*** Assign a tangency shared by two target chains to the later target,
+c*** matching GOAT's vertex-to-target assignment order.  A tangency not
+c*** on a target retains target ID zero.
+      do i = 1, m%nTgc
+        call xertst (m%tgVx(i).gt.0.and.m%tgVx(i).le.m%nVx,
+     .    'finalize_legacy_topology: invalid tangency vertex')
+        m%tgFsID(i) = m%vxFs(m%tgVx(i))
+        call xertst (m%tgFsID(i).gt.0.and.
+     .               m%tgFsID(i).le.m%nFs,
+     .    'finalize_legacy_topology: invalid tangency surface')
+        do j = 1, m%nDiv
+          istart = m%divFcP(j,1)
+          iend = istart + m%divFcP(j,2) - 1
+          do k = istart, iend
+            if (any(m%fcVx(m%divFc(k),:).eq.m%tgVx(i)))
+     .        m%tgDiv(i) = j
+          enddo
+        enddo
+      enddo
+
+      m%hasTopologicalData = .true.
+
+      return
+      end subroutine finalize_legacy_topology
 
 ***********************************************************************
 
