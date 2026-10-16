@@ -16,7 +16,7 @@ contains
 
 #ifndef SOLPS4_3
   subroutine b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-   write_2d, ncid, batch_only, iret)
+   ntgt, nc, write_2d, ncid, batch_only, iret)
     use b2mod_constants
     use b2mod_user_namelist &
     , only : nimp, nomp
@@ -24,8 +24,8 @@ contains
     implicit none
 #   include <netcdf.inc>
     type (mapping), intent(in) :: mpg
-    integer, intent(in) :: ns, ismain, ismain0, nnatmi, nnmoli
-    integer nCv, nFc, nc, iret
+    integer, intent(in) :: ns, ismain, ismain0, nnatmi, nnmoli, ntgt, nc
+    integer nCv, nFc, iret
     integer nya, nyi
     integer nybl, nytl, nytr, nybr
     integer, intent(in) :: write_2d
@@ -127,22 +127,22 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_dim(ncid, 'nFc', mpg%nFc, nfcdim)
       call check_cdf_status(iret)
-      if (maxval(mpg%strDiv).ge.1) then
+      if (ntgt.ge.1) then
         nybl = mpg%divFcP(1,2)
         iret = nf_def_dim(ncid, 'nybl', nybl, nybldim)
         call check_cdf_status(iret)
       end if
-      if (maxval(mpg%strDiv).ge.2) then
-        nybr = mpg%divFcP(maxval(mpg%strDiv),2)
+      if (ntgt.ge.2) then
+        nybr = mpg%divFcP(ntgt,2)
         iret = nf_def_dim(ncid, 'nybr', nybr, nybrdim)
         call check_cdf_status(iret)
       end if
-      if (maxval(mpg%strDiv).ge.4) then
+      if (ntgt.ge.4) then
         nytl = mpg%divFcP(2,2)
         iret = nf_def_dim(ncid, 'nytl', nytl, nytldim)
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.3) then
+      if (ntgt.ge.3) then
         nytr = mpg%divFcP(3,2)
         iret = nf_def_dim(ncid, 'nytr', nytr, nytrdim)
         call check_cdf_status(iret)
@@ -185,7 +185,6 @@ contains
       iret = nf_def_dim(ncid, 'batch', ncunlim, batchdim)
       call check_cdf_status(iret)
     end if
-    nc = max(1,mpg%nXpt)
     iret = nf_def_dim(ncid, 'nc', nc, ncdim)
     call check_cdf_status(iret)
     ! define variables
@@ -216,7 +215,7 @@ contains
         iret = nf_def_var(ncid, 'dsa', NCDOUBLE, 1, dims, dsaid)
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.1) then
+      if (ntgt.ge.1) then
         dims(1) = nybldim
         iret = nf_def_var(ncid, 'fclistl', NCDOUBLE, 1, dims, fclistlid)
         call check_cdf_status(iret)
@@ -231,7 +230,7 @@ contains
         iret = nf_def_var(ncid, 'dsLP', NCDOUBLE, 1, dims, dsLPid)
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.2) then
+      if (ntgt.ge.2) then
         dims(1) = nybrdim
         iret = nf_def_var(ncid, 'fclistr', NCDOUBLE, 1, dims, fclistrid)
         call check_cdf_status(iret)
@@ -246,7 +245,7 @@ contains
         iret = nf_def_var(ncid, 'dsRP', NCDOUBLE, 1, dims, dsRPid)
         call check_cdf_status(iret) 
       endif
-      if (maxval(mpg%strDiv).ge.4) then
+      if (ntgt.ge.4) then
         dims(1) = nytldim
         iret = nf_def_var(ncid, 'fclisttl', NCDOUBLE, 1, dims, fclisttlid)
         call check_cdf_status(iret)
@@ -261,7 +260,7 @@ contains
         iret = nf_def_var(ncid, 'dsTLP', NCDOUBLE, 1, dims, dsTLPid)
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.3) then
+      if (ntgt.ge.3) then
         dims(1) = nytrdim
         iret = nf_def_var(ncid, 'fclisttr', NCDOUBLE, 1, dims, fclisttrid)
         call check_cdf_status(iret)
@@ -628,7 +627,7 @@ contains
       iret = nf_def_var(ncid, 'fchsapp', NCDOUBLE, 2, dims, fchsappid)
       call check_cdf_status(iret)
 
-      if (maxval(mpg%strDiv).ge.1) then
+      if (ntgt.ge.1) then
         dims(1) = nybldim
         dims(2) = nsdim
         dims(3) = timedim
@@ -689,7 +688,7 @@ contains
           call check_cdf_status(iret)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.2) then
+      if (ntgt.ge.2) then
         dims(1) = nybrdim
         dims(2) = nsdim
         dims(3) = timedim
@@ -750,7 +749,7 @@ contains
           call check_cdf_status(iret)
         endif
       end if
-      if(maxval(mpg%strDiv).ge.4) then
+      if(ntgt.ge.4) then
         dims(1) = nytldim
         dims(2) = nsdim
         dims(3) = timedim
@@ -811,7 +810,7 @@ contains
           call check_cdf_status(iret)
         endif
       endif
-      if(maxval(mpg%strDiv).ge.3) then
+      if(ntgt.ge.3) then
         dims(1) = nytrdim
         dims(2) = nsdim
         dims(3) = timedim
@@ -1209,7 +1208,7 @@ contains
         iret = nf_put_att_text(ncid, dsaid, 'units', 2, 'm ')
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.1) then
+      if (ntgt.ge.1) then
         iret = nf_put_att_text(ncid, fclistlid, 'long_name', 29, 'cell faces list, Western edge')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlistlid, 'long_name', 34, 'control volumes list, Western edge')
@@ -1229,7 +1228,7 @@ contains
         iret = nf_put_att_text(ncid, dsLPid, 'units', 3, 'm^2')
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.2) then
+      if (ntgt.ge.2) then
         iret = nf_put_att_text(ncid, fclistrid, 'long_name', 29, 'cell faces list, Eastern edge')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlistrid, 'long_name', 34, 'control volumes list, Eastern edge')
@@ -1249,7 +1248,7 @@ contains
         iret = nf_put_att_text(ncid, dsRPid, 'units', 3, 'm^2')
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.4) then
+      if (ntgt.ge.4) then
         iret = nf_put_att_text(ncid, fclisttlid, 'long_name', 39, 'cell faces list, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlisttlid, 'long_name', 44, 'control volumes list, upper inboard divertor')
@@ -1269,7 +1268,7 @@ contains
         iret = nf_put_att_text(ncid, dsTLPid, 'units', 3, 'm^2')
         call check_cdf_status(iret)
       endif
-      if (maxval(mpg%strDiv).ge.3) then
+      if (ntgt.ge.3) then
         iret = nf_put_att_text(ncid, fclisttrid, 'long_name', 40, 'cell faces list, upper outboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, cvlisttrid, 'long_name', 45, 'control volumes list, upper outboard divertor')
@@ -1713,6 +1712,7 @@ contains
       call check_cdf_status(iret)
 
       ! Western edge (inboard divertor for LSN, outboard divertor for USN) quantities
+      if (ntgt.ge.1) then
       iret = nf_put_att_text(ncid, na3dlid, 'long_name', 35, 'fluid species density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, na3dlid, 'units', 4, 'm^-3')
@@ -1822,6 +1822,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
+      endif
 
       ! inboard midplane quantities
       iret = nf_put_att_text(ncid, na3diid, 'long_name', 39, 'fluid species density, inboard midplane')
@@ -1923,7 +1924,7 @@ contains
       endif
 
       ! upper inboard divertor quantities
-      if(maxval(mpg%strDiv).ge.4) then
+      if(ntgt.ge.4) then
         iret = nf_put_att_text(ncid, na3dtlid, 'long_name', 45, 'fluid species density, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, na3dtlid, 'units', 4, 'm^-3')
@@ -2119,6 +2120,7 @@ contains
       endif
 
       ! Eastern edge (outboard divertor for LSN, inboard divertor for USN) quantities
+      if (ntgt.ge.2) then
       iret = nf_put_att_text(ncid, na3drid, 'long_name', 35, 'fluid species density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, na3drid, 'units', 4, 'm^-3')
@@ -2213,9 +2215,10 @@ contains
         iret = nf_put_att_double(ncid, tmb3drid, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
       endif
+      endif
 
       ! upper outboard divertor quantities
-      if(maxval(mpg%strDiv).ge.3) then
+      if(ntgt.ge.3) then
         iret = nf_put_att_text(ncid, na3dtrid, 'long_name', 46, 'fluid species density, upper outboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, na3dtrid, 'units', 4, 'm^-3')

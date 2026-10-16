@@ -12,6 +12,7 @@ c======================================================================
       use helper
       use b2mod_types
       use b2mod_diag
+      use b2mod_geometry, only: geometryId, GEOMETRY_GENERAL
       use b2mod_ipmain
       use b2mod_b2plot
       use b2mod_b2plot_wall_loading
@@ -64,6 +65,11 @@ c
 #endif
 c======================================================================
 
+      if (geometryId(mpg,geo,1).eq.GEOMETRY_GENERAL) then
+        write(0,*) 'b2paspwr: fixed target labels are not defined '
+     &    // 'for general topology; skipping power summary'
+        return
+      endif
       if (ntrgts.eq.0) ntrgts=maxval(mpg%strDiv)
       n_hlp=ntrgts*m_hlp+m_hlpa
 
@@ -79,7 +85,7 @@ c*** Calculate the power radiated near the targets
         hlp_pwr_in(l)=0.0_R8
         hlp_rad_div(l)=0.0_R8
         hlp_rad_trg(l)=0.0_R8
-        do j=mpg%ifdiv(l),mpg%divFcP(l,2)
+        do j=max(1,mpg%ifdiv(l)),mpg%divFcP(l,2)
           iFc = mpg%divFc(mpg%divFcP(l,1) + j - 1)
           iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           iCn=iCv

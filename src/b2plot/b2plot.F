@@ -2821,16 +2821,20 @@ c
      1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
             end do
           end if
+          if (geometryId(mpg,geo,1).eq.GEOMETRY_GENERAL) then
+            write(*,*) 'b2plot: fixed target pressure summary is not ',
+     1        'defined for general topology; skipping summary'
+          else
           suml=0.0_R8
           sumr=0.0_R8
-          do iy=mpg%ifdiv(1),mpg%divFcP(1,2)
+          do iy=max(1,mpg%ifdiv(1)),mpg%divFcP(1,2)
             iFc=mpg%divFc(mpg%divFcP(1,1)+iy-1)
             iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
             suml(1)=suml(1)+mach(iCv,0)*
      1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
      2                geo%cvX(iCv)*geo%cvHy(iCv)
           end do
-          do iy=mpg%ifdiv(maxval(mpg%strDiv)),
+          do iy=max(1,mpg%ifdiv(maxval(mpg%strDiv))),
      .          mpg%divFcP(maxval(mpg%strDiv),2)
             iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+iy-1)
             iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -2839,12 +2843,12 @@ c
      2                geo%cvX(iCv)*geo%cvHy(iCv)
           end do
           if(mpg%nncut.eq.2) then
-            do iy=mpg%ifdiv(2),mpg%divFcP(2,2)
+            do iy=max(1,mpg%ifdiv(2)),mpg%divFcP(2,2)
               suml(2)=suml(2)+mach(iCv,0)*
      1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
      2                geo%cvX(iCv)*geo%cvHy(iCv)
             end do
-            do iy=mpg%ifdiv(3),mpg%divFcP(3,2)
+            do iy=max(1,mpg%ifdiv(3)),mpg%divFcP(3,2)
               sumr(2)=sumr(2)+mach(iCv,0)*
      1                sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)*
      2                geo%cvX(iCv)*geo%cvHy(iCv)
@@ -2880,6 +2884,7 @@ c
             write(*,*) 'Pressure drop (top & bottom): ',
      1             sumr(2)/sumimp,suml(1)/sumimp
           end select
+          endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('conn')
 ! New treatment using connectivity arrays

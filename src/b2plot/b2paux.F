@@ -136,6 +136,7 @@ c***  fraction.he and pressure.ntr for summary plots;
 c***  oleg.dat with the data for Oleg
 c=======================================================================
       use b2mod_types
+      use b2mod_geometry, only: geometryId, GEOMETRY_GENERAL
       use b2mod_diag
       use b2mod_b2plot
       use b2mod_b2cmpa
@@ -182,6 +183,13 @@ c
         call b2phortn(lun,mpg,gm,st)
       else if(ig.eq.-3) then
 c-----------------------------------------------------------------------
+c*** particle.flx assumes two standard inner/outer target slots.  The
+c*** serialized order of GENERAL targets does not define that pairing.
+        if (geometryId(mpg,gm,1).eq.GEOMETRY_GENERAL) then
+          write(0,*) 'b2paux: particle.flx requires standard '
+     &      // 'inner/outer targets; skipping for general topology'
+          return
+        endif
         allocate(hlp_pi(nspecies),hlp_po(nspecies))
         allocate(hlp_at(natmi,2),hlp_na(natmi,2))
         if (nmoli.gt.0) allocate(hlp_ml(nmoli,2),hlp_nm(nmoli,2))

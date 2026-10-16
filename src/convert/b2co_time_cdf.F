@@ -10,6 +10,9 @@
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2mod_geometry
+     , , only : geometryId, GEOMETRY_LIMITER, GEOMETRY_SN,
+     ,          GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
       use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nimp, imp, icsepimp,
@@ -23,7 +26,8 @@
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
       integer ns, ismain, ismain0, nnatmi, nnmoli
-      integer :: i
+      integer :: i, gridGeometry, ntgt, nc
+      logical :: lgeo_dn
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)
       real (kind=R8), allocatable :: dsl(:), dsi(:), dsa(:),
@@ -37,7 +41,7 @@
 #endif
 #endif
       integer :: status
-      integer :: nc, batchdim, nastep, nbatch, ntstep, timedim
+      integer :: batchdim, nastep, nbatch, ntstep, timedim
       integer :: idim, ivar, iatt, iret, ib, it, ih,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
@@ -67,6 +71,26 @@
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+      ntgt = 0
+      lgeo_dn = .false.
+      if (mpg%hasTopologicalData) then
+        gridGeometry = geometryId(mpg, geo, 1)
+        if (gridGeometry.eq.GEOMETRY_LIMITER.or.
+     &      gridGeometry.eq.GEOMETRY_SN.or.
+     &      gridGeometry.eq.GEOMETRY_CDN.or.
+     &      gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
+     &      gridGeometry.eq.GEOMETRY_DDN_TOP) ntgt = mpg%nDiv
+        lgeo_dn = gridGeometry.eq.GEOMETRY_CDN.or.
+     &            gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
+     &            gridGeometry.eq.GEOMETRY_DDN_TOP
+        nc = 1
+        if (lgeo_dn) nc = 2
+      else
+        if (allocated(mpg%strDiv)) then
+          if (size(mpg%strDiv).gt.0) ntgt = maxval(mpg%strDiv)
+        endif
+        nc = max(mpg%nXpt,1)
+      endif
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
@@ -79,7 +103,7 @@
         endif
         call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
       endif
-      do i = 1, maxval(mpg%strDiv)
+      do i = 1, ntgt
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcP(i,2)) =
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
@@ -91,7 +115,8 @@
           call output_ds_fc
      &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
         case (2)
-          if (mpg%nnreg(0).ge.7) then
+          if ((mpg%hasTopologicalData.and.lgeo_dn).or.
+     &        (.not.mpg%hasTopologicalData.and.mpg%nnreg(0).ge.7)) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif
@@ -120,7 +145,6 @@
         deallocate(fclist)
       end do
 #ifndef NO_CDF
-      nc = max(mpg%nXpt,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
 c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
@@ -262,7 +286,8 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi,
-     .                 nnmoli, write_2d, ncid2, batch_only, iret)
+     .                 nnmoli, ntgt, nc, write_2d,
+     .                 ncid2, batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 
