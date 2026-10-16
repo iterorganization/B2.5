@@ -370,7 +370,7 @@ c**********************************
 !     Loop over isonuclear sequences
       do is=0,ns-1
         k = b2espcr(is)
-        do it=1,mpg%nStr
+        do it=1,mpg%nDiv
           do iy=1,mpg%divFcP(it,2)
             iFc=mpg%divFc(mpg%divFcP(it,1) + iy - 1)
             if (is.eq.0)

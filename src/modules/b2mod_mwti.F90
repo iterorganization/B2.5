@@ -54,14 +54,10 @@ contains
     use b2us_map
     use b2us_plasma
     use b2mod_geometry &
-    , only : geometryID, GEOMETRY_CDN
+    , only : geometryID, GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_CDN, &
+             GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
     use b2mod_user_namelist &
     , only : omp, imp, nimp, nomp, icsepimp
-#ifndef NO_CDF
-    use b2mod_geometry &
-    , only : GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
-             GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS
-#endif
     use b2mod_user_namelist &
     , only : icsepomp
     use b2mod_switches
@@ -154,10 +150,13 @@ contains
     real (kind=R8), allocatable, save :: dsLT(:), dsRT(:), dsTLT(:), dsTRT(:)
     real (kind=R8), allocatable, save :: dsLP(:), dsRP(:), dsTLP(:), dsTRP(:)
     integer, save :: write_2d = 0
-    integer, save :: nc, ntstep, nastep
+    integer, save :: nc, ntstep, nastep, nregCompat
     integer, save :: gridGeometry, plasmaGeometry
+    logical, save :: lgeo_limiter, lgeo_sn, lgeo_dn, lgeo_cdn, &
+                     lgeo_ddn_bottom, lgeo_ddn_top, luse_targets
+    integer, save :: ntgt
     integer, allocatable :: fclist(:)
-    logical :: file_exists
+    logical :: file_exists, ldivc
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
     integer, allocatable :: cvlist(:), cnlist(:)
@@ -213,6 +212,26 @@ contains
     if (ncall.eq.0) then
       gridGeometry = geometryId ( mpg, geo, 1 )
       plasmaGeometry = geometryId ( mpg, geo, 2 )
+      lgeo_limiter = gridGeometry.eq.GEOMETRY_LIMITER
+      lgeo_sn = gridGeometry.eq.GEOMETRY_SN
+      lgeo_cdn = gridGeometry.eq.GEOMETRY_CDN
+      lgeo_ddn_bottom = gridGeometry.eq.GEOMETRY_DDN_BOTTOM
+      lgeo_ddn_top = gridGeometry.eq.GEOMETRY_DDN_TOP
+      lgeo_dn = lgeo_cdn.or.lgeo_ddn_bottom.or.lgeo_ddn_top
+      luse_targets = lgeo_limiter.or.lgeo_sn.or.lgeo_dn
+      ntgt = 0
+      if (luse_targets) ntgt = mpg%nDiv
+      if (lgeo_limiter) then
+        nregCompat = 2
+      else if (lgeo_sn) then
+        nregCompat = 4
+      else if (lgeo_dn) then
+        nregCompat = 8
+      else if (mpg%hasTopologicalData) then
+        nregCompat = 0
+      else
+        nregCompat = mpg%nnreg(0)
+      endif
       !   ..test state
       call ipgeti ('b2mwti_2dwrite',write_2d)
       call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
@@ -220,7 +239,8 @@ contains
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
-      nc = max(mpg%nXpt,1)
+      nc = 1
+      if (lgeo_dn) nc = 2
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
@@ -233,7 +253,7 @@ contains
         end if
         call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
       endif
-      do i = 1, maxval(mpg%strDiv)
+      do i = 1, ntgt
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcp(i,2)) = &
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
@@ -261,7 +281,7 @@ contains
           enddo
           close(99)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (lgeo_dn.and.ntgt.ge.4) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
@@ -360,7 +380,7 @@ contains
           ntstep = 0
           write(6,'(a)') trim(filename)//' will be created'
           call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-            write_2d, ncid, .false., iret)
+            ntgt, nc, write_2d, ncid, .false., iret)
           call check_cdf_status(iret)
           iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
@@ -382,7 +402,7 @@ contains
           ntstep = 0
           write(6,'(a)') trim(filename)//' will be replaced'
           call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-            write_2d, ncid, .false., iret)
+            ntgt, nc, write_2d, ncid, .false., iret)
           call check_cdf_status(iret)
           iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
@@ -407,7 +427,7 @@ contains
             nastep = 0
             write(6,'(a)') trim(filename_av)//' will be created'
             call b2crtimecdf(filename_av, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-              write_2d, ncid, .true., iret)
+              ntgt, nc, write_2d, ncid, .true., iret)
             call check_cdf_status(iret)
             iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
@@ -439,7 +459,7 @@ contains
               iret = nf_close(ncid)
               call check_cdf_status(iret)
               call b2crtimecdf(filename_av, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-               write_2d, ncid, .true., iret)
+               ntgt, nc, write_2d, ncid, .true., iret)
             endif
             iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
@@ -447,7 +467,7 @@ contains
             nastep = 0
             write(6,'(a)') trim(filename_av)//' will be replaced'
             call b2crtimecdf(filename_av, mpg, ns, ismain, ismain0, nnatmi, nnmoli, &
-              write_2d, ncid, .true., iret)
+              ntgt, nc, write_2d, ncid, .true., iret)
             call check_cdf_status(iret)
             iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
@@ -665,7 +685,7 @@ contains
     end if
     fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
     namxip = 0.0_R8; nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8
-    if (allocated(mpg%divFcP)) then
+    if (ntgt.gt.0) then
       do i = mpg%divFcP(1,1), mpg%divFcP(1,1) + mpg%divFcP(1,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
@@ -713,9 +733,9 @@ contains
 
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     namxap = 0.0_R8; nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
-    if (maxval(mpg%strDiv).gt.0) then
-      do i = mpg%divFcP(maxval(mpg%strDiv),1), &
-           & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
+    if (ntgt.gt.0) then
+      do i = mpg%divFcP(ntgt,1), &
+           & mpg%divFcP(ntgt,1) + mpg%divFcP(ntgt,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
           iCv = mpg%fcCv(iFc,1)
@@ -760,7 +780,7 @@ contains
 #endif
     end if
 
-    if(mpg%nXpt.ge.2.and.maxval(mpg%strDiv).gt.2) then
+    if(lgeo_dn.and.ntgt.ge.4) then
       do i = mpg%divFcP(2,1), mpg%divFcP(2,1) + mpg%divFcP(2,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
@@ -854,11 +874,11 @@ contains
     fniyap = 0.0_R8; feeyap = 0.0_R8; feiyap = 0.0_R8; fetyap = 0.0_R8; fchyap = 0.0_R8
     do iFc = 1, mpg%nFc
       ireg = 0
-      if(mpg%nnreg(0).eq.2) then
+      if(nregCompat.eq.2) then
         ireg = 3
-      else if (mpg%nnreg(0).eq.4 .or. mpg%nnreg(0).eq.5) then
+      else if (nregCompat.eq.4.or.nregCompat.eq.5) then
         ireg = 5
-      else if (mpg%nnreg(0).ge.7) then
+      else if (nregCompat.ge.7) then
         ireg = 9
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -877,7 +897,7 @@ contains
         fetsipp(1) = fetsipp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8.and.mpg%nXpt.ge.2) ireg = 11
+      if (nregCompat.eq.8.and.mpg%nXpt.ge.2) ireg = 11
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisipp(2) = fnisipp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesipp(2) = feesipp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -894,11 +914,11 @@ contains
         fetsipp(2) = fetsipp(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4.or.mpg%nnreg(0).eq.5) then
+      if (nregCompat.eq.4.or.nregCompat.eq.5) then
         ireg = 6
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 10
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         ireg = 12
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -917,7 +937,7 @@ contains
         fetsapp(1) = fetsapp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 12
+      if (nregCompat.ge.7.and.mpg%nXpt.ge.2) ireg = 12
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisapp(2) = fnisapp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesapp(2) = feesapp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -934,7 +954,7 @@ contains
         fetsapp(2) = fetsapp(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.4) ireg = 2
+      if (nregCompat.ge.4) ireg = 2
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(1) = fnisip(1) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(1) = feesip(1) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -951,7 +971,7 @@ contains
         fetsip(1) = fetsip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 7
+      if (nregCompat.ge.7.and.mpg%nXpt.ge.2) ireg = 7
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(2) = fnisip(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(2) = feesip(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -968,7 +988,7 @@ contains
         fetsip(2) = fetsip(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.4) then
+      if (nregCompat.ge.4) then
         if (gridGeometry.eq.plasmaGeometry) then
           ireg = 3
         else
@@ -991,7 +1011,7 @@ contains
         fetsap(1) = fetsap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 6
+      if (nregCompat.ge.7.and.mpg%nXpt.ge.2) ireg = 6
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisap(2) = fnisap(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesap(2) = feesap(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -1011,17 +1031,17 @@ contains
         if (mpg%bcFc(i).eq.iFc) fdir = mpg%bcFcOr(i)
       end do
       ireg = 0
-      if (mpg%nnreg(0).eq.1) then
+      if (nregCompat.eq.1) then
         ireg = 4
-      else if (mpg%nnreg(0).eq.2) then
+      else if (nregCompat.eq.2) then
         ireg = 6
-      else if (mpg%nnreg(0).eq.4) then
+      else if (nregCompat.eq.4) then
         ireg = 12
-      else if (mpg%nnreg(0).eq.5) then
+      else if (nregCompat.eq.5) then
         ireg = 13
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 19
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 18
         else
@@ -1045,13 +1065,13 @@ contains
         fetyip(1) = fetyip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (nregCompat.eq.4) then
         ireg = 11
-      else if (mpg%nnreg(0).eq.5) then
+      else if (nregCompat.eq.5) then
         ireg = 8
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 18
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 17
         else
@@ -1075,13 +1095,13 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (nregCompat.eq.4) then
         ireg = 13
-      else if (mpg%nnreg(0).eq.5) then
+      else if (nregCompat.eq.5) then
         ireg = 10
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 20
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 26
         else
@@ -1105,9 +1125,9 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) then
+      if (nregCompat.eq.7) then
         ireg = 24
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 13
         else
@@ -1131,9 +1151,9 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) then
+      if (nregCompat.eq.7) then
         ireg = 25
-      else if (mpg%nnreg(0).eq.8) then
+      else if (nregCompat.eq.8) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 22
         else
@@ -1157,7 +1177,7 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 26
+      if (nregCompat.eq.7) ireg = 26
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1176,9 +1196,9 @@ contains
       end if
       ireg = 0
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (nregCompat.eq.4) then
         ireg = 7
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 14
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -1198,9 +1218,9 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (nregCompat.eq.4) then
         ireg = 9
-      else if (mpg%nnreg(0).eq.7) then
+      else if (nregCompat.eq.7) then
         ireg = 16
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -1220,7 +1240,7 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 21
+      if (nregCompat.eq.7) ireg = 21
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1238,7 +1258,7 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 22
+      if (nregCompat.eq.7) ireg = 22
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1256,7 +1276,7 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 23
+      if (nregCompat.eq.7) ireg = 23
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1274,7 +1294,7 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
+      if (nregCompat.eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
@@ -1300,7 +1320,7 @@ contains
         fetyip(2) = fetyip(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
+      if (nregCompat.eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
@@ -1326,7 +1346,7 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
+      if (nregCompat.eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
@@ -1352,7 +1372,7 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
+      if (nregCompat.eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
@@ -1378,7 +1398,7 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
+      if (nregCompat.eq.8) then
         if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
@@ -1472,9 +1492,7 @@ contains
          co%vsa0(omp(icsepomp),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp),ismain)))
       iFt = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
       cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+target_offset) !inner
-      if (mpg%nXpt.lt.2 .or. gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
-        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+      if (.not.lgeo_dn .or. lgeo_ddn_bottom) then
         do is = 0, ns-1
           nasepi(is+1,1) = pl%na(cvtrg,is)
         end do
@@ -1518,7 +1536,7 @@ contains
         ktsepa(2) = pl%kt(cvtrg)
       end if
       cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
-      if (mpg%nXpt.lt.2 .or. gridGeometry.ne.GEOMETRY_DDN_TOP) then
+      if (.not.lgeo_dn .or. gridGeometry.ne.GEOMETRY_DDN_TOP) then
         nesepa(1) = dv%ne(cvtrg)
         do is = 0, ns-1
           nasepa(is+1,1) = pl%na(cvtrg,is)
@@ -1562,7 +1580,7 @@ contains
         ktsepi(2) = pl%kt(cvtrg)
       end if
     end if
-    if (nimp.gt.0.and.mpg%nXpt.ge.2) then
+    if (nimp.gt.0.and.lgeo_dn) then
       do is = 0, ns-1
         nasepm(is+1,2) = 0.5_R8 * (pl%na(imp(icsepimp-1),is)+pl%na(imp(icsepimp),is))
       end do
@@ -1717,7 +1735,7 @@ contains
         posepa(1) = pl%po(cvtrg)
         ktsepa(1) = pl%kt(cvtrg)
       else if (gridGeometry.eq.GEOMETRY_DDN_BOTTOM) then
-        if (maxval(mpg%strDiv).gt.2) then
+        if (ntgt.gt.2) then
           iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
           if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
             & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
@@ -1775,6 +1793,31 @@ contains
         end if
       end if
     end if
+
+!   ..arbitrary GENERAL topology has no historical inner/outer target
+!     interface; retain only the midplane separatrix quantities
+    if (.not.luse_targets) then
+      nasepi = 0.0_R8
+      nesepi = 0.0_R8
+      tesepi = 0.0_R8
+      tisepi = 0.0_R8
+      posepi = 0.0_R8
+      ktsepi = 0.0_R8
+      dabsepi = 0.0_R8
+      dmbsepi = 0.0_R8
+      tabsepi = 0.0_R8
+      tmbsepi = 0.0_R8
+      nasepa = 0.0_R8
+      nesepa = 0.0_R8
+      tesepa = 0.0_R8
+      tisepa = 0.0_R8
+      posepa = 0.0_R8
+      ktsepa = 0.0_R8
+      dabsepa = 0.0_R8
+      dmbsepa = 0.0_R8
+      tabsepa = 0.0_R8
+      tmbsepa = 0.0_R8
+    endif
 #endif
 
 #ifndef NO_CDF
@@ -1805,7 +1848,7 @@ contains
         tpsepa(1) = 0.0
       endif
     endif
-    if(mpg%nXpt.ge.2) then
+    if(lgeo_dn) then
       if(xymap(ixtr,jsep).gt.0 .and. xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
         tpsepa(2) = 0.5_R8 *(target_temp(xymap(ixtr,jsep),1)+target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
       else
@@ -1852,12 +1895,15 @@ contains
     do iCv = 1,mpg%nCi
       if(mpg%cvOnClosedSurface(iCv)) then
         tmhacore(1)=tmhacore(1)+(emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
-      elseif((mpg%cvReg(iCv).eq.5 .or. mpg%cvReg(iCv).eq.6) .and. mpg%nnreg(0).eq.7) then
-        tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
-      elseif(mod(mpg%cvReg(iCv),4).eq.3 .or.(mod(mpg%cvReg(iCv),4).eq.0 .and. mpg%cvReg(iCv).ne.0)) then
-        tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
-      elseif(mod(mpg%cvReg(iCv),4).eq.2 .or. mpg%nnreg(0).eq.1) then
-        tmhasol(1)=tmhasol(1)+ (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      else
+        call is_divertor_cell(mpg, iCv, ldivc)
+        if (ldivc) then
+          tmhadiv(1)=tmhadiv(1)+
+     &      (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+        else
+          tmhasol(1)=tmhasol(1)+
+     &      (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+        endif
       endif
     enddo
 #endif
@@ -1999,7 +2045,7 @@ contains
         deallocate(slice)
         call rwcdf(rw,ncid,'dsa',imap,dsa,iret)
       endif
-      do k = 1, maxval(mpg%strDiv)
+      do k = 1, ntgt
         select case (k)
         case (1)
           allocate(fclist(mpg%divFcP(1,2)))
@@ -2033,7 +2079,7 @@ contains
           call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
           call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (lgeo_dn.and.ntgt.ge.4) then
             allocate(fclist(mpg%divFcP(2,2)))
             allocate(cvlist(mpg%divFcP(2,2)))
             allocate(cnlist(mpg%divFcP(2,2)))
@@ -2065,7 +2111,7 @@ contains
             call rwcdf(rw,ncid,'dsTLT',imap,dsTLT,iret)
             call rwcdf(rw,ncid,'dsTLP',imap,dsTLP,iret)  
           else
-            ireg=maxval(mpg%strDiv)
+            ireg=ntgt
             allocate(fclist(mpg%divFcP(ireg,2)))
             allocate(cvlist(mpg%divFcP(ireg,2)))
             allocate(cnlist(mpg%divFcP(ireg,2)))
@@ -2129,7 +2175,7 @@ contains
           call rwcdf(rw,ncid,'dsTRT',imap,dsTRT,iret)
           call rwcdf(rw,ncid,'dsTRP',imap,dsTRP,iret)  
         case(4)
-          ireg=maxval(mpg%strDiv)
+          ireg=ntgt
           allocate(fclist(mpg%divFcP(ireg,2)))
           allocate(cvlist(mpg%divFcP(ireg,2)))
           allocate(cnlist(mpg%divFcP(ireg,2)))
@@ -2301,7 +2347,7 @@ contains
       call rwcdf(rw,ncid,'fetsapp',imap,fetsapp,iret)
       call rwcdf(rw,ncid,'fchsapp',imap,fchsapp,iret)
     !
-      if (maxval(mpg%strDiv).ge.1) then
+      if (ntgt.ge.1) then
         imap(1)=1     ! bl
         imap(2)=1
         allocate(slice(mpg%divFcP(1,2)))
@@ -2520,11 +2566,11 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.2) then
+      if (ntgt.ge.2) then
         imap(1)=1     ! br
         imap(2)=1
         imap(3)=1
-        ireg=maxval(mpg%strDiv)
+        ireg=ntgt
         allocate(slice(mpg%divFcP(ireg,2)))
         allocate(slice_ns(mpg%divFcP(ireg,2),ns))
         if (nnatmi.gt.0) then
@@ -2635,7 +2681,7 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.3) then
+      if (ntgt.ge.3) then
         imap(1)=1     ! tr
         imap(2)=1
         imap(3)=1
@@ -2749,7 +2795,7 @@ contains
           deallocate(slice_nmol)
         endif
       end if
-      if (maxval(mpg%strDiv).ge.4) then
+      if (ntgt.ge.4) then
         imap(1)=1     ! tl
         imap(2)=1
         imap(3)=1
@@ -3425,12 +3471,19 @@ contains
     real (kind=R8) :: ds_offset
     character*(*) filename
     integer i
+    external xertst
+
+    ! isep=-1 means that this target has no strike/tangency reference.
+    ! Keep its coordinate measured from the serialized target start.
+    call xertst(nlist.ge.1, 'output_ds_fc: empty target')
+    call xertst(isep.ge.-1.and.isep.lt.nlist, &
+      'output_ds_fc: invalid target reference')
 
     ds(1) = 0.5_R8 * geo%fcHt(fclist(1))
     do i = 2, nlist
       ds(i) = ds(i-1)+ 0.5_R8 * (geo%fcHt(fclist(i-1)) + geo%fcHt(fclist(i)))
     enddo
-    if(isep.ne.0) then
+    if(isep.gt.0) then
       ds_offset = (ds(isep)+ds(isep+1))/2.0_R8
       do i = 1, nlist
         ds(i) = ds(i) - ds_offset

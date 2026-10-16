@@ -731,8 +731,15 @@ cdjm Jan2017 Keep linearised sources for balance
      &                                    mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
-                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
-                  ldiv = mod(iir-1,4)+1.ge.3
+                  if (mpg%hasTopologicalData.and.
+     &                (mpg%geometryID.lt.3.or.mpg%geometryID.gt.7))
+     &                then
+                    lpflux = .false.
+                    ldiv = .false.
+                  else
+                    call is_pfr_cell(mpg, iCv, lpflux)
+                    call is_divertor_cell(mpg, iCv, ldiv)
+                  endif
                   poloidal_scale_factor = 1.0_R8
                   elm_region = .false.
 #ifdef WG_TODO
@@ -821,10 +828,21 @@ cdjm Jan2017 Keep linearised sources for balance
                 elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
                   iy2 = nomp
                 else
-                  cycle
+                  if (mpg%hasTopologicalData) then
+                    iy2 = nomp
+                  else
+                    cycle
+                  endif
                 endif
-                lpflux = mpg%ftReg(mpg%cvFt(iCn)).eq.3
-                ldiv=mod(iir-1,4)+1.ge.3
+                if (mpg%hasTopologicalData.and.
+     &              (mpg%geometryID.lt.3.or.mpg%geometryID.gt.7))
+     &              then
+                  lpflux = .false.
+                  ldiv = .false.
+                else
+                  call is_pfr_cell(mpg, iCn, lpflux)
+                  call is_divertor_cell(mpg, iCn, ldiv)
+                endif
                 poloidal_scale_factor = 1.0_R8
                 elm_region=.false.
 #ifdef WG_TODO
