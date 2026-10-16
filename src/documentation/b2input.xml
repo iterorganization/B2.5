@@ -280,7 +280,7 @@
 				<default>See description (integer)</default>
 				<type>integer</type>
 				<description>
-					Flux surface index, on the basis mesh, of the active separatrix. Can only be provided for slab geometries, otherwise deduced from geometry.
+					Flux-surface index on the basis mesh used as the reference for outer- and inner-midplane distances. For legacy slab/linear grids, this retains its established meaning as the user-designated separatrix line. For explicit general, linear, or cylindrical topology, a positive value selects that nonempty flux surface directly. Without a positive value, an explicit general topology uses its unique primary-X-point flux surface when one exists and otherwise uses the first nonempty flux surface; explicit linear and cylindrical topologies use the first nonempty flux surface. Recognized limiter, single-null, and double-null families continue to deduce their separatrix from the geometry.
 				</description>
 			</switch>
 			<switch>
