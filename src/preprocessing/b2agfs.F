@@ -331,7 +331,7 @@
           nnVx = idum(2)
           nnFs = idum(4)
           nnFt = idum(5)
-          if (grid_version.eq."03.002.000") then
+          if (grid_version.ge."03.002.000") then
             !ghostcells are not provided, nnCv does not match nCv
             !but will match after guard cells are created
 
@@ -345,6 +345,9 @@
 
 !     .. Construct additional connectivity data (fcCv, vxCv, vxFc)
             call calc_add_connectivity(m)
+
+!     .. Assign only poloidal-end guards to physical flux tubes
+            call update_guard_cells(m)
 
 !     .. Order the vertices and faces as rightturning
 !     .. and consequently check convexity
@@ -394,7 +397,7 @@
               g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
             endif
           else
-            call xerrab('Grid version not equal to 03.002.00')
+            call xerrab('b2agfs: old geometry format; run b2us first')
           endif  ! if of the grid_version
 
         else
@@ -425,6 +428,7 @@
       use b2ag_ghostcells
       use b2us_map
       use b2us_geo
+      use b2us_io, only: read_b2fgmtry_topology_header
       use b2mod_subsys
       implicit none
       !input arguments
@@ -436,7 +440,7 @@
 
       !internal
       character idcod*8, id*32
-      integer :: iCv, iVx, iFc, iv(nnVx), ic(nnCv), if(nnFc),
+      integer :: iCv, iVx, iFc, iDiv, iv(nnVx), ic(nnCv), if(nnFc),
      &   idum(0:5), iFt, iFs, ifcv(nnFt), ifsv(nnFs), n2
       real(kind=R8) :: cvBp(m%nCv), cvBt(m%nCv), cvFpsi(m%nCv)
       logical streql
@@ -450,7 +454,7 @@
       !rewind nrid
       call cfverr(nrid,grid_version)
 
-      if (grid_version.eq."03.002.000") then
+      if (grid_version.ge."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
         call cfruin (nrid, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
         nnCv = idum(0)
@@ -479,18 +483,83 @@
           m%nncut = idum(2)
         endif
 
-!        ! read Xpoint information
-!        call cfruin (nrid, 1, idum,'nX')
-!        m%nXp = idum(0)
+        ! Read the fixed .002 topology header. Legacy .000/.001 files
+        ! retain the metadata-free path and consume no extra records.
+        call read_b2fgmtry_topology_header(nrid, grid_version, m)
 
-!        ! read OMPr, OMPz, IMPr, IMPz
-!        call cfrure(nrid,2,m%OMPr,'OMPr')
-!        call cfrure(nrid,2,m%OMPz,'OMPz')
-!        call cfrure(nrid,2,m%IMPr,'IMPr')
-!        call cfrure(nrid,2,m%IMPz,'IMPz')
+        if (m%hasTopologicalData) then
+          ! GOAT X-point vertex, primary flag and flux-surface ID.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nXpt
+              read(nrid,*,err=91) m%Xpt(iVx),
+     &          m%isPrimaryXpt(iVx), m%XptFsID(iVx)
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected Xpt record')
+          endif
 
-!        ! read Xpoint vertex number
-!        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
+          ! GOAT uses this per-X-point table internally. B2.5 does not
+          ! currently retain it, but must consume the required record.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('xpDivLabel',id)) then
+            do iVx = 1, m%nXpt
+              read(nrid,*,err=91) idum(0)
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected xpDivLabel ' //
+     &        'record')
+          endif
+
+          ! GOAT O-point vertex IDs.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nOpt
+              read(nrid,*,err=91) m%Opt(iVx)
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected Opt record')
+          endif
+
+          ! Strike vertex, owning X-point vertex, target and surface.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nStr
+              read(nrid,*,err=91) m%strVx(iVx), m%strXpt(iVx),
+     &          m%strDiv(iVx), m%strFsID(iVx)
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected strVx record')
+          endif
+
+          ! Tangency vertex, target and flux-surface IDs.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nTgc
+              read(nrid,*,err=91) m%tgVx(iVx), m%tgDiv(iVx),
+     &          m%tgFsID(iVx)
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected tgVx record')
+          endif
+
+          ! GOAT's pointer table has the target ID followed by the
+          ! one-based packed-list start and face count.
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('div',id)) then
+            do iDiv = 1, m%nDiv
+              read(nrid,*,err=91) idum(0), m%divFcP(iDiv,1),
+     &          m%divFcP(iDiv,2)
+              call xertst(idum(0).eq.iDiv,
+     &          'read_traduitoutb2us: unexpected divID order')
+            enddo
+          else
+            call xerrab('read_traduitoutb2us: expected divertor ' //
+     &        'index and face-pointer record')
+          endif
+
+          call cfruin(nrid, m%nfcDiv, m%divFc, 'divFc')
+        endif
 
         ! read vertex information
         read(nrid,*,err=91) idcod, id

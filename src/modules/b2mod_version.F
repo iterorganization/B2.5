@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10, save :: newversion ='03.002.001'
+      character*10, save :: newversion ='03.002.002'
       character*10, parameter :: default_version = '00.000.000'
 
       character*10, save ::
@@ -354,4 +354,21 @@ c    Version 03.002.001  25.06.25 Added Qalfmin/max variables to b2fgmtry
 c                                 Added srw arrays to b2fplasma
 c                                 Added multi-species netCDF tally output
 c                                 Open-source release
+c    Version 03.002.002  14.10.26 Added required topology records and
+c                                 GEOMETRY_ID to b2fgmtry.
+c      After the base geometry counts, the header contains topoflag,
+c      GEOMETRY_ID, and nX,nO,nS,nT,nDiv,nDivFc, in that order.
+c      topoflag is 0=general, 1=single null, 2=double null,
+c      3=linear, or 4=limiter. GEOMETRY_ID uses b2mod_geometry:
+c      1=linear, 2=cylinder, 3=limiter, 4=single null, 5=connected
+c      double null, 6=bottom-primary disconnected double null,
+c      7=top-primary disconnected double null, and 13=general.
+c      The mapping records then contain X-point vertex/primary/surface
+c      triples, O-point vertices, strike vertex/X-point/target/surface
+c      quadruples, tangency vertex/target/surface triples, target
+c      face-list start/count pairs, and the packed target face list.
+c      File IDs and face-list starts are one-based. A primary X-point
+c      lies on a separatrix connected directly to a core region.
+c      Versions 03.002.000 and 03.002.001 have no topology block and
+c      retain the legacy inferred-topology path.
 c

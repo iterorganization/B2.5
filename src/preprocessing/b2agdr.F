@@ -9,6 +9,7 @@
       use b2ag_parameters
       use b2us_geo
       use b2us_map
+      use b2us_prep, only: finalize_legacy_topology
       use b2us_io
       use b2mod_subsys
       implicit none
@@ -227,6 +228,12 @@
         call b2agbs(g,m)
       endif
 
+*   ..promote legacy unstructured input to the complete topology
+*     record set required by the current b2fgmtry version
+      if (.not.m%hasTopologicalData) then
+        call finalize_legacy_topology(m, g)
+      endif
+
 *   ..writing some important information 
       write(*,*) 'b2agdr: g%cvBb(m%nCv,0) ', g%cvBb(m%nCv,0)
       write(*,*) 'b2agdr: g%cvEb(m%nCv,0) ', g%cvEb(m%nCv,0)
@@ -423,39 +430,9 @@
       call nancheck(m%nCv,g%cvConn,'cvConn')
       call nancheck(m%nFs,g%fsPsi,'fsPsi')
 
-* ..output - see module b2us_io and b2us.F
-*   ..write headers for output files - code from b2us.F
-      call cfverw (nout(1), newversion)
-      idum(0) = m%nCi
-      idum(1) = m%nCg
-      idum(2) = m%nCv
-      idum(3) = m%nFc
-      idum(4) = m%nVx
-      idum(5) = m%nFs
-      idum(6) = m%nFt
-      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      idum(0) = m%nCmxVx
-      idum(1) = m%nCmxFc
-      idum(2) = m%nVmxCv
-      idum(3) = m%nVmxFc
-      idum(4) = m%nCmxNv
-      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      idum(0) = m%isClassicalGrid
-      call cfwuin (nout(1),1,idum,'isClassicalGrid')
-      if (m%isClassicalGrid == 1) then
-        idum(0) = m%nx
-        idum(1) = m%ny
-        idum(2) = m%nncut
-      else
-        ! dummy values for unstructured grid
-        idum(0) = -1
-        idum(1) = -1
-        idum(2) = -1
-      endif
-      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-      call cfwuch (nout(1), 120, lblgm, 'label')
-      idum(0) = isymm
-      call cfwuin (nout(1), 1, idum, 'isymm')
+* ..Write the versioned b2fgmtry header and required .002 topology
+*   metadata.
+      call write_b2fgmtry_header(nout(1), m, lblgm, isymm)
 
 *   ..write summary of geometry
       call write_b2fgmtry (nout(1), m, g)

@@ -6,6 +6,7 @@
       use b2mod_subsys
       use b2mod_version
       use b2us_map
+      use b2us_io, only: read_b2fgmtry_topology_header
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1)
@@ -98,6 +99,11 @@
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)
+
+*   ..read the fixed .002 topology header before allocation; the
+*     legacy .000/.001 path consumes no additional records
+      call read_b2fgmtry_topology_header(ninp(1), b2fgmtry_version,
+     &  mpg)
 *   ..test basic dimensions
       nCv = mpg%nCv
       nFc = mpg%nFc

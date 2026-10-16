@@ -624,40 +624,14 @@ cdpc-debug
       write (*,*) 'Mapping created'
       call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'
+
+*   ..complete the topology records required by .002 using the
+*     established structured-grid inference
+      call finalize_legacy_topology (mpg, gm)
 !     write unstructured b2fgmtry file
 
 !   ..write header for b2fgmtry
-      call cfverw (nout(1), newversion)
-      idum(0) = mpg%nCi
-      idum(1) = mpg%nCg
-      idum(2) = mpg%nCv
-      idum(3) = mpg%nFc
-      idum(4) = mpg%nVx
-      idum(5) = mpg%nFs
-      idum(6) = mpg%nFt
-      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      idum(0) = mpg%nCmxVx
-      idum(1) = mpg%nCmxFc
-      idum(2) = mpg%nVmxCv
-      idum(3) = mpg%nVmxFc
-      idum(4) = mpg%nCmxNv
-      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      idum(0) = mpg%isClassicalGrid
-      call cfwuin (nout(1),1,idum,'isClassicalGrid')
-      if (mpg%isClassicalGrid == 1) then
-        idum(0) = mpg%nx
-        idum(1) = mpg%ny
-        idum(2) = mpg%nncut
-      else
-        ! dummy values for unstructured grid
-        idum(0) = -1
-        idum(1) = -1
-        idum(2) = -1
-      endif
-      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-      call cfwuch (nout(1), 120, lblgm, 'label')
-      idum(0) = isymm
-      call cfwuin (nout(1), 1, idum, 'isymm')
+      call write_b2fgmtry_header(nout(1), mpg, lblgm, isymm)
 *   ..write geometry
       call write_b2fgmtry (nout(1), mpg, gm)
 

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
+      subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch, lblgm)
       use b2mod_types
       use b2mod_math
       use b2mod_version
@@ -19,6 +19,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nCv, nFc, ns, ns0
+      character lblgm*120
 #ifdef JET
       integer nout(0:11)
 #else
@@ -99,13 +100,13 @@
 
 *   ..local variables
       integer is, idum(0:9)
-      character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
+      character lblcp*120, lblps*120, lblrc*120, lblsr*120,
      &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
 *   ..procedures
       logical is_comment
-      external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
+      external xertst, xerrab, cfruch, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
@@ -162,14 +163,10 @@
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
-*   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
+*   ..geometry header was read before allocation in b2mn_init
 #if ( defined(JET) || defined(IMAS) )
       labgeo=lblgm
-      labgeo=lblgm
 #endif
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read default physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
