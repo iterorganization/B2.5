@@ -29,6 +29,8 @@
       integer :: artificial_slab=0, spatial_hybrid = 0
       integer :: b2us_nasmod_mode = 0 ! 0 (default): convert block 15, 1: block 15 correctly defined through uinp
       integer :: find_loc
+      integer :: nBFaces, nBVerts
+      integer, allocatable :: bVerts(:)
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
@@ -307,7 +309,7 @@
 
 !  adapt block 15
       read (ineir,'(12i6)') nadmod, nasmod
-      write (iouteir,'(12i6)') nadmod, nasmod
+      write (iouteir,'(12i6)') nadmod, abs(nasmod)
 
       do i = 1, nadmod
         read (ineir,'(a500)') line
@@ -332,6 +334,41 @@
               j = find_loc(node_vert,nnode,mpg%icornVx(i))
               read (ineir,'(2i6)') ihelp(1), ihelp(2)
               write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+            end do
+          elseif (nasmod<0) then
+            !! abs(nasmod) indicates the number of void edge to be modified
+            do i = 1, abs(nasmod)
+              read (ineir,'(3i6)') ihelp(1), ihelp(2), ihelp(3)
+
+              ! determine number of faces with this label
+              nBFaces = count(mpg%fcLbl==ihelp(3))
+
+              ! corresponding number of vertices
+              nBVerts = nBFaces + 1
+
+              if (nBFaces.gt.0) then
+
+                allocate (bVerts(nBVerts))
+                ! sort vertices of the boundary faces into a polygon
+                call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,
+     .            ihelp(3),mpg)
+                ! write corresponding vertex number
+                if (ihelp(2).eq.1) then
+                   j = find_loc(node_vert,nnode,bVerts(1))
+                   write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+                elseif (ihelp(2).eq.2) then
+                  j = find_loc(node_vert,nnode,bVerts(nBverts))
+                   write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+                else
+                  call xerrab('conv_surface_models -- wrong ihelp(2)')
+                endif
+
+                deallocate (bVerts)
+
+              else 
+                write (*,* ) 'ihelp(3) = ',ihelp(3)
+                call xerrab('conv_surface_models: fcLbl not found.')
+              endif
             end do
           else
           call xerrab('conv_surface_models -- nasmod')
