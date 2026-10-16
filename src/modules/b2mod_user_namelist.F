@@ -209,7 +209,8 @@ c***  Standard set-up:
       real (kind=R8) :: distint, dsep,
      . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
 
-      logical :: file_ok, on_wall, wall_face(2)
+      logical :: file_ok, on_wall, wall_face(2), general_topology,
+     &           reference_topology
       character*260 filename
       integer i
       logical done, ifail, found
@@ -240,6 +241,14 @@ c***  Standard set-up:
         filedata(ntrc_usr) = .false.
       endif
 
+! Explicit general, linear, and cylindrical topologies use one selected
+! reference flux surface at both midplanes. Only GENERAL needs the new
+! arbitrary-topology distance construction below.
+      reference_topology = m%hasTopologicalData.and.
+     &  (m%geometryID.eq.1.or.m%geometryID.eq.2.or.
+     &   m%geometryID.eq.13)
+      general_topology = m%hasTopologicalData.and.m%geometryID.eq.13
+
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
@@ -262,8 +271,9 @@ c***  Standard set-up:
         do i = m%cvFcP(omp(ic),1),
      &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
           iFc = m%cvFc(i)
-          if ((m%fcFs(iFc).eq.m%iFssep .and.m%iFssep .ne.0).or.
-     &        (m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
+          if ((m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0).or.
+     &        (.not.reference_topology.and.
+     &         m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
             icsepomp = ic + 1
             ifsepomp = iFc
             found = .true.
@@ -271,12 +281,20 @@ c***  Standard set-up:
         end do
         ic = ic + 1
       end do
+      if (.not.found.and.reference_topology) then
+        call xerrab('read_b2mod_user_namelist: no OMP reference ' //
+     &    'surface position')
+      endif
 ! csc get psi for each OMP cell
       psi_omp = 0.0_R8
       do ic = 1, nomp
         psi_omp(ic) = geo%cvFpsi(omp(ic))
       end do
 ! xpb build the distance along the OMP for each flux surface
+      if (general_topology) then
+        call general_midplane_distances(m, geo, rzomp, omp, nomp,
+     &    ifsepomp, .true., 'OMP', fs_ds_omp, ft_omp, ft_ds_omp)
+      else
       Xm1 = rzomp(1,1)
       Xm2 = rzomp(1,2)
       Ym1 = rzomp(2,1)
@@ -351,6 +369,7 @@ c***  Standard set-up:
           ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
         end if
       end do
+      endif
 cxpb set default switches depending on midplane location
       if (sw%set_transport_iyref.eq.0) then
         sw%set_transport_iyref = icsepomp-1
@@ -513,8 +532,9 @@ c*** Set default values according to current species list
         do i = m%cvFcP(imp(ic),1),
      &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
           iFc = m%cvFc(i)
-          if ((m%fcFs(iFc).eq.m%iFssep .and.m%iFssep .ne.0).or.
-     &        (m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
+          if ((m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0).or.
+     &        (.not.reference_topology.and.
+     &         m%fcFs(iFc).eq.m%iFssep2.and.m%iFssep2.ne.0)) then
             icsepimp = ic + 1
             ifsepimp = iFc
             found = .true.
@@ -527,7 +547,12 @@ c*** Set default values according to current species list
       do ic = 1, nimp
         psi_imp(ic) = geo%cvFpsi(imp(ic))
       end do
-! xpb build the distance along the OMP for each flux surface
+! xpb build the distance along the IMP for each flux surface
+      if (general_topology) then
+        if (found) call general_midplane_distances(m, geo, rzimp,
+     &    imp, nimp, ifsepimp, .false., 'IMP', fs_ds_imp,
+     &    ft_imp, ft_ds_imp)
+      else
       if (nimp.gt.0) then
         Xm1 = rzimp(1,1)
         Xm2 = rzimp(1,2)
@@ -604,14 +629,24 @@ c*** Set default values according to current species list
           ft_ds_imp(iFt) = fs_ds_imp(iFs1)+0.5_R8*geo%cvHy(imp(ic))
         end if
       end do
-      if (.not.found) write(*,'(a/a/a)')
-     &  'Warning: did not find separatrix location in IMP definition,',
-     &  '         check specification of RZIMP in b2.user.parameters',
-     &  '         if IMP is needed.'
+      endif
+      if (.not.found) then
+        if (reference_topology) then
+          write(*,'(a)') 'Warning: no IMP reference location'
+        else
+          write(*,'(a)') 'Warning: no IMP separatrix location'
+        endif
+        write(*,'(a)') '         check RZIMP in b2.user.parameters'
+        write(*,'(a)') '         if IMP is needed.'
+      endif
       if (m%isClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
-      write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
-      if (m%iFssep2.gt.0) then
+      if (reference_topology) then
+        write(*,*) 'REFERENCE FLUX SURFACE AT iFs=',m%iFssep
+      else
+        write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
+      endif
+      if (.not.reference_topology.and.m%iFssep2.gt.0) then
         write(*,*) 'SECOND HALF OF CDN SEPARATRIX FLUX SURFACE AT iFs=',
      &   m%iFssep2
       end if
@@ -622,6 +657,256 @@ c*** Set default values according to current species list
   999 call xerrab ('Error while reading USER namelist!')
 #endif
       end subroutine read_b2mod_user_namelist
+
+**********************************************************************
+!> Compute midplane flux-surface and flux-tube distances for an
+!! explicit general topology. Flux-surface crossings come from the
+!! cell faces, while the two bounding surfaces of a cell come from its
+!! vertices. Only boundary faces of that same cell establish wall
+!! contact.
+      subroutine general_midplane_distances(m, geo, rz, midplane,
+     &  nMidplane, referenceFace, outwardIncreasingR, midplaneName,
+     &  fsDistance, ftIndex, ftDistance)
+      implicit none
+
+      type(mapping), intent(in) :: m
+      type(geometry), intent(in) :: geo
+      integer, intent(in) :: nMidplane, referenceFace
+      integer, intent(in) :: midplane(nMidplane)
+      logical, intent(in) :: outwardIncreasingR
+      character*(*), intent(in) :: midplaneName
+      real(kind=R8), intent(in) :: rz(2,2)
+      real(kind=R8), intent(out) :: fsDistance(:), ftDistance(:)
+      integer, intent(out) :: ftIndex(0:)
+
+      integer :: ic, i, iCv, iFc, iFs, iFs1, iFs2, iFt, iVx
+      real(kind=R8) :: distance, distanceTolerance, dsep,
+     &  segmentLength
+      logical :: intersects, collinear, onWall
+      external xerrab
+
+      fsDistance = -999.0_R8
+      ftDistance = -999.0_R8
+      ftIndex = 0
+
+!   Validate the reference and the midplane segment before calculating
+!   any intersections. A zero-length segment has no distance axis.
+      if (referenceFace.lt.1.or.referenceFace.gt.m%nFc) then
+        write(*,*) 'general_midplane_distances: ', midplaneName,
+     &    ' reference face, nFc = ', referenceFace, m%nFc
+        call xerrab('general_midplane_distances: reference face ' //
+     &    'out of range')
+      endif
+      iFs = m%fcFs(referenceFace)
+      if (iFs.ne.m%iFssep) then
+        write(*,*) 'general_midplane_distances: ', midplaneName,
+     &    ' reference face/surface/selected = ', referenceFace,
+     &    iFs, m%iFssep
+        call xerrab('general_midplane_distances: reference face ' //
+     &    'does not lie on the selected surface')
+      endif
+      segmentLength = sqrt((rz(1,2)-rz(1,1))**2+
+     &  (rz(2,2)-rz(2,1))**2)
+      if (segmentLength.le.100.0_R8*epsilon(1.0_R8)*
+     &    max(1.0_R8,maxval(abs(rz)))) then
+        write(*,*) 'general_midplane_distances: degenerate ',
+     &    midplaneName, ' segment ', rz
+        call xerrab('general_midplane_distances: zero-length ' //
+     &    'midplane segment')
+      endif
+      distanceTolerance = 1.0e-10_R8*max(1.0_R8,segmentLength)
+
+!   Intersect every flux-aligned face of the midplane cells with the
+!   user segment. The cross-product form supports vertical faces and
+!   vertical midplane segments without a coordinate denominator.
+      do ic = 1, nMidplane
+        iCv = midplane(ic)
+        do i = m%cvFcP(iCv,1),
+     &         m%cvFcP(iCv,1) + m%cvFcP(iCv,2) - 1
+          iFc = m%cvFc(i)
+          iFs = m%fcFs(iFc)
+          if (iFs.eq.0) cycle
+          if (iFs.lt.1.or.iFs.gt.size(fsDistance)) then
+            write(*,*) 'general_midplane_distances: ', midplaneName,
+     &        ' face/surface/range = ', iFc, iFs, size(fsDistance)
+            call xerrab('general_midplane_distances: face surface ' //
+     &        'ID out of range')
+          endif
+          call midplane_face_intersection(geo, m, rz, iFc,
+     &      intersects, collinear, distance)
+          if (collinear) then
+            write(*,*) 'general_midplane_distances: ', midplaneName,
+     &        ' segment is collinear with face ', iFc
+            call xerrab('general_midplane_distances: ambiguous ' //
+     &        'collinear face intersection')
+          endif
+          if (.not.intersects) cycle
+          if (fsDistance(iFs).eq.-999.0_R8) then
+            fsDistance(iFs) = distance
+          else if (abs(fsDistance(iFs)-distance).gt.
+     &             distanceTolerance) then
+            write(*,*) 'general_midplane_distances: ', midplaneName,
+     &        ' surface has two crossings ', iFs,
+     &        fsDistance(iFs), distance
+            call xerrab('general_midplane_distances: ambiguous ' //
+     &        'flux-surface intersection')
+          endif
+        enddo
+      enddo
+
+      if (fsDistance(m%iFssep).eq.-999.0_R8) then
+        write(*,*) 'general_midplane_distances: ', midplaneName,
+     &    ' selected surface did not cross segment ', m%iFssep
+        call xerrab('general_midplane_distances: reference surface ' //
+     &    'does not cross midplane segment')
+      endif
+      dsep = fsDistance(m%iFssep)
+      do iFs = 1, m%nFs
+        if (fsDistance(iFs).eq.-999.0_R8) cycle
+        if ((outwardIncreasingR.and.rz(1,1).lt.rz(1,2)).or.
+     &      (.not.outwardIncreasingR.and.rz(1,1).gt.rz(1,2))) then
+          fsDistance(iFs) = fsDistance(iFs) - dsep
+        else
+          fsDistance(iFs) = dsep - fsDistance(iFs)
+        endif
+      enddo
+
+!   Derive each intersected flux-tube center from the distinct surface
+!   IDs on the current cell only. Wall contact is also a property of
+!   the current cell; a boundary face belonging only to a neighboring
+!   cell must not affect this result.
+      do ic = 1, nMidplane
+        iCv = midplane(ic)
+        if (iCv.gt.m%nCi) cycle
+        iFt = m%cvFt(iCv)
+        if (iFt.eq.0.or.iFt.eq.m%nFt+1) cycle
+        if (iFt.lt.1.or.iFt.gt.m%nFt) then
+          write(*,*) 'general_midplane_distances: ', midplaneName,
+     &      ' cell/tube/range = ', iCv, iFt, m%nFt
+          call xerrab('general_midplane_distances: flux-tube ID ' //
+     &      'out of range')
+        endif
+
+        iFs1 = 0
+        iFs2 = 0
+        do i = m%cvVxP(iCv,1),
+     &         m%cvVxP(iCv,1) + m%cvVxP(iCv,2) - 1
+          iVx = m%cvVx(i)
+          iFs = m%vxFs(iVx)
+          if (iFs.eq.0) cycle
+          if (iFs.lt.1.or.iFs.gt.size(fsDistance)) then
+            write(*,*) 'general_midplane_distances: ', midplaneName,
+     &        ' cell/vertex/surface/range = ', iCv, iVx, iFs,
+     &        size(fsDistance)
+            call xerrab('general_midplane_distances: vertex surface ' //
+     &        'ID out of range')
+          endif
+          if (iFs1.eq.0) then
+            iFs1 = iFs
+          else if (iFs.ne.iFs1.and.iFs2.eq.0) then
+            iFs2 = iFs
+          else if (iFs.ne.iFs1.and.iFs.ne.iFs2) then
+            write(*,*) 'general_midplane_distances: ', midplaneName,
+     &        ' cell has more than two surfaces ', iCv,
+     &        iFs1, iFs2, iFs
+            call xerrab('general_midplane_distances: more than two ' //
+     &        'flux surfaces bound a midplane cell')
+          endif
+        enddo
+
+        onWall = .false.
+        do i = m%cvFcP(iCv,1),
+     &         m%cvFcP(iCv,1) + m%cvFcP(iCv,2) - 1
+          iFc = m%cvFc(i)
+          onWall = onWall.or.m%fcLbl(iFc).ne.0
+        enddo
+
+        if (iFs1.ne.0.and.iFs2.ne.0) then
+          if (fsDistance(iFs1).ne.-999.0_R8.and.
+     &        fsDistance(iFs2).ne.-999.0_R8) then
+            ftIndex(iFt) = ic
+            ftDistance(iFt) = 0.5_R8*(fsDistance(iFs1)+
+     &        fsDistance(iFs2))
+          endif
+        else if (iFs1.ne.0.and.onWall) then
+          if (fsDistance(iFs1).ne.-999.0_R8) then
+            ftIndex(iFt) = ic
+            ftDistance(iFt) = fsDistance(iFs1)+0.5_R8*geo%cvHy(iCv)
+          endif
+        endif
+      enddo
+
+      return
+      end subroutine general_midplane_distances
+
+**********************************************************************
+!> Return the distance from the first midplane endpoint to the unique
+!! intersection with one face. Cross products avoid divisions by a
+!! particular R or Z component.
+      subroutine midplane_face_intersection(geo, m, rz, iFc,
+     &  intersects, collinear, distance)
+      implicit none
+
+      type(mapping), intent(in) :: m
+      type(geometry), intent(in) :: geo
+      real(kind=R8), intent(in) :: rz(2,2)
+      integer, intent(in) :: iFc
+      logical, intent(out) :: intersects, collinear
+      real(kind=R8), intent(out) :: distance
+
+      integer :: iVx1, iVx2
+      real(kind=R8) :: dmx, dmy, dvx, dvy, qx, qy,
+     &  denom, denomTolerance, faceLength, offsetCross,
+     &  offsetTolerance, parameterTolerance, segmentLength,
+     &  tSegment, tFace
+      external xerrab
+
+      iVx1 = m%fcVx(iFc,1)
+      iVx2 = m%fcVx(iFc,2)
+      dmx = rz(1,2) - rz(1,1)
+      dmy = rz(2,2) - rz(2,1)
+      dvx = geo%vxX(iVx2) - geo%vxX(iVx1)
+      dvy = geo%vxY(iVx2) - geo%vxY(iVx1)
+      qx = geo%vxX(iVx1) - rz(1,1)
+      qy = geo%vxY(iVx1) - rz(2,1)
+      segmentLength = sqrt(dmx**2+dmy**2)
+      faceLength = sqrt(dvx**2+dvy**2)
+      if (faceLength.le.100.0_R8*epsilon(1.0_R8)*
+     &    max(1.0_R8,abs(geo%vxX(iVx1)),
+     &        abs(geo%vxY(iVx1)))) then
+        write(*,*) 'midplane_face_intersection: degenerate face ',
+     &    iFc, iVx1, iVx2
+        call xerrab('midplane_face_intersection: zero-length face')
+      endif
+
+      denom = dmx*dvy - dmy*dvx
+      denomTolerance = 100.0_R8*epsilon(1.0_R8)*
+     &  segmentLength*faceLength
+      offsetCross = qx*dmy - qy*dmx
+      offsetTolerance = 100.0_R8*epsilon(1.0_R8)*
+     &  segmentLength*max(1.0_R8,sqrt(qx**2+qy**2))
+      intersects = .false.
+      collinear = .false.
+      distance = 0.0_R8
+      if (abs(denom).le.denomTolerance) then
+        collinear = abs(offsetCross).le.offsetTolerance
+        return
+      endif
+
+      tSegment = (qx*dvy-qy*dvx)/denom
+      tFace = offsetCross/denom
+      parameterTolerance = 1000.0_R8*epsilon(1.0_R8)
+      if (tSegment.ge.-parameterTolerance.and.
+     &    tSegment.le.1.0_R8+parameterTolerance.and.
+     &    tFace.ge.-parameterTolerance.and.
+     &    tFace.le.1.0_R8+parameterTolerance) then
+        intersects = .true.
+        tSegment = max(0.0_R8,min(1.0_R8,tSegment))
+        distance = tSegment*segmentLength
+      endif
+
+      return
+      end subroutine midplane_face_intersection
 
       subroutine write_b2mod_user_namelist
       implicit none
