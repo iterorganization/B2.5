@@ -100,11 +100,11 @@
       if(corr_core_dn(isb).ne.1.0_R8 .and.
      &               (.not. is_neutral(isb))) then               !srv 25.07.17 {  IYS 19.12.2017
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
-        tt0 = 0.0e0_R8
-        tt1 = 0.0e0_R8
-        tt2 = 0.0e0_R8
-        do iy = -1,ny
-          do ix = -1,nx
+        tt0 = 0.0_R8
+        tt1 = 0.0_R8
+        tt2 = 0.0_R8
+        do iy = -1, ny
+          do ix = -1, nx
             if(on_closed_surface(ix,iy) .and.
      *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
               tt0(iy) = tt0(iy) + vol(ix,iy)
@@ -113,12 +113,12 @@
             endif
           enddo
         enddo
-        do iy = -1,ny
+        do iy = -1, ny
           too_low_density = .FALSE.                       ! IYS 27.11.2017
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
-          do ix = -1,nx
+          do ix = -1, nx
             if(on_closed_surface(ix,iy) .and.
      *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then    ! IYS 27.03.2019
               t0 = pb(ix,iy)+tt2(iy)/tt0(iy) +
@@ -143,7 +143,7 @@
             endif
           enddo
           if (too_low_density) then  ! cancel smoothing of the correction on the surface if the corrected density is too low
-            do ix=-1,nx
+            do ix = -1, nx
               nb(ix,iy) = nb_(ix,iy)
               pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }
             enddo

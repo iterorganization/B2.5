@@ -109,10 +109,10 @@
       endif
 
 c Drift terms
-      fchvispar =0.0e0_R8                                               !srv 09.07.99
-      fchvispar_a=0.0e0_R8
-      dvpar=0.0e0_R8                                                    !srv 24.06.99
-      if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
+      fchvispar =0.0_R8                                                 !srv 09.07.99
+      fchvispar_a=0.0_R8
+      dvpar=0.0_R8                                                      !srv 24.06.99
+      if (vis_par.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
 *      compute gradients of OnedBsq on cell faces
        call grad(nx, ny, hx, hy, hy1, vol, qs, OnedBsq, gOnedBsq)
@@ -182,7 +182,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &         cvsa_drho(ix,iy,0,0,is)*
      &        (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
      &        -avm_u(leftix(ix,iy),leftiy(ix,iy))*
@@ -254,7 +254,7 @@ c Drift terms
      &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
      &         na(leftix(ix,iy),leftiy(ix,iy),is)/
      &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &         0.5e0_R8*
+     &         0.5_R8*
      &         (cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,s2nucl(is)-1)
      &         -zhcscorr*cvsa_uBdp_al(ix,iy,0,0,s2nucl(is)-1))*
      &         t0
@@ -299,7 +299,7 @@ cwdk cancellation of some terms in poloidal and radial current components
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then
              wrk0(ix,iy) = (dvpar(ix,iy)+
-     &         dvpar(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8           !srv 19.07.06
+     &         dvpar(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8             !srv 19.07.06
            endif
           enddo
          enddo                                                          !srv 23.07.05 }
