@@ -283,7 +283,8 @@ c therefore initialise here
       call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
       call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
 *   ..when using BDF2, the first iteration must use IE to start-up the scheme
-      if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
+      if (switch%b2mndt_bdf.eq.2.and.itim.eq.0
+     &     .and.switch%b2mndt_startup.gt.0) then
         switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
         ts_factor=1.0_R8
         if (switch%b2mndt_startup.eq.2) then
