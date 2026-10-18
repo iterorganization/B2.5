@@ -5349,7 +5349,7 @@
 				<description>
 					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
 					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup.
+					The scheme needs to be started up differently in the first time-step: see b2mndt_startup for more details.
 					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -5359,8 +5359,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
-					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
+					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides how to perform the first time-step.
+					If set to 0 (default), the code assumes that the initial solution is in steady-state.
+					If set to 1 or 2, the implicit Euler or the Crank-Nicolson schemes are used during the first time step, respectively.
 				</description>
 			</switch>
 			<switch>

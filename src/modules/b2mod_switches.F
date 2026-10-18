@@ -1254,7 +1254,7 @@ c b2mndt
       s % b2mndt_ckn = 1
       s % b2mndt_bdf = 1
       s % b2mndt_dummy = 0
-      s % b2mndt_startup = 1
+      s % b2mndt_startup = 0
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
 
@@ -2647,8 +2647,8 @@ c b2mndt
      &  'b2mndt_ckn should be 1 or 2')
       call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
      &  'b2mndt_bdf should be 1 or 2')
-      call xertst (s%b2mndt_startup.eq.1.or.s%b2mndt_startup.eq.2,
-     &  'b2mndt_startup should be 1 or 2')
+      call xertst (s%b2mndt_startup.eq.0.or.s%b2mndt_startup.eq.1.or.
+     &  s%b2mndt_startup.eq.2,'b2mndt_startup should be 0, 1 or 2')
       if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
         call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
      &     ' integration schemes at the same time!'//
