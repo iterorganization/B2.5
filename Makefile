@@ -1146,10 +1146,10 @@ else
 endif
 	@if cmp -s ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${OBJDIR}/git_version_new.h; else mv ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
-${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
-ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
-	-mkdir -p ${OBJDIR}
-endif
+${OBJDIR}:
+	mkdir -p ${OBJDIR}
+
+${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules | ${OBJDIR}
 ifneq (${OBJDIR},${OBNDIR})
 ifeq ($(shell [ -d ${OBNDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBNDIR}
@@ -1249,8 +1249,7 @@ ${INCLOCAL}/b2local.h:
 	  echo "c store local or locally modified include files in this directory" ; \
 	  echo "c" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
-${OBJDIR}/mpiversion.mk: ${MAKES}
-	@mkdir -p ${OBJDIR}
+${OBJDIR}/mpiversion.mk: ${MAKES} | ${OBJDIR}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else
