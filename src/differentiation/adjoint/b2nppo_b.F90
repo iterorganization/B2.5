@@ -85,7 +85,7 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv), wrk
   REAL(kind=r8) :: aab(mpg%ncmxnv)
 !   ..procedures
@@ -146,7 +146,13 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
     CALL B2UPPO(ncv, rxf, dv%corpo, pl%po)
     IF (switch%b2nppo_restr_po .NE. 0.0_R8) THEN
       DO icv=1,mpg%ncv
-        IF (mpg%cvonclosedsurface(icv)) THEN
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
+        IF (mpg%cvonclosedsurface(icn)) THEN
           CALL PUSHCONTROL3B(0)
         ELSE IF (switch%b2nppo_restr_po .GT. 0.0_R8) THEN
           IF (qe*pl%po(icv) .GE. 0.) THEN
@@ -289,7 +295,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv), wrk
 !   ..procedures
   EXTERNAL XERTST
@@ -353,7 +359,13 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
     CALL B2UPPO(ncv, rxf, dv%corpo, pl%po)
     IF (switch%b2nppo_restr_po .NE. 0.0_R8) THEN
       DO icv=1,mpg%ncv
-        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
           IF (switch%b2nppo_restr_po .GT. 0.0_R8) THEN
             IF (qe*pl%po(icv) .GE. 0.) THEN
               abs0 = qe*pl%po(icv)

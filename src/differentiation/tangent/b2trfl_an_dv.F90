@@ -285,7 +285,7 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   INTRINSIC SQRT
   INTRINSIC ABS
@@ -300,7 +300,13 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv.GT.mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  ELSE
+    icn = icv
+  ENDIF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = zetap/mp
     DO i=0,nspecies-1
       IF (c_hta_an(i)*gtalc(icv, i) .GE. 0.) THEN

@@ -1225,7 +1225,7 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT_DIFFV_DIFFV), INTENT(INOUT) :: psncdd, psnldd
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, icn, is, is_start, is_end&
 &   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     REAL(kind=r8), DIMENSION(nbdirsmax0) :: sna_pumpd0, sna_puffd0, &
@@ -1669,7 +1669,13 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv.GT.mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+                    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     DO nd=1,nbdirs
                       DO nd0=nd,nbdirs0
                         sum_sdd(nd0, nd) = sum_sdd(nd0, nd) + geo%cvvol(&
@@ -5124,7 +5130,7 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psncd, psnld
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, icn, is, is_start, is_end&
 &   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     REAL(kind=r8), DIMENSION(nbdirsmax) :: sna_pumpd, sna_puffd, &
@@ -5427,7 +5433,13 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv.GT.mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+                    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     DO nd=1,nbdirs
                       sum_sd(nd) = sum_sd(nd) + geo%cvvol(icv)*pld%na(nd&
 &                       , icv, is)

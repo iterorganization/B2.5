@@ -84,7 +84,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   PARAMETER (ce=3.16_R8)
@@ -179,6 +179,12 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
 !
   DO icv=1,ncv
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+    ELSE
+      icn = icv
+    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     result10 = SQRT(t0)
@@ -197,7 +203,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
         result10 = FKE(z)
         hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*result10*tnp
       END IF
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
 ! IYS and lk 21.11.2012
@@ -218,7 +224,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
     ELSE IF (switch%b2tqce_model .EQ. 2) THEN
 ! old SOLPS4.0 Braginskii model for hce
       hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         result10 = FSE(z)
@@ -232,7 +238,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
       result10 = D15E(z)
       result2 = F135E(z)
       hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*(result10/result2)*tnp
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         result10 = D35E(z)
@@ -409,7 +415,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   REAL(kind=r8) :: t0d(nbdirsmax), zd(nbdirsmax), taud(nbdirsmax, ncv), &
@@ -521,6 +527,12 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
   taud = 0.D0
 !
   DO icv=1,ncv
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+    ELSE
+      icn = icv
+    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     temp = SQRT(t0)
@@ -571,7 +583,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
         END DO
         hce(icv, 0) = 2.5_R8*(temp0*(result10*tnp))
       END IF
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
 ! IYS and lk 21.11.2012
@@ -611,7 +623,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
 &         )/me)
       END DO
       hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         CALL FSE_DV(z, zd, result10, result10d, nbdirs)
@@ -637,7 +649,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
 &         nd))/(me*result2)
       END DO
       hce(icv, 0) = 2.5_R8*temp0
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         CALL D35E_DV(z, zd, result10, result10d, nbdirs)

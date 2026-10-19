@@ -1134,7 +1134,7 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psncd, psnld
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, icn, is, is_start, is_end&
 &   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     REAL(kind=r8), DIMENSION(nbdirsmax) :: sna_pumpd, sna_puffd, &
@@ -1437,7 +1437,13 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv.GT.mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+                    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     DO nd=1,nbdirs
                       sum_sd(nd) = sum_sd(nd) + geo%cvvol(icv)*pld%na(nd&
 &                       , icv, is)
@@ -3430,7 +3436,7 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, icn, is, is_start, is_end&
 &   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     INTEGER, SAVE :: ncall=0
@@ -3665,7 +3671,13 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv.GT.mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+                    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     sum_s = sum_s + pl%na(icv, is)*geo%cvvol(icv)
                     charge_frac(iss) = charge_frac(iss) + pl%na(icv, is)&
 &                     *geo%cvvol(icv)

@@ -64,7 +64,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: iCv
+      integer :: iCv, iCn, iFc
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv), wrk
 *   ..procedures
@@ -122,7 +122,13 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
         if (switch%b2nppo_restr_po.ne.0.0_R8) then
           do iCv=1,mpg%nCv
-            if (mpg%cvOnClosedSurface(iCv)) cycle
+            if (iCv.gt.mpg%nCi) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            else
+              iCn = iCv
+            end if
+            if (mpg%cvOnClosedSurface(iCn)) cycle
             if (switch%b2nppo_restr_po.gt.0.0_R8) then
               if (abs(qe*pl%po(iCv))/pl%te(iCv)
      &                   .gt. switch%b2nppo_restr_po ) then
