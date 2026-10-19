@@ -8,6 +8,12 @@ module b2mod_mwti
 #ifndef SOLPS4_3
   public :: b2mwti, dealloc_b2mod_mwti
 #endif
+  integer, parameter :: B2TIME_SAVE_MODE_CLASSICAL  = 0
+  integer, parameter :: B2TIME_SAVE_MODE_AUTO_GROUP = 1
+  integer, parameter :: B2TIME_SAVE_MODE_USER_GROUP = 2
+  integer, parameter :: B2TIME_USER_GROUP_SOURCE_NONE      = 0
+  integer, parameter :: B2TIME_USER_GROUP_SOURCE_FCLBL     = 1
+  integer, parameter :: B2TIME_USER_GROUP_SOURCE_FACE_LIST = 2
   real (kind=R8), allocatable, save, public :: &
          nasepi_av(:,:), nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          dabsepi_av(:,:), dmbsepi_av(:,:), tabsepi_av(:,:), tmbsepi_av(:,:), &
@@ -57,7 +63,7 @@ contains
     , only : geometryID, GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_CDN, &
              GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
     use b2mod_user_namelist &
-    , only : omp, imp, nimp, nomp, icsepimp
+    , only : omp, imp, nimp, nomp, icsepimp, ntarget_fclbl_max
     use b2mod_user_namelist &
     , only : icsepomp
     use b2mod_switches
@@ -108,36 +114,69 @@ contains
     !.declarations
 
     !   ..local variables
-    integer ncall
+    integer ncall, ntargetbuf
     real (kind=R8) :: &
-         fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
-         fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
-         pwmxip(nncutmax), fchxip(nncutmax), fchxap(nncutmax), &
-         fetxip(nncutmax), fetxap(nncutmax)
+         fnixip(max(nncutmax,ntarget_fclbl_max)), &
+         feexip(max(nncutmax,ntarget_fclbl_max)), &
+         feixip(max(nncutmax,ntarget_fclbl_max)), &
+         fnixap(max(nncutmax,ntarget_fclbl_max)), &
+         feexap(max(nncutmax,ntarget_fclbl_max)), &
+         feixap(max(nncutmax,ntarget_fclbl_max)), &
+         pwmxip(max(nncutmax,ntarget_fclbl_max)), &
+         fchxip(max(nncutmax,ntarget_fclbl_max)), &
+         fchxap(max(nncutmax,ntarget_fclbl_max)), &
+         fetxip(max(nncutmax,ntarget_fclbl_max)), &
+         fetxap(max(nncutmax,ntarget_fclbl_max))
     real (kind=R8) :: &
-         fniyip(nncutmax), feeyip(nncutmax), feiyip(nncutmax), &
-         fniyap(nncutmax), feeyap(nncutmax), feiyap(nncutmax), &
-         pwmxap(nncutmax), fchyip(nncutmax), fchyap(nncutmax), &
-         fetyip(nncutmax), fetyap(nncutmax)
+         fniyip(max(nncutmax,ntarget_fclbl_max)), &
+         feeyip(max(nncutmax,ntarget_fclbl_max)), &
+         feiyip(max(nncutmax,ntarget_fclbl_max)), &
+         fniyap(max(nncutmax,ntarget_fclbl_max)), &
+         feeyap(max(nncutmax,ntarget_fclbl_max)), &
+         feiyap(max(nncutmax,ntarget_fclbl_max)), &
+         pwmxap(max(nncutmax,ntarget_fclbl_max)), &
+         fchyip(max(nncutmax,ntarget_fclbl_max)), &
+         fchyap(max(nncutmax,ntarget_fclbl_max)), &
+         fetyip(max(nncutmax,ntarget_fclbl_max)), &
+         fetyap(max(nncutmax,ntarget_fclbl_max))
     real (kind=R8) :: &
-         nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
-         nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), &
-         namxip(ns,nncutmax), namxap(ns,nncutmax)
+         nemxip(max(nncutmax,ntarget_fclbl_max)), &
+         temxip(max(nncutmax,ntarget_fclbl_max)), &
+         timxip(max(nncutmax,ntarget_fclbl_max)), &
+         nemxap(max(nncutmax,ntarget_fclbl_max)), &
+         temxap(max(nncutmax,ntarget_fclbl_max)), &
+         timxap(max(nncutmax,ntarget_fclbl_max)), &
+         pomxip(max(nncutmax,ntarget_fclbl_max)), &
+         pomxap(max(nncutmax,ntarget_fclbl_max)), &
+         namxip(ns,max(nncutmax,ntarget_fclbl_max)), &
+         namxap(ns,max(nncutmax,ntarget_fclbl_max))
 #ifdef WG_TODO
     real (kind=R8) :: &
-         tpmxip(nncutmax), tpmxap(nncutmax)
+         tpmxip(max(nncutmax,ntarget_fclbl_max)), &
+         tpmxap(max(nncutmax,ntarget_fclbl_max))
 #endif
     real (kind=R8) :: &
-         fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
-         fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
-         fchsip(nncutmax), fchsap(nncutmax), &
-         fetsip(nncutmax), fetsap(nncutmax)
+         fnisip(max(nncutmax,ntarget_fclbl_max)), &
+         feesip(max(nncutmax,ntarget_fclbl_max)), &
+         feisip(max(nncutmax,ntarget_fclbl_max)), &
+         fnisap(max(nncutmax,ntarget_fclbl_max)), &
+         feesap(max(nncutmax,ntarget_fclbl_max)), &
+         feisap(max(nncutmax,ntarget_fclbl_max)), &
+         fchsip(max(nncutmax,ntarget_fclbl_max)), &
+         fchsap(max(nncutmax,ntarget_fclbl_max)), &
+         fetsip(max(nncutmax,ntarget_fclbl_max)), &
+         fetsap(max(nncutmax,ntarget_fclbl_max))
     real (kind=R8) :: &
-         fnisipp(nncutmax), feesipp(nncutmax), feisipp(nncutmax), &
-         fnisapp(nncutmax), feesapp(nncutmax), feisapp(nncutmax), &
-         fchsipp(nncutmax), fchsapp(nncutmax), &
-         fetsipp(nncutmax), fetsapp(nncutmax)
+         fnisipp(max(nncutmax,ntarget_fclbl_max)), &
+         feesipp(max(nncutmax,ntarget_fclbl_max)), &
+         feisipp(max(nncutmax,ntarget_fclbl_max)), &
+         fnisapp(max(nncutmax,ntarget_fclbl_max)), &
+         feesapp(max(nncutmax,ntarget_fclbl_max)), &
+         feisapp(max(nncutmax,ntarget_fclbl_max)), &
+         fchsipp(max(nncutmax,ntarget_fclbl_max)), &
+         fchsapp(max(nncutmax,ntarget_fclbl_max)), &
+         fetsipp(max(nncutmax,ntarget_fclbl_max)), &
+         fetsapp(max(nncutmax,ntarget_fclbl_max))
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
@@ -165,25 +204,59 @@ contains
     real (kind=R8) :: fac
     real (kind=R8), allocatable :: fcOr(:)
     real (kind=R8) :: &
-         nasepi(ns,nncutmax), nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
-         dabsepi(nnatmi,nncutmax), dmbsepi(nnmoli,nncutmax), tabsepi(nnatmi,nncutmax), tmbsepi(nnmoli,nncutmax), &
-         nasepm(ns,nncutmax), nesepm(nncutmax), tesepm(nncutmax), tisepm(nncutmax), &
-         dabsepm(nnatmi,nncutmax), dmbsepm(nnmoli,nncutmax), tabsepm(nnatmi,nncutmax), tmbsepm(nnmoli,nncutmax), &
-         nasepa(ns,nncutmax), nesepa(nncutmax), tesepa(nncutmax), tisepa(nncutmax), &
-         dabsepa(nnatmi,nncutmax), dmbsepa(nnmoli,nncutmax), tabsepa(nnatmi,nncutmax), tmbsepa(nnmoli,nncutmax), &
-         posepi(nncutmax), posepm(nncutmax), posepa(nncutmax), &
-         dnsepm(nncutmax), dpsepm(nncutmax), kesepm(nncutmax), &
-         kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
-         vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax), &
-         ktsepm(nncutmax), ktsepi(nncutmax), ktsepa(nncutmax)
+         nasepi(ns,max(nncutmax,ntarget_fclbl_max)), &
+         nesepi(max(nncutmax,ntarget_fclbl_max)), &
+         tesepi(max(nncutmax,ntarget_fclbl_max)), &
+         tisepi(max(nncutmax,ntarget_fclbl_max)), &
+         dabsepi(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         dmbsepi(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         tabsepi(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         tmbsepi(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         nasepm(ns,max(nncutmax,ntarget_fclbl_max)), &
+         nesepm(max(nncutmax,ntarget_fclbl_max)), &
+         tesepm(max(nncutmax,ntarget_fclbl_max)), &
+         tisepm(max(nncutmax,ntarget_fclbl_max)), &
+         dabsepm(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         dmbsepm(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         tabsepm(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         tmbsepm(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         nasepa(ns,max(nncutmax,ntarget_fclbl_max)), &
+         nesepa(max(nncutmax,ntarget_fclbl_max)), &
+         tesepa(max(nncutmax,ntarget_fclbl_max)), &
+         tisepa(max(nncutmax,ntarget_fclbl_max)), &
+         dabsepa(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         dmbsepa(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         tabsepa(nnatmi,max(nncutmax,ntarget_fclbl_max)), &
+         tmbsepa(nnmoli,max(nncutmax,ntarget_fclbl_max)), &
+         posepi(max(nncutmax,ntarget_fclbl_max)), &
+         posepm(max(nncutmax,ntarget_fclbl_max)), &
+         posepa(max(nncutmax,ntarget_fclbl_max)), &
+         dnsepm(max(nncutmax,ntarget_fclbl_max)), &
+         dpsepm(max(nncutmax,ntarget_fclbl_max)), &
+         kesepm(max(nncutmax,ntarget_fclbl_max)), &
+         kisepm(max(nncutmax,ntarget_fclbl_max)), &
+         vxsepm(max(nncutmax,ntarget_fclbl_max)), &
+         vysepm(max(nncutmax,ntarget_fclbl_max)), &
+         vssepm(max(nncutmax,ntarget_fclbl_max)), &
+         tpsepi(max(nncutmax,ntarget_fclbl_max)), &
+         tpsepa(max(nncutmax,ntarget_fclbl_max)), &
+         ktsepm(max(nncutmax,ntarget_fclbl_max)), &
+         ktsepi(max(nncutmax,ntarget_fclbl_max)), &
+         ktsepa(max(nncutmax,ntarget_fclbl_max))
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1)
     real (kind=R8) :: &
          timesa(1), batchsa(1), tstepn(1), icsepimpn(1), icsepompn(1)
     real (kind=R8), allocatable :: slice(:), slice_ns(:,:), slice_natm(:,:), slice_nmol(:,:), wrkc(:)
+    real (kind=R8), allocatable :: target_group_id_out(:)
+    real (kind=R8), allocatable :: target_fclbl_out(:)
+    real (kind=R8), allocatable :: target_fcreg_out(:)
     logical ex
     character*5 rw
     character*256, save :: filename, filename_av
+    character*32, allocatable :: target_group_name_out(:)
+    character*32, allocatable :: target_fclbl_name_out(:)
+    integer :: varid
     real(kind=R8) :: rratio
     external rratio
 #endif
@@ -208,6 +281,7 @@ contains
     call xertst (0.le.ismain0.and.ismain0.lt.ns.and. &
          (is_neutral(ismain0).or.ismain0.eq.ismain), &
          'invalid main neutral species index ismain0')
+    ntargetbuf = max(nncutmax,ntarget_fclbl_max)
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
       gridGeometry = geometryId ( mpg, geo, 1 )
@@ -241,6 +315,12 @@ contains
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = 1
       if (lgeo_dn) nc = 2
+      if (b2mwti_save_mode(mpg).ne.B2TIME_SAVE_MODE_CLASSICAL) then
+        nc = b2mwti_target_count(mpg)
+        call xertst(nc.ge.1,'no b2time target groups')
+        call xertst(nc.le.ntargetbuf,'too many b2time target groups')
+        call write_b2timenc_cell_list(mpg,geo,target_offset)
+      endif
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
@@ -486,86 +566,86 @@ contains
         end if
       end if
 #endif
-      allocate (nasepm_av(1:ns,1:nncutmax))
-      allocate (nesepm_av(1:nncutmax))
-      allocate (tesepm_av(1:nncutmax))
-      allocate (tisepm_av(1:nncutmax))
-      allocate (dabsepm_av(1:nnatmi,1:nncutmax))
-      allocate (dmbsepm_av(1:nnmoli,1:nncutmax))
-      allocate (tabsepm_av(1:nnatmi,1:nncutmax))
-      allocate (tmbsepm_av(1:nnmoli,1:nncutmax))
-      allocate (posepm_av(1:nncutmax))
-      allocate (nasepi_av(1:ns,1:nncutmax))
-      allocate (nesepi_av(1:nncutmax))
-      allocate (tesepi_av(1:nncutmax))
-      allocate (tisepi_av(1:nncutmax))
-      allocate (dabsepi_av(1:nnatmi,1:nncutmax))
-      allocate (dmbsepi_av(1:nnmoli,1:nncutmax))
-      allocate (tabsepi_av(1:nnatmi,1:nncutmax))
-      allocate (tmbsepi_av(1:nnmoli,1:nncutmax))
-      allocate (posepi_av(1:nncutmax))
-      allocate (nasepa_av(1:ns,1:nncutmax))
-      allocate (nesepa_av(1:nncutmax))
-      allocate (tesepa_av(1:nncutmax))
-      allocate (tisepa_av(1:nncutmax))
-      allocate (dabsepa_av(1:nnatmi,1:nncutmax))
-      allocate (dmbsepa_av(1:nnmoli,1:nncutmax))
-      allocate (tabsepa_av(1:nnatmi,1:nncutmax))
-      allocate (tmbsepa_av(1:nnmoli,1:nncutmax))
-      allocate (posepa_av(1:nncutmax))
-      allocate (namxip_av(1:ns,1:nncutmax))
-      allocate (nemxip_av(1:nncutmax))
-      allocate (temxip_av(1:nncutmax))
-      allocate (timxip_av(1:nncutmax))
-      allocate (pomxip_av(1:nncutmax))
-      allocate (namxap_av(1:ns,1:nncutmax))
-      allocate (nemxap_av(1:nncutmax))
-      allocate (temxap_av(1:nncutmax))
-      allocate (timxap_av(1:nncutmax))
-      allocate (pomxap_av(1:nncutmax))
-      allocate (ktsepm_av(1:nncutmax))
-      allocate (ktsepi_av(1:nncutmax))
-      allocate (ktsepa_av(1:nncutmax))
-      allocate (nasepm_std(1:ns,1:nncutmax))
-      allocate (nesepm_std(1:nncutmax))
-      allocate (tesepm_std(1:nncutmax))
-      allocate (tisepm_std(1:nncutmax))
-      allocate (dabsepm_std(1:nnatmi,1:nncutmax))
-      allocate (dmbsepm_std(1:nnmoli,1:nncutmax))
-      allocate (tabsepm_std(1:nnatmi,1:nncutmax))
-      allocate (tmbsepm_std(1:nnmoli,1:nncutmax))
-      allocate (posepm_std(1:nncutmax))
-      allocate (nasepi_std(1:ns,1:nncutmax))
-      allocate (nesepi_std(1:nncutmax))
-      allocate (tesepi_std(1:nncutmax))
-      allocate (tisepi_std(1:nncutmax))
-      allocate (dabsepi_std(1:nnatmi,1:nncutmax))
-      allocate (dmbsepi_std(1:nnmoli,1:nncutmax))
-      allocate (tabsepi_std(1:nnatmi,1:nncutmax))
-      allocate (tmbsepi_std(1:nnmoli,1:nncutmax))
-      allocate (posepi_std(1:nncutmax))
-      allocate (nasepa_std(1:ns,1:nncutmax))
-      allocate (nesepa_std(1:nncutmax))
-      allocate (tesepa_std(1:nncutmax))
-      allocate (tisepa_std(1:nncutmax))
-      allocate (dabsepa_std(1:nnatmi,1:nncutmax))
-      allocate (dmbsepa_std(1:nnmoli,1:nncutmax))
-      allocate (tabsepa_std(1:nnatmi,1:nncutmax))
-      allocate (tmbsepa_std(1:nnmoli,1:nncutmax))
-      allocate (posepa_std(1:nncutmax))
-      allocate (namxip_std(1:ns,1:nncutmax))
-      allocate (nemxip_std(1:nncutmax))
-      allocate (temxip_std(1:nncutmax))
-      allocate (timxip_std(1:nncutmax))
-      allocate (pomxip_std(1:nncutmax))
-      allocate (namxap_std(1:ns,1:nncutmax))
-      allocate (nemxap_std(1:nncutmax))
-      allocate (temxap_std(1:nncutmax))
-      allocate (timxap_std(1:nncutmax))
-      allocate (pomxap_std(1:nncutmax))
-      allocate (ktsepm_std(1:nncutmax))
-      allocate (ktsepi_std(1:nncutmax))
-      allocate (ktsepa_std(1:nncutmax))
+      allocate (nasepm_av(1:ns,1:ntargetbuf))
+      allocate (nesepm_av(1:ntargetbuf))
+      allocate (tesepm_av(1:ntargetbuf))
+      allocate (tisepm_av(1:ntargetbuf))
+      allocate (dabsepm_av(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepm_av(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepm_av(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepm_av(1:nnmoli,1:ntargetbuf))
+      allocate (posepm_av(1:ntargetbuf))
+      allocate (nasepi_av(1:ns,1:ntargetbuf))
+      allocate (nesepi_av(1:ntargetbuf))
+      allocate (tesepi_av(1:ntargetbuf))
+      allocate (tisepi_av(1:ntargetbuf))
+      allocate (dabsepi_av(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepi_av(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepi_av(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepi_av(1:nnmoli,1:ntargetbuf))
+      allocate (posepi_av(1:ntargetbuf))
+      allocate (nasepa_av(1:ns,1:ntargetbuf))
+      allocate (nesepa_av(1:ntargetbuf))
+      allocate (tesepa_av(1:ntargetbuf))
+      allocate (tisepa_av(1:ntargetbuf))
+      allocate (dabsepa_av(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepa_av(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepa_av(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepa_av(1:nnmoli,1:ntargetbuf))
+      allocate (posepa_av(1:ntargetbuf))
+      allocate (namxip_av(1:ns,1:ntargetbuf))
+      allocate (nemxip_av(1:ntargetbuf))
+      allocate (temxip_av(1:ntargetbuf))
+      allocate (timxip_av(1:ntargetbuf))
+      allocate (pomxip_av(1:ntargetbuf))
+      allocate (namxap_av(1:ns,1:ntargetbuf))
+      allocate (nemxap_av(1:ntargetbuf))
+      allocate (temxap_av(1:ntargetbuf))
+      allocate (timxap_av(1:ntargetbuf))
+      allocate (pomxap_av(1:ntargetbuf))
+      allocate (ktsepm_av(1:ntargetbuf))
+      allocate (ktsepi_av(1:ntargetbuf))
+      allocate (ktsepa_av(1:ntargetbuf))
+      allocate (nasepm_std(1:ns,1:ntargetbuf))
+      allocate (nesepm_std(1:ntargetbuf))
+      allocate (tesepm_std(1:ntargetbuf))
+      allocate (tisepm_std(1:ntargetbuf))
+      allocate (dabsepm_std(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepm_std(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepm_std(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepm_std(1:nnmoli,1:ntargetbuf))
+      allocate (posepm_std(1:ntargetbuf))
+      allocate (nasepi_std(1:ns,1:ntargetbuf))
+      allocate (nesepi_std(1:ntargetbuf))
+      allocate (tesepi_std(1:ntargetbuf))
+      allocate (tisepi_std(1:ntargetbuf))
+      allocate (dabsepi_std(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepi_std(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepi_std(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepi_std(1:nnmoli,1:ntargetbuf))
+      allocate (posepi_std(1:ntargetbuf))
+      allocate (nasepa_std(1:ns,1:ntargetbuf))
+      allocate (nesepa_std(1:ntargetbuf))
+      allocate (tesepa_std(1:ntargetbuf))
+      allocate (tisepa_std(1:ntargetbuf))
+      allocate (dabsepa_std(1:nnatmi,1:ntargetbuf))
+      allocate (dmbsepa_std(1:nnmoli,1:ntargetbuf))
+      allocate (tabsepa_std(1:nnatmi,1:ntargetbuf))
+      allocate (tmbsepa_std(1:nnmoli,1:ntargetbuf))
+      allocate (posepa_std(1:ntargetbuf))
+      allocate (namxip_std(1:ns,1:ntargetbuf))
+      allocate (nemxip_std(1:ntargetbuf))
+      allocate (temxip_std(1:ntargetbuf))
+      allocate (timxip_std(1:ntargetbuf))
+      allocate (pomxip_std(1:ntargetbuf))
+      allocate (namxap_std(1:ns,1:ntargetbuf))
+      allocate (nemxap_std(1:ntargetbuf))
+      allocate (temxap_std(1:ntargetbuf))
+      allocate (timxap_std(1:ntargetbuf))
+      allocate (pomxap_std(1:ntargetbuf))
+      allocate (ktsepm_std(1:ntargetbuf))
+      allocate (ktsepi_std(1:ntargetbuf))
+      allocate (ktsepa_std(1:ntargetbuf))
       nasepm_av = 0.0_R8
       nesepm_av = 0.0_R8
       tesepm_av = 0.0_R8
@@ -864,6 +944,16 @@ contains
         endif
       enddo
 #endif
+    endif
+
+    if (b2mwti_use_user_group(mpg)) then
+      call override_target_flux_labels_user_group(mpg,geo,pl,dv,ext, &
+   &   switch,ns,ismain,fnixap,feexap,feixap,fchxap,fetxap, &
+   &   namxap,nemxap,temxap,timxap,pomxap,pwmxap)
+    else if (b2mwti_use_auto_group(mpg)) then
+      call override_target_flux_labels_fcreg(mpg,geo,pl,dv,ext, &
+   &   switch,ns,ismain,fnixap,feexap,feixap,fchxap,fetxap, &
+   &   namxap,nemxap,temxap,timxap,pomxap,pwmxap)
     endif
 
     fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8
@@ -1862,6 +1952,15 @@ contains
     endif
 !WG_TODO
 #endif
+    if (b2mwti_use_user_group(mpg)) then
+      call override_target_scalar_labels_user_group(mpg,geo,pl,dv, &
+   &   ns,nnatmi,nnmoli,target_offset,nasepa,nesepa,tesepa,tisepa, &
+   &   tpsepa,posepa,ktsepa,dabsepa,dmbsepa,tabsepa,tmbsepa)
+    else if (b2mwti_use_auto_group(mpg)) then
+      call override_target_scalar_labels_fcreg(mpg,geo,pl,dv, &
+   &   ns,nnatmi,nnmoli,target_offset,nasepa,nesepa,tesepa,tisepa, &
+   &   tpsepa,posepa,ktsepa,dabsepa,dmbsepa,tabsepa,tmbsepa)
+    endif
 !NO_CDF
 #endif
     !
@@ -1909,110 +2008,110 @@ contains
 !wdk update batch averages
     if (luav) then
       if (ntim_batch .gt. 0 ) then
-        call batch_average(nncutmax*ns,nasepm,nasepm_av,itim,ntim_batch)
-        call batch_average(nncutmax,nesepm,nesepm_av,itim,ntim_batch)
-        call batch_average(nncutmax,tesepm,tesepm_av,itim,ntim_batch)
-        call batch_average(nncutmax,tisepm,tisepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf*ns,nasepm,nasepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,nesepm,nesepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tesepm,tesepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tisepm,tisepm_av,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average(nncutmax*nnatmi,dabsepm,dabsepm_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnatmi,tabsepm,tabsepm_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,dabsepm,dabsepm_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,tabsepm,tabsepm_av,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average(nncutmax*nnmoli,dmbsepm,dmbsepm_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnmoli,tmbsepm,tmbsepm_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,dmbsepm,dmbsepm_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,tmbsepm,tmbsepm_av,itim,ntim_batch)
         endif
-        call batch_average(nncutmax,posepm,posepm_av,itim,ntim_batch)
-        call batch_average(nncutmax*ns,nasepi,nasepi_av,itim,ntim_batch)
-        call batch_average(nncutmax,nesepi,nesepi_av,itim,ntim_batch)
-        call batch_average(nncutmax,tesepi,tesepi_av,itim,ntim_batch)
-        call batch_average(nncutmax,tisepi,tisepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,posepm,posepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf*ns,nasepi,nasepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,nesepi,nesepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tesepi,tesepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tisepi,tisepi_av,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average(nncutmax*nnatmi,dabsepi,dabsepi_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnatmi,tabsepi,tabsepi_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,dabsepi,dabsepi_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,tabsepi,tabsepi_av,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average(nncutmax*nnmoli,dmbsepi,dmbsepi_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnmoli,tmbsepi,tmbsepi_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,dmbsepi,dmbsepi_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,tmbsepi,tmbsepi_av,itim,ntim_batch)
         endif
-        call batch_average(nncutmax,posepi,posepi_av,itim,ntim_batch)
-        call batch_average(nncutmax*ns,nasepa,nasepa_av,itim,ntim_batch)
-        call batch_average(nncutmax,nesepa,nesepa_av,itim,ntim_batch)
-        call batch_average(nncutmax,tesepa,tesepa_av,itim,ntim_batch)
-        call batch_average(nncutmax,tisepa,tisepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,posepi,posepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf*ns,nasepa,nasepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,nesepa,nesepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tesepa,tesepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,tisepa,tisepa_av,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average(nncutmax*nnatmi,dabsepa,dabsepa_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnatmi,tabsepa,tabsepa_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,dabsepa,dabsepa_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnatmi,tabsepa,tabsepa_av,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average(nncutmax*nnmoli,dmbsepa,dmbsepa_av,itim,ntim_batch)
-          call batch_average(nncutmax*nnmoli,tmbsepa,tmbsepa_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,dmbsepa,dmbsepa_av,itim,ntim_batch)
+          call batch_average(ntargetbuf*nnmoli,tmbsepa,tmbsepa_av,itim,ntim_batch)
         endif
-        call batch_average(nncutmax,posepa,posepa_av,itim,ntim_batch)
-        call batch_average(nncutmax,ktsepm,ktsepm_av,itim,ntim_batch)
-        call batch_average(nncutmax,ktsepi,ktsepi_av,itim,ntim_batch)
-        call batch_average(nncutmax,ktsepa,ktsepa_av,itim,ntim_batch)
-        call batch_average(nncutmax*ns,namxip,namxip_av,itim,ntim_batch)
-        call batch_average(nncutmax,nemxip,nemxip_av,itim,ntim_batch)
-        call batch_average(nncutmax,temxip,temxip_av,itim,ntim_batch)
-        call batch_average(nncutmax,timxip,timxip_av,itim,ntim_batch)
-        call batch_average(nncutmax,pomxip,pomxip_av,itim,ntim_batch)
-        call batch_average(nncutmax*ns,namxap,namxap_av,itim,ntim_batch)
-        call batch_average(nncutmax,nemxap,nemxap_av,itim,ntim_batch)
-        call batch_average(nncutmax,temxap,temxap_av,itim,ntim_batch)
-        call batch_average(nncutmax,timxap,timxap_av,itim,ntim_batch)
-        call batch_average(nncutmax,pomxap,pomxap_av,itim,ntim_batch)
-        call batch_average_sq(nncutmax*ns,nasepm,nasepm_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,nesepm,nesepm_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tesepm,tesepm_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tisepm,tisepm_std,itim,ntim_batch)
+        call batch_average(ntargetbuf,posepa,posepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,ktsepm,ktsepm_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,ktsepi,ktsepi_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,ktsepa,ktsepa_av,itim,ntim_batch)
+        call batch_average(ntargetbuf*ns,namxip,namxip_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,nemxip,nemxip_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,temxip,temxip_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,timxip,timxip_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,pomxip,pomxip_av,itim,ntim_batch)
+        call batch_average(ntargetbuf*ns,namxap,namxap_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,nemxap,nemxap_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,temxap,temxap_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,timxap,timxap_av,itim,ntim_batch)
+        call batch_average(ntargetbuf,pomxap,pomxap_av,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf*ns,nasepm,nasepm_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,nesepm,nesepm_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tesepm,tesepm_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tisepm,tisepm_std,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average_sq(nncutmax*nnatmi,dabsepm,dabsepm_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnatmi,tabsepm,tabsepm_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,dabsepm,dabsepm_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,tabsepm,tabsepm_std,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average_sq(nncutmax*nnmoli,dmbsepm,dmbsepm_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnmoli,tmbsepm,tmbsepm_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,dmbsepm,dmbsepm_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,tmbsepm,tmbsepm_std,itim,ntim_batch)
         endif
-        call batch_average_sq(nncutmax,posepm,posepm_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax*ns,nasepi,nasepi_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,nesepi,nesepi_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tesepi,tesepi_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tisepi,tisepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,posepm,posepm_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf*ns,nasepi,nasepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,nesepi,nesepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tesepi,tesepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tisepi,tisepi_std,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average_sq(nncutmax*nnatmi,dabsepi,dabsepi_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnatmi,tabsepi,tabsepi_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,dabsepi,dabsepi_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,tabsepi,tabsepi_std,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average_sq(nncutmax*nnmoli,dmbsepi,dmbsepi_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnmoli,tmbsepi,tmbsepi_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,dmbsepi,dmbsepi_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,tmbsepi,tmbsepi_std,itim,ntim_batch)
         endif
-        call batch_average_sq(nncutmax,posepi,posepi_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax*ns,nasepa,nasepa_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,nesepa,nesepa_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tesepa,tesepa_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,tisepa,tisepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,posepi,posepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf*ns,nasepa,nasepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,nesepa,nesepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tesepa,tesepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,tisepa,tisepa_std,itim,ntim_batch)
         if (nnatmi.gt.0) then
-          call batch_average_sq(nncutmax*nnatmi,dabsepa,dabsepa_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnatmi,tabsepa,tabsepa_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,dabsepa,dabsepa_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnatmi,tabsepa,tabsepa_std,itim,ntim_batch)
         endif
         if (nnmoli.gt.0) then
-          call batch_average_sq(nncutmax*nnmoli,dmbsepa,dmbsepa_std,itim,ntim_batch)
-          call batch_average_sq(nncutmax*nnmoli,tmbsepa,tmbsepa_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,dmbsepa,dmbsepa_std,itim,ntim_batch)
+          call batch_average_sq(ntargetbuf*nnmoli,tmbsepa,tmbsepa_std,itim,ntim_batch)
         endif
-        call batch_average_sq(nncutmax,posepa,posepa_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,ktsepm,ktsepm_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,ktsepi,ktsepi_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,ktsepa,ktsepa_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax*ns,namxip,namxip_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,nemxip,nemxip_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,temxip,temxip_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,timxip,timxip_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,pomxip,pomxip_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax*ns,namxap,namxap_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,nemxap,nemxap_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,temxap,temxap_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,timxap,timxap_std,itim,ntim_batch)
-        call batch_average_sq(nncutmax,pomxap,pomxap_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,posepa,posepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,ktsepm,ktsepm_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,ktsepi,ktsepi_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,ktsepa,ktsepa_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf*ns,namxip,namxip_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,nemxip,nemxip_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,temxip,temxip_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,timxip,timxip_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,pomxip,pomxip_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf*ns,namxap,namxap_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,nemxap,nemxap_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,temxap,temxap_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,timxap,timxap_std,itim,ntim_batch)
+        call batch_average_sq(ntargetbuf,pomxap,pomxap_std,itim,ntim_batch)
       endif
     endif
 !wdk end of batch averaging
@@ -2207,6 +2306,43 @@ contains
         end select
       enddo
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
+      if (b2mwti_use_user_group(mpg)) then
+        allocate(target_group_id_out(1:nc))
+        allocate(target_group_name_out(1:nc))
+        if (b2mwti_use_user_group_fclbl(mpg)) then
+          allocate(target_fclbl_out(1:nc))
+          allocate(target_fclbl_name_out(1:nc))
+          call get_user_group_metadata(mpg,target_group_id_out, &
+   &       target_group_name_out,target_fclbl_out)
+          target_fclbl_name_out = target_group_name_out
+        else
+          call get_user_group_metadata(mpg,target_group_id_out, &
+   &       target_group_name_out)
+        endif
+        imap(1)=1
+        call rwcdf(rw,ncid,'target_group_id',imap, &
+   &     target_group_id_out,iret)
+        iret = nf_inq_varid(ncid,'target_group_name',varid)
+        call check_cdf_status(iret)
+        iret = nf_put_var_text(ncid,varid,target_group_name_out)
+        call check_cdf_status(iret)
+        if (b2mwti_use_user_group_fclbl(mpg)) then
+          call rwcdf(rw,ncid,'target_fclbl',imap, &
+   &       target_fclbl_out,iret)
+          iret = nf_inq_varid(ncid,'target_fclbl_name',varid)
+          call check_cdf_status(iret)
+          iret = nf_put_var_text(ncid,varid,target_fclbl_name_out)
+          call check_cdf_status(iret)
+          deallocate(target_fclbl_out,target_fclbl_name_out)
+        endif
+        deallocate(target_group_id_out,target_group_name_out)
+      else if (b2mwti_use_auto_group(mpg)) then
+        allocate(target_fcreg_out(1:nc))
+        call get_target_fcreg_metadata(mpg,target_fcreg_out)
+        imap(1)=1
+        call rwcdf(rw,ncid,'target_fcreg',imap,target_fcreg_out,iret)
+        deallocate(target_fcreg_out)
+      endif
       imap(1)=1
       imap(2)=1
       imap(3)=1
@@ -2241,6 +2377,13 @@ contains
       call rwcdf(rw,ncid,'feixap',imap,feixap,iret)
       call rwcdf(rw,ncid,'fetxap',imap,fetxap,iret)
       call rwcdf(rw,ncid,'fchxap',imap,fchxap,iret)
+      if (b2mwti_save_mode(mpg).ne.B2TIME_SAVE_MODE_CLASSICAL) then
+        call rwcdf(rw,ncid,'fnixtp',imap,fnixap,iret)
+        call rwcdf(rw,ncid,'feextp',imap,feexap,iret)
+        call rwcdf(rw,ncid,'feixtp',imap,feixap,iret)
+        call rwcdf(rw,ncid,'fetxtp',imap,fetxap,iret)
+        call rwcdf(rw,ncid,'fchxtp',imap,fchxap,iret)
+      endif
 
       call rwcdf(rw,ncid,'nasepi',imap,nasepi,iret)
       call rwcdf(rw,ncid,'nesepi',imap,nesepi,iret)
@@ -2291,6 +2434,22 @@ contains
       endif
       call rwcdf(rw,ncid,'posepa',imap,posepa,iret)
       call rwcdf(rw,ncid,'ktsepa',imap,ktsepa,iret)
+      if (b2mwti_save_mode(mpg).ne.B2TIME_SAVE_MODE_CLASSICAL) then
+        call rwcdf(rw,ncid,'nasept',imap,nasepa,iret)
+        call rwcdf(rw,ncid,'nesept',imap,nesepa,iret)
+        call rwcdf(rw,ncid,'tesept',imap,tesepa,iret)
+        call rwcdf(rw,ncid,'tisept',imap,tisepa,iret)
+        if (nnatmi.gt.0) then
+          call rwcdf(rw,ncid,'dabsept',imap,dabsepa,iret)
+          call rwcdf(rw,ncid,'tabsept',imap,tabsepa,iret)
+        endif
+        if (nnmoli.gt.0) then
+          call rwcdf(rw,ncid,'dmbsept',imap,dmbsepa,iret)
+          call rwcdf(rw,ncid,'tmbsept',imap,tmbsepa,iret)
+        endif
+        call rwcdf(rw,ncid,'posept',imap,posepa,iret)
+        call rwcdf(rw,ncid,'ktsept',imap,ktsepa,iret)
+      endif
       call rwcdf(rw,ncid,'namxip',imap,namxip,iret)
       call rwcdf(rw,ncid,'nemxip',imap,nemxip,iret)
       call rwcdf(rw,ncid,'temxip',imap,temxip,iret)
@@ -2301,6 +2460,13 @@ contains
       call rwcdf(rw,ncid,'temxap',imap,temxap,iret)
       call rwcdf(rw,ncid,'timxap',imap,timxap,iret)
       call rwcdf(rw,ncid,'pomxap',imap,pomxap,iret)
+      if (b2mwti_save_mode(mpg).ne.B2TIME_SAVE_MODE_CLASSICAL) then
+        call rwcdf(rw,ncid,'namxtp',imap,namxap,iret)
+        call rwcdf(rw,ncid,'nemxtp',imap,nemxap,iret)
+        call rwcdf(rw,ncid,'temxtp',imap,temxap,iret)
+        call rwcdf(rw,ncid,'timxtp',imap,timxap,iret)
+        call rwcdf(rw,ncid,'pomxtp',imap,pomxap,iret)
+      endif
       call rwcdf(rw,ncid,'fniyip',imap,fniyip,iret)
       call rwcdf(rw,ncid,'feeyip',imap,feeyip,iret)
       call rwcdf(rw,ncid,'feiyip',imap,feiyip,iret)
@@ -2313,6 +2479,9 @@ contains
       call rwcdf(rw,ncid,'fchyap',imap,fchyap,iret)
       call rwcdf(rw,ncid,'pwmxip',imap,pwmxip,iret)
       call rwcdf(rw,ncid,'pwmxap',imap,pwmxap,iret)
+      if (b2mwti_save_mode(mpg).ne.B2TIME_SAVE_MODE_CLASSICAL) then
+        call rwcdf(rw,ncid,'pwmxtp',imap,pwmxap,iret)
+      endif
 
       imap(1)=1
       call rwcdf(rw,ncid,'tmne',imap,tmne,iret)
@@ -3494,6 +3663,1299 @@ contains
     close(99)
     return
   end subroutine output_ds_fc
+
+  integer function b2mwti_save_mode(mpg)
+    use b2mod_geometry, only : GEOMETRY_GENERAL
+    use b2us_map
+    use b2mod_user_namelist, only : ntarget_fclbl, ntarget_face_group
+    implicit none
+    type (mapping), intent(in) :: mpg
+
+    b2mwti_save_mode = B2TIME_SAVE_MODE_CLASSICAL
+    if (.not.mpg%hasTopologicalData) return
+    if (mpg%geometryID.ne.GEOMETRY_GENERAL) return
+    ! Explicit diagnostic groups do not require a divertor target table.
+    if (ntarget_face_group.gt.0 .or. ntarget_fclbl.gt.0) then
+      b2mwti_save_mode = B2TIME_SAVE_MODE_USER_GROUP
+    else if (mpg%nDiv.gt.0) then
+      b2mwti_save_mode = B2TIME_SAVE_MODE_AUTO_GROUP
+    end if
+    return
+  end function b2mwti_save_mode
+
+  integer function b2mwti_user_group_source()
+    use b2mod_user_namelist, only : ntarget_fclbl, ntarget_face_group
+    implicit none
+
+    if (ntarget_face_group.gt.0) then
+      b2mwti_user_group_source = B2TIME_USER_GROUP_SOURCE_FACE_LIST
+    else if (ntarget_fclbl.gt.0) then
+      b2mwti_user_group_source = B2TIME_USER_GROUP_SOURCE_FCLBL
+    else
+      b2mwti_user_group_source = B2TIME_USER_GROUP_SOURCE_NONE
+    end if
+    return
+  end function b2mwti_user_group_source
+
+  logical function b2mwti_use_auto_group(mpg)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+
+    b2mwti_use_auto_group = &
+     b2mwti_save_mode(mpg).eq.B2TIME_SAVE_MODE_AUTO_GROUP
+    return
+  end function b2mwti_use_auto_group
+
+  logical function b2mwti_use_user_group(mpg)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+
+    b2mwti_use_user_group = &
+     b2mwti_save_mode(mpg).eq.B2TIME_SAVE_MODE_USER_GROUP
+    return
+  end function b2mwti_use_user_group
+
+  logical function b2mwti_use_user_group_fclbl(mpg)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+
+    b2mwti_use_user_group_fclbl = b2mwti_use_user_group(mpg) .and. &
+   &  b2mwti_user_group_source().eq.B2TIME_USER_GROUP_SOURCE_FCLBL
+    return
+  end function b2mwti_use_user_group_fclbl
+
+  logical function b2mwti_use_user_group_face_list(mpg)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+
+    b2mwti_use_user_group_face_list = b2mwti_use_user_group(mpg) .and. &
+   &  b2mwti_user_group_source().eq.B2TIME_USER_GROUP_SOURCE_FACE_LIST
+    return
+  end function b2mwti_use_user_group_face_list
+
+  integer function b2mwti_target_count(mpg)
+    use b2mod_user_namelist, only : ntarget_fclbl, ntarget_face_group
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, allocatable :: regs(:), order(:)
+    integer :: nmax, ntrg
+
+    b2mwti_target_count = 0
+    if (b2mwti_use_user_group(mpg)) then
+      if (b2mwti_user_group_source().eq. &
+       B2TIME_USER_GROUP_SOURCE_FACE_LIST) then
+        b2mwti_target_count = ntarget_face_group
+      else
+        b2mwti_target_count = ntarget_fclbl
+      endif
+    else if (b2mwti_use_auto_group(mpg)) then
+      nmax = 1
+      if (allocated(mpg%divFc)) nmax = max(1,size(mpg%divFc))
+      allocate(regs(nmax),order(nmax))
+      call get_target_fcreg_order(mpg,ntrg,regs,order)
+      b2mwti_target_count = ntrg
+      deallocate(regs,order)
+    endif
+    return
+  end function b2mwti_target_count
+
+  subroutine get_target_fcreg_order(mpg,ntrg,target_regs,div_order)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(out) :: ntrg
+    integer, intent(out) :: target_regs(:), div_order(:)
+    integer :: i, j, regtmp, divtmp, iFc, reg
+
+    ntrg = 0
+    target_regs = 0
+    div_order = 0
+    if (.not.allocated(mpg%divFc)) return
+    if (.not.allocated(mpg%fcReg)) return
+
+    do i = 1, size(mpg%divFc)
+      iFc = mpg%divFc(i)
+      if (iFc.le.0) cycle
+      if (iFc.gt.size(mpg%fcReg)) cycle
+      reg = mpg%fcReg(iFc)
+      if (reg.le.0) cycle
+      if (ntrg.gt.0) then
+        if (any(target_regs(1:ntrg).eq.reg)) cycle
+      endif
+      ntrg = ntrg + 1
+      if (ntrg.gt.size(target_regs)) exit
+      target_regs(ntrg) = reg
+      div_order(ntrg) = reg
+    enddo
+
+    do i = 1, ntrg-1
+      do j = i+1, ntrg
+        if (target_regs(j).lt.target_regs(i)) then
+          regtmp = target_regs(i)
+          target_regs(i) = target_regs(j)
+          target_regs(j) = regtmp
+          divtmp = div_order(i)
+          div_order(i) = div_order(j)
+          div_order(j) = divtmp
+        endif
+      enddo
+    enddo
+    return
+  end subroutine get_target_fcreg_order
+
+  subroutine get_target_fcreg_metadata(mpg,target_fcreg_out)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    real (kind=R8), intent(out) :: target_fcreg_out(:)
+    integer, allocatable :: regs(:), order(:)
+    integer :: i, nmax, ntrg
+
+    target_fcreg_out = 0.0_R8
+    nmax = max(1,size(target_fcreg_out))
+    allocate(regs(nmax),order(nmax))
+    call get_target_fcreg_order(mpg,ntrg,regs,order)
+    do i = 1, min(ntrg,size(target_fcreg_out))
+      target_fcreg_out(i) = real(regs(i),kind=R8)
+    enddo
+    deallocate(regs,order)
+    return
+  end subroutine get_target_fcreg_metadata
+
+  subroutine get_user_group_face_list(mpg,itgt,faces,nfaces, &
+   group_id,group_name)
+    use b2mod_user_namelist, only : ntarget_fclbl, target_fclbl_list, &
+         target_fclbl_name_list, ntarget_face_group, &
+         target_face_group_sizes, target_face_group_list, &
+         target_face_group_name_list
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: itgt
+    integer, intent(out) :: faces(:), nfaces, group_id
+    character*32, intent(out) :: group_name
+    integer :: ibc, iFc, istart, nloc
+
+    faces = 0
+    nfaces = 0
+    group_id = 0
+    group_name = ' '
+
+    select case (b2mwti_user_group_source())
+    case (B2TIME_USER_GROUP_SOURCE_FCLBL)
+      if (itgt.lt.1 .or. itgt.gt.ntarget_fclbl) return
+      if (.not.allocated(mpg%bcFc)) return
+      if (.not.allocated(mpg%fcLbl)) return
+      group_id = target_fclbl_list(itgt)
+      group_name = target_fclbl_name_list(itgt)
+      do ibc = 1, size(mpg%bcFc)
+        iFc = mpg%bcFc(ibc)
+        if (iFc.le.0) cycle
+        if (iFc.gt.size(mpg%fcLbl)) cycle
+        if (mpg%fcLbl(iFc).ne.group_id) cycle
+        nfaces = nfaces + 1
+        if (nfaces.le.size(faces)) faces(nfaces) = iFc
+      enddo
+    case (B2TIME_USER_GROUP_SOURCE_FACE_LIST)
+      if (itgt.lt.1 .or. itgt.gt.ntarget_face_group) return
+      group_id = itgt
+      group_name = target_face_group_name_list(itgt)
+      istart = 1
+      if (itgt.gt.1) istart = 1 + sum(target_face_group_sizes(1:itgt-1))
+      if (istart.lt.1 .or. istart.gt.size(target_face_group_list)) return
+      nloc = max(0,target_face_group_sizes(itgt))
+      nloc = min(nloc,size(target_face_group_list)-istart+1)
+      nfaces = min(nloc,size(faces))
+      if (nfaces.gt.0) then
+        faces(1:nfaces) = &
+   &     target_face_group_list(istart:istart+nfaces-1)
+      endif
+    end select
+    return
+  end subroutine get_user_group_face_list
+
+  subroutine get_user_group_metadata(mpg,target_group_id_out, &
+   target_group_name_out,target_fclbl_out)
+    use b2mod_user_namelist, only : ntarget_fclbl, &
+         target_fclbl_list, target_fclbl_name_list, &
+         ntarget_face_group, target_face_group_name_list
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    real (kind=R8), intent(out) :: target_group_id_out(:)
+    character*32, intent(out) :: target_group_name_out(:)
+    real (kind=R8), intent(out), optional :: target_fclbl_out(:)
+    integer :: i, nout
+
+    target_group_id_out = 0.0_R8
+    target_group_name_out = ' '
+    if (present(target_fclbl_out)) target_fclbl_out = 0.0_R8
+
+    nout = size(target_group_id_out)
+    select case (b2mwti_user_group_source())
+    case (B2TIME_USER_GROUP_SOURCE_FCLBL)
+      do i = 1, min(nout,ntarget_fclbl)
+        target_group_id_out(i) = real(target_fclbl_list(i),kind=R8)
+        target_group_name_out(i) = target_fclbl_name_list(i)
+        if (present(target_fclbl_out)) then
+          target_fclbl_out(i) = real(target_fclbl_list(i),kind=R8)
+        endif
+      enddo
+    case (B2TIME_USER_GROUP_SOURCE_FACE_LIST)
+      do i = 1, min(nout,ntarget_face_group)
+        target_group_id_out(i) = real(i,kind=R8)
+        target_group_name_out(i) = target_face_group_name_list(i)
+      enddo
+    end select
+    return
+  end subroutine get_user_group_metadata
+
+  real (kind=R8) function boundary_face_orientation(mpg,iFc)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: iFc
+    integer :: i
+
+    boundary_face_orientation = 0.0_R8
+    if (iFc.le.0) return
+    if (allocated(mpg%bcFc).and.allocated(mpg%bcFcOr)) then
+      do i = 1, min(size(mpg%bcFc),size(mpg%bcFcOr))
+        if (mpg%bcFc(i).ne.iFc) cycle
+        boundary_face_orientation = mpg%bcFcOr(i)
+        return
+      enddo
+    endif
+    if (allocated(mpg%divFc).and.allocated(mpg%divFcOr)) then
+      do i = 1, min(size(mpg%divFc),size(mpg%divFcOr))
+        if (mpg%divFc(i).ne.iFc) cycle
+        boundary_face_orientation = mpg%divFcOr(i)
+        return
+      enddo
+    endif
+    return
+  end function boundary_face_orientation
+
+  integer function plasma_adjacent_cv(mpg,iFc)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: iFc
+
+    plasma_adjacent_cv = 0
+    if (iFc.le.0) return
+    if (.not.allocated(mpg%fcCv)) return
+    if (iFc.gt.size(mpg%fcCv,1)) return
+    if (mpg%fcCv(iFc,1).gt.0.and.mpg%fcCv(iFc,1).le.mpg%nCi) then
+      plasma_adjacent_cv = mpg%fcCv(iFc,1)
+    else if (mpg%fcCv(iFc,2).gt.0.and. &
+   &         mpg%fcCv(iFc,2).le.mpg%nCi) then
+      plasma_adjacent_cv = mpg%fcCv(iFc,2)
+    endif
+    return
+  end function plasma_adjacent_cv
+
+  integer function offset_target_cv(mpg,iFc,target_offset)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: iFc, target_offset
+
+    offset_target_cv = 0
+    if (iFc.le.0) return
+    if (.not.allocated(mpg%fcCv)) return
+    if (iFc.gt.size(mpg%fcCv,1)) return
+    if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
+   &    (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
+      offset_target_cv = mpg%fcCv(iFc,1)
+    else
+      offset_target_cv = mpg%fcCv(iFc,2)
+    endif
+    return
+  end function offset_target_cv
+
+  subroutine get_separatrix_fs_ids(mpg, sep_fs)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(out) :: sep_fs(2)
+    integer :: i, n_unique
+    integer, allocatable :: unique_fs(:)
+
+    sep_fs = 0
+    if (mpg%iFssep.ne.0 .or. mpg%iFssep2.ne.0) then
+      sep_fs(1) = mpg%iFssep
+      sep_fs(2) = mpg%iFssep2
+      return
+    endif
+    if (.not.allocated(mpg%XptFsID)) return
+    if (size(mpg%XptFsID).eq.0) return
+
+    allocate(unique_fs(size(mpg%XptFsID)))
+    unique_fs = 0
+    n_unique = 0
+    do i = 1, size(mpg%XptFsID)
+      if (mpg%XptFsID(i).le.0) cycle
+      if (n_unique.gt.0) then
+        if (any(unique_fs(1:n_unique).eq.mpg%XptFsID(i))) cycle
+      endif
+      n_unique = n_unique + 1
+      unique_fs(n_unique) = mpg%XptFsID(i)
+    enddo
+
+    if (n_unique.eq.1) then
+      sep_fs(1) = unique_fs(1)
+    else if (n_unique.ge.2) then
+      if (allocated(mpg%isPrimaryXpt)) then
+        do i = 1, size(mpg%XptFsID)
+          if (mpg%isPrimaryXpt(i).eq.1.and.mpg%XptFsID(i).gt.0) then
+            sep_fs(1) = mpg%XptFsID(i)
+            exit
+          endif
+        enddo
+      endif
+      if (sep_fs(1).eq.0) sep_fs(1) = unique_fs(1)
+      do i = 1, n_unique
+        if (unique_fs(i).ne.sep_fs(1)) then
+          sep_fs(2) = unique_fs(i)
+          exit
+        endif
+      enddo
+    endif
+    deallocate(unique_fs)
+    return
+  end subroutine get_separatrix_fs_ids
+
+  logical function cv_touches_separatrix(mpg,iCv)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: iCv
+    integer :: j, iFc, sep_fs(2)
+
+    cv_touches_separatrix = .false.
+    if (iCv.le.0) return
+    if (.not.allocated(mpg%cvFcP)) return
+    if (.not.allocated(mpg%cvFc)) return
+    if (.not.allocated(mpg%fcFs)) return
+    if (iCv.gt.size(mpg%cvFcP,1)) return
+    call get_separatrix_fs_ids(mpg, sep_fs)
+    do j = mpg%cvFcP(iCv,1), mpg%cvFcP(iCv,1)+mpg%cvFcP(iCv,2)-1
+      if (j.le.0 .or. j.gt.size(mpg%cvFc)) cycle
+      iFc = mpg%cvFc(j)
+      if (iFc.le.0 .or. iFc.gt.size(mpg%fcFs)) cycle
+      if ((mpg%fcFs(iFc).eq.sep_fs(1).and.sep_fs(1).ne.0).or. &
+   &      (mpg%fcFs(iFc).eq.sep_fs(2).and.sep_fs(2).ne.0)) then
+        cv_touches_separatrix = .true.
+        return
+      endif
+    enddo
+    return
+  end function cv_touches_separatrix
+
+  subroutine collect_separatrix_vertices(mpg,sep_fs,sep_vertices, &
+   is_sep_vertex)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: sep_fs(2)
+    integer, intent(out) :: sep_vertices(:)
+    logical, intent(inout) :: is_sep_vertex(:)
+    integer :: iVx, iFc, i, j, v1, v2
+
+    sep_vertices = 0
+    is_sep_vertex = .false.
+    j = 0
+    if (.not.allocated(mpg%fcFs)) return
+    if (.not.allocated(mpg%fcVx)) return
+    do iFc = 1, min(mpg%nFc,size(mpg%fcFs))
+      if (iFc.gt.size(mpg%fcVx,1)) cycle
+      do i = 1, 2
+        if (sep_fs(i).le.0) cycle
+        if (mpg%fcFs(iFc).ne.sep_fs(i)) cycle
+        v1 = mpg%fcVx(iFc,1)
+        v2 = mpg%fcVx(iFc,2)
+        if (v1.gt.0.and.v1.le.size(is_sep_vertex)) then
+          is_sep_vertex(v1) = .true.
+        endif
+        if (v2.gt.0.and.v2.le.size(is_sep_vertex)) then
+          is_sep_vertex(v2) = .true.
+        endif
+      enddo
+    enddo
+    do iVx = 1, min(mpg%nVx,size(is_sep_vertex))
+      if (.not.is_sep_vertex(iVx)) cycle
+      j = j + 1
+      if (j.le.size(sep_vertices)) sep_vertices(j) = iVx
+    enddo
+    return
+  end subroutine collect_separatrix_vertices
+
+  real(kind=R8) function min_vertex_distance2(geo,iVx,sep_vertices)
+    use b2us_geo
+    implicit none
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: iVx
+    integer, intent(in) :: sep_vertices(:)
+    integer :: j, jVx
+    real(kind=R8) :: dx, dy
+
+    min_vertex_distance2 = huge(1.0_R8)
+    if (iVx.le.0) return
+    if (.not.allocated(geo%vxX)) return
+    if (.not.allocated(geo%vxY)) return
+    if (iVx.gt.size(geo%vxX)) return
+    if (iVx.gt.size(geo%vxY)) return
+    do j = 1, size(sep_vertices)
+      jVx = sep_vertices(j)
+      if (jVx.le.0) cycle
+      if (jVx.gt.size(geo%vxX)) cycle
+      if (jVx.gt.size(geo%vxY)) cycle
+      dx = geo%vxX(iVx) - geo%vxX(jVx)
+      dy = geo%vxY(iVx) - geo%vxY(jVx)
+      min_vertex_distance2 = min(min_vertex_distance2,dx*dx + dy*dy)
+    enddo
+    return
+  end function min_vertex_distance2
+
+  integer function common_face_vertex(mpg,iFc1,iFc2)
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    integer, intent(in) :: iFc1, iFc2
+    integer :: a1, a2, b1, b2
+
+    common_face_vertex = 0
+    if (iFc1.le.0 .or. iFc2.le.0) return
+    if (.not.allocated(mpg%fcVx)) return
+    if (iFc1.gt.size(mpg%fcVx,1)) return
+    if (iFc2.gt.size(mpg%fcVx,1)) return
+    a1 = mpg%fcVx(iFc1,1)
+    a2 = mpg%fcVx(iFc1,2)
+    b1 = mpg%fcVx(iFc2,1)
+    b2 = mpg%fcVx(iFc2,2)
+    if (a1.eq.b1 .or. a1.eq.b2) then
+      common_face_vertex = a1
+    else if (a2.eq.b1 .or. a2.eq.b2) then
+      common_face_vertex = a2
+    endif
+    return
+  end function common_face_vertex
+
+  real (kind=R8) function cv_to_vertex_distance(geo,iCv,iVx)
+    use b2us_geo
+    implicit none
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: iCv, iVx
+    real (kind=R8) :: dx, dy
+
+    cv_to_vertex_distance = huge(1.0_R8)
+    if (iCv.le.0 .or. iVx.le.0) return
+    if (.not.allocated(geo%cvX)) return
+    if (.not.allocated(geo%cvY)) return
+    if (.not.allocated(geo%vxX)) return
+    if (.not.allocated(geo%vxY)) return
+    if (iCv.gt.size(geo%cvX)) return
+    if (iCv.gt.size(geo%cvY)) return
+    if (iVx.gt.size(geo%vxX)) return
+    if (iVx.gt.size(geo%vxY)) return
+
+    dx = geo%cvX(iCv) - geo%vxX(iVx)
+    dy = geo%cvY(iCv) - geo%vxY(iVx)
+    cv_to_vertex_distance = sqrt(dx*dx + dy*dy)
+    return
+  end function cv_to_vertex_distance
+
+  real (kind=R8) function strike_interp2(q1,q2,d1,d2)
+    implicit none
+    real (kind=R8), intent(in) :: q1, q2, d1, d2
+    real (kind=R8) :: dsum
+
+    if (d1.ge.huge(1.0_R8).and.d2.ge.huge(1.0_R8)) then
+      strike_interp2 = 0.5_R8*(q1+q2)
+      return
+    else if (d1.ge.huge(1.0_R8)) then
+      strike_interp2 = q2
+      return
+    else if (d2.ge.huge(1.0_R8)) then
+      strike_interp2 = q1
+      return
+    endif
+
+    dsum = d1 + d2
+    if (dsum.le.0.0_R8) then
+      strike_interp2 = 0.5_R8*(q1+q2)
+    else
+      strike_interp2 = (q1*d2 + q2*d1)/dsum
+    endif
+    return
+  end function strike_interp2
+
+  integer function nearest_sep_vertex_for_face(mpg,geo,iFc,sep_vertices)
+    use b2us_geo
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: iFc
+    integer, intent(in) :: sep_vertices(:)
+    integer :: i, iVx, iVx1, iVx2
+    real(kind=R8) :: d2, best_d2
+
+    nearest_sep_vertex_for_face = 0
+    if (iFc.le.0) return
+    if (.not.allocated(mpg%fcVx)) return
+    if (iFc.gt.size(mpg%fcVx,1)) return
+    iVx1 = mpg%fcVx(iFc,1)
+    iVx2 = mpg%fcVx(iFc,2)
+    best_d2 = huge(1.0_R8)
+    if (.not.allocated(geo%vxX)) return
+    if (.not.allocated(geo%vxY)) return
+    do i = 1, size(sep_vertices)
+      iVx = sep_vertices(i)
+      if (iVx.le.0) cycle
+      if (iVx.gt.size(geo%vxX)) cycle
+      if (iVx.gt.size(geo%vxY)) cycle
+      if (iVx1.gt.0.and.iVx1.le.size(geo%vxX).and. &
+   &      iVx1.le.size(geo%vxY)) then
+        d2 = (geo%vxX(iVx1)-geo%vxX(iVx))**2 + &
+   &         (geo%vxY(iVx1)-geo%vxY(iVx))**2
+        if (d2.lt.best_d2) then
+          best_d2 = d2
+          nearest_sep_vertex_for_face = iVx
+        endif
+      endif
+      if (iVx2.gt.0.and.iVx2.le.size(geo%vxX).and. &
+   &      iVx2.le.size(geo%vxY)) then
+        d2 = (geo%vxX(iVx2)-geo%vxX(iVx))**2 + &
+   &         (geo%vxY(iVx2)-geo%vxY(iVx))**2
+        if (d2.lt.best_d2) then
+          best_d2 = d2
+          nearest_sep_vertex_for_face = iVx
+        endif
+      endif
+    enddo
+    return
+  end function nearest_sep_vertex_for_face
+
+  subroutine select_pair_from_face_list(mpg,geo,faces,nfaces, &
+   target_offset,sep_vertices,is_sep_vertex,iFc1_out,iFc2_out, &
+   iCv1_out,iCv2_out,cv1_out,cv2_out,iVxsp_out,nmatch)
+    use b2us_geo
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: faces(:), nfaces, target_offset
+    integer, intent(in) :: sep_vertices(:)
+    logical, intent(in) :: is_sep_vertex(:)
+    integer, intent(out) :: iFc1_out, iFc2_out, iCv1_out, iCv2_out
+    integer, intent(out) :: cv1_out, cv2_out, iVxsp_out, nmatch
+    integer :: j, k, iFc1, iFc2, idx_best, idx_pair, iVx, iVxbest
+    real(kind=R8) :: d2, best_d2
+
+    iFc1_out = 0
+    iFc2_out = 0
+    iCv1_out = 0
+    iCv2_out = 0
+    cv1_out = 0
+    cv2_out = 0
+    iVxsp_out = 0
+    nmatch = 0
+    if (nfaces.le.0) return
+
+    if (allocated(mpg%strVx)) then
+      do j = 1, nfaces-1
+        iFc1 = faces(j)
+        if (iFc1.le.0) cycle
+        do k = j+1, nfaces
+          iFc2 = faces(k)
+          if (iFc2.le.0) cycle
+          iVx = common_face_vertex(mpg,iFc1,iFc2)
+          if (iVx.le.0) cycle
+          if (.not.any(mpg%strVx.eq.iVx)) cycle
+          nmatch = nmatch + 1
+          if (iFc1_out.eq.0) then
+            iFc1_out = iFc1
+            iFc2_out = iFc2
+            iVxsp_out = iVx
+          endif
+        enddo
+      enddo
+    endif
+
+    if (iFc1_out.eq.0) then
+      nmatch = 0
+      do j = 1, nfaces-1
+        iFc1 = faces(j)
+        if (iFc1.le.0) cycle
+        do k = j+1, nfaces
+          iFc2 = faces(k)
+          if (iFc2.le.0) cycle
+          iVx = common_face_vertex(mpg,iFc1,iFc2)
+          if (iVx.le.0) cycle
+          if (iVx.gt.size(is_sep_vertex)) cycle
+          if (.not.is_sep_vertex(iVx)) cycle
+          nmatch = nmatch + 1
+          if (iFc1_out.eq.0) then
+            iFc1_out = iFc1
+            iFc2_out = iFc2
+            iVxsp_out = iVx
+          endif
+        enddo
+      enddo
+    endif
+
+    if (iFc1_out.eq.0) then
+      idx_best = 0
+      iVxbest = 0
+      best_d2 = huge(1.0_R8)
+      do j = 1, nfaces
+        iFc1 = faces(j)
+        if (iFc1.le.0) cycle
+        if (.not.allocated(mpg%fcVx)) cycle
+        if (iFc1.gt.size(mpg%fcVx,1)) cycle
+        d2 = min_vertex_distance2(geo,mpg%fcVx(iFc1,1),sep_vertices)
+        if (d2.lt.best_d2) then
+          best_d2 = d2
+          idx_best = j
+          iVxbest = nearest_sep_vertex_for_face(mpg,geo,iFc1,sep_vertices)
+        endif
+        d2 = min_vertex_distance2(geo,mpg%fcVx(iFc1,2),sep_vertices)
+        if (d2.lt.best_d2) then
+          best_d2 = d2
+          idx_best = j
+          iVxbest = nearest_sep_vertex_for_face(mpg,geo,iFc1,sep_vertices)
+        endif
+      enddo
+      if (idx_best.le.0) return
+      if (idx_best.lt.nfaces) then
+        idx_pair = idx_best + 1
+      else if (idx_best.gt.1) then
+        idx_pair = idx_best - 1
+      else
+        idx_pair = 0
+      endif
+      if (idx_pair.le.0) return
+      iFc1_out = faces(idx_best)
+      iFc2_out = faces(idx_pair)
+      iVxsp_out = common_face_vertex(mpg,iFc1_out,iFc2_out)
+      if (iVxsp_out.le.0) iVxsp_out = iVxbest
+    endif
+
+    iCv1_out = plasma_adjacent_cv(mpg,iFc1_out)
+    iCv2_out = plasma_adjacent_cv(mpg,iFc2_out)
+    cv1_out = offset_target_cv(mpg,iFc1_out,target_offset)
+    cv2_out = offset_target_cv(mpg,iFc2_out,target_offset)
+    return
+  end subroutine select_pair_from_face_list
+
+  subroutine find_target_strike_pair_user_group(mpg,geo,itgt, &
+   target_offset,iFc1_out,iFc2_out,iCv1_out,iCv2_out,cv1_out, &
+   cv2_out,iVxsp_out,nmatch)
+    use b2mod_user_namelist, only : ntarget_face_group_list_max
+    use b2us_geo
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: itgt, target_offset
+    integer, intent(out) :: iFc1_out, iFc2_out, iCv1_out, iCv2_out
+    integer, intent(out) :: cv1_out, cv2_out, iVxsp_out, nmatch
+    integer :: sep_fs(2), nfaces, group_id, nfacebuf
+    integer, allocatable :: sep_vertices(:), faces(:)
+    logical, allocatable :: is_sep_vertex(:)
+    character*32 :: group_name
+
+    iFc1_out = 0
+    iFc2_out = 0
+    iCv1_out = 0
+    iCv2_out = 0
+    cv1_out = 0
+    cv2_out = 0
+    iVxsp_out = 0
+    nmatch = 0
+    if (b2mwti_use_user_group_fclbl(mpg)) then
+      if (.not.allocated(mpg%bcFc)) return
+    endif
+    call get_separatrix_fs_ids(mpg, sep_fs)
+    if (all(sep_fs.eq.0)) return
+    allocate(is_sep_vertex(max(1,mpg%nVx)))
+    allocate(sep_vertices(max(1,mpg%nVx)))
+    nfacebuf = ntarget_face_group_list_max
+    if (allocated(mpg%bcFc)) nfacebuf = max(nfacebuf,size(mpg%bcFc))
+    allocate(faces(max(1,nfacebuf)))
+    call collect_separatrix_vertices(mpg,sep_fs,sep_vertices, &
+   & is_sep_vertex)
+    call get_user_group_face_list(mpg,itgt,faces,nfaces,group_id, &
+   & group_name)
+    call select_pair_from_face_list(mpg,geo,faces,nfaces,target_offset, &
+   & sep_vertices,is_sep_vertex,iFc1_out,iFc2_out,iCv1_out,iCv2_out, &
+   & cv1_out,cv2_out,iVxsp_out,nmatch)
+    deallocate(sep_vertices,faces,is_sep_vertex)
+    return
+  end subroutine find_target_strike_pair_user_group
+
+  subroutine find_target_strike_pair_fcreg(mpg,geo,target_fcreg, &
+   target_offset,iFc1_out,iFc2_out,iCv1_out,iCv2_out,cv1_out, &
+   cv2_out,iVxsp_out,nmatch)
+    use b2us_geo
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: target_fcreg, target_offset
+    integer, intent(out) :: iFc1_out, iFc2_out, iCv1_out, iCv2_out
+    integer, intent(out) :: cv1_out, cv2_out, iVxsp_out, nmatch
+    integer :: sep_fs(2), j, iFc, nfaces
+    integer, allocatable :: sep_vertices(:), faces(:)
+    logical, allocatable :: is_sep_vertex(:)
+
+    iFc1_out = 0
+    iFc2_out = 0
+    iCv1_out = 0
+    iCv2_out = 0
+    cv1_out = 0
+    cv2_out = 0
+    iVxsp_out = 0
+    nmatch = 0
+    if (.not.allocated(mpg%divFc)) return
+    if (.not.allocated(mpg%fcReg)) return
+    call get_separatrix_fs_ids(mpg, sep_fs)
+    if (all(sep_fs.eq.0)) return
+
+    allocate(is_sep_vertex(max(1,mpg%nVx)))
+    allocate(sep_vertices(max(1,mpg%nVx)))
+    allocate(faces(max(1,size(mpg%divFc))))
+    call collect_separatrix_vertices(mpg,sep_fs,sep_vertices, &
+   & is_sep_vertex)
+    nfaces = 0
+    do j = 1, size(mpg%divFc)
+      iFc = mpg%divFc(j)
+      if (iFc.le.0) cycle
+      if (iFc.gt.size(mpg%fcReg)) cycle
+      if (mpg%fcReg(iFc).ne.target_fcreg) cycle
+      nfaces = nfaces + 1
+      faces(nfaces) = iFc
+    enddo
+    call select_pair_from_face_list(mpg,geo,faces,nfaces,target_offset, &
+   & sep_vertices,is_sep_vertex,iFc1_out,iFc2_out,iCv1_out,iCv2_out, &
+   & cv1_out,cv2_out,iVxsp_out,nmatch)
+    deallocate(sep_vertices,faces,is_sep_vertex)
+    return
+  end subroutine find_target_strike_pair_fcreg
+
+  subroutine override_target_flux_labels_user_group(mpg,geo,pl,dv, &
+   ext,switch,ns,ismain,fnixap,feexap,feixap,fchxap,fetxap, &
+   namxap,nemxap,temxap,timxap,pomxap,pwmxap)
+    use b2mod_constants
+    use b2mod_user_namelist, only : ntarget_face_group_list_max
+    use b2us_geo
+    use b2us_map
+    use b2us_plasma
+    use b2mod_switches
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    type (B2Plasma), intent(in) :: pl
+    type (B2Derivatives), intent(in) :: dv
+    type (B2StateExt), intent(in) :: ext
+    type (switches), intent(in) :: switch
+    integer, intent(in) :: ns, ismain
+    real (kind=R8), intent(inout) :: fnixap(:), feexap(:)
+    real (kind=R8), intent(inout) :: feixap(:), fchxap(:), fetxap(:)
+    real (kind=R8), intent(inout) :: namxap(:,:), nemxap(:)
+    real (kind=R8), intent(inout) :: temxap(:), timxap(:)
+    real (kind=R8), intent(inout) :: pomxap(:), pwmxap(:)
+    integer :: itgt, ntgt, i, iFc, iCv, is, nfaces, group_id
+    integer :: nfacebuf
+    integer, allocatable :: faces(:)
+    real (kind=R8) :: bc_or, fettmp
+    real (kind=R8), allocatable :: ptf(:,:), taf(:,:), uaf(:,:)
+    character*32 :: group_name
+    external intface1
+
+    fnixap = 0.0_R8
+    feexap = 0.0_R8
+    feixap = 0.0_R8
+    fchxap = 0.0_R8
+    fetxap = 0.0_R8
+    namxap = 0.0_R8
+    nemxap = 0.0_R8
+    temxap = 0.0_R8
+    timxap = 0.0_R8
+    pomxap = 0.0_R8
+    pwmxap = 0.0_R8
+
+    if (b2mwti_use_user_group_fclbl(mpg)) then
+      if (.not.allocated(mpg%bcFc)) return
+    endif
+
+    if (ext%ns.gt.0) then
+      allocate(ptf(1:mpg%nFc,0:ext%ns-1))
+      allocate(taf(1:mpg%nFc,0:ext%ns-1))
+      allocate(uaf(1:mpg%nFc,0:ext%ns-1))
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%pt,ptf)
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%ta,taf)
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%ua,uaf)
+    endif
+
+    nfacebuf = ntarget_face_group_list_max
+    if (allocated(mpg%bcFc)) nfacebuf = max(nfacebuf,size(mpg%bcFc))
+    allocate(faces(max(1,nfacebuf)))
+    ntgt = min(b2mwti_target_count(mpg),size(fnixap))
+    do itgt = 1, ntgt
+      call get_user_group_face_list(mpg,itgt,faces,nfaces,group_id, &
+   &   group_name)
+      do i = 1, nfaces
+        iFc = faces(i)
+        if (iFc.le.0 .or. iFc.gt.mpg%nFc) cycle
+        iCv = plasma_adjacent_cv(mpg,iFc)
+        if (iCv.le.0) cycle
+        bc_or = boundary_face_orientation(mpg,iFc)
+        fnixap(itgt) = fnixap(itgt) + bc_or * &
+   &     (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexap(itgt) = feexap(itgt) + bc_or * &
+   &     (dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixap(itgt) = feixap(itgt) + bc_or * &
+   &     (dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxap(itgt) = fchxap(itgt) + bc_or * &
+   &     (dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = bc_or * (dv%fht(iFc,0) + dv%fht(iFc,1) - &
+   &     dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+   &     ext%fhi(iFc,0) + ext%fhi(iFc,1))
+        if (ext%ns.gt.0) then
+          do is = 0, ext%ns-1
+            fettmp = fettmp + bc_or * (ptf(iFc,is)*ev + &
+   &         (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2 + taf(iFc,is)) * &
+   &         (1.0_R8-switch%BoRiS)) * &
+   &         (ext%fa(iFc,0,is) + ext%fa(iFc,1,is))
+          enddo
+        endif
+        fetxap(itgt) = fetxap(itgt) + fettmp
+        do is = 0, ns-1
+          namxap(is+1,itgt) = max(namxap(is+1,itgt),pl%na(iCv,is))
+        enddo
+        nemxap(itgt) = max(nemxap(itgt),dv%ne(iCv))
+        temxap(itgt) = max(temxap(itgt),pl%te(iCv))
+        timxap(itgt) = max(timxap(itgt),pl%ti(iCv))
+        pomxap(itgt) = max(pomxap(itgt),pl%po(iCv))
+        if (allocated(geo%fcS)) then
+          if (iFc.le.size(geo%fcS)) then
+            if (geo%fcS(iFc).gt.0.0_R8) then
+              pwmxap(itgt) = max(pwmxap(itgt),abs(fettmp)/geo%fcS(iFc))
+            endif
+          endif
+        endif
+      enddo
+    enddo
+    deallocate(faces)
+    if (ext%ns.gt.0) deallocate(ptf,taf,uaf)
+    return
+  end subroutine override_target_flux_labels_user_group
+
+  subroutine override_target_flux_labels_fcreg(mpg,geo,pl,dv,ext, &
+   switch,ns,ismain,fnixap,feexap,feixap,fchxap,fetxap,namxap, &
+   nemxap,temxap,timxap,pomxap,pwmxap)
+    use b2mod_constants
+    use b2us_geo
+    use b2us_map
+    use b2us_plasma
+    use b2mod_switches
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    type (B2Plasma), intent(in) :: pl
+    type (B2Derivatives), intent(in) :: dv
+    type (B2StateExt), intent(in) :: ext
+    type (switches), intent(in) :: switch
+    integer, intent(in) :: ns, ismain
+    real (kind=R8), intent(inout) :: fnixap(:), feexap(:)
+    real (kind=R8), intent(inout) :: feixap(:), fchxap(:), fetxap(:)
+    real (kind=R8), intent(inout) :: namxap(:,:), nemxap(:)
+    real (kind=R8), intent(inout) :: temxap(:), timxap(:)
+    real (kind=R8), intent(inout) :: pomxap(:), pwmxap(:)
+    integer, allocatable :: regs(:), order(:)
+    integer :: itgt, ntrg, i, iFc, iCv, is, target_reg
+    real (kind=R8) :: bc_or, fettmp
+    real (kind=R8), allocatable :: ptf(:,:), taf(:,:), uaf(:,:)
+    external intface1
+
+    fnixap = 0.0_R8
+    feexap = 0.0_R8
+    feixap = 0.0_R8
+    fchxap = 0.0_R8
+    fetxap = 0.0_R8
+    namxap = 0.0_R8
+    nemxap = 0.0_R8
+    temxap = 0.0_R8
+    timxap = 0.0_R8
+    pomxap = 0.0_R8
+    pwmxap = 0.0_R8
+    if (.not.allocated(mpg%divFc)) return
+    if (.not.allocated(mpg%fcReg)) return
+
+    if (ext%ns.gt.0) then
+      allocate(ptf(1:mpg%nFc,0:ext%ns-1))
+      allocate(taf(1:mpg%nFc,0:ext%ns-1))
+      allocate(uaf(1:mpg%nFc,0:ext%ns-1))
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%pt,ptf)
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%ta,taf)
+      call intface1(mpg%nCv,mpg%nFc,ext%ns-1,mpg%fcCv, &
+   &   geo%fcVol,ext%ua,uaf)
+    endif
+
+    allocate(regs(max(1,size(fnixap))))
+    allocate(order(max(1,size(fnixap))))
+    call get_target_fcreg_order(mpg,ntrg,regs,order)
+    do itgt = 1, min(ntrg,size(fnixap))
+      target_reg = regs(itgt)
+      do i = 1, size(mpg%divFc)
+        iFc = mpg%divFc(i)
+        if (iFc.le.0 .or. iFc.gt.mpg%nFc) cycle
+        if (iFc.gt.size(mpg%fcReg)) cycle
+        if (mpg%fcReg(iFc).ne.target_reg) cycle
+        iCv = plasma_adjacent_cv(mpg,iFc)
+        if (iCv.le.0) cycle
+        bc_or = boundary_face_orientation(mpg,iFc)
+        fnixap(itgt) = fnixap(itgt) + bc_or * &
+   &     (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
+        feexap(itgt) = feexap(itgt) + bc_or * &
+   &     (dv%fhe(iFc,0) + dv%fhe(iFc,1))
+        feixap(itgt) = feixap(itgt) + bc_or * &
+   &     (dv%fhi(iFc,0) + dv%fhi(iFc,1))
+        fchxap(itgt) = fchxap(itgt) + bc_or * &
+   &     (dv%fch(iFc,0) + dv%fch(iFc,1))
+        fettmp = bc_or * (dv%fht(iFc,0) + dv%fht(iFc,1) - &
+   &     dv%fhj(iFc,0) - dv%fhj(iFc,1) + &
+   &     ext%fhi(iFc,0) + ext%fhi(iFc,1))
+        if (ext%ns.gt.0) then
+          do is = 0, ext%ns-1
+            fettmp = fettmp + bc_or * (ptf(iFc,is)*ev + &
+   &         (0.5_R8*ext%am(is)*mp*uaf(iFc,is)**2 + taf(iFc,is)) * &
+   &         (1.0_R8-switch%BoRiS)) * &
+   &         (ext%fa(iFc,0,is) + ext%fa(iFc,1,is))
+          enddo
+        endif
+        fetxap(itgt) = fetxap(itgt) + fettmp
+        do is = 0, ns-1
+          namxap(is+1,itgt) = max(namxap(is+1,itgt),pl%na(iCv,is))
+        enddo
+        nemxap(itgt) = max(nemxap(itgt),dv%ne(iCv))
+        temxap(itgt) = max(temxap(itgt),pl%te(iCv))
+        timxap(itgt) = max(timxap(itgt),pl%ti(iCv))
+        pomxap(itgt) = max(pomxap(itgt),pl%po(iCv))
+        if (allocated(geo%fcS)) then
+          if (iFc.le.size(geo%fcS)) then
+            if (geo%fcS(iFc).gt.0.0_R8) then
+              pwmxap(itgt) = max(pwmxap(itgt),abs(fettmp)/geo%fcS(iFc))
+            endif
+          endif
+        endif
+      enddo
+    enddo
+    deallocate(regs,order)
+    if (ext%ns.gt.0) deallocate(ptf,taf,uaf)
+    return
+  end subroutine override_target_flux_labels_fcreg
+
+  subroutine override_target_scalar_labels_user_group(mpg,geo,pl,dv, &
+   ns,nnatmi,nnmoli,target_offset,nasepa,nesepa,tesepa,tisepa, &
+   tpsepa,posepa,ktsepa,dabsepa,dmbsepa,tabsepa,tmbsepa)
+    use b2mod_constants, only : ev
+    use b2mod_neutrals_namelist, only : dab2, dmb2, tab2, tmb2
+    use b2us_geo
+    use b2us_map
+    use b2us_plasma
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    type (B2Plasma), intent(in) :: pl
+    type (B2Derivatives), intent(in) :: dv
+    integer, intent(in) :: ns, nnatmi, nnmoli, target_offset
+    real (kind=R8), intent(inout) :: nasepa(:,:), nesepa(:)
+    real (kind=R8), intent(inout) :: tesepa(:), tisepa(:), tpsepa(:)
+    real (kind=R8), intent(inout) :: posepa(:), ktsepa(:)
+    real (kind=R8), intent(inout) :: dabsepa(:,:), dmbsepa(:,:)
+    real (kind=R8), intent(inout) :: tabsepa(:,:), tmbsepa(:,:)
+    integer :: iFc1, iFc2, iCv1, iCv2, cvtrg1, cvtrg2, iVxsp
+    integer :: itgt, is, iatm, imol, nmatch, ntgt
+    real (kind=R8) :: d1, d2
+
+    nasepa = 0.0_R8
+    nesepa = 0.0_R8
+    tesepa = 0.0_R8
+    tisepa = 0.0_R8
+    tpsepa = 0.0_R8
+    posepa = 0.0_R8
+    ktsepa = 0.0_R8
+    dabsepa = 0.0_R8
+    dmbsepa = 0.0_R8
+    tabsepa = 0.0_R8
+    tmbsepa = 0.0_R8
+
+    ntgt = min(b2mwti_target_count(mpg),size(nesepa))
+    do itgt = 1, ntgt
+      call find_target_strike_pair_user_group(mpg,geo,itgt, &
+   &   target_offset,iFc1,iFc2,iCv1,iCv2,cvtrg1,cvtrg2, &
+   &   iVxsp,nmatch)
+      if (cvtrg1.le.0 .or. cvtrg2.le.0 .or. iVxsp.le.0) cycle
+      d1 = cv_to_vertex_distance(geo,cvtrg1,iVxsp)
+      d2 = cv_to_vertex_distance(geo,cvtrg2,iVxsp)
+      do is = 0, ns-1
+        nasepa(is+1,itgt) = &
+   &     strike_interp2(pl%na(cvtrg1,is),pl%na(cvtrg2,is),d1,d2)
+      enddo
+      nesepa(itgt) = strike_interp2(dv%ne(cvtrg1),dv%ne(cvtrg2),d1,d2)
+      tesepa(itgt) = strike_interp2(pl%te(cvtrg1),pl%te(cvtrg2),d1,d2)/ev
+      tisepa(itgt) = strike_interp2(pl%ti(cvtrg1),pl%ti(cvtrg2),d1,d2)/ev
+      posepa(itgt) = strike_interp2(pl%po(cvtrg1),pl%po(cvtrg2),d1,d2)
+      ktsepa(itgt) = strike_interp2(pl%kt(cvtrg1),pl%kt(cvtrg2),d1,d2)
+      if (nnatmi.gt.0) then
+        do iatm = 1, nnatmi
+          dabsepa(iatm,itgt) = strike_interp2(dab2(cvtrg1,iatm,1), &
+   &       dab2(cvtrg2,iatm,1),d1,d2)
+          tabsepa(iatm,itgt) = strike_interp2(tab2(cvtrg1,iatm,1), &
+   &       tab2(cvtrg2,iatm,1),d1,d2)
+        enddo
+      endif
+      if (nnmoli.gt.0) then
+        do imol = 1, nnmoli
+          dmbsepa(imol,itgt) = strike_interp2(dmb2(cvtrg1,imol,1), &
+   &       dmb2(cvtrg2,imol,1),d1,d2)
+          tmbsepa(imol,itgt) = strike_interp2(tmb2(cvtrg1,imol,1), &
+   &       tmb2(cvtrg2,imol,1),d1,d2)
+        enddo
+      endif
+    enddo
+    return
+  end subroutine override_target_scalar_labels_user_group
+
+  subroutine override_target_scalar_labels_fcreg(mpg,geo,pl,dv,ns, &
+   nnatmi,nnmoli,target_offset,nasepa,nesepa,tesepa,tisepa,tpsepa, &
+   posepa,ktsepa,dabsepa,dmbsepa,tabsepa,tmbsepa)
+    use b2mod_constants, only : ev
+    use b2mod_neutrals_namelist, only : dab2, dmb2, tab2, tmb2
+    use b2us_geo
+    use b2us_map
+    use b2us_plasma
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    type (B2Plasma), intent(in) :: pl
+    type (B2Derivatives), intent(in) :: dv
+    integer, intent(in) :: ns, nnatmi, nnmoli, target_offset
+    real (kind=R8), intent(inout) :: nasepa(:,:), nesepa(:)
+    real (kind=R8), intent(inout) :: tesepa(:), tisepa(:), tpsepa(:)
+    real (kind=R8), intent(inout) :: posepa(:), ktsepa(:)
+    real (kind=R8), intent(inout) :: dabsepa(:,:), dmbsepa(:,:)
+    real (kind=R8), intent(inout) :: tabsepa(:,:), tmbsepa(:,:)
+    integer, allocatable :: regs(:), order(:)
+    integer :: iFc1, iFc2, iCv1, iCv2, cvtrg1, cvtrg2, iVxsp
+    integer :: itgt, is, iatm, imol, nmatch, ntrg
+    real (kind=R8) :: d1, d2
+
+    nasepa = 0.0_R8
+    nesepa = 0.0_R8
+    tesepa = 0.0_R8
+    tisepa = 0.0_R8
+    tpsepa = 0.0_R8
+    posepa = 0.0_R8
+    ktsepa = 0.0_R8
+    dabsepa = 0.0_R8
+    dmbsepa = 0.0_R8
+    tabsepa = 0.0_R8
+    tmbsepa = 0.0_R8
+
+    allocate(regs(max(1,size(nesepa))))
+    allocate(order(max(1,size(nesepa))))
+    call get_target_fcreg_order(mpg,ntrg,regs,order)
+    do itgt = 1, min(ntrg,size(nesepa))
+      call find_target_strike_pair_fcreg(mpg,geo,regs(itgt), &
+   &   target_offset,iFc1,iFc2,iCv1,iCv2,cvtrg1,cvtrg2, &
+   &   iVxsp,nmatch)
+      if (cvtrg1.le.0 .or. cvtrg2.le.0 .or. iVxsp.le.0) cycle
+      d1 = cv_to_vertex_distance(geo,cvtrg1,iVxsp)
+      d2 = cv_to_vertex_distance(geo,cvtrg2,iVxsp)
+      do is = 0, ns-1
+        nasepa(is+1,itgt) = &
+   &     strike_interp2(pl%na(cvtrg1,is),pl%na(cvtrg2,is),d1,d2)
+      enddo
+      nesepa(itgt) = strike_interp2(dv%ne(cvtrg1),dv%ne(cvtrg2),d1,d2)
+      tesepa(itgt) = strike_interp2(pl%te(cvtrg1),pl%te(cvtrg2),d1,d2)/ev
+      tisepa(itgt) = strike_interp2(pl%ti(cvtrg1),pl%ti(cvtrg2),d1,d2)/ev
+      posepa(itgt) = strike_interp2(pl%po(cvtrg1),pl%po(cvtrg2),d1,d2)
+      ktsepa(itgt) = strike_interp2(pl%kt(cvtrg1),pl%kt(cvtrg2),d1,d2)
+      if (nnatmi.gt.0) then
+        do iatm = 1, nnatmi
+          dabsepa(iatm,itgt) = strike_interp2(dab2(cvtrg1,iatm,1), &
+   &       dab2(cvtrg2,iatm,1),d1,d2)
+          tabsepa(iatm,itgt) = strike_interp2(tab2(cvtrg1,iatm,1), &
+   &       tab2(cvtrg2,iatm,1),d1,d2)
+        enddo
+      endif
+      if (nnmoli.gt.0) then
+        do imol = 1, nnmoli
+          dmbsepa(imol,itgt) = strike_interp2(dmb2(cvtrg1,imol,1), &
+   &       dmb2(cvtrg2,imol,1),d1,d2)
+          tmbsepa(imol,itgt) = strike_interp2(tmb2(cvtrg1,imol,1), &
+   &       tmb2(cvtrg2,imol,1),d1,d2)
+        enddo
+      endif
+    enddo
+    deallocate(regs,order)
+    return
+  end subroutine override_target_scalar_labels_fcreg
+
+  subroutine write_b2timenc_cell_list(mpg,geo,target_offset)
+    use b2mod_user_namelist, only : nomp, nimp, omp, imp, &
+         icsepomp, icsepimp, ntarget_face_group_list_max
+    use b2us_geo
+    use b2us_map
+    implicit none
+    type (mapping), intent(in) :: mpg
+    type (geometry), intent(in) :: geo
+    integer, intent(in) :: target_offset
+    integer :: itgt, iFc, nfaces, nmatch, save_mode, group_id
+    integer :: nfacebuf
+    integer :: ntrg, j
+    integer, allocatable :: regs(:), order(:)
+    integer, allocatable :: faces(:)
+    integer :: iFc1, iFc2, iCv1, iCv2, cvtrg1, cvtrg2, iVxsp
+    character*32 :: group_name
+
+    save_mode = b2mwti_save_mode(mpg)
+    open(99,file='../cell_list_b2timenc',status='replace')
+    write(99,'(a)') '[midplane_separatrix]'
+    if (nomp.gt.0 .and. icsepomp.gt.1) then
+      write(99,'(a,2(1x,i0))') 'omp_sep_cells =', &
+   &   omp(icsepomp-1), omp(icsepomp)
+    else
+      write(99,'(a)') 'omp_sep_cells ='
+    endif
+    if (nimp.gt.0 .and. icsepimp.gt.1) then
+      write(99,'(a,2(1x,i0))') 'imp_sep_cells =', &
+   &   imp(icsepimp-1), imp(icsepimp)
+    else
+      write(99,'(a)') 'imp_sep_cells ='
+    endif
+
+    write(99,'(a)') '[target_quantities]'
+    select case (save_mode)
+    case (B2TIME_SAVE_MODE_USER_GROUP)
+      write(99,'(a)') 'save_mode = user_group'
+      if (b2mwti_use_user_group_fclbl(mpg)) then
+        write(99,'(a)') 'target_group_source = fclbl'
+      else if (b2mwti_use_user_group_face_list(mpg)) then
+        write(99,'(a)') 'target_group_source = face_list'
+      endif
+      if (b2mwti_use_user_group_fclbl(mpg) .and. &
+     &    .not.allocated(mpg%bcFc)) then
+        write(99,'(a)') 'no boundary face list available'
+      else
+        nfacebuf = ntarget_face_group_list_max
+        if (allocated(mpg%bcFc)) nfacebuf = max(nfacebuf,size(mpg%bcFc))
+        allocate(faces(max(1,nfacebuf)))
+        do itgt = 1, b2mwti_target_count(mpg)
+          call get_user_group_face_list(mpg,itgt,faces,nfaces, &
+   &       group_id,group_name)
+          write(99,'(a,1x,i0)') 'target_group_index =', itgt
+          write(99,'(a,1x,i0)') 'target_group_id =', group_id
+          if (len_trim(group_name).gt.0) then
+            write(99,'(a,1x,a)') 'target_group_name =', trim(group_name)
+          endif
+          if (b2mwti_use_user_group_fclbl(mpg)) then
+            write(99,'(a,1x,i0)') 'target_fclbl =', group_id
+          endif
+          call find_target_strike_pair_user_group(mpg,geo,itgt, &
+   &       target_offset,iFc1,iFc2,iCv1,iCv2,cvtrg1,cvtrg2, &
+   &       iVxsp,nmatch)
+          write(99,'(a,1x,i0)') 'sept_target_vertex_index =', iVxsp
+          write(99,'(a,1x,2(i0,1x))') 'sept_target_face_indices =', &
+   &       iFc1, iFc2
+          write(99,'(a,1x,2(i0,1x))') &
+   &       'sept_target_plasma_cv_indices =', iCv1, iCv2
+          write(99,'(a,1x,2(i0,1x))') &
+   &       'sept_target_output_cv_indices =', cvtrg1, cvtrg2
+          write(99,'(a,1x,i0)') 'sept_target_face_index =', iFc1
+          write(99,'(a,1x,i0)') 'sept_target_plasma_cv_index =', iCv1
+          write(99,'(a,1x,i0)') 'sept_target_output_cv_index =', cvtrg1
+          write(99,'(a,1x,i0)') 'sept_target_match_count =', nmatch
+          write(99,'(a,1x,i0)') 'target_face_count =', nfaces
+          write(99,'(a)',advance='no') 'target_face_indices ='
+          do j = 1, nfaces
+            if (faces(j).gt.0) write(99,'(1x,i0)',advance='no') faces(j)
+          enddo
+          write(99,*)
+        enddo
+        deallocate(faces)
+      endif
+    case (B2TIME_SAVE_MODE_AUTO_GROUP)
+      write(99,'(a)') 'save_mode = auto_group'
+      write(99,'(a)') 'target_group_source = fcreg'
+      if (.not.allocated(mpg%divFc) .or. .not.allocated(mpg%fcReg)) then
+        write(99,'(a)') 'no divertor face grouping available in fcReg mode'
+      else
+        allocate(regs(max(1,size(mpg%divFc))))
+        allocate(order(max(1,size(mpg%divFc))))
+        call get_target_fcreg_order(mpg,ntrg,regs,order)
+        do itgt = 1, ntrg
+          nfaces = 0
+          do j = 1, size(mpg%divFc)
+            iFc = mpg%divFc(j)
+            if (iFc.le.0) cycle
+            if (iFc.gt.size(mpg%fcReg)) cycle
+            if (mpg%fcReg(iFc).eq.regs(itgt)) nfaces = nfaces + 1
+          enddo
+          if (nfaces.le.0) cycle
+          call find_target_strike_pair_fcreg(mpg,geo,regs(itgt), &
+   &       target_offset,iFc1,iFc2,iCv1,iCv2,cvtrg1,cvtrg2, &
+   &       iVxsp,nmatch)
+          write(99,'(a,1x,i0)') 'target_index =', itgt
+          write(99,'(a,1x,i0)') 'target_fcreg =', regs(itgt)
+          write(99,'(a,1x,i0)') 'sept_target_vertex_index =', iVxsp
+          write(99,'(a,1x,2(i0,1x))') 'sept_target_face_indices =', &
+   &       iFc1, iFc2
+          write(99,'(a,1x,2(i0,1x))') &
+   &       'sept_target_plasma_cv_indices =', iCv1, iCv2
+          write(99,'(a,1x,2(i0,1x))') &
+   &       'sept_target_output_cv_indices =', cvtrg1, cvtrg2
+          write(99,'(a,1x,i0)') 'sept_target_face_index =', iFc1
+          write(99,'(a,1x,i0)') 'sept_target_plasma_cv_index =', iCv1
+          write(99,'(a,1x,i0)') 'sept_target_output_cv_index =', cvtrg1
+          write(99,'(a,1x,i0)') 'sept_target_match_count =', nmatch
+          write(99,'(a,1x,i0)') 'target_face_count =', nfaces
+          write(99,'(a)',advance='no') 'target_face_indices ='
+          do j = 1, size(mpg%divFc)
+            iFc = mpg%divFc(j)
+            if (iFc.le.0) cycle
+            if (iFc.gt.size(mpg%fcReg)) cycle
+            if (mpg%fcReg(iFc).eq.regs(itgt)) then
+              write(99,'(1x,i0)',advance='no') iFc
+            endif
+          enddo
+          write(99,*)
+        enddo
+        deallocate(regs,order)
+      endif
+    case default
+      write(99,'(a)') 'save_mode = classical'
+      write(99,'(a)') &
+   &   'classical save mode: no general-topology target diagnostics requested'
+    end select
+    close(99)
+    return
+  end subroutine write_b2timenc_cell_list
 
 end module b2mod_mwti
 

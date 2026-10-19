@@ -34,8 +34,24 @@
 ! - ft_[oi]mp: index in list of flux tube cell intersection
 
       integer, parameter :: nromp=DEF_NYD*4
+      integer, parameter :: ntarget_fclbl_max=32
+      integer, parameter :: ntarget_face_group_list_max=4096
+      integer, parameter :: target_fclbl_groups_str_len=4096
       integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
      ,                 imp(nromp), icsepimp, ifsepimp, nimp
+      integer, save :: ntarget_fclbl,
+     ,                 target_fclbl_list(ntarget_fclbl_max)
+      integer, save :: ntarget_face_group
+      integer, save :: target_face_group_sizes(ntarget_fclbl_max)
+      integer, save :: target_face_group_list
+      dimension target_face_group_list(ntarget_face_group_list_max)
+      character*32, save :: target_fclbl_name_list(ntarget_fclbl_max)
+      character*32, save :: target_fclbl_group_name_list
+      dimension target_fclbl_group_name_list(ntarget_fclbl_max)
+      character*32, save :: target_face_group_name_list
+      dimension target_face_group_name_list(ntarget_fclbl_max)
+      character*(target_fclbl_groups_str_len), save ::
+     ,  target_fclbl_groups_str
       integer, allocatable :: ft_imp(:), ft_omp(:)
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) :: psi_omp(nromp), psi_imp(nromp)
@@ -68,6 +84,14 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,rzomp,rzimp,
+     ,  ntarget_fclbl,target_fclbl_list,
+     ,  target_fclbl_name_list,
+     ,  target_fclbl_groups_str,
+     ,  target_fclbl_group_name_list,
+     ,  ntarget_face_group,
+     ,  target_face_group_sizes,
+     ,  target_face_group_list,
+     ,  target_face_group_name_list,
      ,  Te_det_threshold,q95_albll,R0_albll,B0_albll,trgshp
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
@@ -175,6 +199,15 @@ c***  Standard set-up:
       fs_ds_omp = -999.0_R8
       ft_ds_imp = -999.0_R8
       ft_ds_omp = -999.0_R8
+      ntarget_fclbl = 0
+      target_fclbl_list = 0
+      target_fclbl_name_list = ' '
+      target_fclbl_groups_str = ' '
+      target_fclbl_group_name_list = ' '
+      ntarget_face_group = 0
+      target_face_group_sizes = 0
+      target_face_group_list = 0
+      target_face_group_name_list = ' '
       user_filename='b2.user.parameters'
       call read_b2mod_user_namelist(ns,geo,m,sw)
       user_initialised = .true.
@@ -240,6 +273,7 @@ c***  Standard set-up:
         user_namelist_used = .false.
         filedata(ntrc_usr) = .false.
       endif
+      call build_target_face_groups_from_fclbl_string(m)
 
 ! Explicit general, linear, and cylindrical topologies use one selected
 ! reference flux surface at both midplanes. Only GENERAL needs the new
@@ -907,6 +941,210 @@ c*** Set default values according to current species list
 
       return
       end subroutine midplane_face_intersection
+      subroutine build_target_face_groups_from_fclbl_string(m)
+      implicit none
+      type(mapping), intent(in) :: m
+      integer :: labels_flat(ntarget_face_group_list_max)
+      integer :: sizes(ntarget_fclbl_max)
+      integer :: starts(ntarget_fclbl_max)
+      integer :: ngroups, nlabels
+      integer :: g, ibc, iFc, lbl, nfaces, istart, iend, i
+      logical :: duplicate
+
+      if (len_trim(target_fclbl_groups_str).le.0) return
+      if (.not.allocated(m%bcFc)) call xerrab(
+     . 'target_fclbl_groups_str: boundary faces are not allocated')
+
+      call parse_tfg_str(target_fclbl_groups_str,
+     . ngroups,sizes,labels_flat,nlabels)
+
+      if (ngroups.le.0) call xerrab(
+     . 'target_fclbl_groups_str: no groups parsed')
+      if (ngroups.gt.ntarget_fclbl_max) call xerrab(
+     . 'target_fclbl_groups_str: too many groups')
+
+      target_face_group_sizes = 0
+      target_face_group_list = 0
+      target_face_group_name_list = ' '
+
+      ntarget_face_group = ngroups
+      ntarget_fclbl = 0
+      starts = 0
+      istart = 1
+      do g = 1, ngroups
+        starts(g) = istart
+        istart = istart + sizes(g)
+      end do
+
+      nfaces = 0
+      do g = 1, ngroups
+        istart = starts(g)
+        iend = istart + sizes(g) - 1
+        do ibc = 1, size(m%bcFc)
+          iFc = m%bcFc(ibc)
+          if (iFc.le.0) cycle
+          lbl = m%fcLbl(iFc)
+          if (lbl.le.0) cycle
+          if (.not.int_in_list(lbl,labels_flat(istart:iend),
+     .        sizes(g))) cycle
+          duplicate = .false.
+          if (target_face_group_sizes(g).gt.0) then
+            duplicate = int_in_list(iFc,
+     .        target_face_group_list(
+     .          nfaces-target_face_group_sizes(g)+1:nfaces),
+     .        target_face_group_sizes(g))
+          end if
+          if (duplicate) cycle
+          if (nfaces+1.gt.ntarget_face_group_list_max) call xerrab(
+     .     'target_fclbl_groups_str: too many grouped target faces')
+          nfaces = nfaces + 1
+          target_face_group_list(nfaces) = iFc
+          target_face_group_sizes(g) = target_face_group_sizes(g) + 1
+        end do
+      end do
+
+      do i = 1, ntarget_face_group
+        if (len_trim(target_fclbl_group_name_list(i)).gt.0) then
+          target_face_group_name_list(i) =
+     .      target_fclbl_group_name_list(i)
+        else
+          target_face_group_name_list(i) = ' '
+        end if
+      end do
+
+      write(*,*) 'Parsed target_fclbl_groups_str into',
+     . ntarget_face_group,' groups'
+
+      return
+      end subroutine build_target_face_groups_from_fclbl_string
+
+      subroutine parse_tfg_str(str,ngroups,sizes,labels,nlabels)
+      implicit none
+      character*(*) str
+      integer, intent(out) :: ngroups, nlabels
+      integer, intent(out) :: sizes(ntarget_fclbl_max)
+      integer, intent(out) :: labels(ntarget_face_group_list_max)
+      integer :: pos, slen, val, gsize
+      logical :: close_group
+
+      ngroups = 0
+      nlabels = 0
+      sizes = 0
+      labels = 0
+      slen = len_trim(str)
+      pos = 1
+
+      do while (pos.le.slen)
+        call skip_group_separators(str,pos,slen)
+        if (pos.gt.slen) exit
+        if (str(pos:pos).ne.'[') call xerrab(
+     .   'target_fclbl_groups_str: expected "["')
+        ngroups = ngroups + 1
+        if (ngroups.gt.ntarget_fclbl_max) call xerrab(
+     .   'target_fclbl_groups_str: too many groups')
+        pos = pos + 1
+        gsize = 0
+        close_group = .false.
+        do while (.not.close_group)
+          call skip_group_spaces(str,pos,slen)
+          if (pos.gt.slen) call xerrab(
+     .     'target_fclbl_groups_str: missing "]"')
+          if (str(pos:pos).eq.']') then
+            pos = pos + 1
+            close_group = .true.
+          else
+            call read_group_integer(str,pos,slen,val)
+            nlabels = nlabels + 1
+            if (nlabels.gt.ntarget_face_group_list_max) call xerrab(
+     .       'target_fclbl_groups_str: too many label entries')
+            labels(nlabels) = val
+            gsize = gsize + 1
+            call skip_group_spaces(str,pos,slen)
+            if (pos.le.slen .and. str(pos:pos).eq.',') pos = pos + 1
+          end if
+        end do
+        if (gsize.le.0) call xerrab(
+     .   'target_fclbl_groups_str: empty group is not allowed')
+        sizes(ngroups) = gsize
+      end do
+
+      return
+      end subroutine parse_tfg_str
+
+      subroutine skip_group_spaces(str,pos,slen)
+      implicit none
+      character*(*) str
+      integer, intent(inout) :: pos
+      integer, intent(in) :: slen
+      do while (pos.le.slen)
+        if (str(pos:pos).eq.' ' .or. str(pos:pos).eq.char(9)) then
+          pos = pos + 1
+        else
+          exit
+        end if
+      end do
+      return
+      end subroutine skip_group_spaces
+
+      subroutine skip_group_separators(str,pos,slen)
+      implicit none
+      character*(*) str
+      integer, intent(inout) :: pos
+      integer, intent(in) :: slen
+      do while (pos.le.slen)
+        if (str(pos:pos).eq.' ' .or. str(pos:pos).eq.char(9) .or.
+     .      str(pos:pos).eq.',') then
+          pos = pos + 1
+        else
+          exit
+        end if
+      end do
+      return
+      end subroutine skip_group_separators
+
+      subroutine read_group_integer(str,pos,slen,val)
+      implicit none
+      character*(*) str
+      integer, intent(inout) :: pos
+      integer, intent(in) :: slen
+      integer, intent(out) :: val
+      integer :: istart, iend, ios
+      character*32 token
+
+      call skip_group_spaces(str,pos,slen)
+      if (pos.gt.slen) call xerrab(
+     . 'target_fclbl_groups_str: expected integer value')
+      istart = pos
+      if (str(pos:pos).eq.'+' .or. str(pos:pos).eq.'-') pos = pos + 1
+      do while (pos.le.slen)
+        if (str(pos:pos).ge.'0' .and. str(pos:pos).le.'9') then
+          pos = pos + 1
+        else
+          exit
+        end if
+      end do
+      iend = pos - 1
+      if (iend.lt.istart) call xerrab(
+     . 'target_fclbl_groups_str: invalid integer token')
+      token = ' '
+      if (iend-istart+1.gt.len(token)) call xerrab(
+     . 'target_fclbl_groups_str: integer token too long')
+      token(1:iend-istart+1) = str(istart:iend)
+      read(token,*,iostat=ios) val
+      if (ios.ne.0) call xerrab(
+     . 'target_fclbl_groups_str: failed integer parse')
+      return
+      end subroutine read_group_integer
+
+      logical function int_in_list(val,list,n)
+      implicit none
+      integer, intent(in) :: val, n
+      integer, intent(in) :: list(n)
+      int_in_list = .false.
+      if (n.le.0) return
+      int_in_list = any(list(1:n).eq.val)
+      return
+      end function int_in_list
 
       subroutine write_b2mod_user_namelist
       implicit none

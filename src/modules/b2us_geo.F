@@ -1195,7 +1195,7 @@
 !! True GENERAL retains its serialized target lists, but the historical
 !! ifdiv/ivdiv interface has no unique meaning for an arbitrary target.
 !! Consumers that require standard target labels are disabled for this
-!! family; b2time retains only its midplane data.
+!! family; configured b2time target groups are handled separately.
         write (*,*) 'b2us_geo: general topology, preserving serialized '
      &    // 'target order and leaving legacy references unset'
         mpg%ifdiv = 0
