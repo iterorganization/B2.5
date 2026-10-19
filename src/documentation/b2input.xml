@@ -590,6 +590,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2us_nasmod_mode</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls EIRENE input block 15 conversion by b2us. The default 0 converts B2.5 corner references to EIRENE node numbers. For vessel-mode void edges, a negative NASMOD requests conversion of face-label and endpoint records and is written as a positive count. Set to 1 only when positive-NASMOD records already contain EIRENE node numbers and should pass through without index conversion. Negative NASMOD is invalid in mode 1.
+				</description>
+			</switch>
+			<switch>
 				<name>conv_triangles_old_co</name>
 				<default>0</default>
 				<type>integer</type>

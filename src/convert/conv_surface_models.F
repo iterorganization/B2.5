@@ -27,6 +27,8 @@
      .                        ilbls_eir(:), ilble_eir(:)
       logical :: found, lhelp(60), lwgf
       integer :: artificial_slab=0, spatial_hybrid = 0
+      integer :: b2us_nasmod_mode=0, nBFaces, nBVerts
+      integer, allocatable :: bVerts(:)
       integer :: find_loc
 #ifdef LEGACYCOMP
       integer newunit
@@ -36,6 +38,10 @@
 
       call ipgeti ('artificial_slab', artificial_slab)
       call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)
+!  mode 0 converts B2.5 references; mode 1 keeps EIRENE node numbers
+      call ipgeti ('b2us_nasmod_mode', b2us_nasmod_mode)
+      if (b2us_nasmod_mode.ne.0.and.b2us_nasmod_mode.ne.1)
+     .  call xerrab('conv_surface_models: invalid b2us_nasmod_mode')
 
       nd = mpg%nRc + mpg%nBc
       if (artificial_slab > 0) nd = nd + 4*nncut
@@ -304,14 +310,23 @@
 
 !  adapt block 15
       read (ineir,'(12i6)') nadmod, nasmod
-      write (iouteir,'(12i6)') nadmod, nasmod
+      if (b2us_nasmod_mode.eq.1.and.nasmod.lt.0)
+     .  call xerrab('conv_surface_models: negative NASMOD ' //
+     .              'requires block 15 conversion')
+      write (iouteir,'(12i6)') nadmod, abs(nasmod)
 
       do i = 1, nadmod
         read (ineir,'(a500)') line
         write (iouteir,'(a)') trim(line)
       end do
 
-      if (nasmod /= 0) then
+      if (b2us_nasmod_mode.eq.1) then
+!  block 15 already contains EIRENE node numbers
+        do i = 1, nasmod
+          read (ineir,'(a500)') line
+          write (iouteir,'(a)') trim(line)
+        end do
+      elseif (nasmod.gt.0) then
         if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
           !! limiter or linear case: only NW and NE corners
           j = find_loc(node_vert,nnode,mpg%icornVx(2))
@@ -330,6 +345,35 @@
         else
          call xerrab('conv_surface_models -- nasmod')
         endif
+      elseif (nasmod.lt.0) then
+!  negative NASMOD identifies void-edge records by boundary face label
+        do i = 1, -nasmod
+          read (ineir,'(3i6)') ihelp(1:3)
+          if (ihelp(3).eq.0)
+     .      call xerrab('conv_surface_models: zero void face label')
+          nBFaces = count(mpg%fcLbl==ihelp(3))
+          if (nBFaces.eq.0) then
+            write (*,*) 'boundary face label = ', ihelp(3)
+            call xerrab('conv_surface_models: face label not found')
+          endif
+          if (ihelp(2).ne.1.and.ihelp(2).ne.2)
+     .      call xerrab('conv_surface_models: invalid void endpoint')
+          nBVerts = nBFaces + 1
+          allocate (bVerts(nBVerts))
+          call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,
+     .                       ihelp(3),mpg)
+          if (ihelp(2).eq.1) then
+            j = find_loc(node_vert,nnode,bVerts(1))
+          else
+            j = find_loc(node_vert,nnode,bVerts(nBVerts))
+          endif
+          if (j.le.0) then
+            write (*,*) 'boundary face label = ', ihelp(3)
+            call xerrab('conv_surface_models: void node not found')
+          endif
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          deallocate (bVerts)
+        end do
       else
          write (*,*) "Warning: found NASMOD = 0 in input block 15"
       endif
