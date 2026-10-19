@@ -1898,11 +1898,9 @@ contains
       else
         call is_divertor_cell(mpg, iCv, ldivc)
         if (ldivc) then
-          tmhadiv(1)=tmhadiv(1)+
-     &      (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+          tmhadiv(1)=tmhadiv(1)+(emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
         else
-          tmhasol(1)=tmhasol(1)+
-     &      (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+          tmhasol(1)=tmhasol(1)+(emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
         endif
       endif
     enddo

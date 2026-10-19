@@ -536,6 +536,10 @@ MAIN: ensure_adas
 endif
 ifneq ($(wildcard $(EBROOTSUITESPARSE)),)
 DEFINES += -DUMFPACK
+else ifneq ($(wildcard $(SUITESPARSE_HOME)),)
+DEFINES += -DUMFPACK
+else ifneq ($(wildcard $(SUITESPARSE_LIB_DIR)),)
+DEFINES += -DUMFPACK
 endif
 
 DIMSDIR = ${SRCDIR}/modules
