@@ -215,6 +215,7 @@
       g%vxBb(:,0)=g%vxBb(:,0)*Bt_rescale*pit_rescale
       g%vxBb(:,1)=g%vxBb(:,1)*Bt_rescale*pit_rescale
       g%vxFpsi = g%vxFpsi*Bt_rescale*pit_rescale
+      g%fsPsi = g%fsPsi*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
         g%fcBb(:,2) = -g%fcBb(:,2)*Bt_rescale
@@ -339,6 +340,9 @@
             rewind lun
             call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      1       cvBp,cvBt,cvFpsi)
+
+!      .. Use one flux value for each declared flux surface
+            call synchronize_flux_surface_psi(g,m,nnFc,nnVx,nnFs)
 
 !      .. Create the guard cells
             call create_guard_cells(nnCv,g,m)
@@ -653,6 +657,79 @@
 91    call xerrab('read_traduitoutb2us: error reading geometry file')
 
       end subroutine read_traduitoutb2us
+
+*-----------------------------------------------------------------------
+
+      subroutine synchronize_flux_surface_psi(g,m,nnFc,nnVx,nnFs)
+      use b2mod_types
+      use b2us_geo
+      use b2us_map
+      implicit none
+      integer, intent(in) :: nnFc, nnVx, nnFs
+      type(geometry), intent(inout) :: g
+      type(mapping), intent(in) :: m
+      integer :: i, iFc, iFs, iVx, iVxLoc, iStart, nFace
+      integer, allocatable :: vxFsLoc(:)
+      external xerrab, xertst
+
+!     A face listed on a flux surface must have the surface flux at both
+!     vertices. Validate the connectivity before replacing the
+!     independently interpolated vertex values with the surface value.
+      call xertst(nnFc.le.m%nFc.and.nnVx.le.m%nVx.and.
+     &  nnFs.eq.m%nFs,
+     &  'synchronize_flux_surface_psi: inconsistent dimensions')
+
+      allocate(vxFsLoc(nnVx))
+      vxFsLoc = 0
+
+      do iFs = 1, nnFs
+        iStart = m%fsFcP(iFs,1)
+        nFace = m%fsFcP(iFs,2)
+        if (nFace.lt.0.or.(nFace.gt.0.and.
+     &      (iStart.lt.1.or.iStart+nFace-1.gt.size(m%fsFc)))) then
+          write(*,*) 'Invalid flux-surface face range: ',iFs,
+     &      iStart,nFace,size(m%fsFc)
+          call xerrab
+     &      ('synchronize_flux_surface_psi: invalid face range')
+        endif
+
+        do i = iStart, iStart+nFace-1
+          iFc = m%fsFc(i)
+          if (iFc.lt.1.or.iFc.gt.nnFc) then
+            write(*,*) 'Invalid flux-surface face: ',iFs,i,iFc,nnFc
+            call xerrab
+     &        ('synchronize_flux_surface_psi: invalid face ID')
+          endif
+          do iVxLoc = 1, 2
+            iVx = m%fcVx(iFc,iVxLoc)
+            if (iVx.lt.1.or.iVx.gt.nnVx) then
+              write(*,*) 'Invalid flux-surface vertex: ',
+     &          iFs,iFc,iVx,nnVx
+              call xerrab
+     &          ('synchronize_flux_surface_psi: invalid vertex ID')
+            endif
+            if (vxFsLoc(iVx).eq.0) then
+              vxFsLoc(iVx) = iFs
+            elseif (g%fsPsi(vxFsLoc(iVx)).ne.g%fsPsi(iFs)) then
+              write(*,*) 'Vertex belongs to surfaces with different ',
+     &          'flux values: ',iVx,vxFsLoc(iVx),iFs
+              write(*,*) 'Flux values: ',g%fsPsi(vxFsLoc(iVx)),
+     &          g%fsPsi(iFs)
+              call xerrab
+     &          ('synchronize_flux_surface_psi: conflicting flux')
+            endif
+          enddo
+        enddo
+      enddo
+
+      do iVx = 1, nnVx
+        if (vxFsLoc(iVx).gt.0)
+     &    g%vxFpsi(iVx) = g%fsPsi(vxFsLoc(iVx))
+      enddo
+
+      deallocate(vxFsLoc)
+      return
+      end subroutine synchronize_flux_surface_psi
 
 *-----------------------------------------------------------------------
 
