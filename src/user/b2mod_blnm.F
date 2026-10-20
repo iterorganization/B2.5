@@ -252,9 +252,9 @@ c*** Upper single null exchanges the inner and outer divertor regions;
 c*** use the same test that reordered the target records in b2us_geo.
         call is_upper_single_null(mpg, geo, lusn)
         inner_reg = 3
-        outer_reg = mpg%nnreg(0)
+        outer_reg = 4
         if (lusn) then
-          inner_reg = mpg%nnreg(0)
+          inner_reg = 4
           outer_reg = 3
         end if
         hlp_nu=0.0_R8

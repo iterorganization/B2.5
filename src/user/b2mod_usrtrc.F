@@ -1222,7 +1222,7 @@ c East target
 
       if(nTargets.gt.2) then !{
         hlp_pwou=0.0_R8
-        do i=1,mpg%divFcP(2,2) !{
+        do i=1,mpg%divFcP(3,2) !{
           iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
@@ -1257,7 +1257,7 @@ c East target
         end do !}
 
         hlp_pwiu=0.0_R8
-        do i=1,mpg%divFcP(3,2) !{
+        do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
@@ -1543,29 +1543,29 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       if(hlp_dbg) print *,'### print_isat=',print_isat    !###
 
       do k=1,nTargets !{
-        d=1.0e18_R8
         if(mpg%ifdiv(k).le.0.or.
      .     mpg%ifdiv(k).gt.mpg%divFcP(k,2)) then !{
           write(*,*) 'b2mod_usrtrc: target reference unavailable; ',
      .      'skipping detachment diagnostic for target ',k
-          cycle
-        end if !}
-        do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
-          iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
-          iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          iFt=mpg%cvFt(iCv)
-          e=2.0_R8*pz(iCv)
-          if(e.gt.0.0_R8.and.iFt.gt.0) then
-            if (nimp.gt.0.and.k.le.nTargets/2) then
-              d=min(d,pz(imp(ft_imp(iFt)))/e)
-            else
-              d=min(d,pz(omp(ft_omp(iFt)))/e)
+        else !}{
+          d=1.0e18_R8
+          do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
+            iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iFt=mpg%cvFt(iCv)
+            e=2.0_R8*pz(iCv)
+            if(e.gt.0.0_R8.and.iFt.gt.0) then
+              if (nimp.gt.0.and.k.le.nTargets/2) then
+                d=min(d,pz(imp(ft_imp(iFt)))/e)
+              else
+                d=min(d,pz(omp(ft_omp(iFt)))/e)
+              end if
             end if
-          end if
-          if(hlp_dbg) print *,'e,d=',e,d  !###
-        end do !}
-        hlp_dod(itg_tmp(k))=d
-        if(hlp_dbg) print *, 'hpl_dod(k)',hlp_dod(itg_tmp(k)) !###
+            if(hlp_dbg) print *,'e,d=',e,d  !###
+          end do !}
+          hlp_dod(itg_tmp(k))=d
+          if(hlp_dbg) print *, 'hpl_dod(k)',hlp_dod(itg_tmp(k)) !###
+        end if !}
         if(print_isat) then !{
           mgl3_tmp=mgl3_tmp+1
 csw 03jan2017 corrected do loop to exclude neutrals from isat calculation
