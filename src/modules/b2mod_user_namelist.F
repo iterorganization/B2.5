@@ -55,6 +55,7 @@
       integer, allocatable :: ft_imp(:), ft_omp(:)
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) :: psi_omp(nromp), psi_imp(nromp)
+      real (kind=R8), save :: omp_pos(nromp), imp_pos(nromp)
       real (kind=R8), allocatable :: fs_ds_imp(:), fs_ds_omp(:)
       real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
       real (kind=R8) ::
@@ -284,17 +285,21 @@ c***  Standard set-up:
       general_topology = m%hasTopologicalData.and.m%geometryID.eq.13
 
       nomp = 0
-      omp = 0 !Need to add check for monotonicity in list
-! Define OMP list by finding CVs which are intersected by the rzomp segment
+      omp = 0
+! Define OMP list by finding CVs which are intersected by the rzomp segment;
+! cv_intersections orders them along the segment (chord midpoints, running in
+! increasing R). omp_pos holds these positions, oriented like the list; they
+! are the abscissa of the OMP profiles (b2time.nc dsa, input profiles).
       call cv_intersections (geo, m, rzomp, omp, nomp, nromp, 1, ifail)
       call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
-! Here we need to guarantee ordering of CVs. With classical grids the conversion
-! is done such that CVs are ordered from left to right and bottom to top wrt
-! the structured computational domain. With fully unstructured grids this is not guaranteed.
-! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
-! SAME FOR IMP
+      omp_pos = 0.0_R8
+      if (nomp.gt.0) then
+        call cv_segment_positions (geo, m, rzomp, omp, nomp,
+     &                             omp_pos(1:nomp))
+        if (rzomp(1,2).lt.rzomp(1,1)) omp_pos(1:nomp) = -omp_pos(1:nomp)
+      end if
       do ic=2,nomp
-        if (geo%cvX(omp(ic)).lt.geo%cvX(omp(ic-1)))
+        if (omp_pos(ic).lt.omp_pos(ic-1))
      &   call xerrab('OMP LIST NOT SORTED')
       end do
 *   ..Definition of separatrix position in OMP list
@@ -554,8 +559,14 @@ c*** Set default values according to current species list
       imp = 0
       call cv_intersections (geo, m, rzimp, imp, nimp, nromp, 1, ifail)
       call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
+      imp_pos = 0.0_R8
+      if (nimp.gt.0) then
+        call cv_segment_positions (geo, m, rzimp, imp, nimp,
+     &                             imp_pos(1:nimp))
+        if (rzimp(1,2).lt.rzimp(1,1)) imp_pos(1:nimp) = -imp_pos(1:nimp)
+      end if
       do ic=2,nimp
-        if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
+        if (imp_pos(ic).lt.imp_pos(ic-1))
      &   call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)

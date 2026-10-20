@@ -15,8 +15,8 @@
      ,          GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
       use b2mod_b2cmpa
       use b2mod_user_namelist
-     , , only : nimp, imp, icsepimp,
-     ,          nomp, omp, icsepomp
+     , , only : nimp, imp, icsepimp, imp_pos,
+     ,          nomp, omp, icsepomp, omp_pos
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -100,13 +100,15 @@
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         endif
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi,
+     &                    imp_pos(1:nimp))
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         endif
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa,
+     &                    omp_pos(1:nomp))
       endif
       do i = 1, ntgt
         allocate(fclist(mpg%divFcP(i,2)))

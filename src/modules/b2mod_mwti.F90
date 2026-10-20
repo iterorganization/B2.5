@@ -63,7 +63,8 @@ contains
     , only : geometryID, GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_CDN, &
              GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
     use b2mod_user_namelist &
-    , only : omp, imp, nimp, nomp, icsepimp, ntarget_fclbl_max
+    , only : omp, imp, nimp, nomp, icsepimp, ntarget_fclbl_max, &
+             omp_pos, imp_pos
     use b2mod_user_namelist &
     , only : icsepomp
     use b2mod_switches
@@ -325,13 +326,13 @@ contains
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         end if
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi,imp_pos(1:nimp))
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         end if
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa,omp_pos(1:nomp))
       endif
       do i = 1, ntgt
         allocate(fclist(mpg%divFcP(i,2)))
@@ -3581,7 +3582,7 @@ contains
   end subroutine dealloc_b2mod_mwti
 #endif
 !
-  subroutine output_ds_cv(mpg,geo,nlist,cvlist,isep,filename,ds)
+  subroutine output_ds_cv(mpg,geo,nlist,cvlist,isep,filename,ds,pos)
     use b2us_geo
     use b2us_map
     implicit none
@@ -3590,17 +3591,45 @@ contains
     integer nlist,isep
     integer cvlist(nlist)
     real (kind=R8), intent(out) :: ds(nlist)
-    real (kind=R8) :: ds_offset
+    real (kind=R8), intent(in), optional :: pos(nlist)
+    real (kind=R8) :: ds_offset, ex, ey, elen
     character*(*) filename
     integer i, i1
     intrinsic sqrt
 
-    ds(1)=0.0_R8
-    do i=2,nlist
-      ds(i)=ds(i-1)+ &
-           sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+ &
-                (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
-    enddo
+    if (present(pos)) then
+      ! Position of each cell along the sampling segment (chord midpoint, see
+      ! cv_segment_positions; omp_pos/imp_pos of b2mod_user_namelist): the
+      ! exact abscissa of a profile sampled along the segment, independent of
+      ! the cell shapes. Sliver cells of the stitching layers of unstructured
+      ! (wide) grids have centres far off the segment, which breaks any
+      ! centre-based distance.
+      do i=1,nlist
+        ds(i) = pos(i) - pos(1)
+      enddo
+    else
+      ! Fallback without positions: every centre-to-centre step is projected
+      ! on the direction from the first to the last listed cell, so that the
+      ! off-segment excursions of the centres do not add spurious distance
+      ! (the plain centre-to-centre path did). Assumes the list is ordered
+      ! along the segment.
+      ex = geo%cvX(cvlist(nlist)) - geo%cvX(cvlist(1))
+      ey = geo%cvY(cvlist(nlist)) - geo%cvY(cvlist(1))
+      elen = sqrt(ex**2 + ey**2)
+      if (elen .gt. 0.0_R8) then
+        ex = ex/elen
+        ey = ey/elen
+      else
+        ex = 1.0_R8
+        ey = 0.0_R8
+      endif
+      ds(1)=0.0_R8
+      do i=2,nlist
+        ds(i) = ds(i-1) + &
+             (geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))*ex + &
+             (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))*ey
+      enddo
+    endif
     if(isep.ne.0) then
       ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
       do i=1,nlist
