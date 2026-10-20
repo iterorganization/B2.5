@@ -1010,6 +1010,23 @@ cwdk  can be derived directly from data in that file
             endif
           endif
 
+*         A structured CDN can split one separatrix into two surface
+*         chains at an X-point.  Both X-point vertices then have the
+*         same vxFs value, so recover the second chain from its faces
+*         as in the legacy mapping path.
+          if (m%isClassicalGrid.eq.1.and.m%geometryID.eq.5.and.
+     &        m%iFssep2.eq.0.and.m%iactive.gt.0) then
+            iVx = m%Xpt(m%iactive)
+            do i = m%vxFcP(iVx,1),
+     &             m%vxFcP(iVx,1)+m%vxFcP(iVx,2)-1
+              iFs = m%fcFs(m%vxFc(i))
+              if (iFs.gt.0.and.iFs.ne.m%iFssep) then
+                m%iFssep2 = iFs
+                exit
+              endif
+            enddo
+          endif
+
 *         The legacy strVxP interface requires strike records grouped by
 *         X-point.  Canonicalize the parallel strike arrays without
 *         losing any of the serialized per-strike information.
