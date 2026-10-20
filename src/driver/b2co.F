@@ -376,6 +376,7 @@
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
+          call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
           write(*,*) 'Truncating ', trim(filename)
           call b2co_time_cdf(mpg, geo, ns, ismain, ismain0,
      .                       nnatmi, nnmoli
@@ -393,6 +394,7 @@
         filename='b2batch.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
+          call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
           write(*,*) 'Truncating ', trim(filename)
           call b2co_time_cdf(mpg, geo, ns, ismain, ismain0,
      .                       nnatmi, nnmoli
