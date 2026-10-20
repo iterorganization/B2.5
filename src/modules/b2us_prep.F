@@ -2519,6 +2519,17 @@ c*** false until geometryId has used the unchanged legacy classifier.
         m%geometryID = GEOMETRY_GENERAL
       end select
 
+c*** A legacy linear reference surface can have artificial endpoint
+c*** strikes but no X-point.  The explicit strike record requires an
+c*** associated X-point, so keep this case on the supported .001 path.
+c*** The legacy reader reconstructs the endpoints and target lists.
+      if (m%geometryID.eq.GEOMETRY_LINEAR.and.m%nXpt.eq.0.and.
+     .    m%nStr.gt.0) then
+        write(*,*) 'finalize_legacy_topology: linear endpoint strikes '
+     .    // 'without an X-point; writing legacy b2fgmtry'
+        return
+      endif
+
 c*** The legacy inference stores target counts implicitly in the array
 c*** shapes.  Materialize them before validating the serialized record
 c*** set.

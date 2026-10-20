@@ -194,8 +194,13 @@
       character(120), intent(in) :: lblgm
       integer, intent(in) :: isymm
       integer :: idum(0:9)
+      character(10) :: gridversion
 
-      call cfverw (nout, newversion)
+* ..Only files with complete explicit records use the current version.
+*   Legacy mappings retain the last metadata-free format.
+      gridversion = newversion
+      if (.not.m%hasTopologicalData) gridversion = '03.002.001'
+      call cfverw (nout, gridversion)
 
       idum(0) = m%nCi
       idum(1) = m%nCg
@@ -227,8 +232,8 @@
       endif
       call cfwuin (nout, 3, idum, 'nx,ny,nncut')
 
-* ..Do not emit the new records until the global version is advanced.
-      if (newversion.ge.'03.002.002') then
+* ..The topology header belongs only to the explicit file version.
+      if (gridversion.ge.'03.002.002') then
         call write_b2fgmtry_topology_header(nout, m)
       endif
 

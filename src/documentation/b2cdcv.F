@@ -245,6 +245,9 @@
 *     .true. when the geometry file contains the required explicit
 *     topology block introduced in b2fgmtry version 03.002.002.
 *     Versions 03.002.000 and 03.002.001 use legacy inference instead.
+*     A structured linear conversion with artificial endpoint strikes
+*     but no X-point remains 03.002.001 so the legacy reader can
+*     reconstruct those endpoints without invalid explicit records.
 *
 *     topoID - integer
 *     Broad topological mesh class written as topoflag: 0 is general,
@@ -268,6 +271,9 @@
 *     Xpt gives the vertex of each X-point.  isPrimaryXpt is one when
 *     its separatrix is connected directly to a core region and zero
 *     otherwise.  XptFsID gives the associated flux-surface ID.
+*     For a structured CDN, two separatrix chains can meet at an
+*     X-point even when both XptFsID values are identical.  The second
+*     compatibility surface is then inferred from incident faces.
 *
 *     Opt - integer array, length nOpt
 *     Vertex IDs of all serialized O-points.
