@@ -1242,18 +1242,18 @@ c East target
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
           do is=1,nnatmi
-            wnutrg(i,2)=wnutrg(i,2)+
+            wnutrg(i,3)=wnutrg(i,3)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
           end do
           do is=1,nnmoli
-            wnutrg(i,2)=wnutrg(i,2)+
+            wnutrg(i,3)=wnutrg(i,3)+
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
-          wnutpr(i,2)=ewldrp_res(ias)
+          wnutpr(i,3)=ewldrp_res(ias)
 #endif
-          wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
-     .                   +wnutrg(i,2)+wrad(i,2,0)
-          hlp_pwou=max(hlp_pwou,wtarg(i,2))
+          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
+     .                   +wnutrg(i,3)+wrad(i,3,0)
+          hlp_pwou=max(hlp_pwou,wtarg(i,3))
         end do !}
 
         hlp_pwiu=0.0_R8
@@ -1277,18 +1277,18 @@ c East target
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
           do is=1,nnatmi
-            wnutrg(i,3)=wnutrg(i,3)+
+            wnutrg(i,2)=wnutrg(i,2)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
           end do
           do is=1,nnmoli
-            wnutrg(i,3)=wnutrg(i,3)+
+            wnutrg(i,2)=wnutrg(i,2)+
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
-          wnutpr(i,3)=ewldrp_res(ias)
+          wnutpr(i,2)=ewldrp_res(ias)
 #endif
-          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
-     .                   +wnutrg(i,3)+wrad(i,3,0)
-          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
+          wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
+     .                   +wnutrg(i,2)+wrad(i,2,0)
+          hlp_pwiu=max(hlp_pwiu,wtarg(i,2))
         end do !}
       end if !}
 
@@ -1309,7 +1309,7 @@ C neutrals
         close(3)
 C plasma
         do j=1,nTargets
-          do i=1,mpg%divFcP(j,2)
+          do i=1,mpg%divFcP(itg_tmp(j),2)
             wtarg(i,itg_tmp(j))=
      .       (wtarg(i,itg_tmp(j))-wnutrg(i,itg_tmp(j))
      .       -wrad(i,itg_tmp(j),0))/trgshp(itg_tmp(j))
