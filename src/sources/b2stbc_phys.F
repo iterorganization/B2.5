@@ -1272,10 +1272,13 @@ cwdk       * need to correct this BC for hybrid scheme
             t0   = geo%fcQalf(iFc,1)
             t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &              geo%fcQbet(iFc,0)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            t2 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%na(:,is))
+            t3 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%na(:,is))
             srw%sna0(iCv1,0,is) =  VBIG*
      &          co%cdna(iFc,1,is)*(t0*pl%na(iCv2,is) -
-     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
-     &         (pl%na(mpg%fcVx(iFc,2),is) - pl%na(mpg%fcVx(iFc,1),is)))
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*(t3-t2))
             srw%sna0(iCv1,1,is) = -VBIG*
      &         (co%cdna(iFc,1,is)*t0 - CONPAR(is,iB,1)*geo%fcS(iFc)*csb)
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
@@ -4845,10 +4848,13 @@ cwdk     * need to correct this BC for hybrid scheme
           t0   = geo%fcQalf(iFc,1)
           t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &            geo%fcQbet(iFc,0)
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t2 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%te)
+          t3 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%te)
           srw%she0(iCv1,0) =  VBIG*NE00*EV*
      &        co%chce(iFc,1)*(t0*pl%te(iCv2) -
-     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
-     &       (pl%te(mpg%fcVx(iFc,2)) - pl%te(mpg%fcVx(iFc,1))))
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*(t3-t2))
           srw%she0(iCv1,1) = -VBIG*NE00*EV*
      &       (co%chce(iFc,1)*t0 -
      &       ENEPAR(iB,1)*geo%fcS(iFc)*vte*dv%ne(iCv1))
@@ -6440,10 +6446,13 @@ cwdk     * need to correct this BC for hybrid scheme
               t2  = t2 + csb*pl%na(iCv1,is)
             endif
           enddo
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t3 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ti)
+          t4 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ti)
           srw%shi0(iCv1,0) =  VBIG*NE00*EV*
      &        co%chci(iFc,1)*(t0*pl%ti(iCv2) -
-     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
-     &       (pl%ti(mpg%fcVx(iFc,2)) - pl%ti(mpg%fcVx(iFc,1))))
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*(t4-t3))
           srw%shi0(iCv1,1) = -VBIG*NE00*EV*
      &       (co%chci(iFc,1)*t0 -
      &       ENIPAR(iB,1)*geo%fcS(iFc)*t2)
