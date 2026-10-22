@@ -4,6 +4,7 @@
       subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg,    !srv 13.10.06 26.09.12
      &   nregionv, solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
      &   rescb, corpb, aa, name)                                  !srv 18.05.02
+      use b2mod_growth_guard, only : growth_diagonal
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -224,6 +225,16 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         ireg = mpg%cvReg(iCv)
         if (.not.solvereg(ireg)) rescb(iCv) = 0.0_R8
       enddo
+
+c growth guard: damp cells whose density would change too fast this step
+      if (switch%growth_guard.eq.1) then
+        do iCv=1,mpg%nCi
+          if (.not.solvereg(mpg%cvReg(iCv))) cycle
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      growth_diagonal(rescb(iCv),1.0_R8,
+     &      nb(iCv)*geo%cvVol(iCv),switch%growth_frac,1,iCv)
+        enddo
+      endif
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name,            !srv 18.05.02
