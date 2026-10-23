@@ -527,13 +527,14 @@ c
       integer :: i, j, k, l, n, is, nv, ns_tmp
       character hlp_c
       character f*(lenfnm)
-      logical :: ex, warn_tmp
+      logical :: ex, warn_tmp, lusn
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
       geometryType = geometryId( mpg, geo, 1 )
+      call is_upper_single_null(mpg, geo, lusn)
       allocate(ltgs(nlim,ntrgs_tmp))
       allocate(limp_tmp(nspecies))
       allocate(radim_tmp(nspecies))
@@ -600,6 +601,12 @@ c*** Assign the identification suffices
         do i=1,k !{
           hlp_trg(i)=hlp_trgs(i,l)
         end do !}
+c*** Upper single null target records are reordered inner-first in
+c*** b2us_geo; keep the tracing labels consistent with that order.
+        if (lusn .and. k.eq.2) then !{
+          hlp_trg(1)=hlp_trgs(2,l)
+          hlp_trg(2)=hlp_trgs(1,l)
+        end if !}
       else !}{
         write(*,*) '@ b2blne: too many targets. Check the hlp_trgs ',
      ,                                                          'array'

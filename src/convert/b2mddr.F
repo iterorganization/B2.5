@@ -1,4 +1,5 @@
-      subroutine b2mddr (ninp, nout, ns, mpg, geo, state, state_ext)
+      subroutine b2mddr (ninp, nout, ns, mpg, geo, state, state_ext,
+     &  lblgm)
       use b2mod_types
       use b2mod_version
       use b2mod_math
@@ -18,6 +19,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), ns
+      character lblgm*120
 *   ..main data structures
       type(mapping)    :: mpg
       type(geometry)   :: geo
@@ -39,7 +41,7 @@
 *   ..local variables
       integer k, is, idum(0:9), ismain
       integer external_species
-      character lblgm*120, lblcp*120, lblmn*120, lblrc*120
+      character lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*256, ligne*256
 *   ..initialisation
       save ismain, external_species
@@ -98,9 +100,6 @@
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
 *   ..read geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
       call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry (mpg, geo, switch)
 *   ..read physics common

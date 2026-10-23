@@ -65,6 +65,14 @@ c=======================================================================
         end if
         close(lun)
 
+c*** The separatrix can be written without a radial psi direction.
+c*** The SOL, PFR, and core classifications below cannot.
+        if (.not.geo%psi_orientation_defined) then
+          write(0,*) 'b2pgeom: psi orientation is undefined; '
+     &      // 'skipping SOL, PFR, and core surface tables'
+          return
+        endif
+
         ofile='gm_SOL.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)

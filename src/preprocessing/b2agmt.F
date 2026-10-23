@@ -103,7 +103,8 @@
      *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc),
      *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
      *   rawQgam1, rawQgam2, signedHc1, signedHc2,
-     *   sideTolerance
+     *   sideTolerance, dpsiFace
+      logical :: useFluxIntersection
       integer, save :: style = 0
 *   ..procedures
       intrinsic sqrt
@@ -288,10 +289,17 @@
          ! If it is possible to put the cell center of the guard cell on the same psi
          ! as the boundary cell, this is done. Otherwise the cell center is placed
          ! in the extension of the vector from the boundary cell center and the face center.
-         if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
-     &       .lt. 1e-1_R8) then !get the guard cell on the same fpsi
+         dpsiFace = g%vxFpsi(v2) - g%vxFpsi(v1)
+         useFluxIntersection = .false.
+         if (dpsiFace.ne.0.0_R8) then
+           useFluxIntersection = abs(fcPsi-bcFpsi).lt.
+     &       1e-1_R8*abs(dpsiFace)
+         endif
+
+         if (useFluxIntersection) then
+           ! Put the guard-cell center on the boundary-cell flux surface
            !Calculate intersection point - find point on face where psi = fcPsi
-           t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))
+           t0 = (bcFpsi-g%vxFpsi(v1))/dpsiFace
            isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
            isy(1) =  g%vxY(v1) + t0 *(g%vxY(v2)- g%vxY(v1))
 

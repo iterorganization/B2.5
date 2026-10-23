@@ -180,7 +180,9 @@ c
       call b2xzef(mpg%nCv, ns, state%rt%rz2, state%pl%na,
      .  state%dv%ne, zeff, state_ext)
       do ic=1,2
-       if (ic.eq.2.and.geometryType.ne.GEOMETRY_CDN) cycle
+c*** iFssep2 is present only for a disconnected double null.  It is
+c*** unset for a connected double null and for single-separatrix grids.
+       if (ic.eq.2.and.mpg%iFssep2.le.0) cycle
        if (ic.eq.1) then
          iFs = mpg%iFssep
        else
@@ -271,7 +273,7 @@ c
       end do
 
       do i=2,mpg%nnreg(0) !{
-        if(mpg%nnreg(0).ge.7.and.(i.eq.5.or.i.eq.6)) cycle
+        if(mpg%nnreg(0).ge.7.and.i.eq.5) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
 

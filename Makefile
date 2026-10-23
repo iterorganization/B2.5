@@ -426,6 +426,7 @@ PROG_OE = b2ag.exe b2ai.exe b2fu.exe b2ts.exe b2uf.exe b2us.exe b2ye.exe b2yt.ex
 PROG_CO = b2co.exe
 PROG_OT = b2ah.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe
 PROG_90 = check_b2_output.exe
+PROG_TOPOLOGY_TEST = check_linear_topology_roundtrip.exe
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
@@ -444,6 +445,7 @@ OPTEXCL = b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
+EXCLUDELIST += ${patsubst %.exe, %\\.o, ${PROG_TOPOLOGY_TEST}}
 ADEXTRA =
 ifdef DIFF_D
 ADEXTRA += ${CONTEXTAD} ${JSONAD}
@@ -467,6 +469,7 @@ OEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OE}}
 COEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_CO}}
 OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 O9EXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_90}}
+TOPOLOGY_TEST_EXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TOPOLOGY_TEST}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 OQEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OQ}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
@@ -485,6 +488,7 @@ STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
 .PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD AM_FILES mods clean depend listobj tags echo local force test nc2text_simple nc2text ensure_adas
+.PHONY: linear_topology_test
 
 DEFAULT: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION AM_FILES ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
@@ -1131,6 +1135,13 @@ ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 
 ${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${LDLIBES}
+
+linear_topology_test: ${TOPOLOGY_TEST_EXE}
+
+${OBJDIR}/check_linear_topology_roundtrip.o: ${OBJDIR}/libb2.a
+
+${TOPOLOGY_TEST_EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${LDLIBES} ${LDOPTSend}
 
 ${GEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${LPOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${EIRLIBS} ${PLLIBES} ${GRLIBES} ${LDLIBES} ${LDOPTSend}

@@ -108,6 +108,8 @@ c
      *     pr(mpg%nCv)
       integer, save :: is
       logical :: done(mpg%nFt)
+      integer :: inner_reg, outer_reg
+      logical :: lusn
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
@@ -246,10 +248,19 @@ c
 c
 c*** Volumetric sources
 c
+c*** Upper single null exchanges the inner and outer divertor regions;
+c*** use the same test that reordered the target records in b2us_geo.
+        call is_upper_single_null(mpg, geo, lusn)
+        inner_reg = 3
+        outer_reg = 4
+        if (lusn) then
+          inner_reg = 4
+          outer_reg = 3
+        end if
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
         do iCv=1,mpg%nCi
-          if (mpg%cvReg(iCv).eq.3) then
+          if (mpg%cvReg(iCv).eq.inner_reg) then
 !WG_TODO          if(resignore(iCv,1).ne.0) then
             hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)
 !WG_TODO          end if
@@ -270,7 +281,7 @@ c
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
         do iCv=1,mpg%nCi
-          if (mpg%cvReg(iCv).eq.mpg%nnreg(0)) then
+          if (mpg%cvReg(iCv).eq.outer_reg) then
 !WG_TODO            if(resignore(iCv,1).ne.0) then
             hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)
 !WG_TODO            if(resignore(iCv,2).ne.0) then

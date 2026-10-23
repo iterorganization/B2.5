@@ -280,7 +280,7 @@
 				<default>See description (integer)</default>
 				<type>integer</type>
 				<description>
-					Flux surface index, on the basis mesh, of the active separatrix. Can only be provided for slab geometries, otherwise deduced from geometry.
+					Flux-surface index on the basis mesh used as the reference for outer- and inner-midplane distances. For legacy slab/linear grids, this retains its established meaning as the user-designated separatrix line. For explicit general, linear, or cylindrical topology, a positive value selects that nonempty flux surface directly. Without a positive value, an explicit general topology uses its unique primary-X-point flux surface when one exists and otherwise uses the first nonempty flux surface; explicit linear and cylindrical topologies use the first nonempty flux surface. Recognized limiter, single-null, and double-null families continue to deduce their separatrix from the geometry.
 				</description>
 			</switch>
 			<switch>
@@ -587,6 +587,14 @@
 				<type>integer</type>
 				<description>
 					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, unstructured b2fstati_us file is written by b2us. When set to 0, it is not.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_nasmod_mode</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls EIRENE input block 15 conversion by b2us. The default 0 converts B2.5 corner references to EIRENE node numbers. For vessel-mode void edges, a negative NASMOD requests conversion of face-label and endpoint records and is written as a positive count. Set to 1 only when positive-NASMOD records already contain EIRENE node numbers and should pass through without index conversion. Negative NASMOD is invalid in mode 1.
 				</description>
 			</switch>
 			<switch>

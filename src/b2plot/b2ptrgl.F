@@ -9,6 +9,7 @@ c***  Power in W/m**2 (previously, MW/m**2) !!!
 c======================================================================
       use b2mod_types
       use b2mod_diag
+      use b2mod_geometry, only: geometryId, GEOMETRY_GENERAL
       use b2mod_time
       use b2mod_b2plot
       use b2mod_b2cmpa
@@ -207,6 +208,11 @@ c*** Here n and T are the density and temperature of the hydrogenic
 c*** atoms near the target.
 c*** The proportionality factor is adjusted to match the integrals
 c*** which are calculated in Eirene.
+      if (geometryId(mpg,geo,1).eq.GEOMETRY_GENERAL) then
+        write(0,*) 'b2ptrgl: fixed inner/outer target loading outputs '
+     &    // 'are not defined for general topology; skipping them'
+        return
+      endif
 #ifdef DBG
       print *,'Starting b2ptrgl...'
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
