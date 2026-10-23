@@ -12909,7 +12909,6 @@ contains
     return
     end subroutine write_sourced_constant
 
-#  if ( IMAS_MAJOR_VERSION > 4 || IMAS_MINOR_VERSION > 0 )
     subroutine write_sourced_constant_2( val, value )
     implicit none
     type(ids_summary_constant_flt_0d_2) :: val
@@ -12922,7 +12921,6 @@ contains
 
     return
     end subroutine write_sourced_constant_2
-#  endif 
 
     subroutine write_sourced_int_constant( ival, ivalue )
     implicit none
