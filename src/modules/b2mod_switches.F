@@ -70,6 +70,7 @@ c Advanced fluid neutral models
       integer :: afn_bcs_use_coarse
       integer :: afn_vnn
       integer :: afn_vnn_ndiff
+      integer :: afn_impurity_pumping
 
 c Zhdanov closure switches
       integer :: Zhdanov_closure
@@ -708,6 +709,7 @@ c Advanced fluid neutral models
       s % afn_bcs_use_coarse = 1
       s % afn_vnn = 1
       s % afn_vnn_ndiff = 0
+      s % afn_impurity_pumping = 0
 
 c Zhdanov closure switches
       s % Zhdanov_closure = 0
@@ -1377,6 +1379,9 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
       call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
       call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
+      call ipgeti ('b2stbr_afn_impurity_pumping', 
+     &             s % afn_impurity_pumping)
+
 
 c Zhdanov closure
       call ipgeti ('b2tral_Zhdanov_closure', s % Zhdanov_closure)

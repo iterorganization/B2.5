@@ -857,8 +857,20 @@ cdpc
          endif
          if (switch%recycle_afn.eq.0.or.nint(zn(is0)).ne.1) then
 !! default neutral recycling/reflection model (always for non-hydrogenic species)
-           srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
-     &      b2recyc(is,istra)*t0
+           if (is_neutral(is).and.
+     &                     switch%afn_impurity_pumping.eq.1) then !! do AFN-like pumping 
+             farea = geo%fcS(iFc) !! area of the face
+             cosa = geo%fcQalf(iFc,0)
+             sina = geo%fcQalf(iFc,1)
+             call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,
+     &              istra,farea,pl,tnf,geo,cosa,sina,
+     &              fnni,fmomni,nni,nnwwni,feneni)
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
+     &                      (b2recyc(is,istra)-1.0_R8)*fnni
+           else !! default model
+             srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
+     &        b2recyc(is,istra)*t0
+           endif
 #ifdef WG_TODO
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
