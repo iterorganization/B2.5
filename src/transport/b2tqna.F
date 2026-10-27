@@ -112,6 +112,7 @@
 
 *   ..local variables
       integer iCv, iFt, is, ic, k
+      logical lpfr, ldivc
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
@@ -592,16 +593,12 @@ cdpc
           endif
         enddo
       endif
-#ifdef WG_TODO
-      if(switch%b2tqna_pfr_rescale.ne.1.0_R8) then
+      if(switch%b2tqna_pfr_rescale.ne.1.0_R8.and.
+     &   (.not.mpg%hasTopologicalData.or.
+     &    (mpg%geometryID.ge.3.and.mpg%geometryID.le.7))) then
         do iCv = 1, nCv
-            if(mpg%cvReg(iCv,0).ne.0.and.
-     1       mod(mpg%cvReg(iCv,0),4).ne.1.and.
-     1       mod(mpg%cvReg(iCv,0),4).ne.2.and.
-     2       (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3       iy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
-     4       ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5       iy.lt.topcut(2)))) then
+            call is_pfr_cell(mpg, iCv, lpfr)
+            if(lpfr) then
               do is=0,ns-1
                 if(.not.is_neutral(is)) then
                   dna0(iCv,is)=dna0(iCv,is)*switch%b2tqna_pfr_rescale
@@ -620,16 +617,13 @@ cdpc
             endif
         enddo
       endif
-      if(switch%b2tqna_divsol_rescale.ne.1.0_R8) then
-        do iy=jsep+1,ny
-          do ix=-1,nx
-            if(mpg%cvReg(iCv,0).ne.0.and.
-     1       mod(mpg%cvReg(iCv,0),4).ne.1.and.
-     1       mod(mpg%cvReg(iCv,0),4).ne.2.and.
-     2       (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3       iy.ge.topcut(1)).or.(nnreg(0).eq.8.and.
-     4       ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5       iy.ge.topcut(2)))) then
+      if(switch%b2tqna_divsol_rescale.ne.1.0_R8.and.
+     &   (.not.mpg%hasTopologicalData.or.
+     &    (mpg%geometryID.ge.3.and.mpg%geometryID.le.7))) then
+        do iCv = 1, nCv
+            call is_divertor_cell(mpg, iCv, ldivc)
+            call is_pfr_cell(mpg, iCv, lpfr)
+            if(ldivc.and..not.lpfr) then
               do is=0,ns-1
                 if(.not.is_neutral(is)) then
                   dna0(iCv,is)=dna0(iCv,is)*switch%b2tqna_divsol_rescale
@@ -646,10 +640,8 @@ cdpc
               sig0(iCv)=sig0(iCv)*switch%b2tqna_divsol_rescale
               alf0(iCv)=alf0(iCv)*switch%b2tqna_divsol_rescale
             endif
-          enddo
         enddo
       endif
-#endif
       if(switch%b2tqna_limit_coeff.ne.0) then
         do is=0,ns-1
           if(.not.is_neutral(is)) then

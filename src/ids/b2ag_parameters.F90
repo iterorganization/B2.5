@@ -4,6 +4,7 @@ module b2ag_parameters
   use tradui_constants
   use b2mod_version
   use b2ag_ghostcells
+  use b2us_io, only: read_b2fgmtry_topology_header
 
   implicit none
 
@@ -184,7 +185,7 @@ contains
        call cfverr(lun,grid_version)
        if(istyle.eq.-1) then
          ! Carre grid input
-         if (grid_version.eq."03.002.000") then
+         if (grid_version >= "03.002.000") then
            ! obtain nCv, nFc, nVx from geometry file
            call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
            nCv0 = idum(0)
@@ -213,6 +214,9 @@ contains
              m%ny = idum(1)
              nncut = idum(2)
            end if
+           ! Read the fixed .002 topology header before alloc_mapping.
+           ! Legacy .000/.001 files consume no additional records.
+           call read_b2fgmtry_topology_header(lun, grid_version, m)
          end if
        end if
      end if

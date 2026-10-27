@@ -1087,12 +1087,31 @@ c.. Make a list of core boundaries
                 end if
               end if
             end if
+            if (todo .and. m%hasTopologicalData) then
+              ic = 1
+              assigned = .false.
+              do while (ic.le.ncbs)
+                if (lcbs(ic).eq.ib) then
+                  if (.not.done(ic)) then
+                    assigned = .true.
+                    done(ic) = .true.
+                  end if
+                end if
+                ic = ic + 1
+              end do
+              if (assigned) then
+                write(*,*) 'Using explicitly declared core boundary ',
+     .            ib
+              end if
+            end if
           endif
         enddo
         if (maxval(m%fsVxP(:,2)).gt.2) then
           if ((m%nnreg(0).gt.1.or.m%periodic_bc.eq.1).and.
      &        .not.(all(m%cvOnClosedSurface).eqv..false.)) then
-            call xertst(1.le.ncbs, 'faulty parameters ncbs')
+            if (.not.m%hasTopologicalData) then
+              call xertst(1.le.ncbs, 'faulty parameters ncbs')
+            end if
           end if
         end if
         do ib = 1, ncbs
@@ -1668,14 +1687,22 @@ cc BCPOT
         end do
       end do
 
-      if (allocated(m%strDiv)) then
-        indd = maxval(m%strDiv)
+      indd = divertor_target_count(m)
+      if (indd.gt.0) then
+        call xertst(allocated(m%divFcP).and.allocated(m%divFc).and.
+     &    allocated(m%divFcOr),
+     &    'bc_to_struct -- target arrays are not allocated')
+        call xertst(size(m%divFcP,1).ge.indd,
+     &    'bc_to_struct -- target pointer array is too small')
+        m%divFcOr = 0.0_R8
         do i = 1, indd
           do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
             iFc = m%divFc(j)
             do k = 1, size(m%bcFc)
               if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
             end do
+            call xertst(abs(m%divFcOr(j)).eq.1.0_R8,
+     &        'bc_to_struct -- target face has no orientation')
           end do
         end do
       end if

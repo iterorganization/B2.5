@@ -220,7 +220,16 @@
 *     For iFs in (1:nFs), fsPsi(iFs) specifies Psi on each flux surface.
 *
 *     psi_increasing - logical
-*     .true. if the Psi value increases from the O-point to the active X-point.
+*     When psi_orientation_defined is .true., psi_increasing specifies
+*     whether Psi increases from the closed-core side toward the primary
+*     separatrix or limiter reference surface.  For legacy standard
+*     topologies this preserves the historical convention.
+*
+*     psi_orientation_defined - logical
+*     .true. when the radial direction of Psi has a derived or
+*     legacy-defined meaning.  For GENERAL topology this may be .false.
+*     for coreless grids, constant-Psi grids, or grids without a usable
+*     primary-X-point/tangency comparison.
 *
 *     periodic_bc - integer
 *     periodic_bc tells whether the cuts correspond to periodic boundary
@@ -229,6 +238,91 @@
 *     periodic_bc.eq.0 is the default.
 *     periodic_bc.eq.1 indicates that periodic boundary conditions are
 *     being used.
+*
+*   ....Topology metadata and derived state
+*
+*     hasTopologicalData - logical
+*     .true. when the geometry file contains the required explicit
+*     topology block introduced in b2fgmtry version 03.002.002.
+*     Versions 03.002.000 and 03.002.001 use legacy inference instead.
+*     A structured linear conversion with artificial endpoint strikes
+*     but no X-point remains 03.002.001 so the legacy reader can
+*     reconstruct those endpoints without invalid explicit records.
+*
+*     topoID - integer
+*     Broad topological mesh class written as topoflag: 0 is general,
+*     1 is single null, 2 is double null, 3 is linear, and 4 is
+*     limiter.  It does not replace the more specific geometryID.
+*
+*     geometryID - integer
+*     Producer-declared geometry family.  Values 1 through 7 denote
+*     linear, cylindrical, limiter, single null, connected double
+*     null, bottom-primary disconnected double null, and top-primary
+*     disconnected double null.  Value 13 denotes general topology.
+*     B2.5 validates a declared standard family against the explicit
+*     topology and rejects the input when the declaration and metadata
+*     are inconsistent.
+*
+*     nXpt, nOpt, nStr, nTgc, nDiv, nfcDiv - integers
+*     Numbers of X-points, O-points, strike points, closed-contour
+*     tangencies, divertor targets, and target faces, respectively.
+*
+*     Xpt, isPrimaryXpt, XptFsID - integer arrays, length nXpt
+*     Xpt gives the vertex of each X-point.  isPrimaryXpt is one when
+*     its separatrix is connected directly to a core region and zero
+*     otherwise.  XptFsID gives the associated flux-surface ID.
+*     For a structured CDN, two separatrix chains can meet at an
+*     X-point even when both XptFsID values are identical.  The second
+*     compatibility surface is then inferred from incident faces.
+*
+*     Opt - integer array, length nOpt
+*     Vertex IDs of all serialized O-points.
+*
+*     strVx, strXpt, strDiv, strFsID - integer arrays, length nStr
+*     For each strike point these give its vertex, associated X-point
+*     vertex, target ID, and flux-surface ID.
+*
+*     strVxP - (1:nXpt,1:2) integer array
+*     Derived compatibility pointer into the strike arrays after they
+*     are grouped by associated X-point.  It is not serialized.
+*
+*     tgVx, tgDiv, tgFsID - integer arrays, length nTgc
+*     For each closed-contour tangency these give its vertex, target
+*     ID, and flux-surface ID.  A tangency is not a strike point.
+*
+*     divFcP - (1:nDiv,1:2) integer array
+*     divFcP(i,1) is the one-based start of target i in divFc and
+*     divFcP(i,2) is its number of faces.  The ranges are packed and
+*     each target is an ordered, vertex-connected face chain.
+*
+*     divFc - (1:nfcDiv) integer array
+*     Packed face IDs for all targets.  A face occurs in at most one
+*     target.  General topology retains the serialized target order;
+*     recognized standard families retain their established order.
+*
+*     iactive, iinactive - integers
+*     Singular compatibility X-point indices derived for established
+*     standard-family consumers.  They do not replace the complete
+*     isPrimaryXpt array and are not serialized.
+*
+*     iFssep, iFssep2 - integers
+*     Established primary and secondary separatrix surface IDs for
+*     standard families.  For explicit general, linear, or cylindrical
+*     topology, iFssep is the selected OMP/IMP reference surface.
+*
+*     ivdiv, ifdiv - integer arrays, length nDiv
+*     ivdiv(i) is the selected strike or tangency reference vertex.
+*     ifdiv(i) is the target-list index of the face immediately after
+*     that reference.  Both are zero when no reference was serialized.
+*     A missing reference is not an X-point-on-target indication.
+*
+*     cvOnClosedSurface - (1:nCv) logical array
+*     .true. for cells on flux tubes classified as closed by bounded
+*     connectivity traversal.  General periodicity is derived from the
+*     presence of at least one closed physical flux tube.
+*
+*     All serialized vertex, face, target, and flux-surface IDs and
+*     all packed-list starts are one-based.
 *
 *   ....Mapping variables
 *
@@ -321,7 +415,10 @@
 *     with help of the ftFcP pointer array.
 *
 *     cvFt - (1:nCv) integer array
-*     cvFt lists for every cell the number of the flux tube to which it belongs.
+*     cvFt lists for every cell the number of the physical flux tube to
+*     which it belongs.  Zero means unassigned.  Imported GOAT/GA domain
+*     cells may use nFt+1 as a no-physical-tube sentinel; guard cells do
+*     not inherit that sentinel.
 *
 *     fsFcP -(1:nFs,1:2) integer array
 *     Pointer array to find the numbers of the faces belonging to flux surface iFs.
@@ -347,10 +444,12 @@
 *     Region numbers of the flux tubes.
 *
 *     fcAligned - (1:nFc) integer array
-*     Integer to indicate whether a face is aligned with the magnetic field.
+*     Zero marks a cross-field/poloidal-end face and one marks a field-
+*     aligned/radial face.  A poloidal-end guard inherits a valid
+*     adjacent physical cvFt; a radial guard remains unassigned.
 *
-*     cvOnClosedSurface - (1:nCv) integer array
-*     Logical to indicate whether a cell belongs to a closed flux tube.
+*     cvOnClosedSurface - (1:nCv) logical array
+*     Logical to indicate whether a cell is on a closed flux surface.
 *
 *     bcCvP -(1:nBc,1:2) integer array
 *     Pointer array to find the numbers of the guard cells belonging to boundary condition iBc.

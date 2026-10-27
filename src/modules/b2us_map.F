@@ -11,15 +11,22 @@
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
      .          init_mapping, get_version,
-     .          calc_add_connectivity
+     .          calc_add_connectivity, update_guard_cells,
+     .          validate_divertor_targets,
+     .          divertor_target_count,
+     .          is_pfr_cell, is_divertor_cell
 
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
-     &             nFci
+     &             nFci, nOpt = 0, nDiv = 0, nfcDiv = 0
         integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2,
      &             iactive, iinactive
+!       Explicit-topology header state
+        logical :: hasTopologicalData = .false.
+        integer :: topoID = 0
+        integer :: geometryID = 13
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
@@ -79,11 +86,19 @@
         integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
 
         integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
+!       O-point vertices and per-X-point primary and surface metadata
+        integer, allocatable :: Opt(:)
+        integer, allocatable :: isPrimaryXpt(:)
+        integer, allocatable :: XptFsID(:)
         integer, allocatable :: strVxP(:,:)            !(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
+        integer, allocatable :: strXpt(:)
         integer, allocatable :: strVx(:)               ! list of vertex numbers for the strike points
         integer, allocatable :: tgVx(:)                ! list of vertex numbers for the tangency points
+        integer, allocatable :: tgDiv(:)
+        integer, allocatable :: tgFsID(:)
         integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor target on which it is located
                                                        ! The divertor targets are labelled from 1 to 4 starting travelling from West to East in the computational domain
+        integer, allocatable :: strFsID(:)
         integer, allocatable :: divFcP(:,:)            ! For each divertor target, the list of associated divertor faces, and their number
         integer, allocatable :: divFc(:)               ! ORDERED list of faces forming the divertor targets
         real (kind=R8), allocatable :: divFcOr(:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
@@ -124,6 +139,27 @@
         end type mapping
 
       contains
+
+**********************************************************************
+
+!> Return the number of mapped divertor targets.
+!! Explicit topology carries an authoritative target count independently
+!! of its strike-point records.  Metadata-free input retains the legacy
+!! convention in which the largest strike-target label gives the count.
+      integer function divertor_target_count(m)
+      implicit none
+      type(mapping), intent(in) :: m
+
+      divertor_target_count = 0
+      if (m%hasTopologicalData) then
+        divertor_target_count = m%nDiv
+      else if (allocated(m%strDiv)) then
+        if (size(m%strDiv).gt.0)
+     .    divertor_target_count = maxval(m%strDiv)
+      endif
+
+      return
+      end function divertor_target_count
 
 **********************************************************************
 
@@ -196,6 +232,22 @@
         allocate (imapFcy(0,0))
         allocate (imapVx(0,0))
 #endif
+      endif
+
+      if (m%hasTopologicalData) then
+        allocate (m%Xpt(m%nXpt))
+        allocate (m%Opt(m%nOpt))
+        allocate (m%isPrimaryXpt(m%nXpt))
+        allocate (m%XptFsID(m%nXpt))
+        allocate (m%strVx(m%nStr))
+        allocate (m%strXpt(m%nStr))
+        allocate (m%strDiv(m%nStr))
+        allocate (m%strFsID(m%nStr))
+        allocate (m%tgVx(m%nTgc))
+        allocate (m%tgDiv(m%nTgc))
+        allocate (m%tgFsID(m%nTgc))
+        allocate (m%divFcP(m%nDiv,2))
+        allocate (m%divFc(m%nfcDiv))
       endif
 
       allocate (m%fcLbl(m%nFc))
@@ -300,6 +352,22 @@
       m%IMPr = 0
       m%IMPz = 0
 
+      if (m%hasTopologicalData) then
+        m%Xpt = 0
+        m%Opt = 0
+        m%isPrimaryXpt = 0
+        m%XptFsID = 0
+        m%strVx = 0
+        m%strXpt = 0
+        m%strDiv = 0
+        m%strFsID = 0
+        m%tgVx = 0
+        m%tgDiv = 0
+        m%tgFsID = 0
+        m%divFcP = 0
+        m%divFc = 0
+      endif
+
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
       write (*,*) '=================================='
@@ -360,10 +428,17 @@
       deallocate (m%vxFs)
 
       if (allocated(m%Xpt)) deallocate (m%Xpt)
+      if (allocated(m%Opt)) deallocate (m%Opt)
+      if (allocated(m%isPrimaryXpt)) deallocate (m%isPrimaryXpt)
+      if (allocated(m%XptFsID)) deallocate (m%XptFsID)
       if (allocated(m%strVxP)) deallocate (m%strVxP)
+      if (allocated(m%strXpt)) deallocate (m%strXpt)
       if (allocated(m%strVx)) deallocate (m%strVx)
       if (allocated(m%tgVx)) deallocate (m%tgVx)
+      if (allocated(m%tgDiv)) deallocate (m%tgDiv)
+      if (allocated(m%tgFsID)) deallocate (m%tgFsID)
       if (allocated(m%strDiv)) deallocate (m%strDiv)
+      if (allocated(m%strFsID)) deallocate (m%strFsID)
       if (allocated(m%divFcP)) deallocate (m%divFcP)
       if (allocated(m%divFc)) deallocate (m%divFc)
       if (allocated(m%divFcOr)) deallocate (m%divFcOr)
@@ -536,9 +611,12 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: n2, nx
+      integer :: n2, nx, i
       type (mapping), intent (inout) :: mpg
-      external cfruin, cfrure
+      character(8) :: idcod
+      character(32) :: id
+      logical streql
+      external cfruin, cfrure, streql, xerrab
 
 #ifdef DBG
       nx_st = mpg%nx
@@ -586,6 +664,59 @@
       call cfruin (iun, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfruin (iun, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
+      if (mpg%hasTopologicalData) then
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.
+     &      (streql('Xpt',id).or.streql('Vx',id)))) then
+          call xerrab('read_mapping: expected Xpt record')
+        endif
+        do i = 1, mpg%nXpt
+          read(iun, *) mpg%Xpt(i), mpg%isPrimaryXpt(i),
+     &      mpg%XptFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.
+     &      (streql('Opt',id).or.streql('Vx',id)))) then
+          call xerrab('read_mapping: expected Opt record')
+        endif
+        do i = 1, mpg%nOpt
+          read(iun, *) mpg%Opt(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.
+     &      (streql('strVx',id).or.streql('Vx',id)))) then
+          call xerrab('read_mapping: expected strVx record')
+        endif
+        do i = 1, mpg%nStr
+          read(iun, *) mpg%strVx(i), mpg%strXpt(i),
+     &      mpg%strDiv(i), mpg%strFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.
+     &      (streql('tgVx',id).or.streql('Vx',id)))) then
+          call xerrab('read_mapping: expected tgVx record')
+        endif
+        do i = 1, mpg%nTgc
+          read(iun, *) mpg%tgVx(i), mpg%tgDiv(i),
+     &      mpg%tgFsID(i)
+        enddo
+
+        read(iun, *) idcod, id
+        if (.not.(streql('*cf:',idcod).and.
+     &      (streql('divFcPstart',id).or.
+     &       streql('divFcP1',id)))) then
+          call xerrab('read_mapping: expected divFcPstart record')
+        endif
+        do i = 1, mpg%nDiv
+          read(iun, *) mpg%divFcP(i,1), mpg%divFcP(i,2)
+        enddo
+
+        call cfruin (iun, mpg%nfcDiv, mpg%divFc, 'divFc')
+      endif
+
 #ifdef DBG
       imapCv  = mpg%imapCv
       imapFcx = mpg%imapFcx
@@ -604,7 +735,7 @@
 
       implicit none
       integer, intent(in) :: nout
-      integer :: idum(0:9), n2
+      integer :: idum(0:9), n2, i
       type (mapping), intent (in) :: mpg
       external cfwuin, cfwure
 
@@ -650,6 +781,38 @@
       call cfwuin (nout, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfwuin (nout, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
+      if (mpg%hasTopologicalData) then
+        write(nout, *) '*cf:    Xpt isPrimary fsID'
+        do i = 1, mpg%nXpt
+          write(nout, *) mpg%Xpt(i), mpg%isPrimaryXpt(i),
+     &      mpg%XptFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    Opt'
+        do i = 1, mpg%nOpt
+          write(nout, *) mpg%Opt(i)
+        enddo
+
+        write(nout, *) '*cf:    strVx Xpt divID fsID'
+        do i = 1, mpg%nStr
+          write(nout, *) mpg%strVx(i), mpg%strXpt(i),
+     &      mpg%strDiv(i), mpg%strFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    tgVx divID fsID'
+        do i = 1, mpg%nTgc
+          write(nout, *) mpg%tgVx(i), mpg%tgDiv(i),
+     &      mpg%tgFsID(i)
+        enddo
+
+        write(nout, *) '*cf:    divFcPstart divFcPcount'
+        do i = 1, mpg%nDiv
+          write(nout, *) mpg%divFcP(i,1), mpg%divFcP(i,2)
+        enddo
+
+        call cfwuin (nout, mpg%nfcDiv, mpg%divFc, 'divFc')
+      endif
+
       return
       end subroutine write_mapping
 
@@ -662,14 +825,18 @@
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, fscount, icount, fccount,
-     *           artificial_slab = 0, found = 0
+     *           artificial_slab = 0, found = 0, userReferenceFs,
+     *           referenceFs, primaryReferenceFs
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:),
-     *                        regcount(:)
+     *                        regcount(:), mapXptID(:), counter(:),
+     *                        tmpStrVx(:), tmpStrXpt(:),
+     *                        tmpStrDiv(:), tmpStrFsID(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi),
      * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
-      logical :: duplicate, left_match_found, right_match_found
+      logical :: duplicate, left_match_found, right_match_found,
+     *           referenceTopology, multiplePrimaryFs
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -678,6 +845,13 @@ cwdk  can be derived directly from data in that file
 *   ..regions
       m%nnreg(0) = maxval(m%cvReg)
       m%nnreg(1) = maxval(m%fcReg)
+
+!   Read the optional reference independently of the topology path.
+!   It retains its established meaning for a legacy linear grid and is a
+!   flux-surface ID for explicit general, linear, or cylindrical
+!   topology.
+      userReferenceFs = 0
+      call ipgeti ('b2mwti_jsep', userReferenceFs)
 
 *   ..set up connectivity information for the matrix stencil
       allocate (m%cvNvP(m%nCv,2))
@@ -765,6 +939,244 @@ cwdk  can be derived directly from data in that file
       m%fsVx(1:m%nFsVxmx) = indFsVx(1:m%nFsVxmx)
       deallocate(indFsVx)
 
+*   ..For explicit topology, validate the X-point records and derive the
+*     singular compatibility indices used by existing PR 41 consumers.
+*     The complete isPrimaryXpt array remains authoritative.
+      if (m%hasTopologicalData) then
+        m%iactive = 0
+        m%iinactive = 0
+        m%iFssep = 0
+        m%iFssep2 = 0
+
+        if (m%nXpt.gt.0) then
+          allocate(mapXptID(m%nVx))
+          mapXptID = 0
+          do i = 1, m%nXpt
+            if (m%Xpt(i).lt.1.or.m%Xpt(i).gt.m%nVx) then
+              write(*,*) 'init_mapping: X-point, vertex, nVx = ',
+     &          i, m%Xpt(i), m%nVx
+              call xerrab('init_mapping: X-point vertex ID out of ' //
+     &          'range')
+            endif
+            if (mapXptID(m%Xpt(i)).ne.0) then
+              write(*,*) 'init_mapping: duplicate X-point vertex ',
+     &          m%Xpt(i)
+              call xerrab('init_mapping: duplicate X-point vertex')
+            endif
+            mapXptID(m%Xpt(i)) = i
+
+            if (m%XptFsID(i).lt.1.or.m%XptFsID(i).gt.m%nFs) then
+              write(*,*) 'init_mapping: X-point, flux surface, nFs = ',
+     &          i, m%XptFsID(i), m%nFs
+              call xerrab('init_mapping: X-point flux surface ID ' //
+     &          'out of range')
+            endif
+            if (m%isPrimaryXpt(i).ne.0.and.
+     &          m%isPrimaryXpt(i).ne.1) then
+              write(*,*) 'init_mapping: X-point, primary flag = ',
+     &          i, m%isPrimaryXpt(i)
+              call xerrab('init_mapping: X-point primary flag must ' //
+     &          'be zero or one')
+            endif
+
+            if (m%isPrimaryXpt(i).eq.1) then
+              if (m%iactive.eq.0) then
+                m%iactive = i
+              else if (m%iinactive.eq.0) then
+                m%iinactive = i
+              endif
+            endif
+          enddo
+
+*         A two-X-point DDN has one primary and one secondary X-point.
+*         With more X-points, leave the singular inactive compatibility
+*         index unset; the complete explicit records remain
+*         authoritative.
+          if (count(m%isPrimaryXpt.eq.1).eq.1.and.
+     &        m%nXpt.eq.2) then
+            if (m%iactive.eq.1) then
+              m%iinactive = 2
+            else
+              m%iinactive = 1
+            endif
+          endif
+
+          if (m%iactive.gt.0) then
+            m%iFssep = m%XptFsID(m%iactive)
+          endif
+          if (m%iinactive.gt.0) then
+            if (m%XptFsID(m%iinactive).ne.m%iFssep) then
+              m%iFssep2 = m%XptFsID(m%iinactive)
+            endif
+          endif
+
+*         A structured CDN can split one separatrix into two surface
+*         chains at an X-point.  Both X-point vertices then have the
+*         same vxFs value, so recover the second chain from its faces
+*         as in the legacy mapping path.
+          if (m%isClassicalGrid.eq.1.and.m%geometryID.eq.5.and.
+     &        m%iFssep2.eq.0.and.m%iactive.gt.0) then
+            iVx = m%Xpt(m%iactive)
+            do i = m%vxFcP(iVx,1),
+     &             m%vxFcP(iVx,1)+m%vxFcP(iVx,2)-1
+              iFs = m%fcFs(m%vxFc(i))
+              if (iFs.gt.0.and.iFs.ne.m%iFssep) then
+                m%iFssep2 = iFs
+                exit
+              endif
+            enddo
+          endif
+
+*         The legacy strVxP interface requires strike records grouped by
+*         X-point.  Canonicalize the parallel strike arrays without
+*         losing any of the serialized per-strike information.
+          allocate(m%strVxP(m%nXpt,2))
+          allocate(counter(m%nXpt))
+          m%strVxP = 0
+          counter = 0
+          m%strVxP(1,1) = 1
+          do i = 1, m%nStr
+            if (m%strXpt(i).lt.1.or.m%strXpt(i).gt.m%nVx) then
+              write(*,*) 'init_mapping: strike, X-point vertex, nVx = ',
+     &          i, m%strXpt(i), m%nVx
+              call xerrab('init_mapping: strike-point X-point ' //
+     &          'vertex ID out of range')
+            endif
+            j = mapXptID(m%strXpt(i))
+            if (j.eq.0) then
+              write(*,*) 'init_mapping: strike, X-point vertex = ',
+     &          i, m%strXpt(i)
+              call xerrab('init_mapping: strike point references ' //
+     &          'an unknown X-point')
+            endif
+            m%strVxP(j,2) = m%strVxP(j,2) + 1
+          enddo
+          do i = 2, m%nXpt
+            m%strVxP(i,1) = m%strVxP(i-1,1) +
+     &        m%strVxP(i-1,2)
+          enddo
+
+          if (m%nStr.gt.0) then
+            allocate(tmpStrVx(m%nStr))
+            allocate(tmpStrXpt(m%nStr))
+            allocate(tmpStrDiv(m%nStr))
+            allocate(tmpStrFsID(m%nStr))
+            do i = 1, m%nStr
+              j = mapXptID(m%strXpt(i))
+              k = m%strVxP(j,1) + counter(j)
+              tmpStrVx(k) = m%strVx(i)
+              tmpStrXpt(k) = m%strXpt(i)
+              tmpStrDiv(k) = m%strDiv(i)
+              tmpStrFsID(k) = m%strFsID(i)
+              counter(j) = counter(j) + 1
+            enddo
+            m%strVx = tmpStrVx
+            m%strXpt = tmpStrXpt
+            m%strDiv = tmpStrDiv
+            m%strFsID = tmpStrFsID
+            deallocate(tmpStrVx)
+            deallocate(tmpStrXpt)
+            deallocate(tmpStrDiv)
+            deallocate(tmpStrFsID)
+          endif
+          deallocate(counter)
+          deallocate(mapXptID)
+        else if (m%nStr.gt.0) then
+          call xerrab('init_mapping: strike points require at least ' //
+     &      'one X-point')
+        endif
+
+*       A two-region limiter has no X-point from which to derive its
+*       reference flux surface.  Retain the established fallback and
+*       find the surface separating the two nonzero volume regions.
+        if (m%iFssep.eq.0.and.m%nnreg(0).eq.2) then
+          iFc = 1
+          do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
+            iCv1 = m%fcCv(iFc,1)
+            iCv2 = m%fcCv(iFc,2)
+            if (m%cvReg(iCv1).ne.m%cvReg(iCv2).and.
+     &          m%cvReg(iCv1).ne.0.and.m%cvReg(iCv2).ne.0.and.
+     &          m%fcFs(iFc).ne.0) then
+              m%iFssep = m%fcFs(iFc)
+            endif
+            if (m%iFssep.eq.0) iFc = iFc + 1
+          enddo
+        endif
+
+*       Target orientation and strike-face indices require geometry.
+*       Allocate their compatibility state now; init_geometry fills it.
+        allocate(m%divFcOr(m%nfcDiv))
+        allocate(m%ifdiv(m%nDiv))
+        allocate(m%ivdiv(m%nDiv))
+        m%divFcOr = 0.0_R8
+        m%ifdiv = 0
+        m%ivdiv = 0
+
+!       One common flux surface defines OMP/IMP distances for explicit
+!       general, linear, and cylindrical topologies. A positive user
+!       value takes precedence. Otherwise GENERAL uses a unique primary
+!       X-point surface, falling back to the first nonempty surface.
+        referenceTopology = m%geometryID.eq.1.or.
+     &    m%geometryID.eq.2.or.m%geometryID.eq.13
+        if (referenceTopology) then
+          referenceFs = 0
+          if (userReferenceFs.gt.0) then
+            referenceFs = userReferenceFs
+            write(*,*) 'init_mapping: using user reference flux ' //
+     &        'surface ', referenceFs
+          else if (m%geometryID.eq.13) then
+            primaryReferenceFs = 0
+            multiplePrimaryFs = .false.
+            do i = 1, m%nXpt
+              if (m%isPrimaryXpt(i).ne.1) cycle
+              if (primaryReferenceFs.eq.0) then
+                primaryReferenceFs = m%XptFsID(i)
+              else if (m%XptFsID(i).ne.primaryReferenceFs) then
+                multiplePrimaryFs = .true.
+              endif
+            enddo
+            if (.not.multiplePrimaryFs)
+     &        referenceFs = primaryReferenceFs
+            if (referenceFs.gt.0) then
+              write(*,*) 'init_mapping: using primary-X-point ' //
+     &          'reference flux surface ', referenceFs
+            else if (multiplePrimaryFs) then
+              write(*,*) 'init_mapping: several primary surfaces; ' //
+     &          'using first nonempty flux surface as reference'
+            endif
+          endif
+
+          if (referenceFs.eq.0) then
+            do iFs = 1, m%nFs
+              if (referenceFs.eq.0.and.m%fsFcP(iFs,2).gt.0)
+     &          referenceFs = iFs
+            enddo
+            if (referenceFs.gt.0) write(*,*) 'init_mapping: using ' //
+     &        'first nonempty reference flux surface ', referenceFs
+          endif
+
+          if (referenceFs.lt.1.or.referenceFs.gt.m%nFs) then
+            write(*,*) 'init_mapping: requested reference, nFs = ',
+     &        referenceFs, m%nFs
+            call xerrab('init_mapping: reference flux surface ID ' //
+     &        'out of range')
+          endif
+          if (m%fsFcP(referenceFs,2).le.0) then
+            write(*,*) 'init_mapping: empty reference flux surface ',
+     &        referenceFs
+            call xerrab('init_mapping: reference flux surface has ' //
+     &        'no faces')
+          endif
+          m%iFssep = referenceFs
+        endif
+
+!       For an unstructured GOAT grid in a recognized basic family,
+!       rebuild the historical two/four-target interface from fcReg.
+!       The serialized polygons remain authoritative for true GENERAL;
+!       structured/CARRE2 grids retain their established target lists.
+        if (m%isClassicalGrid.eq.0.and.m%geometryID.ge.3.and.
+     &      m%geometryID.le.7) call rederive_divertor_from_fcreg(m)
+      else
 !! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
       allocate(indXpt(m%nVx))
       indXpt = 0
@@ -971,7 +1383,7 @@ cwdk  can be derived directly from data in that file
         freg(1) = 1
         freg(2) = 2
       else if (m%nnreg(0).eq.1) then
-        call ipgeti ('b2mwti_jsep', m%iFssep)
+        m%iFssep = userReferenceFs
         allocate(freg(2))
         freg(1) = 1
         freg(2) = 2
@@ -1143,6 +1555,14 @@ cwdk  can be derived directly from data in that file
         write(*,*) 'Targetless topology detected :'
         write(*,*) 'Strike point data not defined'
       end if
+      endif
+
+!   Explicit target records are consumed directly by the GENERAL path.
+!   Validate their packed ranges and serialized connected ordering once
+!   the mapping arrays are complete.  Legacy target construction keeps
+!   its established behavior.
+      if (m%hasTopologicalData.and.m%nDiv.gt.0)
+     &  call validate_divertor_targets(m)
 
       allocate(m%cvAlongBoundary(m%nCv))
       m%cvAlongBoundary = .false.
@@ -1201,6 +1621,255 @@ cwdk  can be derived directly from data in that file
 
       return
       end subroutine init_mapping
+
+**********************************************************************
+
+!> Validate the packed face ranges and connected ordering of every
+!! serialized divertor target.  Each target face must occur once.
+      subroutine validate_divertor_targets(m)
+      implicit none
+      type(mapping), intent(in) :: m
+      integer :: i, j, iStart, nFaces, expectedStart, iFc, iFcPrev
+      logical, allocatable :: faceSeen(:)
+      logical :: sharesVertex
+      external xerrab
+
+      if (m%nDiv.le.0) return
+      if (.not.allocated(m%divFcP).or..not.allocated(m%divFc))
+     &  call xerrab('validate_divertor_targets: target arrays not ' //
+     &    'allocated')
+      if (size(m%divFcP,1).lt.m%nDiv.or.
+     &    size(m%divFcP,2).lt.2) then
+        write(*,*) 'validate_divertor_targets: divFcP shape, nDiv = ',
+     &    shape(m%divFcP), m%nDiv
+        call xerrab('validate_divertor_targets: target pointer ' //
+     &    'array too small')
+      endif
+      if (m%nfcDiv.lt.0.or.size(m%divFc).lt.m%nfcDiv) then
+        write(*,*) 'validate_divertor_targets: nfcDiv, list size = ',
+     &    m%nfcDiv, size(m%divFc)
+        call xerrab('validate_divertor_targets: target face list ' //
+     &    'too small')
+      endif
+
+      allocate(faceSeen(m%nFc))
+      faceSeen = .false.
+      expectedStart = 1
+      do i = 1, m%nDiv
+        iStart = m%divFcP(i,1)
+        nFaces = m%divFcP(i,2)
+        if (iStart.ne.expectedStart.or.nFaces.lt.1.or.
+     &      iStart+nFaces-1.gt.m%nfcDiv) then
+          write(*,*) 'validate_divertor_targets: target/start/count/',
+     &      'expected start/nfcDiv = ', i, iStart, nFaces,
+     &      expectedStart, m%nfcDiv
+          call xerrab('validate_divertor_targets: invalid packed ' //
+     &      'target face range')
+        endif
+
+        do j = iStart, iStart+nFaces-1
+          iFc = m%divFc(j)
+          if (iFc.lt.1.or.iFc.gt.m%nFc) then
+            write(*,*) 'validate_divertor_targets: target/list/face/',
+     &        'nFc = ', i, j, iFc, m%nFc
+            call xerrab('validate_divertor_targets: target face ID ' //
+     &        'out of range')
+          endif
+          if (faceSeen(iFc)) then
+            write(*,*) 'validate_divertor_targets: target/list/face = ',
+     &        i, j, iFc
+            call xerrab('validate_divertor_targets: duplicate face ' //
+     &        'in target lists')
+          endif
+          faceSeen(iFc) = .true.
+
+          if (j.gt.iStart) then
+            iFcPrev = m%divFc(j-1)
+            sharesVertex =
+     &        m%fcVx(iFc,1).eq.m%fcVx(iFcPrev,1).or.
+     &        m%fcVx(iFc,1).eq.m%fcVx(iFcPrev,2).or.
+     &        m%fcVx(iFc,2).eq.m%fcVx(iFcPrev,1).or.
+     &        m%fcVx(iFc,2).eq.m%fcVx(iFcPrev,2)
+            if (.not.sharesVertex) then
+              write(*,*) 'validate_divertor_targets: target/list/',
+     &          'faces = ', i, j, iFcPrev, iFc
+              call xerrab('validate_divertor_targets: target faces ' //
+     &          'do not form an ordered connected chain')
+            endif
+          endif
+        enddo
+        expectedStart = iStart+nFaces
+      enddo
+
+      if (expectedStart.ne.m%nfcDiv+1) then
+        write(*,*) 'validate_divertor_targets: consumed/nfcDiv = ',
+     &    expectedStart-1, m%nfcDiv
+        call xerrab('validate_divertor_targets: target ranges do ' //
+     &    'not cover the packed face list')
+      endif
+
+      deallocate(faceSeen)
+      return
+      end subroutine validate_divertor_targets
+
+**********************************************************************
+
+!> Rebuild the divertor-target arrays of an unstructured GOAT grid
+!! from the standard SOLPS face regions when GOAT declares a basic
+!! limiter, single-null, or double-null family.  Additional X-points
+!! add volume regions but do not change the historical target API.
+      subroutine rederive_divertor_from_fcreg(m)
+      implicit none
+      type(mapping), intent(inout) :: m
+      integer, allocatable :: freg(:), indFc(:),
+     &                        old_face_list(:), new_face_list(:)
+      integer :: i, j, k, iFc, iVx, iVa, iVb, icount, inew, nt
+      logical :: left_match_found, right_match_found
+      external xerrab
+
+!   ..target face regions per basic family
+      if (m%geometryID.eq.3) then
+        allocate(freg(2))
+        freg(1) = 1
+        freg(2) = 2
+      else if (m%geometryID.eq.4) then
+        allocate(freg(2))
+        freg(1) = 1
+        freg(2) = 4
+      else
+        allocate(freg(4))
+        freg(1) = 1
+        freg(2) = 4
+        freg(3) = 5
+        freg(4) = 8
+      endif
+      nt = size(freg)
+
+!   ..associate each strike with its standard target face region
+      if (allocated(m%strDiv)) then
+        m%strDiv = 0
+        do i = 1, m%nStr
+          iVx = m%strVx(i)
+          do j = m%vxFcP(iVx,1),
+     &           m%vxFcP(iVx,1)+m%vxFcP(iVx,2)-1
+            if (m%strDiv(i).ne.0) cycle
+            iFc = m%vxFc(j)
+            do k = 1, nt
+              if (m%fcReg(iFc).eq.freg(k)) m%strDiv(i) = k
+            enddo
+          enddo
+        enddo
+      endif
+
+!   ..a limiter contact is a tangency rather than a strike point
+      if (allocated(m%tgDiv)) then
+        m%tgDiv = 0
+        do i = 1, m%nTgc
+          iVx = m%tgVx(i)
+          do j = m%vxFcP(iVx,1),
+     &           m%vxFcP(iVx,1)+m%vxFcP(iVx,2)-1
+            if (m%tgDiv(i).ne.0) cycle
+            iFc = m%vxFc(j)
+            do k = 1, nt
+              if (m%fcReg(iFc).eq.freg(k)) m%tgDiv(i) = k
+            enddo
+          enddo
+        enddo
+      endif
+
+!   ..gather the faces for each standard target
+      if (allocated(m%divFcP)) deallocate(m%divFcP)
+      if (allocated(m%divFc)) deallocate(m%divFc)
+      if (allocated(m%divFcOr)) deallocate(m%divFcOr)
+      if (allocated(m%ifdiv)) deallocate(m%ifdiv)
+      if (allocated(m%ivdiv)) deallocate(m%ivdiv)
+      m%nDiv = nt
+      allocate(m%divFcP(nt,2))
+      allocate(m%ifdiv(nt))
+      allocate(m%ivdiv(nt))
+      allocate(indFc(m%nFc))
+      m%ifdiv = 0
+      m%ivdiv = 0
+      icount = 0
+      m%divFcP(1,1) = 1
+      m%divFcP(:,2) = 0
+      do i = 1, nt
+        if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1)+
+     &    m%divFcP(i-1,2)
+        do iFc = 1, m%nFc
+          if (m%fcReg(iFc).eq.freg(i)) then
+            icount = icount + 1
+            m%divFcP(i,2) = m%divFcP(i,2) + 1
+            indFc(icount) = iFc
+          endif
+        enddo
+      enddo
+      m%nfcDiv = icount
+      allocate(m%divFc(m%nfcDiv))
+      allocate(m%divFcOr(m%nfcDiv))
+      m%divFcOr = 0.0_R8
+      m%divFc(1:m%nfcDiv) = indFc(1:m%nfcDiv)
+
+!   ..order each target into one connected face chain
+      do i = 1, nt
+        if (m%divFcP(i,2).le.0) cycle
+        allocate(old_face_list(m%divFcP(i,2)))
+        allocate(new_face_list(m%divFcP(i,2)))
+        old_face_list = m%divFc(m%divFcP(i,1):
+     &    m%divFcP(i,1)+m%divFcP(i,2)-1)
+        new_face_list = 0
+        new_face_list(1) = old_face_list(1)
+        old_face_list(1) = 0
+        iVa = m%fcVx(new_face_list(1),1)
+        iVb = m%fcVx(new_face_list(1),2)
+        inew = 1
+        do while (inew.lt.m%divFcP(i,2))
+          left_match_found = .false.
+          do j = 1, m%divFcP(i,2)
+            if (left_match_found.or.old_face_list(j).eq.0) cycle
+            if (iVa.eq.m%fcVx(old_face_list(j),1)) then
+              left_match_found = .true.
+              iVa = m%fcVx(old_face_list(j),2)
+            else if (iVa.eq.m%fcVx(old_face_list(j),2)) then
+              left_match_found = .true.
+              iVa = m%fcVx(old_face_list(j),1)
+            endif
+            if (left_match_found) then
+              indFc(1:inew) = new_face_list(1:inew)
+              new_face_list(1) = old_face_list(j)
+              new_face_list(2:inew+1) = indFc(1:inew)
+              old_face_list(j) = 0
+              inew = inew + 1
+            endif
+          enddo
+          right_match_found = .false.
+          do j = 1, m%divFcP(i,2)
+            if (right_match_found.or.old_face_list(j).eq.0) cycle
+            if (iVb.eq.m%fcVx(old_face_list(j),1)) then
+              right_match_found = .true.
+              iVb = m%fcVx(old_face_list(j),2)
+            else if (iVb.eq.m%fcVx(old_face_list(j),2)) then
+              right_match_found = .true.
+              iVb = m%fcVx(old_face_list(j),1)
+            endif
+            if (right_match_found) then
+              new_face_list(inew+1) = old_face_list(j)
+              old_face_list(j) = 0
+              inew = inew + 1
+            endif
+          enddo
+          if (.not.(left_match_found.or.right_match_found).and.
+     &        inew.lt.m%divFcP(i,2)) call xerrab
+     &      ('rederive_divertor_from_fcreg: broken target chain')
+        enddo
+        m%divFc(m%divFcP(i,1):
+     &    m%divFcP(i,1)+m%divFcP(i,2)-1) = new_face_list
+        deallocate(old_face_list, new_face_list)
+      enddo
+
+      deallocate(indFc, freg)
+      return
+      end subroutine rederive_divertor_from_fcreg
 
 **********************************************************************
 
@@ -1324,6 +1993,136 @@ cwdk  can be derived directly from data in that file
 
       return
       end subroutine calc_add_connectivity
+
+**********************************************************************
+
+!> Complete guard-cell flux-tube data from the imported connectivity and
+!! face-alignment records. A guard across a poloidal end face inherits a
+!! physical tube from its adjacent domain cell. A guard across a field-
+!! aligned radial face remains outside every flux tube.
+      subroutine update_guard_cells(m)
+      implicit none
+
+      type(mapping), intent(inout) :: m
+      integer :: iCv, iCv1, iCv2, iFc, iCvDomain, nGuard
+      external xerrab
+
+!     Cells 1:nCi are domain cells and nCi+1:nCv are guard cells.
+      do iCv = m%nCi+1, m%nCv
+        if (m%cvFcP(iCv,2).ne.1) then
+          write(*,*) 'update_guard_cells: guard cell ', iCv,
+     &      ' has ', m%cvFcP(iCv,2), ' faces'
+          call xerrab('update_guard_cells: guard cell does not have ' //
+     &      'exactly one face')
+        endif
+        iFc = m%cvFc(m%cvFcP(iCv,1))
+        if (iFc.lt.1.or.iFc.gt.m%nFc) then
+          write(*,*) 'update_guard_cells: guard cell, face = ',
+     &      iCv, iFc
+          call xerrab('update_guard_cells: boundary face ID out of ' //
+     &      'range')
+        endif
+
+        iCv1 = m%fcCv(iFc,1)
+        iCv2 = m%fcCv(iFc,2)
+        if (iCv1.lt.1.or.iCv1.gt.m%nCv.or.
+     &      iCv2.lt.1.or.iCv2.gt.m%nCv) then
+          write(*,*) 'update_guard_cells: face and cells = ',
+     &      iFc, iCv1, iCv2
+          call xerrab('update_guard_cells: boundary face cell ID ' //
+     &      'out of range')
+        endif
+
+        nGuard = 0
+        if (iCv1.gt.m%nCi) nGuard = nGuard+1
+        if (iCv2.gt.m%nCi) nGuard = nGuard+1
+        if (nGuard.ne.1.or.(iCv1.ne.iCv.and.iCv2.ne.iCv)) then
+          write(*,*) 'update_guard_cells: guard cell, face, cells = ',
+     &      iCv, iFc, iCv1, iCv2
+          call xerrab('update_guard_cells: boundary face must join ' //
+     &      'exactly one domain cell and one guard cell')
+        endif
+
+        if (iCv1.eq.iCv) then
+          iCvDomain = iCv2
+        else
+          iCvDomain = iCv1
+        endif
+
+        if (m%fcAligned(iFc).eq.0) then
+!         GOAT/GA files may use nFt+1, rather than zero, for a domain
+!         cell outside every physical flux tube. It has no tube for its
+!         poloidal guard to inherit.
+          if (m%cvFt(iCvDomain).ge.1.and.
+     &        m%cvFt(iCvDomain).le.m%nFt) then
+            m%cvFt(iCv) = m%cvFt(iCvDomain)
+          else if (m%cvFt(iCvDomain).eq.0.or.
+     &             m%cvFt(iCvDomain).eq.m%nFt+1) then
+            m%cvFt(iCv) = 0
+          else
+            write(*,*) 'update_guard_cells: guard, face, domain, ' //
+     &        'flux tube = ', iCv, iFc, iCvDomain, m%cvFt(iCvDomain)
+            call xerrab('update_guard_cells: poloidal boundary ' //
+     &        'domain cell has invalid flux-tube ID')
+          endif
+        else if (m%fcAligned(iFc).eq.1) then
+          m%cvFt(iCv) = 0
+        else
+          write(*,*) 'update_guard_cells: face, fcAligned = ',
+     &      iFc, m%fcAligned(iFc)
+          call xerrab('update_guard_cells: invalid face-alignment ' //
+     &      'flag')
+        endif
+      enddo
+
+      return
+      end subroutine update_guard_cells
+
+**********************************************************************
+
+!> Return whether a cell belongs to a private-flux flux tube.
+      subroutine is_pfr_cell(m, iCv, res)
+      implicit none
+      type(mapping), intent(in) :: m
+      integer, intent(in) :: iCv
+      logical, intent(out) :: res
+
+      res = .false.
+      if (iCv.lt.1.or.iCv.gt.m%nCv) return
+      if (m%cvFt(iCv).lt.1.or.m%cvFt(iCv).gt.m%nFt) return
+      res = m%ftReg(m%cvFt(iCv)).eq.3
+      return
+      end subroutine is_pfr_cell
+
+**********************************************************************
+
+!> Return whether a cell belongs to a divertor volume region of its
+!! declared basic family, including added private-flux regions created
+!! by secondary X-points.
+      subroutine is_divertor_cell(m, iCv, res)
+      implicit none
+      type(mapping), intent(in) :: m
+      integer, intent(in) :: iCv
+      logical, intent(out) :: res
+      integer :: iir, nregbase
+
+      res = .false.
+      if (iCv.lt.1.or.iCv.gt.m%nCv) return
+      iir = m%cvReg(iCv)
+      if (iir.le.0) return
+      select case (m%geometryID)
+      case (3)
+        nregbase = 2
+      case (4)
+        nregbase = 4
+      case (5, 6, 7)
+        nregbase = 8
+      case default
+        nregbase = huge(0)
+      end select
+      res = mod(iir-1,4)+1.ge.3.or.iir.gt.nregbase
+      return
+      end subroutine is_divertor_cell
 
 **********************************************************************
 

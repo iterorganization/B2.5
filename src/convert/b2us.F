@@ -186,44 +186,15 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
         call prep_geometry (nx, ny, gm, mpg)
         write (*,*) 'Geometry created'
 
+*       Complete the topology records required by .002 using the
+*       established structured-grid inference.
+        call finalize_legacy_topology (mpg, gm)
+
 *     ..write the converted b2fgmtry_us-file
         if (write_b2fgmtry_us.eq.1) then
 
 *       ..write header for gmtry file
-          call cfverw (nout(1), newversion)
-          idum(0) = mpg%nCi
-          idum(1) = mpg%nCg
-          idum(2) = mpg%nCv
-          idum(3) = mpg%nFc
-          idum(4) = mpg%nVx
-          idum(5) = mpg%nFs
-          idum(6) = mpg%nFt
-          call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-          idum(0) = mpg%nCmxVx
-          idum(1) = mpg%nCmxFc
-          idum(2) = mpg%nVmxCv
-          idum(3) = mpg%nVmxFc
-          idum(4) = mpg%nCmxNv
-          call cfwuin (nout(1),5,idum,
-     .               'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-          idum(0) = mpg%isClassicalGrid
-          call cfwuin (nout(1),1,idum,'isClassicalGrid')
-          if (mpg%isClassicalGrid == 1) then
-            idum(0) = mpg%nx
-            idum(1) = mpg%ny
-            idum(2) = mpg%nncut
-          else
-            ! dummy values for unstructured grid
-            idum(0) = -1
-            idum(1) = -1
-            idum(2) = -1
-          endif
-          call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-          call cfwuch (nout(1), 120, lblgm, 'label')
-          idum(0) = isymm
-          call cfwuin (nout(1), 1, idum, 'isymm')
-          idum(0) = mpg%nCv
-          idum(1) = mpg%nFc
+          call write_b2fgmtry_header(nout(1), mpg, lblgm, isymm)
 
 *       ..write actual geometry info
           call write_b2fgmtry (nout(1), mpg, gm)
@@ -235,32 +206,9 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
         ! b2fgmtry already in unstructured format => simply read
         write (*,*) 'Reading unstructured b2fgmtry...'
 
-*     ..obtain mapping/geometry dimensions from file
-        call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-        mpg%nCi = idum(0)
-        mpg%nCg = idum(1)
-        mpg%nCv = idum(2)
-        mpg%nFc = idum(3)
-        mpg%nVx = idum(4)
-        mpg%nFs = idum(5)
-        mpg%nFt = idum(6)
-        call cfruin (ninp(1),5,idum,
-     .    'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-        mpg%nCmxVx = idum(0)
-        mpg%nCmxFc = idum(1)
-        mpg%nVmxCv = idum(2)
-        mpg%nVmxFc = idum(3)
-        mpg%nCmxNv = idum(4)
-        call cfruin (ninp(1),1,idum,'isClassicalGrid')
-        mpg%isClassicalGrid = idum(0)
-        call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-        mpg%nx    = idum(0)
-        mpg%ny    = idum(1)
-        mpg%nncut = idum(2)
-*     ..read header for geometry
-        call cfruch (ninp(1), 120, lblgm, 'label')
-        call cfruin (ninp(1), 1, idum, 'isymm')
-        isymm = idum(0)
+*     ..obtain mapping/geometry dimensions and topology header
+        call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg,
+     &    lblgm, isymm)
 *     ..allocate mapping and geometry
         call alloc_mapping (mpg)
         call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,

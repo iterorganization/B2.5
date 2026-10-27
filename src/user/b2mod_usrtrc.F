@@ -168,6 +168,8 @@ c*** Column headers:
       data hlp_hs / 'i', 'o' /
 
       integer, private :: gridGeometry, plasmaGeometry
+      integer, private :: nTargets
+      integer, private :: inner_m4, outer_m4
 
       integer, save :: n_pad_str
       real (kind=R8), save :: xdum(1)
@@ -458,8 +460,10 @@ c***  (ipfc_tmp, jpfc_tmp)
         if(lpfrs_pmp.ne.0.and.npfr_cvs.gt.0) then !{
           do i=1,npfr_cvs !{
             k=mod(mpg%cvReg(pfr_cvs(i)),4)
-            if (k.eq.3) hlp_w(1)=hlp_w(1)+geo%cvSz(pfr_cvs(i))
-            if (k.eq.0) hlp_w(2)=hlp_w(2)+geo%cvSz(pfr_cvs(i))
+            if (k.eq.inner_m4) hlp_w(1)=
+     ,        hlp_w(1)+geo%cvSz(pfr_cvs(i))
+            if (k.eq.outer_m4) hlp_w(2)=
+     ,        hlp_w(2)+geo%cvSz(pfr_cvs(i))
           end do !}
         end if !}
 
@@ -943,7 +947,7 @@ c-----------------------------------------------------------------------
 c*** Western divertor
 
           do j=1,npfr_cvs !{
-            if(mod(mpg%cvReg(pfr_cvs(j)),4).ne.0) cycle
+            if(mod(mpg%cvReg(pfr_cvs(j)),4).ne.inner_m4) cycle
             hlp_si=hlp_si+geo%cvSz(pfr_cvs(j))
             hlp=0.0_R8
             do k=1,nnatmi !{
@@ -966,7 +970,7 @@ c*** Western divertor
 c*** Eastern divertor
 
           do j=1,npfr_cvs !{
-            if(mod(mpg%cvReg(pfr_cvs(j)),4).ne.3) cycle
+            if(mod(mpg%cvReg(pfr_cvs(j)),4).ne.outer_m4) cycle
             hlp_so=hlp_so+geo%cvSz(pfr_cvs(j))
             hlp=0.0_R8
             do k=1,nnatmi !{
@@ -1181,8 +1185,8 @@ c West target
       end do !}
 c East target
       hlp_ppwo=0.0_R8
-      do i=1,mpg%divFcP(maxval(mpg%strDiv),2) !{
-        iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+      do i=1,mpg%divFcP(nTargets,2) !{
+        iFc=mpg%divFc(mpg%divFcP(nTargets,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
@@ -1201,23 +1205,58 @@ c East target
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
         do is=1,nnatmi
-          wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
+          wnutrg(i,nTargets)=wnutrg(i,nTargets)+
      .     ewlda_res(is,ias)-ewldea_res(is,ias)
         end do
         do is=1,nnmoli
-          wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
+          wnutrg(i,nTargets)=wnutrg(i,nTargets)+
      .     ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
         end do
-        wnutpr(i,maxval(mpg%strDiv))=ewldrp_res(ias)
+        wnutpr(i,nTargets)=ewldrp_res(ias)
 #endif
-        wtarg(i,maxval(mpg%strDiv))=
-     .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
-     .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
-        hlp_ppwo=max(hlp_ppwo,wtarg(i,maxval(mpg%strDiv)))
+        wtarg(i,nTargets)=
+     .   (hlp-wnutpr(i,nTargets))*trgshp(nTargets)
+     .       +wnutrg(i,nTargets)+wrad(i,nTargets,0)
+        hlp_ppwo=max(hlp_ppwo,wtarg(i,nTargets))
       end do !}
 
-      if(maxval(mpg%strDiv).gt.2) then !{
+      if(nTargets.gt.2) then !{
         hlp_pwou=0.0_R8
+        do i=1,mpg%divFcP(3,2) !{
+          iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
+          iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          s=geo%fcS(iFc)
+          hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
+          do is=0,st_ext%ns-1 !{
+            taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .       st_ext%ta(1,is))
+            uaf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .       st_ext%ua(1,is))
+            hlp=hlp+abs((st_ext%fa(iFc,0,is)+st_ext%fa(iFc,1,is))*(
+     .       st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
+     .      (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
+          end do !}
+          hlp=hlp/s
+#ifdef B25_EIRENE
+          ias=b2_fnmti(iFc)
+          hlp=hlp+ewldt_res(ias)
+          do is=1,nnatmi
+            wnutrg(i,3)=wnutrg(i,3)+
+     .      ewlda_res(is,ias)-ewldea_res(is,ias)
+          end do
+          do is=1,nnmoli
+            wnutrg(i,3)=wnutrg(i,3)+
+     .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
+          end do
+          wnutpr(i,3)=ewldrp_res(ias)
+#endif
+          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
+     .                   +wnutrg(i,3)+wrad(i,3,0)
+          hlp_pwou=max(hlp_pwou,wtarg(i,3))
+        end do !}
+
+        hlp_pwiu=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1249,77 +1288,42 @@ c East target
 #endif
           wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
-          hlp_pwou=max(hlp_pwou,wtarg(i,2))
-        end do !}
-
-        hlp_pwiu=0.0_R8
-        do i=1,mpg%divFcP(3,2) !{
-          iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
-          iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          s=geo%fcS(iFc)
-          hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
-     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          do is=0,st_ext%ns-1 !{
-            taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st_ext%ta(1,is))
-            uaf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st_ext%ua(1,is))
-            hlp=hlp+abs((st_ext%fa(iFc,0,is)+st_ext%fa(iFc,1,is))*(
-     .       st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
-     .      (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
-          end do !}
-          hlp=hlp/s
-#ifdef B25_EIRENE
-          ias=b2_fnmti(iFc)
-          hlp=hlp+ewldt_res(ias)
-          do is=1,nnatmi
-            wnutrg(i,3)=wnutrg(i,3)+
-     .      ewlda_res(is,ias)-ewldea_res(is,ias)
-          end do
-          do is=1,nnmoli
-            wnutrg(i,3)=wnutrg(i,3)+
-     .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
-          end do
-          wnutpr(i,3)=ewldrp_res(ias)
-#endif
-          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
-     .                   +wnutrg(i,3)+wrad(i,3,0)
-          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
+          hlp_pwiu=max(hlp_pwiu,wtarg(i,2))
         end do !}
       end if !}
 
       if(debug_flags(81).gt.0) then
-        write(frm,700) maxval(mpg%strDiv)
+        write(frm,700) nTargets
   700   format('(',i3,'(2x,e15.7))')
 C total power
         open(3,file='targb2.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C neutrals
         open(3,file='targb2n.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wnutrg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wnutrg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C plasma
-        do j=1,maxval(mpg%strDiv)
-          do i=1,mpg%divFcP(j,2)
+        do j=1,nTargets
+          do i=1,mpg%divFcP(itg_tmp(j),2)
             wtarg(i,itg_tmp(j))=
      .       (wtarg(i,itg_tmp(j))-wnutrg(i,itg_tmp(j))
      .       -wrad(i,itg_tmp(j),0))/trgshp(itg_tmp(j))
           end do
         end do
         open(3,file='targb2pl.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wtarg(i,itg_tmp(j)),j=1,nTargets)
         end do
         close(3)
 C radiation
         open(3,file='targb2r.datv')
-        do i=1,maxval(mpg%divFcP(1:maxval(mpg%strDiv),2))
-          write(3,frm) (wrad(i,itg_tmp(j),0),j=1,maxval(mpg%strDiv))
+        do i=1,maxval(mpg%divFcP(1:nTargets,2))
+          write(3,frm) (wrad(i,itg_tmp(j),0),j=1,nTargets)
         end do
         close(3)
       end if
@@ -1487,8 +1491,10 @@ c*** e the temperature*density*area, v the flux*area
           e=0.0_R8
           v=0.0_R8
           do i=1,npfr_cvs !{
-            if (k.eq.1.and.mod(mpg%cvReg(pfr_cvs(i)),4).ne.3) cycle
-            if (k.eq.2.and.mod(mpg%cvReg(pfr_cvs(i)),4).ne.0) cycle
+            if (k.eq.1.and.
+     &        mod(mpg%cvReg(pfr_cvs(i)),4).ne.inner_m4) cycle
+            if (k.eq.2.and.
+     &        mod(mpg%cvReg(pfr_cvs(i)),4).ne.outer_m4) cycle
             s=s+geo%cvSz(pfr_cvs(i))
             if(ndtm_tmp(j).gt.0) then !{
               g=dab2(pfr_cvs(i),ndtm_tmp(j),1)
@@ -1536,24 +1542,30 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
 
       if(hlp_dbg) print *,'### print_isat=',print_isat    !###
 
-      do k=1,maxval(mpg%strDiv) !{
-        d=1.0e18_R8
-        do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
-          iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
-          iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-          iFt=mpg%cvFt(iCv)
-          e=2.0_R8*pz(iCv)
-          if(e.gt.0.0_R8.and.iFt.gt.0) then
-            if (nimp.gt.0.and.k.le.maxval(mpg%strDiv)/2) then
-              d=min(d,pz(imp(ft_imp(iFt)))/e)
-            else
-              d=min(d,pz(omp(ft_omp(iFt)))/e)
+      do k=1,nTargets !{
+        if(mpg%ifdiv(k).le.0.or.
+     .     mpg%ifdiv(k).gt.mpg%divFcP(k,2)) then !{
+          write(*,*) 'b2mod_usrtrc: target reference unavailable; ',
+     .      'skipping detachment diagnostic for target ',k
+        else !}{
+          d=1.0e18_R8
+          do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
+            iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iFt=mpg%cvFt(iCv)
+            e=2.0_R8*pz(iCv)
+            if(e.gt.0.0_R8.and.iFt.gt.0) then
+              if (nimp.gt.0.and.k.le.nTargets/2) then
+                d=min(d,pz(imp(ft_imp(iFt)))/e)
+              else
+                d=min(d,pz(omp(ft_omp(iFt)))/e)
+              end if
             end if
-          end if
-          if(hlp_dbg) print *,'e,d=',e,d  !###
-        end do !}
-        hlp_dod(itg_tmp(k))=d
-        if(hlp_dbg) print *, 'hpl_dod(k)',hlp_dod(itg_tmp(k)) !###
+            if(hlp_dbg) print *,'e,d=',e,d  !###
+          end do !}
+          hlp_dod(itg_tmp(k))=d
+          if(hlp_dbg) print *, 'hpl_dod(k)',hlp_dod(itg_tmp(k)) !###
+        end if !}
         if(print_isat) then !{
           mgl3_tmp=mgl3_tmp+1
 csw 03jan2017 corrected do loop to exclude neutrals from isat calculation
@@ -1795,7 +1807,7 @@ caap tbd add nphoti
      .                            ex,mgl3_tmp,n,ntrc_tmp !###
         if(ex .and. mgl3_tmp.gt.0) then !{
           i=0
-          do k=1,maxval(mpg%strDiv) !{
+          do k=1,nTargets !{
             n=n+1
             i=i+1
             hlp_hdr(n)=hlp_hg3(itg_tmp(k))
@@ -1931,7 +1943,7 @@ c=======================================================================
       integer lnh_tmp
       parameter (lnh_tmp=20)
       character hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
-      logical ex, warn_tmp
+      logical ex, warn_tmp, lusn
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
@@ -1939,6 +1951,29 @@ c-----------------------------------------------------------------------
       tab=char(9)
       gridGeometry = geometryId( mpg, geo, 1 )
       plasmaGeometry = geometryId( mpg, geo, 2 )
+      nTargets = divertor_target_count(mpg)
+
+      if (gridGeometry.eq.GEOMETRY_GENERAL) then
+        write(*,*) 'b2usrtri: user.trc is not defined for GENERAL'
+        filedata(ltrc) = .false.
+        return
+      endif
+      if (nTargets.le.0) then
+        write(*,*) 'b2usrtri: no standard targets; disabling user.trc'
+        filedata(ltrc) = .false.
+        return
+      endif
+      call xertst(nTargets.le.size(itg_tmp),
+     ,  'b2usrtri: too many standard targets')
+
+c*** private-flux inner/outer follow the target reordering
+      call is_upper_single_null(mpg, geo, lusn)
+      inner_m4 = 3
+      outer_m4 = 0
+      if (lusn) then
+        inner_m4 = 0
+        outer_m4 = 3
+      endif
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -2226,13 +2261,13 @@ c
       if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_hg2
       n=n+ngl2_tmp
       mgl3_tmp=0
-      do k=1,maxval(mpg%strDiv) !{
+      do k=1,nTargets !{
         if(print_isat) mgl3_tmp=mgl3_tmp+1
       end do !}
       ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
       if(ex .and. mgl3_tmp.gt.0) then !{
         i=0
-        do k=1,maxval(mpg%strDiv) !{
+        do k=1,nTargets !{
           n=n+1
           i=i+1
           hlp_hdr(n)=hlp_hg3(itg_tmp(k))

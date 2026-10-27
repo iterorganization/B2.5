@@ -10,6 +10,9 @@
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2mod_geometry
+     , , only : geometryId, GEOMETRY_LIMITER, GEOMETRY_SN,
+     ,          GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP
       use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nimp, imp, icsepimp, imp_pos,
@@ -23,7 +26,8 @@
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
       integer ns, ismain, ismain0, nnatmi, nnmoli
-      integer :: i
+      integer :: i, gridGeometry, ntgt, nc
+      logical :: lgeo_dn
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)
       real (kind=R8), allocatable :: dsl(:), dsi(:), dsa(:),
@@ -37,14 +41,18 @@
 #endif
 #endif
       integer :: status
-      integer :: nc, batchdim, nastep, nbatch, ntstep, timedim
+      integer :: batchdim, nastep, nbatch, ntstep, timedim, ncdimid
+      integer :: ndimsout, nvars2, natts2, unlimid2, ndims2, xtype2
+      integer :: dimids2(NF_MAX_VAR_DIMS), len2
       integer :: idim, ivar, iatt, iret, ib, it, ih,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
+      character, allocatable :: data2c(:,:)
       character*(NF_MAX_NAME) :: varname, dimname, attname
+      character*(NF_MAX_NAME) :: varname2, dimname2
       character :: units*(24)
       character*4 :: extension
       character*32 hlp_frm
@@ -67,6 +75,27 @@
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+      ntgt = 0
+      lgeo_dn = .false.
+      if (mpg%hasTopologicalData) then
+        gridGeometry = geometryId(mpg, geo, 1)
+        if (gridGeometry.eq.GEOMETRY_LIMITER.or.
+     &      gridGeometry.eq.GEOMETRY_SN.or.
+     &      gridGeometry.eq.GEOMETRY_CDN.or.
+     &      gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
+     &      gridGeometry.eq.GEOMETRY_DDN_TOP)
+     &    ntgt = divertor_target_count(mpg)
+        lgeo_dn = gridGeometry.eq.GEOMETRY_CDN.or.
+     &            gridGeometry.eq.GEOMETRY_DDN_BOTTOM.or.
+     &            gridGeometry.eq.GEOMETRY_DDN_TOP
+        nc = 1
+        if (lgeo_dn) nc = 2
+      else
+        if (allocated(mpg%strDiv)) then
+          if (size(mpg%strDiv).gt.0) ntgt = maxval(mpg%strDiv)
+        endif
+        nc = max(mpg%nXpt,1)
+      endif
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
@@ -81,7 +110,7 @@
         call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa,
      &                    omp_pos(1:nomp))
       endif
-      do i = 1, maxval(mpg%strDiv)
+      do i = 1, ntgt
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcP(i,2)) =
      &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
@@ -93,7 +122,8 @@
           call output_ds_fc
      &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
         case (2)
-          if (mpg%nnreg(0).ge.7) then
+          if ((mpg%hasTopologicalData.and.lgeo_dn).or.
+     &        (.not.mpg%hasTopologicalData.and.mpg%nnreg(0).ge.7)) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif
@@ -122,7 +152,6 @@
         deallocate(fclist)
       end do
 #ifndef NO_CDF
-      nc = max(mpg%nXpt,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
 c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
@@ -132,6 +161,15 @@ c access the b2time.nc or b2batch.nc file
       call check_cdf_status(status)
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)
       call check_cdf_status(status)
+c preserve the source nc dimension, which may contain several GENERAL
+c target groups; keep the inferred value for older files without nc
+      status=nf_inq_dimid(ncid,'nc',ncdimid)
+      if (status.eq.NF_NOERR) then
+        status=nf_inq_dim(ncid,ncdimid,dimname,nc)
+        call check_cdf_status(status)
+      else if (status.ne.NF_EBADDIM) then
+        call check_cdf_status(status)
+      endif
       itim=0
       ibatch=0
       nastep=0
@@ -264,9 +302,48 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnatmi,
-     .                 nnmoli, write_2d, ncid2, batch_only, iret)
+     .                 nnmoli, ntgt, nc, write_2d,
+     .                 ncid2, batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
+
+c b2crtimecdf must reproduce the saved variable layout. The copy below
+c uses variable IDs, so a changed user namelist cannot be accepted.
+      status=nf_inq(ncid2,ndimsout,nvars2,natts2,unlimid2)
+      call check_cdf_status(status)
+      if (nvars2.ne.nvars)
+     &  call xerrab('b2co_time_cdf: variable count mismatch')
+      do ivar=1,nvars
+        status=nf_inq_var(ncid,ivar,varname,xtype,
+     1   ndims,dimids,natts)
+        call check_cdf_status(status)
+        status=nf_inq_var(ncid2,ivar,varname2,xtype2,
+     1   ndims2,dimids2,natts2)
+        call check_cdf_status(status)
+        if (varname.ne.varname2.or.xtype.ne.xtype2.or.
+     &      ndims.ne.ndims2) then
+          write(message,'(a,i6,4a)')
+     &     'b2co_time_cdf: variable ',ivar,' differs: ',
+     &     trim(varname),' / ',trim(varname2)
+          call xerrab(trim(message))
+        endif
+        do idim=1,ndims
+          status=nf_inq_dim(ncid,dimids(idim),dimname,len)
+          call check_cdf_status(status)
+          status=nf_inq_dim(ncid2,dimids2(idim),dimname2,len2)
+          call check_cdf_status(status)
+          if (dimname.ne.dimname2.or.
+     &        ((dimids(idim).eq.unlimid).neqv.
+     &         (dimids2(idim).eq.unlimid2)).or.
+     &        (dimids(idim).ne.unlimid.and.len.ne.len2)) then
+            write(message,'(3a,i4,4a,2i10)')
+     &       'b2co_time_cdf: ',trim(varname),
+     &       ' dimension ',idim,': ',trim(dimname),
+     &       ' / ',trim(dimname2),len,len2
+            call xerrab(trim(message))
+          endif
+        enddo
+      enddo
 
 c read and rewrite data
       do ivar=1,nvars
@@ -330,22 +407,31 @@ c read and rewrite data
             call check_cdf_status(status)
             deallocate(data3)
           elseif(ndims.eq.2) then
-            allocate(data2(dimsize(1),dimsize(2)))
-            status=nf_get_vara_double(ncid,ivar,start,count,data2)
-            call check_cdf_status(status)
-            if (dimsize(2).eq.timedim) then
-              count(2)=itim
-              if (itim.gt.0) status=nf_put_vara_double(ncid2,ivar,
-     .                                            start,count,data2)
-            else if (dimsize(2).eq.batchdim) then
-              count(2)=ibatch
-              if (ibatch.gt.0) status=nf_put_vara_double(ncid2,ivar,
-     .                                            start,count,data2)
+            if (xtype.eq.NF_CHAR) then
+              allocate(data2c(dimsize(1),dimsize(2)))
+              status=nf_get_vara_text(ncid,ivar,start,count,data2c)
+              call check_cdf_status(status)
+              status=nf_put_vara_text(ncid2,ivar,start,count,data2c)
+              call check_cdf_status(status)
+              deallocate(data2c)
             else
-              status=nf_put_vara_double(ncid2,ivar,start,count,data2)
+              allocate(data2(dimsize(1),dimsize(2)))
+              status=nf_get_vara_double(ncid,ivar,start,count,data2)
+              call check_cdf_status(status)
+              if (dimsize(2).eq.timedim) then
+                count(2)=itim
+                if (itim.gt.0) status=nf_put_vara_double(ncid2,ivar,
+     .                                              start,count,data2)
+              else if (dimsize(2).eq.batchdim) then
+                count(2)=ibatch
+                if (ibatch.gt.0) status=nf_put_vara_double(ncid2,ivar,
+     .                                              start,count,data2)
+              else
+                status=nf_put_vara_double(ncid2,ivar,start,count,data2)
+              end if
+              call check_cdf_status(status)
+              deallocate(data2)
             end if
-            call check_cdf_status(status)
-            deallocate(data2)
           elseif(ndims.eq.1) then
             allocate(data1(dimsize(1)))
             status=nf_get_vara_double(ncid,ivar,start,count,data1)

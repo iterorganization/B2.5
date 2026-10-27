@@ -18,6 +18,7 @@ c*** jy- fluxes are those through the opposite faces (if any)
 c=====================================================
       use b2mod_types
       use b2mod_diag
+      use b2mod_geometry, only: geometryId, GEOMETRY_GENERAL
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2us_map
@@ -43,6 +44,29 @@ c
       call ipgetr('b2mndr_dtim',dtim)
 c*** Set the indices of the cells in question
 
+c*** This X-point diagnostic has no selector for arbitrary topology.
+c*** A single-X-point GENERAL grid is unambiguous; zero or multiple
+c*** X-points are skipped instead of indexing an unset iactive value or
+c*** silently choosing one of several X-points.
+      if (mpg%nXpt.le.0) then
+        write(0,*) 'analyse_xpt: grid has no X-point; '
+     &    // 'x-point.dat was not written'
+        return
+      endif
+      if (geometryId(mpg,geo,1).eq.GEOMETRY_GENERAL.and.
+     &    mpg%nXpt.gt.1) then
+        write(0,*) 'analyse_xpt: multiple X-points in general '
+     &    // 'topology require an explicit selector; '
+     &    // 'x-point.dat was not written'
+        return
+      endif
+      if (geometryId(mpg,geo,1).ne.GEOMETRY_GENERAL.and.
+     &    (mpg%iactive.lt.1.or.mpg%iactive.gt.mpg%nXpt)) then
+        write(0,*) 'analyse_xpt: active X-point is undefined; '
+     &    // 'x-point.dat was not written'
+        return
+      endif
+
       allocate(ddt_ni(nspecies))
       allocate(div_nt(nspecies),div_nx(nspecies),div_ny(nspecies))
       allocate(f_nxp(nspecies),f_nxm(nspecies))
@@ -55,7 +79,11 @@ c*** Set the indices of the cells in question
 
 c*** Calculate the balances for each cell in question
       
-      iVx = mpg%Xpt(mpg%iactive)
+      if (geometryId(mpg,geo,1).eq.GEOMETRY_GENERAL) then
+        iVx = mpg%Xpt(1)
+      else
+        iVx = mpg%Xpt(mpg%iactive)
+      endif
       n_points = mpg%vxCvP(iVx,2)
       allocate(iCx(n_points),
      .         iFxm(n_points),iFxp(n_points),
