@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nx, ny, ns, ismain,                            !srv 28.07.11
-     & BoRiS, bb, vol, hx, hy, hz, na, ua,                              !srv 09.01.01
-     & wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,     !srv 07.07.09
+      subroutine b2stel (nx, ny, ns, ismain,                             !srv 28.07.11
+     & BoRiS, bb, vol, hx, hy, hz, na, ua,                               !srv 09.01.01
+     & wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,      !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09
       use b2mod_types
@@ -26,7 +26,7 @@
      &          balance_netcdf
 #ifdef ASTRA
       use b2mod_b2_to_astra
-     , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
+     , , only : svol, se, seh, sih, b2_to_astra_src                      !srv 28.07.11 11.06.13
 #endif
 #ifdef WITH_FTIMINGS
       use timings
@@ -38,13 +38,13 @@
       integer nx, ny, ns, ismain
       real (kind=R8) ::
      *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), hz(-1:nx,-1:ny),    !srv 09.01.01
+     &  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), hz(-1:nx,-1:ny),       !srv 09.01.01
      &  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vadia(-1:nx,-1:ny,0:1,0:ns-1)                                 !srv 07.07.09
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1)                                    !srv 07.07.09
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
@@ -55,7 +55,7 @@
      &  rlra(-1:nx,-1:ny,0:1,0:ns-1), rlqa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 11.09.09
+     *  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 11.09.09
      &  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1),
      *  smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),
      *  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
@@ -81,11 +81,11 @@
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,         !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3
-!     character chk*1                                             !srv 30.06.08
+!     character chk*1                                                    !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
      *  neutral_sources_rescale
@@ -151,15 +151,15 @@
            jimp_tmp(is)=nimp_tmp
          end if !}
        end do !}
-       call ipgeti ('b2stel_iout', iout)                         !srv 30.06.08
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
+       call ipgeti ('b2stel_iout', iout)                                 !srv 30.06.08
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                          !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
-       call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
-       call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                          !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                        !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
+       call ipgeti ('b2npht_iout', iout_b2npht)                          !srv 11.09.09 }
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -206,7 +206,7 @@
 
 * ..compute source terms
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0_ion, 1)                      !srv 11.09.09
+      call sfill (n2*2*ns, 0.0_R8, sna0_ion, 1)                          !srv 11.09.09
       call sfill (n2*2*ns, 0.0_R8, sna0_rec, 1)
       call sfill (n2*4*ns, 0.0_R8, smq0_ion, 1)
       call sfill (n2*4*ns, 0.0_R8, smq0_rec, 1)
@@ -379,15 +379,15 @@
 *       ..compute damping coefficient
            rf0 = rxm2*max(0.0_R8,-rlra(ix,iy,1,is))
 *       ..compute rate for is->is-1
-           t0 = phm0*rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)               !srv 05.06.18
+           t0 = phm0*rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)                  !srv 05.06.18
 *       ..compute particle source
-           sna0_rec(ix,iy,0,is) = sna0_rec(ix,iy,0,is)+               !srv 11.09.09 {
+           sna0_rec(ix,iy,0,is) = sna0_rec(ix,iy,0,is)+                  !srv 11.09.09 {
      &       rf0*t0*na(ix,iy,is)*rescal_is
            sna0_rec(ix,iy,1,is) = sna0_rec(ix,iy,1,is)-
      &      (1.0_R8+rf0)*t0*rescal_is
            sna0_rec(ix,iy,0,is-1) = sna0_rec(ix,iy,0,is-1)+
      &      (1.0_R8+rf0)*t0*na(ix,iy,is)*rescal_ism1
-           sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-           !srv 11.09.09 {
+           sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-              !srv 11.09.09 {
      &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)*rescal_ism1
            rrana(ix,iy,is) = t0*na(ix,iy,is)
 *       ..compute electron heat source
@@ -458,7 +458,7 @@ c accounted for)
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..for adpak rates, also contains recombination and CX terms
-          t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
+          t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
           she0(ix,iy,3) = she0(ix,iy,3)-
@@ -475,7 +475,7 @@ c accounted for)
           rqrad(ix,iy,is) = t0
           b2rad=b2rad-t0
 *      ..compute bremsstrahlung radiation rate for is->any
-          t0 = phm0*rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)    !srv 05.06.18
+          t0 = phm0*rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
 *      ..compute bremsstrahlung radiation
           rqbrm(ix,iy,is) = t0
           b2brem=b2brem-t0
@@ -541,33 +541,33 @@ c accounted for)
 !$OMP END SINGLE
 #endif
 #ifdef ASTRA
-      do is = 0, ns-1                                                 !srv 28.07.11 {
+      do is = 0, ns-1                                                    !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*na(:,:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
           wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*na(:,:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
         endif
-      enddo                                                           !srv 28.07.11 }
+      enddo                                                              !srv 28.07.11 }
 
       wrk0=she0(:,:,0)+
      &     she0(:,:,1)*te(:,:)+she0(:,:,2)*ne+
      &     she0(:,:,3)*ne*te
-      call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)                 !srv 11.06.13
 
       wrk0=shi0_ion(:,:,0)+
      &     shi0_ion(:,:,1)*ti+shi0_ion(:,:,2)*ni(:,:,0)+
      &     shi0_ion(:,:,3)*ni(:,:,0)*ti
-      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                 !srv 11.06.13
 
       wrk0=shi0_rec(:,:,0)+
      &     shi0_rec(:,:,1)*ti+shi0_rec(:,:,2)*ni(:,:,0)+
      &     shi0_rec(:,:,3)*ni(:,:,0)*ti
-      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                 !srv 11.06.13
 #endif
 
       if (iout.eq.1 .or. iout_b2npmo.eq.1 .or.
-     &    iout_b2wdat .eq. 4) then                                    !srv 30.06.08 11.09.09 {
+     &    iout_b2wdat .eq. 4) then                                       !srv 30.06.08 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !         do k=0,3
@@ -621,17 +621,17 @@ c accounted for)
         call my_out(70,nx,ny,wrk0,'b2stel_she_rad')
         wrk0=shi0_ion(:,:,0)+shi0_ion(:,:,1)*ti+
      &       shi0_ion(:,:,2)*ni(:,:,0)+shi0_ion(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
+        call my_out(70,nx,ny,wrk0,'b2stel_shi_ion')                      !srv 01.11.10
         wrk0=shi0_rec(:,:,0)+shi0_rec(:,:,1)*ti+
      &       shi0_rec(:,:,2)*ni(:,:,0)+shi0_rec(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
+        call my_out(70,nx,ny,wrk0,'b2stel_shi_rec')                      !srv 01.11.10
 
-        do is=0,ns-1                                                 !srv 03.02.12 {
+        do is=0,ns-1                                                     !srv 03.02.12 {
           write(chns,'(i3.3)') is
           call my_out(70,nx,ny,rqrad(-1,-1,is),'b2stel_rqrad'//chns)
           call my_out(70,nx,ny,rqbrm(-1,-1,is),'b2stel_rqbrm'//chns)
-        enddo                                                        !srv 03.02.12 }
-      endif                                                          !srv 30.06.08 11.09.09 }
+        enddo                                                            !srv 03.02.12 }
+      endif                                                              !srv 30.06.08 11.09.09 }
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

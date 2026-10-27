@@ -1286,40 +1286,42 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
-       do ia = 1,nnatmi
-        write (chns,'(i3.3)') ia
-        wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxa_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxa_eir'//chns)
-        call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
-     &                'b2stbr_fatmy_eir'//chns)
-        wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxa_eir'//chns)
-        call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
-     &                'b2stbr_fatmx_eir'//chns)
-        wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_dab2_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tab2_eir'//chns)
-       enddo
-       do im = 1,nmol
-        write (chns,'(i3.3)') im
-        wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxm_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxm_eir'//chns)
-        call my_out(70,nx,ny,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
-     &              'b2stbr_fmoly_eir'//chns)
-        wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxm_eir'//chns)
-        call my_out(70,nx,ny,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
-     &              'b2stbr_fmolx_eir'//chns)
-        wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_dmb2_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tmb2_eir'//chns)
-       enddo
+       if (use_eirene.ne.0) then                                      !xpb 26.10.26
+        do ia = 1,nnatmi
+         write (chns,'(i3.3)') ia
+         wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_rfluxa_eir'//chns)
+         wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_tfluxa_eir'//chns)
+         call my_out(70,nx,ny,fatm_eir(:,:,1,ia),             ! IYS 27.01.2017
+     &                 'b2stbr_fatmy_eir'//chns)
+         wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_pfluxa_eir'//chns)
+         call my_out(70,nx,ny,fatm_eir(:,:,0,ia),             ! IYS 27.01.2017
+     &                 'b2stbr_fatmx_eir'//chns)
+         wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_dab2_eir'//chns)
+         wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_tab2_eir'//chns)
+        enddo
+        do im = 1,nmol
+         write (chns,'(i3.3)') im
+         wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_rfluxm_eir'//chns)
+         wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_tfluxm_eir'//chns)
+         call my_out(70,nx,ny,fmol_eir(:,:,1,im),             ! IYS 27.01.2017
+     &               'b2stbr_fmoly_eir'//chns)
+         wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_pfluxm_eir'//chns)
+         call my_out(70,nx,ny,fmol_eir(:,:,0,im),             ! IYS 27.01.2017
+     &               'b2stbr_fmolx_eir'//chns)
+         wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_dmb2_eir'//chns)
+         wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
+         call my_out(70,nx,ny,wrk0,'b2stbr_tmb2_eir'//chns)
+        enddo
+       endif                                                          !xpb 26.10.26
 #endif
       endif
       if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
