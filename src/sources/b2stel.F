@@ -87,12 +87,10 @@
       character chns*3
 !     character chk*1                                                    !srv 30.06.08
       real (kind=R8) ::
-     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     *  neutral_sources_rescale
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     &  neutral_sources_rescale
+     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
+      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
-     *  rf0, t0, t1, t2, rescal_is, rescal_ism1
+     *  rf0, t0, t1, t2
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       real (kind=R8) :: she0_ion(-1:nx,-1:ny,0:3),
      &                  she0_rec(-1:nx,-1:ny,0:3)
@@ -106,8 +104,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/,
-     &  neutral_sources_rescale/1.0_R8/
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -132,10 +129,6 @@
      &   0.0_R8.le.rxm3.and.0.0_R8.le.rxm4,
      &   'faulty internal parameter rxm0/1/2/3/4')
        call xertst (0.0_R8.le.phm0, 'faulty parameter phm0')
-       call ipgetr ('b2mndr_rescale_neutrals_sources',
-     &   neutral_sources_rescale)
-       call xertst (0.0_R8.le.neutral_sources_rescale,
-     &   'faulty input neutral_sources_rescale')
        call ipgeti ('b2stel_styl0', styl0)
        call xertst (0.le.styl0.and.styl0.lt.4,
      &   'faulty internal parameter styl0')
@@ -246,8 +239,7 @@
       call timer%start("parallel")
 #endif
 !$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1, t2)
-!$OMP& private(rescal_is, rescal_ism1)
-!$OMP& shared(ns, nx, ny, nspecies, neutral_sources_rescale)
+!$OMP& shared(ns, nx, ny, nspecies)
 !$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
 !$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
@@ -356,21 +348,6 @@
 *   ..compute sources due to recombination
         do is = 1, ns-1
          if (lnext(is-1,is)) then
-*     ..rescale recombination sources landing on a neutral species,
-*     ..consistent with how b2stbr scales the recycling source, to
-*     ..avoid injecting an un-suppressed source into a fluid-neutral
-*     ..density that is deliberately kept near-floor because Eirene
-*     ..handles the real neutral population
-          if (is_neutral(is)) then
-           rescal_is = neutral_sources_rescale
-          else
-           rescal_is = 1.0_R8
-          endif
-          if (is_neutral(is-1)) then
-           rescal_ism1 = neutral_sources_rescale
-          else
-           rescal_ism1 = 1.0_R8
-          endif
 *     ..particle source and heat source
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
@@ -382,13 +359,13 @@
            t0 = phm0*rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)                  !srv 05.06.18
 *       ..compute particle source
            sna0_rec(ix,iy,0,is) = sna0_rec(ix,iy,0,is)+                  !srv 11.09.09 {
-     &       rf0*t0*na(ix,iy,is)*rescal_is
+     &       rf0*t0*na(ix,iy,is)
            sna0_rec(ix,iy,1,is) = sna0_rec(ix,iy,1,is)-
-     &      (1.0_R8+rf0)*t0*rescal_is
+     &      (1.0_R8+rf0)*t0
            sna0_rec(ix,iy,0,is-1) = sna0_rec(ix,iy,0,is-1)+
-     &      (1.0_R8+rf0)*t0*na(ix,iy,is)*rescal_ism1
+     &      (1.0_R8+rf0)*t0*na(ix,iy,is)
            sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-              !srv 11.09.09 {
-     &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)*rescal_ism1
+     &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)
            rrana(ix,iy,is) = t0*na(ix,iy,is)
 *       ..compute electron heat source
            t2 = t0*na(ix,iy,is)*rpi(ix,iy,is)*ev
@@ -434,13 +411,13 @@ c accounted for)
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(ix,iy,0,is) = smq0_rec(ix,iy,0,is)+
-     &      rf0*t1*ua(ix,iy,is)*rescal_is
+     &      rf0*t1*ua(ix,iy,is)
            smq0_rec(ix,iy,1,is) = smq0_rec(ix,iy,1,is)-
-     &      (1.0_R8+rf0)*t1*rescal_is
+     &      (1.0_R8+rf0)*t1
            smq0_rec(ix,iy,0,is-1) = smq0_rec(ix,iy,0,is-1)+
-     &      t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is-1))*rescal_ism1
+     &      t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is-1))
            smq0_rec(ix,iy,1,is-1) = smq0_rec(ix,iy,1,is-1)-
-     &      rf0*t1*rescal_ism1
+     &      rf0*t1
            rramo(ix,iy,is) = rramo(ix,iy,is)+t1*ua(ix,iy,is)
            rramo(ix,iy,is-1) = rramo(ix,iy,is-1)+t1*ua(ix,iy,is)
           endif
