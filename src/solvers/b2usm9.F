@@ -51,15 +51,15 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, csb, csb1
-      save ncall, cfc0
+     *  cfc0, aad0_boost0, t0, t1, t2, t3, t4, csb, csb1
+      save ncall, cfc0, aad0_boost0
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
       external xertst, ipgetr, sfill, smin, smax
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
-      data ncall/0/, cfc0/1.0_R8/
+      data ncall/0/, cfc0/1.0_R8/, aad0_boost0/0.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -71,6 +71,9 @@
       if (ncall.eq.0) then
        call ipgetr ('b2usm9_cfc0', cfc0)
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
+       call ipgetr ('b2usmo_aad0_boost0', aad0_boost0)                !xpb 26.10.26
+       call xertst (0.0_R8.le.aad0_boost0,
+     &  'faulty internal parameter aad0_boost0')
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2usm9_iout', iout)                              !srv 17.06.02
@@ -129,6 +132,8 @@
      &    cfc0*abs(vol(ix,iy)*hz(ix,iy)/hx(ix,iy)*bb(ix,iy,0)/       !srv 09.01.01
      &    bb(ix,iy,3)*csb)*rob(ix,iy)
          aa9(ix,iy,0) = aad0(ix,iy)+abs(resmb(ix,iy))/(rxg*csb1)
+         if (aad0_boost0.gt.0.0_R8) aa9(ix,iy,0) = aa9(ix,iy,0)+      !xpb 26.10.26
+     &    abs(resmb(ix,iy))/csb1*aad0_boost0/(csb*rob(ix,iy))         !xpb 26.10.26
         else
          aa9(ix,iy,0) = 1.0_R8
          aad0(ix,iy) = 0.0_R8

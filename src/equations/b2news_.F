@@ -778,7 +778,8 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is) .or. use_9pt_stencil.ne.0) then
-              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+              if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &           is.eq.ismain) then
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
                 call restart_ma28_for_11
 #else
@@ -1284,7 +1285,8 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is) .or. use_9pt_stencil.ne.0) then
-              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+              if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &           is.eq.ismain) then
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(is,ireg)

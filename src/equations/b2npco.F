@@ -319,7 +319,7 @@ csw 11dec2012, check for solv flags
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npco_fnay'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npco_fnay'//chns)
         wrk0=-snadt(:,:,1,isb)*nb(:,:)-snadt(:,:,0,isb)                 !srv 09.03.21
         call my_out(70,nx,ny,wrk0,'b2npco_dnadt'//chns)                 !srv 09.03.21
        endif

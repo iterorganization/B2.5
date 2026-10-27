@@ -4783,7 +4783,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Local boost to the parallel momentum equation matrix diagonal (aad0/aa5(ix,iy,0)), active when densities near the b2mndr_na_min floor, used to damp out the numerical instability leading to some supra-luminal velocities.
+					Local boost to the parallel momentum equation matrix diagonal (aa5(ix,iy,0) in b2usmo for the 5-point stencil, aa9(ix,iy,0) in b2usm9 for the 9-point stencil), active when densities near the b2mndr_na_min floor, used to damp out the numerical instability leading to some supra-luminal velocities.
 					Recommended range: of order 1.e-6. Should be comparable in order of magnitude to the minimal value of product csb*rob, over the valid computational cells, of the main ion species.
 				</description>
 			</switch>
