@@ -3,15 +3,13 @@
 !     Interpolation of B2.5 fields onto arbitrary (R,Z) points and along
 !     straight chords.
 !
-!     Chord geometry (chords_total_points, chords_geometry): a chord is
-!     the straight 3D line between two points given as (R, Z, phi), with
-!     R and Z in metres and the toroidal angle phi in degrees. It is
-!     sampled uniformly in 3D arc length at the Cartesian points
-!     x = R cos(phi), y = R sin(phi), z = Z, and each sample is mapped
-!     back to (R = sqrt(x**2+y**2), Z = z, phi). Because the plasma is
-!     axisymmetric, everything below only needs the (R,Z) of each
-!     sample; phi is kept for output. Equal phi at both ends gives a
-!     chord in a poloidal plane (R and Z then vary linearly).
+!     Chord geometry (chords_geometry): a chord is the straight 3D line
+!     between two Cartesian end points (x, y, z) in metres, z vertical,
+!     as in the b2plot chord files. It is sampled at the midpoints of
+!     npoints equal segments, as in b2plot, and each sample is mapped to
+!     (R = sqrt(x**2+y**2), Z = z, phi = atan2(y,x)). Because the plasma
+!     is axisymmetric, everything below only needs the (R,Z) of each
+!     sample; phi is kept for output.
 !
 !     Method:
 !
@@ -50,7 +48,7 @@
 
       public :: locate_cv, interp_cv_at_rz
       public :: chord_profile_cv, chord_profile_fc
-      public :: chords_total_points, chords_geometry
+      public :: chords_geometry
       public :: sample_cv_at_points, facefield_to_cellcenters
       public :: mask_inside_cv, compact_chords
 
@@ -337,96 +335,38 @@
       end subroutine facefield_to_cellcenters
 
 !-----------------------------------------------------------------------
-      subroutine chord_endpoints_xyz (rzphi, p1, p2, length)
-!     Cartesian end points p1, p2 = (x, y, z) [m] and 3D length [m] of
-!     the chord rzphi(1:3,j) = (R [m], Z [m], phi [deg]), j=1 start,
-!     j=2 end, with x = R cos(phi), y = R sin(phi), z = Z.
-      implicit none
-      real (kind=R8), intent (in)  :: rzphi(3,2)
-      real (kind=R8), intent (out) :: p1(3), p2(3), length
-      p1(1) = rzphi(1,1)*cos(rzphi(3,1)*deg2rad)
-      p1(2) = rzphi(1,1)*sin(rzphi(3,1)*deg2rad)
-      p1(3) = rzphi(2,1)
-      p2(1) = rzphi(1,2)*cos(rzphi(3,2)*deg2rad)
-      p2(2) = rzphi(1,2)*sin(rzphi(3,2)*deg2rad)
-      p2(3) = rzphi(2,2)
-      length = sqrt((p2(1)-p1(1))**2 + (p2(2)-p1(2))**2 +               &
-     &              (p2(3)-p1(3))**2)
-      return
-      end subroutine chord_endpoints_xyz
-
-!-----------------------------------------------------------------------
-      subroutine chord_npoints (rzphi, dl, np)
-!     Number of sample points on one 3D chord (endpoints inclusive), for
-!     a spacing of about dl in 3D arc length. A degenerate/zero chord
-!     returns 1.
-      implicit none
-      real (kind=R8), intent (in)  :: rzphi(3,2), dl
-      integer,        intent (out) :: np
-      real (kind=R8) :: p1(3), p2(3), length
-      call chord_endpoints_xyz(rzphi, p1, p2, length)
-      if (dl.le.0.0_R8 .or. length.le.0.0_R8) then
-        np = 1
-      else
-        np = max(1, ceiling(length/dl)) + 1
-      end if
-      return
-      end subroutine chord_npoints
-
-!-----------------------------------------------------------------------
-      subroutine chords_total_points (rzphichords, nchords, dl, npt)
-!     Total number of sample points over all nchords chords.
-      implicit none
-      integer,        intent (in)  :: nchords
-      real (kind=R8), intent (in)  :: rzphichords(3,2,nchords)
-      real (kind=R8), intent (in)  :: dl
-      integer,        intent (out) :: npt
-      integer :: k, np
-      npt = 0
-      do k = 1, nchords
-        call chord_npoints(rzphichords(:,:,k), dl, np)
-        npt = npt + np
-      end do
-      return
-      end subroutine chords_total_points
-
-!-----------------------------------------------------------------------
-      subroutine chords_geometry (rzphichords, nchords, dl, npt,        &
-     &                            crx, cry, cphi, ds, ichord)
-!     Fill the concatenated sample-point coordinates for all 3D chords:
-!     crx/cry are the (R,Z) [m] of each point, cphi its toroidal angle
-!     [deg], ds the 3D arc length [m] from the start of its chord and
-!     ichord the chord index (1..nchords). The points are equally spaced
-!     along the straight Cartesian line between the two end points.
-!     cphi starts at the given phi of the start point and is continuous
-!     along the chord (no 360 degree jumps). The point ordering matches
-!     chords_total_points / sample_cv_at_points.
+      subroutine chords_geometry (cxyz, cnp, nchords, npt, crx, cry,    &
+     &                            cphi, ds, ichord)
+!     Fill the concatenated sample points of all chords. Chord k runs
+!     from cxyz(:,1,k) to cxyz(:,2,k) and is sampled at the midpoints of
+!     cnp(k) equal segments, with the same formula as b2plot. crx/cry
+!     are the (R,Z) [m] of each point, cphi its toroidal angle [deg],
+!     continuous along the chord, ds its 3D arc length [m] from the
+!     chord start and ichord the chord index. npt must be sum(cnp).
       implicit none
       integer,        intent (in)  :: nchords, npt
-      real (kind=R8), intent (in)  :: rzphichords(3,2,nchords), dl
+      real (kind=R8), intent (in)  :: cxyz(3,2,nchords)
+      integer,        intent (in)  :: cnp(nchords)
       real (kind=R8), intent (out) :: crx(npt), cry(npt), cphi(npt),     &
      &                                ds(npt)
       integer,        intent (out) :: ichord(npt)
-      integer :: k, i, np, off
-      real (kind=R8) :: p1(3), p2(3), length, t, x, y, phi, phiprev
+      integer :: k, i, off
+      real (kind=R8) :: length, f, x, y, phi, phiprev
       off = 0
       do k = 1, nchords
-        call chord_endpoints_xyz(rzphichords(:,:,k), p1, p2, length)
-        call chord_npoints(rzphichords(:,:,k), dl, np)
-        phiprev = rzphichords(3,1,k)
-        do i = 1, np
-          if (np.gt.1) then
-            t = real(i-1, R8)/real(np-1, R8)
-          else
-            t = 0.0_R8
-          end if
-          x = p1(1) + t*(p2(1)-p1(1))
-          y = p1(2) + t*(p2(2)-p1(2))
+        length = sqrt(sum((cxyz(:,2,k) - cxyz(:,1,k))**2))
+!       angle of the start point (0 on the axis, where it is undefined)
+        phiprev = 0.0_R8
+        if (cxyz(1,1,k).ne.0.0_R8 .or. cxyz(2,1,k).ne.0.0_R8)            &
+     &    phiprev = atan2(cxyz(2,1,k), cxyz(1,1,k))/deg2rad
+        do i = 1, cnp(k)
+          f = (real(i, R8) - 0.5_R8)/real(cnp(k), R8)
+          x = cxyz(1,1,k)*(1.0_R8 - f) + cxyz(1,2,k)*f
+          y = cxyz(2,1,k)*(1.0_R8 - f) + cxyz(2,2,k)*f
           crx(off+i) = sqrt(x*x + y*y)
-          cry(off+i) = p1(3) + t*(p2(3)-p1(3))
-          if (i.eq.1 .or. crx(off+i).le.0.0_R8) then
-!           start point (exact user phi) or a point on the axis (phi
-!           undefined there): keep the previous angle
+          cry(off+i) = cxyz(3,1,k)*(1.0_R8 - f) + cxyz(3,2,k)*f
+          if (crx(off+i).le.0.0_R8) then
+!           point on the axis (phi undefined there): keep the previous angle
             phi = phiprev
           else
 !           atan2 angle, unwrapped to within 180 deg of the previous one
@@ -435,10 +375,10 @@
           end if
           cphi(off+i)   = phi
           phiprev       = phi
-          ds(off+i)     = t*length
+          ds(off+i)     = f*length
           ichord(off+i) = k
         end do
-        off = off + np
+        off = off + cnp(k)
       end do
       return
       end subroutine chords_geometry

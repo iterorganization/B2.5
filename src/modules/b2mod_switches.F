@@ -260,7 +260,6 @@ c iout switches
       integer :: write_chord_eirene_fluxes
       integer :: write_chord_eirene_sources
       integer :: write_chord_triangles
-      real (kind=R8) :: cdfchord_resolution
 
 c style switches
       integer :: b2sicf_style
@@ -905,7 +904,6 @@ c Zhdanov closure switches
       s % write_chord_eirene_fluxes = 0
       s % write_chord_eirene_sources = 0
       s % write_chord_triangles = 0
-      s % cdfchord_resolution = 0.01_R8
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -1617,7 +1615,6 @@ c iout switches
       call ipgeti ('cdfchord_eirene_sources',
      1  s % write_chord_eirene_sources)
       call ipgeti ('cdfchord_triangles', s % write_chord_triangles)
-      call ipgetr ('cdfchord_resolution', s % cdfchord_resolution)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)

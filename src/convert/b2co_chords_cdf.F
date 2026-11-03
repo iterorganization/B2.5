@@ -17,7 +17,7 @@
       intrinsic get_environment_variable
 #endif
 #endif
-      integer, parameter :: maxv = 4096, maxg = 1024
+      integer, parameter :: maxv = 4096, maxg = 10000
       character*4 :: extension
       character*256 :: plasmastate
 #endif
@@ -67,10 +67,8 @@ c     Copy fname to fname.<extension>, truncating the time dimension to
 c     the frames up to the restart time tim.
       implicit none
       character*(*) fname
-      integer ncid, ncid2, ng, i, itim, status
+      integer ncid, ncid2, itim, status
       integer ib, it, ih, tlen, tvid, did
-      integer gsrc(maxg), gdst(maxg)
-      character*(NF_MAX_NAME) gname
       character*256 dstname
       real (kind=R8), allocatable :: tvals(:)
       logical exists
@@ -115,24 +113,12 @@ c   ..create the truncated copy (netCDF-4)
       dstname = trim(fname)//'.'//extension
       status = nf_create(dstname, or(NF_NETCDF4,NF_CLOBBER), ncid2)
       call check_cdf_status(status)
-c   ..definitions: root group, then one group per chord
-      call copy_defs(ncid, ncid2)
-      status = nf_inq_grps(ncid, ng, gsrc)
-      call check_cdf_status(status)
-      do i = 1, ng
-        status = nf_inq_grpname(gsrc(i), gname)
-        call check_cdf_status(status)
-        status = nf_def_grp(ncid2, trim(gname), gdst(i))
-        call check_cdf_status(status)
-        call copy_defs(gsrc(i), gdst(i))
-      enddo
+c   ..definitions: root group, chord set groups and their chord groups
+      call copy_tree_defs(ncid, ncid2)
       status = nf_enddef(ncid2)
       call check_cdf_status(status)
-c   ..data: root group, then each chord group (truncating time to itim)
-      call copy_data(ncid, ncid2, itim)
-      do i = 1, ng
-        call copy_data(gsrc(i), gdst(i), itim)
-      enddo
+c   ..data of all groups (truncating time to itim)
+      call copy_tree_data(ncid, ncid2, itim)
 
       status = nf_close(ncid)
       call check_cdf_status(status)
@@ -143,13 +129,70 @@ c   ..data: root group, then each chord group (truncating time to itim)
       end subroutine truncate_chord_file
 
 c-----------------------------------------------------------------------
+      recursive subroutine copy_tree_defs(src, dst)
+c     Copy the definitions of group src and of all its subgroups.
+      implicit none
+      integer src, dst
+      integer ng, i, status
+      integer, allocatable :: gsrc(:)
+      integer gdst
+      character*(NF_MAX_NAME) gname
+      call copy_defs(src, dst)
+      allocate(gsrc(maxg))
+      status = nf_inq_grps(src, ng, gsrc)
+      call check_cdf_status(status)
+      do i = 1, ng
+        status = nf_inq_grpname(gsrc(i), gname)
+        call check_cdf_status(status)
+        status = nf_def_grp(dst, trim(gname), gdst)
+        call check_cdf_status(status)
+        call copy_tree_defs(gsrc(i), gdst)
+      enddo
+      deallocate(gsrc)
+      return
+      end subroutine copy_tree_defs
+
+c-----------------------------------------------------------------------
+      recursive subroutine copy_tree_data(src, dst, itim)
+c     Copy the data of group src and of all its subgroups.
+      implicit none
+      integer src, dst, itim
+      integer ng, i, status
+      integer, allocatable :: gsrc(:)
+      integer gdst
+      character*(NF_MAX_NAME) gname
+      call copy_data(src, dst, itim)
+      allocate(gsrc(maxg))
+      status = nf_inq_grps(src, ng, gsrc)
+      call check_cdf_status(status)
+      do i = 1, ng
+        status = nf_inq_grpname(gsrc(i), gname)
+        call check_cdf_status(status)
+        status = nf_inq_grp_ncid(dst, trim(gname), gdst)
+        call check_cdf_status(status)
+        call copy_tree_data(gsrc(i), gdst, itim)
+      enddo
+      deallocate(gsrc)
+      return
+      end subroutine copy_tree_data
+
+c-----------------------------------------------------------------------
       subroutine copy_defs(src, dst)
       implicit none
       integer src, dst
       integer ndim, dimids(NF_MAX_VAR_DIMS), i, j, nvar
       integer varids(maxv), xtype, nvd, vdims(NF_MAX_VAR_DIMS), nva, k
-      integer ddims(NF_MAX_VAR_DIMS), dvid, ddum, dlen, status
+      integer ddims(NF_MAX_VAR_DIMS), dvid, ddum, dlen, status, ngatt
       character*(NF_MAX_NAME) dname, vname, aname
+c   ..group attributes (label and npoints of a chord set)
+      status = nf_inq_natts(src, ngatt)
+      call check_cdf_status(status)
+      do k = 1, ngatt
+        status = nf_inq_attname(src, NF_GLOBAL, k, aname)
+        call check_cdf_status(status)
+        status = nf_copy_att(src, NF_GLOBAL, aname, dst, NF_GLOBAL)
+        call check_cdf_status(status)
+      enddo
       status = nf_inq_dimids(src, ndim, dimids, 0)
       call check_cdf_status(status)
       do i = 1, ndim
