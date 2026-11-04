@@ -336,7 +336,7 @@ cc while the second contribution corresponds to T dn/dt
      &           *psnl%ti/dtim*geo%cvVol
         else                                 ! separate ion and neutral energy equation
           wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *ts_factor*psnl%ti/dtim*geo%cvVol
+     &           *psnl%ti/dtim*geo%cvVol
           wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))
      &           *psnl%tn/dtim*geo%cvVol
           wrk3(mpg%nCi+1:mpg%nCv) = 0.0_R8
