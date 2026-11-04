@@ -307,9 +307,9 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
      &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
-cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-cc while the second contribution corresponds to T dn/dt
+cc Given d(nT)/dt = n dT/dt + T dn/dt,
+cc What is computed in b2shdt corresponds to n dT/dt,
+cc What is added here below corresponds to T dn/dt
         wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
         do iCv=1,mpg%nCi
           wrk1(iCv) = wrk1(iCv)/(dtee(mpg%cvReg(iCv))*rxf)

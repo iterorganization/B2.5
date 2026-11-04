@@ -543,6 +543,9 @@ cdjm Jan2017 update momentum source components for balance
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
+cc Given d(nu)/dt = n du/dt + u dn/dt,
+cc What is computed in b2smdt corresponds to n du/dt,
+cc What is added here below corresponds to u dn/dt
          wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
      &    psnl%na(:,is))*psnl%ua(:,is)/dtim
          do iCv=1,mpg%nCi
