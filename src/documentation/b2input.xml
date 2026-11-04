@@ -8657,8 +8657,8 @@
 				<default>1.0</default>
 				<type>real array of size (0:NREG)</type>
 				<description>
-				   Multiplier to the time used in solving the ion heat equation in region (ireg).
-				   With b2mndt_style.eq.2, it affects the evolution/relaxation of the ion internal energy.
+					Multiplier to the time used in solving the ion heat equation in region (ireg).
+					With b2mndt_style.eq.2, it affects the evolution/relaxation of the ion internal energy.
 				</description>
 			</switch>
 			<switch>

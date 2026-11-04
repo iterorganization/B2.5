@@ -261,6 +261,7 @@ c***  Standard set-up:
       end do
 *   ..Definition of separatrix position in OMP list
       icsepomp = 0
+      ifsepomp = 0
       ic = 1
       found = .false.
       do while (ic.le.nomp .and..not.found)
@@ -518,6 +519,7 @@ c*** Set default values according to current species list
       end do
 ! Find position of separatrix in IMP list (same as for OMP)
       icsepimp = 0
+      ifsepimp = 0
       ic = 1
       found = .false.
       do while (ic.le.nimp .and..not.found)

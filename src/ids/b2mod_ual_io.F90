@@ -471,7 +471,9 @@ contains
     do i = 1, maxval(mpg%strDiv)
       if (gridGeometry.eq.plasmaGeometry .or. i.eq.1) then
         ireg = i
-      else if (mpg%nnreg(0).eq.8 .and. i.eq.2) then
+      else if ((plasmaGeometry.eq.GEOMETRY_CDN .or. &
+             &  plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+             &  plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM) .and. i.eq.2) then
         ireg = 4
       else
         call xerrab ('Unexpected geometry!')
@@ -502,7 +504,10 @@ contains
       end do
       extension_r(i) = r_max - r_min
       extension_z(i) = z_max - z_min
-      if ( mpg%nnreg(0).eq.8 .and. (i.eq.1 .or. i.eq.2) ) then
+      if ( ( plasmaGeometry.eq.GEOMETRY_CDN .or. &
+        &    plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+        &    plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM ) .and. &
+        &  ( i.eq.1 .or. i.eq.2 ) ) then
         iFc = ifsepimp
       else
         iFc = ifsepomp
@@ -1589,8 +1594,7 @@ contains
             &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           u = 0.0_IDS_real
           do iCv = 1, mpg%nCi
-            if (mpg%cvOnClosedSurface(iCv).and.mpg%nnreg(0).ne.5) cycle
-            if (mpg%nnreg(0).eq.5.and.mpg%cvReg(iCv).eq.1) cycle
+            if (mpg%cvOnClosedSurface(iCv)) cycle
             do is = 0, ns-1
               u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
             end do
@@ -10218,9 +10222,7 @@ contains
       iFc = mpg%fsFc(i)
       iCv1 = mpg%fcCv(iFc,1)
       iCv2 = mpg%fcCv(iFc,2)
-      if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
-        & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
-        & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+      if ( mpg%cvOnClosedSurface(iCv1) .neqv. mpg%cvOnClosedSurface(iCv2) ) then
         sum = sum + geo%fcS(iFc) * weight(iFc) * &
             & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
         area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
@@ -10232,9 +10234,7 @@ contains
         iFc = mpg%fsFc(i)
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
-        if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
-          & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
-          & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+        if ( mpg%cvOnClosedSurface(iCv1) .neqv. mpg%cvOnClosedSurface(iCv2) ) then
           sum = sum + geo%fcS(iFc) * weight(iFc) * &
               & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
           area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
@@ -11087,10 +11087,8 @@ contains
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
         iCv = 0
-        if ( mpg%cvReg(iCv1).eq.1 .or. &
-     &     ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
-        if ( mpg%cvReg(iCv2).eq.1 .or. &
-     &     ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+        if ( mpg%cvOnClosedSurface(iCv1) ) iCv = iCv1
+        if ( mpg%cvOnClosedSurface(iCv2) ) iCv = iCv2
         if ( iCv.eq.0 ) cycle ! skip the divertor legs
         if ( rFc .gt. r_max) then
           r_max = rFc
@@ -11106,10 +11104,8 @@ contains
           iCv1 = mpg%fcCv(iFc,1)
           iCv2 = mpg%fcCv(iFc,2)
           iCv = 0
-          if ( mpg%cvReg(iCv1).eq.1 .or. &
-     &       ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
-          if ( mpg%cvReg(iCv2).eq.1 .or. &
-     &       ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+          if ( mpg%cvOnClosedSurface(iCv1) ) iCv = iCv1
+          if ( mpg%cvOnClosedSurface(iCv2) ) iCv = iCv2
           if ( iCv.eq.0 ) cycle ! skip the divertor legs
           if ( rFc .gt. r_max) then
             r_max = rFc

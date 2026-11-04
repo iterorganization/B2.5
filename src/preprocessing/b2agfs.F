@@ -331,7 +331,7 @@
           nnVx = idum(2)
           nnFs = idum(4)
           nnFt = idum(5)
-          if (grid_version.eq."03.002.000") then
+          if (grid_version.ge."03.002.000") then
             !ghostcells are not provided, nnCv does not match nCv
             !but will match after guard cells are created
 
@@ -394,7 +394,8 @@
               g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
             endif
           else
-            call xerrab('Grid version not equal to 03.002.00')
+            call xerrab('Grid version not greater than or equal to' //
+     &         '03.002.000')
           endif  ! if of the grid_version
 
         else
@@ -450,7 +451,7 @@
       !rewind nrid
       call cfverr(nrid,grid_version)
 
-      if (grid_version.eq."03.002.000") then
+      if (grid_version.ge."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
         call cfruin (nrid, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
         nnCv = idum(0)
@@ -502,7 +503,7 @@
           enddo
         endif
 
-        !read cell information
+        ! read cell information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
           do iCv = 1, nnCv

@@ -1798,7 +1798,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !      if (switch%solve_keps.gt.1 .and.
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
-      call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
+      call createB2Diagnostic( nCv, ns, mpg%nnreg, state%diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 *   initialize 2d batch averages
@@ -2130,7 +2130,7 @@ c   --> better way doing this is necessary)
       if (switch%b2tqna_transport_inputfile .eq. 1) then
         call read_transport_input(transport_ip_filename)
       endif
-      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
+      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg,switch)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
