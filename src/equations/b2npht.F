@@ -91,7 +91,7 @@
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                    !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), wrk1(nCv), wrk2(nCv), wrk3(nCv), 
-     * wrk4(nCv), wrk5(nCv),  wrk6(nCv),                                 !IYS 17.07.26
+     * wrk4(nCv), wrk5(nCv), wrk6(nCv),                                  !IYS 17.07.26
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),

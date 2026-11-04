@@ -659,10 +659,13 @@ cdjm Jan2017 Keep linearised sources for balance
       do kind_coeff=1,nkind_coeff
         do spec=0,ns-1
           do kind_data=1,nkind_data
+            ! Get total number of data points to read in
             ndat=ndata(kind_data,kind_coeff,spec)
+
             if (ndat.eq.0) cycle
             call xertst(ndat.le.nrr,
      .      'Increase NYD in b2mod_dimensions to match size of profile')
+
             allocate(r(ndat), f(ndat), d(ndat), felm(ndat),
      &        delm(ndat))
             r = 0.0_R8
@@ -670,6 +673,8 @@ cdjm Jan2017 Keep linearised sources for balance
             felm = 0.0_R8
             delm = 0.0_R8
             nspec=1
+
+            ! Check for which species to add
             nsp(1)=spec
             do is=1,ns
               if (addspec(is,kind_coeff,spec).GE.0) then
@@ -677,12 +682,15 @@ cdjm Jan2017 Keep linearised sources for balance
                 nspec=nspec+1
               endif
             enddo
+
+            ! Read data into r, f pairs (coordinate, value)
             do i=1,ndat
               r(i)=tdata(1,i,kind_coeff,spec)
               f(i)=tdata(2,i,kind_coeff,spec)
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
+
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
@@ -690,8 +698,11 @@ cdjm Jan2017 Keep linearised sources for balance
             pr(1:nomp)=omp_pos(1:nomp)-
      &        (omp_pos(icsepomp)+omp_pos(icsepomp-1))/2.0_R8
 
+            ! Initialize (?)
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
+
+            ! Interpolate
             call E01BFF(ndat,r,f,d,nomp,pr,pf,ifail)
             if (elm_data) then
               call E01BFF(ndat,r,felm,delm,nomp,pr,pelm,ifail)
@@ -974,7 +985,10 @@ cdjm Jan2017 Keep linearised sources for balance
               endif
             endif
 
+            ! Housekeeping
             deallocate(f, r, pr, pf, felm, pelm, delm, prof, d)
+
+            ! Update loop counter
             iloop=iloop+1
           enddo !kind_data
         enddo !spec=0,ns-1

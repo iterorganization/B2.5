@@ -239,7 +239,7 @@ csw
 *   ..obtain mapping/geometry dimensions from file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
+      mpg%nCg = idum(1)
       mpg%nCv = idum(2)
       mpg%nFc = idum(3)
       mpg%nVx = idum(4)

@@ -1228,7 +1228,7 @@ CONTAINS
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(2a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON = 15 : prescribe the decay length for the density', &
-&         ' for drifs switched on ', conpar(is, ib, 1), ' on ', bcchar(&
+&         ' for drifts switched on ', conpar(is, ib, 1), ' on ', bcchar(&
 &         ib), boundary_location(ib), ' for species ', is
           icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
@@ -14289,7 +14289,7 @@ CONTAINS
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(2a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON = 15 : prescribe the decay length for the density', &
-&         ' for drifs switched on ', conpar(is, ib, 1), ' on ', bcchar(&
+&         ' for drifts switched on ', conpar(is, ib, 1), ' on ', bcchar(&
 &         ib), boundary_location(ib), ' for species ', is
           icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&

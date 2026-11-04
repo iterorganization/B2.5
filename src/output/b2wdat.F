@@ -150,7 +150,7 @@
             if(mpg%cvOnClosedSurface(omp(iy))) then
               n_closed_surface = n_closed_surface + 1
               ilast_closed_surface = iy
-             endif
+            endif
           endif
         enddo
         if (ilast_closed_surface.eq.-2)

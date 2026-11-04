@@ -653,7 +653,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st%srw,
      &     st_ext)
-*   ..recompute source   (only sch is needed)
+*   ..recompute source (only sch is needed)
           if(switch%max_iter_po.eq.0) exit                               !srv 15.02.26 {
           call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
      &     switch, geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,

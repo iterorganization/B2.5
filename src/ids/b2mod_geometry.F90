@@ -561,7 +561,8 @@ contains
         return
     end if
 
-    if (mpg%nnreg(0) == 2) then
+    if ((mpg%nnreg(0) == 2 .and. mpg%isClassicalGrid.eq.1) .or. &
+      & (mpg%nnreg(0) == 1 .and. mpg%isClassicalGrid.eq.0)) then
         geometryId = GEOMETRY_LIMITER
         if (firstgmid(1)) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LIMITER")
@@ -570,7 +571,8 @@ contains
         return
     end if
 
-    if (mpg%nnreg(0) == 4) then
+    if ((mpg%nnreg(0) == 4 .and. mpg%isClassicalGrid.eq.1) .or. &
+      & (mpg%nnreg(0) == 3 .and. mpg%isClassicalGrid.eq.0)) then
         if (object.eq.1) then
           geometryId = GEOMETRY_SN
           if (firstgmid(1)) then
@@ -595,7 +597,7 @@ contains
         return
     end if
 
-    if (mpg%nnreg(0) == 5) then
+    if (mpg%nnreg(0) == 5 .and. mpg%isClassicalGrid.eq.1) then
         geometryId = GEOMETRY_STELLARATORISLAND
         if (firstgmid(1)) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
@@ -604,7 +606,7 @@ contains
         return
     end if
 
-    if (mpg%nnreg(0) == 7) then
+    if (mpg%nnreg(0) == 7 .and. mpg%isClassicalGrid.eq.1) then
         Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
         Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iinactive)))
         if ((Xpsi_active.lt.Xpsi_snowflake.and.geo%psi_increasing).or. &
@@ -634,16 +636,26 @@ contains
         end if
     end if
 
-    if (mpg%nnreg(0) == 8) then
+    if ((mpg%nnreg(0) == 8 .and. mpg%isClassicalGrid.eq.1) .or. &
+      & (mpg%nXpt.ge.2 .and. mpg%isClassicalGrid.eq.0)) then
 
       if (object.eq.1) then
-        if (mpg%nXpt.le.1) then
-          geometryId = GEOMETRY_DDN_BOTTOM ! Arbitrary ambiguous GEOMETRY_DDN assignment
-          if (firstgmid(1)) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_BOTTOM?)")
-            firstgmid(1) = .false.
+        if (mpg%nXpt.eq.1) then
+          if (geo%vxY(mpg%Xpt(1)).le.0.0_R8) then
+            geometryId = GEOMETRY_DDN_BOTTOM ! Ambiguous GEOMETRY_DDN assignment
+            if (firstgmid(1)) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_BOTTOM?)")
+              firstgmid(1) = .false.
+            end if
+            return
+          else if (geo%vxY(mpg%Xpt(1)).gt.0.0_R8) then
+            geometryId = GEOMETRY_DDN_TOP ! Ambiguous GEOMETRY_DDN assignment
+            if (firstgmid(1)) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_TOP?)")
+              firstgmid(1) = .false.
+            end if
+            return
           end if
-          return
         else if (mpg%nXpt.eq.2) then ! We have a true DN grid
           if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
@@ -724,7 +736,7 @@ contains
             deallocate( is_active )
             return
           end if
-        endif
+        end if
       else if (object.eq.2) then
         if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
           geometryId = GEOMETRY_LIMITER
@@ -734,7 +746,7 @@ contains
           end if
           return
         elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
-          geometryID = GEOMETRY_SN
+          geometryId = GEOMETRY_SN
           if (firstgmid(2)) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN")
             firstgmid(2) = .false.
@@ -820,8 +832,8 @@ contains
 
     geometryId = GEOMETRY_UNSPECIFIED
     if (firstgmid(1)) then
-        call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
-        firstgmid(1) = .false.
+      call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
+      firstgmid(1) = .false.
     end if
 
     call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )

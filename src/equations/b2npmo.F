@@ -936,7 +936,7 @@ c     ..compare 9-pt stencil matrix
 *   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
       do is = 0, ns-1
-        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                          ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
+        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                         ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
      &    -sr%smodt(:,1,is)*pl%ua(:,is)                              ! = 0
      &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                    ! = 0
      &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)

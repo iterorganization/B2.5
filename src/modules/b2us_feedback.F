@@ -246,6 +246,7 @@ cxpb size is changed in b2mod_dimensions
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       integer :: nFc, ns
+      integer, save :: gridGeometry
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, valid, done
@@ -329,7 +330,11 @@ cxpb size is changed in b2mod_dimensions
       call xertst (1.0_R8.le.volrec_overshoot.or.
      1 0.0_R8.eq.volrec_overshoot,
      1 'faulty internal parameter volrec_overshoot')
-      if (mpg%nnreg(0).le.2) then
+      gridGeometry = geometryId(mpg,geo,1)
+      if (gridGeometry.eq.GEOMETRY_LINEAR .or.
+     &    gridGeometry.eq.GEOMETRY_LIMITER .or.
+     &    gridGeometry.eq.GEOMETRY_CYLINDER .or.
+     &    gridGeometry.eq.GEOMETRY_ANNULUS) then
         coreregno = 0
       else
         coreregno = 1
