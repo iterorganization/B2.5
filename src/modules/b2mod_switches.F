@@ -953,19 +953,15 @@ c Zhdanov closure switches
         s % b2npco_rxg =  huge(1.0_R8)
         s % b2npht_rxg =  huge(1.0_R8)
         s % b2npmo_rxg =  huge(1.0_R8)
-        s % b2npco_pcm0 = 0.0_R8
-        s % b2npco_pcm1 = 0.0_R8
-        s % b2npht_pcm0 = 0.0_R8
-        s % b2npht_pcm1 = 0.0_R8
       else
         s % b2npco_rxg =  1.0_R8
         s % b2npht_rxg =  1.0_R8
         s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
-        s % b2npco_pcm0 = 1.0_R8
-        s % b2npco_pcm1 = 1.0_R8
-        s % b2npht_pcm0 = 1.0_R8
-        s % b2npht_pcm1 = 1.0_R8
       end if
+      s % b2npco_pcm0 = 1.0_R8
+      s % b2npco_pcm1 = 1.0_R8
+      s % b2npht_pcm0 = 1.0_R8
+      s % b2npht_pcm1 = 1.0_R8
 
       s % xfm0       =  1.0_R8
       s % xfm1       =  1.0_R8

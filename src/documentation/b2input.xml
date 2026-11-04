@@ -5650,7 +5650,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -5678,7 +5678,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switch>
@@ -5695,7 +5695,7 @@
 				<type>real</type>
 				<description>
 					Normalisation factor for the parallel momentum equation.
-					Not used when running in time_dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switch>

@@ -180,7 +180,6 @@
         endif
 c time-dependent treatment
         if(switch%b2mndt_style.eq.2) then
-         rxg_npmo = huge(1.0_R8)
          do is = 0,ns-1
           warning = .false.
           do iCv = 1, mpg%nCi
@@ -193,11 +192,8 @@ c time-dependent treatment
            write(6,*) 'Time derivative terms may be inacurrate !'
           end if
          enddo
-        else
-         rxg_npmo = switch%b2npmo_rxg
         endif
-        call xertst (0.0_R8.lt.rxg_npmo,
-     &    'faulty internal parameter rxg')
+        rxg_npmo = switch%b2npmo_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npmo.lt.3) then

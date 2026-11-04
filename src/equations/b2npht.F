@@ -142,14 +142,6 @@
      &              'equations was implemented similarly as the energy',
      &              'equations but lacks theoretical development'
           endif
-*    ..make sure time-dependent equations are not altered by convergence tricks
-          rxg_npht = huge(1.0_R8)
-          if (switch%b2npht_pcm0.gt.0.0_R8) then
-            call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
-          endif
-          if (switch%b2npht_pcm1.gt.0.0_R8) then
-            call xerrab('b2npht_pcm1 must be 0 for time-dependent mode')
-          endif
           warning_e = .false.
           warning_i = .false.
           warning_n = .false.
@@ -181,11 +173,8 @@
      .   write(6,*) 'Time derivative terms may be inacurrate !'
           if (warning_kt .or. warning_zt)
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
-        else
-          rxg_npht = 1.0_R8
         endif                                                            !srv 07.07.21 }
-        call xertst (0.0_R8.lt.rxg_npht,
-     &   'faulty internal parameter rxg')
+        rxg_npht = switch%b2npht_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
