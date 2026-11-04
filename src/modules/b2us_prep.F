@@ -3012,7 +3012,7 @@ c$$$      end do
                 exit
               endif
             enddo
-            
+
             ! Check if meanCv is inside any original cell (ray casting)
             ! Cast ray in +X direction, count edge crossings
             center_inside = .false.
@@ -3065,8 +3065,7 @@ c$$$      end do
                 exit
               endif
             enddo
-            
-            
+
             ! If no face projection found, center outside all cells,
             ! OR distance invalid, fallback
             if (.not. proj_found .or. .not. center_inside .or.
@@ -3110,8 +3109,8 @@ c$$$      end do
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2State ( mpg%nCv, mpg%nFc, ns, st)
-      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st % diag )
+      call createB2State ( mpg%nCv, mpg%nFc, ns, st )
+      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st%diag )
 
 !     nfx = (nx+1)*ny
 

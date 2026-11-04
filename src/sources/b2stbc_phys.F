@@ -1368,7 +1368,7 @@ c   (ionising_core option)
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(2a,1p,g14.7,a,a,a,a,i3)')
      .       'BCCON = 15 : prescribe the decay length for the density',
-     &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
+     &       ' for drifts switched on ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             iCv = mpg%bcCv(mpg%bcCvP(ib,1),2)
             if (mpg%cvOnClosedSurface(iCv).and.ishigh)

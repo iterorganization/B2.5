@@ -168,6 +168,7 @@ c
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
       integer iCv, iCm, iCn, iCp, iFc, iFt, iFp, iFm, iVx, iVx1, iVx2
       integer is, iss, isp, is2
+      integer nxtl, nxtr
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -1191,6 +1192,7 @@ c
       nz=ns
 c
       if (mpg%isClassicalGrid.eq.1) then
+        call get_nxt(mpg%nx, nxtl, nxtr)
         do iCv=1,mpg%nCv
           XX(iCv,2) = real(cvIx(iCv),R8)
           XX(iCv,1) = real(cvIx(iCv),R8)-0.5_R8
@@ -11450,10 +11452,8 @@ c
         case('nxtl')     ! nxtl
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (mpg%nnreg(0).ge.7) then
-#ifdef WG_TODO
+          if (mpg%nXpt.ge.2) then
             call ipush(istack,iistack,nxtl)
-#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
@@ -11462,10 +11462,8 @@ c
         case('nxtr')     ! nxtr
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (mpg%nnreg(0).ge.7) then
-#ifdef WG_TODO
+          if (mpg%nXpt.ge.2) then
             call ipush(istack,iistack,nxtr)
-#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'

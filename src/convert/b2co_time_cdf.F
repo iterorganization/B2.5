@@ -93,7 +93,7 @@
           call output_ds_fc
      &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i)-1,'dsl',dsl)
         case (2)
-          if (mpg%nnreg(0).ge.7) then
+          if (mpg%nXpt.ge.2) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif
