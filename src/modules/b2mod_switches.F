@@ -574,6 +574,7 @@ c b2mndt
       integer :: b2mndt_startup
       integer :: ntim_step_out
       integer :: calc_err_step_out
+      integer :: tot_eqs_override
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1245,6 +1246,7 @@ c b2mndt
       s % b2mndt_startup = 0
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
+      s % tot_eqs_override = 0
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -2022,6 +2024,7 @@ c b2mndt
       call ipgeti ('b2mndt_startup', s % b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
+      call ipgeti ('b2mndt_tot_eqs_override', s % tot_eqs_override)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2650,6 +2653,8 @@ c b2mndt
      &   'faulty internal parameter ntim_step_out')
       call xertst (1.le.s%calc_err_step_out,
      &   'faulty internal parameter calc_err_step_out')
+      call xertst (s%tot_eqs_override.eq.0.or.s%tot_eqs_override.eq.1,
+     &   'b2mndt_tot_eqs_override should be 0 or 1')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
