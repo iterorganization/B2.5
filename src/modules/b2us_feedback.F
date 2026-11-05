@@ -2587,16 +2587,16 @@ cxpb size is changed in b2mod_dimensions
             end select
 
             if (fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3 .or.
-     &          fb_actuator(ifb).eq.8)
+     &          (fb_actuator(ifb).ge.3 .and.
+     &          fb_actuator(ifb).le.8))
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
           endif
 
           feedback_namelist_used = feedback_namelist_used .or.
-     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3 .or.
-     &     fb_actuator(ifb).eq.8
+     &     fb_actuator(ifb).eq.1 .or. (fb_actuator(ifb).ge.3 .and.
+     &     fb_actuator(ifb).le.8)
 
           if (fb_current_prev(ifb).gt.0.0_R8) then
             saved_fb_prev(ifb) = fb_current_prev(ifb)
