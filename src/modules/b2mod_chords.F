@@ -104,10 +104,8 @@ c   ..list the chord files, those of the working directory first
       endif
 #endif
       if (ex .and. ios.eq.0) then
-        do
-          read(lu,'(a)',iostat=ios) fname
-          if (ios.ne.0) exit
-          if (len_trim(fname).eq.0) cycle
+        read(lu,'(a)',iostat=ios) fname
+        do while (ios.eq.0)
 c   ..a file of the run directory hidden by one of the same name here
           dup = .false.
           if (fname(1:3).eq.'../') then
@@ -115,14 +113,16 @@ c   ..a file of the run directory hidden by one of the same name here
               if (files(i).eq.fname(4:)) dup = .true.
             enddo
           endif
-          if (dup) cycle
-          if (nfile.ge.maxcgrp) then
-            write(*,*) 'cdfchord: too many chord files, ignored ',
-     &        trim(fname)
-            cycle
+          if (len_trim(fname).gt.0 .and. .not.dup) then
+            if (nfile.lt.maxcgrp) then
+              nfile = nfile + 1
+              files(nfile) = fname
+            else
+              write(*,*) 'cdfchord: too many chord files, ignored ',
+     &          trim(fname)
+            endif
           endif
-          nfile = nfile + 1
-          files(nfile) = fname
+          read(lu,'(a)',iostat=ios) fname
         enddo
         close(lu, status='delete')
       endif
@@ -195,25 +195,25 @@ c     Read one chord file into lbl, np (npoints), n and buf(1:7,1:n).
       np = 0
       iline = 0
       bad = .false.
-      do
-        read(lf,'(a)',iostat=ierr) line
-        if (ierr.ne.0) exit
+      read(lf,'(a)',iostat=ierr) line
+      do while (ierr.eq.0 .and. .not.bad .and. n.le.maxcgrp)
         iline = iline + 1
-        if (len_trim(line).eq.0) cycle
-        if (np.eq.0) then
-          read(line,*,iostat=ierr) lbl, np
-          bad = ierr.ne.0 .or. np.eq.0
-          np = abs(np)
-        else
-          read(line,*,iostat=ierr) v
-          bad = ierr.ne.0
-          if (.not.bad) then
-            if (n.ge.size(buf,2)) call grow_buf(2*size(buf,2))
-            n = n + 1
-            buf(1:7,n) = v
+        if (len_trim(line).gt.0) then
+          if (np.eq.0) then
+            read(line,*,iostat=ierr) lbl, np
+            bad = ierr.ne.0 .or. np.eq.0
+            np = abs(np)
+          else
+            read(line,*,iostat=ierr) v
+            bad = ierr.ne.0
+            if (.not.bad) then
+              if (n.ge.size(buf,2)) call grow_buf(2*size(buf,2))
+              n = n + 1
+              buf(1:7,n) = v
+            endif
           endif
         endif
-        if (bad .or. n.gt.maxcgrp) exit
+        if (.not.bad) read(lf,'(a)',iostat=ierr) line
       enddo
       close(lf)
       if (bad) then
@@ -707,14 +707,14 @@ c     rewritten instead of appended).
       status = nf_open(filename, NF_NOWRITE, ncid)
       if (status.ne.NF_NOERR) return
       allocate(sgrp(maxcgrp), cgrp(maxcgrp))
+      nset = 0
       status = nf_inq_grps(ncid, nset, sgrp)
-      if (status.eq.NF_NOERR .and. nset.ge.1) then
-        do is = 1, nset
-          status = nf_inq_grps(sgrp(is), nc, cgrp)
-          if (status.ne.NF_NOERR) exit
-          nchord = nchord + nc
-        enddo
-      endif
+      is = 0
+      do while (status.eq.NF_NOERR .and. is.lt.nset)
+        is = is + 1
+        status = nf_inq_grps(sgrp(is), nc, cgrp)
+        if (status.eq.NF_NOERR) nchord = nchord + nc
+      enddo
       if (status.eq.NF_NOERR .and. nchord.ge.1) then
         deallocate(setname, cnum, npt, npoints, cval)
         deallocate(rstart, zstart, phistart, rend, zend, phiend)
@@ -723,15 +723,17 @@ c     rewritten instead of appended).
         allocate(rstart(nchord), zstart(nchord), phistart(nchord))
         allocate(rend(nchord), zend(nchord), phiend(nchord))
         m = 0
-        do is = 1, nset
-          if (status.eq.NF_NOERR)
-     &      status = nf_inq_grpname(sgrp(is), gname)
+        is = 0
+        do while (status.eq.NF_NOERR .and. is.lt.nset)
+          is = is + 1
+          status = nf_inq_grpname(sgrp(is), gname)
           if (status.eq.NF_NOERR)
      &      status = nf_get_att_int(sgrp(is), NF_GLOBAL, 'npoints', np)
           if (status.eq.NF_NOERR)
      &      status = nf_inq_grps(sgrp(is), nc, cgrp)
-          if (status.ne.NF_NOERR) exit
-          do ic = 1, nc
+          ic = 0
+          do while (status.eq.NF_NOERR .and. ic.lt.nc)
+            ic = ic + 1
             m = m + 1
             setname(m) = gname(1:80)
             npoints(m) = np
@@ -751,7 +753,6 @@ c     rewritten instead of appended).
             call get_dbl('Rend', rend(m))
             call get_dbl('zend', zend(m))
             call get_dbl('phiend', phiend(m))
-            if (status.ne.NF_NOERR) exit
           enddo
         enddo
         ok = status.eq.NF_NOERR

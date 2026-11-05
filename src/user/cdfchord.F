@@ -537,8 +537,9 @@ c     among all chords read, of surviving chord mm.
         call get_cdf_chord_meta(fname, okm, nold, oname, onum, onpt,
      &    onp, oval, ors, ozs, ops, ore, oze, ope)
         same = okm .and. nold.eq.nchd
-        do mm = 1, nchd
-          if (.not.same) exit
+        mm = 0
+        do while (same .and. mm.lt.nchd)
+          mm = mm + 1
           kk = cid(mm)
           same = .false.
           do j = 1, nold
