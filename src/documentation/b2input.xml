@@ -3807,6 +3807,78 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndr_cdfchordtim</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If non-zero, the movie files b2chords.nc and eirenechords.nc are generated (the second one only in case of coupled runs), containing quantities interpolated along the chords defined in the chord files (*.chords, in the b2plot chord file format) of the run directory. Gives the real-time interval between writes of chord frames in b2chords.nc and eirenechords.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_state_variables</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_state_variables.ge.1 then the plasma state variables (na, ne, Te, Ti, etc.) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_fluxes.ge.1 then the plasma flux densities (fna(x/y), fhe(x/y), fhi(x/y), etc.) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_b25_transport</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_b25_transport.ge.1 then the anomalous transport coefficients interpolated along the chords are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_state_variables</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_state_variables.ge.1 then the neutrals state variables (atom and molecule densities and temperatures), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_fluxes.ge.1 then the neutrals fluxes (atom and molecule particle and energy flux densities), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_eirene_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2chords.nc. If cdfchord_eirene_sources.ge.1 then the plasma sources due to plasma-neutrals interactions (particle and energy sources for each fluid species, and neutrals radiation from atoms and molecules), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfchord_triangles</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to eirenechords.nc. If cdfchord_triangles.ge.1 then the neutral quantities on the Eirene triangular grid (atom and molecule particle/energy/momentum densities), interpolated along the chords, are outputted, in case of coupled runs.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_ntim_save</name>
 				<default>0</default>
 				<type>integer</type>
