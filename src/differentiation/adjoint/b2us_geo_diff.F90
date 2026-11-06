@@ -2329,7 +2329,7 @@ CONTAINS
       DO j=mpg%vxfcp(vx_current, 1),mpg%vxfcp(vx_current, 1)+mpg%vxfcp(&
 &         vx_current, 2)-1
         fc_next = mpg%vxfc(j)
-! we ingore the current face
+! we ignore the current face
 ! check if face belongs to same flux tube
         IF (fc_next .NE. fc_current) THEN
 ! stop the for loop if we found the next face

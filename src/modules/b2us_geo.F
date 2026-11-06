@@ -2173,7 +2173,7 @@ csc   than previous face, then identify next vertex
          do j = mpg%vxFcP(vx_current,1),
      &          mpg%vxFcP(vx_current,1)+mpg%vxFcP(vx_current,2)-1
            fc_next = mpg%vxFc(j)
-           if (fc_next==fc_current) cycle  ! we ingore the current face
+           if (fc_next==fc_current) cycle  ! we ignore the current face
            ! check if face belongs to same flux tube
            if (mpg%fcFs(fc_next)==ifs) then
              ! if we are back at the starting face, this
