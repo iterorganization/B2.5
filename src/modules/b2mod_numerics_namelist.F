@@ -168,11 +168,11 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
-! lkw 17.07.2026 - sometimes it is worth solving the equation for total energy to reduce noise in heat exchange term 
-!      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
-!        solveet=.false.
-!        solvemt=.false.
-!      endif
+      if (switch%b2mndt_style.eq.2.and. !! do not solve total momentum and energy equation in time-dependent mode
+     &  switch%tot_eqs_override.eq.0) then !! option to solve total equations in time-dependent mode, but breaks time-dependency
+        solveet=.false.
+        solvemt=.false.
+      endif
       last_solve_5=.true.
       last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
@@ -226,13 +226,13 @@
       end subroutine dealloc_b2mod_numerics
 
       subroutine read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,nnreg,
-     .  cvOnClosedSurface,b2mndt_style,new)
+     .  cvOnClosedSurface,b2mndt_style,tot_eqs_override,new)
       implicit none
 
       integer nCv,ns,nsmin,nsmax,nnreg(0:1)
       logical :: new
       logical :: file_ok, cvOnClosedSurface(nCv)
-      integer iCv, is, ireg, b2mndt_style
+      integer iCv, is, ireg, b2mndt_style, tot_eqs_override
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -253,25 +253,27 @@
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          if (.not. (b2mndt_style.le.1.or..not.solveet(ireg))) then
-            write(*,*)
-            write(*,*) 'Warning: b2mndt_style=2 with SOLVEET = .true.!'
-            write(*,*)
-     &       'This activates the te * d ne / dt and ti * d ni / dt '//
-     &       'terms, but destroys the time-dependent mode.'
-            write(*,*)
-          endif
+          if (tot_eqs_override.eq.0) then
+            call xertst(b2mndt_style.le.1.or..not.solveet(ireg),
+     &      'Time-dependent mode requires SOLVEET = .false.!')
+          else if (tot_eqs_override.eq.1) then
+            write(0,*)
+     &        'WARNING: b2mndt_style=2 with SOLVEET = .true.! ' //
+     &        'This breaks time-dependency and the time evolution'//
+     &        ' should not be trusted!'
+          end if
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          if (.not. (b2mndt_style.le.1.or..not.solvemt(ireg))) then
-            write(*,*)
-            write(*,*) 'Warning: b2mndt_style=2 with SOLVEMT = .true.!'
-            write(*,*)
-     &       'This activates the ua * d na / dt term, '//
-     &       'but destroys the time-dependent mode.'
-            write(*,*)
-          endif
+          if (tot_eqs_override.eq.0) then
+            call xertst(b2mndt_style.le.1.or..not.solvemt(ireg),
+     &       'Time-dependent mode requires SOLVEMT = .false.!')
+          else if (tot_eqs_override.eq.1) then
+            write(0,*)
+     &        'WARNING: b2mndt_style=2 with SOLVEMT = .true.! ' //
+     &        'This breaks time-dependency and the time evolution'//
+     &        ' should not be trusted!'
+          end if
         end do
       else if (file_ok.and.new) then
         call xerrab ('Found unexpected '//trim(filename))

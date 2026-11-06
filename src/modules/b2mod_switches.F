@@ -589,6 +589,7 @@ c b2mndt
       integer :: b2mndt_startup
       integer :: ntim_step_out
       integer :: calc_err_step_out
+      integer :: tot_eqs_override
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -983,19 +984,15 @@ c Zhdanov closure switches
         s % b2npco_rxg =  huge(1.0_R8)
         s % b2npht_rxg =  huge(1.0_R8)
         s % b2npmo_rxg =  huge(1.0_R8)
-        s % b2npco_pcm0 = 0.0_R8
-        s % b2npco_pcm1 = 0.0_R8
-        s % b2npht_pcm0 = 0.0_R8
-        s % b2npht_pcm1 = 0.0_R8
       else
         s % b2npco_rxg =  1.0_R8
         s % b2npht_rxg =  1.0_R8
         s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
-        s % b2npco_pcm0 = 1.0_R8
-        s % b2npco_pcm1 = 1.0_R8
-        s % b2npht_pcm0 = 1.0_R8
-        s % b2npht_pcm1 = 1.0_R8
       end if
+      s % b2npco_pcm0 = 1.0_R8
+      s % b2npco_pcm1 = 1.0_R8
+      s % b2npht_pcm0 = 1.0_R8
+      s % b2npht_pcm1 = 1.0_R8
 
       s % xfm0       =  1.0_R8
       s % xfm1       =  1.0_R8
@@ -1276,9 +1273,10 @@ c b2mndt
       s % b2mndt_ckn = 1
       s % b2mndt_bdf = 1
       s % b2mndt_dummy = 0
-      s % b2mndt_startup = 1
+      s % b2mndt_startup = 0
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
+      s % tot_eqs_override = 0
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -2078,6 +2076,7 @@ c b2mndt
       call ipgeti ('b2mndt_startup', s % b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
+      call ipgeti ('b2mndt_tot_eqs_override', s % tot_eqs_override)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2691,8 +2690,8 @@ c b2mndt
      &  'b2mndt_ckn should be 1 or 2')
       call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
      &  'b2mndt_bdf should be 1 or 2')
-      call xertst (s%b2mndt_startup.eq.1.or.s%b2mndt_startup.eq.2,
-     &  'b2mndt_startup should be 1 or 2')
+      call xertst (s%b2mndt_startup.eq.0.or.s%b2mndt_startup.eq.1.or.
+     &  s%b2mndt_startup.eq.2,'b2mndt_startup should be 0, 1 or 2')
       if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
         call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
      &     ' integration schemes at the same time!'//
@@ -2706,6 +2705,8 @@ c b2mndt
      &   'faulty internal parameter ntim_step_out')
       call xertst (1.le.s%calc_err_step_out,
      &   'faulty internal parameter calc_err_step_out')
+      call xertst (s%tot_eqs_override.eq.0.or.s%tot_eqs_override.eq.1,
+     &   'b2mndt_tot_eqs_override should be 0 or 1')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,

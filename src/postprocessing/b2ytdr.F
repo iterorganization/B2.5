@@ -180,7 +180,7 @@ c 2002-09-11: logic revised
       integer nbc1, ndat, nds(ns-1)
       integer nCv, nFc, nVx
       integer boundary_namelist, neutrals_namelist, use_eirene
-      integer numerics_namelist, style_b2mndt
+      integer numerics_namelist, style_b2mndt, tot_eqs_override
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag, reset_iter
@@ -606,7 +606,8 @@ c 2002-09-11: logic revised
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
       data boundary_namelist/0/, neutrals_namelist/0/
-      data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
+      data use_eirene/0/, style_b2mndt/1/, tot_eqs_override/0/
+      data pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/, reset_iter/2/
@@ -1478,6 +1479,7 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      call ipgeti ('b2mndt_tot_eqs_override', tot_eqs_override)
       allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
       cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
       call ipgetc ('b2tral_zh_tf_toff', cvalip)
@@ -1510,7 +1512,7 @@ c 2002-09-11: logic revised
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
       call alloc_b2mod_numerics(nCv, ns, nnreg, switch)
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2.and.tot_eqs_override.eq.0) then
         solvemt=.false.
         solveet=.false.
       endif
@@ -3639,8 +3641,9 @@ cxpb This will need to be checked !!!
       todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
      &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >   nnreg,mpg%cvOnClosedSurface,style_b2mndt,new_namelist)
+        call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,nnreg,
+     &   mpg%cvOnClosedSurface,style_b2mndt,tot_eqs_override,
+     &   new_namelist)
         if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
      &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
