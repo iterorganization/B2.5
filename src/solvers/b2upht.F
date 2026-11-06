@@ -6,6 +6,8 @@
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, cortt, corte,
      &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
      &  po, ne, ni)
+      use b2mod_growth_guard, only : growth_bound, growth_factor,
+     &                               growth_record
       use b2mod_types
       use b2mod_math
       use b2mod_constants
@@ -56,6 +58,7 @@
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), dzt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
+      real(kind=R8) :: guard_alpha, guard_cs, guard_du
       real (kind=R8) ::
      *  dte1(nCv), dti1(nCv),                                       !lk 26.10.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)      !lk 26.10.17
@@ -165,6 +168,33 @@
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
+c growth guard: cap the heat increments, with one common factor
+c so the e/i exchange direction and ratio survive
+c the pressure/velocity corrections below reuse these accepted increments
+        if (switch%growth_guard.eq.1.and.iCv.le.mpg%nCi) then
+          guard_alpha = 1.0_R8
+          if (solvereg(ireg)) guard_alpha = min(guard_alpha,
+     &      growth_factor(dte(iCv),te(iCv),switch%growth_frac))
+          if (solvireg(ireg)) guard_alpha = min(guard_alpha,
+     &      growth_factor(dti(iCv),ti(iCv),switch%growth_frac))
+          if (solvnreg(ireg).and.switch%tn_style.eq.2)
+     &      guard_alpha = min(guard_alpha,
+     &      growth_factor(dtn(iCv),tn(iCv),switch%growth_frac))
+          if (guard_alpha.lt.1.0_R8) then
+            if (solvereg(ireg)) then
+              dte(iCv) = guard_alpha*dte(iCv)
+              call growth_record(3,iCv,1.0_R8-guard_alpha,.false.)
+            endif
+            if (solvireg(ireg)) then
+              dti(iCv) = guard_alpha*dti(iCv)
+              call growth_record(4,iCv,1.0_R8-guard_alpha,.false.)
+            endif
+            if (solvnreg(ireg).and.switch%tn_style.eq.2) then
+              dtn(iCv) = guard_alpha*dtn(iCv)
+              call growth_record(5,iCv,1.0_R8-guard_alpha,.false.)
+            endif
+          endif
+        endif
         if (solvireg(ireg))
      >   ti(iCv) = max(switch%b2upht_ti_min*ev,
      >     min(switch%b2upht_ti_max*ev,ti(iCv)+dti(iCv)))           !xpb !nh
@@ -197,7 +227,20 @@
         ireg = mpg%cvReg(iCv)
         t0 = switch%b2npht_pcm0*pccm0(iCv)*wrk(iCv)
         do is = 0, ns-1
-         if (solvmreg(is,ireg)) ua(iCv,is) = ua(iCv,is)-t0
+         if (solvmreg(is,ireg)) then
+           if (switch%growth_guard.eq.1) then
+             if (is_neutral(is)) then
+               guard_cs = sqrt(tn(iCv)/(mp*am(is)))
+             else
+               guard_cs = sqrt((te(iCv)+ti(iCv))/(mp*am(is)))
+             endif
+             guard_du = growth_bound(-t0,guard_cs,
+     &         switch%growth_mach,2,iCv)
+             ua(iCv,is) = ua(iCv,is)+guard_du
+           else
+             ua(iCv,is) = ua(iCv,is)-t0
+           endif
+         endif
         enddo
        enddo
       endif
