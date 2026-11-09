@@ -114,7 +114,7 @@
       integer, save :: out_tfiles = 1                                !xpb 28.09.16
       integer, save :: ncall_iout = -1
 #ifdef B25_EIRENE
-      integer ia, im
+      integer ia, im, iCn
 #ifdef ASTRA
       integer, save :: use_astra = 0
 #endif
@@ -565,8 +565,9 @@ c   --> better solution wanted here..
             k = b2espcr(is)
             if (is_neutral(is).or.(.not.do_sna_corr_core(k))) cycle
             do iCv=mpg%nCi+1,nCv
-              if(mpg%cvOnClosedSurface(iCv)) then
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+              if(mpg%cvOnClosedSurface(iCn)) then
                 if (switch%mdf_fnb.ne.0) then
                   sna_core(k) = sna_core(k) + st%dv%fna_mdf(iFc,1,is)
                 else
@@ -659,7 +660,7 @@ c   --> better solution wanted here..
             k = b2espcr(is)
             if(is_neutral(is)) cycle
 !            if(eirspta(k).eq.0.0_R8) then  ! not for sputtered particles yet
-            do iCv=1,nCv
+            do iCv=1,mpg%nCi
               if (do_sna_corr_core(k) .or.
      &                (.not.mpg%cvOnClosedSurface(iCv))) then
                 sna0_eir(iCv,0,is) = sna0_eir(iCv,0,is)*t(k)
@@ -833,7 +834,7 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
      4 st%srw%shi0(:,3)*st%dv%ni(:,0)*st%pl%ti(:)
       st%srw%b2stbr_shn(:)=
      1 st%srw%shn0(:,0)+
-     2 st%srw%shn0(:,1)*st%pl%ti(:)+
+     2 st%srw%shn0(:,1)*st%pl%tn(:)+
      3 st%srw%shn0(:,2)*st%dv%nn(:)+
      4 st%srw%shn0(:,3)*st%dv%nn(:)*st%pl%tn(:)
       st%srw%b2stbr_sch(:)=
@@ -1071,40 +1072,42 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
-       do ia = 1,nnatmi
-        write (chns,'(i3.3)') ia
-        wrk0(:)=rfluxa(:,ia,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxa_eir'//chns)
-        wrk0(:)=tfluxa(:,ia,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxa_eir'//chns)
-        call my_out_us(70,nFc,0,fatm_eir(:,1,ia),              ! IYS 27.01.2017
-     &                'b2stbr_fatmy_eir'//chns)
-        wrk0(:)=pfluxa(:,ia,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxa_eir'//chns)
-        call my_out_us(70,nFc,0,fatm_eir(:,0,ia),              ! IYS 27.01.2017
-     &                'b2stbr_fatmx_eir'//chns)
-        wrk0(:)=dab2(:,ia,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_dab2_eir'//chns)
-        wrk0(:)=tab2(:,ia,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_tab2_eir'//chns)
-       enddo
-       do im = 1,nnmoli
-        write (chns,'(i3.3)') im
-        wrk0(:)=rfluxm(:,im,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxm_eir'//chns)
-        wrk0(:)=tfluxm(:,im,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxm_eir'//chns)
-        call my_out_us(70,nFc,0,fmol_eir(:,1,im),              ! IYS 27.01.2017
-     &              'b2stbr_fmoly_eir'//chns)
-        wrk0(:)=pfluxm(:,im,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxm_eir'//chns)
-        call my_out_us(70,nFc,0,fmol_eir(:,0,im),              ! IYS 27.01.2017
-     &              'b2stbr_fmolx_eir'//chns)
-        wrk0(:)=dmb2(:,im,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_dmb2_eir'//chns)
-        wrk0(:)=tmb2(:,im,1)
-        call my_out_us(70,nCv,0,wrk0,'b2stbr_tmb2_eir'//chns)
-       enddo
+       if (switch%use_eirene.ne.0) then                               !xpb 26.10.26
+        do ia = 1,nnatmi
+         write (chns,'(i3.3)') ia
+         wrk0(:)=rfluxa(:,ia,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxa_eir'//chns)
+         wrk0(:)=tfluxa(:,ia,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxa_eir'//chns)
+         call my_out_us(70,nFc,0,fatm_eir(:,1,ia),             ! IYS 27.01.2017
+     &                 'b2stbr_fatmy_eir'//chns)
+         wrk0(:)=pfluxa(:,ia,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxa_eir'//chns)
+         call my_out_us(70,nFc,0,fatm_eir(:,0,ia),             ! IYS 27.01.2017
+     &                 'b2stbr_fatmx_eir'//chns)
+         wrk0(:)=dab2(:,ia,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_dab2_eir'//chns)
+         wrk0(:)=tab2(:,ia,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_tab2_eir'//chns)
+        enddo
+        do im = 1,nnmoli
+         write (chns,'(i3.3)') im
+         wrk0(:)=rfluxm(:,im,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxm_eir'//chns)
+         wrk0(:)=tfluxm(:,im,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxm_eir'//chns)
+         call my_out_us(70,nFc,0,fmol_eir(:,1,im),             ! IYS 27.01.2017
+     &               'b2stbr_fmoly_eir'//chns)
+         wrk0(:)=pfluxm(:,im,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxm_eir'//chns)
+         call my_out_us(70,nFc,0,fmol_eir(:,0,im),             ! IYS 27.01.2017
+     &               'b2stbr_fmolx_eir'//chns)
+         wrk0(:)=dmb2(:,im,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_dmb2_eir'//chns)
+         wrk0(:)=tmb2(:,im,1)
+         call my_out_us(70,nCv,0,wrk0,'b2stbr_tmb2_eir'//chns)
+        enddo
+       endif                                                          !xpb 26.10.26
 #endif
       endif
       wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+

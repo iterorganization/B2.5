@@ -48,7 +48,7 @@ SUBROUTINE B2TBFL_DV(ncv, nfc, lcore, mpg, flux, fluxd, tbfl, tbfld, div&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ib, ibc, icv, ifc
+  INTEGER :: ib, ibc, icv, icn, ifc
   INTEGER, SAVE :: ncall=0
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -74,9 +74,11 @@ SUBROUTINE B2TBFL_DV(ncv, nfc, lcore, mpg, flux, fluxd, tbfl, tbfld, div&
     DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
       icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+! number of the real cell
+      icn = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
       ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      IF (lcore .OR. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+      IF (lcore .OR. (.NOT.mpg%cvonclosedsurface(icn))) THEN
         temp = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
         DO nd=1,nbdirs
           tbfld(nd, ib) = tbfld(nd, ib) + temp*(fluxd(nd, ifc, 0)+fluxd(&
@@ -142,7 +144,7 @@ SUBROUTINE B2TBFL_NODIFF(ncv, nfc, lcore, mpg, flux, tbfl, div)
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ib, ibc, icv, ifc
+  INTEGER :: ib, ibc, icv, icn, ifc
   INTEGER, SAVE :: ncall=0
 !-----------------------------------------------------------------------
 !.computation
@@ -160,9 +162,11 @@ SUBROUTINE B2TBFL_NODIFF(ncv, nfc, lcore, mpg, flux, tbfl, div)
     DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
       icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+! number of the guard cell
+      icn = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
       ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      IF (lcore .OR. (.NOT.mpg%cvonclosedsurface(icv))) tbfl(ib) = tbfl(&
+      IF (lcore .OR. (.NOT.mpg%cvonclosedsurface(icn))) tbfl(ib) = tbfl(&
 &         ib) + mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*(flux(ifc, 0)+flux(&
 &         ifc, 1))
 ! add boundary flux to total divergence

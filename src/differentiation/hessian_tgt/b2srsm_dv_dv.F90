@@ -145,7 +145,7 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
@@ -186,7 +186,7 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         result10 = ROXA(icv, is)
         result2 = ROXA(icv, is)
         x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
@@ -243,7 +243,7 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
 &       icv, 0) + sr%shi(icv, 3)*ti(icv)*ni(icv, 0)
       IF (x2 .GE. 0.) THEN
@@ -619,7 +619,7 @@ SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           DO nd=1,nbdirs
@@ -686,7 +686,7 @@ SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
         CALL ROXA_DV(icv, is, result2, result2d, nbdirs)
         temp = result2*ua(icv, is)
@@ -793,7 +793,7 @@ SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       temp = ti(icv)*ni(icv, 0)
       DO nd=1,nbdirs
         x2d(nd) = srd%shi(nd, icv, 0) + ti(icv)*srd%shi(nd, icv, 1) + sr&
@@ -1327,7 +1327,7 @@ SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           DO nd=1,nbdirs
@@ -1461,7 +1461,7 @@ SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
 &                 result10dd, nbdirs, nbdirs0)
         CALL ROXA_DV_DV(icv, is, result2, result2d0, result2d, result2dd&
@@ -1704,7 +1704,7 @@ SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
     abs3dd = 0.D0
     x2dd = 0.D0
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       DO nd0=1,nbdirs0
         tempd(nd0) = ni(icv, 0)*tid0(nd0, icv) + ti(icv)*nid0(nd0, icv, &
 &         0)

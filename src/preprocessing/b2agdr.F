@@ -223,13 +223,13 @@
       endif
 
 *   ..correct pbsx on the proper mesh
-      if(redef_gmtry.ne.0) then
-         call b2agbs(g,m)
+      if (redef_gmtry.ne.0) then
+        call b2agbs(g,m)
       endif
 
 *   ..writing some important information 
-      write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
-      write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
+      write(*,*) 'b2agdr: g%cvBb(m%nCv,0) ', g%cvBb(m%nCv,0)
+      write(*,*) 'b2agdr: g%cvEb(m%nCv,0) ', g%cvEb(m%nCv,0)
       write(*,'()')
       if (g%vxFfBz(m%nVx).gt.0.0_R8) then
         write(*,'(a)')
@@ -263,7 +263,7 @@
         write(nout(0),'(/2x,a)')
      .   'This case has ZERO toroidal magnetic field.'
       endif
-      if (g%cvBb(m%nCv,2).ne.0.0_R8) then
+      if (g%cvEb(m%nCv,2).ne.0.0_R8) then
         write(*,'(a)')
      .   'If this is not correct, please set :'
         write(*,'(a)')
@@ -272,7 +272,7 @@
      .   'If already set to "1", set to "0" instead.'
       endif
       write(*,'()')
-      if (g%cvBb(m%nCv,0).gt.0.0_R8) then
+      if (g%cvEb(m%nCv,0).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE poloidal magnetic field.'
         write(*,'(a)')
@@ -323,14 +323,14 @@
      .   'This is the OPPOSITE convention as for '//
      .   'poloidal quantities.'
       end if
-      if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).lt.0.0_R8) then
+      if (g%cvEb(m%nCv,0)*g%cvEb(m%nCv,2).lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
         write(nout(0),'(2x,a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
-      else if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).gt.0.0_R8) then
+      else if (g%cvEb(m%nCv,0)*g%cvEb(m%nCv,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has COUNTER-directed plasma current and '//
      .   'toroidal field.'
@@ -347,6 +347,7 @@
       write(*,'()')
 
       !Take absolute values of magnetic field to comply with b2ag
+      !Already done in b2agmt for unstructured grids
       g%cvBb = abs(g%cvBb)
       g%fcBb = abs(g%fcBb)
       g%vxBb = abs(g%vxBb)
@@ -455,6 +456,25 @@
       call cfwuch (nout(1), 120, lblgm, 'label')
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
+      
+*   ..now read b2us_prep_Qalfmin/Qalfmax
+!ap 17.11.25 this part was missing in b2ag; it was only present in
+!   b2us_prep when starting from a structured/Carre grid. In view of
+!   GOAT integration when we will immediately start with an unstructred
+!   grid, the change to Qalfmin/max is also ported here for consistency,
+!   otherwise the default values would always be written in b2fgmtry.
+      write(*,*) 'b2agdr: default g%Qalfmin: ', g%Qalfmin
+      write(*,*) 'b2agdr: default g%Qalfmax: ', g%Qalfmax
+      write(*,*) 'Now reading b2us_prep_Qalfmin/Qalfmax'
+      call ipgetr('b2us_prep_Qalfmin',g%Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',g%Qalfmax)
+      write (*,*) "b2agdr: new g%Qalfmin: ",g%Qalfmin
+      write (*,*) "b2agdr: new g%Qalfmax: ",g%Qalfmax
+!ap 17.11.25 at this point fcPbs, fcPbshz and fcQalf would be changed
+!   based on checks on local values of fcQalf w.r.t. Qalfmin and
+!   Qalfmax (see b2us_prep). This should not be done when starting
+!   from an unstructured (GOAT) grid, therefore those changes are not
+!   moved here.
 
 *   ..write summary of geometry
       call write_b2fgmtry (nout(1), m, g)

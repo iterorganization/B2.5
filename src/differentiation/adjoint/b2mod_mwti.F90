@@ -3379,10 +3379,10 @@ contains
     real (kind=R8), intent(out) :: ds(nlist)
     real (kind=R8) :: ds_offset
     character*(*) filename
-    integer i
+    integer i, i1
     intrinsic sqrt
 
-    ds(1)= 0.0_R8
+    ds(1)=0.0_R8
     do i=2,nlist
       ds(i)=ds(i-1)+ &
            sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+ &
@@ -3394,7 +3394,17 @@ contains
         ds(i)=ds(i)-ds_offset
       enddo
     endif
-    if(.not.mpg%cvOnClosedSurface(cvlist(1))) then ! flip sign
+    i = 1
+    i1 = 0
+    do while (i1.eq.0 .and. i.le.nlist)
+      if (cvlist(i).le.mpg%nCi) then
+        i1 = i
+      else
+        i = i + 1
+      end if
+    end do
+    call xertst(i1.gt.0, 'No inner cell found!')
+    if(.not.mpg%cvOnClosedSurface(cvlist(i1))) then ! flip sign
       ds(1:nlist)=-ds(1:nlist)
     endif
     open(99,file=filename)

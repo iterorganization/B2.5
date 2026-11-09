@@ -143,6 +143,7 @@ CONTAINS
 &           'faulty parameter iy_nocoreExB')
       DO iy=1,iy_nocoreexb
         ift = mpg%cvft(omp(iy))
+        IF (ift .EQ. 0) CYCLE
         DO ix=1,mpg%ftcvp(ift, 2)
           icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
           IF (mpg%cvonclosedsurface(icv)) THEN
@@ -158,6 +159,7 @@ CONTAINS
       IF (facdrift_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
+          IF (ift .EQ. 0) CYCLE
           DO ix=1,mpg%ftcvp(ift, 2)
             icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
             IF (mpg%cvonclosedsurface(icv)) THEN
@@ -187,6 +189,7 @@ CONTAINS
       IF (facexb_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
+          IF (ift .EQ. 0) CYCLE
           DO ix=1,mpg%ftcvp(ift, 2)
             icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
             IF (mpg%cvonclosedsurface(icv)) THEN
@@ -216,6 +219,7 @@ CONTAINS
       IF (facvis_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
+          IF (ift .EQ. 0) CYCLE
           DO ix=1,mpg%ftcvp(ift, 2)
             icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
             IF (mpg%cvonclosedsurface(icv)) THEN

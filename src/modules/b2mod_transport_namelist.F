@@ -229,6 +229,7 @@ cpxb  In the PFR, we apply the value at the relevant separatrix.
 #ifdef WG_TODO
           do iCv=1,nCv
             iFt = mpg%cvFt(iCv)
+            if (iFt.eq.0) cycle
             if (mpg%cvOnClosedSurface(iCv).or.
      &          mod(mpg%cvReg(iCv,0),4).eq.2) then
               cfl(iCv)=core+(sol-core)*0.5_R8*

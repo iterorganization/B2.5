@@ -413,7 +413,7 @@
 *   ..now calculate the neoclassical transport
 
 *   ..loop over flux tubes
-       do iFt=1,mpg%nFt
+      do iFt=1,mpg%nFt
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
         if (iCv.gt.mpg%nCi) cycle
 
@@ -548,10 +548,10 @@
           enddo
         endif
 
-       enddo
+      enddo
 
 *    ..set transport coefficients on boundary by symmetric condition
-       do iFt=1,mpg%nFt
+      do iFt=1,mpg%nFt
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
         if (iCv.le.mpg%nCi) cycle
         iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
@@ -576,7 +576,7 @@
            vwt(ispecies,istate,iFt)=vwt(ispecies,istate,iFp)
          enddo
         enddo
-       enddo
+      enddo
 
 *    ..determine the neoclassical contribution to the transport coefficients
 *       assuming the following structure for the particle and heat flux

@@ -124,6 +124,7 @@
       srw%sne0 = 0.0_R8
       srw%she0 = 0.0_R8
       srw%shi0 = 0.0_R8
+      srw%shn0 = 0.0_R8
       srw%sch0 = 0.0_R8
       srw%b2stbm_sna = 0.0_R8
       srw%b2stbm_smo = 0.0_R8

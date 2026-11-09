@@ -2570,18 +2570,19 @@ CONTAINS
 !
 !   ..identify cells on closed surfaces
     IF (mpg%nnreg(0) .EQ. 1) THEN
-      mpg%cvonclosedsurface = mpg%periodic_bc .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%periodic_bc .EQ. 1
     ELSE IF (((mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 4) .OR. mpg%&
 &       nnreg(0) .EQ. 5) .OR. mpg%nnreg(0) .EQ. 8) THEN
-      mpg%cvonclosedsurface = MOD(mpg%cvreg, 4) .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = MOD(mpg%cvreg(1:mpg%nCi), 4) .EQ. 1
     ELSE IF (mpg%nnreg(0) .EQ. 7) THEN
-      mpg%cvonclosedsurface = mpg%cvreg .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
     ELSE
-      mpg%cvonclosedsurface = mpg%cvreg .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
       WRITE(*, *) 'Warning: unknown number of regions'
 !call xerrab ('Unknown number of regions!')
       WRITE(*, *) 'Assuming core is region 1'
     END IF
+    mpg%cvOnClosedSurface(mpg%nCi+1:nCv) = .false.
 !
 !   ..set weights for interpolation to faces
     IF (switch%fcvol_style .EQ. 0) THEN
@@ -3775,7 +3776,7 @@ CONTAINS
       DO j=mpg%vxfcp(vx_current, 1),mpg%vxfcp(vx_current, 1)+mpg%vxfcp(&
 &         vx_current, 2)-1
         fc_next = mpg%vxfc(j)
-! we ingore the current face
+! we ignore the current face
 ! check if face belongs to same flux tube
         IF (fc_next .NE. fc_current) THEN
 ! stop the for loop if we found the next face

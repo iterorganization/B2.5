@@ -78,7 +78,7 @@
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
      *          nsrfs, n1st, n2nd, n3rd, nreac,
-     *          eirene_set_parmmod
+     *          ifoff, eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
@@ -278,6 +278,8 @@
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
       real (kind=R8) ::
+     *  delta_cdfchord_time, save_cdfchord_time
+      real (kind=R8) ::
      *  delta_plasma_time, save_plasma_time
       real (kind=R8) ::
      *  delta_ids_time, save_ids_time
@@ -312,6 +314,7 @@
       save delta_tran_time, save_tran_time, tran_num
 #endif
       save delta_cdfmovie_time, save_cdfmovie_time
+      save delta_cdfchord_time, save_cdfchord_time
       save delta_plasma_time, save_plasma_time
       save delta_ids_time, save_ids_time
       save min_areshe, min_areshi, min_aresco, min_aresmo,
@@ -351,12 +354,15 @@
      1     tran_num/0/
 #endif
       data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
+      data delta_cdfchord_time/0.0_R8/, save_cdfchord_time/0.0_R8/
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data delta_ids_time/0.0_R8/, save_ids_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/,
      &     min_aresmo/0.0_R8/, res_quit/1.0e-7_R8/
       data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
+
+      logical :: eirene_wall_read = .false.
 
       contains
 
@@ -1109,6 +1115,13 @@
        call xertst (delta_cdfmovie_time.eq.0.0_R8.or.
      &              delta_cdfmovie_time.ge.dtim,
      &  'b2mndr_cdfmovietim too short compared to timestep !')
+       call ipgetr ('b2mndr_cdfchordtim', delta_cdfchord_time)
+       if (delta_cdfchord_time.gt.0.0_R8)
+     >  write(*,*) 'Saving CDF chord files every ',
+     1  delta_cdfchord_time,' simulation seconds'
+       call xertst (delta_cdfchord_time.eq.0.0_R8.or.
+     &              delta_cdfchord_time.ge.dtim,
+     &  'b2mndr_cdfchordtim too short compared to timestep !')
        call ipgetr ('b2mndr_plasmatim', delta_plasma_time)
        if (delta_plasma_time.gt.0.0_R8)
      >  write(*,*) 'Saving plasma state files every ',
@@ -1403,6 +1416,11 @@ csw 09oct2012
          CALL PXFGETENV ('IMAS_VERSION', 0,
      .                              imas_version, lenval, ierror)
 #else
+#ifdef __APPLE__
+         home_dir = ' '
+         device_env = ' '
+         imas_version = ' '
+#endif
          call get_environment_variable('HOME', status=ierror,
      .                                         length=lenval)
          if (ierror.eq.0) call get_environment_variable('HOME',
@@ -1454,9 +1472,14 @@ csw 09oct2012
 #endif
 #endif
          if (streql(imasdir,' '))
+#ifdef __APPLE__
+     >    imasdir = trim(home_dir)//'/public/imasdb/'//
+     >    trim(database)//'/'//trim(version)
+#else
      >    imasdir = trim(home_dir)//trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
      &                            //'/0'
+#endif
 #endif
          if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
            l=index(imasdir,'imasdb/')
@@ -1587,7 +1610,7 @@ csw 09oct2012
 !$OMP PARALLEL
 #endif
 #endif
-        IUNOUT=6
+        IUNOUT=6+IFOFF
 #ifdef USE_OPENMP
 #ifndef USE_EXT_OPENMP
 !$OMP END PARALLEL
@@ -1775,7 +1798,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !      if (switch%solve_keps.gt.1 .and.
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
-      call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
+      call createB2Diagnostic( nCv, ns, mpg%nnreg, state%diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 *   initialize 2d batch averages
@@ -2087,6 +2110,7 @@ c   --> better way doing this is necessary)
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
       save_cdfmovie_time = tim + delta_cdfmovie_time
+      save_cdfchord_time = tim + delta_cdfchord_time
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -2106,7 +2130,7 @@ c   --> better way doing this is necessary)
       if (switch%b2tqna_transport_inputfile .eq. 1) then
         call read_transport_input(transport_ip_filename)
       endif
-      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
+      call alloc_b2mod_numerics(nCv,ns,mpg%nnreg,switch)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
@@ -2138,12 +2162,13 @@ cxpb for neutral fluxes used in b2stbc_phys
       CALL EIRENE_SETCON
       if (switch%use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
-     &    delta_ids_time.gt.0.0_R8) then
+     &    delta_ids_time.gt.0.0_R8.or.switch%use_eirene.ne.0) then
         call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
           call ngread(mpg,geo,ns,switch,ismain,iflag)
+          eirene_wall_read = .true.
         endif
       endif
 #else
@@ -2162,6 +2187,18 @@ c new CDF movie option (1st frame at t=0)
 #endif
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
+      endif
+c new CDF chord option (1st frame at t=0)
+      if(tim.ge.(save_cdfchord_time-dtim/2.0_R8).and.
+     1 delta_cdfchord_time.gt.0.0_R8) then
+        if(switch%use_eirene.eq.0) then
+#ifndef NO_CDF
+          call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+          write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
+#endif
+        endif
+        save_cdfchord_time=save_cdfchord_time+delta_cdfchord_time
       endif
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
@@ -2276,6 +2313,10 @@ c new CDF movie option (1st frame at t=0)
 #endif
 #endif
       character*256 filename, fort31name
+#ifdef B25_EIRENE
+      logical ex
+      integer iflag
+#endif
 #if ( defined(B25_EIRENE) || defined(IMAS) )
       character*512 systemarg
 #endif
@@ -2574,6 +2615,16 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+c new CDF chord option
+        if(tim.ge.(save_cdfchord_time-dtim/2.0_R8).and.
+     1    delta_cdfchord_time.gt.0.0_R8) then
+#ifndef NO_CDF
+          call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+          write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
+#endif
+          save_cdfchord_time=save_cdfchord_time+delta_cdfchord_time
+        endif
 #endif
         lwti = .false.
         lwav = .false.
@@ -2624,8 +2675,21 @@ c new CDF movie option
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0.and.ntim.ne.0) then
-          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
+          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) then
+#ifdef B25_EIRENE
+            if (switch%use_eirene.ne.0 .and.
+     &          .not.eirene_wall_read) then
+              filename = fort_lc//'44'
+              call find_file(filename,ex)
+              if (ex) then
+                open(unit=44,file=filename)
+                call ngread(mpg,geo,ns,switch,ismain,iflag)
+                eirene_wall_read = .true.
+              endif
+            endif
+#endif
+            call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
+          endif
         endif
 *    ..loop
 #endif
@@ -3624,6 +3688,15 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         call cdfmovie(ncid,nCv,nFc,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
+#endif
+      endif
+*   ..produce last CDF chord frame if not yet done
+      if(tim.gt.save_cdfchord_time-delta_cdfchord_time+dtim.and.
+     1  delta_cdfchord_time.gt.0.0_R8) then
+#ifndef NO_CDF
+        call cdfchord(ncid,nCv,nFc,ns,geo,mpg,state,switch)
+#else
+        write(*,*) 'Compile b2mndr without NO_CDF option for chords!'
 #endif
       endif
 *   ..produce 2d profiles if not yet done

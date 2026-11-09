@@ -1762,8 +1762,13 @@
           if(m%imapCv(ix,iy)/=0) then
             ic = m%imapCv(ix,iy)
             m%cvReg(ic) = region(ix,iy,0)
-            m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
-          endif
+            if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &          bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+              m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
+            else
+              m%cvOnClosedSurface(ic) = .false.
+            end if
+          end if
         end do
       end do
 
@@ -2473,10 +2478,13 @@
      *   ind, ind1, tmp, iFt, iFt1, l, mod_cell_c, iFc1, istart,
      *   iend
       logical :: cvAlongBoundary(mpg%nCv), is_mod_fc(mpg%nFc),
-     *   is_found
+     *   is_found, center_inside, proj_found
       integer :: wrkVx(mpg%nVx), Qalf_mod_style = 0
+      integer :: crossings, nVx_cell, iVx_k, k_next
       real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk, a(2),
      *   cur_len(2), cen_len(2)
+      real (kind=R8) :: v1_x, v1_y, v2_x, v2_y, x_intersect
+      real (kind=R8) :: cv_vx(4), cv_vy(4)
       real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
@@ -2979,6 +2987,7 @@ c$$$      end do
             ! the closest distance between the center of the effective cell and
             ! the boundary side of the effective cell. This side can consist of
             ! multiple boundary faces.
+            proj_found = .false.
             do l=istart,iend
               iVx1 = mpg%fcVx(fcBoundary(l),1)
               iVx2 = mpg%fcVx(fcBoundary(l),2)
@@ -2993,19 +3002,76 @@ c$$$      end do
               if (wrk >= 0.0_R8 .and. wrk <= 1.0_R8) then
                 meanFc(1) = a(1)+wrk*cur_len(1)
                 meanFc(2) = a(2)+wrk*cur_len(2)
+                wrk = norm(meanFc(1)-meanCv(1),
+     &                     meanFc(2)-meanCv(2))
+                proj_found = .true.
                 write (*,*) "Closest point:"
                 write (*,'(2es17.6)') meanFc(1), meanFc(2)
+                write (*,*) "new fcHc:"
+                write (*,'(1es17.6)') wrk
                 exit
               endif
             enddo
 
-            wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
-            write (*,*) "new fcHc:"
-            write (*,'(1es17.6)') wrk
-            if (wrk.le.1.0e-08_R8) then
-              write (*,*) "new fcHc too small! Changes will not "//
-     &         "be applied. Set new fcHc as average value "//
-     &         "of original fcHc."
+            ! Check if meanCv is inside any original cell (ray casting)
+            ! Cast ray in +X direction, count edge crossings
+            center_inside = .false.
+            do l=istart,iend
+              iCv = cvBoundary(l,2)
+              if (l.gt.istart .and. iCv.eq.cvBoundary(l-1,2)) cycle
+              
+              nVx_cell = mpg%cvVxP(iCv,2)
+              crossings = 0
+              
+              ! Read vertices into temporary arrays
+              do k=1,nVx_cell
+                iVx_k = mpg%cvVx(mpg%cvVxP(iCv,1) + k - 1)
+                cv_vx(k) = gm%vxX(iVx_k)
+                cv_vy(k) = gm%vxY(iVx_k)
+              enddo
+              
+              ! Swap V3<->V4 for 4-vertex classical grid cells
+              ! (stored as V1,V2,V3,V4 but perimeter is V1,V2,V4,V3)
+              if (nVx_cell .eq. 4) then
+                x_intersect = cv_vx(3)
+                cv_vx(3) = cv_vx(4)
+                cv_vx(4) = x_intersect
+                x_intersect = cv_vy(3)
+                cv_vy(3) = cv_vy(4)
+                cv_vy(4) = x_intersect
+              endif
+              
+              ! Ray-casting: count edge crossings in +X direction
+              do k=1,nVx_cell
+                k_next = mod(k, nVx_cell) + 1
+                v1_y = cv_vy(k)
+                v2_y = cv_vy(k_next)
+                
+                if ((v1_y > meanCv(2)) .neqv.
+     &              (v2_y > meanCv(2))) then
+                  v1_x = cv_vx(k)
+                  v2_x = cv_vx(k_next)
+                  x_intersect = v1_x + (meanCv(2) - v1_y) /
+     &              (v2_y - v1_y) * (v2_x - v1_x)
+                  if (meanCv(1) < x_intersect) then
+                    crossings = crossings + 1
+                  endif
+                endif
+              enddo
+              
+              ! Odd crossings = inside
+              if (mod(crossings, 2) .eq. 1) then
+                center_inside = .true.
+                exit
+              endif
+            enddo
+
+            ! If no face projection found, center outside all cells,
+            ! OR distance invalid, fallback
+            if (.not. proj_found .or. .not. center_inside .or.
+     &        wrk.le.1.0e-08_R8) then
+              write (*,*) "Center outside or fcHc invalid! ",
+     &          "Using average of original fcHc."
               wrk = sum(gm%fcHc(fcBoundary(istart:iend),1)+
      &         gm%fcHc(fcBoundary(istart:iend),2))/(iend+1-istart)
               write (*,*) "new fcHc:"
@@ -3043,8 +3109,8 @@ c$$$      end do
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2State ( mpg%nCv, mpg%nFc, ns, st)
-      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st % diag )
+      call createB2State ( mpg%nCv, mpg%nFc, ns, st )
+      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st%diag )
 
 !     nfx = (nx+1)*ny
 
@@ -4244,6 +4310,28 @@ c$$$      end do
             rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
             rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
             rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+            nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+            uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+            pop(ix,iy)        = st % psnl % po(ic)
+            tep(ix,iy)        = st % psnl % te(ic)
+            tip(ix,iy)        = st % psnl % ti(ic)
+            nep(ix,iy)        = st % psnl % ne(ic)
+            ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+            ! tnp(ix,iy)        = st % psnl % tn(ic)
+            ! ktp(ix,iy)        = st % psnl % kt(ic)
+            ! ztp(ix,iy)        = st % psnl % zt(ic)
+            na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+            ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+            po0(ix,iy)        = st % psnc % po(ic)
+            te0(ix,iy)        = st % psnc % te(ic)
+            ti0(ix,iy)        = st % psnc % ti(ic)
+            ne0(ix,iy)        = st % psnc % ne(ic)
+            ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+            ! tn0(ix,iy)        = st % psnc % tn(ic)
+            ! kt0(ix,iy)        = st % psnc % kt(ic)
+            ! zt0(ix,iy)        = st % psnc % zt(ic)
           endif
         end do
       end do
@@ -4352,6 +4440,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
 
         iy = ny
@@ -4456,6 +4566,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
       end do
 
@@ -4563,6 +4695,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
 
         ix = nx
@@ -4667,6 +4821,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
       end do
 
@@ -4929,6 +5105,16 @@ c$$$      end do
             coni(ix,iy,0,0:1,:) = st % dv % coni(iFc,0:1,:)
             floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(iFc,0:1)
             floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(iFc,0:1)
+
+!B2PlasmaSnapshot
+            fchp(ix,iy,0,0:1)        = st % psnl % fch(iFc,0:1)
+            fnap(ix,iy,0,0:1,0:ns-1) = st % psnl % fna(iFc,0:1,0:ns-1) 
+            fhep(ix,iy,0,0:1)        = st % psnl % fhe(iFc,0:1)
+            fhip(ix,iy,0,0:1)        = st % psnl % fhi(iFc,0:1) 
+            fch0(ix,iy,0,0:1)        = st % psnc % fch(iFc,0:1)
+            fna0(ix,iy,0,0:1,0:ns-1) = st % psnc % fna(iFc,0:1,0:ns-1) 
+            fhe0(ix,iy,0,0:1)        = st % psnc % fhe(iFc,0:1)
+            fhi0(ix,iy,0,0:1)        = st % psnc % fhi(iFc,0:1) 
           endif
         end do
       end do
@@ -5067,6 +5253,16 @@ c$$$      end do
             coni(ix,iy,1,0:1,:) = st % dv % coni(iFc,0:1,:)
             floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(iFc,0:1)
             floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(iFc,0:1)
+
+!B2PlasmaSnapshot
+            fchp(ix,iy,1,0:1)        = st % psnl % fch(iFc,0:1)
+            fnap(ix,iy,1,0:1,0:ns-1) = st % psnl % fna(iFc,0:1,0:ns-1) 
+            fhep(ix,iy,1,0:1)        = st % psnl % fhe(iFc,0:1)
+            fhip(ix,iy,1,0:1)        = st % psnl % fhi(iFc,0:1) 
+            fch0(ix,iy,1,0:1)        = st % psnc % fch(iFc,0:1)
+            fna0(ix,iy,1,0:1,0:ns-1) = st % psnc % fna(iFc,0:1,0:ns-1) 
+            fhe0(ix,iy,1,0:1)        = st % psnc % fhe(iFc,0:1)
+            fhi0(ix,iy,1,0:1)        = st % psnc % fhi(iFc,0:1) 
           endif
         end do
       end do

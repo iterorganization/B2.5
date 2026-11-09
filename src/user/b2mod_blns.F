@@ -141,7 +141,7 @@ c
       real (kind=R8) :: dtim
 c
       integer i, j, k, ic, ii, is, iy, js, ks, ls,
-     ,        kks, iCv, iFc, ib, ibc, it
+     ,        kks, iCv, iCn, iFc, ib, ibc, it
 #if ( defined(DBG) || defined(B25_EIRENE) )
       integer, save :: l
 #endif
@@ -190,7 +190,7 @@ c----------------------------------------------------------------------
      1 js, ks, ls, kks, use_recyceir, first
 c======================================================================
 
-      if(first_time_step) return
+!      if(first_time_step) return
 
       if(ank_tracing.eq.0) return
 
@@ -387,11 +387,12 @@ c**********************************
             endif
           enddo
         enddo
-        do ib=1,NBC
+        do ib = 1, NBC
           do ibc = 1, mpg%bcCvP(ib,2)
             iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCn = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv,1))
-            if(.not. mpg%cvOnClosedSurface(iCv)) then
+            if(.not. mpg%cvOnClosedSurface(iCn)) then
               if (is_neutral(is).and.switch%use_eirene.eq.0) then
                 flxnw(k) = flxnw(k)+mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
@@ -719,6 +720,35 @@ c*** Puffing/seeding rate and recycling source
 
 !       End of the loop over strata
           enddo
+
+c*** ------------------------------------------------------------------
+c*** Pumped neutral flux at the EIRENE additional surfaces (js<=nnlimi)
+c*** not already counted by the recycling-strata loop above (tracked by
+c*** hlp_pump_counted). Plasma-facing recycling surfaces are skipped
+c*** here, so a pump on either surface type is counted exactly once.
+c*** ------------------------------------------------------------------
+          do js = 1,nnlimi
+#ifdef B25_EIRENE
+            if (iliin(js) .le. 0) cycle                                 ! non-transparent surfaces only
+#endif
+            do j = 1,nnatmi
+              if (latmscl(j).eq.ls .and.
+     &            .not. hlp_pump_counted(j,js)) then
+                flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)
+                hlp_pump_counted(j,js) = .TRUE.
+              end if
+            end do
+            do ic = 1,nnmoli
+              do j = 1,nnatmi
+                if (latmscl(j).eq.ls .and. mlcmp(j,ic).gt.0 .and.
+     &              .not. hlp_pump_counted(nnatmi+ic,js)) then
+                  flxnw_pump(ls) = flxnw_pump(ls) +
+     &               mlcmp(j,ic) * wlpump(nnatmi+ic,js)
+                  hlp_pump_counted(nnatmi+ic,js) = .TRUE.
+                end if
+              end do
+            end do
+          end do
 
 c**********************************
 ! The neutral fluxes from Eirene are now computed

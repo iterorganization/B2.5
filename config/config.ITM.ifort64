@@ -9,6 +9,7 @@ LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXex
 GLI_HOME    ?= ${EBROOTGLI}
 NAGDIR      ?= ${EBROOTOPENBLAS}
 LD_NAG      ?= $(shell pkg-config openblas --libs)
+LD_SSP      ?= $(shell pkg-config UMFPACK --libs)
 
 DEFINES += -DNO_OPT # -DNO_CDF
 

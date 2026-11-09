@@ -381,12 +381,18 @@ c     ADAS file names
       if(ex) then
         fnrec=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnrec=trim(filename)
         else
-          fnrec=trim(UIDSTD)//fnrec
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnrec=trim(filename)
+          else
+            fnrec=trim(UIDSTD)//fnrec
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnion
@@ -394,12 +400,18 @@ c     ADAS file names
       if(ex) then
         fnion=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnion=trim(filename)
         else
-          fnion=trim(UIDSTD)//fnion
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnion=trim(filename)
+          else
+            fnion=trim(UIDSTD)//fnion
+          endif
         endif
       endif
       filename=trim(UIDIN)//fncex
@@ -407,12 +419,18 @@ c     ADAS file names
       if(ex) then
         fncex=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fncex=trim(filename)
         else
-          fncex=trim(UIDSTD)//fncex
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fncex=trim(filename)
+          else
+            fncex=trim(UIDSTD)//fncex
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnprb
@@ -420,12 +438,18 @@ c     ADAS file names
       if(ex) then
         fnprb=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnprb=trim(filename)
         else
-          fnprb=trim(UIDSTD)//fnprb
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnprb=trim(filename)
+          else
+            fnprb=trim(UIDSTD)//fnprb
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnplt
@@ -433,12 +457,18 @@ c     ADAS file names
       if(ex) then
         fnplt=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnplt=trim(filename)
         else
-          fnplt=trim(UIDSTD)//fnplt
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnplt=trim(filename)
+          else
+            fnplt=trim(UIDSTD)//fnplt
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnzav
@@ -446,12 +476,18 @@ c     ADAS file names
       if(ex) then
         fnzav=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnzav=trim(filename)
         else
-          fnzav=trim(UIDSTD)//fnzav
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnzav=trim(filename)
+          else
+            fnzav=trim(UIDSTD)//fnzav
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnza2
@@ -459,12 +495,18 @@ c     ADAS file names
       if(ex) then
         fnza2=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnza2=trim(filename)
         else
-          fnza2=trim(UIDSTD)//fnza2
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnza2=trim(filename)
+          else
+            fnza2=trim(UIDSTD)//fnza2
+          endif
         endif
       endif
       filename=trim(UIDIN)//fnpot
@@ -472,12 +514,18 @@ c     ADAS file names
       if(ex) then
         fnpot=trim(filename)
       else
-        filename=trim(solpstop()) // '/modules/' // trim(filename)
+        filename=trim(solpstop()) // '/' // trim(filename)
         call find_file(filename,ex)
         if(ex) then
           fnpot=trim(filename)
         else
-          fnpot=trim(UIDSTD)//fnpot
+          filename=trim(solpstop()) // '/modules/' // trim(filename)
+          call find_file(filename,ex)
+          if(ex) then
+            fnpot=trim(filename)
+          else
+            fnpot=trim(UIDSTD)//fnpot
+          endif
         endif
       endif
 

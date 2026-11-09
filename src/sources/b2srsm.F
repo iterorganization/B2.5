@@ -111,7 +111,7 @@ c*** before correction (1), after correction (2)
 
 *   ..smooth particle and parallel momentum sources
         do is = 0, ns-1
-          do iCv = 1, mpg%nCv
+          do iCv = 1, mpg%nCi
 !WG_TODO            if (resignore(iCv,1).ne.0) then
 c check particles
               invtimescale =
@@ -146,7 +146,7 @@ c check particles
               endif
 !WG_TODO            endif
           enddo
-          do iCv = 1, mpg%nCv
+          do iCv = 1, mpg%nCi
 !WG_TODO            if (resignore(iCv,2).ne.0) then
 c check parallel momentum
               invtimescale = abs(sr%smo(iCv,0,is) +
@@ -194,7 +194,7 @@ c check parallel momentum
           enddo
         enddo
 *   ..smooth electron heat, ion heat and electron particle sources
-        do iCv = 1, mpg%nCv
+        do iCv = 1, mpg%nCi
 !WG_TODO          if (resignore(iCv,1).ne.0) then
 c check ion energy
             invtimescale =

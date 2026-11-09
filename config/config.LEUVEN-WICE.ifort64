@@ -11,6 +11,9 @@ endif
 ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
+ifdef EBROOTSUITESPARSE
+  LD_SSP ?= -L${EBROOTSUITESPARSE}/lib -lumfpack -lamd -lcolamd -lsuitesparseconfig
+endif
 
 CPP      = /lib/cpp -traditional
 

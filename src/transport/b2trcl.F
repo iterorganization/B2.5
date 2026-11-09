@@ -95,7 +95,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *.declarations
 
 *   ..local variables
-      integer k, is, is0, iCv, iFc, iFt, mode
+      integer k, is, is0, iCv, iCn, iFc, iFt, mode
       character(3) chns, chns0                                        !srv 17.06.08
 #ifdef ASTRA
       integer mintopcut                                               !lk 19.09.07
@@ -389,8 +389,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
           calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
           chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
-         endif
-        enddo
+        endif
+       enddo
        do iCv = 1, nCv
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
@@ -633,6 +633,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
+         if(switch%core_cond_limit.eq.0.and.
+     &    (max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)))))
+     &    cycle
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
@@ -655,6 +659,10 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
+         if(switch%core_cond_limit.eq.0.and.
+     &    (max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)))))
+     &    cycle
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
@@ -675,8 +683,14 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
         !wdk of face flux limit
         call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_ki,co%fllim_ki_c)
         do iCv = 1, nCv
+         if(iCv.gt.mpg%nCi) then
+           iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+           iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+         else
+           iCn = iCv
+         endif
          if(switch%core_cond_limit.ne.0.or.
-     &      .not.mpg%cvOnClosedSurface(iCv)) then
+     &      .not.mpg%cvOnClosedSurface(iCn)) then
           co%hcix_c(iCv)=co%hcix_c(iCv)*co%fllim_ki_c(iCv)
          endif
         enddo
@@ -686,6 +700,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
       if(switch%b2sigp_style.ne.2) then
        if(cflim(0).ne.0.0_R8) then
         do iFc = 1, nFc
+         if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &      mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >    cycle
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
@@ -701,7 +718,13 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
         !wdk of face flux limit
         call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_al,co%fllim_al_c)
         do iCv = 1, nCv
-          if(.not.mpg%cvOnClosedSurface(iCv)) then
+          if(iCv.gt.mpg%nCi) then
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+            iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          else
+            iCn = iCv
+          endif
+          if(.not.mpg%cvOnClosedSurface(iCn)) then
             co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)
           endif
         enddo
@@ -710,6 +733,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
        if(cflim(3).ne.0.0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iFc = 1, nFc
+         if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &      mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >    cycle
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
             jemax = sqrt(
@@ -725,7 +751,13 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
 *   ..apply flux limit to alfx_c at cell centers
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gtec)
         do iCv = 1, nCv
-          if(.not.mpg%cvOnClosedSurface(iCv)) then
+          if(iCv.gt.mpg%nCi) then
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+            iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          else
+            iCn = iCv
+          endif
+          if(.not.mpg%cvOnClosedSurface(iCn)) then
             jemax = sqrt(pl%te(iCv)/me)*
      &         qe*dv%ne(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/

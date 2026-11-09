@@ -26,6 +26,7 @@ ifndef SOLPS_CPP
 DEFINES   += -DNO_CDF
 endif
 endif
+LD_SSP    ?= $(shell pkg-config UMFPACK --libs)
 
 DEFINES += -DNO_OPT
 ifndef SOLPS_CPP
@@ -33,6 +34,7 @@ DEFINES += -DNO_NAG -DNO_21
 endif
 
 CPP = /lib/cpp -traditional
+
 
 MPI_FC ?= mpif90
 ifdef SOLPS_MPI
@@ -53,8 +55,12 @@ ifndef SOLPS_OPENMP
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 endif
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 8; echo $$?),0)
+FCOPTS += -march=broadwell
+else
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
 FCOPTS += -march=native
+endif
 endif
 
 ifdef SOLPS_DEBUG

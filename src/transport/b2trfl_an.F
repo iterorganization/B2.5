@@ -44,7 +44,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer i
+      integer i, iFc, iCn
       real (kind=R8) :: coef,t0,t1,t2
 *-----------------------------------------------------------------------
 *.computation
@@ -52,7 +52,13 @@
 *   ..subprogram start-up calls
       call subini ('b2trfl_an')
 *   ..main
-      if (cflim(4).ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCv)) then
+      if (iCv.gt.mpg%nCi) then
+        iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+        iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      else
+        iCn = iCv
+      end if
+      if (cflim(4).ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCn)) then
         coef=zetap/mp
         do i=0, nspecies-1
           t0=nal(iCv,i)/z2n_cv(iCv,i)**2*sqrt(2.0_R8/amnucl(i))*

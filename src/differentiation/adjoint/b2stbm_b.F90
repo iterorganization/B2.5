@@ -685,6 +685,7 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
     END DO
   END IF
   srwb%sch0 = 0.D0
+  srwb%shn0 = 0.D0
   srwb%shi0 = 0.D0
   srwb%she0 = 0.D0
   srwb%smo0 = 0.D0
@@ -828,6 +829,7 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   srw%sne0 = 0.0_R8
   srw%she0 = 0.0_R8
   srw%shi0 = 0.0_R8
+  srw%shn0 = 0.0_R8
   srw%sch0 = 0.0_R8
   srw%b2stbm_sna = 0.0_R8
   srw%b2stbm_smo = 0.0_R8

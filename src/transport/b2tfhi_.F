@@ -556,11 +556,11 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &      b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visper(ix,iy,1,1) =
-     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*    !srv 02.10.17
+        fhi_visper(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_per*
+     &      fchvisper(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*  !srv 02.10.17
-     &      b2tfnb_ycur*
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_q*
+     &      fchvisq(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
      &      1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
@@ -586,11 +586,11 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visper(ix,iy,1,1) =
-     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*         !srv 02.10.17
+        fhi_visper(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_per*
+     &       fchvisper(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*       !srv 02.10.17
-     &       b2tfnb_ycur*
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_q*
+     &       fchvisq(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
      &       1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*

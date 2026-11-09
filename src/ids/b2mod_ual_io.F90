@@ -471,7 +471,9 @@ contains
     do i = 1, maxval(mpg%strDiv)
       if (gridGeometry.eq.plasmaGeometry .or. i.eq.1) then
         ireg = i
-      else if (mpg%nnreg(0).eq.8 .and. i.eq.2) then
+      else if ((plasmaGeometry.eq.GEOMETRY_CDN .or. &
+             &  plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+             &  plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM) .and. i.eq.2) then
         ireg = 4
       else
         call xerrab ('Unexpected geometry!')
@@ -502,7 +504,10 @@ contains
       end do
       extension_r(i) = r_max - r_min
       extension_z(i) = z_max - z_min
-      if ( mpg%nnreg(0).eq.8 .and. (i.eq.1 .or. i.eq.2) ) then
+      if ( ( plasmaGeometry.eq.GEOMETRY_CDN .or. &
+        &    plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+        &    plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM ) .and. &
+        &  ( i.eq.1 .or. i.eq.2 ) ) then
         iFc = ifsepimp
       else
         iFc = ifsepomp
@@ -1589,8 +1594,7 @@ contains
             &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           u = 0.0_IDS_real
           do iCv = 1, mpg%nCi
-            if (mpg%cvOnClosedSurface(iCv).and.mpg%nnreg(0).ne.5) cycle
-            if (mpg%nnreg(0).eq.5.and.mpg%cvReg(iCv).eq.1) cycle
+            if (mpg%cvOnClosedSurface(iCv)) cycle
             do is = 0, ns-1
               u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
             end do
@@ -1801,6 +1805,7 @@ contains
             allocate( divertors%divertor( mpg%nStr ) )
             do j = 1, mpg%nStr
               i = mpg%strDiv(j)
+              if (i.eq.0) cycle
               allocate( divertors%divertor(i)%name(1) )
               allocate( divertors%divertor(i)%target(1) )
               allocate( divertors%divertor(i)%target(1)%name(1) )
@@ -4257,7 +4262,7 @@ contains
                  &  sources_ggd(i)%neutral( j )%element(1) )
                   sources_ggd(i)%neutral( j )%name = species_list( js )
                   allocate( sources_ggd(i)%neutral( j )%state(1) )
-                  allocate( sources_ggd(i)%neutral( j )%state(1) )
+                  allocate( sources_ggd(i)%neutral( j )%state(1)%name(1) )
                   sources_ggd(i)%neutral( j )%state(1)%name = spclabel
                   call fill_atom_neutral_type( js, &
                     &  sources_ggd(i)%neutral( j )%state(1)%neutral_type )
@@ -5897,10 +5902,11 @@ contains
                 &         electrons%energy%flux,                        &
                 &   value = tmpFace )
 #   endif
+            tmpFace(:) = state%co%fllim_ke(:) * state%co%f_luc_ke(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_limiter,                &
-                &   value = state%dv%fllime )
+                &   value = tmpFace  )
             tmpCv(:) = ( state%sr%she(:,0) +                            &
                 &        state%sr%she(:,1) * state%pl%te(:) +           &
                 &        state%sr%she(:,2) * state%dv%ne(:) +           &
@@ -6029,10 +6035,11 @@ contains
             call write_face_scalar( transport_grid,                     &
                 &   val = transport_ggd(1)%electrons%energy%flux_radial, &
                 &   value = flxFace(:,1) )
+            tmpFace(:) = state%co%fllim_ke(:) * state%co%f_luc_ke(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = transport_ggd(1)%                             &
                 &         electrons%energy%flux_limiter,                &
-                &   value = state%dv%fllime )
+                &   value = tmpFace )
             tmpCv(:) = ( state%sr%she(:,0) +                            &
                 &        state%sr%she(:,1) * state%pl%te(:) +           &
                 &        state%sr%she(:,2) * state%dv%ne(:) +           &
@@ -6184,10 +6191,11 @@ contains
                 &         total_ion_energy%flux,                        &
                 &   value = tmpFace )
 #   endif
+            tmpFace(:) = state%co%fllim_ki(:) * state%co%f_luc_ki(:)
             call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_limiter,                &
-                &   value = state%dv%fllimi )
+                &   value = tmpFace )
             !! Ion energy sources
             tmpCv(:) = ( state%sr%shi(:,0) +                            &
                 &        state%sr%shi(:,1) * state%pl%ti(:) +           &
@@ -6305,10 +6313,11 @@ contains
             call write_face_scalar( transport_grid,                   &
                 &   val = transport_ggd(1)%total_ion_energy%flux_radial, &
                 &   value = flxFace(:,1) )
+            tmpFace(:) = state%co%fllim_ki(:) * state%co%f_luc_ki(:)
             call write_face_scalar( transport_grid,                   &
                 &   val = transport_ggd(1)%total_ion_energy%          &
                 &         flux_limiter,                               &
-                &   value = state%dv%fllimi )
+                &   value = tmpFace )
             !! Ion energy sources
             tmpCv(:) = ( state%sr%shi(:,0) +                          &
                 &        state%sr%shi(:,1) * state%pl%ti(:) +         &
@@ -10213,9 +10222,7 @@ contains
       iFc = mpg%fsFc(i)
       iCv1 = mpg%fcCv(iFc,1)
       iCv2 = mpg%fcCv(iFc,2)
-      if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
-        & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
-        & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+      if ( mpg%cvOnClosedSurface(iCv1) .neqv. mpg%cvOnClosedSurface(iCv2) ) then
         sum = sum + geo%fcS(iFc) * weight(iFc) * &
             & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
         area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
@@ -10227,9 +10234,7 @@ contains
         iFc = mpg%fsFc(i)
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
-        if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
-          & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
-          & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+        if ( mpg%cvOnClosedSurface(iCv1) .neqv. mpg%cvOnClosedSurface(iCv2) ) then
           sum = sum + geo%fcS(iFc) * weight(iFc) * &
               & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
           area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
@@ -11082,10 +11087,8 @@ contains
         iCv1 = mpg%fcCv(iFc,1)
         iCv2 = mpg%fcCv(iFc,2)
         iCv = 0
-        if ( mpg%cvReg(iCv1).eq.1 .or. &
-     &     ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
-        if ( mpg%cvReg(iCv2).eq.1 .or. &
-     &     ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+        if ( mpg%cvOnClosedSurface(iCv1) ) iCv = iCv1
+        if ( mpg%cvOnClosedSurface(iCv2) ) iCv = iCv2
         if ( iCv.eq.0 ) cycle ! skip the divertor legs
         if ( rFc .gt. r_max) then
           r_max = rFc
@@ -11101,10 +11104,8 @@ contains
           iCv1 = mpg%fcCv(iFc,1)
           iCv2 = mpg%fcCv(iFc,2)
           iCv = 0
-          if ( mpg%cvReg(iCv1).eq.1 .or. &
-     &       ( mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv1
-          if ( mpg%cvReg(iCv2).eq.1 .or. &
-     &       ( mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8 ) ) iCv = iCv2
+          if ( mpg%cvOnClosedSurface(iCv1) ) iCv = iCv1
+          if ( mpg%cvOnClosedSurface(iCv2) ) iCv = iCv2
           if ( iCv.eq.0 ) cycle ! skip the divertor legs
           if ( rFc .gt. r_max) then
             r_max = rFc
@@ -11309,7 +11310,7 @@ contains
     type (ids_summary), intent(inout) :: summary
     type (ids_wall), intent(inout), optional :: wall
     integer, optional :: time_sind
-    integer :: i, ib, ireg, freg, is, iFc, ngpn
+    integer :: i, ib, ireg, freg, is, iFc, ngpn, inner
     integer :: istrai
     integer :: iatm
     integer :: iatm1  !< Hydrogenic atom index in molecule composition
@@ -11337,17 +11338,30 @@ contains
         & GEOMETRY_LFS_SNOWFLAKE_PLUS )
       call write_sourced_integer( summary%boundary%type, 14 )
     end select
-    if (geo%LSN) then
-      call write_sourced_value( summary%boundary%strike_point_inner_r, geo%vxX(mpg%strVx(1)) )
-      call write_sourced_value( summary%boundary%strike_point_inner_z, geo%vxY(mpg%strVx(1)) )
-      call write_sourced_value( summary%boundary%strike_point_outer_r, geo%vxX(mpg%strVx(2)) )
-      call write_sourced_value( summary%boundary%strike_point_outer_z, geo%vxY(mpg%strVx(2)) )
-    else
-      call write_sourced_value( summary%boundary%strike_point_inner_r, geo%vxX(mpg%strVx(2)) )
-      call write_sourced_value( summary%boundary%strike_point_inner_z, geo%vxY(mpg%strVx(2)) )
-      call write_sourced_value( summary%boundary%strike_point_outer_r, geo%vxX(mpg%strVx(1)) )
-      call write_sourced_value( summary%boundary%strike_point_outer_z, geo%vxY(mpg%strVx(1)) )
-    endif
+    if (geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,1))).lt. &
+      & geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,2)))) then
+      inner = 1
+    else if (geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,1))).lt. &
+           & geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,2)))) then
+      inner = 2
+    else if (geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,1))).eq. &
+           & geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,2)))) then
+      if (geo%vxY(mpg%strVx(mpg%strVxP(mpg%iactive,1))).lt. &
+        & geo%vxY(mpg%strVx(mpg%strVxP(mpg%iactive,2)))) then
+        inner = 2
+      else if (geo%VxX(mpg%strVx(mpg%strVxP(mpg%iactive,1))).lt. &
+             & geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,2)))) then
+        inner = 1
+      end if
+    end if
+    call write_sourced_value( summary%boundary%strike_point_inner_r, &
+      &  geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,inner))) )
+    call write_sourced_value( summary%boundary%strike_point_inner_z, &
+      &  geo%vxY(mpg%strVx(mpg%strVxP(mpg%iactive,inner))) )
+    call write_sourced_value( summary%boundary%strike_point_outer_r, &
+      &  geo%vxX(mpg%strVx(mpg%strVxP(mpg%iactive,3-inner))) )
+    call write_sourced_value( summary%boundary%strike_point_outer_z, &
+      &  geo%vxY(mpg%strVx(mpg%strVxP(mpg%iactive,3-inner))) )
 
     call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real/5.0_IDS_real )
 #  if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )

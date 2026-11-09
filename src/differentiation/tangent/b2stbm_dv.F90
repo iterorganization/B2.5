@@ -189,6 +189,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
     srwd%smo0(nd, :, :, :) = 0.D0
     srwd%she0(nd, :, :) = 0.D0
     srwd%shi0(nd, :, :) = 0.D0
+    srwd%shn0(nd, :, :) = 0.D0
     srwd%sch0(nd, :, :) = 0.D0
   END DO
   srw%sna0 = 0.0_R8
@@ -196,6 +197,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
   srw%sne0 = 0.0_R8
   srw%she0 = 0.0_R8
   srw%shi0 = 0.0_R8
+  srw%shn0 = 0.0_R8
   srw%sch0 = 0.0_R8
   srw%b2stbm_sna = 0.0_R8
   srw%b2stbm_smo = 0.0_R8
@@ -898,6 +900,7 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   srw%sne0 = 0.0_R8
   srw%she0 = 0.0_R8
   srw%shi0 = 0.0_R8
+  srw%shn0 = 0.0_R8
   srw%sch0 = 0.0_R8
   srw%b2stbm_sna = 0.0_R8
   srw%b2stbm_smo = 0.0_R8

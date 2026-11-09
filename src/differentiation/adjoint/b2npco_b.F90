@@ -156,7 +156,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
     IF (switch%b2mndt_style .EQ. 2) THEN
       rxg_npco = HUGE(1.0_R8)
       warning = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
 &         (icv) .NE. 1.0_R8
       END DO
@@ -545,7 +545,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &                        'b2npco_pcm1 must be 0 for time-dependent mode'&
 &                                              )
       warning = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
 &         (icv) .NE. 1.0_R8
       END DO

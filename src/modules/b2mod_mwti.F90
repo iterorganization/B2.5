@@ -54,14 +54,13 @@ contains
     use b2us_map
     use b2us_plasma
     use b2mod_geometry &
-    , only : geometryID, GEOMETRY_CDN
+    , only : geometryId, GEOMETRY_CDN, &
+             GEOMETRY_LINEAR, GEOMETRY_CYLINDER, GEOMETRY_ANNULUS, &
+             GEOMETRY_SN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
+             GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS, &
+             GEOMETRY_LIMITER, GEOMETRY_STELLARATORISLAND
     use b2mod_user_namelist &
-    , only : omp, imp, nimp, nomp, icsepimp
-#ifndef NO_CDF
-    use b2mod_geometry &
-    , only : GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
-             GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS
-#endif
+    , only : omp, imp, nimp, nomp, icsepimp, omp_pos, imp_pos
     use b2mod_user_namelist &
     , only : icsepomp
     use b2mod_switches
@@ -225,13 +224,13 @@ contains
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         end if
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi,imp_pos(1:nimp))
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         end if
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa,omp_pos(1:nomp))
       endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
@@ -261,7 +260,7 @@ contains
           enddo
           close(99)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)), dsTLT(1:mpg%divFcP(i,2)), dsTLP(1:mpg%divFcP(i,2)))
             end if
@@ -854,11 +853,12 @@ contains
     fniyap = 0.0_R8; feeyap = 0.0_R8; feiyap = 0.0_R8; fetyap = 0.0_R8; fchyap = 0.0_R8
     do iFc = 1, mpg%nFc
       ireg = 0
-      if(mpg%nnreg(0).eq.2) then
+      if(plasmaGeometry.eq.GEOMETRY_LIMITER) then
         ireg = 3
-      else if (mpg%nnreg(0).eq.4 .or. mpg%nnreg(0).eq.5) then
+      else if (plasmaGeometry.eq.GEOMETRY_SN .or. &
+             & plasmaGeometry.eq.GEOMETRY_STELLARATORISLAND) then
         ireg = 5
-      else if (mpg%nnreg(0).ge.7) then
+      else if (mpg%nXpt.ge.2) then
         ireg = 9
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -877,7 +877,9 @@ contains
         fetsipp(1) = fetsipp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8.and.mpg%nXpt.ge.2) ireg = 11
+      if (plasmaGeometry.eq.GEOMETRY_CDN .or. &
+        & plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+        & plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM) ireg = 11
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisipp(2) = fnisipp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesipp(2) = feesipp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -894,11 +896,15 @@ contains
         fetsipp(2) = fetsipp(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4.or.mpg%nnreg(0).eq.5) then
+      if (plasmaGeometry.eq.GEOMETRY_SN .or. &
+        & plasmaGeometry.eq.GEOMETRY_STELLARATORISLAND) then
         ireg = 6
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        &      plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 10
-      else if (mpg%nnreg(0).eq.8) then
+      else if (plasmaGeometry.eq.GEOMETRY_CDN .or. &
+        &      plasmaGeometry.eq.GEOMETRY_DDN_TOP .or. &
+        &      plasmaGeometry.eq.GEOMETRY_DDN_BOTTOM) then
         ireg = 12
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -917,7 +923,7 @@ contains
         fetsapp(1) = fetsapp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 12
+      if (mpg%nXpt.ge.2) ireg = 12
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisapp(2) = fnisapp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesapp(2) = feesapp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -934,7 +940,7 @@ contains
         fetsapp(2) = fetsapp(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.4) ireg = 2
+      if (mpg%nXpt.ge.1) ireg = 2
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(1) = fnisip(1) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(1) = feesip(1) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -951,7 +957,7 @@ contains
         fetsip(1) = fetsip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 7
+      if (mpg%nXpt.ge.2) ireg = 7
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(2) = fnisip(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(2) = feesip(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -968,7 +974,7 @@ contains
         fetsip(2) = fetsip(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.4) then
+      if (mpg%nXpt.ge.1) then
         if (gridGeometry.eq.plasmaGeometry) then
           ireg = 3
         else
@@ -991,7 +997,7 @@ contains
         fetsap(1) = fetsap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 6
+      if (mpg%nXpt.ge.2) ireg = 6
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisap(2) = fnisap(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesap(2) = feesap(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -1011,17 +1017,20 @@ contains
         if (mpg%bcFc(i).eq.iFc) fdir = mpg%bcFcOr(i)
       end do
       ireg = 0
-      if (mpg%nnreg(0).eq.1) then
+      if (plasmaGeometry.eq.GEOMETRY_LINEAR .or. &
+        & plasmaGeometry.eq.GEOMETRY_CYLINDER .or. &
+        & plasmaGeometry.eq.GEOMETRY_ANNULUS) then
         ireg = 4
-      else if (mpg%nnreg(0).eq.2) then
+      else if (plasmaGeometry.eq.GEOMETRY_LIMITER) then
         ireg = 6
-      else if (mpg%nnreg(0).eq.4) then
+      else if (plasmaGeometry.eq.GEOMETRY_SN) then
         ireg = 12
-      else if (mpg%nnreg(0).eq.5) then
+      else if (plasmaGeometry.eq.GEOMETRY_STELLARATORISLAND) then
         ireg = 13
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+             & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 19
-      else if (mpg%nnreg(0).eq.8) then
+      else if (mpg%nXpt.eq.2) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 18
         else
@@ -1045,13 +1054,14 @@ contains
         fetyip(1) = fetyip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (plasmaGeometry.eq.GEOMETRY_SN) then
         ireg = 11
-      else if (mpg%nnreg(0).eq.5) then
+      else if (plasmaGeometry.eq.GEOMETRY_STELLARATORISLAND) then
         ireg = 8
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+             & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 18
-      else if (mpg%nnreg(0).eq.8) then
+      else if (mpg%nXpt.eq.2) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 17
         else
@@ -1075,13 +1085,14 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (plasmaGeometry.eq.GEOMETRY_SN) then
         ireg = 13
-      else if (mpg%nnreg(0).eq.5) then
+      else if (plasmaGeometry.eq.GEOMETRY_STELLARATORISLAND) then
         ireg = 10
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+             & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 20
-      else if (mpg%nnreg(0).eq.8) then
+      else if (mpg%nXpt.eq.2) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 26
         else
@@ -1105,9 +1116,10 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) then
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 24
-      else if (mpg%nnreg(0).eq.8) then
+      else if (mpg%nXpt.eq.2) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 13
         else
@@ -1131,9 +1143,10 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) then
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 25
-      else if (mpg%nnreg(0).eq.8) then
+      else if (mpg%nXpt.eq.2) then
         if (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 22
         else
@@ -1157,7 +1170,8 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 26
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) ireg = 26
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1176,9 +1190,10 @@ contains
       end if
       ireg = 0
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (plasmaGeometry.eq.GEOMETRY_SN) then
         ireg = 7
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+             & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 14
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -1198,9 +1213,10 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.4) then
+      if (plasmaGeometry.eq.GEOMETRY_SN) then
         ireg = 9
-      else if (mpg%nnreg(0).eq.7) then
+      else if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+             & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) then
         ireg = 16
       end if
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
@@ -1220,7 +1236,8 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 21
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) ireg = 21
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1238,7 +1255,8 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 22
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) ireg = 22
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1256,7 +1274,8 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.7) ireg = 23
+      if (plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS .or. &
+        & plasmaGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS) ireg = 23
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fniyap(1) = fniyap(1) + &
           & fdir*(dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))
@@ -1274,10 +1293,10 @@ contains
         fetyap(1) = fetyap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
-        if (mpg%nXpt.eq.1) then
+      if (mpg%nXpt.ge.2) then
+        if (plasmaGeometry.eq.GEOMETRY_SN) then
           ireg = 0
-        elseif (gridGeometry.eq.GEOMETRY_CDN) then
+        elseif (plasmaGeometry.eq.GEOMETRY_CDN) then
           ireg = 25
         else
           ireg = 26
@@ -1300,10 +1319,10 @@ contains
         fetyip(2) = fetyip(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
-        if (mpg%nXpt.eq.1) then
+      if (mpg%nXpt.ge.2) then
+        if (plasmaGeometry.eq.GEOMETRY_SN) then
           ireg = 0
-        elseif (gridGeometry.eq.GEOMETRY_CDN) then
+        elseif (plasmaGeometry.eq.GEOMETRY_CDN) then
           ireg = 19
         else
           ireg = 20
@@ -1326,8 +1345,8 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
-        if (mpg%nXpt.eq.1) then
+      if (mpg%nXpt.eq.2) then
+        if (plasmaGeometry.eq.GEOMETRY_SN) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 24
@@ -1352,8 +1371,8 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
-        if (mpg%nXpt.eq.1) then
+      if (mpg%nXpt.eq.2) then
+        if (plasmaGeometry.eq.GEOMETRY_SN) then
           ireg = 0
         elseif (gridGeometry.eq.GEOMETRY_CDN) then
           ireg = 15
@@ -1378,10 +1397,10 @@ contains
         fetyap(2) = fetyap(2) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8) then
-        if (mpg%nXpt.eq.1) then
+      if (mpg%nXpt.ge.2) then
+        if (plasmaGeometry.eq.GEOMETRY_SN) then
           ireg = 0
-        elseif (gridGeometry.eq.GEOMETRY_CDN) then
+        elseif (plasmaGeometry.eq.GEOMETRY_CDN) then
           ireg = 20
         else
           ireg = 21
@@ -1779,7 +1798,7 @@ contains
 
 #ifndef NO_CDF
 #ifdef WG_TODO
-    if(nnreg(0).ne.2) then
+    if(plasmaGeometry.ne.GEOMETRY_LIMITER) then
       if(xymap(-1,jsep).gt.0 .and. xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
         tpsepi(1) = 0.5_R8 * (target_temp(xymap(-1,jsep),1) + target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
       else
@@ -1792,7 +1811,7 @@ contains
         tpsepi(1) = 0.0_R8
       endif
     endif
-    if(nnreg(0).ne.2) then
+    if(plasmaGeometry.ne.GEOMETRY_LIMITER) then
       if(xymap(nx,jsep).gt.0 .and. xymap(topix(nx,jsep),topiy(nx,jsep)).ge.0) then
         tpsepa(1) = 0.5_R8 * (target_temp(xymap(nx,jsep),1)+ target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
       else
@@ -1849,15 +1868,15 @@ contains
     tmhadiv(1)=0.0_R8
 #ifdef B25_EIRENE
     ! note no emission in guard cells
-    do iCv = 1,mpg%nCi
+    do iCv = 1, mpg%nCi
       if(mpg%cvOnClosedSurface(iCv)) then
         tmhacore(1)=tmhacore(1)+(emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
       elseif((mpg%cvReg(iCv).eq.5 .or. mpg%cvReg(iCv).eq.6) .and. mpg%nnreg(0).eq.7) then
         tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
       elseif(mod(mpg%cvReg(iCv),4).eq.3 .or.(mod(mpg%cvReg(iCv),4).eq.0 .and. mpg%cvReg(iCv).ne.0)) then
         tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
-      elseif(mod(mpg%cvReg(iCv),4).eq.2 .or. mpg%nnreg(0).eq.1) then
-        tmhasol(1)=tmhasol(1)+ (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      elseif(mod(mpg%cvReg(iCv),4).eq.2 .or. plasmaGeometry.eq.GEOMETRY_LINEAR) then
+        tmhasol(1)=tmhasol(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
       endif
     enddo
 #endif
@@ -2033,7 +2052,7 @@ contains
           call rwcdf(rw,ncid,'dsLT',imap,dsLT,iret)
           call rwcdf(rw,ncid,'dsLP',imap,dsLP,iret)
         case (2)
-          if (mpg%nnreg(0).ge.7 .and. mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
+          if (mpg%nXpt.gt.1 .and. maxval(mpg%strDiv).ge.4) then
             allocate(fclist(mpg%divFcP(2,2)))
             allocate(cvlist(mpg%divFcP(2,2)))
             allocate(cnlist(mpg%divFcP(2,2)))
@@ -3049,7 +3068,7 @@ contains
         slice(ny)=target_temp(xymap(nx,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
-      if (nnreg(0).ge.7) then
+      if (mpg%nXpt.ge.2) then
         slice=0.0_R8
         if(minval(xymap(ixtl,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtl,0),1)
@@ -3368,7 +3387,7 @@ contains
   end subroutine dealloc_b2mod_mwti
 #endif
 !
-  subroutine output_ds_cv(mpg,geo,nlist,cvlist,isep,filename,ds)
+  subroutine output_ds_cv(mpg,geo,nlist,cvlist,isep,filename,ds,pos)
     use b2us_geo
     use b2us_map
     implicit none
@@ -3377,24 +3396,62 @@ contains
     integer nlist,isep
     integer cvlist(nlist)
     real (kind=R8), intent(out) :: ds(nlist)
-    real (kind=R8) :: ds_offset
+    real (kind=R8), intent(in), optional :: pos(nlist)
+    real (kind=R8) :: ds_offset, ex, ey, elen
     character*(*) filename
-    integer i
+    integer i, i1
     intrinsic sqrt
 
-    ds(1)= 0.0_R8
-    do i=2,nlist
-      ds(i)=ds(i-1)+ &
-           sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+ &
-                (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
-    enddo
+    if (present(pos)) then
+      ! Position of each cell along the sampling segment (chord midpoint, see
+      ! cv_segment_positions; omp_pos/imp_pos of b2mod_user_namelist): the
+      ! exact abscissa of a profile sampled along the segment, independent of
+      ! the cell shapes. Sliver cells of the stitching layers of unstructured
+      ! (wide) grids have centres far off the segment, which breaks any
+      ! centre-based distance.
+      do i=1,nlist
+        ds(i) = pos(i) - pos(1)
+      enddo
+    else
+      ! Fallback without positions: every centre-to-centre step is projected
+      ! on the direction from the first to the last listed cell, so that the
+      ! off-segment excursions of the centres do not add spurious distance
+      ! (the plain centre-to-centre path did). Assumes the list is ordered
+      ! along the segment.
+      ex = geo%cvX(cvlist(nlist)) - geo%cvX(cvlist(1))
+      ey = geo%cvY(cvlist(nlist)) - geo%cvY(cvlist(1))
+      elen = sqrt(ex**2 + ey**2)
+      if (elen .gt. 0.0_R8) then
+        ex = ex/elen
+        ey = ey/elen
+      else
+        ex = 1.0_R8
+        ey = 0.0_R8
+      endif
+      ds(1)=0.0_R8
+      do i=2,nlist
+        ds(i) = ds(i-1) + &
+             (geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))*ex + &
+             (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))*ey
+      enddo
+    endif
     if(isep.ne.0) then
       ds_offset=(ds(isep-1)+ds(isep))/2.0_R8
       do i=1,nlist
         ds(i)=ds(i)-ds_offset
       enddo
     endif
-    if(.not.mpg%cvOnClosedSurface(cvlist(1))) then ! flip sign
+    i = 1
+    i1 = 0
+    do while (i1.eq.0 .and. i.le.nlist)
+      if (cvlist(i).le.mpg%nCi) then
+        i1 = i
+      else
+        i = i + 1
+      end if
+    end do
+    call xertst(i1.gt.0, 'No inner cell found!')
+    if(.not.mpg%cvOnClosedSurface(cvlist(i1))) then ! flip sign
       ds(1:nlist)=-ds(1:nlist)
     endif
     open(99,file=filename)

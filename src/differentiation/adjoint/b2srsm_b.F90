@@ -143,7 +143,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
@@ -184,7 +184,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         result10 = ROXA(icv, is)
         result2 = ROXA(icv, is)
         x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
@@ -240,7 +240,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
 &       icv, 0) + sr%shi(icv, 3)*ti(icv)*ni(icv, 0)
       IF (x2 .GE. 0.) THEN
@@ -576,7 +576,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           CALL PUSHREAL8(abs0, r8/8)
@@ -603,7 +603,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         CALL PUSHREAL8(result10, r8/8)
         result10 = ROXA(icv, is)
         CALL PUSHREAL8(result2, r8/8)
@@ -645,7 +645,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
 &       icv, 0) + sr%shi(icv, 3)*ti(icv)*ni(icv, 0)
       IF (x2 .GE. 0.) THEN
@@ -705,7 +705,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    DO icv=mpg%ncv,1,-1
+    DO icv=mpg%nci,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         hlpb = 0.D0
@@ -794,7 +794,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
       srb%shi(icv, 3) = srb%shi(icv, 3) + ti(icv)*ni(icv, 0)*x2b
     END DO
     DO is=ns-1,0,-1
-      DO icv=mpg%ncv,1,-1
+      DO icv=mpg%nci,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           CALL POPREAL8(sr%smo(icv, 3, is), r8/8)
@@ -849,7 +849,7 @@ SUBROUTINE B2SRSM_B(ncv, ns, dtim, switch, geo, mpg, na, nab, ua, uab, &
         CALL POPREAL8(result10, r8/8)
         CALL ROXA_B(icv, is, result10b)
       END DO
-      DO icv=mpg%ncv,1,-1
+      DO icv=mpg%nci,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           invtimescale = abs0/(na(icv, is)*geo%cvvol(icv))

@@ -31,7 +31,7 @@ SUBROUTINE B2XZDD_DV(ncv, nd, switch, mpg, src, srcd, nbdirs)
 !      B2XZDD zeroes out the array elements corresponding to dead cells
 !      and core boundary cells.
 !     ------------------------------------------------------------------
-  INTEGER :: id, icv
+  INTEGER :: id, icv, icn, ifc
   INTEGER :: nd0
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
@@ -44,14 +44,17 @@ SUBROUTINE B2XZDD_DV(ncv, nd, switch, mpg, src, srcd, nbdirs)
         END DO
         src(icv, id) = 0.0_R8
       END DO
-    ELSE IF (icv .GT. mpg%nci .AND. mpg%cvonclosedsurface(icv) .AND. &
-&       switch%zero_dead_and_core .GE. 2) THEN
-      DO id=0,nd
-        DO nd0=1,nbdirs
-          srcd(nd0, icv, id) = 0.D0
+    ELSE IF (icv .GT. mpg%nci .AND. switch%zero_dead_and_core .GE. 2) THEN
+      iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+      iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      if ( mpg%cvOnClosedSurface(iCn) ) then
+        DO id=0,nd
+          DO nd0=1,nbdirs
+            srcd(nd0, icv, id) = 0.D0
+          END DO
+          src(icv, id) = 0.0_R8
         END DO
-        src(icv, id) = 0.0_R8
-      END DO
+      END IF
     END IF
   END DO
   RETURN
@@ -83,7 +86,7 @@ SUBROUTINE B2XZDD_NODIFF(ncv, nd, switch, mpg, src)
 !      B2XZDD zeroes out the array elements corresponding to dead cells
 !      and core boundary cells.
 !     ------------------------------------------------------------------
-  INTEGER :: id, icv
+  INTEGER :: id, icv, icn, ifc
 !     ------------------------------------------------------------------
   DO icv=1,ncv
     IF (mpg%cvreg(icv) .EQ. 0 .AND. switch%zero_dead_and_core .GE. 1) &
@@ -91,11 +94,14 @@ SUBROUTINE B2XZDD_NODIFF(ncv, nd, switch, mpg, src)
       DO id=0,nd
         src(icv, id) = 0.0_R8
       END DO
-    ELSE IF (icv .GT. mpg%nci .AND. mpg%cvonclosedsurface(icv) .AND. &
-&       switch%zero_dead_and_core .GE. 2) THEN
-      DO id=0,nd
-        src(icv, id) = 0.0_R8
-      END DO
+    ELSE IF (icv .GT. mpg%nci .AND. switch%zero_dead_and_core .GE. 2) THEN
+      iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+      iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      if ( mpg%cvOnClosedSurface(iCn) ) then
+        DO id=0,nd
+          src(icv, id) = 0.0_R8
+        END DO
+      END IF
     END IF
   END DO
   RETURN

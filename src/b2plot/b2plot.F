@@ -168,6 +168,7 @@ c
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
       integer iCv, iCm, iCn, iCp, iFc, iFt, iFp, iFm, iVx, iVx1, iVx2
       integer is, iss, isp, is2
+      integer nxtl, nxtr
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -302,6 +303,7 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(mpg%nCv,mpg%nFc,NFL)
       CALL EIRENE_ALLOC_EIRBRA(mpg%nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
@@ -1190,6 +1192,7 @@ c
       nz=ns
 c
       if (mpg%isClassicalGrid.eq.1) then
+        call get_nxt(mpg%nx, nxtl, nxtr)
         do iCv=1,mpg%nCv
           XX(iCv,2) = real(cvIx(iCv),R8)
           XX(iCv,1) = real(cvIx(iCv),R8)-0.5_R8
@@ -1492,16 +1495,37 @@ c
               if (mpg%cvFt(iCn).eq.iFt) cycle
               if (mpg%cvFt(iCn).eq.iFm) cycle
               if (mpg%cvFt(iCn).eq.iFp) cycle
-              if (iFm.eq.0) iFm = mpg%cvFt(iCn)
-              if (iFm.ne.0) iFp = mpg%cvFt(iCn)
+              if (iFm.eq.0 .and. iFp.eq.0) then
+                iFm = mpg%cvFt(iCn)
+              else if (iFm.ne.0 .and. iFp.eq.0) then
+                iFp = mpg%cvFt(iCn)
+              end if
             end do
           end do
-          if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1)))) then
-            shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFm))/
-     &       (rave(iFp)-rave(iFm))
-          else
-            shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
-     &       (rave(iFt)-rave(iFm))
+          if (iFm.ne.0 .and. iFp.ne.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))) .and.
+     &          mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1)))) then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFm))/
+     &         (rave(iFp)-rave(iFm))
+            else if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1))))
+     >       then
+              shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
+     &         (rave(iFt)-rave(iFm))
+            else if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1))))
+     >       then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFt))/
+     &         (rave(iFp)-rave(iFt))
+            end if
+          else if (iFm.eq.0 .and. iFp.ne.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFp,1)))) then
+              shear(iFt)=(safetyfactor(iFp)-safetyfactor(iFt))/
+     &         (rave(iFp)-rave(iFt))
+            end if
+          else if (iFm.ne.0 .and. iFp.eq.0) then
+            if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFm,1)))) then
+              shear(iFt)=(safetyfactor(iFt)-safetyfactor(iFm))/
+     &         (rave(iFt)-rave(iFm))
+            end if
           endif
         endif
       enddo
@@ -1612,6 +1636,7 @@ c
             CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
+            CALL EIRENE_DEALLOC_CCOUPL
             CALL EIRENE_DEALLOC_INFCOP
             CALL EIRENE_EXTRAB25_CLEANUP
             CALL EIRENE_WNEUTRALS_DEALLOC
@@ -1708,6 +1733,7 @@ c
           CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
+          CALL EIRENE_DEALLOC_CCOUPL
           CALL EIRENE_DEALLOC_INFCOP
           CALL EIRENE_EXTRAB25_CLEANUP
           CALL EIRENE_WNEUTRALS_DEALLOC
@@ -2782,6 +2808,7 @@ c
           if (nomp.gt.0) then
             do ix=1,nomp
               iCv = omp(ix)
+              if (iCv.gt.mpg%nCi) cycle
               if (mpg%cvOnClosedSurface(iCv)) cycle
               sumomp = sumomp+mach(iCv,0)*geo%cvX(iCv)*wdomp(ix)*
      1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
@@ -2790,6 +2817,7 @@ c
           if (nimp.gt.0) then
             do ix=1,nimp
               iCv = imp(ix)
+              if (iCv.gt.mpg%nCi) cycle
               if (mpg%cvOnClosedSurface(iCv)) cycle
               sumimp = sumimp+mach(iCv,0)*geo%cvX(iCv)*wdimp(ix)*
      1          sqrt(geo%cvBb(iCv,0)**2+geo%cvBb(iCv,1)**2)
@@ -11424,10 +11452,8 @@ c
         case('nxtl')     ! nxtl
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (mpg%nnreg(0).ge.7) then
-#ifdef WG_TODO
+          if (mpg%nXpt.ge.2) then
             call ipush(istack,iistack,nxtl)
-#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
@@ -11436,10 +11462,8 @@ c
         case('nxtr')     ! nxtr
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'
-          if (mpg%nnreg(0).ge.7) then
-#ifdef WG_TODO
+          if (mpg%nXpt.ge.2) then
             call ipush(istack,iistack,nxtr)
-#endif
           else
             write(*,*) cval,
      .       'option available for DN cases only: Nothing done.'
@@ -12217,8 +12241,28 @@ c calculate neoclassical diagnostics
           ds(i)=ds(i)-ds_offset
         enddo
       endif
-      if(.not.mpg%cvOnClosedSurface(cvlist(1)).and.
-     &        mpg%cvOnClosedSurface(cvlist(nlist))) then ! flip sign
+      i = 1
+      iCv1 = 0
+      do while (iCv1.eq.0 .and. i.le.nlist)
+        if (iCv1.eq.0 .and. cvlist(i).gt.mpg%nCi) then
+          i = i + 1
+        else if (iCv1.eq.0) then
+          iCv1 = cvlist(i)
+        endif
+      enddo
+      i = nlist
+      iCv2 = 0
+      do while (iCv2.eq.0 .and. i.gt.0)
+        if (iCv2.eq.0 .and. cvlist(i).gt.mpg%nCi) then
+          i = i - 1
+        else if (iCv2.eq.0) then
+          iCv2 = cvlist(i)
+        endif
+      enddo
+      call xertst(iCv1.gt.0.and.iCv2.gt.0,
+     & 'List does not include internal cells!')
+      if(.not.mpg%cvOnClosedSurface(iCv1).and.
+     &        mpg%cvOnClosedSurface(iCv2)) then ! flip sign
         ds(1:nlist)=-ds(1:nlist)
       endif
       do i=1,nlist

@@ -59,8 +59,6 @@ SUBROUTINE INTFLUX_NODIFF_NODIFF(nfc, ncv, mpg, geo, faceflux, density, &
 !
   INTEGER :: idir, ifc
   REAL(kind=r8) :: qf(nfc), wrkf(nfc, 0:1), wrkc(ncv, 0:1)
-  INTRINSIC ABS
-  REAL(kind=r8) :: abs0
 !
 ! ..interpolate the quantity to cell faces
   CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, density, qf)
@@ -70,13 +68,8 @@ SUBROUTINE INTFLUX_NODIFF_NODIFF(nfc, ncv, mpg, geo, faceflux, density, &
     DO ifc=1,nfc
       IF (geo%fcqalf(ifc, idir) .NE. 0.0_R8 .AND. qf(ifc) .NE. 0.0_R8) &
 &     THEN
-        IF (geo%fcqalf(ifc, idir) .GE. 0.) THEN
-          abs0 = geo%fcqalf(ifc, idir)
-        ELSE
-          abs0 = -geo%fcqalf(ifc, idir)
-        END IF
-        wrkf(ifc, idir) = faceflux(ifc, idir)/qf(ifc)/(geo%fcs(ifc)*abs0&
-&         )
+        wrkf(ifc, idir) = faceflux(ifc, idir)/qf(ifc)/(geo%fcs(ifc)*geo%&
+&         fcqalf(ifc, idir))
       ELSE
         wrkf(ifc, idir) = 0.0_R8
       END IF

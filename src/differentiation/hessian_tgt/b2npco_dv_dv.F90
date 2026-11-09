@@ -213,7 +213,7 @@ SUBROUTINE B2NPCO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &                        'b2npco_pcm1 must be 0 for time-dependent mode'&
 &                                              )
       warning = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
 &         (icv) .NE. 1.0_R8
       END DO
@@ -646,7 +646,7 @@ SUBROUTINE B2NPCO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &                        'b2npco_pcm1 must be 0 for time-dependent mode'&
 &                                              )
       warning = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
 &         (icv) .NE. 1.0_R8
       END DO
@@ -987,7 +987,7 @@ SUBROUTINE B2NPCO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
 &                        'b2npco_pcm1 must be 0 for time-dependent mode'&
 &                                              )
       warning = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
 &         (icv) .NE. 1.0_R8
       END DO

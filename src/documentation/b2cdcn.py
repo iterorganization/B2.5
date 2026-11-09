@@ -235,10 +235,15 @@ for category in categories:
 fort += DELIMITER
 fort += """*.end b2cdcn\n\n      end subroutine b2cdcn\n"""
 
+# Optional output file name: the Makefile passes a private temporary name and
+# renames the result into place, so that concurrent builds never see a
+# truncated or partially written b2cdcn.F
+out_name = sys.argv[1] if len(sys.argv) > 1 else 'b2cdcn.F'
+
 if sys.version_info[0] >= 3:
-    f = open('b2cdcn.F', 'wb')
+    f = open(out_name, 'wb')
     f.write(fort.encode())
 else:
-    f = open('b2cdcn.F', 'w')
+    f = open(out_name, 'w')
     f.write(fort.encode('utf-8'))
 f.close()

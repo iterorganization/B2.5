@@ -35,7 +35,7 @@
       do iCv = m%nCi+1, m%nCv
         ! get the only face linked to the guard cell
         bnd_fc = m%cvFc(m%cvFcP(iCv,1))
-        ! if face is towards core, for recycling we don't care about it
+        ! if face is towards core, for recycling we do not care about it
         if (m%cvOnClosedSurface(m%fcCv(bnd_fc,1)) .or.
      &      m%cvOnClosedSurface(m%fcCv(bnd_fc,2)) .and.
      &      .not. docore) cycle

@@ -142,7 +142,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
@@ -183,7 +183,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         result10 = ROXA(icv, is)
         result2 = ROXA(icv, is)
         x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
@@ -240,7 +240,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
 &       icv, 0) + sr%shi(icv, 3)*ti(icv)*ni(icv, 0)
       IF (x2 .GE. 0.) THEN
@@ -615,7 +615,7 @@ SUBROUTINE B2SRSM_DV(ncv, ns, dtim, switch, geo, mpg, na, nad, ua, uad, &
 !
 !   ..smooth particle and parallel momentum sources
     DO is=0,ns-1
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
 &       ) THEN
           DO nd=1,nbdirs
@@ -682,7 +682,7 @@ SUBROUTINE B2SRSM_DV(ncv, ns, dtim, switch, geo, mpg, na, nad, ua, uad, &
 !WG_TODO            endif
 
       END DO
-      DO icv=1,mpg%ncv
+      DO icv=1,mpg%nci
         CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
         CALL ROXA_DV(icv, is, result2, result2d, nbdirs)
         temp = result2*ua(icv, is)
@@ -789,7 +789,7 @@ SUBROUTINE B2SRSM_DV(ncv, ns, dtim, switch, geo, mpg, na, nad, ua, uad, &
       END DO
     END DO
 !   ..smooth electron heat, ion heat and electron particle sources
-    DO icv=1,mpg%ncv
+    DO icv=1,mpg%nci
       temp = ti(icv)*ni(icv, 0)
       DO nd=1,nbdirs
         x2d(nd) = srd%shi(nd, icv, 0) + ti(icv)*srd%shi(nd, icv, 1) + sr&

@@ -69,7 +69,7 @@ BLD = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
+LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL} ${LD_SSP}
 
 ifdef LD_CATALYST
   CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
@@ -140,7 +140,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef MKLROOT
-  LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+  LD_MKL ?= -L${MKLROOT}/lib -L${MKLROOT}/lib/intel64 -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
 
 ifdef USE_EIRENE

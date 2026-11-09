@@ -180,7 +180,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, is, ireg, k
+  INTEGER :: icv, icn, ifc, is, ireg, k
   INTEGER :: vcount(0:ns-1)
 !srv 04.07.08
   CHARACTER :: chns*3
@@ -321,7 +321,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       rxg_npmo = HUGE(1.0_R8)
       DO is=0,ns-1
         warning = .false.
-        DO icv=1,ncv
+        DO icv=1,mpg%nci
           warning = warning .OR. rxf*dtmo(is, mpg%cvreg(icv))*&
 &           time_factor(icv) .NE. 1.0_R8
         END DO
@@ -1165,8 +1165,14 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   vcount = 0
   IF (switch%ion_vlct_restrict_core .NE. 0) THEN
     DO is=0,ns-1
-      DO icv=1,ncv
-        IF (mpg%cvonclosedsurface(icv)) THEN
+      DO icv=1,mpg%ncv
+        IF (icv.GT.mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+          icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+        ELSE
+          icn = icv
+        END IF
+        IF (mpg%cvonclosedsurface(icn)) THEN
           IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
 &             switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
             CALL PUSHREAL8(cst, r8/8)
@@ -2180,7 +2186,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, is, ireg, k
+  INTEGER :: icv, icn, ifc, is, ireg, k
   INTEGER :: vcount(0:ns-1)
 !srv 04.07.08
   CHARACTER :: chns*3
@@ -2279,7 +2285,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
       rxg_npmo = HUGE(1.0_R8)
       DO is=0,ns-1
         warning = .false.
-        DO icv=1,ncv
+        DO icv=1,mpg%nci
           warning = warning .OR. rxf*dtmo(is, mpg%cvreg(icv))*&
 &           time_factor(icv) .NE. 1.0_R8
         END DO
@@ -2936,8 +2942,14 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   vcount = 0
   IF (switch%ion_vlct_restrict_core .NE. 0) THEN
     DO is=0,ns-1
-      DO icv=1,ncv
-        IF (mpg%cvonclosedsurface(icv)) THEN
+      DO icv=1,mpg%ncv
+        IF (icv.GT.mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+          icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+        ELSE
+          icn = icv
+        END IF
+        IF (mpg%cvonclosedsurface(icn)) THEN
           IF (((.NOT.is_neutral(is)) .OR. switch%tn_style .LE. 1) .OR. (&
 &             switch%tn_style .EQ. 2 .AND. NINT(zn(is)) .NE. 1)) THEN
             cst = SQRT(pz(icv)/rz(icv))

@@ -12,8 +12,8 @@
       use b2us_geo
       use b2mod_b2cmpa
       use b2mod_user_namelist
-     , , only : nimp, imp, icsepimp,
-     ,          nomp, omp, icsepomp
+     , , only : nimp, imp, icsepimp, imp_pos,
+     ,          nomp, omp, icsepomp, omp_pos
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -71,13 +71,15 @@
         if (.not. allocated(dsi)) then
           allocate(dsi(1:nimp))
         endif
-        call output_ds_cv(mpg,geo,nimp,imp,icsepimp,'dsi',dsi)
+        call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi',dsi,
+     &                    imp_pos(1:nimp))
       endif
       if (nomp.gt.0) then
         if (.not. allocated(dsa)) then
           allocate(dsa(1:nomp))
         endif
-        call output_ds_cv(mpg,geo,nomp,omp,icsepomp,'dsa',dsa)
+        call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa',dsa,
+     &                    omp_pos(1:nomp))
       endif
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
@@ -91,7 +93,7 @@
           call output_ds_fc
      &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl',dsl)
         case (2)
-          if (mpg%nnreg(0).ge.7) then
+          if (mpg%nXpt.ge.2) then
             if (.not. allocated(dstl)) then
               allocate(dstl(1:mpg%divFcP(i,2)))
             endif

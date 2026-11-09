@@ -385,7 +385,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
             co%cvsahz(iFc,1,:) = 0.0_R8
           endif
         enddo
-        do iFc = 1,mpg%nFc
+        do iFc = 1, mpg%nFc
           cvs = mpg%fcCv(iFc,1:2)
           if (mpg%cvAlongBoundary(cvs(1)).and.
      &        mpg%cvAlongBoundary(cvs(2))) then

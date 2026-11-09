@@ -65,6 +65,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
+  LOGICAL :: skipfc
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
@@ -338,7 +339,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -354,7 +357,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -387,7 +390,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
 &                          wrkfd0, wrkfd, wrkfdd, qip0, qip0d0, qip0d, &
 &                          qip0dd, nbdirs, nbdirs0)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -403,7 +408,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -479,7 +484,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -495,7 +502,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -896,7 +903,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
           END DO
 !
           DO ifc=1,nfc
-            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+            skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+            IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
               DO nd=1,nbdirs
                 DO nd0=nd,nbdirs0
@@ -919,7 +928,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
               tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
               alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
             END IF
-            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+            IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
               DO nd=1,nbdirs
                 DO nd0=nd,nbdirs0
@@ -1120,7 +1129,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -1136,7 +1147,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -1169,7 +1180,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
 &                          wrkfd0, wrkfd, wrkfdd, qip0, qip0d0, qip0d, &
 &                          qip0dd, nbdirs, nbdirs0)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1185,7 +1198,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1270,7 +1283,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -1286,7 +1301,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   DO nd0=nd,nbdirs0
@@ -1477,7 +1492,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1493,7 +1510,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1526,7 +1543,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
 &                            wrkfd0, wrkfd, wrkfdd, qip0, qip0d0, qip0d&
 &                            , qip0dd, nbdirs, nbdirs0)
                 DO ifc=1,nfc
-                  IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
+                  skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                  IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
 &                     .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &                 THEN
                     DO nd=1,nbdirs
@@ -1543,7 +1562,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                     END DO
                     qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                   END IF
-                  IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
+                  IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
 &                     mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                     DO nd=1,nbdirs
                       DO nd0=nd,nbdirs0
@@ -1634,7 +1653,9 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1650,7 +1671,7 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod0, &
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     DO nd0=nd,nbdirs0
@@ -1978,6 +1999,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+  LOGICAL :: skipfc
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
@@ -2142,7 +2164,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2150,7 +2174,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2171,7 +2195,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
               CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, &
 &                              wrkfd, qip0, qip0d, nbdirs)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc&
@@ -2179,7 +2205,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc&
@@ -2224,7 +2250,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2232,7 +2260,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2397,7 +2425,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
           END DO
 !
           DO ifc=1,nfc
-            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+            skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+            IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
               DO nd=1,nbdirs
                 tauia1d(nd, mpg%fccv(ifc, 2)) = tauia1d(nd, mpg%fccv(ifc&
@@ -2408,7 +2438,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
               tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
               alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
             END IF
-            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+            IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
               DO nd=1,nbdirs
                 tauia1d(nd, mpg%fccv(ifc, 1)) = tauia1d(nd, mpg%fccv(ifc&
@@ -2509,7 +2539,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2517,7 +2549,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2538,7 +2570,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
               CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, &
 &                              wrkfd, qip0, qip0d, nbdirs)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc&
@@ -2546,7 +2580,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc&
@@ -2593,7 +2627,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2601,7 +2637,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                 END DO
                 qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
               END IF
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                 DO nd=1,nbdirs
                   qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc, &
@@ -2693,7 +2729,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc&
@@ -2701,7 +2739,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc&
@@ -2722,7 +2760,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                 CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf&
 &                                , wrkfd, qip0, qip0d, nbdirs)
                 DO ifc=1,nfc
-                  IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
+                  skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                  IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
 &                     .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &                 THEN
                     DO nd=1,nbdirs
@@ -2731,7 +2771,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                     END DO
                     qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                   END IF
-                  IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
+                  IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
 &                     mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                     DO nd=1,nbdirs
                       qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(&
@@ -2779,7 +2819,9 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 2)) = qip0d(nd, mpg%fccv(ifc&
@@ -2787,7 +2829,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, geod&
                   END DO
                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
                 END IF
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
                   DO nd=1,nbdirs
                     qip0d(nd, mpg%fccv(ifc, 1)) = qip0d(nd, mpg%fccv(ifc&
@@ -2955,6 +2997,7 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 !  Hint: nFc should be the size of dimension 1 of array fcbb
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+  LOGICAL :: skipfc
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
@@ -3068,10 +3111,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
 &               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
 !smoothing: interpolate to faces and back to cell centers
@@ -3085,10 +3130,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
               CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, &
 &                                  wrkf, qip0)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &                 fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%&
 &                 fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
               END DO
@@ -3117,10 +3164,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
 &               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
             END DO
@@ -3192,12 +3241,14 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
           END DO
 !
           DO ifc=1,nfc
-            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+            skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+            IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
               tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
               alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
             END IF
-            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+            IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
               tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
               alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
@@ -3257,10 +3308,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
 &               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
 !smoothing: interpolate to faces and back to cell centers
@@ -3274,10 +3327,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
               CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, &
 &                                  wrkf, qip0)
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &                 fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%&
 &                 fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
               END DO
@@ -3306,10 +3361,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
             END DO
 !
             DO ifc=1,nfc
-              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+              skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+              IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+              IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
 &                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
 &               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
             END DO
@@ -3365,10 +3422,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &                 fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%&
 &                 fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
 !smoothing: interpolate to faces and back to cell centers
@@ -3382,10 +3441,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
                 CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, &
 &                                    wrkf, qip0)
                 DO ifc=1,nfc
-                  IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
+                  skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                  IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (&
 &                     .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &                   qip0(mpg%fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-                  IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
+                  IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND.&
 &                     mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%&
 &                   fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
                 END DO
@@ -3415,10 +3476,12 @@ SUBROUTINE B2TVSQ_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
               END DO
 !
               DO ifc=1,nfc
-                IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+                skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+                IF (.NOT.skipfc .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
 &                 fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
-                IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
+                IF (.NOT.skipfc .AND. .NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. &
 &                   mpg%cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%&
 &                 fccv(ifc, 1)) = qip0(mpg%fccv(ifc, 2))
               END DO

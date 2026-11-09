@@ -595,7 +595,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 *   ..solve the potential equation
 *   ..apply the internal iterations if switch%max_iter_po > 0
          do ipot = 0, switch%max_iter_po                                 !srv 15.02.26
-          if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
+          if (switch%fhe_vis_per.eq.0.0_R8) then                         !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
               new_matrix = new_matrix.or.
@@ -607,7 +607,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &        geo, mpg, st%pl, st%dv, st%sr)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
           else
-            call xerrab ('visper not yet available for WG')
+            call xerrab ('vis_per not yet available for WG')
 #ifdef WG_TODO
             call b2npp7 (nx, ny, mpg%nnreg(0), b2news_solving(3),        !srv 27.01.00 22.05.18
      &       solvepo, ncall_b2news_, rxf2, ne, te, conc, avisper,        !srv 27.01.00

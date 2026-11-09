@@ -2628,7 +2628,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&
@@ -5029,7 +5029,7 @@ SUBROUTINE B2STBR_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&
@@ -7471,7 +7471,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&

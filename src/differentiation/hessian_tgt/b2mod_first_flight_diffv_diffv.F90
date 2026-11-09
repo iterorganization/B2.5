@@ -187,7 +187,7 @@ CONTAINS
     TYPE(MAPPING) :: mpg
     TYPE(B2STATE) :: st
     INTEGER :: indptr, icv0, ns, isneut
-    INTEGER :: icv, ia, ptr, ik, ision, k, icvend
+    INTEGER :: icv, icn, ifc, ia, ptr, ik, ision, k, icvend
     REAL(kind=r8) :: dtim, dist_start, dist_end, dist_deposit, vcx, vion&
 &   , vnn, vexc, rcx, rion, rnn, src, sri, eion, sxb, flight_time, &
 &   flown_time, thru_time, work(mpg%ncv, 0:1), wrk2(mpg%ncv), wrk3(mpg%&
@@ -205,7 +205,9 @@ CONTAINS
     REAL(kind=r8) :: arg10
 !
 ! ignore core
-    IF (mpg%cvonclosedsurface(icv0)) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv0,1))
+    icv = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+    IF (mpg%cvonclosedsurface(icv)) THEN
       RETURN
     ELSE
       IF (.NOT.b2mod_math_initialised) CALL B2MOD_MATH_INIT()
@@ -315,9 +317,15 @@ CONTAINS
             END IF
           END DO
  100      IF (dist_end .GT. 0.0_R8 .AND. icvend .NE. 0) THEN
-            IF (mpg%cvonclosedsurface(icvend)) THEN
+            IF (icvend.le.mpg%nci) THEN
+              icn = icvend
+            ELSE
+              ifc = mpg%cvfc(mpg%cvfcp(icvend,1))
+              icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+            ENDIF
+            IF (mpg%cvonclosedsurface(icn)) THEN
               corepuff = corepuff + dist_end
-            ELSE IF (MOD(mpg%cvreg(icvend), 4) .EQ. 2) THEN
+            ELSE IF (MOD(mpg%cvreg(icn), 4) .EQ. 2) THEN
               mainpuff = mainpuff + dist_end
             ELSE
               pfrpuff = pfrpuff + dist_end

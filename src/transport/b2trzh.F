@@ -26,8 +26,11 @@
       use b2mod_switches
       use b2mod_ipmain
       use b2mod_frtf_nccorr
-     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia,
-     &          g_hs_style, alpha_hs_style
+     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
+#ifndef NAGFOR
+      use b2mod_frtf_nccorr
+     & , only : g_hs_style, alpha_hs_style
+#endif
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -888,7 +891,7 @@
 
 *    ..apply Luciani correction for the ion conductivity
       chci0_luc=0.0_R8
-      chci0_luc(:,0) = chci0_luc(:,0)*co%f_luc_ki
+      chci0_luc(:,0) = chci0(:,0)*co%f_luc_ki
       hci0(:,0) = hci0(:,0)*co%f_luc_ki_c
       do i = 0, nspecies-1
         chci0_al_luc(:,0,i) = chci0_al(:,0,i)*co%f_luc_ki

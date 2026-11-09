@@ -534,6 +534,13 @@ ALL: ensure_adas
 NOPLOT: ensure_adas
 MAIN: ensure_adas
 endif
+ifneq ($(wildcard $(EBROOTSUITESPARSE)),)
+DEFINES += -DUMFPACK
+else ifneq ($(wildcard $(SUITESPARSE_HOME)),)
+DEFINES += -DUMFPACK
+else ifneq ($(wildcard $(SUITESPARSE_LIB_DIR)),)
+DEFINES += -DUMFPACK
+endif
 
 DIMSDIR = ${SRCDIR}/modules
 ifeq ($(shell [ -s ${SRCDIR}/modules.local/b2mod_dimensions.F ] && echo yes || echo no ),yes)
@@ -586,11 +593,14 @@ endif
 
 mods : ${MODMODS}
 
+# b2cdci.F and b2cdcn.F are generated into a private temporary file and renamed
+# into place, so concurrent sub-makes (parallel b25eirene_* targets, or several
+# compilers building in the same tree) never compile a truncated file
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
-	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
+	-cd ${DOCDIR}; ( ${PYTHON} b2cdci.py b2cdci.F.$$$$ || echo "! Error building b2cdci.F from b2input.xml" > b2cdci.F.$$$$ ) && mv -f b2cdci.F.$$$$ b2cdci.F
 
 ${DOCDIR}/b2cdcn.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdcn.py
-	-cd ${DOCDIR}; ${PYTHON} b2cdcn.py || echo "! Error building b2cdcn.F from b2input.xml" > ${DOCDIR}/b2cdcn.F
+	-cd ${DOCDIR}; ( ${PYTHON} b2cdcn.py b2cdcn.F.$$$$ || echo "! Error building b2cdcn.F from b2input.xml" > b2cdcn.F.$$$$ ) && mv -f b2cdcn.F.$$$$ b2cdcn.F
 
 ${DIFFDIR}/b2mod_dimensions.F: ${DIMSDIR}/b2mod_dimensions.F
 	ln -sf $< ${DIFFDIR}
@@ -1450,25 +1460,35 @@ else
 endif
 	@if cmp -s ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${OBJDIR}/git_version_new.h; else mv ${OBJDIR}/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
-${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
-ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
-	-mkdir -p ${OBJDIR}
+${OBJDIR}:
+	mkdir -p ${OBJDIR}
+
+${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules | ${OBJDIR}
+ifneq (${OBJDIR},${OBNDIR})
+ifeq ($(shell [ -d ${OBNDIR} ] && echo yes || echo no ),no)
+	-mkdir -p ${OBNDIR}
+endif
 endif
 	printf '# Dummy dependencies file for B2.5\n' > ${OBJDIR}/dependencies
 	${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} depend
 
-AM_FILES: ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
+# retrieve_fnn_datasets fetches all three FNN files in one go, so a single
+# stamp file stands for the set and the script runs at most once per make.
+# The script leaves unchanged files with their old timestamps, which is why the
+# files themselves cannot serve as targets.  A missing file forces a new fetch.
+FNN_FILES = ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
+FNN_STAMP = ${AMDIR}/.fnn_datasets_retrieved
+ifneq ($(filter-out $(wildcard ${FNN_FILES}),${FNN_FILES}),)
+$(shell rm -f ${FNN_STAMP})
+endif
 
-${AMDIR}/dbe.fnn: ${AMDIR}/retrieve_fnn_datasets
-	cd ${AMDIR} ; ./retrieve_fnn_datasets
+AM_FILES: ${FNN_STAMP}
 
-${AMDIR}/dc.fnn: ${AMDIR}/retrieve_fnn_datasets
+${FNN_STAMP}: ${AMDIR}/retrieve_fnn_datasets
 	cd ${AMDIR} ; ./retrieve_fnn_datasets
-
-${AMDIR}/dw.fnn: ${AMDIR}/retrieve_fnn_datasets
-	cd ${AMDIR} ; ./retrieve_fnn_datasets
+	touch $@
 
 $(shell [ -s ${OBJDIR}/dependencies ] || rm -f ${OBJDIR}/dependencies)
 include ${OBJDIR}/dependencies
@@ -1536,33 +1556,37 @@ echo:
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
-${SRCLOCAL}/b2local.F: ${MAKES}
+# Placeholder files for local code. They are created only when missing, so
+# user modifications are never overwritten, and each one is written to a
+# private temporary file and renamed into place, so concurrent sub-makes
+# (parallel b25eirene_* targets, or several compilers building in the same
+# tree) cannot interleave their output.
+${SRCLOCAL}/b2local.F:
 	mkdir -p ${SRCLOCAL}
-	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "c store local or locally modified subroutines in this directory" >> ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      use b2mod_local" >> ${SRCLOCAL}/b2local.F
-	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
-	echo "c" >> ${SRCLOCAL}/b2local.F
-	echo "      end subroutine b2local" >> ${SRCLOCAL}/b2local.F
+	{ echo "      subroutine b2local" ; \
+	  echo "c" ; \
+	  echo "c store local or locally modified subroutines in this directory" ; \
+	  echo "c" ; \
+	  echo "      use b2mod_local" ; \
+	  echo '#include "b2local.h"' ; \
+	  echo "c" ; \
+	  echo "      end subroutine b2local" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
-${MODLOCAL}/b2mod_local.F: ${MAKES}
+${MODLOCAL}/b2mod_local.F:
 	mkdir -p ${MODLOCAL}
-	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
-	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
-	echo "c" >> ${MODLOCAL}/b2mod_local.F
-	echo "      end module b2mod_local" >> ${MODLOCAL}/b2mod_local.F
+	{ echo "      module b2mod_local" ; \
+	  echo "c" ; \
+	  echo "c store local or locally modified modules in this directory" ; \
+	  echo "c" ; \
+	  echo "      end module b2mod_local" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
-${INCLOCAL}/b2local.h: ${MAKES}
+${INCLOCAL}/b2local.h:
 	mkdir -p ${INCLOCAL}
-	echo "c" > ${INCLOCAL}/b2local.h
-	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h
-	echo "c" >> ${INCLOCAL}/b2local.h
+	{ echo "c" ; \
+	  echo "c store local or locally modified include files in this directory" ; \
+	  echo "c" ; } > $@.$$$$ && mv -f $@.$$$$ $@
 
-${OBJDIR}/mpiversion.mk: ${MAKES}
-	@mkdir -p ${OBJDIR}
+${OBJDIR}/mpiversion.mk: ${MAKES} | ${OBJDIR}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else

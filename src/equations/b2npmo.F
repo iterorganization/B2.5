@@ -99,7 +99,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, ireg, k
+      integer iCv, iFc, iCn, is, ireg, k
       integer :: vcount(0:ns-1)
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
@@ -122,7 +122,7 @@
      8  ehxp(nCv), smt(nCv,0:3), cst,                                  !srv 17.01.14
      9  flct(nFc,0:1), wrk1(nCv), wrks(nCv),
      1  smqdu(nCv), wrk0(nCv), wrk2(nCv), wrk3(nCv,0:ns-1),
-     2  ctcfb(nCv), ctcft(nCv),                                        !srv 06.04.07
+     2  wrk4(nCv,0:ns-1), ctcfb(nCv), ctcft(nCv),                      !srv 06.04.07
      3  zeff(nCv), zmff(nCv),                                          !srv 13.01.17 {
      4  ce1(nCv), ce2(nCv),
      5  cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
@@ -180,10 +180,9 @@
         endif
 c time-dependent treatment
         if(switch%b2mndt_style.eq.2) then
-         rxg_npmo = huge(1.0_R8)
          do is = 0,ns-1
           warning = .false.
-          do iCv = 1, nCv
+          do iCv = 1, mpg%nCi
             warning = warning .or.
      .       rxf*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
           enddo
@@ -193,11 +192,8 @@ c time-dependent treatment
            write(6,*) 'Time derivative terms may be inacurrate !'
           end if
          enddo
-        else
-         rxg_npmo = switch%b2npmo_rxg
         endif
-        call xertst (0.0_R8.lt.rxg_npmo,
-     &    'faulty internal parameter rxg')
+        rxg_npmo = switch%b2npmo_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npmo.lt.3) then
@@ -340,7 +336,7 @@ c time-dependent treatment
 !$omp& firstprivate(lnlam)
 !$omp& private(is, k)
 !$omp& lastprivate(kt_neo)
-!$omp& private(wrkf, wrk1, smb, ro)
+!$omp& private(wrkf, wrk1, smb)
 !$omp& private(smbfrea, smbfria, smbtfea, smbtfia)
 !$omp& private(smbch, smbtf, smbvtmp)
 !$omp& private(smbgp, flubv, wrk2, smbvh, smbvv, wrk3)
@@ -349,6 +345,8 @@ c time-dependent treatment
 !$omp& private(chns, wrks, aa, wrkff, wrkfff)
 !$omp& firstprivate(last_solve_9) lastprivate(last_solve_9)
 !$omp& shared(solvemt, solvemo, ns, am, solving, ismain, smqdu, itcnt)
+!$omp& shared(dtmo, rxf)
+!$omp& shared(ro)
 #ifndef FIXED_POINT
 !$omp& shared(balance_netcdf, fmo_b2nxfv)
 !$omp& shared(fmo_tot, tot_smo0to3)
@@ -532,7 +530,7 @@ cdjm Jan2017 update momentum source components for balance
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
        if (switch%b2mndt_ckn.eq.2) then
          if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
-     &            .or.switch%get_residuals.eq.1) then
+     &    .or.switch%get_residuals.eq.1) then
            call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is,
      &       pl%ua(:,is), rob, smb, flub, co%cvsahz(:,:,is),
      &       dv%resmo0(:,is), dv%fmo(:,:,is), dv%fhm(:,:,is),
@@ -545,11 +543,19 @@ cdjm Jan2017 update momentum source components for balance
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
+cc Given d(nu)/dt = n du/dt + u dn/dt,
+cc What is computed in b2smdt corresponds to n du/dt,
+cc What is added here below corresponds to u dn/dt
          wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
      &    psnl%na(:,is))*psnl%ua(:,is)/dtim
+         do iCv=1,mpg%nCi
+           wrk3(:,is) = wrk3(:,is)/(dtmo(is,mpg%cvReg(iCv))*rxf)
+         enddo
          wrk3(mpg%nCi+1:mpg%nCv,is) = 0.0_R8
          sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*wrk3(:,is)
          smb = smb + sr%smodt(:,:,is)
+       else
+         wrk3 = 0.0_R8
        endif
 
 *    ..compute residual
@@ -821,8 +827,14 @@ c     ..compare 9-pt stencil matrix
       vcount = 0
       if( switch%ion_vlct_restrict_core .ne. 0 ) then
         do is = 0, ns-1
-          do iCv = 1, nCv
-            if (mpg%cvOnClosedSurface(iCv)) then
+          do iCv = 1, mpg%nCv
+            if (iCv.gt.mpg%nCi) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            else
+              iCn = iCv
+            end if
+            if (mpg%cvOnClosedSurface(iCn)) then
               if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
      .           (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
                 cst=sqrt(pz(iCv)/rz(iCv))
@@ -911,11 +923,15 @@ c     ..compare 9-pt stencil matrix
 *   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
       do is = 0, ns-1
-        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                          ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
-     &    -sr%smodt(:,1,is)*pl%ua(:,is)                             ! = 0
-     &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                   ! = 0
+        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                         ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
+     &    -sr%smodt(:,1,is)*pl%ua(:,is)                              ! = 0
+     &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                    ! = 0
      &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
      &    /ts_factor
+        do iCv=1,mpg%nCi
+          wrk4(iCv,is) = dtmo(is,mpg%cvReg(iCv)) *
+     &                       (dv%dmodt(iCv,is) - wrk3(iCv,is))
+        enddo
       enddo
 
 *   ..correct pcca
@@ -926,6 +942,7 @@ c     ..compare 9-pt stencil matrix
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
         call my_out_us(70,nCv,0,dv%dmodt(1,is),'b2npmo_dmodt'//chns)
         call my_out_us(70,nCv,0,wrk3(1,is),'b2npmo_mavadnadt'//chns)
+        call my_out_us(70,nCv,0,wrk4(1,is),'b2npmo_manadvadt'//chns)
        enddo
       endif                                                             !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then

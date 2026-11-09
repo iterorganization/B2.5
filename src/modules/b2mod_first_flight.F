@@ -150,7 +150,7 @@ cxpb Recall iCv is the guard cell
       type(mapping) :: mpg
       type(B2State) :: st
       integer indptr,iCv0,ns,isneut
-      integer iCv,ia,ptr,ik,ision,k,iCvend
+      integer iCv,iFc,iCn,ia,ptr,ik,ision,k,iCvend
       real (kind=R8) ::
      *     dtim,dist_start,dist_end,dist_deposit,vcx,vion,vnn,vexc,
      *     rcx,rion,rnn,src,sri,eion,sxb,
@@ -158,7 +158,9 @@ cxpb Recall iCv is the guard cell
      *     work(mpg%nCv,0:1),wrk2(mpg%nCv),wrk3(mpg%nCv),
      *     pfrpuff,mainpuff,corepuff
 
-      if (mpg%cvOnClosedSurface(iCv0)) return   ! ignore core
+      iFc = mpg%cvFc(mpg%cvFcP(iCv0,1))
+      iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      if (mpg%cvOnClosedSurface(iCv)) return   ! ignore core
       if (.not.b2mod_math_initialised) call b2mod_math_init
       if (abs(src).lt.cutlo) return  ! jump over zero sources
       dist_start=src/no_of_slices
@@ -241,9 +243,15 @@ cxpb  neutrals to be eion=shi/sna.
           ptr = ptr + 1
         enddo
         if(dist_end.gt.0.0_R8.and.iCvend.ne.0) then
-          if(mpg%cvOnClosedSurface(iCvend)) then
+          if(iCvend.le.mpg%nCi) then
+            iCn = iCvend
+          else
+            iFc = mpg%cvFc(mpg%cvFcP(iCvend,1))
+            iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          endif
+          if(mpg%cvOnClosedSurface(iCn)) then
             corepuff=corepuff+dist_end
-          elseif(mod(mpg%cvReg(iCvend),4).eq.2) then
+          elseif(mod(mpg%cvReg(iCn),4).eq.2) then
             mainpuff=mainpuff+dist_end
           else
             pfrpuff=pfrpuff+dist_end

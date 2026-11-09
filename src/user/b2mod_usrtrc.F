@@ -1372,10 +1372,14 @@ c*** Calculate the peak parallel power flux to the main chamber wall
      .    (st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
      .    (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
         end do !}
-        hlp=hlp/s
+        if (s.gt.0.0_R8) then !{
+          hlp=hlp/s
+        else !}{
+          hlp=0.0_R8
+        end if !}
         hlp_ppfw=max(hlp_ppfw,hlp)
-          if(hlp_dbg) print '(1x,a,i6,3e12.4)',
-     .     "iCv,pbs,hlp_ppfw,hlp_ppfw_max =>",iCv,s,hlp,hlp_ppfw
+        if(hlp_dbg) print '(1x,a,i6,3e12.4)',
+     .   'iCv,pbs,hlp_ppfw,hlp_ppfw_max =>',iCv,s,hlp,hlp_ppfw
       end do !}
 
 #ifdef B25_EIRENE

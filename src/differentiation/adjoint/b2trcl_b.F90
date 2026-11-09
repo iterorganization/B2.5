@@ -80,6 +80,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array lnlam
 !  Hint: nCv should be the size of dimension 1 of array temp
   IMPLICIT NONE
+  LOGICAL :: skipfc
+  INTEGER :: icn
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
   INTEGER, INTENT(IN) :: iscx(0:nscx-1)
@@ -866,7 +868,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       DO ifc=1,nfc
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.skipfc .AND. .NOT.(mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
           IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
@@ -927,7 +931,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       DO ifc=1,nfc
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.skipfc .AND. .NOT.(mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
           IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
@@ -982,8 +988,14 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, co%&
 &                fllim_ki_c)
       DO icv=1,ncv
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
         IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.mpg%&
-&           cvonclosedsurface(icv))) THEN
+&           cvonclosedsurface(icn))) THEN
           CALL PUSHREAL8(co%hcix_c(icv), r8/8)
           co%hcix_c(icv) = co%hcix_c(icv)*co%fllim_ki_c(icv)
           CALL PUSHCONTROL1B(1)
@@ -1002,7 +1014,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2sigp_style .NE. 2) THEN
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
-        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (.NOT.skipfc .AND. .NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
           CALL PUSHREAL8(flomx, r8/8)
           flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv&
@@ -1040,7 +1054,13 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, co%&
 &                fllim_al_c)
       DO icv=1,ncv
-        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
           CALL PUSHREAL8(co%alfx_c(icv), r8/8)
           co%alfx_c(icv) = co%alfx_c(icv)*co%fllim_al_c(icv)
           CALL PUSHCONTROL1B(1)
@@ -1055,7 +1075,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   ELSE IF (cflim(3) .NE. 0.0_R8) THEN
 !   ..apply flux limit to calf at cell faces
     DO ifc=1,nfc
-      IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+      skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+      IF (.NOT.skipfc .AND. .NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &         cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
           CALL PUSHREAL8(abs3, r8/8)
@@ -1095,7 +1117,13 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL GRADC_P_FWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, pl%te, wrkv&
 &              , gtec)
     DO icv=1,ncv
-      IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+      IF (icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+      ELSE
+        icn = icv
+      END IF
+      IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
         CALL PUSHREAL8(jemax, r8/8)
         jemax = SQRT(pl%te(icv)/me)*qe*dv%ne(icv)*geo%cvbb(icv, 0)/geo%&
 &         cvbb(icv, 3)
@@ -2220,6 +2248,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
+  LOGICAL :: skipfc
+  INTEGER :: icn
 !   ..input arguments (unchanged on exit)
   INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
   INTEGER, INTENT(IN) :: iscx(0:nscx-1)
@@ -2800,7 +2830,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       DO ifc=1,nfc
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.skipfc .AND. .NOT.(mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
           IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
@@ -2836,7 +2868,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       DO ifc=1,nfc
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.skipfc .AND. .NOT.(mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
           IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
@@ -2872,8 +2906,14 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, co%&
 &                   fllim_ki_c)
       DO icv=1,ncv
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
         IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.mpg%&
-&           cvonclosedsurface(icv))) co%hcix_c(icv) = co%hcix_c(icv)*co%&
+&           cvonclosedsurface(icn))) co%hcix_c(icv) = co%hcix_c(icv)*co%&
 &           fllim_ki_c(icv)
       END DO
     END IF
@@ -2882,7 +2922,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2sigp_style .NE. 2) THEN
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
-        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+        skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+        IF (.NOT.skipfc .AND. .NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
           flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv&
 &           (ifc, 2)))/2.0_R8
@@ -2908,14 +2950,22 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, co%&
 &                   fllim_al_c)
       DO icv=1,ncv
-        IF (.NOT.mpg%cvonclosedsurface(icv)) co%alfx_c(icv) = co%alfx_c(&
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+        ELSE
+          icn = icv
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(icn)) co%alfx_c(icv) = co%alfx_c(&
 &           icv)*co%fllim_al_c(icv)
       END DO
     END IF
   ELSE IF (cflim(3) .NE. 0.0_R8) THEN
 !   ..apply flux limit to calf at cell faces
     DO ifc=1,nfc
-      IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+      skipfc = MAX(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)) .GT. mpg%nci .AND. &
+&     mpg%cvonclosedsurface(MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2)))
+      IF (.NOT.skipfc .AND. .NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
 &         cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
           abs3 = geo%fcpbs(ifc)
@@ -2939,7 +2989,13 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !   ..apply flux limit to alfx_c at cell centers
     CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pl%te, wrkv, gtec)
     DO icv=1,ncv
-      IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+      IF (icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+      ELSE
+        icn = icv
+      END IF
+      IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
         jemax = SQRT(pl%te(icv)/me)*qe*dv%ne(icv)*geo%cvbb(icv, 0)/geo%&
 &         cvbb(icv, 3)
         x1 = co%alfx_c(icv)*gtec(icv)/(cflim(3)*jemax+b2trcl_cutlo)

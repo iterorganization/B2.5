@@ -19,7 +19,7 @@
 
       bbsum  = 0.0_R8
       volsum = 0.0_R8
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
         if(mpg%cvOnClosedSurface(iCv)) then      ! for CORE
           bbsum  = bbsum  + bb(iCv,3)**2*vol(iCv)
           volsum = volsum + vol(iCv)

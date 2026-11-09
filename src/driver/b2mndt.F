@@ -433,7 +433,7 @@ ctmp.dpc
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
 
-            if (switch%b2mndt_style.ne.2) then ! EXPERIMENTAL: style 1 is steady-state, style 3 is new time-dependent
+            if (switch%b2mndt_style.eq.1) then
 
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,

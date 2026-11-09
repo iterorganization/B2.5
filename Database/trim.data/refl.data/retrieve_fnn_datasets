@@ -1,15 +1,23 @@
 #!/bin/tcsh
 
 set filelist="dbe.fnn dc.fnn dw.fnn"
+set record="https://zenodo.org/records/19232546"
+
+wget -q --spider --timeout=10 --tries=1 $record >& /dev/null
+if ($status != 0) then
+  echo "Cannot reach $record from `hostname`"
+  echo "Check the Internet connection, or run this script from a node with Internet access"
+  exit 1
+endif
 
 foreach i ($filelist)
   if (! -s $i) then
-    wget https://zenodo.org/records/19232546/files/$i
+    wget $record/files/$i
     echo $i" file downloaded from Zenodo record"
   else
-    wget https://zenodo.org/records/19232546/files/$i
-    set oldstamp=`md5sum $i`
-    set newstamp=`md5sum $i.1`
+    wget $record/files/$i
+    set oldstamp=`md5sum < $i`
+    set newstamp=`md5sum < $i.1`
     if ( "X${oldstamp}X" == "X${newstamp}X") then  
       echo $i" file already present"
       rm $i.1

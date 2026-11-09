@@ -160,7 +160,7 @@
 *     ..rewind b2ag.dat file
         rewind ninp(0)
 *     ..obtain nx, ny, nx1, ny1
-        call b2ag_read_parameters_st(ninp,nout(0:1), nx, ny, nx1, ny1,
+        call b2ag_read_parameters_st(ninp, nout(0:1), nx, ny, nx1, ny1,
      &         ccut1)
 *     ..call principal driver routine
         call alloc_b2mod_indirect(nx,ny,nncutmax)

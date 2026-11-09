@@ -33,11 +33,11 @@ contains
     ! internal
     character :: id*8, cnamip*80, cvalip*80
     integer :: nnx, nny, lun=96
-    character*256 local_sonnet
+    character local_sonnet*256, line*500, ligne*500
     integer :: istyle
 
-    external xertst, xerrab, streql, b2agx0_st, open_file
-    logical :: streql, open_file
+    external xertst, xerrab, streql, b2agx0_st, open_file, is_comment
+    logical :: streql, open_file, is_comment
 
     call b2agx0_st (ninp(0), nx, ny, nx1, ny1)
 
@@ -55,12 +55,17 @@ contains
     !   ..read and echo code internal parameters
     write (nout(0),'(/2x,a)') 'non-default internal parameters:'
 1   continue
-    read (ninp(0),*,end=2,err=93) cnamip, cvalip
-    if (cnamip(1:1).ne.'*') then
-      write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
-      call ipsetc (cnamip, cvalip)
-    endif
-    goto 1
+     read (ninp(0),'(a)',end=2,err=93) line
+     if (.not.is_comment(line)) then
+      ligne = line
+      call strip_spaces(ligne)
+      if (ligne(1:1).eq.'''') then
+        read (line,*) cnamip, cvalip
+        write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+        call ipsetc (cnamip, cvalip)
+       end if
+     end if
+     goto 1
 2   continue
     write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 
@@ -84,6 +89,8 @@ contains
           if (niso.eq.1) ccut1 = nxiso(1)
           doGhostCells = .true.
         end if
+      else
+        call xerrab ('Only Carre2 format for geometry file is supported!')
       end if
       close(lun)
     end if
@@ -125,11 +132,11 @@ contains
         & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
         & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut, &
         & nCmxNv
-    character*256 local_sonnet
+    character local_sonnet*256, line*500, ligne*500
     integer :: istyle
-    logical :: streql, open_file
+    logical :: streql, open_file, is_comment
 
-    external xertst, xerrab, streql, b2agx0, open_file, cfruin
+    external xertst, xerrab, streql, b2agx0, open_file, is_comment, cfruin
 
      nCv = 0
      nFc = 0
@@ -152,12 +159,17 @@ contains
      !   ..read and echo code internal parameters
      write (nout(0),'(/2x,a)') 'non-default internal parameters:'
 1    continue
-     read (ninp(0),*,end=2,err=95) cnamip, cvalip
-     if (cnamip(1:1).ne.'*') then
-       write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
-     endif
-     goto 1
+      read (ninp(0),'(a)',end=2,err=95) line
+      if (.not.is_comment(line)) then
+       ligne = line
+       call strip_spaces(ligne)
+       if (ligne(1:1).eq.'''') then
+        read (line,*) cnamip, cvalip
+        write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+        call ipsetc (cnamip, cvalip)
+       end if
+      end if
+      goto 1
 2    continue
      write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 
@@ -172,7 +184,7 @@ contains
        call cfverr(lun,grid_version)
        if(istyle.eq.-1) then
          ! Carre grid input
-         if (grid_version.eq."03.002.000") then
+         if (grid_version.ge."03.002.000") then
            ! obtain nCv, nFc, nVx from geometry file
            call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
            nCv0 = idum(0)

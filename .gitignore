@@ -35,6 +35,7 @@ grep.lis
 dbe.fnn
 dc.fnn
 dw.fnn
+.fnn_datasets_retrieved
 
 # genmod
 *__genmod*

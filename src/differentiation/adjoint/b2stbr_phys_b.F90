@@ -259,7 +259,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &         irc1)
 !
 ! xpb: no sputtering in core!
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
 !
 !   ..compute 2-D target temperature evolution
 !
@@ -1143,7 +1143,7 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 &         irc1)
 !
 ! xpb: no sputtering in core!
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
 !
 !   ..compute 2-D target temperature evolution
 !
@@ -1208,7 +1208,7 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
         ifc = mpg%cvfc(mpg%cvfcp(irc1, 1))
         dnndy = mpg%rcfcor(mpg%rccvp(istra, 1)+i-1)*dnn(ifc, 1)
         dnndz = -(mpg%rcfcor(mpg%rccvp(istra, 1)+i-1)*dnn(ifc, 0))
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, &
 &                                       1)*SIZE(fna_mol, 2)/8)

@@ -251,7 +251,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
   DO ib=1,nbc
-    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 1)
+    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 2)
     IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -645,7 +645,7 @@ CONTAINS
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON =  2 : density gradient ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -715,7 +715,7 @@ CONTAINS
 &               'BCCON = 4, CONPAR(,,1) !> 0')
           CALL XERTST(conpar(is, ib, 2) .GT. 0.0_R8, &
 &               'BCCON = 4, CONPAR(,,2) !> 0')
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -886,7 +886,7 @@ CONTAINS
 &         ' on ', bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(conpar(is, ib, 1) .NE. 0.0_R8, &
 &               'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -940,7 +940,7 @@ CONTAINS
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') 'BCCON = 10 : leakage ', &
 &         conpar(is, ib, 1), ' on ', bcchar(ib), boundary_location(ib), &
 &         ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -1228,9 +1228,9 @@ CONTAINS
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(2a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON = 15 : prescribe the decay length for the density', &
-&         ' for drifs switched on ', conpar(is, ib, 1), ' on ', bcchar(&
+&         ' for drifts switched on ', conpar(is, ib, 1), ' on ', bcchar(&
 &         ib), boundary_location(ib), ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -2494,7 +2494,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -2549,7 +2549,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
             IF (bccon(is, ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCCON=29: incompatible core BCs'&
@@ -4075,7 +4075,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -4112,7 +4112,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENE=24 intended for core boundaries only!')
         END DO
@@ -4132,7 +4132,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bcene(ib0) .NE. 24) CALL XERRAB(&
 &                                      'BCENE=24: incompatible core BCs'&
@@ -5620,7 +5620,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENI=28 intended for core boundaries only!')
         END DO
@@ -5639,7 +5639,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -5676,7 +5676,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENI=29 intended for core boundaries only!')
         END DO
@@ -5696,7 +5696,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bceni(ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCENI=29: incompatible core BCs'&
@@ -6124,7 +6124,7 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
             CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &                 'BCPOT=12 intended for core boundaries only!')
           END DO
@@ -6209,7 +6209,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
             IF (mpg%cvonclosedsurface(icv1)) THEN
               IF (bcpot(ib0) .NE. 12) CALL XERRAB(&
 &                                      'BCPOT=12: incompatible core BCs'&
@@ -6285,7 +6285,7 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
             CALL XERTST(.NOT.mpg%cvonclosedsurface(icv1), &
 &                 'BCPOT=13 not intended for core boundaries!')
           END DO
@@ -6653,7 +6653,7 @@ CONTAINS
 &       'BCPOT = 22 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCPOT=22 intended for core boundaries only!')
         END DO
@@ -6666,7 +6666,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -6708,7 +6708,7 @@ CONTAINS
 &       'BCPOT = 23 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCPOT=23 intended for core boundaries only!')
         END DO
@@ -6726,7 +6726,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bcpot(ib0) .NE. 23) CALL XERRAB(&
 &                                      'BCPOT=23: incompatible core BCs'&
@@ -7947,7 +7947,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
   DO ib=1,nbc
-    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 1)
+    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 2)
     IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -10783,7 +10783,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
           CALL PUSHINTEGER4(icv1)
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -10843,7 +10843,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
           CALL PUSHINTEGER4(icv1)
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -13706,7 +13706,7 @@ CONTAINS
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON =  2 : density gradient ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -13776,7 +13776,7 @@ CONTAINS
 &               'BCCON = 4, CONPAR(,,1) !> 0')
           CALL XERTST(conpar(is, ib, 2) .GT. 0.0_R8, &
 &               'BCCON = 4, CONPAR(,,2) !> 0')
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -13947,7 +13947,7 @@ CONTAINS
 &         ' on ', bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(conpar(is, ib, 1) .NE. 0.0_R8, &
 &               'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -14001,7 +14001,7 @@ CONTAINS
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') 'BCCON = 10 : leakage ', &
 &         conpar(is, ib, 1), ' on ', bcchar(ib), boundary_location(ib), &
 &         ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -14289,9 +14289,9 @@ CONTAINS
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(2a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCCON = 15 : prescribe the decay length for the density', &
-&         ' for drifs switched on ', conpar(is, ib, 1), ' on ', bcchar(&
+&         ' for drifts switched on ', conpar(is, ib, 1), ' on ', bcchar(&
 &         ib), boundary_location(ib), ' for species ', is
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
+          icv = mpg%bccv(mpg%bccvp(ib, 1), 2)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
 &                                                            switch%&
 &                                                          ionising_core&
@@ -15555,7 +15555,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -15610,7 +15610,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
           IF (mpg%cvonclosedsurface(icv1)) THEN
             IF (bccon(is, ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCCON=29: incompatible core BCs'&
@@ -17812,7 +17812,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -17865,7 +17865,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
         CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -18982,7 +18982,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -19019,7 +19019,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENE=24 intended for core boundaries only!')
         END DO
@@ -19039,7 +19039,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bcene(ib0) .NE. 24) CALL XERRAB(&
 &                                      'BCENE=24: incompatible core BCs'&
@@ -21370,7 +21370,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
         CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -21433,7 +21433,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
         CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -22991,7 +22991,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENI=28 intended for core boundaries only!')
         END DO
@@ -23010,7 +23010,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -23047,7 +23047,7 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCENI=29 intended for core boundaries only!')
         END DO
@@ -23067,7 +23067,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bceni(ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCENI=29: incompatible core BCs'&
@@ -23674,7 +23674,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
             CALL PUSHINTEGER4(icv1)
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
             IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
               DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -24430,7 +24430,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
         CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -24492,7 +24492,7 @@ CONTAINS
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
         CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -25001,7 +25001,7 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
             CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &                 'BCPOT=12 intended for core boundaries only!')
           END DO
@@ -25086,7 +25086,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
             IF (mpg%cvonclosedsurface(icv1)) THEN
               IF (bcpot(ib0) .NE. 12) CALL XERRAB(&
 &                                      'BCPOT=12: incompatible core BCs'&
@@ -25162,7 +25162,7 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
             CALL XERTST(.NOT.mpg%cvonclosedsurface(icv1), &
 &                 'BCPOT=13 not intended for core boundaries!')
           END DO
@@ -25530,7 +25530,7 @@ CONTAINS
 &       'BCPOT = 22 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCPOT=22 intended for core boundaries only!')
         END DO
@@ -25543,7 +25543,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
@@ -25585,7 +25585,7 @@ CONTAINS
 &       'BCPOT = 23 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           CALL XERTST(mpg%cvonclosedsurface(icv1), &
 &               'BCPOT=23 intended for core boundaries only!')
         END DO
@@ -25603,7 +25603,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 1)
+        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv1)) THEN
           IF (bcpot(ib0) .NE. 23) CALL XERRAB(&
 &                                      'BCPOT=23: incompatible core BCs'&

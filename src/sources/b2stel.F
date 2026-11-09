@@ -323,7 +323,8 @@
 *       ..compute particle source
            sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+                     !srv 11.09.09 {
      &       rf0*t0*pl%na(iCv,is)
-           sna0_rec(iCv,1,is) = sna0_rec(iCv,1,is)-(1.0_R8+rf0)*t0
+           sna0_rec(iCv,1,is) = sna0_rec(iCv,1,is)-
+     &      (1.0_R8+rf0)*t0
            sna0_rec(iCv,0,is-1) = sna0_rec(iCv,0,is-1)+
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
            sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-                 !srv 11.09.09 {
@@ -402,10 +403,12 @@ c accounted for)
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(iCv,0,is) = smq0_rec(iCv,0,is)+
      &      rf0*t1*pl%ua(iCv,is)
-           smq0_rec(iCv,1,is) = smq0_rec(iCv,1,is)-(1.0_R8+rf0)*t1
+           smq0_rec(iCv,1,is) = smq0_rec(iCv,1,is)-
+     &      (1.0_R8+rf0)*t1
            smq0_rec(iCv,0,is-1) = smq0_rec(iCv,0,is-1)+
      &      t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is-1))
-           smq0_rec(iCv,1,is-1) = smq0_rec(iCv,1,is-1)-rf0*t1
+           smq0_rec(iCv,1,is-1) = smq0_rec(iCv,1,is-1)-
+     &      rf0*t1
            srw%rramo(iCv,is) = srw%rramo(iCv,is)+t1*pl%ua(iCv,is)
            rramoreg(mpg%cvReg(iCv),is) =
      &      rramoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)

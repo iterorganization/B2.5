@@ -123,6 +123,7 @@ c old style
      &  'faulty parameter iy_nocoreExB')                                 !xpb
        do iy = 1, iy_nocoreExB
          iFt = mpg%cvFt(omp(iy))
+         if (iFt.eq.0) cycle
          do ix = 1, mpg%ftCvP(iFt,2)
            iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
            if(mpg%cvOnClosedSurface(iCv)) then
@@ -138,6 +139,7 @@ c old style
        if(facdrift_tanh_b.ne.0.0_R8) then
          do iy = 1, nomp
            iFt = mpg%cvFt(omp(iy))
+           if (iFt.eq.0) cycle
            do ix = 1, mpg%ftCvP(iFt,2)
              iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
              if(mpg%cvOnClosedSurface(iCv)) then
@@ -167,6 +169,7 @@ c old style
        if(facExB_tanh_b.ne.0.0_R8) then
          do iy = 1, nomp
            iFt = mpg%cvFt(omp(iy))
+           if (iFt.eq.0) cycle
            do ix = 1, mpg%ftCvP(iFt,2)
              iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
              if(mpg%cvOnClosedSurface(iCv)) then
@@ -196,6 +199,7 @@ c old style
        if(facvis_tanh_b.ne.0.0_R8) then
          do iy = 1, nomp
            iFt = mpg%cvFt(omp(iy))
+           if (iFt.eq.0) cycle
            do ix = 1, mpg%ftCvP(iFt,2)
              iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
              if(mpg%cvOnClosedSurface(iCv)) then

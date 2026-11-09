@@ -83,6 +83,7 @@
       use b2mod_subsys
       implicit none
       integer nx, nxtl, nxtr
+      integer ix, iygap, ixgap, ngap
 
       call subini ('get_nxt')
 
@@ -90,22 +91,31 @@ cxpb  Compute position of additional targets in DN and Snowflake configurations
       nxtl = -2
       nxtr = nx+1
       if (nnreg(0).ge.7) then
-        nxtl = 0
-        nxtr = 1
-        !wdk First pass: for target/vessel mode grids, these rows of
-        !    'additional targets' appear as 2 subsequent columns of 
-        !    undefined cells
-        do while (.not.(
-     &    cflags(nxtl,max(topcut(1),topcut(2)),1).eq.GRID_UNDEFINED.and.
-     &    cflags(nxtl+1,max(topcut(1),topcut(2)),1).eq.GRID_UNDEFINED)
-     &    .and.nxtl.lt.nx-1)
-          nxtl=nxtl+1
-          nxtr=nxtr+1
+c       The branch cut is a group of neighbour columns on row iygap
+c       which have no real cells (guard, undefined or external only).
+c       These cells are not used by the flux tubes, so every column
+c       of the group gives the same result.
+        iygap = max(topcut(1),topcut(2))
+        ngap = 0
+        ixgap = -2
+        do ix = leftcut(2), rightcut(2)-1
+          if (cflags(ix,iygap,1).ne.GRID_INTERNAL .and.
+     &        cflags(ix,iygap,1).ne.GRID_BOUNDARY .and.
+     &        (ix.eq.leftcut(2) .or.
+     &         cflags(ix-1,iygap,1).eq.GRID_INTERNAL .or.
+     &         cflags(ix-1,iygap,1).eq.GRID_BOUNDARY)) then
+c           start of a new group
+            ngap = ngap + 1
+            ixgap = ix
+          endif
         enddo
-
-        !wdk if nxtl = nx-1, did not find the additional targets
-        !    => assume standard mode, and use original algorithm
-        if (nxtl == nx-1) then
+        if (ngap.eq.1) then
+c         nxtl is the first column of the group, nxtr = nxtl+1, so
+c         the row is cut between nxtl-1 and nxtr-1 (as before).
+          nxtl = ixgap
+          nxtr = ixgap + 1
+        elseif (ngap.eq.0) then
+c         Standard mode: no such group found, use original algorithm
           nxtl = 0
           do while (rightix(nxtl,max(topcut(1),topcut(2))).ne.nx+1
      &     .and.nxtl.lt.nx)
@@ -116,6 +126,10 @@ cxpb  Compute position of additional targets in DN and Snowflake configurations
      &              nxtr.lt.nx)
             nxtr=nxtr+1
           enddo
+        else
+          write(*,*) 'get_nxt: iygap, candidate gaps = ',
+     &                   iygap, ngap
+          call xerrab ('Could not uniquely identify DN branch gap')
         endif
         write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif

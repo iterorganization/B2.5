@@ -1465,7 +1465,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
       warning_n = .false.
       warning_kt = .false.
       warning_zt = .false.
-      DO icv=1,ncv
+      DO icv=1,mpg%nci
         warning_e = warning_e .OR. rxf*dtee(mpg%cvreg(icv))*time_factor(&
 &         icv) .NE. 1.0_R8
         warning_i = warning_i .OR. rxf*dtei(mpg%cvreg(icv))*time_factor(&
