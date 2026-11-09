@@ -182,7 +182,6 @@
         endif
 c time-dependent treatment
         if(switch%b2mndt_style.eq.2) then
-         rxg_npmo = huge(1.0_R8)
          do is = 0,ns-1
           warning = .false.
           do iCv = 1, mpg%nCi
@@ -195,11 +194,8 @@ c time-dependent treatment
            write(6,*) 'Time derivative terms may be inacurrate !'
           end if
          enddo
-        else
-         rxg_npmo = switch%b2npmo_rxg
         endif
-        call xertst (0.0_R8.lt.rxg_npmo,
-     &    'faulty internal parameter rxg')
+        rxg_npmo = switch%b2npmo_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npmo.lt.3) then
@@ -549,6 +545,9 @@ cdjm Jan2017 update momentum source components for balance
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
+cc Given d(nu)/dt = n du/dt + u dn/dt,
+cc What is computed in b2smdt corresponds to n du/dt,
+cc What is added here below corresponds to u dn/dt
          wrk3(:,is) = am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-
      &    psnl%na(:,is))*psnl%ua(:,is)/dtim
          do iCv=1,mpg%nCi

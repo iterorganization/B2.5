@@ -142,14 +142,6 @@
      &              'equations was implemented similarly as the energy',
      &              'equations but lacks theoretical development'
           endif
-*    ..make sure time-dependent equations are not altered by convergence tricks
-          rxg_npht = huge(1.0_R8)
-          if (switch%b2npht_pcm0.gt.0.0_R8) then
-            call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
-          endif
-          if (switch%b2npht_pcm1.gt.0.0_R8) then
-            call xerrab('b2npht_pcm1 must be 0 for time-dependent mode')
-          endif
           warning_e = .false.
           warning_i = .false.
           warning_n = .false.
@@ -181,11 +173,8 @@
      .   write(6,*) 'Time derivative terms may be inacurrate !'
           if (warning_kt .or. warning_zt)
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
-        else
-          rxg_npht = 1.0_R8
         endif                                                            !srv 07.07.21 }
-        call xertst (0.0_R8.lt.rxg_npht,
-     &   'faulty internal parameter rxg')
+        rxg_npht = switch%b2npht_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
@@ -318,9 +307,9 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
      &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
-cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-cc while the second contribution corresponds to T dn/dt
+cc Given d(nT)/dt = n dT/dt + T dn/dt,
+cc What is computed in b2shdt corresponds to n dT/dt,
+cc What is added here below corresponds to T dn/dt
         wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
         do iCv=1,mpg%nCi
           wrk1(iCv) = wrk1(iCv)/(dtee(mpg%cvReg(iCv))*rxf)
@@ -336,7 +325,7 @@ cc while the second contribution corresponds to T dn/dt
      &           *psnl%ti/dtim*geo%cvVol
         else                                 ! separate ion and neutral energy equation
           wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *ts_factor*psnl%ti/dtim*geo%cvVol
+     &           *psnl%ti/dtim*geo%cvVol
           wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))
      &           *psnl%tn/dtim*geo%cvVol
           wrk3(mpg%nCi+1:mpg%nCv) = 0.0_R8

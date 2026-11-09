@@ -116,13 +116,6 @@
 *   ..set internal parameters on first call
       if (ncall_b2npco.eq.0) then
         if(switch%b2mndt_style.eq.2) then
-          rxg_npco = huge(1.0_R8)
-          if (switch%b2npco_pcm0.gt.0.0_R8) then
-            call xerrab('b2npco_pcm0 must be 0 for time-dependent mode')
-          endif
-          if (switch%b2npco_pcm1.gt.0.0_R8) then
-            call xerrab('b2npco_pcm1 must be 0 for time-dependent mode')
-          endif
           warning = .false.
           do iCv = 1, mpg%nCi
             warning = warning .or.
@@ -133,9 +126,8 @@
      &        'rxf*dtco*time_factor for species ',isb,' should be 1 !'
             write(6,*) 'Time derivative terms may be inacurrate !'
           endif
-        else
-          rxg_npco = switch%b2npco_rxg
         endif
+        rxg_npco = switch%b2npco_rxg
       endif
       if (switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         if (in_parallel()) then

@@ -5364,15 +5364,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2mndt_ckn</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
-					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
-				</description>
-			</switch>
-			<switch>
 				<name>b2mndt_dummy</name>
 				<default>0</default>
 				<type>integer</type>
@@ -5399,7 +5390,7 @@
 				<description>
 					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
 					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup.
+					The scheme needs to be started up differently in the first time-step: see b2mndt_startup for more details.
 					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
 					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
 				</description>
@@ -5409,8 +5400,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
-					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
+					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides how to perform the first time-step.
+					If set to 0 (default), the code assumes that the transient simulation is starting from an initial steady-state solution.
+					If set to 1 or 2, the implicit Euler or the Crank-Nicolson schemes are used during the first time step, respectively.
 				</description>
 			</switch>
 			<switch>
@@ -5488,6 +5480,15 @@
 				<type>integer</type>
 				<description>
 					When set to a value of 'K', the subroutine calc_err will be run at each K-th step. It allows to output the error at desired times during a time-dependent MMS test.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_tot_eqs_override</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 0 (default), solving the total momentum and energy equations is prohibited in time-dependent mode (b2mndt_style=2) because they break time-dependency.
+					When set to 1, the user is allowed to solve the total momentum and energy equations (by setting solveet/mt=true in b2.numerics.parameters) in time-dependent mode, but then the time-dependency is broken and the time evolution is not to be trusted!
 				</description>
 			</switch>
 			<switchgroup>
@@ -5749,7 +5750,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -5777,7 +5778,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switch>
@@ -5794,7 +5795,7 @@
 				<type>real</type>
 				<description>
 					Normalisation factor for the parallel momentum equation.
-					Not used when running in time_dependent mode (b2mndt_style.eq.2).
+					It is inactive (rxg=huge(1.0_R8)) by default when running in time-dependent mode (b2mndt_style.eq.2), but it can be used provided a high enough number of internal iterations (b2mndt_nstg0/1/2).
 				</description>
 			</switch>
 			<switch>
