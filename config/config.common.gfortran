@@ -19,6 +19,8 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
+GFORTRAN_MAJOR_VERSION := ${GFORTRAN_MAJOR_VERSION}
+GFORTRAN_MINOR_VERSION := ${GFORTRAN_MINOR_VERSION}
 
 DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
 
@@ -135,7 +137,8 @@ endif
 
 ifdef IMAS_PKG_LIST
   PKG_KEEP_SYS ?= --keep-system-cflags
-  INCMODS += $(shell pkg-config ${IMAS_PKG_LIST} --cflags ${PKG_KEEP_SYS})
+  IMAS_INCMODS := $(shell pkg-config ${IMAS_PKG_LIST} --cflags ${PKG_KEEP_SYS})
+  INCMODS += ${IMAS_INCMODS}
   IMASLIBS = ${LD_AL}
 endif
 
