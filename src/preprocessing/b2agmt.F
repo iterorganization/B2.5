@@ -89,18 +89,19 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, face, gc, bc, v1, v2, iVx,
-     *   artificial_slab
+      integer i, j, ic, iCv, iCv1, iCv2, iFc, iFt, iVx,
+     *   face, gc, bc, v1, v2, artificial_slab
       integer cells(1:2), fcType(m%nFc), c1, c2, verts2(0:1)
       integer, allocatable :: verts(:)
       integer nv
       integer volhmk
       real (kind=R8) ::
-     *   width, centroid(m%nCv,0:1), bcFpsi,
+     *   width, centroid(m%nCv,0:1), bcFpsi, L1, L2,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, dg, fcPsi, ec1fc(0:1), efcc2(0:1),
      *   econf(0:1), fn(0:1), tol_angles, cvFpsi(1:m%nCv),
      *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc),
+     *   wrk0(1:m%nCv), wrk1(1:m%nCv),
      *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
      *   rawQgam1, rawQgam2, signedHc1, signedHc2,
      *   sideTolerance
@@ -139,7 +140,7 @@
 * ..compute metric coefficients
 
 ! loop over cells
-      do iCv = 1,m%nCv
+      do iCv = 1, m%nCv
 
         !Default values
         !Compute qz which is cvQgam
@@ -221,9 +222,10 @@
      &       ('Area computation not implemented for this type')
           endif
 
-          if (isymm.eq.0) then  !slab geometry
+          if (isymm.eq.0) then  ! slab geometry
             ! volume is area times width
             g%cvVol(iCv) = g%cvSz(iCv)*width
+            g%cvHz(iCv) = width
             call calc_psi_cellcenter(g,m,iCv,psic,isymm)
             cvFpsi(iCv) = psic
 
@@ -239,6 +241,7 @@
             endif
             ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+            g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,0)
 
           elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about y=0
             if (volhmk.eq.0) then
@@ -252,6 +255,7 @@
             endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)
+            g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,1)
           endif
 
           deallocate(verts)
@@ -267,7 +271,7 @@
 
          if ((m%cvLbl(cells(1)).eq.GRID_GUARD) .and.
      &       (m%cvLbl(cells(2)).eq.GRID_BOUNDARY)) then
-           gc = cells(1)   !guard cell
+           gc = cells(1)   ! guard cell
            bc = cells(2)   ! boundary cell
          elseif ((m%cvLbl(cells(1)).eq.GRID_BOUNDARY) .and.
      &           (m%cvLbl(cells(2)).eq.GRID_GUARD)) then
@@ -289,13 +293,13 @@
          ! as the boundary cell, this is done. Otherwise the cell center is placed
          ! in the extension of the vector from the boundary cell center and the face center.
          if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
-     &       .lt. 1e-1_R8) then !get the guard cell on the same fpsi
-           !Calculate intersection point - find point on face where psi = fcPsi
+     &       .lt. 1e-1_R8) then ! get the guard cell on the same fpsi
+           ! Calculate intersection point - find point on face where psi = fcPsi
            t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))
            isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
            isy(1) =  g%vxY(v1) + t0 *(g%vxY(v2)- g%vxY(v1))
 
-           !Set psi value
+           ! Set psi value
            cvFpsi(iCv) = bcFpsi
 
          else ! use geometric face center
@@ -378,15 +382,18 @@
          endif
 
          !Determine cvVol for the guard cell
-         if (isymm.eq.0) then  !slab geometry
+         if (isymm.eq.0) then  ! slab geometry
            ! volume is area times width
-           g%cvVol(iCv) = g%cvSz(iCv) *width
+           g%cvVol(iCv) = g%cvSz(iCv)*width
+           g%cvHz(iCv) = width
          elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
            ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+           g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,0)
          elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0
           ! volume is area times circumference of circle with radius equal to the y-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)
+           g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,1)
          endif
 
        case default
@@ -417,7 +424,7 @@
 
 ! loop over faces
       !precompute face centers
-      do iFc = 1,m%nFc
+      do iFc = 1, m%nFc
         v1 = m%fcVx(iFc,1)
         v2 = m%fcVx(iFc,2)
         ! compute face centers
@@ -444,12 +451,15 @@
        ! g%fcS : face surface
        if (isymm.eq.0) then
          g%fcS(iFc) = g%fcHt(iFc) * width
+         g%fcHz(iFc) = width
        elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
          ! face surface = face length * 2 pi * mean x-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxX(v1) + g%vxX(v2) )
+         g%fcS(iFc) = pi * g%fcHt(iFc) * ( g%vxX(v1) + g%vxX(v2) )
+         g%fcHz(iFc) = pi * ( g%vxX(v1) + g%vxX(v2) )
        elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0 axis
          ! face surface = face length * 2 pi * mean y-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxY(v1) + g%vxY(v2) )
+         g%fcS(iFc) = pi * g%fcHt(iFc) * ( g%vxY(v1) + g%vxY(v2) )
+         g%fcHz(iFc) = pi * ( g%vxY(v1) + g%vxY(v2) )
        endif
 
        ! Calculate fcEb, unit vector of magnetic field at face center
@@ -643,7 +653,7 @@
       ! g%vxBb(:,0) = dpsi/dy
       ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
 
-      do iVx = 1,m%nVx
+      do iVx = 1, m%nVx
         if (isymm.eq.0) then
           t0 = 1.0_R8
         elseif (isymm.eq.1 .or. isymm.eq.2) then
@@ -651,6 +661,7 @@
         elseif (isymm.eq.3 .or. isymm.eq.4) then
           t0 = 2.0_R8 * pi * g%vxY(iVx)
         endif
+        g%vxHz(iVx) = t0
 
         g%vxBb(iVx,0) = sqrt(g%vxBb(iVx,0)**2 + g%vxBb(iVx,1)**2)/t0
         g%vxBb(iVx,1) = 0.0_R8
@@ -660,9 +671,55 @@
 
       enddo
 
-*    ..test sign of g%cvVol, g%cvS, g%fcS
+*    ..compute connection length
+      wrk0 = 0.0_R8
+      wrk1 = 0.0_R8
+      do iFt = 1, m%nFt
+        if (m%ftFcP(iFt,2) .gt. 0) then
+          do i = m%ftFcP(iFt,1), m%ftFcP(iFt,1)+m%ftFcP(iFt,2)-1
+            iFc = m%ftFc(i)
+            iCv1 = m%fcCv(iFc,1)
+            iCv2 = m%fcCv(iFc,2)
+            wrk1(iCv1) = wrk1(iCv1) + g%fcHc(iFc,1)
+            wrk1(iCv2) = wrk1(iCv2) + g%fcHc(iFc,2)
+          enddo
+        endif
+      enddo
+      do iFt = 1, m%nFt
+        do i = m%ftCvP(iFt,1), m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+          iCv = m%ftCv(i)
+          wrk0(iCv) = wrk1(iCv)*g%cvBb(iCv,3)/g%cvBb(iCv,0)
+          g%ftConn(iFt) = g%ftConn(iFt) + wrk0(iCv)
+        enddo
+      enddo
+      do iFt = 1, m%nFt
+        iCv = m%ftCv(m%ftCvP(iFt,1))
+        if (m%cvOnClosedSurface(iCv)) then
+          ! core region: actual connection length (same as ftConn)
+          g%cvConn(m%ftCv(m%ftCvP(iFt,1):m%ftCvP(iFt,1)+
+     &                    m%ftCvP(iFt,2)-1)) = g%ftConn(iFt)
+         else
+          ! SOL/PF: effective distance to targets/boundaries
+          ! implicit assumption that cells in ftCv are listed starting
+          ! at one of the targets
+          do ic = m%ftCvP(iFt,1), m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+            iCv = m%ftCv(ic)
+            L1 = 0.5_R8*wrk0(iCv)
+            do j = ic+1, m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+              L1 = L1 + wrk0(m%ftCv(j))
+            enddo
+            L2 = 0.5_R8*wrk0(iCv)
+            do j = m%ftCvP(iFt,1), ic-1
+              L2 = L2 + wrk0(m%ftCv(j))
+            enddo
+            g%cvConn(iCv) = min(L1,L2)
+          enddo
+        endif
+      enddo
+
+*    ..test sign of g%cvVol, g%cvSz, g%fcS
       call b2xvs1(m%nCv, g%cvVol, 1,'cvVol' ,'.gt.')
-      call b2xvs1(m%nCv, g%cvSz,   1,'cvS'   ,'.gt.')
+      call b2xvs1(m%nCv, g%cvSz,  1,'cvS'   ,'.gt.')
       call b2xvs1(m%nFc, g%fcS,   1,'fcS'   ,'.gt.')
 
 * ..return
