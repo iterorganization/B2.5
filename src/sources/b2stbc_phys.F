@@ -1085,16 +1085,18 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      1       boundary_location(ib),
      2       ' for species ',IS
             iCv = mpg%bcCv(mpg%bcCvP(ib,1),2)
-            if (mpg%cvOnClosedSurface(iCv).and.ishigh)
-     >       call xertst (switch%ionising_core.eq.0,
-     .        'ionising_core switch usage inconsistent with BCCON = 10')
+            if (mpg%cvOnClosedSurface(iCv).and.is_neutral(is)) then
+             call xertst (switch%ionising_core.eq.0,
+     &        'ionising_core switch usage inconsistent with BCCON = 10')
              call xertst (conpar(is,ib,2).ge.0.0_R8,                    !lkw 30.06.2022
-     .        'For BCCON = 10, CONPAR(,,2) should not be negative')
-             if (switch%afn_ionising_core.eq.1) then
+     &        'For BCCON = 10, CONPAR(,,2) should not be negative')
+             if (switch%afn_ionising_core.eq.1
+     &            .and.nint(zn(is)).eq.1) then
                call xertst (conpar(is,ib,1).eq.-0.25_R8,
-     &           'For afn ionizing core to be correct,' // 
+     &           'For afn ionizing core to be correct, ' // 
      &           'leakage factor for neutrals must be -0.25!')
              endif
+            endif
           endif
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
