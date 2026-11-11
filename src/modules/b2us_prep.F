@@ -1114,9 +1114,10 @@
 
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
-! no. of flux surfaces (conservative estimate)
-      m%nFs = max(1,(1 + 1*nncut)*(ny + 2))
-      m%nFt = m%nFs
+! Conservative bounds for number of surfaces and flux tubes.
+! Arrays are resized after construction.
+      m%nFs = max(1,m%nFc)
+      m%nFt = max(1,m%nCi)
 
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg

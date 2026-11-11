@@ -1254,7 +1254,7 @@ c East target
 
         hlp_pwiu=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
-          iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
+          iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+

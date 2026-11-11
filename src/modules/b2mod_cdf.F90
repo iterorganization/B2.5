@@ -2598,7 +2598,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 65, &
+      iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 61, &
            'variance of separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'units', 2, 'eV')

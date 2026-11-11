@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
+      use b2mod_tallies, only : b2qie
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -426,6 +427,13 @@ c residuals for separate neutral energy equation
       enddo
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
+      enddo
+
+*     ..sum electron-ion energy exchange by plasma region for tallies
+      b2qie = 0.0_R8
+      do iCv = 1, mpg%nCi
+        if (mpg%cvReg(iCv).eq.0) cycle
+        b2qie(mpg%cvReg(iCv)) = b2qie(mpg%cvReg(iCv)) + shei(iCv)
       enddo
 
 #ifndef FIXED_POINT
