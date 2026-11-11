@@ -195,3 +195,226 @@
 *.end b2pldr
 
       end subroutine b2pldr
+
+*-----------------------------------------------------------------------
+
+      subroutine b2plrt (ns, switch, changed)
+      use b2mod_types
+      use b2mod_b2cmrc
+      use b2mod_b2cmpa
+      use b2mod_switches
+      use b2mod_neutrals_namelist
+      implicit none
+*
+*     The changes b2mn makes to the rate tables of b2frates when it
+*     starts (b2mod_driver, b2mndr_0), so that b2plot computes the
+*     rates the run used: the coronal model (b2mndr_coronal_model),
+*     b2.atomic_physics_rescale.parameters (b2mndr_atomic_physics_
+*     rescale), the recombination to the neutral species in runs
+*     coupled to Eirene, which does that volume recombination
+*     (b2mndr_rescale_neutrals_sources, times strasclfl of its 'V'
+*     stratum), and hot electrons (b2mndr_dpc_mod_rates_te_hot,
+*     b2mndr_dpc_mod_rates_ne_hot_frac). Keep it as there.
+*     changed: a table was changed (the rates must be computed again).
+*
+      integer ns
+      type (switches), intent(in) :: switch
+      logical changed
+      integer coronal, rescale_flag, is, istra
+      real (kind=R8) :: scl, te_hot, ne_hot_frac
+      real (kind=R8) ::
+     1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
+     2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
+     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+      character*256 filename
+      logical ex, streql
+      external ipgeti, ipgetr, xertst, find_file, streql
+      namelist /atomic_physics_rescale/
+     & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
+     & rescale_rd, rescale_br
+
+      changed = .false.
+*   ..coronal model
+      coronal = 0
+      call ipgeti ('b2mndr_coronal_model', coronal)
+      if (coronal.ne.0) then
+        write(*,*)
+     1   'Modifying rate coefficients to suppress density dependence'
+        do is = 1, rtnn
+          rtlsa(:,is,:)=rtlsa(:,0,:)
+          rtlra(:,is,:)=rtlra(:,0,:)
+          rtlqa(:,is,:)=rtlqa(:,0,:)
+          rtlqr(:,is,:)=rtlqr(:,0,:)
+          rtlcx(:,is,:)=rtlcx(:,0,:)
+          rtlrd(:,is,:)=rtlrd(:,0,:)
+          rtlbr(:,is,:)=rtlbr(:,0,:)
+          rtlza(:,is,:)=rtlza(:,0,:)
+          rtlz2(:,is,:)=rtlz2(:,0,:)
+          rtlpt(:,is,:)=rtlpt(:,0,:)
+          rtlpi(:,is,:)=rtlpi(:,0,:)
+        enddo
+        changed = .true.
+      endif
+*   ..rescaled atomic physics
+      rescale_flag = 0
+      call ipgeti ('b2mndr_atomic_physics_rescale', rescale_flag)
+      if (rescale_flag.ne.0) then
+        rescale_sa = 1.0_R8
+        rescale_ra = 1.0_R8
+        rescale_qa = 1.0_R8
+        rescale_cx = 1.0_R8
+        rescale_rd = 1.0_R8
+        rescale_br = 1.0_R8
+        filename = 'b2.atomic_physics_rescale.parameters'
+        call find_file(filename,ex)
+        open(99,file=filename)
+        write(*,*) 'Reading ',trim(filename)
+        read(99,atomic_physics_rescale)
+        close(99)
+        call xertst (min(
+     1       minval(rescale_sa(0:rtns-1)),
+     2       minval(rescale_ra(0:rtns-1)),
+     3       minval(rescale_qa(0:rtns-1)),
+     4       minval(rescale_cx(0:rtns-1)),
+     5       minval(rescale_rd(0:rtns-1)),
+     6       minval(rescale_br(0:rtns-1)))
+     7       .gt.0.0_R8,
+     8  'faulty value set in b2.atomic_physics_rescale.parameters')
+        do is = 0, rtns-1
+          rtlsa(:,:,is)=rtlsa(:,:,is)+log(rescale_sa(is))
+          rtlra(:,:,is)=rtlra(:,:,is)+log(rescale_ra(is))
+          rtlqa(:,:,is)=rtlqa(:,:,is)+log(rescale_qa(is))
+          rtlqr(:,:,is)=rtlqr(:,:,is)+log(rescale_qa(is))
+          rtlcx(:,:,is)=rtlcx(:,:,is)+log(rescale_cx(is))
+          rtlrd(:,:,is)=rtlrd(:,:,is)+log(rescale_rd(is))
+          rtlbr(:,:,is)=rtlbr(:,:,is)+log(rescale_br(is))
+        enddo
+        changed = .true.
+      endif
+*   ..recombination to the neutral species: done by Eirene
+      if (switch%use_eirene.ne.0 .and.
+     &    switch%neutral_sources_rescale.ne.1.0_R8) then
+        write(*,*) 'Adding ',log(switch%neutral_sources_rescale),
+     &   ' to relevant rtlra and rtlqr'
+        do is = 0, ns-2
+          scl = switch%neutral_sources_rescale
+          do istra = 1, nstrai
+            if (streql(crcstra(istra),'V').and.
+     &        (species_start(istra).eq.is)) then
+              scl = scl*strasclfl(istra)
+            endif
+          enddo
+          if (is_neutral(is) .and. lnext(is,is+1)) then
+            rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
+            rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)
+          endif
+        enddo
+        changed = .true.
+      endif
+*   ..hot electrons
+      te_hot = 0.0_R8
+      ne_hot_frac = 0.0_R8
+      call ipgetr ('b2mndr_dpc_mod_rates_te_hot', te_hot)
+      call ipgetr ('b2mndr_dpc_mod_rates_ne_hot_frac', ne_hot_frac)
+      if (te_hot.gt.0.0_R8.and.ne_hot_frac.gt.0.0_R8) then
+        call b2plrt_hot (te_hot, ne_hot_frac)
+        changed = .true.
+      endif
+      return
+      end subroutine b2plrt
+
+*-----------------------------------------------------------------------
+*     As dpc_mod_rates of b2mod_driver: rates with a fraction
+*     ne_hot_frac of electrons at te_hot.
+
+      subroutine b2plrt_hot(te_hot, ne_hot_frac)
+      use b2mod_types
+      use b2mod_b2cmrc
+
+      implicit none
+
+      real (R8) :: te_hot
+      real (R8) :: ne_hot_frac
+      real (R8) :: rlte, fxte
+      real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
+     *             rate_za, rate_z2, rate_pt, rate_pi, rate_qr
+!!    real (R8) :: rate_cx
+      integer ite, ine, ise, ixte
+
+      write(*,*) 'b2plrt_hot: ', te_hot, ne_hot_frac
+
+      ite = 0
+      rlte = max(rtlt(0),min(rtlt(rtnt),log(te_hot)))
+
+    1 if (ite.lt.rtnt-1) then
+        if (rtlt(ite+1).le.rlte) then
+          ite = ite+1
+          goto 1
+        endif
+      endif
+    2 if (0.lt.ite) then
+        if (rlte.lt.rtlt(ite)) then
+          ite = ite-1
+          goto 2
+        endif
+      endif
+*     ..compute coefficient for linear interpolation
+      ixte = ite
+      fxte = (rlte-rtlt(ite))/(rtlt(ite+1)-rtlt(ite))
+      write(*,*) ixte
+      write(*,*) rtn(rtnn/2)
+      write(*,*) rtt(:)
+      write(*,*) exp(rtlsa(:,rtnn/2,0))
+      do ise= 0, rtns-1
+        do ine= 0, rtnn
+          rate_sa = exp((1.0_R8-fxte)*rtlsa(ixte,ine,ise) +
+     1     fxte*rtlsa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_ra = exp((1.0_R8-fxte)*rtlra(ixte,ine,ise) +
+     1     fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
+     1     fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qr = exp((1.0_R8-fxte)*rtlqr(ixte,ine,ise) +
+     1     fxte*rtlqr(ixte+1,ine,ise)) * ne_hot_frac
+          rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
+     1     fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
+          rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
+     1     fxte*rtlbr(ixte+1,ine,ise)) * ne_hot_frac
+!!        rate_cx = exp((1.0_R8-fxte)*rtlcx(ixte,ine,ise) +
+!!   1     fxte*rtlcx(ixte+1,ine,ise)) * ne_hot_frac
+          rate_za = ((1.0_R8-fxte)*rtlza(ixte,ine,ise) +
+     1     fxte*rtlza(ixte+1,ine,ise)) * ne_hot_frac
+          rate_z2 = ((1.0_R8-fxte)*rtlz2(ixte,ine,ise) +
+     1     fxte*rtlz2(ixte+1,ine,ise)) * ne_hot_frac
+          rate_pt = ((1.0_R8-fxte)*rtlpt(ixte,ine,ise) +
+     1     fxte*rtlpt(ixte+1,ine,ise)) * ne_hot_frac
+          rate_pi = ((1.0_R8-fxte)*rtlpi(ixte,ine,ise) +
+     1     fxte*rtlpi(ixte+1,ine,ise)) * ne_hot_frac
+          do ite= 0, rtnt
+            rtlsa(ite,ine,ise) =
+     1       log(exp(rtlsa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_sa)
+            rtlra(ite,ine,ise) =
+     1       log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
+            rtlqa(ite,ine,ise) =
+     1       log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
+            rtlqr(ite,ine,ise) =
+     1       log(exp(rtlqr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qr)
+            rtlrd(ite,ine,ise) =
+     1       log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
+            rtlbr(ite,ine,ise) =
+     1       log(exp(rtlbr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_br)
+!!          rtlcx(ite,ine,ise) =
+!!   1       log(exp(rtlcx(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_cx)
+            rtlza(ite,ine,ise) =
+     1       rtlza(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_za
+            rtlz2(ite,ine,ise) =
+     1       rtlz2(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_z2
+            rtlpt(ite,ine,ise) =
+     1       rtlpt(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pt
+            rtlpi(ite,ine,ise) =
+     1       rtlpi(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pi
+          enddo
+        enddo
+      enddo
+      write(*,*) exp(rtlsa(:,rtnn/2,0))
+      return
+      end subroutine b2plrt_hot
