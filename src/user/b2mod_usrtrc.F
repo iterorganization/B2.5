@@ -1217,7 +1217,7 @@ c East target
       end do !}
 
       if(maxval(mpg%strDiv).gt.2) then !{
-        hlp_pwou=0.0_R8
+        hlp_pwiu=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1249,10 +1249,10 @@ c East target
 #endif
           wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
-          hlp_pwou=max(hlp_pwou,wtarg(i,2))
+          hlp_pwiu=max(hlp_pwiu,wtarg(i,2))
         end do !}
 
-        hlp_pwiu=0.0_R8
+        hlp_pwou=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
           iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1284,7 +1284,7 @@ c East target
 #endif
           wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
      .                   +wnutrg(i,3)+wrad(i,3,0)
-          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
+          hlp_pwou=max(hlp_pwou,wtarg(i,3))
         end do !}
       end if !}
 
