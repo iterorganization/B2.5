@@ -94,6 +94,8 @@
       integer cells(1:2), fcType(m%nFc), c1, c2, verts2(0:1)
       integer, allocatable :: verts(:)
       integer nv
+      integer k, i0, vPrev, vCur, vNext, nBad, lu
+      logical degenerate, convex
       integer volhmk
       real (kind=R8) ::
      *   width, centroid(m%nCv,0:1), bcFpsi, L1, L2,
@@ -104,7 +106,8 @@
      *   wrk0(1:m%nCv), wrk1(1:m%nCv),
      *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
      *   rawQgam1, rawQgam2, signedHc1, signedHc2,
-     *   sideTolerance
+     *   sideTolerance, ex0, ey0, ex1, ey1, turn, turnSum,
+     *   turnMin, turnMax, tol_convex
       integer, save :: style = 0
 *   ..procedures
       intrinsic sqrt
@@ -112,7 +115,8 @@
       external b2xvsg
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-1_R8/
-      save volhmk, width, guard_rescale
+      data tol_convex /1.0e-6_R8/
+      save volhmk, width, guard_rescale, tol_convex
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -131,11 +135,78 @@
       call xertst (0.0_R8.lt.width, 'faulty input width')
       call xertst (0.0_R8.lt.guard_rescale,
      &  'faulty input guard_rescale')
+      call ipgetr ('b2agmt_convexity_tol', tol_convex)
+      call xertst (0.0_R8.le.tol_convex,
+     &  'faulty input convexity_tol')
 *   ..test nCv, nFc, nVx, isymm
       call xertst (0.lt.m%nCv.and.0.lt.m%nFc.and.0.lt.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
+
+* ..check that every real cell is a simple convex polygon
+*   At corner k, with e_in = x(k)-x(k-1) and e_out = x(k+1)-x(k),
+*   the turning angle is atan2(sin,cos), where sin = cosang(e_in,e_out)
+*   and cos = sinang(e_in,e_out) (see naming in b2mod_math).
+*   Convex: all turns of one sign (zero allowed for co-linear
+*   vertices) and total turn = +-2*pi (rejects self-intersection).
+      nBad = 0
+      do iCv = 1, m%nCi
+        nv = m%cvVxP(iCv,2)
+        i0 = m%cvVxP(iCv,1)
+        turnSum = 0.0_R8
+        turnMin = huge(1.0_R8)
+        turnMax = -huge(1.0_R8)
+        degenerate = .false.
+        do k = 0, nv-1
+          vPrev = m%cvVx(i0 + mod(k-1+nv,nv))
+          vCur  = m%cvVx(i0 + k)
+          vNext = m%cvVx(i0 + mod(k+1,nv))
+          ex0 = g%vxX(vCur)  - g%vxX(vPrev)
+          ey0 = g%vxY(vCur)  - g%vxY(vPrev)
+          ex1 = g%vxX(vNext) - g%vxX(vCur)
+          ey1 = g%vxY(vNext) - g%vxY(vCur)
+          if (norm(ex0,ey0).eq.0.0_R8 .or.
+     &        norm(ex1,ey1).eq.0.0_R8) then
+            degenerate = .true.
+            exit
+          endif
+          turn = atan2(cosang(ex0,ey0,ex1,ey1),
+     &                 sinang(ex0,ey0,ex1,ey1))
+          turnSum = turnSum + turn
+          turnMin = min(turnMin, turn)
+          turnMax = max(turnMax, turn)
+        enddo
+        convex = .not.degenerate
+        if (convex) convex =
+     &    abs(abs(turnSum) - 2.0_R8*pi) .lt. tol_convex .and.
+     &    ( (turnSum.gt.0.0_R8 .and. turnMin.ge.-tol_convex) .or.
+     &      (turnSum.lt.0.0_R8 .and. turnMax.le. tol_convex) )
+        if (.not.convex) then
+          nBad = nBad + 1
+          ! report on both stdout (6) and stderr (0)
+          do lu = 6, 0, -6
+            write(lu,*) 'WARNING b2agmt: non-convex cell iCv, nv = ',
+     &        iCv, nv
+            write(lu,*) '  vertex mean (x,y): ',
+     &        sum(g%vxX(m%cvVx(i0:i0+nv-1)))/real(nv,R8),
+     &        sum(g%vxY(m%cvVx(i0:i0+nv-1)))/real(nv,R8)
+            if (degenerate) then
+              write(lu,*) '  zero-length edge'
+            else
+              write(lu,*) '  min/max turn [deg], winding: ',
+     &          turnMin*180.0_R8/pi, turnMax*180.0_R8/pi,
+     &          turnSum/(2.0_R8*pi)
+            endif
+          enddo
+        endif
+      enddo
+      if (nBad.gt.0) then
+        do lu = 6, 0, -6
+          write(lu,*) 'WARNING b2agmt: ', nBad,
+     &      ' non-convex real cell(s) found'
+        enddo
+      endif
 
 * ..compute metric coefficients
 
@@ -188,11 +259,13 @@
      &                             g%vxX(verts(2)), g%vxY(verts(2)),
      &                             g%vxX(verts(3)), g%vxY(verts(3)) )
 
+      ! Careful here, the vertices must be given in the B2.5 order
+      ! See quadCentroid definition in b2mod_math
             centroid(iCv,:) =
      &       quadCentroid(g%vxX(verts(0)), g%vxY(verts(0)),
      &                    g%vxX(verts(1)), g%vxY(verts(1)),
-     &                    g%vxX(verts(2)), g%vxY(verts(2)),
-     &                    g%vxX(verts(3)), g%vxY(verts(3)) )
+     &                    g%vxX(verts(3)), g%vxY(verts(3)),
+     &                    g%vxX(verts(2)), g%vxY(verts(2)) )
 
           elseif (nv.eq.5) then
             g%cvSz(iCv) =
