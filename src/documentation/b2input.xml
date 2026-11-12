@@ -384,6 +384,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2agmt_convexity_tol</name>
+				<default>1.0e-6</default>
+				<type>real</type>
+				<description>
+					Angular tolerance (in radians) of the convexity check applied to every real (non-guard) cell.
+					At each cell vertex, the turning angle between the incoming and outgoing edges is computed. A cell is flagged as non-convex if it has a zero-length edge, if any turning angle has the wrong sign by more than convexity_tol (co-linear vertices are thus accepted), or if the sum of the turning angles differs from 2*pi by more than convexity_tol (self-intersecting cell).
+					Must be non-negative. To be used in b2ag.dat.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_first_flight_no_of_start_points</name>
 				<default>2*(nx+2)+2*max(nncut,1)*(ny+2)</default>
 				<type>integer</type>
