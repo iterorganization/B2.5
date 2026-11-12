@@ -178,7 +178,6 @@ c
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
 c
       logical ex, cflag, found, eirc_done, classical_style
-      logical rates_changed
       logical open_file, streql, isaletter
       integer len_of_digits
       real (kind=R8) ::
@@ -853,25 +852,6 @@ c
      > call read_neutrals_namelist(ns, mpg, switch, .false.)
       call xertst(nstrat.le.nstraid,
      . 'Increase DEF_NSTRA in b2mod_dimensions')
-*   ..the rate tables as b2mn changes them, then the rates of b2pldr again
-      call b2plrt (ns, switch, rates_changed)
-      if (rates_changed) then
-        call b2spel (mpg%nCv, ns, ev, state%pl%te, state%dv%ne,
-     &   state%rt)
-        call b2sqel (mpg%nCv, ns, ismain, switch, ev, state%pl%te,
-     &   state%rt, state%rtw)
-        do iss = 0, state%rt%nscx-1
-          call b2spcx (mpg%nCv, ns, ev, am(state%rt%iscx(iss)),
-     &     state%pl%ti, state%dv%ne,
-     &     state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,iss))
-        enddo
-        state%rtw%rcx = 0.0_R8
-        do iss = 0, state%rt%nscx-1
-          call b2sqcx (mpg%nCv, ns, ev, switch, am(state%rt%iscx(iss)),
-     &     state%pl%ti, state%pl%tn,
-     &     state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,iss), state%rtw%rcx)
-        enddo
-      endif
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
@@ -893,7 +873,9 @@ c
       enddo
       state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
       state%dv%ue = state%dv%ue/state%dv%ne
-      call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
+*   ..b2fplasma from version 03.002.001 has the sources of the run
+      if (b2fplasma_version.lt.'03.002.001')
+     & call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
      & switch, geo, mpg, state%pl, state%dv, state%rt,
      & state%rtw, state%srw)
       call b2sihs_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns,
