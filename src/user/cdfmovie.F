@@ -389,10 +389,10 @@
         call put_cdf_field2(ncid,'rrahisum',dummy,nx+2,ny+2)
         dummy3 = 0.0_R8
         do is=1,ns
-          dummy3(:,:,is) = rsana(:,:,is-1)/vol(:,:)
+          dummy3(:,:,is) = rrana(:,:,is-1)/vol(:,:)
         enddo
-        write(*,*) 'put_cdf_field3: rsana'
-        call put_cdf_field3(ncid,'rsana',dummy3,nx+2,ny+2,ns)
+        write(*,*) 'put_cdf_field3: rrana'
+        call put_cdf_field3(ncid,'rrana',dummy3,nx+2,ny+2,ns)
         dummy3 = 0.0_R8
         do is=1,ns
           dummy3(:,:,is) = rcxhi(:,:,is-1)/vol(:,:)
