@@ -873,7 +873,9 @@ c
       enddo
       state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
       state%dv%ue = state%dv%ue/state%dv%ne
-      call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
+*   ..b2fplasma from version 03.002.001 has the sources of the run
+      if (b2fplasma_version.lt.'03.002.001')
+     & call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
      & switch, geo, mpg, state%pl, state%dv, state%rt,
      & state%rtw, state%srw)
       call b2sihs_ (mpg%nCv, mpg%nFc, mpg%nVx, state%ns,
