@@ -374,10 +374,10 @@
         call put_cdf_field2(ncid,'rrahisum',dummy,nCv)
         dummy3 = 0.0_R8
         do is=1,ns
-          dummy3(:,is) = state%srw%rsana(:,is-1)/geo%cvVol(:)
+          dummy3(:,is) = state%srw%rrana(:,is-1)/geo%cvVol(:)
         enddo
-        write(*,*) 'put_cdf_field3: rsana'
-        call put_cdf_field3(ncid,'rsana',dummy3,nCv,ns)
+        write(*,*) 'put_cdf_field3: rrana'
+        call put_cdf_field3(ncid,'rrana',dummy3,nCv,ns)
         dummy3 = 0.0_R8
         do is=1,ns
           dummy3(:,is) = state%srw%rcxhi(:,is-1)/geo%cvVol(:)
