@@ -341,6 +341,9 @@
             call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      1       cvBp,cvBt,cvFpsi)
 
+!      .. Align vertex psi with flux-surface values
+            call preprocess_grid(g, m, nnFs)
+
 !      .. Create the guard cells
             call create_guard_cells(nnCv,g,m)
 
@@ -585,6 +588,37 @@
 91    call xerrab('read_traduitoutb2us: error reading geometry file')
 
       end subroutine read_traduitoutb2us
+
+*-----------------------------------------------------------------------
+
+      subroutine preprocess_grid(g, m, nnFs)
+
+      ! Assign flux-surface psi values to the vertices of their faces.
+      ! Vertices outside these surfaces retain their input psi.
+
+      ! Modules
+      use b2us_geo
+      use b2us_map
+      implicit none
+
+      ! Arguments
+      type(geometry), intent(inout)     :: g ! geometry
+      type(mapping), intent(in)         :: m ! mapping
+      integer, intent(in)               :: nnFs ! flux surface count
+
+      ! Internal
+      integer :: iFs, j, iFc
+
+      do iFs = 1, nnFs
+        do j = m%fsFcP(iFs,1),
+     &         m%fsFcP(iFs,1)+m%fsFcP(iFs,2)-1
+          iFc = m%fsFc(j)
+          g%vxFpsi(m%fcVx(iFc,1)) = g%fsPsi(iFs)
+          g%vxFpsi(m%fcVx(iFc,2)) = g%fsPsi(iFs)
+        enddo
+      enddo
+
+      end subroutine preprocess_grid
 
 *-----------------------------------------------------------------------
 
