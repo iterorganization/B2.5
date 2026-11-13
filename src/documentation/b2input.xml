@@ -408,6 +408,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2ag_convexity_tol</name>
+				<default>1.0e-6</default>
+				<type>real</type>
+				<description>
+					Angular tolerance (in radians) of the cell convexity test used in b2ag, both by the convexity check that b2agmt applies to every real (non-guard) cell and by the b2agfs_min_pitch correction.
+					The vertices 0-1-3-2 of a cell are assumed to be ordered counterclockwise. At each vertex, the turning angle between the incoming and outgoing edges is computed. A cell is non-convex if it has a zero-length edge, or if any turning angle is less than -convexity_tol (co-linear vertices are thus accepted) or not less than pi-convexity_tol (edge folding back on itself). This also rejects self-intersecting and clockwise-ordered cells.
+					In b2agmt, failing the test only produces a warning. The b2agfs_min_pitch correction never moves a target vertex to a position where either cell sharing it would fail the test. Must be non-negative. To be used in b2ag.dat.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_first_flight_no_of_start_points</name>
 				<default>2*(nx+2)+2*max(nncut,1)*(ny+2)</default>
 				<type>integer</type>
@@ -464,6 +474,16 @@
 				<type>real</type>
 				<description>
 					Minimum allowed value for the pitch angle (in degrees) at the plates.
+					Where the pitch is smaller, the target vertex shared with the next row
+					is moved along the flux surface (by at most the length of the target face)
+					to the nearest position giving min_pitch. The move is limited so that
+					the two cells sharing the vertex remain convex
+					(see b2ag_convexity_tol) and the pitch of the next row is not
+					reduced below the smaller of its current value and min_pitch. If
+					min_pitch cannot be reached, the position giving the largest pitch is
+					used and a warning is printed. Moves smaller than b2agfs_geom_match_dist
+					are not applied.
+					A value of 0 disables the correction.
 				</description>
 			</switch>
 			<switchgroup>

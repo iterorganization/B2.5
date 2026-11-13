@@ -8,6 +8,7 @@
       use b2mod_math
       use b2mod_constants
       use b2mod_subsys
+      use b2mod_indirect, only: quadConvex
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
@@ -115,12 +116,16 @@
 
 *   ..local variables
       integer n2, ix, iy, i
+      integer kMin, nBad, lu
+      logical degenerate, convex
       integer volhmk
       real (kind=R8) ::
      *   width, centroid(0:1), t0, t1
       real (kind=R8) ::
      *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1),
      *   wrk(-1:nx,-1:ny)
+      real (kind=R8) ::
+     *   turnMin, turnMax, tol_convex
       integer, save :: redef_qc = 1, qc_style = 2
 *   ..procedures
       real (kind=R8) ::
@@ -129,7 +134,8 @@
       external b2xvsg
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
-      save volhmk, width
+      data tol_convex /1.0e-6_R8/
+      save volhmk, width, tol_convex
 
 *-----------------------------------------------------------------------
 *.computation
@@ -143,12 +149,53 @@
       call ipgeti ('b2agmt_redef_qc', redef_qc)
       call ipgeti ('b2agmt_qc_style', qc_style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
+      call ipgetr ('b2ag_convexity_tol', tol_convex)
+      call xertst (0.0_R8.le.tol_convex,
+     &  'faulty input convexity_tol')
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, isymm
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
+
+* ..check that every real (non-guard) cell is a convex quadrangle
+*   (see quadConvex in b2mod_indirect for the criterion).
+*   Failure only produces a warning.
+      nBad = 0
+      do iy = 0, ny-1
+       do ix = 0, nx-1
+        convex = quadConvex(crx(ix,iy,0), cry(ix,iy,0),
+     &    crx(ix,iy,1), cry(ix,iy,1), crx(ix,iy,2), cry(ix,iy,2),
+     &    crx(ix,iy,3), cry(ix,iy,3), tol_convex,
+     &    turnMin, turnMax, kMin, degenerate)
+        if (.not.convex) then
+          nBad = nBad + 1
+          ! report on both stdout (6) and stderr (0)
+          do lu = 6, 0, -6
+            write(lu,'(a,2i5)')
+     &        'WARNING b2agmt: non-convex cell ix, iy = ', ix, iy
+            write(lu,'(a,1p,4g13.6)') '  crx = ',(crx(ix,iy,i),i=0,3)
+            write(lu,'(a,1p,4g13.6)') '  cry = ',(cry(ix,iy,i),i=0,3)
+            if (degenerate) then
+              write(lu,'(a)') '  zero-length edge'
+            else
+              write(lu,'(a,1p,2g13.6)') '  min/max turn [deg]: ',
+     &          turnMin*180.0_R8/pi, turnMax*180.0_R8/pi
+              if (turnMin.lt.-tol_convex) write(lu,'(a,i2,a,1p,2g13.6)')
+     &          '  negative turn at apex vertex ', kMin, ', (x,y) = ',
+     &          crx(ix,iy,kMin), cry(ix,iy,kMin)
+            endif
+          enddo
+        endif
+       enddo
+      enddo
+      if (nBad.gt.0) then
+        do lu = 6, 0, -6
+          write(lu,'(a,i6,a)') 'WARNING b2agmt: ', nBad,
+     &      ' non-convex real cell(s) found'
+        enddo
+      endif
 
 * ..compute metric coefficients
 *   ..compute hx, hy, qz, qc

@@ -13,7 +13,8 @@
       use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_indirect
-     . ,only: GRID_N_CELLFLAGS
+     . ,only: GRID_N_CELLFLAGS, quadConvex
+      use b2mod_math, only: cosang
       use carre_constants
       use b2mod_subsys
       use b2mod_dimensions
@@ -106,14 +107,13 @@
      .  fpsi((nx1+2)*(ny1+2)*4),ffbz((nx1+2)*(ny1+2)*4)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, distval,
-     .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
-     .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
+     .  min_pitch, distval, convexity_tol
       integer ireg,zone(-1:nx1),errors
-      logical found, concave
+      logical found
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/,
+     .  convexity_tol/1.0e-6_R8/
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
@@ -153,6 +153,9 @@
      &  'faulty argument Bt_reversal')
       call ipgetr ('b2agfs_pit_rescale', pit_rescale)
       call ipgetr ('b2agfs_min_pitch', min_pitch)
+      call ipgetr ('b2ag_convexity_tol', convexity_tol)
+      call xertst (convexity_tol.ge.0.0_R8,
+     &  'faulty argument b2ag_convexity_tol')
       call xertst (min_pitch.ge.0.0_R8 .and. min_pitch.lt.90.0_R8,
      &  'faulty argument min_pitch')
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -513,233 +516,17 @@ cxpb Do not correct corner cells
       if (min_pitch.gt.0.0_R8) then
         do ix = -1, nx1
           do iy = 0, ny1-1
-cxpb Western edge
+cxpb Western edge: the real cell next to the guard cell is its right
+cxpb neighbour; target corners 2 (moved) and 0 (hinge)
             if (.not.isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy)))
-     >       then
-              r1 = crx1(rightix1(ix,iy),rightiy1(ix,iy),2)
-              z1 = cry1(rightix1(ix,iy),rightiy1(ix,iy),2)
-              r2 = crx1(rightix1(ix,iy),rightiy1(ix,iy),0)
-              z2 = cry1(rightix1(ix,iy),rightiy1(ix,iy),0)
-              r3 = crx1(rightix1(ix,iy),rightiy1(ix,iy),1)
-              z3 = cry1(rightix1(ix,iy),rightiy1(ix,iy),1)
-              rf = crx1(rightix1(ix,iy),rightiy1(ix,iy),3)
-              z4 = cry1(rightix1(ix,iy),rightiy1(ix,iy),3)
-              nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
-              nhatz = (r2-r1)/sqrt((z1-z2)**2+(r2-r1)**2)
-              bphatr = (r1-rf+r2-r3)/
-     .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-              bphatz = (z1-z4+z2-z3)/
-     .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-              bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
-              cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((r2-r1)*(rf-r1)+(z2-z1)*(z4-z1)).lt.0.0_R8
-     &            .and. ((r2-r1)*(z4-z1)-(z2-z1)*(rf-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)')
-     >         'Cell ',ix,',',iy,' is concave !'
-              if(abs(bdotn).lt.
-     >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
-                write(*,*) 'Western guard cell',iy,': Pitch too small',
-     .           abs(bdotn)/bb1(ix,iy,3)
-cxpb  We first attempt a correction of the guard cell coordinates, if this
-cxpb  fails, we change the poloidal field strength
-                cose = sign(sin(min_pitch*pi/180.0_R8),cosa)*
-     .                 bb1(ix,iy,3)/abs(bb1(ix,iy,0))
-                if(abs(cose).le.1.0_R8.and..not.concave) then
-                  beta = acos(cose) - acos(cosa)
-                  cosb = cos(beta)
-                  sinb = sin(beta)
-cxpb  Modify r1,z1
-cxpb  We rotate point 1 about point 2 by an angle beta
-cxpb  and keep the new coordinates as the intersection of the rotated line
-cxpb  and the parallel to Bp line between point 4 and the original point 1
-                  numer = (r1 - r2) * cosb - (z1 - z2) * sinb
-                  denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then
-                    aaa = numer / denom
-                    if (rf.ne.r1) then
-                      bbb = (z4 - z1)/(rf - r1)
-                      r1 = (r2 + (z4-z2)*aaa - rf*bbb*aaa)/
-     .                 (1.0_R8-bbb*aaa)
-                      z1 =  z4 - (rf-r1)*bbb
-                    else
-                      call xertst(aaa.ne.0.0_R8,'unexpected geometry !')
-                      r1 = rf
-                      z1 = z2 + (rf-r2)/aaa
-                    endif
-                  else
-                    if (rf.ne.r1) then
-                      bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb
-                    else
-                      r1 = rf
-                    endif
-                    z1 = z2
-                  endif
-cxpb  Copy the changes onto crx1, cry1
-                  crx1(rightix1(ix,iy),rightiy1(ix,iy),2) = r1
-                  cry1(rightix1(ix,iy),rightiy1(ix,iy),2) = z1
-                  crx1(ix,iy,3) = r1
-                  cry1(ix,iy,3) = z1
-cxpb  ALSO MOVE THE BACK OF THE GUARD CELLS!
-                  crx1(ix,iy,2) = r1 + (r1-rf)/1000.0_R8
-                  cry1(ix,iy,2) = z1 + (z1-z4)/1000.0_R8
-                  if (isInDomain(nx1,ny1,topix1(ix,iy),
-     .                                   topiy1(ix,iy))) then
-                    crx1(topix1(ix,iy),topiy1(ix,iy),1) = r1
-                    cry1(topix1(ix,iy),topiy1(ix,iy),1) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),0) =
-     .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),0) =
-     .               z1 + (z1-z4)/1000.0_R8
-                    crx1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
-     .               = r1
-                    cry1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
-     .               = z1
-                  endif
-cxpb  if just below the top corner, make the corner cell follow
-                  if (iy.eq.ny1-1) then
-                    crx1(ix,ny1,3) = r1 + (r1-r2)/1000.0_R8
-                    cry1(ix,ny1,3) = z1 + (z1-z2)/1000.0_R8
-                    crx1(ix,ny1,2) = r1 + (r1-r3)/1000.0_R8
-                    cry1(ix,ny1,2) = z1 + (z1-z3)/1000.0_R8
-                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
-     .               r1 + (r1-r2)/1000.0_R8
-                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
-     .               z1 + (z1-z2)/1000.0_R8
-                  end if
-                  nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
-                  nhatz = (r2-r1)/sqrt((z1-z2)**2+(r2-r1)**2)
-                  bphatr = (r1-rf+r2-r3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-                  bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-                else  ! rotation correction impossible
-                  bb1(ix,iy,0) = sign(
-     .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz),
-     1             bb1(ix,iy,0))
-                  bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
-                endif
-                bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
-                write(*,*) 'Corrected pitch :', abs(bdotn)/bb1(ix,iy,3)
-              endif
-            endif
-cxpb Eastern edge
-            if (
-     .       .not.isInDomain(nx1,ny1,rightix1(ix,iy),rightiy1(ix,iy)))
-     >       then
-              rf = crx1(leftix1(ix,iy),leftiy1(ix,iy),2)
-              z4 = cry1(leftix1(ix,iy),leftiy1(ix,iy),2)
-              r3 = crx1(leftix1(ix,iy),leftiy1(ix,iy),0)
-              z3 = cry1(leftix1(ix,iy),leftiy1(ix,iy),0)
-              r2 = crx1(leftix1(ix,iy),leftiy1(ix,iy),1)
-              z2 = cry1(leftix1(ix,iy),leftiy1(ix,iy),1)
-              r1 = crx1(leftix1(ix,iy),leftiy1(ix,iy),3)
-              z1 = cry1(leftix1(ix,iy),leftiy1(ix,iy),3)
-              nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
-              nhatz = (r2-r1)/sqrt((z1-z2)**2+(r2-r1)**2)
-              bphatr = (r1-rf+r2-r3)/
-     .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-              bphatz = (z1-z4+z2-z3)/
-     .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-              bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
-              cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((rf-r1)*(r2-r1)+(z4-z1)*(z2-z1)).lt.0.0_R8
-     &            .and. ((rf-r1)*(z2-z1)-(z4-z1)*(r2-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)')
-     >         'Cell ',ix,',',iy,' is concave !'
-              if(abs(bdotn).lt.
-     >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
-                write(*,*) 'Eastern guard cell',iy,': Pitch too small',
-     .           abs(bdotn)/bb1(ix,iy,3)
-cxpb  We first attempt a correction of the guard cell coordinates, if this
-cxpb  fails, we change the poloidal field strength
-                cose = sign(sin(min_pitch*pi/180.0_R8),cosa)*
-     .                 bb1(ix,iy,3)/bb1(ix,iy,0)
-                if(abs(cose).le.1.0_R8.and..not.concave) then
-                  beta = acos(cose) - acos(cosa)
-                  cosb = cos(beta)
-                  sinb = sin(beta)
-cxpb  Modify r1,z1
-cxpb  We rotate point 1 about point 2 by an angle beta
-cxpb  and keep the new coordinates as the intersection of the rotated line
-cxpb  and the parallel to Bp line between point 4 and the original point 1
-                  numer = (r1 - r2) * cosb - (z1 - z2) * sinb
-                  denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then
-                    aaa = numer / denom
-                    if (rf.ne.r1) then
-                      bbb = (z4 - z1)/(rf - r1)
-                      r1 = (r2 + (z4-z2)*aaa - rf*bbb*aaa)/
-     .                 (1.0_R8-bbb*aaa)
-                      z1 =  z4 - (rf-r1)*bbb
-                    else
-                      call xertst(aaa.ne.0.0_R8,'unexpected geometry !')
-                      r1 = rf
-                      z1 = z2 + (rf-r2)/aaa
-                    endif
-                  else
-                    if (rf.ne.r1) then
-                      bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb
-                    else
-                      r1 = rf
-                    endif
-                    z1 = z2
-                  endif
-cxpb  Copy the changes onto crx1, cry1
-                  crx1(leftix1(ix,iy),leftiy1(ix,iy),3) = r1
-                  cry1(leftix1(ix,iy),leftiy1(ix,iy),3) = z1
-                  crx1(ix,iy,2) = r1
-                  cry1(ix,iy,2) = z1
-cxpb ALSO MOVE THE BACK OF THE GUARD CELLS!
-                  crx1(ix,iy,3) = r1 + (r1-rf)/1000.0_R8
-                  cry1(ix,iy,3) = z1 + (z1-z4)/1000.0_R8
-                  if (isInDomain(nx1,ny1,topix1(ix,iy),
-     .                                   topiy1(ix,iy))) then
-                    crx1(topix1(ix,iy),topiy1(ix,iy),0) = r1
-                    cry1(topix1(ix,iy),topiy1(ix,iy),0) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),1) =
-     .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),1) =
-     .               z1 + (z1-z4)/1000.0_R8
-                    crx1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
-     .               = r1
-                    cry1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
-     .               = z1
-                  endif
-cxpb  if just below the top corner, make the corner cell follow
-                  if (iy.eq.ny1-1) then
-                    crx1(ix,ny1,2) = r1 + (r1-r2)/1000.0_R8
-                    cry1(ix,ny1,2) = z1 + (z1-z2)/1000.0_R8
-                    crx1(ix,ny1,3) = r1 + (r1-r3)/1000.0_R8
-                    cry1(ix,ny1,3) = z1 + (z1-z3)/1000.0_R8
-                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
-     .               r1 + (r1-r2)/1000.0_R8
-                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
-     .               z1 + (z1-z2)/1000.0_R8
-                  end if
-                  nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
-                  nhatz = (r2-r1)/sqrt((z1-z2)**2+(r2-r1)**2)
-                  bphatr = (r1-rf+r2-r3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-                  bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
-                else  ! rotation correction impossible
-                  bb1(ix,iy,0) = sign(
-     .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz),
-     1             bb1(ix,iy,0))
-                  bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
-                endif
-                bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
-                write(*,*) 'Corrected pitch :', abs(bdotn)/bb1(ix,iy,3)
-              endif
-            endif
+     >        call fix_target_pitch(ix, iy,
+     >          rightix1(ix,iy), rightiy1(ix,iy), 2, 0, 1, 3, 'Western')
+cxpb Eastern edge: the real cell next to the guard cell is its left
+cxpb neighbour; target corners 3 (moved) and 1 (hinge)
+            if (.not.isInDomain(nx1,ny1,
+     >                          rightix1(ix,iy),rightiy1(ix,iy)))
+     >        call fix_target_pitch(ix, iy,
+     >          leftix1(ix,iy), leftiy1(ix,iy), 3, 1, 0, 2, 'Eastern')
           enddo
         enddo
       endif
@@ -1015,6 +802,224 @@ cxpb
      2 geom_match_dist
       return
       end function match
+
+      subroutine fix_target_pitch(ix, iy, ixl, iyl, k1, k2, k3, k4,
+     .                            side)
+*  Try to raise the field-line pitch on the target face of the guard
+*  cell (ix,iy) to at least min_pitch by moving one target vertex.
+*  The magnetic field is not modified.
+*  (ixl,iyl) is the real cell L next to the guard cell.  Corners of L:
+*     k1 = target corner P1 shared with the next row (moved),
+*     k2 = other target corner P2 (fixed),
+*     k3 = corner P3 opposite P2 along the flux surface,
+*     k4 = corner P4 opposite P1 along the flux surface.
+*  P1 slides along the line P4-P1 (in either direction), by at most the
+*  length of the target face P1-P2.  A position is admissible if
+*   - L and the cell T on top of L (which shares P1) pass the convexity
+*     test quadConvex (b2mod_indirect) with tolerance b2ag_convexity_tol,
+*     i.e. the same test as in b2agmt, and
+*   - the pitch of the next row's target face, which starts at P1, does
+*     not drop below min(its current value, sin(min_pitch)).
+*  The pitch is |cosang(P2-P1, poloidal direction)|*Bp/B, the poloidal
+*  direction of L being (P1-P4)+(P2-P3).
+*  The smallest admissible move reaching sin(min_pitch) is used; if
+*  there is none, the admissible move maximising the pitch is used.
+*  Moves smaller than geom_match_dist are not applied.
+      implicit none
+      integer, intent(in) :: ix, iy, ixl, iyl, k1, k2, k3, k4
+      character(*), intent(in) :: side
+      integer, parameter :: nsample = 200, nbisect = 50
+      integer :: ixt, iyt, ixg, iyg, ixc, iyc, i, j, isgn
+      logical :: has_top, has_next, found
+      real(kind=R8) :: p1(2), p2(2), p3(2), p4(2), u(2), q(2)
+      real(kind=R8) :: sinmin, fb, pitch0, pitch, plim, lu, smax,
+     .  s, sprev, shit, sbest, pbest, slo, shi, smid
+
+      sinmin = sin(min_pitch*pi/180.0_R8)
+      p1 = (/ crx1(ixl,iyl,k1), cry1(ixl,iyl,k1) /)
+      p2 = (/ crx1(ixl,iyl,k2), cry1(ixl,iyl,k2) /)
+      p3 = (/ crx1(ixl,iyl,k3), cry1(ixl,iyl,k3) /)
+      p4 = (/ crx1(ixl,iyl,k4), cry1(ixl,iyl,k4) /)
+cxpb  Pitch = |cos(face normal, poloidal direction)| * Bp/B
+      fb = abs(bb1(ix,iy,0))/bb1(ix,iy,3)
+      pitch0 = abs(cosang(p2(1)-p1(1), p2(2)-p1(2),
+     .  p1(1)-p4(1)+p2(1)-p3(1), p1(2)-p4(2)+p2(2)-p3(2)))*fb
+      if (pitch0.ge.sinmin) return
+      write(*,'(1x,2a,i5,a,1p,e15.7)') side, ' guard cell', iy,
+     .  ' : Pitch too small ', pitch0
+cxpb  Cell T on top of L, which shares P1 (as its corner k2)
+      ixt = topix1(ixl,iyl)
+      iyt = topiy1(ixl,iyl)
+      has_top = isInDomain(nx1,ny1,ixt,iyt)
+cxpb  Guard cell of the next row, whose target face starts at P1
+      ixg = topix1(ix,iy)
+      iyg = topiy1(ix,iy)
+      has_next = has_top .and. iy.lt.ny1-1 .and.
+     .  isInDomain(nx1,ny1,ixg,iyg)
+cxpb  Lowest pitch allowed for the next row (no check if negative)
+      if (has_next) then
+        plim = min(sinmin,
+     .    pitch_next(p1, ixt, iyt, ixg, iyg, k1, k3, k4))
+      else
+        plim = -1.0_R8
+      endif
+      lu = sqrt(sum((p1-p4)**2))
+      smax = sqrt(sum((p1-p2)**2))
+
+cxpb  Scan P1 + s*u, u along P4->P1, outwards from s=0 in both
+cxpb  directions until the first non-admissible position
+      found = .false.
+      shit = 0.0_R8
+      sbest = 0.0_R8
+      pbest = pitch0
+      if (lu.gt.0.0_R8 .and. admissible(p1, ixl, iyl, ixt, iyt,
+     .    ixg, iyg, k1, k2, k3, k4, has_top, plim)) then
+        u = (p1-p4)/lu
+        do isgn = 1, -1, -2
+          sprev = 0.0_R8
+          do i = 1, nsample
+            s = isgn*smax*real(i,R8)/real(nsample,R8)
+            q = p1 + s*u
+            if (.not.admissible(q, ixl, iyl, ixt, iyt, ixg, iyg,
+     .        k1, k2, k3, k4, has_top, plim)) exit
+            pitch = abs(cosang(p2(1)-q(1), p2(2)-q(2),
+     .        q(1)-p4(1)+p2(1)-p3(1), q(2)-p4(2)+p2(2)-p3(2)))*fb
+            if (pitch.ge.sinmin) then
+cxpb  Refine the crossing of sin(min_pitch) between sprev and s
+              slo = sprev
+              shi = s
+              do j = 1, nbisect
+                smid = 0.5_R8*(slo+shi)
+                q = p1 + smid*u
+                if (abs(cosang(p2(1)-q(1), p2(2)-q(2),
+     .            q(1)-p4(1)+p2(1)-p3(1), q(2)-p4(2)+p2(2)-p3(2)))*fb
+     .            .lt.sinmin) then
+                  slo = smid
+                else
+                  shi = smid
+                endif
+              enddo
+              if (.not.admissible(p1+shi*u, ixl, iyl, ixt, iyt, ixg,
+     .          iyg, k1, k2, k3, k4, has_top, plim)) shi = s
+              if (.not.found .or. abs(shi).lt.abs(shit)) shit = shi
+              found = .true.
+              exit
+            endif
+            if (pitch.gt.pbest) then
+              pbest = pitch
+              sbest = s
+            endif
+            sprev = s
+          enddo
+        enddo
+      endif
+      if (found) then
+        s = shit
+      else
+        s = sbest
+      endif
+      if (abs(s).lt.geom_match_dist) s = 0.0_R8
+
+      if (s.ne.0.0_R8) then
+        q = p1 + s*u
+cxpb  Copy the changes onto crx1, cry1
+        crx1(ixl,iyl,k1) = q(1)
+        cry1(ixl,iyl,k1) = q(2)
+        crx1(ix,iy,k4) = q(1)
+        cry1(ix,iy,k4) = q(2)
+cxpb  ALSO MOVE THE BACK OF THE GUARD CELLS!
+        crx1(ix,iy,k1) = q(1) + (q(1)-p4(1))/1000.0_R8
+        cry1(ix,iy,k1) = q(2) + (q(2)-p4(2))/1000.0_R8
+        if (isInDomain(nx1,ny1,ixg,iyg)) then
+          crx1(ixg,iyg,k3) = q(1)
+          cry1(ixg,iyg,k3) = q(2)
+          crx1(ixg,iyg,k2) = q(1) + (q(1)-p4(1))/1000.0_R8
+          cry1(ixg,iyg,k2) = q(2) + (q(2)-p4(2))/1000.0_R8
+          if (has_top) then
+            crx1(ixt,iyt,k2) = q(1)
+            cry1(ixt,iyt,k2) = q(2)
+          endif
+        endif
+cxpb  if just below the top corner, make the corner cell follow
+        if (iy.eq.ny1-1) then
+          if (k1.eq.2) then
+            ixc = rightix1(ix,ny1)
+            iyc = rightiy1(ix,ny1)
+          else
+            ixc = leftix1(ix,ny1)
+            iyc = leftiy1(ix,ny1)
+          endif
+          crx1(ix,ny1,k4) = q(1) + (q(1)-p2(1))/1000.0_R8
+          cry1(ix,ny1,k4) = q(2) + (q(2)-p2(2))/1000.0_R8
+          crx1(ix,ny1,k1) = q(1) + (q(1)-p3(1))/1000.0_R8
+          cry1(ix,ny1,k1) = q(2) + (q(2)-p3(2))/1000.0_R8
+          crx1(ixc,iyc,k1) = q(1) + (q(1)-p2(1))/1000.0_R8
+          cry1(ixc,iyc,k1) = q(2) + (q(2)-p2(2))/1000.0_R8
+        endif
+cxpb  s > 0: away from P4, i.e. away from the plasma; s < 0: towards it
+        if (s.gt.0.0_R8) then
+          write(*,'(1x,2a,i5,a,1p,e15.7,a)') side, ' guard cell', iy,
+     .      ' : target vertex moved by ', s, ' m away from the plasma'
+        else
+          write(*,'(1x,2a,i5,a,1p,e15.7,a)') side, ' guard cell', iy,
+     .      ' : target vertex moved by ', -s, ' m towards the plasma'
+        endif
+      else
+        q = p1
+      endif
+      pitch = abs(cosang(p2(1)-q(1), p2(2)-q(2),
+     .  q(1)-p4(1)+p2(1)-p3(1), q(2)-p4(2)+p2(2)-p3(2)))*fb
+      write(*,*) 'Corrected pitch :', pitch
+      if (pitch.lt.sinmin) write(*,'(1x,2a,i5,2a)') side,
+     .  ' guard cell', iy, ' : WARNING - min_pitch not reached',
+     .  ' (limited by cell convexity and next-row pitch)'
+      return
+      end subroutine fix_target_pitch
+
+      logical function admissible(qq, ixl, iyl, ixt, iyt, ixg, iyg,
+     .  k1, k2, k3, k4, has_top, plim)
+*  Moving the target corner k1 of L=(ixl,iyl) to qq keeps L and the cell
+*  T=(ixt,iyt) on top of it convex, and leaves the pitch of the next
+*  guard cell (ixg,iyg) at least plim (no check if plim < 0)
+      implicit none
+      real(kind=R8), intent(in) :: qq(2), plim
+      integer, intent(in) :: ixl, iyl, ixt, iyt, ixg, iyg,
+     .  k1, k2, k3, k4
+      logical, intent(in) :: has_top
+      real(kind=R8) :: xc(0:3), yc(0:3)
+      xc = crx1(ixl,iyl,0:3)
+      yc = cry1(ixl,iyl,0:3)
+      xc(k1) = qq(1)
+      yc(k1) = qq(2)
+      admissible = quadConvex(xc(0), yc(0), xc(1), yc(1),
+     .  xc(2), yc(2), xc(3), yc(3), convexity_tol)
+      if (admissible .and. has_top) then
+        xc = crx1(ixt,iyt,0:3)
+        yc = cry1(ixt,iyt,0:3)
+        xc(k2) = qq(1)
+        yc(k2) = qq(2)
+        admissible = quadConvex(xc(0), yc(0), xc(1), yc(1),
+     .  xc(2), yc(2), xc(3), yc(3), convexity_tol)
+      endif
+      if (admissible .and. plim.ge.0.0_R8) admissible =
+     .  pitch_next(qq, ixt, iyt, ixg, iyg, k1, k3, k4).ge.plim
+      end function admissible
+
+      real(kind=R8) function pitch_next(qq, ixt, iyt, ixg, iyg,
+     .  k1, k3, k4)
+*  Pitch of the target face of the next guard cell (ixg,iyg), whose
+*  real neighbour is T=(ixt,iyt), with its fixed corner moved to qq
+      implicit none
+      real(kind=R8), intent(in) :: qq(2)
+      integer, intent(in) :: ixt, iyt, ixg, iyg, k1, k3, k4
+      real(kind=R8) :: n1(2), n3(2), n4(2)
+      n1 = (/ crx1(ixt,iyt,k1), cry1(ixt,iyt,k1) /)
+      n3 = (/ crx1(ixt,iyt,k3), cry1(ixt,iyt,k3) /)
+      n4 = (/ crx1(ixt,iyt,k4), cry1(ixt,iyt,k4) /)
+      pitch_next = abs(cosang(qq(1)-n1(1), qq(2)-n1(2),
+     .  n1(1)-n4(1)+qq(1)-n3(1), n1(2)-n4(2)+qq(2)-n3(2))*
+     .  bb1(ixg,iyg,0))/bb1(ixg,iyg,3)
+      end function pitch_next
 
       end subroutine b2agfs
 c
