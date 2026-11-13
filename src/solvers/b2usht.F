@@ -7,6 +7,7 @@
      &  she, shi, shn, skt, szt, ceqp,
      &  resht, reshe, reshi, reshn, reskt, reszt,
      &  cortt, corte, corti, cortn, corkt, corzt, flo0, con0, aa)
+      use b2mod_growth_guard, only : growth_diagonal
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_switches
@@ -251,6 +252,24 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
             aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &        +abs(resht(iCv))/(switch%b2npht_rxg*t0)
           endif
+c growth guard, total heat: content = 3/2 * V * sum_s(n_s*T_s)
+          if (switch%growth_guard.eq.1.and.iCv.le.mpg%nCi) then
+            t1 = 0.0_R8
+            if (solveee(ireg)) t1 = t1+ne(iCv)*te(iCv)
+            if (solveei(ireg)) then
+              if (switch%tn_style.eq.0) then
+                t1 = t1+ni(iCv,0)*ti(iCv)
+              else
+                t1 = t1+ni(iCv,1)*ti(iCv)
+              endif
+            endif
+            if (solveen(ireg).and.switch%tn_style.eq.2)
+     &        t1 = t1+nn(iCv)*tn(iCv)
+            aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &        growth_diagonal(resht(iCv),t0,
+     &        1.5_R8*geo%cvVol(iCv)*t1,
+     &        switch%growth_frac,6,iCv)
+          endif
         endif
       enddo
 
@@ -424,6 +443,13 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
             aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &      +abs(reshe(iCv))/(switch%b2npht_rxg*te(iCv))              !srv 02.01.07
           endif
+c growth guard, electron heat: content = 3/2 * V * ne*Te
+          if (switch%growth_guard.eq.1.and.iCv.le.mpg%nCi) then
+            aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      growth_diagonal(reshe(iCv),te(iCv),
+     &      1.5_R8*geo%cvVol(iCv)*
+     &      ne(iCv)*te(iCv),switch%growth_frac,3,iCv)
+          endif
         endif
       enddo
 
@@ -594,6 +620,15 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           if (switch%b2mndt_style.lt.2) then
             aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &      +abs(reshi(iCv))/(switch%b2npht_rxg*ti(iCv))
+          endif
+c growth guard, ion heat: content = 3/2 * V * ni*Ti
+          if (switch%growth_guard.eq.1.and.iCv.le.mpg%nCi) then
+            t1 = ni(iCv,1)
+            if (switch%tn_style.eq.0) t1 = ni(iCv,0)
+            aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      growth_diagonal(reshi(iCv),ti(iCv),
+     &      1.5_R8*geo%cvVol(iCv)*t1*ti(iCv),
+     &      switch%growth_frac,4,iCv)
           endif
         endif
       enddo
@@ -773,6 +808,13 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
             if (switch%b2mndt_style.lt.2) then
               aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &         +abs(reshn(iCv))/(switch%b2npht_rxg*tn(iCv))
+            endif
+c growth guard, neutral heat: content = 3/2 * V * nn*Tn
+            if (switch%growth_guard.eq.1.and.iCv.le.mpg%nCi) then
+              aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      growth_diagonal(reshn(iCv),tn(iCv),
+     &      1.5_R8*geo%cvVol(iCv)*
+     &      nn(iCv)*tn(iCv),switch%growth_frac,5,iCv)
             endif
           endif
         enddo
