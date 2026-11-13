@@ -95,6 +95,7 @@
       integer, allocatable :: verts(:)
       integer nv
       integer k, i0, vPrev, vCur, vNext, nBad, lu
+      integer kMin, kMax, kBad
       logical degenerate, convex
       integer volhmk
       real (kind=R8) ::
@@ -107,7 +108,7 @@
      *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
      *   rawQgam1, rawQgam2, signedHc1, signedHc2,
      *   sideTolerance, ex0, ey0, ex1, ey1, turn, turnSum,
-     *   turnMin, turnMax, tol_convex
+     *   turnMin, turnMax, tol_convex, dpsiFace
       integer, save :: style = 0
 *   ..procedures
       intrinsic sqrt
@@ -157,6 +158,8 @@
         turnSum = 0.0_R8
         turnMin = huge(1.0_R8)
         turnMax = -huge(1.0_R8)
+        kMin = -1
+        kMax = -1
         degenerate = .false.
         do k = 0, nv-1
           vPrev = m%cvVx(i0 + mod(k-1+nv,nv))
@@ -174,8 +177,14 @@
           turn = atan2(cosang(ex0,ey0,ex1,ey1),
      &                 sinang(ex0,ey0,ex1,ey1))
           turnSum = turnSum + turn
-          turnMin = min(turnMin, turn)
-          turnMax = max(turnMax, turn)
+          if (turn.lt.turnMin) then
+            turnMin = turn
+            kMin = k
+          endif
+          if (turn.gt.turnMax) then
+            turnMax = turn
+            kMax = k
+          endif
         enddo
         convex = .not.degenerate
         if (convex) convex =
@@ -184,6 +193,16 @@
      &      (turnSum.lt.0.0_R8 .and. turnMax.le. tol_convex) )
         if (.not.convex) then
           nBad = nBad + 1
+          ! apex of a turn against the cell winding (none if the
+          ! winding is zero, i.e. the sign of the cell is undefined)
+          kBad = -1
+          if (.not.degenerate) then
+            if (turnSum.gt.0.0_R8 .and. turnMin.lt.-tol_convex) then
+              kBad = kMin
+            elseif (turnSum.lt.0.0_R8 .and. turnMax.gt.tol_convex) then
+              kBad = kMax
+            endif
+          endif
           ! report on both stdout (6) and stderr (0)
           do lu = 6, 0, -6
             write(lu,*) 'WARNING b2agmt: non-convex cell iCv, nv = ',
@@ -197,6 +216,10 @@
               write(lu,*) '  min/max turn [deg], winding: ',
      &          turnMin*180.0_R8/pi, turnMax*180.0_R8/pi,
      &          turnSum/(2.0_R8*pi)
+              if (kBad.ge.0) write(lu,*)
+     &          '  reverse turn at apex vertex k, iVx, (x,y): ',
+     &          kBad, m%cvVx(i0+kBad),
+     &          g%vxX(m%cvVx(i0+kBad)), g%vxY(m%cvVx(i0+kBad))
             endif
           enddo
         endif
@@ -365,10 +388,10 @@
          ! If it is possible to put the cell center of the guard cell on the same psi
          ! as the boundary cell, this is done. Otherwise the cell center is placed
          ! in the extension of the vector from the boundary cell center and the face center.
-         if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
-     &       .lt. 1e-1_R8) then ! get the guard cell on the same fpsi
+         dpsiFace = g%vxFpsi(v2) - g%vxFpsi(v1)
+         if (abs(fcPsi-bcFpsi) .lt. 1e-1_R8*abs(dpsiFace)) then ! get the guard cell on the same fpsi
            ! Calculate intersection point - find point on face where psi = fcPsi
-           t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))
+           t0 = (bcFpsi - g%vxFpsi(v1)) / dpsiFace
            isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
            isy(1) =  g%vxY(v1) + t0 *(g%vxY(v2)- g%vxY(v1))
 
