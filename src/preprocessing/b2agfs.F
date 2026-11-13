@@ -215,6 +215,7 @@
       g%vxBb(:,0)=g%vxBb(:,0)*Bt_rescale*pit_rescale
       g%vxBb(:,1)=g%vxBb(:,1)*Bt_rescale*pit_rescale
       g%vxFpsi = g%vxFpsi*Bt_rescale*pit_rescale
+      g%fsPsi = g%fsPsi*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
         g%fcBb(:,2) = -g%fcBb(:,2)*Bt_rescale
