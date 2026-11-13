@@ -5,7 +5,10 @@
       use b2mod_cellhelper
       use b2mod_connectivity
       use b2mod_dimensions
+      use b2mod_math, only: cosang, sinang, norm
+      use b2mod_constants, only: pi
       implicit none
+      private :: cosang, sinang, norm, pi
 
       integer, parameter :: NNREGMAX=8
 
@@ -459,5 +462,68 @@
  
       return
       end function averageVertex
+
+  !> Convexity test of a quadrangle given by vertex coordinates
+  !> Corners are numbered in the B2 convention 2-3
+  !>                                           0-1
+  !> and are visited counterclockwise in the order 0-1-3-2.
+  !> At corner k, with e_in = x(k)-x(k-1) and e_out = x(k+1)-x(k), the
+  !> turning angle is atan2(sin,cos), with sin = cosang(e_in,e_out) and
+  !> cos = sinang(e_in,e_out) (see naming in b2mod_math).
+  !> The cell is convex if no edge has zero length and every turning
+  !> angle lies in [-tol, pi-tol): all left turns (co-linear vertices
+  !> allowed within tol), no edge folding back on itself. For a closed
+  !> quadrangle the total turn is then necessarily 2*pi, so
+  !> self-intersecting and clockwise-ordered cells are also rejected.
+  !> Optional outputs: smallest and largest turning angle (radians),
+  !> corner index (0..3) of the smallest turning angle, and whether the
+  !> cell has a zero-length edge (the other outputs are then undefined).
+      function quadConvex( x0, y0, x1, y1, x2, y2, x3, y3, tol,
+     &                     turnMin, turnMax, kMin, degenerate )
+      implicit none
+      logical :: quadConvex
+      real (kind=R8), intent(in) :: x0, y0, x1, y1, x2, y2, x3, y3, tol
+      real (kind=R8), intent(out), optional :: turnMin, turnMax
+      integer, intent(out), optional :: kMin
+      logical, intent(out), optional :: degenerate
+      integer, parameter :: cyc(0:3) = (/ 0, 1, 3, 2 /)
+      integer :: k, ka, kb, kc, kmn
+      real (kind=R8) :: xc(0:3), yc(0:3), ex0, ey0, ex1, ey1, turn,
+     &  tmin, tmax
+      logical :: degen
+
+      xc = (/ x0, x1, x2, x3 /)
+      yc = (/ y0, y1, y2, y3 /)
+      tmin = huge(1.0_R8)
+      tmax = -huge(1.0_R8)
+      kmn = -1
+      degen = .false.
+      do k = 0, 3
+        ka = cyc(mod(k+3,4))
+        kb = cyc(k)
+        kc = cyc(mod(k+1,4))
+        ex0 = xc(kb) - xc(ka)
+        ey0 = yc(kb) - yc(ka)
+        ex1 = xc(kc) - xc(kb)
+        ey1 = yc(kc) - yc(kb)
+        if (norm(ex0,ey0).eq.0.0_R8 .or. norm(ex1,ey1).eq.0.0_R8) then
+          degen = .true.
+          exit
+        endif
+        turn = atan2(cosang(ex0,ey0,ex1,ey1), sinang(ex0,ey0,ex1,ey1))
+        if (turn.lt.tmin) then
+          tmin = turn
+          kmn = kb
+        endif
+        tmax = max(tmax, turn)
+      enddo
+      quadConvex = .not.degen
+      if (quadConvex) quadConvex = tmin.ge.-tol .and. tmax.lt.pi-tol
+      if (present(turnMin)) turnMin = tmin
+      if (present(turnMax)) turnMax = tmax
+      if (present(kMin)) kMin = kmn
+      if (present(degenerate)) degenerate = degen
+      return
+      end function quadConvex
 
       end module b2mod_indirect
