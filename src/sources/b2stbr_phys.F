@@ -100,7 +100,8 @@ c     output for analysis/debugging
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
-     &                  fnni_out(nCv)
+     &                  fnni_out(nCv), fnni_ns_out(nCv,0:ns-1),
+     &                  fnnr_ns_out(nCv,0:ns-1)
 *   ..procedures
       intrinsic abs
       external xertst
@@ -270,6 +271,8 @@ c     initialize debugging/analysis arrays
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
         fna_mol      = 0.0_R8  !nh 30.03.21
+        fnni_ns_out  = 0.0_R8
+        fnnr_ns_out  = 0.0_R8
 
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn)
@@ -530,6 +533,11 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
         call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
+        do is=0,ns-1
+          write (chns,'(i3.3)') is
+          call my_out_us(70,nCv,0,fnni_ns_out(:,is),'AFN_fnni'//chns)
+          call my_out_us(70,nCv,0,fnnr_ns_out(:,is),'AFN_fnnr'//chns)
+        enddo
       endif
 
 #ifdef WG_TODO
@@ -867,6 +875,11 @@ cdpc
      &              fnni,fmomni,nni,nnwwni,feneni)
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
      &                      (b2recyc(is,istra)-1.0_R8)*fnni
+             if (switch%AFN_out.ne.0) then 
+               fnni_ns_out(iCv,is) = fnni 
+               fnnr_ns_out(iCv,is) = (b2recyc(is,istra)-1.0_R8)*fnni
+             endif
+             
            else !! default model
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) +
      &        b2recyc(is,istra)*t0
