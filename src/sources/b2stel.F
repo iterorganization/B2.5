@@ -485,10 +485,10 @@ c accounted for)
      &         rtw%rqr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
             tpart(3) = t0-tpart(1)-tpart(2)-tpart(4)
             b2stel_she_part0to3(iCv,0,is,:) =
-     &           b2stel_she_part0to3(iCv,0,is,:)+rf0*tpart
+     &           b2stel_she_part0to3(iCv,0,is,:)+rf0*tpart(:)
             b2stel_she_part0to3(iCv,3,is,:) =
      &           b2stel_she_part0to3(iCv,3,is,:)-
-     &           (1.0_R8+rf0)*tpart/(dv%ne(iCv)*pl%te(iCv))
+     &           (1.0_R8+rf0)*tpart(:)/(dv%ne(iCv)*pl%te(iCv))
           endif
 #endif
           srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
