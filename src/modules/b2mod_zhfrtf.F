@@ -358,8 +358,8 @@
       subroutine b2mod_zhfrtf_tf(iCv,is,zhcscorr,nais,smtf,smtf_nofl,
      .  corr_tfia)
       implicit none
-      integer :: iCv, is, zhcscorr
-      real (kind=R8) :: smtf, smtf_nofl, corr_tfia, nais
+      integer :: iCv, is, zhcscorr, iss
+      real (kind=R8) :: smtf, smtf_nofl, corr_tfia, nais, dum
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -376,14 +376,20 @@
 *-----------------------------------------------------------------------
 
 *   ..the thermal force before charge state correction
-      smtf=-Ia(iCv,is)*sum(nal(iCv,0:nspecies-1)*
-     & c_R_TA(iCv,s2nucl(is)-1,0:nspecies-1)*
-     & gtalc(iCv,0:nspecies-1))
+      dum = 0.0_R8
+      do iss = 0, nspecies-1
+        dum = dum + nal(iCv,iss)*c_R_TA(iCv,s2nucl(is)-1,iss)*
+     &              gtalc(iCv,iss)
+      end do
+      smtf=-Ia(iCv,is)*dum
 
 *   ..the thermal force before charge state correction without flux limiting
-      smtf_nofl=-Ia(iCv,is)*sum(nal(iCv,0:nspecies-1)*
-     & c_R_TA_nofl(iCv,s2nucl(is)-1,0:nspecies-1)*
-     & gtalc(iCv,0:nspecies-1))
+      dum = 0.0_R8
+      do iss = 0, nspecies-1
+        dum = dum + nal(iCv,iss)*c_R_TA_nofl(iCv,s2nucl(is)-1,iss)*
+     &              gtalc(iCv,iss)
+      end do
+      smtf_nofl=-Ia(iCv,is)*dum
 
 *   ..apply the charge state correction
       if (zhcscorr.eq.1) then

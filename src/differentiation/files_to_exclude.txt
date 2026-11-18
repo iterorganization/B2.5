@@ -130,3 +130,6 @@
   b2mwmv
   b2mod_create_afn_bc_tables
   invert_matrix
+  b2mod_umfpack
+  b2mod_pardiso
+  b2mod_ngs_coupling

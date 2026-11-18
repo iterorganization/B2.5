@@ -298,11 +298,6 @@ function open_file:
   shape: (param 1, param 2, param 3, result)
   type: (integer(), character(), character(), boolean())
 
-function silent_open:
-  external:
-  shape: (param 1, param 2, param 3, param 4, result)
-  type: (integer(), character(), character(), character(), boolean())
-
 function is_comment:
   external:
   shape: (param 1, result)
@@ -322,11 +317,6 @@ function streql:
   external:
   shape: (param 1, param 2, result)
   type: (character(), character(), boolean())
-
-function open_file:
-  external:
-  shape: (param 1, param 2, param 3, result)
-  type: (integer(), character(), character(), boolean())
 
 function silent_open:
   external:
@@ -1432,3 +1422,48 @@ function minval:
   type: (arrayType(metavar real, dimColons()),
          none(),
          metavar real)
+
+subroutine check_file_length:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id)
+
+subroutine check_file_size:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine write_apond_exchange_meta:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine set_apond_exchange_meta:
+ external:
+ shape:()
+ deps: ()
+
+subroutine flush_and_sync:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine remove_file:
+ external:
+ shape:(param 1)
+ deps: (id)
+
+subroutine atomic_publish:
+ external:
+ shape:(param 1, param 2)
+ deps: (id, id) 
+ 
+subroutine sync_to_ngs:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11)
+ deps: (id, id, id, id, id, id, id, id, id, id, id)
+ 
+
+
+
+ 
