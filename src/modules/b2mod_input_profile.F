@@ -274,12 +274,8 @@
           enddo
           call xertst(nxdat.le.DEF_NXD,
      . 'Increase DEF_NXD in b2mod_dimensions to match size of profile')
-          allocate(xf(0:nxdat+1))
-          xf(0)=0.0_R8
-          xf(1:nxdat)=1.0_R8
-          xf(nxdat+1)=0.0_R8
           if (nxdat.gt.0) then
-            allocate(fx(1:nxdat),x(1:nxdat),xr(0:nxdat+1),dx(1:nxdat))
+            allocate(fx(1:nxdat),x(1:nxdat),dx(1:nxdat))
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
