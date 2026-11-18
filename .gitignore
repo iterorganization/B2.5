@@ -36,6 +36,8 @@ dbe.fnn
 dc.fnn
 dw.fnn
 .fnn_datasets_retrieved
+.fnn_datasets.lock
+*.fnn.tmp.*
 
 # genmod
 *__genmod*
