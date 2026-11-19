@@ -26,7 +26,7 @@
       use b2mod_switches
       use b2mod_ipmain
       use b2mod_frtf_nccorr
-     & , only : alloc_b2mod_frtf_nccorr, corr_fria, corr_tfia
+     & , only : corr_fria, corr_tfia
 #ifndef NAGFOR
       use b2mod_frtf_nccorr
      & , only : g_hs_style, alpha_hs_style
@@ -188,8 +188,6 @@
       call subini ('b2trzh')
 *   ..set internal parameters on first call
       if (ncall_b2trzh.eq.0) then
-*   ..allocate
-        call alloc_b2mod_frtf_nccorr(nCv, ns)
         if (switch%Zhdanov_nc.eq.0) then
           corr_fria = 1.0_R8
           corr_tfia = 1.0_R8

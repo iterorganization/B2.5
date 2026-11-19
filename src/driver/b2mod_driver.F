@@ -44,7 +44,7 @@
      & , only : alloc_b2mod_zhfrtf, alloc_b2mod_zhfrtf_df,
      &          dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_frtf_nccorr
-     & , only : dealloc_b2mod_frtf_nccorr
+     & , only : alloc_b2mod_frtf_nccorr, dealloc_b2mod_frtf_nccorr
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -996,6 +996,7 @@
         call alloc_b2mod_mrel(nspecies, zmaxmax, ns)
         call alloc_b2mod_zhco(nspecies, nCv)
         call alloc_b2mod_zhfrtf(nCv, ns)
+        call alloc_b2mod_frtf_nccorr(nCv, ns)
         if (switch%zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nCv, ns)
         endif
