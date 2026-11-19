@@ -1478,8 +1478,13 @@ endif
 # stamp file stands for the set and the script runs at most once per make.
 # The script leaves unchanged files with their old timestamps, which is why the
 # files themselves cannot serve as targets.  A missing file forces a new fetch.
+# Separate make processes (e.g. 'make -j b25_nox_openmp b25eirene_nox_openmp')
+# share ${AMDIR}, so the fetch and the stamp update run under an exclusive
+# lock; a process that waited for the lock skips the fetch if the stamp has
+# meanwhile become up to date.  Without flock the fetch runs unlocked.
 FNN_FILES = ${AMDIR}/dbe.fnn ${AMDIR}/dc.fnn ${AMDIR}/dw.fnn
 FNN_STAMP = ${AMDIR}/.fnn_datasets_retrieved
+FNN_LOCK  = ${AMDIR}/.fnn_datasets.lock
 ifneq ($(filter-out $(wildcard ${FNN_FILES}),${FNN_FILES}),)
 $(shell rm -f ${FNN_STAMP})
 endif
@@ -1487,8 +1492,13 @@ endif
 AM_FILES: ${FNN_STAMP}
 
 ${FNN_STAMP}: ${AMDIR}/retrieve_fnn_datasets
-	cd ${AMDIR} ; ./retrieve_fnn_datasets
-	touch $@
+	cd ${AMDIR} ; \
+	fetch='[ ${FNN_STAMP} -nt retrieve_fnn_datasets ] || { ./retrieve_fnn_datasets && touch ${FNN_STAMP} ; }' ; \
+	if command -v flock > /dev/null 2>&1 ; then \
+	  flock ${FNN_LOCK} sh -c "$$fetch" ; \
+	else \
+	  sh -c "$$fetch" ; \
+	fi
 
 $(shell [ -s ${OBJDIR}/dependencies ] || rm -f ${OBJDIR}/dependencies)
 include ${OBJDIR}/dependencies

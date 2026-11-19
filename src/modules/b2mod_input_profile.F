@@ -463,6 +463,7 @@ cdjm Jan2017 Keep linearised sources for balance
         ext_smo0to3 = smo0
         ext_she0to3 = she0
         ext_shi0to3 = shi0
+        ext_sch0to3 = sch0
       endif
 
       if (new_files) then

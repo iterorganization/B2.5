@@ -23,7 +23,9 @@
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
 #endif
-     &          balance_netcdf
+     &          eirene_mc_papl_sna0to1, eirene_mc_pmpl_sna0to1,
+     &          eirene_mc_pipl_sna0to1, eirene_mc_pppl_sna0to1,
+     &          eirene_mc_core_sna0to1, balance_netcdf
 #endif
       use b2mod_subsys
 #ifdef B25_EIRENE
@@ -665,6 +667,21 @@ c   --> better solution wanted here..
      &                (.not.mpg%cvOnClosedSurface(iCv))) then
                 sna0_eir(iCv,0,is) = sna0_eir(iCv,0,is)*t(k)
                 sna0_eir(iCv,1,is) = sna0_eir(iCv,1,is)*t(k)
+#ifndef FIXED_POINT
+*   ..the parts of the EIRENE source in balance.nc: rescaled as well
+                if (allocated(eirene_mc_papl_sna0to1)) then
+                  eirene_mc_papl_sna0to1(iCv,:,is,:) =
+     &             eirene_mc_papl_sna0to1(iCv,:,is,:)*t(k)
+                  eirene_mc_pmpl_sna0to1(iCv,:,is,:) =
+     &             eirene_mc_pmpl_sna0to1(iCv,:,is,:)*t(k)
+                  eirene_mc_pipl_sna0to1(iCv,:,is,:) =
+     &             eirene_mc_pipl_sna0to1(iCv,:,is,:)*t(k)
+                  eirene_mc_pppl_sna0to1(iCv,:,is,:) =
+     &             eirene_mc_pppl_sna0to1(iCv,:,is,:)*t(k)
+                  eirene_mc_core_sna0to1(iCv,:,is) =
+     &             eirene_mc_core_sna0to1(iCv,:,is)*t(k)
+                endif
+#endif
               end if
               sna_eir(k) = sna_eir(k) +
      &           sna0_eir(iCv,0,is) +
