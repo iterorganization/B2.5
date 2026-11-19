@@ -600,6 +600,17 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2us_nasmod_mode</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls conversion of the endpoint records in EIRENE input block 15 by b2us; specified in b2mn.dat. Other input blocks are still converted.
+					With the default setting 0 and positive NASMOD, the records follow the grid-corner ordering and b2us supplies the corresponding EIRENE node numbers. NASMOD=0 has no endpoint records.
+					With setting 0 and negative NASMOD, each record identifies an additional surface, endpoint and boundary-face label. Faces with that label must form one connected open chain. The resulting EIRENE input contains a positive count and node numbers.
+					Set to 1 when the records already contain EIRENE node numbers and require no conversion. NASMOD must then be nonnegative; a negative value causes an error.
+				</description>
+			</switch>
+			<switch>
 				<name>conv_triangles_old_co</name>
 				<default>0</default>
 				<type>integer</type>

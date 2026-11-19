@@ -27,15 +27,20 @@
      .                        ilbls_eir(:), ilble_eir(:)
       logical :: found, lhelp(60), lwgf
       integer :: artificial_slab=0, spatial_hybrid = 0
+      integer :: b2us_nasmod_mode = 0
       integer :: find_loc
+      integer :: nBFaces, nBVerts
+      integer, allocatable :: bVerts(:)
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
       intrinsic pack
 
+      ! Read switches
       call ipgeti ('artificial_slab', artificial_slab)
       call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)
+      call ipgeti ('b2us_nasmod_mode', b2us_nasmod_mode)
 
       nd = mpg%nRc + mpg%nBc
       if (artificial_slab > 0) nd = nd + 4*nncut
@@ -304,35 +309,86 @@
 
 !  adapt block 15
       read (ineir,'(12i6)') nadmod, nasmod
-      write (iouteir,'(12i6)') nadmod, nasmod
+      if (b2us_nasmod_mode.eq.1.and.nasmod.lt.0)
+     .  call xerrab('conv_surface_models: negative NASMOD ' //
+     .              'requires b2us_nasmod_mode=0')
+      write (iouteir,'(12i6)') nadmod, abs(nasmod)
 
       do i = 1, nadmod
         read (ineir,'(a500)') line
         write (iouteir,'(a)') trim(line)
       end do
 
-      if (nasmod /= 0) then
-        if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
-          !! limiter or linear case: only NW and NE corners
-          j = find_loc(node_vert,nnode,mpg%icornVx(2))
-          read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-          j = find_loc(node_vert,nnode,mpg%icornVx(4))
-          read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-        elseif (count(mpg%icornVx > 0) == nasmod) then
-          !! SN of DN case: 4 or 8 corners
-          do i = 1, nasmod
-            j = find_loc(node_vert,nnode,mpg%icornVx(i))
+      select case (b2us_nasmod_mode)
+
+      case (0)
+        ! Convert endpoint records to EIRENE node numbers.
+        if (nasmod /= 0) then
+          if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
+            !! limiter or linear case: only NW and NE corners
+            j = find_loc(node_vert,nnode,mpg%icornVx(2))
             read (ineir,'(2i6)') ihelp(1), ihelp(2)
             write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
-          end do
+            j = find_loc(node_vert,nnode,mpg%icornVx(4))
+            read (ineir,'(2i6)') ihelp(1), ihelp(2)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+          elseif (count(mpg%icornVx > 0) == nasmod) then
+            !! SN or DN case: 4 or 8 corners
+            do i = 1, nasmod
+              j = find_loc(node_vert,nnode,mpg%icornVx(i))
+              read (ineir,'(2i6)') ihelp(1), ihelp(2)
+              write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+            end do
+          elseif (nasmod<0) then
+            ! Each record gives a surface, endpoint and face label.
+            do i = 1, abs(nasmod)
+              read (ineir,'(3i6)') ihelp(1), ihelp(2), ihelp(3)
+
+              ! The labelled faces must form one connected open chain.
+              nBFaces = count(mpg%fcLbl==ihelp(3))
+              nBVerts = nBFaces + 1
+
+              if (nBFaces.gt.0) then
+
+                allocate (bVerts(nBVerts))
+                ! Order the chain to select its first or last vertex.
+                call sort_vertices(nBVerts,bVerts,mpg%nFc,mpg%fcLbl,
+     .            ihelp(3),mpg)
+                ! Write the EIRENE node number for the selected vertex.
+                if (ihelp(2).eq.1) then
+                  j = find_loc(node_vert,nnode,bVerts(1))
+                  write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+                elseif (ihelp(2).eq.2) then
+                  j = find_loc(node_vert,nnode,bVerts(nBverts))
+                  write (iouteir,'(3i6)') ihelp(1), ihelp(2), j
+                else
+                  call xerrab('conv_surface_models -- wrong ihelp(2)')
+                endif
+
+                deallocate (bVerts)
+
+              else
+                write (*,* ) 'ihelp(3) = ',ihelp(3)
+                call xerrab('conv_surface_models: fcLbl not found.')
+              endif
+            end do
+          else
+            call xerrab('conv_surface_models -- nasmod')
+          endif
         else
-         call xerrab('conv_surface_models -- nasmod')
+          write (*,*) "Warning: found NASMOD = 0 in input block 15"
         endif
-      else
-         write (*,*) "Warning: found NASMOD = 0 in input block 15"
-      endif
+      case (1)
+        ! Endpoint records already contain EIRENE node numbers.
+        do i = 1, nasmod
+          read (ineir,'(a500)') line
+          write (iouteir,'(a)') trim(line)
+        end do
+      case default
+        print *, 'value of b2us_nasmod_mode = ', b2us_nasmod_mode
+        call xerrab('conv_surface_models: b2us_nasmod_mode value ' //
+     .    'not recognized')
+      end select
 
 !  copy input file until end of file
       do
