@@ -463,7 +463,7 @@
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv), psi_active,
      .  dpsi_max_down, dpsi_max_up
-      logical match_found
+      logical match_found, ref_set
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
@@ -511,10 +511,20 @@
       enddo
 
 *   ..precompute psi for flux tube
+*   ..cells lying along an open boundary (e.g. wall-truncated cells of
+*   ..a conformal grid) need not lie between two flux surfaces: they
+*   ..are neither used as reference nor checked
       do iFt = 1, mpg%nFt
         gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
+        ref_set = .false.
         do i = 1, mpg%ftCvP(iFt,2)
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+          if (mpg%cvAlongBoundary(iCv).and.
+     &        .not.mpg%cvOnClosedSurface(iCv)) cycle
+          if (.not.ref_set) then
+            gm%ftFpsi(iFt) = gm%cvFpsi(iCv)
+            ref_set = .true.
+          endif
           if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt)) then
             write (*,'(a,i6,a,i4)')
      &       'Warning: cvFpsi value in cell ', iCv,

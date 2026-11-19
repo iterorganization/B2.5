@@ -19,6 +19,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
+      use b2mod_balance
+     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
+     &          b2scdt_sna0to1, balance_netcdf
+#endif
       use b2mod_ad
      & , only : b2sral_elm_count, ncall_b2sral, sources_inputfile
 #ifndef NAGFOR
@@ -252,6 +257,11 @@
 * ..compute source coefficients
 *   ..compute electron rate coefficients
       call b2sqel (nCv, ns, ismain, switch, ev, st%pl%te, st%rt, st%rtw)
+#ifndef FIXED_POINT
+*   ..balance.nc: the sources are built anew here, without the time
+*     derivative of b2npco (b2mndt_style 2) that is added later
+      if (balance_netcdf.ne.0) b2scdt_sna0to1 = 0.0_R8
+#endif
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.                                              !xpb
       if(switch%b2sral_style.eq.0 .or. switch%b2sral_style.eq.2) then   !srv 28.07.08 03.11.17
@@ -414,6 +424,14 @@
         endif
       endif  ! IYS 06.11.2017
 
+#ifndef FIXED_POINT
+*   ..balance.nc: sum of the charge exchange with all partners
+      if (balance_netcdf.ne.0) then
+        b2stcx_sna0to1 = 0.0_R8
+        b2stcx_smq0to3 = 0.0_R8
+        b2stcx_shi0to3 = 0.0_R8
+      endif
+#endif
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
         call b2sqcx (nCv, ns, ev, switch, am(iscx(k)), st%pl%ti,
