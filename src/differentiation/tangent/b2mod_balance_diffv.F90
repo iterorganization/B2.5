@@ -4528,7 +4528,7 @@ CONTAINS
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_pppl_sna_bal', &
 &                     eirene_mc_pppl_sna_bal_av, vdims, 3)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_core_sna_bal', &
-&                     eirene_mc_core_sna_bal_av, vdims, 3)
+&                     eirene_mc_core_sna_bal_av, vdims, 2)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mapl_smo_bal', &
 &                     eirene_mc_mapl_smo_bal_av, vdims, 3)
       CALL WRITE_CDF_DOUBLE(ncid, 'eirene_mc_mmpl_smo_bal', &
@@ -6511,6 +6511,7 @@ CONTAINS
         status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)
         CALL CHECK_CDF_STATUS(status)
         eirene_mc_piel_sne_bal = data2
+        DEALLOCATE(data2)
       CASE ('eirene_mc_eael_she_bal') 
         ALLOCATE(data2(vdims(1), vdims(2)))
         status = NF_GET_VARA_DOUBLE(ncid, ivar, start, vdims, data2)

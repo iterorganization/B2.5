@@ -18,7 +18,7 @@
 SUBROUTINE PREHD2D_NODIFF(ns, isize, list_x, list_y, dt, isign, ixf, iyf&
 & , idir, area, boris)
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_RATES
   USE B2MOD_PLASMA
   USE B2MOD_CONSTANTS
@@ -135,7 +135,7 @@ END SUBROUTINE PREHD2D_NODIFF
 !  Tp = Target surface temperature (K).
 SUBROUTINE HEATDIFF2D_NODIFF(nw, ns, bndx, q, dt, tp)
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -155,13 +155,13 @@ SUBROUTINE HEATDIFF2D_NODIFF(nw, ns, bndx, q, dt, tp)
   REAL(kind=r8) :: aa5(nw, ndepth_nml, -2:2), nrmc(0:itmax-1)
   REAL(kind=r8) :: t0, ta, tb, tc, x(ndepth_nml), y(nw, ndepth_nml), rho
   EXTERNAL CP_NODIFF, KAPPA_NODIFF, DKAPPABYDT_NODIFF, KAPPA_PERP_NODIFF&
-&     , DKAPPA_PERPBYDT_NODIFF, QEVAP_NODIFF, QRAD_NODIFF, MASS_DENSITY&
-&     , COND_COEF
+&     , DKAPPA_PERPBYDT_NODIFF, QEVAP_NODIFF, QRAD_NODIFF, &
+&     MASS_DENSITY_NODIFF, COND_COEF
 !
   REAL(kind=r8) :: CP_NODIFF, KAPPA_NODIFF, DKAPPABYDT_NODIFF, &
 & KAPPA_PERP_NODIFF, DKAPPA_PERPBYDT_NODIFF, QEVAP_NODIFF, QRAD_NODIFF, &
-& MASS_DENSITY, COND_COEF
-  EXTERNAL SLV5PT, FIC
+& MASS_DENSITY_NODIFF, COND_COEF
+  EXTERNAL SLV5PT, FIC_NODIFF
   INTRINSIC MIN
   INTEGER :: min1
   INTEGER :: min2
@@ -180,7 +180,7 @@ SUBROUTINE HEATDIFF2D_NODIFF(nw, ns, bndx, q, dt, tp)
     DO iwall=1,nw
       qtot = q(iwall)
       tcbc = backplate_temp(bndx(iwall))
-      CALL FIC(bndx(iwall), x, u(iwall, 1:ndepth_nml))
+      CALL FIC_NODIFF(bndx(iwall), x, u(iwall, 1:ndepth_nml))
       DO i=1,ndepth_nml
         tp(iwall, i) = u(iwall, i)
       END DO
@@ -339,7 +339,7 @@ SUBROUTINE HEATDIFF2D_NODIFF(nw, ns, bndx, q, dt, tp)
     DO iwall=1,nw
       DO i=1,ndepth_nml-1
         IF (target_vol(bndx(iwall), i) .GT. 0.0_R8) THEN
-          result1 = MASS_DENSITY(bndx(iwall), i)
+          result1 = MASS_DENSITY_NODIFF(bndx(iwall), i)
           rho = result1*(x(i+1)-x(i))
 !! FIXME : Need to test if proper quantity here is
 ! or may be :

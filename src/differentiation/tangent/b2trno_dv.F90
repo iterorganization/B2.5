@@ -2,53 +2,61 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfdna cfdpa cfvla cfvsa
-!                cfhci cfhce cfsig cfalf *(dv.lnlam) *(co.csig)
-!                *(co.calf) *(co.csig_an) *(co.chce) *(co.chce_exb)
-!                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
-!                *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!   variations   of useful results: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata cfdna cfdpa
+!                cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.lnlam)
+!                *(co.csig) *(co.calf) *(co.csig_an) *(co.chce)
+!                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
+!                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
 !                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
 !                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
 !                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
 !                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0)
-!   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf *(dv.ne)
-!                *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale *(co.csig) *(co.calf)
-!                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
-!                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
-!                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
-!                *(co.cvsa) *(co.cvlahz) *(co.cdpahz) *(co.cvsahz)
-!                *(co.chcb) *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0)
-!                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
-!                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
-!                *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na) *(pl.ua)
-!                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!   with respect to varying inputs: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata parm_hce parm_sig
+!                parm_alf parm_dna parm_dpa parm_vla parm_vsa parm_hci
+!                cfdna cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf
+!                *(dv.ne) *(dv.ni) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
+!                *(rt.rlsa) *(rt.rza) switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2tfhi_fconkt switch.b2tfhi_fconzt
+!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                *(co.csig) *(co.calf) *(co.csig_an) *(co.chce)
+!                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
+!                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
+!                *(co.cvsahz) *(co.chcb) *(co.sig0) *(co.hce0)
+!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
+!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0) *(pl.na)
+!                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
-!                dv.vaecrb:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
-!                geo.cvy:in geo.cvhz:in geo.cvhy:in geo.cvqgam:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.vxvol:in st_ext.am:in
-!                st_ext.na:in st_ext.ni:in st_ext.ta:in rt.rlcx:in
-!                rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
-!                co.csig_an:in co.calf_an:in co.chve:in co.chce:in
-!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
-!                co.chcn:in co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in
-!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
-!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.chcb:in
-!                co.cvsa_an:in co.cvmahz:in co.fllim0fhi:in co.sig0:in
-!                co.hce0:in co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in
-!                co.dzt0:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
-!                co.dpa0:in co.dna0:in co.vsa0:in co.hcib:in co.vla0:in
-!                co.vma0:in pl.na:in pl.ua:in pl.te:in pl.ti:in
-!                pl.tn:in pl.kt:in pl.zt:in
+!                dv.vaecrb:in mpg.intcellr:in geo.cvbb:in geo.cvhz:in
+!                geo.cvhy:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.vxvol:in st_ext.am:in st_ext.na:in st_ext.ni:in
+!                st_ext.ta:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in
+!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
+!                co.chve:in co.chce:in co.chce_exb:in co.chvi:in
+!                co.chci:in co.chci_exb:in co.chcn:in co.cdkt:in
+!                co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
+!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
+!                co.cdpahz:in co.cvsahz:in co.chcb:in co.cvsa_an:in
+!                co.cvmahz:in co.fllim0fhi:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                pl.na:in pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
+!                pl.zt:in
 !
 !
 !

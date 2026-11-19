@@ -946,22 +946,18 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-    INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: smtfd, corr_tfiad, naisd
-    INTRINSIC SUM
-    REAL(kind=r8), DIMENSION(nspecies) :: arg1
-    REAL(kind=r8), DIMENSION(nbdirsmax, nspecies) :: arg1d
+    INTEGER :: icv, is, zhcscorr, iss
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais, dum
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: smtfd, corr_tfiad, naisd, &
+&   dumd
     INTEGER :: nd
-    REAL(kind=r8), DIMENSION(nspecies) :: temp
-    REAL(kind=r8), DIMENSION(nspecies) :: temp0
+    REAL(kind=r8) :: temp
+    REAL(kind=r8) :: temp0
     REAL(kind=r8) :: temp1
     REAL(kind=r8) :: temp2
     REAL(kind=r8) :: temp3
     REAL(kind=r8) :: temp4
     REAL(kind=r8) :: temp5
-    REAL(kind=r8) :: temp6
-    REAL(kind=r8) :: temp7
     INTEGER :: nbdirs
 !-----------------------------------------------------------------------
 !.documentation
@@ -979,41 +975,50 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..the thermal force before charge state correction
-    temp = nal(icv, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)
-    temp0 = c_r_ta(icv, s2nucl(is)-1, 0:nspecies-1)
-    arg1 = temp0*temp
-    temp1 = SUM(arg1)
-    DO nd=1,nbdirs
-      arg1d(nd, :) = temp*c_r_tad(nd, icv, s2nucl(is)-1, 0:nspecies-1) +&
-&       temp0*(gtalc(icv, 0:nspecies-1)*nald(nd, icv, 0:nspecies-1)+nal(&
-&       icv, 0:nspecies-1)*gtalcd(nd, icv, 0:nspecies-1))
-      smtfd(nd) = -(temp1*iad(nd, icv, is)+ia(icv, is)*SUM(arg1d(nd, :))&
-&       )
+    dum = 0.0_R8
+    DO nd=1,nbdirsmax
+      dumd(nd) = 0.D0
     END DO
-    smtf = -(ia(icv, is)*temp1)
+    DO iss=0,nspecies-1
+      temp = nal(icv, iss)*gtalc(icv, iss)
+      temp0 = c_r_ta(icv, s2nucl(is)-1, iss)
+      DO nd=1,nbdirs
+        dumd(nd) = dumd(nd) + temp*c_r_tad(nd, icv, s2nucl(is)-1, iss) +&
+&         temp0*(gtalc(icv, iss)*nald(nd, icv, iss)+nal(icv, iss)*gtalcd&
+&         (nd, icv, iss))
+      END DO
+      dum = dum + temp0*temp
+    END DO
+    DO nd=1,nbdirs
+      smtfd(nd) = -(dum*iad(nd, icv, is)+ia(icv, is)*dumd(nd))
+    END DO
+    smtf = -(ia(icv, is)*dum)
 !
 !   ..the thermal force before charge state correction without flux limiting
-    arg1 = nal(icv, 0:nspecies-1)*c_r_ta_nofl(icv, s2nucl(is)-1, 0:&
-&     nspecies-1)*gtalc(icv, 0:nspecies-1)
-    smtf_nofl = -(ia(icv, is)*SUM(arg1))
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta_nofl(icv, s2nucl(is)-1, iss)*&
+&       gtalc(icv, iss)
+    END DO
+    smtf_nofl = -(ia(icv, is)*dum)
 !
 !   ..apply the charge state correction
     IF (zhcscorr .EQ. 1) THEN
-      temp1 = gtalc(icv, s2nucl(is)-1)
-      temp2 = nal(icv, s2nucl(is)-1)
-      temp3 = nais*gt_ac(icv, is)/temp2
-      temp4 = temp3 - ia(icv, is)*temp1
-      temp5 = nal(icv, s2nucl(is)-1)
-      temp6 = c_r_tb(icv, s2nucl(is)-1)
-      temp7 = temp6*temp5
+      temp0 = gtalc(icv, s2nucl(is)-1)
+      temp = nal(icv, s2nucl(is)-1)
+      temp1 = nais*gt_ac(icv, is)/temp
+      temp2 = temp1 - ia(icv, is)*temp0
+      temp3 = nal(icv, s2nucl(is)-1)
+      temp4 = c_r_tb(icv, s2nucl(is)-1)
+      temp5 = temp4*temp3
       DO nd=1,nbdirs
-        smtfd(nd) = smtfd(nd) - temp4*(temp5*c_r_tbd(nd, icv, s2nucl(is)&
-&         -1)+temp6*nald(nd, icv, s2nucl(is)-1)) - temp7*((gt_ac(icv, is&
-&         )*naisd(nd)+nais*gt_acd(nd, icv, is)-temp3*nald(nd, icv, &
-&         s2nucl(is)-1))/temp2-temp1*iad(nd, icv, is)-ia(icv, is)*gtalcd&
-&         (nd, icv, s2nucl(is)-1))
+        smtfd(nd) = smtfd(nd) - temp2*(temp3*c_r_tbd(nd, icv, s2nucl(is)&
+&         -1)+temp4*nald(nd, icv, s2nucl(is)-1)) - temp5*((gt_ac(icv, is&
+&         )*naisd(nd)+nais*gt_acd(nd, icv, is)-temp1*nald(nd, icv, &
+&         s2nucl(is)-1))/temp-temp0*iad(nd, icv, is)-ia(icv, is)*gtalcd(&
+&         nd, icv, s2nucl(is)-1))
       END DO
-      smtf = smtf - temp7*temp4
+      smtf = smtf - temp5*temp2
 !
       smtf_nofl = smtf_nofl - c_r_tb_nofl(icv, s2nucl(is)-1)*nal(icv, &
 &       s2nucl(is)-1)*(nais/nal(icv, s2nucl(is)-1)*gt_ac(icv, is)-ia(icv&
@@ -1034,10 +1039,8 @@ CONTAINS
 &   corr_tfia)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
-    INTRINSIC SUM
-    REAL(kind=r8), DIMENSION(nspecies) :: arg1
+    INTEGER :: icv, is, zhcscorr, iss
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais, dum
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -1054,14 +1057,20 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..the thermal force before charge state correction
-    arg1 = nal(icv, 0:nspecies-1)*c_r_ta(icv, s2nucl(is)-1, 0:nspecies-1&
-&     )*gtalc(icv, 0:nspecies-1)
-    smtf = -(ia(icv, is)*SUM(arg1))
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta(icv, s2nucl(is)-1, iss)*gtalc(icv&
+&       , iss)
+    END DO
+    smtf = -(ia(icv, is)*dum)
 !
 !   ..the thermal force before charge state correction without flux limiting
-    arg1 = nal(icv, 0:nspecies-1)*c_r_ta_nofl(icv, s2nucl(is)-1, 0:&
-&     nspecies-1)*gtalc(icv, 0:nspecies-1)
-    smtf_nofl = -(ia(icv, is)*SUM(arg1))
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta_nofl(icv, s2nucl(is)-1, iss)*&
+&       gtalc(icv, iss)
+    END DO
+    smtf_nofl = -(ia(icv, is)*dum)
 !
 !   ..apply the charge state correction
     IF (zhcscorr .EQ. 1) THEN

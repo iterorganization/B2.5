@@ -2,7 +2,7 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 MODULE B2MOD_GEOMETRY_DIFFV
-  USE LOGGING, ONLY : logmsg, logdebug
+  USE LOGGING, ONLY : logmsg, logdebug, logwarning
   USE B2MOD_CELLHELPER, ONLY : left, right, top, bottom, nodirection
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -498,172 +498,244 @@ CONTAINS
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(GEOMETRY), INTENT(IN) :: geo
     INTEGER, INTENT(IN) :: object
-    INTEGER :: i, icv
+    INTEGER :: i, j, icv, nactive
     REAL(kind=r8) :: xpsi_active, xpsi_snowflake
-    LOGICAL :: active
+    LOGICAL :: active, is_above_plasma
+    LOGICAL, ALLOCATABLE :: is_active(:)
     EXTERNAL XERRAB, XERTST
     INTRINSIC MAXVAL
+    INTRINSIC COUNT
     REAL(kind=r8) :: result1
     CALL XERTST(object .EQ. 1 .OR. object .EQ. 2, &
 &         'incorrect object setting in geometryId')
     IF (mpg%nnreg(0) .EQ. 1 .AND. mpg%periodic_bc .LE. 0) THEN
       geometryid = geometry_linear
-      IF (firstgmid) THEN
+      IF (firstgmid(1)) THEN
         CALL LOGMSG(logdebug, &
 &          'b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR'&
 &            )
-        firstgmid = .false.
+        firstgmid(1) = .false.
       END IF
       RETURN
     ELSE IF (mpg%nnreg(0) .EQ. 1 .AND. mpg%periodic_bc .EQ. 1) THEN
       geometryid = geometry_cylinder
-      IF (firstgmid) THEN
+      IF (firstgmid(1)) THEN
         CALL LOGMSG(logdebug, &
 &        'b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER'&
 &            )
-        firstgmid = .false.
+        firstgmid(1) = .false.
       END IF
       RETURN
-    ELSE IF (mpg%nnreg(0) .EQ. 2) THEN
+    ELSE IF ((mpg%nnreg(0) .EQ. 2 .AND. mpg%isclassicalgrid .EQ. 1) .OR.&
+&       (mpg%nnreg(0) .EQ. 1 .AND. mpg%isclassicalgrid .EQ. 0)) THEN
       geometryid = geometry_limiter
-      IF (firstgmid) THEN
+      IF (firstgmid(1)) THEN
         CALL LOGMSG(logdebug, &
 &         'b2mod_connectivity.geometryId(): identified GEOMETRY_LIMITER'&
 &            )
-        firstgmid = .false.
+        firstgmid(1) = .false.
       END IF
       RETURN
-    ELSE IF (mpg%nnreg(0) .EQ. 4) THEN
+    ELSE IF ((mpg%nnreg(0) .EQ. 4 .AND. mpg%isclassicalgrid .EQ. 1) .OR.&
+&       (mpg%nnreg(0) .EQ. 3 .AND. mpg%isclassicalgrid .EQ. 0)) THEN
       IF (object .EQ. 1) THEN
         geometryid = geometry_sn
-        IF (firstgmid) THEN
+        IF (firstgmid(1)) THEN
           CALL LOGMSG(logdebug, &
 &         'b2mod_connectivity.geometryId(): identified grid GEOMETRY_SN'&
 &              )
-          firstgmid = .false.
+          firstgmid(1) = .false.
         END IF
       ELSE IF (object .EQ. 2) THEN
         result1 = MAXVAL(mpg%fcreg(1:mpg%nfc))
         IF (result1 .LE. 6) THEN
           geometryid = geometry_limiter
-          IF (firstgmid) THEN
+          IF (firstgmid(2)) THEN
             CALL LOGMSG(logdebug, &
 &  'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER'&
 &                )
-            firstgmid = .false.
+            firstgmid(2) = .false.
           END IF
         ELSE
           geometryid = geometry_sn
-          IF (firstgmid) THEN
+          IF (firstgmid(2)) THEN
             CALL LOGMSG(logdebug, &
 &       'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN'&
 &                )
-            firstgmid = .false.
+            firstgmid(2) = .false.
           END IF
         END IF
       END IF
       RETURN
-    ELSE IF (mpg%nnreg(0) .EQ. 5) THEN
+    ELSE IF (mpg%nnreg(0) .EQ. 5 .AND. mpg%isclassicalgrid .EQ. 1) THEN
       geometryid = geometry_stellaratorisland
-      IF (firstgmid) THEN
+      IF (firstgmid(1)) THEN
         CALL LOGMSG(logdebug, &
 &'b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND&
 &'           )
-        firstgmid = .false.
+        firstgmid(1) = .false.
       END IF
       RETURN
     ELSE
-      IF (mpg%nnreg(0) .EQ. 7) THEN
-        active = .false.
-        DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg%vxcvp&
-&           (mpg%xpt(1), 2)-1
-          icv = mpg%vxcv(i)
-          IF (mpg%cvreg(icv) .EQ. 1) active = .true.
-        END DO
-        IF (active) THEN
-          xpsi_active = geo%fspsi(mpg%vxfs(mpg%xpt(1)))
-          xpsi_snowflake = geo%fspsi(mpg%vxfs(mpg%xpt(2)))
-        ELSE
-          xpsi_active = geo%fspsi(mpg%vxfs(mpg%xpt(2)))
-          xpsi_snowflake = geo%fspsi(mpg%vxfs(mpg%xpt(1)))
-        END IF
+      IF (mpg%nnreg(0) .EQ. 7 .AND. mpg%isclassicalgrid .EQ. 1) THEN
+        xpsi_active = geo%fspsi(mpg%vxfs(mpg%xpt(mpg%iactive)))
+        xpsi_snowflake = geo%fspsi(mpg%vxfs(mpg%xpt(mpg%iinactive)))
         IF ((xpsi_active .LT. xpsi_snowflake .AND. geo%psi_increasing) &
 &           .OR. (xpsi_active .GT. xpsi_snowflake .AND. (.NOT.geo%&
 &           psi_increasing))) THEN
           geometryid = geometry_lfs_snowflake_minus
-          IF (firstgmid) THEN
+          IF (firstgmid(1)) THEN
             CALL LOGMSG(logdebug, 'b2mod_connectivity.geometryId(): iden&
 &tified GEOMETRY_LFS_SNOWFLAKE_MINUS')
-            firstgmid = .false.
+            firstgmid(1) = .false.
           END IF
           RETURN
         ELSE IF ((xpsi_active .GT. xpsi_snowflake .AND. geo%&
 &           psi_increasing) .OR. (xpsi_active .LT. xpsi_snowflake .AND. &
 &           (.NOT.geo%psi_increasing))) THEN
           geometryid = geometry_lfs_snowflake_plus
-          IF (firstgmid) THEN
+          IF (firstgmid(1)) THEN
             CALL LOGMSG(logdebug, 'b2mod_connectivity.geometryId(): iden&
 &tified GEOMETRY_LFS_SNOWFLAKE_PLUS')
-            firstgmid = .false.
+            firstgmid(1) = .false.
           END IF
           RETURN
-        ELSE IF (mpg%vxfs(mpg%xpt(1)) .EQ. mpg%vxfs(mpg%xpt(2))) THEN
+        ELSE IF (mpg%vxfs(mpg%xpt(mpg%iactive)) .EQ. mpg%vxfs(mpg%xpt(&
+&           mpg%iinactive))) THEN
           geometryid = geometry_unspecified
-          IF (firstgmid) THEN
+          IF (firstgmid(1)) THEN
             CALL LOGMSG(logdebug, &
 &        'b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED'&
 &                )
-            firstgmid = .false.
+            firstgmid(1) = .false.
           END IF
           RETURN
         END IF
       END IF
-      IF (mpg%nnreg(0) .EQ. 8) THEN
+      IF ((mpg%nnreg(0) .EQ. 8 .AND. mpg%isclassicalgrid .EQ. 1) .OR. (&
+&         mpg%nxpt .GE. 2 .AND. mpg%isclassicalgrid .EQ. 0)) THEN
         IF (object .EQ. 1) THEN
-          IF (mpg%nxpt .LE. 1) THEN
-! Arbitrary ambiguous GEOMETRY_DDN assignment
-            geometryid = geometry_ddn_bottom
-            IF (firstgmid) THEN
-              CALL LOGMSG(logdebug, 'b2mod_connectivity.geometryId(): id&
-&entified grid GEOMETRY_DDN(_BOTTOM?)')
-              firstgmid = .false.
-            END IF
-            RETURN
-          ELSE IF (mpg%vxfs(mpg%xpt(1)) .EQ. mpg%vxfs(mpg%xpt(2))) THEN
-            geometryid = geometry_cdn
-            IF (firstgmid) THEN
-              CALL LOGMSG(logdebug, &
-&        'b2mod_connectivity.geometryId(): identified grid GEOMETRY_CDN'&
-&                  )
-              firstgmid = .false.
-            END IF
-            RETURN
-          ELSE
-            active = .false.
-            DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg%&
-&               vxcvp(mpg%xpt(1), 2)-1
-              icv = mpg%vxcv(i)
-              IF (mpg%cvreg(icv) .EQ. 1) active = .true.
-            END DO
-            IF ((geo%vxy(mpg%xpt(1)) .LT. geo%vxy(mpg%xpt(2)) .AND. &
-&               active) .OR. (geo%vxy(mpg%xpt(1)) .GT. geo%vxy(mpg%xpt(2&
-&               )) .AND. (.NOT.active))) THEN
+          IF (mpg%nxpt .EQ. 1) THEN
+            IF (geo%vxy(mpg%xpt(1)) .LE. 0.0_R8) THEN
+! Ambiguous GEOMETRY_DDN assignment
               geometryid = geometry_ddn_bottom
-              IF (firstgmid) THEN
+              IF (firstgmid(1)) THEN
+                CALL LOGMSG(logdebug, 'b2mod_connectivity.geometryId(): &
+&identified grid GEOMETRY_DDN(_BOTTOM?)')
+                firstgmid(1) = .false.
+              END IF
+              RETURN
+            ELSE IF (geo%vxy(mpg%xpt(1)) .GT. 0.0_R8) THEN
+! Ambiguous GEOMETRY_DDN assignment
+              geometryid = geometry_ddn_top
+              IF (firstgmid(1)) THEN
                 CALL LOGMSG(logdebug, &
-& 'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_BOTTOM'&
+& 'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_TOP?)'&
 &                    )
-                firstgmid = .false.
+                firstgmid(1) = .false.
+              END IF
+              RETURN
+            END IF
+          ELSE IF (mpg%nxpt .EQ. 2) THEN
+! We have a true DN grid
+            IF (mpg%vxfs(mpg%xpt(1)) .EQ. mpg%vxfs(mpg%xpt(2))) THEN
+              geometryid = geometry_cdn
+              IF (firstgmid(1)) THEN
+                CALL LOGMSG(logdebug, &
+&        'b2mod_connectivity.geometryId(): identified grid GEOMETRY_CDN'&
+&                    )
+                firstgmid(1) = .false.
               END IF
               RETURN
             ELSE
+              active = .false.
+              DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg&
+&                 %vxcvp(mpg%xpt(1), 2)-1
+                icv = mpg%vxcv(i)
+                IF (mpg%cvreg(icv) .EQ. 1) active = .true.
+              END DO
+              IF ((geo%vxy(mpg%xpt(1)) .LT. geo%vxy(mpg%xpt(2)) .AND. &
+&                 active) .OR. (geo%vxy(mpg%xpt(1)) .GT. geo%vxy(mpg%xpt&
+&                 (2)) .AND. (.NOT.active))) THEN
+                geometryid = geometry_ddn_bottom
+                IF (firstgmid(1)) THEN
+                  CALL LOGMSG(logdebug, &
+& 'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_BOTTOM'&
+&                      )
+                  firstgmid(1) = .false.
+                END IF
+                RETURN
+              ELSE
+                geometryid = geometry_ddn_top
+                IF (firstgmid(1)) THEN
+                  CALL LOGMSG(logdebug, &
+&    'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_TOP'&
+&                      )
+                  firstgmid(1) = .false.
+                END IF
+                RETURN
+              END IF
+            END IF
+          ELSE
+! We have more than 2 X-points, to avoid a crash,
+! we base the plasma topology only on the active X-point
+! and its location
+            ALLOCATE(is_active(mpg%nxpt))
+            is_active = .false.
+            is_above_plasma = .false.
+            DO i=1,mpg%nxpt
+              DO j=mpg%vxcvp(mpg%xpt(i), 1),mpg%vxcvp(mpg%xpt(i), 1)+mpg&
+&                 %vxcvp(mpg%xpt(i), 2)-1
+                icv = mpg%vxcv(j)
+                IF (mpg%cvreg(icv) .EQ. 1) THEN
+                  is_active(i) = .true.
+                  is_above_plasma = geo%vxy(mpg%xpt(i)) .GT. geo%cvy(icv&
+&                   )
+                END IF
+              END DO
+            END DO
+            nactive = COUNT(is_active(1:mpg%nxpt) .EQV. .true.)
+            IF (nactive .EQ. 2) THEN
+              geometryid = geometry_cdn
+              IF (firstgmid(1)) THEN
+                CALL LOGMSG(logdebug, &
+&        'b2mod_connectivity.geometryId(): identified grid GEOMETRY_CDN'&
+&                    )
+                CALL LOGMSG(logwarning, &
+&                     'This grid contains more than two X-points!')
+                CALL LOGMSG(logwarning, &
+&                     'Standard diagnostic output may fail.')
+                firstgmid(1) = .false.
+              END IF
+              DEALLOCATE(is_active)
+              RETURN
+            ELSE IF (nactive .EQ. 1 .AND. is_above_plasma) THEN
               geometryid = geometry_ddn_top
-              IF (firstgmid) THEN
+              IF (firstgmid(1)) THEN
                 CALL LOGMSG(logdebug, &
 &    'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_TOP'&
 &                    )
-                firstgmid = .false.
+                CALL LOGMSG(logwarning, &
+&                     'This grid contains more than two X-points!')
+                CALL LOGMSG(logwarning, &
+&                     'Standard diagnostic output may fail.')
+                firstgmid(1) = .false.
               END IF
+              DEALLOCATE(is_active)
+              RETURN
+            ELSE IF (nactive .EQ. 1 .AND. (.NOT.is_above_plasma)) THEN
+              geometryid = geometry_ddn_bottom
+              IF (firstgmid(1)) THEN
+                CALL LOGMSG(logdebug, &
+& 'b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_BOTTOM'&
+&                    )
+                CALL LOGMSG(logwarning, &
+&                     'This grid contains more than two X-points!')
+                CALL LOGMSG(logwarning, &
+&                     'Standard diagnostic output may fail.')
+                firstgmid(1) = .false.
+              END IF
+              DEALLOCATE(is_active)
               RETURN
             END IF
           END IF
@@ -671,68 +743,122 @@ CONTAINS
           result1 = MAXVAL(mpg%fcreg(1:mpg%nfc))
           IF (result1 .LE. 6) THEN
             geometryid = geometry_limiter
-            IF (firstgmid) THEN
+            IF (firstgmid(2)) THEN
               CALL LOGMSG(logdebug, &
 &  'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER'&
 &                  )
-              firstgmid = .false.
+              firstgmid(2) = .false.
             END IF
+            RETURN
           ELSE IF (mpg%nxpt .EQ. 1) THEN
 !nh only 1 X-point for vessel mode grids
             geometryid = geometry_sn
-            IF (firstgmid) THEN
+            IF (firstgmid(2)) THEN
               CALL LOGMSG(logdebug, &
 &       'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN'&
 &                  )
-              firstgmid = .false.
+              firstgmid(2) = .false.
             END IF
             RETURN
-          ELSE IF (mpg%vxfs(mpg%xpt(1)) .EQ. mpg%vxfs(mpg%xpt(2))) THEN
-            geometryid = geometry_cdn
-            IF (firstgmid) THEN
-              CALL LOGMSG(logdebug, &
-&      'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN'&
-&                  )
-              firstgmid = .false.
-            END IF
-            RETURN
-          ELSE
-            active = .false.
-            DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg%&
-&               vxcvp(mpg%xpt(1), 2)-1
-              icv = mpg%vxcv(i)
-              IF (mpg%cvreg(icv) .EQ. 1) active = .true.
-            END DO
-            IF ((geo%vxy(mpg%xpt(1)) .LT. geo%vxy(mpg%xpt(2)) .AND. &
-&               active) .OR. (geo%vxy(mpg%xpt(1)) .GT. geo%vxy(mpg%xpt(2&
-&               )) .AND. (.NOT.active))) THEN
-              geometryid = geometry_ddn_bottom
-              IF (firstgmid) THEN
+          ELSE IF (mpg%nxpt .EQ. 2) THEN
+! The normal DN case
+            IF (mpg%vxfs(mpg%xpt(1)) .EQ. mpg%vxfs(mpg%xpt(2))) THEN
+              geometryid = geometry_cdn
+              IF (firstgmid(2)) THEN
                 CALL LOGMSG(logdebug, &
-&'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM&
-&'                   )
-                firstgmid = .false.
+&      'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN'&
+&                    )
+                firstgmid(2) = .false.
               END IF
               RETURN
             ELSE
+              active = .false.
+              DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg&
+&                 %vxcvp(mpg%xpt(1), 2)-1
+                icv = mpg%vxcv(i)
+                IF (mpg%cvreg(icv) .EQ. 1) active = .true.
+              END DO
+              IF ((geo%vxy(mpg%xpt(1)) .LT. geo%vxy(mpg%xpt(2)) .AND. &
+&                 active) .OR. (geo%vxy(mpg%xpt(1)) .GT. geo%vxy(mpg%xpt&
+&                 (2)) .AND. (.NOT.active))) THEN
+                geometryid = geometry_ddn_bottom
+                IF (firstgmid(2)) THEN
+                  CALL LOGMSG(logdebug, &
+&'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM&
+&'                     )
+                  firstgmid(2) = .false.
+                END IF
+                RETURN
+              ELSE
+                geometryid = geometry_ddn_top
+                IF (firstgmid(2)) THEN
+                  CALL LOGMSG(logdebug, &
+&  'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_TOP'&
+&                      )
+                  firstgmid(2) = .false.
+                END IF
+                RETURN
+              END IF
+            END IF
+          ELSE
+! We have more than 2 X-points,
+! we base the plasma topology only on the active X-point
+! and its location
+            ALLOCATE(is_active(mpg%nxpt))
+            is_active = .false.
+            is_above_plasma = .false.
+            DO i=1,mpg%nxpt
+              DO j=mpg%vxcvp(mpg%xpt(i), 1),mpg%vxcvp(mpg%xpt(i), 1)+mpg&
+&                 %vxcvp(mpg%xpt(i), 2)-1
+                icv = mpg%vxcv(j)
+                IF (mpg%cvreg(icv) .EQ. 1) THEN
+                  is_active(i) = .true.
+                  is_above_plasma = geo%vxy(mpg%xpt(i)) .GT. geo%cvy(icv&
+&                   )
+                END IF
+              END DO
+            END DO
+            nactive = COUNT(is_active(1:mpg%nxpt) .EQV. .true.)
+            IF (nactive .EQ. 2) THEN
+              geometryid = geometry_cdn
+              IF (firstgmid(2)) THEN
+                CALL LOGMSG(logdebug, &
+&      'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN'&
+&                    )
+                firstgmid(2) = .false.
+              END IF
+              DEALLOCATE(is_active)
+              RETURN
+            ELSE IF (nactive .EQ. 1 .AND. is_above_plasma) THEN
               geometryid = geometry_ddn_top
-              IF (firstgmid) THEN
+              IF (firstgmid(2)) THEN
                 CALL LOGMSG(logdebug, &
 &  'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_TOP'&
 &                    )
-                firstgmid = .false.
+                firstgmid(2) = .false.
               END IF
+              DEALLOCATE(is_active)
+              RETURN
+            ELSE IF (nactive .EQ. 1 .AND. (.NOT.is_above_plasma)) THEN
+              geometryid = geometry_ddn_bottom
+              IF (firstgmid(2)) THEN
+                CALL LOGMSG(logdebug, &
+&'b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM&
+&'                   )
+                firstgmid(2) = .false.
+              END IF
+              DEALLOCATE(is_active)
               RETURN
             END IF
           END IF
         END IF
       END IF
       geometryid = geometry_unspecified
-      IF (firstgmid) THEN
+      IF (firstgmid(1)) THEN
         CALL LOGMSG(logdebug, &
 &        'b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED'&
 &            )
-        firstgmid = .false.
+        firstgmid(1) = .false.
       END IF
       CALL XERRAB('b2mod_connectivity.geometryId: unknown geometry')
     END IF

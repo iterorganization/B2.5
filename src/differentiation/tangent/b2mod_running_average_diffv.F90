@@ -1373,7 +1373,7 @@ CONTAINS
 !                               =3*nfl for vectorial momentum sources)
 ! local variables
     INTEGER :: io, iun, idum(0:3), iex
-    CHARACTER :: check*10, line*51
+    CHARACTER :: check*10, line*120
     LOGICAL :: found, no_vector
     INTRINSIC ALLOCATED
     EXTERNAL XERRAB

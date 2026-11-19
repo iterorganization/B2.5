@@ -97,14 +97,13 @@ CONTAINS
 !   with respect to varying inputs: smo0 shi0 sna0 *(state_ext.she)
 !                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
 !                *(state_ext.smo) sch0 she0
-!   Plus diff mem management of: geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvvol:in geo.fchc:in geo.ftconn:in state_ext.sne:in
-!                state_ext.she:in state_ext.shi:in state_ext.sch:in
-!                state_ext.sna:in state_ext.smo:in
+!   Plus diff mem management of: state_ext.sne:in state_ext.she:in
+!                state_ext.shi:in state_ext.sch:in state_ext.sna:in
+!                state_ext.smo:in
 !
-  SUBROUTINE SOURCE_INPUT_DV(mpg, mpgd, geo, geod, switch, switchd, &
-&   state_ext, state_extd, ns, sna0, sna0d, smo0, smo0d, she0, she0d, &
-&   shi0, shi0d, sch0, sch0d, sne0, sne0d, nc, nbdirs)
+  SUBROUTINE SOURCE_INPUT_DV(mpg, mpgd, geo, switch, switchd, state_ext&
+&   , state_extd, ns, sna0, sna0d, smo0, smo0d, she0, she0d, shi0, shi0d&
+&   , sch0, sch0d, sne0, sne0d, nc, nbdirs)
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
@@ -117,7 +116,6 @@ CONTAINS
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
     TYPE(B2STATEEXT) :: state_ext
@@ -277,7 +275,8 @@ CONTAINS
           END DO
 !          write(*,*) 'vor region_profile'
           ndim = nomp
-          CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+          pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&           icsepomp-1))/2.0_R8
 !          allocate (pf(1:ndim))
           CALL E01BEF(ndat, r, f, d, ifail)
 !          write(*,*) 'zwischen,ifail=',ifail
@@ -302,17 +301,11 @@ CONTAINS
           CALL XERTST(nxdat .LE. def_nxd, &
 &        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
 &              )
-          ALLOCATE(xfd(nbdirsmax, 0:nxdat+1))
-          ALLOCATE(xf(0:nxdat+1))
-          xf(0) = 0.0_R8
-          xf(1:nxdat) = 1.0_R8
-          xf(nxdat+1) = 0.0_R8
           IF (nxdat .GT. 0) THEN
             ALLOCATE(fxd(nbdirsmax, 1:nxdat))
             ALLOCATE(fx(1:nxdat))
             ALLOCATE(xd(nbdirsmax, 1:nxdat))
             ALLOCATE(x(1:nxdat))
-            ALLOCATE(xr(0:nxdat+1))
             ALLOCATE(dxd(nbdirsmax, 1:nxdat))
             ALLOCATE(dx(1:nxdat))
             DO i=1,nxdat
@@ -329,157 +322,165 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
-            IF (ift .EQ. 0) CYCLE
-            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
-            ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
-            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
-            nfitanf = mpg%ftcvp(ift, 2) + 1
-            nfitend = 0
-            nfitref = 0
-            icvanf = 0
-            icvend = 0
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (icv .EQ. omp(iy)) nfitref = ix
-              IF (icv .LE. mpg%nci) THEN
-                ireg = mpg%cvreg(icv)
-                IF (MOD(ireg, 4) .EQ. 3) THEN
-                  xr(ix) = 0.0_R8
-                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
-                  xr(ix) = 1.0_R8
-                ELSE
-                  IF (ix .LT. nfitanf) THEN
-                    nfitanf = ix
-                    icvanf = icv
-                  END IF
-                  IF (ix .GT. nfitend) THEN
-                    nfitend = ix
-                    icvend = icv
-                  END IF
-                END IF
-              END IF
-            END DO
-            nxdim = nfitend - nfitanf + 1
-            wrk1 = 0.0_R8
-            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
-              ifc = mpg%ftfc(j)
-              icv1 = mpg%fccv(ifc, 1)
-              icv2 = mpg%fccv(ifc, 2)
-              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
-              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
-            END DO
-            wrk0 = 0.0_R8
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
-            END DO
-            DO ix=nfitanf,nfitend
-              DO ixx=nfitanf,ix
+            IF (ift .NE. 0) THEN
+              ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+              ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
+              ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+              nfitanf = mpg%ftcvp(ift, 2) + 1
+              nfitend = 0
+              nfitref = 0
+              icvanf = 0
+              icvend = 0
+              DO ix=1,mpg%ftcvp(ift, 2)
                 icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-                xr(ix) = xr(ix) + wrk0(icv)
-              END DO
-            END DO
-            dref = xr(nfitref)
-            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
-&             0.5_R8*wrk1(icvanf))
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (mpg%cvonclosedsurface(icv)) THEN
-                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
-              ELSE
-                xr(ix) = (xr(ix)-dref)/dtot
-              END IF
-            END DO
-            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
-&                 (nfitanf:nfitend), ifail)
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              ireg = mpg%cvreg(icv)
-              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
-&                 ireg, 4) .EQ. 2)) THEN
-                IF (kind_source .EQ. 1) THEN
-                  DO nd=1,nbdirs
-                    sna0d(nd, icv, 0, spec) = 0.D0
-                  END DO
-                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 2) THEN
-                  DO nd=1,nbdirs
-                    smo0d(nd, icv, 0, spec) = 0.D0
-                  END DO
-                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 3) THEN
-                  DO nd=1,nbdirs
-                    she0d(nd, icv, 0) = 0.D0
-                  END DO
-                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 4) THEN
-                  DO nd=1,nbdirs
-                    shi0d(nd, icv, 0) = 0.D0
-                  END DO
-                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 5) THEN
-                  DO nd=1,nbdirs
-                    sch0d(nd, icv, 0) = 0.D0
-                  END DO
-                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 6) THEN
-                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                IF (icv .EQ. omp(iy)) nfitref = ix
+                IF (icv .LE. mpg%nci) THEN
+                  ireg = mpg%cvreg(icv)
+                  IF (MOD(ireg, 4) .EQ. 3) THEN
+                    xr(ix) = 0.0_R8
+                  ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                    xr(ix) = 1.0_R8
+                  ELSE
+                    IF (ix .LT. nfitanf) THEN
+                      nfitanf = ix
+                      icvanf = icv
+                    END IF
+                    IF (ix .GT. nfitend) THEN
+                      nfitend = ix
+                      icvend = icv
+                    END IF
+                  END IF
                 END IF
-              END IF
-              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
-                IF (nxdat .GT. 0) THEN
+              END DO
+              nxdim = nfitend - nfitanf + 1
+              wrk1 = 0.0_R8
+              DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)&
+&                 -1
+                ifc = mpg%ftfc(j)
+                icv1 = mpg%fccv(ifc, 1)
+                icv2 = mpg%fccv(ifc, 2)
+                wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+                wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+              END DO
+              wrk0 = 0.0_R8
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+              END DO
+              DO ix=nfitanf,nfitend
+                DO ixx=nfitanf,ix
+                  icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                  xr(ix) = xr(ix) + wrk0(icv)
+                END DO
+              END DO
+              dref = xr(nfitref)
+              dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&               0.5_R8*wrk1(icvanf))
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                IF (mpg%cvonclosedsurface(icv)) THEN
+                  xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+                ELSE
+                  xr(ix) = (xr(ix)-dref)/dtot
+                END IF
+              END DO
+              CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), &
+&                   xf(nfitanf:nfitend), ifail)
+              DO ix=1,mpg%ftcvp(ift, 2)
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                ireg = mpg%cvreg(icv)
+                IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD&
+&                   (ireg, 4) .EQ. 2)) THEN
+                  IF (kind_source .EQ. 1) THEN
+                    DO nd=1,nbdirs
+                      sna0d(nd, icv, 0, spec) = 0.D0
+                    END DO
+                    sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 2) THEN
+                    DO nd=1,nbdirs
+                      smo0d(nd, icv, 0, spec) = 0.D0
+                    END DO
+                    smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 3) THEN
+                    DO nd=1,nbdirs
+                      she0d(nd, icv, 0) = 0.D0
+                    END DO
+                    she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 4) THEN
+                    DO nd=1,nbdirs
+                      shi0d(nd, icv, 0) = 0.D0
+                    END DO
+                    shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 5) THEN
+                    DO nd=1,nbdirs
+                      sch0d(nd, icv, 0) = 0.D0
+                    END DO
+                    sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 6) THEN
+                    sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  END IF
+                END IF
+                IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                  IF (nxdat .GT. 0) THEN
+                    IF (kind_source .EQ. 1) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sna ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 2) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: smo ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 3) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: she ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 4) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: shi ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 5) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sch ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 6) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sne ', xr(ix&
+&                                           ), xf(ix)
+                    IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                  END IF
+                END IF
+              END DO
+              IF (nc .EQ. 0 .OR. debug) THEN
+                IF (ndat .GT. 0) THEN
                   IF (kind_source .EQ. 1) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: sna ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sna ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 2) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: smo ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: smo ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: she ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: she ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: shi ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: shi ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sch ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: sch ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sne ', xr(ix)&
-&                                         , xf(ix)
-                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sne ', pr(iy&
+&                                         ), pf(iy)
+                  IF (new_files) WRITE(94, *) pr(iy), pf(iy)
                 END IF
               END IF
-            END DO
-            IF (nc .EQ. 0 .OR. debug) THEN
-              IF (ndat .GT. 0) THEN
-                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: sna ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: smo ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: she ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: shi ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sch ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sne ', pr(iy)&
-&                                       , pf(iy)
-                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
+              DEALLOCATE(xr)
+              IF (ALLOCATED(xfd)) THEN
+                DEALLOCATE(xfd)
               END IF
+              DEALLOCATE(xf)
             END IF
-            DEALLOCATE(xr)
-            IF (ALLOCATED(xfd)) THEN
-              DEALLOCATE(xfd)
-            END IF
-            DEALLOCATE(xf)
           END DO
         END IF
       END DO
@@ -756,7 +757,8 @@ CONTAINS
           END DO
 !          write(*,*) 'vor region_profile'
           ndim = nomp
-          CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+          pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&           icsepomp-1))/2.0_R8
 !          allocate (pf(1:ndim))
           CALL E01BEF(ndat, r, f, d, ifail)
 !          write(*,*) 'zwischen,ifail=',ifail
@@ -781,14 +783,9 @@ CONTAINS
           CALL XERTST(nxdat .LE. def_nxd, &
 &        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
 &              )
-          ALLOCATE(xf(0:nxdat+1))
-          xf(0) = 0.0_R8
-          xf(1:nxdat) = 1.0_R8
-          xf(nxdat+1) = 0.0_R8
           IF (nxdat .GT. 0) THEN
             ALLOCATE(fx(1:nxdat))
             ALLOCATE(x(1:nxdat))
-            ALLOCATE(xr(0:nxdat+1))
             ALLOCATE(dx(1:nxdat))
             DO i=1,nxdat
               x(i) = xdata(1, i, kind_source, spec)
@@ -806,138 +803,146 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
-            IF (ift .EQ. 0) CYCLE
-            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
-            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
-            nfitanf = mpg%ftcvp(ift, 2) + 1
-            nfitend = 0
-            nfitref = 0
-            icvanf = 0
-            icvend = 0
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (icv .EQ. omp(iy)) nfitref = ix
-              IF (icv .LE. mpg%nci) THEN
-                ireg = mpg%cvreg(icv)
-                IF (MOD(ireg, 4) .EQ. 3) THEN
-                  xr(ix) = 0.0_R8
-                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
-                  xr(ix) = 1.0_R8
-                ELSE
-                  IF (ix .LT. nfitanf) THEN
-                    nfitanf = ix
-                    icvanf = icv
-                  END IF
-                  IF (ix .GT. nfitend) THEN
-                    nfitend = ix
-                    icvend = icv
-                  END IF
-                END IF
-              END IF
-            END DO
-            nxdim = nfitend - nfitanf + 1
-            wrk1 = 0.0_R8
-            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
-              ifc = mpg%ftfc(j)
-              icv1 = mpg%fccv(ifc, 1)
-              icv2 = mpg%fccv(ifc, 2)
-              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
-              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
-            END DO
-            wrk0 = 0.0_R8
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
-            END DO
-            DO ix=nfitanf,nfitend
-              DO ixx=nfitanf,ix
+            IF (ift .NE. 0) THEN
+              ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+              ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+              nfitanf = mpg%ftcvp(ift, 2) + 1
+              nfitend = 0
+              nfitref = 0
+              icvanf = 0
+              icvend = 0
+              DO ix=1,mpg%ftcvp(ift, 2)
                 icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-                xr(ix) = xr(ix) + wrk0(icv)
-              END DO
-            END DO
-            dref = xr(nfitref)
-            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
-&             0.5_R8*wrk1(icvanf))
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (mpg%cvonclosedsurface(icv)) THEN
-                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
-              ELSE
-                xr(ix) = (xr(ix)-dref)/dtot
-              END IF
-            END DO
-            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
-&                 (nfitanf:nfitend), ifail)
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              ireg = mpg%cvreg(icv)
-              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
-&                 ireg, 4) .EQ. 2)) THEN
-                IF (kind_source .EQ. 1) THEN
-                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 2) THEN
-                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 3) THEN
-                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 4) THEN
-                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 5) THEN
-                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 6) THEN
-                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                IF (icv .EQ. omp(iy)) nfitref = ix
+                IF (icv .LE. mpg%nci) THEN
+                  ireg = mpg%cvreg(icv)
+                  IF (MOD(ireg, 4) .EQ. 3) THEN
+                    xr(ix) = 0.0_R8
+                  ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                    xr(ix) = 1.0_R8
+                  ELSE
+                    IF (ix .LT. nfitanf) THEN
+                      nfitanf = ix
+                      icvanf = icv
+                    END IF
+                    IF (ix .GT. nfitend) THEN
+                      nfitend = ix
+                      icvend = icv
+                    END IF
+                  END IF
                 END IF
-              END IF
-              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
-                IF (nxdat .GT. 0) THEN
+              END DO
+              nxdim = nfitend - nfitanf + 1
+              wrk1 = 0.0_R8
+              DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)&
+&                 -1
+                ifc = mpg%ftfc(j)
+                icv1 = mpg%fccv(ifc, 1)
+                icv2 = mpg%fccv(ifc, 2)
+                wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+                wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+              END DO
+              wrk0 = 0.0_R8
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+              END DO
+              DO ix=nfitanf,nfitend
+                DO ixx=nfitanf,ix
+                  icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                  xr(ix) = xr(ix) + wrk0(icv)
+                END DO
+              END DO
+              dref = xr(nfitref)
+              dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&               0.5_R8*wrk1(icvanf))
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                IF (mpg%cvonclosedsurface(icv)) THEN
+                  xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+                ELSE
+                  xr(ix) = (xr(ix)-dref)/dtot
+                END IF
+              END DO
+              CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), &
+&                   xf(nfitanf:nfitend), ifail)
+              DO ix=1,mpg%ftcvp(ift, 2)
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                ireg = mpg%cvreg(icv)
+                IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD&
+&                   (ireg, 4) .EQ. 2)) THEN
+                  IF (kind_source .EQ. 1) THEN
+                    sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 2) THEN
+                    smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 3) THEN
+                    she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 4) THEN
+                    shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 5) THEN
+                    sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 6) THEN
+                    sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  END IF
+                END IF
+                IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                  IF (nxdat .GT. 0) THEN
+                    IF (kind_source .EQ. 1) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sna ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 2) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: smo ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 3) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: she ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 4) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: shi ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 5) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sch ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 6) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sne ', xr(ix&
+&                                           ), xf(ix)
+                    IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                  END IF
+                END IF
+              END DO
+              IF (nc .EQ. 0 .OR. debug) THEN
+                IF (ndat .GT. 0) THEN
                   IF (kind_source .EQ. 1) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: sna ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sna ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 2) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: smo ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: smo ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: she ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: she ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: shi ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: shi ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sch ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: sch ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sne ', xr(ix)&
-&                                         , xf(ix)
-                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sne ', pr(iy&
+&                                         ), pf(iy)
+                  IF (new_files) WRITE(94, *) pr(iy), pf(iy)
                 END IF
               END IF
-            END DO
-            IF (nc .EQ. 0 .OR. debug) THEN
-              IF (ndat .GT. 0) THEN
-                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: sna ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: smo ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: she ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: shi ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sch ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sne ', pr(iy)&
-&                                       , pf(iy)
-                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
-              END IF
+              DEALLOCATE(xr)
+              DEALLOCATE(xf)
             END IF
-            DEALLOCATE(xr)
-            DEALLOCATE(xf)
           END DO
         END IF
       END DO
@@ -1049,20 +1054,27 @@ CONTAINS
   END SUBROUTINE SOURCE_INPUT
 
 !  Differentiation of transport_input in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata vsa0 sig0 alf0 hcib dna0
+!   variations   of useful results: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata vsa0 sig0 alf0
+!                hcib dna0 vla0 hce0 dpa0
+!   with respect to varying inputs: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata vsa0 sig0 *(dv.ne)
+!                alf0 *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
 !                vla0 hce0 dpa0
-!   with respect to varying inputs: tdata vsa0 sig0 *(dv.ne) alf0
-!                *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
-!                vla0 hce0 dpa0
-!   Plus diff mem management of: dv.ne:in geo.cvx:in geo.cvy:in
-!                rt.rza:in pl.na:in pl.te:in pl.ti:in
+!   Plus diff mem management of: dv.ne:in rt.rza:in pl.na:in pl.te:in
+!                pl.ti:in
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_DV(ncv, ns, geo, geod, mpg, pl, pld, dv, &
-&   dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d, &
-&   vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, &
-&   nbdirs)
+  SUBROUTINE TRANSPORT_INPUT_DV(ncv, ns, geo, mpg, pl, pld, dv, dvd, rt&
+&   , rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d, vsa0, &
+&   vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, nbdirs)
 !
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -1079,7 +1091,6 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
@@ -1097,12 +1108,11 @@ CONTAINS
     REAL(kind=r8) :: hce0d(nbdirsmax, ncv), sig0d(nbdirsmax, ncv), alf0d&
 &   (nbdirsmax, ncv)
     INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ifc, ift, icv, icn, &
-&   ndim, is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
-    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
-&   , felm(nrr), delm(nrr), prof(nrr)
-    REAL(kind=r8) :: fd(nbdirsmax, nrr), rd(nbdirsmax, nrr), pfd(&
-&   nbdirsmax, nrr), dd(nbdirsmax, nrr), pelmd(nbdirsmax, nrr), felmd(&
-&   nbdirsmax, nrr), delmd(nbdirsmax, nrr), profd(nbdirsmax, nrr)
+&   is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
+    REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: f, r, pr, pf, d, pelm, &
+&   felm, delm, prof
+    REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: fd, rd, pfd, dd, &
+&   pelmd, felmd, delmd, profd
     REAL(kind=r8) :: poloidal_scale_factor
     LOGICAL, SAVE :: elm_region, elm_data
     CHARACTER(len=26) :: hlp_frm
@@ -1207,31 +1217,55 @@ CONTAINS
     elm_data = .false.
 !        write (*,*) 'vor loop'
     iloop = 0
-    felmd = 0.D0
-    dd = 0.D0
-    fd = 0.D0
-    pelmd = 0.D0
-    rd = 0.D0
-    delmd = 0.D0
-    pfd = 0.D0
-    profd = 0.D0
     DO kind_coeff=1,nkind_coeff
       DO spec=0,ns-1
+! Get total number of data points to read in
         DO kind_data=1,nkind_data
-!           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
           ndat = ndata(kind_data, kind_coeff, spec)
+!
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
 &            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
+!
+            ALLOCATE(rd(nbdirsmax, ndat))
+            rd = 0.D0
+            ALLOCATE(r(ndat))
+            ALLOCATE(fd(nbdirsmax, ndat))
+            fd = 0.D0
+            ALLOCATE(f(ndat))
+            ALLOCATE(dd(nbdirsmax, ndat))
+            dd = 0.D0
+            ALLOCATE(d(ndat))
+            ALLOCATE(felmd(nbdirsmax, ndat))
+            felmd = 0.D0
+            ALLOCATE(felm(ndat))
+            ALLOCATE(delmd(nbdirsmax, ndat))
+            delmd = 0.D0
+            ALLOCATE(delm(ndat))
+            DO nd=1,nbdirs
+              rd(nd, :) = 0.D0
+              fd(nd, :) = 0.D0
+              felmd(nd, :) = 0.D0
+              delmd(nd, :) = 0.D0
+            END DO
+            r = 0.0_R8
+            f = 0.0_R8
+            felm = 0.0_R8
+            delm = 0.0_R8
+! Check for which species to add
             nspec = 1
+!
             nsp(1) = spec
             DO is=1,ns
               IF (addspec(is, kind_coeff, spec) .GE. 0) THEN
                 nsp(nspec+1) = addspec(is, kind_coeff, spec)
                 nspec = nspec + 1
               END IF
+! Read data into r, f pairs (coordinate, value)
+
             END DO
+!
             DO i=1,ndat
               DO nd=1,nbdirs
                 rd(nd, i) = tdatad(nd, 1, i, kind_coeff, spec)
@@ -1248,23 +1282,33 @@ CONTAINS
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
 
             END DO
+!
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
-!
-            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+            ALLOCATE(pr(nomp))
+            ALLOCATE(pfd(nbdirsmax, nomp))
+            pfd = 0.D0
+            ALLOCATE(pf(nomp))
+            ALLOCATE(pelmd(nbdirsmax, nomp))
+            pelmd = 0.D0
+            ALLOCATE(pelm(nomp))
+            ALLOCATE(profd(nbdirsmax, nomp))
+            profd = 0.D0
+            ALLOCATE(prof(nomp))
+! Initialize (?)
+            pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&             icsepomp-1))/2.0_R8
 !
             CALL E01BEF_DV(ndat, r, rd, f, fd, d, dd, ifail, nbdirs)
+! Interpolate
             IF (elm_data) CALL E01BEF_DV(ndat, r, rd, felm, felmd, delm&
 &                                  , delmd, ifail, nbdirs)
-!           write(*,*) 'zwischen,ifail=',ifail
-! FIXME
-            ndim = nomp
-            CALL E01BFF_DV(ndat, r, rd, f, fd, d, dd, ndim, pr, pf, pfd&
+!
+            CALL E01BFF_DV(ndat, r, rd, f, fd, d, dd, nomp, pr, pf, pfd&
 &                    , ifail, nbdirs)
-!           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             IF (elm_data) THEN
-              CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm, delmd, ndim&
+              CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm, delmd, nomp&
 &                      , pr, pelm, pelmd, ifail, nbdirs)
             ELSE
               DO nd=1,nbdirs
@@ -1280,7 +1324,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy), felm(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy), pelm(iy)
                 END DO
               ELSE
@@ -1288,7 +1332,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy)
                 END DO
               END IF
@@ -1300,7 +1344,7 @@ CONTAINS
                 IF (iy .EQ. 0) THEN
 ! The flux tube does not intercept the OMP
 ! Assume it lies in the far SOL
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   iy2 = iy
                 END IF
@@ -1318,14 +1362,14 @@ CONTAINS
 !
                     IF (elm_region) THEN
                       DO nd=1,nbdirs
-                        profd(nd, 1:ndim) = pelmd(nd, 1:ndim)
+                        profd(nd, 1:nomp) = pelmd(nd, 1:nomp)
                       END DO
-                      prof(1:ndim) = pelm(1:ndim)
+                      prof(1:nomp) = pelm(1:nomp)
                     ELSE
                       DO nd=1,nbdirs
-                        profd(nd, 1:ndim) = pfd(nd, 1:ndim)
+                        profd(nd, 1:nomp) = pfd(nd, 1:nomp)
                       END DO
-                      prof(1:ndim) = pf(1:ndim)
+                      prof(1:nomp) = pf(1:nomp)
                     END IF
 !
                     IF (kind_coeff .EQ. 1) THEN
@@ -1418,20 +1462,22 @@ CONTAINS
                       END DO
                       arg1 = temp0
                       temp0 = SQRT(arg1)
-                      result1 = temp0
                       DO nd=1,nbdirs
                         IF (arg1 .EQ. 0.D0) THEN
                           result1d(nd) = 0.D0
                         ELSE
                           result1d(nd) = arg1d(nd)/(2.0*temp0)
                         END IF
+                      END DO
+                      result1 = temp0
+                      temp0 = prof(iy2)*result1
+                      DO nd=1,nbdirs
                         alf0d(nd, icv) = poloidal_scale_factor*(dv%ne(&
 &                         icv)*(result1*profd(nd, iy2)+prof(iy2)*&
-&                         result1d(nd))+prof(iy2)*result1*dvd%ne(nd, icv&
-&                         ))
+&                         result1d(nd))+temp0*dvd%ne(nd, icv))
                       END DO
-                      alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%ne(&
-&                       icv)*result1
+                      alf0(icv) = poloidal_scale_factor*(temp0*dv%ne(icv&
+&                       ))
 !
                     ELSE
                       WRITE(*, *) 'Option', kind_coeff, &
@@ -1459,7 +1505,7 @@ CONTAINS
                   iy2 = 1
                 ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
 ! SOL boundary
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   GOTO 100
                 END IF
@@ -1473,14 +1519,14 @@ CONTAINS
 !
                   IF (elm_region) THEN
                     DO nd=1,nbdirs
-                      profd(nd, 1:ndim) = pelmd(nd, 1:ndim)
+                      profd(nd, 1:nomp) = pelmd(nd, 1:nomp)
                     END DO
-                    prof(1:ndim) = pelm(1:ndim)
+                    prof(1:nomp) = pelm(1:nomp)
                   ELSE
                     DO nd=1,nbdirs
-                      profd(nd, 1:ndim) = pfd(nd, 1:ndim)
+                      profd(nd, 1:nomp) = pfd(nd, 1:nomp)
                     END DO
-                    prof(1:ndim) = pf(1:ndim)
+                    prof(1:nomp) = pf(1:nomp)
                   END IF
 !
                   IF (kind_coeff .EQ. 1) THEN
@@ -1571,19 +1617,21 @@ CONTAINS
                     END DO
                     arg1 = temp0
                     temp0 = SQRT(arg1)
-                    result1 = temp0
                     DO nd=1,nbdirs
                       IF (arg1 .EQ. 0.D0) THEN
                         result1d(nd) = 0.D0
                       ELSE
                         result1d(nd) = arg1d(nd)/(2.0*temp0)
                       END IF
+                    END DO
+                    result1 = temp0
+                    temp0 = prof(iy2)*result1
+                    DO nd=1,nbdirs
                       alf0d(nd, icv) = poloidal_scale_factor*(dv%ne(icv)&
 &                       *(result1*profd(nd, iy2)+prof(iy2)*result1d(nd))&
-&                       +prof(iy2)*result1*dvd%ne(nd, icv))
+&                       +temp0*dvd%ne(nd, icv))
                     END DO
-                    alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%ne(&
-&                     icv)*result1
+                    alf0(icv) = poloidal_scale_factor*(temp0*dv%ne(icv))
 !
                   ELSE
                     WRITE(*, *) 'Option', kind_coeff, &
@@ -1596,11 +1644,12 @@ CONTAINS
 !is=1,nspec
 
             END DO
+! Housekeeping
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),3f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)&
@@ -1640,7 +1689,7 @@ CONTAINS
               ELSE
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),2f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)
@@ -1671,11 +1720,44 @@ CONTAINS
               END IF
             END IF
 !
-!           deallocate(f,r,pr,pf,felm,pelm)
+            IF (ALLOCATED(fd)) THEN
+              DEALLOCATE(fd)
+            END IF
+            DEALLOCATE(f)
+            IF (ALLOCATED(rd)) THEN
+              DEALLOCATE(rd)
+            END IF
+            DEALLOCATE(r)
+            DEALLOCATE(pr)
+            IF (ALLOCATED(pfd)) THEN
+              DEALLOCATE(pfd)
+            END IF
+            DEALLOCATE(pf)
+            IF (ALLOCATED(felmd)) THEN
+              DEALLOCATE(felmd)
+            END IF
+            DEALLOCATE(felm)
+            IF (ALLOCATED(pelmd)) THEN
+              DEALLOCATE(pelmd)
+            END IF
+            DEALLOCATE(pelm)
+            IF (ALLOCATED(delmd)) THEN
+              DEALLOCATE(delmd)
+            END IF
+            DEALLOCATE(delm)
+            IF (ALLOCATED(profd)) THEN
+              DEALLOCATE(profd)
+            END IF
+            DEALLOCATE(prof)
+            IF (ALLOCATED(dd)) THEN
+              DEALLOCATE(dd)
+            END IF
+            DEALLOCATE(d)
+! Update loop counter
+!
             iloop = iloop + 1
-          END IF
 !kind_data
-
+          END IF
         END DO
 !spec=0,ns-1
 
@@ -1722,9 +1804,9 @@ CONTAINS
 &   , 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib(ncv, 0:ns-1)
     REAL(kind=r8) :: hce0(ncv), sig0(ncv), alf0(ncv)
     INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ifc, ift, icv, icn, &
-&   ndim, is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
-    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
-&   , felm(nrr), delm(nrr), prof(nrr)
+&   is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
+    REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: f, r, pr, pf, d, pelm, &
+&   felm, delm, prof
     REAL(kind=r8) :: poloidal_scale_factor
     LOGICAL, SAVE :: elm_region, elm_data
     CHARACTER(len=26) :: hlp_frm
@@ -1820,21 +1902,37 @@ CONTAINS
     iloop = 0
     DO kind_coeff=1,nkind_coeff
       DO spec=0,ns-1
+! Get total number of data points to read in
         DO kind_data=1,nkind_data
-!           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
           ndat = ndata(kind_data, kind_coeff, spec)
+!
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
 &            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
+!
+            ALLOCATE(r(ndat))
+            ALLOCATE(f(ndat))
+            ALLOCATE(d(ndat))
+            ALLOCATE(felm(ndat))
+            ALLOCATE(delm(ndat))
+            r = 0.0_R8
+            f = 0.0_R8
+            felm = 0.0_R8
+            delm = 0.0_R8
+! Check for which species to add
             nspec = 1
+!
             nsp(1) = spec
             DO is=1,ns
               IF (addspec(is, kind_coeff, spec) .GE. 0) THEN
                 nsp(nspec+1) = addspec(is, kind_coeff, spec)
                 nspec = nspec + 1
               END IF
+! Read data into r, f pairs (coordinate, value)
+
             END DO
+!
             DO i=1,ndat
               r(i) = tdata(1, i, kind_coeff, spec)
               f(i) = tdata(2, i, kind_coeff, spec)
@@ -1842,21 +1940,25 @@ CONTAINS
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
 
             END DO
+!
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
-!
-            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+            ALLOCATE(pr(nomp))
+            ALLOCATE(pf(nomp))
+            ALLOCATE(pelm(nomp))
+            ALLOCATE(prof(nomp))
+! Initialize (?)
+            pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&             icsepomp-1))/2.0_R8
 !
             CALL E01BEF(ndat, r, f, d, ifail)
+! Interpolate
             IF (elm_data) CALL E01BEF(ndat, r, felm, delm, ifail)
-!           write(*,*) 'zwischen,ifail=',ifail
-! FIXME
-            ndim = nomp
-            CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
-!           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
+!
+            CALL E01BFF(ndat, r, f, d, nomp, pr, pf, ifail)
             IF (elm_data) THEN
-              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+              CALL E01BFF(ndat, r, felm, delm, nomp, pr, pelm, ifail)
             ELSE
               pelm = pf
             END IF
@@ -1868,7 +1970,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy), felm(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy), pelm(iy)
                 END DO
               ELSE
@@ -1876,7 +1978,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy)
                 END DO
               END IF
@@ -1888,7 +1990,7 @@ CONTAINS
                 IF (iy .EQ. 0) THEN
 ! The flux tube does not intercept the OMP
 ! Assume it lies in the far SOL
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   iy2 = iy
                 END IF
@@ -1905,9 +2007,9 @@ CONTAINS
 &                 ) THEN
 !
                     IF (elm_region) THEN
-                      prof(1:ndim) = pelm(1:ndim)
+                      prof(1:nomp) = pelm(1:nomp)
                     ELSE
-                      prof(1:ndim) = pf(1:ndim)
+                      prof(1:nomp) = pf(1:nomp)
                     END IF
 !
                     IF (kind_coeff .EQ. 1) THEN
@@ -1981,7 +2083,7 @@ CONTAINS
                   iy2 = 1
                 ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
 ! SOL boundary
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   GOTO 100
                 END IF
@@ -1994,9 +2096,9 @@ CONTAINS
 &               THEN
 !
                   IF (elm_region) THEN
-                    prof(1:ndim) = pelm(1:ndim)
+                    prof(1:nomp) = pelm(1:nomp)
                   ELSE
-                    prof(1:ndim) = pf(1:ndim)
+                    prof(1:nomp) = pf(1:nomp)
                   END IF
 !
                   IF (kind_coeff .EQ. 1) THEN
@@ -2053,11 +2155,12 @@ CONTAINS
 !is=1,nspec
 
             END DO
+! Housekeeping
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),3f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)&
@@ -2097,7 +2200,7 @@ CONTAINS
               ELSE
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),2f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)
@@ -2128,11 +2231,20 @@ CONTAINS
               END IF
             END IF
 !
-!           deallocate(f,r,pr,pf,felm,pelm)
+            DEALLOCATE(f)
+            DEALLOCATE(r)
+            DEALLOCATE(pr)
+            DEALLOCATE(pf)
+            DEALLOCATE(felm)
+            DEALLOCATE(pelm)
+            DEALLOCATE(delm)
+            DEALLOCATE(prof)
+            DEALLOCATE(d)
+! Update loop counter
+!
             iloop = iloop + 1
-          END IF
 !kind_data
-
+          END IF
         END DO
 !spec=0,ns-1
 
@@ -2202,7 +2314,7 @@ CONTAINS
 &   , nfitanf)
 !
     USE B2MOD_INDIRECT_DIFFV
-    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp
+    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp, omp_pos
     USE B2US_GEO_DIFFV
     USE B2US_MAP_DIFFV
     USE B2MOD_MWTI, ONLY : output_ds_cv
@@ -2230,7 +2342,8 @@ CONTAINS
         ALLOCATE(prdsa(nomp))
         ALLOCATE(dsp(nomp))
         arg1 = icsepomp - 1
-        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp)
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp, omp_pos&
+&                   (1:nomp))
       END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF

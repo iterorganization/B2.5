@@ -21,9 +21,10 @@ MODULE B2US_GEO_DIFFV
 !
   PRIVATE 
   PUBLIC :: alloc_geometry, dealloc_geometry, read_geometry, &
-& write_geometry, init_geometry, calc_conn, check_geometry, &
-& divide_by_area, split_face_flux, pitch
-  PUBLIC :: alloc_geometry_dv, dealloc_geometry_dv, read_geometry_dv
+& write_geometry, init_geometry, init_walls_and_targets, calc_conn, &
+& check_geometry, divide_by_area, split_face_flux, pitch
+  PUBLIC :: alloc_geometry_dv, dealloc_geometry_dv, read_geometry_dv, &
+& init_walls_and_targets_dv
 !
 !  cell quantites
 ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
@@ -866,7 +867,6 @@ CONTAINS
 !
 !**********************************************************************
 !
-!
   SUBROUTINE READ_GEOMETRY_DV(iun, ncv, nfc, nvx, nfs, nft, nvmxcv, gm, &
 &   gmd, nbdirs)
   USE B2MOD_DIFFSIZES
@@ -950,7 +950,6 @@ CONTAINS
 
 !
 !**********************************************************************
-!
 !
   SUBROUTINE READ_GEOMETRY(iun, ncv, nfc, nvx, nfs, nft, nvmxcv, gm)
   USE B2MOD_DIFFSIZES
@@ -1137,12 +1136,11 @@ CONTAINS
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
     INTEGER, SAVE :: temp_ignore_geo=0
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
-&   , dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
-    LOGICAL :: active, match_found, ref_set
+&   , dpsi(mpg%ncv), psi_active, dpsi_max_down, dpsi_max_up
+    LOGICAL :: match_found
     INTRINSIC MAXVAL, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, IPGETI, XERRAB, &
 &       XERTST
-    INTRINSIC MOD
     INTRINSIC MINVAL
     INTRINSIC REAL
     INTRINSIC SIGN
@@ -1152,6 +1150,8 @@ CONTAINS
     REAL(kind=r8) :: abs0
     REAL(kind=r8), DIMENSION(mpg%nFs) :: dabs0
     REAL(kind=r8), DIMENSION(mpg%nFs) :: abs1
+    REAL(kind=r8) :: abs2
+    REAL(kind=r8) :: abs3
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: arg10
@@ -1165,25 +1165,6 @@ CONTAINS
     ncv = mpg%ncv
     nfc = mpg%nfc
     nvx = mpg%nvx
-!
-!   ..identify periodicity
-    CALL IS_PERIODIC(mpg, gm)
-!
-!   ..identify cells on closed surfaces
-    IF (mpg%nnreg(0) .EQ. 1) THEN
-      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%periodic_bc .EQ. 1
-    ELSE IF (((mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 4) .OR. mpg%&
-&       nnreg(0) .EQ. 5) .OR. mpg%nnreg(0) .EQ. 8) THEN
-      mpg%cvonclosedsurface(1:mpg%nCi) = MOD(mpg%cvreg(1:mpg%nCi), 4) .EQ. 1
-    ELSE IF (mpg%nnreg(0) .EQ. 7) THEN
-      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
-    ELSE
-      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
-      WRITE(*, *) 'Warning: unknown number of regions'
-!call xerrab ('Unknown number of regions!')
-      WRITE(*, *) 'Assuming core is region 1'
-    END IF
-    mpg%cvOnClosedSurface(mpg%nCi+1:nCv) = .false.
 !
 !   ..set weights for interpolation to faces
     IF (switch%fcvol_style .EQ. 0) THEN
@@ -1228,20 +1209,10 @@ CONTAINS
     END DO
 !
 !   ..precompute psi for flux tube
-!   ..cells lying along an open boundary (e.g. wall-truncated cells of
-!   ..a conformal grid) need not lie between two flux surfaces: they
-!   ..are neither used as reference nor checked
     DO ift=1,mpg%nft
       gm%ftfpsi(ift) = gm%cvfpsi(mpg%ftcv(mpg%ftcvp(ift, 1)))
-      ref_set = .false.
       DO i=1,mpg%ftcvp(ift, 2)
         icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-        IF (mpg%cvalongboundary(icv) .AND. .NOT.mpg%cvonclosedsurface(&
-&           icv)) CYCLE
-        IF (.NOT.ref_set) THEN
-          gm%ftfpsi(ift) = gm%cvfpsi(icv)
-          ref_set = .true.
-        END IF
         IF (gm%cvfpsi(icv) .NE. gm%ftfpsi(ift)) THEN
           WRITE(*, '(a,i6,a,i4)') 'Warning: cvFpsi value in cell ', icv&
 &         , ' not equal to value in its flux tube ', ift
@@ -1705,10 +1676,11 @@ CONTAINS
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
     ixpt = 0
-    IF (.NOT.(mpg%nnreg(0) .EQ. 1 .OR. (.NOT.ALLOCATED(mpg%xpt)))) THEN
+    IF (.NOT.((mpg%nnreg(0) .EQ. 1 .AND. mpg%isclassicalgrid .EQ. 1) &
+&       .OR. (.NOT.ALLOCATED(mpg%xpt)))) THEN
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
-      IF (mpg%nnreg(0) .EQ. 2) THEN
+      IF (mpg%nxpt .EQ. 0) THEN
         DO i=mpg%vxfcp(mpg%tgvx(1), 1),mpg%vxfcp(mpg%tgvx(1), 1)+mpg%&
 &           vxfcp(mpg%tgvx(1), 2)-1
           ifc = mpg%vxfc(i)
@@ -1732,7 +1704,10 @@ CONTAINS
 &             mpg%vxfs(mpg%tgvx(1))) .OR. result11 .EQ. 0.0_R8
           END IF
         END DO
-      ELSE IF (mpg%nnreg(0) .EQ. 4) THEN
+      ELSE IF (mpg%nnreg(0) .EQ. 5 .AND. mpg%isclassicalgrid .EQ. 1) &
+&     THEN
+        ixpt = 1
+      ELSE IF (mpg%nxpt .EQ. 1) THEN
         DO i=mpg%vxfcp(mpg%xpt(1), 1),mpg%vxfcp(mpg%xpt(1), 1)+mpg%vxfcp&
 &           (mpg%xpt(1), 2)-1
           ifc = mpg%vxfc(i)
@@ -1749,23 +1724,10 @@ CONTAINS
           END IF
         END DO
         ixpt = 1
-      ELSE IF (mpg%nnreg(0) .EQ. 5) THEN
-        ixpt = 1
-      ELSE IF (mpg%nnreg(0) .GE. 7) THEN
-        active = .false.
-        DO i=mpg%vxcvp(mpg%xpt(1), 1),mpg%vxcvp(mpg%xpt(1), 1)+mpg%vxcvp&
-&           (mpg%xpt(1), 2)-1
-          icv = mpg%vxcv(i)
-          IF (mpg%cvreg(icv) .EQ. 1) active = .true.
-        END DO
-        IF (active) THEN
-          ixpt = 1
-        ELSE
-          ixpt = 2
-        END IF
+      ELSE IF (mpg%nxpt .GE. 2) THEN
+        ixpt = mpg%iactive
       END IF
     END IF
-! Compute signmf
     IF (ixpt .NE. 0) THEN
       match_found = .false.
       DO i=mpg%vxcvp(mpg%xpt(ixpt), 1),mpg%vxcvp(mpg%xpt(ixpt), 1)+mpg%&
@@ -1793,6 +1755,37 @@ CONTAINS
           END IF
         END IF
       END DO
+    END IF
+! Compute signmf
+!
+    IF (mpg%iactive .GT. 0 .AND. mpg%iinactive .EQ. 0 .AND. mpg%nxpt &
+&       .GE. 2) THEN
+!! look for the inactive X-point as the one closest in psi-space to the
+!! active X-point
+      psi_active = gm%fspsi(mpg%vxfs(mpg%xpt(mpg%iactive)))
+      j = 0
+      DO i=1,mpg%nxpt
+        IF (i .NE. mpg%iactive) THEN
+          IF (j .EQ. 0) THEN
+            j = i
+          ELSE
+            IF (gm%fspsi(mpg%vxfs(mpg%xpt(i))) - psi_active .GE. 0.) &
+&           THEN
+              abs2 = gm%fspsi(mpg%vxfs(mpg%xpt(i))) - psi_active
+            ELSE
+              abs2 = -(gm%fspsi(mpg%vxfs(mpg%xpt(i)))-psi_active)
+            END IF
+            IF (gm%fspsi(mpg%vxfs(mpg%xpt(j))) - psi_active .GE. 0.) &
+&           THEN
+              abs3 = gm%fspsi(mpg%vxfs(mpg%xpt(j))) - psi_active
+            ELSE
+              abs3 = -(gm%fspsi(mpg%vxfs(mpg%xpt(j)))-psi_active)
+            END IF
+            IF (abs2 .LT. abs3) j = i
+          END IF
+        END IF
+      END DO
+      mpg%iinactive = j
     END IF
 !
     r0 = 0.0_R8
@@ -2214,6 +2207,1167 @@ CONTAINS
     RETURN
   END SUBROUTINE CALC_CONN
 
+!  Differentiation of init_walls_and_targets as a context to call tangent code (with options multiDirectional context noISIZE r8)
+!:
+!   Plus diff mem management of: gm.fcqalf:in mpg.divfcor:in-out
+!
+!*********************************************************************
+!
+  SUBROUTINE INIT_WALLS_AND_TARGETS_DV(mpg, mpgd, gm, gmd, nbdirs)
+    USE B2US_MAP_DIFFV
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(INOUT) :: mpg
+    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
+    TYPE(GEOMETRY), INTENT(IN) :: gm
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: gmd
+    INTEGER :: i, j, k, l, indd, inew, icv, icv1, icv2, icn, ifc, ifcc, &
+&   ifs, ivx, iva, ivb
+    INTEGER :: icount, fccount
+    INTEGER, SAVE :: artificial_slab=0
+    INTEGER, SAVE :: found=0
+    INTEGER, ALLOCATABLE :: indxpt(:), indfc(:), regcount(:), freg(:), &
+&   old_face_list(:), new_face_list(:)
+    INTEGER :: fcsb(MAXVAL(mpg%fclbl), mpg%nci), fcsbcounter(MAXVAL(mpg%&
+&   fclbl)), cvsb(MAXVAL(mpg%fclbl), mpg%nci)
+    LOGICAL :: duplicate, left_match_found, right_match_found
+    EXTERNAL IPGETI, XERRAB
+    INTRINSIC MOD
+    INTRINSIC ANY
+    INTRINSIC ALLOCATED
+    INTRINSIC SIZE
+    INTRINSIC COUNT
+    INTRINSIC MIN
+    INTEGER :: result1
+    INTEGER :: nd
+    INTEGER :: nbdirs
+    INTRINSIC MAXVAL
+!
+!   ..identify periodicity
+    CALL IS_PERIODIC(mpg, gm)
+!
+!   ..identify cells on closed surfaces
+!   ..for Goat grids, was already done in is_periodic
+    IF (mpg%isclassicalgrid .EQ. 1) THEN
+      IF (mpg%nnreg(0) .EQ. 1) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%periodic_bc .EQ. 1
+      ELSE IF (((mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 4) .OR. mpg%&
+&         nnreg(0) .EQ. 5) .OR. mpg%nnreg(0) .EQ. 8) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = MOD(mpg%cvreg(1:mpg%nci), 4) &
+&         .EQ. 1
+      ELSE IF (mpg%nnreg(0) .EQ. 7) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%cvreg(1:mpg%nci) .EQ. 1
+      ELSE
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%cvreg(1:mpg%nci) .EQ. 1
+        WRITE(*, *) 'Warning: unknown number of regions'
+!call xerrab ('Unknown number of regions!')
+        WRITE(*, *) 'Assuming core is region 1'
+      END IF
+    END IF
+    mpg%cvonclosedsurface(mpg%nci+1:mpg%ncv) = .false.
+!
+!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
+    ALLOCATE(indxpt(mpg%nvx))
+    indxpt = 0
+    mpg%nxpt = 0
+    mpg%iactive = 0
+    mpg%iinactive = 0
+    DO ivx=1,mpg%nvx
+      IF (mpg%vxfcp(ivx, 2) .GE. 4) THEN
+        fccount = 0
+        DO i=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+          ifc = mpg%vxfc(i)
+          IF (mpg%fcfs(ifc) .NE. 0) fccount = fccount + 1
+        END DO
+        IF (fccount .EQ. 4) THEN
+          mpg%nxpt = mpg%nxpt + 1
+          indxpt(mpg%nxpt) = ivx
+          DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, 2)-1
+            icv = mpg%vxcv(i)
+            IF (mpg%cvreg(icv) .EQ. 1) THEN
+              IF (mpg%iactive .EQ. 0) THEN
+                mpg%iactive = mpg%nxpt
+              ELSE IF (mpg%iinactive .EQ. 0) THEN
+                mpg%iinactive = mpg%nxpt
+              END IF
+            END IF
+          END DO
+        END IF
+      END IF
+    END DO
+!
+!! use a different approach for slab cases with cuts,
+!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other i
+!nternal vertices.
+!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+    CALL IPGETI('artificial_slab', artificial_slab)
+    IF (mpg%nxpt .EQ. 0 .AND. artificial_slab .EQ. 1) THEN
+      DO ivx=1,mpg%nvx
+        IF (found .NE. 1) THEN
+          IF (mpg%vxcvp(ivx, 2) .GE. 4) THEN
+            ALLOCATE(regcount(mpg%vxcvp(ivx, 2)))
+            DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, 2)-1
+              icv = mpg%vxcv(i)
+              regcount(i-mpg%vxcvp(ivx, 1)+1) = mpg%cvreg(icv)
+            END DO
+            IF (ANY(regcount .EQ. 1) .AND. ANY(regcount .EQ. 2) .AND. (&
+&               ANY(regcount .EQ. 3) .OR. ANY(regcount .EQ. 4))) THEN
+              mpg%nxpt = mpg%nxpt + 1
+              indxpt(mpg%nxpt) = ivx
+              found = 1
+              IF (mpg%iactive .EQ. 0) THEN
+                DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, &
+&                   2)-1
+                  IF (mpg%iactive .EQ. 0) THEN
+                    icv = mpg%vxcv(i)
+                    IF (mpg%cvreg(icv) .EQ. 1) mpg%iactive = mpg%nxpt
+                  END IF
+                END DO
+              END IF
+            END IF
+            DEALLOCATE(regcount)
+          END IF
+        END IF
+      END DO
+    END IF
+!
+    mpg%nstr = 0
+    mpg%ntgc = 0
+    IF (mpg%nxpt .GT. 0) THEN
+      ALLOCATE(mpgd%xpt(nbdirsmax,mpg%nxpt))
+      DO nd=1,nbdirsmax
+        mpgd%xpt(nd,:) = 0
+      END DO
+      ALLOCATE(mpg%xpt(mpg%nxpt))
+      mpg%xpt(1:mpg%nxpt) = indxpt(1:mpg%nxpt)
+      IF (mpg%iactive .NE. 0) THEN
+        DO i=1,mpg%vxfcp(mpg%xpt(mpg%iactive), 2)
+          ifs = mpg%fcfs(mpg%vxfc(mpg%vxfcp(mpg%xpt(mpg%iactive), 1)+i-1&
+&           ))
+          IF (ifs .NE. 0) THEN
+            IF (mpg%ifssep .EQ. 0) mpg%ifssep = ifs
+            IF (mpg%ifssep2 .EQ. 0 .AND. ifs .NE. mpg%ifssep) mpg%&
+&             ifssep2 = ifs
+          END IF
+        END DO
+      END IF
+      indxpt = 0
+      icount = 0
+      ALLOCATE(mpgd%strvxp(nbdirsmax,mpg%nxpt, 2))
+      DO nd=1,nbdirsmax
+        mpgd%strvxp(nd,:,:) = 0
+      END DO
+      ALLOCATE(mpg%strvxp(mpg%nxpt, 2))
+      mpg%strvxp = 0
+      mpg%strvxp(1, 1) = 1
+      DO i=1,mpg%nxpt
+        IF (i .GT. 1) mpg%strvxp(i, 1) = mpg%strvxp(i-1, 1) + mpg%strvxp&
+&           (i-1, 2)
+        IF (i .EQ. mpg%iactive) THEN
+          ifs = mpg%ifssep
+        ELSE
+          ifs = mpg%vxfs(mpg%xpt(i))
+        END IF
+        DO j=mpg%fsfcp(ifs, 1),mpg%fsfcp(ifs, 1)+mpg%fsfcp(ifs, 2)-1
+          ifc = mpg%fsfc(j)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            fccount = 0
+            DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%fcfs(mpg%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              mpg%strvxp(i, 2) = mpg%strvxp(i, 2) + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        IF (mpg%ifssep2 .GT. 0) THEN
+          IF (i .EQ. mpg%iinactive .OR. i .EQ. mpg%iactive) THEN
+            ifs = mpg%ifssep2
+            DO j=mpg%fsfcp(ifs, 1),mpg%fsfcp(ifs, 1)+mpg%fsfcp(ifs, 2)-1
+              ifc = mpg%fsfc(j)
+              DO k=1,2
+                ivx = mpg%fcvx(ifc, k)
+                fccount = 0
+                DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, &
+&                   2)-1
+                  IF (mpg%fcfs(mpg%vxfc(l)) .EQ. ifs) fccount = fccount &
+&                     + 1
+                END DO
+                IF (fccount .EQ. 1) THEN
+                  icount = icount + 1
+                  mpg%strvxp(i, 2) = mpg%strvxp(i, 2) + 1
+                  indxpt(icount) = ivx
+                END IF
+              END DO
+            END DO
+          END IF
+        END IF
+      END DO
+      mpg%nstr = icount
+      ALLOCATE(mpgd%strvx(nbdirsmax,mpg%nstr))
+      DO nd=1,nbdirsmax
+        mpgd%strvx(nd,:) = 0
+      END DO
+      ALLOCATE(mpg%strvx(mpg%nstr))
+      mpg%strvx(1:mpg%nstr) = indxpt(1:mpg%nstr)
+      ALLOCATE(mpgd%strdiv(nbdirsmax,mpg%nstr))
+      DO nd=1,nbdirsmax
+        mpgd%strdiv(nd,:) = 0
+      END DO
+      ALLOCATE(mpg%strdiv(mpg%nstr))
+      ALLOCATE(freg(mpg%nstr))
+      mpg%strdiv = 0
+      freg = 0
+      DO i=1,mpg%nxpt
+        DO j=mpg%strvxp(i, 1),mpg%strvxp(i, 1)+mpg%strvxp(i, 2)-1
+          ivx = mpg%strvx(j)
+          DO k=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+            IF (mpg%strdiv(j) .EQ. 0) THEN
+              ifc = mpg%vxfc(k)
+              IF (mpg%fcreg(ifc) .EQ. 1) THEN
+                mpg%strdiv(j) = 1
+                freg(j) = 1
+              ELSE IF (mpg%fcreg(ifc) .EQ. 4) THEN
+                mpg%strdiv(j) = 2
+                freg(j) = 4
+              ELSE IF (mpg%fcreg(ifc) .EQ. 5) THEN
+                IF (mpg%nxpt .EQ. 1) THEN
+                  mpg%strdiv(j) = 1
+                  freg(j) = 5
+                ELSE IF (i .EQ. mpg%iactive .OR. i .EQ. mpg%iinactive) &
+&               THEN
+                  mpg%strdiv(j) = 3
+                  freg(j) = 5
+                END IF
+              ELSE IF (mpg%fcreg(ifc) .EQ. 8) THEN
+                IF (mpg%nxpt .EQ. 1) THEN
+                  mpg%strdiv(j) = 2
+                  freg(j) = 8
+                ELSE IF (i .EQ. mpg%iactive .OR. i .EQ. mpg%iinactive) &
+&               THEN
+                  mpg%strdiv(j) = 4
+                  freg(j) = 8
+                END IF
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+      ALLOCATE(mpgd%tgvx(nbdirsmax,mpg%ntgc))
+      DO nd=1,nbdirsmax
+        mpgd%tgvx(nd,:) = 0
+      END DO
+      ALLOCATE(mpg%tgvx(mpg%ntgc))
+!csc needed for adjoint AD
+    ELSE
+      ALLOCATE(freg(2))
+      ifc = 1
+      icount = 0
+      DO WHILE (mpg%ifssep .EQ. 0 .AND. ifc .LE. mpg%nfc)
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (mpg%cvreg(icv1) .NE. mpg%cvreg(icv2) .AND. mpg%cvreg(icv1) &
+&           .NE. 0 .AND. mpg%cvreg(icv2) .NE. 0) mpg%ifssep = mpg%fcfs(&
+&           ifc)
+        IF (mpg%ifssep .EQ. 0) ifc = ifc + 1
+      END DO
+      IF (mpg%ifssep .GT. 0) THEN
+        DO i=mpg%fsfcp(mpg%ifssep, 1),mpg%fsfcp(mpg%ifssep, 1)+mpg%fsfcp&
+&           (mpg%ifssep, 2)-1
+          ifc = mpg%fsfc(i)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            DO j=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              ifcc = mpg%vxfc(j)
+              IF (mpg%fclbl(ifcc) .NE. 0) THEN
+                duplicate = .false.
+                DO l=1,icount
+                  IF (indxpt(l) .EQ. ivx) duplicate = .true.
+                END DO
+                IF (.NOT.duplicate) THEN
+                  icount = icount + 1
+                  indxpt(icount) = ivx
+                END IF
+              END IF
+            END DO
+          END DO
+        END DO
+        mpg%ntgc = icount
+        ALLOCATE(mpgd%tgvx(nbdirsmax,mpg%ntgc))
+        DO nd=1,nbdirsmax
+          mpgd%tgvx(nd,:) = 0
+        END DO
+        ALLOCATE(mpg%tgvx(mpg%ntgc))
+        mpg%tgvx(1:mpg%ntgc) = indxpt(1:mpg%ntgc)
+        ALLOCATE(mpgd%strdiv(nbdirsmax,2))
+        DO nd=1,nbdirsmax
+          mpgd%strdiv(nd,:) = 0
+        END DO
+        ALLOCATE(mpg%strdiv(2))
+        mpg%strdiv(1) = 1
+        mpg%strdiv(2) = 2
+        freg(1) = 1
+        freg(2) = 2
+      END IF
+    END IF
+!
+    IF (mpg%nnreg(0) .EQ. 1 .AND. mpg%ifssep .EQ. 0) THEN
+      DO icv=1,mpg%nci
+        IF (mpg%ifssep .LE. 0) THEN
+          DO j=mpg%cvfcp(icv, 1),mpg%cvfcp(icv, 1)+mpg%cvfcp(icv, 2)-1
+            ifc = mpg%cvfc(j)
+            IF (mpg%fccv(ifc, 1) .EQ. icv) icn = mpg%fccv(ifc, 2)
+            IF (mpg%fccv(ifc, 2) .EQ. icv) icn = mpg%fccv(ifc, 1)
+            IF (icn .LE. mpg%nci) THEN
+              IF (mpg%cvonclosedsurface(icv) .NEQV. mpg%&
+&                 cvonclosedsurface(icn)) mpg%ifssep = mpg%fcfs(ifc)
+            END IF
+          END DO
+        END IF
+      END DO
+      IF (mpg%ifssep .EQ. 0) CALL IPGETI('b2mwti_jsep', mpg%ifssep)
+      IF (.NOT.ALLOCATED(freg)) THEN
+        ALLOCATE(freg(2))
+      END IF
+      freg(1) = 1
+      freg(2) = 2
+      IF (mpg%ifssep .GT. 0) THEN
+        indxpt = 0
+        icount = 0
+        ALLOCATE(mpgd%strvxp(nbdirsmax,1, 2))
+        DO nd=1,nbdirsmax
+          mpgd%strvxp(nd,:,:) = 0
+        END DO
+        ALLOCATE(mpg%strvxp(1, 2))
+        mpg%strvxp(1, 1) = 1
+        mpg%strvxp(1, 2) = 2
+        DO j=mpg%fsfcp(mpg%ifssep, 1),mpg%fsfcp(mpg%ifssep, 1)+mpg%fsfcp&
+&           (mpg%ifssep, 2)-1
+          ifc = mpg%fsfc(j)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            fccount = 0
+            DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%fcfs(mpg%vxfc(l)) .EQ. mpg%ifssep) fccount = &
+&                 fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        mpg%nstr = icount
+        IF (mpg%nstr .GT. 0) THEN
+          ALLOCATE(mpgd%strvx(nbdirsmax,mpg%nstr))
+          DO nd=1,nbdirsmax
+            mpgd%strvx(nd,:) = 0
+          END DO
+          ALLOCATE(mpg%strvx(mpg%nstr))
+          mpg%strvx(1:mpg%nstr) = indxpt(1:mpg%nstr)
+          ALLOCATE(mpgd%strdiv(nbdirsmax,mpg%nstr))
+          DO nd=1,nbdirsmax
+            mpgd%strdiv(nd,:) = 0
+          END DO
+          ALLOCATE(mpg%strdiv(mpg%nstr))
+          mpg%strdiv = 0
+          DO i=1,mpg%nstr
+            ivx = mpg%strvx(i)
+            DO j=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%strdiv(i) .EQ. 0) THEN
+                ifc = mpg%vxfc(j)
+                IF (mpg%fcreg(ifc) .EQ. 1) THEN
+                  mpg%strdiv(i) = 1
+                ELSE IF (mpg%fcreg(ifc) .EQ. 2) THEN
+                  mpg%strdiv(i) = 2
+                END IF
+              END IF
+            END DO
+          END DO
+        END IF
+      END IF
+    END IF
+    DEALLOCATE(indxpt)
+!
+    IF (ALLOCATED(mpg%strdiv)) THEN
+      indd = SIZE(mpg%strdiv)
+      result1 = MAXVAL(mpg%strdiv)
+      IF (indd .GT. 0 .AND. result1 .GT. 0) THEN
+        ALLOCATE(mpgd%ifdiv(nbdirsmax,MAXVAL(mpg%strdiv)))
+        DO nd=1,nbdirsmax
+          mpgd%ifdiv(nd,:) = 0
+        END DO
+        ALLOCATE(mpg%ifdiv(MAXVAL(mpg%strdiv)))
+        ALLOCATE(mpgd%ivdiv(nbdirsmax,MAXVAL(mpg%strdiv)))
+        DO nd=1,nbdirsmax
+          mpgd%ivdiv(nd,:) = 0
+        END DO
+        ALLOCATE(mpg%ivdiv(MAXVAL(mpg%strdiv)))
+        ALLOCATE(mpgd%divfcp(nbdirsmax,MAXVAL(mpg%strdiv), 2))
+        DO nd=1,nbdirsmax
+          mpgd%divfcp(nd,:,:) = 0
+        END DO
+        ALLOCATE(mpg%divfcp(MAXVAL(mpg%strdiv), 2))
+        ALLOCATE(indfc(mpg%nfc))
+        indfc = 0
+        icount = 0
+        mpg%ifdiv = 0
+        mpg%ivdiv = 0
+        mpg%divfcp(:, 2) = 0
+! first assemble all the faces
+        DO i=1,indd
+          IF (.NOT.(mpg%strdiv(i) .EQ. 0 .OR. freg(i) .EQ. 0)) THEN
+! already done, skip
+            IF (mpg%divfcp(mpg%strdiv(i), 2) .EQ. 0) THEN
+              DO ifc=1,mpg%nfc
+                IF (mpg%fcreg(ifc) .EQ. freg(i)) THEN
+                  icount = icount + 1
+                  mpg%divfcp(mpg%strdiv(i), 2) = mpg%divfcp(mpg%strdiv(i&
+&                   ), 2) + 1
+                  indfc(icount) = ifc
+                END IF
+              END DO
+            END IF
+          END IF
+        END DO
+        mpg%divfcp(1, 1) = 1
+        result1 = MAXVAL(mpg%strdiv)
+        DO i=2,result1
+          mpg%divfcp(i, 1) = mpg%divfcp(i-1, 1) + mpg%divfcp(i-1, 2)
+        END DO
+        icount = COUNT(indfc(:) .NE. 0)
+        ALLOCATE(mpgd%divfc(nbdirsmax,icount))
+        DO nd=1,nbdirsmax
+          mpgd%divfc(nd,:) = 0
+        END DO
+        ALLOCATE(mpg%divfc(icount))
+        ALLOCATE(mpgd%divfcor(nbdirsmax, icount))
+        mpgd%divfcor = 0.D0
+        ALLOCATE(mpg%divfcor(icount))
+        mpg%divfc = 0
+        mpg%divfcor = 0.0_R8
+        icount = 1
+        DO i=1,indd
+          IF (mpg%strdiv(i) .NE. 0) THEN
+! already done
+            IF (mpg%divfc(mpg%divfcp(mpg%strdiv(i), 1)) .EQ. 0) THEN
+              mpg%divfc(mpg%divfcp(mpg%strdiv(i), 1):mpg%divfcp(mpg%&
+&             strdiv(i), 1)+mpg%divfcp(mpg%strdiv(i), 2)-1) = indfc(&
+&               icount:icount+mpg%divfcp(mpg%strdiv(i), 2)-1)
+              icount = icount + mpg%divfcp(mpg%strdiv(i), 2)
+            END IF
+          END IF
+        END DO
+! now re-order them
+        result1 = MAXVAL(mpg%strdiv)
+        DO i=1,result1
+          ALLOCATE(old_face_list(mpg%divfcp(i, 2)))
+          ALLOCATE(new_face_list(mpg%divfcp(i, 2)))
+          old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, 1)&
+&           :mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = mpg%divfc(mpg%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = mpg%fcvx(mpg%divfc(mpg%divfcp(i, 1)), 1)
+          ivb = mpg%fcvx(mpg%divfc(mpg%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. mpg%divfcp(i, 2))
+            left_match_found = .false.
+            DO j=1,mpg%divfcp(i, 2)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. mpg%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = mpg%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. mpg%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = mpg%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,mpg%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. mpg%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = mpg%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. mpg%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = mpg%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. mpg%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
+                iva = mpg%fcvx(ifc, 1)
+                ivb = mpg%fcvx(ifc, 2)
+                WRITE(6, '(a,4i6)') &
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
+&               , ivb
+              END DO
+              DO j=1,mpg%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = mpg%divfc(mpg%divfcp(i, 1)+j-1)
+                  iva = mpg%fcvx(ifc, 1)
+                  ivb = mpg%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          mpg%divfc(mpg%divfcp(i, 1):mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1&
+&         ) = new_face_list(1:mpg%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
+        END DO
+        DEALLOCATE(indfc)
+      END IF
+    END IF
+!
+    IF (ALLOCATED(freg)) THEN
+      DEALLOCATE(freg)
+    ELSE
+      WRITE(*, *) 'Targetless topology detected :'
+      WRITE(*, *) 'Strike point data not defined'
+    END IF
+!
+    ALLOCATE(mpgd%cvalongboundary(nbdirsmax,mpg%ncv))
+    DO nd=1,nbdirsmax
+      mpgd%cvalongboundary(nd,:) = .false.
+    END DO
+    ALLOCATE(mpg%cvalongboundary(mpg%ncv))
+    mpg%cvalongboundary = .false.
+    fcsbcounter = 0
+    DO icv=mpg%nci+1,mpg%ncv
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fclbl(ifc) .GT. 0) THEN
+        fcsbcounter(mpg%fclbl(ifc)) = fcsbcounter(mpg%fclbl(ifc)) + 1
+        fcsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = ifc
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (icv1 .GT. icv2) THEN
+          cvsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = icv2
+        ELSE
+          cvsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = icv1
+        END IF
+      END IF
+    END DO
+    result1 = MAXVAL(mpg%fclbl)
+    DO k=1,result1
+      DO j=1,fcsbcounter(k)
+        icv2 = cvsb(k, j)
+        ifc = fcsb(k, j)
+        icv1 = MAXVAL(mpg%fccv(ifc, 1:2))
+        IF (j .LT. fcsbcounter(k)) THEN
+          IF (mpg%cvft(icv2) .EQ. mpg%cvft(cvsb(k, j+1))) mpg%&
+&           cvalongboundary(icv2) = .true.
+        END IF
+        IF (j .GT. 1) THEN
+          IF (mpg%cvft(icv2) .EQ. mpg%cvft(cvsb(k, j-1))) mpg%&
+&           cvalongboundary(icv2) = .true.
+        END IF
+      END DO
+    END DO
+!
+    ALLOCATE(mpgd%fcs_wall(nbdirsmax,mpg%ncg))
+    DO nd=1,nbdirsmax
+      mpgd%fcs_wall(nd,:) = 0
+    END DO
+    ALLOCATE(mpg%fcs_wall(mpg%ncg))
+!
+    k = 1
+    DO l=mpg%nci+1,mpg%ncv
+      mpg%fcs_wall(k) = mpg%cvfc(mpg%cvfcp(l, 1))
+      k = k + 1
+    END DO
+!
+    DO 110 k=1,mpg%ncg
+      DO l=k+1,mpg%ncg
+        IF (((mpg%fcvx(mpg%fcs_wall(k), 1) .EQ. mpg%fcvx(mpg%fcs_wall(l)&
+&           , 1) .OR. mpg%fcvx(mpg%fcs_wall(k), 1) .EQ. mpg%fcvx(mpg%&
+&           fcs_wall(l), 2)) .OR. mpg%fcvx(mpg%fcs_wall(k), 2) .EQ. mpg%&
+&           fcvx(mpg%fcs_wall(l), 1)) .OR. mpg%fcvx(mpg%fcs_wall(k), 2) &
+&           .EQ. mpg%fcvx(mpg%fcs_wall(l), 2)) GOTO 100
+      END DO
+      GOTO 110
+ 100  inew = mpg%fcs_wall(k+1)
+      mpg%fcs_wall(k+1) = mpg%fcs_wall(l)
+      mpg%fcs_wall(l) = inew
+ 110 CONTINUE
+!
+    WRITE(*, *) 'nXpt, nStr, nTgc ', mpg%nxpt, mpg%nstr, mpg%ntgc
+!
+    RETURN
+  END SUBROUTINE INIT_WALLS_AND_TARGETS_DV
+
+!
+!*********************************************************************
+!
+  SUBROUTINE INIT_WALLS_AND_TARGETS(mpg, gm)
+    USE B2US_MAP_DIFFV
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(INOUT) :: mpg
+    TYPE(GEOMETRY), INTENT(IN) :: gm
+    INTEGER :: i, j, k, l, indd, inew, icv, icv1, icv2, icn, ifc, ifcc, &
+&   ifs, ivx, iva, ivb
+    INTEGER :: icount, fccount
+    INTEGER, SAVE :: artificial_slab=0
+    INTEGER, SAVE :: found=0
+    INTEGER, ALLOCATABLE :: indxpt(:), indfc(:), regcount(:), freg(:), &
+&   old_face_list(:), new_face_list(:)
+    INTEGER :: fcsb(MAXVAL(mpg%fclbl), mpg%nci), fcsbcounter(MAXVAL(mpg%&
+&   fclbl)), cvsb(MAXVAL(mpg%fclbl), mpg%nci)
+    LOGICAL :: duplicate, left_match_found, right_match_found
+    EXTERNAL IPGETI, XERRAB
+    INTRINSIC MOD
+    INTRINSIC ANY
+    INTRINSIC ALLOCATED
+    INTRINSIC SIZE
+    INTRINSIC COUNT
+    INTRINSIC MIN
+    INTEGER :: result1
+    INTRINSIC MAXVAL
+!
+!   ..identify periodicity
+    CALL IS_PERIODIC(mpg, gm)
+!
+!   ..identify cells on closed surfaces
+!   ..for Goat grids, was already done in is_periodic
+    IF (mpg%isclassicalgrid .EQ. 1) THEN
+      IF (mpg%nnreg(0) .EQ. 1) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%periodic_bc .EQ. 1
+      ELSE IF (((mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 4) .OR. mpg%&
+&         nnreg(0) .EQ. 5) .OR. mpg%nnreg(0) .EQ. 8) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = MOD(mpg%cvreg(1:mpg%nci), 4) &
+&         .EQ. 1
+      ELSE IF (mpg%nnreg(0) .EQ. 7) THEN
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%cvreg(1:mpg%nci) .EQ. 1
+      ELSE
+        mpg%cvonclosedsurface(1:mpg%nci) = mpg%cvreg(1:mpg%nci) .EQ. 1
+        WRITE(*, *) 'Warning: unknown number of regions'
+!call xerrab ('Unknown number of regions!')
+        WRITE(*, *) 'Assuming core is region 1'
+      END IF
+    END IF
+    mpg%cvonclosedsurface(mpg%nci+1:mpg%ncv) = .false.
+!
+!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
+    ALLOCATE(indxpt(mpg%nvx))
+    indxpt = 0
+    mpg%nxpt = 0
+    mpg%iactive = 0
+    mpg%iinactive = 0
+    DO ivx=1,mpg%nvx
+      IF (mpg%vxfcp(ivx, 2) .GE. 4) THEN
+        fccount = 0
+        DO i=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+          ifc = mpg%vxfc(i)
+          IF (mpg%fcfs(ifc) .NE. 0) fccount = fccount + 1
+        END DO
+        IF (fccount .EQ. 4) THEN
+          mpg%nxpt = mpg%nxpt + 1
+          indxpt(mpg%nxpt) = ivx
+          DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, 2)-1
+            icv = mpg%vxcv(i)
+            IF (mpg%cvreg(icv) .EQ. 1) THEN
+              IF (mpg%iactive .EQ. 0) THEN
+                mpg%iactive = mpg%nxpt
+              ELSE IF (mpg%iinactive .EQ. 0) THEN
+                mpg%iinactive = mpg%nxpt
+              END IF
+            END IF
+          END DO
+        END IF
+      END IF
+    END DO
+!
+!! use a different approach for slab cases with cuts,
+!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other i
+!nternal vertices.
+!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+    CALL IPGETI('artificial_slab', artificial_slab)
+    IF (mpg%nxpt .EQ. 0 .AND. artificial_slab .EQ. 1) THEN
+      DO ivx=1,mpg%nvx
+        IF (found .NE. 1) THEN
+          IF (mpg%vxcvp(ivx, 2) .GE. 4) THEN
+            ALLOCATE(regcount(mpg%vxcvp(ivx, 2)))
+            DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, 2)-1
+              icv = mpg%vxcv(i)
+              regcount(i-mpg%vxcvp(ivx, 1)+1) = mpg%cvreg(icv)
+            END DO
+            IF (ANY(regcount .EQ. 1) .AND. ANY(regcount .EQ. 2) .AND. (&
+&               ANY(regcount .EQ. 3) .OR. ANY(regcount .EQ. 4))) THEN
+              mpg%nxpt = mpg%nxpt + 1
+              indxpt(mpg%nxpt) = ivx
+              found = 1
+              IF (mpg%iactive .EQ. 0) THEN
+                DO i=mpg%vxcvp(ivx, 1),mpg%vxcvp(ivx, 1)+mpg%vxcvp(ivx, &
+&                   2)-1
+                  IF (mpg%iactive .EQ. 0) THEN
+                    icv = mpg%vxcv(i)
+                    IF (mpg%cvreg(icv) .EQ. 1) mpg%iactive = mpg%nxpt
+                  END IF
+                END DO
+              END IF
+            END IF
+            DEALLOCATE(regcount)
+          END IF
+        END IF
+      END DO
+    END IF
+!
+    mpg%nstr = 0
+    mpg%ntgc = 0
+    IF (mpg%nxpt .GT. 0) THEN
+      ALLOCATE(mpg%xpt(mpg%nxpt))
+      mpg%xpt(1:mpg%nxpt) = indxpt(1:mpg%nxpt)
+      IF (mpg%iactive .NE. 0) THEN
+        DO i=1,mpg%vxfcp(mpg%xpt(mpg%iactive), 2)
+          ifs = mpg%fcfs(mpg%vxfc(mpg%vxfcp(mpg%xpt(mpg%iactive), 1)+i-1&
+&           ))
+          IF (ifs .NE. 0) THEN
+            IF (mpg%ifssep .EQ. 0) mpg%ifssep = ifs
+            IF (mpg%ifssep2 .EQ. 0 .AND. ifs .NE. mpg%ifssep) mpg%&
+&             ifssep2 = ifs
+          END IF
+        END DO
+      END IF
+      indxpt = 0
+      icount = 0
+      ALLOCATE(mpg%strvxp(mpg%nxpt, 2))
+      mpg%strvxp = 0
+      mpg%strvxp(1, 1) = 1
+      DO i=1,mpg%nxpt
+        IF (i .GT. 1) mpg%strvxp(i, 1) = mpg%strvxp(i-1, 1) + mpg%strvxp&
+&           (i-1, 2)
+        IF (i .EQ. mpg%iactive) THEN
+          ifs = mpg%ifssep
+        ELSE
+          ifs = mpg%vxfs(mpg%xpt(i))
+        END IF
+        DO j=mpg%fsfcp(ifs, 1),mpg%fsfcp(ifs, 1)+mpg%fsfcp(ifs, 2)-1
+          ifc = mpg%fsfc(j)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            fccount = 0
+            DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%fcfs(mpg%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              mpg%strvxp(i, 2) = mpg%strvxp(i, 2) + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        IF (mpg%ifssep2 .GT. 0) THEN
+          IF (i .EQ. mpg%iinactive .OR. i .EQ. mpg%iactive) THEN
+            ifs = mpg%ifssep2
+            DO j=mpg%fsfcp(ifs, 1),mpg%fsfcp(ifs, 1)+mpg%fsfcp(ifs, 2)-1
+              ifc = mpg%fsfc(j)
+              DO k=1,2
+                ivx = mpg%fcvx(ifc, k)
+                fccount = 0
+                DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, &
+&                   2)-1
+                  IF (mpg%fcfs(mpg%vxfc(l)) .EQ. ifs) fccount = fccount &
+&                     + 1
+                END DO
+                IF (fccount .EQ. 1) THEN
+                  icount = icount + 1
+                  mpg%strvxp(i, 2) = mpg%strvxp(i, 2) + 1
+                  indxpt(icount) = ivx
+                END IF
+              END DO
+            END DO
+          END IF
+        END IF
+      END DO
+      mpg%nstr = icount
+      ALLOCATE(mpg%strvx(mpg%nstr))
+      mpg%strvx(1:mpg%nstr) = indxpt(1:mpg%nstr)
+      ALLOCATE(mpg%strdiv(mpg%nstr))
+      ALLOCATE(freg(mpg%nstr))
+      mpg%strdiv = 0
+      freg = 0
+      DO i=1,mpg%nxpt
+        DO j=mpg%strvxp(i, 1),mpg%strvxp(i, 1)+mpg%strvxp(i, 2)-1
+          ivx = mpg%strvx(j)
+          DO k=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+            IF (mpg%strdiv(j) .EQ. 0) THEN
+              ifc = mpg%vxfc(k)
+              IF (mpg%fcreg(ifc) .EQ. 1) THEN
+                mpg%strdiv(j) = 1
+                freg(j) = 1
+              ELSE IF (mpg%fcreg(ifc) .EQ. 4) THEN
+                mpg%strdiv(j) = 2
+                freg(j) = 4
+              ELSE IF (mpg%fcreg(ifc) .EQ. 5) THEN
+                IF (mpg%nxpt .EQ. 1) THEN
+                  mpg%strdiv(j) = 1
+                  freg(j) = 5
+                ELSE IF (i .EQ. mpg%iactive .OR. i .EQ. mpg%iinactive) &
+&               THEN
+                  mpg%strdiv(j) = 3
+                  freg(j) = 5
+                END IF
+              ELSE IF (mpg%fcreg(ifc) .EQ. 8) THEN
+                IF (mpg%nxpt .EQ. 1) THEN
+                  mpg%strdiv(j) = 2
+                  freg(j) = 8
+                ELSE IF (i .EQ. mpg%iactive .OR. i .EQ. mpg%iinactive) &
+&               THEN
+                  mpg%strdiv(j) = 4
+                  freg(j) = 8
+                END IF
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+      ALLOCATE(mpg%tgvx(mpg%ntgc))
+!csc needed for adjoint AD
+    ELSE
+      ALLOCATE(freg(2))
+      ifc = 1
+      icount = 0
+      DO WHILE (mpg%ifssep .EQ. 0 .AND. ifc .LE. mpg%nfc)
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (mpg%cvreg(icv1) .NE. mpg%cvreg(icv2) .AND. mpg%cvreg(icv1) &
+&           .NE. 0 .AND. mpg%cvreg(icv2) .NE. 0) mpg%ifssep = mpg%fcfs(&
+&           ifc)
+        IF (mpg%ifssep .EQ. 0) ifc = ifc + 1
+      END DO
+      IF (mpg%ifssep .GT. 0) THEN
+        DO i=mpg%fsfcp(mpg%ifssep, 1),mpg%fsfcp(mpg%ifssep, 1)+mpg%fsfcp&
+&           (mpg%ifssep, 2)-1
+          ifc = mpg%fsfc(i)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            DO j=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              ifcc = mpg%vxfc(j)
+              IF (mpg%fclbl(ifcc) .NE. 0) THEN
+                duplicate = .false.
+                DO l=1,icount
+                  IF (indxpt(l) .EQ. ivx) duplicate = .true.
+                END DO
+                IF (.NOT.duplicate) THEN
+                  icount = icount + 1
+                  indxpt(icount) = ivx
+                END IF
+              END IF
+            END DO
+          END DO
+        END DO
+        mpg%ntgc = icount
+        ALLOCATE(mpg%tgvx(mpg%ntgc))
+        mpg%tgvx(1:mpg%ntgc) = indxpt(1:mpg%ntgc)
+        ALLOCATE(mpg%strdiv(2))
+        mpg%strdiv(1) = 1
+        mpg%strdiv(2) = 2
+        freg(1) = 1
+        freg(2) = 2
+      END IF
+    END IF
+!
+    IF (mpg%nnreg(0) .EQ. 1 .AND. mpg%ifssep .EQ. 0) THEN
+      DO icv=1,mpg%nci
+        IF (mpg%ifssep .LE. 0) THEN
+          DO j=mpg%cvfcp(icv, 1),mpg%cvfcp(icv, 1)+mpg%cvfcp(icv, 2)-1
+            ifc = mpg%cvfc(j)
+            IF (mpg%fccv(ifc, 1) .EQ. icv) icn = mpg%fccv(ifc, 2)
+            IF (mpg%fccv(ifc, 2) .EQ. icv) icn = mpg%fccv(ifc, 1)
+            IF (icn .LE. mpg%nci) THEN
+              IF (mpg%cvonclosedsurface(icv) .NEQV. mpg%&
+&                 cvonclosedsurface(icn)) mpg%ifssep = mpg%fcfs(ifc)
+            END IF
+          END DO
+        END IF
+      END DO
+      IF (mpg%ifssep .EQ. 0) CALL IPGETI('b2mwti_jsep', mpg%ifssep)
+      IF (.NOT.ALLOCATED(freg)) THEN
+        ALLOCATE(freg(2))
+      END IF
+      freg(1) = 1
+      freg(2) = 2
+      IF (mpg%ifssep .GT. 0) THEN
+        indxpt = 0
+        icount = 0
+        ALLOCATE(mpg%strvxp(1, 2))
+        mpg%strvxp(1, 1) = 1
+        mpg%strvxp(1, 2) = 2
+        DO j=mpg%fsfcp(mpg%ifssep, 1),mpg%fsfcp(mpg%ifssep, 1)+mpg%fsfcp&
+&           (mpg%ifssep, 2)-1
+          ifc = mpg%fsfc(j)
+          DO k=1,2
+            ivx = mpg%fcvx(ifc, k)
+            fccount = 0
+            DO l=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%fcfs(mpg%vxfc(l)) .EQ. mpg%ifssep) fccount = &
+&                 fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        mpg%nstr = icount
+        IF (mpg%nstr .GT. 0) THEN
+          ALLOCATE(mpg%strvx(mpg%nstr))
+          mpg%strvx(1:mpg%nstr) = indxpt(1:mpg%nstr)
+          ALLOCATE(mpg%strdiv(mpg%nstr))
+          mpg%strdiv = 0
+          DO i=1,mpg%nstr
+            ivx = mpg%strvx(i)
+            DO j=mpg%vxfcp(ivx, 1),mpg%vxfcp(ivx, 1)+mpg%vxfcp(ivx, 2)-1
+              IF (mpg%strdiv(i) .EQ. 0) THEN
+                ifc = mpg%vxfc(j)
+                IF (mpg%fcreg(ifc) .EQ. 1) THEN
+                  mpg%strdiv(i) = 1
+                ELSE IF (mpg%fcreg(ifc) .EQ. 2) THEN
+                  mpg%strdiv(i) = 2
+                END IF
+              END IF
+            END DO
+          END DO
+        END IF
+      END IF
+    END IF
+    DEALLOCATE(indxpt)
+!
+    IF (ALLOCATED(mpg%strdiv)) THEN
+      indd = SIZE(mpg%strdiv)
+      result1 = MAXVAL(mpg%strdiv)
+      IF (indd .GT. 0 .AND. result1 .GT. 0) THEN
+        ALLOCATE(mpg%ifdiv(MAXVAL(mpg%strdiv)))
+        ALLOCATE(mpg%ivdiv(MAXVAL(mpg%strdiv)))
+        ALLOCATE(mpg%divfcp(MAXVAL(mpg%strdiv), 2))
+        ALLOCATE(indfc(mpg%nfc))
+        indfc = 0
+        icount = 0
+        mpg%ifdiv = 0
+        mpg%ivdiv = 0
+        mpg%divfcp(:, 2) = 0
+! first assemble all the faces
+        DO i=1,indd
+          IF (.NOT.(mpg%strdiv(i) .EQ. 0 .OR. freg(i) .EQ. 0)) THEN
+! already done, skip
+            IF (mpg%divfcp(mpg%strdiv(i), 2) .EQ. 0) THEN
+              DO ifc=1,mpg%nfc
+                IF (mpg%fcreg(ifc) .EQ. freg(i)) THEN
+                  icount = icount + 1
+                  mpg%divfcp(mpg%strdiv(i), 2) = mpg%divfcp(mpg%strdiv(i&
+&                   ), 2) + 1
+                  indfc(icount) = ifc
+                END IF
+              END DO
+            END IF
+          END IF
+        END DO
+        mpg%divfcp(1, 1) = 1
+        result1 = MAXVAL(mpg%strdiv)
+        DO i=2,result1
+          mpg%divfcp(i, 1) = mpg%divfcp(i-1, 1) + mpg%divfcp(i-1, 2)
+        END DO
+        icount = COUNT(indfc(:) .NE. 0)
+        ALLOCATE(mpg%divfc(icount))
+        ALLOCATE(mpg%divfcor(icount))
+        mpg%divfc = 0
+        mpg%divfcor = 0.0_R8
+        icount = 1
+        DO i=1,indd
+          IF (mpg%strdiv(i) .NE. 0) THEN
+! already done
+            IF (mpg%divfc(mpg%divfcp(mpg%strdiv(i), 1)) .EQ. 0) THEN
+              mpg%divfc(mpg%divfcp(mpg%strdiv(i), 1):mpg%divfcp(mpg%&
+&             strdiv(i), 1)+mpg%divfcp(mpg%strdiv(i), 2)-1) = indfc(&
+&               icount:icount+mpg%divfcp(mpg%strdiv(i), 2)-1)
+              icount = icount + mpg%divfcp(mpg%strdiv(i), 2)
+            END IF
+          END IF
+        END DO
+! now re-order them
+        result1 = MAXVAL(mpg%strdiv)
+        DO i=1,result1
+          ALLOCATE(old_face_list(mpg%divfcp(i, 2)))
+          ALLOCATE(new_face_list(mpg%divfcp(i, 2)))
+          old_face_list(1:mpg%divfcp(i, 2)) = mpg%divfc(mpg%divfcp(i, 1)&
+&           :mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = mpg%divfc(mpg%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = mpg%fcvx(mpg%divfc(mpg%divfcp(i, 1)), 1)
+          ivb = mpg%fcvx(mpg%divfc(mpg%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. mpg%divfcp(i, 2))
+            left_match_found = .false.
+            DO j=1,mpg%divfcp(i, 2)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. mpg%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = mpg%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. mpg%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = mpg%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,mpg%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. mpg%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = mpg%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. mpg%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = mpg%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. mpg%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
+                iva = mpg%fcvx(ifc, 1)
+                ivb = mpg%fcvx(ifc, 2)
+                WRITE(6, '(a,4i6)') &
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
+&               , ivb
+              END DO
+              DO j=1,mpg%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = mpg%divfc(mpg%divfcp(i, 1)+j-1)
+                  iva = mpg%fcvx(ifc, 1)
+                  ivb = mpg%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          mpg%divfc(mpg%divfcp(i, 1):mpg%divfcp(i, 1)+mpg%divfcp(i, 2)-1&
+&         ) = new_face_list(1:mpg%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
+        END DO
+        DEALLOCATE(indfc)
+      END IF
+    END IF
+!
+    IF (ALLOCATED(freg)) THEN
+      DEALLOCATE(freg)
+    ELSE
+      WRITE(*, *) 'Targetless topology detected :'
+      WRITE(*, *) 'Strike point data not defined'
+    END IF
+!
+    ALLOCATE(mpg%cvalongboundary(mpg%ncv))
+    mpg%cvalongboundary = .false.
+    fcsbcounter = 0
+    DO icv=mpg%nci+1,mpg%ncv
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fclbl(ifc) .GT. 0) THEN
+        fcsbcounter(mpg%fclbl(ifc)) = fcsbcounter(mpg%fclbl(ifc)) + 1
+        fcsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = ifc
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (icv1 .GT. icv2) THEN
+          cvsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = icv2
+        ELSE
+          cvsb(mpg%fclbl(ifc), fcsbcounter(mpg%fclbl(ifc))) = icv1
+        END IF
+      END IF
+    END DO
+    result1 = MAXVAL(mpg%fclbl)
+    DO k=1,result1
+      DO j=1,fcsbcounter(k)
+        icv2 = cvsb(k, j)
+        ifc = fcsb(k, j)
+        icv1 = MAXVAL(mpg%fccv(ifc, 1:2))
+        IF (j .LT. fcsbcounter(k)) THEN
+          IF (mpg%cvft(icv2) .EQ. mpg%cvft(cvsb(k, j+1))) mpg%&
+&           cvalongboundary(icv2) = .true.
+        END IF
+        IF (j .GT. 1) THEN
+          IF (mpg%cvft(icv2) .EQ. mpg%cvft(cvsb(k, j-1))) mpg%&
+&           cvalongboundary(icv2) = .true.
+        END IF
+      END DO
+    END DO
+!
+    ALLOCATE(mpg%fcs_wall(mpg%ncg))
+!
+    k = 1
+    DO l=mpg%nci+1,mpg%ncv
+      mpg%fcs_wall(k) = mpg%cvfc(mpg%cvfcp(l, 1))
+      k = k + 1
+    END DO
+!
+    DO 100 k=1,mpg%ncg
+      DO l=k+1,mpg%ncg
+        IF (((mpg%fcvx(mpg%fcs_wall(k), 1) .EQ. mpg%fcvx(mpg%fcs_wall(l)&
+&           , 1) .OR. mpg%fcvx(mpg%fcs_wall(k), 1) .EQ. mpg%fcvx(mpg%&
+&           fcs_wall(l), 2)) .OR. mpg%fcvx(mpg%fcs_wall(k), 2) .EQ. mpg%&
+&           fcvx(mpg%fcs_wall(l), 1)) .OR. mpg%fcvx(mpg%fcs_wall(k), 2) &
+&           .EQ. mpg%fcvx(mpg%fcs_wall(l), 2)) THEN
+          inew = mpg%fcs_wall(k+1)
+          mpg%fcs_wall(k+1) = mpg%fcs_wall(l)
+          mpg%fcs_wall(l) = inew
+          GOTO 100
+        END IF
+      END DO
+ 100 CONTINUE
+!
+    WRITE(*, *) 'nXpt, nStr, nTgc ', mpg%nxpt, mpg%nstr, mpg%ntgc
+!
+    RETURN
+  END SUBROUTINE INIT_WALLS_AND_TARGETS
+
 !
 !*********************************************************************
 !
@@ -2223,13 +3377,15 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(IN) :: gm
-    INTEGER :: icvm, icvn, icvp, icv, ifc, ift, icount
-    LOGICAL :: closed, end_found, all_closed
+    INTEGER :: icvm, icvn, icvp, icv, ifc, ift, icount, keep_count
+    INTEGER :: i, icvtmp, ivc1, ivc2
+    LOGICAL :: closed, end_found, all_closed, pinch
 !
     mpg%periodic_bc = 0
-    IF (mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 5) THEN
+    IF (mpg%isclassicalgrid .EQ. 1 .AND. (mpg%nnreg(0) .EQ. 2 .OR. mpg%&
+&       nnreg(0) .EQ. 5)) THEN
       mpg%periodic_bc = 1
-    ELSE IF (mpg%nnreg(0) .EQ. 1) THEN
+    ELSE IF (mpg%nnreg(0) .EQ. 1 .OR. mpg%isclassicalgrid .EQ. 0) THEN
       all_closed = mpg%nft .GT. 0
       DO ift=1,mpg%nft
         closed = .false.
@@ -2237,12 +3393,17 @@ CONTAINS
         IF (mpg%ftcvp(ift, 2) .GT. 1) THEN
           icvm = icv
           icvn = 0
+          keep_count = 0
           DO ifc=mpg%cvfcp(icv, 1),mpg%cvfcp(icv, 1)+mpg%cvfcp(icv, 2)-1
             IF (gm%fcqalf(mpg%cvfc(ifc), 0) .NE. 0.0_R8) THEN
               IF (mpg%fccv(mpg%cvfc(ifc), 1) .EQ. icv) THEN
-                icvn = mpg%fccv(mpg%cvfc(ifc), 2)
+                icvtmp = mpg%fccv(mpg%cvfc(ifc), 2)
               ELSE
-                icvn = mpg%fccv(mpg%cvfc(ifc), 1)
+                icvtmp = mpg%fccv(mpg%cvfc(ifc), 1)
+              END IF
+              IF (icvtmp .LE. mpg%nci) THEN
+                keep_count = keep_count + 1
+                icvn = icvtmp
               END IF
             END IF
           END DO
@@ -2250,24 +3411,46 @@ CONTAINS
           end_found = icvn .EQ. 0
           DO WHILE (.NOT.end_found)
             icvp = 0
+            keep_count = 0
             DO ifc=mpg%cvfcp(icvn, 1),mpg%cvfcp(icvn, 1)+mpg%cvfcp(icvn&
 &               , 2)-1
               IF (gm%fcqalf(mpg%cvfc(ifc), 0) .NE. 0.0_R8) THEN
                 IF (mpg%fccv(mpg%cvfc(ifc), 1) .NE. icvm) THEN
                   IF (mpg%fccv(mpg%cvfc(ifc), 2) .NE. icvm) THEN
                     IF (mpg%fccv(mpg%cvfc(ifc), 1) .EQ. icvn) THEN
-                      icvp = mpg%fccv(mpg%cvfc(ifc), 2)
+                      icvtmp = mpg%fccv(mpg%cvfc(ifc), 2)
                     ELSE
-                      icvp = mpg%fccv(mpg%cvfc(ifc), 1)
+                      icvtmp = mpg%fccv(mpg%cvfc(ifc), 1)
+                    END IF
+                    IF (icvtmp .LE. mpg%nci) THEN
+                      keep_count = keep_count + 1
+                      icvp = icvtmp
                     END IF
                   END IF
                 END IF
               END IF
             END DO
-            icvm = icvn
-            icvn = icvp
-            closed = icvp .EQ. icv
-            end_found = closed .OR. icvp .EQ. 0
+            IF (icvp .EQ. 0) THEN
+! genuine dead end: check whether the cell we are
+! stuck at shares a vertex with the flux tube
+! original seed cell -- a valid closed-loop pinch-point
+! (e.g. limiter-tangent) with no direct face link
+              pinch = .false.
+              DO ivc1=mpg%cvvxp(icvn, 1),mpg%cvvxp(icvn, 1)+mpg%cvvxp(&
+&                 icvn, 2)-1
+                DO ivc2=mpg%cvvxp(icv, 1),mpg%cvvxp(icv, 1)+mpg%cvvxp(&
+&                   icv, 2)-1
+                  IF (mpg%cvvx(ivc1) .EQ. mpg%cvvx(ivc2)) pinch = .true.
+                END DO
+              END DO
+              closed = pinch
+              end_found = .true.
+            ELSE
+              icvm = icvn
+              icvn = icvp
+              closed = icvp .EQ. icv
+              end_found = closed
+            END IF
           END DO
         ELSE IF (mpg%ftcvp(ift, 2) .EQ. 1) THEN
           icount = 0
@@ -2283,6 +3466,12 @@ CONTAINS
           closed = .true.
         END IF
         all_closed = all_closed .AND. closed
+        IF (closed .AND. mpg%isclassicalgrid .EQ. 0) THEN
+          DO i=1,mpg%ftcvp(ift, 2)
+            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+            mpg%cvonclosedsurface(icv) = .true.
+          END DO
+        END IF
       END DO
       IF (all_closed) mpg%periodic_bc = 1
     END IF
@@ -2392,19 +3581,27 @@ CONTAINS
 ! stop the for loop if we found the next face
           IF (mpg%fcfs(fc_next) .EQ. ifs) THEN
 ! face belongs to flux tube and is not the previous face
-            found_next = .true.
-            ll = ll + geo%fcht(fc_next)*geo%fcbb(fc_next, 3)/geo%fcbb(&
-&             fc_next, 0)
-            vx1 = mpg%fcvx(fc_next, 1)
-! identify vertex of next face which is not the current vertex
-            vx2 = mpg%fcvx(fc_next, 2)
-! update the current face number
-            IF (vx1 .EQ. vx_current) THEN
-              vx_current = vx2
+! if we are back at the starting face, this
+! flux surface is closed: stop here instead
+! of looping forever
+            IF (fc_next .EQ. ifc) THEN
+              found_next = .false.
+              GOTO 100
             ELSE
-              vx_current = vx1
+              found_next = .true.
+              ll = ll + geo%fcht(fc_next)*geo%fcbb(fc_next, 3)/geo%fcbb(&
+&               fc_next, 0)
+              vx1 = mpg%fcvx(fc_next, 1)
+! identify vertex of next face which is not the current vertex
+              vx2 = mpg%fcvx(fc_next, 2)
+! update the current face number
+              IF (vx1 .EQ. vx_current) THEN
+                vx_current = vx2
+              ELSE
+                vx_current = vx1
+              END IF
+              fc_current = fc_next
             END IF
-            fc_current = fc_next
           END IF
           IF (found_next) GOTO 100
         END IF

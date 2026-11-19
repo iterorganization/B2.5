@@ -162,7 +162,7 @@ SUBROUTINE B2TBFL_NODIFF(ncv, nfc, lcore, mpg, flux, tbfl, div)
     DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
       icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
-! number of the guard cell
+! number of the real cell
       icn = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
       ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
