@@ -10,6 +10,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
+      use b2mod_balance
+     & , only : update_balance_charge, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2nppo
 #ifndef NAGFOR
@@ -103,6 +107,11 @@
         call b2ursd (nCv, nFc, mpg, dv%ne, pl%po, sr%sch, dv%fch,
      &    dv%respo)
       endif                                                         !srv 22.05.18
+#ifndef FIXED_POINT
+*   ..balance.nc: sources, currents and residual of this equation
+      if (balance_netcdf.ne.0)
+     &  call update_balance_charge(nCv,nFc,mpg,dv%ne,pl%po,sr%sch,dv)
+#endif
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
 c-rfs     .  sch(20,-1,0), sch(20,-1,1),

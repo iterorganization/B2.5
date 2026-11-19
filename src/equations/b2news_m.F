@@ -18,6 +18,11 @@
      & , only : restart_ma28_for_us
       use b2mod_facdrift_ExB
       use b2mod_convergence                                             !srv 15.02.26
+#ifndef FIXED_POINT
+      use b2mod_balance
+     & , only : update_balance_charge, reset_balance_sources_charge,
+     &          balance_netcdf
+#endif
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -477,8 +482,9 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
 *    ..compute particle flux
+*      (balance.nc keeps the parts of the flux used by b2npco above)
         call b2tfnb (nCv, nFc, nVx, is, ismain,
-     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)        !djm Jan2017
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo                                                              !srv 01.10.99
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_M_LOOP2))
 !$OMP END PARALLEL DO
@@ -627,6 +633,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &     st%sr, st%srw, st%psnc, st%psnl, wrong_flow, .true., 'pot')
 *   .. store contributions from BC
           st%sr%sch = st%srw%sch0
+#ifndef FIXED_POINT
+          if (balance_netcdf.ne.0) call reset_balance_sources_charge
+#endif
           if(switch%iout_iter_po.ge.1.and.
      &       mod(ncall_b2news_,switch%ntim_step_out).eq.0)
      >     write(700,'(2i6,es14.6,es14.6,2x,l1)') ncall_b2news_,
@@ -651,6 +660,12 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &     call b2ursd (nCv, nFc, mpg,
      &                  st%dv%ne, st%pl%po, st%sr%sch, st%dv%fch,
      &                  st%dv%respo)
+#ifndef FIXED_POINT
+*   ..balance.nc: the potential equation also when it is not solved
+         if (balance_netcdf.ne.0)
+     &    call update_balance_charge(nCv,nFc,mpg,st%dv%ne,st%pl%po,
+     &                               st%sr%sch,st%dv)
+#endif
         endif
       endif           ! if pot_eq                                        !srv 13.07.05 29.01.20 }
 
