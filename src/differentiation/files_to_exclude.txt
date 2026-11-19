@@ -132,4 +132,7 @@
   invert_matrix
   b2mod_umfpack
   b2mod_pardiso
-  b2mod_ngs_coupling
+  cdfchord
+  b2mod_chords
+  b2mod_chord_interp
+  b2mod_chord_interp_tri

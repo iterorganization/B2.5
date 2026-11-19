@@ -1432,38 +1432,11 @@ subroutine check_file_size:
  external:
  shape:(param 1, param 2, param 3)
  deps: (id, id, id)
-
-subroutine write_apond_exchange_meta:
- external:
- shape:(param 1, param 2, param 3, param 4)
- deps: (id, id, id, id)
-
-subroutine set_apond_exchange_meta:
- external:
- shape:()
- deps: ()
-
-subroutine flush_and_sync:
- external:
- shape:(param 1)
- deps: (id)
-
-subroutine remove_file:
- external:
- shape:(param 1)
- deps: (id)
-
-subroutine atomic_publish:
- external:
- shape:(param 1, param 2)
- deps: (id, id) 
  
-subroutine sync_to_ngs:
+subroutine cdfchord:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11)
- deps: (id, id, id, id, id, id, id, id, id, id, id)
- 
-
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8)
+ deps: (id, id, id, id, id, id, id, id)
 
 
  
