@@ -70,7 +70,7 @@
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
      &  b2xvsg, b2nxfc,
-     &  b2sigp, b2sicf, b2nxcm, b2urmo, b2usmo_perp
+     &  b2sigp, b2sicf, b2nxcm, b2urmo
 
 *-----------------------------------------------------------------------
 *.computation
@@ -169,17 +169,17 @@
       endif                                                          
 
 *    ..compute correction
-      call b2usmo_perp (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
-     &    b2npmo_solvedum, itcnt, rxg_npmo_mol_perp, ro, pm,
-     &    u_rad_mol(:,0), sm_mol_rad,
-     &    flcb_rad, cvcb_rad, dv%resmo_mol_rad, zeroes_nCv, 
-     &    dv%coru_mol_rad, aa, wrk1, 'b2usmo_mol_rad') 
+c      call b2usmo_perp (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
+c     &    b2npmo_solvedum, itcnt, rxg_npmo_mol_perp, ro, pm,
+c     &    u_rad_mol(:,0), sm_mol_rad,
+c     &    flcb_rad, cvcb_rad, dv%resmo_mol_rad, zeroes_nCv, 
+c     &    dv%coru_mol_rad, aa, wrk1, 'b2usmo_mol_rad') 
 
-      call b2usmo_perp (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
-     &    b2npmo_solvedum, itcnt, rxg_npmo_mol_perp, ro, pm,
-     &    u_dia_mol(:,0), sm_mol_dia,
-     &    flcb_dia, cvcb_dia, dv%resmo_mol_dia, zeroes_nCv, 
-     &    dv%coru_mol_dia, aa, wrk1, 'b2usmo_mol_dia') 
+c      call b2usmo_perp (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
+c     &    b2npmo_solvedum, itcnt, rxg_npmo_mol_perp, ro, pm,
+c     &    u_dia_mol(:,0), sm_mol_dia,
+c     &    flcb_dia, cvcb_dia, dv%resmo_mol_dia, zeroes_nCv, 
+c     &    dv%coru_mol_dia, aa, wrk1, 'b2usmo_mol_dia') 
 
 
 cc print out sources before update

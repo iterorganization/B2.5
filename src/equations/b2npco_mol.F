@@ -126,7 +126,7 @@
         n_mol(:,0) = nm
         u_mol(:,0) = um 
       else
-        call b2upco_perp (nCv, nFc, nVx, geo, mpg, nregionv,
+        call b2upco_3D (nCv, nFc, nVx, geo, mpg, nregionv,
      &   solve_ua, solvcreg, rxf, switch%b2npco_pcm0, dv%corp_mol,
      &   dv%pcc_mol_pol(:,0),dv%pcc_mol_rad(:,0),
      &   pm, nm, um_pol, um_rad, psnl, switch%b2npco_iout)

@@ -73,7 +73,7 @@
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
      &  b2xvsg, b2nxfc,
-     &  b2sicf, b2nxcm, b2urmo, b2usmo_perp2
+     &  b2sicf, b2nxcm, b2urmo
 
 *-----------------------------------------------------------------------
 *.computation

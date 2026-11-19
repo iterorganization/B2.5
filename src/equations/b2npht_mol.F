@@ -136,7 +136,7 @@ cc        switch%b2uxus_style = 2
      &  dv%pcc_mol(1:nCv,0),nm0, um0, tm0)
         t_mol(:,0) = tm0
       else
-        call b2upht_mol_perp (nCv, nFc, nVx, switch, geo, mpg,
+        call b2upht_mol_3D (nCv, nFc, nVx, switch, geo, mpg,
      &  ua_solve, rxf, dv%cort_mol,
      &  dv%pcc_mol_pol(1:nCv,0), dv%pcc_mol_rad(1:nCv,0),
      &  nm0, um0_pol, um0_rad, tm0)
