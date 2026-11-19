@@ -214,6 +214,7 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   END IF
 !srv 22.05.18
 !
+!
 ! ..particle balance
 !   ..compute residual
   IF ((solving .AND. ANY(solvcreg(0:mpg%nnreg(0)))) .OR. switch%&
@@ -531,6 +532,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     sr%sna(:, :, isb) = sr%sna(:, :, isb) + sr%snadt(:, :, isb)
   END IF
 !srv 22.05.18
+!
 !
 ! ..particle balance
 !   ..compute residual

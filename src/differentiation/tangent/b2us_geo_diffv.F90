@@ -1137,7 +1137,7 @@ CONTAINS
     INTEGER, SAVE :: temp_ignore_geo=0
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
 &   , dpsi(mpg%ncv), psi_active, dpsi_max_down, dpsi_max_up
-    LOGICAL :: match_found
+    LOGICAL :: match_found, ref_set
     INTRINSIC MAXVAL, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF, INTFACE, INTVERTEX_NODIFF, IPGETI, XERRAB, &
 &       XERTST
@@ -1209,14 +1209,25 @@ CONTAINS
     END DO
 !
 !   ..precompute psi for flux tube
+!   ..cells lying along an open boundary (e.g. wall-truncated cells of
+!   ..a conformal grid) need not lie between two flux surfaces: they
+!   ..are neither used as reference nor checked
     DO ift=1,mpg%nft
       gm%ftfpsi(ift) = gm%cvfpsi(mpg%ftcv(mpg%ftcvp(ift, 1)))
+      ref_set = .false.
       DO i=1,mpg%ftcvp(ift, 2)
         icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
-        IF (gm%cvfpsi(icv) .NE. gm%ftfpsi(ift)) THEN
-          WRITE(*, '(a,i6,a,i4)') 'Warning: cvFpsi value in cell ', icv&
-&         , ' not equal to value in its flux tube ', ift
-          WRITE(*, *) gm%cvfpsi(icv), gm%ftfpsi(ift)
+        IF (.NOT.(mpg%cvalongboundary(icv) .AND. (.NOT.mpg%&
+&           cvonclosedsurface(icv)))) THEN
+          IF (.NOT.ref_set) THEN
+            gm%ftfpsi(ift) = gm%cvfpsi(icv)
+            ref_set = .true.
+          END IF
+          IF (gm%cvfpsi(icv) .NE. gm%ftfpsi(ift)) THEN
+            WRITE(*, '(a,i6,a,i4)') 'Warning: cvFpsi value in cell ', &
+&           icv, ' not equal to value in its flux tube ', ift
+            WRITE(*, *) gm%cvfpsi(icv), gm%ftfpsi(ift)
+          END IF
         END IF
       END DO
     END DO

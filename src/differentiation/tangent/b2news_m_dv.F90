@@ -713,9 +713,9 @@ SUBROUTINE B2NEWS_M_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, st%pl%&
 &         ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+&                pl, st%dv, st%co, st%rt, .false.)
 !srv 01.10.99
   END DO
 !
@@ -2123,10 +2123,10 @@ SUBROUTINE B2NEWS_M_DV0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &            , std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is), std%&
 &            dv%pa(:, :, is), nbdirs)
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
 &            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
-&            st%rt, std%rt, .true., nbdirs)
+&            st%rt, std%rt, .false., nbdirs)
 !srv 01.10.99
   END DO
 !
@@ -3201,9 +3201,9 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
     CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, st%pl%&
 &         ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+&                pl, st%dv, st%co, st%rt, .false.)
 !srv 01.10.99
   END DO
 !

@@ -294,6 +294,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   END DO
   IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) 'Doing B2-style bc'
 !
+!srv 15.02.26
+  conv_bcpot11 = .true.
 !srv 16.02.12 {
   once_bccon = .false.
   once_bcene = .false.
@@ -6035,8 +6037,6 @@ CONTAINS
         END DO
       END IF
 !srv 15.02.26
-      conv_bcpot11 = .true.
-!srv 15.02.26
       mrs = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -6137,8 +6137,8 @@ CONTAINS
           ELSE
             abs5 = -fch_bnd
           END IF
-          IF (abs2 .GE. abs5*switch%bcpot11_epsr + switch%bcpot11_epsa) &
-&           conv_bcpot11 = .false.
+          conv_bcpot11 = conv_bcpot11 .AND. abs2 .LT. abs5*switch%&
+&           bcpot11_epsr + switch%bcpot11_epsa
           IF (res_bcpot11 .GE. 0.) THEN
             y2 = res_bcpot11
           ELSE
@@ -8098,6 +8098,8 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   END DO
   IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) 'Doing B2-style bc'
 !
+!srv 15.02.26
+  conv_bcpot11 = .true.
 !srv 16.02.12 {
   once_bccon = .false.
   once_bcene = .false.
@@ -22536,8 +22538,6 @@ CONTAINS
         END DO
       END IF
 !srv 15.02.26
-      conv_bcpot11 = .true.
-!srv 15.02.26
       mrs = 0.0_R8
       DO nd=1,nbdirsmax
         vbcd(nd) = 0.D0
@@ -22720,8 +22720,8 @@ CONTAINS
           ELSE
             abs5 = -fch_bnd
           END IF
-          IF (abs2 .GE. abs5*switch%bcpot11_epsr + switch%bcpot11_epsa) &
-&           conv_bcpot11 = .false.
+          conv_bcpot11 = conv_bcpot11 .AND. abs2 .LT. abs5*switch%&
+&           bcpot11_epsr + switch%bcpot11_epsa
           IF (res_bcpot11 .GE. 0.) THEN
             y2 = res_bcpot11
           ELSE
@@ -24127,8 +24127,6 @@ CONTAINS
         END DO
       END IF
 !srv 15.02.26
-      conv_bcpot11 = .true.
-!srv 15.02.26
       mrs = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -24229,8 +24227,8 @@ CONTAINS
           ELSE
             abs5 = -fch_bnd
           END IF
-          IF (abs2 .GE. abs5*switch%bcpot11_epsr + switch%bcpot11_epsa) &
-&           conv_bcpot11 = .false.
+          conv_bcpot11 = conv_bcpot11 .AND. abs2 .LT. abs5*switch%&
+&           bcpot11_epsr + switch%bcpot11_epsa
           IF (res_bcpot11 .GE. 0.) THEN
             y2 = res_bcpot11
           ELSE

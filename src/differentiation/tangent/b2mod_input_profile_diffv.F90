@@ -548,6 +548,7 @@ CONTAINS
       ext_smo0to3 = smo0
       ext_she0to3 = she0
       ext_shi0to3 = shi0
+      ext_sch0to3 = sch0
     END IF
 !
     IF (new_files) THEN
@@ -999,6 +1000,7 @@ CONTAINS
       ext_smo0to3 = smo0
       ext_she0to3 = she0
       ext_shi0to3 = shi0
+      ext_sch0to3 = sch0
     END IF
 !
     IF (new_files) THEN
