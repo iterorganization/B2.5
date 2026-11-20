@@ -78,8 +78,6 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg&
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nfc) :: temp
   INTEGER :: nbdirs
@@ -122,20 +120,20 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg&
         CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, po, pod, wrkv, &
 &                wrkvd, gpo, gpod, nbdirs)
         DO nd=1,nbdirs
-          arg1d(nd, :) = ti*nad(nd, :, is) + na(:, is)*tid(nd, :)
+          wrkcd(nd, :) = ti*nad(nd, :, is) + na(:, is)*tid(nd, :)
 !
 !      ..interpolate to face and multiply by radial area
           fchvisper_ad(nd, :, 0, is) = 0.D0
         END DO
-        arg1 = na(:, is)*ti
-        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, arg1, arg1d, &
+        wrkc = na(:, is)*ti
+        CALL GRAD_R_DV(ncv, nfc, nvx, 0, geo, mpg, mpgd, wrkc, wrkcd, &
 &                wrkv, wrkvd, gpa, gpad, nbdirs)
         DO nd=1,nbdirs
-          arg1d(nd, :) = rza(:, is)*nad(nd, :, is) + na(:, is)*rzad(nd, &
+          wrkcd(nd, :) = rza(:, is)*nad(nd, :, is) + na(:, is)*rzad(nd, &
 &           :, is)
         END DO
-        arg1 = na(:, is)*rza(:, is)
-        CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, arg1, arg1d, wrkf, &
+        wrkc = na(:, is)*rza(:, is)
+        CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, wrkc, wrkcd, wrkf, &
 &                 wrkfd, nbdirs)
         temp = gpa/(qe*wrkf)
         DO nd=1,nbdirs
@@ -183,12 +181,13 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg&
         CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, wrkc, wrkcd, &
 &                 fchvisper_a(:, 1, is), fchvisper_ad(:, :, 1, is), &
 &                 nbdirs)
+        temp = switch%fhe_vis_per*fac_vis*geo%fcs*geo%fcqalf(:, 1)
         DO nd=1,nbdirs
-          fchvisper_ad(nd, :, 1, is) = -(geo%fcs*geo%fcqalf(:, 1)*&
-&           fchvisper_ad(nd, :, 1, is)/geo%fcbb(:, 3))
+          fchvisper_ad(nd, :, 1, is) = -(temp*fchvisper_ad(nd, :, 1, is)&
+&           /geo%fcbb(:, 3))
         END DO
-        fchvisper_a(:, 1, is) = -(fchvisper_a(:, 1, is)*geo%fcs*geo%&
-&         fcqalf(:, 1)/geo%fcbb(:, 3))
+        fchvisper_a(:, 1, is) = -(temp*(fchvisper_a(:, 1, is)/geo%fcbb(:&
+&         , 3)))
 !
       ELSE
 !
@@ -291,7 +290,6 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -324,10 +322,10 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !      ..compute V_{perp,a} on cell faces
         CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, gpo)
-        arg1 = na(:, is)*ti
-        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, arg1, wrkv, gpa)
-        arg1 = na(:, is)*rza(:, is)
-        CALL INTFACE(ncv, nfc, mpg%fccv, weight, arg1, wrkf)
+        wrkc = na(:, is)*ti
+        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrkc, wrkv, gpa)
+        wrkc = na(:, is)*rza(:, is)
+        CALL INTFACE(ncv, nfc, mpg%fccv, weight, wrkc, wrkf)
         wrkf = -((gpo+gpa/(qe*wrkf))/geo%fcbb(:, 3))
 !
 !      ..interpolate V_{perp,a} to cell centers
@@ -354,8 +352,8 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
         fchvisper_a(:, 0, is) = 0.0_R8
         CALL INTFACE(ncv, nfc, mpg%fccv, weight, wrkc, fchvisper_a(:, 1&
 &              , is))
-        fchvisper_a(:, 1, is) = -(fchvisper_a(:, 1, is)*geo%fcs*geo%&
-&         fcqalf(:, 1)/geo%fcbb(:, 3))
+        fchvisper_a(:, 1, is) = -(fchvisper_a(:, 1, is)*switch%&
+&         fhe_vis_per*fac_vis*geo%fcs*geo%fcqalf(:, 1)/geo%fcbb(:, 3))
 !
       ELSE
 !

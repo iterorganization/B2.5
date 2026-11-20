@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_ank_diffv
-      use b2mod_wall
+      use b2mod_wall_diffv
       implicit none
       integer inum
 

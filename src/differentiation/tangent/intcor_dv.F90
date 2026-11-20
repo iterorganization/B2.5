@@ -138,23 +138,21 @@ SUBROUTINE INTCOR_NODIFF(nx, ny, vol, centre, corner)
   END IF
 !
 ! special treatment of diverted island X-points                          !xpb
+  IF (nnreg(0) .EQ. 5) THEN
 !xpb
-  DO iy=-1,ny-1
+    DO iy=-1,ny-1
 !xpb
-    DO ix=-1,nx-1
+      DO ix=-1,nx-1
 !xpb
-      IF (topiy(topix(ix, iy), topiy(ix, iy)) .EQ. iy .AND. ny .GT. 1) &
-&     THEN
-!xpb
-!xpb
-        ix1 = topix(rightix(ix, iy), rightiy(ix, iy))
-!xpb
-        iy1 = topiy(rightix(ix, iy), rightiy(ix, iy))
-!xpb
-        ix2 = topix(ix, iy)
+        IF (topiy(topix(ix, iy), topiy(ix, iy)) .EQ. iy .AND. ny .GT. 1&
+&       ) THEN
 !xpb
 !xpb
+          ix1 = topix(rightix(ix, iy), rightiy(ix, iy))
 !xpb
+          iy1 = topiy(rightix(ix, iy), rightiy(ix, iy))
+!xpb
+          ix2 = topix(ix, iy)
 !xpb
 !xpb
 !xpb
@@ -166,45 +164,48 @@ SUBROUTINE INTCOR_NODIFF(nx, ny, vol, centre, corner)
 !xpb
 !xpb
 !xpb
-        corner(ix1, iy1) = (centre(ix1, iy1)*vol(ix2, iy)+centre(&
-&         bottomix(ix1, iy1), bottomiy(ix1, iy1))*vol(leftix(ix2, iy), &
-&         leftiy(ix2, iy))+centre(leftix(ix1, iy), leftiy(ix1, iy))*vol(&
-&         leftix(ix1, iy1), leftiy(ix1, iy1))+centre(ix2, iy)*vol(ix1, &
-&         iy1)+centre(leftix(ix2, iy), leftiy(ix2, iy))*vol(bottomix(ix1&
-&         , iy1), bottomiy(ix1, iy1))+centre(leftix(ix1, iy1), leftiy(&
-&         ix1, iy1))*vol(leftix(ix1, iy), leftiy(ix1, iy)))/(vol(ix2, iy&
-&         )+vol(leftix(ix2, iy), leftiy(ix2, iy))+vol(leftix(ix1, iy1), &
-&         leftiy(ix1, iy1))+vol(ix1, iy1)+vol(bottomix(ix1, iy1), &
-&         bottomiy(ix1, iy1))+vol(leftix(ix1, iy), leftiy(ix1, iy)))
+!xpb
+!xpb
+!xpb
+          corner(ix1, iy1) = (centre(ix1, iy1)*vol(ix2, iy)+centre(&
+&           bottomix(ix1, iy1), bottomiy(ix1, iy1))*vol(leftix(ix2, iy)&
+&           , leftiy(ix2, iy))+centre(leftix(ix1, iy), leftiy(ix1, iy))*&
+&           vol(leftix(ix1, iy1), leftiy(ix1, iy1))+centre(ix2, iy)*vol(&
+&           ix1, iy1)+centre(leftix(ix2, iy), leftiy(ix2, iy))*vol(&
+&           bottomix(ix1, iy1), bottomiy(ix1, iy1))+centre(leftix(ix1, &
+&           iy1), leftiy(ix1, iy1))*vol(leftix(ix1, iy), leftiy(ix1, iy)&
+&           ))/(vol(ix2, iy)+vol(leftix(ix2, iy), leftiy(ix2, iy))+vol(&
+&           leftix(ix1, iy1), leftiy(ix1, iy1))+vol(ix1, iy1)+vol(&
+&           bottomix(ix1, iy1), bottomiy(ix1, iy1))+vol(leftix(ix1, iy)&
+&           , leftiy(ix1, iy)))
 !xpb No corner(ix2,iy2) is assigned as this would map into a dead cell   !xpb 
-      END IF
+        END IF
+!xpb
+
+      END DO
 !xpb
 
     END DO
-!xpb
-
-  END DO
+  END IF
 !
 ! special treatment of limiter tangency X-points                         !xpb
+  IF (nncut .EQ. 0) THEN
 !xpb
-  DO iy=0,ny-1
+    DO iy=0,ny-1
 !xpb
-    DO ix=-1,nx-1
+      DO ix=-1,nx-1
 !xpb
-      IF (bottomiy(bottomix(ix, iy), bottomiy(ix, iy)) .EQ. iy .AND. ny &
-&         .GT. 1) THEN
-!xpb
-!xpb
-        ix1 = rightix(ix, iy)
-!xpb
-        iy1 = rightiy(ix, iy)
-!xpb
-        ix2 = bottomix(ix, iy)
-        iy2 = bottomiy(ix, iy)
+        IF (bottomiy(bottomix(ix, iy), bottomiy(ix, iy)) .EQ. iy .AND. &
+&           ny .GT. 1) THEN
 !xpb
 !xpb
+          ix1 = rightix(ix, iy)
 !xpb
+          iy1 = rightiy(ix, iy)
 !xpb
+          ix2 = bottomix(ix, iy)
+          iy2 = bottomiy(ix, iy)
+          IF (topiy(ix1, iy1) .NE. ny + 1) THEN
 !xpb
 !xpb
 !xpb
@@ -215,24 +216,31 @@ SUBROUTINE INTCOR_NODIFF(nx, ny, vol, centre, corner)
 !xpb
 !xpb
 !xpb
-        corner(ix1, iy1) = (centre(ix1, iy1)*vol(ix2, iy)+centre(topix(&
-&         ix1, iy1), topiy(ix1, iy1))*vol(leftix(ix2, iy), leftiy(ix2, &
-&         iy))+centre(leftix(ix1, iy), leftiy(ix1, iy))*vol(leftix(ix1, &
-&         iy1), leftiy(ix1, iy1))+centre(ix2, iy)*vol(ix1, iy1)+centre(&
-&         leftix(ix2, iy), leftiy(ix2, iy))*vol(topix(ix1, iy1), topiy(&
-&         ix1, iy1))+centre(leftix(ix1, iy1), leftiy(ix1, iy1))*vol(&
-&         leftix(ix1, iy), leftiy(ix1, iy)))/(vol(ix2, iy)+vol(leftix(&
-&         ix2, iy), leftiy(ix2, iy))+vol(leftix(ix1, iy1), leftiy(ix1, &
-&         iy1))+vol(ix1, iy1)+vol(topix(ix1, iy1), topiy(ix1, iy1))+vol(&
-&         leftix(ix1, iy), leftiy(ix1, iy)))
-        corner(ix2, iy2) = corner(ix1, iy1)
-      END IF
+!xpb
+!xpb
+!xpb
+!xpb
+            corner(ix1, iy1) = (centre(ix1, iy1)*vol(ix2, iy)+centre(&
+&             topix(ix1, iy1), topiy(ix1, iy1))*vol(leftix(ix2, iy), &
+&             leftiy(ix2, iy))+centre(leftix(ix1, iy), leftiy(ix1, iy))*&
+&             vol(leftix(ix1, iy1), leftiy(ix1, iy1))+centre(ix2, iy)*&
+&             vol(ix1, iy1)+centre(leftix(ix2, iy), leftiy(ix2, iy))*vol&
+&             (topix(ix1, iy1), topiy(ix1, iy1))+centre(leftix(ix1, iy1)&
+&             , leftiy(ix1, iy1))*vol(leftix(ix1, iy), leftiy(ix1, iy)))&
+&             /(vol(ix2, iy)+vol(leftix(ix2, iy), leftiy(ix2, iy))+vol(&
+&             leftix(ix1, iy1), leftiy(ix1, iy1))+vol(ix1, iy1)+vol(&
+&             topix(ix1, iy1), topiy(ix1, iy1))+vol(leftix(ix1, iy), &
+&             leftiy(ix1, iy)))
+            corner(ix2, iy2) = corner(ix1, iy1)
+          END IF
+        END IF
+!xpb
+
+      END DO
 !xpb
 
     END DO
-!xpb
-
-  END DO
+  END IF
 !
   RETURN
 END SUBROUTINE INTCOR_NODIFF

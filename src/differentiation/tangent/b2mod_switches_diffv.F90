@@ -249,6 +249,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2upht_zt_min
       REAL(kind=r8) :: b2upht_zt_max
       REAL(kind=r8) :: cfc0
+      REAL(kind=r8) :: aad0_boost0
       REAL(kind=r8) :: prl_cur
       REAL(kind=r8) :: dia_cur
       REAL(kind=r8) :: fch_pte
@@ -351,7 +352,22 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2scdt_iout
       INTEGER :: b2smdt_iout
       INTEGER :: b2shdt_iout
+      INTEGER :: write_b25_state_variables
+      INTEGER :: write_b25_fluxes
+      INTEGER :: write_b25_sources
+      INTEGER :: write_b25_transport
+      INTEGER :: write_eirene_state_variables
+      INTEGER :: write_eirene_fluxes
       INTEGER :: write_eirene_sources
+      INTEGER :: write_triangles
+      INTEGER :: write_chord_b25_state_variables
+      INTEGER :: write_chord_b25_fluxes
+      INTEGER :: write_chord_b25_sources
+      INTEGER :: write_chord_b25_transport
+      INTEGER :: write_chord_eirene_state_variables
+      INTEGER :: write_chord_eirene_fluxes
+      INTEGER :: write_chord_eirene_sources
+      INTEGER :: write_chord_triangles
       INTEGER :: b2sicf_style
       INTEGER :: b2sigp_style
       INTEGER :: b2sigp_pressure_restriction
@@ -634,6 +650,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       INTEGER :: b2mndt_startup
       INTEGER :: ntim_step_out
       INTEGER :: calc_err_step_out
+      INTEGER :: tot_eqs_override
       REAL(kind=r8) :: b2mndr_hz
       REAL(kind=r8) :: b2mndr_stim
       REAL(kind=r8) :: neutral_rescale
@@ -711,6 +728,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_zt_min
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_zt_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: cfc0
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: aad0_boost0
       REAL(kind=r8), DIMENSION(nbdirsmax) :: prl_cur
       REAL(kind=r8), DIMENSION(nbdirsmax) :: dia_cur
       REAL(kind=r8), DIMENSION(nbdirsmax) :: fch_pte
@@ -1117,6 +1135,7 @@ CONTAINS
     s%b2upht_zt_min = 1.0e-8_R8
     s%b2upht_zt_max = 1.0e30_R8
     s%cfc0 = 1.0_R8
+    s%aad0_boost0 = 0.0_R8
     s%prl_cur = 1.0_R8
     s%dia_cur = 1.0_R8
     s%fch_pte = 1.0_R8
@@ -1212,7 +1231,22 @@ CONTAINS
     s%b2scdt_iout = 0
     s%b2smdt_iout = 0
     s%b2shdt_iout = 0
+    s%write_b25_state_variables = 1
+    s%write_b25_fluxes = 0
+    s%write_b25_sources = 0
+    s%write_b25_transport = 0
+    s%write_eirene_state_variables = 0
+    s%write_eirene_fluxes = 0
     s%write_eirene_sources = 0
+    s%write_triangles = 0
+    s%write_chord_b25_state_variables = 1
+    s%write_chord_b25_fluxes = 0
+    s%write_chord_b25_sources = 0
+    s%write_chord_b25_transport = 0
+    s%write_chord_eirene_state_variables = 0
+    s%write_chord_eirene_fluxes = 0
+    s%write_chord_eirene_sources = 0
+    s%write_chord_triangles = 0
 !
     s%b2sicf_style = 0
     s%b2sigp_style = 2
@@ -1292,20 +1326,16 @@ CONTAINS
       s%b2npco_rxg = HUGE(1.0_R8)
       s%b2npht_rxg = HUGE(1.0_R8)
       s%b2npmo_rxg = HUGE(1.0_R8)
-      s%b2npco_pcm0 = 0.0_R8
-      s%b2npco_pcm1 = 0.0_R8
-      s%b2npht_pcm0 = 0.0_R8
-      s%b2npht_pcm1 = 0.0_R8
     ELSE
       s%b2npco_rxg = 1.0_R8
       s%b2npht_rxg = 1.0_R8
 !! 10^6 !!
       s%b2npmo_rxg = 1.0e6_R8
-      s%b2npco_pcm0 = 1.0_R8
-      s%b2npco_pcm1 = 1.0_R8
-      s%b2npht_pcm0 = 1.0_R8
-      s%b2npht_pcm1 = 1.0_R8
     END IF
+    s%b2npco_pcm0 = 1.0_R8
+    s%b2npco_pcm1 = 1.0_R8
+    s%b2npht_pcm0 = 1.0_R8
+    s%b2npht_pcm1 = 1.0_R8
 !
     s%xfm0 = 1.0_R8
     s%xfm1 = 1.0_R8
@@ -1589,9 +1619,10 @@ CONTAINS
     s%b2mndt_ckn = 1
     s%b2mndt_bdf = 1
     s%b2mndt_dummy = 0
-    s%b2mndt_startup = 1
+    s%b2mndt_startup = 0
     s%ntim_step_out = 1
     s%calc_err_step_out = 1
+    s%tot_eqs_override = 0
 !
 ! Feedback
     s%b2stbc_feedback = 0
@@ -1811,6 +1842,8 @@ CONTAINS
     CALL IPGETR('b2upht_zt_min', s%b2upht_zt_min)
     CALL IPGETR('b2upht_zt_max', s%b2upht_zt_max)
     CALL IPGETR('b2usmo_cfc0', s%cfc0)
+!xpb 20.09.21
+    CALL IPGETR('b2usmo_aad0_boost0', s%aad0_boost0)
     CALL IPGETR('b2tfhe_prl_cur', s%prl_cur)
     CALL IPGETR('b2tfhe_dia_cur', s%dia_cur)
     CALL IPGETR('b2tfhe_fch_pTe', s%fch_pte)
@@ -1919,7 +1952,26 @@ CONTAINS
     CALL IPGETI('b2scdt_iout', s%b2scdt_iout)
     CALL IPGETI('b2smdt_iout', s%b2smdt_iout)
     CALL IPGETI('b2shdt_iout', s%b2shdt_iout)
+    CALL IPGETI('cdfmovie_b25_state_variables', s%&
+&         write_b25_state_variables)
+    CALL IPGETI('cdfmovie_b25_fluxes', s%write_b25_fluxes)
+    CALL IPGETI('cdfmovie_b25_sources', s%write_b25_sources)
+    CALL IPGETI('cdfmovie_b25_transport', s%write_b25_transport)
+    CALL IPGETI('cdfmovie_eirene_state_variables', s%&
+&         write_eirene_state_variables)
+    CALL IPGETI('cdfmovie_eirene_fluxes', s%write_eirene_fluxes)
     CALL IPGETI('cdfmovie_eirene_sources', s%write_eirene_sources)
+    CALL IPGETI('cdfmovie_triangles', s%write_triangles)
+    CALL IPGETI('cdfchord_b25_state_variables', s%&
+&         write_chord_b25_state_variables)
+    CALL IPGETI('cdfchord_b25_fluxes', s%write_chord_b25_fluxes)
+    CALL IPGETI('cdfchord_b25_sources', s%write_chord_b25_sources)
+    CALL IPGETI('cdfchord_b25_transport', s%write_chord_b25_transport)
+    CALL IPGETI('cdfchord_eirene_state_variables', s%&
+&         write_chord_eirene_state_variables)
+    CALL IPGETI('cdfchord_eirene_fluxes', s%write_chord_eirene_fluxes)
+    CALL IPGETI('cdfchord_eirene_sources', s%write_chord_eirene_sources)
+    CALL IPGETI('cdfchord_triangles', s%write_chord_triangles)
 !
 ! style/mode switches
     CALL IPGETI('b2sicf_style', s%b2sicf_style)
@@ -2381,6 +2433,7 @@ CONTAINS
     CALL IPGETI('b2mndt_startup', s%b2mndt_startup)
     CALL IPGETI('b2mndt_ntim_step_out', s%ntim_step_out)
     CALL IPGETI('b2mndt_calc_err_step_out', s%calc_err_step_out)
+    CALL IPGETI('b2mndt_tot_eqs_override', s%tot_eqs_override)
 !
 ! b2mndr
 !srv 09.01.01 09.06.08
@@ -2797,6 +2850,8 @@ CONTAINS
 !
 ! b2usmo
     CALL XERTST(0.0_R8 .LE. s%cfc0, 'faulty parameter cfc0')
+    CALL XERTST(0.0_R8 .LE. s%aad0_boost0, &
+&         'faulty parameter aad0_boost0')
 !
 ! b2tfcc
     CALL XERTST(0.0_R8 .LE. s%xfac, 'faulty parameter xfac')
@@ -2989,8 +3044,9 @@ CONTAINS
 &         'b2mndt_ckn should be 1 or 2')
     CALL XERTST(s%b2mndt_bdf .EQ. 1 .OR. s%b2mndt_bdf .EQ. 2, &
 &         'b2mndt_bdf should be 1 or 2')
-    CALL XERTST(s%b2mndt_startup .EQ. 1 .OR. s%b2mndt_startup .EQ. 2, &
-&         'b2mndt_startup should be 1 or 2')
+    CALL XERTST((s%b2mndt_startup .EQ. 0 .OR. s%b2mndt_startup .EQ. 1) &
+&         .OR. s%b2mndt_startup .EQ. 2, &
+&         'b2mndt_startup should be 0, 1 or 2')
     IF (s%b2mndt_ckn .EQ. 2 .AND. s%b2mndt_bdf .EQ. 2) CALL XERRAB(&
 &                              'Cannot use Crank-Nicolson and BDF2 time'&
 &                                                            //&
@@ -3007,6 +3063,8 @@ CONTAINS
 &         'faulty internal parameter ntim_step_out')
     CALL XERTST(1 .LE. s%calc_err_step_out, &
 &         'faulty internal parameter calc_err_step_out')
+    CALL XERTST(s%tot_eqs_override .EQ. 0 .OR. s%tot_eqs_override .EQ. 1&
+&         , 'b2mndt_tot_eqs_override should be 0 or 1')
 !
 ! b2mndr
 !srv 09.01.01 09.06.08 }
@@ -3073,16 +3131,14 @@ CONTAINS
     IF (s%pot_eq .EQ. 1) CALL XERTST(s%prl_cur .GT. 0.0_R8, &
 &                              'No parallel current!')
 !
-    IF (s%pot_eq .EQ. 1) THEN
-!fnb/fhe?
-!fnb/fhe?
-      CALL XERTST(((((((s%fch_ion_neutral .GT. 0.0_R8 .OR. s%&
-&           fch_anomalous .GT. 0.0_R8) .OR. s%fhe_vis_q .GT. 0.0_R8) &
-&           .OR. s%fch_inert .GT. 0.0_R8) .OR. s%fhe_vis_per .GT. 0.0_R8&
-&           ) .OR. s%fch_stochastic .GT. 0.0_R8) .OR. s%dia_cur .GT. &
-&           0.0_R8) .OR. s%fhe_vis_par .GT. 0.0_R8, &
-&           'No radial current terms!')
-    END IF
+    IF (s%pot_eq .EQ. 1) CALL XERTST(((((((s%fch_ion_neutral .GT. 0.0_R8&
+&                              .OR. s%fch_anomalous .GT. 0.0_R8) .OR. s%&
+&                              fhe_vis_q .GT. 0.0_R8) .OR. s%fch_inert &
+&                              .GT. 0.0_R8) .OR. s%fhe_vis_per .GT. &
+&                              0.0_R8) .OR. s%fch_stochastic .GT. 0.0_R8&
+&                              ) .OR. s%dia_cur .GT. 0.0_R8) .OR. s%&
+&                              fhe_vis_par .GT. 0.0_R8, &
+&                              'No radial current terms!')
 !
 ! AFN neutral model
     IF (s%afn_out .NE. 0 .AND. s%recycle_afn .EQ. 0) CALL XERRAB(&

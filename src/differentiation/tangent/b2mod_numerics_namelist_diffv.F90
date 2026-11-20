@@ -136,8 +136,10 @@ CONTAINS
       solveet = .true.
       solvekt = .true.
       solvezt = .true.
-      IF (switch%b2mndt_style .EQ. 2) THEN
 !! do not solve total momentum and energy equation in time-dependent mode
+      IF (switch%b2mndt_style .EQ. 2 .AND. switch%tot_eqs_override .EQ. &
+&         0) THEN
+!! option to solve total equations in time-dependent mode, but breaks time-dependency
         solveet = .false.
         solvemt = .false.
       END IF
@@ -174,14 +176,14 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, nsmin, nsmax, nnreg, &
-&   cvonclosedsurface, b2mndt_style, new)
+&   cvonclosedsurface, b2mndt_style, tot_eqs_override, new)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
     INTEGER :: ncv, ns, nsmin, nsmax, nnreg(0:1)
     LOGICAL :: new
     LOGICAL :: file_ok, cvonclosedsurface(ncv)
-    INTEGER :: icv, is, ireg, b2mndt_style
+    INTEGER :: icv, is, ireg, b2mndt_style, tot_eqs_override
     REAL(kind=r8) :: ttf
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE
@@ -205,13 +207,25 @@ CONTAINS
       DO ireg=0,nnreg(0)
         solveet(ireg) = solveee(ireg) .AND. solveei(ireg) .AND. solveet(&
 &         ireg)
-        CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solveet(ireg)), &
-&             'Time-dependent mode requires SOLVEET = .false.!')
+        IF (tot_eqs_override .EQ. 0) THEN
+          CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solveet(ireg)), &
+&               'Time-dependent mode requires SOLVEET = .false.!')
+        ELSE IF (tot_eqs_override .EQ. 1) THEN
+          WRITE(0, *) 'WARNING: b2mndt_style=2 with SOLVEET = .true.! '&
+&         //'This breaks time-dependency and the time evolution'//&
+&         ' should not be trusted!'
+        END IF
         DO is=nsmin,nsmax-1
           solvemt(ireg) = solvemt(ireg) .AND. solvemo(is, ireg)
         END DO
-        CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solvemt(ireg)), &
-&             'Time-dependent mode requires SOLVEMT = .false.!')
+        IF (tot_eqs_override .EQ. 0) THEN
+          CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solvemt(ireg)), &
+&               'Time-dependent mode requires SOLVEMT = .false.!')
+        ELSE IF (tot_eqs_override .EQ. 1) THEN
+          WRITE(0, *) 'WARNING: b2mndt_style=2 with SOLVEMT = .true.! '&
+&         //'This breaks time-dependency and the time evolution'//&
+&         ' should not be trusted!'
+        END IF
       END DO
     ELSE IF (file_ok .AND. new) THEN
       CALL XERRAB('Found unexpected '//TRIM(filename))

@@ -112,8 +112,6 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   EXTERNAL XERTST, IPGETR
   EXTERNAL B2XVSG, B2URSC_NODIFF, B2USCO_NODIFF, B2UPCO_NODIFF
   EXTERNAL B2URSC_DV, B2USCO_DV, B2UPCO_DV
-  INTRINSIC HUGE
-  EXTERNAL XERRAB
   INTRINSIC ANY
   CHARACTER(len=7) :: arg1
   CHARACTER(len=9) :: arg10
@@ -158,13 +156,6 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..set internal parameters on first call
   IF (ncall_b2npco .EQ. 0) THEN
     IF (switch%b2mndt_style .EQ. 2) THEN
-      rxg_npco = HUGE(1.0_R8)
-      IF (switch%b2npco_pcm0 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npco_pcm0 must be 0 for time-dependent mode'&
-&                                              )
-      IF (switch%b2npco_pcm1 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npco_pcm1 must be 0 for time-dependent mode'&
-&                                              )
       warning = .false.
       DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
@@ -175,9 +166,8 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &       ' should be 1 !'
         WRITE(6, *) 'Time derivative terms may be inacurrate !'
       END IF
-    ELSE
-      rxg_npco = switch%b2npco_rxg
     END IF
+    rxg_npco = switch%b2npco_rxg
   END IF
   IF (switch%b2npco_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
     IF (IN_PARALLEL()) WRITE(*, *) &
@@ -223,6 +213,7 @@ SUBROUTINE B2NPCO_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     sr%sna(:, :, isb) = sr%sna(:, :, isb) + sr%snadt(:, :, isb)
   END IF
 !srv 22.05.18
+!
 !
 ! ..particle balance
 !   ..compute residual
@@ -449,8 +440,6 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..procedures
   EXTERNAL XERTST, IPGETR
   EXTERNAL B2XVSG, B2URSC_NODIFF, B2USCO_NODIFF, B2UPCO_NODIFF
-  INTRINSIC HUGE
-  EXTERNAL XERRAB
   INTRINSIC ANY
   CHARACTER(len=7) :: arg1
   CHARACTER(len=9) :: arg10
@@ -493,13 +482,6 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..set internal parameters on first call
   IF (ncall_b2npco .EQ. 0) THEN
     IF (switch%b2mndt_style .EQ. 2) THEN
-      rxg_npco = HUGE(1.0_R8)
-      IF (switch%b2npco_pcm0 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npco_pcm0 must be 0 for time-dependent mode'&
-&                                              )
-      IF (switch%b2npco_pcm1 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npco_pcm1 must be 0 for time-dependent mode'&
-&                                              )
       warning = .false.
       DO icv=1,mpg%nci
         warning = warning .OR. rxf*dtco(isb, mpg%cvreg(icv))*time_factor&
@@ -510,9 +492,8 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 &       ' should be 1 !'
         WRITE(6, *) 'Time derivative terms may be inacurrate !'
       END IF
-    ELSE
-      rxg_npco = switch%b2npco_rxg
     END IF
+    rxg_npco = switch%b2npco_rxg
   END IF
   IF (switch%b2npco_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
     IF (IN_PARALLEL()) WRITE(*, *) &
@@ -551,6 +532,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     sr%sna(:, :, isb) = sr%sna(:, :, isb) + sr%snadt(:, :, isb)
   END IF
 !srv 22.05.18
+!
 !
 ! ..particle balance
 !   ..compute residual

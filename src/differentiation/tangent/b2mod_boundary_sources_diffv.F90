@@ -99,7 +99,8 @@ CONTAINS
     END DO
     CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                               nsmax, mpg%nnreg, mpg%cvonclosedsurface&
-&                               , switch%b2mndt_style, .false.)
+&                               , switch%b2mndt_style, switch%&
+&                               tot_eqs_override, .false.)
 !
 !      Read MMS inputs
 !
