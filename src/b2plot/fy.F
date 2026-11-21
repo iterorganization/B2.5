@@ -20,7 +20,8 @@ c
       real (kind=R8) :: y_transform
       real (kind=R8), allocatable :: ds(:), wd(:), wrk(:)
       integer, allocatable :: cvlist(:)
-      integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
+      integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,
+     .        iFn,iVx,iVx1,iVx2,iVn1,iVn2,nlist
       integer iystart,iyend
       integer len_of_digits
       external xertst, len_of_digits
@@ -53,24 +54,41 @@ c
         cvlist(1) = iCv
         do iy = iystart+1, iyend
           cvlist(iy-iystart+1) = mpg%imapCv(ix,iy)
-          do i = 1, mpg%cvFcP(cvlist(iy-iystart),2)
-            iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1)+i-1)
-            if (mpg%fcFs(iFc).eq.0) cycle
-            if ((mpg%fcCv(iFc,1).eq.cvlist(iy-iystart).and.
-     &           mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
-     &          (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
-     &           mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
-              if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
-     &            mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
-              if (isep.eq.0 .and. mpg%nXpt.gt.1) then
-                do j = 1, mpg%nXpt
-                  if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then
-                    if (isep.eq.0) isep = iy-iystart
-                  end if
-                end do
+          if (cvlist(iy-iystart+1).le.mpg%nCi) then
+            do i = 1, mpg%cvFcP(cvlist(iy-iystart),2)
+              iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1)+i-1)
+              if (mpg%fcFs(iFc).eq.0) cycle
+              if ((mpg%fcCv(iFc,1).eq.cvlist(iy-iystart).and.
+     &             mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
+     &            (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
+     &             mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
+                if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
+     &              mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
+                if (isep.eq.0 .and. mpg%nXpt.gt.1) then
+                  do j = 1, mpg%nXpt
+                    if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then
+                      if (isep.eq.0) isep = iy-iystart
+                    end if
+                  end do
+                end if
               end if
+            end do
+          else ! special treatment for guard cells
+            iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1))
+            iFn = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart+1),1))
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            iVn1 = mpg%fcVx(iFn,1)
+            iVn2 = mpg%fcVx(iFn,2)
+            if (iVx1.eq.iVn1.or.iVx1.eq.iVn2) iVx = iVx1
+            if (iVx2.eq.iVn1.or.iVx2.eq.iVn2) iVx = iVx2
+            if (mpg%iFssep2.gt.0) then
+              if (mpg%vxFs(iVx).eq.mpg%iFssep2) isep = iy-iystart
             end if
-          end do
+            if (mpg%iFssep.gt.0) then ! done second so the main separatrix wins
+              if (mpg%vxFs(iVx).eq.mpg%iFssep) isep = iy-iystart
+            end if
+          end if
         end do
         call set_distances(mpg,geo,nlist,cvlist,isep,ds,wd)
       else

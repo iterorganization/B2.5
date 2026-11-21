@@ -12228,6 +12228,7 @@ c calculate neoclassical diagnostics
       real(kind=R8), intent(out) :: ds(nlist), wd(nlist)
       integer i,j,iFc,iCv1,iCv2,ifound
       real(kind=R8) :: ds_offset
+      logical all_guard
       intrinsic sqrt
 
       ds(1)= 0.0_R8
@@ -12261,46 +12262,58 @@ c calculate neoclassical diagnostics
           iCv2 = cvlist(i)
         endif
       enddo
-      call xertst(iCv1.gt.0.and.iCv2.gt.0,
-     & 'List does not include internal cells!')
-      if(.not.mpg%cvOnClosedSurface(iCv1).and.
-     &        mpg%cvOnClosedSurface(iCv2)) then ! flip sign
-        ds(1:nlist)=-ds(1:nlist)
+      all_guard = iCv1.eq.0.and.iCv2.eq.0
+      if(.not.all_guard) then
+        if(.not.mpg%cvOnClosedSurface(iCv1).and.
+     &          mpg%cvOnClosedSurface(iCv2)) then ! flip sign
+          ds(1:nlist)=-ds(1:nlist)
+        endif
       endif
       do i=1,nlist
         ifound=0
-        do j=1,mpg%cvFcP(cvlist(i),2)
-          iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1)+j-1)
-          iCv1=mpg%fcCv(iFc,1)
-          iCv2=mpg%fcCv(iFc,2)
-          if(iCv1.eq.cvlist(i)) then
-            if(i.gt.1) then
-              if(iCv2.eq.cvlist(i-1)) then
-                ifound=ifound+1
-                wd(i)=wd(i)+geo%fcHc(iFc,1)
-              endif
-            endif
-            if(i.lt.nlist) then
-              if(iCv2.eq.cvlist(i+1)) then
-                ifound=ifound+1
-                wd(i)=wd(i)+geo%fcHc(iFc,1)
-              endif
-            endif
-          else if(iCv2.eq.cvlist(i)) then
-            if(i.gt.1) then
-              if(iCv1.eq.cvlist(i-1)) then
-                ifound=ifound+1
-                wd(i)=wd(i)+geo%fcHc(iFc,2)
-              endif
-            endif
-            if(i.lt.nlist) then
-              if(iCv1.eq.cvlist(i+1)) then
-                ifound=ifound+1
-                wd(i)=wd(i)+geo%fcHc(iFc,2)
-              endif
-            endif
+        if (all_guard) then
+          if (i.gt.1) then
+            ifound=ifound+1
+            iFc=mpg%cvFc(mpg%cvFcP(cvlist(i-1),1))
+            wd(i)=wd(i)+0.5_R8*geo%fcHt(iFc)
           endif
-        enddo
+          ifound=ifound+1
+          iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1))
+          wd(i)=wd(i)+0.5_R8*geo%fcHt(iFc)
+        else
+          do j=1,mpg%cvFcP(cvlist(i),2)
+            iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1)+j-1)
+            iCv1=mpg%fcCv(iFc,1)
+            iCv2=mpg%fcCv(iFc,2)
+            if(iCv1.eq.cvlist(i)) then
+              if(i.gt.1) then
+                if(iCv2.eq.cvlist(i-1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,1)
+                endif
+              endif
+              if(i.lt.nlist) then
+                if(iCv2.eq.cvlist(i+1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,1)
+                endif
+              endif
+            else if(iCv2.eq.cvlist(i)) then
+              if(i.gt.1) then
+                if(iCv1.eq.cvlist(i-1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,2)
+                endif
+              endif
+              if(i.lt.nlist) then
+                if(iCv1.eq.cvlist(i+1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,2)
+                endif
+              endif
+            endif
+          enddo
+        endif
         if (ifound.eq.1) wd(i)=2.0_R8*wd(i)
       enddo
 
