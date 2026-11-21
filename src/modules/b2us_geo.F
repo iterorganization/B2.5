@@ -1243,6 +1243,18 @@
      &   'No matching face found for strike point !')
        end do
       end if
+!   ..no X-point (limiter): the face of each target at the last closed
+!     flux surface as its strike point face
+      if (mpg%nXpt.eq.0 .and. mpg%iFssep.gt.0 .and.
+     &    allocated(mpg%ifdiv)) then
+        do i = 1, size(mpg%ifdiv)
+          do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
+            if (mpg%ifdiv(i).eq.0 .and.
+     &          any(mpg%vxFs(mpg%fcVx(mpg%divFc(j),:)).eq.mpg%iFssep))
+     &        mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+          end do
+        end do
+      end if
 
       else
         write (*,*) 'Warning: temp_ignore_geo switch used'
@@ -1479,7 +1491,8 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (in) :: gm
       integer :: i, j, k, l, indd, inew,
-     *           iCv, iCv1, iCv2, iCn, iFc, iFcc, iFs, iVx, iVa, iVb
+     *           iCv, iCv1, iCv2, iCn, iFc, iFcc, iFs, iVx, iVa, iVb,
+     *           iFs2
       integer :: icount, fccount, artificial_slab = 0, found = 0
       integer, allocatable :: indXpt(:), indFc(:), regcount(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
@@ -1582,6 +1595,10 @@
       if (mpg%nXpt.gt.0) then
         allocate(mpg%Xpt(mpg%nXpt))
         mpg%Xpt(1:mpg%nXpt) = indXpt(1:mpg%nXpt)
+!   ..of two X-points the other one is the inactive one, also when it
+!     is not next to the core (disconnected double null)
+        if (mpg%nXpt.eq.2 .and. mpg%iactive.gt.0 .and.
+     &      mpg%iinactive.eq.0) mpg%iinactive = 3 - mpg%iactive
         if (mpg%iactive.ne.0) then
           do i = 1, mpg%vxFcP(mpg%Xpt(mpg%iactive),2)
             iFs =
@@ -1622,9 +1639,15 @@
               end if
             end do
           end do
-          if (mpg%iFssep2.gt.0) then
+          iFs2 = 0 ! the other flux surface through this X-point
+          do l = mpg%vxFcP(mpg%Xpt(i),1),
+     &           mpg%vxFcP(mpg%Xpt(i),1) + mpg%vxFcP(mpg%Xpt(i),2) - 1
+            if (iFs2.eq.0 .and. mpg%fcFs(mpg%vxFc(l)).ne.iFs)
+     &        iFs2 = mpg%fcFs(mpg%vxFc(l))
+          end do
+          if (iFs2.gt.0) then
             if (i.eq.mpg%iinactive .or. i.eq.mpg%iactive) then
-              iFs = mpg%iFssep2
+              iFs = iFs2
               do j = mpg%fsFcP(iFs,1),
      &               mpg%fsFcP(iFs,1) + mpg%fsFcP(iFs,2) - 1
                 iFc = mpg%fsFc(j)
