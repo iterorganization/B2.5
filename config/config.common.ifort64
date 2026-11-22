@@ -78,7 +78,7 @@ ifndef COMPILER_REDEF
   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
    FCOPTS  += -mprefer-vector-width=512
   else
-   FCOPTS  += -qopt-zmm-usage=high
+   FCOPTS  += -qopt-zmm-usage=high -qopenmp-threadprivate=compat
   endif
  endif
  ifdef SOLPS_OPENMP
