@@ -112,7 +112,8 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   USE B2MOD_B2ZHCO_DIFF, ONLY : c_hta_an_fl_save, c_hta_an_fl_saveb, &
 & c_r_ta_an_save, c_r_ta_an_saveb
   USE B2MOD_FRTF_NCCORR_DIFF, ONLY : b2mod_frtf_nccorr_coefs, &
-& b2mod_frtf_nccorr_coefs_b, corr_tfia, corr_tfiab, g_hs_style, &
+& b2mod_frtf_nccorr_coefs_b
+  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : corr_tfia, corr_tfiab, g_hs_style, &
 & g_hs_styleb, corr_fria, corr_friab, alpha_hs_style, alpha_hs_styleb
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array temp
@@ -180,7 +181,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, icn, ifc, is, ireg, k
+  INTEGER :: icv, ifc, icn, is, ireg, k
   INTEGER :: vcount(0:ns-1)
 !srv 04.07.08
   CHARACTER :: chns*3
@@ -205,11 +206,11 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 & ncv, 0:3), flcb(nfc, 0:1), cvcb(nfc, 0:1), ro(ncv), rz(ncv), pr(ncv), &
 & pz(ncv), rob1(ncv), pb1(ncv), ehxp(ncv), smt(ncv, 0:3), cst, flct(nfc&
 & , 0:1), wrk1(ncv), wrks(ncv), smqdu(ncv), wrk0(ncv), wrk2(ncv), wrk3(&
-& ncv, 0:ns-1), ctcfb(ncv), ctcft(ncv), zeff(ncv), zmff(ncv), ce1(ncv), &
-& ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1), zetap(ncv), zetae(&
-& ncv), gti(ncv), gte(ncv), gtn(ncv), wrkf0(nfc), wrkf1(nfc), zmc(ncv), &
-& z11(ncv), z12(ncv), z22(ncv), zf1(ncv), zf2(ncv), rho_b_rel(ncv), &
-& resmt(ncv)
+& ncv, 0:ns-1), wrk4(ncv, 0:ns-1), ctcfb(ncv), ctcft(ncv), zeff(ncv), &
+& zmff(ncv), ce1(ncv), ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1)&
+& , zetap(ncv), zetae(ncv), gti(ncv), gte(ncv), gtn(ncv), wrkf0(nfc), &
+& wrkf1(nfc), zmc(ncv), z11(ncv), z12(ncv), z22(ncv), zf1(ncv), zf2(ncv)&
+& , rho_b_rel(ncv), resmt(ncv)
   REAL(kind=r8) :: smbchb(ncv, 0:3), smbtfb(ncv, 0:3), smbgpb(ncv, 0:3)&
 & , smbvhb(ncv, 0:3), smbvvb(ncv, 0:3), smbvib(ncv, 0:3), smbvtmpb(ncv, &
 & 0:3), smbcfb(ncv, 0:3), smbanb(ncv, 0:3), cvctb(nfc, 0:1), pbb(ncv), &
@@ -218,11 +219,10 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 & , smbb(ncv, 0:3), flcbb(nfc, 0:1), cvcbb(nfc, 0:1), rob0(ncv), rzb(ncv&
 & ), pzb(ncv), rob1b(ncv), pb1b(ncv), ehxpb(ncv), smtb(ncv, 0:3), cstb, &
 & flctb(nfc, 0:1), wrk1b(ncv), smqdub(ncv), wrk0b(ncv), wrk2b(ncv), &
-& wrk3b(ncv, 0:ns-1), ctcfbb(ncv), ctcftb(ncv), zeffb(ncv), zmffb(ncv), &
-& ce1b(ncv), cimp1b(ncv, 0:ns-1), cimp2b(ncv, 0:ns-1), zetapb(ncv), &
-& zetaeb(ncv), gtib(ncv), gteb(ncv), wrkf0b(nfc), zmcb(ncv), z11b(ncv), &
-& z12b(ncv), z22b(ncv), zf1b(ncv), zf2b(ncv), rho_b_relb(ncv), resmtb(&
-& ncv)
+& wrk3b(ncv, 0:ns-1), zeffb(ncv), zmffb(ncv), ce1b(ncv), cimp1b(ncv, 0:&
+& ns-1), cimp2b(ncv, 0:ns-1), zetapb(ncv), zetaeb(ncv), gtib(ncv), gteb(&
+& ncv), wrkf0b(nfc), zmcb(ncv), z11b(ncv), z12b(ncv), z22b(ncv), zf1b(&
+& ncv), zf2b(ncv), rho_b_relb(ncv), resmtb(ncv)
 !
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
@@ -243,11 +243,11 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 &     B2XPPB_BWD, B2NXDU_B, B2NXDV_B, B2NXFX_B, B2NXFC_B, B2NXST_B, &
 &     B2SIGP_B, B2SIAV_B, B2SICF_B, B2NXCM_B, B2URMO_B, B2USMO_B
   INTRINSIC NINT
-  INTRINSIC HUGE
   INTRINSIC SQRT
   INTRINSIC ANY
   INTRINSIC ABS
   INTRINSIC SIGN
+  INTRINSIC MIN
   REAL(r8) :: abs0
   REAL(r8) :: abs1
   REAL(r8) :: abs2
@@ -318,7 +318,6 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     END IF
 ! time-dependent treatment
     IF (switch%b2mndt_style .EQ. 2) THEN
-      rxg_npmo = HUGE(1.0_R8)
       DO is=0,ns-1
         warning = .false.
         DO icv=1,mpg%nci
@@ -337,8 +336,8 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       CALL PUSHCONTROL2B(0)
     ELSE
       CALL PUSHCONTROL2B(1)
-      rxg_npmo = switch%b2npmo_rxg
     END IF
+    rxg_npmo = switch%b2npmo_rxg
   ELSE
     CALL PUSHCONTROL2B(2)
   END IF
@@ -749,8 +748,14 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       CALL B2SMDT_NODIFF(ncv, mpg%nci, ns, dtim, geo%cvhz, geo%cvvol, pl&
 &                  %na, psnl%ua, switch, mpg, sr%smodt, is)
 !    .. add contribution from time-dependent source
+!c Given d(nu)/dt = n du/dt + u dn/dt,
+!c What is computed in b2smdt corresponds to n du/dt,
+!c What is added here below corresponds to u dn/dt
       wrk3(:, is) = am(is)*mp*geo%cvvol*geo%cvhz*(pl%na(:, is)-psnl%na(:&
 &       , is))*psnl%ua(:, is)/dtim
+      DO icv=1,mpg%nci
+        wrk3(:, is) = wrk3(:, is)/(dtmo(is, mpg%cvreg(icv))*rxf)
+      END DO
       wrk3(mpg%nci+1:mpg%ncv, is) = 0.0_R8
       CALL PUSHREAL8ARRAY(sr%smodt(:, 0, is), r8*SIZE(sr%smodt, 1)/8)
       sr%smodt(:, 0, is) = sr%smodt(:, 0, is) - ts_factor*wrk3(:, is)
@@ -758,6 +763,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       smb = smb + sr%smodt(:, :, is)
       CALL PUSHCONTROL1B(0)
     ELSE
+      wrk3 = 0.0_R8
       CALL PUSHCONTROL1B(1)
     END IF
 !srv 22.05.18
@@ -1008,7 +1014,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       arg1 = nfc*2
       CALL B2SAXPY_FWD(arg1, 1.0_R8, cvcb, 1, cvct, 1)
 !srv 06.04.07
-      CALL B2SAXPY_FWD(ncv, 1.0_R8, ctcfb, 1, ctcft, 1)
+      CALL B2SAXPY_NODIFF(ncv, 1.0_R8, ctcfb, 1, ctcft, 1)
       CALL PUSHCONTROL1B(1)
     ELSE
       CALL PUSHCONTROL1B(0)
@@ -1166,10 +1172,17 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   IF (switch%ion_vlct_restrict_core .NE. 0) THEN
     DO is=0,ns-1
       DO icv=1,mpg%ncv
-        IF (icv.GT.mpg%nci) THEN
-          ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-          icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            CALL PUSHCONTROL1B(1)
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+            icn = mpg%fccv(ifc, 1)
+          END IF
         ELSE
+          CALL PUSHCONTROL1B(0)
           icn = icv
         END IF
         IF (mpg%cvonclosedsurface(icn)) THEN
@@ -1303,6 +1316,10 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     dv%dmodt(:, is) = (-sr%smodt(:, 0, is)-sr%smodt(:, 1, is)*pl%ua(:, &
 &     is)-sr%smodt(:, 2, is)*pl%na(:, is)*mp*am(is)-sr%smodt(:, 3, is)*&
 &     pl%ua(:, is)*pl%na(:, is)*mp*am(is))/ts_factor
+    DO icv=1,mpg%nci
+      wrk4(icv, is) = dtmo(is, mpg%cvreg(icv))*(dv%dmodt(icv, is)-wrk3(&
+&       icv, is))
+    END DO
   END DO
 !
 !   ..correct pcca
@@ -1318,6 +1335,8 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       CALL MY_OUT_US(70, ncv, 0, dv%dmodt(1, is), arg11)
       arg19 = 'b2npmo_mavadnadt'//chns
       CALL MY_OUT_US(70, ncv, 0, wrk3(1, is), arg19)
+      arg19 = 'b2npmo_manadvadt'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk4(1, is), arg19)
     END DO
   END IF
 !srv 12.07.02 }
@@ -1373,7 +1392,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   rzb = 0.D0
   pzb = 0.D0
   DO is=ns-1,0,-1
-    DO icv=ncv,1,-1
+    DO icv=mpg%ncv,1,-1
       CALL POPCONTROL2B(branch)
       IF (branch .NE. 0) THEN
         IF (branch .EQ. 1) THEN
@@ -1402,6 +1421,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
           rzb(icv) = rzb(icv) - temp2*tempb2
         END IF
       END IF
+      CALL POPCONTROL1B(branch)
     END DO
   END DO
  100 CALL POPCONTROL2B(branch)
@@ -1482,7 +1502,6 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     smtb = 0.D0
     flctb = 0.D0
     cvctb = 0.D0
-    ctcftb = 0.D0
     wrk1b = 0.D0
     new_matrix = .false.
     DO ireg=0,mpg%nnreg(0)
@@ -1493,8 +1512,8 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     CALL B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, mpg%nnreg&
 &           (0), solvemt, itcnt, rxg_npmo, ro, rob0, rz, rzb, pr, pz, &
 &           pzb, wrk0, wrk0b, smt, smtb, flct, flctb, cvct, cvctb, dv%&
-&           resmt, dvb%resmt, ctcft, ctcftb, dv%corut, dvb%corut, dv%&
-&           pccm, dvb%pccm, aa, aab, wrk1, wrk1b, 'b2usmo_total')
+&           resmt, dvb%resmt, ctcft, dv%corut, dvb%corut, dv%pccm, dvb%&
+&           pccm, aa, aab, wrk1, wrk1b, 'b2usmo_total')
     dvb%pccm = 0.D0
     CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb0, wrk0, wrk0b, 1)
   ELSE
@@ -1505,7 +1524,6 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     rob0 = 0.D0
     wrk0b = 0.D0
     wrk1b = 0.D0
-    ctcftb = 0.D0
     flctb = 0.D0
     cvctb = 0.D0
   END IF
@@ -1542,12 +1560,9 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     IF (branch .EQ. 0) THEN
       smbtfb = 0.D0
       smbanb = 0.D0
-      ctcfbb = 0.D0
       smbcfb = 0.D0
       smbchb = 0.D0
     ELSE
-      ctcfbb = 0.D0
-      CALL B2SAXPY_BWD(ncv, 1.0_R8, ctcfb, ctcfbb, 1, ctcft, ctcftb, 1)
       arg1 = nfc*2
       CALL B2SAXPY_BWD(arg1, 1.0_R8, cvcb, cvcbb, 1, cvct, cvctb, 1)
       arg1 = nfc*2
@@ -1617,9 +1632,9 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 &             nnreg(0), b2npmo_solvedum, itcnt, rxg_npmo, rob, robb, &
 &             rob1, rob1b, pb, pb1, pb1b, pl%ua(:, is), plb%ua(:, is), &
 &             smb, smbb, flcb, flcbb, cvcb, cvcbb, dv%resmo(:, is), dvb%&
-&             resmo(:, is), ctcfb, ctcfbb, dv%corua(:, is), dvb%corua(:&
-&             , is), dv%pcca(:, :, is), dvb%pcca(:, :, is), aa, aab, &
-&             wrk1, wrk1b, arg16)
+&             resmo(:, is), ctcfb, dv%corua(:, is), dvb%corua(:, is), dv&
+&             %pcca(:, :, is), dvb%pcca(:, :, is), aa, aab, wrk1, wrk1b&
+&             , arg16)
       dvb%pcca(:, :, is) = 0.D0
       robb = robb + rob1b
       pbb = 0.D0
@@ -1669,6 +1684,9 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       CALL POPREAL8ARRAY(sr%smodt(:, 0, is), r8*SIZE(sr%smodt, 1)/8)
       wrk3b(:, is) = wrk3b(:, is) - ts_factor*srb%smodt(:, 0, is)
       wrk3b(mpg%nci+1:mpg%ncv, is) = 0.D0
+      DO icv=mpg%nci,1,-1
+        wrk3b(:, is) = wrk3b(:, is)/(dtmo(is, mpg%cvreg(icv))*rxf)
+      END DO
       tempb0 = am(is)*geo%cvhz*mp*geo%cvvol*wrk3b(:, is)
       wrk3b(:, is) = 0.D0
       tempb1 = psnl%ua(:, is)*tempb0/dtim
@@ -1681,6 +1699,8 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       CALL B2SMDT_B(ncv, mpg%nci, ns, dtim, geo%cvhz, geo%cvvol, pl%na, &
 &             plb%na, psnl%ua, psnlb%ua, switch, mpg, sr%smodt, srb%&
 &             smodt, is)
+    ELSE
+      wrk3b = 0.D0
     END IF
     CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
@@ -1728,12 +1748,11 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 &              smbb, 1)
     CALL B2SIAN_B(ncv, nfc, is, switch, geo, mpg, mpgb, dv%fchanml_a(:, &
 &           :, is), dvb%fchanml_a(:, :, is), smban, smbanb)
-    arg10 = am(is)*mp
     CALL POPREAL8ARRAY(ctcfb, r8*ncv/8)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL B2SICF_B(ncv, nfc, nvx, is, arg10, switch, geo, geob, mpg, mpgb&
-&           , pl%na(:, is), plb%na(:, is), pl%ua(:, is), plb%ua(:, is), &
-&           smbcf, smbcfb, ctcfb, ctcfbb, wrk0, wrk0b)
+&           , pl%na(:, is), pl%ua(:, is), plb%ua(:, is), smbcf, smbcfb, &
+&           ctcfb, wrk0, wrk0b)
     smbvib = switch%smbvi_factor*smbvib
     CALL POPCONTROL3B(branch)
     IF (branch .LT. 2) THEN
@@ -2132,8 +2151,9 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !som 13.08.21
   USE B2MOD_ZHFRTF_DIFF, ONLY : rho_a_rel, avm_u, z2n_cv
   USE B2MOD_B2ZHCO_DIFF, ONLY : c_hta_an_fl_save, c_r_ta_an_save
-  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : b2mod_frtf_nccorr_coefs, corr_tfia,&
-& g_hs_style, corr_fria, alpha_hs_style
+  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : b2mod_frtf_nccorr_coefs
+  USE B2MOD_FRTF_NCCORR_DIFF, ONLY : corr_tfia, g_hs_style, corr_fria, &
+& alpha_hs_style
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
@@ -2186,7 +2206,7 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, icn, ifc, is, ireg, k
+  INTEGER :: icv, ifc, icn, is, ireg, k
   INTEGER :: vcount(0:ns-1)
 !srv 04.07.08
   CHARACTER :: chns*3
@@ -2211,11 +2231,11 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & ncv, 0:3), flcb(nfc, 0:1), cvcb(nfc, 0:1), ro(ncv), rz(ncv), pr(ncv), &
 & pz(ncv), rob1(ncv), pb1(ncv), ehxp(ncv), smt(ncv, 0:3), cst, flct(nfc&
 & , 0:1), wrk1(ncv), wrks(ncv), smqdu(ncv), wrk0(ncv), wrk2(ncv), wrk3(&
-& ncv, 0:ns-1), ctcfb(ncv), ctcft(ncv), zeff(ncv), zmff(ncv), ce1(ncv), &
-& ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1), zetap(ncv), zetae(&
-& ncv), gti(ncv), gte(ncv), gtn(ncv), wrkf0(nfc), wrkf1(nfc), zmc(ncv), &
-& z11(ncv), z12(ncv), z22(ncv), zf1(ncv), zf2(ncv), rho_b_rel(ncv), &
-& resmt(ncv)
+& ncv, 0:ns-1), wrk4(ncv, 0:ns-1), ctcfb(ncv), ctcft(ncv), zeff(ncv), &
+& zmff(ncv), ce1(ncv), ce2(ncv), cimp1(ncv, 0:ns-1), cimp2(ncv, 0:ns-1)&
+& , zetap(ncv), zetae(ncv), gti(ncv), gte(ncv), gtn(ncv), wrkf0(nfc), &
+& wrkf1(nfc), zmc(ncv), z11(ncv), z12(ncv), z22(ncv), zf1(ncv), zf2(ncv)&
+& , rho_b_rel(ncv), resmt(ncv)
 !
 !srv 13.01.17 05.07.17
   REAL(kind=r8) :: smbfria(ncv, 0:3), smbfrea(ncv, 0:3), smbtfia(ncv, 0:&
@@ -2229,11 +2249,11 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &     , B2NXFX_NODIFF, B2NXFC_NODIFF, B2NXST, B2SIGP_NODIFF, &
 &     B2SIAV_NODIFF, B2SICF_NODIFF, B2NXCM, B2URMO_NODIFF, B2USMO_NODIFF
   INTRINSIC NINT
-  INTRINSIC HUGE
   INTRINSIC SQRT
   INTRINSIC ANY
   INTRINSIC ABS
   INTRINSIC SIGN
+  INTRINSIC MIN
   REAL(r8) :: abs0
   REAL(r8) :: abs1
   REAL(r8) :: abs2
@@ -2282,7 +2302,6 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
     END IF
 ! time-dependent treatment
     IF (switch%b2mndt_style .EQ. 2) THEN
-      rxg_npmo = HUGE(1.0_R8)
       DO is=0,ns-1
         warning = .false.
         DO icv=1,mpg%nci
@@ -2295,10 +2314,8 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
           WRITE(6, *) 'Time derivative terms may be inacurrate !'
         END IF
       END DO
-    ELSE
-      rxg_npmo = switch%b2npmo_rxg
     END IF
-    CALL XERTST(0.0_R8 .LT. rxg_npmo, 'faulty internal parameter rxg')
+    rxg_npmo = switch%b2npmo_rxg
   END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npmo .LT. 3) THEN
@@ -2620,11 +2637,19 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
       CALL B2SMDT_NODIFF(ncv, mpg%nci, ns, dtim, geo%cvhz, geo%cvvol, pl&
 &                  %na, psnl%ua, switch, mpg, sr%smodt, is)
 !    .. add contribution from time-dependent source
+!c Given d(nu)/dt = n du/dt + u dn/dt,
+!c What is computed in b2smdt corresponds to n du/dt,
+!c What is added here below corresponds to u dn/dt
       wrk3(:, is) = am(is)*mp*geo%cvvol*geo%cvhz*(pl%na(:, is)-psnl%na(:&
 &       , is))*psnl%ua(:, is)/dtim
+      DO icv=1,mpg%nci
+        wrk3(:, is) = wrk3(:, is)/(dtmo(is, mpg%cvreg(icv))*rxf)
+      END DO
       wrk3(mpg%nci+1:mpg%ncv, is) = 0.0_R8
       sr%smodt(:, 0, is) = sr%smodt(:, 0, is) - ts_factor*wrk3(:, is)
       smb = smb + sr%smodt(:, :, is)
+    ELSE
+      wrk3 = 0.0_R8
     END IF
 !srv 22.05.18
 !
@@ -2943,9 +2968,13 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   IF (switch%ion_vlct_restrict_core .NE. 0) THEN
     DO is=0,ns-1
       DO icv=1,mpg%ncv
-        IF (icv.GT.mpg%nci) THEN
-          ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-          icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
         ELSE
           icn = icv
         END IF
@@ -3048,6 +3077,10 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
     dv%dmodt(:, is) = (-sr%smodt(:, 0, is)-sr%smodt(:, 1, is)*pl%ua(:, &
 &     is)-sr%smodt(:, 2, is)*pl%na(:, is)*mp*am(is)-sr%smodt(:, 3, is)*&
 &     pl%ua(:, is)*pl%na(:, is)*mp*am(is))/ts_factor
+    DO icv=1,mpg%nci
+      wrk4(icv, is) = dtmo(is, mpg%cvreg(icv))*(dv%dmodt(icv, is)-wrk3(&
+&       icv, is))
+    END DO
   END DO
 !
 !   ..correct pcca
@@ -3064,6 +3097,8 @@ SUBROUTINE B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
       CALL MY_OUT_US(70, ncv, 0, dv%dmodt(1, is), arg11)
       arg19 = 'b2npmo_mavadnadt'//chns
       CALL MY_OUT_US(70, ncv, 0, wrk3(1, is), arg19)
+      arg19 = 'b2npmo_manadvadt'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk4(1, is), arg19)
     END DO
   END IF
 !srv 12.07.02 }

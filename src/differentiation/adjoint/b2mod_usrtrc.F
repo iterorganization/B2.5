@@ -1217,7 +1217,7 @@ c East target
       end do !}
 
       if(maxval(mpg%strDiv).gt.2) then !{
-        hlp_pwou=0.0_R8
+        hlp_pwiu=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1249,12 +1249,12 @@ c East target
 #endif
           wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
-          hlp_pwou=max(hlp_pwou,wtarg(i,2))
+          hlp_pwiu=max(hlp_pwiu,wtarg(i,2))
         end do !}
 
-        hlp_pwiu=0.0_R8
+        hlp_pwou=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
-          iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
+          iFc=mpg%divFc(mpg%divFcP(3,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
@@ -1284,7 +1284,7 @@ c East target
 #endif
           wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
      .                   +wnutrg(i,3)+wrad(i,3,0)
-          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
+          hlp_pwou=max(hlp_pwou,wtarg(i,3))
         end do !}
       end if !}
 
@@ -1372,10 +1372,14 @@ c*** Calculate the peak parallel power flux to the main chamber wall
      .    (st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
      .    (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
         end do !}
-        hlp=hlp/s
+        if (s.gt.0.0_R8) then !{
+          hlp=hlp/s
+        else !}{
+          hlp=0.0_R8
+        end if !}
         hlp_ppfw=max(hlp_ppfw,hlp)
-          if(hlp_dbg) print '(1x,a,i6,3e12.4)',
-     .     "iCv,pbs,hlp_ppfw,hlp_ppfw_max =>",iCv,s,hlp,hlp_ppfw
+        if(hlp_dbg) print '(1x,a,i6,3e12.4)',
+     .   'iCv,pbs,hlp_ppfw,hlp_ppfw_max =>',iCv,s,hlp,hlp_ppfw
       end do !}
 
 #ifdef B25_EIRENE

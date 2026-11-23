@@ -37,7 +37,9 @@ SUBROUTINE INTFLUX_NODIFF(nfc, ncv, mpg, geo, faceflux, density, cvflux)
 ! Provides an interpolation of face flux quantities to cell centers
 ! The flux carries the cell-centered density of the quantity being transported
 ! We first interpolate the density to cell faces
-! We then compute an effective velocity at cell faces
+! We then compute an effective velocity at cell faces. The projected area
+! retains the sign of fcQalf because face orientation can reverse across
+! topology cuts.
 ! We interpolate this velocity to cell centers
 ! We multiply the interpolated velocity by the density and the projected area
   USE B2MOD_TYPES

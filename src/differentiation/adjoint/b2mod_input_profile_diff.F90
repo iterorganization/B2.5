@@ -93,14 +93,13 @@ CONTAINS
 !   with respect to varying inputs: smo0 shi0 sna0 *(state_ext.she)
 !                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
 !                *(state_ext.smo) sch0 she0
-!   Plus diff mem management of: geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvvol:in geo.fchc:in geo.ftconn:in state_ext.sne:in
-!                state_ext.she:in state_ext.shi:in state_ext.sch:in
-!                state_ext.sna:in state_ext.smo:in
+!   Plus diff mem management of: state_ext.sne:in state_ext.she:in
+!                state_ext.shi:in state_ext.sch:in state_ext.sna:in
+!                state_ext.smo:in
 !
-  SUBROUTINE SOURCE_INPUT_B(mpg, mpgb, geo, geob, switch, switchb, &
-&   state_ext, state_extb, ns, sna0, sna0b, smo0, smo0b, she0, she0b, &
-&   shi0, shi0b, sch0, sch0b, sne0, sne0b, nc)
+  SUBROUTINE SOURCE_INPUT_B(mpg, mpgb, geo, switch, switchb, state_ext, &
+&   state_extb, ns, sna0, sna0b, smo0, smo0b, she0, she0b, shi0, shi0b, &
+&   sch0, sch0b, sne0, sne0b, nc)
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
@@ -111,7 +110,6 @@ CONTAINS
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(MAPPING_DIFF) :: mpgb
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFF) :: geob
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(SWITCHES) :: switchb
     TYPE(B2STATEEXT) :: state_ext
@@ -274,9 +272,6 @@ CONTAINS
               CALL PUSHCONTROL1B(0)
             END IF
           END DO
-          ALLOCATE(xfb(0:nxdat+1))
-          xfb = 0.D0
-          ALLOCATE(xf(0:nxdat+1))
           IF (nxdat .GT. 0) THEN
             ALLOCATE(fxb(1:nxdat))
             fxb = 0.D0
@@ -284,7 +279,6 @@ CONTAINS
             ALLOCATE(xb(1:nxdat))
             xb = 0.D0
             ALLOCATE(x(1:nxdat))
-            ALLOCATE(xr(0:nxdat+1))
             ALLOCATE(dxb(1:nxdat))
             dxb = 0.D0
             ALLOCATE(dx(1:nxdat))
@@ -299,41 +293,46 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
-            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
-            ALLOCATE(xfb(mpg%ftcvp(ift, 2)))
-            xfb = 0.D0
-            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
-            DO ix=1,mpg%ftcvp(ift, 2)
-              CALL PUSHINTEGER4(icv)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              ireg = mpg%cvreg(icv)
-              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
-&                 ireg, 4) .EQ. 2)) THEN
-                IF (kind_source .EQ. 1) THEN
-                  CALL PUSHCONTROL3B(0)
-                ELSE IF (kind_source .EQ. 2) THEN
-                  CALL PUSHCONTROL3B(1)
-                ELSE IF (kind_source .EQ. 3) THEN
-                  CALL PUSHCONTROL3B(2)
-                ELSE IF (kind_source .EQ. 4) THEN
-                  CALL PUSHCONTROL3B(3)
-                ELSE IF (kind_source .EQ. 5) THEN
-                  CALL PUSHCONTROL3B(4)
+            IF (ift .EQ. 0) THEN
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+              ALLOCATE(xfb(mpg%ftcvp(ift, 2)))
+              xfb = 0.D0
+              ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+              DO ix=1,mpg%ftcvp(ift, 2)
+                CALL PUSHINTEGER4(icv)
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                ireg = mpg%cvreg(icv)
+                IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD&
+&                   (ireg, 4) .EQ. 2)) THEN
+                  IF (kind_source .EQ. 1) THEN
+                    CALL PUSHCONTROL3B(0)
+                  ELSE IF (kind_source .EQ. 2) THEN
+                    CALL PUSHCONTROL3B(1)
+                  ELSE IF (kind_source .EQ. 3) THEN
+                    CALL PUSHCONTROL3B(2)
+                  ELSE IF (kind_source .EQ. 4) THEN
+                    CALL PUSHCONTROL3B(3)
+                  ELSE IF (kind_source .EQ. 5) THEN
+                    CALL PUSHCONTROL3B(4)
+                  ELSE
+                    CALL PUSHCONTROL3B(5)
+                  END IF
                 ELSE
-                  CALL PUSHCONTROL3B(5)
+                  CALL PUSHCONTROL3B(6)
                 END IF
-              ELSE
-                CALL PUSHCONTROL3B(6)
+              END DO
+              CALL PUSHINTEGER4(ix - 1)
+              DEALLOCATE(xr)
+              CALL PUSHINTEGER4(chunklength)
+              IF (ALLOCATED(xfb)) THEN
+                DEALLOCATE(xfb)
               END IF
-            END DO
-            CALL PUSHINTEGER4(ix - 1)
-            DEALLOCATE(xr)
-            CALL PUSHINTEGER4(chunklength)
-            IF (ALLOCATED(xfb)) THEN
-              DEALLOCATE(xfb)
+              DEALLOCATE(xf)
+              CALL PUSHINTEGER4(chunklength)
+              CALL PUSHCONTROL1B(1)
             END IF
-            DEALLOCATE(xf)
-            CALL PUSHINTEGER4(chunklength)
           END DO
           CALL PUSHINTEGER4(iy - 1)
           CALL PUSHCONTROL1B(1)
@@ -395,34 +394,37 @@ CONTAINS
         ELSE
           CALL POPINTEGER4(ad_to0)
           DO iy=ad_to0,1,-1
-            CALL POPINTEGER4(chunklength)
-            ALLOCATE(xf(chunklength))
-            ALLOCATE(xfb(chunklength))
-            CALL POPINTEGER4(chunklength)
-            ALLOCATE(xr(chunklength))
-            CALL POPINTEGER4(ad_to)
-            DO ix=ad_to,1,-1
-              CALL POPCONTROL3B(branch)
-              IF (branch .LT. 3) THEN
-                IF (branch .EQ. 0) THEN
-                  sna0b(icv, 0, spec) = 0.D0
-                ELSE IF (branch .EQ. 1) THEN
-                  smo0b(icv, 0, spec) = 0.D0
-                ELSE
-                  she0b(icv, 0) = 0.D0
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL POPINTEGER4(chunklength)
+              ALLOCATE(xf(chunklength))
+              ALLOCATE(xfb(chunklength))
+              CALL POPINTEGER4(chunklength)
+              ALLOCATE(xr(chunklength))
+              CALL POPINTEGER4(ad_to)
+              DO ix=ad_to,1,-1
+                CALL POPCONTROL3B(branch)
+                IF (branch .LT. 3) THEN
+                  IF (branch .EQ. 0) THEN
+                    sna0b(icv, 0, spec) = 0.D0
+                  ELSE IF (branch .EQ. 1) THEN
+                    smo0b(icv, 0, spec) = 0.D0
+                  ELSE
+                    she0b(icv, 0) = 0.D0
+                  END IF
+                ELSE IF (branch .LT. 5) THEN
+                  IF (branch .EQ. 3) THEN
+                    shi0b(icv, 0) = 0.D0
+                  ELSE
+                    sch0b(icv, 0) = 0.D0
+                  END IF
                 END IF
-              ELSE IF (branch .LT. 5) THEN
-                IF (branch .EQ. 3) THEN
-                  shi0b(icv, 0) = 0.D0
-                ELSE
-                  sch0b(icv, 0) = 0.D0
-                END IF
-              END IF
-              CALL POPINTEGER4(icv)
-            END DO
-            DEALLOCATE(xf)
-            DEALLOCATE(xfb)
-            DEALLOCATE(xr)
+                CALL POPINTEGER4(icv)
+              END DO
+              DEALLOCATE(xf)
+              DEALLOCATE(xfb)
+              DEALLOCATE(xr)
+            END IF
           END DO
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) GOTO 130
@@ -430,14 +432,11 @@ CONTAINS
       END IF
       DEALLOCATE(dx)
       DEALLOCATE(dxb)
-      DEALLOCATE(xr)
       DEALLOCATE(x)
       DEALLOCATE(xb)
       DEALLOCATE(fx)
       DEALLOCATE(fxb)
- 130  DEALLOCATE(xf)
-      DEALLOCATE(xfb)
-      DO i=nkind_data,1,-1
+ 130  DO i=nkind_data,1,-1
         CALL POPCONTROL1B(branch)
       END DO
       CALL POPINTEGER4(nxdat)
@@ -654,7 +653,8 @@ CONTAINS
           END DO
 !          write(*,*) 'vor region_profile'
           ndim = nomp
-          CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+          pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&           icsepomp-1))/2.0_R8
 !          allocate (pf(1:ndim))
           CALL E01BEF(ndat, r, f, d, ifail)
 !          write(*,*) 'zwischen,ifail=',ifail
@@ -679,14 +679,9 @@ CONTAINS
           CALL XERTST(nxdat .LE. def_nxd, &
 &        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
 &              )
-          ALLOCATE(xf(0:nxdat+1))
-          xf(0) = 0.0_R8
-          xf(1:nxdat) = 1.0_R8
-          xf(nxdat+1) = 0.0_R8
           IF (nxdat .GT. 0) THEN
             ALLOCATE(fx(1:nxdat))
             ALLOCATE(x(1:nxdat))
-            ALLOCATE(xr(0:nxdat+1))
             ALLOCATE(dx(1:nxdat))
             DO i=1,nxdat
               x(i) = xdata(1, i, kind_source, spec)
@@ -704,138 +699,146 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
-            IF (ift.EQ.0) CYCLE
-            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
-            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
-            nfitanf = mpg%ftcvp(ift, 2) + 1
-            nfitend = 0
-            nfitref = 0
-            icvanf = 0
-            icvend = 0
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (icv .EQ. omp(iy)) nfitref = ix
-              IF (icv .LE. mpg%nci) THEN
-                ireg = mpg%cvreg(icv)
-                IF (MOD(ireg, 4) .EQ. 3) THEN
-                  xr(ix) = 0.0_R8
-                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
-                  xr(ix) = 1.0_R8
-                ELSE
-                  IF (ix .LT. nfitanf) THEN
-                    nfitanf = ix
-                    icvanf = icv
-                  END IF
-                  IF (ix .GT. nfitend) THEN
-                    nfitend = ix
-                    icvend = icv
-                  END IF
-                END IF
-              END IF
-            END DO
-            nxdim = nfitend - nfitanf + 1
-            wrk1 = 0.0_R8
-            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
-              ifc = mpg%ftfc(j)
-              icv1 = mpg%fccv(ifc, 1)
-              icv2 = mpg%fccv(ifc, 2)
-              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
-              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
-            END DO
-            wrk0 = 0.0_R8
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
-            END DO
-            DO ix=nfitanf,nfitend
-              DO ixx=nfitanf,ix
+            IF (ift .NE. 0) THEN
+              ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+              ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+              nfitanf = mpg%ftcvp(ift, 2) + 1
+              nfitend = 0
+              nfitref = 0
+              icvanf = 0
+              icvend = 0
+              DO ix=1,mpg%ftcvp(ift, 2)
                 icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-                xr(ix) = xr(ix) + wrk0(icv)
-              END DO
-            END DO
-            dref = xr(nfitref)
-            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
-&             0.5_R8*wrk1(icvanf))
-            DO ix=nfitanf,nfitend
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              IF (mpg%cvonclosedsurface(icv)) THEN
-                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
-              ELSE
-                xr(ix) = (xr(ix)-dref)/dtot
-              END IF
-            END DO
-            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
-&                 (nfitanf:nfitend), ifail)
-            DO ix=1,mpg%ftcvp(ift, 2)
-              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-              ireg = mpg%cvreg(icv)
-              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
-&                 ireg, 4) .EQ. 2)) THEN
-                IF (kind_source .EQ. 1) THEN
-                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 2) THEN
-                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 3) THEN
-                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 4) THEN
-                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 5) THEN
-                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
-                ELSE IF (kind_source .EQ. 6) THEN
-                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                IF (icv .EQ. omp(iy)) nfitref = ix
+                IF (icv .LE. mpg%nci) THEN
+                  ireg = mpg%cvreg(icv)
+                  IF (MOD(ireg, 4) .EQ. 3) THEN
+                    xr(ix) = 0.0_R8
+                  ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                    xr(ix) = 1.0_R8
+                  ELSE
+                    IF (ix .LT. nfitanf) THEN
+                      nfitanf = ix
+                      icvanf = icv
+                    END IF
+                    IF (ix .GT. nfitend) THEN
+                      nfitend = ix
+                      icvend = icv
+                    END IF
+                  END IF
                 END IF
-              END IF
-              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
-                IF (nxdat .GT. 0) THEN
+              END DO
+              nxdim = nfitend - nfitanf + 1
+              wrk1 = 0.0_R8
+              DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)&
+&                 -1
+                ifc = mpg%ftfc(j)
+                icv1 = mpg%fccv(ifc, 1)
+                icv2 = mpg%fccv(ifc, 2)
+                wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+                wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+              END DO
+              wrk0 = 0.0_R8
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+              END DO
+              DO ix=nfitanf,nfitend
+                DO ixx=nfitanf,ix
+                  icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                  xr(ix) = xr(ix) + wrk0(icv)
+                END DO
+              END DO
+              dref = xr(nfitref)
+              dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&               0.5_R8*wrk1(icvanf))
+              DO ix=nfitanf,nfitend
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                IF (mpg%cvonclosedsurface(icv)) THEN
+                  xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+                ELSE
+                  xr(ix) = (xr(ix)-dref)/dtot
+                END IF
+              END DO
+              CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), &
+&                   xf(nfitanf:nfitend), ifail)
+              DO ix=1,mpg%ftcvp(ift, 2)
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                ireg = mpg%cvreg(icv)
+                IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD&
+&                   (ireg, 4) .EQ. 2)) THEN
+                  IF (kind_source .EQ. 1) THEN
+                    sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 2) THEN
+                    smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 3) THEN
+                    she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 4) THEN
+                    shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 5) THEN
+                    sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  ELSE IF (kind_source .EQ. 6) THEN
+                    sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                  END IF
+                END IF
+                IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                  IF (nxdat .GT. 0) THEN
+                    IF (kind_source .EQ. 1) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sna ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 2) WRITE(*, &
+&                                           '(a,i2,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: smo ', spec&
+&                                           , xr(ix), xf(ix)
+                    IF (kind_source .EQ. 3) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: she ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 4) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: shi ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 5) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sch ', xr(ix&
+&                                           ), xf(ix)
+                    IF (kind_source .EQ. 6) WRITE(*, &
+&                                           '(a,1p,2(1x,e14.7))') &
+&                                           'AXIAL-SOURCES: sne ', xr(ix&
+&                                           ), xf(ix)
+                    IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                  END IF
+                END IF
+              END DO
+              IF (nc .EQ. 0 .OR. debug) THEN
+                IF (ndat .GT. 0) THEN
                   IF (kind_source .EQ. 1) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: sna ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sna ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 2) WRITE(*, &
 &                                         '(a,i2,1p,2(1x,e14.7))') &
-&                                         'AXIAL-SOURCES: smo ', spec, &
-&                                         xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: smo ', spec&
+&                                         , pr(iy), pf(iy)
                   IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: she ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: she ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: shi ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: shi ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sch ', xr(ix)&
-&                                         , xf(ix)
+&                                         'PROFILE-SOURCES: sch ', pr(iy&
+&                                         ), pf(iy)
                   IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
-&                                         'AXIAL-SOURCES: sne ', xr(ix)&
-&                                         , xf(ix)
-                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+&                                         'PROFILE-SOURCES: sne ', pr(iy&
+&                                         ), pf(iy)
+                  IF (new_files) WRITE(94, *) pr(iy), pf(iy)
                 END IF
               END IF
-            END DO
-            IF (nc .EQ. 0 .OR. debug) THEN
-              IF (ndat .GT. 0) THEN
-                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: sna ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
-&                                      ) 'PROFILE-SOURCES: smo ', spec, &
-&                                       pr(iy), pf(iy)
-                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: she ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: shi ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sch ', pr(iy)&
-&                                       , pf(iy)
-                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
-&                                       'PROFILE-SOURCES: sne ', pr(iy)&
-&                                       , pf(iy)
-                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
-              END IF
+              DEALLOCATE(xr)
+              DEALLOCATE(xf)
             END IF
-            DEALLOCATE(xr)
-            DEALLOCATE(xf)
           END DO
         END IF
       END DO
@@ -892,6 +895,7 @@ CONTAINS
       ext_smo0to3 = smo0
       ext_she0to3 = she0
       ext_shi0to3 = shi0
+      ext_sch0to3 = sch0
     END IF
 !
     IF (new_files) THEN
@@ -946,20 +950,28 @@ CONTAINS
   END SUBROUTINE SOURCE_INPUT
 
 !  Differentiation of transport_input in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: tdata vsa0 sig0 *(dv.ne) alf0
-!                *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
+!   gradient     of useful results: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata vsa0 sig0 *(dv.ne)
+!                alf0 *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
 !                vla0 hce0 dpa0
-!   with respect to varying inputs: tdata vsa0 sig0 *(dv.ne) alf0
-!                *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
+!   with respect to varying inputs: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata vsa0 sig0 *(dv.ne)
+!                alf0 *(rt.rza) hcib dna0 *(pl.na) *(pl.te) *(pl.ti)
 !                vla0 hce0 dpa0
-!   Plus diff mem management of: dv.ne:in geo.cvx:in geo.cvy:in
-!                rt.rza:in pl.na:in pl.te:in pl.ti:in
+!   Plus diff mem management of: dv.ne:in rt.rza:in pl.na:in pl.te:in
+!                pl.ti:in
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_B(ncv, ns, geo, geob, mpg, pl, plb, dv, dvb&
-&   , rt, rtb, hcib, hcibb, dna0, dna0b, dpa0, dpa0b, vla0, vla0b, vsa0&
-&   , vsa0b, hci0, hce0, hce0b, sig0, sig0b, alf0, alf0b, ncall)
+  SUBROUTINE TRANSPORT_INPUT_B(ncv, ns, geo, mpg, pl, plb, dv, dvb, rt, &
+&   rtb, hcib, hcibb, dna0, dna0b, dpa0, dpa0b, vla0, vla0b, vsa0, vsa0b&
+&   , hci0, hce0, hce0b, sig0, sig0b, alf0, alf0b, ncall)
 !
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -974,7 +986,6 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
-    TYPE(GEOMETRY_DIFF) :: geob
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFF) :: plb
@@ -990,11 +1001,11 @@ CONTAINS
     REAL(kind=r8) :: hce0(ncv), sig0(ncv), alf0(ncv)
     REAL(kind=r8) :: hce0b(ncv), sig0b(ncv), alf0b(ncv)
     INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ifc, ift, icv, icn, &
-&   ndim, is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
-    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
-&   , felm(nrr), delm(nrr), prof(nrr)
-    REAL(kind=r8) :: fb(nrr), rb(nrr), pfb(nrr), db(nrr), pelmb(nrr), &
-&   felmb(nrr), delmb(nrr), profb(nrr)
+&   is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
+    REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: f, r, pr, pf, d, pelm, &
+&   felm, delm, prof
+    REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: fb, rb, pfb, db, pelmb, &
+&   felmb, delmb, profb
     REAL(kind=r8) :: poloidal_scale_factor
     LOGICAL, SAVE :: elm_region, elm_data
     CHARACTER(len=26) :: hlp_frm
@@ -1008,6 +1019,7 @@ CONTAINS
     INTRINSIC ANY
     INTRINSIC TRIM
     INTRINSIC MIN
+    INTEGER*4 :: branch
     REAL(r8) :: temp
     REAL(kind=r8) :: temp0
     REAL(kind=r8) :: tempb
@@ -1015,15 +1027,13 @@ CONTAINS
     REAL(kind=r8) :: temp1
     REAL(kind=r8) :: temp2
     REAL(kind=r8) :: tempb1
+    INTEGER :: chunklength
     INTEGER :: ad_count
     INTEGER :: i0
-    INTEGER*4 :: branch
     INTEGER :: ad_to
     INTEGER :: ad_from
     INTEGER :: ad_to0
     INTEGER :: ad_to1
-    INTEGER :: ad_to2
-    INTEGER :: ad_to3
 !
     IF (ncall .EQ. 0) THEN
       IF (transport_ip_time_mod .GT. 0.0_R8) THEN
@@ -1082,13 +1092,36 @@ CONTAINS
 !        write (*,*) 'vor loop'
     DO kind_coeff=1,nkind_coeff
       DO spec=0,ns-1
+! Get total number of data points to read in
         DO kind_data=1,nkind_data
-!           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
           ndat = ndata(kind_data, kind_coeff, spec)
+!
           IF (ndat .EQ. 0) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
+!
+            ALLOCATE(rb(ndat))
+            rb = 0.D0
+            ALLOCATE(r(ndat))
+            ALLOCATE(fb(ndat))
+            fb = 0.D0
+            ALLOCATE(f(ndat))
+            ALLOCATE(db(ndat))
+            db = 0.D0
+            ALLOCATE(d(ndat))
+            ALLOCATE(felmb(ndat))
+            felmb = 0.D0
+            ALLOCATE(felm(ndat))
+            ALLOCATE(delmb(ndat))
+            delmb = 0.D0
+            ALLOCATE(delm(ndat))
+            r = 0.0_R8
+            f = 0.0_R8
+            felm = 0.0_R8
+            delm = 0.0_R8
+! Check for which species to add
             nspec = 1
+!
             CALL PUSHINTEGER4(nsp(1))
             nsp(1) = spec
             DO is=1,ns
@@ -1097,11 +1130,12 @@ CONTAINS
                 nsp(nspec+1) = addspec(is, kind_coeff, spec)
                 CALL PUSHINTEGER4(nspec)
                 nspec = nspec + 1
-                CALL PUSHCONTROL1B(1)
-              ELSE
                 CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHCONTROL1B(1)
               END IF
             END DO
+!
             DO i=1,ndat
               CALL PUSHREAL8(r(i), r8/8)
               r(i) = tdata(1, i, kind_coeff, spec)
@@ -1116,29 +1150,48 @@ CONTAINS
               END IF
             END DO
             CALL PUSHINTEGER4(i - 1)
+!
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
+            ALLOCATE(pr(nomp))
+            ALLOCATE(pfb(nomp))
+            pfb = 0.D0
+            ALLOCATE(pf(nomp))
+            ALLOCATE(pelmb(nomp))
+            pelmb = 0.D0
+            ALLOCATE(pelm(nomp))
+            ALLOCATE(profb(nomp))
+            profb = 0.D0
+            ALLOCATE(prof(nomp))
+! Initialize (?)
+            pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&             icsepomp-1))/2.0_R8
 !
-            CALL PUSHREAL8ARRAY(pr, r8*nrr/8)
-            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
-!
-            CALL PUSHREAL8ARRAY(d, r8*nrr/8)
+            IF (ALLOCATED(d)) THEN
+              CALL PUSHREAL8ARRAY(d, r8*SIZE(d, 1)/8)
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
             CALL E01BEF(ndat, r, f, d, ifail)
+! Interpolate
             IF (elm_data) THEN
-              CALL PUSHREAL8ARRAY(delm, r8*nrr/8)
+              IF (ALLOCATED(delm)) THEN
+                CALL PUSHREAL8ARRAY(delm, r8*SIZE(delm, 1)/8)
+                CALL PUSHCONTROL1B(1)
+              ELSE
+                CALL PUSHCONTROL1B(0)
+              END IF
               CALL E01BEF(ndat, r, felm, delm, ifail)
               CALL PUSHCONTROL1B(0)
             ELSE
               CALL PUSHCONTROL1B(1)
             END IF
-!           write(*,*) 'zwischen,ifail=',ifail
-! FIXME
-            ndim = nomp
-            CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
-!           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
+!
+            CALL E01BFF(ndat, r, f, d, nomp, pr, pf, ifail)
             IF (elm_data) THEN
-              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+              CALL E01BFF(ndat, r, felm, delm, nomp, pr, pelm, ifail)
               CALL PUSHCONTROL1B(0)
             ELSE
               pelm = pf
@@ -1152,7 +1205,7 @@ CONTAINS
 ! The flux tube does not intercept the OMP
 ! Assume it lies in the far SOL
                   CALL PUSHINTEGER4(iy2)
-                  iy2 = ndim
+                  iy2 = nomp
                   CALL PUSHCONTROL1B(1)
                 ELSE
                   CALL PUSHINTEGER4(iy2)
@@ -1173,12 +1226,22 @@ CONTAINS
 &                 ) THEN
 !
                     IF (elm_region) THEN
-                      CALL PUSHREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                      prof(1:ndim) = pelm(1:ndim)
+                      IF (ALLOCATED(prof)) THEN
+                        CALL PUSHREAL8ARRAY(prof(1:nomp), r8*nomp/8)
+                        CALL PUSHCONTROL1B(1)
+                      ELSE
+                        CALL PUSHCONTROL1B(0)
+                      END IF
+                      prof(1:nomp) = pelm(1:nomp)
                       CALL PUSHCONTROL1B(0)
                     ELSE
-                      CALL PUSHREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                      prof(1:ndim) = pf(1:ndim)
+                      IF (ALLOCATED(prof)) THEN
+                        CALL PUSHREAL8ARRAY(prof(1:nomp), r8*nomp/8)
+                        CALL PUSHCONTROL1B(1)
+                      ELSE
+                        CALL PUSHCONTROL1B(0)
+                      END IF
+                      prof(1:nomp) = pf(1:nomp)
                       CALL PUSHCONTROL1B(1)
                     END IF
 !
@@ -1236,7 +1299,7 @@ CONTAINS
                 ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
 ! SOL boundary
                   CALL PUSHINTEGER4(iy2)
-                  iy2 = ndim
+                  iy2 = nomp
                   CALL PUSHCONTROL1B(1)
                 ELSE
                   CALL PUSHCONTROL4B(0)
@@ -1251,12 +1314,22 @@ CONTAINS
 &               THEN
 !
                   IF (elm_region) THEN
-                    CALL PUSHREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                    prof(1:ndim) = pelm(1:ndim)
+                    IF (ALLOCATED(prof)) THEN
+                      CALL PUSHREAL8ARRAY(prof(1:nomp), r8*nomp/8)
+                      CALL PUSHCONTROL1B(1)
+                    ELSE
+                      CALL PUSHCONTROL1B(0)
+                    END IF
+                    prof(1:nomp) = pelm(1:nomp)
                     CALL PUSHCONTROL1B(0)
                   ELSE
-                    CALL PUSHREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                    prof(1:ndim) = pf(1:ndim)
+                    IF (ALLOCATED(prof)) THEN
+                      CALL PUSHREAL8ARRAY(prof(1:nomp), r8*nomp/8)
+                      CALL PUSHCONTROL1B(1)
+                    ELSE
+                      CALL PUSHCONTROL1B(0)
+                    END IF
+                    prof(1:nomp) = pf(1:nomp)
                     CALL PUSHCONTROL1B(1)
                   END IF
 !
@@ -1295,44 +1368,133 @@ CONTAINS
  100          CONTINUE
             END DO
             CALL PUSHINTEGER4(is - 1)
+! Housekeeping
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
-                iy = ndim + 1
-                CALL PUSHINTEGER4(iy - 1)
                 CALL PUSHCONTROL2B(0)
               ELSE
-                iy = ndim + 1
-                CALL PUSHINTEGER4(iy - 1)
                 CALL PUSHCONTROL2B(1)
               END IF
             ELSE
               CALL PUSHCONTROL2B(2)
             END IF
+!
+            IF (ALLOCATED(fb)) THEN
+              DEALLOCATE(fb)
+            END IF
+            chunklength = ndat
+            CALL PUSHREAL8ARRAY(f, r8*chunklength/8)
+            DEALLOCATE(f)
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(rb)) THEN
+              DEALLOCATE(rb)
+            END IF
+            chunklength = ndat
+            CALL PUSHREAL8ARRAY(r, r8*chunklength/8)
+            DEALLOCATE(r)
+            CALL PUSHINTEGER4(chunklength)
+            chunklength = nomp
+            CALL PUSHREAL8ARRAY(pr, r8*chunklength/8)
+            DEALLOCATE(pr)
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(pfb)) THEN
+              DEALLOCATE(pfb)
+            END IF
+            DEALLOCATE(pf)
+            chunklength = nomp
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(felmb)) THEN
+              DEALLOCATE(felmb)
+            END IF
+            chunklength = ndat
+            CALL PUSHREAL8ARRAY(felm, r8*chunklength/8)
+            DEALLOCATE(felm)
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(pelmb)) THEN
+              DEALLOCATE(pelmb)
+            END IF
+            DEALLOCATE(pelm)
+            chunklength = nomp
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(delmb)) THEN
+              DEALLOCATE(delmb)
+            END IF
+            chunklength = ndat
+            CALL PUSHREAL8ARRAY(delm, r8*chunklength/8)
+            DEALLOCATE(delm)
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(profb)) THEN
+              DEALLOCATE(profb)
+            END IF
+            chunklength = nomp
+            CALL PUSHREAL8ARRAY(prof, r8*chunklength/8)
+            DEALLOCATE(prof)
+            CALL PUSHINTEGER4(chunklength)
+            IF (ALLOCATED(db)) THEN
+              DEALLOCATE(db)
+            END IF
+            chunklength = ndat
+            CALL PUSHREAL8ARRAY(d, r8*chunklength/8)
+            DEALLOCATE(d)
+            CALL PUSHINTEGER4(chunklength)
+! Update loop counter
+!
+!kind_data
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
       END DO
     END DO
-    felmb = 0.D0
-    db = 0.D0
-    fb = 0.D0
-    pelmb = 0.D0
-    rb = 0.D0
-    delmb = 0.D0
-    pfb = 0.D0
-    profb = 0.D0
     DO kind_coeff=nkind_coeff,1,-1
       DO spec=ns-1,0,-1
         DO kind_data=nkind_data,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            ndim = nomp
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(d(chunklength))
+            CALL POPREAL8ARRAY(d, r8*chunklength/8)
+            ALLOCATE(db(chunklength))
+            db = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(prof(chunklength))
+            CALL POPREAL8ARRAY(prof, r8*chunklength/8)
+            ALLOCATE(profb(chunklength))
+            profb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(delm(chunklength))
+            CALL POPREAL8ARRAY(delm, r8*chunklength/8)
+            ALLOCATE(delmb(chunklength))
+            delmb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(pelm(chunklength))
+            ALLOCATE(pelmb(chunklength))
+            pelmb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(felm(chunklength))
+            CALL POPREAL8ARRAY(felm, r8*chunklength/8)
+            ALLOCATE(felmb(chunklength))
+            felmb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(pf(chunklength))
+            ALLOCATE(pfb(chunklength))
+            pfb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(pr(chunklength))
+            CALL POPREAL8ARRAY(pr, r8*chunklength/8)
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(r(chunklength))
+            CALL POPREAL8ARRAY(r, r8*chunklength/8)
+            ALLOCATE(rb(chunklength))
+            rb = 0.D0
+            CALL POPINTEGER4(chunklength)
+            ALLOCATE(f(chunklength))
+            CALL POPREAL8ARRAY(f, r8*chunklength/8)
+            ALLOCATE(fb(chunklength))
+            fb = 0.D0
             CALL POPCONTROL2B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPINTEGER4(ad_to2)
               iy = 0
             ELSE IF (branch .EQ. 1) THEN
-              CALL POPINTEGER4(ad_to3)
               iy = 0
             END IF
             CALL POPINTEGER4(ad_to1)
@@ -1430,13 +1592,17 @@ CONTAINS
                 END IF
                 CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 0) THEN
-                  CALL POPREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                  pelmb(1:ndim) = pelmb(1:ndim) + profb(1:ndim)
-                  profb(1:ndim) = 0.D0
+                  CALL POPCONTROL1B(branch)
+                  IF (branch .EQ. 1) CALL POPREAL8ARRAY(prof(1:nomp), r8&
+&                                                 *nomp/8)
+                  pelmb(1:nomp) = pelmb(1:nomp) + profb(1:nomp)
+                  profb(1:nomp) = 0.D0
                 ELSE
-                  CALL POPREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                  pfb(1:ndim) = pfb(1:ndim) + profb(1:ndim)
-                  profb(1:ndim) = 0.D0
+                  CALL POPCONTROL1B(branch)
+                  IF (branch .EQ. 1) CALL POPREAL8ARRAY(prof(1:nomp), r8&
+&                                                 *nomp/8)
+                  pfb(1:nomp) = pfb(1:nomp) + profb(1:nomp)
+                  profb(1:nomp) = 0.D0
                 END IF
  110            CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 0) THEN
@@ -1540,13 +1706,17 @@ CONTAINS
                   END IF
                   CALL POPCONTROL1B(branch)
                   IF (branch .EQ. 0) THEN
-                    CALL POPREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                    pelmb(1:ndim) = pelmb(1:ndim) + profb(1:ndim)
-                    profb(1:ndim) = 0.D0
+                    CALL POPCONTROL1B(branch)
+                    IF (branch .EQ. 1) CALL POPREAL8ARRAY(prof(1:nomp), &
+&                                                   r8*nomp/8)
+                    pelmb(1:nomp) = pelmb(1:nomp) + profb(1:nomp)
+                    profb(1:nomp) = 0.D0
                   ELSE
-                    CALL POPREAL8ARRAY(prof(1:ndim), r8*ndim/8)
-                    pfb(1:ndim) = pfb(1:ndim) + profb(1:ndim)
-                    profb(1:ndim) = 0.D0
+                    CALL POPCONTROL1B(branch)
+                    IF (branch .EQ. 1) CALL POPREAL8ARRAY(prof(1:nomp), &
+&                                                   r8*nomp/8)
+                    pfb(1:nomp) = pfb(1:nomp) + profb(1:nomp)
+                    profb(1:nomp) = 0.D0
                   END IF
  130              CALL POPINTEGER4(icv)
                 END DO
@@ -1561,24 +1731,33 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               ndat = ndata(kind_data, kind_coeff, spec)
-              CALL E01BFF_B(ndat, r, rb, felm, felmb, delm, delmb, ndim&
+              CALL E01BFF_B(ndat, r, rb, felm, felmb, delm, delmb, nomp&
 &                     , pr, pelm, pelmb, ifail)
             ELSE
               pfb = pfb + pelmb
-              ndat = ndata(kind_data, kind_coeff, spec)
               pelmb = 0.D0
+              ndat = ndata(kind_data, kind_coeff, spec)
             END IF
-            CALL E01BFF_B(ndat, r, rb, f, fb, d, db, ndim, pr, pf, pfb, &
+            CALL E01BFF_B(ndat, r, rb, f, fb, d, db, nomp, pr, pf, pfb, &
 &                   ifail)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(delm, r8*nrr/8)
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 1) CALL POPREAL8ARRAY(delm, r8*SIZE(delm, &
+&                                             1)/8)
               CALL E01BEF_B(ndat, r, rb, felm, felmb, delm, delmb, ifail&
 &                    )
             END IF
-            CALL POPREAL8ARRAY(d, r8*nrr/8)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPREAL8ARRAY(d, r8*SIZE(d, 1)/8)
             CALL E01BEF_B(ndat, r, rb, f, fb, d, db, ifail)
-            CALL POPREAL8ARRAY(pr, r8*nrr/8)
+            DEALLOCATE(prof)
+            DEALLOCATE(profb)
+            DEALLOCATE(pelm)
+            DEALLOCATE(pelmb)
+            DEALLOCATE(pf)
+            DEALLOCATE(pfb)
+            DEALLOCATE(pr)
             CALL POPINTEGER4(ad_to)
             DO i=ad_to,1,-1
               CALL POPCONTROL1B(branch)
@@ -1599,12 +1778,26 @@ CONTAINS
             END DO
             DO is=ns,1,-1
               CALL POPCONTROL1B(branch)
-              IF (branch .NE. 0) THEN
+              IF (branch .EQ. 0) THEN
                 CALL POPINTEGER4(nspec)
                 CALL POPINTEGER4(nsp(nspec+1))
               END IF
             END DO
             CALL POPINTEGER4(nsp(1))
+            delmb = 0.D0
+            felmb = 0.D0
+            fb = 0.D0
+            rb = 0.D0
+            DEALLOCATE(delm)
+            DEALLOCATE(delmb)
+            DEALLOCATE(felm)
+            DEALLOCATE(felmb)
+            DEALLOCATE(d)
+            DEALLOCATE(db)
+            DEALLOCATE(f)
+            DEALLOCATE(fb)
+            DEALLOCATE(r)
+            DEALLOCATE(rb)
           END IF
         END DO
       END DO
@@ -1651,9 +1844,9 @@ CONTAINS
 &   , 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib(ncv, 0:ns-1)
     REAL(kind=r8) :: hce0(ncv), sig0(ncv), alf0(ncv)
     INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ifc, ift, icv, icn, &
-&   ndim, is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
-    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
-&   , felm(nrr), delm(nrr), prof(nrr)
+&   is, nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic
+    REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: f, r, pr, pf, d, pelm, &
+&   felm, delm, prof
     REAL(kind=r8) :: poloidal_scale_factor
     LOGICAL, SAVE :: elm_region, elm_data
     CHARACTER(len=26) :: hlp_frm
@@ -1743,21 +1936,37 @@ CONTAINS
     iloop = 0
     DO kind_coeff=1,nkind_coeff
       DO spec=0,ns-1
+! Get total number of data points to read in
         DO kind_data=1,nkind_data
-!           write (*,*) 'loop-begin', kind_coeff,spec,kind_data
           ndat = ndata(kind_data, kind_coeff, spec)
+!
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
 &            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
+!
+            ALLOCATE(r(ndat))
+            ALLOCATE(f(ndat))
+            ALLOCATE(d(ndat))
+            ALLOCATE(felm(ndat))
+            ALLOCATE(delm(ndat))
+            r = 0.0_R8
+            f = 0.0_R8
+            felm = 0.0_R8
+            delm = 0.0_R8
+! Check for which species to add
             nspec = 1
+!
             nsp(1) = spec
             DO is=1,ns
               IF (addspec(is, kind_coeff, spec) .GE. 0) THEN
                 nsp(nspec+1) = addspec(is, kind_coeff, spec)
                 nspec = nspec + 1
               END IF
+! Read data into r, f pairs (coordinate, value)
+
             END DO
+!
             DO i=1,ndat
               r(i) = tdata(1, i, kind_coeff, spec)
               f(i) = tdata(2, i, kind_coeff, spec)
@@ -1765,21 +1974,25 @@ CONTAINS
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
 
             END DO
+!
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
-!
-            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
+            ALLOCATE(pr(nomp))
+            ALLOCATE(pf(nomp))
+            ALLOCATE(pelm(nomp))
+            ALLOCATE(prof(nomp))
+! Initialize (?)
+            pr(1:nomp) = omp_pos(1:nomp) - (omp_pos(icsepomp)+omp_pos(&
+&             icsepomp-1))/2.0_R8
 !
             CALL E01BEF(ndat, r, f, d, ifail)
+! Interpolate
             IF (elm_data) CALL E01BEF(ndat, r, felm, delm, ifail)
-!           write(*,*) 'zwischen,ifail=',ifail
-! FIXME
-            ndim = nomp
-            CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
-!           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
+!
+            CALL E01BFF(ndat, r, f, d, nomp, pr, pf, ifail)
             IF (elm_data) THEN
-              CALL E01BFF(ndat, r, felm, delm, ndim, pr, pelm, ifail)
+              CALL E01BFF(ndat, r, felm, delm, nomp, pr, pelm, ifail)
             ELSE
               pelm = pf
             END IF
@@ -1791,7 +2004,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy), felm(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy), pelm(iy)
                 END DO
               ELSE
@@ -1799,7 +2012,7 @@ CONTAINS
                   WRITE(93, *) r(iy), f(iy)
                 END DO
 !
-                DO iy=1,ndim
+                DO iy=1,nomp
                   WRITE(94, *) pr(iy), pf(iy)
                 END DO
               END IF
@@ -1811,7 +2024,7 @@ CONTAINS
                 IF (iy .EQ. 0) THEN
 ! The flux tube does not intercept the OMP
 ! Assume it lies in the far SOL
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   iy2 = iy
                 END IF
@@ -1828,9 +2041,9 @@ CONTAINS
 &                 ) THEN
 !
                     IF (elm_region) THEN
-                      prof(1:ndim) = pelm(1:ndim)
+                      prof(1:nomp) = pelm(1:nomp)
                     ELSE
-                      prof(1:ndim) = pf(1:ndim)
+                      prof(1:nomp) = pf(1:nomp)
                     END IF
 !
                     IF (kind_coeff .EQ. 1) THEN
@@ -1902,7 +2115,7 @@ CONTAINS
                   iy2 = 1
                 ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
 ! SOL boundary
-                  iy2 = ndim
+                  iy2 = nomp
                 ELSE
                   GOTO 100
                 END IF
@@ -1915,9 +2128,9 @@ CONTAINS
 &               THEN
 !
                   IF (elm_region) THEN
-                    prof(1:ndim) = pelm(1:ndim)
+                    prof(1:nomp) = pelm(1:nomp)
                   ELSE
-                    prof(1:ndim) = pf(1:ndim)
+                    prof(1:nomp) = pf(1:nomp)
                   END IF
 !
                   IF (kind_coeff .EQ. 1) THEN
@@ -1972,11 +2185,12 @@ CONTAINS
 !is=1,nspec
 
             END DO
+! Housekeeping
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),3f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)&
@@ -2016,7 +2230,7 @@ CONTAINS
               ELSE
                 WRITE(hlp_frm, '(a,i3,a)') '(a,1x,a,', nspec, &
 &               '(1x,i3),2f14.7)'
-                DO iy=1,ndim
+                DO iy=1,nomp
                   IF (kind_coeff .EQ. 1) WRITE(*, hlp_frm) &
 &                                        'transport=Dna', 'spec=', (nsp(&
 &                                        i), i=1,nspec), pr(iy), pf(iy)
@@ -2047,11 +2261,20 @@ CONTAINS
               END IF
             END IF
 !
-!           deallocate(f,r,pr,pf,felm,pelm)
+            DEALLOCATE(f)
+            DEALLOCATE(r)
+            DEALLOCATE(pr)
+            DEALLOCATE(pf)
+            DEALLOCATE(felm)
+            DEALLOCATE(pelm)
+            DEALLOCATE(delm)
+            DEALLOCATE(prof)
+            DEALLOCATE(d)
+! Update loop counter
+!
             iloop = iloop + 1
-          END IF
 !kind_data
-
+          END IF
         END DO
 !spec=0,ns-1
 
@@ -2120,7 +2343,7 @@ CONTAINS
 &   , nfitanf)
 !
     USE B2MOD_INDIRECT_DIFF
-    USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
+    USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp, omp_pos
     USE B2US_GEO_DIFF
     USE B2US_MAP_DIFF
     USE B2MOD_MWTI, ONLY : output_ds_cv
@@ -2147,7 +2370,8 @@ CONTAINS
         ALLOCATE(prdsa(nomp))
         ALLOCATE(dsp(nomp))
         arg1 = icsepomp - 1
-        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp)
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp', dsp, omp_pos&
+&                   (1:nomp))
       END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF
