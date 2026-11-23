@@ -98,7 +98,7 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, conpard, enepar, &
 & enepard, enipar, enipard, nbcd, lfeedback, enkpar, enkpard, potpar, &
-& potpard, mompar, mompard
+& potpard, mompar, mompard, nbcd
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc_phys, nsdmax, &
 & senepar, senepard, senipar, senipard, sconpar, sconpard, scurpar, &
 & scurpard, prev_cur_delta, prev_cur_deltad, po_prev, po_prevd, po_curr,&
@@ -565,7 +565,7 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, enepar, enipar, nbcd&
-& , lfeedback, enkpar, potpar, mompar
+& , lfeedback, enkpar, potpar, mompar, nbcd
   USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2stbc_phys, nsdmax, &
 & senepar, senipar, sconpar, scurpar, prev_cur_delta, po_prev, po_curr, &
 & coeff_16, pos

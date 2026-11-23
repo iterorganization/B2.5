@@ -15,7 +15,7 @@
 MODULE B2MOD_RECYCLE_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_MATH_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES

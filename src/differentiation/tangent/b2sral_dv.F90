@@ -85,7 +85,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & , st_extd, st_avg, wrong_flow, main_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
@@ -130,7 +130,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & sconpar, sconpard, scurpar, scurpard, prev_cur_delta, prev_cur_deltad,&
 & po_prev, po_prevd, po_curr, po_currd, coeff_16, coeff_16d, &
 & in_no_of_angles, in_size_of_table, covered, cvcov, icov, icvsv, rmin, &
-& rmax, zmin, zmax, first, pos, posd
+& rmax, zmin, zmax, first, pos, posd, lngcov, lngind
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -277,7 +277,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -299,7 +299,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -336,7 +336,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -840,7 +840,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & , st_extd, st_avg, wrong_flow, main_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
@@ -885,7 +885,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & sconpar, sconpard, scurpar, scurpard, prev_cur_delta, prev_cur_deltad,&
 & po_prev, po_prevd, po_curr, po_currd, coeff_16, coeff_16d, &
 & in_no_of_angles, in_size_of_table, covered, cvcov, icov, icvsv, rmin, &
-& rmax, zmin, zmax, first, pos, posd
+& rmax, zmin, zmax, first, pos, posd, lngcov, lngind
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -1044,7 +1044,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -1066,7 +1066,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1103,7 +1103,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -1278,7 +1278,7 @@ SUBROUTINE B2SRAL_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..compute sources by inputfiles (heating,...)
   IF (sources_inputfile .EQ. 1) THEN
     dummyzerodiffd2 = 0.D0
-    CALL SOURCE_INPUT_DV(mpg, mpgd, geo, geod, switch, switchd, st_ext, &
+    CALL SOURCE_INPUT_DV(mpg, mpgd, geo, switch, switchd, st_ext, &
 &                  st_extd, ns, st%srw%sna0, std%srw%sna0, st%srw%smo0, &
 &                  std%srw%smo0, st%srw%she0, std%srw%she0, st%srw%shi0&
 &                  , std%srw%shi0, st%srw%sch0, std%srw%sch0, st%srw%&
@@ -1546,7 +1546,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & main_call)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
@@ -1585,7 +1585,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & ntstep_b2wall, ncall_b2tfrn, senepar, senipar, sconpar, scurpar, &
 & prev_cur_delta, po_prev, po_curr, coeff_16, in_no_of_angles, &
 & in_size_of_table, covered, cvcov, icov, icvsv, rmin, rmax, zmin, zmax,&
-& first, pos
+& first, pos, lngcov, lngind
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -1722,7 +1722,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -1744,7 +1744,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1781,7 +1781,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                 , .false.)
+&                                 , switch%tot_eqs_override, .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF

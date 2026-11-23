@@ -182,15 +182,15 @@ CONTAINS
     TYPE(MAPPING) :: mpg
     TYPE(B2STATE) :: st
     INTEGER :: indptr, icv0, ns, isneut
-    INTEGER :: icv, icn, ifc, ia, ptr, ik, ision, k, icvend
+    INTEGER :: icv, ifc, icn, ia, ptr, ik, ision, k, icvend
     REAL(kind=r8) :: dtim, dist_start, dist_end, dist_deposit, vcx, vion&
 &   , vnn, vexc, rcx, rion, rnn, src, sri, eion, sxb, flight_time, &
 &   flown_time, thru_time, work(mpg%ncv, 0:1), wrk2(mpg%ncv), wrk3(mpg%&
 &   ncv), pfrpuff, mainpuff, corepuff
+    INTRINSIC MIN
     INTRINSIC ABS
     INTRINSIC LOG
     INTRINSIC SQRT
-    INTRINSIC MIN
     INTRINSIC MOD
     REAL(kind=r8) :: abs0
     REAL(r8) :: arg1
@@ -199,9 +199,13 @@ CONTAINS
     REAL(r8) :: result10
     REAL(kind=r8) :: arg10
 !
+    ifc = mpg%cvfc(mpg%cvfcp(icv0, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icv = mpg%fccv(ifc, 2)
+    ELSE
+      icv = mpg%fccv(ifc, 1)
+    END IF
 ! ignore core
-    ifc = mpg%cvfc(mpg%cvfcp(icv0,1))
-    icv = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
     IF (mpg%cvonclosedsurface(icv)) THEN
       RETURN
     ELSE
@@ -312,12 +316,16 @@ CONTAINS
             END IF
           END DO
  100      IF (dist_end .GT. 0.0_R8 .AND. icvend .NE. 0) THEN
-            IF (icvend.le.mpg%nci) THEN
+            IF (icvend .LE. mpg%nci) THEN
               icn = icvend
             ELSE
-              ifc = mpg%cvfc(mpg%cvfcp(icvend,1))
-              icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
-            ENDIF
+              ifc = mpg%cvfc(mpg%cvfcp(icvend, 1))
+              IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+                icn = mpg%fccv(ifc, 2)
+              ELSE
+                icn = mpg%fccv(ifc, 1)
+              END IF
+            END IF
             IF (mpg%cvonclosedsurface(icn)) THEN
               corepuff = corepuff + dist_end
             ELSE IF (MOD(mpg%cvreg(icn), 4) .EQ. 2) THEN

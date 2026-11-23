@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2usmo in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: corub resmb aad0 pccb
-!   with respect to varying inputs: ub ctcfb rzb flcb corub cvsb
-!                resmb aad0 smb rob pz
+!   with respect to varying inputs: ub rzb flcb corub cvsb resmb
+!                aad0 smb rob pz
 !   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvhx:in
 !                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqalf:in
 !                geo.fcqbet:in geo.vxvol:in
@@ -27,8 +27,7 @@
 SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 & nregionv, solvereg, itcnt, rxg, rob, robd, rzb, rzbd, pb, pz, pzd, ub&
 & , ubd, smb, smbd, flcb, flcbd, cvsb, cvsbd, resmb, resmbd, ctcfb, &
-& ctcfbd, corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs&
-&)
+& corub, corubd, pccb, pccbd, aa, aad, aad0, aad0d, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -56,7 +55,7 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: robd(nbdirsmax, ncv), rzbd(nbdirsmax, ncv), pzd(&
 & nbdirsmax, ncv), ubd(nbdirsmax, ncv), smbd(nbdirsmax, ncv, 0:3), flcbd&
 & (nbdirsmax, nfc, 0:1), cvsbd(nbdirsmax, nfc, 0:1), resmbd(nbdirsmax, &
-& ncv), ctcfbd(nbdirsmax, ncv)
+& ncv)
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corub(ncv), pccb(ncv, 0:1)
@@ -99,8 +98,9 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
   INTRINSIC MAXVAL
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
   REAL(r8) :: min1
-  REAL(r8), DIMENSION(nbdirsmax) :: min1d
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
   integer :: result1
@@ -205,6 +205,29 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
           aad(nd, mpg%cvnvp(icv, 1)) = aad0d(nd, icv)
         END DO
         aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      END IF
+!xpb 20.09.21
+      IF (switch%aad0_boost0 .GT. 0.0_R8) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs1d(nd) = resmbd(nd, icv)
+          END DO
+          abs1 = resmb(icv)
+        ELSE
+          DO nd=1,nbdirs
+            abs1d(nd) = -resmbd(nd, icv)
+          END DO
+          abs1 = -resmb(icv)
+        END IF
+!xpb 20.09.21
+        temp0 = csb1*csb*rob(icv)
+        DO nd=1,nbdirs
+          aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) + &
+&           switch%aad0_boost0*(abs1d(nd)-abs1*(rob(icv)*(csb*csb1d(nd)+&
+&           csb1*csbd(nd))+csb1*csb*robd(nd, icv))/temp0)/temp0
+        END DO
+        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + switch%&
+&         aad0_boost0*(abs1/temp0)
       END IF
     ELSE
       DO nd=1,nbdirs
@@ -385,18 +408,10 @@ SUBROUTINE B2USMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 !   ..contribution from linearization of centrifugal force
   DO icv=1,ncv
     IF (0.0_R8 .GT. ctcfb(icv)) THEN
-      DO nd=1,nbdirs
-        min1d(nd) = ctcfbd(nd, icv)
-      END DO
       min1 = ctcfb(icv)
     ELSE
       min1 = 0.0_R8
-      min1d = 0.D0
     END IF
-    DO nd=1,nbdirs
-      aad(nd, mpg%cvnvp(icv, 1)) = aad(nd, mpg%cvnvp(icv, 1)) - min1d(nd&
-&       )
-    END DO
     aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) - min1
   END DO
   DO icv=1,ncv
@@ -553,6 +568,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
   INTRINSIC MIN
   INTRINSIC MAXVAL
   REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
   REAL(r8) :: min1
   REAL(kind=r8) :: arg1
   integer :: result1
@@ -609,6 +625,17 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
         aa(mpg%cvnvp(icv, 1)) = aad0(icv) + abs0/(rxg*csb1)
       ELSE
         aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      END IF
+!xpb 20.09.21
+      IF (switch%aad0_boost0 .GT. 0.0_R8) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          abs1 = resmb(icv)
+        ELSE
+          abs1 = -resmb(icv)
+        END IF
+!xpb 20.09.21
+        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs1/csb1*switch&
+&         %aad0_boost0/(csb*rob(icv))
       END IF
     ELSE
       aa(mpg%cvnvp(icv, 1)) = 1.0_R8

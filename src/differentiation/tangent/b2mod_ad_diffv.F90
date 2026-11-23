@@ -201,7 +201,7 @@ MODULE B2MOD_AD_DIFFV
   REAL(kind=r8), SAVE :: gradient_res=0.0_R8
 !
 !
-  LOGICAL, SAVE :: firstgmid=.true.
+  LOGICAL, SAVE :: firstgmid(2)=.true.
   DATA fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))', &
 &      '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))', '(1p,9(1x,e13.5e3))'&
 &      , '(1p,10(1x,e12.4e3))'/

@@ -93,6 +93,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -179,12 +180,6 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
 !
   DO icv=1,ncv
-    IF (icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
-    ELSE
-      icn = icv
-    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     result10 = SQRT(t0)
@@ -192,6 +187,16 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
     result10 = PITX(icv)
     tnp = tau(icv)*dv%ne(icv)*result10**2
     z = dv%ne2(icv)/dv%ne(icv)
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -257,11 +262,6 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 1), 1)
-!
-!srv 15.06.18
-  sig(:, :) = sig(:, :)*switch%prl_cur
-!srv 15.06.18
-  alf(:, :) = alf(:, :)*switch%prl_cur
 !srv 16.06.08 }
 !
   IF (switch%b2tqce_iout .NE. 0) THEN
@@ -427,6 +427,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -527,12 +528,6 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
   taud = 0.D0
 !
   DO icv=1,ncv
-    IF (icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
-    ELSE
-      icn = icv
-    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     temp = SQRT(t0)
@@ -562,6 +557,16 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
     END DO
     tnp = tau(icv)*dv%ne(icv)*result10**2
     z = temp0
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -684,15 +689,6 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, mpg, pl, pld, dv, dvd, &
   dummyzerodiffd1 = 0.D0
   CALL SFILL_DV(ncv, 0.0_R8, dummyzerodiffd1, alf(1, 1), alfd(:, 1, 1), &
 &         1, nbdirs)
-  DO nd=1,nbdirs
-!
-!srv 15.06.18
-    sigd(nd, :, :) = switch%prl_cur*sigd(nd, :, :)
-!srv 15.06.18
-    alfd(nd, :, :) = switch%prl_cur*alfd(nd, :, :)
-  END DO
-  sig(:, :) = sig(:, :)*switch%prl_cur
-  alf(:, :) = alf(:, :)*switch%prl_cur
 !srv 16.06.08 }
 !
   IF (switch%b2tqce_iout .NE. 0) THEN
