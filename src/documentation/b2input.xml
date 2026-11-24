@@ -3395,6 +3395,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_afn_impurity_pumping</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the pumping of non-hydrogenic fluid neutrals is controlled similarly as in the AFN model. The recycling factor from b2.neutrals.parameters is applied to the incident flux, which is approximated as a drifting Maxwellian.
+					It is then recommended to use zero-flux boundary conditions in b2.boundary.parameters.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_afn_bcs_use_coarse</name>
 				<default>1</default>
 				<type>integer</type>

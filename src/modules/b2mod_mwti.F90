@@ -1731,23 +1731,23 @@ contains
         do is = 0, ns-1
           nasepa(is+1,2) = pl%na(cvtrg,is)
         end do
-        nesepi(2) = dv%ne(cvtrg)
-        tesepi(2) = pl%te(cvtrg)/ev
-        tisepi(2) = pl%ti(cvtrg)/ev
+        nesepa(2) = dv%ne(cvtrg)
+        tesepa(2) = pl%te(cvtrg)/ev
+        tisepa(2) = pl%ti(cvtrg)/ev
         if (nnatmi.gt.0) then
           do iatm=1,nnatmi
-            dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
-            tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
+            dabsepa(iatm,2) = dab2(cvtrg,iatm,1)
+            tabsepa(iatm,2) = tab2(cvtrg,iatm,1)
           enddo
         endif
         if (nnmoli.gt.0) then
           do imol=1,nnmoli
-            dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
-            tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
+            dmbsepa(imol,2) = dmb2(cvtrg,imol,1)
+            tmbsepa(imol,2) = tmb2(cvtrg,imol,1)
           enddo
         endif
-        posepi(2) = pl%po(cvtrg)
-        ktsepi(2) = pl%kt(cvtrg)
+        posepa(2) = pl%po(cvtrg)
+        ktsepa(2) = pl%kt(cvtrg)
       else if (gridGeometry.eq.GEOMETRY_DDN_TOP) then
         ! Inner (lower) target quantities
         iFc = mpg%divFc(mpg%divFcP(1,1)+mpg%ifdiv(1)-1)
