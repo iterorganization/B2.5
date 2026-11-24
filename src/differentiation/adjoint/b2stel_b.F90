@@ -19,7 +19,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 & , rt, rtw, srw)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFF
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA
@@ -65,7 +65,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
   INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n, tpart(4)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: sna0_ion(ncv, 0:1, 0:ns-1), sna0_rec(ncv, 0:1, 0:ns-1&
 & ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), she0_ion(&
@@ -381,7 +381,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 !       ..compute electron heat source
           t2 = t0*pl%na(icv, is)*rt%rpi(icv, is)*ev
           she0_rec(icv, 0) = she0_rec(icv, 0) + (1.0_R8+rf0)*t2
-          she0_rec(icv, 0) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+          she0_rec(icv, 3) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
 &           (icv))
 !       ..compute atom heat source
           IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
@@ -412,8 +412,8 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
             shi0_rec(icv, 3) = shi0_rec(icv, 3) - rf0*t1i/(dv%ni(icv, 0)&
 &             *pl%ti(icv))
             shn0_rec(icv, 0) = shn0_rec(icv, 0) + (1.0_R8+rf0)*t1n
-            shn0_rec(icv, 3) = shn0_rec(icv, 3) - rf0*t1n/((dv%ni(icv, 0&
-&             )-dv%ni(icv, 1))*pl%tn(icv))
+            shn0_rec(icv, 3) = shn0_rec(icv, 3) - rf0*t1n/(dv%nn(icv)*pl&
+&             %tn(icv))
           END IF
           srw%rrahi(icv, is) = t1
           rrahireg(mpg%cvreg(icv), is) = rrahireg(mpg%cvreg(icv), is) + &
@@ -679,7 +679,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, mpg, pl, plb, dv&
 & , dvb, rt, rtb, rtw, rtwb, srw, srwb)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFF
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA
@@ -730,7 +730,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, mpg, pl, plb, dv&
   INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n, tpart(4)
   REAL(kind=r8) :: rf0b, t0b, t1b, tkinb, t1ib, t1nb
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: wrk0b(ncv)
@@ -1456,16 +1456,13 @@ SUBROUTINE B2STEL_B(ncv, nfc, ns, ismain, switch, geo, mpg, pl, plb, dv&
             plb%ti(icv) = plb%ti(icv) + t0*tempb0
           ELSE
             t1n = t0*pl%na(icv, is)*(1.5_R8*pl%ti(icv)+tkin)
-            temp2 = dv%ni(icv, 0) - dv%ni(icv, 1)
-            temp1 = temp2*pl%tn(icv)
-            tempb0 = -(shn0_recb(icv, 3)/temp1)
+            temp2 = dv%nn(icv)*pl%tn(icv)
+            tempb0 = -(shn0_recb(icv, 3)/temp2)
             rf0b = rf0b + t1n*tempb0
             t1nb = rf0*tempb0 + (rf0+1.0_R8)*shn0_recb(icv, 0)
-            tempb1 = -(rf0*t1n*tempb0/temp1)
-            tempb2 = pl%tn(icv)*tempb1
-            plb%tn(icv) = plb%tn(icv) + temp2*tempb1
-            dvb%ni(icv, 0) = dvb%ni(icv, 0) + tempb2
-            dvb%ni(icv, 1) = dvb%ni(icv, 1) - tempb2
+            tempb2 = -(rf0*t1n*tempb0/temp2)
+            dvb%nn(icv) = dvb%nn(icv) + pl%tn(icv)*tempb2
+            plb%tn(icv) = plb%tn(icv) + dv%nn(icv)*tempb2
             t1i = t0*pl%na(icv, is)*(-(1.5_R8*pl%ti(icv)))
             CALL POPREAL8(shi0_rec(icv, 3), r8/8)
             temp2 = dv%ni(icv, 0)*pl%ti(icv)

@@ -69,6 +69,7 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
   INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8) :: coefb, t0b, t1b, t2b
+  INTRINSIC MIN
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC TANH
@@ -88,12 +89,19 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
 !
 !   ..subprogram start-up calls
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      CALL PUSHCONTROL1B(1)
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
+    CALL PUSHCONTROL1B(0)
     icn = icv
-  ENDIF
+  END IF
   IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = zetap/mp
     DO i=0,nspecies-1
@@ -195,6 +203,7 @@ SUBROUTINE B2TRFL_AN_B(icv, switch, mpg, c_hta_an, c_hta_anb, amnucl, &
     amtib = 0.D0
     cf_limb0 = 0.D0
   END IF
+  CALL POPCONTROL1B(branch)
 END SUBROUTINE B2TRFL_AN_B
 
 !
@@ -253,6 +262,7 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !   ..local variables
   INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
+  INTRINSIC MIN
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC TANH
@@ -263,12 +273,16 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
     icn = icv
-  ENDIF
+  END IF
   IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = zetap/mp
     DO i=0,nspecies-1

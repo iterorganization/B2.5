@@ -2,10 +2,10 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2usmo in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: ub ctcfb rzb flcb corub cvsb
-!                resmb aad0 smb rob pz pccb
-!   with respect to varying inputs: ub ctcfb rzb flcb corub cvsb
-!                resmb aad0 smb rob pz
+!   gradient     of useful results: ub rzb flcb corub cvsb resmb
+!                aad0 smb rob pz pccb
+!   with respect to varying inputs: ub rzb flcb corub cvsb resmb
+!                aad0 smb rob pz
 !   Plus diff mem management of: geo.cvbb:in geo.cvhz:in geo.cvhx:in
 !                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqalf:in
 !                geo.fcqbet:in geo.vxvol:in
@@ -28,7 +28,7 @@
 SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 & nregionv, solvereg, itcnt, rxg, rob, robb, rzb, rzbb, pb, pz, pzb, ub&
 & , ubb, smb, smbb, flcb, flcbb, cvsb, cvsbb, resmb, resmbb, ctcfb, &
-& ctcfbb, corub, corubb, pccb, pccbb, aa, aab, aad0, aad0b, name)
+& corub, corubb, pccb, pccbb, aa, aab, aad0, aad0b, name)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -54,7 +54,7 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
   REAL(kind=r8) :: rxg, rob(ncv), rzb(ncv), pb(ncv), pz(ncv), ub(ncv), &
 & smb(ncv, 0:3), flcb(nfc, 0:1), cvsb(nfc, 0:1), resmb(ncv), ctcfb(ncv)
   REAL(kind=r8) :: robb(ncv), rzbb(ncv), pzb(ncv), ubb(ncv), smbb(ncv, 0&
-& :3), flcbb(nfc, 0:1), cvsbb(nfc, 0:1), resmbb(ncv), ctcfbb(ncv)
+& :3), flcbb(nfc, 0:1), cvsbb(nfc, 0:1), resmbb(ncv)
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corub(ncv), pccb(ncv, 0:1)
@@ -97,8 +97,9 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
   INTRINSIC MAXVAL
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs0b
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs1b
   REAL(r8) :: min1
-  REAL(r8) :: min1b
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask0
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask1
@@ -119,6 +120,8 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 !   ..extensive tests on first few calls
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb
+  REAL(kind=r8) :: temp0
+  REAL(kind=r8) :: tempb0
   INTEGER*4 :: branch
 !
 ! ..apply discretization scheme
@@ -148,6 +151,17 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
         aa(mpg%cvnvp(icv, 1)) = aad0(icv) + abs0/(rxg*csb1)
       ELSE
         aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      END IF
+!xpb 20.09.21
+      IF (switch%aad0_boost0 .GT. 0.0_R8) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          abs1 = resmb(icv)
+        ELSE
+          abs1 = -resmb(icv)
+        END IF
+!xpb 20.09.21
+        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs1/csb1*switch&
+&         %aad0_boost0/(csb*rob(icv))
       END IF
     ELSE
       aa(mpg%cvnvp(icv, 1)) = 1.0_R8
@@ -300,17 +314,6 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
     END IF
   END DO
   CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
-!$BWD-OF II-LOOP 
-  DO icv=1,ncv
-    IF (0.0_R8 .GT. ctcfb(icv)) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    min1b = -aab(mpg%cvnvp(icv, 1))
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) ctcfbb(icv) = ctcfbb(icv) + min1b
-  END DO
   CALL POPREAL8ARRAY(pccb, r8*ncv*2/8)
   CALL POPREAL8ARRAY(resmb, r8*ncv/8)
   CALL POPREAL8ARRAY(aa, r8*mpg%ncmxnv/8)
@@ -318,14 +321,14 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
   DO icv=1,ncv
     ireg = mpg%cvreg(icv)
     IF (solvereg(ireg)) THEN
-      temp = geo%cvbb(icv, 3)*aad0(icv)
+      temp0 = geo%cvbb(icv, 3)*aad0(icv)
       aad0b(icv) = aad0b(icv) - geo%cvbb(icv, 3)*geo%cvvol(icv)*geo%cvhz&
-&       (icv)*geo%cvbb(icv, 0)*pccbb(icv, 1)/temp**2
+&       (icv)*geo%cvbb(icv, 0)*pccbb(icv, 1)/temp0**2
       pccbb(icv, 1) = 0.D0
-      temp = geo%cvbb(icv, 3)*aa(mpg%cvnvp(icv, 1))
+      temp0 = geo%cvbb(icv, 3)*aa(mpg%cvnvp(icv, 1))
       aab(mpg%cvnvp(icv, 1)) = aab(mpg%cvnvp(icv, 1)) - geo%cvbb(icv, 3)&
 &       *geo%cvvol(icv)*geo%cvhz(icv)*geo%cvbb(icv, 0)*pccbb(icv, 0)/&
-&       temp**2
+&       temp0**2
       pccbb(icv, 0) = 0.D0
     ELSE
       resmbb(icv) = 0.D0
@@ -479,11 +482,43 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
           abs0 = -resmb(icv)
           CALL PUSHCONTROL1B(1)
         END IF
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+!xpb 20.09.21
+      IF (switch%aad0_boost0 .GT. 0.0_R8) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          abs1 = resmb(icv)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          abs1 = -resmb(icv)
+          CALL PUSHCONTROL1B(1)
+        END IF
+        temp = csb1*csb*rob(icv)
+        tempb0 = switch%aad0_boost0*aab(mpg%cvnvp(icv, 1))/temp
+        abs1b = tempb0
+        tempb = -(abs1*tempb0/temp)
+        csb1b = csb*rob(icv)*tempb
+        csbb = csb1*rob(icv)*tempb
+        robb(icv) = robb(icv) + csb1*csb*tempb
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          resmbb(icv) = resmbb(icv) + abs1b
+        ELSE
+          resmbb(icv) = resmbb(icv) - abs1b
+        END IF
+      ELSE
+        csbb = 0.D0
+        csb1b = 0.D0
+      END IF
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
         aad0b(icv) = aad0b(icv) + aab(mpg%cvnvp(icv, 1))
         tempb = aab(mpg%cvnvp(icv, 1))/(rxg*csb1)
         aab(mpg%cvnvp(icv, 1)) = 0.D0
         abs0b = tempb
-        csb1b = -(abs0*tempb/csb1)
+        csb1b = csb1b - abs0*tempb/csb1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           resmbb(icv) = resmbb(icv) + abs0b
@@ -493,7 +528,6 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
       ELSE
         aad0b(icv) = aad0b(icv) + aab(mpg%cvnvp(icv, 1))
         aab(mpg%cvnvp(icv, 1)) = 0.D0
-        csb1b = 0.D0
       END IF
       aad0b(icv) = aad0b(icv) + aab(mpg%cvnvp(icv, 1))
       aab(mpg%cvnvp(icv, 1)) = 0.D0
@@ -503,7 +537,7 @@ SUBROUTINE B2USMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
       robb(icv) = robb(icv) + csb*tempb - smb(icv, 3)*aad0b(icv)
       smbb(icv, 1) = smbb(icv, 1) - aad0b(icv)
       aad0b(icv) = 0.D0
-      csbb = rob(icv)*tempb
+      csbb = csbb + rob(icv)*tempb
       IF (ub(icv)**2 + csb**2 .EQ. 0.D0) THEN
         tempb = 0.D0
       ELSE
@@ -606,6 +640,7 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
   INTRINSIC MIN
   INTRINSIC MAXVAL
   REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
   REAL(r8) :: min1
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask0
@@ -665,6 +700,17 @@ SUBROUTINE B2USMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, nregionv, &
         aa(mpg%cvnvp(icv, 1)) = aad0(icv) + abs0/(rxg*csb1)
       ELSE
         aa(mpg%cvnvp(icv, 1)) = aad0(icv)
+      END IF
+!xpb 20.09.21
+      IF (switch%aad0_boost0 .GT. 0.0_R8) THEN
+        IF (resmb(icv) .GE. 0.) THEN
+          abs1 = resmb(icv)
+        ELSE
+          abs1 = -resmb(icv)
+        END IF
+!xpb 20.09.21
+        aa(mpg%cvnvp(icv, 1)) = aa(mpg%cvnvp(icv, 1)) + abs1/csb1*switch&
+&         %aad0_boost0/(csb*rob(icv))
       END IF
     ELSE
       aa(mpg%cvnvp(icv, 1)) = 1.0_R8

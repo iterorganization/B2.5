@@ -32,7 +32,7 @@ SUBROUTINE B2XBZB_NODIFF(ncv, nfc, nvx, mpg, bb, bbf, bbv, vol, bzb, &
 !
   bbsum = 0.0_R8
   volsum = 0.0_R8
-  DO icv=1,ncv
+  DO icv=1,mpg%nci
     IF (mpg%cvonclosedsurface(icv)) THEN
 ! for CORE
       bbsum = bbsum + bb(icv, 3)**2*vol(icv)

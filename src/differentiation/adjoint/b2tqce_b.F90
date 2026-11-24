@@ -92,6 +92,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
 !   ..initialisation
@@ -170,18 +171,22 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
 !
   DO icv=1,ncv
-    IF (icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
-    ELSE
-      icn = icv
-    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     tau(icv) = ctaue/dv%lnlam(icv)*t0*SQRT(t0)/dv%ne2(icv)
     result1 = PITX(icv)
     tnp = tau(icv)*dv%ne(icv)*result1**2
     z = dv%ne2(icv)/dv%ne(icv)
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -244,11 +249,6 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 1), 1)
-!
-!srv 15.06.18
-  sig(:, :) = sig(:, :)*switch%prl_cur
-!srv 15.06.18
-  alf(:, :) = alf(:, :)*switch%prl_cur
 !srv 16.06.08 }
 !
   IF (switch%b2tqce_iout .NE. 0) THEN
@@ -410,6 +410,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_FWD, SFILL_BWD
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result1b
   REAL(kind=r8) :: result2
@@ -489,12 +490,6 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
 ! IYS and lk 21.11.2012
 !
   DO icv=1,ncv
-    IF (icv .GT. mpg%nci) THEN
-      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-      icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
-    ELSE
-      icn = icv
-    END IF
     t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
     CALL PUSHREAL8(tau(icv), r8/8)
@@ -505,6 +500,19 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
     tnp = tau(icv)*dv%ne(icv)*result1**2
     CALL PUSHREAL8(z, r8/8)
     z = dv%ne2(icv)/dv%ne(icv)
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        CALL PUSHCONTROL1B(1)
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      CALL PUSHCONTROL1B(0)
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -583,13 +591,8 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
   CALL SFILL_FWD(ncv, 0.0_R8, hce(1, 1), 1)
   CALL SFILL_FWD(ncv, 0.0_R8, sig(1, 1), 1)
   CALL SFILL_FWD(ncv, 0.0_R8, alf(1, 1), 1)
-!
-!srv 15.06.18
-!srv 15.06.18
 !srv 16.06.08 }
 !
-  alfb = switch%prl_cur*alfb
-  sigb = switch%prl_cur*sigb
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb1, alf(1, 1), alfb(1, 1), 1)
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb0, sig(1, 1), sigb(1, 1), 1)
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb, hce(1, 1), hceb(1, 1), 1)
@@ -717,7 +720,8 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
  100 plb%te(icv) = plb%te(icv) + tnp*ce*hceb(icv, 0)/me
     tnpb = tnpb + pl%te(icv)*ce*hceb(icv, 0)/me
     hceb(icv, 0) = 0.D0
- 110 tempb1 = result1**2*tnpb
+ 110 CALL POPCONTROL1B(branch)
+    tempb1 = result1**2*tnpb
     CALL POPREAL8(z, r8/8)
     tempb0 = zb/dv%ne(icv)
     dvb%ne2(icv) = dvb%ne2(icv) + tempb0

@@ -48,6 +48,7 @@ MODULE B2MOD_USER_NAMELIST_DIFF
   INTEGER, ALLOCATABLE :: ft_imp(:), ft_omp(:)
   REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2)
   REAL(kind=r8) :: psi_omp(nromp), psi_imp(nromp)
+  REAL(kind=r8), SAVE :: omp_pos(nromp), imp_pos(nromp)
   REAL(kind=r8), ALLOCATABLE :: fs_ds_imp(:), fs_ds_omp(:)
   REAL(kind=r8), ALLOCATABLE :: ft_ds_imp(:), ft_ds_omp(:)
   REAL(kind=r8) :: fusion_power, spmp_he_to_d, spmp_nom
@@ -256,24 +257,28 @@ CONTAINS
     END IF
 !
     nomp = 0
-!Need to add check for monotonicity in list
     omp = 0
-! Define OMP list by finding CVs which are intersected by the rzomp segment
+! Define OMP list by finding CVs which are intersected by the rzomp segment;
+! cv_intersections orders them along the segment (chord midpoints, running in
+! increasing R). omp_pos holds these positions, oriented like the list; they
+! are the abscissa of the OMP profiles (b2time.nc dsa, input profiles).
     CALL CV_INTERSECTIONS_NODIFF(geo, m, rzomp, omp, nomp, nromp, 1, &
 &                          ifail)
     CALL XERTST(.NOT.ifail, 'Increase DEF_NYD in b2mod_dimensions')
-! Here we need to guarantee ordering of CVs. With classical grids the conversion
-! is done such that CVs are ordered from left to right and bottom to top wrt
-! the structured computational domain. With fully unstructured grids this is not guaranteed.
-! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
-! SAME FOR IMP
+    omp_pos = 0.0_R8
+    IF (nomp .GT. 0) THEN
+      CALL CV_SEGMENT_POSITIONS_NODIFF(geo, m, rzomp, omp, nomp, omp_pos&
+&                                (1:nomp))
+      IF (rzomp(1, 2) .LT. rzomp(1, 1)) omp_pos(1:nomp) = -omp_pos(1:&
+&         nomp)
+    END IF
     DO ic=2,nomp
-      IF (geo%cvx(omp(ic)) .LT. geo%cvx(omp(ic-1))) CALL XERRAB(&
-&                                                  'OMP LIST NOT SORTED'&
-&                                                        )
+      IF (omp_pos(ic) .LT. omp_pos(ic-1)) CALL XERRAB(&
+&                                               'OMP LIST NOT SORTED')
     END DO
 !   ..Definition of separatrix position in OMP list
     icsepomp = 0
+    ifsepomp = 0
     ic = 1
     found = .false.
     DO WHILE (ic .LE. nomp .AND. (.NOT.found))
@@ -518,13 +523,20 @@ CONTAINS
     CALL CV_INTERSECTIONS_NODIFF(geo, m, rzimp, imp, nimp, nromp, 1, &
 &                          ifail)
     CALL XERTST(.NOT.ifail, 'Increase DEF_NYD in b2mod_dimensions')
+    imp_pos = 0.0_R8
+    IF (nimp .GT. 0) THEN
+      CALL CV_SEGMENT_POSITIONS_NODIFF(geo, m, rzimp, imp, nimp, imp_pos&
+&                                (1:nimp))
+      IF (rzimp(1, 2) .LT. rzimp(1, 1)) imp_pos(1:nimp) = -imp_pos(1:&
+&         nimp)
+    END IF
     DO ic=2,nimp
-      IF (geo%cvx(imp(ic)) .LT. geo%cvx(imp(ic-1))) CALL XERRAB(&
-&                                                  'IMP LIST NOT SORTED'&
-&                                                        )
+      IF (imp_pos(ic) .LT. imp_pos(ic-1)) CALL XERRAB(&
+&                                               'IMP LIST NOT SORTED')
     END DO
 ! Find position of separatrix in IMP list (same as for OMP)
     icsepimp = 0
+    ifsepimp = 0
     ic = 1
     found = .false.
     DO WHILE (ic .LE. nimp .AND. (.NOT.found))
