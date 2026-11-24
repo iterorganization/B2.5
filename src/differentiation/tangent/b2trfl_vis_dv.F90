@@ -57,6 +57,7 @@ SUBROUTINE B2TRFL_VIS_DV(icv, mpg, ns, eta, etad, pa, pad, gamma, cfl, &
   INTEGER :: is, ifc, icn
   REAL(kind=r8) :: t0, t1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d, t1d
+  INTRINSIC MIN
   INTRINSIC ABS
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -73,12 +74,16 @@ SUBROUTINE B2TRFL_VIS_DV(icv, mpg, ns, eta, etad, pa, pad, gamma, cfl, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_vis')
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
     icn = icv
-  ENDIF
+  END IF
   IF (cfl .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     DO is=0,ns-1
       IF (gavm_uc(icv) .GE. 0.) THEN
@@ -175,6 +180,7 @@ SUBROUTINE B2TRFL_VIS_NODIFF(icv, mpg, ns, eta, pa, gamma, cfl, cf_limv)
 !   ..local variables
   INTEGER :: is, ifc, icn
   REAL(kind=r8) :: t0, t1
+  INTRINSIC MIN
   INTRINSIC ABS
 !-----------------------------------------------------------------------
 !.computation
@@ -182,12 +188,16 @@ SUBROUTINE B2TRFL_VIS_NODIFF(icv, mpg, ns, eta, pa, gamma, cfl, cf_limv)
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_vis')
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
     icn = icv
-  ENDIF
+  END IF
   IF (cfl .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     DO is=0,ns-1
       IF (gavm_uc(icv) .GE. 0.) THEN

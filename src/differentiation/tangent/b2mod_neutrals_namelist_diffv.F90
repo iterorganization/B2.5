@@ -46,7 +46,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
 !*                  source correction in eirene_mc
 !ank }
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_B2CMFS
   USE B2MOD_VERSION
   USE B2US_MAP_DIFFV
@@ -305,7 +305,7 @@ CONTAINS
         erecyc(is, :) = 0.3_R8
       END IF
     END DO
-!mb  Default Franck-Condon energy is 2eV per atom
+!mb  Default Franck-Condon energy is 3eV per atom
     e_fc = 3.0_R8
 !mb  Default is to accelerate ions everywhere with sheath potential (target & wall)
     accel_ion = 1
@@ -454,7 +454,7 @@ CONTAINS
 
 !
   SUBROUTINE READ_NEUTRALS_NAMELIST_ST(nx, ny, ns, dotest)
-    USE B2MOD_WALL, ONLY : track_index, ntrack, track_species
+    USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
     USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
@@ -1103,7 +1103,7 @@ CONTAINS
 !
   SUBROUTINE READ_NEUTRALS_NAMELIST_US_DV(ns, m, md0, switch, dotest, &
 &   nbdirs)
-    USE B2MOD_WALL, ONLY : track_index, ntrack, track_species
+    USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
     USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
@@ -1519,7 +1519,7 @@ CONTAINS
 
 !
   SUBROUTINE READ_NEUTRALS_NAMELIST_US(ns, m, switch, dotest)
-    USE B2MOD_WALL, ONLY : track_index, ntrack, track_species
+    USE B2MOD_WALL_DIFFV, ONLY : track_index, ntrack, track_species
     USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS, ONLY : is_codes
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV

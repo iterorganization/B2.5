@@ -67,19 +67,19 @@
 !                psnl.ne:in psnl.ni:in psnl.nn:in psnl.kinrgy:in
 !                psnl.reshi0:in psnl.reshe0:in psnl.reshn0:in psnl.reskt0:in
 !                psnl.reszt0:in psnl.dhedt:in psnl.dhidt:in psnl.dhndt:in
-!                psnl.dktdt:in psnl.dztdt:in geo.cvbb:in geo.cvhz:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.vxy:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
-!                geo.fspsi:in st_ext.am:in st_ext.za2:in st_ext.na:in
-!                st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in srw.b2sihs_divue:in
-!                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
-!                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
-!                sr.she:in sr.shi:in sr.shn:in sr.skt:in sr.szt:in
-!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.shidt:in
-!                sr.shndt:in sr.skt_diss:in sr.skt_prod:in co.cvsa:in
-!                co.cvsa_cl:in co.cvsa_drho:in co.cvsahz_eff:in
+!                psnl.dktdt:in psnl.dztdt:in geo.cvbb:in geo.cvy:in
+!                geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxy:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.fspsi:in st_ext.am:in st_ext.za2:in
+!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
+!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
+!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
+!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
+!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
+!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
+!                co.cvsa:in co.cvsa_cl:in co.cvsa_drho:in co.cvsahz_eff:in
 !                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
 !                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
 !                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
@@ -189,12 +189,13 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !   ..local variables
   INTEGER :: icv, is
 !srv 02.01.07
-!srv 02.01.07
+!IYS 17.07.26
 !srv 18.09.09
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
-& wrk1(ncv), wrk2(ncv), wrk3(ncv), she0(ncv, 0:3), shi0(ncv, 0:3), shn0(&
-& ncv, 0:3), wrk0(ncv), shei(ncv), shekt(ncv, 0:3), shikt(ncv, 0:3), &
-& skt0(ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk4(ncv), wrk5(ncv), wrk6(ncv), she0&
+& (ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv), wrkfd(nbdirsmax, nfc, 0:1&
 & ), wrkcd(nbdirsmax, nfc, 0:1, 0:2), wrk1d(nbdirsmax, ncv), wrk2d(&
 & nbdirsmax, ncv), wrk3d(nbdirsmax, ncv), she0d(nbdirsmax, ncv, 0:3), &
@@ -212,7 +213,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !srv 02.01.07
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USHT_NODIFF, B2UPHT_NODIFF
   EXTERNAL B2URSD_DV, B2USHT_DV, B2UPHT_DV
-  INTRINSIC HUGE
   EXTERNAL XERRAB
   INTRINSIC ANY
   INTEGER :: arg1
@@ -222,10 +222,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   REAL(r8), DIMENSION(nbdirsmax) :: result1d
   CHARACTER(len=9) :: arg11
   INTEGER :: nd
-  REAL(r8) :: temp
+  REAL(kind=r8) :: temp
   REAL(r8) :: temp0
   REAL(r8) :: temp1
   REAL(r8) :: temp2
+  REAL(r8) :: temp3
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -269,14 +270,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &                    'equations was implemented similarly as the energy'&
 &                                   , &
 &                          'equations but lacks theoretical development'
-!    ..make sure time-dependent equations are not altered by convergence tricks
-      rxg_npht = HUGE(1.0_R8)
-      IF (switch%b2npht_pcm0 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm0 must be 0 for time-dependent mode'&
-&                                              )
-      IF (switch%b2npht_pcm1 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm1 must be 0 for time-dependent mode'&
-&                                              )
       warning_e = .false.
       warning_i = .false.
       warning_n = .false.
@@ -303,10 +296,8 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &                            'Time derivative terms may be inacurrate !'
       IF (warning_kt .OR. warning_zt) WRITE(6, *) &
 &                   'Time derivative terms may be inacurrate for k-eps!'
-    ELSE
-      rxg_npht = 1.0_R8
     END IF
-    CALL XERTST(0.0_R8 .LT. rxg_npht, 'faulty internal parameter rxg')
+    rxg_npht = switch%b2npht_rxg
   END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npht .LT. 3) THEN
@@ -479,78 +470,90 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &            , mpg, sr%shedt, srd%shedt, sr%shidt, srd%shidt, sr%shndt, &
 &            srd%shndt, sr%sktdt, srd%sktdt, sr%sztdt, srd%sztdt, nbdirs&
 &           )
-    DO nd=1,nbdirs
 !  .. add contribution from time-dependent source
-!c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-!c then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-!c while the second contribution corresponds to T dn/dt
+!c Given d(nT)/dt = n dT/dt + T dn/dt,
+!c What is computed in b2shdt corresponds to n dT/dt,
+!c What is added here below corresponds to T dn/dt
+    DO nd=1,nbdirs
       wrk1d(nd, :) = geo%cvvol*1.5_R8*(psnl%te*(dvd%ne(nd, :)-psnld%ne(&
 &       nd, :))/dtim+(dv%ne-psnl%ne)*psnld%te(nd, :)/dtim)
+    END DO
+    wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvvol
+    DO icv=1,mpg%nci
+      temp = dtee(mpg%cvreg(icv))*rxf
+      DO nd=1,nbdirs
+        wrk1d(nd, icv) = wrk1d(nd, icv)/temp
+      END DO
+      wrk1(icv) = wrk1(icv)/temp
+    END DO
+    DO nd=1,nbdirs
       wrk1d(nd, mpg%nci+1:mpg%ncv) = 0.D0
       srd%shedt(nd, :, 0) = srd%shedt(nd, :, 0) - ts_factor*wrk1d(nd, :)
       she0d(nd, :, :) = she0d(nd, :, :) + srd%shedt(nd, :, :)
     END DO
-    wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvvol
     wrk1(mpg%nci+1:mpg%ncv) = 0.0_R8
     sr%shedt(:, 0) = sr%shedt(:, 0) - wrk1*ts_factor
     she0 = she0 + sr%shedt
     IF (switch%tn_style .EQ. 0) THEN
-      DO nd=1,nbdirs
 ! default, combined ion-neutral energy equation
+      DO nd=1,nbdirs
         wrk2d(nd, :) = geo%cvvol*1.5_R8*(psnl%ti*(dvd%ni(nd, :, 0)-psnld&
 &         %ni(nd, :, 0))/dtim+(dv%ni(:, 0)-psnl%ni(:, 0))*psnld%ti(nd, :&
 &         )/dtim)
-        wrk2d(nd, mpg%nci+1:mpg%ncv) = 0.D0
-        srd%shidt(nd, :, 0) = srd%shidt(nd, :, 0) - ts_factor*wrk2d(nd, &
-&         :)
-        shi0d(nd, :, :) = shi0d(nd, :, :) + srd%shidt(nd, :, :)
       END DO
       wrk2 = 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE IF (switch%tn_style .EQ. 1) THEN
-      DO nd=1,nbdirs
 ! pure ion energy equation
+      DO nd=1,nbdirs
         wrk2d(nd, :) = geo%cvvol*1.5_R8*(psnl%ti*(dvd%ni(nd, :, 1)-psnld&
 &         %ni(nd, :, 1))/dtim+(dv%ni(:, 1)-psnl%ni(:, 1))*psnld%ti(nd, :&
 &         )/dtim)
-        wrk2d(nd, mpg%nci+1:mpg%ncv) = 0.D0
-        srd%shidt(nd, :, 0) = srd%shidt(nd, :, 0) - ts_factor*wrk2d(nd, &
-&         :)
-        shi0d(nd, :, :) = shi0d(nd, :, :) + srd%shidt(nd, :, :)
       END DO
       wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE
       DO nd=1,nbdirs
 ! separate ion and neutral energy equation
-        wrk2d(nd, :) = ts_factor*1.5_R8*geo%cvvol*(psnl%ti*(dvd%ni(nd, :&
-&         , 1)-psnld%ni(nd, :, 1))/dtim+(dv%ni(:, 1)-psnl%ni(:, 1))*&
-&         psnld%ti(nd, :)/dtim)
-        wrk2d(nd, mpg%nci+1:mpg%ncv) = 0.D0
-        srd%shidt(nd, :, 0) = srd%shidt(nd, :, 0) - ts_factor*wrk2d(nd, &
-&         :)
-        shi0d(nd, :, :) = shi0d(nd, :, :) + srd%shidt(nd, :, :)
+        wrk2d(nd, :) = geo%cvvol*1.5_R8*(psnl%ti*(dvd%ni(nd, :, 1)-psnld&
+&         %ni(nd, :, 1))/dtim+(dv%ni(:, 1)-psnl%ni(:, 1))*psnld%ti(nd, :&
+&         )/dtim)
         wrk3d(nd, :) = geo%cvvol*1.5_R8*(psnl%tn*(dvd%nn(nd, :)-psnld%nn&
 &         (nd, :))/dtim+(dv%nn(:)-psnl%nn(:))*psnld%tn(nd, :)/dtim)
         wrk3d(nd, mpg%nci+1:mpg%ncv) = 0.D0
+      END DO
+      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
+      wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))*psnl%tn/dtim*geo%cvvol
+      wrk3(mpg%nci+1:mpg%ncv) = 0.0_R8
+      DO icv=1,mpg%nci
+        temp = dtei(mpg%cvreg(icv))*rxf
+        DO nd=1,nbdirs
+          wrk3d(nd, icv) = wrk3d(nd, icv)/temp
+        END DO
+        wrk3(icv) = wrk3(icv)/temp
+      END DO
+      DO nd=1,nbdirs
         srd%shndt(nd, :, 0) = srd%shndt(nd, :, 0) - ts_factor*wrk3d(nd, &
 &         :)
         shn0d(nd, :, :) = shn0d(nd, :, :) + srd%shndt(nd, :, :)
       END DO
-      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*ts_factor*psnl%ti/dtim*&
-&       geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
-      wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))*psnl%tn/dtim*geo%cvvol
-      wrk3(mpg%nci+1:mpg%ncv) = 0.0_R8
       sr%shndt(:, 0) = sr%shndt(:, 0) - wrk3*ts_factor
       shn0 = shn0 + sr%shndt
     END IF
+!
+    DO icv=1,mpg%nci
+      temp = dtei(mpg%cvreg(icv))*rxf
+      DO nd=1,nbdirs
+        wrk2d(nd, icv) = wrk2d(nd, icv)/temp
+      END DO
+      wrk2(icv) = wrk2(icv)/temp
+    END DO
+    DO nd=1,nbdirs
+      wrk2d(nd, mpg%nci+1:mpg%ncv) = 0.D0
+      srd%shidt(nd, :, 0) = srd%shidt(nd, :, 0) - ts_factor*wrk2d(nd, :)
+      shi0d(nd, :, :) = shi0d(nd, :, :) + srd%shidt(nd, :, :)
+    END DO
+    wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
+    sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
+    shi0 = shi0 + sr%shidt
     IF (switch%solve_keps .GT. 0) THEN
       DO nd=1,nbdirs
         srd%sktdt(nd, :, 0) = srd%sktdt(nd, :, 0) - ts_factor*1.5_R8*geo&
@@ -573,6 +576,10 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       ))*ts_factor*psnl%zt/dtim*geo%cvvol
       szt0 = szt0 + sr%sztdt
     END IF
+  ELSE
+    wrk1 = 0.0_R8
+    wrk2 = 0.0_R8
+    wrk3 = 0.0_R8
   END IF
 !srv 22.05.18
 !
@@ -642,112 +649,112 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !     ..compute equipartition
   DO icv=1,mpg%nci
     arg10 = pl%te(icv)
-    temp = SQRT(arg10)
+    temp0 = SQRT(arg10)
     DO nd=1,nbdirs
       arg10d(nd) = pld%te(nd, icv)
       IF (arg10 .EQ. 0.D0) THEN
         result1d(nd) = 0.D0
       ELSE
-        result1d(nd) = arg10d(nd)/(2.0*temp)
+        result1d(nd) = arg10d(nd)/(2.0*temp0)
       END IF
 !lkw 29.03.2024{
       arg10d(nd) = pld%te(nd, icv)
     END DO
-    result1 = temp
-    temp = pl%te(icv) - pl%ti(icv)
-    temp0 = dv%ni(icv, 0)*temp
-    temp1 = pl%te(icv)*result1
-    temp2 = co%ceqp(icv)*dv%ne(icv)/temp1
+    result1 = temp0
+    temp0 = pl%te(icv) - pl%ti(icv)
+    temp1 = dv%ni(icv, 0)*temp0
+    temp2 = pl%te(icv)*result1
+    temp3 = co%ceqp(icv)*dv%ne(icv)/temp2
     DO nd=1,nbdirs
-      sheid(nd, icv) = temp0*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*&
-&       dvd%ne(nd, icv)-temp2*(result1*pld%te(nd, icv)+pl%te(icv)*&
-&       result1d(nd)))/temp1 + temp2*(temp*dvd%ni(nd, icv, 0)+dv%ni(icv&
+      sheid(nd, icv) = temp1*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*&
+&       dvd%ne(nd, icv)-temp3*(result1*pld%te(nd, icv)+pl%te(icv)*&
+&       result1d(nd)))/temp2 + temp3*(temp0*dvd%ni(nd, icv, 0)+dv%ni(icv&
 &       , 0)*(pld%te(nd, icv)-pld%ti(nd, icv)))
     END DO
-    shei(icv) = temp2*temp0
+    shei(icv) = temp3*temp1
     arg10 = pl%te(icv)
-    temp2 = SQRT(arg10)
+    temp3 = SQRT(arg10)
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.D0) THEN
         result1d(nd) = 0.D0
       ELSE
-        result1d(nd) = arg10d(nd)/(2.0*temp2)
+        result1d(nd) = arg10d(nd)/(2.0*temp3)
       END IF
       arg10d(nd) = pld%te(nd, icv)
     END DO
-    result1 = temp2
-    temp2 = dv%ni(icv, 0)*pl%ti(icv)
-    temp1 = pl%te(icv)*result1
-    temp0 = co%ceqp(icv)*dv%ne(icv)/temp1
+    result1 = temp3
+    temp3 = dv%ni(icv, 0)*pl%ti(icv)
+    temp2 = pl%te(icv)*result1
+    temp1 = co%ceqp(icv)*dv%ne(icv)/temp2
     DO nd=1,nbdirs
       shi0d(nd, icv, 0) = shi0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
-&       temp2*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
-&       -temp0*(result1*pld%te(nd, icv)+pl%te(icv)*result1d(nd)))/temp1+&
-&       temp0*(pl%ti(icv)*dvd%ni(nd, icv, 0)+dv%ni(icv, 0)*pld%ti(nd, &
+&       temp3*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       -temp1*(result1*pld%te(nd, icv)+pl%te(icv)*result1d(nd)))/temp2+&
+&       temp1*(pl%ti(icv)*dvd%ni(nd, icv, 0)+dv%ni(icv, 0)*pld%ti(nd, &
 &       icv)))
     END DO
-    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*(temp0*temp2)
+    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*(temp1*temp3)
     arg10 = pl%te(icv)
-    temp2 = SQRT(arg10)
+    temp3 = SQRT(arg10)
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.D0) THEN
         result1d(nd) = 0.D0
       ELSE
-        result1d(nd) = arg10d(nd)/(2.0*temp2)
+        result1d(nd) = arg10d(nd)/(2.0*temp3)
       END IF
       arg10d(nd) = pld%te(nd, icv)
     END DO
-    result1 = temp2
-    temp2 = pl%te(icv)*result1
-    temp1 = dv%ni(icv, 0)/temp2
-    temp0 = co%ceqp(icv)*dv%ne(icv)
+    result1 = temp3
+    temp3 = pl%te(icv)*result1
+    temp2 = dv%ni(icv, 0)/temp3
+    temp1 = co%ceqp(icv)*dv%ne(icv)
     DO nd=1,nbdirs
       shi0d(nd, icv, 1) = shi0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
-&       temp1*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
-&       )+temp0*(dvd%ni(nd, icv, 0)-temp1*(result1*pld%te(nd, icv)+pl%te&
-&       (icv)*result1d(nd)))/temp2)
+&       temp2*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       )+temp1*(dvd%ni(nd, icv, 0)-temp2*(result1*pld%te(nd, icv)+pl%te&
+&       (icv)*result1d(nd)))/temp3)
     END DO
-    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*(temp0*temp1)
+    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*(temp1*temp2)
     arg10 = pl%te(icv)
-    temp2 = SQRT(arg10)
+    temp3 = SQRT(arg10)
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.D0) THEN
         result1d(nd) = 0.D0
       ELSE
-        result1d(nd) = arg10d(nd)/(2.0*temp2)
+        result1d(nd) = arg10d(nd)/(2.0*temp3)
       END IF
 !lkw 29.03.2024}
       arg10d(nd) = pld%te(nd, icv)
     END DO
-    result1 = temp2
-    temp2 = dv%ne(icv)*dv%ni(icv, 0)
-    temp1 = co%ceqp(icv)/result1
+    result1 = temp3
+    temp3 = dv%ne(icv)*dv%ni(icv, 0)
+    temp2 = co%ceqp(icv)/result1
     DO nd=1,nbdirs
       she0d(nd, icv, 0) = she0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
-&       temp2*(cod%ceqp(nd, icv)-temp1*result1d(nd))/result1+temp1*(dv%&
+&       temp3*(cod%ceqp(nd, icv)-temp2*result1d(nd))/result1+temp2*(dv%&
 &       ni(icv, 0)*dvd%ne(nd, icv)+dv%ne(icv)*dvd%ni(nd, icv, 0)))
     END DO
-    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*(temp1*temp2)
+    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*(temp2*temp3)
     arg10 = pl%te(icv)
-    temp2 = SQRT(arg10)
+    temp3 = SQRT(arg10)
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.D0) THEN
         result1d(nd) = 0.D0
       ELSE
-        result1d(nd) = arg10d(nd)/(2.0*temp2)
+        result1d(nd) = arg10d(nd)/(2.0*temp3)
       END IF
     END DO
-    result1 = temp2
-    temp2 = pl%te(icv)*result1
-    temp1 = dv%ni(icv, 0)/temp2
-    temp0 = co%ceqp(icv)*dv%ne(icv)
+    result1 = temp3
+    temp3 = pl%te(icv)*result1
+    temp2 = dv%ni(icv, 0)/temp3
+    temp1 = co%ceqp(icv)*dv%ne(icv)
     DO nd=1,nbdirs
       she0d(nd, icv, 1) = she0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
-&       temp1*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
-&       )+temp0*(dvd%ni(nd, icv, 0)-temp1*(result1*pld%te(nd, icv)+pl%te&
-&       (icv)*result1d(nd)))/temp2)
+&       temp2*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       )+temp1*(dvd%ni(nd, icv, 0)-temp2*(result1*pld%te(nd, icv)+pl%te&
+&       (icv)*result1d(nd)))/temp3)
     END DO
-    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*(temp0*temp1)
+    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*(temp1*temp2)
   END DO
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
@@ -1027,6 +1034,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &   (:, 1)+sr%sktdt(:, 3)*pl%kt*dv%ni(:, 1))/ts_factor)
   dv%dztdt = -((sr%sztdt(:, 0)+sr%sztdt(:, 1)*pl%zt+sr%sztdt(:, 2)*dv%ni&
 &   (:, 1)+sr%sztdt(:, 3)*pl%zt*dv%ni(:, 1))/ts_factor)
+  DO icv=1,mpg%nci
+    wrk4(icv) = dtee(mpg%cvreg(icv))*(dv%dhedt(icv)-wrk1(icv))
+    wrk5(icv) = dtei(mpg%cvreg(icv))*(dv%dhidt(icv)-wrk2(icv))
+    wrk6(icv) = dtei(mpg%cvreg(icv))*(dv%dhndt(icv)-wrk3(icv))
+  END DO
 !
   IF (switch%b2npht_iout .EQ. 1) THEN
     DO is=0,ns-1
@@ -1055,10 +1067,13 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
     CALL MY_OUT_US(70, ncv, 0, dv%dhedt, 'b2npht_dhedt')
     CALL MY_OUT_US(70, ncv, 0, wrk1, 'b2npht_tednedt')
+    CALL MY_OUT_US(70, ncv, 0, wrk4, 'b2npht_nedtedt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhidt, 'b2npht_dhidt')
     CALL MY_OUT_US(70, ncv, 0, wrk2, 'b2npht_tidnidt')
+    CALL MY_OUT_US(70, ncv, 0, wrk5, 'b2npht_nidtidt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhndt, 'b2npht_dhndt')
     CALL MY_OUT_US(70, ncv, 0, wrk3, 'b2npht_tndnndt')
+    CALL MY_OUT_US(70, ncv, 0, wrk6, 'b2npht_nndtndt')
     CALL MY_OUT_US(70, ncv, 0, dv%dktdt, 'b2npht_dktdt')
     CALL MY_OUT_US(70, ncv, 0, dv%dztdt, 'b2npht_dztdt')
   END IF
@@ -1165,12 +1180,13 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 !   ..local variables
   INTEGER :: icv, is
 !srv 02.01.07
-!srv 02.01.07
+!IYS 17.07.26
 !srv 18.09.09
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
-& wrk1(ncv), wrk2(ncv), wrk3(ncv), she0(ncv, 0:3), shi0(ncv, 0:3), shn0(&
-& ncv, 0:3), wrk0(ncv), shei(ncv), shekt(ncv, 0:3), shikt(ncv, 0:3), &
-& skt0(ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk4(ncv), wrk5(ncv), wrk6(ncv), she0&
+& (ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
 !srv 17.07.05
   CHARACTER :: chns*3
   LOGICAL :: warning_i, warning_e, warning_n, warning_kt, warning_zt
@@ -1179,7 +1195,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   EXTERNAL XERTST, IPGETR, B2SAXPY_NODIFF
 !srv 02.01.07
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USHT_NODIFF, B2UPHT_NODIFF
-  INTRINSIC HUGE
   EXTERNAL XERRAB
   INTRINSIC ANY
   INTEGER :: arg1
@@ -1228,14 +1243,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                    'equations was implemented similarly as the energy'&
 &                                   , &
 &                          'equations but lacks theoretical development'
-!    ..make sure time-dependent equations are not altered by convergence tricks
-      rxg_npht = HUGE(1.0_R8)
-      IF (switch%b2npht_pcm0 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm0 must be 0 for time-dependent mode'&
-&                                              )
-      IF (switch%b2npht_pcm1 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm1 must be 0 for time-dependent mode'&
-&                                              )
       warning_e = .false.
       warning_i = .false.
       warning_n = .false.
@@ -1262,10 +1269,8 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                            'Time derivative terms may be inacurrate !'
       IF (warning_kt .OR. warning_zt) WRITE(6, *) &
 &                   'Time derivative terms may be inacurrate for k-eps!'
-    ELSE
-      rxg_npht = 1.0_R8
     END IF
-    CALL XERTST(0.0_R8 .LT. rxg_npht, 'faulty internal parameter rxg')
+    rxg_npht = switch%b2npht_rxg
   END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npht .LT. 3) THEN
@@ -1392,37 +1397,40 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                dv%nn, psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr&
 &                %shndt, sr%sktdt, sr%sztdt)
 !  .. add contribution from time-dependent source
-!c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-!c then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-!c while the second contribution corresponds to T dn/dt
+!c Given d(nT)/dt = n dT/dt + T dn/dt,
+!c What is computed in b2shdt corresponds to n dT/dt,
+!c What is added here below corresponds to T dn/dt
     wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvvol
+    DO icv=1,mpg%nci
+      wrk1(icv) = wrk1(icv)/(dtee(mpg%cvreg(icv))*rxf)
+    END DO
     wrk1(mpg%nci+1:mpg%ncv) = 0.0_R8
     sr%shedt(:, 0) = sr%shedt(:, 0) - wrk1*ts_factor
     she0 = she0 + sr%shedt
     IF (switch%tn_style .EQ. 0) THEN
 ! default, combined ion-neutral energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE IF (switch%tn_style .EQ. 1) THEN
 ! pure ion energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE
 ! separate ion and neutral energy equation
-      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*ts_factor*psnl%ti/dtim*&
-&       geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
+      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
       wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))*psnl%tn/dtim*geo%cvvol
       wrk3(mpg%nci+1:mpg%ncv) = 0.0_R8
+      DO icv=1,mpg%nci
+        wrk3(icv) = wrk3(icv)/(dtei(mpg%cvreg(icv))*rxf)
+      END DO
       sr%shndt(:, 0) = sr%shndt(:, 0) - wrk3*ts_factor
       shn0 = shn0 + sr%shndt
     END IF
+!
+    DO icv=1,mpg%nci
+      wrk2(icv) = wrk2(icv)/(dtei(mpg%cvreg(icv))*rxf)
+    END DO
+    wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
+    sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
+    shi0 = shi0 + sr%shidt
     IF (switch%solve_keps .GT. 0) THEN
       sr%sktdt(:, 0) = sr%sktdt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1&
 &       ))*ts_factor*psnl%kt/dtim*geo%cvvol
@@ -1433,6 +1441,10 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &       ))*ts_factor*psnl%zt/dtim*geo%cvvol
       szt0 = szt0 + sr%sztdt
     END IF
+  ELSE
+    wrk1 = 0.0_R8
+    wrk2 = 0.0_R8
+    wrk3 = 0.0_R8
   END IF
 !srv 22.05.18
 !
@@ -1680,6 +1692,11 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &   (:, 1)+sr%sktdt(:, 3)*pl%kt*dv%ni(:, 1))/ts_factor)
   dv%dztdt = -((sr%sztdt(:, 0)+sr%sztdt(:, 1)*pl%zt+sr%sztdt(:, 2)*dv%ni&
 &   (:, 1)+sr%sztdt(:, 3)*pl%zt*dv%ni(:, 1))/ts_factor)
+  DO icv=1,mpg%nci
+    wrk4(icv) = dtee(mpg%cvreg(icv))*(dv%dhedt(icv)-wrk1(icv))
+    wrk5(icv) = dtei(mpg%cvreg(icv))*(dv%dhidt(icv)-wrk2(icv))
+    wrk6(icv) = dtei(mpg%cvreg(icv))*(dv%dhndt(icv)-wrk3(icv))
+  END DO
 !
   IF (switch%b2npht_iout .EQ. 1) THEN
     DO is=0,ns-1
@@ -1708,10 +1725,13 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
     CALL MY_OUT_US(70, ncv, 0, dv%dhedt, 'b2npht_dhedt')
     CALL MY_OUT_US(70, ncv, 0, wrk1, 'b2npht_tednedt')
+    CALL MY_OUT_US(70, ncv, 0, wrk4, 'b2npht_nedtedt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhidt, 'b2npht_dhidt')
     CALL MY_OUT_US(70, ncv, 0, wrk2, 'b2npht_tidnidt')
+    CALL MY_OUT_US(70, ncv, 0, wrk5, 'b2npht_nidtidt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhndt, 'b2npht_dhndt')
     CALL MY_OUT_US(70, ncv, 0, wrk3, 'b2npht_tndnndt')
+    CALL MY_OUT_US(70, ncv, 0, wrk6, 'b2npht_nndtndt')
     CALL MY_OUT_US(70, ncv, 0, dv%dktdt, 'b2npht_dktdt')
     CALL MY_OUT_US(70, ncv, 0, dv%dztdt, 'b2npht_dztdt')
   END IF

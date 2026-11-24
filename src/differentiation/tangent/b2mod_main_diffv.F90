@@ -776,10 +776,8 @@ CONTAINS
 !                rtlra:in rtlqa:in rtlcx:in b2data:in b2dataoncf:in
 !                b2voloncf:in c_hw_save:in c_r_ta:in c_r_tb:in
 !                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save:in c_r_ta_an_save:in
-!                corr_tfia[from module b2mod_frtf_nccorr]:in-out
-!                g_hs_style[from module b2mod_frtf_nccorr]:in-out
-!                corr_fria[from module b2mod_frtf_nccorr]:in-out
-!                alpha_hs_style[from module b2mod_frtf_nccorr]:in-out
+!                corr_tfia[from module b2mod_frtf_nccorr]:in g_hs_style[from module b2mod_frtf_nccorr]:in
+!                corr_fria[from module b2mod_frtf_nccorr]:in alpha_hs_style[from module b2mod_frtf_nccorr]:in
 !
   SUBROUTINE B2MN_STEP_DV(j, jd, nbdirs)
     USE B2MOD_TYPES

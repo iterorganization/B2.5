@@ -20,7 +20,8 @@ c
       real (kind=R8) :: y_transform
       real (kind=R8), allocatable :: ds(:), wd(:), wrk(:)
       integer, allocatable :: cvlist(:)
-      integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
+      integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,
+     .        iFn,iVx,iVx1,iVx2,iVn1,iVn2,nlist
       integer iystart,iyend
       integer len_of_digits
       external xertst, len_of_digits
@@ -53,24 +54,41 @@ c
         cvlist(1) = iCv
         do iy = iystart+1, iyend
           cvlist(iy-iystart+1) = mpg%imapCv(ix,iy)
-          do i = 1, mpg%cvFcP(cvlist(iy-iystart),2)
-            iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1)+i-1)
-            if (mpg%fcFs(iFc).eq.0) cycle
-            if ((mpg%fcCv(iFc,1).eq.cvlist(iy-iystart).and.
-     &           mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
-     &          (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
-     &           mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
-              if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
-     &            mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
-              if (isep.eq.0 .and. mpg%nXpt.gt.1) then
-                do j = 1, mpg%nXpt
-                  if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then
-                    if (isep.eq.0) isep = iy-iystart
-                  end if
-                end do
+          if (cvlist(iy-iystart+1).le.mpg%nCi) then
+            do i = 1, mpg%cvFcP(cvlist(iy-iystart),2)
+              iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1)+i-1)
+              if (mpg%fcFs(iFc).eq.0) cycle
+              if ((mpg%fcCv(iFc,1).eq.cvlist(iy-iystart).and.
+     &             mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
+     &            (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
+     &             mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
+                if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
+     &              mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
+                if (isep.eq.0 .and. mpg%nXpt.gt.1) then
+                  do j = 1, mpg%nXpt
+                    if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then
+                      if (isep.eq.0) isep = iy-iystart
+                    end if
+                  end do
+                end if
               end if
+            end do
+          else ! special treatment for guard cells
+            iFc = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart),1))
+            iFn = mpg%cvFc(mpg%cvFcP(cvlist(iy-iystart+1),1))
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            iVn1 = mpg%fcVx(iFn,1)
+            iVn2 = mpg%fcVx(iFn,2)
+            if (iVx1.eq.iVn1.or.iVx1.eq.iVn2) iVx = iVx1
+            if (iVx2.eq.iVn1.or.iVx2.eq.iVn2) iVx = iVx2
+            if (mpg%iFssep2.gt.0) then
+              if (mpg%vxFs(iVx).eq.mpg%iFssep2) isep = iy-iystart
             end if
-          end do
+            if (mpg%iFssep.gt.0) then ! done second so the main separatrix wins
+              if (mpg%vxFs(iVx).eq.mpg%iFssep) isep = iy-iystart
+            end if
+          end if
         end do
         call set_distances(mpg,geo,nlist,cvlist,isep,ds,wd)
       else
@@ -1446,3 +1464,108 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
       endif
       return
       end subroutine plot_wallfile
+
+
+      subroutine set_distances(mpg,geo,nlist,cvlist,isep,ds,wd)
+      use b2us_map
+      use b2us_geo
+      use b2mod_types
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      integer, intent(in) :: nlist, isep
+      integer, intent(in) :: cvlist(nlist)
+      real(kind=R8), intent(out) :: ds(nlist), wd(nlist)
+      integer i,j,iFc,iCv1,iCv2,ifound
+      real(kind=R8) :: ds_offset
+      logical all_guard
+      intrinsic sqrt
+
+      ds(1)= 0.0_R8
+      wd(:)= 0.0_R8
+      do i=2,nlist
+        ds(i)=ds(i-1)+
+     &      sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+
+     &           (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
+      enddo
+      if(isep.ne.0) then
+        ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
+        do i=1,nlist
+          ds(i)=ds(i)-ds_offset
+        enddo
+      endif
+      i = 1
+      iCv1 = 0
+      do while (iCv1.eq.0 .and. i.le.nlist)
+        if (iCv1.eq.0 .and. cvlist(i).gt.mpg%nCi) then
+          i = i + 1
+        else if (iCv1.eq.0) then
+          iCv1 = cvlist(i)
+        endif
+      enddo
+      i = nlist
+      iCv2 = 0
+      do while (iCv2.eq.0 .and. i.gt.0)
+        if (iCv2.eq.0 .and. cvlist(i).gt.mpg%nCi) then
+          i = i - 1
+        else if (iCv2.eq.0) then
+          iCv2 = cvlist(i)
+        endif
+      enddo
+      all_guard = iCv1.eq.0.and.iCv2.eq.0
+      if(.not.all_guard) then
+        if(.not.mpg%cvOnClosedSurface(iCv1).and.
+     &          mpg%cvOnClosedSurface(iCv2)) then ! flip sign
+          ds(1:nlist)=-ds(1:nlist)
+        endif
+      endif
+      do i=1,nlist
+        ifound=0
+        if (all_guard) then
+          if (i.gt.1) then
+            ifound=ifound+1
+            iFc=mpg%cvFc(mpg%cvFcP(cvlist(i-1),1))
+            wd(i)=wd(i)+0.5_R8*geo%fcHt(iFc)
+          endif
+          ifound=ifound+1
+          iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1))
+          wd(i)=wd(i)+0.5_R8*geo%fcHt(iFc)
+        else
+          do j=1,mpg%cvFcP(cvlist(i),2)
+            iFc=mpg%cvFc(mpg%cvFcP(cvlist(i),1)+j-1)
+            iCv1=mpg%fcCv(iFc,1)
+            iCv2=mpg%fcCv(iFc,2)
+            if(iCv1.eq.cvlist(i)) then
+              if(i.gt.1) then
+                if(iCv2.eq.cvlist(i-1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,1)
+                endif
+              endif
+              if(i.lt.nlist) then
+                if(iCv2.eq.cvlist(i+1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,1)
+                endif
+              endif
+            else if(iCv2.eq.cvlist(i)) then
+              if(i.gt.1) then
+                if(iCv1.eq.cvlist(i-1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,2)
+                endif
+              endif
+              if(i.lt.nlist) then
+                if(iCv1.eq.cvlist(i+1)) then
+                  ifound=ifound+1
+                  wd(i)=wd(i)+geo%fcHc(iFc,2)
+                endif
+              endif
+            endif
+          enddo
+        endif
+        if (ifound.eq.1) wd(i)=2.0_R8*wd(i)
+      enddo
+
+      return
+      end subroutine set_distances

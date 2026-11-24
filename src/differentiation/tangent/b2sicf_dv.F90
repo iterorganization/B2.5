@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2sicf in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: wrk0 ctcf smbcf
-!   with respect to varying inputs: nb ub wrk0
+!   variations   of useful results: wrk0 smbcf
+!   with respect to varying inputs: ub wrk0
 !   Plus diff mem management of: mpg.intcellp:in geo.cvbb:in geo.cvhz:in
 !                geo.cvvol:in geo.fchc:in geo.fcht:in geo.fcqgam:in
 !                geo.fcqalf:in geo.fcqbet:in geo.vxhz:in geo.vxvol:in
@@ -24,8 +24,7 @@
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
-& mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, ctcf, ctcfd, wrk0, wrk0d, &
-& nbdirs)
+& mpgd, nb, ub, ubd, smbcf, smbcfd, ctcf, wrk0, wrk0d, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -46,11 +45,11 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
-  REAL(kind=r8) :: nbd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)
+  REAL(kind=r8) :: ubd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
   REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
-  REAL(kind=r8) :: smbcfd(nbdirsmax, ncv, 0:3), ctcfd(nbdirsmax, ncv)
+  REAL(kind=r8) :: smbcfd(nbdirsmax, ncv, 0:3)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: wrk0d(nbdirsmax, ncv)
@@ -76,8 +75,6 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   CHARACTER(len=12) :: arg1
   CHARACTER(len=11) :: arg10
   INTEGER :: nd
-  REAL(kind=r8) :: temp
-  REAL(kind=r8) :: temp0
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -104,39 +101,55 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   IF (switch%b2sicf_style .EQ. 0) THEN
     CALL GRADC_P_NODIFF(ncv, nfc, nvx, 1, geo, mpg, geo%cvhz, geo%vxhz, &
 &                 wrk0)
-    ctcfd = 0.D0
     smbcfd = 0.D0
 !
 !   .. compute smbcf
+!     ..the centrifugal force is quadratic in the (unknown) parallel
+!     ..velocity; Newton-linearise ub**2 around the current ub instead
+!     ..of dumping the full quadratic into the constant slot (0) with
+!     ..no matrix feedback (slots 1/3 left at their zero fill) -- the
+!     ..latter left the term fully explicit and able to run away once
+!     ..ub got large, with no compensating diagonal contribution.
+!     ..ub**2 = ub_old*(2*ub - ub_old) + O((ub-ub_old)**2), so put the
+!     ..-ub_old**2 piece in the rob-weighted constant slot (2) and the
+!     ..+2*ub_old*ua piece in the rob*ua-weighted slot (3); mb*nb=rob
+!     ..is supplied by the caller's reconstruction, so it must not be
+!     ..included again here. The linear (slot-3) piece is only used
+!     ..when it is stabilising (<=0), matching the codebase invariant
+!     ..that smb(:,:,3) must never be positive -- this mirrors what the
+!     ..old one-sided ctcf=min(0,ctcfb) diagonal patch did, just routed
+!     ..through the smbcf(2:3) slots. When the derivative would
+!     ..destabilise (>0), fall back to the fully explicit treatment.
     DO icv=1,mpg%nci
 !srv factor hz/hz=1
 !srv 05.04.07
-      temp = geo%cvvol(icv)*wrk0(icv)*geo%cvbb(icv, 0)*switch%&
-&       b2sicf_phm0*mb
-      temp0 = nb(icv)/geo%cvbb(icv, 3)
-      DO nd=1,nbdirs
-        smbcfd(nd, icv, 0) = temp*(temp0*2*ub(icv)*ubd(nd, icv)+ub(icv)&
-&         **2*nbd(nd, icv)/geo%cvbb(icv, 3))
-      END DO
-      smbcf(icv, 0) = temp*(ub(icv)*ub(icv)*temp0)
-!srv 06.04.07 {
-!srv 06.04.07 }
-      temp0 = 2.0_R8*geo%cvvol(icv)*wrk0(icv)*switch%b2sicf_phm1*mb*&
-&       switch%b2sicf_phm0*geo%cvbb(icv, 0)
-      DO nd=1,nbdirs
-        ctcfd(nd, icv) = temp0*(nb(icv)*ubd(nd, icv)+ub(icv)*nbd(nd, icv&
-&         ))/geo%cvbb(icv, 3)
-      END DO
-      ctcf(icv) = temp0*(ub(icv)*nb(icv)/geo%cvbb(icv, 3))
+      wrks(icv) = switch%b2sicf_phm0*geo%cvvol(icv)*(geo%cvbb(icv, 0)/&
+&       geo%cvbb(icv, 3))*wrk0(icv)
+      IF (wrks(icv)*ub(icv) .LE. 0.0_R8) THEN
+        DO nd=1,nbdirs
+          smbcfd(nd, icv, 2) = -(wrks(icv)*2*ub(icv)*ubd(nd, icv))
+          smbcfd(nd, icv, 3) = wrks(icv)*2.0_R8*ubd(nd, icv)
+        END DO
+        smbcf(icv, 2) = -(wrks(icv)*ub(icv)**2)
+        smbcf(icv, 3) = wrks(icv)*2.0_R8*ub(icv)
+      ELSE
+        DO nd=1,nbdirs
+          smbcfd(nd, icv, 2) = wrks(icv)*2*ub(icv)*ubd(nd, icv)
+          smbcfd(nd, icv, 3) = 0.D0
+        END DO
+        smbcf(icv, 2) = wrks(icv)*ub(icv)**2
+        smbcf(icv, 3) = 0.0_R8
+      END IF
+!         ..ctcf left at zero (see init above): now handled through
+!         ..smbcf(2:3) above, not the one-sided ctcf patch
+
     END DO
     wrk0d = 0.D0
   ELSE IF (switch%b2sicf_style .EQ. 1) THEN
 !
     CALL XERRAB('b2sicf -- style 1 not for WG')
-    ctcfd = 0.D0
     smbcfd = 0.D0
   ELSE
-    ctcfd = 0.D0
     smbcfd = 0.D0
   END IF
 !srv 17.06.02 }
@@ -256,16 +269,37 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
 &                 wrk0)
 !
 !   .. compute smbcf
+!     ..the centrifugal force is quadratic in the (unknown) parallel
+!     ..velocity; Newton-linearise ub**2 around the current ub instead
+!     ..of dumping the full quadratic into the constant slot (0) with
+!     ..no matrix feedback (slots 1/3 left at their zero fill) -- the
+!     ..latter left the term fully explicit and able to run away once
+!     ..ub got large, with no compensating diagonal contribution.
+!     ..ub**2 = ub_old*(2*ub - ub_old) + O((ub-ub_old)**2), so put the
+!     ..-ub_old**2 piece in the rob-weighted constant slot (2) and the
+!     ..+2*ub_old*ua piece in the rob*ua-weighted slot (3); mb*nb=rob
+!     ..is supplied by the caller's reconstruction, so it must not be
+!     ..included again here. The linear (slot-3) piece is only used
+!     ..when it is stabilising (<=0), matching the codebase invariant
+!     ..that smb(:,:,3) must never be positive -- this mirrors what the
+!     ..old one-sided ctcf=min(0,ctcfb) diagonal patch did, just routed
+!     ..through the smbcf(2:3) slots. When the derivative would
+!     ..destabilise (>0), fall back to the fully explicit treatment.
     DO icv=1,mpg%nci
 !srv factor hz/hz=1
 !srv 05.04.07
-      smbcf(icv, 0) = switch%b2sicf_phm0*geo%cvvol(icv)*(geo%cvbb(icv, 0&
-&       )/geo%cvbb(icv, 3))*mb*ub(icv)**2*nb(icv)*wrk0(icv)
-!srv 06.04.07 {
-!srv 06.04.07 }
-      ctcf(icv) = switch%b2sicf_phm0*switch%b2sicf_phm1*geo%cvvol(icv)*(&
-&       geo%cvbb(icv, 0)/geo%cvbb(icv, 3))*mb*2.0_R8*ub(icv)*nb(icv)*&
-&       wrk0(icv)
+      wrks(icv) = switch%b2sicf_phm0*geo%cvvol(icv)*(geo%cvbb(icv, 0)/&
+&       geo%cvbb(icv, 3))*wrk0(icv)
+      IF (wrks(icv)*ub(icv) .LE. 0.0_R8) THEN
+        smbcf(icv, 2) = -(wrks(icv)*ub(icv)**2)
+        smbcf(icv, 3) = wrks(icv)*2.0_R8*ub(icv)
+      ELSE
+        smbcf(icv, 2) = wrks(icv)*ub(icv)**2
+        smbcf(icv, 3) = 0.0_R8
+      END IF
+!         ..ctcf left at zero (see init above): now handled through
+!         ..smbcf(2:3) above, not the one-sided ctcf patch
+
     END DO
   ELSE IF (switch%b2sicf_style .EQ. 1) THEN
 !

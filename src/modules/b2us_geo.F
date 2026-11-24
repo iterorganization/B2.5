@@ -461,7 +461,7 @@
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
-     .  Psi1, Psi2, dpsi(mpg%nCv), psi_active,
+     .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical match_found, ref_set
       intrinsic maxval, abs, sqrt
@@ -1057,25 +1057,6 @@
        end do
       end if
 
-      if (mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
-     > then
-!! look for the inactive X-point as the one closest in psi-space to the
-!! active X-point
-        psi_active = gm%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
-        j = 0
-        do i = 1, mpg%nXpt
-          if (i.eq.mpg%iactive) cycle
-          if (j.eq.0) then
-            j = i
-          else
-            if (abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(i)))-psi_active ).lt.
-     .          abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(j)))-psi_active ))
-     >        j = i
-          end if
-        end do
-        mpg%iinactive = j
-      end if
-
       ! Compute signmf
       r0=0.0_R8
       z0=0.0_R8
@@ -1195,7 +1176,7 @@
         do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
           iVx1 = mpg%fcVx(mpg%divFc(j),1)
           iVx2 = mpg%fcVx(mpg%divFc(j),2)
-          do k = 1, mpg%nXpt
+          do k = 1, max(1,mpg%nXpt) ! to handle limiter cases
             do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
               if (iVx1.eq.mpg%strVx(l)) then
                 if((gm%psi_increasing .and.
@@ -1486,6 +1467,7 @@
       integer :: fcsb(maxval(mpg%fcLbl),mpg%nCi),
      * fcsbcounter(maxval(mpg%fcLbl)), cvsb(maxval(mpg%fcLbl),mpg%nCi)
       logical :: duplicate, left_match_found, right_match_found
+      real(kind=R8) :: psi_active
       external ipgeti, xerrab
 
 *   ..identify periodicity
@@ -1544,6 +1526,25 @@
         end if
       end do
 
+      if (mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
+     > then
+!! look for the inactive X-point as the one closest in psi-space to the
+!! active X-point for DDN cases
+        psi_active = gm%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
+        j = 0
+        do i = 1, mpg%nXpt
+          if (i.eq.mpg%iactive) cycle
+          if (j.eq.0) then
+            j = i
+          else
+            if (abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(i)))-psi_active ).lt.
+     .          abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(j)))-psi_active ))
+     >        j = i
+          end if
+        end do
+        mpg%iinactive = j
+      end if
+
 !! use a different approach for slab cases with cuts,
 !! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
 !! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
@@ -1590,6 +1591,14 @@
             if (mpg%iFssep.eq.0) mpg%iFssep = iFs
             if (mpg%iFssep2.eq.0.and.iFs.ne.mpg%iFssep)
      >       mpg%iFssep2 = iFs
+          end do
+        end if
+        if (mpg%iinactive.gt.0) then
+          do i = 1, mpg%vxFcP(mpg%Xpt(mpg%iinactive),2)
+            iFs =
+     .       mpg%fcFs(mpg%vxFc(mpg%vxFcP(mpg%Xpt(mpg%iinactive),1)+i-1))
+            if (iFs.eq.0) cycle
+            if (mpg%iFssep2.eq.0) mpg%iFssep2 = iFs
           end do
         end if
         indXpt = 0

@@ -58,30 +58,6 @@ MODULE B2MOD_FRTF_NCCORR_DIFFV
 !-----------------------------------------------------------------------
 
 CONTAINS
-!  Differentiation of alloc_b2mod_frtf_nccorr in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: corr_tfia:out g_hs_style:out corr_fria:out
-!                alpha_hs_style:out
-!.......................................................................
-!
-  SUBROUTINE ALLOC_B2MOD_FRTF_NCCORR_DV0(ncv, ns, nbdirs)
-!  Hint: nbdirsmax should be the maximum number of differentiation directions
-  USE B2MOD_DIFFSIZES
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ncv, ns
-    INTEGER :: nbdirs
-!
-    ALLOCATE(alpha_hs_styled(nbdirsmax, 1:ncv, 0:ns-1))
-    ALLOCATE(alpha_hs_style(1:ncv, 0:ns-1))
-    ALLOCATE(g_hs_styled(nbdirsmax, 1:ncv))
-    ALLOCATE(g_hs_style(1:ncv))
-    ALLOCATE(corr_tfiad(nbdirsmax, 1:ncv, 0:ns-1))
-    ALLOCATE(corr_tfia(1:ncv, 0:ns-1))
-    ALLOCATE(corr_friad(nbdirsmax, 1:ncv, 0:ns-1))
-    ALLOCATE(corr_fria(1:ncv, 0:ns-1))
-!
-    RETURN
-  END SUBROUTINE ALLOC_B2MOD_FRTF_NCCORR_DV0
-
 !  Differentiation of alloc_b2mod_frtf_nccorr as a context to call tangent code (with options multiDirectional context noISIZE r8
 !):
 !   Plus diff mem management of: corr_tfia:out g_hs_style:out corr_fria:out

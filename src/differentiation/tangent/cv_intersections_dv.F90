@@ -26,6 +26,8 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(geo, m, segm, list, nncv, nmax, mode&
   INTEGER :: list(nmax), nncv, mode
   INTEGER :: ic, ifc, ii, kk
   REAL(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
+  REAL(kind=r8) :: sgn, key
+  REAL(kind=r8), ALLOCATABLE :: pos(:)
   EXTERNAL INTERSECTS, XERTST
   LOGICAL :: found, INTERSECTS, ifail, slab_test
   INTRINSIC SQRT
@@ -82,20 +84,113 @@ SUBROUTINE CV_INTERSECTIONS_NODIFF(geo, m, segm, list, nncv, nmax, mode&
     END IF
   END DO
   nncv = nncv - 1
-!     Now sort the obtained list
-  DO ii=2,nncv
-    ic = list(ii)
-    DO kk=ii-1,1,-1
-      IF (mode .EQ. 1) THEN
-        IF (geo%cvx(list(kk)) .LE. geo%cvx(ic)) GOTO 100
-      ELSE IF (geo%cvy(list(kk)) .LE. geo%cvy(ic)) THEN
-        GOTO 100
-      END IF
-      list(kk+1) = list(kk)
+!     Now sort the obtained list along the segment: the sort key of a cell is
+!     the position of its chord midpoint on the segment (cv_segment_positions).
+  IF (nncv .GT. 1) THEN
+    ALLOCATE(pos(nncv))
+    CALL CV_SEGMENT_POSITIONS_NODIFF(geo, m, segm, list, nncv, pos)
+    sgn = 1.0_R8
+    IF (segm(mode, 2) .LT. segm(mode, 1)) sgn = -1.0_R8
+    DO ii=2,nncv
+      ic = list(ii)
+      key = sgn*pos(ii)
+      DO kk=ii-1,1,-1
+        IF (sgn*pos(kk) .LE. key) THEN
+          GOTO 100
+        ELSE
+          list(kk+1) = list(kk)
+          pos(kk+1) = pos(kk)
+        END IF
+      END DO
+ 100  list(kk+1) = ic
+      pos(kk+1) = key*sgn
     END DO
- 100 list(kk+1) = ic
-  END DO
+    DEALLOCATE(pos)
+  END IF
 !
   RETURN
 END SUBROUTINE CV_INTERSECTIONS_NODIFF
+
+!
+!
+SUBROUTINE CV_SEGMENT_POSITIONS_NODIFF(geo, m, segm, list, nncv, pos)
+  USE B2MOD_TYPES
+  USE B2US_GEO_DIFFV
+  USE B2US_MAP_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(MAPPING), INTENT(IN) :: m
+  REAL(kind=r8), INTENT(IN) :: segm(2, 2)
+  INTEGER, INTENT(IN) :: nncv
+  INTEGER, INTENT(IN) :: list(nncv)
+  REAL(kind=r8), INTENT(OUT) :: pos(nncv)
+  INTEGER :: ii, ic, i, ifc, nhit
+  REAL(kind=r8) :: d(2), e(2), w(2), dlen, den, t, u, tmin, tmax
+  REAL(kind=r8), PARAMETER :: tol=1.0e-9_R8
+  INTRINSIC SQRT
+  INTRINSIC ABS
+  INTRINSIC MIN
+  INTRINSIC MAX
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8) :: result1
+!
+  d = segm(:, 2) - segm(:, 1)
+  arg1 = d(1)**2 + d(2)**2
+  dlen = SQRT(arg1)
+  DO ii=1,nncv
+    ic = list(ii)
+    nhit = 0
+    tmin = 0.0_R8
+    tmax = 0.0_R8
+    DO i=m%cvfcp(ic, 1),m%cvfcp(ic, 1)+m%cvfcp(ic, 2)-1
+      ifc = m%cvfc(i)
+      e(1) = geo%vxx(m%fcvx(ifc, 2)) - geo%vxx(m%fcvx(ifc, 1))
+      e(2) = geo%vxy(m%fcvx(ifc, 2)) - geo%vxy(m%fcvx(ifc, 1))
+      den = d(1)*e(2) - d(2)*e(1)
+      IF (den .GE. 0.) THEN
+        abs0 = den
+      ELSE
+        abs0 = -den
+      END IF
+      arg1 = e(1)**2 + e(2)**2
+      result1 = SQRT(arg1)
+      IF (abs0 .GT. tol*dlen*result1) THEN
+        w(1) = geo%vxx(m%fcvx(ifc, 1)) - segm(1, 1)
+        w(2) = geo%vxy(m%fcvx(ifc, 1)) - segm(2, 1)
+        t = (w(1)*e(2)-w(2)*e(1))/den
+        u = (w(1)*d(2)-w(2)*d(1))/den
+        IF (.NOT.(t .LT. -tol .OR. t .GT. 1.0_R8 + tol)) THEN
+          IF (.NOT.(u .LT. -tol .OR. u .GT. 1.0_R8 + tol)) THEN
+            IF (nhit .EQ. 0) THEN
+              tmin = t
+              tmax = t
+            ELSE
+              IF (tmin .GT. t) THEN
+                tmin = t
+              ELSE
+                tmin = tmin
+              END IF
+              IF (tmax .LT. t) THEN
+                tmax = t
+              ELSE
+                tmax = tmax
+              END IF
+            END IF
+            nhit = nhit + 1
+          END IF
+        END IF
+      END IF
+    END DO
+    IF (nhit .GT. 0) THEN
+      pos(ii) = 0.5_R8*(tmin+tmax)*dlen
+    ELSE
+      pos(ii) = ((geo%cvx(ic)-segm(1, 1))*d(1)+(geo%cvy(ic)-segm(2, 1))*&
+&       d(2))/dlen
+    END IF
+  END DO
+!
+  RETURN
+END SUBROUTINE CV_SEGMENT_POSITIONS_NODIFF
 

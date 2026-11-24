@@ -622,8 +622,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
       IF (zamin(is) .EQ. zamax(is)) THEN
         zab(nflai) = zamin(is)
       ELSE
-        CALL XERRAB('eirene_mc: do not use bundled '//&
-&             'species for Eirene')
+        zab(nflai) = 0.5_R8*(zamin(is)+zamax(is))
       END IF
 ! cell centred
       DO ic=1,ncv
