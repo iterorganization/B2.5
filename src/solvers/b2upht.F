@@ -141,7 +141,7 @@
         dte1(iCv) = dte(iCv)
         dti1(iCv) = dti(iCv)
 *   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
-        if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+        if(mpg%cvOnClosedSurface(iCv).and.iCv.le.mpg%nCi) then      ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)*ni(iCv,1)
@@ -154,7 +154,7 @@
 
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+        if(mpg%cvOnClosedSurface(iCv).and.iCv.le.mpg%nCi) then      ! IYS 27.03.2019
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             dti1(iCv) = tt1(iFt)/tt0(iFt) +

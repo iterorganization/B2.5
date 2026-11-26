@@ -23,7 +23,7 @@ SUBROUTINE B2XTVC_NODIFF(nx, ny, nx1, ny1, fun, fun1, nncutmax, &
   IMPLICIT NONE
   INTEGER :: nx, ny, nx1, ny1, nncutmax
   REAL(kind=r8) :: fun(-1:nx, -1:ny), fun1(-1:nx1, -1:ny1), wrk1(-1:nx, &
-& -1:ny1)
+& -1:MAX(ny, ny1))
   INTEGER :: non_commensurate
   INTEGER :: nnreg(0:2), nncut, periodic_bc, jsep, jsep1
   INTEGER :: region(-1:nx, -1:ny, 0:2), region1(-1:nx1, -1:ny1, 0:2)
@@ -356,6 +356,23 @@ SUBROUTINE B2XTVC_NODIFF(nx, ny, nx1, ny1, fun, fun1, nncutmax, &
       arg2 = iyd - iyc + 1
       CALL E01BFF(arg1, yy(iya-1:iyb+1), wrk1(-1, iya-1:iyb+1), d, arg2&
 &           , yy1(iyc:iyd), fun1(-1, iyc:iyd), ifail)
+!    .. region 2 : periodic_bc.eq.1 : central part
+      wrk1(ixa-1, iya-1) = fun(ixm, iym)
+      wrk1(ixa-1, iya:iyb) = fun(ixm, iya:iyb)
+      wrk1(ixa-1, iyb+1) = fun(ixm, iyp)
+      wrk1(ixa:ixb, iya-1) = fun(ixa:ixb, iym)
+      wrk1(ixa:ixb, iya:iyb) = fun(ixa:ixb, iya:iyb)
+      wrk1(ixa:ixb, iyb+1) = fun(ixa:ixb, iyp)
+      wrk1(ixb+1, iya-1) = fun(ixp, iym)
+      wrk1(ixb+1, iya:iyb) = fun(ixp, iya:iyb)
+      wrk1(ixb+1, iyb+1) = fun(ixp, iyp)
+      arg1 = ixb - ixa + 3
+      arg2 = iyb - iya + 3
+      arg3 = ixd - ixc + 1
+      arg4 = iyd - iyc + 1
+      CALL INTERP2D(arg1, arg2, arg3, arg4, xx(ixa-1:ixb+1), yy(iya-1:&
+&             iyb+1), xx1(ixc:ixd), yy1(iyc:iyd), wrk1(ixa-1:ixb+1, iya-&
+&             1:iyb+1), fun1(ixc:ixd, iyc:iyd))
 !    .. region 2 : periodic_bc.eq.1 : eastern edge
       wrk1(nx, iya-1) = fun(nx, iym)
       wrk1(nx, iya:iyb) = fun(nx, iya:iyb)
@@ -367,6 +384,17 @@ SUBROUTINE B2XTVC_NODIFF(nx, ny, nx1, ny1, fun, fun1, nncutmax, &
       arg2 = iyd - iyc + 1
       CALL E01BFF(arg1, yy(iya-1:iyb+1), wrk1(nx, iya-1:iyb+1), d, arg2&
 &           , yy1(iyc:iyd), fun1(nx1, iyc:iyd), ifail)
+!    .. region 2 : periodic_bc.eq.1 : top row
+      wrk1(ixa-1, ny) = fun(ixm, ny)
+      wrk1(ixa:ixb, ny) = fun(ixa:ixb, ny)
+      wrk1(ixb+1, ny) = fun(ixp, ny)
+      arg1 = ixb - ixa + 3
+      CALL E01BEF(arg1, xx(ixa-1:ixb+1), wrk1(ixa-1:ixb+1, ny), d, ifail&
+&          )
+      arg1 = ixb - ixa + 3
+      arg2 = ixd - ixc + 1
+      CALL E01BFF(arg1, xx(ixa-1:ixb+1), wrk1(ixa-1:ixb+1, ny), d, arg2&
+&           , xx1(ixc:ixd), fun1(ixc:ixd, ny1), ifail)
     ELSE
       iya = jsep + 1
       iym = jsep

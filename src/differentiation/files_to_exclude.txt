@@ -130,3 +130,9 @@
   b2mwmv
   b2mod_create_afn_bc_tables
   invert_matrix
+  b2mod_umfpack
+  b2mod_pardiso
+  cdfchord
+  b2mod_chords
+  b2mod_chord_interp
+  b2mod_chord_interp_tri

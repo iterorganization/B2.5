@@ -9,7 +9,7 @@
 ! everything else mirrors b2optim_tao as closely as possible:
 !
 !   - b2mn_step      is the cheap forward-only evaluator (line search)
-!   - b2mn_step_db   is the expensive forward+gradient evaluator
+!   - b2mn_step_b   is the expensive forward+gradient evaluator
 !                    (called once per accepted BFGS iterate)
 !   - parameter rescaling, sigma/mean/shift/corr handling,
 !     active-drift reset, intermediate state writing, and
@@ -371,7 +371,7 @@ contains
 
        ! --- store new (s, y) pair; rho computed on free subspace only
        ! (variables active at the *new* point are excluded so stale
-       ! curvature from the bound doesn't enter future directions)
+       ! curvature from the bound does not enter future directions)
        sty_free = 0.0d0
        do i = 1, n
           if (.not. active(i)) &
@@ -633,7 +633,7 @@ program b2optim_bfgs
   !   call TaoSetTolerances(tao, tol_opt, tol_opt, tol_opt, ierr)
   call bfgs_bound_solve(npar_opt, X, X_L, X_U,               &
                         FormFunction,                        &  ! cheap  (b2mn_step)
-                        FormFunctionGradient,                &  ! expensive (b2mn_step_dv)
+                        FormFunctionGradient,                &  ! expensive (b2mn_step_b)
                         maxiter,                             &
                         real(tol_opt,8),                     &  ! gatol
                         real(tol_opt,8),                     &  ! grtol
@@ -898,7 +898,7 @@ contains
   ! FormFunctionGradient
   !
   ! Expensive evaluator (forward + adjoint/tangent) called once per
-  ! accepted BFGS iterate.  Wraps b2mn_step_dv.
+  ! accepted BFGS iterate.  Wraps b2mn_step_b.
   ! Signature matches func_grad_if abstract interface.
   !=====================================================================
   subroutine FormFunctionGradient(n, x_v, F, g_v)

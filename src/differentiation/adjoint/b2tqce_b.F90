@@ -83,7 +83,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   PARAMETER (ce=3.16_R8)
@@ -92,6 +92,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
 !   ..initialisation
@@ -176,6 +177,16 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
     result1 = PITX(icv)
     tnp = tau(icv)*dv%ne(icv)*result1**2
     z = dv%ne2(icv)/dv%ne(icv)
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -187,7 +198,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
         result1 = FKE(z)
         hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*result1*tnp
       END IF
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
 ! IYS and lk 21.11.2012
@@ -207,7 +218,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
     ELSE IF (switch%b2tqce_model .EQ. 2) THEN
 ! old SOLPS4.0 Braginskii model for hce
       hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         result1 = FSE(z)
@@ -220,7 +231,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
       result1 = D15E(z)
       result2 = F135E(z)
       hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*(result1/result2)*tnp
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         result1 = D35E(z)
@@ -238,11 +249,6 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 1), 1)
   CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 1), 1)
-!
-!srv 15.06.18
-  sig(:, :) = sig(:, :)*switch%prl_cur
-!srv 15.06.18
-  alf(:, :) = alf(:, :)*switch%prl_cur
 !srv 16.06.08 }
 !
   IF (switch%b2tqce_iout .NE. 0) THEN
@@ -393,7 +399,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv
+  INTEGER :: icv, icn, ifc
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   REAL(kind=r8) :: t0b, zb, taub(ncv), tnpb
@@ -404,6 +410,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_FWD, SFILL_BWD
   EXTERNAL B2XVSG
+  INTRINSIC MIN
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result1b
   REAL(kind=r8) :: result2
@@ -493,6 +500,19 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
     tnp = tau(icv)*dv%ne(icv)*result1**2
     CALL PUSHREAL8(z, r8/8)
     z = dv%ne2(icv)/dv%ne(icv)
+    IF (icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        CALL PUSHCONTROL1B(1)
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+        icn = mpg%fccv(ifc, 1)
+      END IF
+    ELSE
+      CALL PUSHCONTROL1B(0)
+      icn = icv
+    END IF
     IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
       IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
@@ -506,7 +526,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
         result1 = FKE(z)
         CALL PUSHCONTROL1B(1)
       END IF
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
 ! IYS and lk 21.11.2012
@@ -529,7 +549,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
       END IF
     ELSE IF (switch%b2tqce_model .EQ. 2) THEN
 ! old SOLPS4.0 Braginskii model for hce
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         CALL PUSHREAL8(result1, r8/8)
@@ -546,7 +566,7 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
       result1 = D15E(z)
       CALL PUSHREAL8(result2, r8/8)
       result2 = F135E(z)
-      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icn)) .OR. switch&
 &         %b2tqce_style_guard_cells .EQ. 0) THEN
 ! IYS and lk 21.11.2012
         CALL PUSHREAL8(result1, r8/8)
@@ -571,13 +591,8 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
   CALL SFILL_FWD(ncv, 0.0_R8, hce(1, 1), 1)
   CALL SFILL_FWD(ncv, 0.0_R8, sig(1, 1), 1)
   CALL SFILL_FWD(ncv, 0.0_R8, alf(1, 1), 1)
-!
-!srv 15.06.18
-!srv 15.06.18
 !srv 16.06.08 }
 !
-  alfb = switch%prl_cur*alfb
-  sigb = switch%prl_cur*sigb
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb1, alf(1, 1), alfb(1, 1), 1)
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb0, sig(1, 1), sigb(1, 1), 1)
   CALL SFILL_BWD(ncv, 0.0_R8, dummydiffb, hce(1, 1), hceb(1, 1), 1)
@@ -705,7 +720,8 @@ SUBROUTINE B2TQCE_B(ncv, switch, switchb, geo, mpg, pl, plb, dv, dvb, &
  100 plb%te(icv) = plb%te(icv) + tnp*ce*hceb(icv, 0)/me
     tnpb = tnpb + pl%te(icv)*ce*hceb(icv, 0)/me
     hceb(icv, 0) = 0.D0
- 110 tempb1 = result1**2*tnpb
+ 110 CALL POPCONTROL1B(branch)
+    tempb1 = result1**2*tnpb
     CALL POPREAL8(z, r8/8)
     tempb0 = zb/dv%ne(icv)
     dvb%ne2(icv) = dvb%ne2(icv) + tempb0

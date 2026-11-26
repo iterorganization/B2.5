@@ -94,8 +94,18 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
 & , gtib(ncv, 0:1)
 !   ..procedures
   INTRINSIC SQRT
+  INTRINSIC MAX
+  INTRINSIC MIN
   INTRINSIC DATAN
   INTRINSIC LOG
+  INTEGER :: max1
+  INTEGER :: max2
+  INTEGER :: max3
+  INTEGER :: max4
+  INTEGER :: min1
+  INTEGER :: min2
+  INTEGER :: min3
+  INTEGER :: min4
   CHARACTER(len=12) :: arg1
   CHARACTER(len=16) :: arg10
   CHARACTER(len=15) :: arg11
@@ -194,21 +204,35 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
         END DO
 !
         DO ifc=1,nfc
-          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-            tmp = qip0(mpg%fccv(ifc, 1))
-            qip0(mpg%fccv(ifc, 2)) = tmp
-            CALL PUSHCONTROL1B(0)
+          IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+            max1 = mpg%fccv(ifc, 2)
           ELSE
-            CALL PUSHCONTROL1B(1)
+            max1 = mpg%fccv(ifc, 1)
           END IF
-          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
-            tmp0 = qip0(mpg%fccv(ifc, 2))
-            qip0(mpg%fccv(ifc, 1)) = tmp0
-            CALL PUSHCONTROL1B(0)
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            min1 = mpg%fccv(ifc, 2)
           ELSE
-            CALL PUSHCONTROL1B(1)
+            min1 = mpg%fccv(ifc, 1)
+          END IF
+          IF (max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1)) THEN
+            CALL PUSHCONTROL2B(0)
+          ELSE
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+              tmp = qip0(mpg%fccv(ifc, 1))
+              qip0(mpg%fccv(ifc, 2)) = tmp
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+              tmp0 = qip0(mpg%fccv(ifc, 2))
+              qip0(mpg%fccv(ifc, 1)) = tmp0
+              CALL PUSHCONTROL2B(1)
+            ELSE
+              CALL PUSHCONTROL2B(2)
+            END IF
           END IF
         END DO
 !
@@ -219,21 +243,36 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
 !wdk todo: rationalize this when separatrix-structure is introduced?
           CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
           DO ifc=1,nfc
-            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-              tmp1 = qip0(mpg%fccv(ifc, 1))
-              qip0(mpg%fccv(ifc, 2)) = tmp1
-              CALL PUSHCONTROL1B(0)
+            IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+              max2 = mpg%fccv(ifc, 2)
             ELSE
-              CALL PUSHCONTROL1B(1)
+              max2 = mpg%fccv(ifc, 1)
             END IF
-            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
-              tmp2 = qip0(mpg%fccv(ifc, 2))
-              qip0(mpg%fccv(ifc, 1)) = tmp2
-              CALL PUSHCONTROL1B(1)
+            IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+              min2 = mpg%fccv(ifc, 2)
             ELSE
-              CALL PUSHCONTROL1B(0)
+              min2 = mpg%fccv(ifc, 1)
+            END IF
+            IF (max2 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min2)) &
+&           THEN
+              CALL PUSHCONTROL2B(0)
+            ELSE
+              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+                tmp1 = qip0(mpg%fccv(ifc, 1))
+                qip0(mpg%fccv(ifc, 2)) = tmp1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHCONTROL1B(1)
+              END IF
+              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+&                 %cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+                tmp2 = qip0(mpg%fccv(ifc, 2))
+                qip0(mpg%fccv(ifc, 1)) = tmp2
+                CALL PUSHCONTROL2B(2)
+              ELSE
+                CALL PUSHCONTROL2B(1)
+              END IF
             END IF
           END DO
         END DO
@@ -263,21 +302,35 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
         END DO
 !
         DO ifc=1,nfc
-          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-            tmp3 = qip0(mpg%fccv(ifc, 1))
-            qip0(mpg%fccv(ifc, 2)) = tmp3
-            CALL PUSHCONTROL1B(0)
+          IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+            max3 = mpg%fccv(ifc, 2)
           ELSE
-            CALL PUSHCONTROL1B(1)
+            max3 = mpg%fccv(ifc, 1)
           END IF
-          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
-            tmp4 = qip0(mpg%fccv(ifc, 2))
-            qip0(mpg%fccv(ifc, 1)) = tmp4
-            CALL PUSHCONTROL1B(1)
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            min3 = mpg%fccv(ifc, 2)
           ELSE
-            CALL PUSHCONTROL1B(0)
+            min3 = mpg%fccv(ifc, 1)
+          END IF
+          IF (max3 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min3)) THEN
+            CALL PUSHCONTROL2B(0)
+          ELSE
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+              tmp3 = qip0(mpg%fccv(ifc, 1))
+              qip0(mpg%fccv(ifc, 2)) = tmp3
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+              tmp4 = qip0(mpg%fccv(ifc, 2))
+              qip0(mpg%fccv(ifc, 1)) = tmp4
+              CALL PUSHCONTROL2B(2)
+            ELSE
+              CALL PUSHCONTROL2B(1)
+            END IF
           END IF
         END DO
         CALL PUSHCONTROL1B(0)
@@ -328,25 +381,39 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
       END DO
 !
       DO ifc=1,nfc
-        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-          tmp5 = tauia1(mpg%fccv(ifc, 1))
-          tauia1(mpg%fccv(ifc, 2)) = tmp5
-          tmp6 = alpha1(mpg%fccv(ifc, 1))
-          alpha1(mpg%fccv(ifc, 2)) = tmp6
-          CALL PUSHCONTROL1B(0)
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max4 = mpg%fccv(ifc, 2)
         ELSE
-          CALL PUSHCONTROL1B(1)
+          max4 = mpg%fccv(ifc, 1)
         END IF
-        IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
-          tmp7 = tauia1(mpg%fccv(ifc, 2))
-          tauia1(mpg%fccv(ifc, 1)) = tmp7
-          tmp8 = alpha1(mpg%fccv(ifc, 2))
-          alpha1(mpg%fccv(ifc, 1)) = tmp8
-          CALL PUSHCONTROL1B(1)
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min4 = mpg%fccv(ifc, 2)
         ELSE
-          CALL PUSHCONTROL1B(0)
+          min4 = mpg%fccv(ifc, 1)
+        END IF
+        IF (max4 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min4)) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            tmp5 = tauia1(mpg%fccv(ifc, 1))
+            tauia1(mpg%fccv(ifc, 2)) = tmp5
+            tmp6 = alpha1(mpg%fccv(ifc, 1))
+            alpha1(mpg%fccv(ifc, 2)) = tmp6
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            tmp7 = tauia1(mpg%fccv(ifc, 2))
+            tauia1(mpg%fccv(ifc, 1)) = tmp7
+            tmp8 = alpha1(mpg%fccv(ifc, 2))
+            alpha1(mpg%fccv(ifc, 1)) = tmp8
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            CALL PUSHCONTROL2B(1)
+          END IF
         END IF
       END DO
 !
@@ -480,23 +547,29 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
       tib = tib + ni*temp7*tempb7 + tempb8
       teb = teb + tempb8
       DO ifc=nfc,1,-1
-        CALL POPCONTROL1B(branch)
+        CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
-          tmpb8 = alpha1b(mpg%fccv(ifc, 1))
-          alpha1b(mpg%fccv(ifc, 1)) = 0.D0
-          alpha1b(mpg%fccv(ifc, 2)) = alpha1b(mpg%fccv(ifc, 2)) + tmpb8
-          tmpb7 = tauia1b(mpg%fccv(ifc, 1))
-          tauia1b(mpg%fccv(ifc, 1)) = 0.D0
-          tauia1b(mpg%fccv(ifc, 2)) = tauia1b(mpg%fccv(ifc, 2)) + tmpb7
-        END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          tmpb6 = alpha1b(mpg%fccv(ifc, 2))
-          alpha1b(mpg%fccv(ifc, 2)) = 0.D0
-          alpha1b(mpg%fccv(ifc, 1)) = alpha1b(mpg%fccv(ifc, 1)) + tmpb6
-          tmpb5 = tauia1b(mpg%fccv(ifc, 2))
-          tauia1b(mpg%fccv(ifc, 2)) = 0.D0
-          tauia1b(mpg%fccv(ifc, 1)) = tauia1b(mpg%fccv(ifc, 1)) + tmpb5
+          IF (branch .NE. 1) THEN
+            tmpb8 = alpha1b(mpg%fccv(ifc, 1))
+            alpha1b(mpg%fccv(ifc, 1)) = 0.D0
+            alpha1b(mpg%fccv(ifc, 2)) = alpha1b(mpg%fccv(ifc, 2)) + &
+&             tmpb8
+            tmpb7 = tauia1b(mpg%fccv(ifc, 1))
+            tauia1b(mpg%fccv(ifc, 1)) = 0.D0
+            tauia1b(mpg%fccv(ifc, 2)) = tauia1b(mpg%fccv(ifc, 2)) + &
+&             tmpb7
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            tmpb6 = alpha1b(mpg%fccv(ifc, 2))
+            alpha1b(mpg%fccv(ifc, 2)) = 0.D0
+            alpha1b(mpg%fccv(ifc, 1)) = alpha1b(mpg%fccv(ifc, 1)) + &
+&             tmpb6
+            tmpb5 = tauia1b(mpg%fccv(ifc, 2))
+            tauia1b(mpg%fccv(ifc, 2)) = 0.D0
+            tauia1b(mpg%fccv(ifc, 1)) = tauia1b(mpg%fccv(ifc, 1)) + &
+&             tmpb5
+          END IF
         END IF
       END DO
       tauiab = 0.D0
@@ -576,17 +649,19 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         DO ifc=nfc,1,-1
-          CALL POPCONTROL1B(branch)
+          CALL POPCONTROL2B(branch)
           IF (branch .NE. 0) THEN
-            tmpb4 = qip0b(mpg%fccv(ifc, 1))
-            qip0b(mpg%fccv(ifc, 1)) = 0.D0
-            qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb4
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            tmpb3 = qip0b(mpg%fccv(ifc, 2))
-            qip0b(mpg%fccv(ifc, 2)) = 0.D0
-            qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb3
+            IF (branch .NE. 1) THEN
+              tmpb4 = qip0b(mpg%fccv(ifc, 1))
+              qip0b(mpg%fccv(ifc, 1)) = 0.D0
+              qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb4
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              tmpb3 = qip0b(mpg%fccv(ifc, 2))
+              qip0b(mpg%fccv(ifc, 2)) = 0.D0
+              qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb3
+            END IF
           END IF
         END DO
         gtib = 0.D0
@@ -617,17 +692,21 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
       IF (branch .EQ. 0) THEN
         DO k=nsmooth_siav,1,-1
           DO ifc=nfc,1,-1
-            CALL POPCONTROL1B(branch)
+            CALL POPCONTROL2B(branch)
             IF (branch .NE. 0) THEN
-              tmpb2 = qip0b(mpg%fccv(ifc, 1))
-              qip0b(mpg%fccv(ifc, 1)) = 0.D0
-              qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb2
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              tmpb1 = qip0b(mpg%fccv(ifc, 2))
-              qip0b(mpg%fccv(ifc, 2)) = 0.D0
-              qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb1
+              IF (branch .NE. 1) THEN
+                tmpb2 = qip0b(mpg%fccv(ifc, 1))
+                qip0b(mpg%fccv(ifc, 1)) = 0.D0
+                qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + &
+&                 tmpb2
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                tmpb1 = qip0b(mpg%fccv(ifc, 2))
+                qip0b(mpg%fccv(ifc, 2)) = 0.D0
+                qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + &
+&                 tmpb1
+              END IF
             END IF
           END DO
           CALL INTCELL_BWD(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfb, &
@@ -637,17 +716,19 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob, &
 &                    wrkfb)
         END DO
         DO ifc=nfc,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            tmpb0 = qip0b(mpg%fccv(ifc, 1))
-            qip0b(mpg%fccv(ifc, 1)) = 0.D0
-            qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb0
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            tmpb = qip0b(mpg%fccv(ifc, 2))
-            qip0b(mpg%fccv(ifc, 2)) = 0.D0
-            qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb
+          CALL POPCONTROL2B(branch)
+          IF (branch .NE. 0) THEN
+            IF (branch .EQ. 1) THEN
+              tmpb0 = qip0b(mpg%fccv(ifc, 1))
+              qip0b(mpg%fccv(ifc, 1)) = 0.D0
+              qip0b(mpg%fccv(ifc, 2)) = qip0b(mpg%fccv(ifc, 2)) + tmpb0
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              tmpb = qip0b(mpg%fccv(ifc, 2))
+              qip0b(mpg%fccv(ifc, 2)) = 0.D0
+              qip0b(mpg%fccv(ifc, 1)) = qip0b(mpg%fccv(ifc, 1)) + tmpb
+            END IF
           END IF
         END DO
         DO ift=mpg%nft,1,-1
@@ -751,8 +832,18 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 & ncv), nu1(ncv), s2, gti(ncv, 0:1)
 !   ..procedures
   INTRINSIC SQRT
+  INTRINSIC MAX
+  INTRINSIC MIN
   INTRINSIC DATAN
   INTRINSIC LOG
+  INTEGER :: max1
+  INTEGER :: max2
+  INTEGER :: max3
+  INTEGER :: max4
+  INTEGER :: min1
+  INTEGER :: min2
+  INTEGER :: min3
+  INTEGER :: min4
   CHARACTER(len=12) :: arg1
   CHARACTER(len=16) :: arg10
   CHARACTER(len=15) :: arg11
@@ -806,14 +897,27 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
         END DO
 !
         DO ifc=1,nfc
-          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc, 2&
-&           )) = qip0(mpg%fccv(ifc, 1))
-          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, 1)&
-&           ) = qip0(mpg%fccv(ifc, 2))
+          IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+            max1 = mpg%fccv(ifc, 2)
+          ELSE
+            max1 = mpg%fccv(ifc, 1)
+          END IF
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            min1 = mpg%fccv(ifc, 2)
+          ELSE
+            min1 = mpg%fccv(ifc, 1)
+          END IF
+          IF (.NOT.(max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1))&
+&         ) THEN
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
+&             , 2)) = qip0(mpg%fccv(ifc, 1))
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
+&             1)) = qip0(mpg%fccv(ifc, 2))
 !smoothing: interpolate to faces and back to cell centers
 
+          END IF
         END DO
 !
         wght = 1.0_R8
@@ -823,12 +927,25 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !wdk todo: rationalize this when separatrix-structure is introduced?
           CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, qip0)
           DO ifc=1,nfc
-            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
-&             , 2)) = qip0(mpg%fccv(ifc, 1))
-            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
-&             1)) = qip0(mpg%fccv(ifc, 2))
+            IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+              max2 = mpg%fccv(ifc, 2)
+            ELSE
+              max2 = mpg%fccv(ifc, 1)
+            END IF
+            IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+              min2 = mpg%fccv(ifc, 2)
+            ELSE
+              min2 = mpg%fccv(ifc, 1)
+            END IF
+            IF (.NOT.(max2 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min2&
+&               ))) THEN
+              IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.&
+&                 mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%&
+&               fccv(ifc, 2)) = qip0(mpg%fccv(ifc, 1))
+              IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg&
+&                 %cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(&
+&               ifc, 1)) = qip0(mpg%fccv(ifc, 2))
+            END IF
           END DO
         END DO
       END IF
@@ -853,12 +970,25 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
         END DO
 !
         DO ifc=1,nfc
-          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc, 2&
-&           )) = qip0(mpg%fccv(ifc, 1))
-          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&             cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, 1)&
-&           ) = qip0(mpg%fccv(ifc, 2))
+          IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+            max3 = mpg%fccv(ifc, 2)
+          ELSE
+            max3 = mpg%fccv(ifc, 1)
+          END IF
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            min3 = mpg%fccv(ifc, 2)
+          ELSE
+            min3 = mpg%fccv(ifc, 1)
+          END IF
+          IF (.NOT.(max3 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min3))&
+&         ) THEN
+            IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2)))) qip0(mpg%fccv(ifc&
+&             , 2)) = qip0(mpg%fccv(ifc, 1))
+            IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&               cvonclosedsurface(mpg%fccv(ifc, 2))) qip0(mpg%fccv(ifc, &
+&             1)) = qip0(mpg%fccv(ifc, 2))
+          END IF
         END DO
       END IF
 !
@@ -903,15 +1033,28 @@ SUBROUTINE B2SIAV_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
       END DO
 !
       DO ifc=1,nfc
-        IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-          tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
-          alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max4 = mpg%fccv(ifc, 2)
+        ELSE
+          max4 = mpg%fccv(ifc, 1)
         END IF
-        IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
-          tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
-          alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min4 = mpg%fccv(ifc, 2)
+        ELSE
+          min4 = mpg%fccv(ifc, 1)
+        END IF
+        IF (.NOT.(max4 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min4))) &
+&       THEN
+          IF (mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            tauia1(mpg%fccv(ifc, 2)) = tauia1(mpg%fccv(ifc, 1))
+            alpha1(mpg%fccv(ifc, 2)) = alpha1(mpg%fccv(ifc, 1))
+          END IF
+          IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))) THEN
+            tauia1(mpg%fccv(ifc, 1)) = tauia1(mpg%fccv(ifc, 2))
+            alpha1(mpg%fccv(ifc, 1)) = alpha1(mpg%fccv(ifc, 2))
+          END IF
         END IF
       END DO
 !

@@ -61,20 +61,22 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC MIN
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(kind=r8) :: y1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
-  REAL(kind=r8) :: max1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
+  INTEGER :: max1
+  REAL(kind=r8) :: max2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max2d
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs3d
-  REAL(kind=r8) :: max2
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max2d
+  REAL(kind=r8) :: max3
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max3d
+  INTEGER :: min1
   CHARACTER(len=7) :: arg1
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -205,111 +207,125 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
       IF (.NOT.(.NOT.is_neutral(isb) .AND. mpg%cvonclosedsurface(mpg%&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
-!srv 12.04.08
-        IF (switch%min_collisions .GT. 0.0_R8) THEN
-          wrk = switch%cvsa_low_col_mltpl
-          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
-&             *(1.0_R8-wrk) + wrk) THEN
-            DO nd=1,nbdirs
-              y1d(nd) = (1.0_R8-wrk)*collisnumfd(nd, ifc)/5.0_R8
-            END DO
-            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
-&             wrk) + wrk
-          ELSE
-            y1 = 1.0_R8
-            y1d = 0.D0
-          END IF
-          IF (wrk .LT. y1) THEN
-            DO nd=1,nbdirs
-              max1d(nd) = y1d(nd)
-            END DO
-            max1 = y1
-          ELSE
-            max1 = wrk
-            max1d = 0.D0
-          END IF
-          DO nd=1,nbdirs
-            cflmv_locd(nd, ifc) = max1*cflmv_locd(nd, ifc) + cflmv_loc(&
-&             ifc)*max1d(nd)
-          END DO
-          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
+        ELSE
+          max1 = mpg%fccv(ifc, 1)
         END IF
-        IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-          DO nd=1,nbdirs
-            qcld(nd) = -(dub(ifc)*cvsbxd(nd, ifc)+cvsbx(ifc)*dubd(nd, &
-&             ifc))
-          END DO
-          qcl = -(cvsbx(ifc)*dub(ifc))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs2 = geo%fcpbs(ifc)
-          ELSE
-            abs2 = -geo%fcpbs(ifc)
-          END IF
-!srv 11.01.13
-          temp0 = nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1)) + nb(mpg%&
-&           fccv(ifc, 2))*tb(mpg%fccv(ifc, 2))
-          temp = cflmv_loc(ifc)/2.0_R8
-          DO nd=1,nbdirs
-            qfld(nd) = abs2*(temp0*cflmv_locd(nd, ifc)/2.0_R8+temp*(tb(&
-&             mpg%fccv(ifc, 1))*nbd(nd, mpg%fccv(ifc, 1))+nb(mpg%fccv(&
-&             ifc, 1))*tbd(nd, mpg%fccv(ifc, 1))+tb(mpg%fccv(ifc, 2))*&
-&             nbd(nd, mpg%fccv(ifc, 2))+nb(mpg%fccv(ifc, 2))*tbd(nd, mpg&
-&             %fccv(ifc, 2))))
-          END DO
-          qfl = abs2*(temp*temp0)
-          IF (qfl .GT. 0.0_R8) THEN
-            IF (qcl/qfl .GE. 0.) THEN
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
+!srv 12.04.08
+        IF (max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1)) THEN
+          fl(ifc) = 1.0_R8
+        ELSE
+          IF (switch%min_collisions .GT. 0.0_R8) THEN
+            wrk = switch%cvsa_low_col_mltpl
+            IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/&
+&               5.0_R8*(1.0_R8-wrk) + wrk) THEN
               DO nd=1,nbdirs
-                abs3d(nd) = (qcld(nd)-qcl*qfld(nd)/qfl)/qfl
+                y1d(nd) = (1.0_R8-wrk)*collisnumfd(nd, ifc)/5.0_R8
               END DO
-              abs3 = qcl/qfl
+              y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(&
+&               1.0_R8-wrk) + wrk
             ELSE
+              y1 = 1.0_R8
+              y1d = 0.D0
+            END IF
+            IF (wrk .LT. y1) THEN
               DO nd=1,nbdirs
-                abs3d(nd) = -((qcld(nd)-qcl*qfld(nd)/qfl)/qfl)
+                max2d(nd) = y1d(nd)
               END DO
-              abs3 = -(qcl/qfl)
+              max2 = y1
+            ELSE
+              max2 = wrk
+              max2d = 0.D0
             END IF
             DO nd=1,nbdirs
-              tfld(nd) = abs3d(nd)
+              cflmv_locd(nd, ifc) = max2*cflmv_locd(nd, ifc) + cflmv_loc&
+&               (ifc)*max2d(nd)
             END DO
-            tfl = 1.0_R8 + abs3
-          ELSE
-            tfl = 1.0_R8
-            tfld = 0.D0
+            cflmv_loc(ifc) = cflmv_loc(ifc)*max2
           END IF
-        ELSE
-          IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max2 = 1.0e-16_R8
-            max2d = 0.D0
-          ELSE
+          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
             DO nd=1,nbdirs
-              max2d(nd) = collisnumfd(nd, ifc)
+              qcld(nd) = -(dub(ifc)*cvsbxd(nd, ifc)+cvsbx(ifc)*dubd(nd, &
+&               ifc))
             END DO
-            max2 = collisnumf(ifc)
+            qcl = -(cvsbx(ifc)*dub(ifc))
+            IF (geo%fcpbs(ifc) .GE. 0.) THEN
+              abs2 = geo%fcpbs(ifc)
+            ELSE
+              abs2 = -geo%fcpbs(ifc)
+            END IF
+!srv 11.01.13
+            temp0 = nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(ifc, 1)) + nb(mpg%&
+&             fccv(ifc, 2))*tb(mpg%fccv(ifc, 2))
+            temp = cflmv_loc(ifc)/2.0_R8
+            DO nd=1,nbdirs
+              qfld(nd) = abs2*(temp0*cflmv_locd(nd, ifc)/2.0_R8+temp*(tb&
+&               (mpg%fccv(ifc, 1))*nbd(nd, mpg%fccv(ifc, 1))+nb(mpg%fccv&
+&               (ifc, 1))*tbd(nd, mpg%fccv(ifc, 1))+tb(mpg%fccv(ifc, 2))&
+&               *nbd(nd, mpg%fccv(ifc, 2))+nb(mpg%fccv(ifc, 2))*tbd(nd, &
+&               mpg%fccv(ifc, 2))))
+            END DO
+            qfl = abs2*(temp*temp0)
+            IF (qfl .GT. 0.0_R8) THEN
+              IF (qcl/qfl .GE. 0.) THEN
+                DO nd=1,nbdirs
+                  abs3d(nd) = (qcld(nd)-qcl*qfld(nd)/qfl)/qfl
+                END DO
+                abs3 = qcl/qfl
+              ELSE
+                DO nd=1,nbdirs
+                  abs3d(nd) = -((qcld(nd)-qcl*qfld(nd)/qfl)/qfl)
+                END DO
+                abs3 = -(qcl/qfl)
+              END IF
+              DO nd=1,nbdirs
+                tfld(nd) = abs3d(nd)
+              END DO
+              tfl = 1.0_R8 + abs3
+            ELSE
+              tfl = 1.0_R8
+              tfld = 0.D0
+            END IF
+          ELSE
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              max3 = 1.0e-16_R8
+              max3d = 0.D0
+            ELSE
+              DO nd=1,nbdirs
+                max3d(nd) = collisnumfd(nd, ifc)
+              END DO
+              max3 = collisnumf(ifc)
+            END IF
+            temp0 = 1.0/(cflmv_loc(ifc)*max3)
+            DO nd=1,nbdirs
+              tfld(nd) = -(temp0*(max3*cflmv_locd(nd, ifc)+cflmv_loc(ifc&
+&               )*max3d(nd))/(cflmv_loc(ifc)*max3))
+            END DO
+            tfl = temp0 + 1.0_R8
           END IF
-          temp0 = 1.0/(cflmv_loc(ifc)*max2)
+          temp0 = cvsbx(ifc)/tfl
           DO nd=1,nbdirs
-            tfld(nd) = -(temp0*(max2*cflmv_locd(nd, ifc)+cflmv_loc(ifc)*&
-&             max2d(nd))/(cflmv_loc(ifc)*max2))
+            cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp0*tfld(nd))/tfl
           END DO
-          tfl = temp0 + 1.0_R8
+          cvsbx(ifc) = temp0
+          temp0 = cvsbxhz(ifc)/tfl
+          DO nd=1,nbdirs
+            cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp0*tfld(nd))/tfl
+          END DO
+          cvsbxhz(ifc) = temp0
+          temp0 = vsbfx(ifc)/tfl
+          DO nd=1,nbdirs
+            vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp0*tfld(nd))/tfl
+          END DO
+          vsbfx(ifc) = temp0
+          fl(ifc) = tfl
         END IF
-        temp0 = cvsbx(ifc)/tfl
-        DO nd=1,nbdirs
-          cvsbxd(nd, ifc) = (cvsbxd(nd, ifc)-temp0*tfld(nd))/tfl
-        END DO
-        cvsbx(ifc) = temp0
-        temp0 = cvsbxhz(ifc)/tfl
-        DO nd=1,nbdirs
-          cvsbxhzd(nd, ifc) = (cvsbxhzd(nd, ifc)-temp0*tfld(nd))/tfl
-        END DO
-        cvsbxhz(ifc) = temp0
-        temp0 = vsbfx(ifc)/tfl
-        DO nd=1,nbdirs
-          vsbfxd(nd, ifc) = (vsbfxd(nd, ifc)-temp0*tfld(nd))/tfl
-        END DO
-        vsbfx(ifc) = temp0
-        fl(ifc) = tfl
       ELSE
         fl(ifc) = 1.0_R8
       END IF
@@ -373,15 +389,17 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC MIN
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(kind=r8) :: y1
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
-  REAL(kind=r8) :: max1
+  INTEGER :: max1
+  REAL(kind=r8) :: max2
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
-  REAL(kind=r8) :: max2
+  REAL(kind=r8) :: max3
+  INTEGER :: min1
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -460,55 +478,69 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
       IF (.NOT.(.NOT.is_neutral(isb) .AND. mpg%cvonclosedsurface(mpg%&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
-!srv 12.04.08
-        IF (switch%min_collisions .GT. 0.0_R8) THEN
-          wrk = switch%cvsa_low_col_mltpl
-          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
-&             *(1.0_R8-wrk) + wrk) THEN
-            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
-&             wrk) + wrk
-          ELSE
-            y1 = 1.0_R8
-          END IF
-          IF (wrk .LT. y1) THEN
-            max1 = y1
-          ELSE
-            max1 = wrk
-          END IF
-          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
-        END IF
-        IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-          qcl = -(cvsbx(ifc)*dub(ifc))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs2 = geo%fcpbs(ifc)
-          ELSE
-            abs2 = -geo%fcpbs(ifc)
-          END IF
-!srv 11.01.13
-          qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
-&           ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
-          IF (qfl .GT. 0.0_R8) THEN
-            IF (qcl/qfl .GE. 0.) THEN
-              abs3 = qcl/qfl
-            ELSE
-              abs3 = -(qcl/qfl)
-            END IF
-            tfl = 1.0_R8 + abs3
-          ELSE
-            tfl = 1.0_R8
-          END IF
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
         ELSE
-          IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max2 = 1.0e-16_R8
-          ELSE
-            max2 = collisnumf(ifc)
-          END IF
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
+          max1 = mpg%fccv(ifc, 1)
         END IF
-        cvsbx(ifc) = cvsbx(ifc)/tfl
-        cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
-        vsbfx(ifc) = vsbfx(ifc)/tfl
-        fl(ifc) = tfl
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
+!srv 12.04.08
+        IF (max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1)) THEN
+          fl(ifc) = 1.0_R8
+        ELSE
+          IF (switch%min_collisions .GT. 0.0_R8) THEN
+            wrk = switch%cvsa_low_col_mltpl
+            IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/&
+&               5.0_R8*(1.0_R8-wrk) + wrk) THEN
+              y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(&
+&               1.0_R8-wrk) + wrk
+            ELSE
+              y1 = 1.0_R8
+            END IF
+            IF (wrk .LT. y1) THEN
+              max2 = y1
+            ELSE
+              max2 = wrk
+            END IF
+            cflmv_loc(ifc) = cflmv_loc(ifc)*max2
+          END IF
+          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
+            qcl = -(cvsbx(ifc)*dub(ifc))
+            IF (geo%fcpbs(ifc) .GE. 0.) THEN
+              abs2 = geo%fcpbs(ifc)
+            ELSE
+              abs2 = -geo%fcpbs(ifc)
+            END IF
+!srv 11.01.13
+            qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
+&             ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+            IF (qfl .GT. 0.0_R8) THEN
+              IF (qcl/qfl .GE. 0.) THEN
+                abs3 = qcl/qfl
+              ELSE
+                abs3 = -(qcl/qfl)
+              END IF
+              tfl = 1.0_R8 + abs3
+            ELSE
+              tfl = 1.0_R8
+            END IF
+          ELSE
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              max3 = 1.0e-16_R8
+            ELSE
+              max3 = collisnumf(ifc)
+            END IF
+            tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max3)
+          END IF
+          cvsbx(ifc) = cvsbx(ifc)/tfl
+          cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
+          vsbfx(ifc) = vsbfx(ifc)/tfl
+          fl(ifc) = tfl
+        END IF
       ELSE
         fl(ifc) = 1.0_R8
       END IF

@@ -70,6 +70,7 @@ c Advanced fluid neutral models
       integer :: afn_bcs_use_coarse
       integer :: afn_vnn
       integer :: afn_vnn_ndiff
+      integer :: afn_impurity_pumping
 
 c Zhdanov closure switches
       integer :: Zhdanov_closure
@@ -136,6 +137,7 @@ c Zhdanov closure switches
       real (kind=R8) :: b2upht_zt_min
       real (kind=R8) :: b2upht_zt_max
       real (kind=R8) :: cfc0
+      real (kind=R8) :: aad0_boost0
       real (kind=R8) :: prl_cur
       real (kind=R8) :: dia_cur
       real (kind=R8) :: fch_pTe
@@ -243,7 +245,22 @@ c iout switches
       integer :: b2scdt_iout
       integer :: b2smdt_iout
       integer :: b2shdt_iout
+      integer :: write_b25_state_variables
+      integer :: write_b25_fluxes
+      integer :: write_b25_sources
+      integer :: write_b25_transport
+      integer :: write_eirene_state_variables
+      integer :: write_eirene_fluxes
       integer :: write_eirene_sources
+      integer :: write_triangles
+      integer :: write_chord_b25_state_variables
+      integer :: write_chord_b25_fluxes
+      integer :: write_chord_b25_sources
+      integer :: write_chord_b25_transport
+      integer :: write_chord_eirene_state_variables
+      integer :: write_chord_eirene_fluxes
+      integer :: write_chord_eirene_sources
+      integer :: write_chord_triangles
 
 c style switches
       integer :: b2sicf_style
@@ -573,6 +590,7 @@ c b2mndt
       integer :: b2mndt_startup
       integer :: ntim_step_out
       integer :: calc_err_step_out
+      integer :: tot_eqs_override
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -711,6 +729,7 @@ c Advanced fluid neutral models
       s % afn_bcs_use_coarse = 1
       s % afn_vnn = 1
       s % afn_vnn_ndiff = 0
+      s % afn_impurity_pumping = 0
 
 c Zhdanov closure switches
       s % Zhdanov_closure = 0
@@ -777,6 +796,7 @@ c Zhdanov closure switches
       s % b2upht_zt_min = 1.0e-8_R8
       s % b2upht_zt_max = 1.0e30_R8
       s % cfc0 = 1.0_R8
+      s % aad0_boost0 = 0.0_R8
       s % prl_cur = 1.0_R8
       s % dia_cur = 1.0_R8
       s % fch_pTe = 1.0_R8
@@ -871,7 +891,22 @@ c Zhdanov closure switches
       s % b2scdt_iout = 0
       s % b2smdt_iout = 0
       s % b2shdt_iout = 0
+      s % write_b25_state_variables = 1
+      s % write_b25_fluxes = 0
+      s % write_b25_sources = 0
+      s % write_b25_transport = 0
+      s % write_eirene_state_variables = 0
+      s % write_eirene_fluxes = 0
       s % write_eirene_sources = 0
+      s % write_triangles = 0
+      s % write_chord_b25_state_variables = 1
+      s % write_chord_b25_fluxes = 0
+      s % write_chord_b25_sources = 0
+      s % write_chord_b25_transport = 0
+      s % write_chord_eirene_state_variables = 0
+      s % write_chord_eirene_fluxes = 0
+      s % write_chord_eirene_sources = 0
+      s % write_chord_triangles = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -951,19 +986,15 @@ c Zhdanov closure switches
         s % b2npco_rxg =  huge(1.0_R8)
         s % b2npht_rxg =  huge(1.0_R8)
         s % b2npmo_rxg =  huge(1.0_R8)
-        s % b2npco_pcm0 = 0.0_R8
-        s % b2npco_pcm1 = 0.0_R8
-        s % b2npht_pcm0 = 0.0_R8
-        s % b2npht_pcm1 = 0.0_R8
       else
         s % b2npco_rxg =  1.0_R8
         s % b2npht_rxg =  1.0_R8
         s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
-        s % b2npco_pcm0 = 1.0_R8
-        s % b2npco_pcm1 = 1.0_R8
-        s % b2npht_pcm0 = 1.0_R8
-        s % b2npht_pcm1 = 1.0_R8
       end if
+      s % b2npco_pcm0 = 1.0_R8
+      s % b2npco_pcm1 = 1.0_R8
+      s % b2npht_pcm0 = 1.0_R8
+      s % b2npht_pcm1 = 1.0_R8
 
       s % xfm0       =  1.0_R8
       s % xfm1       =  1.0_R8
@@ -1244,9 +1275,10 @@ c b2mndt
       s % b2mndt_ckn = 1
       s % b2mndt_bdf = 1
       s % b2mndt_dummy = 0
-      s % b2mndt_startup = 1
+      s % b2mndt_startup = 0
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
+      s % tot_eqs_override = 0
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1388,6 +1420,9 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
       call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
       call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
+      call ipgeti ('b2stbr_afn_impurity_pumping', 
+     &             s % afn_impurity_pumping)
+
 
 c Zhdanov closure
       call ipgeti ('b2tral_Zhdanov_closure', s % Zhdanov_closure)
@@ -1454,6 +1489,7 @@ c Zhdanov closure
       call ipgetr ('b2upht_zt_min', s % b2upht_zt_min)
       call ipgetr ('b2upht_zt_max', s % b2upht_zt_max)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
+      call ipgetr ('b2usmo_aad0_boost0', s % aad0_boost0)              !xpb 20.09.21
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
       call ipgetr ('b2tfhe_dia_cur', s % dia_cur)
       call ipgetr ('b2tfhe_fch_pTe', s % fch_pTe)
@@ -1559,7 +1595,29 @@ c iout switches
       call ipgeti ('b2scdt_iout', s % b2scdt_iout)
       call ipgeti ('b2smdt_iout', s % b2smdt_iout)
       call ipgeti ('b2shdt_iout', s % b2shdt_iout)
+      call ipgeti ('cdfmovie_b25_state_variables',
+     1  s % write_b25_state_variables)
+      call ipgeti ('cdfmovie_b25_fluxes', s % write_b25_fluxes)
+      call ipgeti ('cdfmovie_b25_sources', s % write_b25_sources)
+      call ipgeti ('cdfmovie_b25_transport', s % write_b25_transport)
+      call ipgeti ('cdfmovie_eirene_state_variables',
+     1  s % write_eirene_state_variables)
+      call ipgeti ('cdfmovie_eirene_fluxes', s % write_eirene_fluxes)
       call ipgeti ('cdfmovie_eirene_sources', s % write_eirene_sources)
+      call ipgeti ('cdfmovie_triangles', s % write_triangles)
+      call ipgeti ('cdfchord_b25_state_variables',
+     1  s % write_chord_b25_state_variables)
+      call ipgeti ('cdfchord_b25_fluxes', s % write_chord_b25_fluxes)
+      call ipgeti ('cdfchord_b25_sources', s % write_chord_b25_sources)
+      call ipgeti ('cdfchord_b25_transport',
+     1  s % write_chord_b25_transport)
+      call ipgeti ('cdfchord_eirene_state_variables',
+     1  s % write_chord_eirene_state_variables)
+      call ipgeti ('cdfchord_eirene_fluxes',
+     1  s % write_chord_eirene_fluxes)
+      call ipgeti ('cdfchord_eirene_sources',
+     1  s % write_chord_eirene_sources)
+      call ipgeti ('cdfchord_triangles', s % write_chord_triangles)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)
@@ -2023,6 +2081,7 @@ c b2mndt
       call ipgeti ('b2mndt_startup', s % b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
+      call ipgeti ('b2mndt_tot_eqs_override', s % tot_eqs_override)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2427,6 +2486,8 @@ c b2news
 
 c b2usmo
        call xertst (0.0_R8.le.s%cfc0, 'faulty parameter cfc0')
+       call xertst (0.0_R8.le.s%aad0_boost0,
+     &  'faulty parameter aad0_boost0')
 
 c b2tfcc
        call xertst (0.0_R8.le.s%xfac, 'faulty parameter xfac')
@@ -2634,8 +2695,8 @@ c b2mndt
      &  'b2mndt_ckn should be 1 or 2')
       call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
      &  'b2mndt_bdf should be 1 or 2')
-      call xertst (s%b2mndt_startup.eq.1.or.s%b2mndt_startup.eq.2,
-     &  'b2mndt_startup should be 1 or 2')
+      call xertst (s%b2mndt_startup.eq.0.or.s%b2mndt_startup.eq.1.or.
+     &  s%b2mndt_startup.eq.2,'b2mndt_startup should be 0, 1 or 2')
       if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
         call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
      &     ' integration schemes at the same time!'//
@@ -2649,6 +2710,8 @@ c b2mndt
      &   'faulty internal parameter ntim_step_out')
       call xertst (1.le.s%calc_err_step_out,
      &   'faulty internal parameter calc_err_step_out')
+      call xertst (s%tot_eqs_override.eq.0.or.s%tot_eqs_override.eq.1,
+     &   'b2mndt_tot_eqs_override should be 0 or 1')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
@@ -2717,9 +2780,9 @@ c check the inter-consistency of different switches (e.g. certain combinations o
       if (s%pot_eq .eq. 1) then
        call xertst(s%fch_ion_neutral .gt. 0.0_R8 .or.
      *             s%fch_anomalous .gt. 0.0_R8 .or.
-     *             s%fhe_vis_q .gt. 0.0_R8 .or.  !fnb/fhe?
+     *             s%fhe_vis_q .gt. 0.0_R8 .or.
      *             s%fch_inert .gt. 0.0_R8 .or.
-     *             s%fhe_vis_per .gt. 0.0_R8 .or. !fnb/fhe?
+     *             s%fhe_vis_per .gt. 0.0_R8 .or.
      *             s%fch_stochastic .gt. 0.0_R8 .or.
      *             s%dia_cur .gt. 0.0_R8 .or.
      *             s%fhe_vis_par .gt. 0.0_R8,

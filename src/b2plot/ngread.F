@@ -760,7 +760,9 @@ cank
           ke = 0
           do i = 1, ntns
             if (ltns(i).eq.0) cycle
+            if (eirdiag_nds_ind(ltns(i)).eq.NCL) cycle
             iFc = fnmti_b2(eirdiag_nds_ind(ltns(i))+1)
+            if (iFc.eq.-1) cycle
             if (mpg%fcReg(iFc).eq.0) cycle
             if
      &       (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.WEST)

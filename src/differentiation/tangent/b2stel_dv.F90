@@ -19,7 +19,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 & , rt, rtw, srw)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFFV
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA
@@ -66,7 +66,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
   INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n, tpart(4)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: sna0_ion(ncv, 0:1, 0:ns-1), sna0_rec(ncv, 0:1, 0:ns-1&
 & ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), she0_ion(&
@@ -382,7 +382,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
 !       ..compute electron heat source
           t2 = t0*pl%na(icv, is)*rt%rpi(icv, is)*ev
           she0_rec(icv, 0) = she0_rec(icv, 0) + (1.0_R8+rf0)*t2
-          she0_rec(icv, 0) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+          she0_rec(icv, 3) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
 &           (icv))
 !       ..compute atom heat source
           IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
@@ -413,8 +413,8 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
             shi0_rec(icv, 3) = shi0_rec(icv, 3) - rf0*t1i/(dv%ni(icv, 0)&
 &             *pl%ti(icv))
             shn0_rec(icv, 0) = shn0_rec(icv, 0) + (1.0_R8+rf0)*t1n
-            shn0_rec(icv, 3) = shn0_rec(icv, 3) - rf0*t1n/((dv%ni(icv, 0&
-&             )-dv%ni(icv, 1))*pl%tn(icv))
+            shn0_rec(icv, 3) = shn0_rec(icv, 3) - rf0*t1n/(dv%nn(icv)*pl&
+&             %tn(icv))
           END IF
           srw%rrahi(icv, is) = t1
           rrahireg(mpg%cvreg(icv), is) = rrahireg(mpg%cvreg(icv), is) + &
@@ -678,7 +678,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, mpg, pl, pld, dv&
 & , dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_DIAG_DIFFV
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA
@@ -731,7 +731,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, mpg, pl, pld, dv&
   INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n, tpart(4)
   REAL(kind=r8), DIMENSION(nbdirsmax) :: rf0d, t0d, t1d, tkind, t1id, &
 & t1nd
   REAL(kind=r8) :: wrk0(ncv)
@@ -1255,7 +1255,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, mpg, pl, pld, dv&
 !       ..compute electron heat source
           t2 = t0*pl%na(icv, is)*rt%rpi(icv, is)*ev
           she0_rec(icv, 0) = she0_rec(icv, 0) + (1.0_R8+rf0)*t2
-          she0_rec(icv, 0) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+          she0_rec(icv, 3) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
 &           (icv))
 !       ..compute atom heat source
           IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
@@ -1339,13 +1339,12 @@ SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, mpg, pl, pld, dv&
             END DO
             shi0_rec(icv, 3) = shi0_rec(icv, 3) - temp
             shn0_rec(icv, 0) = shn0_rec(icv, 0) + (1.0_R8+rf0)*t1n
-            temp2 = dv%ni(icv, 0) - dv%ni(icv, 1)
-            temp1 = temp2*pl%tn(icv)
-            temp = rf0*t1n/temp1
+            temp2 = dv%nn(icv)*pl%tn(icv)
+            temp = rf0*t1n/temp2
             DO nd=1,nbdirs
               shn0_recd(nd, icv, 3) = shn0_recd(nd, icv, 3) - (t1n*rf0d(&
-&               nd)+rf0*t1nd(nd)-temp*(pl%tn(icv)*(dvd%ni(nd, icv, 0)-&
-&               dvd%ni(nd, icv, 1))+temp2*pld%tn(nd, icv)))/temp1
+&               nd)+rf0*t1nd(nd)-temp*(pl%tn(icv)*dvd%nn(nd, icv)+dv%nn(&
+&               icv)*pld%tn(nd, icv)))/temp2
             END DO
             shn0_rec(icv, 3) = shn0_rec(icv, 3) - temp
           END IF

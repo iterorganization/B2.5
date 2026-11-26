@@ -25,7 +25,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: ib, ibc, iCv, iFc
+      integer :: ib, ibc, iCv, iCn, iFc
       integer, save :: ncall = 0
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(ncall)
@@ -44,8 +44,9 @@
         ! compute flux through boundary; positive if out of the domain
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                       ! number of the guard cell
+          iCn = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                       ! number of the real cell
           iFc = mpg%cvFc(mpg%cvFcP(iCv,1))                              ! number of the guard cell face
-          if (lcore.or.(.not.mpg%cvOnClosedSurface(iCv))) then
+          if (lcore.or.(.not.mpg%cvOnClosedSurface(iCn))) then
             tbfl(ib) = tbfl(ib) + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &        (flux(iFc,0) + flux(iFc,1))
           endif

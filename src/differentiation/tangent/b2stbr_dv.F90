@@ -49,7 +49,7 @@ END SUBROUTINE B2STBR_NEUTR_SCL_NODIFF
 SUBROUTINE B2STBR_INIT_DV(ns, switch, switchd, mpg, mpgd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_TIME
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFFV, ONLY : sput_dst, sput_dst2, sput_dst3
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -256,7 +256,7 @@ END SUBROUTINE B2STBR_INIT_DV
 SUBROUTINE B2STBR_INIT_NODIFF(ns, switch, mpg)
   USE B2MOD_TYPES
   USE B2MOD_TIME
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFFV
   USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFFV, ONLY : sput_dst, sput_dst2, sput_dst3
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
@@ -503,7 +503,7 @@ SUBROUTINE B2STBR_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA
   USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -2643,7 +2643,7 @@ SUBROUTINE B2STBR_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&
@@ -2919,7 +2919,7 @@ SUBROUTINE B2STBR_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA
   USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -5078,7 +5078,7 @@ SUBROUTINE B2STBR_DV0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&
@@ -5328,7 +5328,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_B2CMPA
   USE B2MOD_B2CMPB
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -7448,7 +7448,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   st%srw%b2stbr_shi(:) = st%srw%shi0(:, 0) + st%srw%shi0(:, 1)*st%pl%ti(&
 &   :) + st%srw%shi0(:, 2)*st%dv%ni(:, 0) + st%srw%shi0(:, 3)*st%dv%ni(:&
 &   , 0)*st%pl%ti(:)
-  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%ti(&
+  st%srw%b2stbr_shn(:) = st%srw%shn0(:, 0) + st%srw%shn0(:, 1)*st%pl%tn(&
 &   :) + st%srw%shn0(:, 2)*st%dv%nn(:) + st%srw%shn0(:, 3)*st%dv%nn(:)*&
 &   st%pl%tn(:)
   st%srw%b2stbr_sch(:) = st%srw%sch0(:, 0) + st%srw%sch0(:, 1)*st%pl%po(&

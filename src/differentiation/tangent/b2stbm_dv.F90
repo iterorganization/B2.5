@@ -4,21 +4,24 @@
 !  Differentiation of b2stbm in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(st_ext.she) *(st_ext.shi)
 !                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
-!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
+!                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.smo0)
+!                *(srw.sna0)
 !   with respect to varying inputs: *(st_ext.she) *(st_ext.shi)
 !                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
-!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
-!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
+!                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.smo0)
+!                *(srw.sna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
+!                *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
 !                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvqgam:in
 !                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
 !                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
 !                st_ext.sna:in st_ext.smo:in srw.sch0:in srw.she0:in
-!                srw.shi0:in srw.sne0:in srw.smo0:in srw.sna0:in
-!                srw.b2stbm_sch:in srw.b2stbm_she:in srw.b2stbm_shi:in
-!                srw.b2stbm_sne:in srw.b2stbm_smo:in srw.b2stbm_sna:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                srw.shi0:in srw.sne0:in srw.shn0:in srw.smo0:in
+!                srw.sna0:in srw.b2stbm_sch:in srw.b2stbm_she:in
+!                srw.b2stbm_shi:in srw.b2stbm_sne:in srw.b2stbm_smo:in
+!                srw.b2stbm_sna:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.tn:in
 !
 !
 !
@@ -189,6 +192,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
     srwd%smo0(nd, :, :, :) = 0.D0
     srwd%she0(nd, :, :) = 0.D0
     srwd%shi0(nd, :, :) = 0.D0
+    srwd%shn0(nd, :, :) = 0.D0
     srwd%sch0(nd, :, :) = 0.D0
   END DO
   srw%sna0 = 0.0_R8
@@ -196,6 +200,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
   srw%sne0 = 0.0_R8
   srw%she0 = 0.0_R8
   srw%shi0 = 0.0_R8
+  srw%shn0 = 0.0_R8
   srw%sch0 = 0.0_R8
   srw%b2stbm_sna = 0.0_R8
   srw%b2stbm_smo = 0.0_R8
@@ -898,6 +903,7 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   srw%sne0 = 0.0_R8
   srw%she0 = 0.0_R8
   srw%shi0 = 0.0_R8
+  srw%shn0 = 0.0_R8
   srw%sch0 = 0.0_R8
   srw%b2stbm_sna = 0.0_R8
   srw%b2stbm_smo = 0.0_R8

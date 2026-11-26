@@ -385,6 +385,11 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd0, &
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+       IF (MAX(mpg%fccv(ifc,1),mpg%fccv(ifc,2)).GT.mpg%nci.AND.&
+&          mpg%cvonclosedsurface(MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2)))) &
+&      THEN
+         fl(ifc) = 1.0_R8
+       ELSE
         IF (switch%min_collisions .GT. 0.0_R8) THEN
           wrk = switch%cvsa_low_col_mltpl
           IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
@@ -633,6 +638,7 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd0, &
         END DO
         vsbfx(ifc) = temp0
         fl(ifc) = tfl
+       ENDIF
       ELSE
         fl(ifc) = 1.0_R8
       END IF
@@ -862,6 +868,11 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
 !srv 12.04.08
+       IF (MAX(mpg%fccv(ifc,1),mpg%fccv(ifc,2)).GT.mpg%nci.AND.&
+&          mpg%cvonclosedsurface(MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2)))) &
+&      THEN
+         fl(ifc) = 1.0_R8
+       ELSE
         IF (switch%min_collisions .GT. 0.0_R8) THEN
           wrk = switch%cvsa_low_col_mltpl
           IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
@@ -966,6 +977,7 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
         END DO
         vsbfx(ifc) = temp0
         fl(ifc) = tfl
+       END IF
       ELSE
         fl(ifc) = 1.0_R8
       END IF

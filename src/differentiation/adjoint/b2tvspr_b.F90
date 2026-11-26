@@ -74,8 +74,6 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
-  REAL(kind=r8), DIMENSION(ncv) :: arg1b
   REAL(kind=r8), DIMENSION(nfc) :: tempb
   INTEGER*4 :: branch
 !-----------------------------------------------------------------------
@@ -105,11 +103,11 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 !
 !      ..compute V_{perp,a} on cell faces
         CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, gpo)
-        arg1 = na(:, is)*ti
+        wrkc = na(:, is)*ti
         CALL PUSHREAL8ARRAY(gpa, r8*nfc/8)
-        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, arg1, wrkv, gpa)
-        arg1 = na(:, is)*rza(:, is)
-        CALL INTFACE_FWD(ncv, nfc, mpg%fccv, weight, arg1, wrkf)
+        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrkc, wrkv, gpa)
+        wrkc = na(:, is)*rza(:, is)
+        CALL INTFACE_FWD(ncv, nfc, mpg%fccv, weight, wrkc, wrkf)
         CALL PUSHREAL8ARRAY(wrkf, r8*nfc/8)
         wrkf = -((gpo+gpa/(qe*wrkf))/geo%fcbb(:, 3))
 !
@@ -149,8 +147,8 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
       fchvisper_ab(:, :, is) = fchvisper_ab(:, :, is) + fchvisperb
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        fchvisper_ab(:, 1, is) = -(geo%fcs*geo%fcqalf(:, 1)*fchvisper_ab&
-&         (:, 1, is)/geo%fcbb(:, 3))
+        fchvisper_ab(:, 1, is) = -(switch%fhe_vis_per*fac_vis*geo%fcs*&
+&         geo%fcqalf(:, 1)*fchvisper_ab(:, 1, is)/geo%fcbb(:, 3))
         weight = 1.0_R8
         wrkcb = 0.D0
         CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, wrkc, wrkcb, &
@@ -178,17 +176,17 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         tempb = -(wrkfb/(qe*wrkf*geo%fcbb(:, 3)))
         wrkfb = -(gpa*tempb/wrkf)
         gpab = gpab + tempb
-        arg1b = 0.D0
-        CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, arg1, arg1b, wrkf, &
+        wrkcb = 0.D0
+        CALL INTFACE_BWD(ncv, nfc, mpg%fccv, weight, wrkc, wrkcb, wrkf, &
 &                  wrkfb)
-        nab(:, is) = nab(:, is) + rza(:, is)*arg1b
-        rzab(:, is) = rzab(:, is) + na(:, is)*arg1b
+        nab(:, is) = nab(:, is) + rza(:, is)*wrkcb
+        rzab(:, is) = rzab(:, is) + na(:, is)*wrkcb
         CALL POPREAL8ARRAY(gpa, r8*nfc/8)
-        arg1b = 0.D0
-        CALL GRAD_R_B(ncv, nfc, nvx, 0, geo, mpg, mpgb, arg1, arg1b, &
+        wrkcb = 0.D0
+        CALL GRAD_R_B(ncv, nfc, nvx, 0, geo, mpg, mpgb, wrkc, wrkcb, &
 &               wrkv, wrkvb, gpa, gpab)
-        nab(:, is) = nab(:, is) + ti*arg1b
-        tib = tib + na(:, is)*arg1b
+        nab(:, is) = nab(:, is) + ti*wrkcb
+        tib = tib + na(:, is)*wrkcb
         CALL GRAD_R_B(ncv, nfc, nvx, 0, geo, mpg, mpgb, po, pob, wrkv, &
 &               wrkvb, gpo, gpob)
       ELSE
@@ -259,7 +257,6 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -292,10 +289,10 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !      ..compute V_{perp,a} on cell faces
         CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, gpo)
-        arg1 = na(:, is)*ti
-        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, arg1, wrkv, gpa)
-        arg1 = na(:, is)*rza(:, is)
-        CALL INTFACE(ncv, nfc, mpg%fccv, weight, arg1, wrkf)
+        wrkc = na(:, is)*ti
+        CALL GRAD_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrkc, wrkv, gpa)
+        wrkc = na(:, is)*rza(:, is)
+        CALL INTFACE(ncv, nfc, mpg%fccv, weight, wrkc, wrkf)
         wrkf = -((gpo+gpa/(qe*wrkf))/geo%fcbb(:, 3))
 !
 !      ..interpolate V_{perp,a} to cell centers
@@ -322,8 +319,8 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
         fchvisper_a(:, 0, is) = 0.0_R8
         CALL INTFACE(ncv, nfc, mpg%fccv, weight, wrkc, fchvisper_a(:, 1&
 &              , is))
-        fchvisper_a(:, 1, is) = -(fchvisper_a(:, 1, is)*geo%fcs*geo%&
-&         fcqalf(:, 1)/geo%fcbb(:, 3))
+        fchvisper_a(:, 1, is) = -(fchvisper_a(:, 1, is)*switch%&
+&         fhe_vis_per*fac_vis*geo%fcs*geo%fcqalf(:, 1)/geo%fcbb(:, 3))
 !
       ELSE
 !

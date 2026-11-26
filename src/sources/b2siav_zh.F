@@ -142,6 +142,9 @@
             !copy value of qip0 across separatrix
             !wdk todo: rationalize this when separatrix-structure is introduced?
             do iFc = 1, nFc
+              if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >          cycle
               if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                 qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
@@ -160,6 +163,9 @@
              !copy value of qip0 across separatrix
              !wdk todo: rationalize this when separatrix-structure is introduced?
              do iFc = 1, nFc
+               if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >           cycle
                if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &             .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                  qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
@@ -191,6 +197,9 @@
             !copy value of qip0 across separatrix
             !wdk todo: rationalize this when separatrix-structure is introduced?
             do iFc = 1, nFc
+              if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >          cycle
               if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                 qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
@@ -235,6 +244,9 @@
               !copy value of qip0 across separatrix
               !wdk todo: rationalize this when separatrix-structure is introduced?
               do iFc = 1, nFc
+                if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >            cycle
                 if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &              .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                   qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
@@ -253,6 +265,9 @@
                !copy value of qip0 across separatrix
                !wdk todo: rationalize this when separatrix-structure is introduced?
                do iFc = 1, nFc
+                 if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >             cycle
                  if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &               .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                    qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
@@ -288,6 +303,9 @@
               !copy value of qip0 across separatrix
               !wdk todo: rationalize this when separatrix-structure is introduced?
               do iFc = 1, nFc
+                if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &     mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >            cycle
                 if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &              .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
                   qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))

@@ -143,51 +143,51 @@
       if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
-         ilast_closed_surface = -2
-         n_closed_surface = 0
-         do iy = 1, nomp
+        ilast_closed_surface = -2
+        n_closed_surface = 0
+        do iy = 1, nomp
           if(omp(iy).le.mpg%nCi) then
-           if(mpg%cvOnClosedSurface(omp(iy))) then
-            n_closed_surface = n_closed_surface + 1
-            ilast_closed_surface = iy
-           endif
+            if(mpg%cvOnClosedSurface(omp(iy))) then
+              n_closed_surface = n_closed_surface + 1
+              ilast_closed_surface = iy
+            endif
           endif
-         enddo
-         if (ilast_closed_surface.eq.-2)
-     &    call xerrab('Problem identifying last closed surface')
+        enddo
+        if (ilast_closed_surface.eq.-2)
+     &   call xerrab('Problem identifying last closed surface')
 *      ..find the number of the first open surface in SOL
-         ifirst_open_surface = ilast_closed_surface
-         found = .false.
-         do iy = ilast_closed_surface + 1, nomp
+        ifirst_open_surface = ilast_closed_surface
+        found = .false.
+        do iy = ilast_closed_surface + 1, nomp
           if(omp(iy).le.mpg%nCi .and. .not.found) then
-           if(.not.mpg%cvOnClosedSurface(omp(iy))) then
-            ifirst_open_surface = iy
-            found = .true.
-           endif
+            if(.not.mpg%cvOnClosedSurface(omp(iy))) then
+              ifirst_open_surface = iy
+              found = .true.
+            endif
           endif
-         enddo
-         if (ifirst_open_surface.eq.ilast_closed_surface)
-     &    call xerrab('Problem identifying first open surface')
+        enddo
+        if (ifirst_open_surface.eq.ilast_closed_surface)
+     &   call xerrab('Problem identifying first open surface')
 
 *      ..find the poloidal number of midplane cell as a number of cell with min abs(Bz)
 *        and inner midplane as cell with max abs(Bz)
-         iy=ilast_closed_surface
-         first=.true.
-         do ix = -1, nx
+        iy=ilast_closed_surface
+        first=.true.
+        do ix = -1, nx
           if(mpg%imapCv(ix,iy) /= 0) then
-           if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
-            if(first) then
-               nmdpl = ix
-               nmdpl_i = ix
-               first = .false.
+            if(mpg%cvOnClosedSurface(mpg%imapCv(ix,iy))) then
+              if(first) then
+                nmdpl = ix
+                nmdpl_i = ix
+                first = .false.
+              endif
+              if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
+     &           geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix
+              if(geo%cvBb(mpg%imapCv(ix,iy),2) .gt.
+     &           geo%cvBb(mpg%imapCv(nmdpl_i,iy),2)) nmdpl_i = ix
             endif
-            if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
-     &         geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix
-            if(geo%cvBb(mpg%imapCv(ix,iy),2) .gt.
-     &         geo%cvBb(mpg%imapCv(nmdpl_i,iy),2)) nmdpl_i = ix
-           endif
           endif
-         enddo
+        enddo
       endif
 #endif
 

@@ -20,7 +20,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 & , ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
 !      use b2mod_sources
   USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV
@@ -436,7 +436,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
 & smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, rcxhi, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
 !      use b2mod_sources
   USE B2MOD_B2CMPA
   USE B2MOD_SWITCHES_DIFFV

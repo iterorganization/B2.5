@@ -17,7 +17,8 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
-     &          balance_netcdf, update_balance_eirene_sources_heat
+     &          balance_netcdf, update_balance_eirene_sources_heat,
+     &          b2shdt_she0to3, b2shdt_shi0to3
 #endif
       use b2mod_ad
      & , only : ncall_b2npht, rxg_npht
@@ -91,7 +92,7 @@
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                    !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), wrk1(nCv), wrk2(nCv), wrk3(nCv), 
-     * wrk4(nCv), wrk5(nCv),  wrk6(nCv),                                 !IYS 17.07.26
+     * wrk4(nCv), wrk5(nCv), wrk6(nCv),                                  !IYS 17.07.26
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
@@ -142,20 +143,12 @@
      &              'equations was implemented similarly as the energy',
      &              'equations but lacks theoretical development'
           endif
-*    ..make sure time-dependent equations are not altered by convergence tricks
-          rxg_npht = huge(1.0_R8)
-          if (switch%b2npht_pcm0.gt.0.0_R8) then
-            call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
-          endif
-          if (switch%b2npht_pcm1.gt.0.0_R8) then
-            call xerrab('b2npht_pcm1 must be 0 for time-dependent mode')
-          endif
           warning_e = .false.
           warning_i = .false.
           warning_n = .false.
           warning_kt = .false.
           warning_zt = .false.
-          do iCv = 1, nCv
+          do iCv = 1, mpg%nCi
             warning_e = warning_e .or.
      .        rxf*dtee(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
             warning_i = warning_i .or.
@@ -181,11 +174,8 @@
      .   write(6,*) 'Time derivative terms may be inacurrate !'
           if (warning_kt .or. warning_zt)
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
-        else
-          rxg_npht = 1.0_R8
         endif                                                            !srv 07.07.21 }
-        call xertst (0.0_R8.lt.rxg_npht,
-     &   'faulty internal parameter rxg')
+        rxg_npht = switch%b2npht_rxg
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
@@ -248,17 +238,6 @@ c make sure fhn is zero when not solving a separate neutral energy equation
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
 
-#ifndef FIXED_POINT
-cdjm Jan2017 update particle source components for balance
-      if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
-      endif
-      if (balance_netcdf.ne.0 .or.
-     &    switch%write_eirene_sources.ne.0) then
-        call update_balance_eirene_sources_heat
-     .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
-      endif
-#endif
 !fc This is the new positioning of time-dependent treatment
 !fc It had to be moved here to allow for the use of Crank-Nicolson
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
@@ -318,9 +297,9 @@ c time-dependent treatment                                              !srv 07.
      &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
      &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
-cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-cc while the second contribution corresponds to T dn/dt
+cc Given d(nT)/dt = n dT/dt + T dn/dt,
+cc What is computed in b2shdt corresponds to n dT/dt,
+cc What is added here below corresponds to T dn/dt
         wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvVol
         do iCv=1,mpg%nCi
           wrk1(iCv) = wrk1(iCv)/(dtee(mpg%cvReg(iCv))*rxf)
@@ -336,7 +315,7 @@ cc while the second contribution corresponds to T dn/dt
      &           *psnl%ti/dtim*geo%cvVol
         else                                 ! separate ion and neutral energy equation
           wrk2 = 1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &           *ts_factor*psnl%ti/dtim*geo%cvVol
+     &           *psnl%ti/dtim*geo%cvVol
           wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))
      &           *psnl%tn/dtim*geo%cvVol
           wrk3(mpg%nCi+1:mpg%nCv) = 0.0_R8
@@ -348,7 +327,7 @@ cc while the second contribution corresponds to T dn/dt
         endif
 
         do iCv=1,mpg%nCi
-            wrk2(iCv) = wrk2(iCv)/(dtei(mpg%cvReg(iCv))*rxf)
+          wrk2(iCv) = wrk2(iCv)/(dtei(mpg%cvReg(iCv))*rxf)
         enddo
         wrk2(mpg%nCi+1:mpg%nCv) = 0.0_R8
         sr%shidt(:,0) = sr%shidt(:,0) - wrk2*ts_factor
@@ -366,7 +345,28 @@ cc while the second contribution corresponds to T dn/dt
      &                      *ts_factor*psnl%zt/dtim*geo%cvVol
           szt0 = szt0 + sr%sztdt
         endif
+      else
+        wrk1 = 0.0_R8
+        wrk2 = 0.0_R8
+        wrk3 = 0.0_R8
       endif                                                              !srv 207.07.21 }
+#ifndef FIXED_POINT
+cdjm Jan2017 update particle source components for balance
+      if (balance_netcdf.ne.0) then
+*   ..the time derivative of b2mndt_style 2, as added to she0 and shi0
+*     above
+        if (switch%b2mndt_style.eq.2) then
+          b2shdt_she0to3 = sr%shedt
+          b2shdt_shi0to3 = sr%shidt
+        endif
+        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_heat
+     .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
+      endif
+#endif
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -421,14 +421,14 @@ c residuals for separate neutral energy equation
      &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
      &     pl%ti(iCv)
         shi0(iCv,1) = shi0(iCv,1) - switch%b2npht_stab_shei*
-     &    co%ceqp(iCv)*
+     &     co%ceqp(iCv)*
      &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))
-        she0(iCv,0) = she0(iCv,0) + switch%b2npht_stab_shei
-     &    *co%ceqp(iCv)*
+        she0(iCv,0) = she0(iCv,0) + switch%b2npht_stab_shei*
+     &     co%ceqp(iCv)*
      &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
      &     pl%te(iCv)
-        she0(iCv,1) = she0(iCv,1) - switch%b2npht_stab_shei
-     &    *co%ceqp(iCv)*
+        she0(iCv,1) = she0(iCv,1) - switch%b2npht_stab_shei*
+     &     co%ceqp(iCv)*
      &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))         !lkw 29.03.2024}
       enddo
       do iCv = mpg%nCi+1, nCv

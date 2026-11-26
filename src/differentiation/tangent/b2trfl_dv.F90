@@ -67,9 +67,10 @@ SUBROUTINE B2TRFL_DV(icv, switch, mpg, ainv, ainvd, zeffne, zeffned, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, t0d, t1d, t2d
+  INTRINSIC MIN
   INTRINSIC SUM
   INTRINSIC ABS
   INTRINSIC SQRT
@@ -101,7 +102,17 @@ SUBROUTINE B2TRFL_DV(icv, switch, mpg, ainv, ainvd, zeffne, zeffned, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
+  ELSE
+    icn = icv
+  END IF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     temp = mp*(zeffne*zeffne)
     DO nd=1,nbdirs
       coefd(nd) = 2.5_R8*(zetapd(nd)-zetap*mp*2*zeffne*zeffned(nd)/temp)&
@@ -284,8 +295,9 @@ SUBROUTINE B2TRFL_NODIFF(icv, switch, mpg, ainv, zeffne, amti, zetap, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
+  INTRINSIC MIN
   INTRINSIC SUM
   INTRINSIC ABS
   INTRINSIC SQRT
@@ -300,7 +312,17 @@ SUBROUTINE B2TRFL_NODIFF(icv, switch, mpg, ainv, zeffne, amti, zetap, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
+  ELSE
+    icn = icv
+  END IF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = 2.5_R8*zetap/mp/zeffne**2
     DO i=0,nspecies-1
       arg1 = ainv(i, 0:nspecies-1)*nal(icv, 0:nspecies-1)*gtalc(icv, 0:&

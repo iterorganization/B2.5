@@ -153,7 +153,7 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: k, is, is0, icv, ifc, ift, mode
+  INTEGER :: k, is, is0, icv, icn, ifc, ift, mode
 !srv 17.06.08
   CHARACTER(len=3) :: chns, chns0
 !srv 13.01.17
@@ -202,29 +202,38 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   INTRINSIC NINT
   INTRINSIC SQRT
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(r8) :: x1
   REAL(r8), DIMENSION(nbdirsmax) :: x1d
+  INTEGER :: max1
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
-  REAL(kind=r8) :: max1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
-  REAL(kind=r8) :: abs1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
   REAL(kind=r8) :: max2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max2d
+  INTEGER :: max3
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs1d
+  REAL(kind=r8) :: max4
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: max4d
+  INTEGER :: max5
   REAL(kind=r8) :: abs2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
+  INTEGER :: max6
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs4d
   REAL(kind=r8), DIMENSION(nCv) :: dabs0
   REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dabs0d
-  REAL(r8) :: max3
-  REAL(r8), DIMENSION(nbdirsmax) :: max3d
-  REAL(r8) :: max4
-  REAL(r8), DIMENSION(nbdirsmax) :: max4d
-  REAL(r8) :: max5
-  REAL(r8), DIMENSION(nbdirsmax) :: max5d
+  INTEGER :: min1
+  REAL(r8) :: max7
+  REAL(r8), DIMENSION(nbdirsmax) :: max7d
+  INTEGER :: min2
+  REAL(r8) :: max8
+  REAL(r8), DIMENSION(nbdirsmax) :: max8d
+  INTEGER :: min3
+  REAL(r8) :: max9
+  REAL(r8), DIMENSION(nbdirsmax) :: max9d
+  INTEGER :: min4
   REAL(kind=r8) :: result1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
   REAL(kind=r8) :: result2
@@ -1188,156 +1197,193 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !   .. apply the conductive limit of parallel electron heat flux      !srv 03.06.03 {
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
+        ELSE
+          max1 = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
-          IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
-            temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
-            temp1 = co%chvemx(ifc)/2.0_R8
-            DO nd=1,nbdirs
-              flomxd(nd) = temp2*cod%chvemx(nd, ifc)/2.0_R8 + temp1*(dvd&
-&               %ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))
-            END DO
-            flomx = temp1*temp2
-            IF (chce(ifc, 0)*dte(ifc) .GE. 0.) THEN
+        IF (.NOT.(switch%core_cond_limit .EQ. 0 .AND. (max1 .GT. mpg%nci&
+&           .AND. mpg%cvonclosedsurface(min1)))) THEN
+          IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
+            IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
+              temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
+              temp1 = co%chvemx(ifc)/2.0_R8
               DO nd=1,nbdirs
-                abs0d(nd) = dte(ifc)*chced(nd, ifc, 0) + chce(ifc, 0)*&
-&                 dted(nd, ifc)
+                flomxd(nd) = temp2*cod%chvemx(nd, ifc)/2.0_R8 + temp1*(&
+&                 dvd%ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, &
+&                 2)))
               END DO
-              abs0 = chce(ifc, 0)*dte(ifc)
+              flomx = temp1*temp2
+              IF (chce(ifc, 0)*dte(ifc) .GE. 0.) THEN
+                DO nd=1,nbdirs
+                  abs0d(nd) = dte(ifc)*chced(nd, ifc, 0) + chce(ifc, 0)*&
+&                   dted(nd, ifc)
+                END DO
+                abs0 = chce(ifc, 0)*dte(ifc)
+              ELSE
+                DO nd=1,nbdirs
+                  abs0d(nd) = -(dte(ifc)*chced(nd, ifc, 0)+chce(ifc, 0)*&
+&                   dted(nd, ifc))
+                END DO
+                abs0 = -(chce(ifc, 0)*dte(ifc))
+              END IF
+              IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
+&             THEN
+                DO nd=1,nbdirs
+                  max7d(nd) = pld%te(nd, mpg%fccv(ifc, 2))
+                END DO
+                max7 = pl%te(mpg%fccv(ifc, 2))
+              ELSE
+                DO nd=1,nbdirs
+                  max7d(nd) = pld%te(nd, mpg%fccv(ifc, 1))
+                END DO
+                max7 = pl%te(mpg%fccv(ifc, 1))
+              END IF
+              temp11 = abs0/(b2trcl_cutlo+flomx*max7)
+              DO nd=1,nbdirs
+                t0d(nd) = (abs0d(nd)-temp11*(max7*flomxd(nd)+flomx*max7d&
+&                 (nd)))/(b2trcl_cutlo+flomx*max7)
+              END DO
+              t0 = temp11
             ELSE
+              IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
+                max2 = 1.0e-16_R8
+                max2d = 0.D0
+              ELSE
+                DO nd=1,nbdirs
+                  max2d(nd) = collisnumefd(nd, ifc)
+                END DO
+                max2 = collisnumef(ifc)
+              END IF
               DO nd=1,nbdirs
-                abs0d(nd) = -(dte(ifc)*chced(nd, ifc, 0)+chce(ifc, 0)*&
-&                 dted(nd, ifc))
+                t0d(nd) = -(max2d(nd)/(cflim(0)*max2**2))
               END DO
-              abs0 = -(chce(ifc, 0)*dte(ifc))
+              t0 = (cflim(0)*max2)**(-1)
             END IF
-            IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
-&           THEN
-              DO nd=1,nbdirs
-                max3d(nd) = pld%te(nd, mpg%fccv(ifc, 2))
-              END DO
-              max3 = pl%te(mpg%fccv(ifc, 2))
-            ELSE
-              DO nd=1,nbdirs
-                max3d(nd) = pld%te(nd, mpg%fccv(ifc, 1))
-              END DO
-              max3 = pl%te(mpg%fccv(ifc, 1))
-            END IF
-            temp11 = abs0/(b2trcl_cutlo+flomx*max3)
+            co%fllim_ke(ifc) = 1.0_R8/(1.0_R8+t0)
             DO nd=1,nbdirs
-              t0d(nd) = (abs0d(nd)-temp11*(max3*flomxd(nd)+flomx*max3d(&
-&               nd)))/(b2trcl_cutlo+flomx*max3)
+              cod%fllim_ke(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
+              chced(nd, ifc, 0) = co%fllim_ke(ifc)*chced(nd, ifc, 0) + &
+&               chce(ifc, 0)*cod%fllim_ke(nd, ifc)
             END DO
-            t0 = temp11
-          ELSE
-            IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
-              max1 = 1.0e-16_R8
-              max1d = 0.D0
-            ELSE
-              DO nd=1,nbdirs
-                max1d(nd) = collisnumefd(nd, ifc)
-              END DO
-              max1 = collisnumef(ifc)
-            END IF
-            DO nd=1,nbdirs
-              t0d(nd) = -(max1d(nd)/(cflim(0)*max1**2))
-            END DO
-            t0 = (cflim(0)*max1)**(-1)
+            chce(ifc, 0) = chce(ifc, 0)*co%fllim_ke(ifc)
           END IF
-          co%fllim_ke(ifc) = 1.0_R8/(1.0_R8+t0)
-          DO nd=1,nbdirs
-            cod%fllim_ke(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
-            chced(nd, ifc, 0) = co%fllim_ke(ifc)*chced(nd, ifc, 0) + &
-&             chce(ifc, 0)*cod%fllim_ke(nd, ifc)
-          END DO
-          chce(ifc, 0) = chce(ifc, 0)*co%fllim_ke(ifc)
         END IF
       END DO
     END IF
 !   .. apply the conductive limit of parallel ion heat flux
     IF (cflim(1) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max3 = mpg%fccv(ifc, 2)
+        ELSE
+          max3 = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min2 = mpg%fccv(ifc, 2)
+        ELSE
+          min2 = mpg%fccv(ifc, 1)
+        END IF
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
-          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-            temp2 = dv%ni(mpg%fccv(ifc, 1), 0) + dv%ni(mpg%fccv(ifc, 2)&
-&             , 0)
-            temp1 = co%chvimx(ifc)/2.0_R8
-            DO nd=1,nbdirs
-              flomxd(nd) = temp2*cod%chvimx(nd, ifc)/2.0_R8 + temp1*(dvd&
-&               %ni(nd, mpg%fccv(ifc, 1), 0)+dvd%ni(nd, mpg%fccv(ifc, 2)&
-&               , 0))
-            END DO
-            flomx = temp1*temp2
-            IF (chci(ifc, 0)*dti(ifc) .GE. 0.) THEN
+        IF (.NOT.(switch%core_cond_limit .EQ. 0 .AND. (max3 .GT. mpg%nci&
+&           .AND. mpg%cvonclosedsurface(min2)))) THEN
+          IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
+            IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
+              temp2 = dv%ni(mpg%fccv(ifc, 1), 0) + dv%ni(mpg%fccv(ifc, 2&
+&               ), 0)
+              temp1 = co%chvimx(ifc)/2.0_R8
               DO nd=1,nbdirs
-                abs1d(nd) = dti(ifc)*chcid(nd, ifc, 0) + chci(ifc, 0)*&
-&                 dtid(nd, ifc)
+                flomxd(nd) = temp2*cod%chvimx(nd, ifc)/2.0_R8 + temp1*(&
+&                 dvd%ni(nd, mpg%fccv(ifc, 1), 0)+dvd%ni(nd, mpg%fccv(&
+&                 ifc, 2), 0))
               END DO
-              abs1 = chci(ifc, 0)*dti(ifc)
+              flomx = temp1*temp2
+              IF (chci(ifc, 0)*dti(ifc) .GE. 0.) THEN
+                DO nd=1,nbdirs
+                  abs1d(nd) = dti(ifc)*chcid(nd, ifc, 0) + chci(ifc, 0)*&
+&                   dtid(nd, ifc)
+                END DO
+                abs1 = chci(ifc, 0)*dti(ifc)
+              ELSE
+                DO nd=1,nbdirs
+                  abs1d(nd) = -(dti(ifc)*chcid(nd, ifc, 0)+chci(ifc, 0)*&
+&                   dtid(nd, ifc))
+                END DO
+                abs1 = -(chci(ifc, 0)*dti(ifc))
+              END IF
+              IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) &
+&             THEN
+                DO nd=1,nbdirs
+                  max8d(nd) = pld%ti(nd, mpg%fccv(ifc, 2))
+                END DO
+                max8 = pl%ti(mpg%fccv(ifc, 2))
+              ELSE
+                DO nd=1,nbdirs
+                  max8d(nd) = pld%ti(nd, mpg%fccv(ifc, 1))
+                END DO
+                max8 = pl%ti(mpg%fccv(ifc, 1))
+              END IF
+              temp11 = abs1/(b2trcl_cutlo+flomx*max8)
+              DO nd=1,nbdirs
+                t0d(nd) = (abs1d(nd)-temp11*(max8*flomxd(nd)+flomx*max8d&
+&                 (nd)))/(b2trcl_cutlo+flomx*max8)
+              END DO
+              t0 = temp11
             ELSE
+              IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+                max4 = 1.0e-16_R8
+                max4d = 0.D0
+              ELSE
+                DO nd=1,nbdirs
+                  max4d(nd) = collisnumfd(nd, ifc)
+                END DO
+                max4 = collisnumf(ifc)
+              END IF
               DO nd=1,nbdirs
-                abs1d(nd) = -(dti(ifc)*chcid(nd, ifc, 0)+chci(ifc, 0)*&
-&                 dtid(nd, ifc))
+                t0d(nd) = -(max4d(nd)/(cflim(1)*max4**2))
               END DO
-              abs1 = -(chci(ifc, 0)*dti(ifc))
+              t0 = (cflim(1)*max4)**(-1)
             END IF
-            IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) &
-&           THEN
-              DO nd=1,nbdirs
-                max4d(nd) = pld%ti(nd, mpg%fccv(ifc, 2))
-              END DO
-              max4 = pl%ti(mpg%fccv(ifc, 2))
-            ELSE
-              DO nd=1,nbdirs
-                max4d(nd) = pld%ti(nd, mpg%fccv(ifc, 1))
-              END DO
-              max4 = pl%ti(mpg%fccv(ifc, 1))
-            END IF
-            temp11 = abs1/(b2trcl_cutlo+flomx*max4)
+            co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
             DO nd=1,nbdirs
-              t0d(nd) = (abs1d(nd)-temp11*(max4*flomxd(nd)+flomx*max4d(&
-&               nd)))/(b2trcl_cutlo+flomx*max4)
+              cod%fllim_ki(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
+              chcid(nd, ifc, 0) = co%fllim_ki(ifc)*chcid(nd, ifc, 0) + &
+&               chci(ifc, 0)*cod%fllim_ki(nd, ifc)
             END DO
-            t0 = temp11
-          ELSE
-            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-              max2 = 1.0e-16_R8
-              max2d = 0.D0
-            ELSE
-              DO nd=1,nbdirs
-                max2d(nd) = collisnumfd(nd, ifc)
-              END DO
-              max2 = collisnumf(ifc)
-            END IF
-            DO nd=1,nbdirs
-              t0d(nd) = -(max2d(nd)/(cflim(1)*max2**2))
-            END DO
-            t0 = (cflim(1)*max2)**(-1)
+            chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
           END IF
-          co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
-          DO nd=1,nbdirs
-            cod%fllim_ki(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
-            chcid(nd, ifc, 0) = co%fllim_ki(ifc)*chcid(nd, ifc, 0) + &
-&             chci(ifc, 0)*cod%fllim_ki(nd, ifc)
-          END DO
-          chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
-        END IF
 !wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
+        END IF
       END DO
       CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, cod%&
 &               fllim_ki, co%fllim_ki_c, cod%fllim_ki_c, nbdirs)
       DO icv=1,ncv
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
+        ELSE
+          icn = icv
+        END IF
         IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.mpg%&
-&           cvonclosedsurface(icv))) THEN
+&           cvonclosedsurface(icn))) THEN
           DO nd=1,nbdirs
             cod%hcix_c(nd, icv) = co%fllim_ki_c(icv)*cod%hcix_c(nd, icv)&
 &             + co%hcix_c(icv)*cod%fllim_ki_c(nd, icv)
@@ -1354,60 +1400,84 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2sigp_style .NE. 2) THEN
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
-        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-          temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
-          temp1 = co%chvemx(ifc)/2.0_R8
-          DO nd=1,nbdirs
-            flomxd(nd) = temp2*cod%chvemx(nd, ifc)/2.0_R8 + temp1*(dvd%&
-&             ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))
-          END DO
-          flomx = temp1*temp2
-          IF (wrk(ifc)*dte(ifc) .GE. 0.) THEN
-            DO nd=1,nbdirs
-              abs2d(nd) = dte(ifc)*wrkd(nd, ifc) + wrk(ifc)*dted(nd, ifc&
-&               )
-            END DO
-            abs2 = wrk(ifc)*dte(ifc)
-          ELSE
-            DO nd=1,nbdirs
-              abs2d(nd) = -(dte(ifc)*wrkd(nd, ifc)+wrk(ifc)*dted(nd, ifc&
-&               ))
-            END DO
-            abs2 = -(wrk(ifc)*dte(ifc))
-          END IF
-          IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) THEN
-            DO nd=1,nbdirs
-              max5d(nd) = pld%te(nd, mpg%fccv(ifc, 2))
-            END DO
-            max5 = pl%te(mpg%fccv(ifc, 2))
-          ELSE
-            DO nd=1,nbdirs
-              max5d(nd) = pld%te(nd, mpg%fccv(ifc, 1))
-            END DO
-            max5 = pl%te(mpg%fccv(ifc, 1))
-          END IF
-          temp11 = abs2/(b2trcl_cutlo+flomx*max5)
-          t0 = temp11
-          co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
-          DO nd=1,nbdirs
-            t0d(nd) = (abs2d(nd)-temp11*(max5*flomxd(nd)+flomx*max5d(nd)&
-&             ))/(b2trcl_cutlo+flomx*max5)
-            cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
-!srv 13.01.17
-            calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + &
-&             calf(ifc, 0)*cod%fllim_al(nd, ifc)
-          END DO
-          calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max5 = mpg%fccv(ifc, 2)
+        ELSE
+          max5 = mpg%fccv(ifc, 1)
         END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min3 = mpg%fccv(ifc, 2)
+        ELSE
+          min3 = mpg%fccv(ifc, 1)
+        END IF
+        IF (.NOT.(max5 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min3))) &
+&       THEN
+          IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
+            temp1 = co%chvemx(ifc)/2.0_R8
+            DO nd=1,nbdirs
+              flomxd(nd) = temp2*cod%chvemx(nd, ifc)/2.0_R8 + temp1*(dvd&
+&               %ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))
+            END DO
+            flomx = temp1*temp2
+            IF (wrk(ifc)*dte(ifc) .GE. 0.) THEN
+              DO nd=1,nbdirs
+                abs2d(nd) = dte(ifc)*wrkd(nd, ifc) + wrk(ifc)*dted(nd, &
+&                 ifc)
+              END DO
+              abs2 = wrk(ifc)*dte(ifc)
+            ELSE
+              DO nd=1,nbdirs
+                abs2d(nd) = -(dte(ifc)*wrkd(nd, ifc)+wrk(ifc)*dted(nd, &
+&                 ifc))
+              END DO
+              abs2 = -(wrk(ifc)*dte(ifc))
+            END IF
+            IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
+&           THEN
+              DO nd=1,nbdirs
+                max9d(nd) = pld%te(nd, mpg%fccv(ifc, 2))
+              END DO
+              max9 = pl%te(mpg%fccv(ifc, 2))
+            ELSE
+              DO nd=1,nbdirs
+                max9d(nd) = pld%te(nd, mpg%fccv(ifc, 1))
+              END DO
+              max9 = pl%te(mpg%fccv(ifc, 1))
+            END IF
+            temp11 = abs2/(b2trcl_cutlo+flomx*max9)
+            t0 = temp11
+            co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
+            DO nd=1,nbdirs
+              t0d(nd) = (abs2d(nd)-temp11*(max9*flomxd(nd)+flomx*max9d(&
+&               nd)))/(b2trcl_cutlo+flomx*max9)
+              cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
+!srv 13.01.17
+              calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + &
+&               calf(ifc, 0)*cod%fllim_al(nd, ifc)
+            END DO
+            calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+          END IF
 !wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
+        END IF
       END DO
       CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, cod%&
 &               fllim_al, co%fllim_al_c, cod%fllim_al_c, nbdirs)
       DO icv=1,ncv
-        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
+        ELSE
+          icn = icv
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
           DO nd=1,nbdirs
             cod%alfx_c(nd, icv) = co%fllim_al_c(icv)*cod%alfx_c(nd, icv)&
 &             + co%alfx_c(icv)*cod%fllim_al_c(nd, icv)
@@ -1419,57 +1489,70 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   ELSE IF (cflim(3) .NE. 0.0_R8) THEN
 !   ..apply flux limit to calf at cell faces
     DO ifc=1,nfc
-      IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&         cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-        IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs3 = geo%fcpbs(ifc)
-        ELSE
-          abs3 = -geo%fcpbs(ifc)
-        END IF
-        arg11 = (pl%te(mpg%fccv(ifc, 1))+pl%te(mpg%fccv(ifc, 2)))/2.0_R8&
-&         /me
-        temp2 = SQRT(arg11)
-        DO nd=1,nbdirs
-          arg11d(nd) = (pld%te(nd, mpg%fccv(ifc, 1))+pld%te(nd, mpg%fccv&
-&           (ifc, 2)))/(2.0_R8*me)
-          IF (arg11 .EQ. 0.D0) THEN
-            result12d(nd) = 0.D0
+      IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+        max6 = mpg%fccv(ifc, 2)
+      ELSE
+        max6 = mpg%fccv(ifc, 1)
+      END IF
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        min4 = mpg%fccv(ifc, 2)
+      ELSE
+        min4 = mpg%fccv(ifc, 1)
+      END IF
+      IF (.NOT.(max6 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min4))) &
+&     THEN
+        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs3 = geo%fcpbs(ifc)
           ELSE
-            result12d(nd) = arg11d(nd)/(2.0*temp2)
+            abs3 = -geo%fcpbs(ifc)
           END IF
-        END DO
-        result12 = temp2
-        temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
-        DO nd=1,nbdirs
-          jemaxd(nd) = qe*abs3*(temp2*result12d(nd)/2.0_R8+result12*(dvd&
-&           %ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))/&
-&           2.0_R8)
-        END DO
-        jemax = qe*abs3*(result12/2.0_R8*temp2)
-        IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
+          arg11 = (pl%te(mpg%fccv(ifc, 1))+pl%te(mpg%fccv(ifc, 2)))/&
+&           2.0_R8/me
+          temp2 = SQRT(arg11)
           DO nd=1,nbdirs
-            abs4d(nd) = dte(ifc)*calfd(nd, ifc, 0) + calf(ifc, 0)*dted(&
-&             nd, ifc)
+            arg11d(nd) = (pld%te(nd, mpg%fccv(ifc, 1))+pld%te(nd, mpg%&
+&             fccv(ifc, 2)))/(2.0_R8*me)
+            IF (arg11 .EQ. 0.D0) THEN
+              result12d(nd) = 0.D0
+            ELSE
+              result12d(nd) = arg11d(nd)/(2.0*temp2)
+            END IF
           END DO
-          abs4 = calf(ifc, 0)*dte(ifc)
-        ELSE
+          result12 = temp2
+          temp2 = dv%ne(mpg%fccv(ifc, 1)) + dv%ne(mpg%fccv(ifc, 2))
           DO nd=1,nbdirs
-            abs4d(nd) = -(dte(ifc)*calfd(nd, ifc, 0)+calf(ifc, 0)*dted(&
-&             nd, ifc))
+            jemaxd(nd) = qe*abs3*(temp2*result12d(nd)/2.0_R8+result12*(&
+&             dvd%ne(nd, mpg%fccv(ifc, 1))+dvd%ne(nd, mpg%fccv(ifc, 2)))&
+&             /2.0_R8)
           END DO
-          abs4 = -(calf(ifc, 0)*dte(ifc))
-        END IF
-        temp11 = b2trcl_cutlo + cflim(3)*jemax
-        t0 = abs4/temp11
-        co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
-        DO nd=1,nbdirs
-          t0d(nd) = (abs4d(nd)-abs4*cflim(3)*jemaxd(nd)/temp11)/temp11
-          cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
+          jemax = qe*abs3*(result12/2.0_R8*temp2)
+          IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs4d(nd) = dte(ifc)*calfd(nd, ifc, 0) + calf(ifc, 0)*dted&
+&               (nd, ifc)
+            END DO
+            abs4 = calf(ifc, 0)*dte(ifc)
+          ELSE
+            DO nd=1,nbdirs
+              abs4d(nd) = -(dte(ifc)*calfd(nd, ifc, 0)+calf(ifc, 0)*dted&
+&               (nd, ifc))
+            END DO
+            abs4 = -(calf(ifc, 0)*dte(ifc))
+          END IF
+          temp11 = b2trcl_cutlo + cflim(3)*jemax
+          t0 = abs4/temp11
+          co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
+          DO nd=1,nbdirs
+            t0d(nd) = (abs4d(nd)-abs4*cflim(3)*jemaxd(nd)/temp11)/temp11
+            cod%fllim_al(nd, ifc) = -(t0d(nd)/(t0+1.0_R8)**2)
 !srv 13.01.17
-          calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + calf(&
-&           ifc, 0)*cod%fllim_al(nd, ifc)
-        END DO
-        calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+            calfd(nd, ifc, 0) = co%fllim_al(ifc)*calfd(nd, ifc, 0) + &
+&             calf(ifc, 0)*cod%fllim_al(nd, ifc)
+          END DO
+          calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+        END IF
       END IF
     END DO
 !   ..apply flux limit to alfx_c at cell centers
@@ -1477,7 +1560,17 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%te, pld%&
 &             te, wrkv, wrkvd, gtec, gtecd, nbdirs)
     DO icv=1,ncv
-      IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+      IF (icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icn = mpg%fccv(ifc, 2)
+        ELSE
+          icn = mpg%fccv(ifc, 1)
+        END IF
+      ELSE
+        icn = icv
+      END IF
+      IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
         arg11 = pl%te(icv)/me
         temp2 = SQRT(arg11)
         result12 = temp2
@@ -1767,7 +1860,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: k, is, is0, icv, ifc, ift, mode
+  INTEGER :: k, is, is0, icv, icn, ifc, ift, mode
 !srv 17.06.08
   CHARACTER(len=3) :: chns, chns0
 !srv 13.01.17
@@ -1798,18 +1891,27 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   INTRINSIC NINT
   INTRINSIC SQRT
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(r8) :: x1
+  INTEGER :: max1
   REAL(kind=r8) :: abs0
-  REAL(kind=r8) :: max1
-  REAL(kind=r8) :: abs1
   REAL(kind=r8) :: max2
+  INTEGER :: max3
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: max4
+  INTEGER :: max5
   REAL(kind=r8) :: abs2
+  INTEGER :: max6
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8), DIMENSION(nCv) :: dabs0
-  REAL(r8) :: max3
-  REAL(r8) :: max4
-  REAL(r8) :: max5
+  INTEGER :: min1
+  REAL(r8) :: max7
+  INTEGER :: min2
+  REAL(r8) :: max8
+  INTEGER :: min3
+  REAL(r8) :: max9
+  INTEGER :: min4
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
@@ -2334,82 +2436,118 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !   .. apply the conductive limit of parallel electron heat flux      !srv 03.06.03 {
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
+        ELSE
+          max1 = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
-          IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
-            flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%&
-&             fccv(ifc, 2)))/2.0_R8
-            IF (chce(ifc, 0)*dte(ifc) .GE. 0.) THEN
-              abs0 = chce(ifc, 0)*dte(ifc)
+        IF (.NOT.(switch%core_cond_limit .EQ. 0 .AND. (max1 .GT. mpg%nci&
+&           .AND. mpg%cvonclosedsurface(min1)))) THEN
+          IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
+            IF (collisnumef(ifc) .GT. switch%min_collisions) THEN
+              flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%&
+&               fccv(ifc, 2)))/2.0_R8
+              IF (chce(ifc, 0)*dte(ifc) .GE. 0.) THEN
+                abs0 = chce(ifc, 0)*dte(ifc)
+              ELSE
+                abs0 = -(chce(ifc, 0)*dte(ifc))
+              END IF
+              IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
+&             THEN
+                max7 = pl%te(mpg%fccv(ifc, 2))
+              ELSE
+                max7 = pl%te(mpg%fccv(ifc, 1))
+              END IF
+              t0 = abs0/(flomx*max7+b2trcl_cutlo)
             ELSE
-              abs0 = -(chce(ifc, 0)*dte(ifc))
+              IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
+                max2 = 1.0e-16_R8
+              ELSE
+                max2 = collisnumef(ifc)
+              END IF
+              t0 = (cflim(0)*max2)**(-1)
             END IF
-            IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
-&           THEN
-              max3 = pl%te(mpg%fccv(ifc, 2))
-            ELSE
-              max3 = pl%te(mpg%fccv(ifc, 1))
-            END IF
-            t0 = abs0/(flomx*max3+b2trcl_cutlo)
-          ELSE
-            IF (collisnumef(ifc) .LT. 1.0e-16_R8) THEN
-              max1 = 1.0e-16_R8
-            ELSE
-              max1 = collisnumef(ifc)
-            END IF
-            t0 = (cflim(0)*max1)**(-1)
+            co%fllim_ke(ifc) = 1.0_R8/(1.0_R8+t0)
+            chce(ifc, 0) = chce(ifc, 0)*co%fllim_ke(ifc)
           END IF
-          co%fllim_ke(ifc) = 1.0_R8/(1.0_R8+t0)
-          chce(ifc, 0) = chce(ifc, 0)*co%fllim_ke(ifc)
         END IF
       END DO
     END IF
 !   .. apply the conductive limit of parallel ion heat flux
     IF (cflim(1) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max3 = mpg%fccv(ifc, 2)
+        ELSE
+          max3 = mpg%fccv(ifc, 1)
+        END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min2 = mpg%fccv(ifc, 2)
+        ELSE
+          min2 = mpg%fccv(ifc, 1)
+        END IF
 !sw 19oct2011, also in core for SOLPS4.3 comparison!!!
 !          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
-        IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
-          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-            flomx = co%chvimx(ifc)*(dv%ni(mpg%fccv(ifc, 1), 0)+dv%ni(mpg&
-&             %fccv(ifc, 2), 0))/2.0_R8
-            IF (chci(ifc, 0)*dti(ifc) .GE. 0.) THEN
-              abs1 = chci(ifc, 0)*dti(ifc)
+        IF (.NOT.(switch%core_cond_limit .EQ. 0 .AND. (max3 .GT. mpg%nci&
+&           .AND. mpg%cvonclosedsurface(min2)))) THEN
+          IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.(mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2))))) THEN
+            IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
+              flomx = co%chvimx(ifc)*(dv%ni(mpg%fccv(ifc, 1), 0)+dv%ni(&
+&               mpg%fccv(ifc, 2), 0))/2.0_R8
+              IF (chci(ifc, 0)*dti(ifc) .GE. 0.) THEN
+                abs1 = chci(ifc, 0)*dti(ifc)
+              ELSE
+                abs1 = -(chci(ifc, 0)*dti(ifc))
+              END IF
+              IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) &
+&             THEN
+                max8 = pl%ti(mpg%fccv(ifc, 2))
+              ELSE
+                max8 = pl%ti(mpg%fccv(ifc, 1))
+              END IF
+              t0 = abs1/(flomx*max8+b2trcl_cutlo)
             ELSE
-              abs1 = -(chci(ifc, 0)*dti(ifc))
+              IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+                max4 = 1.0e-16_R8
+              ELSE
+                max4 = collisnumf(ifc)
+              END IF
+              t0 = (cflim(1)*max4)**(-1)
             END IF
-            IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) &
-&           THEN
-              max4 = pl%ti(mpg%fccv(ifc, 2))
-            ELSE
-              max4 = pl%ti(mpg%fccv(ifc, 1))
-            END IF
-            t0 = abs1/(flomx*max4+b2trcl_cutlo)
-          ELSE
-            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-              max2 = 1.0e-16_R8
-            ELSE
-              max2 = collisnumf(ifc)
-            END IF
-            t0 = (cflim(1)*max2)**(-1)
+            co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
+            chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
           END IF
-          co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
-          chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
-        END IF
 !wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
+        END IF
       END DO
       CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, co%&
 &                   fllim_ki_c)
       DO icv=1,ncv
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
+        ELSE
+          icn = icv
+        END IF
         IF (switch%core_cond_limit .NE. 0 .OR. (.NOT.mpg%&
-&           cvonclosedsurface(icv))) co%hcix_c(icv) = co%hcix_c(icv)*co%&
+&           cvonclosedsurface(icn))) co%hcix_c(icv) = co%hcix_c(icv)*co%&
 &           fllim_ki_c(icv)
       END DO
     END IF
@@ -2418,66 +2556,113 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IF (switch%b2sigp_style .NE. 2) THEN
     IF (cflim(0) .NE. 0.0_R8) THEN
       DO ifc=1,nfc
-        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-          flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv&
-&           (ifc, 2)))/2.0_R8
-          IF (wrk(ifc)*dte(ifc) .GE. 0.) THEN
-            abs2 = wrk(ifc)*dte(ifc)
-          ELSE
-            abs2 = -(wrk(ifc)*dte(ifc))
-          END IF
-          IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) THEN
-            max5 = pl%te(mpg%fccv(ifc, 2))
-          ELSE
-            max5 = pl%te(mpg%fccv(ifc, 1))
-          END IF
-          t0 = abs2/(flomx*max5+b2trcl_cutlo)
-          co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
-!srv 13.01.17
-          calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max5 = mpg%fccv(ifc, 2)
+        ELSE
+          max5 = mpg%fccv(ifc, 1)
         END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min3 = mpg%fccv(ifc, 2)
+        ELSE
+          min3 = mpg%fccv(ifc, 1)
+        END IF
+        IF (.NOT.(max5 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min3))) &
+&       THEN
+          IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&             cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+            flomx = co%chvemx(ifc)*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%&
+&             fccv(ifc, 2)))/2.0_R8
+            IF (wrk(ifc)*dte(ifc) .GE. 0.) THEN
+              abs2 = wrk(ifc)*dte(ifc)
+            ELSE
+              abs2 = -(wrk(ifc)*dte(ifc))
+            END IF
+            IF (pl%te(mpg%fccv(ifc, 1)) .LT. pl%te(mpg%fccv(ifc, 2))) &
+&           THEN
+              max9 = pl%te(mpg%fccv(ifc, 2))
+            ELSE
+              max9 = pl%te(mpg%fccv(ifc, 1))
+            END IF
+            t0 = abs2/(flomx*max9+b2trcl_cutlo)
+            co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
+!srv 13.01.17
+            calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+          END IF
 !wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
+        END IF
       END DO
       CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, co%&
 &                   fllim_al_c)
       DO icv=1,ncv
-        IF (.NOT.mpg%cvonclosedsurface(icv)) co%alfx_c(icv) = co%alfx_c(&
+        IF (icv .GT. mpg%nci) THEN
+          ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
+        ELSE
+          icn = icv
+        END IF
+        IF (.NOT.mpg%cvonclosedsurface(icn)) co%alfx_c(icv) = co%alfx_c(&
 &           icv)*co%fllim_al_c(icv)
       END DO
     END IF
   ELSE IF (cflim(3) .NE. 0.0_R8) THEN
 !   ..apply flux limit to calf at cell faces
     DO ifc=1,nfc
-      IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
-&         cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
-        IF (geo%fcpbs(ifc) .GE. 0.) THEN
-          abs3 = geo%fcpbs(ifc)
-        ELSE
-          abs3 = -geo%fcpbs(ifc)
-        END IF
-        arg11 = (pl%te(mpg%fccv(ifc, 1))+pl%te(mpg%fccv(ifc, 2)))/2.0_R8&
-&         /me
-        result12 = SQRT(arg11)
-        jemax = result12*qe*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv(ifc&
-&         , 2)))/2.0_R8*abs3
-        IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
-          abs4 = calf(ifc, 0)*dte(ifc)
-        ELSE
-          abs4 = -(calf(ifc, 0)*dte(ifc))
-        END IF
-        t0 = abs4/(cflim(3)*jemax+b2trcl_cutlo)
-        co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
+      IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+        max6 = mpg%fccv(ifc, 2)
+      ELSE
+        max6 = mpg%fccv(ifc, 1)
+      END IF
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        min4 = mpg%fccv(ifc, 2)
+      ELSE
+        min4 = mpg%fccv(ifc, 1)
+      END IF
+      IF (.NOT.(max6 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min4))) &
+&     THEN
+        IF (.NOT.(mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. mpg%&
+&           cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+          IF (geo%fcpbs(ifc) .GE. 0.) THEN
+            abs3 = geo%fcpbs(ifc)
+          ELSE
+            abs3 = -geo%fcpbs(ifc)
+          END IF
+          arg11 = (pl%te(mpg%fccv(ifc, 1))+pl%te(mpg%fccv(ifc, 2)))/&
+&           2.0_R8/me
+          result12 = SQRT(arg11)
+          jemax = result12*qe*(dv%ne(mpg%fccv(ifc, 1))+dv%ne(mpg%fccv(&
+&           ifc, 2)))/2.0_R8*abs3
+          IF (calf(ifc, 0)*dte(ifc) .GE. 0.) THEN
+            abs4 = calf(ifc, 0)*dte(ifc)
+          ELSE
+            abs4 = -(calf(ifc, 0)*dte(ifc))
+          END IF
+          t0 = abs4/(cflim(3)*jemax+b2trcl_cutlo)
+          co%fllim_al(ifc) = 1.0_R8/(1.0_R8+t0)
 !srv 13.01.17
-        calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+          calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
+        END IF
       END IF
     END DO
 !   ..apply flux limit to alfx_c at cell centers
     CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pl%te, wrkv, gtec)
     DO icv=1,ncv
-      IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+      IF (icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          icn = mpg%fccv(ifc, 2)
+        ELSE
+          icn = mpg%fccv(ifc, 1)
+        END IF
+      ELSE
+        icn = icv
+      END IF
+      IF (.NOT.mpg%cvonclosedsurface(icn)) THEN
         arg11 = pl%te(icv)/me
         result12 = SQRT(arg11)
         jemax = result12*qe*dv%ne(icv)*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)

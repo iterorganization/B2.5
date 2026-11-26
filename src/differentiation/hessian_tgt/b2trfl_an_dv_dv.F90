@@ -97,7 +97,7 @@ SUBROUTINE B2TRFL_AN_DV_DV(icv, switch, mpg, c_hta_an, c_hta_and0, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: coefd0, t0d0, t1d0, t2d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, t0d, t1d, t2d
@@ -157,7 +157,13 @@ SUBROUTINE B2TRFL_AN_DV_DV(icv, switch, mpg, c_hta_an, c_hta_and0, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv.GT.mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  ELSE
+    icn = icv
+  ENDIF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coefdd = 0.D0
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0
@@ -631,7 +637,7 @@ SUBROUTINE B2TRFL_AN_DV_NODIFF(icv, switch, mpg, c_hta_an, c_hta_and, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, t0d, t1d, t2d
   INTRINSIC SQRT
@@ -663,7 +669,13 @@ SUBROUTINE B2TRFL_AN_DV_NODIFF(icv, switch, mpg, c_hta_an, c_hta_and, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv.GT.mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  ELSE
+    icn = icv
+  ENDIF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     DO nd=1,nbdirs
       coefd(nd) = zetapd(nd)/mp
     END DO
@@ -848,7 +860,7 @@ SUBROUTINE B2TRFL_AN_NODIFF_NODIFF(icv, switch, mpg, c_hta_an, amnucl, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   INTRINSIC SQRT
   INTRINSIC ABS
@@ -863,7 +875,13 @@ SUBROUTINE B2TRFL_AN_NODIFF_NODIFF(icv, switch, mpg, c_hta_an, amnucl, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv.GT.mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
+    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  ELSE
+    icn = icv
+  ENDIF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = zetap/mp
     DO i=0,nspecies-1
       IF (c_hta_an(i)*gtalc(icv, i) .GE. 0.) THEN

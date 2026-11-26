@@ -1114,9 +1114,10 @@
 
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
-! no. of flux surfaces (conservative estimate)
-      m%nFs = max(1,(1 + 1*nncut)*(ny + 2))
-      m%nFt = m%nFs
+! conservative bounds for number of surfaces and flux tubes
+! arrays are resized after construction
+      m%nFs = max(1,m%nFc)
+      m%nFt = max(1,m%nCi)
 
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg
@@ -1762,8 +1763,13 @@
           if(m%imapCv(ix,iy)/=0) then
             ic = m%imapCv(ix,iy)
             m%cvReg(ic) = region(ix,iy,0)
-            m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
-          endif
+            if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &          bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+              m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
+            else
+              m%cvOnClosedSurface(ic) = .false.
+            end if
+          end if
         end do
       end do
 
@@ -3007,7 +3013,7 @@ c$$$      end do
                 exit
               endif
             enddo
-            
+
             ! Check if meanCv is inside any original cell (ray casting)
             ! Cast ray in +X direction, count edge crossings
             center_inside = .false.
@@ -3060,8 +3066,7 @@ c$$$      end do
                 exit
               endif
             enddo
-            
-            
+
             ! If no face projection found, center outside all cells,
             ! OR distance invalid, fallback
             if (.not. proj_found .or. .not. center_inside .or.
@@ -3105,8 +3110,8 @@ c$$$      end do
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, iFc!, nfx
 
-      call createB2State ( mpg%nCv, mpg%nFc, ns, st)
-      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st % diag )
+      call createB2State ( mpg%nCv, mpg%nFc, ns, st )
+      call createB2Diagnostic ( mpg%nCv, ns, nnreg, st%diag )
 
 !     nfx = (nx+1)*ny
 
@@ -4306,6 +4311,28 @@ c$$$      end do
             rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
             rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
             rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+            nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+            uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+            pop(ix,iy)        = st % psnl % po(ic)
+            tep(ix,iy)        = st % psnl % te(ic)
+            tip(ix,iy)        = st % psnl % ti(ic)
+            nep(ix,iy)        = st % psnl % ne(ic)
+            ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+            ! tnp(ix,iy)        = st % psnl % tn(ic)
+            ! ktp(ix,iy)        = st % psnl % kt(ic)
+            ! ztp(ix,iy)        = st % psnl % zt(ic)
+            na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+            ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+            po0(ix,iy)        = st % psnc % po(ic)
+            te0(ix,iy)        = st % psnc % te(ic)
+            ti0(ix,iy)        = st % psnc % ti(ic)
+            ne0(ix,iy)        = st % psnc % ne(ic)
+            ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+            ! tn0(ix,iy)        = st % psnc % tn(ic)
+            ! kt0(ix,iy)        = st % psnc % kt(ic)
+            ! zt0(ix,iy)        = st % psnc % zt(ic)
           endif
         end do
       end do
@@ -4414,6 +4441,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
 
         iy = ny
@@ -4518,6 +4567,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
       end do
 
@@ -4625,6 +4696,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
 
         ix = nx
@@ -4729,6 +4822,28 @@ c$$$      end do
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+
+! B2plasmaSnapshot
+          nap(ix,iy,0:ns-1) = st % psnl % na(ic,0:ns-1)
+          uap(ix,iy,0:ns-1) = st % psnl % ua(ic,0:ns-1)
+          pop(ix,iy)        = st % psnl % po(ic)
+          tep(ix,iy)        = st % psnl % te(ic)
+          tip(ix,iy)        = st % psnl % ti(ic)
+          nep(ix,iy)        = st % psnl % ne(ic)
+          ! nip(ix,iy,0:1)    = st % psnl % ni(ic,0:1)
+          ! tnp(ix,iy)        = st % psnl % tn(ic)
+          ! ktp(ix,iy)        = st % psnl % kt(ic)
+          ! ztp(ix,iy)        = st % psnl % zt(ic)
+          na0(ix,iy,0:ns-1) = st % psnc % na(ic,0:ns-1)
+          ua0(ix,iy,0:ns-1) = st % psnc % ua(ic,0:ns-1)
+          po0(ix,iy)        = st % psnc % po(ic)
+          te0(ix,iy)        = st % psnc % te(ic)
+          ti0(ix,iy)        = st % psnc % ti(ic)
+          ne0(ix,iy)        = st % psnc % ne(ic)
+          ! ni0(ix,iy,0:1)    = st % psnc % ni(ic,0:1)
+          ! tn0(ix,iy)        = st % psnc % tn(ic)
+          ! kt0(ix,iy)        = st % psnc % kt(ic)
+          ! zt0(ix,iy)        = st % psnc % zt(ic)
         endif
       end do
 
@@ -4991,6 +5106,16 @@ c$$$      end do
             coni(ix,iy,0,0:1,:) = st % dv % coni(iFc,0:1,:)
             floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(iFc,0:1)
             floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(iFc,0:1)
+
+!B2PlasmaSnapshot
+            fchp(ix,iy,0,0:1)        = st % psnl % fch(iFc,0:1)
+            fnap(ix,iy,0,0:1,0:ns-1) = st % psnl % fna(iFc,0:1,0:ns-1) 
+            fhep(ix,iy,0,0:1)        = st % psnl % fhe(iFc,0:1)
+            fhip(ix,iy,0,0:1)        = st % psnl % fhi(iFc,0:1) 
+            fch0(ix,iy,0,0:1)        = st % psnc % fch(iFc,0:1)
+            fna0(ix,iy,0,0:1,0:ns-1) = st % psnc % fna(iFc,0:1,0:ns-1) 
+            fhe0(ix,iy,0,0:1)        = st % psnc % fhe(iFc,0:1)
+            fhi0(ix,iy,0,0:1)        = st % psnc % fhi(iFc,0:1) 
           endif
         end do
       end do
@@ -5129,6 +5254,16 @@ c$$$      end do
             coni(ix,iy,1,0:1,:) = st % dv % coni(iFc,0:1,:)
             floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(iFc,0:1)
             floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(iFc,0:1)
+
+!B2PlasmaSnapshot
+            fchp(ix,iy,1,0:1)        = st % psnl % fch(iFc,0:1)
+            fnap(ix,iy,1,0:1,0:ns-1) = st % psnl % fna(iFc,0:1,0:ns-1) 
+            fhep(ix,iy,1,0:1)        = st % psnl % fhe(iFc,0:1)
+            fhip(ix,iy,1,0:1)        = st % psnl % fhi(iFc,0:1) 
+            fch0(ix,iy,1,0:1)        = st % psnc % fch(iFc,0:1)
+            fna0(ix,iy,1,0:1,0:ns-1) = st % psnc % fna(iFc,0:1,0:ns-1) 
+            fhe0(ix,iy,1,0:1)        = st % psnc % fhe(iFc,0:1)
+            fhi0(ix,iy,1,0:1)        = st % psnc % fhi(iFc,0:1) 
           endif
         end do
       end do

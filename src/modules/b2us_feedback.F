@@ -246,6 +246,7 @@ cxpb size is changed in b2mod_dimensions
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       integer :: nFc, ns
+      integer, save :: gridGeometry
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, valid, done
@@ -329,7 +330,11 @@ cxpb size is changed in b2mod_dimensions
       call xertst (1.0_R8.le.volrec_overshoot.or.
      1 0.0_R8.eq.volrec_overshoot,
      1 'faulty internal parameter volrec_overshoot')
-      if (mpg%nnreg(0).le.2) then
+      gridGeometry = geometryId(mpg,geo,1)
+      if (gridGeometry.eq.GEOMETRY_LINEAR .or.
+     &    gridGeometry.eq.GEOMETRY_LIMITER .or.
+     &    gridGeometry.eq.GEOMETRY_CYLINDER .or.
+     &    gridGeometry.eq.GEOMETRY_ANNULUS) then
         coreregno = 0
       else
         coreregno = 1
@@ -1007,7 +1012,7 @@ cxpb size is changed in b2mod_dimensions
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
 *   ..local variables
-      integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
+      integer :: ifb, iFc, iFc1, iFc2, iCv, iCn, ic1, ic2, is, is_start,
      & is_end, iss, ibc, istra, i, j, k, l, ic, iFs, iatm, imol
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
@@ -1222,7 +1227,13 @@ cxpb size is changed in b2mod_dimensions
                 ic1 = fbRegP(ifb,1)
                 ic2 = ic1 + fbRegP(ifb,2) - 1
                 do iCv = ic1, ic2
-                  if (mpg%cvOnClosedSurface(iCv)) then
+                  if (iCv.gt.mpg%nCi) then
+                    iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+                    iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+                  else
+                    iCn = iCv
+                  end if
+                  if (mpg%cvOnClosedSurface(iCn)) then
                     sum_s = sum_s + pl%na(iCv,is) * geo%cvVol(iCv)
                     charge_frac(iss) = charge_frac(iss) +
      .                pl%na(iCv,is) * geo%cvVol(iCv)
@@ -2576,16 +2587,16 @@ cxpb size is changed in b2mod_dimensions
             end select
 
             if (fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3 .or.
-     &          fb_actuator(ifb).eq.8)
+     &          (fb_actuator(ifb).ge.3 .and.
+     &          fb_actuator(ifb).le.8))
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
           endif
 
           feedback_namelist_used = feedback_namelist_used .or.
-     &     fb_actuator(ifb).eq.1 .or. fb_actuator(ifb).eq.3 .or.
-     &     fb_actuator(ifb).eq.8
+     &     fb_actuator(ifb).eq.1 .or. (fb_actuator(ifb).ge.3 .and.
+     &     fb_actuator(ifb).le.8)
 
           if (fb_current_prev(ifb).gt.0.0_R8) then
             saved_fb_prev(ifb) = fb_current_prev(ifb)

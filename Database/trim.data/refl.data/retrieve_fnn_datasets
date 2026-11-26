@@ -1,21 +1,47 @@
 #!/bin/tcsh
 
+# Each file is downloaded to a temporary name and then renamed into place,
+# so a reader only ever sees either no file or a complete one.
+# Concurrent invocations (e.g. from parallel builds) are serialised by the
+# caller with flock (see the FNN_STAMP rule in modules/B2.5/Makefile).
+
 set filelist="dbe.fnn dc.fnn dw.fnn"
+set record="https://zenodo.org/records/19232546"
+
+onintr cleanup
+
+wget -q --spider --timeout=10 --tries=3 --waitretry=5 --retry-connrefused $record >& /dev/null
+if ($status != 0) then
+  echo "Cannot reach $record from `hostname`"
+  echo "Check the Internet connection, or run this script from a node with Internet access"
+  exit 1
+endif
 
 foreach i ($filelist)
+  set tmp="$i.tmp.$$"
+  wget -O $tmp $record/files/$i
+  if ($status != 0 || ! -s $tmp) then
+    echo "Download of $i from Zenodo record failed"
+    rm -f $tmp
+    exit 1
+  endif
   if (! -s $i) then
-    wget https://zenodo.org/records/19232546/files/$i
+    mv -f $tmp $i
     echo $i" file downloaded from Zenodo record"
   else
-    wget https://zenodo.org/records/19232546/files/$i
-    set oldstamp=`md5sum $i`
-    set newstamp=`md5sum $i.1`
-    if ( "X${oldstamp}X" == "X${newstamp}X") then  
+    set oldstamp=`md5sum < $i`
+    set newstamp=`md5sum < $tmp`
+    if ( "X${oldstamp}X" == "X${newstamp}X") then
       echo $i" file already present"
-      rm $i.1
+      rm -f $tmp
     else
-      mv $i.1 $i
+      mv -f $tmp $i
       echo $i" file updated to new version"
     endif
   endif
 end
+exit 0
+
+cleanup:
+rm -f *.fnn.tmp.$$
+exit 1

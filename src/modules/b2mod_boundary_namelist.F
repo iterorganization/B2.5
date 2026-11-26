@@ -1579,7 +1579,9 @@ cc BCMOM
         do is=0,ns-1
           if (bcmom(is,ib).eq.3) then
             bcmom(is,ib) = 13
+            bccon(is,ib) = 14
             write(*,*) 'Automatically changing BCMOM from 3 to 13'
+            write(*,*) 'and accompanying BCCON to 14'
             changed = .true.
           endif
         enddo
@@ -1656,7 +1658,7 @@ cc BCPOT
           iFc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
           ic1 = min(m%fcCv(iFc,1), m%fcCv(iFc,2))
           ic2 = max(m%fcCv(iFc,1), m%fcCv(iFc,2))
-          if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
+          if ((ic1 <= m%nCi) .and. (ic2 > m%nCi)) then
             m%bcCv(inbc,1) = ic2
             m%bcCv(inbc,2) = ic1
 !pb         m%bcFcOr(inbc) = bc_face_ori(ibc,ib)
@@ -1687,13 +1689,15 @@ cc BCPOT
       write (iout,*) 'nbc =',m%nBc
       write (iout,'(a,/(10i6))') 'bcCvP(1) ',(m%bcCvP(ib,1),ib=1,m%nBc)
       write (iout,'(a,/(10i6))') 'bcCvP(2) ',(m%bcCvP(ib,2),ib=1,m%nBc)
+      write (iout,*)
       do ib = 1, m%nBc
         ian = m%bcCvP(ib,1)
         ien = m%bcCvP(ib,1) + m%bcCvP(ib,2) - 1
         write (iout,*) 'ib = ',ib
         write (iout,'(a,/(10i6))') 'bcCv(1) ',(m%bcCv(i,1),i=ian,ien)
         write (iout,'(a,/(10i6))') 'bcCv(2) ',(m%bcCv(i,2),i=ian,ien)
-        write (iout,'(a,/(10f6.2))') 'bcCv(2) ',(m%bcFcOr(i),i=ian,ien)
+        write (iout,'(a,/(10f6.2))') 'bcFcOr ',(m%bcFcOr(i),i=ian,ien)
+        if (ib.lt.m%nBc) write (iout,*)
       end do
       close (iout)
 #endif

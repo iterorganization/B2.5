@@ -391,6 +391,7 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
+            IF (ift .EQ. 0) CYCLE
             ALLOCATE(xr(mpg%ftcvp(ift, 2)))
             ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
             ALLOCATE(xf(mpg%ftcvp(ift, 2)))
@@ -953,6 +954,7 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
+            IF (ift .EQ. 0) CYCLE
             ALLOCATE(xr(mpg%ftcvp(ift, 2)))
             ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
             ALLOCATE(xf(mpg%ftcvp(ift, 2)))
@@ -1427,6 +1429,7 @@ CONTAINS
 !
           DO iy=1,ndim
             ift = mpg%cvft(omp(iy))
+            IF (ift .EQ. 0) CYCLE
             ALLOCATE(xr(mpg%ftcvp(ift, 2)))
             ALLOCATE(xf(mpg%ftcvp(ift, 2)))
             nfitanf = mpg%ftcvp(ift, 2) + 1

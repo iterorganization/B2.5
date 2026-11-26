@@ -21,7 +21,7 @@
       use b2mod_balance !djm Jan2017
      1 , only : balance_netcdf
      2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
-     3          b2stbm_shi0to3
+     3          b2stbm_shi0to3, b2stbm_sch0to3
 #endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
@@ -124,6 +124,7 @@
       srw%sne0 = 0.0_R8
       srw%she0 = 0.0_R8
       srw%shi0 = 0.0_R8
+      srw%shn0 = 0.0_R8
       srw%sch0 = 0.0_R8
       srw%b2stbm_sna = 0.0_R8
       srw%b2stbm_smo = 0.0_R8
@@ -461,6 +462,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbm_smo0to3 = srw%smo0
         b2stbm_she0to3 = srw%she0
         b2stbm_shi0to3 = srw%shi0
+        b2stbm_sch0to3 = srw%sch0
       endif
 #endif
 

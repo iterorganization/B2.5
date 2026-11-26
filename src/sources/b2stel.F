@@ -14,7 +14,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
-     &          b2stel_she0to3,
+     &          b2stel_she0to3, b2stel_she_part0to3,
      &          b2stel_she_ion0to3, b2stel_she_rec0to3,
      &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
      &          balance_netcdf
@@ -65,7 +65,7 @@
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       character chns*3!, chk*1                                          !srv 30.06.08
       real (kind=R8) ::
-     *  rf0, t0, t1, t2, tkin, t1i, t1n, rescal_is, rescal_ism1
+     *  rf0, t0, t1, t2, tkin, t1i, t1n, tpart(4)
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
@@ -157,7 +157,6 @@
 !svdk eliminate
 !$omp parallel default(none)
 !$omp& private(iCv, is, rf0, t0, t1, t2, t1i, t1n)
-!$omp& private(rescal_is, rescal_ism1)
 !$omp& shared(ns, mpg, switch, srw, pl, dv, rt, rtw, geo)
 !$omp& shared(zn, am)
 !$omp& shared(sna0_ion, shi0_ion, smq0_ion, shn0_ion)
@@ -310,24 +309,19 @@
       srw%rrahi=0.0_R8
       srw%rramo=0.0_R8
       srw%rqahe=0.0_R8
+#ifndef FIXED_POINT
+*   ..electron energy of each species for balance.nc: the energy given
+*     back on recombination (fix_recomb, below) and the cooling; also
+*     by part: line radiation, bremsstrahlung, ionisation (the rest of
+*     the cooling), recombination (fix_recomb and rqr)
+      if (balance_netcdf.ne.0) then
+        b2stel_she0to3 = 0.0_R8
+        b2stel_she_part0to3 = 0.0_R8
+      endif
+#endif
 
       do is = 1, ns-1
        if (lnext(is-1,is)) then
-*     ..rescale recombination sources landing on a neutral species,
-*     ..consistent with how b2stbr scales the recycling source, to
-*     ..avoid injecting an un-suppressed source into a fluid-neutral
-*     ..density that is deliberately kept near-floor because Eirene
-*     ..handles the real neutral population
-        if (is_neutral(is)) then
-         rescal_is = switch%neutral_sources_rescale
-        else
-         rescal_is = 1.0_R8
-        endif
-        if (is_neutral(is-1)) then
-         rescal_ism1 = switch%neutral_sources_rescale
-        else
-         rescal_ism1 = 1.0_R8
-        endif
 *     ..particle source and heat source
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
@@ -338,13 +332,13 @@
      &                    rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)     !srv 05.06.18
 *       ..compute particle source
            sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+                     !srv 11.09.09 {
-     &       rf0*t0*pl%na(iCv,is)*rescal_is
+     &       rf0*t0*pl%na(iCv,is)
            sna0_rec(iCv,1,is) = sna0_rec(iCv,1,is)-
-     &      (1.0_R8+rf0)*t0*rescal_is
+     &      (1.0_R8+rf0)*t0
            sna0_rec(iCv,0,is-1) = sna0_rec(iCv,0,is-1)+
-     &      (1.0_R8+rf0)*t0*pl%na(iCv,is)*rescal_ism1
+     &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
            sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-                 !srv 11.09.09 {
-     &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is-1)*rescal_ism1
+     &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is-1)
            srw%rrana(iCv,is) = t0*pl%na(iCv,is)
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
@@ -397,6 +391,22 @@ c accounted for)
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
              srw%she0(iCv,3) = srw%she0(iCv,3)-rf0*
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/(dv%ne(iCv)*pl%te(iCv))
+#ifndef FIXED_POINT
+             if (balance_netcdf.ne.0) then
+               b2stel_she0to3(iCv,0,is) = b2stel_she0to3(iCv,0,is)+
+     &          (1.0_R8+rf0)*t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+               b2stel_she0to3(iCv,3,is) = b2stel_she0to3(iCv,3,is)-
+     &          rf0*t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/
+     &          (dv%ne(iCv)*pl%te(iCv))
+               b2stel_she_part0to3(iCv,0,is,4) =
+     &          b2stel_she_part0to3(iCv,0,is,4)+
+     &          (1.0_R8+rf0)*t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+               b2stel_she_part0to3(iCv,3,is,4) =
+     &          b2stel_she_part0to3(iCv,3,is,4)-
+     &          rf0*t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/
+     &          (dv%ne(iCv)*pl%te(iCv))
+             endif
+#endif
              srw%rqahe(iCv,is) = srw%rqahe(iCv,is) -
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
              rqahereg(mpg%cvReg(iCv),is) =
@@ -418,13 +428,13 @@ c accounted for)
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(iCv,0,is) = smq0_rec(iCv,0,is)+
-     &      rf0*t1*pl%ua(iCv,is)*rescal_is
+     &      rf0*t1*pl%ua(iCv,is)
            smq0_rec(iCv,1,is) = smq0_rec(iCv,1,is)-
-     &      (1.0_R8+rf0)*t1*rescal_is
+     &      (1.0_R8+rf0)*t1
            smq0_rec(iCv,0,is-1) = smq0_rec(iCv,0,is-1)+
-     &      t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is-1))*rescal_ism1
+     &      t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is-1))
            smq0_rec(iCv,1,is-1) = smq0_rec(iCv,1,is-1)-
-     &      rf0*t1*rescal_ism1
+     &      rf0*t1
            srw%rramo(iCv,is) = srw%rramo(iCv,is)+t1*pl%ua(iCv,is)
            rramoreg(mpg%cvReg(iCv),is) =
      &      rramoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)
@@ -461,9 +471,24 @@ c accounted for)
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
 #ifndef FIXED_POINT
           if (balance_netcdf.ne.0) then
-            b2stel_she0to3(iCv,0,is) = rf0*t0
-            b2stel_she0to3(iCv,3,is) =
-     &           -(1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+            b2stel_she0to3(iCv,0,is) = b2stel_she0to3(iCv,0,is)+
+     &           rf0*t0
+            b2stel_she0to3(iCv,3,is) = b2stel_she0to3(iCv,3,is)-
+     &           (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+*         ..line radiation and bremsstrahlung as rqrad and rqbrm below,
+*           rqr to recombination, the rest is ionisation
+            tpart(1) = switch%b2stel_phm0*
+     &         rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+            tpart(2) = switch%b2stel_phm0*
+     &         rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+            tpart(4) = switch%b2stel_phm0*
+     &         rtw%rqr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+            tpart(3) = t0-tpart(1)-tpart(2)-tpart(4)
+            b2stel_she_part0to3(iCv,0,is,:) =
+     &           b2stel_she_part0to3(iCv,0,is,:)+rf0*tpart(:)
+            b2stel_she_part0to3(iCv,3,is,:) =
+     &           b2stel_she_part0to3(iCv,3,is,:)-
+     &           (1.0_R8+rf0)*tpart(:)/(dv%ne(iCv)*pl%te(iCv))
           endif
 #endif
           srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0

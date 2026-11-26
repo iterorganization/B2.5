@@ -31,7 +31,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer is
+      integer is, iFc, iCn
       real (kind=R8) :: t0,t1
 *-----------------------------------------------------------------------
 *.computation
@@ -39,7 +39,13 @@
 *   ..subprogram start-up calls
       call subini ('b2trfl_vis')
 *   ..main
-      if (cfl.ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCv)) then
+      if (iCv.gt.mpg%nCi) then
+        iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+        iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+      else
+        iCn = iCv
+      end if
+      if (cfl.ne.0.0_R8.and..not.mpg%cvOnClosedSurface(iCn)) then
         do is=0, ns-1
           t0=abs(gavm_uc(iCv))
           t1=cfl*pa(is)

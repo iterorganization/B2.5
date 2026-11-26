@@ -356,11 +356,11 @@ c        .. apply flux limit
                 fllim_al_ab = 1.0_R8/(1.0_R8+t0)
               else
                 fllim_al_ab = 1.0_R8
-             endif
-             t0 = na(iCv,isb)*na(iCv,is)/
-     &                      ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
-             smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
-             smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
+              endif
+              t0 = na(iCv,isb)*na(iCv,is)/
+     &                       ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
+              smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
+              smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
             enddo
            endif
           enddo
@@ -413,11 +413,11 @@ c        .. apply flux limit
               fllim_al_ab = 1.0_R8/(1.0_R8+t0)
             else
               fllim_al_ab = 1.0_R8
-           endif
-           t0 = na(iCv,isb)*na(iCv,is)/
-     &                    ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
-           smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
-           smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
+            endif
+            t0 = na(iCv,isb)*na(iCv,is)/
+     &                     ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
+            smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0
+            smbtfial_nofl(iCv,0) = smbtfial_nofl(iCv,0) + coef*t0
           enddo
          endif
         enddo

@@ -11,7 +11,7 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-     2          b2srst_shi0to3, balance_netcdf
+     2          b2srst_shi0to3, b2srst_sch0to3, balance_netcdf
 #endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -265,6 +265,7 @@ cdjm Jan2017 Store for balance
         b2srst_smo0to3 = smost
         b2srst_she0to3 = shest
         b2srst_shi0to3 = shist
+        b2srst_sch0to3 = schst
       endif
 #endif
 

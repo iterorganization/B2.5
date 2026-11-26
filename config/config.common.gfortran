@@ -19,6 +19,8 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
+GFORTRAN_MAJOR_VERSION := ${GFORTRAN_MAJOR_VERSION}
+GFORTRAN_MINOR_VERSION := ${GFORTRAN_MINOR_VERSION}
 
 DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
 
@@ -69,7 +71,7 @@ BLD = ar rucv
 
 GRLIBES  = ${LD_NCARG}
 PLLIBES  = ${LD_MSCL}
-LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL}
+LDLIBES += ${LD_NAG} ${LD_NETCDF} ${LD_MKL} ${LD_SSP}
 
 ifdef LD_CATALYST
   CXXFLAGS = -std=c++11 -DPARAVIEW_MAJOR_VERSION=${PARAVIEW_MAJOR_VERSION}
@@ -135,12 +137,13 @@ endif
 
 ifdef IMAS_PKG_LIST
   PKG_KEEP_SYS ?= --keep-system-cflags
-  INCMODS += $(shell pkg-config ${IMAS_PKG_LIST} --cflags ${PKG_KEEP_SYS})
+  IMAS_INCMODS := $(shell pkg-config ${IMAS_PKG_LIST} --cflags ${PKG_KEEP_SYS})
+  INCMODS += ${IMAS_INCMODS}
   IMASLIBS = ${LD_AL}
 endif
 
 ifdef MKLROOT
-  LD_MKL ?= -L${MKLROOT} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
+  LD_MKL ?= -L${MKLROOT}/lib -L${MKLROOT}/lib/intel64 -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
 
 ifdef USE_EIRENE

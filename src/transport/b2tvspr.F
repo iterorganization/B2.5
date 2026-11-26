@@ -78,8 +78,10 @@
 
 *      ..compute V_{perp,a} on cell faces
          call grad_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, gpo)
-         call grad_r(nCv, nFc, nVx, 0, geo, mpg, na(:,is)*ti, wrkv, gpa)
-         call intface(nCv,nFc,mpg%fcCv,weight,na(:,is)*rza(:,is),wrkf)
+         wrkc = na(:,is)*ti
+         call grad_r(nCv, nFc, nVx, 0, geo, mpg, wrkc, wrkv, gpa)
+         wrkc = na(:,is)*rza(:,is)
+         call intface(nCv, nFc, mpg%fcCv, weight, wrkc, wrkf)
          wrkf = -(gpo + gpa/(qe*wrkf))/geo%fcBb(:,3)
 
 *      ..interpolate V_{perp,a} to cell centers
@@ -106,7 +108,8 @@
          call intface(nCv, nFc, mpg%fcCv, weight, wrkc,
      &     fchvisper_a(:,1,is))
          fchvisper_a(:,1,is) = 
-     &    -fchvisper_a(:,1,is)*geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
+     &    -fchvisper_a(:,1,is)*switch%fhe_vis_per*fac_vis*
+     &     geo%fcS*geo%fcQalf(:,1)/geo%fcBb(:,3)
 
         else
 

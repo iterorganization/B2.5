@@ -263,7 +263,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
 &         irc1)
 !
 ! xpb: no sputtering in core!
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
 !
 !   ..compute 2-D target temperature evolution
 !
@@ -1242,7 +1242,7 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
 &                       , phi_app, phi_appd, nbdirs)
 !
 ! xpb: no sputtering in core!
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
 !
 !   ..compute 2-D target temperature evolution
 !
@@ -3148,7 +3148,7 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                          , nbdirs, nbdirs0)
 !
 ! xpb: no sputtering in core!
-        lcore = mpg%cvonclosedsurface(irc1)
+        lcore = mpg%cvonclosedsurface(irc2)
 !
 !   ..compute 2-D target temperature evolution
 !

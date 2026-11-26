@@ -140,8 +140,8 @@ MODULE B2MOD_PAR_OPT_DIFF
   INTEGER, SAVE :: nmean_opt=0
   INTEGER, SAVE :: nshift_opt=0
   INTEGER, SAVE :: ncorr_opt=0
-  INTEGER, SAVE :: lbfgs_memsize=1
-  INTEGER, SAVE :: lbfgs_h0_type=1
+  INTEGER, SAVE :: lbfgs_memsize=10
+  INTEGER, SAVE :: lbfgs_h0_type=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
   LOGICAL, SAVE :: sigma_opt(nsigmx), mean_opt(nsigmx), shift_opt(nsigmx&
 & ), shiftopt(nsigmx), corr_opt(nncf), parallel_hf
@@ -168,7 +168,8 @@ MODULE B2MOD_PAR_OPT_DIFF
 &     shift_prior_type, shift_prior_par, shift_prior_range, corr_model, &
 &     corr_length, corr_prior_type, corr_prior_range, corr_prior_par, &
 &     corr_opt, corr_l, corr_u, corr_cutoff, corr_rescale, parallel_hf, &
-&     lbfgs_memsize, lbfgs_theta, lbfgs_stepinit, lbfgs_h0_type, lbfgs_rescale_rho
+&     lbfgs_memsize, lbfgs_theta, lbfgs_stepinit, lbfgs_h0_type, &
+&     lbfgs_rescale_rho
 !
 
 CONTAINS

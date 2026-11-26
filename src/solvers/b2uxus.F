@@ -11,6 +11,7 @@
       use b2mod_openmp
 #endif
       use b2mod_pardiso
+      use b2mod_umfpack
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt, style
@@ -97,10 +98,10 @@
       call subini ('b2uxus')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call xertst (0.le.style.and.style.lt.4,
+       call xertst (0.le.style.and.style.lt.5,
      &   'faulty internal parameter style')
        call ipgeti ('b2uxus_cpu', cpu)
-       if(style.eq.2.or.style.eq.3) then
+       if(style.eq.2.or.style.eq.3.or.style.eq.4) then
          mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
@@ -128,12 +129,20 @@
         call xerrab ('b2uxus: Style 0 is not implemented')
       else if (style.eq.1) then
         call xerrab ('b2uxus: Style 1 is not implemented')
-      else if (style.eq.2.or.style.eq.3) then
+      else if (style.eq.2.or.style.eq.3.or.style.eq.4) then
         allocate(ind(1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
       endif
       write(*,*) 'Allocated space for solver b2uxus'
       endif
+
+*   ..store data
+      call cpu_time(c_start)
+      call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
+     &                  ind, iasave, jasave, name)
+      call cpu_time(c_end)
+      if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
+     &               c_end-c_start
 
 *   ..solve the correction equation
       call cpu_time(cpu_start)
@@ -145,22 +154,13 @@
        call xerrab ('b2uxus: Style 1 is not implemented')
       else if (style.eq.2) then
 *    ..use ma28 (default)
-       call cpu_time(c_start)
-       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     *                  ind, iasave, jasave, name)
-       call cpu_time(c_end)
-       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
-     &               c_end-c_start
-       call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
+       call ILUTERN_US(nCv, nz, resfun, corfun, name)     !sv 13.10.06
       else if (style.eq.3) then
 *    ..use PARDISO
-       call cpu_time(c_start)
-       call storage_us (nCv, mpg, aa, n_nonzeros, irnh, icnh, a1h, nz,
-     *                  ind, iasave, jasave, name)
-       call cpu_time(c_end)
-       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
-     &               c_end-c_start
-       call SolvePARDISO(NCV, NZ, resfun, corfun, name, flag)  
+       call SolvePARDISO(nCv, nz, resfun, corfun, name, flag)  
+      else if (style.eq.4) then
+*    ..use UMFPACK by SuiteSparse
+       call solve_umfpack(nCv,nz,resfun,corfun)
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),

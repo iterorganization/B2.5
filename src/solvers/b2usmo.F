@@ -106,6 +106,10 @@
          else
            aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
          endif
+         if (switch%aad0_boost0.gt.0.0_R8) then                       !xpb 20.09.21
+           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) +
+     &      abs(resmb(iCv))/csb1*switch%aad0_boost0/(csb*rob(iCv))
+         endif                                                        !xpb 20.09.21
         else
          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
          aad0(iCv) = 0.0_R8

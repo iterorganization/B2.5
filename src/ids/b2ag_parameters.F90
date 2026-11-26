@@ -89,6 +89,8 @@ contains
           if (niso.eq.1) ccut1 = nxiso(1)
           doGhostCells = .true.
         end if
+      else
+        call xerrab ('Only Carre2 format for geometry file is supported!')
       end if
       close(lun)
     end if
@@ -182,7 +184,7 @@ contains
        call cfverr(lun,grid_version)
        if(istyle.eq.-1) then
          ! Carre grid input
-         if (grid_version.eq."03.002.000") then
+         if (grid_version.ge."03.002.000") then
            ! obtain nCv, nFc, nVx from geometry file
            call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
            nCv0 = idum(0)

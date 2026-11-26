@@ -129,15 +129,15 @@ function run_test {
 
   # Set number of threads, compact pinning, and stack size
   export OMP_NUM_THREADS=$4
-  export KMP_AFFINITY=verbose,norespect,compact
-  if [ -z "$KMP_STACKSIZE" ]; then
-    export KMP_STACKSIZE=128M
-  fi
+  export KMP_AFFINITY=verbose,respect,compact
   if [ "$COMPILER" != "ifort64" ]; then
     if [ -z "$OMP_STACKSIZE" ]; then
       export OMP_STACKSIZE=128M
     fi
   else
+    if [ -z "$KMP_STACKSIZE" ]; then
+      export KMP_STACKSIZE=128M
+    fi
     unset OMP_STACKSIZE
   fi
   if [ -n "$SOLPS_MPI" ]; then

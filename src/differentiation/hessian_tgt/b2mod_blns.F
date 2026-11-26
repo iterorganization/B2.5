@@ -141,7 +141,7 @@ c
       real (kind=R8) :: dtim
 c
       integer i, j, k, ic, ii, is, iy, js, ks, ls,
-     ,        kks, iCv, iFc, ib, ibc, it
+     ,        kks, iCv, iCn, iFc, ib, ibc, it
 #if ( defined(DBG) || defined(B25_EIRENE) )
       integer, save :: l
 #endif
@@ -390,8 +390,9 @@ c**********************************
         do ib=1,NBC
           do ibc = 1, mpg%bcCvP(ib,2)
             iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCn = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv,1))
-            if(.not. mpg%cvOnClosedSurface(iCv)) then
+            if(.not. mpg%cvOnClosedSurface(iCn)) then
               if (is_neutral(is).and.switch%use_eirene.eq.0) then
                 flxnw(k) = flxnw(k)+mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))

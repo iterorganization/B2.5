@@ -10,6 +10,10 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
+      use b2mod_balance
+     & , only : update_balance_charge, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2nppo
 #ifndef NAGFOR
@@ -64,7 +68,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: iCv
+      integer :: iCv, iCn, iFc
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv), wrk
 *   ..procedures
@@ -103,6 +107,11 @@
         call b2ursd (nCv, nFc, mpg, dv%ne, pl%po, sr%sch, dv%fch,
      &    dv%respo)
       endif                                                         !srv 22.05.18
+#ifndef FIXED_POINT
+*   ..balance.nc: sources, currents and residual of this equation
+      if (balance_netcdf.ne.0)
+     &  call update_balance_charge(nCv,nFc,mpg,dv%ne,pl%po,sr%sch,dv)
+#endif
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
 c-rfs     .  sch(20,-1,0), sch(20,-1,1),
@@ -122,14 +131,20 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
         if (switch%b2nppo_restr_po.ne.0.0_R8) then
           do iCv=1,mpg%nCv
-            if (mpg%cvOnClosedSurface(iCv)) cycle
+            if (iCv.gt.mpg%nCi) then
+              iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            else
+              iCn = iCv
+            end if
+            if (mpg%cvOnClosedSurface(iCn)) cycle
             if (switch%b2nppo_restr_po.gt.0.0_R8) then
               if (abs(qe*pl%po(iCv))/pl%te(iCv)
      &                   .gt. switch%b2nppo_restr_po ) then
                 wrk = pl%po(iCv)
                 pl%po(iCv) = sign(switch%b2nppo_restr_po*pl%te(iCv)/qe,
      &           pl%po(iCv))
-                write(*,*) "Applied po/Te ratio limit",
+                write(*,'(a,i6,1p,2e15.8)') "Applied po/Te ratio limit",
      &           iCv,wrk,pl%po(iCv)
               endif
             else
@@ -139,7 +154,7 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
                 wrk = pl%po(iCv)
                 pl%po(iCv) = sign(switch%b2nppo_restr_po*pl%te(iCv)/qe,
      &           pl%po(iCv))
-                write(*,*) "Applied po/Te ratio limit",
+                write(*,'(a,i6,1p,2e15.8)') "Applied po/Te ratio limit",
      &           iCv,wrk,pl%po(iCv)
               endif
             endif

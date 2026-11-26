@@ -181,6 +181,7 @@ csw 28feb2011 mpi
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
         my_pe=rank_mpi
+        iunout=7+ifoff
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
@@ -238,7 +239,7 @@ csw
 *   ..obtain mapping/geometry dimensions from file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
       mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
+      mpg%nCg = idum(1)
       mpg%nCv = idum(2)
       mpg%nFc = idum(3)
       mpg%nVx = idum(4)

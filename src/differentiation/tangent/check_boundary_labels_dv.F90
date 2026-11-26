@@ -49,7 +49,7 @@ SUBROUTINE CHECK_BOUNDARY_LABELS_NODIFF(m, nb, bstart, bend, docore)
 !
 ! get the only face linked to the guard cell
   DO icv=m%nci+1,m%ncv
-! if face is towards core, for recycling we don't care about it
+! if face is towards core, for recycling we do not care about it
     bnd_fc = m%cvfc(m%cvfcp(icv, 1))
     IF (.NOT.(m%cvonclosedsurface(m%fccv(bnd_fc, 1)) .OR. (m%&
 &       cvonclosedsurface(m%fccv(bnd_fc, 2)) .AND. (.NOT.docore)))) THEN

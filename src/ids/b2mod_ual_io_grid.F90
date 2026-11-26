@@ -2418,10 +2418,10 @@ contains
                 psi_average = psi_average + geo%vxFpsi(iVx)
               end do
               psi_average = psi_average / real(mpg%cvVxP(iCv,2))
-              if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(1)),      &
-                                   & geo%vxFpsi(mpg%Xpt(2))).and. &
-                & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(1)),      &
-                                   & geo%vxFpsi(mpg%Xpt(2)))) then
+              if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(mpg%iactive)),      &
+                                   & geo%vxFpsi(mpg%Xpt(mpg%iinactive))).and. &
+                & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(mpg%iactive)),      &
+                                   & geo%vxFpsi(mpg%Xpt(mpg%iinactive)))) then
                 iInd = iInd + 1
                 indexList2d( iInd, SPACE_POLOIDALPLANE ) = iCv
               end if
@@ -2511,8 +2511,8 @@ contains
           !! Outer strikepoint
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if ( mpg%nnreg(0).le.7 .or. plasmaId.eq.GEOMETRY_DDN_TOP .or. &
-              & (mpg%nnreg(0).eq.8 .and. plasmaId.eq.GEOMETRY_SN) ) then
+            if ( mpg%nXpt.le.1 .or. plasmaId.eq.GEOMETRY_DDN_TOP .or. &
+              & (mpg%nXpt.ge.2 .and. plasmaId.eq.GEOMETRY_SN) ) then
               if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
             else if (plasmaId.eq.GEOMETRY_CDN .or. &
                    & plasmaId.eq.GEOMETRY_DDN_BOTTOM) then
@@ -2589,14 +2589,12 @@ contains
           !! Outer strikepoint inactive
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if (mpg%nnreg(0).eq.7) then
+            if (plasmaId.eq.GEOMETRY_CDN.or.plasmaId.eq.GEOMETRY_DDN_BOTTOM) then
               if (mpg%strDiv(i).eq.3) iVx = mpg%strVx(i)
-            else if (mpg%nnreg(0).eq.8) then
-              if (plasmaId.eq.GEOMETRY_CDN.or.plasmaId.eq.GEOMETRY_DDN_BOTTOM) then
-                if (mpg%strDiv(i).eq.3) iVx = mpg%strVx(i)
-              else if (plasmaId.eq.GEOMETRY_DDN_TOP) then
-                if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
-              end if
+            else if (plasmaId.eq.GEOMETRY_DDN_TOP) then
+              if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
+            else
+              if (mpg%strDiv(i).eq.3) iVx = mpg%strVx(i)
             end if
           end do
           if (iVx .ne. US_GRID_UNDEFINED) then
@@ -2630,14 +2628,12 @@ contains
           !! Inner strikepoint inactive
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if (mpg%nnreg(0).eq.7) then
+            if (plasmaId.eq.GEOMETRY_CDN.or.plasmaId.eq.GEOMETRY_DDN_BOTTOM) then
+              if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
+            else if (plasmaId.eq.GEOMETRY_DDN_TOP) then
+              if (mpg%strDiv(i).eq.1) iVx = mpg%strVx(i)
+            else
               if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
-            else if (mpg%nnreg(0).eq.8) then
-              if (plasmaId.eq.GEOMETRY_CDN.or.plasmaId.eq.GEOMETRY_DDN_BOTTOM) then
-                if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
-              else if (plasmaId.eq.GEOMETRY_DDN_TOP) then
-                if (mpg%strDiv(i).eq.1) iVx = mpg%strVx(i)
-              end if
             end if
           end do
           if (iVx .ne. US_GRID_UNDEFINED) then

@@ -2,10 +2,14 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !  Differentiation of b2tqna in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: tdata parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf hce_exb
-!                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
+!   gradient     of useful results: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata parm_hce parm_sig
+!                parm_alf parm_dna parm_dpa parm_vla parm_vsa parm_hci
+!                cfdna cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf
+!                hce_exb hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
 !                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
 !                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
@@ -13,10 +17,14 @@
 !                switch.keps_shear switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !                vla0 hce0 dzt0 dpa0 hci_exb
-!   with respect to varying inputs: tdata parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf hce_exb
-!                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
+!   with respect to varying inputs: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] tdata parm_hce parm_sig
+!                parm_alf parm_dna parm_dpa parm_vla parm_vsa parm_hci
+!                cfdna cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf
+!                hce_exb hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
 !                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
 !                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
@@ -25,11 +33,10 @@
 !                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !                vla0 hce0 dzt0 dpa0 hci_exb
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhy:in geo.cvvol:in geo.fcbb:in geo.fcs:in
-!                geo.fcvol:in geo.fcqalf:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in pl.na:in pl.te:in pl.ti:in pl.tn:in
-!                pl.kt:in pl.zt:in
+!                mpg.intcellr:in geo.cvbb:in geo.cvhy:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fcvol:in geo.fcqalf:in
+!                rt.rlcx:in rt.rlsa:in rt.rza:in pl.na:in pl.te:in
+!                pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -1211,10 +1218,10 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPINTEGER4(tr_ip_elm_count)
     CALL POPREAL8(transport_ip_time_mod, r8/8)
     CALL POPREAL8(transport_ip_time_switch, r8/8)
-    CALL TRANSPORT_INPUT_B(ncv, ns, geo, geob, mpg, pl, plb, dv, dvb, rt&
-&                    , rtb, hcib, hcibb, dna0, dna0b, dpa0, dpa0b, vla0&
-&                    , vla0b, vsa0, vsa0b, hci0, hce0, hce0b, sig0, &
-&                    sig0b, alf0, alf0b, ncall_b2tqna)
+    CALL TRANSPORT_INPUT_B(ncv, ns, geo, mpg, pl, plb, dv, dvb, rt, rtb&
+&                    , hcib, hcibb, dna0, dna0b, dpa0, dpa0b, vla0, &
+&                    vla0b, vsa0, vsa0b, hci0, hce0, hce0b, sig0, sig0b&
+&                    , alf0, alf0b, ncall_b2tqna)
     hci0b = 0.D0
     hcn0b = 0.D0
   END IF

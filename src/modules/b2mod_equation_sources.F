@@ -80,7 +80,7 @@
        enddo
        call read_b2mod_numerics_namelist(nCv,ns,
      &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     &      switch%b2mndt_style, .false.)
+     &      switch%b2mndt_style, switch%tot_eqs_override, .false.)
 
 !      Read inputs
 

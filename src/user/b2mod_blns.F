@@ -141,7 +141,7 @@ c
       real (kind=R8) :: dtim
 c
       integer i, j, k, ic, ii, is, iy, js, ks, ls,
-     ,        kks, iCv, iFc, ib, ibc, it
+     ,        kks, iCv, iCn, iFc, ib, ibc, it
 #if ( defined(DBG) || defined(B25_EIRENE) )
       integer, save :: l
 #endif
@@ -370,7 +370,7 @@ c**********************************
 !     Loop over isonuclear sequences
       do is=0,ns-1
         k = b2espcr(is)
-        do it=1,mpg%nStr
+        do it=1,maxval(mpg%strDiv)
           do iy=1,mpg%divFcP(it,2)
             iFc=mpg%divFc(mpg%divFcP(it,1) + iy - 1)
             if (is.eq.0)
@@ -387,11 +387,12 @@ c**********************************
             endif
           enddo
         enddo
-        do ib=1,NBC
+        do ib = 1, NBC
           do ibc = 1, mpg%bcCvP(ib,2)
             iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCn = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv,1))
-            if(.not. mpg%cvOnClosedSurface(iCv)) then
+            if(.not. mpg%cvOnClosedSurface(iCn)) then
               if (is_neutral(is).and.switch%use_eirene.eq.0) then
                 flxnw(k) = flxnw(k)+mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))

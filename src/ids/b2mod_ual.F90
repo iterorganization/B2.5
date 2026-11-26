@@ -1414,7 +1414,7 @@ contains
 #endif
     implicit none
     integer iun, i, k, l
-    integer, parameter :: ninpf=44, noutf=27, file_len=38
+    integer, parameter :: ninpf=44, noutf=29, file_len=38
     character(len=STRMAXLEN) :: alias
     character(len=256) :: file_path, filename
     character(len=file_len) :: input_file_list(ninpf)
@@ -1445,10 +1445,11 @@ contains
    & 'b2mn.prt', 'b2fparam', 'b2fstate', 'b2fplasma', 'b2favere', &  !5
    & 'fort.10', 'fort.11', 'fort.12', 'fort.13', 'fort.14', &  !10
    & 'fort.15', 'fort.44', 'fort.46', 'b2time.nc', 'b2batch.nc', 'b2wall.nc', &  !16
-   & 'b2movies.nc', 'eirenemovies.nc', 'b2tallies.nc', 'balance.nc', &  !20
-   & 'tran', 'shotnumber.history', 'b2.transport_models_save.parameters', &  !23
-   & 'b2.feedback_save.parameters', 'b2.neutrals_save.parameters', &  !25
-   & 'b2.sputter_save.parameters', 'b2.wall_save.parameters'/  !27
+   & 'b2movies.nc', 'eirenemovies.nc', 'b2chords.nc', 'eirenechords.nc', &  !20
+   & 'b2tallies.nc', 'balance.nc', &  !22
+   & 'tran', 'shotnumber.history', 'b2.transport_models_save.parameters', &  !25
+   & 'b2.feedback_save.parameters', 'b2.neutrals_save.parameters', &  !27
+   & 'b2.sputter_save.parameters', 'b2.wall_save.parameters'/  !29
 
 #ifndef LEGACYCOMP
     open (newunit=iun,file='manifest.yaml',form='FORMATTED')

@@ -97,7 +97,7 @@
 *     and electron density rtn(j) for the process k->k+1. rtsa has
 *     dimension m**3/s.
 *
-*     rtrla - (0:nt,0:nn,0:ns0-1) real*8 array, input.
+*     rtlra - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlra(i,j,k)) specifies
 *     the recombination rate coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for the process k->k-1. rtra has

@@ -11,6 +11,10 @@ LD_NETCDF  ?= -L${NCDIR} -lnetcdff
 LD_MSCL    ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG   ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG     ?= -L${SOLPSLIB} -lblaslapack
+ifdef MKLROOT
+  MKL_LIB_DIR ?= ${MKLROOT}/lib
+  LD_MKL ?= -L${MKL_LIB_DIR} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+endif
 
 CPP = /lib/cpp -traditional
 

@@ -4191,7 +4191,7 @@ cxpb  core recycling into ions of the highest ionisation stage
                 if (balance_netcdf.ne.0 .or.
      *              switch%write_eirene_sources.ne.0) then
                   eirene_mc_core_sna0to1(iCv,1,ishigh(j))= !djm Jan2017
-     &             eirene_mc_core_sna0to1(iCv,0,ishigh(j))-
+     &             eirene_mc_core_sna0to1(iCv,1,ishigh(j))-
      &             rf0*abs(t0)/st%pl%na(iCv,ishigh(j))
                 endif
 #endif

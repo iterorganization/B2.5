@@ -15,7 +15,7 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh,
+     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh, fhi_kevis,
      &          balance_netcdf
 #endif
       use b2mod_ad
@@ -390,6 +390,18 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
       endif
 #endif
 
+#ifndef FIXED_POINT
+*   ..viscosity part of fhi for balance.nc file
+      if (balance.and.(balance_netcdf.ne.0)) then
+        dumm1 = 0.0_R8
+        dumm4(:,0) = 1.5_R8/qe*dv%fchviskt(:,0)
+        dumm4(:,1) = 1.5_R8/qe*dv%fchviskt(:,1)
+        wrkf = sign(dumm4,floi0_mdf)
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
+     &    wrkf,dumm1,dumm2,fhi_kevis,dumm3)
+        fhi_kevis = sign(fhi_kevis,dumm4)
+      endif
+#endif
 #ifdef WG_TODO
       if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
         call xerrab ('b2tfhi_: option not yet available for WG')
@@ -556,11 +568,11 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &      b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visper(ix,iy,1,1) =
-     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*    !srv 02.10.17
+        fhi_visper(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_per*
+     &      fchvisper(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*  !srv 02.10.17
-     &      b2tfnb_ycur*
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_q*
+     &      fchvisq(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
      &      1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
@@ -586,11 +598,11 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visper(ix,iy,1,1) =
-     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*         !srv 02.10.17
+        fhi_visper(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_per*
+     &       fchvisper(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*       !srv 02.10.17
-     &       b2tfnb_ycur*
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*switch%fnb_vis_q*
+     &       fchvisq(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
      &       1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*

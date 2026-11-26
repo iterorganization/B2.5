@@ -2537,7 +2537,7 @@ CONTAINS
     INTEGER, SAVE :: temp_ignore_geo=0
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
 &   , dpsi(mpg%ncv), dpsi_max_down, dpsi_max_up
-    LOGICAL :: active, match_found
+    LOGICAL :: active, match_found, ref_set
     INTRINSIC MAXVAL, ABS, SQRT
     EXTERNAL B2XBZB_NODIFF_NODIFF, INTFACE, INTVERTEX_NODIFF_NODIFF, &
 &       IPGETI, XERRAB, XERTST
@@ -2570,18 +2570,19 @@ CONTAINS
 !
 !   ..identify cells on closed surfaces
     IF (mpg%nnreg(0) .EQ. 1) THEN
-      mpg%cvonclosedsurface = mpg%periodic_bc .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%periodic_bc .EQ. 1
     ELSE IF (((mpg%nnreg(0) .EQ. 2 .OR. mpg%nnreg(0) .EQ. 4) .OR. mpg%&
 &       nnreg(0) .EQ. 5) .OR. mpg%nnreg(0) .EQ. 8) THEN
-      mpg%cvonclosedsurface = MOD(mpg%cvreg, 4) .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = MOD(mpg%cvreg(1:mpg%nCi), 4) .EQ. 1
     ELSE IF (mpg%nnreg(0) .EQ. 7) THEN
-      mpg%cvonclosedsurface = mpg%cvreg .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
     ELSE
-      mpg%cvonclosedsurface = mpg%cvreg .EQ. 1
+      mpg%cvonclosedsurface(1:mpg%nCi) = mpg%cvreg(1:mpg%nCi) .EQ. 1
       WRITE(*, *) 'Warning: unknown number of regions'
 !call xerrab ('Unknown number of regions!')
       WRITE(*, *) 'Assuming core is region 1'
     END IF
+    mpg%cvOnClosedSurface(mpg%nCi+1:nCv) = .false.
 !
 !   ..set weights for interpolation to faces
     IF (switch%fcvol_style .EQ. 0) THEN
@@ -2626,10 +2627,20 @@ CONTAINS
     END DO
 !
 !   ..precompute psi for flux tube
+!   ..cells lying along an open boundary (e.g. wall-truncated cells of
+!   ..a conformal grid) need not lie between two flux surfaces: they
+!   ..are neither used as reference nor checked
     DO ift=1,mpg%nft
       gm%ftfpsi(ift) = gm%cvfpsi(mpg%ftcv(mpg%ftcvp(ift, 1)))
+      ref_set = .false.
       DO i=1,mpg%ftcvp(ift, 2)
         icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+        IF (mpg%cvalongboundary(icv) .AND. .NOT.mpg%cvonclosedsurface(&
+&           icv)) CYCLE
+        IF (.NOT.ref_set) THEN
+          gm%ftfpsi(ift) = gm%cvfpsi(icv)
+          ref_set = .true.
+        END IF
         IF (gm%cvfpsi(icv) .NE. gm%ftfpsi(ift)) THEN
           WRITE(*, '(a,i6,a,i4)') 'Warning: cvFpsi value in cell ', icv&
 &         , ' not equal to value in its flux tube ', ift
@@ -3775,7 +3786,7 @@ CONTAINS
       DO j=mpg%vxfcp(vx_current, 1),mpg%vxfcp(vx_current, 1)+mpg%vxfcp(&
 &         vx_current, 2)-1
         fc_next = mpg%vxfc(j)
-! we ingore the current face
+! we ignore the current face
 ! check if face belongs to same flux tube
         IF (fc_next .NE. fc_current) THEN
 ! stop the for loop if we found the next face

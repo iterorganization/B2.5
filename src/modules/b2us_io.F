@@ -34,6 +34,7 @@
       call read_mapping (ninp, mpg)
       call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv, gm)
+      call init_walls_and_targets(mpg, gm)
 
       return
       end subroutine read_b2fgmtry

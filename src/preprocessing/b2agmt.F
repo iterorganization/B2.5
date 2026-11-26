@@ -89,19 +89,26 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, face, gc, bc, v1, v2, iVx,
-     *   artificial_slab
+      integer i, j, ic, iCv, iCv1, iCv2, iFc, iFt, iVx,
+     *   face, gc, bc, v1, v2, artificial_slab
       integer cells(1:2), fcType(m%nFc), c1, c2, verts2(0:1)
       integer, allocatable :: verts(:)
       integer nv
+      integer k, i0, vPrev, vCur, vNext, nBad, lu
+      integer kMin, kMax, kBad
+      logical degenerate, convex
       integer volhmk
       real (kind=R8) ::
-     *   width, centroid(m%nCv,0:1), bcFpsi,
+     *   width, centroid(m%nCv,0:1), bcFpsi, L1, L2,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, dg, fcPsi, ec1fc(0:1), efcc2(0:1),
      *   econf(0:1), fn(0:1), tol_angles, cvFpsi(1:m%nCv),
      *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc),
-     *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1)
+     *   wrk0(1:m%nCv), wrk1(1:m%nCv),
+     *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1),
+     *   rawQgam1, rawQgam2, signedHc1, signedHc2,
+     *   sideTolerance, ex0, ey0, ex1, ey1, turn, turnSum,
+     *   turnMin, turnMax, tol_convex, dpsiFace
       integer, save :: style = 0
 *   ..procedures
       intrinsic sqrt
@@ -109,7 +116,8 @@
       external b2xvsg
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-1_R8/
-      save volhmk, width, guard_rescale
+      data tol_convex /1.0e-6_R8/
+      save volhmk, width, guard_rescale, tol_convex
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -128,16 +136,105 @@
       call xertst (0.0_R8.lt.width, 'faulty input width')
       call xertst (0.0_R8.lt.guard_rescale,
      &  'faulty input guard_rescale')
+      call ipgetr ('b2agmt_convexity_tol', tol_convex)
+      call xertst (0.0_R8.le.tol_convex,
+     &  'faulty input convexity_tol')
 *   ..test nCv, nFc, nVx, isymm
       call xertst (0.lt.m%nCv.and.0.lt.m%nFc.and.0.lt.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
 
+* ..check that every real cell is a simple convex polygon
+*   At corner k, with e_in = x(k)-x(k-1) and e_out = x(k+1)-x(k),
+*   the turning angle is atan2(sin,cos), where sin = cosang(e_in,e_out)
+*   and cos = sinang(e_in,e_out) (see naming in b2mod_math).
+*   Convex: all turns of one sign (zero allowed for co-linear
+*   vertices) and total turn = +-2*pi (rejects self-intersection).
+      nBad = 0
+      do iCv = 1, m%nCi
+        nv = m%cvVxP(iCv,2)
+        i0 = m%cvVxP(iCv,1)
+        turnSum = 0.0_R8
+        turnMin = huge(1.0_R8)
+        turnMax = -huge(1.0_R8)
+        kMin = -1
+        kMax = -1
+        degenerate = .false.
+        do k = 0, nv-1
+          vPrev = m%cvVx(i0 + mod(k-1+nv,nv))
+          vCur  = m%cvVx(i0 + k)
+          vNext = m%cvVx(i0 + mod(k+1,nv))
+          ex0 = g%vxX(vCur)  - g%vxX(vPrev)
+          ey0 = g%vxY(vCur)  - g%vxY(vPrev)
+          ex1 = g%vxX(vNext) - g%vxX(vCur)
+          ey1 = g%vxY(vNext) - g%vxY(vCur)
+          if (norm(ex0,ey0).eq.0.0_R8 .or.
+     &        norm(ex1,ey1).eq.0.0_R8) then
+            degenerate = .true.
+            exit
+          endif
+          turn = atan2(cosang(ex0,ey0,ex1,ey1),
+     &                 sinang(ex0,ey0,ex1,ey1))
+          turnSum = turnSum + turn
+          if (turn.lt.turnMin) then
+            turnMin = turn
+            kMin = k
+          endif
+          if (turn.gt.turnMax) then
+            turnMax = turn
+            kMax = k
+          endif
+        enddo
+        convex = .not.degenerate
+        if (convex) convex =
+     &    abs(abs(turnSum) - 2.0_R8*pi) .lt. tol_convex .and.
+     &    ( (turnSum.gt.0.0_R8 .and. turnMin.ge.-tol_convex) .or.
+     &      (turnSum.lt.0.0_R8 .and. turnMax.le. tol_convex) )
+        if (.not.convex) then
+          nBad = nBad + 1
+          ! apex of a turn against the cell winding (none if the
+          ! winding is zero, i.e. the sign of the cell is undefined)
+          kBad = -1
+          if (.not.degenerate) then
+            if (turnSum.gt.0.0_R8 .and. turnMin.lt.-tol_convex) then
+              kBad = kMin
+            elseif (turnSum.lt.0.0_R8 .and. turnMax.gt.tol_convex) then
+              kBad = kMax
+            endif
+          endif
+          ! report on both stdout (6) and stderr (0)
+          do lu = 6, 0, -6
+            write(lu,*) 'WARNING b2agmt: non-convex cell iCv, nv = ',
+     &        iCv, nv
+            write(lu,*) '  vertex mean (x,y): ',
+     &        sum(g%vxX(m%cvVx(i0:i0+nv-1)))/real(nv,R8),
+     &        sum(g%vxY(m%cvVx(i0:i0+nv-1)))/real(nv,R8)
+            if (degenerate) then
+              write(lu,*) '  zero-length edge'
+            else
+              write(lu,*) '  min/max turn [deg], winding: ',
+     &          turnMin*180.0_R8/pi, turnMax*180.0_R8/pi,
+     &          turnSum/(2.0_R8*pi)
+              if (kBad.ge.0) write(lu,*)
+     &          '  reverse turn at apex vertex k, iVx, (x,y): ',
+     &          kBad, m%cvVx(i0+kBad),
+     &          g%vxX(m%cvVx(i0+kBad)), g%vxY(m%cvVx(i0+kBad))
+            endif
+          enddo
+        endif
+      enddo
+      if (nBad.gt.0) then
+        do lu = 6, 0, -6
+          write(lu,*) 'WARNING b2agmt: ', nBad,
+     &      ' non-convex real cell(s) found'
+        enddo
+      endif
+
 * ..compute metric coefficients
 
 ! loop over cells
-      do iCv = 1,m%nCv
+      do iCv = 1, m%nCv
 
         !Default values
         !Compute qz which is cvQgam
@@ -185,11 +282,13 @@
      &                             g%vxX(verts(2)), g%vxY(verts(2)),
      &                             g%vxX(verts(3)), g%vxY(verts(3)) )
 
+      ! Careful here, the vertices must be given in the B2.5 order
+      ! See quadCentroid definition in b2mod_math
             centroid(iCv,:) =
      &       quadCentroid(g%vxX(verts(0)), g%vxY(verts(0)),
      &                    g%vxX(verts(1)), g%vxY(verts(1)),
-     &                    g%vxX(verts(2)), g%vxY(verts(2)),
-     &                    g%vxX(verts(3)), g%vxY(verts(3)) )
+     &                    g%vxX(verts(3)), g%vxY(verts(3)),
+     &                    g%vxX(verts(2)), g%vxY(verts(2)) )
 
           elseif (nv.eq.5) then
             g%cvSz(iCv) =
@@ -219,9 +318,10 @@
      &       ('Area computation not implemented for this type')
           endif
 
-          if (isymm.eq.0) then  !slab geometry
+          if (isymm.eq.0) then  ! slab geometry
             ! volume is area times width
             g%cvVol(iCv) = g%cvSz(iCv)*width
+            g%cvHz(iCv) = width
             call calc_psi_cellcenter(g,m,iCv,psic,isymm)
             cvFpsi(iCv) = psic
 
@@ -237,6 +337,7 @@
             endif
             ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+            g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,0)
 
           elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about y=0
             if (volhmk.eq.0) then
@@ -250,6 +351,7 @@
             endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)
+            g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,1)
           endif
 
           deallocate(verts)
@@ -265,7 +367,7 @@
 
          if ((m%cvLbl(cells(1)).eq.GRID_GUARD) .and.
      &       (m%cvLbl(cells(2)).eq.GRID_BOUNDARY)) then
-           gc = cells(1)   !guard cell
+           gc = cells(1)   ! guard cell
            bc = cells(2)   ! boundary cell
          elseif ((m%cvLbl(cells(1)).eq.GRID_BOUNDARY) .and.
      &           (m%cvLbl(cells(2)).eq.GRID_GUARD)) then
@@ -286,14 +388,14 @@
          ! If it is possible to put the cell center of the guard cell on the same psi
          ! as the boundary cell, this is done. Otherwise the cell center is placed
          ! in the extension of the vector from the boundary cell center and the face center.
-         if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
-     &       .lt. 1e-1_R8) then !get the guard cell on the same fpsi
-           !Calculate intersection point - find point on face where psi = fcPsi
-           t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))
+         dpsiFace = g%vxFpsi(v2) - g%vxFpsi(v1)
+         if (abs(fcPsi-bcFpsi) .lt. 1e-1_R8*abs(dpsiFace)) then ! get the guard cell on the same fpsi
+           ! Calculate intersection point - find point on face where psi = fcPsi
+           t0 = (bcFpsi - g%vxFpsi(v1)) / dpsiFace
            isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
            isy(1) =  g%vxY(v1) + t0 *(g%vxY(v2)- g%vxY(v1))
 
-           !Set psi value
+           ! Set psi value
            cvFpsi(iCv) = bcFpsi
 
          else ! use geometric face center
@@ -376,15 +478,18 @@
          endif
 
          !Determine cvVol for the guard cell
-         if (isymm.eq.0) then  !slab geometry
+         if (isymm.eq.0) then  ! slab geometry
            ! volume is area times width
-           g%cvVol(iCv) = g%cvSz(iCv) *width
+           g%cvVol(iCv) = g%cvSz(iCv)*width
+           g%cvHz(iCv) = width
          elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
            ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+           g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,0)
          elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0
           ! volume is area times circumference of circle with radius equal to the y-coordinate of centroid
            g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)
+           g%cvHz(iCv) = 2.0_R8*pi*centroid(iCv,1)
          endif
 
        case default
@@ -415,7 +520,7 @@
 
 ! loop over faces
       !precompute face centers
-      do iFc = 1,m%nFc
+      do iFc = 1, m%nFc
         v1 = m%fcVx(iFc,1)
         v2 = m%fcVx(iFc,2)
         ! compute face centers
@@ -442,12 +547,15 @@
        ! g%fcS : face surface
        if (isymm.eq.0) then
          g%fcS(iFc) = g%fcHt(iFc) * width
+         g%fcHz(iFc) = width
        elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
          ! face surface = face length * 2 pi * mean x-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxX(v1) + g%vxX(v2) )
+         g%fcS(iFc) = pi * g%fcHt(iFc) * ( g%vxX(v1) + g%vxX(v2) )
+         g%fcHz(iFc) = pi * ( g%vxX(v1) + g%vxX(v2) )
        elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0 axis
          ! face surface = face length * 2 pi * mean y-coordinate of face center
-         g%fcS(iFc) = pi*g%fcHt(iFc) * ( g%vxY(v1) + g%vxY(v2) )
+         g%fcS(iFc) = pi * g%fcHt(iFc) * ( g%vxY(v1) + g%vxY(v2) )
+         g%fcHz(iFc) = pi * ( g%vxY(v1) + g%vxY(v2) )
        endif
 
        ! Calculate fcEb, unit vector of magnetic field at face center
@@ -489,6 +597,29 @@
        econf(1) = (g%fcHc(iFc,2)*ec1fc(1) + g%fcHc(iFc,1)*efcc2(1))
      &            /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
 
+       ! The oriented face normal points away from c1. On a valid face,
+       ! both center-to-face vectors therefore have positive projections.
+       ! Check the raw geometry before poloidal faces replace the connector.
+       t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
+       t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
+       fn(0) = t0
+       fn(1) = t1
+       rawQgam1 = sinang(ec1fc(0),ec1fc(1),fn(0),fn(1))
+       rawQgam2 = sinang(efcc2(0),efcc2(1),fn(0),fn(1))
+       signedHc1 = rawQgam1*g%fcHc(iFc,1)
+       signedHc2 = rawQgam2*g%fcHc(iFc,2)
+       sideTolerance = 1.0e-6_R8*g%fcHt(iFc)
+
+       if (signedHc1.lt.-sideTolerance .or.
+     &     signedHc2.lt.-sideTolerance) then
+         write(*,*) 'ERROR b2agmt: cell centers on same face side'
+         write(*,*) '  iFc, c1, c2: ', iFc, c1, c2
+         write(*,*) '  face midpoint (x,y): ', fcX(iFc), fcY(iFc)
+         write(*,*) '  signed center distances [mm]: ',
+     &     1.0e3_R8*signedHc1, 1.0e3_R8*signedHc2
+         call xerrab('b2agmt: invalid face geometry')
+       endif
+
        ! Corrections for specific geometries
        ! poloidal faces
        ! =  is a face across the poloidal direction in a cell with aligned radial faces
@@ -510,14 +641,6 @@
            efcc2(1) = -g%fcEb(iFc,1)
          endif
        endif
-
-       ! Calculate face normal (not normalized!)
-       ! general: dx_normal = dy_verts  (= y2 - y1)
-       !          dy_normal = -dx_verts (= x1 - x2)
-       t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
-       t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
-       fn(0) = t0
-       fn(1) = t1
 
 *    .. compute angles
        ! gamma - angle between cell connector (on face) and the face normal
@@ -626,7 +749,7 @@
       ! g%vxBb(:,0) = dpsi/dy
       ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
 
-      do iVx = 1,m%nVx
+      do iVx = 1, m%nVx
         if (isymm.eq.0) then
           t0 = 1.0_R8
         elseif (isymm.eq.1 .or. isymm.eq.2) then
@@ -634,6 +757,7 @@
         elseif (isymm.eq.3 .or. isymm.eq.4) then
           t0 = 2.0_R8 * pi * g%vxY(iVx)
         endif
+        g%vxHz(iVx) = t0
 
         g%vxBb(iVx,0) = sqrt(g%vxBb(iVx,0)**2 + g%vxBb(iVx,1)**2)/t0
         g%vxBb(iVx,1) = 0.0_R8
@@ -643,9 +767,55 @@
 
       enddo
 
-*    ..test sign of g%cvVol, g%cvS, g%fcS
+*    ..compute connection length
+      wrk0 = 0.0_R8
+      wrk1 = 0.0_R8
+      do iFt = 1, m%nFt
+        if (m%ftFcP(iFt,2) .gt. 0) then
+          do i = m%ftFcP(iFt,1), m%ftFcP(iFt,1)+m%ftFcP(iFt,2)-1
+            iFc = m%ftFc(i)
+            iCv1 = m%fcCv(iFc,1)
+            iCv2 = m%fcCv(iFc,2)
+            wrk1(iCv1) = wrk1(iCv1) + g%fcHc(iFc,1)
+            wrk1(iCv2) = wrk1(iCv2) + g%fcHc(iFc,2)
+          enddo
+        endif
+      enddo
+      do iFt = 1, m%nFt
+        do i = m%ftCvP(iFt,1), m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+          iCv = m%ftCv(i)
+          wrk0(iCv) = wrk1(iCv)*g%cvBb(iCv,3)/g%cvBb(iCv,0)
+          g%ftConn(iFt) = g%ftConn(iFt) + wrk0(iCv)
+        enddo
+      enddo
+      do iFt = 1, m%nFt
+        iCv = m%ftCv(m%ftCvP(iFt,1))
+        if (m%cvOnClosedSurface(iCv)) then
+          ! core region: actual connection length (same as ftConn)
+          g%cvConn(m%ftCv(m%ftCvP(iFt,1):m%ftCvP(iFt,1)+
+     &                    m%ftCvP(iFt,2)-1)) = g%ftConn(iFt)
+         else
+          ! SOL/PF: effective distance to targets/boundaries
+          ! implicit assumption that cells in ftCv are listed starting
+          ! at one of the targets
+          do ic = m%ftCvP(iFt,1), m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+            iCv = m%ftCv(ic)
+            L1 = 0.5_R8*wrk0(iCv)
+            do j = ic+1, m%ftCvP(iFt,1)+m%ftCvP(iFt,2)-1
+              L1 = L1 + wrk0(m%ftCv(j))
+            enddo
+            L2 = 0.5_R8*wrk0(iCv)
+            do j = m%ftCvP(iFt,1), ic-1
+              L2 = L2 + wrk0(m%ftCv(j))
+            enddo
+            g%cvConn(iCv) = min(L1,L2)
+          enddo
+        endif
+      enddo
+
+*    ..test sign of g%cvVol, g%cvSz, g%fcS
       call b2xvs1(m%nCv, g%cvVol, 1,'cvVol' ,'.gt.')
-      call b2xvs1(m%nCv, g%cvSz,   1,'cvS'   ,'.gt.')
+      call b2xvs1(m%nCv, g%cvSz,  1,'cvS'   ,'.gt.')
       call b2xvs1(m%nFc, g%fcS,   1,'fcS'   ,'.gt.')
 
 * ..return

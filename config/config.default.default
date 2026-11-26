@@ -35,7 +35,7 @@ LDLIBES =     # other libraries
 
 LD =          # loader
 LN =          # loader for netCDF utility programs (should be serial)
-LDOPTS =      # options for loader (for serail compilation)
+LDOPTS =      # options for loader (for serial compilation)
 LPOPTS =      # options for loader (added to LDOPTS for parallel compilation)
 
 #!!!Local Variables:

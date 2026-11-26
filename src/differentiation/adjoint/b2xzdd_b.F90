@@ -28,7 +28,8 @@ SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src)
 !      B2XZDD zeroes out the array elements corresponding to dead cells
 !      and core boundary cells.
 !     ------------------------------------------------------------------
-  INTEGER :: id, icv
+  INTEGER :: id, ifc, icn, icv
+  INTRINSIC MIN
 !     ------------------------------------------------------------------
   DO icv=1,ncv
     IF (mpg%cvreg(icv) .EQ. 0 .AND. switch%zero_dead_and_core .GE. 1) &
@@ -36,13 +37,23 @@ SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src)
       DO id=0,nd
         src(icv, id) = 0.0_R8
       END DO
-      CALL PUSHCONTROL2B(2)
-    ELSE IF (icv .GT. mpg%nci .AND. mpg%cvonclosedsurface(icv) .AND. &
-&       switch%zero_dead_and_core .GE. 2) THEN
-      DO id=0,nd
-        src(icv, id) = 0.0_R8
-      END DO
-      CALL PUSHCONTROL2B(1)
+      CALL PUSHCONTROL2B(3)
+    ELSE IF (icv .GT. mpg%nci .AND. switch%zero_dead_and_core .GE. 2) &
+&   THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+      IF (mpg%cvonclosedsurface(icn)) THEN
+        DO id=0,nd
+          src(icv, id) = 0.0_R8
+        END DO
+        CALL PUSHCONTROL2B(2)
+      ELSE
+        CALL PUSHCONTROL2B(1)
+      END IF
     ELSE
       CALL PUSHCONTROL2B(0)
     END IF
@@ -73,12 +84,13 @@ SUBROUTINE B2XZDD_BWD(ncv, nd, switch, mpg, src, srcb)
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: src(ncv, 0:nd)
   REAL(kind=r8) :: srcb(ncv, 0:nd)
-  INTEGER :: id, icv
+  INTEGER :: id, ifc, icn, icv
+  INTRINSIC MIN
   INTEGER*4 :: branch
   DO icv=ncv,1,-1
     CALL POPCONTROL2B(branch)
-    IF (branch .NE. 0) THEN
-      IF (branch .EQ. 1) THEN
+    IF (branch .GE. 2) THEN
+      IF (branch .EQ. 2) THEN
         DO id=nd,0,-1
           srcb(icv, id) = 0.D0
         END DO
@@ -115,7 +127,8 @@ SUBROUTINE B2XZDD_NODIFF(ncv, nd, switch, mpg, src)
 !      B2XZDD zeroes out the array elements corresponding to dead cells
 !      and core boundary cells.
 !     ------------------------------------------------------------------
-  INTEGER :: id, icv
+  INTEGER :: id, ifc, icn, icv
+  INTRINSIC MIN
 !     ------------------------------------------------------------------
   DO icv=1,ncv
     IF (mpg%cvreg(icv) .EQ. 0 .AND. switch%zero_dead_and_core .GE. 1) &
@@ -123,11 +136,19 @@ SUBROUTINE B2XZDD_NODIFF(ncv, nd, switch, mpg, src)
       DO id=0,nd
         src(icv, id) = 0.0_R8
       END DO
-    ELSE IF (icv .GT. mpg%nci .AND. mpg%cvonclosedsurface(icv) .AND. &
-&       switch%zero_dead_and_core .GE. 2) THEN
-      DO id=0,nd
-        src(icv, id) = 0.0_R8
-      END DO
+    ELSE IF (icv .GT. mpg%nci .AND. switch%zero_dead_and_core .GE. 2) &
+&   THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+        icn = mpg%fccv(ifc, 2)
+      ELSE
+        icn = mpg%fccv(ifc, 1)
+      END IF
+      IF (mpg%cvonclosedsurface(icn)) THEN
+        DO id=0,nd
+          src(icv, id) = 0.0_R8
+        END DO
+      END IF
     END IF
   END DO
   RETURN

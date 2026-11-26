@@ -1037,20 +1037,16 @@ CONTAINS
   SUBROUTINE B2MOD_ZHFRTF_TF_B(icv, is, zhcscorr, nais, naisb, smtf, &
 &   smtfb, smtf_nofl, corr_tfia, corr_tfiab)
     IMPLICIT NONE
-    INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
-    REAL(kind=r8) :: smtfb, corr_tfiab, naisb
-    INTRINSIC SUM
-    REAL(kind=r8), DIMENSION(nspecies) :: temp
-    REAL(kind=r8), DIMENSION(nspecies) :: temp0
-    REAL(kind=r8), DIMENSION(nspecies) :: tempb
-    INTEGER :: ii1
+    INTEGER :: icv, is, zhcscorr, iss
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais, dum
+    REAL(kind=r8) :: smtfb, corr_tfiab, naisb, dumb
+    REAL(kind=r8) :: temp
+    REAL(kind=r8) :: tempb
+    REAL(kind=r8) :: temp0
     REAL(kind=r8) :: temp1
+    REAL(kind=r8) :: tempb0
     REAL(kind=r8) :: temp2
     REAL(kind=r8) :: temp3
-    REAL(kind=r8) :: tempb0
-    REAL(kind=r8) :: temp4
-    REAL(kind=r8) :: temp5
     REAL(kind=r8) :: tempb1
     REAL(kind=r8) :: tempb2
     INTEGER*4 :: branch
@@ -1070,9 +1066,13 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..the thermal force before charge state correction
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta(icv, s2nucl(is)-1, iss)*gtalc(icv&
+&       , iss)
+    END DO
     CALL PUSHREAL8(smtf, r8/8)
-    smtf = -(ia(icv, is)*SUM(nal(icv, 0:nspecies-1)*c_r_ta(icv, s2nucl(&
-&     is)-1, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)))
+    smtf = -(ia(icv, is)*dum)
 !
 !   ..the thermal force before charge state correction without flux limiting
 !
@@ -1090,40 +1090,33 @@ CONTAINS
     smtfb = corr_tfia*smtfb
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      temp1 = gtalc(icv, s2nucl(is)-1)
+      temp = gtalc(icv, s2nucl(is)-1)
+      temp0 = nal(icv, s2nucl(is)-1)
+      temp1 = nais*gt_ac(icv, is)/temp0
       temp2 = nal(icv, s2nucl(is)-1)
-      temp3 = nais*gt_ac(icv, is)/temp2
-      temp4 = nal(icv, s2nucl(is)-1)
-      temp5 = c_r_tb(icv, s2nucl(is)-1)
-      tempb0 = -((temp3-ia(icv, is)*temp1)*smtfb)
-      tempb1 = -(temp5*temp4*smtfb)
-      tempb2 = tempb1/temp2
-      iab(icv, is) = iab(icv, is) - temp1*tempb1
+      temp3 = c_r_tb(icv, s2nucl(is)-1)
+      tempb0 = -((temp1-ia(icv, is)*temp)*smtfb)
+      tempb1 = -(temp3*temp2*smtfb)
+      tempb2 = tempb1/temp0
+      iab(icv, is) = iab(icv, is) - temp*tempb1
       gtalcb(icv, s2nucl(is)-1) = gtalcb(icv, s2nucl(is)-1) - ia(icv, is&
 &       )*tempb1
       naisb = naisb + gt_ac(icv, is)*tempb2
       gt_acb(icv, is) = gt_acb(icv, is) + nais*tempb2
-      nalb(icv, s2nucl(is)-1) = nalb(icv, s2nucl(is)-1) + temp5*tempb0 -&
-&       temp3*tempb2
-      c_r_tbb(icv, s2nucl(is)-1) = c_r_tbb(icv, s2nucl(is)-1) + temp4*&
+      nalb(icv, s2nucl(is)-1) = nalb(icv, s2nucl(is)-1) + temp3*tempb0 -&
+&       temp1*tempb2
+      c_r_tbb(icv, s2nucl(is)-1) = c_r_tbb(icv, s2nucl(is)-1) + temp2*&
 &       tempb0
     END IF
     CALL POPREAL8(smtf, r8/8)
-    temp = nal(icv, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)
-    temp0 = c_r_ta(icv, s2nucl(is)-1, 0:nspecies-1)
-    iab(icv, is) = iab(icv, is) - SUM(temp0*temp)*smtfb
-    ii1 = nspecies + 1
-    DO ii1=1,nspecies
-      c_r_tab(icv, s2nucl(is)-1, ii1-1) = c_r_tab(icv, s2nucl(is)-1, ii1&
-&       -1) + temp(ii1)*tempb(ii1)
-    END DO
-    DO ii1=1,nspecies
-      nalb(icv, ii1-1) = nalb(icv, ii1-1) + gtalc(icv, ii1-1)*temp0(ii1)&
-&       *tempb(ii1)
-    END DO
-    DO ii1=1,nspecies
-      gtalcb(icv, ii1-1) = gtalcb(icv, ii1-1) + nal(icv, ii1-1)*temp0(&
-&       ii1)*tempb(ii1)
+    iab(icv, is) = iab(icv, is) - dum*smtfb
+    dumb = -(ia(icv, is)*smtfb)
+    DO iss=nspecies-1,0,-1
+      c_r_tab(icv, s2nucl(is)-1, iss) = c_r_tab(icv, s2nucl(is)-1, iss) &
+&       + nal(icv, iss)*gtalc(icv, iss)*dumb
+      tempb = c_r_ta(icv, s2nucl(is)-1, iss)*dumb
+      nalb(icv, iss) = nalb(icv, iss) + gtalc(icv, iss)*tempb
+      gtalcb(icv, iss) = gtalcb(icv, iss) + nal(icv, iss)*tempb
     END DO
   END SUBROUTINE B2MOD_ZHFRTF_TF_B
 
@@ -1132,9 +1125,8 @@ CONTAINS
   SUBROUTINE B2MOD_ZHFRTF_TF(icv, is, zhcscorr, nais, smtf, smtf_nofl, &
 &   corr_tfia)
     IMPLICIT NONE
-    INTEGER :: icv, is, zhcscorr
-    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais
-    INTRINSIC SUM
+    INTEGER :: icv, is, zhcscorr, iss
+    REAL(kind=r8) :: smtf, smtf_nofl, corr_tfia, nais, dum
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -1151,12 +1143,20 @@ CONTAINS
 !-----------------------------------------------------------------------
 !
 !   ..the thermal force before charge state correction
-    smtf = -(ia(icv, is)*SUM(nal(icv, 0:nspecies-1)*c_r_ta(icv, s2nucl(&
-&     is)-1, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)))
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta(icv, s2nucl(is)-1, iss)*gtalc(icv&
+&       , iss)
+    END DO
+    smtf = -(ia(icv, is)*dum)
 !
 !   ..the thermal force before charge state correction without flux limiting
-    smtf_nofl = -(ia(icv, is)*SUM(nal(icv, 0:nspecies-1)*c_r_ta_nofl(icv&
-&     , s2nucl(is)-1, 0:nspecies-1)*gtalc(icv, 0:nspecies-1)))
+    dum = 0.0_R8
+    DO iss=0,nspecies-1
+      dum = dum + nal(icv, iss)*c_r_ta_nofl(icv, s2nucl(is)-1, iss)*&
+&       gtalc(icv, iss)
+    END DO
+    smtf_nofl = -(ia(icv, is)*dum)
 !
 !   ..apply the charge state correction
     IF (zhcscorr .EQ. 1) THEN

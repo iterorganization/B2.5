@@ -276,6 +276,7 @@ CONTAINS
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(GEOMETRY), INTENT(IN) :: geo
     INTEGER :: nfc, ns
+    INTEGER, SAVE :: gridgeometry
     INTEGER :: ifb, ifbb, istrai, icount
     INTEGER :: ifbreg, is, ib, is0, is00, is_start, is_end, iatm
     LOGICAL :: consistent, valid, done
@@ -369,7 +370,10 @@ CONTAINS
     CALL XERTST(1.0_R8 .LE. volrec_overshoot .OR. 0.0_R8 .EQ. &
 &         volrec_overshoot, 'faulty internal parameter volrec_overshoot'&
 &        )
-    IF (mpg%nnreg(0) .LE. 2) THEN
+    gridgeometry = GEOMETRYID(mpg, geo, 1)
+    IF (((gridgeometry .EQ. geometry_linear .OR. gridgeometry .EQ. &
+&       geometry_limiter) .OR. gridgeometry .EQ. geometry_cylinder) .OR.&
+&       gridgeometry .EQ. geometry_annulus) THEN
       coreregno = 0
     ELSE
       coreregno = 1
@@ -1134,8 +1138,8 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psncd, psnld
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, icn, ic1, ic2, is, is_start, &
+&   is_end, iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     REAL(kind=r8), DIMENSION(nbdirsmax) :: sna_pumpd, sna_puffd, &
 &   sna_cored
@@ -1145,11 +1149,11 @@ CONTAINS
 &   t0d, zafd
     REAL(kind=r8), EXTERNAL :: INTFACE_S
     INTRINSIC MAXVAL
+    INTRINSIC MIN
     INTRINSIC NINT
     INTRINSIC SUM
     INTRINSIC MAX
     INTRINSIC ABS
-    INTRINSIC MIN
     EXTERNAL XERRAB
     INTRINSIC LOG
     INTRINSIC TANH
@@ -1437,7 +1441,17 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv .GT. mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+                    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+                      icn = mpg%fccv(ifc, 2)
+                    ELSE
+                      icn = mpg%fccv(ifc, 1)
+                    END IF
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     DO nd=1,nbdirs
                       sum_sd(nd) = sum_sd(nd) + geo%cvvol(icv)*pld%na(nd&
 &                       , icv, is)
@@ -3374,17 +3388,17 @@ CONTAINS
 !
           END SELECT
 !
-          IF ((fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&             .OR. fb_actuator(ifb) .EQ. 8) WRITE(*, '(a,1p,i3,g15.6)') &
-&                                           'feedback_actuator ', &
-&                                           b2espcr(fb_species(ifb)), &
-&                                           saved_fb_actuator(ifb)
+          IF (fb_actuator(ifb) .EQ. 1 .OR. (fb_actuator(ifb) .GE. 3 &
+&             .AND. fb_actuator(ifb) .LE. 8)) WRITE(*, '(a,1p,i3,g15.6)'&
+&                                            ) 'feedback_actuator ', &
+&                                             b2espcr(fb_species(ifb)), &
+&                                             saved_fb_actuator(ifb)
         END IF
 !
 !
-        feedback_namelist_used = ((feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
-&         fb_actuator(ifb) .EQ. 8
+        feedback_namelist_used = (feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. (fb_actuator(ifb) .GE. 3 .AND. &
+&         fb_actuator(ifb) .LE. 8)
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           DO nd=1,nbdirs
@@ -3430,18 +3444,18 @@ CONTAINS
     TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
     LOGICAL :: main_call
 !   ..local variables
-    INTEGER :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start, is_end&
-&   , iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
+    INTEGER :: ifb, ifc, ifc1, ifc2, icv, icn, ic1, ic2, is, is_start, &
+&   is_end, iss, ibc, istra, i, j, k, l, ic, ifs, iatm, imol
     REAL(kind=r8) :: sna_pump, sna_puff, sna_core
     INTEGER, SAVE :: ncall=0
     REAL(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s, t0, t1, zaf
     REAL(kind=r8), EXTERNAL :: INTFACE_S
     INTRINSIC MAXVAL
+    INTRINSIC MIN
     INTRINSIC NINT
     INTRINSIC SUM
     INTRINSIC MAX
     INTRINSIC ABS
-    INTRINSIC MIN
     EXTERNAL XERRAB
     INTRINSIC LOG
     INTRINSIC TANH
@@ -3665,7 +3679,17 @@ CONTAINS
                 ic1 = fbregp(ifb, 1)
                 ic2 = ic1 + fbregp(ifb, 2) - 1
                 DO icv=ic1,ic2
-                  IF (mpg%cvonclosedsurface(icv)) THEN
+                  IF (icv .GT. mpg%nci) THEN
+                    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+                    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+                      icn = mpg%fccv(ifc, 2)
+                    ELSE
+                      icn = mpg%fccv(ifc, 1)
+                    END IF
+                  ELSE
+                    icn = icv
+                  END IF
+                  IF (mpg%cvonclosedsurface(icn)) THEN
                     sum_s = sum_s + pl%na(icv, is)*geo%cvvol(icv)
                     charge_frac(iss) = charge_frac(iss) + pl%na(icv, is)&
 &                     *geo%cvvol(icv)
@@ -4972,17 +4996,17 @@ CONTAINS
 !
           END SELECT
 !
-          IF ((fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3) &
-&             .OR. fb_actuator(ifb) .EQ. 8) WRITE(*, '(a,1p,i3,g15.6)') &
-&                                           'feedback_actuator ', &
-&                                           b2espcr(fb_species(ifb)), &
-&                                           saved_fb_actuator(ifb)
+          IF (fb_actuator(ifb) .EQ. 1 .OR. (fb_actuator(ifb) .GE. 3 &
+&             .AND. fb_actuator(ifb) .LE. 8)) WRITE(*, '(a,1p,i3,g15.6)'&
+&                                            ) 'feedback_actuator ', &
+&                                             b2espcr(fb_species(ifb)), &
+&                                             saved_fb_actuator(ifb)
         END IF
 !
 !
-        feedback_namelist_used = ((feedback_namelist_used .OR. &
-&         fb_actuator(ifb) .EQ. 1) .OR. fb_actuator(ifb) .EQ. 3) .OR. &
-&         fb_actuator(ifb) .EQ. 8
+        feedback_namelist_used = (feedback_namelist_used .OR. &
+&         fb_actuator(ifb) .EQ. 1) .OR. (fb_actuator(ifb) .GE. 3 .AND. &
+&         fb_actuator(ifb) .LE. 8)
 !
         IF (fb_current_prev(ifb) .GT. 0.0_R8) THEN
           saved_fb_prev(ifb) = fb_current_prev(ifb)

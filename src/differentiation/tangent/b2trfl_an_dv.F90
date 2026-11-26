@@ -69,9 +69,10 @@ SUBROUTINE B2TRFL_AN_DV(icv, switch, mpg, c_hta_an, c_hta_and, amnucl, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, t0d, t1d, t2d
+  INTRINSIC MIN
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC TANH
@@ -100,7 +101,17 @@ SUBROUTINE B2TRFL_AN_DV(icv, switch, mpg, c_hta_an, c_hta_and, amnucl, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
+  ELSE
+    icn = icv
+  END IF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     DO nd=1,nbdirs
       coefd(nd) = zetapd(nd)/mp
     END DO
@@ -285,8 +296,9 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !-----------------------------------------------------------------------
 !.declarations
 !   ..local variables
-  INTEGER :: i
+  INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
+  INTRINSIC MIN
   INTRINSIC SQRT
   INTRINSIC ABS
   INTRINSIC TANH
@@ -300,7 +312,17 @@ SUBROUTINE B2TRFL_AN_NODIFF(icv, switch, mpg, c_hta_an, amnucl, amti, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl_an')
 !   ..main
-  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))) THEN
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
+  ELSE
+    icn = icv
+  END IF
+  IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = zetap/mp
     DO i=0,nspecies-1
       IF (c_hta_an(i)*gtalc(icv, i) .GE. 0.) THEN

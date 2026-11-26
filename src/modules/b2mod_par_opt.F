@@ -116,7 +116,7 @@
      &                        lbfgs_rescale_rho=1.0_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0,
      &                 nmean_opt = 0, nshift_opt = 0, ncorr_opt = 0,
-     &                 lbfgs_memsize = 1, lbfgs_h0_type = 1
+     &                 lbfgs_memsize = 10, lbfgs_h0_type = 0
       integer, save :: paris(nvmx), parib(nvmx)
       logical, save :: sigma_opt(nsigmx), mean_opt(nsigmx),
      &                 shift_opt(nsigmx), shiftopt(nsigmx),

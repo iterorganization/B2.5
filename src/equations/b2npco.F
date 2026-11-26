@@ -18,7 +18,8 @@
      & ,only : update_balance_sources_particles,
      &         update_balance_eirene_sources_particles,
      &         balance_netcdf,                                           !djm Jan2017
-     &         tot_sna0to1, fna_tot                                      !djm Mar2019
+     &         tot_sna0to1, fna_tot,                                     !djm Mar2019
+     &         b2scdt_sna0to1
 #endif
       use b2mod_ad
      & , only : ncall_b2npco, rxg_npco
@@ -116,15 +117,8 @@
 *   ..set internal parameters on first call
       if (ncall_b2npco.eq.0) then
         if(switch%b2mndt_style.eq.2) then
-          rxg_npco = huge(1.0_R8)
-          if (switch%b2npco_pcm0.gt.0.0_R8) then
-            call xerrab('b2npco_pcm0 must be 0 for time-dependent mode')
-          endif
-          if (switch%b2npco_pcm1.gt.0.0_R8) then
-            call xerrab('b2npco_pcm1 must be 0 for time-dependent mode')
-          endif
           warning = .false.
-          do iCv=1, nCv
+          do iCv = 1, mpg%nCi
             warning = warning .or.
      &        rxf*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
           enddo
@@ -133,9 +127,8 @@
      &        'rxf*dtco*time_factor for species ',isb,' should be 1 !'
             write(6,*) 'Time derivative terms may be inacurrate !'
           endif
-        else
-          rxg_npco = switch%b2npco_rxg
         endif
+        rxg_npco = switch%b2npco_rxg
       endif
       if (switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         if (in_parallel()) then
@@ -161,19 +154,6 @@
        call b2xvsg (nCv, dv%pa(1,isb), 1, 'pb', '.gt.')
        call b2xvsg (nCv, pl%na(1,isb), 1, 'nb', '.gt.')
       endif
-#ifndef FIXED_POINT
-cdjm Jan2017 update particle source components for balance
-      if (balance_netcdf.ne.0) then
-        tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
-        fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
-        call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
-      endif
-      if (balance_netcdf.ne.0 .or.
-     &    switch%write_eirene_sources.ne.0) then
-        call update_balance_eirene_sources_particles
-     &   (nCv,isb,pl%na(:,isb))
-      endif
-#endif
 
       !Compute residual without time-stepping sources (needed at next time-step for ckn scheme)
       if (switch%b2mndt_ckn.eq.2) then
@@ -190,7 +170,27 @@ cdjm Jan2017 update particle source components for balance
      &   geo%cvVol, psnl%na(:,isb), switch, mpg, sr%snadt(1,0,isb))
 *  .. add contribution from time-dependent source
         sr%sna(:,:,isb) = sr%sna(:,:,isb) + sr%snadt(:,:,isb)
+#ifndef FIXED_POINT
+*  .. balance.nc: added to the sources in place, so summed up until
+*     b2sral builds the sources anew
+        if (balance_netcdf.ne.0) b2scdt_sna0to1(:,:,isb) =
+     &    b2scdt_sna0to1(:,:,isb) + sr%snadt(:,:,isb)
+#endif
       endif                                                              !srv 07.07.21 }
+
+#ifndef FIXED_POINT
+cdjm Jan2017 update particle source components for balance
+      if (balance_netcdf.ne.0) then
+        tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
+        fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
+        call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles
+     &   (nCv,isb,pl%na(:,isb))
+      endif
+#endif
 
 * ..particle balance
 *   ..compute residual

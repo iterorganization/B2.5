@@ -621,6 +621,7 @@ cdpc-debug
 
 !   ..conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
+      call init_mapping (mpg)
       write (*,*) 'Mapping created'
       call prep_geometry (nx, ny, gm, mpg)
       write (*,*) 'Geometry created'

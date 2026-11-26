@@ -22,6 +22,8 @@
       use b2mod_running_average
       use b2mod_batch_average
      & , only : batch_av_all
+      use b2mod_tallies
+     & , only : b2qie
       use b2mod_switches
       use b2mod_facdrift_ExB
 #ifndef NAGFOR
@@ -282,6 +284,17 @@ c therefore initialise here
 *   ..compute initial ni
       call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
       call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
+*   ..when using BDF2, the first iteration must use IE to start-up the scheme
+      if (switch%b2mndt_bdf.eq.2.and.itim.eq.0
+     &     .and.switch%b2mndt_startup.gt.0) then
+        switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+        ts_factor=1.0_R8
+        if (switch%b2mndt_startup.eq.2) then
+          switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+          ts_factor=2.0_R8
+        endif
+        flag_startup=1 !fc: startup done
+      endif
 * ..main loop
 *   ..outer iteration
       istg(0) = 0
@@ -349,6 +362,21 @@ ctmp.dpc
      &      st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
      &      st%dv%fchviskt_a, st%dv%fchviskt)
 
+*      ..compute temperature equilibration term for Eirene
+          call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
+          call b2treq (nCv, switch, geo%cvVol,
+     &     st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni,
+     &     wrk0, st%dv%lnlam, st_ext, st%co%ceqp)
+          b2qie = 0.0_R8
+          do iCv = 1, mpg%nCi
+            if(mpg%cvReg(iCv).gt.0) then
+              b2qie(mpg%cvReg(iCv)) = b2qie(mpg%cvReg(iCv))+
+     &          st%co%ceqp(iCv)*st%dv%ne(iCv)*st%dv%ni(iCv,0)/
+     &         (st%pl%te(iCv)*sqrt(st%pl%te(iCv)))*
+     &         (st%pl%te(iCv)-st%pl%ti(iCv))
+            end if
+          end do
+          b2qie(0) = sum(b2qie(1:mpg%nnreg(0)))
 #ifdef WG_TODO
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -421,16 +449,7 @@ ctmp.dpc
 *      ..basic iterative step
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
-            !fc: if using BDF2, the first iteration must use IE to start-up the scheme
-            if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
-              switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
-              ts_factor=1.0_R8
-              if (switch%b2mndt_startup.eq.2) then
-                switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
-                ts_factor=2.0_R8
-              endif
-              flag_startup=1 !fc: startup done
-            endif
+
             if (switch%b2mndt_style.eq.1) then
 
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
@@ -445,15 +464,6 @@ ctmp.dpc
 
             else
               call xerrab('b2mndt_style should be 1 or 2')
-            endif
-            
-            !fc: if BDF2 startup done, switch back to BDF2 time-stepping scheme
-            if (flag_startup.eq.1) then
-                switch%b2mndt_bdf=2
-                if (switch%b2mndt_startup.eq.2) then
-                  switch%b2mndt_ckn=1
-                endif
-                ts_factor = 3.0_R8/2.0_R8
             endif
 
             flush(6)
@@ -588,6 +598,15 @@ ctmp.dpc
 *    ..end outer iteration
         istg(0) = istg(0)+1
         goto 1
+      endif
+                  
+      !once startup is done, switch back to BDF2 time-stepping scheme
+      if (flag_startup.eq.1) then
+          switch%b2mndt_bdf=2
+          if (switch%b2mndt_startup.eq.2) then
+            switch%b2mndt_ckn=1
+          endif
+          ts_factor = 3.0_R8/2.0_R8
       endif
 
 *   ..mms time-dependent error analysis

@@ -371,7 +371,7 @@ contains
 
        ! --- store new (s, y) pair; rho computed on free subspace only
        ! (variables active at the *new* point are excluded so stale
-       ! curvature from the bound doesn't enter future directions)
+       ! curvature from the bound does not enter future directions)
        sty_free = 0.0d0
        do i = 1, n
           if (.not. active(i)) &

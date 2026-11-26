@@ -97,6 +97,11 @@ c       fl = 1.0_R8
           if(.not.(.not.is_neutral(isb) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then     !srv 12.04.08
+           if(max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)).gt.mpg%nCi.and.
+     &  mpg%cvOnClosedSurface(min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))))
+     >      then
+             fl(iFc) = 1.0_R8
+           else
             if (switch%min_collisions.gt.0.0_R8) then
               wrk = switch%cvsa_low_col_mltpl
               cflmv_loc(iFc) = cflmv_loc(iFc)*
@@ -121,6 +126,7 @@ c       fl = 1.0_R8
             cvsbxhz(iFc) = cvsbxhz(iFc)/tfl
             vsbfx(iFc) = vsbfx(iFc)/tfl
             fl(iFc) = tfl
+           endif
           else
             fl(iFc) = 1.0_R8
           endif

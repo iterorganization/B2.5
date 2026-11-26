@@ -62,7 +62,7 @@ c<<<
 c     tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-c      if(nnreg(0).lt.7) then
+c      if(mpg%nXpt.le.1) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -306,12 +306,15 @@ c======================================================================
       use b2mod_b2plot
       use b2mod_constants
       use b2mod_b2plot_wall_loading
+      use b2mod_geometry
+     , , only : geometryId, GEOMETRY_LIMITER
 #ifdef B25_EIRENE
       use eirmod_eirbra
       use eirmod_wneutrals
 #endif
       use b2us_data
       implicit none
+      integer, save :: geometryType
       integer i,i1,i2,ii,il,is,itmp,j,jj,iCv,iFc,istart,iend,idir,
      *  k,k1,k2,kb,ke,kk,kn,kkb,kke,kkk,ks,
      *  l,n,cont,flagmin,flagmin1,ksel,iVx1,iVx2,nRFc
@@ -345,7 +348,8 @@ c======================================================================
       call subini ('b2pwltrg')
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2mndr_eirene', use_eirene)
-      lim_cnf=mpg%nncut.eq.0 .and. mpg%nnreg(0).eq.2
+      geometryType=geometryId(mpg,geo,2)
+      lim_cnf=geometryType.eq.GEOMETRY_LIMITER
       tab=char(9)
 c
 c*** Check the shadowing structure - it must be closed
@@ -606,7 +610,7 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-c      if (mpg%nnreg(0).lt.7) then
+c      if (mpg%nXpt.le.1) then
 c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
 c        if (lim_cnf) then
 c          print '(1x,a3,1p,4e12.4)',

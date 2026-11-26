@@ -15,7 +15,7 @@
 MODULE B2MOD_RECYCLE_DIFF
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_MATH_DIFF
   IMPLICIT NONE
 !**************************************************************************************

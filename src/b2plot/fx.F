@@ -12,7 +12,7 @@ c
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
       real (kind=R8) :: wrk(-1:mpg%nx)
-      integer ix,is,iCv,iCn,ixstart,ixend,len_of_digits
+      integer ix,is,iCv,iCn,iFc,ixstart,ixend,len_of_digits
 
       intrinsic min,max,mod,sqrt
       external xertst,len_of_digits
@@ -135,6 +135,14 @@ cxpb : new default behaviour : zero of distance set at ixref
      2       min(lmax,max(lmin,work(iCv,is,iwrk))),
      3       wrk(ix+1),
      4       min(lmax,max(lmin,work(iCn,is,iwrk))))
+            if(iCv.gt.mpg%nCi) then
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            endif
+            if(iCn.gt.mpg%nCi) then
+              iFc=mpg%cvFc(mpg%cvFcP(iCn,1))
+              iCn=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            endif
             if(mpg%cvOnClosedSurface(iCv).neqv.
      .         mpg%cvOnClosedSurface(iCn)) then
 #ifndef PLPLOT
@@ -235,6 +243,14 @@ cxpb : new default behaviour : zero of distance set at ixref
      2       min(lmax,max(lmin,work(iCv,is,iwrk))),
      3       wrk(ix+1),
      4       min(lmax,max(lmin,work(iCn,is,iwrk))))
+            if(iCv.gt.mpg%nCi) then
+              iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+              iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            endif
+            if(iCn.gt.mpg%nCi) then
+              iFc=mpg%cvFc(mpg%cvFcP(iCn,1))
+              iCn=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            endif
             if(mpg%cvOnClosedSurface(iCv).neqv.
      .         mpg%cvOnClosedSurface(iCn)) then
 #ifndef PLPLOT

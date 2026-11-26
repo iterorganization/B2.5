@@ -40,13 +40,13 @@ CONTAINS
 !                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
 !                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
 !                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
-!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
 !                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
-!                gm.vxeb:out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
 !                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
 !                gm.ftbbav2:in-out gm.ftfpsi:in-out gm.fspsi:in-out
-!                gm.ftds:out gm.fsds:out mpg.intcellp:in-out mpg.intcellr:in-out
-!                mpg.divfcor:in-out
+!                gm.ftds:in-out gm.fsds:in-out mpg.intcellp:in-out
+!                mpg.intcellr:in-out mpg.divfcor:in-out
 !
 !**********************************************************************
 !     Module containing basic routines for reading/writing data files
@@ -67,6 +67,7 @@ CONTAINS
     CALL READ_MAPPING_B(ninp, mpg, mpgb)
     CALL READ_GEOMETRY_B(ninp, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, mpg%&
 &                  nft, mpg%nvmxcv, gm, gmb)
+    CALL INIT_WALLS_AND_TARGETS_B(mpg, mpgb, gm, gmb)
 !
     RETURN
   END SUBROUTINE READ_B2FGMTRY_B
@@ -89,6 +90,7 @@ CONTAINS
     CALL READ_MAPPING(ninp, mpg)
     CALL READ_GEOMETRY(ninp, mpg%ncv, mpg%nfc, mpg%nvx, mpg%nfs, mpg%nft&
 &                , mpg%nvmxcv, gm)
+    CALL INIT_WALLS_AND_TARGETS(mpg, gm)
 !
     RETURN
   END SUBROUTINE READ_B2FGMTRY
