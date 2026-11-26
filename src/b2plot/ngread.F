@@ -594,11 +594,6 @@ cank
             call gfsub2(44,mpg%nCv,nCvp,eneutrad(:,is,0))
           end do
         end if
-        if(jvft44_in .ge. 20261124) then
-          do is = 1, natmi
-            call gfsub2(44,mpg%nCv,nCvp,eplasrad(:,is,0))
-          end do
-        end if
 
         if(jvft44_in .ge. 20180323) then
           do is = 1, nmoli
@@ -606,6 +601,11 @@ cank
           end do
           do is = 1, nioni
             call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
+          end do
+        end if
+        if(jvft44_in .ge. 20261124) then
+          do is = 1, natmi
+            call gfsub2(44,mpg%nCv,nCvp,eplsrad(:,is,0))
           end do
         end if
 
@@ -920,17 +920,17 @@ cank
             call gfsub2(44,mpg%nCv,nCvp,eneutrad(:,is,0))
           end do
         end if
-        if(jvft44_in .ge. 20261124) then
-          do is = 1, natmi
-            call gfsub2(44,mpg%nCv,nCvp,eplasrad(:,is,0))
-          end do
-        end if
         if(jvft44_in .ge. 20180323) then
           do is = 1, nmoli
             call gfsub2(44,mpg%nCv,nCvp,emolrad(:,is,0))
           end do
           do is = 1, nioni
             call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
+          end do
+        end if
+        if(jvft44_in .ge. 20261124) then
+          do is = 1, natmi
+            call gfsub2(44,mpg%nCv,nCvp,eplsrad(:,is,0))
           end do
         end if
       end if

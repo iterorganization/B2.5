@@ -111,7 +111,8 @@
      &  wldpp_s(:,:,:), wldpa_s(:,:,:),
      &  wldpm_s(:,:,:), wldpeb_s(:,:),
      &  wldspt_s(:,:), wldspta_s(:,:,:), wldsptm_s(:,:,:),
-     &  eneutrad_s(:,:,:), emolrad_s(:,:,:), eionrad_s(:,:,:),
+     &  eneutrad_s(:,:,:), emolrad_s(:,:,:), eionrad_s(:,:,:), 
+     &  eplsrad_s(:,:,:),
      &  wlabsrp_s(:,:), wldna_res_s(:,:), wldnm_res_s(:,:),
      &  ewlda_res_s(:,:), ewldm_res_s(:,:), ewldt_res_s(:),
      &  ewldea_res_s(:,:), ewldem_res_s(:,:), ewldrp_res_s(:),
@@ -4065,11 +4066,15 @@ c
 !             rdneureg(k)=rdneureg(k)+eneutrad(ic,iatm,1)
 !             recycereg(k)=recycereg(k)+eneutrad(ic,iatm,1)
 !pb
-              radarr(ic)=radarr(ic)+eneutrad(ic,iatm,0)
-              rad_neutr=rad_neutr+eneutrad(ic,iatm,0)
-              rdneureg(k)=rdneureg(k)+eneutrad(ic,iatm,0)
-              recycereg(k)=recycereg(k)+eneutrad(ic,iatm,0)
-            enddo
+              radarr(ic)   = radarr(ic) + eneutrad(ic,iatm,0) + 
+     &                                               eplsrad(ic,iatm,0)
+              rad_neutr    = rad_neutr + eneutrad(ic,iatm,0) + 
+     &                                               eplsrad(ic,iatm,0)
+              rdneureg(k)  = rdneureg(k) + eneutrad(ic,iatm,0) + 
+     &                                               eplsrad(ic,iatm,0)
+              recycereg(k) = recycereg(k) + eneutrad(ic,iatm,0) + 
+     &                                               eplsrad(ic,iatm,0)
+            enddo 
             do imol = 1, nnmoli
 !pb  edissml dimensioned per stratum to allow for short cycling
 !pb  only sum over strata used here
@@ -4096,9 +4101,12 @@ c$$$              recycereg(k)=recycereg(k)-edissml(ic,imol,0)
           endif
         enddo
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
-        if (dbg_eir_mc.ge.2 .and. main_call .and. nnatmi.gt.0)
-     .   write(*,hlp_frm) 'EIRENE_MC. ENEUTRAD : ',
+        if (dbg_eir_mc.ge.2 .and. main_call .and. nnatmi.gt.0) then
+         write(*,hlp_frm) 'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nCv,iatm,0)),iatm=1,nnatmi)
+         write(*,hlp_frm) 'EIRENE_MC. EPLSRAD : ',
+     .   (SUM(eplsrad(1:nCv,iatm,0)),iatm=1,nnatmi)
+        endif
         if (dbg_eir_mc.ge.2 .and. main_call .and. nnmoli.gt.0)
      .   write(*,hlp_frm) 'EIRENE_MC. EMOLRAD : ',
      .   (SUM(emolrad(1:nCv,imol,0)),imol=1,nnmoli)
@@ -4857,6 +4865,7 @@ c!###}
       allocate(eneutrad_s(size(eneutrad,1),size(eneutrad,2),0:nstra+1))
       allocate(emolrad_s(size(emolrad,1),size(emolrad,2),0:nstra+1))
       allocate(eionrad_s(size(eionrad,1),size(eionrad,2),0:nstra+1))
+      allocate(eplsrad_s(size(eplsrad,1),size(eplsrad,2),0:nstra+1))
       allocate(wlabsrp_s(size(wlabsrp,1),size(wlabsrp,2)))
       allocate(wldna_res_s(natm,size(wldna_res,2)))
       allocate(wldnm_res_s(nmol,size(wldnm_res,2)))
@@ -4965,6 +4974,7 @@ c!###}
       deallocate(eneutrad_s)
       deallocate(emolrad_s)
       deallocate(eionrad_s)
+      deallocate(eplsrad_s)
       deallocate(wlabsrp_s)
       deallocate(wldna_res_s)
       deallocate(wldnm_res_s)
@@ -5078,6 +5088,7 @@ c!###}
       eneutrad_s = eneutrad_s + eneutrad
       emolrad_s = emolrad_s + emolrad
       eionrad_s = eionrad_s + eionrad
+      eplsrad_s = eplsrad_s + eplsrad
       wlabsrp_s = wlabsrp_s + wlabsrp
       wldna_res_s = wldna_res_s + wldna_res
       wldnm_res_s = wldnm_res_s + wldnm_res
@@ -5195,6 +5206,7 @@ c!###}
       eneutrad = eneutrad_s/dble(n_avg_repeat)
       emolrad = emolrad_s/dble(n_avg_repeat)
       eionrad = eionrad_s/dble(n_avg_repeat)
+      eplsrad = eplsrad_s/dble(n_avg_repeat)
       wlabsrp = wlabsrp_s/dble(n_avg_repeat)
       wldna_res = wldna_res_s/dble(n_avg_repeat)
       wldnm_res = wldnm_res_s/dble(n_avg_repeat)
@@ -5299,6 +5311,7 @@ c!###}
       eneutrad_s = 0.0_R8
       emolrad_s = 0.0_R8
       eionrad_s = 0.0_R8
+      eplsrad_s = 0.0_R8
       wlabsrp_s = 0.0_R8
       wldna_res_s = 0.0_R8
       wldnm_res_s = 0.0_R8
