@@ -143,41 +143,43 @@ CONTAINS
 &           'faulty parameter iy_nocoreExB')
       DO iy=1,iy_nocoreexb
         ift = mpg%cvft(omp(iy))
-        IF (ift .EQ. 0) CYCLE
-        DO ix=1,mpg%ftcvp(ift, 2)
-          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-          IF (mpg%cvonclosedsurface(icv)) THEN
-            DO i=1,mpg%cvfcp(icv, 2)
-              ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
-              fac_exb_profile(ifc) = 0.0_R8
-            END DO
-          END IF
-        END DO
+        IF (ift .NE. 0) THEN
+          DO ix=1,mpg%ftcvp(ift, 2)
+            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+            IF (mpg%cvonclosedsurface(icv)) THEN
+              DO i=1,mpg%cvfcp(icv, 2)
+                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                fac_exb_profile(ifc) = 0.0_R8
+              END DO
+            END IF
+          END DO
+        END IF
       END DO
       CALL IPGETR('b2news_facdrift_tanh_a', facdrift_tanh_a)
       CALL IPGETR('b2news_facdrift_tanh_b', facdrift_tanh_b)
       IF (facdrift_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
-          IF (ift .EQ. 0) CYCLE
-          DO ix=1,mpg%ftcvp(ift, 2)
-            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-            IF (mpg%cvonclosedsurface(icv)) THEN
-              DO i=1,mpg%cvfcp(icv, 2)
-                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
-                ifs = mpg%fcfs(ifc)
-                IF (ifs .EQ. 0) THEN
-                  facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((ft_ds_omp(ift)-facdrift_tanh_a)/&
-&                   facdrift_tanh_b))
-                ELSE
-                  facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((fs_ds_omp(ifs)-facdrift_tanh_a)/&
-&                   facdrift_tanh_b))
-                END IF
-              END DO
-            END IF
-          END DO
+          IF (ift .NE. 0) THEN
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                DO i=1,mpg%cvfcp(icv, 2)
+                  ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                  ifs = mpg%fcfs(ifc)
+                  IF (ifs .EQ. 0) THEN
+                    facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8&
+&                     *(1.0_R8+TANH((ft_ds_omp(ift)-facdrift_tanh_a)/&
+&                     facdrift_tanh_b))
+                  ELSE
+                    facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8&
+&                     *(1.0_R8+TANH((fs_ds_omp(ifs)-facdrift_tanh_a)/&
+&                     facdrift_tanh_b))
+                  END IF
+                END DO
+              END IF
+            END DO
+          END IF
         END DO
       END IF
       CALL IPGETR('b2news_fac_ExB_tanh_a', facexb_tanh_a)
@@ -189,25 +191,26 @@ CONTAINS
       IF (facexb_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
-          IF (ift .EQ. 0) CYCLE
-          DO ix=1,mpg%ftcvp(ift, 2)
-            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-            IF (mpg%cvonclosedsurface(icv)) THEN
-              DO i=1,mpg%cvfcp(icv, 2)
-                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
-                ifs = mpg%fcfs(ifc)
-                IF (ifs .EQ. 0) THEN
-                  fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((ft_ds_omp(ift)-facexb_tanh_a)/&
-&                   facexb_tanh_b))
-                ELSE
-                  fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((fs_ds_omp(ifs)-facexb_tanh_a)/&
-&                   facexb_tanh_b))
-                END IF
-              END DO
-            END IF
-          END DO
+          IF (ift .NE. 0) THEN
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                DO i=1,mpg%cvfcp(icv, 2)
+                  ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                  ifs = mpg%fcfs(ifc)
+                  IF (ifs .EQ. 0) THEN
+                    fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
+&                     1.0_R8+TANH((ft_ds_omp(ift)-facexb_tanh_a)/&
+&                     facexb_tanh_b))
+                  ELSE
+                    fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
+&                     1.0_R8+TANH((fs_ds_omp(ifs)-facexb_tanh_a)/&
+&                     facexb_tanh_b))
+                  END IF
+                END DO
+              END IF
+            END DO
+          END IF
         END DO
       END IF
       CALL IPGETR('b2news_fac_vis_tanh_a', facvis_tanh_a)
@@ -219,25 +222,26 @@ CONTAINS
       IF (facvis_tanh_b .NE. 0.0_R8) THEN
         DO iy=1,nomp
           ift = mpg%cvft(omp(iy))
-          IF (ift .EQ. 0) CYCLE
-          DO ix=1,mpg%ftcvp(ift, 2)
-            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
-            IF (mpg%cvonclosedsurface(icv)) THEN
-              DO i=1,mpg%cvfcp(icv, 2)
-                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
-                ifs = mpg%fcfs(ifc)
-                IF (ifs .EQ. 0) THEN
-                  fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((ft_ds_omp(ift)-facvis_tanh_a)/&
-&                   facvis_tanh_b))
-                ELSE
-                  fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
-&                   1.0_R8+TANH((fs_ds_omp(ifs)-facvis_tanh_a)/&
-&                   facvis_tanh_b))
-                END IF
-              END DO
-            END IF
-          END DO
+          IF (ift .NE. 0) THEN
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                DO i=1,mpg%cvfcp(icv, 2)
+                  ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                  ifs = mpg%fcfs(ifc)
+                  IF (ifs .EQ. 0) THEN
+                    fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
+&                     1.0_R8+TANH((ft_ds_omp(ift)-facvis_tanh_a)/&
+&                     facvis_tanh_b))
+                  ELSE
+                    fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
+&                     1.0_R8+TANH((fs_ds_omp(ifs)-facvis_tanh_a)/&
+&                     facvis_tanh_b))
+                  END IF
+                END DO
+              END IF
+            END DO
+          END IF
         END DO
       END IF
     END IF

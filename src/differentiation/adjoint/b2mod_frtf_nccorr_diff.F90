@@ -56,38 +56,6 @@ MODULE B2MOD_FRTF_NCCORR_DIFF
 !-----------------------------------------------------------------------
 
 CONTAINS
-!  Differentiation of alloc_b2mod_frtf_nccorr in reverse (adjoint) mode (with options context noISIZE r8):
-!   Plus diff mem management of: corr_tfia:out g_hs_style:out corr_fria:out
-!                alpha_hs_style:out
-!.......................................................................
-!
-  SUBROUTINE ALLOC_B2MOD_FRTF_NCCORR_B0(ncv, ns)
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ncv, ns
-!
-    ALLOCATE(alpha_hs_styleb(1:ncv, 0:ns-1))
-    alpha_hs_styleb = 0.D0
-    ALLOCATE(alpha_hs_style(1:ncv, 0:ns-1))
-    ALLOCATE(g_hs_styleb(1:ncv))
-    g_hs_styleb = 0.D0
-    ALLOCATE(g_hs_style(1:ncv))
-    ALLOCATE(corr_tfiab(1:ncv, 0:ns-1))
-    corr_tfiab = 0.D0
-    ALLOCATE(corr_tfia(1:ncv, 0:ns-1))
-    ALLOCATE(corr_friab(1:ncv, 0:ns-1))
-    corr_friab = 0.D0
-    ALLOCATE(corr_fria(1:ncv, 0:ns-1))
-!
-    DEALLOCATE(corr_fria)
-    DEALLOCATE(corr_friab)
-    DEALLOCATE(corr_tfia)
-    DEALLOCATE(corr_tfiab)
-    DEALLOCATE(g_hs_style)
-    DEALLOCATE(g_hs_styleb)
-    DEALLOCATE(alpha_hs_style)
-    DEALLOCATE(alpha_hs_styleb)
-  END SUBROUTINE ALLOC_B2MOD_FRTF_NCCORR_B0
-
 !  Differentiation of alloc_b2mod_frtf_nccorr as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: corr_tfia:out g_hs_style:out corr_fria:out
 !                alpha_hs_style:out

@@ -2,10 +2,52 @@
 !  Tapenade 3.16 (develop) - 23 Jul 2024 17:41
 !
 !
+! ..finalise time-dependent wall data
+SUBROUTINE WALL_FINAL_NODIFF(nx, ny, ns, wall_namelist_used)
+  USE B2MOD_TYPES
+  USE B2MOD_WALL_DIFF
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: nx, ny, ns
+  LOGICAL, INTENT(INOUT) :: wall_namelist_used
+!
+  INTEGER :: ibnd
+  LOGICAL :: default_cooling
+  INTRINSIC MAXVAL
+  REAL(kind=r8) :: result1
+  REAL(kind=r8) :: result2
+  REAL(kind=r8) :: result3
+  REAL(kind=r8) :: result4
+  REAL(kind=r8) :: result5
+  REAL(kind=r8) :: result6
+!
+  result1 = MAXVAL(target_temp(1:nbnd, 1))
+  result2 = MAXVAL(thermal_evaporation(1:nbnd, 0:ns-1))
+  result3 = MAXVAL(physical_sputtering(1:nbnd, 0:ns-1))
+  result4 = MAXVAL(chemical_sputtering(1:nbnd, 0:ns-1))
+  result5 = MAXVAL(res_sputtering(1:nbnd, 0:ns-1))
+  result6 = MAXVAL(backscattering(1:nbnd, 0:ns-1))
+  wall_namelist_used = (((((((wall_namelist_used .OR. ntargsp .GT. 0) &
+&   .OR. layer_thermal_contact .NE. 1.0_R8) .OR. result1 .GT. plate_temp&
+&   ) .OR. result2 .GT. 0.0_R8) .OR. result3 .GT. 0.0_R8) .OR. result4 &
+&   .GT. 0.0_R8) .OR. result5 .GT. 0.0_R8) .OR. result6 .GT. 0.0_R8
+  default_cooling = .true.
+  DO ibnd=1,nbnd
+    default_cooling = default_cooling .AND. (.NOT.inertial_cooling(ibnd)&
+&     )
+  END DO
+  IF (.NOT.wall_namelist_used) THEN
+    RETURN
+  ELSE
+    CALL WRITE_B2MOD_WALL_NAMELIST(99, nx, ny, ns, '    ')
+    RETURN
+  END IF
+END SUBROUTINE WALL_FINAL_NODIFF
+
+!
 FUNCTION LAYER_KAPPA_NODIFF(ibnd, t) RESULT (layer_kappa)
   USE B2MOD_TYPES
   USE B2MOD_LAYER
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_SPUTTER_DIFF
   IMPLICIT NONE
   INTEGER :: ibnd
@@ -83,7 +125,7 @@ END FUNCTION LAYER_KAPPA_NODIFF
 FUNCTION DLAYER_KAPPABYDT_NODIFF(ibnd, t) RESULT (dlayer_kappabydt)
   USE B2MOD_TYPES
   USE B2MOD_LAYER
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_SPUTTER_DIFF
   IMPLICIT NONE
   INTEGER :: ibnd
@@ -161,7 +203,7 @@ END FUNCTION DLAYER_KAPPABYDT_NODIFF
 !
 FUNCTION LAYER_CP_NODIFF(ibnd, t) RESULT (layer_cp)
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_LAYER
   USE B2MOD_SPUTTER_DIFF
   IMPLICIT NONE
@@ -251,7 +293,7 @@ END FUNCTION LAYER_CP_NODIFF
 FUNCTION LAYER_EMISSIVITY_NODIFF(ibnd) RESULT (layer_emissivity)
   USE B2MOD_TYPES
   USE B2MOD_LAYER
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_SPUTTER_DIFF
   IMPLICIT NONE
   INTEGER :: ibnd
@@ -281,7 +323,7 @@ END FUNCTION LAYER_EMISSIVITY_NODIFF
 !
 SUBROUTINE ADD_LAYER_THICKNESS_NODIFF(ns, ibnd)
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_LAYER
   USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFF
@@ -294,9 +336,9 @@ SUBROUTINE ADD_LAYER_THICKNESS_NODIFF(ns, ibnd)
   CHARACTER(len=24) :: filename
   INTEGER, SAVE :: ncall, hd_linlog, sput_frac_flag
   REAL(kind=r8), SAVE :: hd_ratio, sput_mixed_alpha, sput_mixed_beta
-  EXTERNAL MASS_DENSITY, OPEN_FILE
+  EXTERNAL MASS_DENSITY_NODIFF, OPEN_FILE
 !
-  REAL(kind=r8) :: MASS_DENSITY
+  REAL(kind=r8) :: MASS_DENSITY_NODIFF
   REAL(kind=r8) :: onemeps
   PARAMETER (onemeps=1.0_R8-1.0e-5_R8)
   LOGICAL :: OPEN_FILE
@@ -546,7 +588,7 @@ SUBROUTINE ADD_LAYER_THICKNESS_NODIFF(ns, ibnd)
   CALL COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
 !xpb  Update layer mass density
 !xpb  with bulk and deposited contributions
-  result1 = MASS_DENSITY(ibnd, 2)
+  result1 = MASS_DENSITY_NODIFF(ibnd, 2)
   layer_mass_density(ibnd) = result1*sput_frac(0)
   DO itrack=1,ntargsp
     layer_mass_density(ibnd) = layer_mass_density(ibnd) + sput_frac(&
@@ -559,7 +601,7 @@ END SUBROUTINE ADD_LAYER_THICKNESS_NODIFF
 !
 SUBROUTINE COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
   USE B2MOD_TYPES
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_LAYER
   USE B2MOD_B2CMPA
   USE B2MOD_SPUTTER_DIFF
@@ -569,8 +611,8 @@ SUBROUTINE COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
 !
   INTEGER :: j, itrack, nz
   LOGICAL :: found
-  EXTERNAL MASS_DENSITY
-  REAL(kind=r8) :: MASS_DENSITY
+  EXTERNAL MASS_DENSITY_NODIFF
+  REAL(kind=r8) :: MASS_DENSITY_NODIFF
   INTRINSIC NINT
   REAL(kind=r8) :: result1
 !
@@ -589,14 +631,14 @@ SUBROUTINE COMPOSE_LAYER_NODIFF(ibnd, sput_frac)
 &       .LT. coating_thickness(ibnd)) THEN
 !xpb  Coating case
       IF (itrack_0(ibnd) .NE. 0) THEN
-        result1 = MASS_DENSITY(ibnd, 2)
+        result1 = MASS_DENSITY_NODIFF(ibnd, 2)
         particle_inventory(ibnd, itrack_0(ibnd)) = (coating_thickness(&
 &         ibnd)-layer_depth(ibnd))*plate_area(ibnd)*result1/(atomic_mass&
 &         (matsurf_nzconstituents(ibnd, 1))*mp)
       END IF
     ELSE IF (itrack_0(ibnd) .NE. 0) THEN
 !xpb  Deep erosion or no coating case
-      result1 = MASS_DENSITY(ibnd, 2)
+      result1 = MASS_DENSITY_NODIFF(ibnd, 2)
       particle_inventory(ibnd, itrack_0(ibnd)) = (plate_thickness(ibnd)-&
 &       layer_depth(ibnd))*plate_area(ibnd)*result1/(atomic_mass(&
 &       matsurf_nzconstituents(ibnd, 1))*mp)
@@ -645,7 +687,7 @@ SUBROUTINE INIT_WALL_NODIFF(mpg)
   USE B2MOD_PLASMA
   USE B2MOD_SPUTTER_DIFF
   USE B2MOD_INDIRECT_DIFF
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_LAYER
   USE B2MOD_B2CMPA
   USE B2MOD_B2CMPB
@@ -669,7 +711,7 @@ SUBROUTINE GET_WALL_DATA_NODIFF(mpg, nx, ny, ns, boris, &
 & wall_namelist_used)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFF
-  USE B2MOD_WALL
+  USE B2MOD_WALL_DIFF
   USE B2MOD_PLASMA
   USE B2MOD_SPUTTER_DIFF
   USE B2MOD_INDIRECT_DIFF

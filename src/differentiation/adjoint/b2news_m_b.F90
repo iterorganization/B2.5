@@ -6,27 +6,27 @@
 !                gt_ac:in gtalc:in avm_u:in rho_a_rel:in gavm_uc:in
 !                z_to_m1_ast:in c_hw_save:in c_r_ta:in c_r_tb:in
 !                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save[save in b2mod_b2zhco]:in
-!                c_r_ta_an_save[save in b2mod_b2zhco]:in corr_tfia:in-out
-!                g_hs_style:in-out corr_fria:in-out alpha_hs_style:in-out
-!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhx:in geo.cvhy:in geo.cvqgam:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
-!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                geo.ftbbav2:in geo.fspsi:in st_ext.am:in st_ext.ne:in
-!                st_ext.ne2:in st_ext.ue:in st_ext.za:in st_ext.za2:in
-!                st_ext.pt:in st_ext.na:in st_ext.ni:in st_ext.ua:in
-!                st_ext.ta:in st_ext.fhi:in st_ext.fa:in st_ext.sne:in
-!                st_ext.she:in st_ext.shi:in st_ext.sch:in st_ext.sna:in
-!                st_ext.smo:in st.pl.na:in st.pl.ua:in st.pl.po:in
-!                st.pl.te:in st.pl.ti:in st.pl.tn:in st.pl.kt:in
-!                st.pl.zt:in st.co.csig:in st.co.calf:in st.co.csig_an:in
-!                st.co.calf_an:in st.co.csig_cl:in st.co.calf_cl:in
-!                st.co.csigin:in st.co.chve:in st.co.chce:in st.co.chce_exb:in
+!                c_r_ta_an_save[save in b2mod_b2zhco]:in corr_tfia:in
+!                g_hs_style:in corr_fria:in alpha_hs_style:in mpg.bcfcor:in
+!                mpg.rcfcor:in-out mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
+!                geo.cvhx:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.fcbzb:in geo.vxbb:in geo.vxx:in geo.vxy:in
+!                geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
+!                geo.ftconn:in geo.fsconn:in geo.fteps:in geo.ftbbav2:in
+!                geo.fspsi:in st_ext.am:in st_ext.ne:in st_ext.ne2:in
+!                st_ext.ue:in st_ext.za:in st_ext.za2:in st_ext.pt:in
+!                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
+!                st_ext.fhi:in st_ext.fa:in st_ext.sne:in st_ext.she:in
+!                st_ext.shi:in st_ext.sch:in st_ext.sna:in st_ext.smo:in
+!                st.pl.na:in st.pl.ua:in st.pl.po:in st.pl.te:in
+!                st.pl.ti:in st.pl.tn:in st.pl.kt:in st.pl.zt:in
+!                st.co.csig:in st.co.calf:in st.co.csig_an:in st.co.calf_an:in
+!                st.co.csig_cl:in st.co.calf_cl:in st.co.csigin:in
+!                st.co.chve:in st.co.chce:in st.co.chce_exb:in
 !                st.co.chvi:in st.co.chci:in st.co.chci_exb:in
 !                st.co.chcn:in st.co.cdkt:in st.co.cdzt:in st.co.chvemx:in
 !                st.co.chvimx:in st.co.cvla:in st.co.cdna:in st.co.cdna_exb:in
@@ -170,7 +170,7 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   USE B2MOD_CONVERGENCE
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_TALLIES, ONLY : rrahireg, rranareg, rsahireg, rqradreg, &
+  USE B2MOD_TALLIES_DIFF, ONLY : rrahireg, rranareg, rsahireg, rqradreg,&
 & rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, rsamoreg,&
 & b2divue, b2divua, b2exbe, b2exba, b2visa, b2joule, b2fraa, rcxnareg, &
 & rcxhireg, rcxmoreg
@@ -204,7 +204,7 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 & fb_current_prevb
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutlob, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_WALL, ONLY : track_species
+  USE B2MOD_WALL_DIFF, ONLY : track_species
   USE B2MOD_ZHFRTF_DIFF, ONLY : is_i, z2n_cv, z2n_cvb, nal, nalb, ia, &
 & iab, av_ualpha, av_ualphab, gt_ac, gt_acb, gtalc, gtalcb, avm_u, &
 & avm_ub, rho_a_rel, rho_a_relb, gavm_uc, gavm_ucb, z_to_m1_ast, &
@@ -299,7 +299,6 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &     B2XPFE_NODIFF, B2XPFI_NODIFF, B2XPPB, B2XPNM_NODIFF, B2TRAL_NODIFF&
 &     , B2TREQ_NODIFF, B2TFNB_NODIFF, B2NPMO_NODIFF, B2NPCO_NODIFF, &
 &     B2NPPO_NODIFF, B2NPHT_NODIFF, B2NXDP_NODIFF, B2XPPZ_NODIFF
-  EXTERNAL B2TRAL_B
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
   INTRINSIC ABS
@@ -510,10 +509,9 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv%ne2&
 &             )
 !   ..compute transport coefficients
-  CALL B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch, &
-&         switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv, &
-&         st%rt, stb%rt, st_ext, st_extb, st%co, stb%co, st%co_ns, stb%&
-&         co_ns)
+  CALL B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&              switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co, st%&
+&              co_ns)
 !   ..compute currents
   CALL B2TANML_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, st%co&
 &               %csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza, st%dv&
@@ -674,9 +672,9 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, st%pl%&
 &         ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+&                pl, st%dv, st%co, st%rt, .false.)
 !srv 01.10.99
   END DO
 !
@@ -800,7 +798,7 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 !srv 15.02.26
       DO ipot=0,switch%max_iter_po
 !srv 06.07.00
-        IF (switch%fhe_vis_per .EQ. 0.0_R8 .OR. .true.) THEN
+        IF (switch%fhe_vis_per .EQ. 0.0_R8) THEN
 !srv 06.07.00
           new_matrix = .false.
           DO ireg=0,mpg%nnreg(0)
@@ -814,7 +812,7 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                      mpg, st%pl, st%dv, st%sr)
           last_solve_9(0:mpg%nnreg(0)) = solvepo(0:mpg%nnreg(0))
         ELSE
-          CALL XERRAB('visper not yet available for WG')
+          CALL XERRAB('vis_per not yet available for WG')
         END IF
         t0 = B2SASUM_NODIFF(ncv, st%dv%respo, 1)
         WRITE(*, *) 'respo before solving', t0
@@ -1081,20 +1079,21 @@ SUBROUTINE B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 END SUBROUTINE B2NEWS_M_B
 
 !  Differentiation of b2news_m in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: [alloc*corr_fria in alloc_b2mod_frtf_nccorr]
-!                [alloc*corr_tfia in alloc_b2mod_frtf_nccorr] [alloc*g_hs_style in alloc_b2mod_frtf_nccorr]
-!                [alloc*alpha_hs_style in alloc_b2mod_frtf_nccorr]
-!                she_rad_tot she_eir_tot saved_fb_actuator saved_fb_prev
-!                fb_current fb_rescale fb_current_prev int0l int1l
-!                int2l int3l int4l tdata recyc b2recyc userfluxparm
-!                conpar mompar enepar enipar potpar enkpar *z2n_cv
-!                *nal *ia *av_ualpha *gt_ac *gtalc *avm_u *rho_a_rel
-!                *gavm_uc *z_to_m1_ast parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf senepar
-!                senipar sconpar scurpar prev_cur_delta po_prev
-!                po_curr coeff_16 pos *c_hw_save *c_r_ta *c_r_tb
-!                *c_r_tb_nofl *c_r_w *c_hta_an_fl_save[save in b2mod_b2zhco]
+!   gradient     of useful results: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] she_rad_tot she_eir_tot
+!                saved_fb_actuator saved_fb_prev fb_current fb_rescale
+!                fb_current_prev int0l int1l int2l int3l int4l
+!                tdata recyc b2recyc userfluxparm conpar mompar
+!                enepar enipar potpar enkpar *z2n_cv *nal *ia *av_ualpha
+!                *gt_ac *gtalc *avm_u *rho_a_rel *gavm_uc *z_to_m1_ast
+!                parm_hce parm_sig parm_alf parm_dna parm_dpa parm_vla
+!                parm_vsa parm_hci cfdna cfdpa cfvla cfvsa cfhci
+!                cfhce cfsig cfalf senepar senipar sconpar scurpar
+!                prev_cur_delta po_prev po_curr coeff_16 pos *c_hw_save
+!                *c_r_ta *c_r_tb *c_r_tb_nofl *c_r_w *c_hta_an_fl_save[save in b2mod_b2zhco]
 !                *c_r_ta_an_save[save in b2mod_b2zhco] *corr_tfia
 !                *g_hs_style *corr_fria *alpha_hs_style charge_frac
 !                *(st_ext.she) *(st_ext.shi) *(st_ext.sch) *(st_ext.sna)
@@ -1186,20 +1185,21 @@ END SUBROUTINE B2NEWS_M_B
 !                *(st.psnl.dztdt) *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te)
 !                *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt)
 !                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
-!   with respect to varying inputs: [alloc*corr_fria in alloc_b2mod_frtf_nccorr]
-!                [alloc*corr_tfia in alloc_b2mod_frtf_nccorr] [alloc*g_hs_style in alloc_b2mod_frtf_nccorr]
-!                [alloc*alpha_hs_style in alloc_b2mod_frtf_nccorr]
-!                she_rad_tot she_eir_tot saved_fb_actuator saved_fb_prev
-!                fb_current fb_rescale fb_current_prev int0l int1l
-!                int2l int3l int4l tdata recyc b2recyc userfluxparm
-!                conpar mompar enepar enipar potpar enkpar *z2n_cv
-!                *nal *ia *av_ualpha *gt_ac *gtalc *avm_u *rho_a_rel
-!                *gavm_uc *z_to_m1_ast parm_hce parm_sig parm_alf
-!                parm_dna parm_dpa parm_vla parm_vsa parm_hci cfdna
-!                cfdpa cfvla cfvsa cfhci cfhce cfsig cfalf senepar
-!                senipar sconpar scurpar prev_cur_delta po_prev
-!                po_curr coeff_16 pos *c_hw_save *c_r_ta *c_r_tb
-!                *c_r_tb_nofl *c_r_w *c_hta_an_fl_save[save in b2mod_b2zhco]
+!   with respect to varying inputs: [alloc*prof in transport_input]
+!                [alloc*pelm in transport_input] [alloc*pf in transport_input]
+!                [alloc*delm in transport_input] [alloc*felm in transport_input]
+!                [alloc*d in transport_input] [alloc*f in transport_input]
+!                [alloc*r in transport_input] she_rad_tot she_eir_tot
+!                saved_fb_actuator saved_fb_prev fb_current fb_rescale
+!                fb_current_prev int0l int1l int2l int3l int4l
+!                tdata recyc b2recyc userfluxparm conpar mompar
+!                enepar enipar potpar enkpar *z2n_cv *nal *ia *av_ualpha
+!                *gt_ac *gtalc *avm_u *rho_a_rel *gavm_uc *z_to_m1_ast
+!                parm_hce parm_sig parm_alf parm_dna parm_dpa parm_vla
+!                parm_vsa parm_hci cfdna cfdpa cfvla cfvsa cfhci
+!                cfhce cfsig cfalf senepar senipar sconpar scurpar
+!                prev_cur_delta po_prev po_curr coeff_16 pos *c_hw_save
+!                *c_r_ta *c_r_tb *c_r_tb_nofl *c_r_w *c_hta_an_fl_save[save in b2mod_b2zhco]
 !                *c_r_ta_an_save[save in b2mod_b2zhco] *corr_tfia
 !                *g_hs_style *corr_fria *alpha_hs_style charge_frac
 !                *(st_ext.she) *(st_ext.shi) *(st_ext.sch) *(st_ext.sna)
@@ -1295,27 +1295,27 @@ END SUBROUTINE B2NEWS_M_B
 !                gt_ac:in gtalc:in avm_u:in rho_a_rel:in gavm_uc:in
 !                z_to_m1_ast:in c_hw_save:in c_r_ta:in c_r_tb:in
 !                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save[save in b2mod_b2zhco]:in
-!                c_r_ta_an_save[save in b2mod_b2zhco]:in corr_tfia:in-out
-!                g_hs_style:in-out corr_fria:in-out alpha_hs_style:in-out
-!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhx:in geo.cvhy:in geo.cvqgam:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
-!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                geo.ftbbav2:in geo.fspsi:in st_ext.am:in st_ext.ne:in
-!                st_ext.ne2:in st_ext.ue:in st_ext.za:in st_ext.za2:in
-!                st_ext.pt:in st_ext.na:in st_ext.ni:in st_ext.ua:in
-!                st_ext.ta:in st_ext.fhi:in st_ext.fa:in st_ext.sne:in
-!                st_ext.she:in st_ext.shi:in st_ext.sch:in st_ext.sna:in
-!                st_ext.smo:in st.pl.na:in st.pl.ua:in st.pl.po:in
-!                st.pl.te:in st.pl.ti:in st.pl.tn:in st.pl.kt:in
-!                st.pl.zt:in st.co.csig:in st.co.calf:in st.co.csig_an:in
-!                st.co.calf_an:in st.co.csig_cl:in st.co.calf_cl:in
-!                st.co.csigin:in st.co.chve:in st.co.chce:in st.co.chce_exb:in
+!                c_r_ta_an_save[save in b2mod_b2zhco]:in corr_tfia:in
+!                g_hs_style:in corr_fria:in alpha_hs_style:in mpg.bcfcor:in
+!                mpg.rcfcor:in-out mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvhz:in
+!                geo.cvhx:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.fcbzb:in geo.vxbb:in geo.vxx:in geo.vxy:in
+!                geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
+!                geo.ftconn:in geo.fsconn:in geo.fteps:in geo.ftbbav2:in
+!                geo.fspsi:in st_ext.am:in st_ext.ne:in st_ext.ne2:in
+!                st_ext.ue:in st_ext.za:in st_ext.za2:in st_ext.pt:in
+!                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
+!                st_ext.fhi:in st_ext.fa:in st_ext.sne:in st_ext.she:in
+!                st_ext.shi:in st_ext.sch:in st_ext.sna:in st_ext.smo:in
+!                st.pl.na:in st.pl.ua:in st.pl.po:in st.pl.te:in
+!                st.pl.ti:in st.pl.tn:in st.pl.kt:in st.pl.zt:in
+!                st.co.csig:in st.co.calf:in st.co.csig_an:in st.co.calf_an:in
+!                st.co.csig_cl:in st.co.calf_cl:in st.co.csigin:in
+!                st.co.chve:in st.co.chce:in st.co.chce_exb:in
 !                st.co.chvi:in st.co.chci:in st.co.chci_exb:in
 !                st.co.chcn:in st.co.cdkt:in st.co.cdzt:in st.co.chvemx:in
 !                st.co.chvimx:in st.co.cvla:in st.co.cdna:in st.co.cdna_exb:in
@@ -1459,7 +1459,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   USE B2MOD_CONVERGENCE
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_TALLIES, ONLY : rrahireg, rranareg, rsahireg, rqradreg, &
+  USE B2MOD_TALLIES_DIFF, ONLY : rrahireg, rranareg, rsahireg, rqradreg,&
 & rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, rsamoreg,&
 & b2divue, b2divua, b2exbe, b2exba, b2visa, b2joule, b2fraa, rcxnareg, &
 & rcxhireg, rcxmoreg
@@ -1493,7 +1493,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 & fb_current_prevb
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutlob, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_WALL, ONLY : track_species
+  USE B2MOD_WALL_DIFF, ONLY : track_species
   USE B2MOD_ZHFRTF_DIFF, ONLY : is_i, z2n_cv, z2n_cvb, nal, nalb, ia, &
 & iab, av_ualpha, av_ualphab, gt_ac, gt_acb, gtalc, gtalcb, avm_u, &
 & avm_ub, rho_a_rel, rho_a_relb, gavm_uc, gavm_ucb, z_to_m1_ast, &
@@ -1590,7 +1590,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &     , B2TREQ_NODIFF, B2TFNB_NODIFF, B2NPMO_NODIFF, B2NPCO_NODIFF, &
 &     B2NPPO_NODIFF, B2NPHT_NODIFF, B2NXDP_NODIFF, B2XPPZ_NODIFF
   EXTERNAL B2XPNE_B, B2XPNI_B, B2XPNN_B, B2XPFE_B, B2XPFI_B, B2XPPB_FWD&
-&     , B2XPPB_BWD, B2XPNM_B, B2TRAL_B0, B2TREQ_B, B2TFNB_B, B2NPMO_B, &
+&     , B2XPPB_BWD, B2XPNM_B, B2TRAL_B, B2TREQ_B, B2TFNB_B, B2NPMO_B, &
 &     B2NPCO_B, B2NPPO_B, B2NPHT_B, B2NXDP_B, B2XPPZ_B
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
@@ -2783,7 +2783,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     CALL B2XPPB_FWD(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, st&
 &             %pl%ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL PUSHINTEGER4(ncall_b2tfnb)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL PUSHREAL8ARRAY(st%dv%fna, r8*SIZE(st%dv%fna, 1)*SIZE(st%dv%fna&
@@ -2810,7 +2810,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                 dv%vaecrb, 2)*SIZE(st%dv%vaecrb, 3)/8)
     CALL PUSHREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+&                pl, st%dv, st%co, st%rt, .false.)
 !srv 01.10.99
   END DO
 !
@@ -3771,7 +3771,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 !srv 15.02.26
       DO ipot=0,switch%max_iter_po
 !srv 06.07.00
-        IF (switch%fhe_vis_per .EQ. 0.0_R8 .OR. .true.) THEN
+        IF (switch%fhe_vis_per .EQ. 0.0_R8) THEN
 !srv 22.05.18
           CALL PUSHINTEGER4(ncall_b2uspo)
           CALL PUSHINTEGER4(ncall_b2ursd)
@@ -4235,7 +4235,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 !lkw20.03.2023}
 !   ..iterate on heat balance
 !srv 22.05.18
-  CALL PUSHBOOLEAN(firstgmid)
+  CALL PUSHBOOLEANARRAY(firstgmid, 2)
   CALL PUSHINTEGER4(ncall_b2xehy)
   CALL PUSHINTEGER4(ncall_b2xehx)
   CALL PUSHINTEGER4(ncall_b2usht)
@@ -4810,7 +4810,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   CALL POPINTEGER4(ncall_b2usht)
   CALL POPINTEGER4(ncall_b2xehx)
   CALL POPINTEGER4(ncall_b2xehy)
-  CALL POPBOOLEAN(firstgmid)
+  CALL POPBOOLEANARRAY(firstgmid, 2)
   CALL B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, mpgb&
 &         , ncall_b2news_, ismain, b2news_solving, solveee, solveei, &
 &         solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3, &
@@ -5969,7 +5969,7 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
     CALL POPINTEGER4(ncall_b2tfnb)
     CALL B2TFNB_B(ncv, nfc, nvx, is, ismain, switch, switchb, geo, geob&
 &           , mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv, st%co, stb%co, st&
-&           %rt, stb%rt, .true.)
+&           %rt, stb%rt, .false.)
     CALL B2XPPB_BWD(ncv, st%rt%rza(:, is), stb%rt%rza(:, is), st%pl%na(:&
 &             , is), stb%pl%na(:, is), st%pl%te, stb%pl%te, st%pl%ti, &
 &             stb%pl%ti, st%pl%tn, stb%pl%tn, is, st%dv%pa(:, is), stb%&
@@ -6708,10 +6708,10 @@ SUBROUTINE B2NEWS_M_B0(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL B2TRAL_B0(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch&
-&          , switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv&
-&          , st%rt, stb%rt, st_ext, st_extb, st%co, stb%co, st%co_ns, &
-&          stb%co_ns)
+  CALL B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch, &
+&         switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv, &
+&         st%rt, stb%rt, st_ext, st_extb, st%co, stb%co, st%co_ns, stb%&
+&         co_ns)
   CALL POPREAL8ARRAY(st%dv%ne2, r8*SIZE(st%dv%ne2, 1)/8)
   CALL B2XPNE_B(ncv, ns, st%rt%rz2, stb%rt%rz2, st%pl%na, stb%pl%na, &
 &         st_ext%ne2, st%dv%ne2, stb%dv%ne2)
@@ -6774,7 +6774,7 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
   USE B2MOD_CONVERGENCE
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_TALLIES, ONLY : rrahireg, rranareg, rsahireg, rqradreg, &
+  USE B2MOD_TALLIES_DIFF, ONLY : rrahireg, rranareg, rsahireg, rqradreg,&
 & rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, rsamoreg,&
 & b2divue, b2divua, b2exbe, b2exba, b2visa, b2joule, b2fraa, rcxnareg, &
 & rcxhireg, rcxmoreg
@@ -6802,7 +6802,7 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 & fb_current_prev
   USE B2MOD_MATH_DIFF, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_WALL, ONLY : track_species
+  USE B2MOD_WALL_DIFF, ONLY : track_species
   USE B2MOD_ZHFRTF_DIFF, ONLY : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac,&
 & gtalc, avm_u, rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out, &
 & hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
@@ -7256,9 +7256,9 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
     CALL B2XPPB(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te, st%pl%&
 &         ti, st%pl%tn, is, st%dv%pa(:, is))
 !    ..compute particle flux
-!djm Jan2017
+!      (balance.nc keeps the parts of the flux used by b2npco above)
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
-&                pl, st%dv, st%co, st%rt, .true.)
+&                pl, st%dv, st%co, st%rt, .false.)
 !srv 01.10.99
   END DO
 !
@@ -7382,7 +7382,7 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 !srv 15.02.26
       DO ipot=0,switch%max_iter_po
 !srv 06.07.00
-        IF (switch%fhe_vis_per .EQ. 0.0_R8 .OR. .true.) THEN
+        IF (switch%fhe_vis_per .EQ. 0.0_R8) THEN
 !srv 06.07.00
           new_matrix = .false.
           DO ireg=0,mpg%nnreg(0)
@@ -7396,7 +7396,7 @@ SUBROUTINE B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                      mpg, st%pl, st%dv, st%sr)
           last_solve_9(0:mpg%nnreg(0)) = solvepo(0:mpg%nnreg(0))
         ELSE
-          CALL XERRAB('visper not yet available for WG')
+          CALL XERRAB('vis_per not yet available for WG')
         END IF
         t0 = B2SASUM_NODIFF(ncv, st%dv%respo, 1)
         WRITE(*, *) 'respo before solving', t0

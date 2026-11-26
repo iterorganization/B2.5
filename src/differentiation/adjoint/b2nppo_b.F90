@@ -93,6 +93,7 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   EXTERNAL B2URSD_B, B2USPO_B, B2UPPO_B
   INTRINSIC ANY
+  INTRINSIC MIN
   INTRINSIC ABS
   INTRINSIC SIGN
   REAL(kind=r8) :: abs0
@@ -148,8 +149,15 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
       DO icv=1,mpg%ncv
         IF (icv .GT. mpg%nci) THEN
           ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            CALL PUSHCONTROL1B(1)
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+            icn = mpg%fccv(ifc, 1)
+          END IF
         ELSE
+          CALL PUSHCONTROL1B(0)
           icn = icv
         END IF
         IF (mpg%cvonclosedsurface(icn)) THEN
@@ -207,6 +215,7 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
             plb%po(icv) = 0.D0
           END IF
         END IF
+        CALL POPCONTROL1B(branch)
       END DO
     END IF
     CALL POPREAL8ARRAY(pl%po, r8*SIZE(pl%po, 1)/8)
@@ -301,6 +310,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   EXTERNAL XERTST
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   INTRINSIC ANY
+  INTRINSIC MIN
   INTRINSIC ABS
   INTRINSIC SIGN
   REAL(kind=r8) :: abs0
@@ -361,7 +371,11 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
       DO icv=1,mpg%ncv
         IF (icv .GT. mpg%nci) THEN
           ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
-          icn = MIN(mpg%fccv(ifc, 1), mpg%fccv(ifc, 2))
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icn = mpg%fccv(ifc, 2)
+          ELSE
+            icn = mpg%fccv(ifc, 1)
+          END IF
         ELSE
           icn = icv
         END IF
@@ -376,8 +390,8 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
               wrk = pl%po(icv)
               pl%po(icv) = SIGN(switch%b2nppo_restr_po*pl%te(icv)/qe, pl&
 &               %po(icv))
-              WRITE(*, '(a,i6,1p,2e15.8)') 'Applied po/Te ratio limit',&
-&               icv, wrk, pl%po(icv)
+              WRITE(*, '(a,i6,1p,2e15.8)') 'Applied po/Te ratio limit', &
+&             icv, wrk, pl%po(icv)
             END IF
           ELSE
             IF (qe*pl%po(icv) .GE. 0.) THEN
@@ -395,8 +409,8 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
               wrk = pl%po(icv)
               pl%po(icv) = SIGN(switch%b2nppo_restr_po*pl%te(icv)/qe, pl&
 &               %po(icv))
-              WRITE(*, '(a,i6,1p,2e15.8)') 'Applied po/Te ratio limit',&
-&               icv, wrk, pl%po(icv)
+              WRITE(*, '(a,i6,1p,2e15.8)') 'Applied po/Te ratio limit', &
+&             icv, wrk, pl%po(icv)
             END IF
           END IF
         END IF

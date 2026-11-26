@@ -89,19 +89,19 @@
 !                psnl.ne:in psnl.ni:in psnl.nn:in psnl.kinrgy:in
 !                psnl.reshi0:in psnl.reshe0:in psnl.reshn0:in psnl.reskt0:in
 !                psnl.reszt0:in psnl.dhedt:in psnl.dhidt:in psnl.dhndt:in
-!                psnl.dktdt:in psnl.dztdt:in geo.cvbb:in geo.cvhz:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.vxy:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
-!                geo.fspsi:in st_ext.am:in st_ext.za2:in st_ext.na:in
-!                st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in srw.b2sihs_divue:in
-!                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
-!                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
-!                sr.she:in sr.shi:in sr.shn:in sr.skt:in sr.szt:in
-!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.shidt:in
-!                sr.shndt:in sr.skt_diss:in sr.skt_prod:in co.cvsa:in
-!                co.cvsa_cl:in co.cvsa_drho:in co.cvsahz_eff:in
+!                psnl.dktdt:in psnl.dztdt:in geo.cvbb:in geo.cvy:in
+!                geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxy:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.fspsi:in st_ext.am:in st_ext.za2:in
+!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
+!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
+!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
+!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
+!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
+!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
+!                co.cvsa:in co.cvsa_cl:in co.cvsa_drho:in co.cvsahz_eff:in
 !                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
 !                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
 !                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
@@ -211,12 +211,13 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !   ..local variables
   INTEGER :: icv, is
 !srv 02.01.07
-!srv 02.01.07
+!IYS 17.07.26
 !srv 18.09.09
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
-& wrk1(ncv), wrk2(ncv), wrk3(ncv), she0(ncv, 0:3), shi0(ncv, 0:3), shn0(&
-& ncv, 0:3), wrk0(ncv), shei(ncv), shekt(ncv, 0:3), shikt(ncv, 0:3), &
-& skt0(ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk4(ncv), wrk5(ncv), wrk6(ncv), she0&
+& (ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
   REAL(kind=r8) :: aab(mpg%ncmxnv), wrkfb(nfc, 0:1), wrkcb(nfc, 0:1, 0:2&
 & ), wrk1b(ncv), wrk2b(ncv), wrk3b(ncv), she0b(ncv, 0:3), shi0b(ncv, 0:3&
 & ), shn0b(ncv, 0:3), sheib(ncv), shektb(ncv, 0:3), shiktb(ncv, 0:3), &
@@ -231,7 +232,6 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !srv 02.01.07
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USHT_NODIFF, B2UPHT_NODIFF
   EXTERNAL B2URSD_B, B2USHT_B, B2UPHT_B
-  INTRINSIC HUGE
   EXTERNAL XERRAB
   INTRINSIC ANY
   INTEGER :: arg1
@@ -294,7 +294,7 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   IF (switch%b2npht_style .EQ. 0) THEN
     CALL PUSHCONTROL1B(0)
   ELSE
-    CALL PUSHBOOLEAN(firstgmid)
+    CALL PUSHBOOLEANARRAY(firstgmid, 2)
     CALL PUSHINTEGER4(ncall_b2xehy)
     CALL PUSHINTEGER4(ncall_b2xehx)
     CALL PUSHINTEGER4(ncall_b2sifrtf)
@@ -438,10 +438,13 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 &                dv%nn, psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr&
 &                %shndt, sr%sktdt, sr%sztdt)
 !  .. add contribution from time-dependent source
-!c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-!c then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-!c while the second contribution corresponds to T dn/dt
+!c Given d(nT)/dt = n dT/dt + T dn/dt,
+!c What is computed in b2shdt corresponds to n dT/dt,
+!c What is added here below corresponds to T dn/dt
     wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvvol
+    DO icv=1,mpg%nci
+      wrk1(icv) = wrk1(icv)/(dtee(mpg%cvreg(icv))*rxf)
+    END DO
     wrk1(mpg%nci+1:mpg%ncv) = 0.0_R8
     CALL PUSHREAL8ARRAY(sr%shedt(:, 0), r8*SIZE(sr%shedt, 1)/8)
     sr%shedt(:, 0) = sr%shedt(:, 0) - wrk1*ts_factor
@@ -450,38 +453,34 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     IF (switch%tn_style .EQ. 0) THEN
 ! default, combined ion-neutral energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      CALL PUSHREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      CALL PUSHREAL8ARRAY(shi0, r8*ncv*4/8)
-      shi0 = shi0 + sr%shidt
-      CALL PUSHCONTROL2B(0)
+      CALL PUSHCONTROL2B(2)
     ELSE IF (switch%tn_style .EQ. 1) THEN
 ! pure ion energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      CALL PUSHREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      CALL PUSHREAL8ARRAY(shi0, r8*ncv*4/8)
-      shi0 = shi0 + sr%shidt
       CALL PUSHCONTROL2B(1)
     ELSE
 ! separate ion and neutral energy equation
-      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*ts_factor*psnl%ti/dtim*&
-&       geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      CALL PUSHREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      CALL PUSHREAL8ARRAY(shi0, r8*ncv*4/8)
-      shi0 = shi0 + sr%shidt
+      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
       wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))*psnl%tn/dtim*geo%cvvol
       wrk3(mpg%nci+1:mpg%ncv) = 0.0_R8
+      DO icv=1,mpg%nci
+        wrk3(icv) = wrk3(icv)/(dtei(mpg%cvreg(icv))*rxf)
+      END DO
       CALL PUSHREAL8ARRAY(sr%shndt(:, 0), r8*SIZE(sr%shndt, 1)/8)
       sr%shndt(:, 0) = sr%shndt(:, 0) - wrk3*ts_factor
       CALL PUSHREAL8ARRAY(shn0, r8*ncv*4/8)
       shn0 = shn0 + sr%shndt
-      CALL PUSHCONTROL2B(2)
+      CALL PUSHCONTROL2B(0)
     END IF
+!
+    DO icv=1,mpg%nci
+      wrk2(icv) = wrk2(icv)/(dtei(mpg%cvreg(icv))*rxf)
+    END DO
+    wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
+    CALL PUSHREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
+    sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
+    CALL PUSHREAL8ARRAY(shi0, r8*ncv*4/8)
+    shi0 = shi0 + sr%shidt
     IF (switch%solve_keps .GT. 0) THEN
       sr%sktdt(:, 0) = sr%sktdt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1&
 &       ))*ts_factor*psnl%kt/dtim*geo%cvvol
@@ -828,41 +827,41 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   ELSE
     CALL PUSHCONTROL1B(1)
   END IF
-  tempb1 = -(dvb%dztdt/ts_factor)
+  tempb2 = -(dvb%dztdt/ts_factor)
   dvb%dztdt = 0.D0
-  srb%sztdt(:, 0) = srb%sztdt(:, 0) + tempb1
-  srb%sztdt(:, 1) = srb%sztdt(:, 1) + pl%zt*tempb1
-  plb%zt = plb%zt + (sr%sztdt(:, 1)+sr%sztdt(:, 3)*dv%ni(:, 1))*tempb1
-  srb%sztdt(:, 2) = srb%sztdt(:, 2) + dv%ni(:, 1)*tempb1
+  srb%sztdt(:, 0) = srb%sztdt(:, 0) + tempb2
+  srb%sztdt(:, 1) = srb%sztdt(:, 1) + pl%zt*tempb2
+  plb%zt = plb%zt + (sr%sztdt(:, 1)+sr%sztdt(:, 3)*dv%ni(:, 1))*tempb2
+  srb%sztdt(:, 2) = srb%sztdt(:, 2) + dv%ni(:, 1)*tempb2
   dvb%ni(:, 1) = dvb%ni(:, 1) + (sr%sztdt(:, 2)+sr%sztdt(:, 3)*pl%zt)*&
-&   tempb1
-  srb%sztdt(:, 3) = srb%sztdt(:, 3) + pl%zt*dv%ni(:, 1)*tempb1
-  tempb1 = -(dvb%dktdt/ts_factor)
+&   tempb2
+  srb%sztdt(:, 3) = srb%sztdt(:, 3) + pl%zt*dv%ni(:, 1)*tempb2
+  tempb2 = -(dvb%dktdt/ts_factor)
   dvb%dktdt = 0.D0
-  srb%sktdt(:, 0) = srb%sktdt(:, 0) + tempb1
-  srb%sktdt(:, 1) = srb%sktdt(:, 1) + pl%kt*tempb1
-  plb%kt = plb%kt + (sr%sktdt(:, 1)+sr%sktdt(:, 3)*dv%ni(:, 1))*tempb1
-  srb%sktdt(:, 2) = srb%sktdt(:, 2) + dv%ni(:, 1)*tempb1
+  srb%sktdt(:, 0) = srb%sktdt(:, 0) + tempb2
+  srb%sktdt(:, 1) = srb%sktdt(:, 1) + pl%kt*tempb2
+  plb%kt = plb%kt + (sr%sktdt(:, 1)+sr%sktdt(:, 3)*dv%ni(:, 1))*tempb2
+  srb%sktdt(:, 2) = srb%sktdt(:, 2) + dv%ni(:, 1)*tempb2
   dvb%ni(:, 1) = dvb%ni(:, 1) + (sr%sktdt(:, 2)+sr%sktdt(:, 3)*pl%kt)*&
-&   tempb1
-  srb%sktdt(:, 3) = srb%sktdt(:, 3) + pl%kt*dv%ni(:, 1)*tempb1
-  tempb2 = -(dvb%dhndt/ts_factor)
+&   tempb2
+  srb%sktdt(:, 3) = srb%sktdt(:, 3) + pl%kt*dv%ni(:, 1)*tempb2
+  tempb1 = -(dvb%dhndt/ts_factor)
   dvb%dhndt = 0.D0
-  srb%shndt(:, 0) = srb%shndt(:, 0) + tempb2
-  srb%shndt(:, 1) = srb%shndt(:, 1) + pl%tn*tempb2
-  plb%tn = plb%tn + (sr%shndt(:, 1)+dv%nn*sr%shndt(:, 3))*tempb2
-  srb%shndt(:, 2) = srb%shndt(:, 2) + dv%nn*tempb2
-  dvb%nn = dvb%nn + (sr%shndt(:, 2)+pl%tn*sr%shndt(:, 3))*tempb2
-  srb%shndt(:, 3) = srb%shndt(:, 3) + pl%tn*dv%nn*tempb2
-  tempb1 = -(dvb%dhidt/ts_factor)
+  srb%shndt(:, 0) = srb%shndt(:, 0) + tempb1
+  srb%shndt(:, 1) = srb%shndt(:, 1) + pl%tn*tempb1
+  plb%tn = plb%tn + (sr%shndt(:, 1)+dv%nn*sr%shndt(:, 3))*tempb1
+  srb%shndt(:, 2) = srb%shndt(:, 2) + dv%nn*tempb1
+  dvb%nn = dvb%nn + (sr%shndt(:, 2)+pl%tn*sr%shndt(:, 3))*tempb1
+  srb%shndt(:, 3) = srb%shndt(:, 3) + pl%tn*dv%nn*tempb1
+  tempb2 = -(dvb%dhidt/ts_factor)
   dvb%dhidt = 0.D0
-  srb%shidt(:, 0) = srb%shidt(:, 0) + tempb1
-  srb%shidt(:, 1) = srb%shidt(:, 1) + pl%ti*tempb1
-  plb%ti = plb%ti + (sr%shidt(:, 1)+sr%shidt(:, 3)*dv%ni(:, 0))*tempb1
-  srb%shidt(:, 2) = srb%shidt(:, 2) + dv%ni(:, 0)*tempb1
+  srb%shidt(:, 0) = srb%shidt(:, 0) + tempb2
+  srb%shidt(:, 1) = srb%shidt(:, 1) + pl%ti*tempb2
+  plb%ti = plb%ti + (sr%shidt(:, 1)+sr%shidt(:, 3)*dv%ni(:, 0))*tempb2
+  srb%shidt(:, 2) = srb%shidt(:, 2) + dv%ni(:, 0)*tempb2
   dvb%ni(:, 0) = dvb%ni(:, 0) + (sr%shidt(:, 2)+sr%shidt(:, 3)*pl%ti)*&
-&   tempb1
-  srb%shidt(:, 3) = srb%shidt(:, 3) + pl%ti*dv%ni(:, 0)*tempb1
+&   tempb2
+  srb%shidt(:, 3) = srb%shidt(:, 3) + pl%ti*dv%ni(:, 0)*tempb2
   tempb = -(dvb%dhedt/ts_factor)
   dvb%dhedt = 0.D0
   srb%shedt(:, 0) = srb%shedt(:, 0) + tempb
@@ -1118,9 +1117,9 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   IF (branch .EQ. 0) THEN
     CALL POPREAL8ARRAY(szt0, r8*ncv*4/8)
     srb%sztdt = srb%sztdt + szt0b
-    tempb1 = -(ts_factor*1.5_R8*geo%cvvol*srb%sztdt(:, 0))
-    tempb0 = psnl%zt*tempb1/dtim
-    psnlb%zt = psnlb%zt + (dv%ni(:, 1)-psnl%ni(:, 1))*tempb1/dtim
+    tempb2 = -(ts_factor*1.5_R8*geo%cvvol*srb%sztdt(:, 0))
+    tempb0 = psnl%zt*tempb2/dtim
+    psnlb%zt = psnlb%zt + (dv%ni(:, 1)-psnl%ni(:, 1))*tempb2/dtim
     dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
     psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
   ELSE IF (branch .NE. 1) THEN
@@ -1130,59 +1129,53 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   IF (branch .EQ. 0) THEN
     CALL POPREAL8ARRAY(skt0, r8*ncv*4/8)
     srb%sktdt = srb%sktdt + skt0b
-    tempb1 = -(ts_factor*1.5_R8*geo%cvvol*srb%sktdt(:, 0))
-    tempb0 = psnl%kt*tempb1/dtim
-    psnlb%kt = psnlb%kt + (dv%ni(:, 1)-psnl%ni(:, 1))*tempb1/dtim
-    dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
-    psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
+    tempb0 = -(ts_factor*1.5_R8*geo%cvvol*srb%sktdt(:, 0))
+    tempb2 = psnl%kt*tempb0/dtim
+    psnlb%kt = psnlb%kt + (dv%ni(:, 1)-psnl%ni(:, 1))*tempb0/dtim
+    dvb%ni(:, 1) = dvb%ni(:, 1) + tempb2
+    psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb2
   END IF
+  CALL POPREAL8ARRAY(shi0, r8*ncv*4/8)
+  srb%shidt = srb%shidt + shi0b
+  wrk2b = 0.D0
+  CALL POPREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
+  wrk2b = -(ts_factor*srb%shidt(:, 0))
+  wrk2b(mpg%nci+1:mpg%ncv) = 0.D0
+  DO icv=mpg%nci,1,-1
+    wrk2b(icv) = wrk2b(icv)/(dtei(mpg%cvreg(icv))*rxf)
+  END DO
   CALL POPCONTROL2B(branch)
   IF (branch .EQ. 0) THEN
-    CALL POPREAL8ARRAY(shi0, r8*ncv*4/8)
-    srb%shidt = srb%shidt + shi0b
-    wrk2b = 0.D0
-    CALL POPREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-    wrk2b = -(ts_factor*srb%shidt(:, 0))
-    wrk2b(mpg%nci+1:mpg%ncv) = 0.D0
+    CALL POPREAL8ARRAY(shn0, r8*ncv*4/8)
+    srb%shndt = srb%shndt + shn0b
+    wrk3b = 0.D0
+    CALL POPREAL8ARRAY(sr%shndt(:, 0), r8*SIZE(sr%shndt, 1)/8)
+    wrk3b = -(ts_factor*srb%shndt(:, 0))
+    DO icv=mpg%nci,1,-1
+      wrk3b(icv) = wrk3b(icv)/(dtei(mpg%cvreg(icv))*rxf)
+    END DO
+    wrk3b(mpg%nci+1:mpg%ncv) = 0.D0
+    tempb1 = psnl%tn*geo%cvvol*1.5_R8*wrk3b/dtim
+    psnlb%tn = psnlb%tn + (dv%nn-psnl%nn)*geo%cvvol*1.5_R8*wrk3b/dtim
+    dvb%nn = dvb%nn + tempb1
+    psnlb%nn = psnlb%nn - tempb1
     tempb0 = psnl%ti*geo%cvvol*1.5_R8*wrk2b/dtim
-    psnlb%ti = psnlb%ti + (dv%ni(:, 0)-psnl%ni(:, 0))*geo%cvvol*1.5_R8*&
+    psnlb%ti = psnlb%ti + (dv%ni(:, 1)-psnl%ni(:, 1))*geo%cvvol*1.5_R8*&
 &     wrk2b/dtim
-    dvb%ni(:, 0) = dvb%ni(:, 0) + tempb0
-    psnlb%ni(:, 0) = psnlb%ni(:, 0) - tempb0
+    dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
+    psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
   ELSE IF (branch .EQ. 1) THEN
-    CALL POPREAL8ARRAY(shi0, r8*ncv*4/8)
-    srb%shidt = srb%shidt + shi0b
-    wrk2b = 0.D0
-    CALL POPREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-    wrk2b = -(ts_factor*srb%shidt(:, 0))
-    wrk2b(mpg%nci+1:mpg%ncv) = 0.D0
     tempb0 = psnl%ti*geo%cvvol*1.5_R8*wrk2b/dtim
     psnlb%ti = psnlb%ti + (dv%ni(:, 1)-psnl%ni(:, 1))*geo%cvvol*1.5_R8*&
 &     wrk2b/dtim
     dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
     psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
   ELSE
-    CALL POPREAL8ARRAY(shn0, r8*ncv*4/8)
-    srb%shndt = srb%shndt + shn0b
-    wrk3b = 0.D0
-    CALL POPREAL8ARRAY(sr%shndt(:, 0), r8*SIZE(sr%shndt, 1)/8)
-    wrk3b = -(ts_factor*srb%shndt(:, 0))
-    wrk3b(mpg%nci+1:mpg%ncv) = 0.D0
-    tempb2 = psnl%tn*geo%cvvol*1.5_R8*wrk3b/dtim
-    psnlb%tn = psnlb%tn + (dv%nn-psnl%nn)*geo%cvvol*1.5_R8*wrk3b/dtim
-    dvb%nn = dvb%nn + tempb2
-    psnlb%nn = psnlb%nn - tempb2
-    CALL POPREAL8ARRAY(shi0, r8*ncv*4/8)
-    srb%shidt = srb%shidt + shi0b
-    wrk2b = 0.D0
-    CALL POPREAL8ARRAY(sr%shidt(:, 0), r8*SIZE(sr%shidt, 1)/8)
-    wrk2b = -(ts_factor*srb%shidt(:, 0))
-    wrk2b(mpg%nci+1:mpg%ncv) = 0.D0
-    tempb0 = ts_factor*1.5_R8*geo%cvvol*wrk2b
-    tempb1 = psnl%ti*tempb0/dtim
-    psnlb%ti = psnlb%ti + (dv%ni(:, 1)-psnl%ni(:, 1))*tempb0/dtim
-    dvb%ni(:, 1) = dvb%ni(:, 1) + tempb1
-    psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb1
+    tempb0 = psnl%ti*geo%cvvol*1.5_R8*wrk2b/dtim
+    psnlb%ti = psnlb%ti + (dv%ni(:, 0)-psnl%ni(:, 0))*geo%cvvol*1.5_R8*&
+&     wrk2b/dtim
+    dvb%ni(:, 0) = dvb%ni(:, 0) + tempb0
+    psnlb%ni(:, 0) = psnlb%ni(:, 0) - tempb0
   END IF
   CALL POPREAL8ARRAY(she0, r8*ncv*4/8)
   srb%shedt = srb%shedt + she0b
@@ -1190,6 +1183,9 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   CALL POPREAL8ARRAY(sr%shedt(:, 0), r8*SIZE(sr%shedt, 1)/8)
   wrk1b = -(ts_factor*srb%shedt(:, 0))
   wrk1b(mpg%nci+1:mpg%ncv) = 0.D0
+  DO icv=mpg%nci,1,-1
+    wrk1b(icv) = wrk1b(icv)/(dtee(mpg%cvreg(icv))*rxf)
+  END DO
   tempb = psnl%te*geo%cvvol*1.5_R8*wrk1b/dtim
   psnlb%te = psnlb%te + (dv%ne-psnl%ne)*geo%cvvol*1.5_R8*wrk1b/dtim
   dvb%ne = dvb%ne + tempb
@@ -1284,7 +1280,7 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     CALL POPINTEGER4(ncall_b2sifrtf)
     CALL POPINTEGER4(ncall_b2xehx)
     CALL POPINTEGER4(ncall_b2xehy)
-    CALL POPBOOLEAN(firstgmid)
+    CALL POPBOOLEANARRAY(firstgmid, 2)
     CALL B2SIHS__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 &            mpgb, ismain, dv%fac_exb, dv%lnlam, dvb%lnlam, pl%na, plb%&
 &            na, pl%ua, plb%ua, dv%ue, dvb%ue, pl%te, plb%te, pl%ti, plb&
@@ -1391,12 +1387,13 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 !   ..local variables
   INTEGER :: icv, is
 !srv 02.01.07
-!srv 02.01.07
+!IYS 17.07.26
 !srv 18.09.09
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
-& wrk1(ncv), wrk2(ncv), wrk3(ncv), she0(ncv, 0:3), shi0(ncv, 0:3), shn0(&
-& ncv, 0:3), wrk0(ncv), shei(ncv), shekt(ncv, 0:3), shikt(ncv, 0:3), &
-& skt0(ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk4(ncv), wrk5(ncv), wrk6(ncv), she0&
+& (ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
 !srv 17.07.05
   CHARACTER :: chns*3
   LOGICAL :: warning_i, warning_e, warning_n, warning_kt, warning_zt
@@ -1405,7 +1402,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   EXTERNAL XERTST, IPGETR, B2SAXPY_NODIFF
 !srv 02.01.07
   EXTERNAL B2XVSG, B2URSD_NODIFF, B2USHT_NODIFF, B2UPHT_NODIFF
-  INTRINSIC HUGE
   EXTERNAL XERRAB
   INTRINSIC ANY
   INTEGER :: arg1
@@ -1452,14 +1448,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                    'equations was implemented similarly as the energy'&
 &                                   , &
 &                          'equations but lacks theoretical development'
-!    ..make sure time-dependent equations are not altered by convergence tricks
-      rxg_npht = HUGE(1.0_R8)
-      IF (switch%b2npht_pcm0 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm0 must be 0 for time-dependent mode'&
-&                                              )
-      IF (switch%b2npht_pcm1 .GT. 0.0_R8) CALL XERRAB(&
-&                        'b2npht_pcm1 must be 0 for time-dependent mode'&
-&                                              )
       warning_e = .false.
       warning_i = .false.
       warning_n = .false.
@@ -1486,10 +1474,8 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                            'Time derivative terms may be inacurrate !'
       IF (warning_kt .OR. warning_zt) WRITE(6, *) &
 &                   'Time derivative terms may be inacurrate for k-eps!'
-    ELSE
-      rxg_npht = 1.0_R8
     END IF
-    CALL XERTST(0.0_R8 .LT. rxg_npht, 'faulty internal parameter rxg')
+    rxg_npht = switch%b2npht_rxg
   END IF
 !   ..extensive tests on first few calls
   IF (ncall_b2npht .LT. 3) THEN
@@ -1616,37 +1602,40 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                dv%nn, psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr&
 &                %shndt, sr%sktdt, sr%sztdt)
 !  .. add contribution from time-dependent source
-!c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
-!c then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
-!c while the second contribution corresponds to T dn/dt
+!c Given d(nT)/dt = n dT/dt + T dn/dt,
+!c What is computed in b2shdt corresponds to n dT/dt,
+!c What is added here below corresponds to T dn/dt
     wrk1 = 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*geo%cvvol
+    DO icv=1,mpg%nci
+      wrk1(icv) = wrk1(icv)/(dtee(mpg%cvreg(icv))*rxf)
+    END DO
     wrk1(mpg%nci+1:mpg%ncv) = 0.0_R8
     sr%shedt(:, 0) = sr%shedt(:, 0) - wrk1*ts_factor
     she0 = she0 + sr%shedt
     IF (switch%tn_style .EQ. 0) THEN
 ! default, combined ion-neutral energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE IF (switch%tn_style .EQ. 1) THEN
 ! pure ion energy equation
       wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
     ELSE
 ! separate ion and neutral energy equation
-      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*ts_factor*psnl%ti/dtim*&
-&       geo%cvvol
-      wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
-      sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
-      shi0 = shi0 + sr%shidt
+      wrk2 = 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*psnl%ti/dtim*geo%cvvol
       wrk3 = 1.5_R8*(dv%nn(:)-psnl%nn(:))*psnl%tn/dtim*geo%cvvol
       wrk3(mpg%nci+1:mpg%ncv) = 0.0_R8
+      DO icv=1,mpg%nci
+        wrk3(icv) = wrk3(icv)/(dtei(mpg%cvreg(icv))*rxf)
+      END DO
       sr%shndt(:, 0) = sr%shndt(:, 0) - wrk3*ts_factor
       shn0 = shn0 + sr%shndt
     END IF
+!
+    DO icv=1,mpg%nci
+      wrk2(icv) = wrk2(icv)/(dtei(mpg%cvreg(icv))*rxf)
+    END DO
+    wrk2(mpg%nci+1:mpg%ncv) = 0.0_R8
+    sr%shidt(:, 0) = sr%shidt(:, 0) - wrk2*ts_factor
+    shi0 = shi0 + sr%shidt
     IF (switch%solve_keps .GT. 0) THEN
       sr%sktdt(:, 0) = sr%sktdt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1&
 &       ))*ts_factor*psnl%kt/dtim*geo%cvvol
@@ -1657,6 +1646,10 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &       ))*ts_factor*psnl%zt/dtim*geo%cvvol
       szt0 = szt0 + sr%sztdt
     END IF
+  ELSE
+    wrk1 = 0.0_R8
+    wrk2 = 0.0_R8
+    wrk3 = 0.0_R8
   END IF
 !srv 22.05.18
 !
@@ -1894,6 +1887,11 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &   (:, 1)+sr%sktdt(:, 3)*pl%kt*dv%ni(:, 1))/ts_factor)
   dv%dztdt = -((sr%sztdt(:, 0)+sr%sztdt(:, 1)*pl%zt+sr%sztdt(:, 2)*dv%ni&
 &   (:, 1)+sr%sztdt(:, 3)*pl%zt*dv%ni(:, 1))/ts_factor)
+  DO icv=1,mpg%nci
+    wrk4(icv) = dtee(mpg%cvreg(icv))*(dv%dhedt(icv)-wrk1(icv))
+    wrk5(icv) = dtei(mpg%cvreg(icv))*(dv%dhidt(icv)-wrk2(icv))
+    wrk6(icv) = dtei(mpg%cvreg(icv))*(dv%dhndt(icv)-wrk3(icv))
+  END DO
 !
   IF (switch%b2npht_iout .EQ. 1) THEN
     DO is=0,ns-1
@@ -1922,10 +1920,13 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
     CALL MY_OUT_US(70, ncv, 0, dv%dhedt, 'b2npht_dhedt')
     CALL MY_OUT_US(70, ncv, 0, wrk1, 'b2npht_tednedt')
+    CALL MY_OUT_US(70, ncv, 0, wrk4, 'b2npht_nedtedt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhidt, 'b2npht_dhidt')
     CALL MY_OUT_US(70, ncv, 0, wrk2, 'b2npht_tidnidt')
+    CALL MY_OUT_US(70, ncv, 0, wrk5, 'b2npht_nidtidt')
     CALL MY_OUT_US(70, ncv, 0, dv%dhndt, 'b2npht_dhndt')
     CALL MY_OUT_US(70, ncv, 0, wrk3, 'b2npht_tndnndt')
+    CALL MY_OUT_US(70, ncv, 0, wrk6, 'b2npht_nndtndt')
     CALL MY_OUT_US(70, ncv, 0, dv%dktdt, 'b2npht_dktdt')
     CALL MY_OUT_US(70, ncv, 0, dv%dztdt, 'b2npht_dztdt')
   END IF
