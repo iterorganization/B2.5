@@ -1987,7 +1987,7 @@
                 iVa = mpg%fcVx(iFc,1)
                 iVb = mpg%fcVx(iFc,2)
                 write(6,'(a,4i6)')
-     &        'Left over faces and vertices in old list',j,iFc,iVa,iVb
+     &        'Leftover faces and vertices in old list',j,iFc,iVa,iVb
               end do
               call xerrab ('Broken face chain along target')
             end if
@@ -2227,6 +2227,10 @@ cxpb and re-order so they start at the tangency point
      &                pinch = .true.
                   end do
                 end do
+                if (pinch) then
+                  write(6,*) 'Tangency point found.'
+                  write(6,*) 'The first open flux tube has number ',iFt
+                end if
                 closed = .false.
                 end_found = .true.
               else

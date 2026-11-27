@@ -2331,7 +2331,7 @@ CONTAINS
                   iva = m%fcvx(ifc, 1)
                   ivb = m%fcvx(ifc, 2)
                   WRITE(6, '(a,4i6)') &
-&                 'Left over faces and vertices in old list', j, ifc, &
+&                 'Leftover faces and vertices in old list', j, ifc, &
 &                 iva, ivb
                 END IF
               END DO
@@ -2888,7 +2888,7 @@ CONTAINS
                   iva = m%fcvx(ifc, 1)
                   ivb = m%fcvx(ifc, 2)
                   WRITE(6, '(a,4i6)') &
-&                 'Left over faces and vertices in old list', j, ifc, &
+&                 'Leftover faces and vertices in old list', j, ifc, &
 &                 iva, ivb
                 END IF
               END DO
