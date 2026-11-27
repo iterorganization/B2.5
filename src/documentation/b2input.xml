@@ -3406,6 +3406,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_afn_impurity_pumping</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, the pumping of non-hydrogenic fluid neutrals is controlled similarly as in the AFN model. The recycling factor from b2.neutrals.parameters is applied to the incident flux, which is approximated as a drifting Maxwellian.
+					It is then recommended to use zero-flux boundary conditions in b2.boundary.parameters.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_afn_bcs_use_coarse</name>
 				<default>1</default>
 				<type>integer</type>
@@ -4819,7 +4828,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					This switch concerns a 9-point correction for the Neumann type boundary conditions (BCCON/BCMOM/BCENE/BCENI/BCPOT/BCENK/BCENZ = 2) for non-orthogonal cells.
+					This switch concerns a 9-point correction for the Neumann type boundary conditions (BCCON/BCMOM/BCENE/BCENI/BCPOT/BCENK/BCENZ = 2) for non-orthogonal cells, and BCMOM=13/BCPOT=11 for almost tangential cells where the grazing angle is below Qalfmin.
 					If b2stbc_BC2_cor9.eq.0.0, gradients tangential to the boundary are ignored. The actual normal gradient then deviates from the one requested by the user.
 					If b2stbc_BC2_cor9.eq.1.0, an additional term based on the vertex values of the boundary face is added to correct for the tangential gradient, to get the correct (up to interpolation error) normal gradient.
 				</description>

@@ -12,7 +12,9 @@
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum,
      2          update_balance_eirene_sources_momentum,
-     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot,
+     4          b2smdt_smo0to3, b2siav_smovh0to3, b2siav_smovv0to3,
+     5          b2siav_smovi0to3
 #endif
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
@@ -350,6 +352,8 @@ c time-dependent treatment
 #ifndef FIXED_POINT
 !$omp& shared(balance_netcdf, fmo_b2nxfv)
 !$omp& shared(fmo_tot, tot_smo0to3)
+!$omp& shared(b2smdt_smo0to3, b2siav_smovh0to3, b2siav_smovv0to3)
+!$omp& shared(b2siav_smovi0to3)
 !$omp& private(robf, ubf)
 #endif
 !$omp& shared(is_neutral)
@@ -510,21 +514,6 @@ c time-dependent treatment
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
        call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv
-#ifndef FIXED_POINT
-cdjm Jan2017 update momentum source components for balance
-       if (balance_netcdf.ne.0) then
-         tot_smo0to3(:,:,is)=smb !djm Mar2019
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
-        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
-     &    ubf,robf)
-       endif
-       if (balance_netcdf.ne.0 .or.
-     &    switch%write_eirene_sources.ne.0) then
-        call update_balance_eirene_sources_momentum(
-     &   nCv,is,pl%ua(1,is),rob)
-       endif
-#endif
 
 *    ..time-dependent treatment
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
@@ -557,6 +546,28 @@ cc What is added here below corresponds to u dn/dt
        else
          wrk3 = 0.0_R8
        endif
+#ifndef FIXED_POINT
+cdjm Jan2017 update momentum source components for balance
+       if (balance_netcdf.ne.0) then
+*    ..the viscosity terms as added to smb above, and the time
+*      derivative of b2mndt_style 2
+         b2siav_smovh0to3(:,:,is)=smbvh
+         b2siav_smovv0to3(:,:,is)=smbvv
+         b2siav_smovi0to3(:,:,is)=smbvi
+         if (switch%b2mndt_style.eq.2)
+     &    b2smdt_smo0to3(:,:,is)=sr%smodt(:,:,is)
+         tot_smo0to3(:,:,is)=smb !djm Mar2019
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
+        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
+     &    ubf,robf)
+       endif
+       if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_momentum(
+     &   nCv,is,pl%ua(1,is),rob)
+       endif
+#endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))

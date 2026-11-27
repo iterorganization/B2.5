@@ -17,7 +17,8 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
-     &          balance_netcdf, update_balance_eirene_sources_heat
+     &          balance_netcdf, update_balance_eirene_sources_heat,
+     &          b2shdt_she0to3, b2shdt_shi0to3
 #endif
       use b2mod_ad
      & , only : ncall_b2npht, rxg_npht
@@ -237,17 +238,6 @@ c make sure fhn is zero when not solving a separate neutral energy equation
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
 
-#ifndef FIXED_POINT
-cdjm Jan2017 update particle source components for balance
-      if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
-      endif
-      if (balance_netcdf.ne.0 .or.
-     &    switch%write_eirene_sources.ne.0) then
-        call update_balance_eirene_sources_heat
-     .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
-      endif
-#endif
 !fc This is the new positioning of time-dependent treatment
 !fc It had to be moved here to allow for the use of Crank-Nicolson
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
@@ -360,6 +350,23 @@ cc What is added here below corresponds to T dn/dt
         wrk2 = 0.0_R8
         wrk3 = 0.0_R8
       endif                                                              !srv 207.07.21 }
+#ifndef FIXED_POINT
+cdjm Jan2017 update particle source components for balance
+      if (balance_netcdf.ne.0) then
+*   ..the time derivative of b2mndt_style 2, as added to she0 and shi0
+*     above
+        if (switch%b2mndt_style.eq.2) then
+          b2shdt_she0to3 = sr%shedt
+          b2shdt_shi0to3 = sr%shidt
+        endif
+        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_heat
+     .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
+      endif
+#endif
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)

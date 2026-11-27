@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_diag_diff
       use b2mod_b2cmpa
-      use b2mod_tallies
+      use b2mod_tallies_diff
       use b2mod_switches_diff
       use b2mod_constants
       use b2mod_subsys
@@ -395,6 +395,7 @@
       b2sext_she_reg(0)=0.0_R8
       b2sext_shi_reg(0)=0.0_R8
       b2sext_sch_reg(0)=0.0_R8
+      b2qie(0)=0.0_R8
       b2divue(0)=0.0_R8
       b2divua(0)=0.0_R8
       b2exbe(0)=0.0_R8

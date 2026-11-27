@@ -98,7 +98,7 @@ c----------------------------------------------------------------------
       contains
 
       subroutine b2wrsep(mpg,geo,ns,state,state_ext,switch)
-      use b2mod_tallies
+      use b2mod_tallies_diffv
       use b2mod_switches_diffv
       use b2mod_constants
       use b2mod_user_namelist_diffv
@@ -143,7 +143,7 @@ c*** Local variables of general use
       save
 c======================================================================
 
-      if(first_time_step) return
+!      if(first_time_step) return
 
       if(ank_tracing.eq.0) return
 

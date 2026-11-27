@@ -15,7 +15,7 @@
 #ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-     &          fna_ch, fna_pschused, balance_netcdf
+     &          fna_ch, fna_pschused, fna_ecrb, fna_dia, balance_netcdf
 #endif
       use b2mod_ad
      & , only : ncall_b2tfnb
@@ -874,24 +874,26 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &    geo%fcQalf(:,1)
         wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    wrkf, dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_ecrb(:,:,isb), dumm3)
         do iFc = 1,nFc !nh limit by sound speed
-          fna_drift(iFc,:,isb) = wrk4(iFc)*fna_drift(iFc,:,isb)
+          fna_ecrb(iFc,:,isb) = wrk4(iFc)*fna_ecrb(iFc,:,isb)
         enddo
-        fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
-        fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
+        fna_ecrb(:,:,isb) = sign(fna_ecrb(:,:,isb),dumm4)
+        fna_ecrb(:,0,isb) = fna_ecrb(:,0,isb) + (1.0_R8-drift_hyb)*
      &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
-        fna_drift(:,1,isb) = fna_drift(:,1,isb) + (1.0_R8-drift_hyb)*
+        fna_ecrb(:,1,isb) = fna_ecrb(:,1,isb) + (1.0_R8-drift_hyb)*
      &    dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
         if (switch%mdf_fnb.eq.0) then
-          fna_drift(:,0,isb) = fna_drift(:,0,isb) +
+          fna_dia(:,0,isb) =
      &      dv%vadia(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
-          fna_drift(:,1,isb) = fna_drift(:,1,isb) +
+          fna_dia(:,1,isb) =
      &      dv%vadia(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
           fna_pschused(:,:,isb) = 0.0_R8
         else
+          fna_dia(:,:,isb) = 0.0_R8
           fna_pschused(:,:,isb) = -dv%fnaPSch(:,:,isb)
         endif
+        fna_drift(:,:,isb) = fna_ecrb(:,:,isb) + fna_dia(:,:,isb)
         wrkf = sign(drift_hyb*scur,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    wrkf, dumm1, dumm2, fna_ch(:,:,isb), dumm3)

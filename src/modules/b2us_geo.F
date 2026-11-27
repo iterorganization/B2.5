@@ -461,9 +461,9 @@
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
-     .  Psi1, Psi2, dpsi(mpg%nCv), psi_active,
+     .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
-      logical match_found
+      logical match_found, ref_set
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
@@ -511,10 +511,20 @@
       enddo
 
 *   ..precompute psi for flux tube
+*   ..cells lying along an open boundary (e.g. wall-truncated cells of
+*   ..a conformal grid) need not lie between two flux surfaces: they
+*   ..are neither used as reference nor checked
       do iFt = 1, mpg%nFt
         gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
+        ref_set = .false.
         do i = 1, mpg%ftCvP(iFt,2)
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+          if (mpg%cvAlongBoundary(iCv).and.
+     &        .not.mpg%cvOnClosedSurface(iCv)) cycle
+          if (.not.ref_set) then
+            gm%ftFpsi(iFt) = gm%cvFpsi(iCv)
+            ref_set = .true.
+          endif
           if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt)) then
             write (*,'(a,i6,a,i4)')
      &       'Warning: cvFpsi value in cell ', iCv,
@@ -979,15 +989,15 @@
 !!               at the same level and to the left of the O-point
       iXpt = 0
       if ((mpg%nnreg(0).eq.1.and.mpg%isClassicalGrid.eq.1).or.
-     &    .not.allocated(mpg%Xpt)) then
+     &    (.not.allocated(mpg%strVx).and..not.allocated(mpg%tgVx))) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       elseif (mpg%nXpt.eq.0) then
         do i = mpg%vxFcP(mpg%tgVx(1),1),
      &         mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
           iFc = mpg%vxFc(i)
-          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
-     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
+          if ( mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &         mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)) ) then
             if ( mpg%fcVx(iFc,1).eq.mpg%tgVx(1)) then
               iVx = mpg%fcVx(iFc,2)
             else
@@ -1009,9 +1019,9 @@
         do i = mpg%vxFcP(mpg%Xpt(1),1),
      &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
           iFc = mpg%vxFc(i)
-          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
-     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
-            if ( mpg%fcVx(iFc,1).eq.mpg%Xpt(1)) then
+          if ( mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &         mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)) ) then
+            if ( mpg%fcVx(iFc,1).eq.mpg%Xpt(1) ) then
               iVx = mpg%fcVx(iFc,2)
             else
               iVx = mpg%fcVx(iFc,1)
@@ -1033,7 +1043,7 @@
      &                                    mpg%vxCvP(mpg%Xpt(iXpt),2) - 1
         if (match_found) cycle
         iCv = mpg%vxCv(i)
-        if (mpg%cvReg(iCv).eq.1) then
+        if (mpg%cvOnClosedSurface(iCv)) then
           do j = mpg%cvVxP(iCv,1),
      &           mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
             if (match_found) cycle
@@ -1045,25 +1055,6 @@
           end do
         end if
        end do
-      end if
-
-      if (mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
-     > then
-!! look for the inactive X-point as the one closest in psi-space to the
-!! active X-point
-        psi_active = gm%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
-        j = 0
-        do i = 1, mpg%nXpt
-          if (i.eq.mpg%iactive) cycle
-          if (j.eq.0) then
-            j = i
-          else
-            if (abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(i)))-psi_active ).lt.
-     .          abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(j)))-psi_active ))
-     >        j = i
-          end if
-        end do
-        mpg%iinactive = j
       end if
 
       ! Compute signmf
@@ -1116,6 +1107,7 @@
 !! and identify strike point face indices
       if (allocated(mpg%strDiv)) then
        do i = 1, maxval(mpg%strDiv)
+        if (mpg%divFcP(i,2).eq.0) cycle
         match_found = .false.
         k = 1
         do while (.not.match_found)
@@ -1185,7 +1177,7 @@
         do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
           iVx1 = mpg%fcVx(mpg%divFc(j),1)
           iVx2 = mpg%fcVx(mpg%divFc(j),2)
-          do k = 1, mpg%nXpt
+          do k = 1, max(mpg%nTgc,mpg%nXpt)
             do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
               if (iVx1.eq.mpg%strVx(l)) then
                 if((gm%psi_increasing .and.
@@ -1468,14 +1460,18 @@
       implicit none
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (in) :: gm
-      integer :: i, j, k, l, indd, inew,
-     *           iCv, iCv1, iCv2, iCn, iFc, iFcc, iFs, iVx, iVa, iVb
-      integer :: icount, fccount, artificial_slab = 0, found = 0
-      integer, allocatable :: indXpt(:), indFc(:), regcount(:), freg(:),
+      integer :: i, j, j1, j2, k, l, indd, inew,
+     *           iCv, iCv1, iCv2, iCn, iFc, iFc1, iFc2, iFcc, iFs,
+     *           iVx, iVa, iVb
+      integer :: icount, fccount, wallcount
+      integer :: artificial_slab = 0, found = 0
+      integer, allocatable :: indXpt(:), indFc(:), regcount(:),
+     *                        freg(:), flbl(:),
      *                        old_face_list(:), new_face_list(:)
       integer :: fcsb(maxval(mpg%fcLbl),mpg%nCi),
      * fcsbcounter(maxval(mpg%fcLbl)), cvsb(maxval(mpg%fcLbl),mpg%nCi)
       logical :: duplicate, left_match_found, right_match_found
+      real(kind=R8) :: psi_active, Psi1, Psi2
       external ipgeti, xerrab
 
 *   ..identify periodicity
@@ -1522,7 +1518,7 @@
             do i = mpg%vxCvP(iVx,1),
      &             mpg%vxCvP(iVx,1) + mpg%vxCvP(iVx,2) - 1
               iCv = mpg%vxCv(i)
-              if (mpg%cvReg(iCv).eq.1) then
+              if (mpg%cvOnClosedSurface(iCv)) then
                 if (mpg%iactive.eq.0) then
                   mpg%iactive = mpg%nXpt
                 else if (mpg%iinactive.eq.0) then
@@ -1533,6 +1529,25 @@
           end if
         end if
       end do
+
+      if (mpg%iactive.gt.0 .and. mpg%iinactive.eq.0 .and. mpg%nXpt.ge.2)
+     > then
+!! look for the inactive X-point as the one closest in psi-space to the
+!! active X-point for DDN cases
+        psi_active = gm%fsPsi(mpg%vxFs(mpg%Xpt(mpg%iactive)))
+        j = 0
+        do i = 1, mpg%nXpt
+          if (i.eq.mpg%iactive) cycle
+          if (j.eq.0) then
+            j = i
+          else
+            if (abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(i)))-psi_active ).lt.
+     .          abs( gm%fsPsi(mpg%vxFs(mpg%Xpt(j)))-psi_active ))
+     >        j = i
+          end if
+        end do
+        mpg%iinactive = j
+      end if
 
 !! use a different approach for slab cases with cuts,
 !! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
@@ -1580,6 +1595,14 @@
             if (mpg%iFssep.eq.0) mpg%iFssep = iFs
             if (mpg%iFssep2.eq.0.and.iFs.ne.mpg%iFssep)
      >       mpg%iFssep2 = iFs
+          end do
+        end if
+        if (mpg%iinactive.gt.0) then
+          do i = 1, mpg%vxFcP(mpg%Xpt(mpg%iinactive),2)
+            iFs =
+     .       mpg%fcFs(mpg%vxFc(mpg%vxFcP(mpg%Xpt(mpg%iinactive),1)+i-1))
+            if (iFs.eq.0) cycle
+            if (mpg%iFssep2.eq.0) mpg%iFssep2 = iFs
           end do
         end if
         indXpt = 0
@@ -1641,8 +1664,10 @@
         mpg%strVx(1:mpg%nStr) = indXpt(1:mpg%nStr)
         allocate(mpg%strDiv(mpg%nStr))
         allocate(freg(mpg%nStr))
+        allocate(flbl(mpg%nStr))
         mpg%strDiv = 0
         freg = 0
+        flbl = 0
         do i = 1, mpg%nXpt
           do j = mpg%strVxP(i,1),
      &           mpg%strVxP(i,1) + mpg%strVxP(i,2) - 1
@@ -1651,6 +1676,7 @@
      &             mpg%vxFcP(iVx,1) + mpg%vxFcP(iVx,2) - 1
               if (mpg%strDiv(j).ne.0) cycle
               iFc = mpg%vxFc(k)
+              flbl(j) = mpg%fcLbl(iFc)
               if (mpg%fcReg(iFc).eq.1) then
                 mpg%strDiv(j) = 1
                 freg(j) = 1
@@ -1680,13 +1706,17 @@
         allocate(mpg%tgVx(mpg%nTgc)) !csc needed for adjoint AD
       else
         allocate(freg(2))
+        allocate(flbl(2))
+        freg = 0
+        flbl = 0
         iFc = 1
         icount = 0
         do while (mpg%iFssep.eq.0.and.iFc.le.mpg%nFc)
           iCv1 = mpg%fcCv(iFc,1)
           iCv2 = mpg%fcCv(iFc,2)
-          if (mpg%cvReg(iCv1).ne.mpg%cvReg(iCv2).and.
-     &        mpg%cvReg(iCv1).ne.0.and.mpg%cvReg(iCv2).ne.0) then
+          if (mpg%cvOnClosedSurface(iCv1).neqv.
+     &        mpg%cvOnClosedSurface(iCv2).and.
+     &        iCv1.le.mpg%nCi.and.iCv2.le.mpg%nCi) then
             mpg%iFssep = mpg%fcFs(iFc)
           end if
           if (mpg%iFssep.eq.0) iFc = iFc + 1
@@ -1708,6 +1738,8 @@
                   if (.not.duplicate) then
                     icount = icount + 1
                     indXpt(icount) = iVx
+                    freg(icount) = mpg%fcReg(iFcc)
+                    flbl(icount) = mpg%fcLbl(iFcc)
                   end if
                 end if
               end do
@@ -1715,12 +1747,15 @@
           end do
           mpg%nTgc = icount
           allocate(mpg%tgVx(mpg%nTgc))
+          allocate(mpg%strVx(mpg%nTgc))
+          allocate(mpg%strVxP(mpg%nTgc,2))
           mpg%tgVx(1:mpg%nTgc) = indXpt(1:mpg%nTgc)
+          mpg%strVx(1:mpg%nTgc) = indXpt(1:mpg%nTgc)
+          mpg%strVxP(1,1) = 1
+          mpg%strVxP(1,2) = 1
           allocate(mpg%strDiv(2))
           mpg%strDiv(1) = 1
           mpg%strDiv(2) = 2
-          freg(1) = 1
-          freg(2) = 2
         end if
       end if
 
@@ -1740,47 +1775,92 @@
         end do
         if (mpg%iFssep.eq.0) call ipgeti ('b2mwti_jsep', mpg%iFssep)
         if (.not.allocated(freg)) allocate(freg(2))
-        freg(1) = 1
-        freg(2) = 2
+        if (.not.allocated(flbl)) allocate(flbl(2))
+        freg = 0
+        flbl = 0
         if (mpg%iFssep.gt.0) then
           indXpt = 0
           icount = 0
           allocate(mpg%strVxP(1,2))
-          mpg%strVxP(1,1) = 1
-          mpg%strVxP(1,2) = 2
           do j = mpg%fsFcP(mpg%iFssep,1),
      &           mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
             iFc = mpg%fsFc(j)
             do k = 1, 2
               iVx = mpg%fcVx(iFc,k)
               fccount = 0
+              wallcount = 0
               do l = mpg%vxFcP(iVx,1),
      &               mpg%vxFcP(iVx,1) + mpg%vxFcP(iVx,2) - 1
                 if (mpg%fcFs(mpg%vxFc(l)).eq.mpg%iFssep)
      >           fccount = fccount + 1
+                if (mpg%fcLbl(mpg%vxFc(l)).ne.0) then
+                  duplicate = .false.
+                  do i = 1, icount
+                    if (indXpt(icount).eq.iVx) duplicate = .true.
+                  end do
+                  if (.not.duplicate) then
+                    wallcount = wallcount + 1
+                    freg(wallcount) = mpg%fcReg(mpg%vxFc(l))
+                    flbl(wallcount) = mpg%fcLbl(mpg%vxFc(l))
+                  end if
+                end if
               end do
-              if (fccount.eq.1) then
+              if (.not.duplicate.and.
+     &           (fccount.eq.1.or.wallcount.eq.2)) then
                 icount = icount + 1
                 indXpt(icount) = iVx
               end if
+              if (fccount.eq.1) mpg%nStr = mpg%nStr + 1
+              if (wallcount.eq.2) mpg%nTgc = mpg%nTgc + 1
             end do
           end do
-          mpg%nStr = icount
           if (mpg%nStr.gt.0) then
             allocate(mpg%strVx(mpg%nStr))
             mpg%strVx(1:mpg%nStr) = indXpt(1:mpg%nStr)
             allocate(mpg%strDiv(mpg%nStr))
             mpg%strDiv = 0
+            mpg%strVxP(1,1) = 1
             do i = 1, mpg%nStr
+              mpg%strVxP(i,2) = 2
+              if (i.gt.1) mpg%strVxP(i,1) = mpg%strVxP(i-1,1) + 2
               iVx = mpg%strVx(i)
               do j = mpg%vxFcP(iVx,1),
      &               mpg%vxFcP(iVx,1) + mpg%vxFcP(iVx,2) - 1
-                if (mpg%strDiv(i).ne.0) cycle
                 iFc = mpg%vxFc(j)
-                if (mpg%fcReg(iFc).eq.1) then
+                if (mpg%fcReg(iFc).eq.freg(1)) then
                   mpg%strDiv(i) = 1
-                else if (mpg%fcReg(iFc).eq.2) then
+                else if (mpg%fcReg(iFc).eq.freg(2)) then
                   mpg%strDiv(i) = 2
+                else if (mpg%fcLbl(iFc).eq.flbl(1)) then
+                  mpg%strDiv(i) = 1
+                else if (mpg%fcLbl(iFc).eq.flbl(2)) then
+                  mpg%strDiv(i) = 2
+                end if
+              end do
+            end do
+          else if (mpg%nTgc.gt.0) then
+            allocate(mpg%tgVx(mpg%nTgc))
+            allocate(mpg%strVx(mpg%nTgc))
+            mpg%tgVx(1:mpg%nTgc) = indXpt(1:mpg%nTgc)
+            mpg%strVx(1:mpg%nTgc) = indXpt(1:mpg%nTgc)
+            allocate(mpg%strDiv(2*mpg%nTgc))
+            mpg%strDiv = 0
+            mpg%strVxP(1,1) = 1
+            do i = 1, mpg%nTgc
+              mpg%strVxP(i,2) = 1
+              if (i.gt.1) mpg%strVxP(i,1) = mpg%strVxP(i-1,1) + 1
+              iVx = mpg%strVx(i)
+              do j = mpg%vxFcP(iVx,1),
+     &               mpg%vxFcP(iVx,1) + mpg%vxFcP(iVx,2) - 1
+                iFc = mpg%vxFc(j)
+                if (mpg%fcReg(iFc).eq.freg(2*i-1)) then
+                  mpg%strDiv(2*i-1) = 1
+                else if (mpg%fcReg(iFc).eq.freg(2*i)) then
+                  mpg%strDiv(2*i) = 2
+                else if (mpg%fcLbl(iFc).eq.flbl(2*i-1)) then
+                  mpg%strDiv(2*i-1) = 1
+                else if (mpg%fcLbl(iFc).eq.flbl(2*i)) then
+                  mpg%strDiv(2*i) = 2
                 end if
               end do
             end do
@@ -1802,7 +1882,8 @@
         mpg%ivdiv = 0
         mpg%divFcP(:,2) = 0
         do i = 1, indd  ! first assemble all the faces
-          if (mpg%strDiv(i).eq.0 .or. freg(i).eq.0) cycle
+          if (mpg%strDiv(i).eq.0 .or.
+     &       (freg(i).eq.0 .and. flbl(i).eq.0)) cycle
           if (mpg%divFcP(mpg%strDiv(i),2).ne.0) cycle ! already done, skip
           do iFc = 1, mpg%nFc
             if (mpg%fcReg(iFc).eq.freg(i)) then
@@ -1812,6 +1893,15 @@
               indFc(icount) = iFc
             end if
           end do
+          if (mpg%divFcP(mpg%strDiv(i),2).eq.0) then ! fallback option
+            do iFc = 1, mpg%nFc
+              if (mpg%fcLbl(iFc).eq.flbl(i)) then
+                mpg%divFcP(mpg%strDiv(i),2) =
+     &           mpg%divFcP(mpg%strDiv(i),2) + 1
+                indFc(icount) = iFc
+              end if
+            end do
+          end if
         end do
         mpg%divFcP(1,1) = 1
         do i = 2, maxval(mpg%strDiv)
@@ -1825,6 +1915,7 @@
         icount = 1
         do i = 1, indd
           if (mpg%strDiv(i).eq.0) cycle
+          if (mpg%divFcP(mpg%strDiv(i),2).eq.0) cycle
           if (mpg%divFc(mpg%divFcP(mpg%strDiv(i),1)).ne.0) cycle ! already done
           mpg%divFc(mpg%divFcP(mpg%strDiv(i),1):
      .              mpg%divFcP(mpg%strDiv(i),1)+
@@ -1833,6 +1924,7 @@
           icount = icount + mpg%divFcP(mpg%strDiv(i),2)
         end do
         do i = 1, maxval(mpg%strDiv) ! now re-order them
+          if (mpg%divFcP(i,2).eq.0) cycle
           allocate(old_face_list(mpg%divFcP(i,2)))
           allocate(new_face_list(mpg%divFcP(i,2)))
           old_face_list(1:mpg%divFcP(i,2))=
@@ -1895,13 +1987,43 @@
                 iVa = mpg%fcVx(iFc,1)
                 iVb = mpg%fcVx(iFc,2)
                 write(6,'(a,4i6)')
-     &        'Left over faces and vertices in old list',j,iFc,iVa,iVb
+     &        'Leftover faces and vertices in old list',j,iFc,iVa,iVb
               end do
               call xerrab ('Broken face chain along target')
             end if
           end do
           mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)=
      &     new_face_list(1:mpg%divFcP(i,2))
+          ! make sure the ordering of the faces is from PFR to SOL
+          if (mpg%divFcP(i,2).gt.1) then
+            iFc1 = mpg%divFc(mpg%divFcP(i,1))
+            iFc2 = mpg%divFc(mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+            Psi1 = 0.5_R8*(gm%vxFpsi(mpg%fcVx(iFc1,1))+
+     &                     gm%vxFpsi(mpg%fcVx(iFc1,2)))
+            Psi2 = 0.5_R8*(gm%vxFpsi(mpg%fcVx(iFc2,1))+
+     &                     gm%vxFpsi(mpg%fcVx(iFc2,2)))
+            if (gm%psi_increasing) then
+              if (Psi1.gt.Psi2) then
+                old_face_list(1:mpg%divFcP(i,2)) =
+     &           mpg%divFc(mpg%divFcP(i,1):
+     &                     mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+                do j = 1, mpg%divFcP(i,2)
+                 mpg%divFc(mpg%divFcP(i,1)+j-1) =
+     &            old_face_list(mpg%divFcP(i,2)-j+1)
+                end do
+              end if
+            else
+              if (Psi1.lt.Psi2) then
+                old_face_list(1:mpg%divFcP(i,2)) =
+     &           mpg%divFc(mpg%divFcP(i,1):
+     &                     mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+                do j = 1, mpg%divFcP(i,2)
+                 mpg%divFc(mpg%divFcP(i,1)+j-1) =
+     &            old_face_list(mpg%divFcP(i,2)-j+1)
+                end do
+              end if
+            end if
+          end if
           deallocate(old_face_list)
           deallocate(new_face_list)
         end do
@@ -1909,8 +2031,65 @@
        end if
       end if
 
+cxpb Special treatment to remove the duplicates in case
+cxpb of a tangency point with same label faces on both sides
+cxpb Split the list in two halves on both sides of the tangency point
+cxpb and re-order so they start at the tangency point
+      if (mpg%nTgc.gt.0) then
+        iFc1 = 0
+        iFc2 = 0
+        iVx = mpg%tgVx(1)
+        do j = mpg%vxFcP(iVx,1), mpg%vxFcP(iVx,1) + mpg%vxFcP(iVx,2) - 1
+          iFc = mpg%vxFc(j)
+          if (mpg%fcReg(iFc).eq.0.and.mpg%fcLbl(iFc).eq.0) cycle
+          if (mpg%fcReg(iFc).ne.0.and.iFc1.eq.0) then
+            iFc1 = iFc
+          else if (mpg%fcLbl(iFc).ne.0.and.iFc1.eq.0) then
+            iFc1 = iFc
+          else if (mpg%fcReg(iFc).ne.0.and.iFc1.ne.0) then
+            iFc2 = iFc
+          else if (mpg%fcLbl(iFc).ne.0.and.iFc1.ne.0) then
+            iFc2 = iFc
+          end if
+        end do
+        if (iFc1.ne.0.and.iFc2.ne.0) then
+         if ((mpg%fcLbl(iFc1).eq.mpg%fcLbl(iFc2).and.
+     &        mpg%fcLbl(iFc1).ne.0.and.mpg%fcLbl(iFc2).ne.0).or.
+     &       (mpg%fcReg(iFc1).eq.mpg%fcReg(iFc2).and.
+     &        mpg%fcReg(iFc1).ne.0.and.mpg%fcReg(iFc2).ne.0)) then
+          do j = 1, mpg%divFcP(1,2)
+            iFc = mpg%divFc(mpg%divFcP(1,1)+j-1)
+            if (iFc.eq.iFc1) j1 = j
+            if (iFc.eq.iFc2) j2 = j
+          end do
+          if (j1.gt.0.and.j2.gt.0) then
+            mpg%divFcP(2,2) = mpg%divFcP(1,2) - min(j1,j2)
+            mpg%divFcP(2,1) = min(j1,j2) + 1
+            mpg%divFcP(1,2) = min(j1,j2)
+            allocate(old_face_list(mpg%divFcP(1,2)))
+            old_face_list(1:mpg%divFcP(1,2)) =
+     .       mpg%divFc(1:mpg%divFcP(1,2))
+            do j = 1, mpg%divFcP(1,2)
+             mpg%divFc(j) = old_face_list(mpg%divFcP(1,2)-j+1)
+            end do
+            deallocate(old_face_list)
+            allocate(old_face_list(mpg%divFcP(2,2)))
+            old_face_list(1:mpg%divFcP(2,2)) =
+     .       mpg%divFc(mpg%divFcP(2,1):
+     .                 mpg%divFcP(2,1)+mpg%divFcP(2,2)-1)
+            do j = 1, mpg%divFcP(2,2)
+             mpg%divFc(mpg%divFcP(2,1)+j-1) =
+     .        old_face_list(mpg%divFcP(2,2)-j+1)
+            end do
+            deallocate(old_face_list)
+          end if
+         end if
+        end if
+      end if
+
       if (allocated(freg)) then
         deallocate(freg)
+        deallocate(flbl)
       else
         write(*,*) 'Targetless topology detected :'
         write(*,*) 'Strike point data not defined'
@@ -2048,7 +2227,11 @@
      &                pinch = .true.
                   end do
                 end do
-                closed = pinch
+                if (pinch) then
+                  write(6,*) 'Tangency point found.'
+                  write(6,*) 'The first open flux tube has number ',iFt
+                end if
+                closed = .false.
                 end_found = .true.
               else
                 iCvm = iCvn

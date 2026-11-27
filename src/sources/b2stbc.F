@@ -9,7 +9,7 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan 2017
      1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
-     2          b2stbc_shi0to3,balance_netcdf
+     2          b2stbc_shi0to3,b2stbc_sch0to3,balance_netcdf
       use b2mod_openmp
 #endif
       use b2us_feedback
@@ -644,6 +644,9 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbc_smo0to3 = srw%smo0
         b2stbc_she0to3 = srw%she0
         b2stbc_shi0to3 = srw%shi0
+*   ..charge sources only where they were recomputed here
+        if (bc_for_equations.eq.'all' .or. bc_for_equations.eq.'pot')
+     &   b2stbc_sch0to3 = srw%sch0
       endif
 #endif
 

@@ -70,6 +70,7 @@ SUBROUTINE B2TRFL_DV(icv, switch, mpg, ainv, ainvd, zeffne, zeffned, &
   INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
   REAL(kind=r8), DIMENSION(nbdirsmax) :: coefd, t0d, t1d, t2d
+  INTRINSIC MIN
   INTRINSIC SUM
   INTRINSIC ABS
   INTRINSIC SQRT
@@ -101,12 +102,16 @@ SUBROUTINE B2TRFL_DV(icv, switch, mpg, ainv, ainvd, zeffne, zeffned, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl')
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
     icn = icv
-  ENDIF
+  END IF
   IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     temp = mp*(zeffne*zeffne)
     DO nd=1,nbdirs
@@ -292,6 +297,7 @@ SUBROUTINE B2TRFL_NODIFF(icv, switch, mpg, ainv, zeffne, amti, zetap, &
 !   ..local variables
   INTEGER :: i, ifc, icn
   REAL(kind=r8) :: coef, t0, t1, t2
+  INTRINSIC MIN
   INTRINSIC SUM
   INTRINSIC ABS
   INTRINSIC SQRT
@@ -306,12 +312,16 @@ SUBROUTINE B2TRFL_NODIFF(icv, switch, mpg, ainv, zeffne, amti, zetap, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2trfl')
 !   ..main
-  IF (icv.GT.mpg%nci) THEN
-    ifc = mpg%cvfc(mpg%cvfcp(icv,1))
-    icn = MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2))
+  IF (icv .GT. mpg%nci) THEN
+    ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+      icn = mpg%fccv(ifc, 2)
+    ELSE
+      icn = mpg%fccv(ifc, 1)
+    END IF
   ELSE
     icn = icv
-  ENDIF
+  END IF
   IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icn))) THEN
     coef = 2.5_R8*zetap/mp/zeffne**2
     DO i=0,nspecies-1

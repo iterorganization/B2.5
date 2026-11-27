@@ -16,7 +16,7 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
-     2          b2srdt_shi0to3, balance_netcdf
+     2          b2srdt_shi0to3, b2srdt_sch0to3, balance_netcdf
 #endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -549,6 +549,7 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_smo0to3 = sr%smodt
         b2srdt_she0to3 = sr%shedt
         b2srdt_shi0to3 = sr%shidt
+        b2srdt_sch0to3 = sr%schdt
       endif
 #endif
 

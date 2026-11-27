@@ -15,7 +15,7 @@
 MODULE B2MOD_DRIVER_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_VERSION
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_TIME
   USE B2MOD_DIAG_DIFFV
@@ -30,7 +30,7 @@ MODULE B2MOD_DRIVER_DIFFV
 & dealloc_b2mod_sputter
   USE B2MOD_SOLPSTOP
   USE B2MOD_YSMP_SDRV, ONLY : dealloc_b2mod_ysmp_sdrv
-  USE B2MOD_WALL, ONLY : dealloc_b2mod_wall
+  USE B2MOD_WALL_DIFFV, ONLY : dealloc_b2mod_wall
   USE B2MOD_NEOCLASSICAL_DIFFV, ONLY : dealloc_b2mod_neoclassical
   USE B2MOD_FACDRIFT_EXB_DIFFV, ONLY : dealloc_b2mod_facdrift_exb
   USE B2MOD_FIRST_FLIGHT_DIFFV
@@ -52,7 +52,8 @@ MODULE B2MOD_DRIVER_DIFFV
   USE B2MOD_ZHFRTF_DIFFV, ONLY : alloc_b2mod_zhfrtf, &
 & alloc_b2mod_zhfrtf_dv, alloc_b2mod_zhfrtf_df, dealloc_b2mod_zhfrtf, &
 & dealloc_b2mod_zhfrtf_dv, dealloc_b2mod_zhfrtf_df
-  USE B2MOD_FRTF_NCCORR_DIFFV, ONLY : dealloc_b2mod_frtf_nccorr, &
+  USE B2MOD_FRTF_NCCORR_DIFFV, ONLY : alloc_b2mod_frtf_nccorr, &
+& alloc_b2mod_frtf_nccorr_dv, dealloc_b2mod_frtf_nccorr, &
 & dealloc_b2mod_frtf_nccorr_dv
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_MWTI
@@ -1939,6 +1940,7 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER :: NF_SET_LOG_LEVEL
   INTEGER :: ncid
   REAL(kind=r8) :: delta_cdfmovie_time, save_cdfmovie_time
+  REAL(kind=r8) :: delta_cdfchord_time, save_cdfchord_time
   REAL(kind=r8) :: delta_plasma_time, save_plasma_time
   REAL(kind=r8) :: delta_ids_time, save_ids_time
   REAL(kind=r8) :: te_hot, ne_hot_frac
@@ -1965,9 +1967,12 @@ MODULE B2MOD_DRIVER_DIFFV
 &     external_species, b2mndr_elapsed
   SAVE ismaind, ismain0d
   SAVE delta_cdfmovie_time, save_cdfmovie_time
+  SAVE delta_cdfchord_time, save_cdfchord_time
   SAVE delta_plasma_time, save_plasma_time
   SAVE delta_ids_time, save_ids_time
   SAVE min_areshe, min_areshi, min_aresco, min_aresmo, res_quit, res_max
+!
+  LOGICAL, SAVE :: eirene_wall_read=.false.
   DATA ncall /0/
   DATA ntim /1/
   DATA mvinc /1/
@@ -2009,6 +2014,8 @@ MODULE B2MOD_DRIVER_DIFFV
   DATA external_species /0/
   DATA delta_cdfmovie_time /0.0_R8/
   DATA save_cdfmovie_time /0.0_R8/
+  DATA delta_cdfchord_time /0.0_R8/
+  DATA save_cdfchord_time /0.0_R8/
   DATA delta_plasma_time /0.0_R8/
   DATA save_plasma_time /0.0_R8/
   DATA delta_ids_time /0.0_R8/
@@ -2302,6 +2309,7 @@ CONTAINS
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
+    EXTERNAL CDFCHORD
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
@@ -2911,6 +2919,7 @@ CONTAINS
         CALL ALLOC_B2MOD_MREL(nspecies, zmaxmax, ns)
         CALL ALLOC_B2MOD_ZHCO_DV(nspecies, ncv, nbdirs)
         CALL ALLOC_B2MOD_ZHFRTF_DV(ncv, ns, nbdirs)
+        CALL ALLOC_B2MOD_FRTF_NCCORR_DV(ncv, ns, nbdirs)
         IF (switch%zh_dist_fun .EQ. 1) CALL ALLOC_B2MOD_ZHFRTF_DF(ncv, &
 &                                                           ns)
       END IF
@@ -3026,6 +3035,14 @@ CONTAINS
       CALL XERTST(delta_cdfmovie_time .EQ. 0.0_R8 .OR. &
 &           delta_cdfmovie_time .GE. dtim, &
 &           'b2mndr_cdfmovietim too short compared to timestep !')
+      CALL IPGETR('b2mndr_cdfchordtim', delta_cdfchord_time)
+      IF (delta_cdfchord_time .GT. 0.0_R8) WRITE(*, *) &
+&                                        'Saving CDF chord files every '&
+&                                          , delta_cdfchord_time, &
+&                                          ' simulation seconds'
+      CALL XERTST(delta_cdfchord_time .EQ. 0.0_R8 .OR. &
+&           delta_cdfchord_time .GE. dtim, &
+&           'b2mndr_cdfchordtim too short compared to timestep !')
       CALL IPGETR('b2mndr_plasmatim', delta_plasma_time)
       IF (delta_plasma_time .GT. 0.0_R8) WRITE(*, *) &
 &                                     'Saving plasma state files every '&
@@ -3735,6 +3752,7 @@ CONTAINS
     save_plasma_time = tim + delta_plasma_time
     save_ids_time = tim + delta_ids_time
     save_cdfmovie_time = tim + delta_cdfmovie_time
+    save_cdfchord_time = tim + delta_cdfchord_time
 !   ..initialise tracing routines
     WRITE(*, *) 'Calling alloc_b2mod_elements'
     CALL ALLOC_B2MOD_ELEMENTS(ns, zn, am)
@@ -3797,12 +3815,19 @@ CONTAINS
 &                                           nci, ns, geo, state, switch)
       save_cdfmovie_time = save_cdfmovie_time + delta_cdfmovie_time
     END IF
+! new CDF chord option (1st frame at t=0)
+    IF (tim .GE. save_cdfchord_time - dtim/2.0_R8 .AND. &
+&       delta_cdfchord_time .GT. 0.0_R8) THEN
+      IF (switch%use_eirene .EQ. 0) CALL CDFCHORD(ncid, ncv, nfc, ns, &
+&                                           geo, mpg, state, switch)
+      save_cdfchord_time = save_cdfchord_time + delta_cdfchord_time
+    END IF
     idx = 0
-!Initialize residual if using Crank-Nicolson scheme
+!Initialize plasma snapshots when using second-order schemes
     WRITE(*, *) 'b2mndr_0, end: nCv = ', mpg%ncv
 !
-    IF (itim .EQ. 0 .AND. (switch%b2mndt_ckn .EQ. 2 .OR. switch%&
-&       b2mndt_startup .EQ. 2)) THEN
+    IF (itim .EQ. 0 .AND. (switch%b2mndt_ckn .EQ. 2 .OR. (switch%&
+&       b2mndt_bdf .EQ. 2 .AND. switch%b2mndt_startup .EQ. 0))) THEN
 !Dummy call to b2mndt
 !Temporarily set dummy switch to 1
 !Temporarily set rxf to 0 to not update any physical quantities
@@ -3829,13 +3854,7 @@ CONTAINS
       CALL IPGETI('b2mndt_nstg2', switch%nstg(2))
 !Update plasma snapshots with initialized residuals (without time-stepping sources)
       switch%b2mndt_dummy = 0
-      state%psnl%resco0 = state%dv%resco0
-      state%psnl%resmo0 = state%dv%resmo0
-      state%psnl%reshe0 = state%dv%reshe0
-      state%psnl%reshi0 = state%dv%reshi0
-      state%psnl%reshn0 = state%dv%reshn0
-      state%psnl%reskt0 = state%dv%reskt0
-      state%psnl%reszt0 = state%dv%reszt0
+      CALL GETB2PLASMASNAPSHOT(state%pl, state%dv, state%psnl)
     END IF
 !
     CALL SUBEND()
@@ -3878,6 +3897,7 @@ CONTAINS
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
+    EXTERNAL CDFCHORD
     REAL(r8) :: x1
     REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs0
     REAL(kind=r8), DIMENSION(mpg%nCv, 0:ns-1) :: dabs1
@@ -4482,6 +4502,7 @@ CONTAINS
         CALL ALLOC_B2MOD_MREL(nspecies, zmaxmax, ns)
         CALL ALLOC_B2MOD_ZHCO(nspecies, ncv)
         CALL ALLOC_B2MOD_ZHFRTF(ncv, ns)
+        CALL ALLOC_B2MOD_FRTF_NCCORR(ncv, ns)
         IF (switch%zh_dist_fun .EQ. 1) CALL ALLOC_B2MOD_ZHFRTF_DF(ncv, &
 &                                                           ns)
       END IF
@@ -4597,6 +4618,14 @@ CONTAINS
       CALL XERTST(delta_cdfmovie_time .EQ. 0.0_R8 .OR. &
 &           delta_cdfmovie_time .GE. dtim, &
 &           'b2mndr_cdfmovietim too short compared to timestep !')
+      CALL IPGETR('b2mndr_cdfchordtim', delta_cdfchord_time)
+      IF (delta_cdfchord_time .GT. 0.0_R8) WRITE(*, *) &
+&                                        'Saving CDF chord files every '&
+&                                          , delta_cdfchord_time, &
+&                                          ' simulation seconds'
+      CALL XERTST(delta_cdfchord_time .EQ. 0.0_R8 .OR. &
+&           delta_cdfchord_time .GE. dtim, &
+&           'b2mndr_cdfchordtim too short compared to timestep !')
       CALL IPGETR('b2mndr_plasmatim', delta_plasma_time)
       IF (delta_plasma_time .GT. 0.0_R8) WRITE(*, *) &
 &                                     'Saving plasma state files every '&
@@ -5280,6 +5309,7 @@ CONTAINS
     save_plasma_time = tim + delta_plasma_time
     save_ids_time = tim + delta_ids_time
     save_cdfmovie_time = tim + delta_cdfmovie_time
+    save_cdfchord_time = tim + delta_cdfchord_time
 !   ..initialise tracing routines
     WRITE(*, *) 'Calling alloc_b2mod_elements'
     CALL ALLOC_B2MOD_ELEMENTS(ns, zn, am)
@@ -5339,12 +5369,19 @@ CONTAINS
 &                                           nci, ns, geo, state, switch)
       save_cdfmovie_time = save_cdfmovie_time + delta_cdfmovie_time
     END IF
+! new CDF chord option (1st frame at t=0)
+    IF (tim .GE. save_cdfchord_time - dtim/2.0_R8 .AND. &
+&       delta_cdfchord_time .GT. 0.0_R8) THEN
+      IF (switch%use_eirene .EQ. 0) CALL CDFCHORD(ncid, ncv, nfc, ns, &
+&                                           geo, mpg, state, switch)
+      save_cdfchord_time = save_cdfchord_time + delta_cdfchord_time
+    END IF
     idx = 0
-!Initialize residual if using Crank-Nicolson scheme
+!Initialize plasma snapshots when using second-order schemes
     WRITE(*, *) 'b2mndr_0, end: nCv = ', mpg%ncv
 !
-    IF (itim .EQ. 0 .AND. (switch%b2mndt_ckn .EQ. 2 .OR. switch%&
-&       b2mndt_startup .EQ. 2)) THEN
+    IF (itim .EQ. 0 .AND. (switch%b2mndt_ckn .EQ. 2 .OR. (switch%&
+&       b2mndt_bdf .EQ. 2 .AND. switch%b2mndt_startup .EQ. 0))) THEN
 !Dummy call to b2mndt
 !Temporarily set dummy switch to 1
 !Temporarily set rxf to 0 to not update any physical quantities
@@ -5367,13 +5404,7 @@ CONTAINS
       CALL IPGETI('b2mndt_nstg2', switch%nstg(2))
 !Update plasma snapshots with initialized residuals (without time-stepping sources)
       switch%b2mndt_dummy = 0
-      state%psnl%resco0 = state%dv%resco0
-      state%psnl%resmo0 = state%dv%resmo0
-      state%psnl%reshe0 = state%dv%reshe0
-      state%psnl%reshi0 = state%dv%reshi0
-      state%psnl%reshn0 = state%dv%reshn0
-      state%psnl%reskt0 = state%dv%reskt0
-      state%psnl%reszt0 = state%dv%reszt0
+      CALL GETB2PLASMASNAPSHOT(state%pl, state%dv, state%psnl)
     END IF
 !
     CALL SUBEND()
@@ -5595,8 +5626,7 @@ CONTAINS
 !                rtlra:in rtlqa:in rtlcx:in b2data:in b2dataoncf:in
 !                b2voloncf:in c_hw_save:in c_r_ta:in c_r_tb:in
 !                c_r_tb_nofl:in c_r_w:in c_hta_an_fl_save:in c_r_ta_an_save:in
-!                corr_tfia:in-out g_hs_style:in-out corr_fria:in-out
-!                alpha_hs_style:in-out
+!                corr_tfia:in g_hs_style:in corr_fria:in alpha_hs_style:in
 !
   SUBROUTINE B2MNDR_1_DV(nout, ns, j, jd, nbdirs)
 ! csc The following are not necessary for computation but are needed
@@ -6626,6 +6656,7 @@ CONTAINS
     EXTERNAL B2WDAT
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL CDFCHORD
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
@@ -6739,6 +6770,11 @@ CONTAINS
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, nfc, &
 &                                                mpg%nci, ns, geo, state&
 &                                                , switch)
+!   ..produce last CDF chord frame if not yet done
+    IF (tim .GT. save_cdfchord_time - delta_cdfchord_time + dtim .AND. &
+&       delta_cdfchord_time .GT. 0.0_R8) CALL CDFCHORD(ncid, ncv, nfc, &
+&                                                ns, geo, mpg, state, &
+&                                                switch)
 !   ..produce 2d profiles if not yet done
     IF (b2time .GT. 0) THEN
       IF ((MOD(itim, b2time) .NE. 0 .AND. itim .GT. 1) .OR. itim .EQ. 0&
@@ -6878,6 +6914,7 @@ CONTAINS
     EXTERNAL B2WDAT
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL CDFCHORD
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
@@ -6990,6 +7027,11 @@ CONTAINS
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, nfc, &
 &                                                mpg%nci, ns, geo, state&
 &                                                , switch)
+!   ..produce last CDF chord frame if not yet done
+    IF (tim .GT. save_cdfchord_time - delta_cdfchord_time + dtim .AND. &
+&       delta_cdfchord_time .GT. 0.0_R8) CALL CDFCHORD(ncid, ncv, nfc, &
+&                                                ns, geo, mpg, state, &
+&                                                switch)
 !   ..produce 2d profiles if not yet done
     IF (b2time .GT. 0) THEN
       IF ((MOD(itim, b2time) .NE. 0 .AND. itim .GT. 1) .OR. itim .EQ. 0&

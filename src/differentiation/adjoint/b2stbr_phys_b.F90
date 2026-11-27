@@ -22,7 +22,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & new_sputter_namelist, shi0_ff, f_redep)
   USE B2MOD_TYPES
 !WG_TODO      use b2mod_sputter
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFF
 !WG_TODO      use b2mod_elements
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFF
@@ -981,7 +981,7 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 & sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep)
   USE B2MOD_TYPES
 !WG_TODO      use b2mod_sputter
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFF
 !WG_TODO      use b2mod_elements
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFF

@@ -214,11 +214,14 @@ contains
       plasmaGeometry = geometryId ( mpg, geo, 2 )
       !   ..test state
       call ipgeti ('b2mwti_2dwrite',write_2d)
-      call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
+      call xertst (0.le.write_2d.and.write_2d.le.2, &
+       & 'faulty internal parameter write_2d')
       call ipgeti ('b2mwti_target_offset',target_offset)
-      call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
+      call xertst (0.le.target_offset.and.target_offset.le.1, &
+       & 'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
+      call xertst(icsepomp.gt.0, &
+       & 'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = max(mpg%nXpt,1)
       if (nimp.gt.0) then
         if (.not. allocated(dsi)) then
@@ -703,18 +706,22 @@ contains
       ix = -1 ! 1
       ix_off  = ix + target_offset
       do iy = iylstrt,iylend
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. &
+          & xymap(ix,iy).ne.0) then
           tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
         endif
       enddo
 #endif
     end if
 
-    fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
-    namxap = 0.0_R8; nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
+    fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8;
+    fchxap = 0.0_R8; fetxap = 0.0_R8
+    namxap = 0.0_R8; nemxap = 0.0_R8;
+    temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8
     if (maxval(mpg%strDiv).gt.0) then
       do i = mpg%divFcP(maxval(mpg%strDiv),1), &
-           & mpg%divFcP(maxval(mpg%strDiv),1) + mpg%divFcP(maxval(mpg%strDiv),2) - 1
+           & mpg%divFcP(maxval(mpg%strDiv),1) + &
+           & mpg%divFcP(maxval(mpg%strDiv),2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
           iCv = mpg%fcCv(iFc,1)
@@ -752,7 +759,8 @@ contains
       ix = nx ! 2
       ix_off  = ix - target_offset
       do iy = iyrstrt,iyrend
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. &
+          & xymap(ix,iy).ne.0) then
           tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
         endif
       enddo
@@ -830,7 +838,8 @@ contains
       ix = ixtr ! 3
       ix_off  = ix + target_offset
       do iy = iytrstrt,iytrend
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. &
+          & xymap(ix,iy).ne.0) then
           tpmxap(2) = max(tpmxap(2), target_temp(xymap(ix,iy),1))
         endif
       enddo
@@ -838,7 +847,8 @@ contains
       ix = ixtl ! 4
       ix_off  = ix - target_offset
       do iy = iytlstrt,iytlend
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. &
+          & xymap(ix,iy).ne.0) then
           tpmxip(2) = max(tpmxip(2), target_temp(xymap(ix,iy),1))
         endif
       enddo
@@ -1439,7 +1449,7 @@ contains
     nasepa = 0.0_R8; nesepa = 0.0_R8; tesepa = 0.0_R8; tisepa = 0.0_R8; tpsepa = 0.0_R8; posepa = 0.0_R8;
     dabsepa = 0.0_R8; dmbsepa = 0.0_R8; tabsepa = 0.0_R8; tmbsepa = 0.0_R8;
     ktsepm = 0.0_R8; ktsepi = 0.0_R8; ktsepa = 0.0_R8;
-! csc For now only identify outer midplane and targets separatrix values using flux tube concept
+! Outer separatrix midplane quantities
     if (nomp.gt.0) then
       do is = 0, ns-1
         nasepm(is+1,1) = 0.5_R8 * (pl%na(omp(icsepomp-1),is)+pl%na(omp(icsepomp),is))
@@ -1489,11 +1499,22 @@ contains
       vssepm(1) = 0.5_R8 * ( &
          co%vsa0(omp(icsepomp-1),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp-1),ismain))+ &
          co%vsa0(omp(icsepomp),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp),ismain)))
-      iFt = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
-      cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+target_offset) !inner
-      if (mpg%nXpt.lt.2 .or. gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
+    end if
+    if (allocated(mpg%divFc)) then
+      if (gridGeometry.eq.GEOMETRY_LINEAR .or. &
+        & gridGeometry.eq.GEOMETRY_LIMITER .or. &
+        &(gridGeometry.eq.GEOMETRY_SN .and. geo%LSN) .or. &
+        & gridGeometry.eq.GEOMETRY_CDN .or. &
+        & gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
         & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
         & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+        ! Inner (lower) target quantities
+        iFc = mpg%divFc(mpg%divFcP(1,1)+mpg%ifdiv(1)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
         do is = 0, ns-1
           nasepi(is+1,1) = pl%na(cvtrg,is)
         end do
@@ -1514,11 +1535,203 @@ contains
         endif
         posepi(1) = pl%po(cvtrg)
         ktsepi(1) = pl%kt(cvtrg)
-      else
-        nesepa(2) = dv%ne(cvtrg)
+
+        ! Outer (lower) target quantities
+        iFc = mpg%divFc(mpg%divFcP(2*nc,1)+mpg%ifdiv(2*nc)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
+        nesepa(1) = dv%ne(cvtrg)
+        do is = 0, ns-1
+          nasepa(is+1,1) = pl%na(cvtrg,is)
+        end do
+        tesepa(1) = pl%te(cvtrg)/ev
+        tisepa(1) = pl%ti(cvtrg)/ev
+        if (nnatmi.gt.0) then
+          do iatm=1,nnatmi
+            dabsepa(iatm,1) = dab2(cvtrg,iatm,1)
+            tabsepa(iatm,1) = tab2(cvtrg,iatm,1)
+          enddo
+        endif
+        if (nnmoli.gt.0) then
+          do imol=1,nnmoli
+            dmbsepa(imol,1) = dmb2(cvtrg,imol,1)
+            tmbsepa(imol,1) = tmb2(cvtrg,imol,1)
+          enddo
+        endif
+        posepa(1) = pl%po(cvtrg)
+        ktsepa(1) = pl%kt(cvtrg)
+      else if (gridGeometry.eq.GEOMETRY_DDN_TOP .or. &
+          &   (gridGeometry.eq.GEOMETRY_SN .and. .not.geo%LSN)) then
+        ! Outer (upper) target quantities
+        iFc = mpg%divFc(mpg%divFcP(2*nc-1,1)+mpg%ifdiv(2*nc-1)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
+        nesepa(1) = dv%ne(cvtrg)
+        do is = 0, ns-1
+          nasepa(is+1,1) = pl%na(cvtrg,is)
+        end do
+        tesepa(1) = pl%te(cvtrg)/ev
+        tisepa(1) = pl%ti(cvtrg)/ev
+        if (nnatmi.gt.0) then
+          do iatm=1,nnatmi
+            dabsepa(iatm,1) = dab2(cvtrg,iatm,1)
+            tabsepa(iatm,1) = tab2(cvtrg,iatm,1)
+          enddo
+        endif
+        if (nnmoli.gt.0) then
+          do imol=1,nnmoli
+            dmbsepa(imol,1) = dmb2(cvtrg,imol,1)
+            tmbsepa(imol,1) = tmb2(cvtrg,imol,1)
+          enddo
+        endif
+        posepa(1) = pl%po(cvtrg)
+        ktsepa(1) = pl%kt(cvtrg)
+
+        ! Inner (upper) target quantities
+        iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
+        do is = 0, ns-1
+          nasepi(is+1,1) = pl%na(cvtrg,is)
+        end do
+        nesepi(1) = dv%ne(cvtrg)
+        tesepi(1) = pl%te(cvtrg)/ev
+        tisepi(1) = pl%ti(cvtrg)/ev
+        if (nnatmi.gt.0) then
+          do iatm=1,nnatmi
+            dabsepi(iatm,1) = dab2(cvtrg,iatm,1)
+            tabsepi(iatm,1) = tab2(cvtrg,iatm,1)
+          enddo
+        endif
+        if (nnmoli.gt.0) then
+          do imol=1,nnmoli
+            dmbsepi(imol,1) = dmb2(cvtrg,imol,1)
+            tmbsepi(imol,1) = tmb2(cvtrg,imol,1)
+          enddo
+        endif
+        posepi(1) = pl%po(cvtrg)
+        ktsepi(1) = pl%kt(cvtrg)
+      end if
+    end if
+    if (mpg%nXpt.ge.2) then
+      if (nimp.gt.0) then
+        do is = 0, ns-1
+          nasepm(is+1,2) = 0.5_R8 * (pl%na(imp(icsepimp-1),is)+ &
+                                   & pl%na(imp(icsepimp),is))
+        end do
+        nesepm(2) = 0.5_R8 * (dv%ne(imp(icsepimp-1))+dv%ne(imp(icsepimp)))
+        tesepm(2) = 0.5_R8 * (pl%te(imp(icsepimp-1))+pl%te(imp(icsepimp)))/ev
+        tisepm(2) = 0.5_R8 * (pl%ti(imp(icsepimp-1))+pl%ti(imp(icsepimp)))/ev
+        if (nnatmi.gt.0) then
+          do iatm=1,nnatmi
+            dabsepm(iatm,2) = 0.5_R8 * (dab2(imp(icsepimp-1),iatm,1)+ &
+                                      & dab2(imp(icsepimp),iatm,1))
+            tabsepm(iatm,2) = 0.5_R8 * (tab2(imp(icsepimp-1),iatm,1)+ &
+                                      & tab2(imp(icsepimp),iatm,1))
+          enddo
+        endif
+        if (nnmoli.gt.0) then
+          do imol=1,nnmoli
+            dmbsepm(imol,2) = 0.5_R8 * (dmb2(imp(icsepimp-1),imol,1)+ &
+                                      & dmb2(imp(icsepimp),imol,1))
+            tmbsepm(imol,2) = 0.5_R8 * (tmb2(imp(icsepimp-1),imol,1)+ &
+                                      & tmb2(imp(icsepimp),imol,1))
+          enddo
+        endif
+        posepm(2) = 0.5_R8 * (pl%po(imp(icsepimp-1))+pl%po(imp(icsepimp)))
+        dnsepm(2) = 0.5_R8 * (co%dna0(imp(icsepimp-1),ismain0)+ &
+          &                   co%dna0(imp(icsepimp),ismain0))
+        kesepm(2) = 0.5_R8 * (co%hce0(imp(icsepimp-1))/dv%ne(imp(icsepimp-1))+ &
+          &                   co%hce0(imp(icsepimp))/dv%ne(imp(icsepimp)))
+        if (switch%tn_style.eq.0) then
+          kisepm(2) = 0.5_R8 * &
+            &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),0)+ &
+            &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),0))
+        else if (switch%tn_style.eq.1) then
+          kisepm(2) = 0.5_R8 * &
+            &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),1)+ &
+            &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),1))
+        else if (switch%tn_style.eq.2) then
+          kisepm(2) = 0.5_R8 * (co%hci0(imp(icsepimp-1))/ &
+            &                  (dv%ni(imp(icsepimp-1),0)- &
+            &                   dv%nn(imp(icsepimp-1))) &
+            &                  +co%hci0(imp(icsepimp))/ &
+            &                  (dv%ni(imp(icsepimp),0)-dv%nn(imp(icsepimp-1))))
+        end if
+        if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
+          dpsepm(2) = 0.5_R8 * ( &
+           co%dpa0(imp(icsepimp-1),ismain0)*( &
+           rt%rza(imp(icsepimp-1),ismain0)*pl%te(imp(icsepimp-1))+ &
+                                         & pl%ti(imp(icsepimp-1)))+ &
+           co%dpa0(imp(icsepimp),ismain0)*( &
+           rt%rza(imp(icsepimp),ismain0)*pl%te(imp(icsepimp))+ &
+                                       & pl%ti(imp(icsepimp))))
+        else
+          dpsepm(2) = 0.5_R8 * ( &
+           co%dpa0(imp(icsepimp-1),ismain0)*pl%tn(imp(icsepimp-1))+ &
+           co%dpa0(imp(icsepimp),ismain0)*pl%tn(imp(icsepimp)))
+        endif
+        ktsepm(2) = 0.5_R8 * (pl%kt(imp(icsepimp-1)) + pl%kt(imp(icsepimp)))/ev
+        vxsepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),0,ismain) + &
+                            & co%vla0(imp(icsepimp),0,ismain))
+        vysepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),1,ismain) + &
+                            & co%vla0(imp(icsepimp),1,ismain))
+        vssepm(2) = 0.5_R8 * ( &
+         co%vsa0(imp(icsepimp-1),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp-1),ismain))+ &
+         co%vsa0(imp(icsepimp),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp),ismain)))
+      end if
+      if (gridGeometry.eq.GEOMETRY_CDN .or. &
+        & gridGeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
+        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+        & gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+        ! Inner (upper) target quantities
+        iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
+        do is = 0, ns-1
+          nasepi(is+1,2) = pl%na(cvtrg,is)
+        end do
+        nesepi(2) = dv%ne(cvtrg)
+        tesepi(2) = pl%te(cvtrg)/ev
+        tisepi(2) = pl%ti(cvtrg)/ev
+        posepi(2) = pl%po(cvtrg)
+        if (nnatmi.gt.0) then
+          do iatm=1,nnatmi
+            dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
+            tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
+          enddo
+        endif
+        if (nnmoli.gt.0) then
+          do imol=1,nnmoli
+            dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
+            tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
+          enddo
+        endif
+        ktsepi(2) = pl%kt(cvtrg)
+
+        ! Outer (upper) target quantities
+        iFc = mpg%divFc(mpg%divFcP(3,1)+mpg%ifdiv(3)-1)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        end if
         do is = 0, ns-1
           nasepa(is+1,2) = pl%na(cvtrg,is)
         end do
+        nesepa(2) = dv%ne(cvtrg)
         tesepa(2) = pl%te(cvtrg)/ev
         tisepa(2) = pl%ti(cvtrg)/ev
         if (nnatmi.gt.0) then
@@ -1535,263 +1748,62 @@ contains
         endif
         posepa(2) = pl%po(cvtrg)
         ktsepa(2) = pl%kt(cvtrg)
-      end if
-      cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
-      if (mpg%nXpt.lt.2 .or. gridGeometry.ne.GEOMETRY_DDN_TOP) then
-        nesepa(1) = dv%ne(cvtrg)
-        do is = 0, ns-1
-          nasepa(is+1,1) = pl%na(cvtrg,is)
-        end do
-        tesepa(1) = pl%te(cvtrg)/ev
-        tisepa(1) = pl%ti(cvtrg)/ev
-        if (nnatmi.gt.0) then
-          do iatm=1,nnatmi
-            dabsepa(iatm,1) = dab2(cvtrg,iatm,1)
-            tabsepa(iatm,1) = tab2(cvtrg,iatm,1)
-          enddo
-        endif
-        if (nnmoli.gt.0) then
-          do imol=1,nnmoli
-            dmbsepa(imol,1) = dmb2(cvtrg,imol,1)
-            tmbsepa(imol,1) = tmb2(cvtrg,imol,1)
-          enddo
-        endif
-        posepa(1) = pl%po(cvtrg)
-        ktsepa(1) = pl%kt(cvtrg)
-      else
-        do is = 0, ns-1
-          nasepi(is+1,2) = pl%na(cvtrg,is)
-        end do
-        nesepi(2) = dv%ne(cvtrg)
-        tesepi(2) = pl%te(cvtrg)/ev
-        tisepi(2) = pl%ti(cvtrg)/ev
-        if (nnatmi.gt.0) then
-          do iatm=1,nnatmi
-            dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
-            tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
-          enddo
-        endif
-        if (nnmoli.gt.0) then
-          do imol=1,nnmoli
-            dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
-            tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
-          enddo
-        endif
-        posepi(2) = pl%po(cvtrg)
-        ktsepi(2) = pl%kt(cvtrg)
-      end if
-    end if
-    if (nimp.gt.0.and.mpg%nXpt.ge.2) then
-      do is = 0, ns-1
-        nasepm(is+1,2) = 0.5_R8 * (pl%na(imp(icsepimp-1),is)+pl%na(imp(icsepimp),is))
-      end do
-      nesepm(2) = 0.5_R8 * (dv%ne(imp(icsepimp-1))+dv%ne(imp(icsepimp)))
-      tesepm(2) = 0.5_R8 * (pl%te(imp(icsepimp-1))+pl%te(imp(icsepimp)))/ev
-      tisepm(2) = 0.5_R8 * (pl%ti(imp(icsepimp-1))+pl%ti(imp(icsepimp)))/ev
-      if (nnatmi.gt.0) then
-        do iatm=1,nnatmi
-          dabsepm(iatm,2) = 0.5_R8 * (dab2(imp(icsepimp-1),iatm,1)+dab2(imp(icsepimp),iatm,1))
-          tabsepm(iatm,2) = 0.5_R8 * (tab2(imp(icsepimp-1),iatm,1)+tab2(imp(icsepimp),iatm,1))
-        enddo
-      endif
-      if (nnmoli.gt.0) then
-        do imol=1,nnmoli
-          dmbsepm(imol,2) = 0.5_R8 * (dmb2(imp(icsepimp-1),imol,1)+dmb2(imp(icsepimp),imol,1))
-          tmbsepm(imol,2) = 0.5_R8 * (tmb2(imp(icsepimp-1),imol,1)+tmb2(imp(icsepimp),imol,1))
-        enddo
-      endif
-      posepm(2) = 0.5_R8 * (pl%po(imp(icsepimp-1))+pl%po(imp(icsepimp)))
-      dnsepm(2) = 0.5_R8 * (co%dna0(imp(icsepimp-1),ismain0)+ &
-        &                   co%dna0(imp(icsepimp),ismain0))
-      kesepm(2) = 0.5_R8 * (co%hce0(imp(icsepimp-1))/dv%ne(imp(icsepimp-1))+ &
-        &                   co%hce0(imp(icsepimp))/dv%ne(imp(icsepimp)))
-      if (switch%tn_style.eq.0) then
-        kisepm(2) = 0.5_R8 * &
-          &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),0)+ &
-          &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),0))
-      else if (switch%tn_style.eq.1) then
-        kisepm(2) = 0.5_R8 * &
-          &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),1)+ &
-          &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),1))
-      else if (switch%tn_style.eq.2) then
-        kisepm(2) = 0.5_R8 * (co%hci0(imp(icsepimp-1))/ &
-          &                  (dv%ni(imp(icsepimp-1),0)-dv%nn(imp(icsepimp-1))) &
-          &                  +co%hci0(imp(icsepimp))/ &
-          &                  (dv%ni(imp(icsepimp),0)-dv%nn(imp(icsepimp-1))))
-      end if
-      if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
-        dpsepm(2) = 0.5_R8 * ( &
-         co%dpa0(imp(icsepimp-1),ismain0)*( &
-         rt%rza(imp(icsepimp-1),ismain0)*pl%te(imp(icsepimp-1))+pl%ti(imp(icsepimp-1)))+ &
-         co%dpa0(imp(icsepimp),ismain0)*( &
-         rt%rza(imp(icsepimp),ismain0)*pl%te(imp(icsepimp))+pl%ti(imp(icsepimp))))
-      else
-        dpsepm(2) = 0.5_R8 * ( &
-         co%dpa0(imp(icsepimp-1),ismain0)*pl%tn(imp(icsepimp-1))+ &
-         co%dpa0(imp(icsepimp),ismain0)*pl%tn(imp(icsepimp)))
-      endif
-      ktsepm(2) = 0.5_R8 * (pl%kt(imp(icsepimp-1)) + pl%kt(imp(icsepimp)))/ev
-      vxsepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),0,ismain)+ co%vla0(imp(icsepimp),0,ismain))
-      vysepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),1,ismain)+ co%vla0(imp(icsepimp),1,ismain))
-      vssepm(2) = 0.5_R8 * ( &
-         co%vsa0(imp(icsepimp-1),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp-1),ismain))+ &
-         co%vsa0(imp(icsepimp),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp),ismain)))
-      if (gridGeometry.eq.GEOMETRY_CDN) then
-        iFt = mpg%cvFt(imp(icsepimp)) ! HFS separatrix flux tube
-        cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
-        do is = 0, ns-1
-          nasepi(is+1,1) = pl%na(cvtrg,is)
-        end do
-        nesepi(1) = dv%ne(cvtrg)
-        tesepi(1) = pl%te(cvtrg)/ev
-        tisepi(1) = pl%ti(cvtrg)/ev
-        posepi(1) = pl%po(cvtrg)
-        if (nnatmi.gt.0) then
-          do iatm=1,nnatmi
-            dabsepi(iatm,1) = dab2(cvtrg,iatm,1)
-            tabsepi(iatm,1) = tab2(cvtrg,iatm,1)
-          enddo
-        endif
-        if (nnmoli.gt.0) then
-          do imol=1,nnmoli
-            dmbsepi(imol,1) = dmb2(cvtrg,imol,1)
-            tmbsepi(imol,1) = tmb2(cvtrg,imol,1)
-          enddo
-        endif
-        ktsepi(1) = pl%kt(cvtrg)
-        cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
-        do is = 0, ns-1
-          nasepi(is+1,2) = pl%na(cvtrg,is)
-        end do
-        nesepi(2) = dv%ne(cvtrg)
-        tesepi(2) = pl%te(cvtrg)/ev
-        tisepi(2) = pl%ti(cvtrg)/ev
-        if (nnatmi.gt.0) then
-          do iatm=1,nnatmi
-            dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
-            tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
-          enddo
-        endif
-        if (nnmoli.gt.0) then
-          do imol=1,nnmoli
-            dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
-            tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
-          enddo
-        endif
-        posepi(2) = pl%po(cvtrg)
-        ktsepi(2) = pl%kt(cvtrg)
       else if (gridGeometry.eq.GEOMETRY_DDN_TOP) then
+        ! Inner (lower) target quantities
         iFc = mpg%divFc(mpg%divFcP(1,1)+mpg%ifdiv(1)-1)
-        if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-          & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-          cvtrg = mpg%fcCv(iFc,1)
-        else
-          cvtrg = mpg%fcCv(iFc,2)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         end if
         do is = 0, ns-1
-          nasepi(is+1,1) = pl%na(cvtrg,is)
+          nasepi(is+1,2) = pl%na(cvtrg,is)
         end do
-        nesepi(1) = dv%ne(cvtrg)
-        tesepi(1) = pl%te(cvtrg)/ev
-        tisepi(1) = pl%ti(cvtrg)/ev
+        nesepi(2) = dv%ne(cvtrg)
+        tesepi(2) = pl%te(cvtrg)/ev
+        tisepi(2) = pl%ti(cvtrg)/ev
         if (nnatmi.gt.0) then
           do iatm=1,nnatmi
-            dabsepi(iatm,1) = dab2(cvtrg,iatm,1)
-            tabsepi(iatm,1) = tab2(cvtrg,iatm,1)
+            dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
+            tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
           enddo
         endif
         if (nnmoli.gt.0) then
           do imol=1,nnmoli
-            dmbsepi(imol,1) = dmb2(cvtrg,imol,1)
-            tmbsepi(imol,1) = tmb2(cvtrg,imol,1)
+            dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
+            tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
           enddo
         endif
-        posepi(1) = pl%po(cvtrg)
-        ktsepi(1) = pl%kt(cvtrg)
+        posepi(2) = pl%po(cvtrg)
+        ktsepi(2) = pl%kt(cvtrg)
+
+        ! Inner (lower) target quantities
         iFc = mpg%divFc(mpg%divFcP(4,1)+mpg%ifdiv(4)-1)
-        if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-          & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-          cvtrg = mpg%fcCv(iFc,1)
-        else
-          cvtrg = mpg%fcCv(iFc,2)
+        if (target_offset.eq.0) then ! guard cell
+          cvtrg = max(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        else ! real cell
+          cvtrg = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         end if
         do is = 0, ns-1
-          nasepa(is+1,1) = pl%na(cvtrg,is)
+          nasepa(is+1,2) = pl%na(cvtrg,is)
         end do
-        nesepa(1) = dv%ne(cvtrg)
-        tesepa(1) = pl%te(cvtrg)/ev
-        tisepa(1) = pl%ti(cvtrg)/ev
+        nesepa(2) = dv%ne(cvtrg)
+        tesepa(2) = pl%te(cvtrg)/ev
+        tisepa(2) = pl%ti(cvtrg)/ev
         if (nnatmi.gt.0) then
           do iatm=1,nnatmi
-            dabsepa(iatm,1) = dab2(cvtrg,iatm,1)
-            tabsepa(iatm,1) = tab2(cvtrg,iatm,1)
+            dabsepa(iatm,2) = dab2(cvtrg,iatm,1)
+            tabsepa(iatm,2) = tab2(cvtrg,iatm,1)
           enddo
         endif
         if (nnmoli.gt.0) then
           do imol=1,nnmoli
-            dmbsepa(imol,1) = dmb2(cvtrg,imol,1)
-            tmbsepa(imol,1) = tmb2(cvtrg,imol,1)
+            dmbsepa(imol,2) = dmb2(cvtrg,imol,1)
+            tmbsepa(imol,2) = tmb2(cvtrg,imol,1)
           enddo
         endif
-        posepa(1) = pl%po(cvtrg)
-        ktsepa(1) = pl%kt(cvtrg)
-      else if (gridGeometry.eq.GEOMETRY_DDN_BOTTOM) then
-        if (maxval(mpg%strDiv).gt.2) then
-          iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
-          if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-            & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-            cvtrg = mpg%fcCv(iFc,1)
-          else
-            cvtrg = mpg%fcCv(iFc,2)
-          end if
-          do is = 0, ns-1
-            nasepi(is+1,2) = pl%na(cvtrg,is)
-          end do
-          nesepi(2) = dv%ne(cvtrg)
-          tesepi(2) = pl%te(cvtrg)/ev
-          tisepi(2) = pl%ti(cvtrg)/ev
-          if (nnatmi.gt.0) then
-            do iatm=1,nnatmi
-              dabsepi(iatm,2) = dab2(cvtrg,iatm,1)
-              tabsepi(iatm,2) = tab2(cvtrg,iatm,1)
-            enddo
-          endif
-          if (nnmoli.gt.0) then
-            do imol=1,nnmoli
-              dmbsepi(imol,2) = dmb2(cvtrg,imol,1)
-              tmbsepi(imol,2) = tmb2(cvtrg,imol,1)
-            enddo
-          endif
-          posepi(2) = pl%po(cvtrg)
-          ktsepi(2) = pl%kt(cvtrg)
-          iFc = mpg%divFc(mpg%divFcP(3,1)+mpg%ifdiv(3)-1)
-          if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-            & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-            cvtrg = mpg%fcCv(iFc,1)
-          else
-            cvtrg = mpg%fcCv(iFc,2)
-          end if
-          do is = 0, ns-1
-            nasepa(is+1,2) = pl%na(cvtrg,is)
-          end do
-          nesepa(2) = dv%ne(cvtrg)
-          tesepa(2) = pl%te(cvtrg)/ev
-          tisepa(2) = pl%ti(cvtrg)/ev
-          if (nnatmi.gt.0) then
-            do iatm=1,nnatmi
-              dabsepa(iatm,2) = dab2(cvtrg,iatm,1)
-              tabsepa(iatm,2) = tab2(cvtrg,iatm,1)
-            enddo
-          endif
-          if (nnmoli.gt.0) then
-            do imol=1,nnmoli
-              dmbsepa(imol,2) = dmb2(cvtrg,imol,1)
-              tmbsepa(imol,2) = tmb2(cvtrg,imol,1)
-            enddo
-          endif
-          posepa(2) = pl%po(cvtrg)
-          ktsepa(2) = pl%kt(cvtrg)
-        end if
+        posepa(2) = pl%po(cvtrg)
+        ktsepa(2) = pl%kt(cvtrg)
       end if
     end if
 #endif

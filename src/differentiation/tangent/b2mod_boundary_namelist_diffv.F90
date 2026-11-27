@@ -751,56 +751,89 @@ CONTAINS
         END DO
       END DO
 !..  test that boundary cells are guard cells
+!..  test corner cells separately, but only external corners
       DO ib=1,nbc
         IF (bcchar(ib) .EQ. 'N') THEN
           IF (old_style(ib)) THEN
-            DO ix=bcstart(ib),bcend(ib)
+            IF (bcstart(ib) .EQ. -1) CALL XERTST(topiy(bcstart(ib), &
+&                                          bcpos(ib)) .EQ. ny + 1, &
+&                             'Inconsistent boundary North-West corner!'&
+&                                         )
+            DO ix=bcstart(ib)+1,bcend(ib)-1
               CALL XERTST(topiy(ix, bcpos(ib)) .EQ. ny + 1, &
-&                   'inconsistent North boundary!')
+&                   'Inconsistent North boundary!')
             END DO
+            IF (bcend(ib) .EQ. nx) CALL XERTST(topiy(bcend(ib), bcpos(ib&
+&                                        )) .EQ. ny + 1, &
+&                             'Inconsistent boundary North-East corner!'&
+&                                       )
           ELSE
             DO ic=1,bc_list_size(ib)
               CALL XERTST(topiy(bc_list_x(ic, ib), bc_list_y(ic, ib)) &
-&                   .EQ. ny + 1, 'inconsistent North boundary!')
+&                   .EQ. ny + 1, 'Inconsistent North boundary!')
             END DO
           END IF
         END IF
         IF (bcchar(ib) .EQ. 'S') THEN
           IF (old_style(ib)) THEN
-            DO ix=bcstart(ib),bcend(ib)
+            IF (bcstart(ib) .EQ. -1) CALL XERTST(bottomiy(bcstart(ib), &
+&                                          bcpos(ib)) .EQ. -2, &
+&                             'Inconsistent boundary South-West corner!'&
+&                                         )
+            DO ix=bcstart(ib)+1,bcend(ib)-1
               CALL XERTST(bottomiy(ix, bcpos(ib)) .EQ. -2, &
-&                   'inconsistent South boundary!')
+&                   'Inconsistent South boundary!')
             END DO
+            IF (bcend(ib) .EQ. nx) CALL XERTST(bottomiy(bcend(ib), bcpos&
+&                                        (ib)) .EQ. -2, &
+&                             'Inconsistent boundary South-East corner!'&
+&                                       )
           ELSE
             DO ic=1,bc_list_size(ib)
               CALL XERTST(bottomiy(bc_list_x(ic, ib), bc_list_y(ic, ib))&
-&                   .EQ. -2, 'inconsistent South boundary!')
+&                   .EQ. -2, 'Inconsistent South boundary!')
             END DO
           END IF
         END IF
         IF (bcchar(ib) .EQ. 'E') THEN
           IF (old_style(ib)) THEN
-            DO iy=bcstart(ib),bcend(ib)
+            IF (bcstart(ib) .EQ. -1) CALL XERTST(rightix(bcpos(ib), &
+&                                          bcstart(ib)) .EQ. nx + 1, &
+&                             'Inconsistent boundary South-East corner!'&
+&                                         )
+            DO iy=bcstart(ib)+1,bcend(ib)-1
               CALL XERTST(rightix(bcpos(ib), iy) .EQ. nx + 1, &
-&                   'inconsistent East boundary!')
+&                   'Inconsistent East boundary!')
+              IF (bcend(ib) .EQ. ny) CALL XERTST(rightix(bcpos(ib), &
+&                                          bcend(ib)) .EQ. nx + 1, &
+&                             'Inconsistent boundary North-East corner!'&
+&                                         )
             END DO
           ELSE
             DO ic=1,bc_list_size(ib)
               CALL XERTST(rightix(bc_list_x(ic, ib), bc_list_y(ic, ib)) &
-&                   .EQ. nx + 1, 'inconsistent East boundary!')
+&                   .EQ. nx + 1, 'Inconsistent East boundary!')
             END DO
           END IF
         END IF
         IF (bcchar(ib) .EQ. 'W') THEN
           IF (old_style(ib)) THEN
-            DO iy=bcstart(ib),bcend(ib)
+            IF (bcstart(ib) .EQ. -1) CALL XERTST(leftix(bcpos(ib), &
+&                                          bcstart(ib)) .EQ. -2, &
+&                             'Inconsistent boundary South-West corner!'&
+&                                         )
+            DO iy=bcstart(ib)+1,bcend(ib)-1
               CALL XERTST(leftix(bcpos(ib), iy) .EQ. -2, &
-&                   'inconsistent West boundary!')
+&                   'Inconsistent West boundary!')
             END DO
+            IF (bcend(ib) .EQ. ny) CALL XERTST(leftix(bcpos(ib), bcend(&
+&                                        ib)) .EQ. -2, &
+&                             'Inconsistent boundary North-West corner!'&
+&                                       )
           ELSE
             DO ic=1,bc_list_size(ib)
               CALL XERTST(leftix(bc_list_x(ic, ib), bc_list_y(ic, ib)) &
-&                   .EQ. -2, 'inconsistent West boundary!')
+&                   .EQ. -2, 'Inconsistent West boundary!')
             END DO
           END IF
         END IF
@@ -1806,7 +1839,9 @@ CONTAINS
       DO is=0,ns-1
         IF (bcmom(is, ib) .EQ. 3) THEN
           bcmom(is, ib) = 13
+          bccon(is, ib) = 14
           WRITE(*, *) 'Automatically changing BCMOM from 3 to 13'
+          WRITE(*, *) 'and accompanying BCCON to 14'
           changed = .true.
         END IF
       END DO

@@ -83,7 +83,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv1, ifc, is, ib, ibc, k
+  INTEGER :: icv1, icv2, ifc, is, ib, ibc, k
 !Solovyev 23.05.14 !srv 29.09.15 }
   INTEGER, SAVE :: bcpot_16_step=50
   INTEGER, SAVE :: bccon_flux_fb_style=0
@@ -98,7 +98,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 16.02.12 12.02.15 29.09.15
   LOGICAL :: once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot
   REAL(kind=r8) :: naua2sum(0:ns-1), naua2average(0:ns-1), pzaverage, &
-& pzsum, volsum, vbc(ncv, 0:ns-1), csbc(ncv, 0:ns-1)
+& pzsum, volsum, wrks, vbc, csbc
 !lk 20.11.07
   REAL(kind=r8) :: bzsum, bzaverage
 !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
@@ -251,8 +251,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
   DO ib=1,nbc
-    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 2)
-    IF (mpg%cvonclosedsurface(icv1)) THEN
+    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 1)
+    icv2 = mpg%bccv(mpg%bccvp(ib, 1), 2)
+    IF (mpg%cvonclosedsurface(icv2)) THEN
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -290,6 +291,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   END DO
   IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) 'Doing B2-style bc'
 !
+!srv 15.02.26
+  conv_bcpot11 = .true.
 !srv 16.02.12 {
   once_bccon = .false.
   once_bcene = .false.
@@ -419,18 +422,17 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 CONTAINS
 !
 !srv 15.02.26 {
-  SUBROUTINE CSBC_IS(icv1, ib, is, cs)
+  SUBROUTINE CSBC_IS(icv1, ib, is, csbc)
     IMPLICIT NONE
     INTEGER :: icv1, ib, is
-    REAL(kind=r8) :: cs
+    REAL(kind=r8) :: csbc
     INTRINSIC SQRT
 !
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      cs = SQRT(pz(icv1)/rz(icv1))
-      csbc(icv1, is) = cs
+      csbc = SQRT(pz(icv1)/rz(icv1))
     ELSE
-      cs = SQRT((pl%te(icv1)*rt%rza(icv1, is)+pl%ti(icv1))/(am(is)*mp))
-      csbc(icv1, is) = cs
+      csbc = SQRT((pl%te(icv1)*rt%rza(icv1, is)+pl%ti(icv1))/(am(is)*mp)&
+&       )
     END IF
     RETURN
   END SUBROUTINE CSBC_IS
@@ -438,12 +440,12 @@ CONTAINS
 !srv 15.02.26 }
 !
 !srv 15.02.26 {
-  SUBROUTINE VBC_IS(ib, is, ibc, icv1, icv2, ifc, cs, wrk)
+  SUBROUTINE VBC_IS(ib, is, ibc, icv, ifc, csbc, wrks, vbnd, vbc)
     IMPLICIT NONE
-    INTEGER :: ib, is, ibc, icv1, icv2, ifc
-! cs=csbc(iCv1,is)
-    REAL(kind=r8) :: cs
-    REAL(kind=r8) :: wrk, vbnd, t0
+    INTEGER :: ib, is, ibc, icv, ifc
+    REAL(kind=r8) :: csbc
+    REAL(kind=r8) :: vbnd, vbndm, t0
+    REAL(kind=r8) :: wrks, vbc
     INTRINSIC ABS
     INTRINSIC MIN
     INTRINSIC SIGN
@@ -456,17 +458,17 @@ CONTAINS
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: max1
 !
-    wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
+    wrks = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
 &     bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(ifc, 1, &
 &     is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      IF (wrk .GE. 0.) THEN
-        abs0 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs0 = wrks
       ELSE
-        abs0 = -wrk
+        abs0 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs0
+      t0 = 2.0_R8*csbc*abs0
       IF (vbnd .GE. 0.) THEN
         y1 = vbnd
       ELSE
@@ -477,15 +479,15 @@ CONTAINS
       ELSE
         min1 = t0
       END IF
-      vbnd = min1*SIGN(1.0_R8, vbnd)
-      vbc(icv1, is) = cs*wrk - vbnd*SIGN(1.0_R8, wrk)
+      vbndm = min1*SIGN(1.0_R8, vbnd)
+      vbc = csbc*wrks - vbndm*SIGN(1.0_R8, wrks)
     ELSE
-      IF (wrk .GE. 0.) THEN
-        abs1 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs1 = wrks
       ELSE
-        abs1 = -wrk
+        abs1 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs1
+      t0 = 2.0_R8*csbc*abs1
       IF (vbnd .GE. 0.) THEN
         y2 = vbnd
       ELSE
@@ -496,15 +498,15 @@ CONTAINS
       ELSE
         min2 = t0
       END IF
-      vbnd = min2*SIGN(1.0_R8, vbnd)
-      vbc(icv1, is) = cs*wrk - vbnd*SIGN(1.0_R8, wrk)
-      x1 = vbc(icv1, is)*SIGN(1.0_R8, wrk)
-      IF (x1 .LT. wrk*pl%ua(icv2, is)) THEN
-        max1 = wrk*pl%ua(icv2, is)
+      vbndm = min2*SIGN(1.0_R8, vbnd)
+      vbc = csbc*wrks - vbndm*SIGN(1.0_R8, wrks)
+      x1 = vbc*SIGN(1.0_R8, wrks)
+      IF (x1 .LT. wrks*pl%ua(icv, is)) THEN
+        max1 = wrks*pl%ua(icv, is)
       ELSE
         max1 = x1
       END IF
-      vbc(icv1, is) = max1*SIGN(1.0_R8, wrk)
+      vbc = max1*SIGN(1.0_R8, wrks)
     END IF
     RETURN
   END SUBROUTINE VBC_IS
@@ -1123,24 +1125,19 @@ CONTAINS
           icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            s1 = geo%fcpbs(ifc)
-          ELSE
-            s1 = -geo%fcpbs(ifc)
-          END IF
 !srv 15.02.26
-          CALL CSBC_IS(icv1, ib, is, cs)
+          CALL CSBC_IS(icv1, ib, is, csbc)
 !srv 15.02.26
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-          IF (wrk .GE. 0.) THEN
-            abs0 = wrk
+          CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
+          IF (wrks .GE. 0.) THEN
+            abs0 = wrks
           ELSE
-            abs0 = -wrk
+            abs0 = -wrks
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
             srw%sna0(icv1, 0, is) = 0.0_R8
-            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*cs*&
-&             geo%qalfmax)
+            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*&
+&             csbc*geo%qalfmax)
             sna0_no_mdf(icv1, :, is) = sna0_no_mdf(icv1, :, is) + srw%&
 &             sna0(icv1, :, is)
             IF (switch%mdf_fnb .EQ. 0) THEN
@@ -1176,17 +1173,14 @@ CONTAINS
               END IF
             END IF
           ELSE
-            vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(&
-&             ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1&
-&             )+ibc-1)
             srw%sna0(icv1, 0, is) = 0.0_R8
-            IF (wrk .GE. 0.) THEN
-              abs6 = wrk
+            IF (wrks .GE. 0.) THEN
+              abs6 = wrks
             ELSE
-              abs6 = -wrk
+              abs6 = -wrks
             END IF
-            x2 = csbc(icv1, is)*abs6
-            y6 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+            x2 = csbc*abs6
+            y6 = vbc*SIGN(1.0_R8, wrks) + vbnd
             IF (x2 .LT. y6) THEN
               max8 = y6
             ELSE
@@ -1254,9 +1248,14 @@ CONTAINS
           t0 = geo%fcqalf(ifc, 1)
           t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &           fcqbet(ifc, 0)
+          ivx1 = mpg%fcvx(ifc, 1)
+          ivx2 = mpg%fcvx(ifc, 2)
+          t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
+          t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
           srw%sna0(icv1, 0, is) = vbig*co%cdna(ifc, 1, is)*(t0*pl%na(&
-&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%na(mpg%&
-&           fcvx(ifc, 2), is)-pl%na(mpg%fcvx(ifc, 1), is)))
+&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t3-t2))
           srw%sna0(icv1, 1, is) = -(vbig*(co%cdna(ifc, 1, is)*t0-conpar(&
 &           is, ib, 1)*geo%fcs(ifc)*csb))
           sna0_no_mdf(icv1, :, is) = srw%sna0(icv1, :, is)
@@ -2494,8 +2493,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -2549,8 +2548,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
             IF (bccon(is, ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCCON=29: incompatible core BCs'&
 &                                            )
@@ -2927,12 +2926,13 @@ CONTAINS
 &             fcs(ifc)*geo%fchz(ifc))
           ELSE
 !srv 15.02.26
-            CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                 wrk)
+            CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+            CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
 !srv 07.05.09 {
             srw%smo0(icv1, 0, is) = srw%smo0(icv1, 0, is) + ubig/epslon&
-&             **2*am(is)*mp*pl%na(icv1, is)*mompar(is, ib, 1)*vbc(icv1, &
-&             is)*geo%fcs(ifc)*geo%fchz(ifc)
+&             **2*am(is)*mp*pl%na(icv1, is)*mompar(is, ib, 1)*vbc*geo%&
+&             fcs(ifc)*geo%fchz(ifc)
             IF (geo%fcpbshz(ifc) .GE. 0.) THEN
               abs5 = geo%fcpbshz(ifc)
             ELSE
@@ -4042,9 +4042,12 @@ CONTAINS
         t0 = geo%fcqalf(ifc, 1)
         t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%te)
+        t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%te)
         srw%she0(icv1, 0) = vbig*ne00*ev*co%chce(ifc, 1)*(t0*pl%te(icv2)&
-&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%te(mpg%fcvx(ifc, 2)&
-&         )-pl%te(mpg%fcvx(ifc, 1))))
+&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t3-t2))
         srw%she0(icv1, 1) = -(vbig*ne00*ev*(co%chce(ifc, 1)*t0-enepar(ib&
 &         , 1)*geo%fcs(ifc)*vte*dv%ne(icv1)))
       END DO
@@ -4075,8 +4078,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -4112,8 +4115,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENE=24 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') 'specified electron heat flux', &
@@ -4132,8 +4135,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bcene(ib0) .NE. 24) CALL XERRAB(&
 &                                      'BCENE=24: incompatible core BCs'&
 &                                      )
@@ -4458,6 +4461,8 @@ CONTAINS
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+! number of the corresponding domain cell
+        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         sy = geo%fcs(ifc)
@@ -4646,12 +4651,6 @@ CONTAINS
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         cs = SQRT(pz(icv1)/rz(icv1))
         t0 = 0.0_R8
         t1 = 0.0_R8
@@ -4665,12 +4664,16 @@ CONTAINS
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
             srw%shi0(icv1, 0) = 0.0_R8
+! Apply the same residual-neutral Ti damping used by the
+! regular-Qalf sheath branch: K*(Ti_old-Ti_new).
             srw%shi0(icv1, 1) = -(1.5_R8*geo%fcs(ifc)*geo%qalfmax*cs*dv%&
 &             ni(icv1, 1))
+            srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - switch%&
+&             stab_coeff_sheath_ti*dv%ne(icv1)*cs*geo%fcs(ifc)
+            srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&             stab_coeff_sheath_ti*dv%ne(icv1)*cs*geo%fcs(ifc)*pl%ti(&
+&             icv1)
             IF (switch%mdf_fhi .NE. 0) THEN
-              srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + mpg%bcfcor(mpg%&
-&               bccvp(ib, 1)+ibc-1)*(dv%fhipsch(ifc, 0)+dv%fhipsch(ifc, &
-&               1))
               t0 = 0.0_R8
               DO is=0,ns-1
                 t0 = t0 + mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*1.5_R8*(geo&
@@ -4695,16 +4698,18 @@ CONTAINS
           ELSE
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
-                vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%&
-&                 vaecrb(ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%&
-&                 bccvp(ib, 1)+ibc-1)
+!srv 15.02.26
+                CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+                CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, &
+&                     vbc)
                 IF (wrk .GE. 0.) THEN
                   abs5 = wrk
                 ELSE
                   abs5 = -wrk
                 END IF
-                x1 = csbc(icv1, is)*abs5
-                y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+                x1 = csbc*abs5
+                y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
                 IF (x1 .LT. y1) THEN
                   max6 = y1
                 ELSE
@@ -5120,9 +5125,12 @@ CONTAINS
             t2 = t2 + csb*pl%na(icv1, is)
           END IF
         END DO
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        t3 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%ti)
+        t4 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%ti)
         srw%shi0(icv1, 0) = vbig*ne00*ev*co%chci(ifc, 1)*(t0*pl%ti(icv2)&
-&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%ti(mpg%fcvx(ifc, 2)&
-&         )-pl%ti(mpg%fcvx(ifc, 1))))
+&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t4-t3))
         srw%shi0(icv1, 1) = -(vbig*ne00*ev*(co%chci(ifc, 1)*t0-enipar(ib&
 &         , 1)*geo%fcs(ifc)*t2))
 !srv 23.07.10 }
@@ -5247,7 +5255,7 @@ CONTAINS
 !
 !IYS 04.03.2013 {
       IF (ncall_b2stbc_phys .EQ. 0) THEN
-        WRITE(*, '(a)') 'BCENI = 24 : Given integrated ion heat flux', &
+        WRITE(*, '(a)') 'BCENI = 24 : Given integrated ion heat flux'//&
 &       ' with constant Ti '
 !          write all boundaries with this type of boundary condition
         DO ibw=ib,nbc
@@ -5504,7 +5512,7 @@ CONTAINS
 ! CONDITION ON ION DENSITY BCCON = 25,26,27
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
-        WRITE(*, *) 'BCENI = 27 : Given integrated ion heat flux', &
+        WRITE(*, '(a)') 'BCENI = 27 : Given integrated ion heat flux'//&
 &       ' with constant Ti '
 !         write all boundaries with this type of boundary condition
         DO ibw=ib,nbc
@@ -5620,8 +5628,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENI=28 intended for core boundaries only!')
         END DO
         IF (switch%use_astra .NE. 0) enipar(ib, 1) = teb_astra*1.0e3_R8
@@ -5639,8 +5647,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -5676,8 +5684,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENI=29 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') 'specified ion heat flux', enipar&
@@ -5696,8 +5704,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bceni(ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCENI=29: incompatible core BCs'&
 &                                      )
@@ -5766,7 +5774,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ib, ib0, ibc, ibc0, ibw, is
     INTEGER :: icv, icv1, icv2, ifc, ivx1, ivx2
-    REAL(kind=r8) :: cs, vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
+    REAL(kind=r8) :: vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
 &   neave, poave, totpar, totflux, wrk, seec, fchy_dia, fchy_inertia
     REAL(kind=r8), EXTERNAL :: INTVERTEX_S_NODIFF
     EXTERNAL XERRAB
@@ -5988,8 +5996,6 @@ CONTAINS
         END DO
       END IF
 !srv 15.02.26
-      conv_bcpot11 = .true.
-!srv 15.02.26
       mrs = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -6001,12 +6007,6 @@ CONTAINS
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         ivx1 = mpg%fcvx(ifc, 1)
         ivx2 = mpg%fcvx(ifc, 2)
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         vte = SQRT(pl%te(icv1)/me)
         t0 = 0.0_R8
         wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -6026,16 +6026,17 @@ CONTAINS
           s1 = geo%fcs(ifc)
           DO is=0,ns-1
             IF (.NOT.is_neutral(is)) THEN
-              vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb&
-&               (ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib&
-&               , 1)+ibc-1)
+!srv 15.02.26
+              CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+              CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
               IF (wrk .GE. 0.) THEN
                 abs4 = wrk
               ELSE
                 abs4 = -wrk
               END IF
-              x1 = csbc(icv1, is)*abs4
-              y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+              x1 = csbc*abs4
+              y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
               IF (x1 .LT. y1) THEN
                 max1 = y1
               ELSE
@@ -6092,8 +6093,8 @@ CONTAINS
           ELSE
             abs5 = -fch_bnd
           END IF
-          IF (abs2 .GE. abs5*switch%bcpot11_epsr + switch%bcpot11_epsa) &
-&           conv_bcpot11 = .false.
+          conv_bcpot11 = conv_bcpot11 .AND. abs2 .LT. abs5*switch%&
+&           bcpot11_epsr + switch%bcpot11_epsa
           IF (res_bcpot11 .GE. 0.) THEN
             y2 = res_bcpot11
           ELSE
@@ -6124,8 +6125,8 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-            CALL XERTST(mpg%cvonclosedsurface(icv1), &
+            icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+            CALL XERTST(mpg%cvonclosedsurface(icv), &
 &                 'BCPOT=12 intended for core boundaries only!')
           END DO
         END IF
@@ -6209,8 +6210,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-            IF (mpg%cvonclosedsurface(icv1)) THEN
+            icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+            IF (mpg%cvonclosedsurface(icv)) THEN
               IF (bcpot(ib0) .NE. 12) CALL XERRAB(&
 &                                      'BCPOT=12: incompatible core BCs'&
 &                                          )
@@ -6285,8 +6286,8 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-            CALL XERTST(.NOT.mpg%cvonclosedsurface(icv1), &
+            icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+            CALL XERTST(.NOT.mpg%cvonclosedsurface(icv), &
 &                 'BCPOT=13 not intended for core boundaries!')
           END DO
         END IF
@@ -6653,8 +6654,8 @@ CONTAINS
 &       'BCPOT = 22 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCPOT=22 intended for core boundaries only!')
         END DO
       END IF
@@ -6666,8 +6667,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -6708,8 +6709,8 @@ CONTAINS
 &       'BCPOT = 23 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCPOT=23 intended for core boundaries only!')
         END DO
       END IF
@@ -6726,8 +6727,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bcpot(ib0) .NE. 23) CALL XERRAB(&
 &                                      'BCPOT=23: incompatible core BCs'&
 &                                      )
@@ -7470,8 +7471,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENZ=16 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
@@ -7805,7 +7806,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv1, ifc, is, ib, ibc, k
+  INTEGER :: icv1, icv2, ifc, is, ib, ibc, k
 !Solovyev 23.05.14 !srv 29.09.15 }
   INTEGER, SAVE :: bcpot_16_step=50
   INTEGER, SAVE :: bccon_flux_fb_style=0
@@ -7820,9 +7821,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !srv 16.02.12 12.02.15 29.09.15
   LOGICAL :: once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot
   REAL(kind=r8) :: naua2sum(0:ns-1), naua2average(0:ns-1), pzaverage, &
-& pzsum, volsum, vbc(ncv, 0:ns-1), csbc(ncv, 0:ns-1)
+& pzsum, volsum, wrks, vbc, csbc
   REAL(kind=r8) :: naua2sumb(0:ns-1), naua2averageb(0:ns-1), pzaverageb&
-& , pzsumb, vbcb(ncv, 0:ns-1), csbcb(ncv, 0:ns-1)
+& , pzsumb, vbcb, csbcb
 !lk 20.11.07
   REAL(kind=r8) :: bzsum, bzaverage
 !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
@@ -7947,8 +7948,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
   DO ib=1,nbc
-    icv1 = mpg%bccv(mpg%bccvp(ib, 1), 2)
-    IF (mpg%cvonclosedsurface(icv1)) THEN
+    icv2 = mpg%bccv(mpg%bccvp(ib, 1), 2)
+    IF (mpg%cvonclosedsurface(icv2)) THEN
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -7988,6 +7989,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
   IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) 'Doing B2-style bc'
 !
+!srv 15.02.26
+  conv_bcpot11 = .true.
 !srv 16.02.12 {
   once_bccon = .false.
   once_bcene = .false.
@@ -8015,9 +8018,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     SELECT CASE  (bc_for_equations) 
     CASE ('all') 
 !srv 15.02.26 {
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
       CALL PUSHREAL8ARRAY(sna0_no_mdf, r8*ncv*2*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHBOOLEANARRAY(once_bccon, ns)
       CALL PUSHREAL8ARRAY(srw%sna0, r8*SIZE(srw%sna0, 1)*SIZE(srw%sna0, &
 &                   2)*SIZE(srw%sna0, 3)/8)
@@ -8039,13 +8040,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CALL PUSHREAL8ARRAY(enepar, r8*nbcd*2/8)
       CALL B2STBC_PHYS_ENE(ib)
       CALL PUSHBOOLEAN(once_bceni)
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHREAL8(senipar, r8/8)
       CALL PUSHREAL8ARRAY(enipar, r8*nbcd*2/8)
       CALL B2STBC_PHYS_ENI(ib)
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHBOOLEAN(once_bcpot)
       CALL PUSHREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%sch0, &
 &                   2)/8)
@@ -8066,9 +8063,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CALL B2STBC_PHYS_ENZ(ib)
       CALL PUSHCONTROL3B(0)
     CASE ('spc') 
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
       CALL PUSHREAL8ARRAY(sna0_no_mdf, r8*ncv*2*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHBOOLEANARRAY(once_bccon, ns)
       CALL PUSHREAL8ARRAY(srw%sna0, r8*SIZE(srw%sna0, 1)*SIZE(srw%sna0, &
 &                   2)*SIZE(srw%sna0, 3)/8)
@@ -8094,8 +8089,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CALL PUSHCONTROL3B(2)
     CASE ('eni') 
       CALL PUSHBOOLEAN(once_bceni)
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHREAL8ARRAY(srw%shi0, r8*SIZE(srw%shi0, 1)*SIZE(srw%shi0, &
 &                   2)/8)
       CALL PUSHREAL8(senipar, r8/8)
@@ -8103,8 +8096,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CALL B2STBC_PHYS_ENI(ib)
       CALL PUSHCONTROL3B(3)
     CASE ('pot') 
-      CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-      CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
       CALL PUSHBOOLEAN(once_bcpot)
       CALL PUSHREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%sch0, &
 &                   2)/8)
@@ -8197,10 +8188,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     END DO
   END IF
   naua2averageb = 0.D0
-  vbcb = 0.D0
   sna0_no_mdfb = 0.D0
   rzb = 0.D0
-  csbcb = 0.D0
   pzaverageb = 0.D0
   pzb = 0.D0
   DO ib=nbc,1,-1
@@ -8225,13 +8214,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL POPREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%&
 &                      sch0, 2)/8)
           CALL POPBOOLEAN(once_bcpot)
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
           CALL B2STBC_PHYS_POT_B(ib)
           CALL POPREAL8ARRAY(enipar, r8*nbcd*2/8)
           CALL POPREAL8(senipar, r8/8)
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
           CALL POPBOOLEAN(once_bceni)
           CALL B2STBC_PHYS_ENI_B(ib)
           CALL POPREAL8ARRAY(enepar, r8*nbcd*2/8)
@@ -8253,9 +8238,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL POPREAL8ARRAY(srw%sna0, r8*SIZE(srw%sna0, 1)*SIZE(srw%&
 &                      sna0, 2)*SIZE(srw%sna0, 3)/8)
           CALL POPBOOLEANARRAY(once_bccon, ns)
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
           CALL POPREAL8ARRAY(sna0_no_mdf, r8*ncv*2*ns/8)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
           CALL B2STBC_PHYS_SPECIES_B(ib)
         ELSE
           CALL POPREAL8ARRAY(conpar, r8*nsdmax*nbcd*3/8)
@@ -8265,9 +8248,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL POPREAL8ARRAY(srw%sna0, r8*SIZE(srw%sna0, 1)*SIZE(srw%&
 &                      sna0, 2)*SIZE(srw%sna0, 3)/8)
           CALL POPBOOLEANARRAY(once_bccon, ns)
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
           CALL POPREAL8ARRAY(sna0_no_mdf, r8*ncv*2*ns/8)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
           CALL B2STBC_PHYS_SPECIES_B(ib)
         END IF
       ELSE IF (branch .EQ. 2) THEN
@@ -8288,8 +8269,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         CALL POPREAL8(senipar, r8/8)
         CALL POPREAL8ARRAY(srw%shi0, r8*SIZE(srw%shi0, 1)*SIZE(srw%shi0&
 &                    , 2)/8)
-        CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-        CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
         CALL POPBOOLEAN(once_bceni)
         CALL B2STBC_PHYS_ENI_B(ib)
       END IF
@@ -8306,8 +8285,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         CALL POPREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%sch0&
 &                    , 2)/8)
         CALL POPBOOLEAN(once_bcpot)
-        CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-        CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
         CALL B2STBC_PHYS_POT_B(ib)
       ELSE
         CALL POPREAL8ARRAY(srw%skt0, r8*SIZE(srw%skt0, 1)*SIZE(srw%skt0&
@@ -8357,42 +8334,38 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 CONTAINS
 !  Differentiation of csbc_is in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: *(rt.rza) *(pl.te) *(pl.ti)
-!                rz csbc pz cs
+!                rz pz csbc
 !   with respect to varying inputs: *(rt.rza) *(pl.te) *(pl.ti)
-!                rz csbc pz
+!                rz pz
 !   Plus diff mem management of: rt.rza:in pl.te:in pl.ti:in
 !
 !srv 15.02.26 {
-  SUBROUTINE CSBC_IS_B(icv1, ib, is, cs, csb)
+  SUBROUTINE CSBC_IS_B(icv1, ib, is, csbc, csbcb)
     IMPLICIT NONE
     INTEGER :: icv1, ib, is
-    REAL(kind=r8) :: cs
-    REAL(kind=r8) :: csb
+    REAL(kind=r8) :: csbc
+    REAL(kind=r8) :: csbcb
     INTRINSIC SQRT
     REAL(kind=r8) :: temp
     REAL(kind=r8) :: tempb
     REAL(r8) :: tempb0
 !
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      csb = csb + csbcb(icv1, is)
-      csbcb(icv1, is) = 0.D0
       temp = pz(icv1)/rz(icv1)
       IF (temp .EQ. 0.D0) THEN
         tempb = 0.D0
       ELSE
-        tempb = csb/(rz(icv1)*2.0*SQRT(temp))
+        tempb = csbcb/(rz(icv1)*2.0*SQRT(temp))
       END IF
       pzb(icv1) = pzb(icv1) + tempb
       rzb(icv1) = rzb(icv1) - temp*tempb
     ELSE
-      csb = csb + csbcb(icv1, is)
-      csbcb(icv1, is) = 0.D0
       IF ((pl%te(icv1)*rt%rza(icv1, is)+pl%ti(icv1))/(am(is)*mp) .EQ. &
 &         0.D0) THEN
         tempb0 = 0.D0
       ELSE
-        tempb0 = csb/(am(is)*mp*2.0*SQRT((pl%te(icv1)*rt%rza(icv1, is)+&
-&         pl%ti(icv1))/(am(is)*mp)))
+        tempb0 = csbcb/(am(is)*mp*2.0*SQRT((pl%te(icv1)*rt%rza(icv1, is)&
+&         +pl%ti(icv1))/(am(is)*mp)))
       END IF
       plb%te(icv1) = plb%te(icv1) + rt%rza(icv1, is)*tempb0
       rtb%rza(icv1, is) = rtb%rza(icv1, is) + pl%te(icv1)*tempb0
@@ -8402,37 +8375,39 @@ CONTAINS
 
 !
 !srv 15.02.26 {
-  SUBROUTINE CSBC_IS(icv1, ib, is, cs)
+  SUBROUTINE CSBC_IS(icv1, ib, is, csbc)
     IMPLICIT NONE
     INTEGER :: icv1, ib, is
-    REAL(kind=r8) :: cs
+    REAL(kind=r8) :: csbc
     INTRINSIC SQRT
 !
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      cs = SQRT(pz(icv1)/rz(icv1))
-      csbc(icv1, is) = cs
+      csbc = SQRT(pz(icv1)/rz(icv1))
     ELSE
-      cs = SQRT((pl%te(icv1)*rt%rza(icv1, is)+pl%ti(icv1))/(am(is)*mp))
-      csbc(icv1, is) = cs
+      csbc = SQRT((pl%te(icv1)*rt%rza(icv1, is)+pl%ti(icv1))/(am(is)*mp)&
+&       )
     END IF
     RETURN
   END SUBROUTINE CSBC_IS
 
 !  Differentiation of vbc_is in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *(dv.vaecrb) *(pl.ua) vbc cs
-!   with respect to varying inputs: *(dv.vaecrb) *(pl.ua) vbc cs
+!   gradient     of useful results: *(dv.vaecrb) *(pl.ua) vbnd
+!                vbc csbc
+!   with respect to varying inputs: *(dv.vaecrb) *(pl.ua) csbc
 !   Plus diff mem management of: dv.vaecrb:in pl.ua:in
 !srv 15.02.26 }
 !
 !srv 15.02.26 {
-  SUBROUTINE VBC_IS_B(ib, is, ibc, icv1, icv2, ifc, cs, csb, wrk)
+  SUBROUTINE VBC_IS_B(ib, is, ibc, icv, ifc, csbc, csbcb, wrks, vbnd, &
+&   vbndb, vbc, vbcb)
     IMPLICIT NONE
-    INTEGER :: ib, is, ibc, icv1, icv2, ifc
-! cs=csbc(iCv1,is)
-    REAL(kind=r8) :: cs
-    REAL(kind=r8) :: csb
-    REAL(kind=r8) :: wrk, vbnd, t0
-    REAL(kind=r8) :: vbndb, t0b
+    INTEGER :: ib, is, ibc, icv, ifc
+    REAL(kind=r8) :: csbc
+    REAL(kind=r8) :: csbcb
+    REAL(kind=r8) :: vbnd, vbndm, t0
+    REAL(kind=r8) :: vbndb, vbndmb, t0b
+    REAL(kind=r8) :: wrks, vbc
+    REAL(kind=r8) :: vbcb
     INTRINSIC ABS
     INTRINSIC MIN
     INTRINSIC SIGN
@@ -8453,18 +8428,18 @@ CONTAINS
     REAL(kind=r8) :: tempb
     INTEGER*4 :: branch
 !
-    CALL PUSHREAL8(wrk, r8/8)
-    wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
+    CALL PUSHREAL8(wrks, r8/8)
+    wrks = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
 &     bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(ifc, 1, &
 &     is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      IF (wrk .GE. 0.) THEN
-        abs0 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs0 = wrks
       ELSE
-        abs0 = -wrk
+        abs0 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs0
+      t0 = 2.0_R8*csbc*abs0
       IF (vbnd .GE. 0.) THEN
         y1 = vbnd
         CALL PUSHCONTROL1B(0)
@@ -8477,10 +8452,9 @@ CONTAINS
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
-      csb = csb + wrk*vbcb(icv1, is)
-      vbndb = -(SIGN(1.0_R8, wrk)*vbcb(icv1, is))
-      vbcb(icv1, is) = 0.D0
-      min1b = SIGN(1.0_R8, vbnd)*vbndb
+      csbcb = csbcb + wrks*vbcb
+      vbndmb = -(SIGN(1.0_R8, wrks)*vbcb)
+      min1b = SIGN(1.0_R8, vbnd)*vbndmb
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         y1b = min1b
@@ -8491,18 +8465,18 @@ CONTAINS
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        vbndb = y1b
+        vbndb = vbndb + y1b
       ELSE
-        vbndb = -y1b
+        vbndb = vbndb - y1b
       END IF
-      csb = csb + abs0*2.0_R8*t0b
+      csbcb = csbcb + abs0*2.0_R8*t0b
     ELSE
-      IF (wrk .GE. 0.) THEN
-        abs1 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs1 = wrks
       ELSE
-        abs1 = -wrk
+        abs1 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs1
+      t0 = 2.0_R8*csbc*abs1
       IF (vbnd .GE. 0.) THEN
         y2 = vbnd
         CALL PUSHCONTROL1B(0)
@@ -8517,32 +8491,28 @@ CONTAINS
         min2 = t0
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8(vbnd, r8/8)
-      vbnd = min2*SIGN(1.0_R8, vbnd)
-      CALL PUSHREAL8(vbc(icv1, is), r8/8)
-      vbc(icv1, is) = cs*wrk - vbnd*SIGN(1.0_R8, wrk)
-      x1 = vbc(icv1, is)*SIGN(1.0_R8, wrk)
-      IF (x1 .LT. wrk*pl%ua(icv2, is)) THEN
+      vbndm = min2*SIGN(1.0_R8, vbnd)
+      CALL PUSHREAL8(vbc, r8/8)
+      vbc = csbc*wrks - vbndm*SIGN(1.0_R8, wrks)
+      x1 = vbc*SIGN(1.0_R8, wrks)
+      IF (x1 .LT. wrks*pl%ua(icv, is)) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
-      max1b = SIGN(1.0_R8, wrk)*vbcb(icv1, is)
-      vbcb(icv1, is) = 0.D0
+      max1b = SIGN(1.0_R8, wrks)*vbcb
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        plb%ua(icv2, is) = plb%ua(icv2, is) + wrk*max1b
+        plb%ua(icv, is) = plb%ua(icv, is) + wrks*max1b
         x1b = 0.D0
       ELSE
         x1b = max1b
       END IF
-      vbcb(icv1, is) = vbcb(icv1, is) + SIGN(1.0_R8, wrk)*x1b
-      CALL POPREAL8(vbc(icv1, is), r8/8)
-      csb = csb + wrk*vbcb(icv1, is)
-      vbndb = -(SIGN(1.0_R8, wrk)*vbcb(icv1, is))
-      vbcb(icv1, is) = 0.D0
-      CALL POPREAL8(vbnd, r8/8)
-      min2b = SIGN(1.0_R8, vbnd)*vbndb
+      vbcb = SIGN(1.0_R8, wrks)*x1b
+      CALL POPREAL8(vbc, r8/8)
+      csbcb = csbcb + wrks*vbcb
+      vbndmb = -(SIGN(1.0_R8, wrks)*vbcb)
+      min2b = SIGN(1.0_R8, vbnd)*vbndmb
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         y2b = min2b
@@ -8553,29 +8523,29 @@ CONTAINS
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        vbndb = y2b
+        vbndb = vbndb + y2b
       ELSE
-        vbndb = -y2b
+        vbndb = vbndb - y2b
       END IF
-      csb = csb + abs1*2.0_R8*t0b
+      csbcb = csbcb + abs1*2.0_R8*t0b
     END IF
     tempb = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*vbndb
     dvb%vaecrb(ifc, 0, is) = dvb%vaecrb(ifc, 0, is) + geo%fcqalf(ifc, 0)&
 &     *tempb
     dvb%vaecrb(ifc, 1, is) = dvb%vaecrb(ifc, 1, is) + geo%fcqalf(ifc, 1)&
 &     *tempb
-    CALL POPREAL8(wrk, r8/8)
+    CALL POPREAL8(wrks, r8/8)
   END SUBROUTINE VBC_IS_B
 
 !srv 15.02.26 }
 !
 !srv 15.02.26 {
-  SUBROUTINE VBC_IS(ib, is, ibc, icv1, icv2, ifc, cs, wrk)
+  SUBROUTINE VBC_IS(ib, is, ibc, icv, ifc, csbc, wrks, vbnd, vbc)
     IMPLICIT NONE
-    INTEGER :: ib, is, ibc, icv1, icv2, ifc
-! cs=csbc(iCv1,is)
-    REAL(kind=r8) :: cs
-    REAL(kind=r8) :: wrk, vbnd, t0
+    INTEGER :: ib, is, ibc, icv, ifc
+    REAL(kind=r8) :: csbc
+    REAL(kind=r8) :: vbnd, vbndm, t0
+    REAL(kind=r8) :: wrks, vbc
     INTRINSIC ABS
     INTRINSIC MIN
     INTRINSIC SIGN
@@ -8588,17 +8558,17 @@ CONTAINS
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: max1
 !
-    wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
+    wrks = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*mpg%&
 &     bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(ifc, 1, &
 &     is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
     IF (mompar(is, ib, 2) .LT. 0.5_R8) THEN
-      IF (wrk .GE. 0.) THEN
-        abs0 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs0 = wrks
       ELSE
-        abs0 = -wrk
+        abs0 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs0
+      t0 = 2.0_R8*csbc*abs0
       IF (vbnd .GE. 0.) THEN
         y1 = vbnd
       ELSE
@@ -8609,15 +8579,15 @@ CONTAINS
       ELSE
         min1 = t0
       END IF
-      vbnd = min1*SIGN(1.0_R8, vbnd)
-      vbc(icv1, is) = cs*wrk - vbnd*SIGN(1.0_R8, wrk)
+      vbndm = min1*SIGN(1.0_R8, vbnd)
+      vbc = csbc*wrks - vbndm*SIGN(1.0_R8, wrks)
     ELSE
-      IF (wrk .GE. 0.) THEN
-        abs1 = wrk
+      IF (wrks .GE. 0.) THEN
+        abs1 = wrks
       ELSE
-        abs1 = -wrk
+        abs1 = -wrks
       END IF
-      t0 = 2.0_R8*cs*abs1
+      t0 = 2.0_R8*csbc*abs1
       IF (vbnd .GE. 0.) THEN
         y2 = vbnd
       ELSE
@@ -8628,15 +8598,15 @@ CONTAINS
       ELSE
         min2 = t0
       END IF
-      vbnd = min2*SIGN(1.0_R8, vbnd)
-      vbc(icv1, is) = cs*wrk - vbnd*SIGN(1.0_R8, wrk)
-      x1 = vbc(icv1, is)*SIGN(1.0_R8, wrk)
-      IF (x1 .LT. wrk*pl%ua(icv2, is)) THEN
-        max1 = wrk*pl%ua(icv2, is)
+      vbndm = min2*SIGN(1.0_R8, vbnd)
+      vbc = csbc*wrks - vbndm*SIGN(1.0_R8, wrks)
+      x1 = vbc*SIGN(1.0_R8, wrks)
+      IF (x1 .LT. wrks*pl%ua(icv, is)) THEN
+        max1 = wrks*pl%ua(icv, is)
       ELSE
         max1 = x1
       END IF
-      vbc(icv1, is) = max1*SIGN(1.0_R8, wrk)
+      vbc = max1*SIGN(1.0_R8, wrks)
     END IF
     RETURN
   END SUBROUTINE VBC_IS
@@ -8646,14 +8616,14 @@ CONTAINS
 !                *(dv.fna_mdf) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir)
 !                *(dv.vadia) *(dv.vaecrb) *(rt.rza) *(srw.smo0)
 !                *(srw.sna0) *(co.cdna) *(co.dpa0) *(co.dna0) *(co.vsa0)
-!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) vbc sna0_no_mdf
-!                rz csbc pz
+!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) sna0_no_mdf
+!                rz pz
 !   with respect to varying inputs: conpar mompar sconpar *(dv.fna)
 !                *(dv.fna_mdf) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir)
 !                *(dv.vadia) *(dv.vaecrb) *(rt.rza) *(srw.smo0)
 !                *(srw.sna0) *(co.cdna) *(co.dpa0) *(co.dna0) *(co.vsa0)
-!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) vbc sna0_no_mdf
-!                rz csbc pz
+!                *(pl.na) *(pl.ua) *(pl.te) *(pl.ti) sna0_no_mdf
+!                rz pz
 !   Plus diff mem management of: dv.fna:in dv.fna_mdf:in dv.fnapsch:in
 !                dv.fna_fcor:in dv.fna_eir:in dv.vadia:in dv.vaecrb:in
 !                mpg.bcfcor:in geo.fcs:in geo.vxvol:in rt.rza:in
@@ -8712,7 +8682,7 @@ CONTAINS
     REAL(kind=r8) :: s1, t0, t1, t2, t3, t4, vbnd, totpar, totflux, &
 &   totfluxn, totfluxi, a, cs, csb, wrk
     REAL(kind=r8) :: t0b, t1b, t2b, t3b, t4b, vbndb, totparb, totfluxb, &
-&   totfluxnb, totfluxib, ab, csb0, csbb
+&   totfluxnb, totfluxib, ab, csbb
     REAL(kind=r8), EXTERNAL :: INTVERTEX_S_NODIFF
     LOGICAL :: ishigh
     EXTERNAL XERRAB
@@ -9412,24 +9382,23 @@ CONTAINS
           CALL PUSHINTEGER4(ifc)
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
 !srv 15.02.26
-          CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-          CALL PUSHREAL8(cs, r8/8)
-          CALL CSBC_IS(icv1, ib, is, cs)
+          CALL PUSHREAL8(csbc, r8/8)
+          CALL CSBC_IS(icv1, ib, is, csbc)
 !srv 15.02.26
-          CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL PUSHREAL8(wrk, r8/8)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-          IF (wrk .GE. 0.) THEN
-            abs0 = wrk
+          CALL PUSHREAL8(vbc, r8/8)
+          CALL PUSHREAL8(wrks, r8/8)
+          CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
+          IF (wrks .GE. 0.) THEN
+            abs0 = wrks
           ELSE
-            abs0 = -wrk
+            abs0 = -wrks
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
             CALL PUSHREAL8(srw%sna0(icv1, 0, is), r8/8)
             srw%sna0(icv1, 0, is) = 0.0_R8
             CALL PUSHREAL8(srw%sna0(icv1, 1, is), r8/8)
-            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*cs*&
-&             geo%qalfmax)
+            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*&
+&             csbc*geo%qalfmax)
             CALL PUSHREAL8ARRAY(sna0_no_mdf(icv1, :, is), r8*2/8)
             sna0_no_mdf(icv1, :, is) = sna0_no_mdf(icv1, :, is) + srw%&
 &             sna0(icv1, :, is)
@@ -9478,22 +9447,19 @@ CONTAINS
               END IF
             END IF
           ELSE
-            vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(&
-&             ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1&
-&             )+ibc-1)
             CALL PUSHREAL8(srw%sna0(icv1, 0, is), r8/8)
             srw%sna0(icv1, 0, is) = 0.0_R8
-            IF (wrk .GE. 0.) THEN
+            IF (wrks .GE. 0.) THEN
               CALL PUSHREAL8(abs6, r8/8)
-              abs6 = wrk
+              abs6 = wrks
               CALL PUSHCONTROL1B(0)
             ELSE
               CALL PUSHREAL8(abs6, r8/8)
-              abs6 = -wrk
+              abs6 = -wrks
               CALL PUSHCONTROL1B(1)
             END IF
-            x2 = csbc(icv1, is)*abs6
-            y6 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+            x2 = csbc*abs6
+            y6 = vbc*SIGN(1.0_R8, wrks) + vbnd
             IF (x2 .LT. y6) THEN
               CALL PUSHREAL8(max8, r8/8)
               max8 = y6
@@ -9574,10 +9540,17 @@ CONTAINS
           CALL PUSHREAL8(t1, r8/8)
           t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &           fcqbet(ifc, 0)
+          ivx1 = mpg%fcvx(ifc, 1)
+          ivx2 = mpg%fcvx(ifc, 2)
+          CALL PUSHREAL8(t2, r8/8)
+          t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
+          CALL PUSHREAL8(t3, r8/8)
+          t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
           CALL PUSHREAL8(srw%sna0(icv1, 0, is), r8/8)
           srw%sna0(icv1, 0, is) = vbig*co%cdna(ifc, 1, is)*(t0*pl%na(&
-&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%na(mpg%&
-&           fcvx(ifc, 2), is)-pl%na(mpg%fcvx(ifc, 1), is)))
+&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t3-t2))
           CALL PUSHREAL8(srw%sna0(icv1, 1, is), r8/8)
           srw%sna0(icv1, 1, is) = -(vbig*(co%cdna(ifc, 1, is)*t0-conpar(&
 &           is, ib, 1)*geo%fcs(ifc)*csb))
@@ -10782,9 +10755,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          CALL PUSHINTEGER4(icv1)
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          CALL PUSHINTEGER4(icv)
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -10842,12 +10815,13 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          CALL PUSHINTEGER4(icv1)
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          CALL PUSHINTEGER4(icv)
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
+              CALL PUSHINTEGER4(icv1)
               icv1 = mpg%bccv(mpg%bccvp(ib0, 1)+ibc0-1, 1)
 ! number of the domain cell
               CALL PUSHINTEGER4(icv2)
@@ -11108,22 +11082,21 @@ CONTAINS
 &           :, is))
           IF (geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3) .GE. &
 &             0.) THEN
-            CALL PUSHREAL8(wrk, r8/8)
             wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
-            CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8(wrk, r8/8)
             wrk = -(geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)&
 &             )
-            CALL PUSHCONTROL1B(1)
           END IF
           IF (wrk .LT. geo%qalfmin) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
 !srv 15.02.26
-            CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
-            CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                 wrk)
+            CALL PUSHREAL8(csbc, r8/8)
+            CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+            CALL PUSHREAL8(vbc, r8/8)
+            CALL PUSHREAL8(wrks, r8/8)
+            CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
 !srv 07.05.09 {
             IF (geo%fcpbshz(ifc) .GE. 0.) THEN
               CALL PUSHREAL8(abs5, r8/8)
@@ -11227,6 +11200,8 @@ CONTAINS
         CALL PUSHCONTROL4B(14)
       END SELECT
     END DO
+    vbcb = 0.D0
+    csbcb = 0.D0
     t3b = 0.D0
     DO 110 is=ns-1,0,-1
       CALL POPCONTROL4B(branch)
@@ -11458,25 +11433,25 @@ CONTAINS
               END IF
               tempb5 = ubig*mp*geo%fchz(ifc)*am(is)*geo%fcs(ifc)*srwb%&
 &               smo0(icv1, 0, is)
-              tempb2 = vbc(icv1, is)*tempb5/epslon**2
-              vbcb(icv1, is) = vbcb(icv1, is) + pl%na(icv1, is)*mompar(&
-&               is, ib, 1)*tempb5/epslon**2
+              tempb2 = vbc*tempb5/epslon**2
+              vbcb = vbcb + pl%na(icv1, is)*mompar(is, ib, 1)*tempb5/&
+&               epslon**2
               plb%na(icv1, is) = plb%na(icv1, is) + mompar(is, ib, 1)*&
 &               tempb2
               momparb(is, ib, 1) = momparb(is, ib, 1) + pl%na(icv1, is)*&
 &               tempb2
               icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-              CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-              CALL VBC_IS_B(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is)&
-&                     , csbcb(icv1, is), wrk)
+              CALL POPREAL8(wrks, r8/8)
+              CALL POPREAL8(vbc, r8/8)
+              vbndb = 0.D0
+              CALL VBC_IS_B(ib, is, ibc, icv2, ifc, csbc, csbcb, wrks, &
+&                     vbnd, vbndb, vbc, vbcb)
+              vbcb = 0.D0
+              CALL POPREAL8(csbc, r8/8)
+              CALL CSBC_IS_B(icv1, ib, is, csbc, csbcb)
+              csbcb = 0.D0
               t1b = 0.D0
               t2b = 0.D0
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL8(wrk, r8/8)
-            ELSE
-              CALL POPREAL8(wrk, r8/8)
             END IF
             ivx2 = mpg%fcvx(ifc, 2)
             CALL POPREAL8(t2, r8/8)
@@ -12169,6 +12144,7 @@ CONTAINS
                 CALL POPCONTROL3B(branch)
                 IF (branch .LT. 2) THEN
                   IF (branch .NE. 0) THEN
+                    icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
                     CALL POPREAL8(srw%sna0(icv1, 1, is), r8/8)
                     tempb5 = srwb%sna0(icv1, 1, is)/pl%na(icv1, is)
                     min3b = tempb5
@@ -12235,10 +12211,9 @@ CONTAINS
                     x2b = max8b
                     y6b = 0.D0
                   END IF
-                  vbcb(icv1, is) = vbcb(icv1, is) + SIGN(1.0_R8, wrk)*&
-&                   y6b
+                  vbcb = vbcb + SIGN(1.0_R8, wrks)*y6b
                   vbndb = y6b
-                  csbcb(icv1, is) = csbcb(icv1, is) + abs6*x2b
+                  csbcb = csbcb + abs6*x2b
                   CALL POPCONTROL1B(branch)
                   IF (branch .EQ. 0) THEN
                     CALL POPREAL8(abs6, r8/8)
@@ -12247,12 +12222,6 @@ CONTAINS
                   END IF
                   CALL POPREAL8(srw%sna0(icv1, 0, is), r8/8)
                   srwb%sna0(icv1, 0, is) = 0.D0
-                  tempb4 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*vbndb
-                  dvb%vaecrb(ifc, 0, is) = dvb%vaecrb(ifc, 0, is) + geo%&
-&                   fcqalf(ifc, 0)*tempb4
-                  dvb%vaecrb(ifc, 1, is) = dvb%vaecrb(ifc, 1, is) + geo%&
-&                   fcqalf(ifc, 1)*tempb4
-                  csb0 = 0.D0
                 ELSE
                   IF (branch .EQ. 2) THEN
                     icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -12337,18 +12306,20 @@ CONTAINS
                   tempb4 = -(geo%fcs(ifc)*geo%qalfmax*srwb%sna0(icv1, 1&
 &                   , is))
                   srwb%sna0(icv1, 1, is) = 0.D0
-                  momparb(is, ib, 1) = momparb(is, ib, 1) + cs*tempb4
-                  csb0 = mompar(is, ib, 1)*tempb4
+                  momparb(is, ib, 1) = momparb(is, ib, 1) + csbc*tempb4
+                  csbcb = csbcb + mompar(is, ib, 1)*tempb4
                   CALL POPREAL8(srw%sna0(icv1, 0, is), r8/8)
                   srwb%sna0(icv1, 0, is) = 0.D0
+                  vbndb = 0.D0
                 END IF
-                CALL POPREAL8(wrk, r8/8)
-                CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-                CALL VBC_IS_B(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, &
-&                       is), csbcb(icv1, is), wrk)
-                CALL POPREAL8(cs, r8/8)
-                CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
-                CALL CSBC_IS_B(icv1, ib, is, cs, csb0)
+                CALL POPREAL8(wrks, r8/8)
+                CALL POPREAL8(vbc, r8/8)
+                CALL VBC_IS_B(ib, is, ibc, icv2, ifc, csbc, csbcb, wrks&
+&                       , vbnd, vbndb, vbc, vbcb)
+                vbcb = 0.D0
+                CALL POPREAL8(csbc, r8/8)
+                CALL CSBC_IS_B(icv1, ib, is, csbc, csbcb)
+                csbcb = 0.D0
                 CALL POPINTEGER4(ifc)
                 CALL POPINTEGER4(icv2)
                 CALL POPINTEGER4(icv1)
@@ -12374,18 +12345,24 @@ CONTAINS
               t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo&
 &               %fcqbet(ifc, 0)
               CALL POPREAL8(srw%sna0(icv1, 0, is), r8/8)
-              temp4 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1
+              temp4 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
               cob%cdna(ifc, 1, is) = cob%cdna(ifc, 1, is) + (t0*pl%na(&
-&               icv2, is)-temp4*(pl%na(mpg%fcvx(ifc, 2), is)-pl%na(mpg%&
-&               fcvx(ifc, 1), is)))*vbig*srwb%sna0(icv1, 0, is)
+&               icv2, is)-temp4*(t1*(t3-t2)))*vbig*srwb%sna0(icv1, 0, is&
+&               )
               tempb3 = co%cdna(ifc, 1, is)*vbig*srwb%sna0(icv1, 0, is)
               srwb%sna0(icv1, 0, is) = 0.D0
               plb%na(icv2, is) = plb%na(icv2, is) + t0*tempb3
-              tempb5 = -(temp4*tempb3)
-              plb%na(mpg%fcvx(ifc, 2), is) = plb%na(mpg%fcvx(ifc, 2), is&
-&               ) + tempb5
-              plb%na(mpg%fcvx(ifc, 1), is) = plb%na(mpg%fcvx(ifc, 1), is&
-&               ) - tempb5
+              tempb0 = -(t1*temp4*tempb3)
+              t3b = t3b + tempb0
+              t2b = -tempb0
+              ivx2 = mpg%fcvx(ifc, 2)
+              CALL POPREAL8(t3, r8/8)
+              CALL INTVERTEX_S_B(ivx2, ncv, nvx, mpg, geo%vxvol, pl%na(:&
+&                          , is), plb%na(:, is), t3b)
+              ivx1 = mpg%fcvx(ifc, 1)
+              CALL POPREAL8(t2, r8/8)
+              CALL INTVERTEX_S_B(ivx1, ncv, nvx, mpg, geo%vxvol, pl%na(:&
+&                          , is), plb%na(:, is), t2b)
               CALL POPREAL8(t1, r8/8)
               CALL POPREAL8(t0, r8/8)
               CALL POPREAL8(csb, r8/8)
@@ -12402,6 +12379,7 @@ CONTAINS
               CALL POPINTEGER4(ifc)
               CALL POPINTEGER4(icv2)
               CALL POPINTEGER4(icv1)
+              t3b = 0.D0
             END DO
           ELSE IF (branch .EQ. 12) THEN
             nasb = 0.D0
@@ -13428,7 +13406,7 @@ CONTAINS
                 CALL POPINTEGER4(icv2)
               END DO
             END IF
-            CALL POPINTEGER4(icv1)
+            CALL POPINTEGER4(icv)
           END DO
           CALL POPREAL8(t1, r8/8)
           CALL POPREAL8(t0, r8/8)
@@ -13556,9 +13534,10 @@ CONTAINS
 &                 t1b
                 CALL POPINTEGER4(ifc)
                 CALL POPINTEGER4(icv2)
+                CALL POPINTEGER4(icv1)
               END DO
             END IF
-            CALL POPINTEGER4(icv1)
+            CALL POPINTEGER4(icv)
           END DO
           CALL POPREAL8(totpar, r8/8)
           CALL POPREAL8(totflux, r8/8)
@@ -14184,24 +14163,19 @@ CONTAINS
           icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            s1 = geo%fcpbs(ifc)
-          ELSE
-            s1 = -geo%fcpbs(ifc)
-          END IF
 !srv 15.02.26
-          CALL CSBC_IS(icv1, ib, is, cs)
+          CALL CSBC_IS(icv1, ib, is, csbc)
 !srv 15.02.26
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-          IF (wrk .GE. 0.) THEN
-            abs0 = wrk
+          CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
+          IF (wrks .GE. 0.) THEN
+            abs0 = wrks
           ELSE
-            abs0 = -wrk
+            abs0 = -wrks
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
             srw%sna0(icv1, 0, is) = 0.0_R8
-            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*cs*&
-&             geo%qalfmax)
+            srw%sna0(icv1, 1, is) = -(geo%fcs(ifc)*mompar(is, ib, 1)*&
+&             csbc*geo%qalfmax)
             sna0_no_mdf(icv1, :, is) = sna0_no_mdf(icv1, :, is) + srw%&
 &             sna0(icv1, :, is)
             IF (switch%mdf_fnb .EQ. 0) THEN
@@ -14237,17 +14211,14 @@ CONTAINS
               END IF
             END IF
           ELSE
-            vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb(&
-&             ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib, 1&
-&             )+ibc-1)
             srw%sna0(icv1, 0, is) = 0.0_R8
-            IF (wrk .GE. 0.) THEN
-              abs6 = wrk
+            IF (wrks .GE. 0.) THEN
+              abs6 = wrks
             ELSE
-              abs6 = -wrk
+              abs6 = -wrks
             END IF
-            x2 = csbc(icv1, is)*abs6
-            y6 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+            x2 = csbc*abs6
+            y6 = vbc*SIGN(1.0_R8, wrks) + vbnd
             IF (x2 .LT. y6) THEN
               max8 = y6
             ELSE
@@ -14315,9 +14286,14 @@ CONTAINS
           t0 = geo%fcqalf(ifc, 1)
           t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &           fcqbet(ifc, 0)
+          ivx1 = mpg%fcvx(ifc, 1)
+          ivx2 = mpg%fcvx(ifc, 2)
+          t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
+          t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%na(&
+&           :, is))
           srw%sna0(icv1, 0, is) = vbig*co%cdna(ifc, 1, is)*(t0*pl%na(&
-&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%na(mpg%&
-&           fcvx(ifc, 2), is)-pl%na(mpg%fcvx(ifc, 1), is)))
+&           icv2, is)-mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t3-t2))
           srw%sna0(icv1, 1, is) = -(vbig*(co%cdna(ifc, 1, is)*t0-conpar(&
 &           is, ib, 1)*geo%fcs(ifc)*csb))
           sna0_no_mdf(icv1, :, is) = srw%sna0(icv1, :, is)
@@ -15555,8 +15531,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
             DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -15610,8 +15586,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
         DO ib0=1,nbc
-          icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-          IF (mpg%cvonclosedsurface(icv1)) THEN
+          icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+          IF (mpg%cvonclosedsurface(icv)) THEN
             IF (bccon(is, ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCCON=29: incompatible core BCs'&
 &                                            )
@@ -15988,12 +15964,13 @@ CONTAINS
 &             fcs(ifc)*geo%fchz(ifc))
           ELSE
 !srv 15.02.26
-            CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                 wrk)
+            CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+            CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
 !srv 07.05.09 {
             srw%smo0(icv1, 0, is) = srw%smo0(icv1, 0, is) + ubig/epslon&
-&             **2*am(is)*mp*pl%na(icv1, is)*mompar(is, ib, 1)*vbc(icv1, &
-&             is)*geo%fcs(ifc)*geo%fchz(ifc)
+&             **2*am(is)*mp*pl%na(icv1, is)*mompar(is, ib, 1)*vbc*geo%&
+&             fcs(ifc)*geo%fchz(ifc)
             IF (geo%fcpbshz(ifc) .GE. 0.) THEN
               abs5 = geo%fcpbshz(ifc)
             ELSE
@@ -17757,8 +17734,15 @@ CONTAINS
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the domain cell
 ! number of the guard cell face
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         CALL PUSHREAL8(vte, r8/8)
         vte = SQRT(pl%te(icv1)/me)
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        CALL PUSHREAL8(t2, r8/8)
+        t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%te)
+        CALL PUSHREAL8(t3, r8/8)
+        t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%te)
       END DO
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -17774,18 +17758,24 @@ CONTAINS
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
-        temp7 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1
+        temp7 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
         tempb2 = vbig*ne00*ev*srwb%she0(icv1, 0)
         cob%chce(ifc, 1) = cob%chce(ifc, 1) + t0*tempb6 + (t0*pl%te(icv2&
-&         )-temp7*(pl%te(mpg%fcvx(ifc, 2))-pl%te(mpg%fcvx(ifc, 1))))*&
-&         tempb2
+&         )-temp7*(t1*(t3-t2)))*tempb2
         srwb%she0(icv1, 0) = 0.D0
         tempb7 = co%chce(ifc, 1)*tempb2
         plb%te(icv2) = plb%te(icv2) + t0*tempb7
-        plb%te(mpg%fcvx(ifc, 2)) = plb%te(mpg%fcvx(ifc, 2)) - temp7*&
-&         tempb7
-        plb%te(mpg%fcvx(ifc, 1)) = plb%te(mpg%fcvx(ifc, 1)) + temp7*&
-&         tempb7
+        tempb3 = -(t1*temp7*tempb7)
+        t3b = tempb3
+        t2b = -tempb3
+        ivx2 = mpg%fcvx(ifc, 2)
+        CALL POPREAL8(t3, r8/8)
+        CALL INTVERTEX_S_B(ivx2, ncv, nvx, mpg, geo%vxvol, pl%te, plb%te&
+&                    , t3b)
+        ivx1 = mpg%fcvx(ifc, 1)
+        CALL POPREAL8(t2, r8/8)
+        CALL INTVERTEX_S_B(ivx1, ncv, nvx, mpg, geo%vxvol, pl%te, plb%te&
+&                    , t2b)
         CALL POPREAL8(vte, r8/8)
         IF (.NOT.pl%te(icv1)/me .EQ. 0.D0) plb%te(icv1) = plb%te(icv1) +&
 &           vteb/(me*2.0*SQRT(pl%te(icv1)/me))
@@ -17812,8 +17802,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -17850,6 +17841,7 @@ CONTAINS
             plb%te(icv2) = plb%te(icv2) + geo%cvvol(icv2)*t1b
           END DO
         END IF
+        CALL POPINTEGER4(icv)
       END DO
       CALL POPCONTROL2B(branch)
       IF (branch .EQ. 0) eneparb(ib, 1) = 0.D0
@@ -17864,9 +17856,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -17922,14 +17914,6 @@ CONTAINS
         max9 = x3
         CALL PUSHCONTROL1B(1)
       END IF
-!     ..impose temperature with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t2b = 0.D0
       t4b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
@@ -17942,7 +17926,6 @@ CONTAINS
         plb%te(icv2) = plb%te(icv2) + tempb2
         t4b = t4b + tempb2
         t2b = t2b - tempb2
-        CALL POPINTEGER4(icv1)
       END DO
       temp7 = t3/max9
       tempb2 = t1*t4b
@@ -17995,7 +17978,7 @@ CONTAINS
             plb%te(icv1) = plb%te(icv1) + geo%cvvol(icv2)*t1b
           END DO
         END IF
-        CALL POPINTEGER4(icv1)
+        CALL POPINTEGER4(icv)
       END DO
     END SELECT
   END SUBROUTINE B2STBC_PHYS_ENE_B
@@ -18949,9 +18932,12 @@ CONTAINS
         t0 = geo%fcqalf(ifc, 1)
         t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        t2 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%te)
+        t3 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%te)
         srw%she0(icv1, 0) = vbig*ne00*ev*co%chce(ifc, 1)*(t0*pl%te(icv2)&
-&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%te(mpg%fcvx(ifc, 2)&
-&         )-pl%te(mpg%fcvx(ifc, 1))))
+&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t3-t2))
         srw%she0(icv1, 1) = -(vbig*ne00*ev*(co%chce(ifc, 1)*t0-enepar(ib&
 &         , 1)*geo%fcs(ifc)*vte*dv%ne(icv1)))
       END DO
@@ -18982,8 +18968,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -19019,8 +19005,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENE=24 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') 'specified electron heat flux', &
@@ -19039,8 +19025,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bcene(ib0) .NE. 24) CALL XERRAB(&
 &                                      'BCENE=24: incompatible core BCs'&
 &                                      )
@@ -19110,13 +19096,13 @@ CONTAINS
 !                *(dv.fhm) *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb)
 !                *(rt.rza) *(srw.shi0) *(srw.sna0) *(co.chci) *(co.hci0)
 !                *(co.hcn0) *(co.dna0) *(pl.na) *(pl.ua) *(pl.te)
-!                *(pl.ti) vbc rz csbc pz
+!                *(pl.ti) rz pz
 !   with respect to varying inputs: conpar mompar enipar senipar
 !                *(dv.fna) *(dv.fhi) *(dv.fhi_mdf) *(dv.fhipsch)
 !                *(dv.fhm) *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb)
 !                *(rt.rza) *(srw.shi0) *(srw.sna0) *(co.chci) *(co.hci0)
 !                *(co.hcn0) *(co.dna0) *(pl.na) *(pl.ua) *(pl.te)
-!                *(pl.ti) vbc rz csbc pz
+!                *(pl.ti) rz pz
 !   Plus diff mem management of: dv.fna:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhipsch:in dv.fhm:in dv.ne:in dv.ni:in dv.vadia:in
 !                dv.vaecrb:in mpg.bcfcor:in geo.cvbb:in geo.fcs:in
@@ -19436,6 +19422,8 @@ CONTAINS
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+! number of the corresponding domain cell
+        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         IF (switch%recycle_afn .EQ. 0 .OR. switch%tn_style .NE. 0) THEN
@@ -19480,6 +19468,7 @@ CONTAINS
       END DO
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
@@ -19715,15 +19704,6 @@ CONTAINS
 ! number of the guard cell face
         CALL PUSHINTEGER4(ifc)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-          CALL PUSHREAL8(cs, r8/8)
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         CALL PUSHREAL8(cs, r8/8)
         cs = SQRT(pz(icv1)/rz(icv1))
         CALL PUSHREAL8(t0, r8/8)
@@ -19738,6 +19718,8 @@ CONTAINS
             abs0 = -wrk
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
+! Apply the same residual-neutral Ti damping used by the
+! regular-Qalf sheath branch: K*(Ti_old-Ti_new).
             IF (switch%mdf_fhi .NE. 0) THEN
               t0 = 0.0_R8
               DO is=0,ns-1
@@ -19770,9 +19752,12 @@ CONTAINS
               IF (is_neutral(is)) THEN
                 CALL PUSHCONTROL2B(0)
               ELSE
-                vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%&
-&                 vaecrb(ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%&
-&                 bccvp(ib, 1)+ibc-1)
+!srv 15.02.26
+                CALL PUSHREAL8(csbc, r8/8)
+                CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+                CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, &
+&                     vbc)
                 IF (wrk .GE. 0.) THEN
                   CALL PUSHREAL8(abs5, r8/8)
                   abs5 = wrk
@@ -19782,8 +19767,8 @@ CONTAINS
                   abs5 = -wrk
                   CALL PUSHCONTROL1B(1)
                 END IF
-                x1 = csbc(icv1, is)*abs5
-                y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+                x1 = csbc*abs5
+                y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
                 IF (x1 .LT. y1) THEN
                   CALL PUSHREAL8(max6, r8/8)
                   max6 = y1
@@ -19909,6 +19894,8 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
+      vbcb = 0.D0
+      csbcb = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
@@ -19987,14 +19974,18 @@ CONTAINS
               dvb%vaecrb(ifc, 1, is) = dvb%vaecrb(ifc, 1, is) + temp*&
 &               tempb4
             END DO
-            tempb2 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*srwb%shi0(icv1, &
-&             0)
-            dvb%fhipsch(ifc, 0) = dvb%fhipsch(ifc, 0) + tempb2
-            dvb%fhipsch(ifc, 1) = dvb%fhipsch(ifc, 1) + tempb2
           END IF
           tempb3 = -(geo%fcs(ifc)*geo%qalfmax*1.5_R8*srwb%shi0(icv1, 1))
+          tempb2 = switch%stab_coeff_sheath_ti*geo%fcs(ifc)*srwb%shi0(&
+&           icv1, 0)
+          tempb5 = pl%ti(icv1)*tempb2
+          plb%ti(icv1) = plb%ti(icv1) + dv%ne(icv1)*cs*tempb2
+          tempb2 = -(switch%stab_coeff_sheath_ti*geo%fcs(ifc)*srwb%shi0(&
+&           icv1, 1))
+          dvb%ne(icv1) = dvb%ne(icv1) + cs*tempb5 + cs*tempb2
+          csb0 = dv%ne(icv1)*tempb5 + dv%ne(icv1)*tempb2 + dv%ni(icv1, 1&
+&           )*tempb3
           srwb%shi0(icv1, 1) = 0.D0
-          csb0 = dv%ni(icv1, 1)*tempb3
           dvb%ni(icv1, 1) = dvb%ni(icv1, 1) + cs*tempb3
           srwb%shi0(icv1, 0) = 0.D0
         ELSE IF (branch .EQ. 2) THEN
@@ -20040,20 +20031,21 @@ CONTAINS
                 x1b = max6b
                 y1b = 0.D0
               END IF
-              vbcb(icv1, is) = vbcb(icv1, is) + SIGN(1.0_R8, wrk)*y1b
+              vbcb = vbcb + SIGN(1.0_R8, wrk)*y1b
               vbndb = y1b
-              csbcb(icv1, is) = csbcb(icv1, is) + abs5*x1b
+              csbcb = csbcb + abs5*x1b
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
                 CALL POPREAL8(abs5, r8/8)
               ELSE
                 CALL POPREAL8(abs5, r8/8)
               END IF
-              tempb3 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*vbndb
-              dvb%vaecrb(ifc, 0, is) = dvb%vaecrb(ifc, 0, is) + geo%&
-&               fcqalf(ifc, 0)*tempb3
-              dvb%vaecrb(ifc, 1, is) = dvb%vaecrb(ifc, 1, is) + geo%&
-&               fcqalf(ifc, 1)*tempb3
+              CALL VBC_IS_B(ib, is, ibc, icv2, ifc, csbc, csbcb, wrks, &
+&                     vbnd, vbndb, vbc, vbcb)
+              vbcb = 0.D0
+              CALL POPREAL8(csbc, r8/8)
+              CALL CSBC_IS_B(icv1, ib, is, csbc, csbcb)
+              csbcb = 0.D0
             END IF
           END DO
         ELSE
@@ -20162,15 +20154,6 @@ CONTAINS
         END IF
         pzb(icv1) = pzb(icv1) + tempb3
         rzb(icv1) = rzb(icv1) - temp4*tempb3
-        DO is=ns-1,0,-1
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL VBC_IS_B(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                 csbcb(icv1, is), wrk)
-          CALL POPREAL8(cs, r8/8)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
-          csb0 = 0.D0
-          CALL CSBC_IS_B(icv1, ib, is, cs, csb0)
-        END DO
         CALL POPINTEGER4(ifc)
         CALL POPINTEGER4(icv2)
         CALL POPINTEGER4(icv1)
@@ -20619,6 +20602,7 @@ CONTAINS
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the domain cell
 ! number of the guard cell face
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         CALL PUSHREAL8(t2, r8/8)
         t2 = 0.0_R8
         DO is=0,ns-1
@@ -20632,6 +20616,13 @@ CONTAINS
             CALL PUSHCONTROL1B(0)
           END IF
         END DO
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        CALL PUSHREAL8(t3, r8/8)
+        t3 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%ti)
+        CALL PUSHREAL8(t4, r8/8)
+        t4 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%ti)
+!srv 23.07.10 }
       END DO
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -20645,18 +20636,24 @@ CONTAINS
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         t1 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
-        temp7 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1
+        temp7 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
         tempb2 = vbig*ne00*ev*srwb%shi0(icv1, 0)
         cob%chci(ifc, 1) = cob%chci(ifc, 1) + t0*tempb7 + (t0*pl%ti(icv2&
-&         )-temp7*(pl%ti(mpg%fcvx(ifc, 2))-pl%ti(mpg%fcvx(ifc, 1))))*&
-&         tempb2
+&         )-temp7*(t1*(t4-t3)))*tempb2
         srwb%shi0(icv1, 0) = 0.D0
         tempb6 = co%chci(ifc, 1)*tempb2
         plb%ti(icv2) = plb%ti(icv2) + t0*tempb6
-        plb%ti(mpg%fcvx(ifc, 2)) = plb%ti(mpg%fcvx(ifc, 2)) - temp7*&
-&         tempb6
-        plb%ti(mpg%fcvx(ifc, 1)) = plb%ti(mpg%fcvx(ifc, 1)) + temp7*&
-&         tempb6
+        tempb3 = -(t1*temp7*tempb6)
+        t4b = tempb3
+        t3b = -tempb3
+        ivx2 = mpg%fcvx(ifc, 2)
+        CALL POPREAL8(t4, r8/8)
+        CALL INTVERTEX_S_B(ivx2, ncv, nvx, mpg, geo%vxvol, pl%ti, plb%ti&
+&                    , t4b)
+        ivx1 = mpg%fcvx(ifc, 1)
+        CALL POPREAL8(t3, r8/8)
+        CALL INTVERTEX_S_B(ivx1, ncv, nvx, mpg, geo%vxvol, pl%ti, plb%ti&
+&                    , t3b)
         DO is=ns-1,0,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
@@ -21369,9 +21366,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -21386,14 +21383,6 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
       END DO
-!     ..impose temperature with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t1b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -21405,7 +21394,6 @@ CONTAINS
         plb%ti(icv2) = plb%ti(icv2) + tempb2
         eniparb(ib, 1) = eniparb(ib, 1) + ev*tempb2
         t1b = t1b - tempb2
-        CALL POPINTEGER4(icv1)
       END DO
       t1b = t1b/t0
       DO ib0=nbc,1,-1
@@ -21417,7 +21405,7 @@ CONTAINS
             plb%ti(icv2) = plb%ti(icv2) + geo%cvvol(icv2)*t1b
           END DO
         END IF
-        CALL POPINTEGER4(icv1)
+        CALL POPINTEGER4(icv)
       END DO
       CALL POPCONTROL2B(branch)
       IF (branch .EQ. 0) eniparb(ib, 1) = 0.D0
@@ -21432,9 +21420,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -21490,14 +21478,6 @@ CONTAINS
         max12 = x6
         CALL PUSHCONTROL1B(1)
       END IF
-!     ..impose temperature with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t2b = 0.D0
       t4b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
@@ -21510,7 +21490,6 @@ CONTAINS
         plb%ti(icv2) = plb%ti(icv2) + tempb2
         t4b = t4b + tempb2
         t2b = t2b - tempb2
-        CALL POPINTEGER4(icv1)
       END DO
       temp7 = t3/max12
       tempb2 = t1*t4b
@@ -21563,7 +21542,7 @@ CONTAINS
             plb%ti(icv1) = plb%ti(icv1) + geo%cvvol(icv2)*t1b
           END DO
         END IF
-        CALL POPINTEGER4(icv1)
+        CALL POPINTEGER4(icv)
       END DO
     END SELECT
   END SUBROUTINE B2STBC_PHYS_ENI_B
@@ -21829,6 +21808,8 @@ CONTAINS
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+! number of the corresponding domain cell
+        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         sy = geo%fcs(ifc)
@@ -22017,12 +21998,6 @@ CONTAINS
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         cs = SQRT(pz(icv1)/rz(icv1))
         t0 = 0.0_R8
         t1 = 0.0_R8
@@ -22036,12 +22011,16 @@ CONTAINS
           END IF
           IF (abs0 .LT. geo%qalfmin) THEN
             srw%shi0(icv1, 0) = 0.0_R8
+! Apply the same residual-neutral Ti damping used by the
+! regular-Qalf sheath branch: K*(Ti_old-Ti_new).
             srw%shi0(icv1, 1) = -(1.5_R8*geo%fcs(ifc)*geo%qalfmax*cs*dv%&
 &             ni(icv1, 1))
+            srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - switch%&
+&             stab_coeff_sheath_ti*dv%ne(icv1)*cs*geo%fcs(ifc)
+            srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
+&             stab_coeff_sheath_ti*dv%ne(icv1)*cs*geo%fcs(ifc)*pl%ti(&
+&             icv1)
             IF (switch%mdf_fhi .NE. 0) THEN
-              srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + mpg%bcfcor(mpg%&
-&               bccvp(ib, 1)+ibc-1)*(dv%fhipsch(ifc, 0)+dv%fhipsch(ifc, &
-&               1))
               t0 = 0.0_R8
               DO is=0,ns-1
                 t0 = t0 + mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*1.5_R8*(geo&
@@ -22066,16 +22045,18 @@ CONTAINS
           ELSE
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
-                vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%&
-&                 vaecrb(ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%&
-&                 bccvp(ib, 1)+ibc-1)
+!srv 15.02.26
+                CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+                CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, &
+&                     vbc)
                 IF (wrk .GE. 0.) THEN
                   abs5 = wrk
                 ELSE
                   abs5 = -wrk
                 END IF
-                x1 = csbc(icv1, is)*abs5
-                y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+                x1 = csbc*abs5
+                y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
                 IF (x1 .LT. y1) THEN
                   max6 = y1
                 ELSE
@@ -22491,9 +22472,12 @@ CONTAINS
             t2 = t2 + csb*pl%na(icv1, is)
           END IF
         END DO
+        ivx1 = mpg%fcvx(ifc, 1)
+        ivx2 = mpg%fcvx(ifc, 2)
+        t3 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%ti)
+        t4 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%ti)
         srw%shi0(icv1, 0) = vbig*ne00*ev*co%chci(ifc, 1)*(t0*pl%ti(icv2)&
-&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(pl%ti(mpg%fcvx(ifc, 2)&
-&         )-pl%ti(mpg%fcvx(ifc, 1))))
+&         -mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*t1*(t4-t3))
         srw%shi0(icv1, 1) = -(vbig*ne00*ev*(co%chci(ifc, 1)*t0-enipar(ib&
 &         , 1)*geo%fcs(ifc)*t2))
 !srv 23.07.10 }
@@ -22618,7 +22602,7 @@ CONTAINS
 !
 !IYS 04.03.2013 {
       IF (ncall_b2stbc_phys .EQ. 0) THEN
-        WRITE(*, '(a)') 'BCENI = 24 : Given integrated ion heat flux', &
+        WRITE(*, '(a)') 'BCENI = 24 : Given integrated ion heat flux'//&
 &       ' with constant Ti '
 !          write all boundaries with this type of boundary condition
         DO ibw=ib,nbc
@@ -22875,7 +22859,7 @@ CONTAINS
 ! CONDITION ON ION DENSITY BCCON = 25,26,27
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
-        WRITE(*, *) 'BCENI = 27 : Given integrated ion heat flux', &
+        WRITE(*, '(a)') 'BCENI = 27 : Given integrated ion heat flux'//&
 &       ' with constant Ti '
 !         write all boundaries with this type of boundary condition
         DO ibw=ib,nbc
@@ -22991,8 +22975,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENI=28 intended for core boundaries only!')
         END DO
         IF (switch%use_astra .NE. 0) enipar(ib, 1) = teb_astra*1.0e3_R8
@@ -23010,8 +22994,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -23047,8 +23031,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENI=29 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') 'specified ion heat flux', enipar&
@@ -23067,8 +23051,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bceni(ib0) .NE. 29) CALL XERRAB(&
 &                                      'BCENI=29: incompatible core BCs'&
 &                                      )
@@ -23138,15 +23122,15 @@ CONTAINS
 !                *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchviskt) *(dv.ne) *(dv.vaecrb)
 !                *(rt.rza) *(srw.sch0) *(co.sig0) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.te) *(pl.ti) naua2average vbc rz
-!                csbc pzaverage pz
+!                *(pl.po) *(pl.te) *(pl.ti) naua2average rz pzaverage
+!                pz
 !   with respect to varying inputs: mompar potpar scurpar prev_cur_delta
 !                po_prev po_curr coeff_16 pos *(dv.fch) *(dv.fchdia)
 !                *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
 !                *(dv.fchinert) *(dv.fchviskt) *(dv.ne) *(dv.vaecrb)
 !                *(rt.rza) *(srw.sch0) *(co.sig0) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.te) *(pl.ti) naua2average vbc rz
-!                csbc pzaverage pz
+!                *(pl.po) *(pl.te) *(pl.ti) naua2average rz pzaverage
+!                pz
 !   Plus diff mem management of: dv.fch:in dv.fchdia:in dv.fchin:in
 !                dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchviskt:in dv.ne:in dv.vaecrb:in
@@ -23158,10 +23142,10 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ib, ib0, ibc, ibc0, ibw, is
     INTEGER :: icv, icv1, icv2, ifc, ivx1, ivx2
-    REAL(kind=r8) :: cs, vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
+    REAL(kind=r8) :: vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
 &   neave, poave, totpar, totflux, wrk, seec, fchy_dia, fchy_inertia
-    REAL(kind=r8) :: csb, vteb, vbndb, fcheb, fchib, t0b, t1b, t2b, t3b&
-&   , t4b, neaveb, poaveb, totparb, totfluxb, fchy_diab, fchy_inertiab
+    REAL(kind=r8) :: vteb, vbndb, fcheb, fchib, t0b, t1b, t2b, t3b, t4b&
+&   , neaveb, poaveb, totparb, totfluxb, fchy_diab, fchy_inertiab
     REAL(kind=r8), EXTERNAL :: INTVERTEX_S_NODIFF
     EXTERNAL XERRAB
     INTRINSIC SQRT
@@ -23338,14 +23322,6 @@ CONTAINS
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         ivx1 = mpg%fcvx(ifc, 1)
         ivx2 = mpg%fcvx(ifc, 2)
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL PUSHREAL8ARRAY(csbc, r8*ncv*ns/8)
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL PUSHREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         CALL PUSHREAL8(vte, r8/8)
         vte = SQRT(pl%te(icv1)/me)
         t0 = 0.0_R8
@@ -23363,9 +23339,11 @@ CONTAINS
             IF (is_neutral(is)) THEN
               CALL PUSHCONTROL1B(0)
             ELSE
-              vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb&
-&               (ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib&
-&               , 1)+ibc-1)
+!srv 15.02.26
+              CALL PUSHREAL8(csbc, r8/8)
+              CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+              CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
               IF (wrk .GE. 0.) THEN
                 CALL PUSHREAL8(abs4, r8/8)
                 abs4 = wrk
@@ -23375,8 +23353,8 @@ CONTAINS
                 abs4 = -wrk
                 CALL PUSHCONTROL1B(1)
               END IF
-              x1 = csbc(icv1, is)*abs4
-              y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+              x1 = csbc*abs4
+              y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
               IF (x1 .LT. y1) THEN
                 CALL PUSHREAL8(max1, r8/8)
                 max1 = y1
@@ -23438,6 +23416,8 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
+      vbcb = 0.D0
+      csbcb = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
@@ -23516,6 +23496,7 @@ CONTAINS
             CALL POPREAL8(abs1, r8/8)
           END IF
           t0b = qe*fchib
+          icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
           DO is=ns-1,0,-1
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
@@ -23537,35 +23518,27 @@ CONTAINS
                 x1b = max1b
                 y1b = 0.D0
               END IF
-              vbcb(icv1, is) = vbcb(icv1, is) + SIGN(1.0_R8, wrk)*y1b
+              vbcb = vbcb + SIGN(1.0_R8, wrk)*y1b
               vbndb = y1b
-              csbcb(icv1, is) = csbcb(icv1, is) + abs4*x1b
+              csbcb = csbcb + abs4*x1b
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 0) THEN
                 CALL POPREAL8(abs4, r8/8)
               ELSE
                 CALL POPREAL8(abs4, r8/8)
               END IF
-              tempb0 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*vbndb
-              dvb%vaecrb(ifc, 0, is) = dvb%vaecrb(ifc, 0, is) + geo%&
-&               fcqalf(ifc, 0)*tempb0
-              dvb%vaecrb(ifc, 1, is) = dvb%vaecrb(ifc, 1, is) + geo%&
-&               fcqalf(ifc, 1)*tempb0
+              CALL VBC_IS_B(ib, is, ibc, icv2, ifc, csbc, csbcb, wrks, &
+&                     vbnd, vbndb, vbc, vbcb)
+              vbcb = 0.D0
+              CALL POPREAL8(csbc, r8/8)
+              CALL CSBC_IS_B(icv1, ib, is, csbc, csbcb)
+              csbcb = 0.D0
             END IF
           END DO
-          icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
         END IF
         CALL POPREAL8(vte, r8/8)
         IF (.NOT.pl%te(icv1)/me .EQ. 0.D0) plb%te(icv1) = plb%te(icv1) +&
 &           vteb/(me*2.0*SQRT(pl%te(icv1)/me))
-        DO is=ns-1,0,-1
-          CALL POPREAL8ARRAY(vbc, r8*ncv*ns/8)
-          CALL VBC_IS_B(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), &
-&                 csbcb(icv1, is), wrk)
-          CALL POPREAL8ARRAY(csbc, r8*ncv*ns/8)
-          csb = 0.D0
-          CALL CSBC_IS_B(icv1, ib, is, cs, csb)
-        END DO
       END DO
     CASE (12) 
       result11 = MAXVAL(dv%facdrift)
@@ -23575,9 +23548,6 @@ CONTAINS
 !wdk with <fcBb(:,2)>
 ! loop over number of cells in the boundary
           DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-            CALL PUSHINTEGER4(icv1)
-! number of the guard cell face
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
                 CALL PUSHCONTROL1B(1)
@@ -23601,15 +23571,10 @@ CONTAINS
             pzaverageb = pzaverageb - dv%facdrift(ifc)*mpg%bcfcor(mpg%&
 &             bccvp(ib, 1)+ibc-1)*switch%b2stbc_phm0*bzaverage*geo%&
 &             fcqalf(ifc, 1)*gonedbsq(ifc, 0)*geo%fcs(ifc)*fchy_diab
-            CALL POPINTEGER4(icv1)
           END DO
         ELSE IF (bcpot_12_style .EQ. 0) THEN
 ! loop over number of cells in the boundary
           DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-            CALL PUSHINTEGER4(icv1)
-! number of the guard cell face
-!wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
             DO is=0,ns-1
               IF (.NOT.is_neutral(is)) THEN
                 CALL PUSHCONTROL1B(1)
@@ -23634,17 +23599,8 @@ CONTAINS
             pzaverageb = pzaverageb - switch%b2stbc_phm0*geo%fcqalf(ifc&
 &             , 1)*geo%fcbb(ifc, 2)*geo%fcs(ifc)*mpg%bcfcor(mpg%bccvp(ib&
 &             , 1)+ibc-1)*dv%facdrift(ifc)*gonedbsq(ifc, 0)*fchy_diab
-            CALL POPINTEGER4(icv1)
           END DO
         ELSE IF (bcpot_12_style .EQ. 1) THEN
-!wdk experimental - use fchdia / fchinert as computed
-! loop over number of cells in the boundary
-          DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-            CALL PUSHINTEGER4(icv1)
-! number of the guard cell face
-!wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
-          END DO
           DO ibc=mpg%bccvp(ib, 2),1,-1
             icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
             fchy_inertiab = -srwb%sch0(icv1, 0)
@@ -23656,7 +23612,6 @@ CONTAINS
             tempb1 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*fchy_diab
             dvb%fchdia(ifc, 0) = dvb%fchdia(ifc, 0) + tempb1
             dvb%fchdia(ifc, 1) = dvb%fchdia(ifc, 1) + tempb1
-            CALL POPINTEGER4(icv1)
           END DO
         ELSE IF (bcpot_12_style .EQ. 2) THEN
 !wdk experimental - find constant potential (with
@@ -23673,9 +23628,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
-            CALL PUSHINTEGER4(icv1)
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-            IF (mpg%cvonclosedsurface(icv1)) THEN
+            CALL PUSHINTEGER4(icv)
+            icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+            IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
               DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -23733,14 +23688,6 @@ CONTAINS
             max3 = x2
             CALL PUSHCONTROL2B(3)
           END IF
-!       ..impose potential with perturbation
-! loop over number of cells in the boundary
-          DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-            CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-          END DO
           t2b = 0.D0
           t4b = 0.D0
           DO ibc=mpg%bccvp(ib, 2),1,-1
@@ -23753,7 +23700,6 @@ CONTAINS
             plb%po(icv2) = plb%po(icv2) + tempb1
             t4b = t4b + tempb1
             t2b = t2b - tempb1
-            CALL POPINTEGER4(icv1)
           END DO
           temp0 = t3/max3
           tempb1 = t1*t4b
@@ -23805,18 +23751,11 @@ CONTAINS
                 plb%po(icv1) = plb%po(icv1) + geo%cvvol(icv2)*t1b
               END DO
             END IF
-            CALL POPINTEGER4(icv1)
+            CALL POPINTEGER4(icv)
           END DO
         END IF
       END IF
     CASE (13) 
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the guard cell face
-!srv 03.03.15 }
-      END DO
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
@@ -23836,7 +23775,6 @@ CONTAINS
         dvb%fchvisper(ifc, 1) = dvb%fchvisper(ifc, 1) + tempb1
         dvb%fchinert(ifc, 0) = dvb%fchinert(ifc, 0) + tempb1
         dvb%fchinert(ifc, 1) = dvb%fchinert(ifc, 1) + tempb1
-        CALL POPINTEGER4(icv1)
       END DO
     CASE (14) 
       us = 0.0_R8
@@ -24429,9 +24367,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -24446,14 +24384,6 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
       END DO
-!     ..impose potential with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t1b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -24465,7 +24395,6 @@ CONTAINS
         plb%po(icv2) = plb%po(icv2) + tempb1
         potparb(ib, 1) = potparb(ib, 1) + tempb1
         t1b = t1b - tempb1
-        CALL POPINTEGER4(icv1)
       END DO
       t1b = t1b/t0
       DO ib0=nbc,1,-1
@@ -24477,7 +24406,7 @@ CONTAINS
             plb%po(icv2) = plb%po(icv2) + geo%cvvol(icv2)*t1b
           END DO
         END IF
-        CALL POPINTEGER4(icv1)
+        CALL POPINTEGER4(icv)
       END DO
     CASE (23) 
 !     ..compute average potential on core boundary
@@ -24491,9 +24420,9 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        CALL PUSHINTEGER4(icv1)
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        CALL PUSHINTEGER4(icv)
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -24552,15 +24481,6 @@ CONTAINS
         max6 = x5
         CALL PUSHCONTROL2B(3)
       END IF
-!
-!     ..impose potential with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t2b = 0.D0
       t4b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
@@ -24573,7 +24493,6 @@ CONTAINS
         plb%po(icv2) = plb%po(icv2) + tempb1
         t4b = t4b + tempb1
         t2b = t2b - tempb1
-        CALL POPINTEGER4(icv1)
       END DO
       temp0 = (totflux-totpar)/max6
       t1b = t4b
@@ -24633,7 +24552,7 @@ CONTAINS
             plb%po(icv1) = plb%po(icv1) + geo%cvvol(icv2)*t1b
           END DO
         END IF
-        CALL POPINTEGER4(icv1)
+        CALL POPINTEGER4(icv)
       END DO
     END SELECT
   END SUBROUTINE B2STBC_PHYS_POT_B
@@ -24643,7 +24562,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ib, ib0, ibc, ibc0, ibw, is
     INTEGER :: icv, icv1, icv2, ifc, ivx1, ivx2
-    REAL(kind=r8) :: cs, vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
+    REAL(kind=r8) :: vte, vbnd, s1, fche, fchi, t0, t1, t2, t3, t4, &
 &   neave, poave, totpar, totflux, wrk, seec, fchy_dia, fchy_inertia
     REAL(kind=r8), EXTERNAL :: INTVERTEX_S_NODIFF
     EXTERNAL XERRAB
@@ -24865,8 +24784,6 @@ CONTAINS
         END DO
       END IF
 !srv 15.02.26
-      conv_bcpot11 = .true.
-!srv 15.02.26
       mrs = 0.0_R8
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -24878,12 +24795,6 @@ CONTAINS
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         ivx1 = mpg%fcvx(ifc, 1)
         ivx2 = mpg%fcvx(ifc, 2)
-!srv 15.02.26 {
-        DO is=0,ns-1
-          CALL CSBC_IS(icv1, ib, is, cs)
-          CALL VBC_IS(ib, is, ibc, icv1, icv2, ifc, csbc(icv1, is), wrk)
-!srv 15.02.26 }
-        END DO
         vte = SQRT(pl%te(icv1)/me)
         t0 = 0.0_R8
         wrk = geo%fcqalf(ifc, 0)*geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)
@@ -24903,16 +24814,17 @@ CONTAINS
           s1 = geo%fcs(ifc)
           DO is=0,ns-1
             IF (.NOT.is_neutral(is)) THEN
-              vbnd = (dv%vaecrb(ifc, 0, is)*geo%fcqalf(ifc, 0)+dv%vaecrb&
-&               (ifc, 1, is)*geo%fcqalf(ifc, 1))*mpg%bcfcor(mpg%bccvp(ib&
-&               , 1)+ibc-1)
+!srv 15.02.26
+              CALL CSBC_IS(icv1, ib, is, csbc)
+!srv 15.02.26
+              CALL VBC_IS(ib, is, ibc, icv2, ifc, csbc, wrks, vbnd, vbc)
               IF (wrk .GE. 0.) THEN
                 abs4 = wrk
               ELSE
                 abs4 = -wrk
               END IF
-              x1 = csbc(icv1, is)*abs4
-              y1 = vbc(icv1, is)*SIGN(1.0_R8, wrk) + vbnd
+              x1 = csbc*abs4
+              y1 = vbc*SIGN(1.0_R8, wrk) + vbnd
               IF (x1 .LT. y1) THEN
                 max1 = y1
               ELSE
@@ -24969,8 +24881,8 @@ CONTAINS
           ELSE
             abs5 = -fch_bnd
           END IF
-          IF (abs2 .GE. abs5*switch%bcpot11_epsr + switch%bcpot11_epsa) &
-&           conv_bcpot11 = .false.
+          conv_bcpot11 = conv_bcpot11 .AND. abs2 .LT. abs5*switch%&
+&           bcpot11_epsr + switch%bcpot11_epsa
           IF (res_bcpot11 .GE. 0.) THEN
             y2 = res_bcpot11
           ELSE
@@ -25001,8 +24913,8 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-            CALL XERTST(mpg%cvonclosedsurface(icv1), &
+            icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+            CALL XERTST(mpg%cvonclosedsurface(icv), &
 &                 'BCPOT=12 intended for core boundaries only!')
           END DO
         END IF
@@ -25086,8 +24998,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
           DO ib0=1,nbc
-            icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-            IF (mpg%cvonclosedsurface(icv1)) THEN
+            icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+            IF (mpg%cvonclosedsurface(icv)) THEN
               IF (bcpot(ib0) .NE. 12) CALL XERRAB(&
 &                                      'BCPOT=12: incompatible core BCs'&
 &                                          )
@@ -25162,8 +25074,8 @@ CONTAINS
           CALL XERRAB('faulty parameter istyle_cur_contr_on_S_and_N !')
         ELSE
           DO ibc=1,mpg%bccvp(ib, 2)
-            icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-            CALL XERTST(.NOT.mpg%cvonclosedsurface(icv1), &
+            icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+            CALL XERTST(.NOT.mpg%cvonclosedsurface(icv), &
 &                 'BCPOT=13 not intended for core boundaries!')
           END DO
         END IF
@@ -25530,8 +25442,8 @@ CONTAINS
 &       'BCPOT = 22 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCPOT=22 intended for core boundaries only!')
         END DO
       END IF
@@ -25543,8 +25455,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
           DO ibc0=1,mpg%bccvp(ib0, 2)
 ! number of the guard cell
@@ -25585,8 +25497,8 @@ CONTAINS
 &       'BCPOT = 23 : specified potential ', potpar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCPOT=23 intended for core boundaries only!')
         END DO
       END IF
@@ -25603,8 +25515,8 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
-        icv1 = mpg%bccv(mpg%bccvp(ib0, 1), 2)
-        IF (mpg%cvonclosedsurface(icv1)) THEN
+        icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
+        IF (mpg%cvonclosedsurface(icv)) THEN
           IF (bcpot(ib0) .NE. 23) CALL XERRAB(&
 &                                      'BCPOT=23: incompatible core BCs'&
 &                                      )
@@ -26855,6 +26767,7 @@ CONTAINS
 ! implicit assumption at the moment: first ring in the
 ! core is a 'structured grid' ring with quad cells
       DO ib0=1,nbc
+        CALL PUSHINTEGER4(icv)
         icv = mpg%bccv(mpg%bccvp(ib0, 1), 2)
         IF (mpg%cvonclosedsurface(icv)) THEN
 ! loop over number of cells in the boundary
@@ -26871,14 +26784,6 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
       END DO
-!     ..impose zt with perturbation
-! loop over number of cells in the boundary
-      DO ibc=1,mpg%bccvp(ib, 2)
-! number of the guard cell
-        CALL PUSHINTEGER4(icv1)
-! number of the domain cell
-! number of the guard cell face
-      END DO
       t1b = 0.D0
       DO ibc=mpg%bccvp(ib, 2),1,-1
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
@@ -26889,7 +26794,6 @@ CONTAINS
         srwb%szt0(icv1, 0) = 0.D0
         plb%zt(icv2) = plb%zt(icv2) + tempb0
         t1b = t1b - tempb0
-        CALL POPINTEGER4(icv1)
       END DO
       t1b = t1b/t0
       DO ib0=nbc,1,-1
@@ -26901,6 +26805,7 @@ CONTAINS
             plb%zt(icv2) = plb%zt(icv2) + geo%cvvol(icv2)*t1b
           END DO
         END IF
+        CALL POPINTEGER4(icv)
       END DO
     END SELECT
   END SUBROUTINE B2STBC_PHYS_ENZ_B
@@ -27106,8 +27011,8 @@ CONTAINS
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         DO ibc=1,mpg%bccvp(ib, 2)
-          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
-          CALL XERTST(mpg%cvonclosedsurface(icv1), &
+          icv = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+          CALL XERTST(mpg%cvonclosedsurface(icv), &
 &               'BCENZ=16 intended for core boundaries only!')
         END DO
         WRITE(*, '(a,1p,g14.7,a,a,a)') &

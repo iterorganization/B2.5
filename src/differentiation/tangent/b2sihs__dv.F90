@@ -20,14 +20,14 @@
 !                c_r_ta[save in b2mod_b2zhco]:in c_r_tb[save in b2mod_b2zhco]:in
 !                c_r_w[save in b2mod_b2zhco]:in corr_tfia[from module b2mod_frtf_nccorr]:in
 !                corr_fria[from module b2mod_frtf_nccorr]:in mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxy:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.fspsi:in st_ext.za2:in st_ext.na:in
-!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
-!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
-!                srw.b2sihs_fraa:in srw.b2sihs_str:in
+!                mpg.intcellr:in geo.cvbb:in geo.cvy:in geo.cvhz:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxy:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.fspsi:in st_ext.za2:in
+!                st_ext.na:in srw.b2sihs_joule:in srw.b2sihs_divue:in
+!                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
+!                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
 !
 !
 !
@@ -50,7 +50,7 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & , sigx_cd, rza, rz2, rz2d, st_ext, st_extd, she0, she0d, shi0, shi0d, &
 & shn0, shn0d, srw, srwd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA
@@ -2185,7 +2185,7 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
 & , cvsa_cl, cvsa_drho, cvsahz_eff, f_luc_sg, alfx_c, sigx_c, rza, rz2, &
 & st_ext, she0, shi0, shn0, srw)
   USE B2MOD_TYPES
-  USE B2MOD_TALLIES
+  USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA

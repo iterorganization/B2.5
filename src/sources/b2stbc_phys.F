@@ -451,6 +451,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 #endif
       if(ncall_b2stbc_phys.eq.0) write(*,*) 'Doing B2-style bc'
 
+      conv_bcpot11 = .true.                                           !srv 15.02.26
       once_bccon = .false.                                            !srv 16.02.12 {
       once_bcene = .false.
       once_bceni = .false.                                            !srv 16.02.12 }
@@ -7590,7 +7591,6 @@ c              fchi=0.0_R8
      &       'one must have BCCON=14 for all ion species!')
           enddo
         endif
-        conv_bcpot11 = .true.                                        !srv 15.02.26
         mrs = 0.0_R8                                                 !srv 15.02.26
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -7634,11 +7634,9 @@ c              fchi=0.0_R8
             if (mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1).gt.0.0_R8)
      >       fch_bnd = -fch_bnd
             res_bcpot11 = fch_sch - fch_bnd
-            if (abs(res_bcpot11).ge.abs(fch_bnd)*switch%bcpot11_epsr +
-     &                                           switch%bcpot11_epsa)
-     >       then
-              conv_bcpot11=.false.
-            endif
+            conv_bcpot11 = conv_bcpot11 .and.
+     &       abs(res_bcpot11).lt.(abs(fch_bnd)*switch%bcpot11_epsr +
+     &                                         switch%bcpot11_epsa )
             mrs = max(mrs,abs(res_bcpot11))                             !srv 15.02.26 }
           endif
 #ifdef B25_EIRENE

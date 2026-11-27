@@ -58,20 +58,22 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC MIN
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(kind=r8) :: y1
   REAL(kind=r8) :: y1b
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs1b
-  REAL(kind=r8) :: max1
-  REAL(kind=r8) :: max1b
+  INTEGER :: max1
+  REAL(kind=r8) :: max2
+  REAL(kind=r8) :: max2b
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs3b
-  REAL(kind=r8) :: max2
-  REAL(kind=r8) :: max2b
+  REAL(kind=r8) :: max3
+  REAL(kind=r8) :: max3b
+  INTEGER :: min1
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -166,96 +168,104 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
       IF (.NOT.(.NOT.is_neutral(isb) .AND. mpg%cvonclosedsurface(mpg%&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
-!srv 12.04.08
-       IF (MAX(mpg%fccv(ifc,1),mpg%fccv(ifc,2)).GT.mpg%nci.AND.&
-&          mpg%cvonclosedsurface(MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2)))) &
-&      THEN
-         CALL PUSHCONTROL1B(0)
-         fl(ifc) = 1.0_R8
-       ELSE
-        IF (switch%min_collisions .GT. 0.0_R8) THEN
-          CALL PUSHREAL8(wrk, r8/8)
-          wrk = switch%cvsa_low_col_mltpl
-          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
-&             *(1.0_R8-wrk) + wrk) THEN
-            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
-&             wrk) + wrk
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-            y1 = 1.0_R8
-          END IF
-          IF (wrk .LT. y1) THEN
-            CALL PUSHREAL8(max1, r8/8)
-            max1 = y1
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL8(max1, r8/8)
-            max1 = wrk
-            CALL PUSHCONTROL1B(1)
-          END IF
-          CALL PUSHREAL8(cflmv_loc(ifc), r8/8)
-          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
-          CALL PUSHCONTROL1B(0)
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
         ELSE
-          CALL PUSHCONTROL1B(1)
+          max1 = mpg%fccv(ifc, 1)
         END IF
-        IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-          qcl = -(cvsbx(ifc)*dub(ifc))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            CALL PUSHREAL8(abs2, r8/8)
-            abs2 = geo%fcpbs(ifc)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL8(abs2, r8/8)
-            abs2 = -geo%fcpbs(ifc)
-            CALL PUSHCONTROL1B(1)
-          END IF
-!srv 11.01.13
-          CALL PUSHREAL8(qfl, r8/8)
-          qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
-&           ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
-          IF (qfl .GT. 0.0_R8) THEN
-            IF (qcl/qfl .GE. 0.) THEN
-              abs3 = qcl/qfl
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
+!srv 12.04.08
+        IF (max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1)) THEN
+          CALL PUSHCONTROL2B(2)
+          fl(ifc) = 1.0_R8
+        ELSE
+          IF (switch%min_collisions .GT. 0.0_R8) THEN
+            CALL PUSHREAL8(wrk, r8/8)
+            wrk = switch%cvsa_low_col_mltpl
+            IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/&
+&               5.0_R8*(1.0_R8-wrk) + wrk) THEN
+              y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(&
+&               1.0_R8-wrk) + wrk
               CALL PUSHCONTROL1B(0)
             ELSE
-              abs3 = -(qcl/qfl)
+              CALL PUSHCONTROL1B(1)
+              y1 = 1.0_R8
+            END IF
+            IF (wrk .LT. y1) THEN
+              CALL PUSHREAL8(max2, r8/8)
+              max2 = y1
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(max2, r8/8)
+              max2 = wrk
+              CALL PUSHCONTROL1B(1)
+            END IF
+            CALL PUSHREAL8(cflmv_loc(ifc), r8/8)
+            cflmv_loc(ifc) = cflmv_loc(ifc)*max2
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
+            qcl = -(cvsbx(ifc)*dub(ifc))
+            IF (geo%fcpbs(ifc) .GE. 0.) THEN
+              CALL PUSHREAL8(abs2, r8/8)
+              abs2 = geo%fcpbs(ifc)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(abs2, r8/8)
+              abs2 = -geo%fcpbs(ifc)
+              CALL PUSHCONTROL1B(1)
+            END IF
+!srv 11.01.13
+            CALL PUSHREAL8(qfl, r8/8)
+            qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
+&             ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+            IF (qfl .GT. 0.0_R8) THEN
+              IF (qcl/qfl .GE. 0.) THEN
+                abs3 = qcl/qfl
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                abs3 = -(qcl/qfl)
+                CALL PUSHCONTROL1B(1)
+              END IF
+              CALL PUSHREAL8(tfl, r8/8)
+              tfl = 1.0_R8 + abs3
+              CALL PUSHCONTROL2B(0)
+            ELSE
+              CALL PUSHREAL8(tfl, r8/8)
+              tfl = 1.0_R8
+              CALL PUSHCONTROL2B(1)
+            END IF
+          ELSE
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              CALL PUSHREAL8(max3, r8/8)
+              max3 = 1.0e-16_R8
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHREAL8(max3, r8/8)
+              max3 = collisnumf(ifc)
               CALL PUSHCONTROL1B(1)
             END IF
             CALL PUSHREAL8(tfl, r8/8)
-            tfl = 1.0_R8 + abs3
-            CALL PUSHCONTROL2B(0)
-          ELSE
-            CALL PUSHREAL8(tfl, r8/8)
-            tfl = 1.0_R8
-            CALL PUSHCONTROL2B(1)
+            tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max3)
+            CALL PUSHCONTROL2B(2)
           END IF
-        ELSE
-          IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            CALL PUSHREAL8(max2, r8/8)
-            max2 = 1.0e-16_R8
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL8(max2, r8/8)
-            max2 = collisnumf(ifc)
-            CALL PUSHCONTROL1B(1)
-          END IF
-          CALL PUSHREAL8(tfl, r8/8)
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
-          CALL PUSHCONTROL2B(2)
+          CALL PUSHREAL8(cvsbx(ifc), r8/8)
+          cvsbx(ifc) = cvsbx(ifc)/tfl
+          CALL PUSHREAL8(cvsbxhz(ifc), r8/8)
+          cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
+          CALL PUSHREAL8(vsbfx(ifc), r8/8)
+          vsbfx(ifc) = vsbfx(ifc)/tfl
+          fl(ifc) = tfl
+          CALL PUSHCONTROL2B(1)
         END IF
-        CALL PUSHREAL8(cvsbx(ifc), r8/8)
-        cvsbx(ifc) = cvsbx(ifc)/tfl
-        CALL PUSHREAL8(cvsbxhz(ifc), r8/8)
-        cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
-        CALL PUSHREAL8(vsbfx(ifc), r8/8)
-        vsbfx(ifc) = vsbfx(ifc)/tfl
-        fl(ifc) = tfl
-        CALL PUSHCONTROL1B(1)
-       END IF
       ELSE
-        CALL PUSHCONTROL1B(0)
+        CALL PUSHCONTROL2B(0)
         fl(ifc) = 1.0_R8
       END IF
     END DO
@@ -326,86 +336,88 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
     dubb = 0.D0
     cflmv_locb = 0.D0
     DO ifc=nfc,1,-1
-      CALL POPCONTROL1B(branch)
+      CALL POPCONTROL2B(branch)
       IF (branch .NE. 0) THEN
-        CALL POPREAL8(vsbfx(ifc), r8/8)
-        CALL POPREAL8(cvsbxhz(ifc), r8/8)
-        CALL POPREAL8(cvsbx(ifc), r8/8)
-        tflb = -(vsbfx(ifc)*vsbfxb(ifc)/tfl**2) - cvsbxhz(ifc)*cvsbxhzb(&
-&         ifc)/tfl**2 - cvsbx(ifc)*cvsbxb(ifc)/tfl**2
-        vsbfxb(ifc) = vsbfxb(ifc)/tfl
-        cvsbxhzb(ifc) = cvsbxhzb(ifc)/tfl
-        cvsbxb(ifc) = cvsbxb(ifc)/tfl
-        CALL POPCONTROL2B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(tfl, r8/8)
-          abs3b = tflb
-          qcl = -(cvsbx(ifc)*dub(ifc))
+        IF (branch .EQ. 1) THEN
+          CALL POPREAL8(vsbfx(ifc), r8/8)
+          CALL POPREAL8(cvsbxhz(ifc), r8/8)
+          CALL POPREAL8(cvsbx(ifc), r8/8)
+          tflb = -(vsbfx(ifc)*vsbfxb(ifc)/tfl**2) - cvsbxhz(ifc)*&
+&           cvsbxhzb(ifc)/tfl**2 - cvsbx(ifc)*cvsbxb(ifc)/tfl**2
+          vsbfxb(ifc) = vsbfxb(ifc)/tfl
+          cvsbxhzb(ifc) = cvsbxhzb(ifc)/tfl
+          cvsbxb(ifc) = cvsbxb(ifc)/tfl
+          CALL POPCONTROL2B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL8(tfl, r8/8)
+            abs3b = tflb
+            qcl = -(cvsbx(ifc)*dub(ifc))
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              qclb = abs3b/qfl
+              qflb = -(qcl*abs3b/qfl**2)
+            ELSE
+              qclb = -(abs3b/qfl)
+              qflb = qcl*abs3b/qfl**2
+            END IF
+          ELSE IF (branch .EQ. 1) THEN
+            CALL POPREAL8(tfl, r8/8)
+            qflb = 0.D0
+            qclb = 0.D0
+          ELSE
+            CALL POPREAL8(tfl, r8/8)
+            tempb = -(tflb/(cflmv_loc(ifc)**2*max3**2))
+            cflmv_locb(ifc) = cflmv_locb(ifc) + max3*tempb
+            max3b = cflmv_loc(ifc)*tempb
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(max3, r8/8)
+            ELSE
+              CALL POPREAL8(max3, r8/8)
+              collisnumfb(ifc) = collisnumfb(ifc) + max3b
+            END IF
+            GOTO 100
+          END IF
+          CALL POPREAL8(qfl, r8/8)
+          cflmv_locb(ifc) = cflmv_locb(ifc) + (nb(mpg%fccv(ifc, 1))*tb(&
+&           mpg%fccv(ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))&
+&           *abs2*qflb/2.0_R8
+          tempb = cflmv_loc(ifc)*abs2*qflb/2.0_R8
+          nbb(mpg%fccv(ifc, 1)) = nbb(mpg%fccv(ifc, 1)) + tb(mpg%fccv(&
+&           ifc, 1))*tempb
+          tbb(mpg%fccv(ifc, 1)) = tbb(mpg%fccv(ifc, 1)) + nb(mpg%fccv(&
+&           ifc, 1))*tempb
+          nbb(mpg%fccv(ifc, 2)) = nbb(mpg%fccv(ifc, 2)) + tb(mpg%fccv(&
+&           ifc, 2))*tempb
+          tbb(mpg%fccv(ifc, 2)) = tbb(mpg%fccv(ifc, 2)) + nb(mpg%fccv(&
+&           ifc, 2))*tempb
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            qclb = abs3b/qfl
-            qflb = -(qcl*abs3b/qfl**2)
+            CALL POPREAL8(abs2, r8/8)
           ELSE
-            qclb = -(abs3b/qfl)
-            qflb = qcl*abs3b/qfl**2
+            CALL POPREAL8(abs2, r8/8)
           END IF
-        ELSE IF (branch .EQ. 1) THEN
-          CALL POPREAL8(tfl, r8/8)
-          qflb = 0.D0
-          qclb = 0.D0
-        ELSE
-          CALL POPREAL8(tfl, r8/8)
-          tempb = -(tflb/(cflmv_loc(ifc)**2*max2**2))
-          cflmv_locb(ifc) = cflmv_locb(ifc) + max2*tempb
-          max2b = cflmv_loc(ifc)*tempb
-          CALL POPCONTROL1B(branch)
+          cvsbxb(ifc) = cvsbxb(ifc) - dub(ifc)*qclb
+          dubb(ifc) = dubb(ifc) - cvsbx(ifc)*qclb
+ 100      CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8(max2, r8/8)
-          ELSE
-            CALL POPREAL8(max2, r8/8)
-            collisnumfb(ifc) = collisnumfb(ifc) + max2b
+            CALL POPREAL8(cflmv_loc(ifc), r8/8)
+            max2b = cflmv_loc(ifc)*cflmv_locb(ifc)
+            cflmv_locb(ifc) = max2*cflmv_locb(ifc)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL8(max2, r8/8)
+              y1b = max2b
+              wrk = switch%cvsa_low_col_mltpl
+            ELSE
+              CALL POPREAL8(max2, r8/8)
+              y1b = 0.D0
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) collisnumfb(ifc) = collisnumfb(ifc) + (&
+&               1.0_R8-wrk)*y1b/5.0_R8
+            CALL POPREAL8(wrk, r8/8)
           END IF
-          GOTO 100
-        END IF
-        CALL POPREAL8(qfl, r8/8)
-        cflmv_locb(ifc) = cflmv_locb(ifc) + (nb(mpg%fccv(ifc, 1))*tb(mpg&
-&         %fccv(ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))*abs2&
-&         *qflb/2.0_R8
-        tempb = cflmv_loc(ifc)*abs2*qflb/2.0_R8
-        nbb(mpg%fccv(ifc, 1)) = nbb(mpg%fccv(ifc, 1)) + tb(mpg%fccv(ifc&
-&         , 1))*tempb
-        tbb(mpg%fccv(ifc, 1)) = tbb(mpg%fccv(ifc, 1)) + nb(mpg%fccv(ifc&
-&         , 1))*tempb
-        nbb(mpg%fccv(ifc, 2)) = nbb(mpg%fccv(ifc, 2)) + tb(mpg%fccv(ifc&
-&         , 2))*tempb
-        tbb(mpg%fccv(ifc, 2)) = tbb(mpg%fccv(ifc, 2)) + nb(mpg%fccv(ifc&
-&         , 2))*tempb
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(abs2, r8/8)
-        ELSE
-          CALL POPREAL8(abs2, r8/8)
-        END IF
-        cvsbxb(ifc) = cvsbxb(ifc) - dub(ifc)*qclb
-        dubb(ifc) = dubb(ifc) - cvsbx(ifc)*qclb
- 100    CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL8(cflmv_loc(ifc), r8/8)
-          max1b = cflmv_loc(ifc)*cflmv_locb(ifc)
-          cflmv_locb(ifc) = max1*cflmv_locb(ifc)
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL8(max1, r8/8)
-            y1b = max1b
-            wrk = switch%cvsa_low_col_mltpl
-          ELSE
-            CALL POPREAL8(max1, r8/8)
-            y1b = 0.D0
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) collisnumfb(ifc) = collisnumfb(ifc) + (&
-&             1.0_R8-wrk)*y1b/5.0_R8
-          CALL POPREAL8(wrk, r8/8)
         END IF
       END IF
     END DO
@@ -475,15 +487,17 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
   INTRINSIC ABS
   EXTERNAL XERTST
   EXTERNAL B2XVSG
-  INTRINSIC MIN
   INTRINSIC MAX
+  INTRINSIC MIN
   REAL(kind=r8) :: y1
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
-  REAL(kind=r8) :: max1
+  INTEGER :: max1
+  REAL(kind=r8) :: max2
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
-  REAL(kind=r8) :: max2
+  REAL(kind=r8) :: max3
+  INTEGER :: min1
   CHARACTER(len=7) :: arg1
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -562,61 +576,69 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
       IF (.NOT.(.NOT.is_neutral(isb) .AND. mpg%cvonclosedsurface(mpg%&
 &         fccv(ifc, 1)) .AND. mpg%cvonclosedsurface(mpg%fccv(ifc, 2)))) &
 &     THEN
-!srv 12.04.08
-       IF (MAX(mpg%fccv(ifc,1),mpg%fccv(ifc,2)).GT.mpg%nci.AND.&
-&          mpg%cvonclosedsurface(MIN(mpg%fccv(ifc,1),mpg%fccv(ifc,2)))) &
-&      THEN
-         fl(ifc) = 1.0_R8
-       ELSE
-        IF (switch%min_collisions .GT. 0.0_R8) THEN
-          wrk = switch%cvsa_low_col_mltpl
-          IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/5.0_R8&
-&             *(1.0_R8-wrk) + wrk) THEN
-            y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(1.0_R8-&
-&             wrk) + wrk
-          ELSE
-            y1 = 1.0_R8
-          END IF
-          IF (wrk .LT. y1) THEN
-            max1 = y1
-          ELSE
-            max1 = wrk
-          END IF
-          cflmv_loc(ifc) = cflmv_loc(ifc)*max1
-        END IF
-        IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
-          qcl = -(cvsbx(ifc)*dub(ifc))
-          IF (geo%fcpbs(ifc) .GE. 0.) THEN
-            abs2 = geo%fcpbs(ifc)
-          ELSE
-            abs2 = -geo%fcpbs(ifc)
-          END IF
-!srv 11.01.13
-          qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
-&           ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
-          IF (qfl .GT. 0.0_R8) THEN
-            IF (qcl/qfl .GE. 0.) THEN
-              abs3 = qcl/qfl
-            ELSE
-              abs3 = -(qcl/qfl)
-            END IF
-            tfl = 1.0_R8 + abs3
-          ELSE
-            tfl = 1.0_R8
-          END IF
+        IF (mpg%fccv(ifc, 1) .LT. mpg%fccv(ifc, 2)) THEN
+          max1 = mpg%fccv(ifc, 2)
         ELSE
-          IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
-            max2 = 1.0e-16_R8
-          ELSE
-            max2 = collisnumf(ifc)
-          END IF
-          tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max2)
+          max1 = mpg%fccv(ifc, 1)
         END IF
-        cvsbx(ifc) = cvsbx(ifc)/tfl
-        cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
-        vsbfx(ifc) = vsbfx(ifc)/tfl
-        fl(ifc) = tfl
-       END IF
+        IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+          min1 = mpg%fccv(ifc, 2)
+        ELSE
+          min1 = mpg%fccv(ifc, 1)
+        END IF
+!srv 12.04.08
+        IF (max1 .GT. mpg%nci .AND. mpg%cvonclosedsurface(min1)) THEN
+          fl(ifc) = 1.0_R8
+        ELSE
+          IF (switch%min_collisions .GT. 0.0_R8) THEN
+            wrk = switch%cvsa_low_col_mltpl
+            IF (1.0_R8 .GT. (collisnumf(ifc)-switch%min_collisions)/&
+&               5.0_R8*(1.0_R8-wrk) + wrk) THEN
+              y1 = (collisnumf(ifc)-switch%min_collisions)/5.0_R8*(&
+&               1.0_R8-wrk) + wrk
+            ELSE
+              y1 = 1.0_R8
+            END IF
+            IF (wrk .LT. y1) THEN
+              max2 = y1
+            ELSE
+              max2 = wrk
+            END IF
+            cflmv_loc(ifc) = cflmv_loc(ifc)*max2
+          END IF
+          IF (collisnumf(ifc) .GT. switch%min_collisions) THEN
+            qcl = -(cvsbx(ifc)*dub(ifc))
+            IF (geo%fcpbs(ifc) .GE. 0.) THEN
+              abs2 = geo%fcpbs(ifc)
+            ELSE
+              abs2 = -geo%fcpbs(ifc)
+            END IF
+!srv 11.01.13
+            qfl = cflmv_loc(ifc)*abs2*(nb(mpg%fccv(ifc, 1))*tb(mpg%fccv(&
+&             ifc, 1))+nb(mpg%fccv(ifc, 2))*tb(mpg%fccv(ifc, 2)))/2.0_R8
+            IF (qfl .GT. 0.0_R8) THEN
+              IF (qcl/qfl .GE. 0.) THEN
+                abs3 = qcl/qfl
+              ELSE
+                abs3 = -(qcl/qfl)
+              END IF
+              tfl = 1.0_R8 + abs3
+            ELSE
+              tfl = 1.0_R8
+            END IF
+          ELSE
+            IF (collisnumf(ifc) .LT. 1.0e-16_R8) THEN
+              max3 = 1.0e-16_R8
+            ELSE
+              max3 = collisnumf(ifc)
+            END IF
+            tfl = 1.0_R8 + 1.0_R8/(cflmv_loc(ifc)*max3)
+          END IF
+          cvsbx(ifc) = cvsbx(ifc)/tfl
+          cvsbxhz(ifc) = cvsbxhz(ifc)/tfl
+          vsbfx(ifc) = vsbfx(ifc)/tfl
+          fl(ifc) = tfl
+        END IF
       ELSE
         fl(ifc) = 1.0_R8
       END IF
