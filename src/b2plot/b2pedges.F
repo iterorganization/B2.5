@@ -203,10 +203,10 @@ c      print *,hlp_frmr               !###
           hlp_fly(j)=state%dv%fna(new_face_list(m),1,j)/hlp_area*
      &     mpg%bcFcOr(mpg%fcBc(new_face_list(m),1))
         end do !}
-        ra=geo%cvX(mpg%fcVx(new_face_list(m),1))
-        za=geo%cvY(mpg%fcVx(new_face_list(m),1))
-        rb=geo%cvX(mpg%fcVx(new_face_list(m),2))
-        zb=geo%cvY(mpg%fcVx(new_face_list(m),2))
+        ra=geo%vxX(mpg%fcVx(new_face_list(m),1))
+        za=geo%vxY(mpg%fcVx(new_face_list(m),1))
+        rb=geo%vxX(mpg%fcVx(new_face_list(m),2))
+        zb=geo%vxY(mpg%fcVx(new_face_list(m),2))
         d=geo%fcHt(new_face_list(m))
         re=0.5_R8*(ra+rb)
         ze=0.5_R8*(za+zb)
