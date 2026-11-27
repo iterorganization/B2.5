@@ -603,6 +603,11 @@ cank
             call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
           end do
         end if
+        if(jvft44_in .ge. 20261124) then
+          do is = 1, natmi
+            call gfsub2(44,mpg%nCv,nCvp,eplsrad(:,is,0))
+          end do
+        end if
 
         if(jvft44_in .ge. 20080706) then
           call read_title(44)
@@ -923,6 +928,11 @@ cank
           end do
           do is = 1, nioni
             call gfsub2(44,mpg%nCv,nCvp,eionrad(:,is,0))
+          end do
+        end if
+        if(jvft44_in .ge. 20261124) then
+          do is = 1, natmi
+            call gfsub2(44,mpg%nCv,nCvp,eplsrad(:,is,0))
           end do
         end if
       end if

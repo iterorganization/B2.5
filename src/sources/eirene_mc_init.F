@@ -61,6 +61,7 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(eneutrad(nCv,natm,0:nstra+1))
         allocate(emolrad(nCv,nmol,0:nstra+1))
         allocate(eionrad(nCv,nion,0:nstra+1))
+        allocate(eplsrad(nCv,natm,0:nstra+1))
         allocate(wlarea(nlimps))
         allocate(wlabsrp(natm+nmol+nion+npls,nlimps))
         allocate(wlpump(natm+nmol+nion+npls,nsgmx))
@@ -95,6 +96,7 @@ c     avoids double module definition in case code is compiled with Eirene
         eneutrad=0.0_R8
         emolrad=0.0_R8
         eionrad=0.0_R8
+        eplsrad=0.0_R8
         wldnek=0.0_R8
         wldnep=0.0_R8
         wldna=0.0_R8

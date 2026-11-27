@@ -1621,7 +1621,7 @@ cxpb size is changed in b2mod_dimensions
               if (switch%use_eirene.ne.0)
      >         fb_current(ifb) = fb_current(ifb) -
      &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
-     &          +sum(eionrad(:,:,0)))
+     &          +sum(eionrad(:,:,0))+sum(eplsrad(:,:,0)))
 #endif
 
             case (22) ! average density of this species at the separatrix
